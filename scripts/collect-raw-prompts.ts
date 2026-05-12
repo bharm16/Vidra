@@ -24,24 +24,24 @@ import {
 type TimestampLike = admin.firestore.Timestamp | string | undefined;
 
 interface ScriptOptions {
-  userId?: string;
+  userId?: string | undefined;
   batchSize: number;
   limit: number | null;
   output: string;
   format: "json" | "csv";
-  localFile?: string;
-  envFile?: string;
+  localFile?: string | undefined;
+  envFile?: string | undefined;
 }
 
 interface RawPromptEntry {
   source: "firestore" | "localStorage";
-  id?: string;
-  uuid?: string;
-  userId?: string;
-  timestamp?: string;
-  mode?: string;
+  id?: string | undefined;
+  uuid?: string | undefined;
+  userId?: string | undefined;
+  timestamp?: string | undefined;
+  mode?: string | undefined;
   input: string;
-  output?: string;
+  output?: string | undefined;
 }
 
 const argv = process.argv.slice(2);
@@ -152,7 +152,7 @@ async function collectFromFirestore(
       entries.push(buildEntryFromFirestore(doc));
     }
 
-    lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    lastDoc = snapshot.docs[snapshot.docs.length - 1] ?? null;
 
     if (remaining !== null) {
       remaining -= snapshot.size;

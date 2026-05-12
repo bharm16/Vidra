@@ -25,11 +25,12 @@ const options = {
   userId: args.find((arg) => arg.startsWith("--userId="))?.split("=")[1],
   batchSize:
     parseInt(
-      args.find((arg) => arg.startsWith("--batch-size="))?.split("=")[1],
+      args.find((arg) => arg.startsWith("--batch-size="))?.split("=")[1] ?? "",
     ) || 10,
   limit:
-    parseInt(args.find((arg) => arg.startsWith("--limit="))?.split("=")[1]) ||
-    null,
+    parseInt(
+      args.find((arg) => arg.startsWith("--limit="))?.split("=")[1] ?? "",
+    ) || null,
 };
 
 const LEGACY_ID_MAP: Record<string, string> = {
@@ -269,7 +270,8 @@ async function runMigration(): Promise<void> {
 
   const db = initializeFirebaseAdmin();
 
-  let query = db.collection("prompts");
+  let query: admin.firestore.Query<admin.firestore.DocumentData> =
+    db.collection("prompts");
   if (options.userId) {
     query = query.where("userId", "==", options.userId);
   }

@@ -39,6 +39,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { AIModelService } from "../../server/src/services/ai-model/AIModelService.js";
+import type { ClientsMap } from "../../server/src/services/ai-model/types.js";
 import { OpenAICompatibleAdapter } from "../../server/src/clients/adapters/OpenAICompatibleAdapter.js";
 import { labelSpans } from "../../server/src/llm/span-labeling/SpanLabelingService.js";
 import { warmupNlpServices } from "../../server/src/llm/span-labeling/nlp/NlpSpanService.js";
@@ -74,6 +75,7 @@ interface GoldenSpan {
   start: number;
   end: number;
   role: string;
+  [key: string]: unknown;
 }
 
 interface GoldenPrompt {
@@ -139,7 +141,7 @@ function createAIService(): {
   service: AIModelService;
   resolvedProvider: "groq" | "openai";
 } {
-  const clients: Record<string, OpenAICompatibleAdapter> = {};
+  const clients: ClientsMap = { openai: null };
 
   if (process.env.GROQ_API_KEY) {
     clients.groq = new OpenAICompatibleAdapter({
@@ -165,7 +167,7 @@ function createAIService(): {
     clients.openai = clients.groq;
   }
 
-  if (Object.keys(clients).length === 0) {
+  if (!clients.openai) {
     throw new Error(
       "No AI API keys found. Set GROQ_API_KEY or OPENAI_API_KEY before running this script.",
     );

@@ -27,6 +27,7 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { AIModelService } from "../../server/src/services/ai-model/AIModelService.js";
+import type { ClientsMap } from "../../server/src/services/ai-model/types.js";
 import { OpenAICompatibleAdapter } from "../../server/src/clients/adapters/OpenAICompatibleAdapter.js";
 import { PromptOptimizationService } from "../../server/src/services/prompt-optimization/PromptOptimizationService.js";
 import { ImageObservationService } from "../../server/src/services/image-observation/ImageObservationService.js";
@@ -101,7 +102,7 @@ interface EvaluationDataset {
 // =============================================================================
 
 function createAIService(): AIModelService {
-  const clients: Record<string, any> = {};
+  const clients: ClientsMap = { openai: null };
   const groqTimeoutMs = Number(process.env.GROQ_TIMEOUT_MS || 5000);
   const openaiTimeoutMs = Number(process.env.OPENAI_TIMEOUT_MS || 60000);
   const groqModel = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
@@ -144,7 +145,7 @@ function createAIService(): AIModelService {
     clients.openai = clients.groq;
   }
 
-  if (Object.keys(clients).length === 0) {
+  if (!clients.openai) {
     throw new Error("No AI API keys found. Set GROQ_API_KEY or OPENAI_API_KEY");
   }
 
@@ -176,7 +177,8 @@ function findLatestPromptsFile(): string | null {
     .sort()
     .reverse();
 
-  return files.length > 0 ? join(projectRoot, files[0]) : null;
+  const newest = files[0];
+  return newest ? join(projectRoot, newest) : null;
 }
 
 function loadRawPrompts(filePath: string): RawPromptRecord[] {
@@ -225,7 +227,7 @@ async function optimizePrompt(
 
     clearTimeout(timeout);
 
-    const output = result.prompt || result.optimizedPrompt || "";
+    const output = result.prompt || "";
 
     return {
       output,
@@ -252,10 +254,13 @@ async function main(): Promise<void> {
   let sampleSize: number | null = null;
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--input" && args[i + 1]) {
-      inputFile = args[++i];
-    } else if (args[i] === "--sample" && args[i + 1]) {
-      sampleSize = parseInt(args[++i], 10);
+    const next = args[i + 1];
+    if (args[i] === "--input" && next !== undefined) {
+      inputFile = next;
+      i++;
+    } else if (args[i] === "--sample" && next !== undefined) {
+      sampleSize = parseInt(next, 10);
+      i++;
     }
   }
 
@@ -323,7 +328,9 @@ async function main(): Promise<void> {
   console.log(`Generating ${inputsToProcess.length} optimized prompts...\n`);
 
   for (let i = 0; i < inputsToProcess.length; i++) {
-    const { id, input } = inputsToProcess[i];
+    const next = inputsToProcess[i];
+    if (next === undefined) continue;
+    const { id, input } = next;
 
     // Progress indicator
     const progress = `[${(i + 1).toString().padStart(3)}/${inputsToProcess.length}]`;

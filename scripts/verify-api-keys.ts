@@ -46,7 +46,7 @@ const log = {
     logWithMeta(`${colors.yellow}⚠${colors.reset}`, msg, meta),
   info: (msg: string, meta?: LogMeta) =>
     logWithMeta(`${colors.cyan}ℹ${colors.reset}`, msg, meta),
-  header: (msg) => console.log(`\n${colors.bold}${msg}${colors.reset}`),
+  header: (msg: string) => console.log(`\n${colors.bold}${msg}${colors.reset}`),
 };
 
 /**
@@ -76,7 +76,7 @@ async function testOpenAIKey() {
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as { data: Array<{ id: string }> };
       log.success("OpenAI API key is valid", { modelCount: data.data.length });
 
       // Check if the configured model is available
@@ -140,7 +140,7 @@ async function testGroqKey() {
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as { data: Array<{ id: string }> };
       log.success("Groq API key is valid", { modelCount: data.data.length });
 
       // Check if the configured model is available

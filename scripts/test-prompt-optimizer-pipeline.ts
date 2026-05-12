@@ -230,6 +230,8 @@ function parseCliArgs(argv: string[]): CliOptions {
       continue;
     }
 
+    if (arg === undefined) continue;
+
     if (arg.startsWith("--")) {
       throw new Error(`Unknown option: ${arg}`);
     }
@@ -354,6 +356,7 @@ async function main(): Promise<void> {
 
   for (let index = 0; index < allPrompts.length; index += 1) {
     const rawPrompt = allPrompts[index];
+    if (rawPrompt === undefined) continue;
 
     console.log("-".repeat(90));
     console.log(`Prompt ${index + 1}/${allPrompts.length}`);

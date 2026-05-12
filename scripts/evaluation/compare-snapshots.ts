@@ -599,10 +599,13 @@ async function main(): Promise<void> {
   let currentPath = join(SNAPSHOTS_DIR, "latest.json");
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--baseline" && args[i + 1]) {
-      baselinePath = args[++i];
-    } else if (args[i] === "--current" && args[i + 1]) {
-      currentPath = args[++i];
+    const next = args[i + 1];
+    if (args[i] === "--baseline" && next !== undefined) {
+      baselinePath = next;
+      i++;
+    } else if (args[i] === "--current" && next !== undefined) {
+      currentPath = next;
+      i++;
     }
   }
 

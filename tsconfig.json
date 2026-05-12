@@ -81,7 +81,23 @@
     "client/src/**/*",
     "server/src/**/*",
     "shared/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "scripts/**/*"
   ],
-  "exclude": ["node_modules", "dist", "build"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    // TODO: Re-enable type checking for these files. They were excluded when
+    // `scripts/**/*` was first added to `include` because each had 13+ existing
+    // type errors. The migration scripts are one-shot and have already run;
+    // the legacy span-labeling-evaluation files are superseded by
+    // golden-set-relaxed-f1.ts. Triage: fix or delete each, then remove from
+    // this list.
+    "scripts/get-highlight-stats.ts",
+    "scripts/migrations/backfill-highlight-cache.ts",
+    "scripts/migrations/force-highlight-rerender.ts",
+    "scripts/evaluation/span-labeling-evaluation.ts",
+    "scripts/evaluation/span-labeling-evaluation-gemini.ts"
+  ]
 }

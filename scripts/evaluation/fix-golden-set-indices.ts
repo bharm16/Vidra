@@ -58,7 +58,7 @@ function computeSpanIndices(
     );
   }
 
-  const start = matches[pick];
+  const start = matches[pick]!;
   return { start, end: start + spanText.length };
 }
 
