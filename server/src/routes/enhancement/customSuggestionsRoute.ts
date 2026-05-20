@@ -22,7 +22,7 @@ export function registerCustomSuggestionsRoute(
   { enhancementService }: CustomSuggestionsDeps,
 ): void {
   router.post(
-    "/get-custom-suggestions",
+    "/enhancement/custom-suggestions",
     validateRequest(customSuggestionSchema),
     asyncHandler(async (req, res) => {
       const startTime = Date.now();

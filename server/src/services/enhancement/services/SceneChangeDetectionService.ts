@@ -19,7 +19,7 @@ export interface SceneChangeResult {
  * Service for detecting scene changes in video prompts
  * Determines if field changes require updating related fields.
  *
- * Consumed by the enhancement domain via /api/detect-scene-change
+ * Consumed by the enhancement domain via /api/enhancement/scene-change
  * (routes/enhancement/sceneChangeRoute.ts).
  */
 export class SceneChangeDetectionService {

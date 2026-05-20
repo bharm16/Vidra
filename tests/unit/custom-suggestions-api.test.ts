@@ -89,7 +89,7 @@ describe("fetchCustomSuggestions", () => {
     expect(result).toEqual([{ text: "one" }, { text: "two" }]);
     expect(mockBuildFirebaseAuthHeaders).toHaveBeenCalledTimes(1);
     expect(mockFetch).toHaveBeenCalledWith(
-      "/api/get-custom-suggestions",
+      "/api/enhancement/custom-suggestions",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({

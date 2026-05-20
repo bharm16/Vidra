@@ -97,12 +97,12 @@ describe("enhancement routes", () => {
     vi.clearAllMocks();
   });
 
-  describe("/get-enhancement-suggestions", () => {
+  describe("/enhancement/suggestions", () => {
     it("returns 400 for invalid request body", async () => {
       const { app, enhancementService } = createApp();
 
       const response = await request(app)
-        .post("/get-enhancement-suggestions")
+        .post("/enhancement/suggestions")
         .send({ fullPrompt: "A runner in rain" });
 
       expect(response.status).toBe(400);
@@ -135,7 +135,7 @@ describe("enhancement routes", () => {
       });
 
       const response = await request(app)
-        .post("/get-enhancement-suggestions")
+        .post("/enhancement/suggestions")
         .send({
           highlightedText: "tracking shot",
           fullPrompt: "A cinematic runner in rain, tracking shot.",
@@ -159,7 +159,7 @@ describe("enhancement routes", () => {
       });
 
       const response = await request(app)
-        .post("/get-enhancement-suggestions")
+        .post("/enhancement/suggestions")
         .send({
           highlightedText: "tracking shot",
           fullPrompt: "A cinematic runner in rain, tracking shot.",
@@ -173,10 +173,12 @@ describe("enhancement routes", () => {
   it("returns 400 for invalid custom suggestion requests", async () => {
     const { app } = createApp();
 
-    const response = await request(app).post("/get-custom-suggestions").send({
-      highlightedText: "runner",
-      fullPrompt: "A runner in rain",
-    });
+    const response = await request(app)
+      .post("/enhancement/custom-suggestions")
+      .send({
+        highlightedText: "runner",
+        fullPrompt: "A runner in rain",
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Validation failed");
@@ -196,7 +198,7 @@ describe("enhancement routes", () => {
   it("returns 400 for invalid scene change requests", async () => {
     const { app } = createApp();
 
-    const response = await request(app).post("/detect-scene-change").send({
+    const response = await request(app).post("/enhancement/scene-change").send({
       newValue: "desert",
       fullPrompt: "A runner in rain",
     });
@@ -208,7 +210,7 @@ describe("enhancement routes", () => {
   it("returns 400 when /test-nlp is missing prompt query", async () => {
     const { app } = createApp();
 
-    const response = await request(app).get("/test-nlp");
+    const response = await request(app).get("/enhancement/test-nlp");
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
@@ -216,10 +218,10 @@ describe("enhancement routes", () => {
     });
   });
 
-  it("returns NLP spans when /test-nlp query is valid", async () => {
+  it("returns NLP spans when /enhancement/test-nlp query is valid", async () => {
     const { app } = createApp();
 
-    const response = await request(app).get("/test-nlp").query({
+    const response = await request(app).get("/enhancement/test-nlp").query({
       prompt: "A runner in rain with neon reflections",
     });
 

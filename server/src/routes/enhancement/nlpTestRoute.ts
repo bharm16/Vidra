@@ -5,7 +5,7 @@ import { extractSemanticSpans } from "@llm/span-labeling/nlp/NlpSpanService";
 
 export function registerNlpTestRoute(router: Router): void {
   router.get(
-    "/test-nlp",
+    "/enhancement/test-nlp",
     asyncHandler(async (req, res) => {
       const startTime = Date.now();
       const requestId = req.id || "unknown";

@@ -5,8 +5,9 @@
  *
  * Route structure:
  * - /api/optimize → optimize.routes.ts
- * - /api/get-enhancement-suggestions, /api/get-custom-suggestions,
- *   /api/detect-scene-change, /api/test-nlp → enhancement.routes.ts
+ * - /api/enhancement/suggestions, /api/enhancement/custom-suggestions,
+ *   /api/enhancement/scene-change, /api/enhancement/test-nlp → enhancement.routes.ts
+ * - /api/enhancement/observe-image → image-observation.routes.ts
  */
 
 import express, { type Router } from "express";

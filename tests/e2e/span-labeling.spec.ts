@@ -111,7 +111,7 @@ test.describe("span labeling and suggestions", () => {
       });
 
       let suggestionsCalled = false;
-      await page.route("**/api/get-enhancement-suggestions", async (route) => {
+      await page.route("**/api/enhancement/suggestions", async (route) => {
         suggestionsCalled = true;
         await route.fulfill(
           jsonResponse({

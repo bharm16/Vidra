@@ -78,7 +78,7 @@ describe("enhancementSuggestionsRoute telemetry wiring (regression)", () => {
     app.use(router);
 
     const result = await runSupertestOrSkip(() =>
-      request(app).post("/get-enhancement-suggestions").send({
+      request(app).post("/enhancement/suggestions").send({
         highlightedText: "a calm lake",
         fullPrompt: "A wide shot of a calm lake at golden hour.",
       }),

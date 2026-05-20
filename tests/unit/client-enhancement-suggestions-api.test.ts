@@ -84,7 +84,7 @@ describe("client enhancementSuggestionsApi", () => {
 
       expect(result).toBe(response);
       expect(fetchImpl).toHaveBeenCalledWith(
-        "/api/get-enhancement-suggestions",
+        "/api/enhancement/suggestions",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({

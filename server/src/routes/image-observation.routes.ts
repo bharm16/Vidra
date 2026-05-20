@@ -17,7 +17,7 @@ export function createImageObservationRoutes(
   const router = express.Router();
 
   router.post(
-    "/image/observe",
+    "/enhancement/observe-image",
     asyncHandler(async (req: Request, res: Response) => {
       const parsed = ImageObservationRequestSchema.safeParse(req.body);
       if (!parsed.success) {

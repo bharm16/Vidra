@@ -75,5 +75,5 @@ export const MAX_REQUEST_LENGTH = 500 as const;
 // ===========================
 
 export const API_ENDPOINTS = {
-  CUSTOM_SUGGESTIONS: "/api/get-custom-suggestions",
+  CUSTOM_SUGGESTIONS: "/api/enhancement/custom-suggestions",
 } as const;

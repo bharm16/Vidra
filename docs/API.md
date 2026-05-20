@@ -570,11 +570,11 @@ curl -X POST http://localhost:3001/llm/label-spans-batch \
 
 ## Enhancement Endpoints
 
-### POST /api/get-enhancement-suggestions
+### POST /api/enhancement/suggestions
 
 Get AI-powered enhancement suggestions for selected text.
 
-**Endpoint:** `POST /api/get-enhancement-suggestions`
+**Endpoint:** `POST /api/enhancement/suggestions`
 
 **Request Body:**
 
@@ -598,7 +598,7 @@ Get AI-powered enhancement suggestions for selected text.
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3001/api/get-enhancement-suggestions \
+curl -X POST http://localhost:3001/api/enhancement/suggestions \
   -H "Content-Type: application/json" \
   -d '{
     "highlightedText": "a person walking",
@@ -655,11 +655,11 @@ curl -X POST http://localhost:3001/api/get-enhancement-suggestions \
 
 ---
 
-### POST /api/get-custom-suggestions
+### POST /api/enhancement/custom-suggestions
 
 Get custom enhancement suggestions based on user's specific request.
 
-**Endpoint:** `POST /api/get-custom-suggestions`
+**Endpoint:** `POST /api/enhancement/custom-suggestions`
 
 **Request Body:**
 
@@ -675,7 +675,7 @@ Get custom enhancement suggestions based on user's specific request.
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3001/api/get-custom-suggestions \
+curl -X POST http://localhost:3001/api/enhancement/custom-suggestions \
   -H "Content-Type: application/json" \
   -d '{
     "highlightedText": "sunset",
@@ -708,11 +708,11 @@ curl -X POST http://localhost:3001/api/get-custom-suggestions \
 
 ---
 
-### POST /api/detect-scene-change
+### POST /api/enhancement/scene-change
 
 Detect if a prompt change describes a new scene (video mode).
 
-**Endpoint:** `POST /api/detect-scene-change`
+**Endpoint:** `POST /api/enhancement/scene-change`
 
 **Request Body:**
 
@@ -731,7 +731,7 @@ Detect if a prompt change describes a new scene (video mode).
 **Example Request:**
 
 ```bash
-curl -X POST http://localhost:3001/api/detect-scene-change \
+curl -X POST http://localhost:3001/api/enhancement/scene-change \
   -H "Content-Type: application/json" \
   -d '{
     "changedField": "location",

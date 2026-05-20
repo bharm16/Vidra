@@ -39,7 +39,7 @@ export function registerEnhancementSuggestionsRoute(
   }: EnhancementSuggestionsDeps,
 ): void {
   router.post(
-    "/get-enhancement-suggestions",
+    "/enhancement/suggestions",
     perfMonitor.trackRequest.bind(perfMonitor),
     validateRequest(suggestionSchema),
     asyncHandler(async (req, res) => {

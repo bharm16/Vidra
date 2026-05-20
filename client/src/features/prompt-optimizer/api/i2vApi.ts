@@ -79,7 +79,7 @@ export async function observeImage(
   }
 
   const authHeaders = await buildFirebaseAuthHeaders();
-  const response = await fetchFn("/api/image/observe", {
+  const response = await fetchFn("/api/enhancement/observe-image", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

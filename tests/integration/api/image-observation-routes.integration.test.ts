@@ -42,11 +42,11 @@ describe("Image Observation Routes (integration)", () => {
     return { app, imageObservationService };
   }
 
-  it("POST /api/image/observe returns observation payload for valid request", async () => {
+  it("POST /api/enhancement/observe-image returns observation payload for valid request", async () => {
     const { app, imageObservationService } = createApp();
 
     const response = await request(app)
-      .post("/api/image/observe")
+      .post("/api/enhancement/observe-image")
       .set("x-api-key", TEST_API_KEY)
       .send({
         image: "https://example.com/frame.png",
@@ -62,11 +62,11 @@ describe("Image Observation Routes (integration)", () => {
     );
   });
 
-  it("POST /api/image/observe returns 400 for invalid payload", async () => {
+  it("POST /api/enhancement/observe-image returns 400 for invalid payload", async () => {
     const { app, imageObservationService } = createApp();
 
     const response = await request(app)
-      .post("/api/image/observe")
+      .post("/api/enhancement/observe-image")
       .set("x-api-key", TEST_API_KEY)
       .send({ image: "" });
 
@@ -76,11 +76,11 @@ describe("Image Observation Routes (integration)", () => {
     expect(imageObservationService.observe).not.toHaveBeenCalled();
   });
 
-  it("POST /api/image/observe requires authentication", async () => {
+  it("POST /api/enhancement/observe-image requires authentication", async () => {
     const { app } = createApp();
 
     const response = await request(app)
-      .post("/api/image/observe")
+      .post("/api/enhancement/observe-image")
       .send({ image: "https://example.com/no-auth.png" });
 
     expect(response.status).toBe(401);

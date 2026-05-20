@@ -307,14 +307,34 @@
       "sourceFile": "server/src/routes/storage.routes.ts"
     },
     {
-      "method": "POST",
-      "fullPath": "/api/detect-scene-change",
-      "sourceFile": "server/src/routes/enhancement/sceneChangeRoute.ts"
-    },
-    {
       "method": "GET",
       "fullPath": "/api/download-url",
       "sourceFile": "server/src/routes/storage.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/enhancement/custom-suggestions",
+      "sourceFile": "server/src/routes/enhancement/customSuggestionsRoute.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/enhancement/observe-image",
+      "sourceFile": "server/src/routes/image-observation.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/enhancement/scene-change",
+      "sourceFile": "server/src/routes/enhancement/sceneChangeRoute.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/enhancement/suggestions",
+      "sourceFile": "server/src/routes/enhancement/enhancementSuggestionsRoute.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/enhancement/test-nlp",
+      "sourceFile": "server/src/routes/enhancement/nlpTestRoute.ts"
     },
     {
       "method": "POST",
@@ -343,23 +363,8 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/get-custom-suggestions",
-      "sourceFile": "server/src/routes/enhancement/customSuggestionsRoute.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/get-enhancement-suggestions",
-      "sourceFile": "server/src/routes/enhancement/enhancementSuggestionsRoute.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/i2v/motion-ideas",
       "sourceFile": "server/src/routes/i2v/motionIdeas.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/image/observe",
-      "sourceFile": "server/src/routes/image-observation.routes.ts"
     },
     {
       "method": "POST",
@@ -850,11 +855,6 @@
       "method": "GET",
       "fullPath": "/api/suggestions/rubrics",
       "sourceFile": "server/src/routes/suggestions/router.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/test-nlp",
-      "sourceFile": "server/src/routes/enhancement/nlpTestRoute.ts"
     },
     {
       "method": "POST",

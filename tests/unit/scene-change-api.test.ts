@@ -78,7 +78,7 @@ describe("sceneChangeApi", () => {
       const result = await detectSceneChange(request, fetchImpl);
 
       expect(result).toEqual(payload);
-      expect(fetchImpl).toHaveBeenCalledWith("/api/detect-scene-change", {
+      expect(fetchImpl).toHaveBeenCalledWith("/api/enhancement/scene-change", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

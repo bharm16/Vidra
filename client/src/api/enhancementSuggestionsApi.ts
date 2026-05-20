@@ -52,7 +52,7 @@ export async function requestEnhancementSuggestions(
 
   const authHeaders = await buildFirebaseAuthHeaders();
   const debugHeaders = import.meta.env.DEV ? { "x-debug": "true" } : {};
-  const response = await fetchFn("/api/get-enhancement-suggestions", {
+  const response = await fetchFn("/api/enhancement/suggestions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

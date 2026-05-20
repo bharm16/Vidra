@@ -107,7 +107,7 @@ describe("Enhancement Suggestions Flow (integration)", () => {
     const highlightedCategory = "subject.identity";
 
     const suggestionsResponse = await request(app)
-      .post("/api/get-enhancement-suggestions")
+      .post("/api/enhancement/suggestions")
       .set("x-api-key", TEST_API_KEY)
       .send({
         highlightedText,
@@ -184,7 +184,7 @@ describe("Enhancement Suggestions Flow (integration)", () => {
     );
 
     const response = await request(app)
-      .post("/api/get-enhancement-suggestions")
+      .post("/api/enhancement/suggestions")
       .set("x-api-key", TEST_API_KEY)
       .send({
         fullPrompt: "A cinematic runner in neon rain",

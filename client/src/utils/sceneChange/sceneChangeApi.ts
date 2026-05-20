@@ -13,7 +13,7 @@ export async function detectSceneChange(
   }
 
   const authHeaders = await buildFirebaseAuthHeaders();
-  const response = await fetchFn("/api/detect-scene-change", {
+  const response = await fetchFn("/api/enhancement/scene-change", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

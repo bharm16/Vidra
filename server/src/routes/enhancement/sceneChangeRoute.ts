@@ -22,7 +22,7 @@ export function registerSceneChangeRoute(
   { sceneDetectionService }: SceneChangeDeps,
 ): void {
   router.post(
-    "/detect-scene-change",
+    "/enhancement/scene-change",
     validateRequest(sceneChangeSchema),
     asyncHandler(async (req, res) => {
       const startTime = Date.now();
