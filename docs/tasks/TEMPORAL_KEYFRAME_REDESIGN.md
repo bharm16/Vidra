@@ -40,7 +40,7 @@ NEW (star):
 - `planParser.ts` — no changes (still parses `{"deltas": [...]}`)
 - `storyboardUtils.ts` — no changes
 - `fetchImageAsDataUrl.ts` — no changes
-- `generation.services.ts` (DI registration) — no changes
+- `image-generation.services.ts` (DI registration) — no changes
 - `imageStoryboardGenerate.ts` (route handler) — no changes
 - Any client code — no changes
 - Any LLM adapters — no changes

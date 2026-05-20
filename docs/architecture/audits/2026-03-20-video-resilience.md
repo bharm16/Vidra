@@ -159,7 +159,7 @@ All `.parse()` calls lack error context. If the API response shape changes, the 
 
 No provider validates that its API key/token is non-empty before making the first request. A misconfigured key results in an opaque 401 error from the provider API rather than a clear startup-time error.
 
-**Recommendation:** Add a `validateCredentials()` check during DI registration (in `generation.services.ts`) that verifies keys are non-empty strings. This already exists implicitly for some services (e.g., FAL_KEY check) but not for Sora/Luma/Kling.
+**Recommendation:** Add a `validateCredentials()` check during DI registration (in `video-generation.services.ts`) that verifies keys are non-empty strings. This already exists implicitly for some services (e.g., FAL_KEY check) but not for Sora/Luma/Kling.
 
 ---
 

@@ -81,7 +81,7 @@ The plan is strictly incremental. Every step is independently shippable, indepen
    - `types.ts` — generic `JobRecord<TInput, TResult>`, discriminated by `type`
 2. Move video-specific code:
    - `server/src/services/video-generation/jobs/VideoJobHandler.ts` — implements `JobHandler`. Wraps current `processVideoJob.ts` logic unchanged.
-3. Wiring: `server/src/config/services/generation.services.ts` registers `JobEngine` with `[videoHandler]` as the only handler. The old `VideoJobWorker` DI token becomes an alias for the engine for one release, then is removed.
+3. Wiring: `server/src/config/services/video-generation.services.ts` registers `JobEngine` with `[videoHandler]` as the only handler. The old `VideoJobWorker` DI token becomes an alias for the engine for one release, then is removed.
 4. Inline processor in `server/src/routes/preview/inlineProcessor.ts` still uses `videoJobStore.claimJob` directly — it doesn't need the engine. No change here.
 5. Tests: all existing `VideoJobWorker` tests move to `JobEngine` tests, semantically identical.
 

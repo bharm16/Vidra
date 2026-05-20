@@ -375,7 +375,7 @@ Promote `PromptSpanProvider` to a shared port so Optimization, Model Intelligenc
 - Modify: `server/src/services/cache/SpanLabelingCacheService.ts` (delegate to base or thin)
 - Modify: `server/src/services/prompt-optimization/evaluation/integrations/spanLabeling.ts` (consume via port, drop hardcoded `templateVersion: "v3.0"`)
 - Modify: `server/src/middleware/requestBatching.ts` (consume via port)
-- Modify: `server/src/config/services/generation.services.ts` (drop the inline lambda registration of `PromptSpanProvider`)
+- Modify: `server/src/config/services/model-intelligence.services.ts` (drop the inline lambda registration of `PromptSpanProvider`)
 - Tests across the above
 
 ### Risks / open questions

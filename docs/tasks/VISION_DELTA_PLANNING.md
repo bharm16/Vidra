@@ -431,7 +431,7 @@ this.log.info("Storyboard deltas planned", {
 
 Keep the rest of the method (`generateEditFrames` call and return) unchanged.
 
-### 5. MODIFY: `server/src/config/services/generation.services.ts`
+### 5. MODIFY: `server/src/config/services/image-generation.services.ts`
 
 Change the `storyboardFramePlanner` registration to inject `claudeClient`:
 
@@ -859,7 +859,7 @@ npx tsc --noEmit
 | 2   | `storyboard/prompts.ts`                                 | **ADD**     | New `buildVisionDeltaUserPrompt()` function                                              |
 | 3   | `storyboard/StoryboardFramePlanner.ts`                  | **MODIFY**  | Add `visionLlmClient` option, vision path in `requestPlan`, graceful fallback            |
 | 4   | `storyboard/StoryboardPreviewService.ts`                | **MODIFY**  | Flip execution order: `resolveBaseImage()` before `planDeltas()`, pass `baseProviderUrl` |
-| 5   | `config/services/generation.services.ts`                | **MODIFY**  | Inject `claudeClient` into `storyboardFramePlanner` registration                         |
+| 5   | `config/services/image-generation.services.ts`          | **MODIFY**  | Inject `claudeClient` into `storyboardFramePlanner` registration                         |
 | 6   | `storyboard/__tests__/fetchImageAsDataUrl.test.ts`      | **NEW**     | Unit tests for fetch utility                                                             |
 | 7   | `storyboard/__tests__/StoryboardFramePlanner.test.ts`   | **ADD**     | New `describe('vision path')` test block                                                 |
 | 8   | `storyboard/__tests__/StoryboardPreviewService.test.ts` | **MODIFY**  | Fix delta-count test setup, add `baseProviderUrl` pass-through test                      |
