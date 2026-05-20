@@ -472,10 +472,18 @@ export function extractRoutes(): RouteEntry[] {
     );
   }
 
+  // Filter out phantom entries produced when the walker resolves a factory call
+  // (e.g. createAssetRoutes(assetService)) via the generic identifier-callee branch
+  // and descends with the parent prefix rather than the sub-router's mount prefix.
+  // Those produce entries like { fullPath: "/api" } that are never real routes —
+  // legitimate list-collection routes live at paths like "/api/assets", not "/api".
+  const BARE_PREFIXES = new Set(["/api", "/", ""]);
+  const filtered = entries.filter((e) => !BARE_PREFIXES.has(e.fullPath));
+
   // Deduplicate (identical method+path+source from multiple registration paths)
   const seen = new Set<string>();
   const unique: RouteEntry[] = [];
-  for (const entry of entries) {
+  for (const entry of filtered) {
     const key = `${entry.method} ${entry.fullPath} ${entry.sourceFile}`;
     if (seen.has(key)) continue;
     seen.add(key);

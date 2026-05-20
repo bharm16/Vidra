@@ -28,36 +28,6 @@
   "routes": [
     {
       "method": "GET",
-      "fullPath": "/api",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api",
-      "sourceFile": "server/src/routes/reference-images.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api",
-      "sourceFile": "server/src/routes/reference-images.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
       "fullPath": "/api-docs",
       "sourceFile": "server/src/openapi/devRoute.ts"
     },

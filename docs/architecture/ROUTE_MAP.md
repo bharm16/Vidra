@@ -7,12 +7,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 
 | Method | Full path                                                               | Source file                                                     |
 | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
-| GET    | `/api`                                                                  | `server/src/routes/asset.routes.ts`                             |
-| GET    | `/api`                                                                  | `server/src/routes/reference-images.routes.ts`                  |
-| GET    | `/api`                                                                  | `server/src/routes/sessions.routes.ts`                          |
-| POST   | `/api`                                                                  | `server/src/routes/asset.routes.ts`                             |
-| POST   | `/api`                                                                  | `server/src/routes/reference-images.routes.ts`                  |
-| POST   | `/api`                                                                  | `server/src/routes/sessions.routes.ts`                          |
 | GET    | `/api-docs`                                                             | `server/src/openapi/devRoute.ts`                                |
 | DELETE | `/api/:id`                                                              | `server/src/routes/asset.routes.ts`                             |
 | DELETE | `/api/:id`                                                              | `server/src/routes/reference-images.routes.ts`                  |
@@ -189,4 +183,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/llm/label-spans-batch`                                                | `server/src/config/routes/api.registration.ts`                  |
 | POST   | `/llm/label-spans/stream`                                               | `server/src/routes/labelSpansRoute.ts`                          |
 
-_Generated route count: **181**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **175**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

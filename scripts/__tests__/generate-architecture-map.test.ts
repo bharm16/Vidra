@@ -68,4 +68,13 @@ describe("generate-architecture-map", () => {
       expect(allowed.has(route.method)).toBe(true);
     }
   });
+
+  it("does not emit phantom routes with bare prefix paths", () => {
+    const map = buildArchitectureMap();
+    const phantoms = map.routes.filter(
+      (r: { fullPath: string }) =>
+        r.fullPath === "/api" || r.fullPath === "/" || r.fullPath === "",
+    );
+    expect(phantoms).toEqual([]);
+  });
 });
