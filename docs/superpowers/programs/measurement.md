@@ -92,7 +92,7 @@ The T2V Optimize telemetry stack already exists and is the pattern subsequent su
 
 - `optimize.completed` — per `/api/optimize` call ([spec](../specs/2026-05-09-t2v-optimize-telemetry-design.md))
 - `llm.call.completed` — per `aiService.execute` invocation
-- `suggestions.completed` — per `/api/get-enhancement-suggestions` call
+- `suggestions.completed` — per `/api/enhancement/suggestions` call
 - "T2V Optimize Health" dashboard (PostHog project `417445`, dashboard id `1565688`)
 - Documented in [`docs/architecture/observability.md`](../../architecture/observability.md)
 

@@ -127,7 +127,7 @@ PromptOptimizerContainer
 2. **Signal Combination**: Combine user cancellation + timeout signals
 3. **Text Relocation**: `relocateQuote()` for robust matching
 4. **Context Extraction**: Up to 1000 chars before/after
-5. **API Request**: POST to `/api/get-enhancement-suggestions`
+5. **API Request**: POST to `/api/enhancement/suggestions`
 6. **Error Handling**: Distinguish timeout vs cancellation
 
 **Key Algorithm:** Token-based text relocation (whitespace-agnostic)

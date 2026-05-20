@@ -198,7 +198,7 @@ LIMIT 100
 
 ## Suggestions telemetry (`suggestions.completed`)
 
-**What it answers:** how long does click-to-enhance take per request, what's the cache hit rate, how many suggestions come back, which engine mode ran, and which span category was selected. One event fires per `POST /api/get-enhancement-suggestions` request.
+**What it answers:** how long does click-to-enhance take per request, what's the cache hit rate, how many suggestions come back, which engine mode ran, and which span category was selected. One event fires per `POST /api/enhancement/suggestions` request.
 
 **Project / dashboard:** Same project as Optimize (`417445`). Surfaced on [Suggestions Health (id `1571039`)](https://us.posthog.com/project/417445/dashboard/1571039) — see that section below for the tile inventory.
 
