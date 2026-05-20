@@ -145,7 +145,7 @@ export function createAPIRoutes(services: ApiServices): Router {
 
   if (sessionService) {
     router.use(
-      "/v2/sessions",
+      "/sessions",
       createSessionRoutes(
         sessionService,
         continuitySessionService ?? null,

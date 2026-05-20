@@ -131,7 +131,7 @@ const fetchSessionById = async (
   const task = (async (): Promise<SessionDto | null> => {
     try {
       const response = await apiClient.get(
-        `/v2/sessions/${encodeURIComponent(sessionId)}`,
+        `/sessions/${encodeURIComponent(sessionId)}`,
       );
       const data = (response as { data?: SessionDto }).data ?? null;
       sessionFetchCache.set(sessionId, {

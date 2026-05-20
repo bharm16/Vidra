@@ -236,7 +236,7 @@ describe("WorkspaceSessionContext", () => {
     const { result } = renderHook(() => useWorkspaceSession(), { wrapper });
 
     await waitFor(() => {
-      expect(mockApiGet).toHaveBeenCalledWith("/v2/sessions/session-1");
+      expect(mockApiGet).toHaveBeenCalledWith("/sessions/session-1");
     });
     await waitFor(() => {
       expect(result.current.session?.id).toBe("session-1");
@@ -269,7 +269,7 @@ describe("WorkspaceSessionContext", () => {
     const { result } = renderHook(() => useWorkspaceSession(), { wrapper });
 
     await waitFor(() => {
-      expect(mockApiGet).toHaveBeenCalledWith("/v2/sessions/session-1");
+      expect(mockApiGet).toHaveBeenCalledWith("/sessions/session-1");
     });
     await waitFor(() => {
       expect(result.current.session?.id).toBe("session-1");
@@ -376,7 +376,7 @@ describe("WorkspaceSessionContext", () => {
     const { result } = renderHook(() => useWorkspaceSession(), { wrapper });
 
     await waitFor(() => {
-      expect(mockApiGet).toHaveBeenCalledWith("/v2/sessions/session-1");
+      expect(mockApiGet).toHaveBeenCalledWith("/sessions/session-1");
     });
     await waitFor(() => {
       expect(result.current.session?.id).toBe("session-1");
@@ -410,12 +410,12 @@ describe("WorkspaceSessionContext", () => {
     let resolveSession1: ((value: unknown) => void) | null = null;
     let resolveSession2: ((value: unknown) => void) | null = null;
     mockApiGet.mockImplementation((url: string) => {
-      if (url === "/v2/sessions/session-1") {
+      if (url === "/sessions/session-1") {
         return new Promise((resolve) => {
           resolveSession1 = resolve;
         });
       }
-      if (url === "/v2/sessions/session-2") {
+      if (url === "/sessions/session-2") {
         return new Promise((resolve) => {
           resolveSession2 = resolve;
         });

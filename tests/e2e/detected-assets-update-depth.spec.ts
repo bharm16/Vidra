@@ -182,12 +182,12 @@ test("regression: detected assets prompt churn does not hit max update depth", a
     await route.fallback();
   });
 
-  await page.route("**/api/v2/sessions**", async (route) => {
+  await page.route("**/api/sessions**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const pathname = url.pathname;
 
-    if (request.method() === "GET" && pathname.endsWith("/api/v2/sessions")) {
+    if (request.method() === "GET" && pathname.endsWith("/api/sessions")) {
       await route.fulfill(jsonResponse({ success: true, data: [] }));
       return;
     }

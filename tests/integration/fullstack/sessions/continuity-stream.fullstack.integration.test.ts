@@ -293,7 +293,7 @@ describe("Continuity stream routes (full-stack integration)", () => {
     }
   });
 
-  it("GET /api/v2/sessions/:sessionId/shots/:shotId/status returns status payload fields", async () => {
+  it("GET /api/sessions/:sessionId/shots/:shotId/status returns status payload fields", async () => {
     const session = sessionStoreState.get("session-1");
     if (!session) {
       throw new Error("Missing seeded session state");
@@ -315,7 +315,7 @@ describe("Continuity stream routes (full-stack integration)", () => {
     sessionStoreState.set(session.id, structuredClone(session));
 
     const response = await request(app)
-      .get("/api/v2/sessions/session-1/shots/shot-1/status")
+      .get("/api/sessions/session-1/shots/shot-1/status")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(200);
@@ -337,9 +337,9 @@ describe("Continuity stream routes (full-stack integration)", () => {
     });
   });
 
-  it("GET /api/v2/sessions/:sessionId/shots/:shotId/status returns 404 for unknown shot", async () => {
+  it("GET /api/sessions/:sessionId/shots/:shotId/status returns 404 for unknown shot", async () => {
     const response = await request(app)
-      .get("/api/v2/sessions/session-1/shots/unknown-shot/status")
+      .get("/api/sessions/session-1/shots/unknown-shot/status")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(404);
@@ -359,7 +359,7 @@ describe("Continuity stream routes (full-stack integration)", () => {
     );
 
     const streamPromise = request(app)
-      .post("/api/v2/sessions/session-1/shots/shot-1/generate-stream")
+      .post("/api/sessions/session-1/shots/shot-1/generate-stream")
       .set("x-api-key", TEST_API_KEY)
       .set("Accept", "text/event-stream")
       .send({})
@@ -375,7 +375,7 @@ describe("Continuity stream routes (full-stack integration)", () => {
       });
 
       const statusResponse = await request(app)
-        .get("/api/v2/sessions/session-1/shots/shot-1/status")
+        .get("/api/sessions/session-1/shots/shot-1/status")
         .set("x-api-key", TEST_API_KEY);
 
       expect(statusResponse.status).toBe(200);

@@ -174,7 +174,7 @@ function PromptRedirect(): React.ReactElement {
       }
       try {
         const response = await apiClient.get(
-          `/v2/sessions/by-prompt/${encodeURIComponent(uuid)}`,
+          `/sessions/by-prompt/${encodeURIComponent(uuid)}`,
         );
         const data = (response as { data?: { id: string } }).data;
         if (!cancelled && data?.id) {

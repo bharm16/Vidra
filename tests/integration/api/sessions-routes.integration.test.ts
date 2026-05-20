@@ -82,7 +82,7 @@ function createApp(options: { continuityEnabled?: boolean } = {}) {
   const app = express();
   app.use(express.json());
   app.use(
-    "/api/v2/sessions",
+    "/api/sessions",
     apiAuthMiddleware,
     createSessionRoutes(
       sessionService as never,
@@ -110,11 +110,11 @@ describe("Sessions Routes (integration)", () => {
     process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
   });
 
-  it("POST /api/v2/sessions creates a session when payload is valid", async () => {
+  it("POST /api/sessions creates a session when payload is valid", async () => {
     const { app, sessionService } = createApp();
 
     const response = await request(app)
-      .post("/api/v2/sessions")
+      .post("/api/sessions")
       .set("x-api-key", TEST_API_KEY)
       .send({
         name: "My prompt session",
@@ -134,13 +134,11 @@ describe("Sessions Routes (integration)", () => {
     );
   });
 
-  it("GET /api/v2/sessions returns session list and list options", async () => {
+  it("GET /api/sessions returns session list and list options", async () => {
     const { app, sessionService } = createApp();
 
     const response = await request(app)
-      .get(
-        "/api/v2/sessions?limit=7&includePrompt=false&includeContinuity=false",
-      )
+      .get("/api/sessions?limit=7&includePrompt=false&includeContinuity=false")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(200);
@@ -153,11 +151,11 @@ describe("Sessions Routes (integration)", () => {
     });
   });
 
-  it("keeps core /api/v2/sessions routes available without continuity service", async () => {
+  it("keeps core /api/sessions routes available without continuity service", async () => {
     const { app, sessionService } = createApp({ continuityEnabled: false });
 
     const listResponse = await request(app)
-      .get("/api/v2/sessions")
+      .get("/api/sessions")
       .set("x-api-key", TEST_API_KEY);
 
     expect(listResponse.status).toBe(200);
@@ -167,17 +165,17 @@ describe("Sessions Routes (integration)", () => {
     });
 
     const continuitySubroute = await request(app)
-      .get("/api/v2/sessions/session_123/shots/shot-1/status")
+      .get("/api/sessions/session_123/shots/shot-1/status")
       .set("x-api-key", TEST_API_KEY);
 
     expect(continuitySubroute.status).toBe(404);
   });
 
-  it("GET /api/v2/sessions/by-prompt/:uuid returns mapped session", async () => {
+  it("GET /api/sessions/by-prompt/:uuid returns mapped session", async () => {
     const { app, sessionService } = createApp();
 
     const response = await request(app)
-      .get("/api/v2/sessions/by-prompt/prompt-session_123")
+      .get("/api/sessions/by-prompt/prompt-session_123")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(200);
@@ -188,7 +186,7 @@ describe("Sessions Routes (integration)", () => {
     );
   });
 
-  it("GET /api/v2/sessions/:sessionId blocks cross-user access", async () => {
+  it("GET /api/sessions/:sessionId blocks cross-user access", async () => {
     const { app, sessionService } = createApp();
     sessionService.getSession.mockResolvedValueOnce({
       ...buildSession("session_999"),
@@ -196,7 +194,7 @@ describe("Sessions Routes (integration)", () => {
     });
 
     const response = await request(app)
-      .get("/api/v2/sessions/session_999")
+      .get("/api/sessions/session_999")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(403);
@@ -204,11 +202,11 @@ describe("Sessions Routes (integration)", () => {
     expect(response.body.error).toBe("Access denied");
   });
 
-  it("PATCH /api/v2/sessions/:sessionId updates the session", async () => {
+  it("PATCH /api/sessions/:sessionId updates the session", async () => {
     const { app, sessionService } = createApp();
 
     const response = await request(app)
-      .patch("/api/v2/sessions/session_123")
+      .patch("/api/sessions/session_123")
       .set("x-api-key", TEST_API_KEY)
       .send({
         name: "Updated name",
@@ -228,11 +226,11 @@ describe("Sessions Routes (integration)", () => {
     expect(sessionService.updateSession).not.toHaveBeenCalled();
   });
 
-  it("DELETE /api/v2/sessions/:sessionId deletes owned session", async () => {
+  it("DELETE /api/sessions/:sessionId deletes owned session", async () => {
     const { app, sessionService } = createApp();
 
     const response = await request(app)
-      .delete("/api/v2/sessions/session_123")
+      .delete("/api/sessions/session_123")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(200);
@@ -248,7 +246,7 @@ describe("Sessions Routes (integration)", () => {
     const { app, sessionService } = createApp();
 
     const promptResponse = await request(app)
-      .patch("/api/v2/sessions/session_123/prompt")
+      .patch("/api/sessions/session_123/prompt")
       .set("x-api-key", TEST_API_KEY)
       .send({
         input: "new input",
@@ -265,7 +263,7 @@ describe("Sessions Routes (integration)", () => {
     );
 
     const highlightsResponse = await request(app)
-      .patch("/api/v2/sessions/session_123/highlights")
+      .patch("/api/sessions/session_123/highlights")
       .set("x-api-key", TEST_API_KEY)
       .send({
         highlightCache: { main: [] },
@@ -282,7 +280,7 @@ describe("Sessions Routes (integration)", () => {
     );
 
     const outputResponse = await request(app)
-      .patch("/api/v2/sessions/session_123/output")
+      .patch("/api/sessions/session_123/output")
       .set("x-api-key", TEST_API_KEY)
       .send({ output: "final output" });
     expect(outputResponse.status).toBe(200);
@@ -295,7 +293,7 @@ describe("Sessions Routes (integration)", () => {
     );
 
     const versionsResponse = await request(app)
-      .patch("/api/v2/sessions/session_123/versions")
+      .patch("/api/sessions/session_123/versions")
       .set("x-api-key", TEST_API_KEY)
       .send({
         versions: [{ id: "v1", output: "v1 output" }],
@@ -321,7 +319,7 @@ describe("Sessions Routes (integration)", () => {
     );
 
     const response = await request(app)
-      .patch("/api/v2/sessions/session_123")
+      .patch("/api/sessions/session_123")
       .set("x-api-key", TEST_API_KEY)
       .send({ name: "should not persist" });
 
@@ -348,7 +346,7 @@ describe("Sessions Routes (integration)", () => {
     );
 
     const response = await request(app)
-      .delete("/api/v2/sessions/session_123")
+      .delete("/api/sessions/session_123")
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(403);
@@ -364,7 +362,7 @@ describe("Sessions Routes (integration)", () => {
     const { app, sessionService } = createApp();
 
     const invalidResponse = await request(app)
-      .post("/api/v2/sessions")
+      .post("/api/sessions")
       .set("x-api-key", TEST_API_KEY)
       .send({
         prompt: "invalid-prompt-shape",
@@ -377,7 +375,7 @@ describe("Sessions Routes (integration)", () => {
     expect(sessionService.updateSessionForUser).not.toHaveBeenCalled();
     expect(sessionService.deleteSessionForUser).not.toHaveBeenCalled();
 
-    const unauthenticatedResponse = await request(app).get("/api/v2/sessions");
+    const unauthenticatedResponse = await request(app).get("/api/sessions");
 
     expect(unauthenticatedResponse.status).toBe(401);
     expect(unauthenticatedResponse.body.error).toBe("Authentication required");

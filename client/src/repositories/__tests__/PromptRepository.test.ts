@@ -54,7 +54,7 @@ describe("PromptRepository", () => {
       mode: "video",
     });
 
-    expect(mockApiClient.post).toHaveBeenCalledWith("/v2/sessions", {
+    expect(mockApiClient.post).toHaveBeenCalledWith("/sessions", {
       name: "My Prompt",
       prompt: expect.objectContaining({
         uuid,
@@ -95,7 +95,7 @@ describe("PromptRepository", () => {
     const result = await repository.getUserPrompts("user-1", 25);
 
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      "/v2/sessions?limit=25&includeContinuity=true&includePrompt=true",
+      "/sessions?limit=25&includeContinuity=true&includePrompt=true",
     );
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -176,7 +176,7 @@ describe("PromptRepository", () => {
     const result = await repository.getUserPrompts("user-1", 10);
 
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      "/v2/sessions?limit=10&includeContinuity=true&includePrompt=true",
+      "/sessions?limit=10&includeContinuity=true&includePrompt=true",
     );
     expect(result).toHaveLength(2);
     expect(result[0]).toMatchObject({
@@ -211,7 +211,7 @@ describe("PromptRepository", () => {
     const result = await repository.getById(uuid);
 
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      `/v2/sessions/by-prompt/${encodeURIComponent(uuid)}`,
+      `/sessions/by-prompt/${encodeURIComponent(uuid)}`,
     );
     expect(result).toMatchObject({
       id: "session_uuid",
@@ -236,7 +236,7 @@ describe("PromptRepository", () => {
 
     const result = await repository.getById("session_abc");
 
-    expect(mockApiClient.get).toHaveBeenCalledWith("/v2/sessions/session_abc");
+    expect(mockApiClient.get).toHaveBeenCalledWith("/sessions/session_abc");
     expect(result).toMatchObject({
       id: "session_abc",
       input: "in",
@@ -287,12 +287,12 @@ describe("PromptRepository", () => {
     expect(mockApiClient.get).toHaveBeenCalledTimes(1);
     expect(mockApiClient.patch).toHaveBeenNthCalledWith(
       1,
-      "/v2/sessions/session_cached/prompt",
+      "/sessions/session_cached/prompt",
       { input: "first" },
     );
     expect(mockApiClient.patch).toHaveBeenNthCalledWith(
       2,
-      "/v2/sessions/session_cached/output",
+      "/sessions/session_cached/output",
       { output: "second" },
     );
   });
@@ -316,13 +316,13 @@ describe("PromptRepository", () => {
     await Promise.all([p1, p2]);
 
     expect(mockApiClient.patch).toHaveBeenCalledWith(
-      "/v2/sessions/session_inflight/prompt",
+      "/sessions/session_inflight/prompt",
       {
         title: "t1",
       },
     );
     expect(mockApiClient.patch).toHaveBeenCalledWith(
-      "/v2/sessions/session_inflight/output",
+      "/sessions/session_inflight/output",
       {
         output: "out-2",
       },

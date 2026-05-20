@@ -78,7 +78,7 @@ describe("continuityApi", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.example.test/v2/sessions/continuity",
+      "https://api.example.test/sessions/continuity",
       expect.objectContaining({ method: "POST" }),
     );
 
@@ -127,7 +127,7 @@ describe("continuityApi", () => {
     const result = await continuityApi.listSessions();
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.example.test/v2/sessions?includeContinuity=true&includePrompt=false",
+      "https://api.example.test/sessions?includeContinuity=true&includePrompt=false",
       expect.any(Object),
     );
     expect(result).toHaveLength(2);

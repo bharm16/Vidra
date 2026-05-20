@@ -66,18 +66,18 @@ test.fixme(
       );
     });
 
-    await page.route("**/api/v2/sessions**", async (route) => {
+    await page.route("**/api/sessions**", async (route) => {
       const request = route.request();
       const url = new URL(request.url());
       const pathname = url.pathname;
       const method = request.method();
 
-      if (method === "GET" && pathname.endsWith("/api/v2/sessions")) {
+      if (method === "GET" && pathname.endsWith("/api/sessions")) {
         await route.fulfill(jsonResponse({ success: true, data: [] }));
         return;
       }
 
-      if (method === "POST" && pathname.endsWith("/api/v2/sessions")) {
+      if (method === "POST" && pathname.endsWith("/api/sessions")) {
         sessionMutationCalls += 1;
         await route.fulfill(
           jsonResponse({
@@ -91,10 +91,7 @@ test.fixme(
         return;
       }
 
-      if (
-        method === "GET" &&
-        pathname.includes("/api/v2/sessions/by-prompt/")
-      ) {
+      if (method === "GET" && pathname.includes("/api/sessions/by-prompt/")) {
         await route.fulfill(
           jsonResponse(
             {
@@ -109,7 +106,7 @@ test.fixme(
 
       if (
         method === "GET" &&
-        pathname.includes("/api/v2/sessions/session_e2e_1")
+        pathname.includes("/api/sessions/session_e2e_1")
       ) {
         await route.fulfill(
           jsonResponse({

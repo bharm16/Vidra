@@ -7,28 +7,25 @@ test.describe("share page", () => {
   }) => {
     const testUuid = "e2e-share-uuid-123";
 
-    await page.route(
-      `**/api/v2/sessions/by-prompt/${testUuid}`,
-      async (route) => {
-        await route.fulfill(
-          jsonResponse({
-            success: true,
-            data: {
-              id: "session_shared",
-              prompt: {
-                uuid: testUuid,
-                input: "Original user prompt about a sunset.",
-                output:
-                  "A breathtaking golden sunset over a calm ocean, cinematic wide shot.",
-                mode: "enhanced",
-                timestamp: "2026-02-01T12:00:00.000Z",
-                score: 85,
-              },
+    await page.route(`**/api/sessions/by-prompt/${testUuid}`, async (route) => {
+      await route.fulfill(
+        jsonResponse({
+          success: true,
+          data: {
+            id: "session_shared",
+            prompt: {
+              uuid: testUuid,
+              input: "Original user prompt about a sunset.",
+              output:
+                "A breathtaking golden sunset over a calm ocean, cinematic wide shot.",
+              mode: "enhanced",
+              timestamp: "2026-02-01T12:00:00.000Z",
+              score: 85,
             },
-          }),
-        );
-      },
-    );
+          },
+        }),
+      );
+    });
 
     await page.goto(`/share/${testUuid}`);
 
@@ -51,12 +48,9 @@ test.describe("share page", () => {
   }) => {
     const badUuid = "nonexistent-uuid";
 
-    await page.route(
-      `**/api/v2/sessions/by-prompt/${badUuid}`,
-      async (route) => {
-        await route.fulfill(jsonResponse({ success: true, data: null }));
-      },
-    );
+    await page.route(`**/api/sessions/by-prompt/${badUuid}`, async (route) => {
+      await route.fulfill(jsonResponse({ success: true, data: null }));
+    });
 
     await page.goto(`/share/${badUuid}`);
 

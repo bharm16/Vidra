@@ -43,7 +43,7 @@ export class PromptRepository {
   ): Promise<SavedPromptResult> {
     try {
       void userId;
-      const response = await apiClient.post("/v2/sessions", {
+      const response = await apiClient.post("/sessions", {
         name: promptData.title ?? undefined,
         prompt: {
           uuid: promptData.uuid,
@@ -87,7 +87,7 @@ export class PromptRepository {
     try {
       void userId;
       const response = await apiClient.get(
-        `/v2/sessions?limit=${encodeURIComponent(String(limitCount))}&includeContinuity=true&includePrompt=true`,
+        `/sessions?limit=${encodeURIComponent(String(limitCount))}&includeContinuity=true&includePrompt=true`,
       );
       const data = (response as { data?: SessionDto[] }).data ?? [];
       return data
@@ -105,7 +105,7 @@ export class PromptRepository {
   async getByUuid(uuid: string): Promise<PromptHistoryEntry | null> {
     try {
       const response = await apiClient.get(
-        `/v2/sessions/by-prompt/${encodeURIComponent(uuid)}`,
+        `/sessions/by-prompt/${encodeURIComponent(uuid)}`,
       );
       const data = (response as { data?: SessionDto }).data;
       if (!data) return null;
@@ -127,7 +127,7 @@ export class PromptRepository {
         return await this.getByUuid(normalizedId);
       }
       const response = await apiClient.get(
-        `/v2/sessions/${encodeURIComponent(normalizedId)}`,
+        `/sessions/${encodeURIComponent(normalizedId)}`,
       );
       const data = (response as { data?: SessionDto }).data;
       if (!data) return null;
@@ -155,7 +155,7 @@ export class PromptRepository {
         ? normalizedId
         : await this.resolveSessionId(normalizedId);
       await apiClient.patch(
-        `/v2/sessions/${encodeURIComponent(sessionId)}/prompt`,
+        `/sessions/${encodeURIComponent(sessionId)}/prompt`,
         {
           ...(updates.input !== undefined ? { input: updates.input } : {}),
           ...(updates.title !== undefined ? { title: updates.title } : {}),
@@ -191,7 +191,7 @@ export class PromptRepository {
         ? normalizedId
         : await this.resolveSessionId(normalizedId);
       await apiClient.patch(
-        `/v2/sessions/${encodeURIComponent(sessionId)}/highlights`,
+        `/sessions/${encodeURIComponent(sessionId)}/highlights`,
         {
           ...(highlightCache !== undefined ? { highlightCache } : {}),
           ...(versionEntry ? { versionEntry } : {}),
@@ -214,7 +214,7 @@ export class PromptRepository {
         ? normalizedId
         : await this.resolveSessionId(normalizedId);
       await apiClient.patch(
-        `/v2/sessions/${encodeURIComponent(sessionId)}/output`,
+        `/sessions/${encodeURIComponent(sessionId)}/output`,
         { output },
       );
     } catch (error) {
@@ -237,7 +237,7 @@ export class PromptRepository {
         ? normalizedId
         : await this.resolveSessionId(normalizedId);
       await apiClient.patch(
-        `/v2/sessions/${encodeURIComponent(sessionId)}/versions`,
+        `/sessions/${encodeURIComponent(sessionId)}/versions`,
         { versions },
       );
     } catch (error) {
@@ -254,7 +254,7 @@ export class PromptRepository {
       if (!docId) {
         throw new Error("Document ID is required for deletion");
       }
-      await apiClient.delete(`/v2/sessions/${encodeURIComponent(docId)}`);
+      await apiClient.delete(`/sessions/${encodeURIComponent(docId)}`);
     } catch (error) {
       log.error("Error deleting prompt", error as Error);
       throw new PromptRepositoryError("Failed to delete prompt", error);
@@ -334,7 +334,7 @@ export class PromptRepository {
 
     const resolvePromise = (async () => {
       const response = await apiClient.get(
-        `/v2/sessions/by-prompt/${encodeURIComponent(normalized)}`,
+        `/sessions/by-prompt/${encodeURIComponent(normalized)}`,
       );
       const data = (response as { data?: { id: string } }).data;
       if (!data?.id) {

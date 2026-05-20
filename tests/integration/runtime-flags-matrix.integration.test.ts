@@ -61,7 +61,7 @@ describe("Runtime flag matrix contracts (integration)", () => {
       expect(health.body.status).toBe("healthy");
 
       const sessionsRoute = await request(app)
-        .patch("/api/v2/sessions/session-1")
+        .patch("/api/sessions/session-1")
         .set("x-api-key", TEST_API_KEY)
         .send({ status: "not-a-valid-status" });
       expect(sessionsRoute.status).toBe(400);
@@ -74,7 +74,7 @@ describe("Runtime flag matrix contracts (integration)", () => {
       expect(continuityRoute.status).toBe(404);
 
       const sessionsContinuitySubroute = await request(app)
-        .get("/api/v2/sessions/session-1/shots/shot-1/status")
+        .get("/api/sessions/session-1/shots/shot-1/status")
         .set("x-api-key", TEST_API_KEY);
       expect(sessionsContinuitySubroute.status).toBe(404);
 

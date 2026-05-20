@@ -592,9 +592,24 @@
       "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
+      "method": "GET",
+      "fullPath": "/api/sessions",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
       "method": "POST",
       "fullPath": "/api/sessions",
       "sourceFile": "server/src/routes/continuity.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "fullPath": "/api/sessions/:sessionId",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "GET",
@@ -602,9 +617,39 @@
       "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
+      "method": "GET",
+      "fullPath": "/api/sessions/:sessionId",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/sessions/:sessionId",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/sessions/:sessionId/highlights",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/sessions/:sessionId/output",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/sessions/:sessionId/prompt",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
       "method": "POST",
       "fullPath": "/api/sessions/:sessionId/scene-proxy",
       "sourceFile": "server/src/routes/continuity.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/scene-proxy",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "PUT",
@@ -612,14 +657,29 @@
       "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
+      "method": "PUT",
+      "fullPath": "/api/sessions/:sessionId/settings",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
       "method": "POST",
       "fullPath": "/api/sessions/:sessionId/shots",
       "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/shots",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
       "method": "PATCH",
       "fullPath": "/api/sessions/:sessionId/shots/:shotId",
       "sourceFile": "server/src/routes/continuity.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/sessions/:sessionId/shots/:shotId",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "POST",
@@ -628,8 +688,28 @@
     },
     {
       "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/shots/:shotId/generate",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/shots/:shotId/generate-stream",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
       "fullPath": "/api/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
       "sourceFile": "server/src/routes/continuity.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/sessions/:sessionId/shots/:shotId/status",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "PUT",
@@ -638,8 +718,33 @@
     },
     {
       "method": "PUT",
+      "fullPath": "/api/sessions/:sessionId/shots/:shotId/style-reference",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "PUT",
       "fullPath": "/api/sessions/:sessionId/style-reference",
       "sourceFile": "server/src/routes/continuity.routes.ts"
+    },
+    {
+      "method": "PUT",
+      "fullPath": "/api/sessions/:sessionId/style-reference",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/sessions/:sessionId/versions",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/sessions/by-prompt/:uuid",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions/continuity",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "DELETE",
@@ -745,111 +850,6 @@
       "method": "GET",
       "fullPath": "/api/usage",
       "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/v2/sessions",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "DELETE",
-      "fullPath": "/api/v2/sessions/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/v2/sessions/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/v2/sessions/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/v2/sessions/:sessionId/highlights",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/v2/sessions/:sessionId/output",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/v2/sessions/:sessionId/prompt",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions/:sessionId/scene-proxy",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/v2/sessions/:sessionId/settings",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions/:sessionId/shots",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/v2/sessions/:sessionId/shots/:shotId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions/:sessionId/shots/:shotId/generate",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions/:sessionId/shots/:shotId/generate-stream",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/v2/sessions/:sessionId/shots/:shotId/status",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/v2/sessions/:sessionId/shots/:shotId/style-reference",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/v2/sessions/:sessionId/style-reference",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/v2/sessions/:sessionId/versions",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/v2/sessions/by-prompt/:uuid",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/v2/sessions/continuity",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "POST",

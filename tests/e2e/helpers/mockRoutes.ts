@@ -8,20 +8,20 @@
 import type { Page } from "@playwright/test";
 import { jsonResponse } from "./responses";
 
-/** Mock the v2 sessions API with empty defaults. */
+/** Mock the sessions API with empty defaults. */
 export async function mockSessionRoutes(page: Page): Promise<void> {
-  await page.route("**/api/v2/sessions**", async (route) => {
+  await page.route("**/api/sessions**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const pathname = url.pathname;
     const method = request.method();
 
-    if (method === "GET" && pathname.endsWith("/api/v2/sessions")) {
+    if (method === "GET" && pathname.endsWith("/api/sessions")) {
       await route.fulfill(jsonResponse({ success: true, data: [] }));
       return;
     }
 
-    if (method === "POST" && pathname.endsWith("/api/v2/sessions")) {
+    if (method === "POST" && pathname.endsWith("/api/sessions")) {
       await route.fulfill(
         jsonResponse({
           success: true,
@@ -34,14 +34,14 @@ export async function mockSessionRoutes(page: Page): Promise<void> {
       return;
     }
 
-    if (method === "GET" && pathname.includes("/api/v2/sessions/by-prompt/")) {
+    if (method === "GET" && pathname.includes("/api/sessions/by-prompt/")) {
       await route.fulfill(
         jsonResponse({ success: true, data: { id: "session_e2e" } }),
       );
       return;
     }
 
-    if (method === "GET" && pathname.includes("/api/v2/sessions/session_e2e")) {
+    if (method === "GET" && pathname.includes("/api/sessions/session_e2e")) {
       await route.fulfill(
         jsonResponse({
           success: true,

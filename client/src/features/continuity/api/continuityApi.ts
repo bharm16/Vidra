@@ -112,7 +112,7 @@ function sessionToContinuity(session: SessionDtoPayload): ContinuitySession {
 export const continuityApi = {
   createSession: async (input: CreateSessionInput) => {
     const session = await fetchWithAuth(
-      "/v2/sessions/continuity",
+      "/sessions/continuity",
       SessionDtoSchema,
       {
         method: "POST",
@@ -124,7 +124,7 @@ export const continuityApi = {
 
   listSessions: async () => {
     const sessions = await fetchWithAuth(
-      "/v2/sessions?includeContinuity=true&includePrompt=false",
+      "/sessions?includeContinuity=true&includePrompt=false",
       z.array(SessionDtoSchema),
     );
     return sessions.map((session) => sessionToContinuity(session));
@@ -132,25 +132,21 @@ export const continuityApi = {
 
   getSession: async (sessionId: string) => {
     const session = await fetchWithAuth(
-      `/v2/sessions/${sessionId}`,
+      `/sessions/${sessionId}`,
       SessionDtoSchema,
     );
     return sessionToContinuity(session);
   },
 
   addShot: (sessionId: string, input: CreateShotInput) =>
-    fetchWithAuth(
-      `/v2/sessions/${sessionId}/shots`,
-      SessionContinuityShotSchema,
-      {
-        method: "POST",
-        body: JSON.stringify(input),
-      },
-    ),
+    fetchWithAuth(`/sessions/${sessionId}/shots`, SessionContinuityShotSchema, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 
   updateShot: (sessionId: string, shotId: string, updates: UpdateShotInput) =>
     fetchWithAuth(
-      `/v2/sessions/${sessionId}/shots/${shotId}`,
+      `/sessions/${sessionId}/shots/${shotId}`,
       SessionContinuityShotSchema,
       {
         method: "PATCH",
@@ -160,7 +156,7 @@ export const continuityApi = {
 
   generateShot: (sessionId: string, shotId: string) =>
     fetchWithAuth(
-      `/v2/sessions/${sessionId}/shots/${shotId}/generate`,
+      `/sessions/${sessionId}/shots/${shotId}/generate`,
       SessionContinuityShotSchema,
       {
         method: "POST",
@@ -173,7 +169,7 @@ export const continuityApi = {
     styleReferenceId: string | null,
   ) =>
     fetchWithAuth(
-      `/v2/sessions/${sessionId}/shots/${shotId}/style-reference`,
+      `/sessions/${sessionId}/shots/${shotId}/style-reference`,
       SessionContinuityShotSchema,
       {
         method: "PUT",
@@ -186,7 +182,7 @@ export const continuityApi = {
     input: Record<string, unknown>,
   ) => {
     const session = await fetchWithAuth(
-      `/v2/sessions/${sessionId}/style-reference`,
+      `/sessions/${sessionId}/style-reference`,
       SessionDtoSchema,
       {
         method: "PUT",
@@ -201,7 +197,7 @@ export const continuityApi = {
     settings: Record<string, unknown>,
   ) => {
     const session = await fetchWithAuth(
-      `/v2/sessions/${sessionId}/settings`,
+      `/sessions/${sessionId}/settings`,
       SessionDtoSchema,
       {
         method: "PUT",
@@ -213,7 +209,7 @@ export const continuityApi = {
 
   createSceneProxy: async (sessionId: string, input: CreateSceneProxyInput) => {
     const session = await fetchWithAuth(
-      `/v2/sessions/${sessionId}/scene-proxy`,
+      `/sessions/${sessionId}/scene-proxy`,
       SessionDtoSchema,
       {
         method: "POST",
@@ -229,7 +225,7 @@ export const continuityApi = {
     input?: PreviewSceneProxyInput,
   ) =>
     fetchWithAuth(
-      `/v2/sessions/${sessionId}/shots/${shotId}/scene-proxy-preview`,
+      `/sessions/${sessionId}/shots/${shotId}/scene-proxy-preview`,
       SessionContinuityShotSchema,
       {
         method: "POST",
