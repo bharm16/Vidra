@@ -32,7 +32,9 @@
   "paths": {
     "/health": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "summary": "Basic health check",
         "description": "Returns healthy if the server process is running. No dependency checks.",
         "operationId": "getHealth",
@@ -79,7 +81,9 @@
     },
     "/health/live": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "summary": "Liveness probe",
         "description": "Kubernetes/Cloud Run liveness probe. Always returns 200 if the process is alive.",
         "operationId": "getLiveness",
@@ -99,7 +103,9 @@
     },
     "/health/ready": {
       "get": {
-        "tags": ["Health"],
+        "tags": [
+          "Health"
+        ],
         "summary": "Readiness probe",
         "description": "Checks all dependencies (cache, Firestore, LLM providers). Returns 503 if any critical dependency is unhealthy.",
         "operationId": "getReadiness",
@@ -127,101 +133,11 @@
         }
       }
     },
-    "/api/optimize-stream": {
-      "post": {
-        "tags": ["Prompt Optimization"],
-        "summary": "Optimize a prompt (streaming SSE)",
-        "description": "Two-stage prompt optimization pipeline. Returns Server-Sent Events: `draft` (fast Groq response), `spans` (semantic labeling), `refined` (OpenAI refinement), `done`.",
-        "operationId": "optimizePromptStream",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PromptOptimizeRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of optimization events.",
-            "headers": {
-              "RateLimit-Limit": {
-                "description": "Maximum requests allowed in the current window.",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "RateLimit-Remaining": {
-                "description": "Requests remaining in the current window.",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "RateLimit-Reset": {
-                "description": "Seconds until the rate limit window resets.",
-                "schema": {
-                  "type": "integer"
-                }
-              },
-              "X-Request-Id": {
-                "description": "Unique request correlation ID.",
-                "schema": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
-            },
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid API key.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RateLimitResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/optimize-compile": {
       "post": {
-        "tags": ["Prompt Optimization"],
+        "tags": [
+          "Prompt Optimization"
+        ],
         "summary": "Compile a prompt for a specific model",
         "description": "Single-stage prompt compilation targeting a specific model. No streaming — returns the compiled prompt synchronously.",
         "operationId": "compilePrompt",
@@ -303,7 +219,9 @@
     },
     "/api/capabilities": {
       "get": {
-        "tags": ["Capabilities"],
+        "tags": [
+          "Capabilities"
+        ],
         "summary": "Get model capabilities schema",
         "description": "Returns parameter constraints (aspect ratios, durations, resolution) for a given provider and model combination.",
         "operationId": "getCapabilities",
@@ -392,7 +310,9 @@
     },
     "/api/payment/status": {
       "get": {
-        "tags": ["Payment"],
+        "tags": [
+          "Payment"
+        ],
         "summary": "Get billing status",
         "description": "Returns the current plan tier, subscription status, and starter grant info.",
         "operationId": "getBillingStatus",
@@ -441,7 +361,11 @@
                   "properties": {
                     "planTier": {
                       "type": "string",
-                      "enum": ["free", "explorer", "pro"]
+                      "enum": [
+                        "free",
+                        "explorer",
+                        "pro"
+                      ]
                     },
                     "isSubscribed": {
                       "type": "boolean"
@@ -483,6 +407,7 @@
           "INSUFFICIENT_CREDITS",
           "RATE_LIMITED",
           "SERVICE_UNAVAILABLE",
+          "LLM_UNAVAILABLE",
           "GENERATION_FAILED",
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_CONFLICT",
@@ -505,6 +430,7 @@
               "INSUFFICIENT_CREDITS",
               "RATE_LIMITED",
               "SERVICE_UNAVAILABLE",
+              "LLM_UNAVAILABLE",
               "GENERATION_FAILED",
               "IDEMPOTENCY_KEY_REQUIRED",
               "IDEMPOTENCY_CONFLICT",
@@ -519,16 +445,23 @@
             "type": "string"
           }
         },
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "additionalProperties": {}
       },
       "ApiSuccessResponse": {
         "type": "object",
-        "required": ["success", "data"],
+        "required": [
+          "success",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           },
           "data": {
             "description": "Endpoint-specific payload."
@@ -541,11 +474,16 @@
       },
       "HealthResponse": {
         "type": "object",
-        "required": ["status", "timestamp"],
+        "required": [
+          "status",
+          "timestamp"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["healthy"]
+            "enum": [
+              "healthy"
+            ]
           },
           "timestamp": {
             "type": "string",
@@ -559,11 +497,16 @@
       },
       "LivenessResponse": {
         "type": "object",
-        "required": ["status", "timestamp"],
+        "required": [
+          "status",
+          "timestamp"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["alive"]
+            "enum": [
+              "alive"
+            ]
           },
           "timestamp": {
             "type": "string",
@@ -573,11 +516,18 @@
       },
       "ReadinessResponse": {
         "type": "object",
-        "required": ["status", "timestamp", "dependencies"],
+        "required": [
+          "status",
+          "timestamp",
+          "dependencies"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ready", "unhealthy"]
+            "enum": [
+              "ready",
+              "unhealthy"
+            ]
           },
           "timestamp": {
             "type": "string",
@@ -588,7 +538,10 @@
             "description": "Dependency health checks (firebase, gcs, cache, redis, LLM providers).",
             "additionalProperties": {
               "type": "object",
-              "required": ["required", "healthy"],
+              "required": [
+                "required",
+                "healthy"
+              ],
               "properties": {
                 "required": {
                   "type": "boolean"
@@ -640,7 +593,9 @@
           "mode": {
             "default": "video",
             "type": "string",
-            "enum": ["video"]
+            "enum": [
+              "video"
+            ]
           },
           "targetModel": {
             "nullable": true,
@@ -712,10 +667,6 @@
             "type": "string",
             "maxLength": 10000
           },
-          "constraintMode": {
-            "type": "string",
-            "enum": ["strict", "flexible", "transform"]
-          },
           "skipCache": {
             "default": false,
             "type": "boolean"
@@ -760,12 +711,19 @@
                   "type": "number"
                 }
               },
-              "required": ["text"],
+              "required": [
+                "text"
+              ],
               "additionalProperties": false
             }
           }
         },
-        "required": ["prompt", "mode", "skipCache", "lockedSpans"],
+        "required": [
+          "prompt",
+          "mode",
+          "skipCache",
+          "lockedSpans"
+        ],
         "additionalProperties": false
       },
       "PromptCompileRequest": {
@@ -776,6 +734,11 @@
             "minLength": 1,
             "maxLength": 10000
           },
+          "artifactKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
           "targetModel": {
             "type": "string",
             "minLength": 1,
@@ -785,6 +748,14 @@
             "nullable": true,
             "type": "object",
             "properties": {
+              "originalPrompt": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "originalUserPrompt": {
+                "type": "string",
+                "maxLength": 10000
+              },
               "specificAspects": {
                 "type": "string",
                 "maxLength": 5000
@@ -796,17 +767,38 @@
               "intendedUse": {
                 "type": "string",
                 "maxLength": 1000
+              },
+              "constraints": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "apiParams": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "assets": {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
               }
             },
             "additionalProperties": false
           }
         },
-        "required": ["prompt", "targetModel"],
+        "required": [
+          "targetModel"
+        ],
         "additionalProperties": false
       },
       "RateLimitResponse": {
         "type": "object",
-        "required": ["error", "code"],
+        "required": [
+          "error",
+          "code"
+        ],
         "properties": {
           "error": {
             "type": "string",
@@ -814,7 +806,9 @@
           },
           "code": {
             "type": "string",
-            "enum": ["RATE_LIMITED"]
+            "enum": [
+              "RATE_LIMITED"
+            ]
           },
           "details": {
             "type": "string",
@@ -831,7 +825,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "X-API-Key",
-        "description": "API key required for all /api/* and /llm/* endpoints."
+        "description": "API key required for all /api/* endpoints."
       },
       "FirebaseAuth": {
         "type": "http",

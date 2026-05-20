@@ -173,7 +173,7 @@ function buildSecuritySchemes(): Record<string, unknown> {
       type: "apiKey",
       in: "header",
       name: "X-API-Key",
-      description: "API key required for all /api/* and /llm/* endpoints.",
+      description: "API key required for all /api/* endpoints.",
     },
     FirebaseAuth: {
       type: "http",

@@ -21,7 +21,7 @@ export interface PromptSpanProvider {
   /**
    * Label spans and return the full `LabelSpansResult` (spans + meta +
    * isAdversarial flag + analysisTrace). Used by the public
-   * /llm/label-spans-batch endpoint which needs the complete payload.
+   * /api/llm/label-spans-batch endpoint which needs the complete payload.
    */
   labelFull(
     prompt: string,
