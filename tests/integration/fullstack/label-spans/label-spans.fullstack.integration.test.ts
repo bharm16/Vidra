@@ -120,18 +120,18 @@ describe("Label Spans Routes (full-stack integration)", () => {
     aiServiceMock.getOperationConfig.mockReturnValue({ model: "mock-model" });
   });
 
-  it("POST /llm/label-spans rejects unauthenticated requests", async () => {
+  it("POST /api/llm/label-spans rejects unauthenticated requests", async () => {
     const response = await request(app)
-      .post("/llm/label-spans")
+      .post("/api/llm/label-spans")
       .send({ text: "A runner in frame" });
 
     expect(response.status).toBe(401);
     expect(response.body.error).toBe("Authentication required");
   });
 
-  it("POST /llm/label-spans validates request payload", async () => {
+  it("POST /api/llm/label-spans validates request payload", async () => {
     const response = await request(app)
-      .post("/llm/label-spans")
+      .post("/api/llm/label-spans")
       .set("x-api-key", TEST_API_KEY)
       .send({ text: "" });
 
@@ -139,9 +139,9 @@ describe("Label Spans Routes (full-stack integration)", () => {
     expect(response.body.error).toBeTypeOf("string");
   });
 
-  it("POST /llm/label-spans returns labeled spans for a valid request", async () => {
+  it("POST /api/llm/label-spans returns labeled spans for a valid request", async () => {
     const response = await request(app)
-      .post("/llm/label-spans")
+      .post("/api/llm/label-spans")
       .set("x-api-key", TEST_API_KEY)
       .send({
         text: "A runner turns toward camera",
@@ -158,11 +158,11 @@ describe("Label Spans Routes (full-stack integration)", () => {
     });
   });
 
-  it("POST /llm/label-spans returns 502 when span labeling fails", async () => {
+  it("POST /api/llm/label-spans returns 502 when span labeling fails", async () => {
     forceAiFailure = true;
 
     const response = await request(app)
-      .post("/llm/label-spans")
+      .post("/api/llm/label-spans")
       .set("x-api-key", TEST_API_KEY)
       .send({ text: "zxqv ptnr blorf" });
 
@@ -170,18 +170,18 @@ describe("Label Spans Routes (full-stack integration)", () => {
     expect(response.body.error).toBe("LLM span labeling failed");
   });
 
-  it("POST /llm/label-spans/stream rejects unauthenticated requests", async () => {
+  it("POST /api/llm/label-spans/stream rejects unauthenticated requests", async () => {
     const response = await request(app)
-      .post("/llm/label-spans/stream")
+      .post("/api/llm/label-spans/stream")
       .send({ text: "A runner in frame" });
 
     expect(response.status).toBe(401);
     expect(response.body.error).toBe("Authentication required");
   });
 
-  it("POST /llm/label-spans/stream validates request payload", async () => {
+  it("POST /api/llm/label-spans/stream validates request payload", async () => {
     const response = await request(app)
-      .post("/llm/label-spans/stream")
+      .post("/api/llm/label-spans/stream")
       .set("x-api-key", TEST_API_KEY)
       .send({ text: "" });
 
@@ -189,9 +189,9 @@ describe("Label Spans Routes (full-stack integration)", () => {
     expect(response.body.error).toBeTypeOf("string");
   });
 
-  it("POST /llm/label-spans/stream streams span entries for valid requests", async () => {
+  it("POST /api/llm/label-spans/stream streams span entries for valid requests", async () => {
     const response = await request(app)
-      .post("/llm/label-spans/stream")
+      .post("/api/llm/label-spans/stream")
       .set("x-api-key", TEST_API_KEY)
       .send({
         text: "A runner turns toward camera",
@@ -225,11 +225,11 @@ describe("Label Spans Routes (full-stack integration)", () => {
     });
   });
 
-  it("POST /llm/label-spans/stream reports stream errors as JSON payloads", async () => {
+  it("POST /api/llm/label-spans/stream reports stream errors as JSON payloads", async () => {
     forceAiFailure = true;
 
     const response = await request(app)
-      .post("/llm/label-spans/stream")
+      .post("/api/llm/label-spans/stream")
       .set("x-api-key", TEST_API_KEY)
       .send({ text: "zxqv ptnr blorf" });
 

@@ -373,6 +373,21 @@
     },
     {
       "method": "POST",
+      "fullPath": "/api/llm/label-spans",
+      "sourceFile": "server/src/routes/labelSpansRoute.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/llm/label-spans-batch",
+      "sourceFile": "server/src/config/routes/api.registration.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/llm/label-spans/stream",
+      "sourceFile": "server/src/routes/labelSpansRoute.ts"
+    },
+    {
+      "method": "POST",
       "fullPath": "/api/model-intelligence/recommend",
       "sourceFile": "server/src/routes/model-intelligence.routes.ts"
     },
@@ -885,21 +900,6 @@
       "method": "GET",
       "fullPath": "/health/ready",
       "sourceFile": "server/src/routes/health.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/llm/label-spans",
-      "sourceFile": "server/src/routes/labelSpansRoute.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/llm/label-spans-batch",
-      "sourceFile": "server/src/config/routes/api.registration.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/llm/label-spans/stream",
-      "sourceFile": "server/src/routes/labelSpansRoute.ts"
     }
   ],
   "featureFlags": [

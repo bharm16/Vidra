@@ -83,7 +83,7 @@ Legacy `*_DISABLED` env var names still work but emit a deprecation warning at s
 | --------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
 | `POST /api/optimize`                    | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
 | `POST /api/enhance`, `/api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
-| `POST /llm/label-spans`                 | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
+| `POST /api/llm/label-spans`             | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
 | `/api/preview/*`                        | `preview.routes.ts`                       | `features/preview/api/`                             |
 | `/api/payment/*`                        | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
 | `/api/motion/*`                         | `motion.routes.ts`                        | `api/motionApi.ts`                                  |

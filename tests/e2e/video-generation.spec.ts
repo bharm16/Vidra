@@ -36,7 +36,7 @@ test.describe("video generation (authenticated)", () => {
         );
       });
 
-      await page.route("**/llm/label-spans**", async (route) => {
+      await page.route("**/api/llm/label-spans**", async (route) => {
         await route.fulfill(jsonResponse({ spans: [] }));
       });
 

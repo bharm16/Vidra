@@ -123,10 +123,10 @@ export function registerApiRoutes(
       "spanLabelingTelemetryService",
     ),
   );
-  app.use("/llm/label-spans", apiAuthMiddleware, labelSpansRoute);
+  app.use("/api/llm/label-spans", apiAuthMiddleware, labelSpansRoute);
 
   app.post(
-    "/llm/label-spans-batch",
+    "/api/llm/label-spans-batch",
     apiAuthMiddleware,
     createBatchMiddleware(container.resolve("spanLabelingProvider")),
   );

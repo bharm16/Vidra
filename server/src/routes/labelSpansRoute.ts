@@ -57,7 +57,7 @@ export function createLabelSpansRoute(
 
   router.post(
     "/",
-    requestCoalescing.middleware({ keyScope: "/llm/label-spans" }),
+    requestCoalescing.middleware({ keyScope: "/api/llm/label-spans" }),
     async (req: Request, res: Response) => {
       const parsed = parseLabelSpansRequest(req.body);
       if (!parsed.ok) {

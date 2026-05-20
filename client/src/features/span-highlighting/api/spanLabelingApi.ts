@@ -48,7 +48,7 @@ export class SpanLabelingApi {
     signal: AbortSignal | null = null,
   ): Promise<LabelSpansResponse> {
     const authHeaders = await buildFirebaseAuthHeaders();
-    const res = await fetch("/llm/label-spans", {
+    const res = await fetch("/api/llm/label-spans", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export class SpanLabelingApi {
     const authHeaders = await buildFirebaseAuthHeaders();
     let res: Response;
     try {
-      res = await fetch("/llm/label-spans/stream", {
+      res = await fetch("/api/llm/label-spans/stream", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

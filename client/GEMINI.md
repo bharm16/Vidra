@@ -20,7 +20,7 @@ These terms have specific meanings in this codebase. Do not conflate them.
 
 | Term                          | Meaning                                                                        | Client Feature/Service              | Server Route                       |
 | ----------------------------- | ------------------------------------------------------------------------------ | ----------------------------------- | ---------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories for UI highlights | `features/span-highlighting/`       | `/llm/label-spans`                 |
+| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories for UI highlights | `features/span-highlighting/`       | `/api/llm/label-spans`             |
 | **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)   | `services/EnhancementApi.ts`        | `/api/suggestions`, `/api/enhance` |
 | **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement)               | `services/PromptOptimizationApi.ts` | `/api/optimize-stream` (SSE)       |
 | **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                        | `features/continuity/`              | `/api/continuity`                  |
@@ -62,7 +62,7 @@ Use this to find the correct client file for a given backend route. Do not creat
 | --------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
 | `POST /api/optimize-stream`             | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
 | `POST /api/enhance`, `/api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
-| `POST /llm/label-spans`                 | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
+| `POST /api/llm/label-spans`             | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
 | `/api/preview/*`                        | `preview.routes.ts`                       | `features/preview/api/`                             |
 | `/api/payment/*`                        | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
 | `/api/motion/*`                         | `motion.routes.ts`                        | `api/motionApi.ts`                                  |

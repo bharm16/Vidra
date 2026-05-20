@@ -43,7 +43,7 @@ These terms have specific meanings in this codebase. Do not conflate them.
 
 | Term                          | Meaning                                                                                                     | Server Path                                                                      | Route                              |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories (subject, camera, lighting…) for UI highlights | `server/src/llm/span-labeling/`                                                  | `/llm/label-spans`                 |
+| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories (subject, camera, lighting…) for UI highlights | `server/src/llm/span-labeling/`                                                  | `/api/llm/label-spans`             |
 | **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                | `server/src/services/enhancement/`                                               | `/api/suggestions`, `/api/enhance` |
 | **Optimization**              | Two-stage prompt rewriting pipeline (Groq fast draft → OpenAI refinement)                                   | `server/src/services/prompt-optimization/`                                       | `/api/optimize` (buffered)         |
 | **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                                                     | `server/src/services/continuity/`                                                | `/api/continuity`                  |
@@ -167,7 +167,7 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 | -------------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
 | `POST /api/optimize`                         | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
 | `POST /api/enhance`, `POST /api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
-| `POST /llm/label-spans`                      | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
+| `POST /api/llm/label-spans`                  | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
 | `/api/preview/*`                             | `preview.routes.ts`                       | `features/preview/api/`                             |
 | `/api/payment/*`                             | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
 | `/api/motion/*`                              | `motion.routes.ts`                        | `api/motionApi.ts`                                  |

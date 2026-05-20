@@ -7,14 +7,15 @@ import { applyRateLimitingMiddleware } from "../middleware.config";
 /**
  * Regression: general limiter must not double-count routes with dedicated limiters.
  *
- * Previously, every /api/ and /llm/ request counted against both the general
+ * Previously, every /api/ request counted against both the general
  * limiter (15-min window, 100 req in prod / 25 without Redis) and its dedicated
  * limiter. During longer QA runs or normal usage without Redis, the general
  * budget was exhausted by API traffic, which then blocked ALL routes including
  * unrelated pages, /assets, and session history.
  *
- * Invariant: For any request to /api/*, /llm/*, or /health, the general limiter
+ * Invariant: For any request to /api/* or /health, the general limiter
  * must be skipped. These routes are protected by their own dedicated limiters.
+ * LLM routes (/api/llm/*) are covered by the /api/* invariant.
  */
 
 describe("regression: general limiter skips routes with dedicated limiters", () => {
@@ -75,7 +76,7 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
     expect(staticResponse.status).toBe(200);
   });
 
-  it("/llm/ requests do not count against the general limiter", async () => {
+  it("/api/llm/ requests do not count against the general limiter", async () => {
     process.env.NODE_ENV = "development";
     delete process.env.VITEST_WORKER_ID;
     delete process.env.VITEST;
@@ -83,7 +84,7 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
     const app = express();
     applyRateLimitingMiddleware(app);
 
-    app.post("/llm/label-spans", (_req, res) => {
+    app.post("/api/llm/label-spans", (_req, res) => {
       res.status(200).json({ spans: [] });
     });
     app.get("/static/page", (_req, res) => {
@@ -92,7 +93,9 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
 
     // Fire LLM requests
     await Promise.all(
-      Array.from({ length: 100 }, () => request(app).post("/llm/label-spans")),
+      Array.from({ length: 100 }, () =>
+        request(app).post("/api/llm/label-spans"),
+      ),
     );
 
     // Non-API request must still work

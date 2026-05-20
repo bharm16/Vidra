@@ -5,7 +5,7 @@ import { injectAuthUser } from "./helpers/auth";
 
 test.describe("span labeling and suggestions", () => {
   // FIXME(e2e): `[data-category]` elements never appear after optimize on main.
-  // The /api/optimize and /llm/label-spans routes are mocked correctly, but
+  // The /api/optimize and /api/llm/label-spans routes are mocked correctly, but
   // the SpanCategoryAccordion (the component that renders [data-category]
   // spans) doesn't surface in the post-optimize state. Pre-existing failure
   // on main for 5+ runs — needs frontend trace inspection to determine which
@@ -29,7 +29,7 @@ test.describe("span labeling and suggestions", () => {
         );
       });
 
-      await page.route("**/llm/label-spans", async (route) => {
+      await page.route("**/api/llm/label-spans", async (route) => {
         await route.fulfill(
           jsonResponse({
             spans: [
@@ -93,7 +93,7 @@ test.describe("span labeling and suggestions", () => {
         );
       });
 
-      await page.route("**/llm/label-spans", async (route) => {
+      await page.route("**/api/llm/label-spans", async (route) => {
         await route.fulfill(
           jsonResponse({
             spans: [

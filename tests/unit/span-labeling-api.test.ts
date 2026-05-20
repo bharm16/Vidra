@@ -72,7 +72,7 @@ describe("SpanLabelingApi", () => {
     const result = await SpanLabelingApi.labelSpans(payload);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/llm/label-spans",
+      "/api/llm/label-spans",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({

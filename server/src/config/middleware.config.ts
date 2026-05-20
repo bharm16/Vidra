@@ -372,16 +372,15 @@ export function applyRateLimitingMiddleware(
   // Two handlers exist because the limiters run in different contexts:
   //
   // - `mountedLimiterJSONHandler` is used by limiters mounted at a specific
-  //   path prefix (`app.use("/api/", limiter)`, `/llm/`, burst limiters).
+  //   path prefix (`app.use("/api/", limiter)`, `/api/llm/`, burst limiters).
   //   Express's route mount guarantees the request matches that prefix, so
   //   the handler returns the ApiErrorResponse JSON shape unconditionally.
   //
   // - `globalLimiterHandler` is used by the application-wide general limiter
-  //   that runs on every request. It dispatches: /api/ and /llm/ requests
-  //   that slip through (because the dedicated limiter's `skip()` was
-  //   evaluated after the general one already ran) get the JSON shape so
-  //   the client can parse it; everything else (static pages, etc.) gets
-  //   plain text.
+  //   that runs on every request. It dispatches: /api/ requests that slip
+  //   through (because the dedicated limiter's `skip()` was evaluated after
+  //   the general one already ran) get the JSON shape so the client can parse
+  //   it; everything else (static pages, etc.) gets plain text.
   //
   // The two handlers are not duplication — they encode the mounted-vs-global
   // distinction. Do not collapse them into a single path-checking handler:
@@ -408,7 +407,7 @@ export function applyRateLimitingMiddleware(
     options: { statusCode: number; message: string },
   ): void => {
     const requestPath = req.originalUrl || req.path;
-    if (requestPath.startsWith("/api/") || requestPath.startsWith("/llm/")) {
+    if (requestPath.startsWith("/api/")) {
       mountedLimiterJSONHandler(req, res, next, options);
       return;
     }
@@ -416,16 +415,14 @@ export function applyRateLimitingMiddleware(
     res.status(options.statusCode).send(options.message);
   };
 
-  // Routes with dedicated limiters (/api/, /llm/, /health) are skipped from
+  // Routes with dedicated limiters (/api/, /health) are skipped from
   // the general limiter to prevent double-counting. Previously only asset-view
   // routes were skipped, causing the 15-minute general budget (100 req in prod,
   // 25 without Redis) to be exhausted by normal API traffic, which then blocked
   // all routes including static assets and unrelated pages.
   const isGeneralSkipped = (req: express.Request): boolean => {
     const p = req.path;
-    return (
-      p.startsWith("/api/") || p.startsWith("/llm/") || p.startsWith("/health")
-    );
+    return p.startsWith("/api/") || p.startsWith("/health");
   };
 
   // General limiter (all routes)
@@ -505,11 +502,11 @@ export function applyRateLimitingMiddleware(
   // in-memory limits under the 4x divisor), LLM routes are expensive enough
   // that unlimited traffic is a cost/abuse risk — so we return 503 instead
   // of silently allowing N × (limit/4) per-instance through an autoscaler.
-  app.use("/llm/", createFailClosedLlmRateLimit());
+  app.use("/api/llm/", createFailClosedLlmRateLimit());
 
   // LLM endpoints limiter (higher limits for span labeling)
   app.use(
-    "/llm/",
+    "/api/llm/",
     rateLimit({
       windowMs: RATE_LIMIT_CONFIG.llm.windowMs,
       max: llmMax,

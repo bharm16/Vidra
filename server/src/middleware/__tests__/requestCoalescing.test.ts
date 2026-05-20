@@ -108,10 +108,10 @@ describe("RequestCoalescingMiddleware", () => {
   });
 
   it("skips streaming requests", async () => {
-    const middleware = service.middleware({ keyScope: "/llm/label-spans" });
+    const middleware = service.middleware({ keyScope: "/api/llm/label-spans" });
     const req = createRequest({
       path: "/stream",
-      baseUrl: "/llm/label-spans",
+      baseUrl: "/api/llm/label-spans",
       headers: {
         accept: "text/event-stream",
       },

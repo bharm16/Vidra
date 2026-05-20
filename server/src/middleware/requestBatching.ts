@@ -52,7 +52,7 @@ type BatchResult =
  * - Maintains <200ms latency for each request
  *
  * Usage:
- * app.post('/llm/label-spans-batch', requestBatching.middleware(aiService));
+ * app.post('/api/llm/label-spans-batch', requestBatching.middleware(aiService));
  */
 export class RequestBatchingService {
   private batchWindow: number;
@@ -113,7 +113,7 @@ export class RequestBatchingService {
    * Express middleware for batch endpoint
    *
    * Accepts multiple requests in an array:
-   * POST /llm/label-spans-batch
+   * POST /api/llm/label-spans-batch
    * Body: [
    *   { text: "...", maxSpans: 60, ... },
    *   { text: "...", maxSpans: 60, ... }
@@ -221,7 +221,7 @@ export class RequestBatchingService {
           const { text, ...options } = request;
           // Route through the shared port so this batch path benefits from
           // cache hits + single-flight coalescing identical to the per-request
-          // /llm/label-spans path.
+          // /api/llm/label-spans path.
           const result = await spanLabelingProvider.labelFull(text, options);
 
           logger.debug("Batch item completed", {

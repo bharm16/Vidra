@@ -66,7 +66,7 @@ describe("SpanLabelingApi", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/llm/label-spans",
+      "/api/llm/label-spans",
       expect.objectContaining({ method: "POST" }),
     );
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;

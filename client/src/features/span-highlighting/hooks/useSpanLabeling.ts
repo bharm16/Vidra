@@ -127,7 +127,7 @@ function normalizeMetaVersion(
 }
 
 /**
- * Hook to call the /llm/label-spans endpoint with debounce + cancellation.
+ * Hook to call the /api/llm/label-spans endpoint with debounce + cancellation.
  */
 export function useSpanLabeling({
   text,
