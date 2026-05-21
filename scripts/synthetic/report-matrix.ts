@@ -101,24 +101,41 @@ export function buildComparisonQuery(
   const dims = DIM_KEYS_BY_SURFACE[surface];
   const dimAggregates = dims
     .map(
-      (d) =>
-        `avg(toFloat(JSONExtractRaw(q.properties.dimensions, '${d}'))) AS ${d}`,
+      (d) => `avg(toFloat(JSONExtractRaw(scored.dimensions, '${d}'))) AS ${d}`,
     )
-    .join(",\n         ");
+    .join(",\n           ");
 
+  // CTE rewrite: pre-filter both sides BEFORE joining. The previous
+  // shape did INNER JOIN events s ON ... with JSON extraction in SELECT
+  // and a post-join `modelVariant IS NOT NULL` filter, which times out
+  // (HogQL 504) on real PostHog data sizes. Narrowing each side to its
+  // own CTE first lets the query engine scan the smallest possible row
+  // sets before the join. Verified to return in seconds on ~60-100
+  // events per variant where the JOIN form hit the time budget.
   return `
-    SELECT s.properties.modelVariant AS modelVariant,
+    WITH scored AS (
+      SELECT properties.scoredEventId AS sourceId,
+             toFloat(properties.totalScore) AS totalScore,
+             properties.dimensions AS dimensions
+      FROM events
+      WHERE event = 'quality.scored'
+        AND properties.surface = '${surface}'
+        AND timestamp > now() - INTERVAL ${interval}
+    ),
+    source AS (
+      SELECT toString(uuid) AS uuid,
+             properties.modelVariant AS modelVariant
+      FROM events
+      WHERE event = '${sourceEvent}'
+        AND properties.modelVariant IS NOT NULL
+        AND timestamp > now() - INTERVAL ${interval}
+    )
+    SELECT source.modelVariant AS modelVariant,
            count() AS n,
            ${dimAggregates},
-           avg(toFloat(q.properties.totalScore)) AS totalScore
-    FROM events q
-    INNER JOIN events s ON toString(s.uuid) = q.properties.scoredEventId
-    WHERE q.event = 'quality.scored'
-      AND q.properties.surface = '${surface}'
-      AND q.timestamp > now() - INTERVAL ${interval}
-      AND s.event = '${sourceEvent}'
-      AND s.properties.modelVariant IS NOT NULL
-      AND s.timestamp > now() - INTERVAL ${interval}
+           avg(scored.totalScore) AS totalScore
+    FROM scored
+    INNER JOIN source ON source.uuid = scored.sourceId
     GROUP BY modelVariant
     ORDER BY totalScore DESC
   `.trim();

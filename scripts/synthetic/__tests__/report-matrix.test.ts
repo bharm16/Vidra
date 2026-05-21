@@ -51,6 +51,30 @@ describe("buildComparisonQuery", () => {
       "label-spans.completed",
     );
   });
+
+  it("pre-filters both sides via CTEs before joining (avoids HogQL 504)", () => {
+    // Regression pin: the previous shape did
+    //   FROM events q INNER JOIN events s ON toString(s.uuid) = q.properties.scoredEventId
+    // with `modelVariant IS NOT NULL` as a post-join WHERE filter. That
+    // form times out on real PostHog data sizes. The CTE rewrite pre-
+    // filters each side before joining. If this query ever silently
+    // reverts to the unbounded-join shape, this test fails.
+    const sql = buildComparisonQuery("suggestions", "30 MINUTE");
+    expect(sql).toContain("WITH scored AS");
+    expect(sql).toContain("source AS");
+    expect(sql).toContain("INNER JOIN source ON source.uuid = scored.sourceId");
+    // The pre-filter must keep modelVariant IS NOT NULL inside the
+    // source CTE — not as a post-join filter.
+    const sourceCteStart = sql.indexOf("source AS");
+    const mainSelectStart = sql.indexOf("SELECT source.modelVariant");
+    const modelVariantFilter = sql.indexOf(
+      "properties.modelVariant IS NOT NULL",
+    );
+    expect(sourceCteStart).toBeGreaterThan(-1);
+    expect(mainSelectStart).toBeGreaterThan(sourceCteStart);
+    expect(modelVariantFilter).toBeGreaterThan(sourceCteStart);
+    expect(modelVariantFilter).toBeLessThan(mainSelectStart);
+  });
 });
 
 describe("formatComparisonTable", () => {
