@@ -167,6 +167,8 @@
     "test:ui": "vitest --ui --config config/test/vitest.unit.config.js",
     "test:coverage": "vitest run --coverage --config config/test/vitest.unit.config.js",
     "synthetic": "tsx scripts/synthetic/run-harness.ts",
+    "synthetic:matrix": "tsx scripts/synthetic/run-matrix.ts",
+    "synthetic:report-matrix": "tsx scripts/synthetic/report-matrix.ts",
     "eval:span": "tsx --tsconfig server/tsconfig.json scripts/evaluation/run-golden-set-evaluation.ts",
     "eval:golden-set": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts",
     "eval:golden-set:bless": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts --bless",
