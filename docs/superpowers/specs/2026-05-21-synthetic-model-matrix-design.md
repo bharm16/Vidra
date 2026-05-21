@@ -18,7 +18,7 @@ Half the mechanism already exists. `server/src/config/modelConfig.ts` exposes en
 2. **Tagging** — when a swap happens, the resulting telemetry events don't record which model produced them. PostHog dashboards can't distinguish runs.
 3. **Matrix orchestration** — no way to run N variants in one command. Currently it's `edit env → run → edit env → run → manually correlate`.
 4. **Comparison report** — no per-variant comparison view.
-5. **Span-labeling asymmetry** — `span-labeling.driver.ts` hardcodes Gemini constants, breaking the swap pattern for that surface.
+5. **Span-labeling telemetry-annotation drift** — `span_labeling` is already in `modelConfig.ts` and IS swappable via `SPAN_PROVIDER` / `SPAN_MODEL`, so routing works. But `span-labeling.driver.ts` hardcodes constants (`PROVIDER = "gemini"`, `MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash"`) that it passes into the telemetry annotation — so the emitted event's `provider`/`model` fields are stale and don't reflect what `aiService` actually routed to. The driver fix is alignment, not new env-var hooks.
 
 Sub-project E unifies these into a coherent workflow. Beyond unblocking Sub-project B2, it enables future questions: "Does optimize tail-truncation differ between OpenAI variants? Does span-labeling do better with Gemini Pro vs Flash? Which model is cheapest for parity scores?"
 
@@ -26,19 +26,19 @@ Sub-project E unifies these into a coherent workflow. Beyond unblocking Sub-proj
 
 ## 1. Locked architectural decisions
 
-| Decision                     | Choice                                                                                    | Reason                                                                                                                                                                                                                               |
-| ---------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Variant definition           | **Typed preset registry in `scripts/synthetic/variants.ts`**                              | Type-safe; testable; reusable across runs; matches the codebase convention of TS-as-config. Power users can extend by adding a preset.                                                                                               |
-| Isolation                    | **Subprocess per variant**                                                                | Matches the discipline lesson from Sub-projects A/B — every measurement-system bug we hit was state leakage. Subprocesses give hard env-var + adapter-state boundaries. 2-3 sec spawn overhead is noise next to 30-60 sec LLM calls. |
-| Execution order              | **Sequential per variant** (one subprocess at a time)                                     | Predictable PostHog ingestion ordering; avoids the rate-limit bug class. Parallel matrix is YAGNI for v1.                                                                                                                            |
-| Surface scope per matrix run | **One surface at a time** (`--only suggestions`, etc.)                                    | Matches existing `run-harness.ts` semantics. Multiple surfaces means multiple matrix invocations. Cross-surface matrix is YAGNI.                                                                                                     |
-| Event tag field name         | **`modelVariant`** (camelCase, matches `sceneSummary` from Sub-project B)                 | Convention consistency with the existing telemetry payload shape.                                                                                                                                                                    |
-| Backward compatibility       | **`npm run synthetic` without `--variant-tag` produces null `modelVariant`**              | Plain harness runs continue to work unchanged. Tag is opt-in.                                                                                                                                                                        |
-| Report data source           | **Existing PostHog `quality.scored` events, joined to surface events by `scoredEventId`** | No new event types. Reuses Sub-project A's calibration anchor.                                                                                                                                                                       |
-| Report output                | **Markdown table to stdout + URL to a saved PostHog dashboard**                           | CLI table answers the question immediately; dashboard URL provides drill-down for follow-up.                                                                                                                                         |
-| Judge swap                   | **Out of scope** — defer to a future Sub-project                                          | Judge swap is its own design surface (different code path, different calibration implications).                                                                                                                                      |
-| Span-labeling alignment      | **Add `SPAN_LABELING_PROVIDER` and `SPAN_LABELING_MODEL` env vars to the driver**         | Smallest change that makes span-labeling swappable. Routing through full `modelConfig.ts` is a larger refactor; defer.                                                                                                               |
-| Cost / quota guards          | **Out of scope** — user manages their own quota                                           | Each variant burns ~$0.20-0.40 (synthetic + judge); matrix multiplies that linearly. No hard guard.                                                                                                                                  |
+| Decision                     | Choice                                                                                                   | Reason                                                                                                                                                                                                                               |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Variant definition           | **Typed preset registry in `scripts/synthetic/variants.ts`**                                             | Type-safe; testable; reusable across runs; matches the codebase convention of TS-as-config. Power users can extend by adding a preset.                                                                                               |
+| Isolation                    | **Subprocess per variant**                                                                               | Matches the discipline lesson from Sub-projects A/B — every measurement-system bug we hit was state leakage. Subprocesses give hard env-var + adapter-state boundaries. 2-3 sec spawn overhead is noise next to 30-60 sec LLM calls. |
+| Execution order              | **Sequential per variant** (one subprocess at a time)                                                    | Predictable PostHog ingestion ordering; avoids the rate-limit bug class. Parallel matrix is YAGNI for v1.                                                                                                                            |
+| Surface scope per matrix run | **One surface at a time** (`--only suggestions`, etc.)                                                   | Matches existing `run-harness.ts` semantics. Multiple surfaces means multiple matrix invocations. Cross-surface matrix is YAGNI.                                                                                                     |
+| Event tag field name         | **`modelVariant`** (camelCase, matches `sceneSummary` from Sub-project B)                                | Convention consistency with the existing telemetry payload shape.                                                                                                                                                                    |
+| Backward compatibility       | **`npm run synthetic` without `--variant-tag` produces null `modelVariant`**                             | Plain harness runs continue to work unchanged. Tag is opt-in.                                                                                                                                                                        |
+| Report data source           | **Existing PostHog `quality.scored` events, joined to surface events by `scoredEventId`**                | No new event types. Reuses Sub-project A's calibration anchor.                                                                                                                                                                       |
+| Report output                | **Markdown table to stdout + URL to a saved PostHog dashboard**                                          | CLI table answers the question immediately; dashboard URL provides drill-down for follow-up.                                                                                                                                         |
+| Judge swap                   | **Out of scope** — defer to a future Sub-project                                                         | Judge swap is its own design surface (different code path, different calibration implications).                                                                                                                                      |
+| Span-labeling alignment      | **Replace driver's hardcoded `PROVIDER`/`MODEL` constants with reads from `SPAN_PROVIDER`/`SPAN_MODEL`** | These env vars already exist (`modelConfig.ts:391-392`) and routing already honors them. Driver's telemetry annotation must read the same env vars so emitted events reflect the actual routed model.                                |
+| Cost / quota guards          | **Out of scope** — user manages their own quota                                                          | Each variant burns ~$0.20-0.40 (synthetic + judge); matrix multiplies that linearly. No hard guard.                                                                                                                                  |
 
 ---
 
@@ -112,8 +112,8 @@ export const VARIANTS: VariantPreset[] = [
     name: "gemini",
     surface: "span-labeling",
     env: {
-      SPAN_LABELING_PROVIDER: "gemini",
-      SPAN_LABELING_MODEL: "gemini-2.5-flash",
+      SPAN_PROVIDER: "gemini",
+      SPAN_MODEL: "gemini-2.5-flash",
     },
     description: "Gemini 2.5 Flash (current prod default)",
   },
@@ -121,8 +121,8 @@ export const VARIANTS: VariantPreset[] = [
     name: "gemini-pro",
     surface: "span-labeling",
     env: {
-      SPAN_LABELING_PROVIDER: "gemini",
-      SPAN_LABELING_MODEL: "gemini-2.5-pro",
+      SPAN_PROVIDER: "gemini",
+      SPAN_MODEL: "gemini-2.5-pro",
     },
     description: "Gemini 2.5 Pro (slower, possibly higher quality)",
   },
@@ -132,7 +132,7 @@ export const VARIANTS: VariantPreset[] = [
 Authoring rules (validated at startup):
 
 - `name` is unique within each surface.
-- Every `env` key must be one of a known whitelist: `ENHANCE_PROVIDER`, `ENHANCE_MODEL`, `OPTIMIZE_PROVIDER`, `OPTIMIZE_MODEL`, `SPAN_LABELING_PROVIDER`, `SPAN_LABELING_MODEL`, plus per-provider model env vars (`OPENAI_MODEL`, `QWEN_MODEL`, `GEMINI_MODEL`, `GROQ_MODEL`).
+- Every `env` key must be one of a known whitelist: `ENHANCE_PROVIDER`, `ENHANCE_MODEL`, `OPTIMIZE_PROVIDER`, `OPTIMIZE_MODEL`, `SPAN_PROVIDER`, `SPAN_MODEL`, plus per-provider model env vars (`OPENAI_MODEL`, `QWEN_MODEL`, `GEMINI_MODEL`, `GROQ_MODEL`).
 - `surface` is one of the three legal values.
 
 ### 2.2 CLI surface
@@ -215,7 +215,7 @@ The report is purely descriptive — no recommendations engine. The user reads t
 - **Not a judge swap.** Future Sub-project; keeps the calibration anchor stable.
 - **Not auto-creating PostHog dashboards.** The dashboard URL points to a one-time manually-created dashboard with `modelVariant` as a breakdown dimension. Auto-creation can land later.
 - **Not cross-surface matrix.** `--only` still takes one surface. Multiple surfaces = multiple invocations.
-- **Not routing span-labeling through full `modelConfig.ts`.** Just adds two env-var hooks (`SPAN_LABELING_PROVIDER`, `SPAN_LABELING_MODEL`) to the driver. Full alignment is a separate refactor.
+- **Not routing span-labeling through full `modelConfig.ts`.** Just adds two env-var hooks (`SPAN_PROVIDER`, `SPAN_MODEL`) to the driver. Full alignment is a separate refactor.
 - **Not parallel subprocess execution.** Sequential by design (PostHog ingestion ordering + rate-limit safety).
 - **Not cost guards.** User manages their own quota.
 - **Not a continuous matrix.** No cron, no scheduled runs.
@@ -242,7 +242,7 @@ The report is purely descriptive — no recommendations engine. The user reads t
 1. Add `modelVariant` field to telemetry types and services (all three surfaces). Add `--variant-tag` flag to `run-harness.ts`. Update all three drivers to thread the value through.
 2. Create `scripts/synthetic/variants.ts` preset registry + startup validation. Unit tests cover the validation invariants.
 3. Create `scripts/synthetic/run-matrix.ts` orchestrator. Unit tests cover variant filtering + arg construction.
-4. Align `span-labeling.driver.ts` with new env-var hooks (`SPAN_LABELING_PROVIDER`, `SPAN_LABELING_MODEL`).
+4. Align `span-labeling.driver.ts` with new env-var hooks (`SPAN_PROVIDER`, `SPAN_MODEL`).
 5. Create `scripts/synthetic/report-matrix.ts`. Unit test the HogQL construction.
 6. Add `synthetic:matrix` and `synthetic:report-matrix` to `package.json`.
 7. Update `scripts/synthetic/README.md` (or create) with full documentation: env-var system, presets, matrix workflow, report format.
