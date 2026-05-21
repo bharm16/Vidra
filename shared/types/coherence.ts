@@ -1,4 +1,4 @@
-// Shared contract for the /api/check-prompt-coherence endpoint.
+// Shared contract for the /api/enhancement/prompt-coherence endpoint.
 // Kept in the shared layer so server and client reference the same shapes
 // and any drift surfaces as a compile-time error.
 

@@ -233,11 +233,6 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/check-prompt-coherence",
-      "sourceFile": "server/src/routes/enhancement/coherenceCheckRoute.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/confirm-upload",
       "sourceFile": "server/src/routes/storage.routes.ts"
     },
@@ -320,6 +315,11 @@
       "method": "POST",
       "fullPath": "/api/enhancement/observe-image",
       "sourceFile": "server/src/routes/image-observation.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/enhancement/prompt-coherence",
+      "sourceFile": "server/src/routes/enhancement/coherenceCheckRoute.ts"
     },
     {
       "method": "POST",

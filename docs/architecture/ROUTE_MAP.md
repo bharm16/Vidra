@@ -48,7 +48,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/assets/validate`                                                  | `server/src/routes/asset.routes.ts`                             |
 | GET    | `/api/by-prompt/:uuid`                                                  | `server/src/routes/sessions.routes.ts`                          |
 | GET    | `/api/capabilities`                                                     | `server/src/routes/capabilities.routes.ts`                      |
-| POST   | `/api/check-prompt-coherence`                                           | `server/src/routes/enhancement/coherenceCheckRoute.ts`          |
 | POST   | `/api/confirm-upload`                                                   | `server/src/routes/storage.routes.ts`                           |
 | POST   | `/api/continuity`                                                       | `server/src/routes/sessions.routes.ts`                          |
 | GET    | `/api/continuity/sessions`                                              | `server/src/routes/continuity.routes.ts`                        |
@@ -66,6 +65,7 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/download-url`                                                     | `server/src/routes/storage.routes.ts`                           |
 | POST   | `/api/enhancement/custom-suggestions`                                   | `server/src/routes/enhancement/customSuggestionsRoute.ts`       |
 | POST   | `/api/enhancement/observe-image`                                        | `server/src/routes/image-observation.routes.ts`                 |
+| POST   | `/api/enhancement/prompt-coherence`                                     | `server/src/routes/enhancement/coherenceCheckRoute.ts`          |
 | POST   | `/api/enhancement/scene-change`                                         | `server/src/routes/enhancement/sceneChangeRoute.ts`             |
 | POST   | `/api/enhancement/suggestions`                                          | `server/src/routes/enhancement/enhancementSuggestionsRoute.ts`  |
 | GET    | `/api/enhancement/test-nlp`                                             | `server/src/routes/enhancement/nlpTestRoute.ts`                 |

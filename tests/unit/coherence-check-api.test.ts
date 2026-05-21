@@ -64,7 +64,7 @@ describe("checkPromptCoherence", () => {
       );
 
       expect(fetchImpl).toHaveBeenCalledWith(
-        "/api/check-prompt-coherence",
+        "/api/enhancement/prompt-coherence",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({

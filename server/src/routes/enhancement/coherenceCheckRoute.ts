@@ -20,7 +20,7 @@ export function registerCoherenceCheckRoute(
   { promptCoherenceService, perfMonitor }: CoherenceCheckDeps,
 ): void {
   router.post(
-    "/check-prompt-coherence",
+    "/enhancement/prompt-coherence",
     perfMonitor.trackRequest.bind(perfMonitor),
     validateRequest(coherenceCheckSchema),
     asyncHandler(async (req, res) => {

@@ -57,7 +57,7 @@ export async function checkPromptCoherence(
   }
 
   const authHeaders = await buildFirebaseAuthHeaders();
-  const response = await fetchFn("/api/check-prompt-coherence", {
+  const response = await fetchFn("/api/enhancement/prompt-coherence", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

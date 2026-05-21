@@ -187,9 +187,11 @@ describe("enhancement routes", () => {
   it("returns 400 for invalid coherence check requests", async () => {
     const { app } = createApp();
 
-    const response = await request(app).post("/check-prompt-coherence").send({
-      beforePrompt: "A runner in rain",
-    });
+    const response = await request(app)
+      .post("/enhancement/prompt-coherence")
+      .send({
+        beforePrompt: "A runner in rain",
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Validation failed");
