@@ -11,7 +11,8 @@
  * § 2.1 for the design rationale.
  */
 
-export type Surface = "suggestions" | "optimize" | "span-labeling";
+export const SURFACES = ["suggestions", "optimize", "span-labeling"] as const;
+export type Surface = (typeof SURFACES)[number];
 
 export interface VariantPreset {
   /** Short identifier — used in CLI flags AND as the modelVariant tag. */
@@ -105,11 +106,7 @@ export const VARIANTS: VariantPreset[] = [
 ];
 
 const VALID_ENV_KEY_SET = new Set<string>(VALID_ENV_KEYS);
-const VALID_SURFACES = new Set<Surface>([
-  "suggestions",
-  "optimize",
-  "span-labeling",
-]);
+const VALID_SURFACES = new Set<Surface>(SURFACES);
 
 /**
  * Asserts every preset in VARIANTS satisfies the authoring invariants.
