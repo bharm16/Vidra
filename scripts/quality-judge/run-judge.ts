@@ -23,6 +23,21 @@ import {
   type QualityScoredSurface,
 } from "./judge-event-types.js";
 
+export interface RunSummaryCounts {
+  fetched: number;
+  scored: number;
+  alreadyScored: number;
+  nonJudgeable: number;
+  failed: number;
+}
+
+export function formatRunSummary(
+  counts: RunSummaryCounts,
+  surface: QualityScoredSurface,
+): string {
+  return `[quality-judge] ${surface}: ${counts.fetched} fetched, ${counts.scored} scored, ${counts.alreadyScored} already-scored, ${counts.nonJudgeable} non-judgeable, ${counts.failed} failed.`;
+}
+
 export interface RunJudgeOptions {
   hoursBack: number;
   /**
