@@ -29,15 +29,19 @@ vi.mock("../posthog-query-client.js", () => ({
 import { runJudgeForSurface } from "../run-judge.js";
 
 describe("run-judge orchestrator", () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     emitMock.mockReset();
     shutdownMock.mockClear();
     judgeMock.mockReset();
     fetchEventsMock.mockReset();
     fetchScoredMock.mockReset();
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    logSpy.mockRestore();
     vi.clearAllMocks();
   });
 
@@ -192,24 +196,18 @@ describe("run-judge orchestrator", () => {
       costUsd: 0.003,
     });
 
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await runJudgeForSurface("optimize", {
+      hoursBack: 24,
+      userSampleRate: 1,
+    });
 
-    try {
-      await runJudgeForSurface("optimize", {
-        hoursBack: 24,
-        userSampleRate: 1,
-      });
-
-      const accountingLines = logSpy.mock.calls
-        .map((args) => String(args[0]))
-        .filter((line) => line.startsWith("[quality-judge] optimize:"));
-      expect(accountingLines.length).toBeGreaterThanOrEqual(1);
-      const accountingLine = accountingLines[accountingLines.length - 1];
-      expect(accountingLine).toBe(
-        "[quality-judge] optimize: 3 fetched, 1 scored, 1 already-scored, 1 non-judgeable, 0 failed.",
-      );
-    } finally {
-      logSpy.mockRestore();
-    }
+    const accountingLines = logSpy.mock.calls
+      .map((args) => String(args[0]))
+      .filter((line) => line.startsWith("[quality-judge] optimize:"));
+    expect(accountingLines.length).toBeGreaterThanOrEqual(1);
+    const accountingLine = accountingLines[accountingLines.length - 1];
+    expect(accountingLine).toBe(
+      "[quality-judge] optimize: 3 fetched, 1 scored, 1 already-scored, 1 non-judgeable, 0 failed.",
+    );
   });
 });

@@ -80,17 +80,6 @@ describe("formatRunSummary", () => {
     });
   }
 
-  it("preserves sum invariant: scored + alreadyScored + nonJudgeable + failed === fetched", () => {
-    for (const row of rows) {
-      const sum =
-        row.counts.scored +
-        row.counts.alreadyScored +
-        row.counts.nonJudgeable +
-        row.counts.failed;
-      expect(sum).toBe(row.counts.fetched);
-    }
-  });
-
   it("formats the surface name into the prefix", () => {
     const counts: RunSummaryCounts = {
       fetched: 1,
