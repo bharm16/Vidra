@@ -168,6 +168,31 @@ Both have regression tests in `scripts/quality-judge/calibration/__tests__/run-c
 
 See [`2026-05-15-quality-judge-calibration-seeding-design.md`](./2026-05-15-quality-judge-calibration-seeding-design.md) and [`../plans/2026-05-15-quality-judge-calibration-seeding.md`](../plans/2026-05-15-quality-judge-calibration-seeding.md) for the design and execution detail.
 
+### 4.1.5 Sub-project B (shipped 2026-05-21, partial pass)
+
+Scene-summary-first JSON output landed across 11 commits (specs/2026-05-15-suggestions-scene-summary-design.md, plans/2026-05-15-suggestions-scene-summary.md). Post-change baseline on synthetic suggestions (n=47 scored, calibrated judge ρ=0.755 anchor):
+
+| Dimension        | Pre-B (post-Phase-1) | Post-B    | Δ     | Floor  | Pass?            |
+| ---------------- | -------------------- | --------- | ----- | ------ | ---------------- |
+| relevance        | 3.57                 | **3.87**  | +0.30 | ≥ 4.3  | ❌ short by 0.43 |
+| categoryFidelity | 4.19                 | 4.51      | +0.32 | ≥ 4.0  | ✅               |
+| plausibility     | 4.70                 | 4.70      | 0.00  | ≥ 4.5  | ✅               |
+| diversity        | 3.83                 | 4.06      | +0.23 | ≥ 3.5  | ✅               |
+| qualityRange     | 3.77                 | 3.83      | +0.06 | ≥ 3.5  | ✅               |
+| **total**        | **20.06**            | **20.98** | +0.92 | ≥ 22.0 | ❌ short by 1.02 |
+| minTotal         | 5                    | 11        | +6    | —      | floor jumped     |
+
+**Mechanism works; emission rate caps the impact.** Four of five dimensions lifted; no regression below any floor. The worst-case score nearly doubled (5→11). But relevance — the dimension explicitly targeted by the scene-summary mechanism — moved only +0.30 against a target of +0.73. Root cause: Qwen via Groq emits `scene_summary` only ~36% of the time despite the prompt instruction (the field is documented in `properties` but not in `required` for the Groq variant after the 2026-05-15 fix). The mechanism fires for those ~36% of calls; the other ~64% emit suggestions without scene-narrative conditioning, so the lift averages down.
+
+**The minTotal jump (5→11) is the strongest signal that the mechanism does what the spec hypothesized:** when scene_summary fires, it eliminates the most egregious off-context failures — exactly the failure pattern the calibration data flagged.
+
+**Two implementation-time bugs surfaced and shipped as part of Sub-project B's deliverables:**
+
+- Initial Groq schema required `scene_summary`; Groq's json_object mode doesn't honor required-arrays like OpenAI strict mode does. First post-B synthetic run dropped 14 of 43 events to "Missing required field: scene_summary" validation errors. Fixed by moving `scene_summary` to `properties` only in the Groq variant; OpenAI strict keeps it required (decoding-level enforcement). Regression test in `server/src/utils/provider/schemas/__tests__/enhancement.regression.test.ts`.
+- `StructuredOutputEnforcer.enforceJSON` previously had no way to surface sibling fields from the parent object before unwrapping the suggestions array. Added an opt-in `captureSiblings` option that returns `{ value, siblings }`; default behavior unchanged for existing callers.
+
+**Next step:** see Sub-project B2 — push Qwen's scene_summary emission rate from ~36% toward 80%+ (either via stronger prompt language, a one-shot example, or model swap for the primary suggestions path).
+
 ### 4.2 GitHub Actions secrets
 
 `gh api repos/{owner}/{repo}/actions/secrets` currently returns `total_count: 0`. The nightly `Quality Judge` cron and the PR calibration gate workflows both fail silently without `POSTHOG_API_KEY` and `OPENAI_API_KEY` in repo secrets. Set both; verify a manual `workflow_dispatch` of the nightly cron completes and emits `quality.scored` events with `source=ci`.
