@@ -2,6 +2,8 @@
 
 Generates `source: "synthetic"` telemetry events for the three judgeable surfaces (suggestions, optimize, span-labeling) without booting the HTTP server. Each driver invokes the real production service code in-process; events flow into PostHog with the same shape real user traffic produces. See `docs/superpowers/specs/2026-05-10-source-discriminator-and-harness-design.md` for the original design.
 
+Sub-project #1 of the [Measurement Program](../../docs/superpowers/programs/measurement.md). Pre-launch the harness is the **only** way to produce operational telemetry — there are no real users yet.
+
 ## Quick start
 
 ```bash
@@ -14,6 +16,20 @@ npm run synthetic -- --only suggestions
 # Score the events afterward
 npm run judge:run -- --surface suggestions
 ```
+
+`POSTHOG_API_KEY` must be set in `.env` (loaded automatically). When unset, the harness runs in no-op mode — useful for dry-runs in CI and local-only smoke tests.
+
+### Event count expectations
+
+20 fixture prompts × 3 surfaces ≈ **165 events per full run**. Per-surface breakdown:
+
+| Surface       | Surface event           | LLM calls per prompt      |
+| ------------- | ----------------------- | ------------------------- |
+| `optimize`    | `optimize.completed`    | 4                         |
+| `suggestions` | `suggestions.completed` | 1                         |
+| `span-labels` | `label-spans.completed` | 1 (skipped on cache hits) |
+
+If a run lands materially below this, check that `POSTHOG_API_KEY` is set and that no surface short-circuited on a cache hit you didn't expect.
 
 ## Per-surface model swap
 
@@ -55,6 +71,14 @@ Cost note: each variant burns ~$0.30 in synthetic + judge calls. A 5-variant mat
 
 Presets live in `scripts/synthetic/variants.ts`. Add new presets by appending to the `VARIANTS` array; the registry validates env-var names against a whitelist at startup.
 
+## Fixtures
+
+`fixtures/prompts.json` contains 20 hand-picked prompts covering the span taxonomy (subject, camera, lighting, motion, style, action, setting). Refresh by editing the file directly when the taxonomy changes meaningfully — they're not generated. The suggestions fixture's `highlights[]` arrays (authored by Sub-project A's Layer 5 fix) are validated against `shared/taxonomy.ts` at startup via `utils/fixture-validation.ts`.
+
+## CI
+
+`.github/workflows/synthetic-harness.yml` runs on `workflow_dispatch`; the `schedule:` cron is committed but commented out. Uncomment to enable nightly baseline runs. The workflow only needs `POSTHOG_API_KEY` as a repo secret — no other configuration.
+
 ## Architecture
 
 - `run-harness.ts` — single-surface entry point. Reads `--only` + `--variant-tag` flags. Sequential per-surface driver invocations.
@@ -65,8 +89,19 @@ Presets live in `scripts/synthetic/variants.ts`. Add new presets by appending to
 - `run-matrix.ts` — matrix orchestrator. Subprocess per variant, sequential, doesn't abort on per-variant failure.
 - `report-matrix.ts` — post-matrix comparison report. HogQL query against PostHog grouped by `modelVariant`.
 
+### Why direct emission (not HTTP)
+
+The earlier HTTP version of this harness fired anonymous requests at production endpoints. That hit two problems:
+
+1. The endpoints require Firebase auth — anonymous requests get `401` and zero events emit.
+2. Going through HTTP exercises code paths (auth, CORS, rate limiting) that don't help validate the **telemetry pipeline + dashboards**, which is what we actually want.
+
+Direct emission constructs the telemetry services in-process and emits events through the same code path real requests use. The events that land in PostHog are structurally identical to production events — minus the HTTP layer the harness doesn't care about.
+
 ## Related docs
 
+- Measurement Program (parent): `docs/superpowers/programs/measurement.md`
 - Spec: `docs/superpowers/specs/2026-05-21-synthetic-model-matrix-design.md`
 - Plan: `docs/superpowers/plans/2026-05-21-synthetic-model-matrix.md`
+- Source discriminator design: `docs/superpowers/specs/2026-05-10-source-discriminator-and-harness-design.md`
 - Quality judge: `scripts/quality-judge/` (run-judge.ts source)
