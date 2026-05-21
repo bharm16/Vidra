@@ -28,7 +28,9 @@ const TEMPLATE_VERSION = "v3.0";
 // Read the same env vars modelConfig.ts:391-392 routes against, so the
 // telemetry annotation reflects the actual model aiService used. Default
 // to the same fallback as modelConfig.ts so behavior matches when no
-// override is set.
+// override is set. Evaluated once at module import — the matrix
+// orchestrator must set these in the spawned subprocess's env before
+// the import resolves, not mutate process.env in-process.
 const PROVIDER = process.env.SPAN_PROVIDER ?? "gemini";
 const MODEL = process.env.SPAN_MODEL ?? "gemini-2.5-flash";
 

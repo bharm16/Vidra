@@ -10,6 +10,7 @@
  *   npm run synthetic                       # all 3 surfaces
  *   npm run synthetic -- --only optimize    # subset
  *   npm run synthetic -- --only optimize,suggestions
+ *   npm run synthetic -- --variant-tag qwen   # tag events with modelVariant dimension
  *
  * Requires POSTHOG_API_KEY in env (loaded from .env automatically). When
  * unset, the PostHogClient returns a no-op stub — runs cleanly but no events
