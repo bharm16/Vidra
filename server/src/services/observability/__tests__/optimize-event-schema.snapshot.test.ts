@@ -74,6 +74,7 @@ describe("optimize.completed event schema (contract)", () => {
           "llmCallCount",
           "lockedSpanCount",
           "mode",
+          "modelVariant",
           "outcome",
           "outputLength",
           "outputPrompt",

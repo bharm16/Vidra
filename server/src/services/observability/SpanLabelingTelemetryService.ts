@@ -24,6 +24,11 @@ export interface SpanLabelingCompleteSummary {
   inputText: string;
   /** The labeled spans the model returned. Empty on error. */
   spans: SpanLabelSpan[];
+  /**
+   * Optional variant tag set by Sub-project E's matrix runs. Null when
+   * the synthetic harness runs without `--variant-tag`.
+   */
+  modelVariant?: string | null;
 }
 
 interface SpanLabelingEventProperties {
@@ -40,6 +45,7 @@ interface SpanLabelingEventProperties {
   model: string | null;
   inputText: string;
   spans: SpanLabelSpan[];
+  modelVariant?: string | null;
 }
 
 export class SpanLabelingTrace {
@@ -85,6 +91,7 @@ export class SpanLabelingTrace {
       model: summary.model,
       inputText: summary.inputText,
       spans: summary.spans,
+      modelVariant: summary.modelVariant ?? null,
     };
 
     try {

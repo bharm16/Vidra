@@ -56,6 +56,7 @@ describe("label-spans.completed event schema (contract)", () => {
           "durationMs",
           "inputText",
           "model",
+          "modelVariant",
           "outcome",
           "promptLength",
           "provider",

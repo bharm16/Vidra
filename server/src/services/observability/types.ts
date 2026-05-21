@@ -24,6 +24,11 @@ export interface OptimizeTraceCompleteSummary {
   inputPrompt: string;
   /** Final optimized output. Null on error/abort when no output was produced. */
   outputPrompt: string | null;
+  /**
+   * Optional variant tag set by Sub-project E's matrix runs. Null when
+   * the synthetic harness runs without `--variant-tag`.
+   */
+  modelVariant?: string | null;
 }
 
 export interface OptimizeEventStages {
@@ -57,6 +62,7 @@ export interface OptimizeEventProperties {
   /** Content fields — let dashboards show what was actually produced (vs counts only). */
   inputPrompt: string;
   outputPrompt: string | null;
+  modelVariant?: string | null;
 }
 
 // ----- LLM call telemetry -----
@@ -131,6 +137,12 @@ export interface SuggestionsTraceCompleteSummary {
    * Null when the LLM omitted it or a non-guided engine mode ran.
    */
   sceneSummary?: string | null;
+  /**
+   * Optional variant tag set by Sub-project E's matrix runs. Null when
+   * the synthetic harness runs without `--variant-tag`. Used by PostHog
+   * dashboards to group events by which model produced them.
+   */
+  modelVariant?: string | null;
 }
 
 export interface SuggestionsEventStages {
@@ -174,4 +186,5 @@ export interface SuggestionsEventProperties {
    * the LLM omitted it or a non-guided engine mode ran.
    */
   sceneSummary?: string | null;
+  modelVariant?: string | null;
 }

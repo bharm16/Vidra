@@ -85,6 +85,7 @@ export class SuggestionsTrace {
       fullPrompt: summary.fullPrompt,
       suggestions: summary.suggestions,
       sceneSummary: summary.sceneSummary ?? null,
+      modelVariant: summary.modelVariant ?? null,
     };
 
     try {

@@ -89,6 +89,7 @@ export class OptimizeTrace {
       stages,
       inputPrompt: summary.inputPrompt,
       outputPrompt: summary.outputPrompt,
+      modelVariant: summary.modelVariant ?? null,
     };
 
     try {
