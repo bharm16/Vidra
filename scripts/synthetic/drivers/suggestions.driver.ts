@@ -30,6 +30,7 @@ import {
 interface DriverDeps {
   suggestions: SuggestionsTelemetryService;
   aiService: AIModelService;
+  variantTag: string | null;
 }
 
 const POLICY_VERSION = "2026-03-v2a";
@@ -128,6 +129,7 @@ export async function driveSuggestions(
             fullPrompt: prompt.text,
             suggestions: suggestionTexts,
             sceneSummary: execution.debug.sceneSummary ?? null,
+            modelVariant: deps.variantTag,
           });
           surfaceEvents++;
           const dbg = execution.debug;
@@ -154,6 +156,7 @@ export async function driveSuggestions(
             highlightedText: highlight.text,
             fullPrompt: prompt.text,
             suggestions: [],
+            modelVariant: deps.variantTag,
           });
           console.warn(
             `[suggestions] ${prompt.id}/h${h} errored: ${(err as Error).message}`,

@@ -38,11 +38,13 @@ type Surface = "optimize" | "suggestions" | "span-labels";
 
 interface CliConfig {
   surfaces: Set<Surface>;
+  variantTag: string | null;
 }
 
 function parseArgs(argv: string[]): CliConfig {
   const surfaces = new Set<Surface>();
   let only: string | undefined;
+  let variantTag: string | null = null;
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--only") {
       only = argv[++i];
@@ -50,6 +52,15 @@ function parseArgs(argv: string[]): CliConfig {
         console.error("--only requires a value (e.g., --only optimize)");
         process.exit(2);
       }
+    } else if (argv[i] === "--variant-tag") {
+      const value = argv[++i];
+      if (!value) {
+        console.error(
+          "--variant-tag requires a value (e.g., --variant-tag qwen)",
+        );
+        process.exit(2);
+      }
+      variantTag = value;
     }
   }
   if (only) {
@@ -71,7 +82,7 @@ function parseArgs(argv: string[]): CliConfig {
     surfaces.add("suggestions");
     surfaces.add("span-labels");
   }
-  return { surfaces };
+  return { surfaces, variantTag };
 }
 
 async function main(): Promise<void> {
@@ -102,22 +113,38 @@ async function main(): Promise<void> {
   };
   const aiService = createSyntheticAIService({ llmCallTelemetry: llm });
 
+  const variantSuffix = config.variantTag
+    ? ` [variant=${config.variantTag}]`
+    : "";
   console.log(
-    `Running synthetic harness with ${prompts.length} prompts. Surfaces: ${[...config.surfaces].join(", ")}`,
+    `Running synthetic harness with ${prompts.length} prompts${variantSuffix}. Surfaces: ${[...config.surfaces].join(", ")}`,
   );
 
   try {
     const summaries: DriverSummary[] = [];
     if (config.surfaces.has("optimize")) {
-      summaries.push(await driveOptimize({ optimize, aiService }, prompts));
+      summaries.push(
+        await driveOptimize(
+          { optimize, aiService, variantTag: config.variantTag },
+          prompts,
+        ),
+      );
     }
     if (config.surfaces.has("suggestions")) {
       summaries.push(
-        await driveSuggestions({ suggestions, aiService }, prompts),
+        await driveSuggestions(
+          { suggestions, aiService, variantTag: config.variantTag },
+          prompts,
+        ),
       );
     }
     if (config.surfaces.has("span-labels")) {
-      summaries.push(await driveSpanLabels({ spanLabels, aiService }, prompts));
+      summaries.push(
+        await driveSpanLabels(
+          { spanLabels, aiService, variantTag: config.variantTag },
+          prompts,
+        ),
+      );
     }
 
     console.log("\n=== Summary ===");

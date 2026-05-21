@@ -21,13 +21,16 @@ import {
 interface DriverDeps {
   spanLabels: SpanLabelingTelemetryService;
   aiService: AIModelService;
+  variantTag: string | null;
 }
 
 const TEMPLATE_VERSION = "v3.0";
-const PROVIDER = "gemini";
-// Matches the SPAN_MODEL default in server/src/config/modelConfig.ts so synthetic
-// label-spans.completed events carry the same model dimension prod emits.
-const MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+// Read the same env vars modelConfig.ts:391-392 routes against, so the
+// telemetry annotation reflects the actual model aiService used. Default
+// to the same fallback as modelConfig.ts so behavior matches when no
+// override is set.
+const PROVIDER = process.env.SPAN_PROVIDER ?? "gemini";
+const MODEL = process.env.SPAN_MODEL ?? "gemini-2.5-flash";
 
 export async function driveSpanLabels(
   deps: DriverDeps,
@@ -70,6 +73,7 @@ export async function driveSpanLabels(
           model: MODEL,
           inputText: prompt.text,
           spans,
+          modelVariant: deps.variantTag,
         });
         surfaceEvents++;
         console.log(
@@ -84,6 +88,7 @@ export async function driveSpanLabels(
           model: MODEL,
           inputText: prompt.text,
           spans: [],
+          modelVariant: deps.variantTag,
         });
         console.warn(
           `[span-labels] ${prompt.id} errored: ${(err as Error).message}`,

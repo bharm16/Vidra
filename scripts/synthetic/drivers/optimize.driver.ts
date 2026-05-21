@@ -22,6 +22,7 @@ import {
 interface DriverDeps {
   optimize: OptimizeTelemetryService;
   aiService: AIModelService;
+  variantTag: string | null;
 }
 
 const TARGET_MODELS = ["sora", "veo", "kling", "luma", "runway"] as const;
@@ -80,6 +81,7 @@ export async function driveOptimize(
           useConstitutionalAI: true,
           inputPrompt: prompt.text,
           outputPrompt,
+          modelVariant: deps.variantTag,
         });
         surfaceEvents++;
         console.log(
@@ -99,6 +101,7 @@ export async function driveOptimize(
           useConstitutionalAI: true,
           inputPrompt: prompt.text,
           outputPrompt: "",
+          modelVariant: deps.variantTag,
         });
         console.warn(
           `[optimize] ${prompt.id} errored: ${(err as Error).message}`,
