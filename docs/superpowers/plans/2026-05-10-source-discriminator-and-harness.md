@@ -6,7 +6,7 @@
 **Program:** Part of the [Measurement Program](../programs/measurement.md) — sub-project #1
 **North-star context:** Vidra has zero real users and no production deploy yet. The CI cron lands disabled-by-default; local harness is the day-one win.
 
-**Goal:** Add a `source` discriminator (`user`/`synthetic`/`ci`/`dev`/`unknown`) to every operational telemetry event, instrument `/llm/label-spans` end-to-end with a new `label-spans.completed` event, ship a synthetic-traffic harness covering Optimize + Suggestions + Span Labeling, and build three new per-component health dashboards.
+**Goal:** Add a `source` discriminator (`user`/`synthetic`/`ci`/`dev`/`unknown`) to every operational telemetry event, instrument `/api/llm/label-spans` end-to-end with a new `label-spans.completed` event, ship a synthetic-traffic harness covering Optimize + Suggestions + Span Labeling, and build three new per-component health dashboards.
 
 **Architecture:** Source resolution happens once per request in a new `telemetrySourceMiddleware` that extends the existing `requestContext` AsyncLocalStorage. The `PostHogClient.capture()` wrapper reads source from ALS and stamps it on every emitted event — telemetry services stay source-unaware. Frontend sets `X-Telemetry-Source: user` via a build-time interceptor. The harness is a TS script firing anonymous HTTP requests against a configurable target URL (`VIDRA_API_URL`), runnable locally today; the GitHub Actions workflow ships but its `schedule:` trigger stays commented out until a deployed environment exists.
 
@@ -1030,7 +1030,7 @@ Inside the existing `router.post("/", ...)` handler (the non-stream variant), wr
 ```typescript
 router.post(
   "/",
-  requestCoalescing.middleware({ keyScope: "/llm/label-spans" }),
+  requestCoalescing.middleware({ keyScope: "/api/llm/label-spans" }),
   async (req: Request, res: Response) => {
     const parsed = parseLabelSpansRequest(req.body);
     if (!parsed.ok) {
@@ -1192,7 +1192,7 @@ git add server/src/services/observability/SpanLabelingTelemetryService.ts \
 git commit -m "feat(source-discrim): label-spans.completed surface event
 
 Adds a SpanLabelingTelemetryService mirroring SuggestionsTelemetryService.
-One label-spans.completed event fires per /llm/label-spans request,
+One label-spans.completed event fires per /api/llm/label-spans request,
 carrying duration, span count, cache hit, provider/model, and outcome.
 
 Schema locked by a snapshot test. The new telemetry service is wired into
@@ -1793,7 +1793,7 @@ export async function driveSuggestions(
     // Pick the first tag as the "highlighted category" — small but realistic
     const category = prompt.tags[0] ?? "subject";
     const res = await sendSyntheticRequest(
-      `${baseUrl}/api/get-enhancement-suggestions`,
+      `${baseUrl}/api/enhancement/suggestions`,
       {
         prompt: prompt.text,
         selectedSpan: { text: prompt.text.split(" ")[0] ?? "shot", category },
@@ -1831,7 +1831,7 @@ export async function driveSpanLabels(
   const results: { prompt: HarnessPrompt; res: HarnessRequestResult }[] = [];
 
   for (const prompt of prompts) {
-    const res = await sendSyntheticRequest(`${baseUrl}/llm/label-spans`, {
+    const res = await sendSyntheticRequest(`${baseUrl}/api/llm/label-spans`, {
       text: prompt.text,
     });
     results.push({ prompt, res });
@@ -1920,13 +1920,11 @@ describe("synthetic harness drivers — smoke", () => {
     expect(summary.successCount).toBe(PROMPTS.length);
   });
 
-  it("driveSuggestions hits /api/get-enhancement-suggestions with the right header", async () => {
+  it("driveSuggestions hits /api/enhancement/suggestions with the right header", async () => {
     await driveSuggestions("http://localhost:3001", PROMPTS);
     expect(fetchSpy).toHaveBeenCalledTimes(PROMPTS.length);
     for (const call of fetchSpy.mock.calls) {
-      expect(call[0]).toBe(
-        "http://localhost:3001/api/get-enhancement-suggestions",
-      );
+      expect(call[0]).toBe("http://localhost:3001/api/enhancement/suggestions");
       const init = call[1] as RequestInit;
       expect(
         (init.headers as Record<string, string>)["X-Telemetry-Source"],
@@ -1934,11 +1932,11 @@ describe("synthetic harness drivers — smoke", () => {
     }
   });
 
-  it("driveSpanLabels hits /llm/label-spans with the right header", async () => {
+  it("driveSpanLabels hits /api/llm/label-spans with the right header", async () => {
     await driveSpanLabels("http://localhost:3001", PROMPTS);
     expect(fetchSpy).toHaveBeenCalledTimes(PROMPTS.length);
     for (const call of fetchSpy.mock.calls) {
-      expect(call[0]).toBe("http://localhost:3001/llm/label-spans");
+      expect(call[0]).toBe("http://localhost:3001/api/llm/label-spans");
       const init = call[1] as RequestInit;
       expect(
         (init.headers as Record<string, string>)["X-Telemetry-Source"],
@@ -2116,7 +2114,7 @@ unset VIDRA_API_URL
 npm run synthetic -- --only span-labels
 ```
 
-Expected: 20 requests fire against `/llm/label-spans`, most succeed, summary printed. If many requests error, the request shape is wrong — debug before continuing.
+Expected: 20 requests fire against `/api/llm/label-spans`, most succeed, summary printed. If many requests error, the request shape is wrong — debug before continuing.
 
 - [ ] **Step 4: Verify events landed in PostHog**
 
@@ -2293,7 +2291,7 @@ Wait ~30 seconds for PostHog ingestion.
 Use `mcp__posthog__dashboard-create`:
 
 - name: `"Suggestions Health"`
-- description: `"Per-call health of /api/get-enhancement-suggestions (click-to-enhance) — latency, cache hit, outcome, suggestions returned."`
+- description: `"Per-call health of /api/enhancement/suggestions (click-to-enhance) — latency, cache hit, outcome, suggestions returned."`
 
 Record the returned dashboard ID.
 
@@ -2546,7 +2544,7 @@ Append after the existing event documentation:
 
 ## Span Labeling telemetry (`label-spans.completed`)
 
-**What it answers:** how long does `/llm/label-spans` take per call, cache hit rate, which provider handled it, how many spans were returned, error breakdown by stage.
+**What it answers:** how long does `/api/llm/label-spans` take per call, cache hit rate, which provider handled it, how many spans were returned, error breakdown by stage.
 
 **Project / dashboard:** Same project (`417445`). Dashboard ["Span Labeling Health" (id `<TILE_ID_FROM_TASK_17>`)](https://us.posthog.com/project/417445/dashboard/<TILE_ID_FROM_TASK_17>).
 
@@ -2706,14 +2704,14 @@ These are **adaptation points**, not placeholders — the code is concrete, but 
 
 ## Risks specific to execution
 
-| Risk                                                                                             | Mitigation                                                                                                         |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `shared/` alias not configured in tsconfig                                                       | Task 0 step 1 catches this before any real work.                                                                   |
-| `RequestContext` type narrows in a future refactor and breaks source-stamping                    | Task 2 documents the dependency on `Record<string, unknown>`; if it narrows, this plan needs `source` field added. |
-| `requestCoalescing` middleware in labelSpansRoute may swallow source                             | If the harness shows `tagged_unknown > 0` on /llm/label-spans, suspect coalescing — test by bypassing it locally.  |
-| Snapshot tests in middleware/PostHogClient tests interfere with vi.mock hoisting                 | Task 5 places the mock at module scope; if Vitest complains, switch to `beforeAll` + manual injection.             |
-| Smoke testing harness requires a running server, but worktrees can't boot one                    | If running in a worktree, skip Task 15 step 3 — defer harness validation to the main checkout.                     |
-| PostHog MCP session loses org/project context between tasks                                      | Task 17 step 1 resets context; repeat if a dashboard create fails with 403.                                        |
-| `result.meta.provider` doesn't exist on the labelSpans coordinator return                        | Documented in "Notes on field-name adaptation" above. Pass `null` and add a follow-up.                             |
-| Integration test gate fails after middleware mount                                               | Task 6 step 1 catches it before commit. Most likely cause: the new middleware throws when `existing` is undefined. |
-| Anonymous request path on /api/get-enhancement-suggestions has stricter validation than expected | Task 15 step 3 catches it — if the harness shows 4xx errors, validate the request body against the Zod schema.     |
+| Risk                                                                                         | Mitigation                                                                                                            |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `shared/` alias not configured in tsconfig                                                   | Task 0 step 1 catches this before any real work.                                                                      |
+| `RequestContext` type narrows in a future refactor and breaks source-stamping                | Task 2 documents the dependency on `Record<string, unknown>`; if it narrows, this plan needs `source` field added.    |
+| `requestCoalescing` middleware in labelSpansRoute may swallow source                         | If the harness shows `tagged_unknown > 0` on /api/llm/label-spans, suspect coalescing — test by bypassing it locally. |
+| Snapshot tests in middleware/PostHogClient tests interfere with vi.mock hoisting             | Task 5 places the mock at module scope; if Vitest complains, switch to `beforeAll` + manual injection.                |
+| Smoke testing harness requires a running server, but worktrees can't boot one                | If running in a worktree, skip Task 15 step 3 — defer harness validation to the main checkout.                        |
+| PostHog MCP session loses org/project context between tasks                                  | Task 17 step 1 resets context; repeat if a dashboard create fails with 403.                                           |
+| `result.meta.provider` doesn't exist on the labelSpans coordinator return                    | Documented in "Notes on field-name adaptation" above. Pass `null` and add a follow-up.                                |
+| Integration test gate fails after middleware mount                                           | Task 6 step 1 catches it before commit. Most likely cause: the new middleware throws when `existing` is undefined.    |
+| Anonymous request path on /api/enhancement/suggestions has stricter validation than expected | Task 15 step 3 catches it — if the harness shows 4xx errors, validate the request body against the Zod schema.        |
