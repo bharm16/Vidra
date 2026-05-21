@@ -77,9 +77,23 @@ export async function runJudgeForSurface(
       JUDGE_MODEL_NAME,
     );
 
+    const counts: RunSummaryCounts = {
+      fetched: events.length,
+      scored: 0,
+      alreadyScored: 0,
+      nonJudgeable: 0,
+      failed: 0,
+    };
+
     for (const event of events) {
-      if (seen.has(event.uuid)) continue;
-      if (!isJudgeable(event, surface)) continue;
+      if (seen.has(event.uuid)) {
+        counts.alreadyScored++;
+        continue;
+      }
+      if (!isJudgeable(event, surface)) {
+        counts.nonJudgeable++;
+        continue;
+      }
 
       const startedAt = Date.now();
       try {
@@ -107,13 +121,18 @@ export async function runJudgeForSurface(
             source: event.properties.source ?? "unknown",
           },
         });
+        counts.scored++;
       } catch (err) {
+        counts.failed++;
         // eslint-disable-next-line no-console
         console.warn(
           `[quality-judge] ${surface} ${event.uuid}: judge failed: ${String(err)}`,
         );
       }
     }
+
+    // eslint-disable-next-line no-console
+    console.log(formatRunSummary(counts, surface));
   } finally {
     await emitter.shutdown();
   }
