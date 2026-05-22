@@ -4,27 +4,29 @@ You are picking up the Vidra Measurement Program at a clear pause point. This do
 
 **Canonical program doc:** [`docs/superpowers/programs/measurement.md`](../programs/measurement.md) — the reordering log there is the audit trail for every prior decision and is more authoritative than this handoff if they disagree.
 
+**Important update vs. an earlier draft of this doc:** Sub-project D was REFRAMED on 2026-05-22 after a diagnostic session refuted the "labeler under-segmentation bug" hypothesis. The actual issue is **Layer 6 of the measurement-system false-signal hunt — pre-rewrite synthetic-pool events polluted the calibration sample**. There is no labeler bug to fix. Sub-project D's new scope is a calibration reseed. The design spec is already written at [`docs/superpowers/specs/2026-05-22-calibration-reseed-design.md`](../specs/2026-05-22-calibration-reseed-design.md) — read that before starting D.
+
 ---
 
 ## TL;DR — What state are you in?
 
 The Measurement Program has shipped six sub-projects so far. Three remain (B2, C, D) plus two small deferred follow-ups (Gemini JSON parse flakiness, judge dedup race). Sub-project E (matrix infrastructure) just shipped, which means **per-surface model swap and comparison is now a first-class capability**. Use it.
 
-| Sub-project                                 | Status                | Notes                                                                                         |
-| ------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
-| #0 Eval Visibility                          | ✅ shipped            |                                                                                               |
-| #1 Source Discriminator + Synthetic Harness | ✅ shipped            |                                                                                               |
-| #3 LLM Judge Framework                      | ✅ shipped            |                                                                                               |
-| Layer 5 fixture fix                         | ✅ shipped 2026-05-14 | Suggestions fixture self-consistency                                                          |
-| **A** Calibration seeding                   | ✅ partial pass       | optimize ρ=0.787, suggestions ρ=0.755, span-labeling ρ=0.688 (misses 0.7 floor by 0.012)      |
-| **B** Suggestions scene-summary             | ✅ partial pass       | relevance 3.57→3.87 (+0.30 vs +0.73 target), minTotal 5→11; Qwen emission rate ~36% caps lift |
-| **E** Matrix infrastructure                 | ✅ shipped 2026-05-21 | `npm run synthetic:matrix` + `:report-matrix`; verified end-to-end                            |
-| **B2** Push Qwen emission                   | ⏳ next               | Empirically grounded by Sub-project E's matrix data                                           |
-| **C** Optimize tail-truncation              | ⏳ open               | Clearest-cut bug (mid-sentence truncation)                                                    |
-| **D** Span-labeling under-segmentation      | ⏳ open               | Would also close calibration ρ gap (0.688 → ≥ 0.7)                                            |
-| #2/#4/#5/#6/#7                              | not started           | Per the Measurement Program decomposition                                                     |
+| Sub-project                                 | Status                | Notes                                                                                                                  |
+| ------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| #0 Eval Visibility                          | ✅ shipped            |                                                                                                                        |
+| #1 Source Discriminator + Synthetic Harness | ✅ shipped            |                                                                                                                        |
+| #3 LLM Judge Framework                      | ✅ shipped            |                                                                                                                        |
+| Layer 5 fixture fix                         | ✅ shipped 2026-05-14 | Suggestions fixture self-consistency                                                                                   |
+| **A** Calibration seeding                   | ✅ partial pass       | optimize ρ=0.787, suggestions ρ=0.755, span-labeling ρ=0.688 (misses 0.7 floor by 0.012)                               |
+| **B** Suggestions scene-summary             | ✅ partial pass       | relevance 3.57→3.87 (+0.30 vs +0.73 target), minTotal 5→11; Qwen emission rate ~36% caps lift                          |
+| **E** Matrix infrastructure                 | ✅ shipped 2026-05-21 | `npm run synthetic:matrix` + `:report-matrix`; verified end-to-end                                                     |
+| **B2** Push Qwen emission                   | ⏳ next               | Empirically grounded by Sub-project E's matrix data                                                                    |
+| **C** Optimize tail-truncation              | ⏳ open               | Clearest-cut bug (mid-sentence truncation)                                                                             |
+| **D** **Calibration reseed (Layer 6)**      | ⏳ spec ready         | Reframed 2026-05-22 — no labeler bug; reseed cal w/ `MIN_EVENT_TIMESTAMP` filter. See spec link in § D below. ~1.5-2h. |
+| #2/#4/#5/#6/#7                              | not started           | Per the Measurement Program decomposition                                                                              |
 
-**Recommended next move:** see [§ Recommended sequence](#recommended-sequence) below. Short version: Sub-project C first (clearest bug, cheapest ship), then D (two-birds-one-stone for calibration), then B2 (now has real comparison data to inform).
+**Recommended next move:** see [§ Recommended sequence](#recommended-sequence) below. Short version: F2 (15-min log-line fix) → Sub-project D (calibration reseed, spec ready, ~1.5-2h) → Sub-project C (optimize tail-truncation, ~half day) → Sub-project B2 (Qwen emission, now empirically grounded). D moves earlier than the original draft because the spec is already written and it's the prerequisite for trusting B2/C measurement deltas.
 
 ---
 
@@ -51,6 +53,8 @@ These principles were earned across Sub-projects A → E. Read them. The same fa
 9. **Don't attribute Claude in this project.** No `Co-Authored-By` trailer, no "Generated with Claude Code" footer, no AI signatures in files / commits / PRs.
 
 10. **Always recommend with every question.** When you give the user options, the first one is your recommendation and it ends with "(Recommended)" — never neutral framing.
+
+11. **Calibration samples can span product versions silently** (Layer 6, discovered 2026-05-22). If you sample events from PostHog across a window that crossed a harness/product rewrite, your sample mixes pre-rewrite and post-rewrite outputs but the telemetry annotation doesn't distinguish them — the `provider`/`model` fields on pre-rewrite events were stamped even though no LLM was called. The fix is a `MIN_EVENT_TIMESTAMP` cutoff constant in the sampler. The deeper lesson: **measurement infrastructure has its own version-vs-data lineage problem; the events PostHog stores today don't know which version of the harness produced them. Two follow-ups (F5/F6) would fix the lineage gap at the schema level; until they ship, sampler-side cutoffs are the workaround.**
 
 ---
 
@@ -87,7 +91,7 @@ Gemini's lower n is a pre-existing JSON-mode flakiness in `EnhancementV2Engine._
 
 ### Calibrated judge
 
-GPT-4o judge is anchored at Spearman ρ ≥ 0.7 for two of three surfaces (optimize 0.787, suggestions 0.755). Span-labeling is at 0.688 — close, but it's a "judge-vs-Claude-labels" cross-model anchor rather than human-anchored. Sub-project D's product fix is expected to close the ρ gap as a side effect (the bifurcated old-vs-new span-labeling outputs in the calibration sample go away once D lands).
+GPT-4o judge is anchored at Spearman ρ ≥ 0.7 for two of three surfaces (optimize 0.787, suggestions 0.755). Span-labeling is at 0.688 — close, but the 2026-05-22 diagnostic proved this is **not a labeler problem**. The calibration sample (taken 2026-05-15) included pre-harness-rewrite events where the harness emitted canned `synthesizeSpans()` window-fragment content — Claude scored those low and Claude-vs-GPT-4o disagreement on fake content drove ρ down. Sub-project D's new scope re-seeds calibration from post-`4bf218dd` events only. The new ρ will be honest. Until D lands, treat span-labeling absolute ρ skeptically (rank-correlation pattern is still informative, but the 0.688 figure is "Claude scoring fake outputs."). All labels are still Claude-authored (cross-model agreement check), not human-anchored — see F3.
 
 ---
 
@@ -150,32 +154,39 @@ This is observably a real bug regardless of rubric interpretation — mid-senten
 
 **Estimated effort:** ~half day. Smallest scope of the three open sub-projects.
 
-### Sub-project D: Span-labeling under-segmentation
+### Sub-project D: Calibration reseed (Layer 6 — REFRAMED 2026-05-22)
 
-**Why it matters:** Span-labeling scored 22.79/25 in the pre-Sub-project-E baseline. Weakest dimension: `coverage` at 4.29. The pattern: the Gemini-2.5-flash labeler chunks multiple distinct concepts into one span AND misses action verbs.
+**Spec:** [`docs/superpowers/specs/2026-05-22-calibration-reseed-design.md`](../specs/2026-05-22-calibration-reseed-design.md) — read this first. Self-contained; tells you exactly what to change.
 
-Examples from the calibration set:
+**Why the scope changed:** the original handoff framed D as "fix span-labeling under-segmentation." A diagnostic session on 2026-05-22 (agent `a6c5046dcaf48639c`) refuted that hypothesis. The actual story:
 
-- "missed action 'cuts through'" / "missed 'steamed milk' as a potential span" — verb phrases dropped
-- "should be split: 'symmetrical composition' and 'pastel palette'" — multi-concept lumping
-- "'abandoned 1950s diner' and 'overgrown with vines' could be individually labeled"
+- Sub-project A's calibration sampler (`scripts/quality-judge/calibration/select-samples.ts`) used a 7-day PostHog lookback when run on 2026-05-15. That window spanned commit `4bf218dd` (2026-05-14T23:16:39Z), which replaced canned `synthesizeSpans()` / canned optimize / canned suggestions helpers with live `AIModelService` calls.
+- Pre-`4bf218dd` events were emitted with `provider="gemini", model="gemini-2.5-flash"` annotations even though no LLM was called — the harness fabricated those fields. Content was 3-word-window slicing with cycling category tags.
+- The span-labeling calibration entries 0-9 were Claude scoring those fake window-fragment outputs (correctly low — 5-11/25). Entries 10-19 were Claude scoring real Gemini output (21-25/25). The judge's "disagreement" with Claude was disagreement about how to score fake content, not about labeler quality.
+- Optimize and suggestions calibrations are likely polluted by the same lookback overlap — Sub-project D re-seeds all three unconditionally.
 
-**Two-birds-one-stone:** D's product fix is expected to remove the bifurcation in the span-labeling calibration sample (entries 0-9 emit window-fragment outputs scored 5-11; entries 10-19 emit clean semantic spans scored 21-25). Once the bifurcation goes away, the calibration ρ should rise from 0.688 → ≥ 0.7 as a side effect. Verify this by re-running `npm run judge:calibrate` after D ships.
+This is **Layer 6** of the false-signal hunt: pre-rewrite synthetic-pool events polluting post-rewrite calibration samples.
 
-**Likely fix location:**
+**What to do (~1.5-2h, mostly subagent labeling):**
 
-- `server/src/llm/span-labeling/SpanLabelingService.ts` — Gemini template (v3.0 → v3.1)
-- The template likely needs: explicit "label action verbs" instruction, "prefer multiple smaller spans over one large span", maybe a few-shot example showing the split pattern
+1. Add `MIN_EVENT_TIMESTAMP = "2026-05-14T23:16:39Z"` const to `scripts/quality-judge/calibration/select-samples.ts` with explanatory comment.
+2. Modify `fetchScoredRows` and `fetchSourceRows` to add `AND timestamp > '${MIN_EVENT_TIMESTAMP}'` to both HogQL queries.
+3. Re-run `select-samples.ts` to overwrite all three `*.calibration.json` files with post-cutoff stubs.
+4. Dispatch three sequential labeling subagents (one per surface), each receiving ONLY the rubric prose + the 20 stubs (no prior calibration data, no judge scores, no surface-level priors). Same labeling discipline as Sub-project A.
+5. Run `npm run judge:calibrate`; record the new ρ values.
+6. Update the Measurement Program reordering log with the 2026-05-22 Layer 6 entry and the new ρ values.
 
-**Recommended verification path:**
+**Success criterion is NOT ρ ≥ 0.7 — it's just "new ρ values are recorded honestly."** If span-labeling is still < 0.7 after the reseed, that surfaces a different real issue (rubric drift, judge instability, residual labeler quality) — open a follow-up sub-project for it. Conflating "pollution removed" with "ρ acceptable" was the original mistake.
 
-- Update template to v3.1
-- Run `npm run synthetic -- --only span-labels`
-- Run `npm run judge:run -- --surface span-labeling`
-- Compare coverage dimension (target: 4.29 → 4.7+)
-- Re-run `npm run judge:calibrate` and confirm span-labeling ρ ≥ 0.7
+**Files in scope:**
 
-**Estimated effort:** ~1 day. Higher uncertainty than C because prompt-engineering iteration may need multiple rounds.
+- `scripts/quality-judge/calibration/select-samples.ts` (sampler + new const)
+- `scripts/quality-judge/calibration/*.calibration.json` (overwritten in place; git history preserves old)
+- `docs/superpowers/programs/measurement.md` (new reordering-log entry)
+
+**Out of scope:** any labeler code change (`server/src/llm/span-labeling/`), any telemetry-schema discriminator field (`harnessVersion` / `source: "synthetic-pool"`) — that's F5, and any historical-event backfill — that's F6. Both deferred per the spec.
+
+**Why D moves earlier in the recommended sequence:** the spec is already written. Until D lands, every measurement comparison (B2's emission-rate matrix, C's tail-truncation matrix) is being benchmarked against a polluted ρ. D is the prerequisite for trusting the next two sub-projects' deltas as "real product change" rather than "Claude vs polluted judge."
 
 ---
 
@@ -227,34 +238,56 @@ Examples from the calibration set:
 
 **Estimated effort:** 5 minutes once you have credentials access.
 
+### F5: Telemetry-schema discriminator for harness version
+
+**Where:** Event payloads emitted by `scripts/synthetic/drivers/*.driver.ts` and consumed by everything downstream.
+
+**Symptom:** The harness can emit events under multiple substantively different code paths (canned content vs. live LLM calls, different prompt-template versions, different model providers). Today, an event's `provider`/`model` fields are stamped by the driver but the underlying _harness behavior_ (canned vs. live) isn't recorded anywhere. This is the root cause of Layer 6 — Sub-project A's calibration sample couldn't distinguish pre/post-`4bf218dd` events without a manual git-log archaeology pass.
+
+**Why this matters:** As long as the harness keeps shipping behavior changes (and it should — Sub-projects B2 / future template work will keep doing this), the lineage problem will recur. The current Sub-project D fix is a sampler-side cutoff constant; F5 is the schema-level fix that would make sampler cutoffs unnecessary.
+
+**Recommended fix:** Add `harnessVersion` (semver or commit-SHA-short) and optionally `source: "synthetic" | "synthetic-pool" | "user" | ...` discriminator fields to every operational event. Stamp at emission time. Make calibration samplers and dashboards filter on these explicitly.
+
+**Estimated effort:** Brainstorm-then-design — touches all three driver paths, the event schemas, possibly the PostHog dashboards. ~1 day for the brainstorm + design; implementation depends on how far the schema change ripples.
+
+### F6: Backfill or mark historical pre-`4bf218dd` PostHog events
+
+**Where:** PostHog events emitted before 2026-05-14T23:16:39Z.
+
+**Symptom:** Those events still exist in PostHog with fabricated `provider="gemini"` annotations. Sub-project D's cutoff makes the calibration sampler ignore them, but other consumers (dashboards, ad-hoc HogQL queries) still see them and would need their own filters.
+
+**Recommended:** Either delete the pre-cutoff events (PostHog supports event deletion via the API), or add a `synthetic_pool_pre_rewrite: true` property to them via a one-shot script. Defer to brainstorm — the right answer depends on whether anyone is querying that historical data.
+
+**Estimated effort:** ~half day if delete-via-API, ~1 day if property backfill (PostHog property updates are awkward).
+
 ---
 
 ## Recommended sequence
 
 Given the open work, this is what I'd do:
 
-### Option A (recommended): Bank the easy wins first
+### Option A (recommended): D first — it's the prerequisite for trusting everything else
 
-1. **F2 (judge dedup log line)** — 15 min, zero risk, removes a paper-cut that affects every subsequent run
-2. **Sub-project C (optimize tail-truncation)** — ~half day. Clearest bug. Likely cheapest fix (token-budget or template tightening). Verify via 2-variant matrix.
-3. **Sub-project D (span-labeling under-segmentation)** — ~1 day. Two-birds-one-stone — also closes calibration ρ gap. Verify via matrix + re-run `judge:calibrate`.
+1. **F2 (judge dedup log line)** — 15 min, zero risk, removes a paper-cut that affects every subsequent run.
+2. **Sub-project D (calibration reseed, Layer 6)** — ~1.5-2h. **Spec already written.** Adds `MIN_EVENT_TIMESTAMP` cutoff, re-runs sampler, dispatches three labeling subagents, re-runs `judge:calibrate`, records honest ρ. **Why first:** every measurement comparison after this depends on the calibrated judge being honest. Running B2 or C against a polluted ρ means treating "Claude vs polluted judge" deltas as if they were product-quality deltas. Don't.
+3. **Sub-project C (optimize tail-truncation)** — ~half day. Clearest bug. Likely cheapest fix (token-budget or template tightening). Verify via 2-variant matrix.
 4. **Sub-project B2 (Qwen emission rate)** — ~half day. Now empirically grounded (Qwen beats Gemini → don't swap, target emission). Verify via 2-variant matrix `qwen-current,qwen-with-fix`.
 
 By the end of this sequence:
 
-- All three surfaces have run through the matrix pipeline for product-quality improvements
-- Calibration ρ is ≥ 0.7 on all three surfaces (D's side effect)
+- All three surfaces have honest calibration ρ values
+- The two product-quality sub-projects (B2, C) have shipped against a trustworthy baseline
 - Suggestions scores have moved from the post-B 20.98 baseline closer to the spec's 22+ target
-- The reordering log captures three more layers of false-signal hunting + one product-quality push per surface
+- The reordering log captures Layer 6 + the two product-quality pushes
 
-### Option B: Front-load B2 (sharpest leverage on the spec's primary metric)
+### Option B: Front-load B2 (sharpest leverage on the spec's primary metric, but at a cost)
 
 1. F2
 2. B2 — closes the relevance gap that motivated the whole arc (Sub-project B's partial pass was the catalyst for E)
-3. C
-4. D
+3. D — clean up the lineage debt
+4. C
 
-Lower aggregate impact but more decisive on the question that started this. Pick this if you want to see the relevance number move first.
+**Why I don't recommend this:** B2's measurement is against the polluted calibration anchor. The delta you measure ("relevance went from 3.87 to 4.X") is a real number, but the meaning ("the judge thinks the product improved") is wobbly until D lands. You'll end up re-measuring B2's outcome after D anyway. Pick this only if you want to see the relevance number move first for momentum reasons.
 
 ### Anti-pattern (don't do)
 
@@ -272,6 +305,7 @@ Lower aggregate impact but more decisive on the question that started this. Pick
 | Sub-project A spec / plan          | `docs/superpowers/specs/2026-05-15-quality-judge-calibration-seeding-design.md` / `plans/2026-05-15-quality-judge-calibration-seeding.md` |
 | Sub-project B spec / plan          | `docs/superpowers/specs/2026-05-15-suggestions-scene-summary-design.md` / `plans/2026-05-15-suggestions-scene-summary.md`                 |
 | Sub-project E spec / plan          | `docs/superpowers/specs/2026-05-21-synthetic-model-matrix-design.md` / `plans/2026-05-21-synthetic-model-matrix.md`                       |
+| **Sub-project D spec (reframed)**  | **`docs/superpowers/specs/2026-05-22-calibration-reseed-design.md` — read first if you're picking up D**                                  |
 | Parent quality-improvement spec    | `docs/superpowers/specs/2026-05-14-baseline-quality-improvement-design.md`                                                                |
 | Synthetic harness                  | `scripts/synthetic/` (see its README)                                                                                                     |
 | Variant presets                    | `scripts/synthetic/variants.ts`                                                                                                           |
