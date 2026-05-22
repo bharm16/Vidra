@@ -151,6 +151,73 @@ describe("run-judge orchestrator", () => {
     expect(emitMock).not.toHaveBeenCalled();
   });
 
+  it("logs pre-loop liveness signal mentioning how many events are new to score", async () => {
+    // Invariant: between fetch and the end-of-run summary, the operator must
+    // see at least one log line stating how many events will be scored. Without
+    // this signal, the operator thinks the process is hung and re-invokes,
+    // racing the first invocation's flush and creating duplicate quality.scored
+    // events. See docs/superpowers/handoff/2026-05-22-next-session.md § F2.
+    fetchEventsMock.mockResolvedValue([
+      {
+        uuid: "e1",
+        event: "optimize.completed",
+        properties: {
+          inputPrompt: "x",
+          outputPrompt: "y",
+          source: "synthetic",
+        },
+      },
+      {
+        uuid: "e2",
+        event: "optimize.completed",
+        properties: {
+          inputPrompt: "x",
+          outputPrompt: "y",
+          source: "synthetic",
+        },
+      },
+      {
+        uuid: "e3",
+        event: "optimize.completed",
+        properties: {
+          inputPrompt: "x",
+          outputPrompt: "y",
+          source: "synthetic",
+        },
+      },
+    ]);
+    fetchScoredMock.mockResolvedValue(new Set(["e1"]));
+    judgeMock.mockResolvedValue({
+      dimensions: {
+        fidelity: 5,
+        detailEnrichment: 4,
+        coherence: 4,
+        constraintCompliance: 5,
+        brevityDiscipline: 4,
+      },
+      reasoning: "ok",
+      tokensIn: 800,
+      tokensOut: 100,
+      costUsd: 0.003,
+    });
+
+    await runJudgeForSurface("optimize", {
+      hoursBack: 24,
+      userSampleRate: 1,
+    });
+
+    const livenessLines = logSpy.mock.calls
+      .map((args) => String(args[0]))
+      .filter(
+        (line) =>
+          line.startsWith("[quality-judge] optimize:") &&
+          line.includes("new to score"),
+      );
+    expect(livenessLines.length).toBe(1);
+    // 3 fetched, 1 already-scored → 2 new
+    expect(livenessLines[0]).toContain("2 new to score");
+  });
+
   it("emits accounting summary log when fetched > 0", async () => {
     fetchEventsMock.mockResolvedValue([
       {

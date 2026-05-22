@@ -77,6 +77,12 @@ export async function runJudgeForSurface(
       JUDGE_MODEL_NAME,
     );
 
+    const newCount = events.length - seen.size;
+    // eslint-disable-next-line no-console
+    console.log(
+      `[quality-judge] ${surface}: ${events.length} fetched, ${newCount} new to score (${seen.size} already-scored)`,
+    );
+
     const counts: RunSummaryCounts = {
       fetched: events.length,
       scored: 0,
