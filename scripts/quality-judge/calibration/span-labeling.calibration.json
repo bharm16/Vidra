@@ -1,263 +1,198 @@
 [
   {
     "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-4388dd69b68b",
-    "inputContent": {
-      "inputText": "Cinematic anamorphic shot, film grain, teal and orange color grade"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "style", "text": "Cinematic anamorphic shot," },
-        { "category": "color", "text": "film grain, teal" },
-        { "category": "style", "text": "and orange color" },
-        { "category": "color", "text": "grade" }
-      ]
-    },
-    "humanScore": 6,
-    "humanDimensions": {
-      "coverage": 2,
-      "precision": 1,
-      "categoryAccuracy": 2,
-      "granularity": 0,
-      "boundaryCleanness": 1
-    },
-    "humanNotes": "Window-style chunks rather than semantic spans. 'film grain, teal' lumps style.filmStock with part of a color-grade phrase. 'and orange color' is a sentence fragment. Boundaries leak commas and articles across spans.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-437401c03fc0",
-    "inputContent": {
-      "inputText": "Macro close-up of dewdrops on a spider web, shallow depth of field"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "camera.shot", "text": "Macro close-up of" },
-        { "category": "subject", "text": "dewdrops on a" },
-        { "category": "camera.shot", "text": "spider web, shallow" },
-        { "category": "subject", "text": "depth of field" }
-      ]
-    },
-    "humanScore": 5,
-    "humanDimensions": {
-      "coverage": 2,
-      "precision": 1,
-      "categoryAccuracy": 1,
-      "granularity": 0,
-      "boundaryCleanness": 1
-    },
-    "humanNotes": "'depth of field' tagged as subject when it's camera.focus. 'spider web, shallow' lumps a subject with the start of a focus term. Window-style fragments throughout — same pattern as entry 0.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-4388dd69b68b",
-    "inputContent": {
-      "inputText": "Cinematic anamorphic shot, film grain, teal and orange color grade"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "style", "text": "Cinematic anamorphic shot," },
-        { "category": "color", "text": "film grain, teal" },
-        { "category": "style", "text": "and orange color" },
-        { "category": "color", "text": "grade" }
-      ]
-    },
-    "humanScore": 6,
-    "humanDimensions": {
-      "coverage": 2,
-      "precision": 1,
-      "categoryAccuracy": 2,
-      "granularity": 0,
-      "boundaryCleanness": 1
-    },
-    "humanNotes": "Same event as entry 0 (stratification picked the same id for two quartiles). Same scoring.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-438eb78ecaec",
-    "inputContent": {
-      "inputText": "A barista pours steamed milk creating a heart pattern in coffee"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "action", "text": "A barista pours" },
-        { "category": "subject", "text": "steamed milk creating" },
-        { "category": "camera.shot", "text": "a heart pattern" },
-        { "category": "action", "text": "in coffee" }
-      ]
-    },
-    "humanScore": 5,
-    "humanDimensions": {
-      "coverage": 2,
-      "precision": 1,
-      "categoryAccuracy": 1,
-      "granularity": 0,
-      "boundaryCleanness": 1
-    },
-    "humanNotes": "'a heart pattern' tagged as camera.shot — entirely wrong (it's the visual result of the action). 'in coffee' as action is wrong. Window-fragment chunking lumps barista + pours, milk + creating, etc.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-436cf8af0862",
-    "inputContent": {
-      "inputText": "A young woman with red hair walks through a misty forest at dawn"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "subject", "text": "A young woman" },
-        { "category": "lighting", "text": "with red hair" },
-        { "category": "setting", "text": "walks through a" },
-        { "category": "subject", "text": "misty forest at" },
-        { "category": "lighting", "text": "dawn" }
-      ]
-    },
-    "humanScore": 11,
-    "humanDimensions": {
-      "coverage": 3,
-      "precision": 2,
-      "categoryAccuracy": 2,
-      "granularity": 2,
-      "boundaryCleanness": 2
-    },
-    "humanNotes": "'A young woman' clean, 'dawn' clean. The middle three spans have category errors ('with red hair' is subject.appearance not lighting; 'walks through a' includes a verb in a setting span; 'misty forest at' should be environment.location and shouldn't include 'at').",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-4396c6fe87d1",
-    "inputContent": {
-      "inputText": "An abandoned 1950s diner overgrown with vines"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "setting", "text": "An abandoned 1950s" },
-        { "category": "subject", "text": "diner overgrown with" },
-        { "category": "setting", "text": "vines" }
-      ]
-    },
-    "humanScore": 8,
-    "humanDimensions": {
-      "coverage": 2,
-      "precision": 2,
-      "categoryAccuracy": 2,
-      "granularity": 1,
-      "boundaryCleanness": 1
-    },
-    "humanNotes": "Splits 'An abandoned 1950s diner' across two spans, missing the natural noun-phrase boundary. 'diner overgrown with' lumps subject + verb fragment. 'vines' as setting is questionable (environment.context fits better).",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e23e7-3af6-708e-85aa-436ee6e040af",
-    "inputContent": {
-      "inputText": "An elderly fisherman casts his line into a calm mountain lake"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "subject", "text": "An elderly fisherman" },
-        { "category": "setting", "text": "casts his line" },
-        { "category": "action", "text": "into a calm" },
-        { "category": "subject", "text": "mountain lake" }
-      ]
-    },
-    "humanScore": 10,
-    "humanDimensions": {
-      "coverage": 3,
-      "precision": 2,
-      "categoryAccuracy": 1,
-      "granularity": 2,
-      "boundaryCleanness": 2
-    },
-    "humanNotes": "Only 'An elderly fisherman' is correctly categorized. 'casts his line' tagged as setting (should be action.movement). 'into a calm' is a fragment. 'mountain lake' tagged as subject (should be environment.location).",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27e9-0564-7159-9d95-e1f5e44d5e90",
+    "scoredEventId": "019e29af-b79d-7837-94d5-dea267b0bb02",
     "inputContent": {
       "inputText": "Wes Anderson symmetrical composition, pastel palette"
     },
     "outputContent": {
       "spans": [
-        { "category": "style", "text": "Wes Anderson symmetrical" },
-        { "category": "composition", "text": "composition, pastel palette" }
+        {
+          "category": "style.aesthetic",
+          "text": "Wes Anderson symmetrical composition, pastel palette"
+        }
       ]
     },
-    "humanScore": 10,
-    "humanDimensions": {
-      "coverage": 3,
-      "precision": 2,
-      "categoryAccuracy": 2,
-      "granularity": 1,
-      "boundaryCleanness": 2
-    },
-    "humanNotes": "'composition' is not a valid taxonomy category. Splits 'symmetrical' from 'composition' across span boundaries. Should be three spans: 'Wes Anderson' (style.aesthetic), 'symmetrical composition' (style.aesthetic), 'pastel palette' (style.colorGrade).",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27e9-0564-7159-9d95-e203319d1eb6",
-    "inputContent": {
-      "inputText": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "camera.movement", "text": "Handheld camera follows" },
-        { "category": "subject", "text": "a chef through" },
-        { "category": "setting", "text": "a busy restaurant" },
-        { "category": "lighting", "text": "kitchen, warm tungsten" },
-        { "category": "camera.shot", "text": "lighting, shallow focus" },
-        { "category": "camera.movement", "text": "pulls between faces" }
-      ]
-    },
-    "humanScore": 10,
+    "humanScore": 21,
     "humanDimensions": {
       "coverage": 4,
-      "precision": 2,
-      "categoryAccuracy": 2,
-      "granularity": 1,
-      "boundaryCleanness": 1
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 2,
+      "boundaryCleanness": 5
     },
-    "humanNotes": "Comprehensive but window-fragmented. 'kitchen, warm tungsten' lumps a location with a lighting attribute. 'lighting, shallow focus' is categorized as camera.shot but contains a lighting term. Rampant cross-word splits.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "Single span swallows three distinct style concepts (director reference, composition, palette) that a working editor would chunk separately; under-segmentation drags granularity.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27e9-0564-7159-9d95-e1d539b42945",
+    "scoredEventId": "019e29af-8f63-7004-b054-b3f6fba56f0b",
     "inputContent": {
-      "inputText": "A young woman with red hair walks through a misty forest at dawn"
+      "inputText": "Bright midday sun cuts through tropical palm leaves"
     },
     "outputContent": {
       "spans": [
-        { "category": "subject", "text": "A young woman" },
-        { "category": "lighting", "text": "with red hair" },
-        { "category": "setting", "text": "walks through a" },
-        { "category": "subject", "text": "misty forest at" },
-        { "category": "lighting", "text": "dawn" }
+        {
+          "category": "lighting.quality",
+          "text": "Bright midday sun cuts through"
+        },
+        {
+          "category": "environment.context",
+          "text": "tropical palm leaves"
+        }
       ]
     },
-    "humanScore": 11,
+    "humanScore": 16,
     "humanDimensions": {
-      "coverage": 3,
-      "precision": 2,
-      "categoryAccuracy": 2,
+      "coverage": 4,
+      "precision": 4,
+      "categoryAccuracy": 3,
       "granularity": 2,
-      "boundaryCleanness": 2
+      "boundaryCleanness": 3
     },
-    "humanNotes": "Same span content as entry 4 (different scoredEventId, same output). Same scoring.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "First span fuses lighting quality, timeOfDay, source, and an action verb (\"cuts through\") into a single lighting.quality label — leaky boundary and conflated concepts hurt granularity and category accuracy.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-ae66-70d6-9df0-3b968219b875",
+    "inputContent": {
+      "inputText": "Cinematic anamorphic shot, film grain, teal and orange color grade"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "style.aesthetic",
+          "text": "Cinematic"
+        },
+        {
+          "category": "camera.lens",
+          "text": "anamorphic shot"
+        },
+        {
+          "category": "style.aesthetic",
+          "text": "film grain, teal and orange color grade"
+        }
+      ]
+    },
+    "humanScore": 19,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 3,
+      "granularity": 2,
+      "boundaryCleanness": 4
+    },
+    "humanNotes": "Final span lumps film grain (style.filmStock) and teal/orange color grade (style.colorGrade) under generic style.aesthetic, missing the namespaced attributes and under-segmenting two distinct concepts.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-df3a-7d52-a354-a35b4e13553a",
+    "inputContent": {
+      "inputText": "An abandoned 1950s diner overgrown with vines"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "environment.location",
+          "text": "abandoned 1950s diner overgrown with vines"
+        }
+      ]
+    },
+    "humanScore": 21,
+    "humanDimensions": {
+      "coverage": 4,
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 2,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Entire prompt collapsed to one location span — defensible category but \"abandoned 1950s diner\" and \"overgrown with vines\" should be chunked separately; granularity is the weak link.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-c345-7a97-9a0d-6a595ba6f55b",
+    "inputContent": {
+      "inputText": "A barista pours steamed milk creating a heart pattern in coffee"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "subject.identity",
+          "text": "barista"
+        },
+        {
+          "category": "action.movement",
+          "text": "pours steamed milk creating a heart pattern"
+        },
+        {
+          "category": "environment.context",
+          "text": "coffee"
+        }
+      ]
+    },
+    "humanScore": 21,
+    "humanDimensions": {
+      "coverage": 4,
+      "precision": 5,
+      "categoryAccuracy": 4,
+      "granularity": 3,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Action span correctly captures the gesture but is on the long side; \"coffee\" as environment.context is a stretch (it's the object being acted on, not setting), and \"heart pattern\" could stand alone.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29b0-0327-7b81-8475-a48d74d1d509",
+    "inputContent": {
+      "inputText": "Wide angle establishing shot of a snowy village, dolly forward toward a single illuminated window"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "camera.lens",
+          "text": "Wide angle"
+        },
+        {
+          "category": "shot.type",
+          "text": "establishing shot"
+        },
+        {
+          "category": "environment.location",
+          "text": "snowy village"
+        },
+        {
+          "category": "camera.movement",
+          "text": "dolly forward"
+        },
+        {
+          "category": "lighting.source",
+          "text": "illuminated"
+        },
+        {
+          "category": "environment.context",
+          "text": "window"
+        }
+      ]
+    },
+    "humanScore": 23,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 4,
+      "categoryAccuracy": 4,
+      "granularity": 5,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Strong chunking and clean boundaries; minor ding for labeling the bare adjective \"illuminated\" as lighting.source — it's a quality/state of the window rather than a discrete source.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -268,22 +203,34 @@
     },
     "outputContent": {
       "spans": [
-        { "category": "technical", "text": "Slow motion" },
-        { "category": "subject.identity", "text": "hummingbird" },
-        { "category": "action.movement", "text": "hovering" },
-        { "category": "environment.context", "text": "hibiscus flower" }
+        {
+          "category": "technical",
+          "text": "Slow motion"
+        },
+        {
+          "category": "subject.identity",
+          "text": "hummingbird"
+        },
+        {
+          "category": "action.movement",
+          "text": "hovering"
+        },
+        {
+          "category": "environment.context",
+          "text": "hibiscus flower"
+        }
       ]
     },
-    "humanScore": 23,
+    "humanScore": 25,
     "humanDimensions": {
-      "coverage": 4,
+      "coverage": 5,
       "precision": 5,
-      "categoryAccuracy": 4,
+      "categoryAccuracy": 5,
       "granularity": 5,
       "boundaryCleanness": 5
     },
-    "humanNotes": "Clean semantic spans with correct categories. Tagging 'hibiscus flower' as environment.context is debatable (it's also a subject.identity since the hummingbird interacts with it). Missed 'shot' as a potential shot.type span.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "Clean exemplar — every span is a meaningful unit, categories are all valid taxonomy members, and boundaries align with how an editor would parse the prompt.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -294,11 +241,26 @@
     },
     "outputContent": {
       "spans": [
-        { "category": "lighting.timeOfDay", "text": "Golden hour light" },
-        { "category": "environment.context", "text": "dust motes" },
-        { "category": "environment.location", "text": "antique library" },
-        { "category": "camera.movement", "text": "slow vertical pan" },
-        { "category": "environment.context", "text": "towering bookshelves" }
+        {
+          "category": "lighting.timeOfDay",
+          "text": "Golden hour light"
+        },
+        {
+          "category": "environment.context",
+          "text": "dust motes"
+        },
+        {
+          "category": "environment.location",
+          "text": "antique library"
+        },
+        {
+          "category": "camera.movement",
+          "text": "slow vertical pan"
+        },
+        {
+          "category": "environment.context",
+          "text": "towering bookshelves"
+        }
       ]
     },
     "humanScore": 25,
@@ -309,8 +271,8 @@
       "granularity": 5,
       "boundaryCleanness": 5
     },
-    "humanNotes": "Perfect — all five meaningful phrases identified with correct categories and clean word-bound boundaries.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "Strong pass on a richer prompt — connecting verbs (\"catches\", \"reveals\") are correctly left unlabeled while the substantive nouns and modifiers all land in correct categories.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -321,108 +283,14 @@
     },
     "outputContent": {
       "spans": [
-        { "category": "environment.weather", "text": "Rain" },
-        { "category": "environment.context", "text": "window" }
-      ]
-    },
-    "humanScore": 24,
-    "humanDimensions": {
-      "coverage": 4,
-      "precision": 5,
-      "categoryAccuracy": 5,
-      "granularity": 5,
-      "boundaryCleanness": 5
-    },
-    "humanNotes": "Both meaningful nouns identified with correct categories. Coverage is 4 because 'window' could arguably be environment.location, but both readings are valid per rubric.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27e9-0564-7159-9d95-e217829c88c3",
-    "inputContent": {
-      "inputText": "A single candle flickers"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "subject", "text": "A single candle" },
-        { "category": "lighting", "text": "flickers" }
-      ]
-    },
-    "humanScore": 23,
-    "humanDimensions": {
-      "coverage": 5,
-      "precision": 5,
-      "categoryAccuracy": 3,
-      "granularity": 5,
-      "boundaryCleanness": 5
-    },
-    "humanNotes": "Clean spans but 'flickers' miscategorized as lighting — it's a verb (action.movement). Otherwise complete coverage with clean boundaries.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27f4-18a4-71ce-80cd-8b4e456be716",
-    "inputContent": {
-      "inputText": "Rain on a window"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "environment.weather", "text": "Rain" },
-        { "category": "environment.context", "text": "window" }
-      ]
-    },
-    "humanScore": 24,
-    "humanDimensions": {
-      "coverage": 4,
-      "precision": 5,
-      "categoryAccuracy": 5,
-      "granularity": 5,
-      "boundaryCleanness": 5
-    },
-    "humanNotes": "Same content as another entry. Same scoring.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27f3-a211-711e-a1bf-e74e2fa4c6d9",
-    "inputContent": {
-      "inputText": "Time-lapse of clouds racing over a desert mesa"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "style.aesthetic", "text": "Time-lapse" },
-        { "category": "subject.identity", "text": "clouds" },
-        { "category": "action.movement", "text": "racing" },
-        { "category": "environment.location", "text": "desert mesa" }
-      ]
-    },
-    "humanScore": 24,
-    "humanDimensions": {
-      "coverage": 5,
-      "precision": 5,
-      "categoryAccuracy": 4,
-      "granularity": 5,
-      "boundaryCleanness": 5
-    },
-    "humanNotes": "Clean spans and boundaries. 'Time-lapse' tagged as style.aesthetic is debatable — shot.type or technical.frameRate would be more precise — but the parent style category is still valid per rubric.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27f3-c958-7b70-abbb-653e0c65946f",
-    "inputContent": {
-      "inputText": "Two children chase fireflies in a backyard at dusk"
-    },
-    "outputContent": {
-      "spans": [
-        { "category": "subject.identity", "text": "Two children" },
-        { "category": "action.movement", "text": "chase fireflies" },
-        { "category": "environment.location", "text": "backyard" },
-        { "category": "lighting.timeOfDay", "text": "dusk" }
+        {
+          "category": "environment.weather",
+          "text": "Rain"
+        },
+        {
+          "category": "environment.context",
+          "text": "window"
+        }
       ]
     },
     "humanScore": 25,
@@ -433,13 +301,279 @@
       "granularity": 5,
       "boundaryCleanness": 5
     },
-    "humanNotes": "Perfect — every meaningful phrase tagged with the correct category, clean boundaries throughout.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "Minimal prompt handled correctly — both nouns labeled with appropriate namespaced categories and no junk in between.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27f3-d3db-7846-a71d-1b8a43b8d03a",
+    "scoredEventId": "019e29af-5655-798e-a458-b419647556f8",
+    "inputContent": {
+      "inputText": "A young woman with red hair walks through a misty forest at dawn"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "subject.identity",
+          "text": "young woman"
+        },
+        {
+          "category": "subject.appearance",
+          "text": "red hair"
+        },
+        {
+          "category": "action.movement",
+          "text": "walks"
+        },
+        {
+          "category": "environment.location",
+          "text": "misty forest"
+        },
+        {
+          "category": "lighting.timeOfDay",
+          "text": "dawn"
+        }
+      ]
+    },
+    "humanScore": 25,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 5,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Textbook decomposition — identity, appearance, action, location, timeOfDay all separated cleanly with correct namespaced categories.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-5fe8-7d4f-910e-533c8aa95f04",
+    "inputContent": {
+      "inputText": "An elderly fisherman casts his line into a calm mountain lake"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "subject.appearance",
+          "text": "elderly fisherman"
+        },
+        {
+          "category": "action.movement",
+          "text": "casts his line"
+        },
+        {
+          "category": "environment.location",
+          "text": "calm mountain lake"
+        }
+      ]
+    },
+    "humanScore": 23,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 4,
+      "granularity": 4,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "\"Elderly fisherman\" is fundamentally subject.identity with \"elderly\" as the appearance modifier — labeling the joined phrase as appearance loses the identity, and the modifier could have been split out.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-6c03-70c5-8b3e-95930f2d618d",
+    "inputContent": {
+      "inputText": "Aerial drone shot pulling back from a city skyline at sunset"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "shot.type",
+          "text": "Aerial drone shot"
+        },
+        {
+          "category": "camera.movement",
+          "text": "pulling back"
+        },
+        {
+          "category": "environment.location",
+          "text": "city skyline"
+        },
+        {
+          "category": "lighting.timeOfDay",
+          "text": "sunset"
+        }
+      ]
+    },
+    "humanScore": 25,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 5,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Clean pass — shot, camera move, location, and time-of-day all separated with correct categories and no leaked articles or function words.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-7700-779d-803e-2674b74a66f6",
+    "inputContent": {
+      "inputText": "Macro close-up of dewdrops on a spider web, shallow depth of field"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "shot.type",
+          "text": "Macro close-up"
+        },
+        {
+          "category": "subject.identity",
+          "text": "dewdrops"
+        },
+        {
+          "category": "environment.context",
+          "text": "spider web"
+        },
+        {
+          "category": "camera.focus",
+          "text": "shallow depth of field"
+        }
+      ]
+    },
+    "humanScore": 25,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 5,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Macro/close-up correctly captured as shot.type and the optical concept (\"shallow depth of field\") gets its own camera.focus span — well-segmented.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-7fe7-7e1c-9bde-31d5c5410885",
+    "inputContent": {
+      "inputText": "A dimly lit jazz club with a single spotlight on a saxophone player"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "lighting.quality",
+          "text": "dimly lit"
+        },
+        {
+          "category": "environment.location",
+          "text": "jazz club"
+        },
+        {
+          "category": "lighting.source",
+          "text": "single spotlight"
+        },
+        {
+          "category": "subject.identity",
+          "text": "saxophone player"
+        }
+      ]
+    },
+    "humanScore": 25,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 5,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Distinguishes lighting.quality (dimly lit ambient) from lighting.source (single spotlight) — that nuance is exactly what the namespaced taxonomy exists for.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-a4d0-7eea-beac-80ed7a64aba4",
+    "inputContent": {
+      "inputText": "Time-lapse of clouds racing over a desert mesa"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "style.aesthetic",
+          "text": "Time-lapse"
+        },
+        {
+          "category": "subject.identity",
+          "text": "clouds"
+        },
+        {
+          "category": "action.movement",
+          "text": "racing"
+        },
+        {
+          "category": "environment.location",
+          "text": "desert mesa"
+        }
+      ]
+    },
+    "humanScore": 24,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 4,
+      "granularity": 5,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Solid except \"time-lapse\" is more naturally a technical attribute (frame-rate manipulation) than a style.aesthetic — defensible but not the cleanest fit.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-cbd4-7a14-8f03-49714b908b64",
+    "inputContent": {
+      "inputText": "Two children chase fireflies in a backyard at dusk"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "subject.identity",
+          "text": "Two children"
+        },
+        {
+          "category": "action.movement",
+          "text": "chase fireflies"
+        },
+        {
+          "category": "environment.location",
+          "text": "backyard"
+        },
+        {
+          "category": "lighting.timeOfDay",
+          "text": "dusk"
+        }
+      ]
+    },
+    "humanScore": 24,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 5,
+      "granularity": 4,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "Categories all correct; \"fireflies\" arguably deserves its own subject span rather than being absorbed into the action — minor granularity nit.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29af-d6e1-703e-bbf5-7ca2adec65c3",
     "inputContent": {
       "inputText": "A bustling night market in Bangkok with neon signs reflected in puddles"
     },
@@ -459,60 +593,102 @@
     "humanDimensions": {
       "coverage": 4,
       "precision": 5,
-      "categoryAccuracy": 4,
-      "granularity": 3,
+      "categoryAccuracy": 5,
+      "granularity": 2,
       "boundaryCleanness": 5
     },
-    "humanNotes": "Under-segmented — 'neon signs' could be its own lighting.source span. Two large spans capture the location and context correctly but lose the lighting source identity. Clean boundaries within the chosen spans.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "Only two spans for a six-concept prompt — \"night\" (timeOfDay), \"neon signs\" (lighting.source), and the puddle reflection all collapse into oversized location/context chunks.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27f3-ec9d-789c-8326-a332f7ae0619",
+    "scoredEventId": "019e29af-f3d7-7221-835b-1b63397fe06b",
     "inputContent": {
       "inputText": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces"
     },
     "outputContent": {
       "spans": [
-        { "category": "camera.movement", "text": "Handheld camera follows" },
-        { "category": "subject.identity", "text": "chef" },
+        {
+          "category": "camera.movement",
+          "text": "Handheld camera follows"
+        },
+        {
+          "category": "subject.identity",
+          "text": "chef"
+        },
         {
           "category": "environment.location",
           "text": "busy restaurant kitchen"
         },
-        { "category": "lighting.colorTemp", "text": "warm tungsten lighting" },
+        {
+          "category": "lighting.colorTemp",
+          "text": "warm tungsten lighting"
+        },
         {
           "category": "camera.focus",
           "text": "shallow focus pulls between faces"
         }
       ]
     },
-    "humanScore": 23,
+    "humanScore": 22,
     "humanDimensions": {
-      "coverage": 4,
-      "precision": 5,
+      "coverage": 5,
+      "precision": 4,
       "categoryAccuracy": 5,
       "granularity": 4,
-      "boundaryCleanness": 5
+      "boundaryCleanness": 4
     },
-    "humanNotes": "Clean spans with all-correct categories on a complex multi-clause input. 'shallow focus pulls between faces' could arguably be split into 'shallow focus' + 'pulls between faces' (action), but combining them as camera.focus reads coherently.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "First span trails the action verb \"follows\" into camera.movement (slight bleed); otherwise good coverage and correct namespaced categories like lighting.colorTemp and camera.focus.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "label-spans.completed",
-    "scoredEventId": "019e27f4-09b1-7cad-b945-7ded9baa3749",
+    "scoredEventId": "019e29b0-1982-7d27-b374-6875028e8f71",
     "inputContent": {
-      "inputText": "Golden hour light catches dust motes in an antique library, slow vertical pan reveals towering bookshelves"
+      "inputText": "A red balloon floats up"
     },
     "outputContent": {
       "spans": [
-        { "category": "lighting.timeOfDay", "text": "Golden hour light" },
-        { "category": "environment.context", "text": "dust motes" },
-        { "category": "environment.location", "text": "antique library" },
-        { "category": "camera.movement", "text": "slow vertical pan" },
-        { "category": "environment.context", "text": "towering bookshelves" }
+        {
+          "category": "subject.appearance",
+          "text": "red balloon"
+        },
+        {
+          "category": "action.movement",
+          "text": "floats up"
+        }
+      ]
+    },
+    "humanScore": 23,
+    "humanDimensions": {
+      "coverage": 5,
+      "precision": 5,
+      "categoryAccuracy": 4,
+      "granularity": 4,
+      "boundaryCleanness": 5
+    },
+    "humanNotes": "\"Red balloon\" labeled wholesale as subject.appearance loses the identity (balloon) — should be identity with \"red\" as a separate appearance modifier.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "label-spans.completed",
+    "scoredEventId": "019e29b0-2831-71ec-ad44-7e693d944831",
+    "inputContent": {
+      "inputText": "A single candle flickers"
+    },
+    "outputContent": {
+      "spans": [
+        {
+          "category": "subject.identity",
+          "text": "single candle"
+        },
+        {
+          "category": "action.movement",
+          "text": "flickers"
+        }
       ]
     },
     "humanScore": 25,
@@ -523,8 +699,8 @@
       "granularity": 5,
       "boundaryCleanness": 5
     },
-    "humanNotes": "Same content as another entry. Perfect.",
-    "authoredAt": "2026-05-15T06:00:00.000Z",
+    "humanNotes": "Minimal prompt with clean identity + action decomposition; nothing left unlabeled and no noise.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   }
 ]

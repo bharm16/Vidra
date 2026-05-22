@@ -1,33 +1,111 @@
 [
   {
     "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e27e9-0563-7406-ae42-4aa0d34f0432",
+    "scoredEventId": "019e29ac-1667-7404-90d1-600fd3a71529",
     "inputContent": {
-      "inputPrompt": "Bright midday sun cuts through tropical palm leaves",
-      "targetModel": "sora",
+      "inputPrompt": "Cinematic anamorphic shot, film grain, teal and orange color grade",
+      "targetModel": "luma",
       "mode": "video",
       "hasContext": false,
       "hasShotPlan": false,
       "useConstitutionalAI": true
     },
     "outputContent": {
-      "outputPrompt": "Bright midday sun cuts through tropical palm leaves, warm golden-hour light, rich atmospheric depth"
+      "outputPrompt": "An extreme wide, high-angle shot from a static tripod, captured with an anamorphic lens at. An abstract urban landscape composed of towering structures with highly reflective glass and polished metal surfaces. The scene is still, allowing natural golden hour light to dramatically interact with the environment. Natural golden hour light bathes the scene in warm, rich oranges, creating high dynamic range lighting. Sunlight scatters and reflects off the glass facades, casting prominent teal reflections that contrast with the soft ambient fill, creating deep shadows and bright highlights. A cinematic, stylized atmosphere with a distinct teal and orange color grade, enhanced by subtle film grain. The abstract urban environment feels vast and contemplative, imbued with the serene yet dramatic glow of"
     },
-    "humanScore": 13,
+    "humanScore": 11,
     "humanDimensions": {
       "fidelity": 3,
-      "detailEnrichment": 1,
-      "coherence": 2,
-      "constraintCompliance": 3,
-      "brevityDiscipline": 4
+      "detailEnrichment": 3,
+      "coherence": 1,
+      "constraintCompliance": 2,
+      "brevityDiscipline": 2
     },
-    "humanNotes": "Preserves the input phrase verbatim but contradicts it with 'warm golden-hour light' (incompatible with bright midday). Minimal enrichment beyond two atmospheric tags; coherence suffers from the lighting contradiction.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Two mid-sentence truncations (\"anamorphic lens at.\" and trailing \"glow of\") kill coherence and constraint compliance; the teal/orange/film-grain intent is preserved but the broken sentences make this unusable downstream.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e2880-d685-7f9c-bcb3-3f957393f961",
+    "scoredEventId": "019e29ad-372a-77c0-8007-797f513ca6d1",
+    "inputContent": {
+      "inputPrompt": "A bustling night market in Bangkok with neon signs reflected in puddles",
+      "targetModel": "kling",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "A bustling night market in teeming with people browsing goods and food stalls. Bright neon signs, displaying electric blues, reds, and greens, intensely reflect on the wet pavement, creating dynamic pools of light. A static tripod, eye-level establishing shot captures the energetic scene. Neon signs provide the sole illumination, creating strong contrasts and deep shadows. The visual style resembles energetic urban street photography, akin to Kodak Ektachrome 100D. Ambient market chatter and distant music are., natural speech, high fidelity audio"
+    },
+    "humanScore": 9,
+    "humanDimensions": {
+      "fidelity": 2,
+      "detailEnrichment": 3,
+      "coherence": 1,
+      "constraintCompliance": 1,
+      "brevityDiscipline": 2
+    },
+    "humanNotes": "\"Bangkok\" is dropped (\"a bustling night market in teeming with people\") and the ending \"are., natural speech, high fidelity audio\" is fragment + metadata leakage; two distinct failure modes compound here.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29ab-8017-7a55-a450-cc819032911b",
+    "inputContent": {
+      "inputPrompt": "Slow motion shot of a hummingbird hovering near a hibiscus flower",
+      "targetModel": "veo",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "An extreme close-up, eye-level shot captures an iridescent green hummingbird, its rapidly beating wings a blur, as it hovers with a long slender beak poised near the vibrant crimson petals of a hibiscus flower. The static tripod, utilizing a 100mm macro lens at, holds the frame steady. Early afternoon natural sunlight casts soft diffused highlights and gentle shadows through the lush garden foliage, creating a vivid color palette. The scene unfolds in slow motion, reminiscent of a nature documentary. Subtle garden sounds and a light breeze are present, documentary style, available light, handheld intimacy"
+    },
+    "humanScore": 14,
+    "humanDimensions": {
+      "fidelity": 4,
+      "detailEnrichment": 4,
+      "coherence": 2,
+      "constraintCompliance": 2,
+      "brevityDiscipline": 2
+    },
+    "humanNotes": "Rich enrichment and faithful to the slow-mo/hummingbird/hibiscus intent, but the \"100mm macro lens at,\" truncation plus the dangling metadata tail (\"handheld intimacy\") with no closing punctuation break coherence and shape.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29a9-ec5c-7124-8566-01940a9c9546",
+    "inputContent": {
+      "inputPrompt": "An elderly fisherman casts his line into a calm mountain lake",
+      "targetModel": "veo",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "A weathered elderly fisherman, clad in a worn plaid shirt and a wide-brimmed hat, casts his weathered fishing rod into a tranquil mountain lake. The camera executes a slow, eye-level pan in a Medium Long Shot, capturing the golden hues of the setting sun softly illuminating the scene. Pine trees densely line the lake's edge, reflecting the early evening light. The naturalistic aesthetic emulates Kodak Portra 160 film, with gentle lapping water and distant birdsong filling the air. Shot with a 50mm lens at, cinematic look, naturalistic lighting, shallow depth of field"
+    },
+    "humanScore": 15,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 4,
+      "coherence": 2,
+      "constraintCompliance": 2,
+      "brevityDiscipline": 2
+    },
+    "humanNotes": "Subject/action perfectly preserved with strong wardrobe and lighting enrichment, but the closing \"50mm lens at, cinematic look, naturalistic lighting, shallow depth of field\" is the recurring lens-aperture truncation plus uncommitted tag-soup tail.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29a9-b2ae-730f-9ab9-7116d788f39c",
     "inputContent": {
       "inputPrompt": "A young woman with red hair walks through a misty forest at dawn",
       "targetModel": "sora",
@@ -37,103 +115,25 @@
       "useConstitutionalAI": true
     },
     "outputContent": {
-      "outputPrompt": "A serene, ancient forest path emerges from a dense, ethereal mist at dawn, imbued with a touch of magical realism. A young woman, her long red hair cascading, walks calmly along the damp earth path. She wears a rich green wool coat and sturdy brown hiking boots. Her coat sways gently with each step, and strands of red hair catch the light as she moves, exhibiting natural motion physics and continuous movement. Soft, diffused dawn light filters through the thick mist, providing a gentle fill and creating subtle highlights on her hair and the wet foliage. The camera maintains an eye-level, medium long tracking shot, captured with a 50mm lens at, following her steady progress. The 7-second, 16:9 video at"
+      "outputPrompt": "A young woman with long red hair, wearing a green wool coat and brown hiking boots, walks calmly along a winding forest path. The scene unfolds at dawn, with soft, diffused light filtering through a thick, ethereal mist that blankets the ancient trees. The cool, still air is filled with the fog, which acts as a natural fill light, gently illuminating her figure. Her red hair catches subtle highlights as she moves, swaying gently with each continuous step, exhibiting natural motion physics. A tracking shot follows her at eye-level, a medium long shot captured with a 50mm lens at, emphasizing a naturalistic style with a touch of magical realism. Soft forest ambience with distant bird calls accompanies the 7-second duration"
     },
     "humanScore": 17,
     "humanDimensions": {
       "fidelity": 5,
-      "detailEnrichment": 5,
-      "coherence": 2,
-      "constraintCompliance": 2,
-      "brevityDiscipline": 3
-    },
-    "humanNotes": "Fully preserves user intent with rich cinematographic enrichment (camera angle, lens, lighting, color). Truncated mid-sentence twice ('50mm lens at,' and '16:9 video at'), breaking coherence and indicating likely token-limit constraint violation.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-72caf4e1dd7c",
-    "inputContent": {
-      "inputPrompt": "Bright midday sun cuts through tropical palm leaves",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "Bright midday sun cuts through tropical palm leaves, warm golden-hour light, rich atmospheric depth"
-    },
-    "humanScore": 14,
-    "humanDimensions": {
-      "fidelity": 3,
-      "detailEnrichment": 1,
-      "coherence": 2,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 4
-    },
-    "humanNotes": "Same output as the sora-targeted variant — contradicts 'bright midday' with 'warm golden-hour light.' No model-specific constraints to violate (targetModel=null), so constraintCompliance gets the rubric's 4 for clean shape.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e2881-c482-7105-b0a6-6baae6ab8d26",
-    "inputContent": {
-      "inputPrompt": "Aerial drone shot pulling back from a city skyline at sunset",
-      "targetModel": "kling",
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "A sprawling city skyline of towering glass and steel structures, their surfaces reflecting the last golden rays of the setting sun. A drone camera smoothly glides forward, revealing the urban expanse as the sky transitions into hues of deep orange and soft purple, casting long, gentle shadows across the buildings."
-    },
-    "humanScore": 21,
-    "humanDimensions": {
-      "fidelity": 3,
-      "detailEnrichment": 5,
-      "coherence": 5,
-      "constraintCompliance": 5,
-      "brevityDiscipline": 3
-    },
-    "humanNotes": "Rich, coherent, well-shaped output. Major fidelity hit: user asked for camera 'pulling back' but the output has the drone 'gliding forward' — direct contradiction of user intent.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-72f28395d03f",
-    "inputContent": {
-      "inputPrompt": "Wes Anderson symmetrical composition, pastel palette",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "Wes Anderson symmetrical composition, pastel palette, anamorphic film grain, symmetrical framing"
-    },
-    "humanScore": 16,
-    "humanDimensions": {
-      "fidelity": 5,
-      "detailEnrichment": 1,
+      "detailEnrichment": 4,
       "coherence": 3,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 3
+      "constraintCompliance": 3,
+      "brevityDiscipline": 2
     },
-    "humanNotes": "Preserves user intent and adds 'anamorphic film grain' as plausible enrichment. But 'symmetrical framing' duplicates the input's 'symmetrical composition' — redundancy. Comma list reads as a label string rather than a scene description, hurting coherence.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Faithful and well-enriched with wardrobe, dawn mist, and tracking shot, but \"50mm lens at, emphasizing\" leaks the lens-aperture artifact and the trailing duration sentence lacks a period; getting bloated with \"ethereal\"/\"magical realism\" filler.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e2887-109a-71f8-86e6-3d16c14bd701",
+    "scoredEventId": "019e29ab-0e20-7773-aab0-b6a1b3842267",
     "inputContent": {
-      "inputPrompt": "A single candle flickers",
+      "inputPrompt": "A dimly lit jazz club with a single spotlight on a saxophone player",
       "targetModel": "runway",
       "mode": "video",
       "hasContext": false,
@@ -141,7 +141,111 @@
       "useConstitutionalAI": true
     },
     "outputContent": {
-      "outputPrompt": "Static: A close-up, eye-level shot of a single candle, crafted from beeswax with a distinct oval wick and a golden flame tip, flickering gently in the breeze within a dimly lit room with shadowed corners. The sole light source is the warm, soft glow from the candle flame, casting gentle, cinematic shadows against the ambient darkness. This is a single continuous shot, capturing the fluid motion of the flame with consistent geometry, filmed with a 50mm lens at. The aesthetic is minimalist with soft focus, akin to a Baroque still life, featuring a palette of warm amber tones from the flame against desaturated cool blues in the deep shadows. Shot on Kodak Portra 400 film stock, with subtle soft halation around the flame and gently crushed blacks. The soft crackling of the wick is audible."
+      "outputPrompt": "Static: A medium close-up, eye-level shot focuses on a saxophone player in a black fedora hat and a dark pinstripe suit, passionately playing soulful jazz on a polished brass saxophone. He is dramatically lit by a single, sharp overhead spotlight, creating a stark contrast against the deep shadows of a dimly lit, late-night jazz club. Distant, warm amber table lamps provide a subtle, soft fill. The entire scene embodies a classic 1950s film noir aesthetic, characterized by rich, crushed blacks, desaturated cool blues in the background, and the warm glow of the spotlight. The textured fabric of his suit, the glint off his fedora, and the weathered wood of the stage are rendered with sharp detail. Shot on 16mm Kodak film stock, the image exhibits fine grain and subtle soft halation around the highlights, enhancing the vintage feel. This is a single continuous shot, ensuring fluid motion and consistent geometry"
+    },
+    "humanScore": 20,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 5,
+      "coherence": 4,
+      "constraintCompliance": 3,
+      "brevityDiscipline": 3
+    },
+    "humanNotes": "Strong fidelity and rich, plausible noir-era enrichment with no \"lens at\" truncation; pulled down by length bloat for a Runway slot and trailing sentence missing its period.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29ac-4c75-7c37-b133-8aa296febf7c",
+    "inputContent": {
+      "inputPrompt": "Wes Anderson symmetrical composition, pastel palette",
+      "targetModel": "runway",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "Static: An eye-level establishing shot of a meticulously composed, Wes Anderson-inspired vintage hotel lobby at midday. The scene is dominated by a symmetrical composition, rendered in a soft, pastel color palette featuring dusty rose, mint green, and pale yellow accents. Softly diffused overhead lighting casts gentle pastel hues across polished brass fixtures and velvet upholstery, ensuring no harsh shadows and creating a cinematic lighting quality. Shot with a 35mm lens at, emphasizing the consistent geometry and clean lines. The entire scene unfolds as a single continuous shot with fluid motion, maintaining perfectly consistent geometry throughout."
+    },
+    "humanScore": 17,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 4,
+      "coherence": 3,
+      "constraintCompliance": 3,
+      "brevityDiscipline": 2
+    },
+    "humanNotes": "Captures Wes Anderson symmetry + pastels with a plausible hotel-lobby scene; one \"35mm lens at,\" truncation and a redundant \"consistent geometry\" repeated twice drop coherence and brevity.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29ac-fe30-776d-be76-3cd85cdce236",
+    "inputContent": {
+      "inputPrompt": "Two children chase fireflies in a backyard at dusk",
+      "targetModel": "veo",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "Two barefoot children, one in a vibrant red t-shirt and the other in striped shorts, sprint across a dewy backyard lawn, their arms outstretched as they chase ephemeral, warm-glowing fireflies. A steady eye-level medium long tracking shot follows them from behind, capturing their joyful pursuit. The scene is bathed in a soft twilight glow, with cool, deep shadows pooling under mature trees at the perimeter. Pinpricks of warm, golden light from the fireflies illuminate the darkening air, creating an aesthetic reminiscent of a nostalgic family film. Soft laughter and the subtle hum of evening ambient sounds drift through the air, cinematic look, naturalistic lighting, shallow depth of field"
+    },
+    "humanScore": 18,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 4,
+      "coherence": 3,
+      "constraintCompliance": 3,
+      "brevityDiscipline": 3
+    },
+    "humanNotes": "Faithful subject/action with strong sensory detail; no lens-aperture truncation, but a tag-soup tail (\"cinematic look, naturalistic lighting, shallow depth of field\") tacked onto the closing sentence still costs coherence.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29ad-79a9-7d40-b871-5342ceebcefe",
+    "inputContent": {
+      "inputPrompt": "An abandoned 1950s diner overgrown with vines",
+      "targetModel": "luma",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "Wide eye-level shot, captured with a 24mm lens atfrom a static tripod. An abandoned 1950s American diner, its exterior and interior visibly decaying, heavily overgrown with lush green vines that snake across the dusty windows, peeling paint, and rusted chrome signage. Subtle, gentle swaying of the vines in a soft breeze, causing slight shifts in shadow patterns on the diner's weathered surfaces. Soft diffused natural light from an overcast sky, providing an even fill across the scene with gentle, subtle shadows. The light interacts with the dusty glass and peeling paint, revealing textures with high dynamic range lighting, emphasizing the muted color palette of the vintage film aesthetic. A melancholic and nostalgic atmosphere, reminiscent of a vintage film shot on"
+    },
+    "humanScore": 11,
+    "humanDimensions": {
+      "fidelity": 4,
+      "detailEnrichment": 3,
+      "coherence": 1,
+      "constraintCompliance": 1,
+      "brevityDiscipline": 2
+    },
+    "humanNotes": "Two breakage points: \"24mm lens atfrom\" (missing aperture, run-together word) at the start and \"reminiscent of a vintage film shot on\" trailing off at the end — bookended truncation is the worst version of this failure mode.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29ad-b7a1-71f6-b163-f7b6ddfb94a7",
+    "inputContent": {
+      "inputPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces",
+      "targetModel": "runway",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "Handheld follow shot: A medium close-up, eye-level perspective follows a chef in a crisp white chef's coat, black apron, and traditional chef's hat, navigating through the bustling, high-energy stations of a busy restaurant kitchen. The scene is illuminated by warm tungsten lights overhead, with soft fill from under-cabinet fixtures casting golden highlights on polished stainless steel surfaces and steam rising from pots. This is a single continuous shot, captured with dynamic and fluid motion, ensuring consistent geometry throughout the scene. Shot on a 50mm lens at, maintaining a shallow depth of field with subtle focus pulls between faces, creating a documentary style, handheld realism. The cinematic lighting features warm amber tones, with desaturated cool blues in the background, shot on Fujifilm Pro 400H film stock with fine grain, exhibiting soft halation around light sources and crushed blacks in the deepest shadows."
     },
     "humanScore": 19,
     "humanDimensions": {
@@ -151,190 +255,8 @@
       "constraintCompliance": 3,
       "brevityDiscipline": 3
     },
-    "humanNotes": "Highly enriched and faithful to the user's terse input. 'Filmed with a 50mm lens at.' has an incomplete focal-stop spec (trailing period), suggesting token truncation. Output is long for runway's typically terse-preferring style.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af4-7411-925b-a28abb0b111d",
-    "inputContent": {
-      "inputPrompt": "A dimly lit jazz club with a single spotlight on a saxophone player",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "A dimly lit jazz club with a single spotlight on a saxophone player, warm golden-hour light, framed with shallow depth of field, rich atmospheric depth"
-    },
-    "humanScore": 15,
-    "humanDimensions": {
-      "fidelity": 3,
-      "detailEnrichment": 2,
-      "coherence": 3,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 3
-    },
-    "humanNotes": "Preserves the user phrase but appends 'warm golden-hour light' which contradicts the dimly-lit jazz-club setting. Cumulative filler-style atmospheric tags rather than scene-level enrichment.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-731ad170abde",
-    "inputContent": {
-      "inputPrompt": "An abandoned 1950s diner overgrown with vines",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "An abandoned 1950s diner overgrown with vines, rich atmospheric depth, framed with shallow depth of field"
-    },
-    "humanScore": 17,
-    "humanDimensions": {
-      "fidelity": 5,
-      "detailEnrichment": 1,
-      "coherence": 4,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 3
-    },
-    "humanNotes": "Faithful but minimal enrichment — two generic atmospheric tags without scene-specific cinematography. No camera or lighting specifics; output barely longer than input.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-732ea326839b",
-    "inputContent": {
-      "inputPrompt": "Wide angle establishing shot of a snowy village, dolly forward toward a single illuminated window",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "Wide angle establishing shot of a snowy village, dolly forward toward a single illuminated window, medium close-up, slow dolly forward, rich atmospheric depth"
-    },
-    "humanScore": 14,
-    "humanDimensions": {
-      "fidelity": 4,
-      "detailEnrichment": 2,
-      "coherence": 2,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 2
-    },
-    "humanNotes": "Preserves user intent but adds 'medium close-up' which directly contradicts the user-specified 'wide angle establishing shot.' Also duplicates 'dolly forward' with 'slow dolly forward,' adding redundancy.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-72def086472e",
-    "inputContent": {
-      "inputPrompt": "Time-lapse of clouds racing over a desert mesa",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "Time-lapse of clouds racing over a desert mesa, 24fps cinematic, rich atmospheric depth"
-    },
-    "humanScore": 18,
-    "humanDimensions": {
-      "fidelity": 5,
-      "detailEnrichment": 2,
-      "coherence": 4,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 3
-    },
-    "humanNotes": "Preserves the time-lapse intent and adds plausible cinematographic tags. Minimal enrichment beyond two tags; no scene-specific camera or lighting detail.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-73249cfd98ae",
-    "inputContent": {
-      "inputPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces, slow dolly forward, framed with shallow depth of field, rich atmospheric depth"
-    },
-    "humanScore": 13,
-    "humanDimensions": {
-      "fidelity": 3,
-      "detailEnrichment": 2,
-      "coherence": 2,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 2
-    },
-    "humanNotes": "Adds 'slow dolly forward' which directly contradicts the user-specified 'Handheld camera' (mutually exclusive stabilization choices). 'Shallow depth of field' also duplicates the user's 'shallow focus.' Multiple contradictions and redundancies.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-7342c8f4a84f",
-    "inputContent": {
-      "inputPrompt": "A red balloon floats up",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "A red balloon floats up, framed with shallow depth of field, motion captured in slow detail"
-    },
-    "humanScore": 19,
-    "humanDimensions": {
-      "fidelity": 5,
-      "detailEnrichment": 2,
-      "coherence": 4,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 4
-    },
-    "humanNotes": "Faithful with minimal enrichment — two atmospheric tags. No scene-specific camera or lighting work; the output is barely longer than the input.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "optimize.completed",
-    "scoredEventId": "019e23e7-3af5-79e8-bf51-734ce067dc13",
-    "inputContent": {
-      "inputPrompt": "Rain on a window",
-      "targetModel": null,
-      "mode": "video",
-      "hasContext": false,
-      "hasShotPlan": false,
-      "useConstitutionalAI": true
-    },
-    "outputContent": {
-      "outputPrompt": "Rain on a window, framed with shallow depth of field, rich atmospheric depth"
-    },
-    "humanScore": 18,
-    "humanDimensions": {
-      "fidelity": 5,
-      "detailEnrichment": 1,
-      "coherence": 4,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 4
-    },
-    "humanNotes": "Same pattern as 'red balloon' and 'abandoned diner' entries — terse user prompt gets two generic atmospheric tags appended without scene-specific cinematography.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Excellent fidelity (handheld, tungsten, focus pulls all preserved) and rich enrichment; pulled down by the \"50mm lens at,\" artifact and overall bloat for a Runway slot.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -351,16 +273,16 @@
     "outputContent": {
       "outputPrompt": "A wide, high-angle shot from a static tripod captures a dense tropical forest, bathed in bright midday sun. Intense direct sunlight cuts through the canopy of lush tropical palm leaves, creating sharp, high-contrast patterns of vivid green foliage and cool, deep shadows on the forest floor. Sunlit fronds glow with vibrant color, while subtle air currents cause the leaves to gently sway, shifting the dappled light across the scene with natural motion physics. A vibrant nature documentary style, with a rich color palette, defines the scene. Distant bird calls and the soft rustling of leaves are heard. (5 seconds, 16:9, 24fps)"
     },
-    "humanScore": 24,
+    "humanScore": 22,
     "humanDimensions": {
       "fidelity": 5,
       "detailEnrichment": 5,
-      "coherence": 5,
-      "constraintCompliance": 5,
+      "coherence": 4,
+      "constraintCompliance": 4,
       "brevityDiscipline": 4
     },
-    "humanNotes": "Excellent rewrite — preserves intent, adds rich cinematographic enrichment (camera, lighting, motion, sound), reads as single coherent scene, fits sora's preferred shape with technical specs at end.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Clean, faithful, and well-shaped for Sora — no \"lens at\" truncation, sentences terminate properly, and the (5s, 16:9, 24fps) tag is appropriate metadata; the cleanest entry in this sample.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -377,16 +299,94 @@
     "outputContent": {
       "outputPrompt": "Warm golden hour light catches countless dancing dust motes, streaming in thick, visible beams through the tall arched windows of an antique library. A slow, low-angle vertical pan, captured with a wide 24mm lens, reveals towering shelves filled with aged, leather-bound books, their weathered wood glowing with soft, warm highlights and deep shadows. The scene evokes a warm, nostalgic aesthetic, reminiscent of classic literature films. Soft ambient library sounds."
     },
-    "humanScore": 24,
+    "humanScore": 22,
     "humanDimensions": {
       "fidelity": 5,
-      "detailEnrichment": 5,
+      "detailEnrichment": 4,
       "coherence": 5,
-      "constraintCompliance": 5,
+      "constraintCompliance": 4,
       "brevityDiscipline": 4
     },
-    "humanNotes": "Strong rewrite — all user elements preserved with cinematographic enrichment (lens, lighting beams, aesthetic, sound). Internally coherent and well-shaped for veo.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Every input element preserved (golden hour, dust motes, vertical pan, towering shelves), clean sentences with no truncation, and disciplined length; one of the strongest outputs.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29ae-893b-712a-90e1-d9653b1121ef",
+    "inputContent": {
+      "inputPrompt": "A red balloon floats up",
+      "targetModel": "kling",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "A single red balloon, made of shiny red latex, perfectly round and helium-filled, with a delicate white string dangling. It gracefully floats upward, slowly ascending into the vast, clear blue sky. The scene is set in an open field dotted with various colorful wildflowers, under bright midday natural daylight, casting soft, gentle shadows. A subtle breeze rustles the grass. Captured by a static tripod, eye-level wide shot."
+    },
+    "humanScore": 20,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 4,
+      "coherence": 4,
+      "constraintCompliance": 4,
+      "brevityDiscipline": 3
+    },
+    "humanNotes": "Faithful expansion of a very terse input with plausible setting invention (wildflowers, blue sky); no truncation and clean sentence structure, slight redundancy in the balloon adjectives.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29aa-6596-7ddb-8260-6faa318f79a6",
+    "inputContent": {
+      "inputPrompt": "Aerial drone shot pulling back from a city skyline at sunset",
+      "targetModel": "kling",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "A sprawling city skyline, bathed in the warm, golden light of sunset. A high-angle aerial shot slowly pulls back, revealing the intricate network of illuminated buildings and streets as the sun dips below the horizon, casting long, soft shadows."
+    },
+    "humanScore": 18,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 3,
+      "coherence": 5,
+      "constraintCompliance": 4,
+      "brevityDiscipline": 1
+    },
+    "humanNotes": "Faithful and clean but barely longer than the input — minimal enrichment with no lens, no specific lighting beyond \"warm golden\"; brevity here reads as under-developed rather than disciplined.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "optimize.completed",
+    "scoredEventId": "019e29aa-c82c-749d-8489-d40ef09e7d76",
+    "inputContent": {
+      "inputPrompt": "Macro close-up of dewdrops on a spider web, shallow depth of field",
+      "targetModel": "luma",
+      "mode": "video",
+      "hasContext": false,
+      "hasShotPlan": false,
+      "useConstitutionalAI": true
+    },
+    "outputContent": {
+      "outputPrompt": "Extreme Close-Up, Eye-Level Shot, static tripod, macro lens at, shallow depth of field, showcasing delicate silk threads of a spider web adorned with numerous spherical dewdrops. The dewdrops glisten and refract the surrounding light, each acting as a tiny prism, causing subtle shimmering on the web's surface. Soft diffused natural light from early morning, casting cool tones with gentle, high dynamic range highlights reflecting off the dewdrops. A serene and delicate mood, evoking the quiet beauty of nature in an early morning setting."
+    },
+    "humanScore": 17,
+    "humanDimensions": {
+      "fidelity": 5,
+      "detailEnrichment": 4,
+      "coherence": 3,
+      "constraintCompliance": 3,
+      "brevityDiscipline": 2
+    },
+    "humanNotes": "Faithful with nice refraction detail, but \"macro lens at,\" mid-list is the recurring aperture artifact and the opening is comma-spliced shot-tag soup rather than a sentence.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -403,16 +403,16 @@
     "outputContent": {
       "outputPrompt": "A time-lapse sequence of voluminous, billowy clouds, their forms constantly shifting, racing swiftly across a clear sky. They cast dynamic, evolving shadows over a rugged desert mesa, as natural daylight transitions to the warm, golden hues of a descending sun. Static tripod, wide eye-level shot."
     },
-    "humanScore": 25,
+    "humanScore": 19,
     "humanDimensions": {
       "fidelity": 5,
-      "detailEnrichment": 5,
+      "detailEnrichment": 3,
       "coherence": 5,
-      "constraintCompliance": 5,
-      "brevityDiscipline": 5
+      "constraintCompliance": 4,
+      "brevityDiscipline": 2
     },
-    "humanNotes": "Tight, well-shaped rewrite. Preserves time-lapse intent with concrete cinematographic detail (cloud forms, shadow dynamics, light transition, camera setup). Concise and complete.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Clean and faithful with plausible day-to-sunset arc, but enrichment stays mostly at adjectives; some filler (\"voluminous, billowy\") inflates a short prompt without adding shot-craft.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -429,16 +429,16 @@
     "outputContent": {
       "outputPrompt": "Skilled hands of a barista, under warm, soft ambient light, precisely tilt a stainless steel pitcher, pouring velvety white steamed milk into a dark, rich espresso in a ceramic cup. The milk swirls gracefully, its continuous flow creating a delicate, symmetrical heart pattern on the coffee's glossy surface. The liquids interact with natural motion physics, the white foam expanding gently as the design forms. A blurred, warm cafe background suggests a bustling morning."
     },
-    "humanScore": 24,
+    "humanScore": 22,
     "humanDimensions": {
       "fidelity": 5,
-      "detailEnrichment": 5,
+      "detailEnrichment": 4,
       "coherence": 5,
-      "constraintCompliance": 5,
+      "constraintCompliance": 4,
       "brevityDiscipline": 4
     },
-    "humanNotes": "Rich action-detail rewrite with motion physics, lighting, background context. All user elements preserved and enriched with scene-specific cinematography.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Tight, faithful, and physically plausible (milk swirl, foam physics); no truncation, no lens-aperture artifact, and the length suits a Sora prompt slot well.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -455,16 +455,16 @@
     "outputContent": {
       "outputPrompt": "A wide-angle establishing shot, captured with a 24mm lens at, slowly dollies forward across a tranquil, snow-covered Nordic village at twilight. Scattered, dark timber cabins with heavy snow resting on their steep roofs emerge from the soft ambient light. A single window in one cabin glows with a warm, inviting amber light, becoming a subtle focal point as the camera glides smoothly towards it for 8 seconds. The entire scene is rendered with the rich, slightly cool color palette and fine grain of Kodak Ektar 100 film, as delicate snowflakes drift lazily through the crisp air, reflecting the twilight hues."
     },
-    "humanScore": 22,
+    "humanScore": 20,
     "humanDimensions": {
       "fidelity": 5,
       "detailEnrichment": 5,
-      "coherence": 4,
+      "coherence": 3,
       "constraintCompliance": 4,
-      "brevityDiscipline": 4
+      "brevityDiscipline": 3
     },
-    "humanNotes": "Strong rewrite with cinematographic detail (lens, film stock, color palette, snow atmosphere). '24mm lens at,' has a trailing comma indicating likely truncation of the aperture spec — minor coherence hit.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Excellent fidelity to wide-angle/dolly/illuminated-window beats with strong Ektar film-stock enrichment; the lone \"24mm lens at,\" truncation is the only real defect.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -481,16 +481,16 @@
     "outputContent": {
       "outputPrompt": "Close-Up, Eye-Level Shot, static tripod, 50mm lens at, clear water droplets and individual raindrops with soft reflections, sliding down a windowpane, forming delicate trails and merging with others. Soft, diffused light from an overcast sky, casting gentle highlights on each droplet, high dynamic range lighting. An intimate naturalism, reminiscent of Tarkovsky's rain scenes, evoking a serene and contemplative mood on an overcast day."
     },
-    "humanScore": 22,
+    "humanScore": 17,
     "humanDimensions": {
       "fidelity": 5,
-      "detailEnrichment": 5,
-      "coherence": 4,
-      "constraintCompliance": 4,
-      "brevityDiscipline": 4
+      "detailEnrichment": 4,
+      "coherence": 3,
+      "constraintCompliance": 3,
+      "brevityDiscipline": 2
     },
-    "humanNotes": "Rich enrichment — shot type, lens, lighting quality, mood reference (Tarkovsky). '50mm lens at,' has trailing comma indicating likely focal-stop truncation.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Tarkovsky reference and droplet behavior land well, but \"50mm lens at,\" is the same aperture truncation and the opening is comma-spliced shot-tag soup instead of a sentence.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   },
   {
@@ -507,16 +507,16 @@
     "outputContent": {
       "outputPrompt": "Static: A close-up, eye-level shot of a single candle in a dark room, held in a polished brass holder. Melted wax drips glisten along its side as its softly flickering flame casts a warm amber glow, with gentle highlights illuminating the wax. Shot with a 50mm lens at, creating a shallow depth of field. This single continuous shot captures the fluid motion of the flame with consistent geometry, rendered with minimalist, cinematic lighting that emphasizes serenity. Soft halation emanates from the flame, creating a focused and tranquil visual against deep, desaturated shadows."
     },
-    "humanScore": 21,
+    "humanScore": 19,
     "humanDimensions": {
       "fidelity": 5,
-      "detailEnrichment": 5,
+      "detailEnrichment": 4,
       "coherence": 4,
       "constraintCompliance": 3,
-      "brevityDiscipline": 4
+      "brevityDiscipline": 3
     },
-    "humanNotes": "Rich enrichment with concrete scene detail (brass holder, melted wax, halation, depth of field). '50mm lens at,' truncation. Possibly long for runway's preferred terse style.",
-    "authoredAt": "2026-05-15T05:35:00.000Z",
+    "humanNotes": "Faithful expansion of a three-word input with plausible brass-holder/halation detail; pulled down by the \"50mm lens at,\" truncation and slight overreach in length for a Runway slot.",
+    "authoredAt": "2026-05-22T22:35:00.000Z",
     "authoredBy": "claude"
   }
 ]

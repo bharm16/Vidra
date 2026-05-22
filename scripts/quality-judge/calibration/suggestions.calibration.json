@@ -1,354 +1,40 @@
 [
   {
     "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e287b-2349-7581-88a5-4abe4bb318c0",
+    "scoredEventId": "019e4922-35b5-7e86-8f58-7511abb14c4b",
     "inputContent": {
-      "highlightedText": "Wes Anderson",
-      "fullPrompt": "Wes Anderson symmetrical composition, pastel palette",
-      "highlightedCategory": "style"
+      "highlightedText": "Aerial drone shot",
+      "fullPrompt": "Aerial drone shot pulling back from a city skyline at sunset",
+      "highlightedCategory": "camera.movement"
     },
     "outputContent": {
       "suggestions": [
-        "Pastel",
-        "Symmetrical",
-        "Quirky",
-        "Whimsical",
-        "Stylized",
-        "Artistic"
+        "slow dolly forward",
+        "slow dolly backward",
+        "slow dolly lateral",
+        "slow dolly upward",
+        "slow dolly downward",
+        "slow tracking forward"
       ]
     },
-    "humanScore": 12,
-    "humanDimensions": {
-      "relevance": 1,
-      "diversity": 3,
-      "categoryFidelity": 3,
-      "plausibility": 3,
-      "qualityRange": 2
-    },
-    "humanNotes": "Suggestions describe Wes Anderson's style rather than offering alternative named aesthetics. 'Pastel symmetrical composition, pastel palette' creates redundancy. Missing the proper-noun-as-aesthetic frame (no other director references like 'Kubrick' or 'Lynchian').",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e2899-157c-7a64-8bff-d5fc449f57e2",
-    "inputContent": {
-      "highlightedText": "Two children",
-      "fullPrompt": "Two children chase fireflies in a backyard at dusk",
-      "highlightedCategory": "action"
-    },
-    "outputContent": {
-      "suggestions": [
-        "Two kids",
-        "Two siblings",
-        "Two little girls",
-        "Two boys",
-        "Two toddlers"
-      ]
-    },
-    "humanScore": 15,
-    "humanDimensions": {
-      "relevance": 4,
-      "diversity": 4,
-      "categoryFidelity": 0,
-      "plausibility": 5,
-      "qualityRange": 2
-    },
-    "humanNotes": "Highlighted category is 'action' but the highlight text 'Two children' is a subject. System honored the text (returning subject alternatives) rather than the category. Suggestions fit the slot syntactically but fail categoryFidelity entirely.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-bf71-7130-834c-102c2cd44541",
-    "inputContent": {
-      "highlightedText": "teal and orange color grade",
-      "fullPrompt": "Cinematic anamorphic shot, film grain, teal and orange color grade",
-      "highlightedCategory": "style.colorGrade"
-    },
-    "outputContent": {
-      "suggestions": [
-        "desaturated",
-        "warm amber",
-        "cool steel-blue",
-        "muted pastel",
-        "high contrast",
-        "desaturated grade"
-      ]
-    },
-    "humanScore": 22,
-    "humanDimensions": {
-      "relevance": 4,
-      "diversity": 5,
-      "categoryFidelity": 4,
-      "plausibility": 5,
-      "qualityRange": 4
-    },
-    "humanNotes": "Strong color-grade alternatives spanning warm/cool/muted/desaturated. 'High contrast' is more a quality than a grade-name but still adjacent. 'Desaturated' and 'desaturated grade' are near-paraphrases of each other.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29af-2cf9-7a5a-b1bb-2859ca6a325f",
-    "inputContent": {
-      "highlightedText": "Slow motion",
-      "fullPrompt": "Slow motion shot of a hummingbird hovering near a hibiscus flower",
-      "highlightedCategory": "camera.focus"
-    },
-    "outputContent": {
-      "suggestions": [
-        "tight focus",
-        "tight rack focus",
-        "tight bokeh",
-        "shallow focus",
-        "shallow rack focus",
-        "shallow bokeh"
-      ]
-    },
-    "humanScore": 11,
-    "humanDimensions": {
-      "relevance": 0,
-      "diversity": 1,
-      "categoryFidelity": 5,
-      "plausibility": 4,
-      "qualityRange": 1
-    },
-    "humanNotes": "Honored stated category (camera.focus) at the expense of relevance — 'tight focus shot of a hummingbird' replaces 'Slow motion' with a focus term that breaks the user's slow-motion intent. All suggestions are tight/shallow + focus/bokeh — minimal diversity.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e2899-157c-7a64-8bff-d5fc449f57e2",
-    "inputContent": {
-      "highlightedText": "Two children",
-      "fullPrompt": "Two children chase fireflies in a backyard at dusk",
-      "highlightedCategory": "action"
-    },
-    "outputContent": {
-      "suggestions": [
-        "Two kids",
-        "Two siblings",
-        "Two little girls",
-        "Two boys",
-        "Two toddlers"
-      ]
-    },
-    "humanScore": 15,
-    "humanDimensions": {
-      "relevance": 4,
-      "diversity": 4,
-      "categoryFidelity": 0,
-      "plausibility": 5,
-      "qualityRange": 2
-    },
-    "humanNotes": "Same event as another entry in this set (stratification picked this id for two quartiles). Same scoring: highlighted category mismatch (action vs subject text), so categoryFidelity=0 while relevance is preserved.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e2899-1ba4-7327-84ae-7018efd7088a",
-    "inputContent": {
-      "highlightedText": "An abandoned",
-      "fullPrompt": "An abandoned 1950s diner overgrown with vines",
-      "highlightedCategory": "environment.location"
-    },
-    "outputContent": {
-      "suggestions": [
-        "A derelict",
-        "A forgotten",
-        "A decaying",
-        "A neglected",
-        "A crumbling",
-        "A weathered"
-      ]
-    },
-    "humanScore": 21,
-    "humanDimensions": {
-      "relevance": 5,
-      "diversity": 4,
-      "categoryFidelity": 4,
-      "plausibility": 5,
-      "qualityRange": 3
-    },
-    "humanNotes": "Drop-in alternatives for the adjective preceding '1950s diner' — 'A derelict 1950s diner overgrown with vines' works. All suggestions cluster around abandonment/decay; could include a bolder alternative like 'A vine-choked' or 'A boarded-up'.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-ad8f-7e96-b421-635500135e67",
-    "inputContent": {
-      "highlightedText": "Slow motion",
-      "fullPrompt": "Slow motion shot of a hummingbird hovering near a hibiscus flower",
-      "highlightedCategory": "technical.frameRate"
-    },
-    "outputContent": {
-      "suggestions": ["24fps", "30fps", "48fps", "60fps", "120fps"]
-    },
-    "humanScore": 23,
-    "humanDimensions": {
-      "relevance": 3,
-      "diversity": 5,
-      "categoryFidelity": 5,
-      "plausibility": 5,
-      "qualityRange": 5
-    },
-    "humanNotes": "Full range of frame rates covers the technical.frameRate slot well. '120fps shot of a hummingbird' loses the artistic 'slow motion' intent — 120fps is the production rate, not the playback effect — so relevance is moderate.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-b4f1-7854-ad24-955ea491f855",
-    "inputContent": {
-      "highlightedText": "hovering",
-      "fullPrompt": "Slow motion shot of a hummingbird hovering near a hibiscus flower",
-      "highlightedCategory": "action.movement"
-    },
-    "outputContent": {
-      "suggestions": [
-        "suspended near",
-        "suspended",
-        "suspended in place",
-        "balancing",
-        "suspended midair",
-        "stationary"
-      ]
-    },
-    "humanScore": 17,
-    "humanDimensions": {
-      "relevance": 4,
-      "diversity": 2,
-      "categoryFidelity": 5,
-      "plausibility": 4,
-      "qualityRange": 2
-    },
-    "humanNotes": "Four of six suggestions are 'suspended' variants — paraphrases rather than distinct alternatives. Only 'balancing' and 'stationary' offer real variation. All fit the action slot for a hummingbird.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-cf17-753b-8088-6d93a858d135",
-    "inputContent": {
-      "highlightedText": "A barista",
-      "fullPrompt": "A barista pours steamed milk creating a heart pattern in coffee",
-      "highlightedCategory": "subject.identity"
-    },
-    "outputContent": {
-      "suggestions": ["A coffee shop employee"]
-    },
-    "humanScore": 13,
-    "humanDimensions": {
-      "relevance": 4,
-      "diversity": 0,
-      "categoryFidelity": 5,
-      "plausibility": 4,
-      "qualityRange": 0
-    },
-    "humanNotes": "Single suggestion — zero diversity, zero qualityRange. 'A coffee shop employee' works as a replacement but is less specific than 'barista' (downgrades the prompt). Missing alternatives like 'A latte artist', 'A coffeemaker', 'A young barista'.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-f782-72ab-a2ed-af8b3544c78c",
-    "inputContent": {
-      "highlightedText": "establishing shot",
-      "fullPrompt": "Wide angle establishing shot of a snowy village, dolly forward toward a single illuminated window",
-      "highlightedCategory": "shot.type"
-    },
-    "outputContent": {
-      "suggestions": [
-        "wide shot",
-        "medium wide shot",
-        "extreme wide shot",
-        "extreme close-up",
-        "close-up",
-        "medium close-up"
-      ]
-    },
-    "humanScore": 21,
+    "humanScore": 14,
     "humanDimensions": {
       "relevance": 2,
-      "diversity": 5,
+      "diversity": 1,
       "categoryFidelity": 5,
       "plausibility": 5,
-      "qualityRange": 4
+      "qualityRange": 1
     },
-    "humanNotes": "Full shot-type range but most contradict the preceding 'Wide angle' qualifier — 'Wide angle extreme close-up of a snowy village' is internally inconsistent. The wide-shot family works; the close-up family does not.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
+    "humanNotes": "Generic dolly-direction matrix substituted for an aerial-drone gesture — all six suggestions are ground-based moves, so the aerial character is lost and diversity collapses to one template.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-f782-72ab-a2ed-af8adb029c42",
+    "scoredEventId": "019e4922-930d-78c4-a306-625a0e08eec2",
     "inputContent": {
-      "highlightedText": "Wide angle",
-      "fullPrompt": "Wide angle establishing shot of a snowy village, dolly forward toward a single illuminated window",
-      "highlightedCategory": "camera.lens"
-    },
-    "outputContent": {
-      "suggestions": [
-        "24mm lens",
-        "24mm prime lens",
-        "35mm lens",
-        "35mm prime lens",
-        "50mm lens",
-        "50mm prime lens"
-      ]
-    },
-    "humanScore": 17,
-    "humanDimensions": {
-      "relevance": 3,
-      "diversity": 2,
-      "categoryFidelity": 5,
-      "plausibility": 5,
-      "qualityRange": 2
-    },
-    "humanNotes": "Three focal lengths × prime/non-prime variants — heavy paraphrasing. '50mm lens establishing shot of a snowy village' contradicts the user's wide-angle framing intent. Safe lens specs; no bold alternative like a fisheye or anamorphic.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f4-1e2d-743c-ba3a-b9fa2b096707",
-    "inputContent": {
-      "highlightedText": "flickers",
-      "fullPrompt": "A single candle flickers",
-      "highlightedCategory": "action.movement"
-    },
-    "outputContent": {
-      "suggestions": [
-        "sways",
-        "trembles",
-        "dances",
-        "wavers",
-        "shimmers",
-        "glows"
-      ]
-    },
-    "humanScore": 23,
-    "humanDimensions": {
-      "relevance": 5,
-      "diversity": 5,
-      "categoryFidelity": 4,
-      "plausibility": 5,
-      "qualityRange": 4
-    },
-    "humanNotes": "All six fit 'A single candle ___'. Genuinely distinct alternatives spanning physical motion ('sways') to poetic ('dances') to state ('glows'). 'Glows' is more state than movement, slight categoryFidelity hit.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29af-2cf8-7498-9a0c-b87cbd6eafcb",
-    "inputContent": {
-      "highlightedText": "A dimly",
-      "fullPrompt": "A dimly lit jazz club with a single spotlight on a saxophone player",
+      "highlightedText": "Bright midday sun",
+      "fullPrompt": "Bright midday sun cuts through tropical palm leaves",
       "highlightedCategory": "lighting.source"
     },
     "outputContent": {
@@ -361,134 +47,513 @@
         "harsh window light"
       ]
     },
-    "humanScore": 17,
+    "humanScore": 14,
     "humanDimensions": {
       "relevance": 1,
-      "diversity": 4,
+      "diversity": 2,
       "categoryFidelity": 5,
-      "plausibility": 4,
-      "qualityRange": 3
+      "plausibility": 5,
+      "qualityRange": 1
     },
-    "humanNotes": "Highlighted text 'A dimly' is a determiner+adverb fragment, but suggestions are full lighting-source noun phrases. 'Soft window light lit jazz club' breaks grammar. Five of six start with 'soft' — slight monotony.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
+    "humanNotes": "All six suggestions are 'soft X' interior light sources — completely wrong for a bright outdoor tropical midday context, and the template repetition kills diversity.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29af-4987-70d6-8ca2-01713e4e6f3f",
+    "scoredEventId": "019e4924-b0f2-7c33-8128-a31db81716fd",
     "inputContent": {
-      "highlightedText": "Rain on",
-      "fullPrompt": "Rain on a window",
-      "highlightedCategory": "subject"
+      "highlightedText": "neon signs",
+      "fullPrompt": "A bustling night market in Bangkok with neon signs reflected in puddles",
+      "highlightedCategory": "lighting.source"
     },
     "outputContent": {
-      "suggestions": ["Raindrops on", "Water on", "Drops on"]
+      "suggestions": [
+        "soft window light",
+        "soft sunlight",
+        "soft neon glow",
+        "soft candlelight",
+        "soft streetlamp spill",
+        "harsh window light"
+      ]
+    },
+    "humanScore": 14,
+    "humanDimensions": {
+      "relevance": 1,
+      "diversity": 2,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 1
+    },
+    "humanNotes": "Same canned 'soft X light' list reappears — most options (sunlight, candlelight, window light) would break the night-market neon context.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4925-1145-7b96-afc7-2e9e632f6c89",
+    "inputContent": {
+      "highlightedText": "Handheld camera",
+      "fullPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces",
+      "highlightedCategory": "camera.movement"
+    },
+    "outputContent": {
+      "suggestions": [
+        "slow dolly forward",
+        "slow dolly backward",
+        "slow dolly lateral",
+        "slow dolly upward",
+        "slow dolly downward",
+        "slow tracking forward"
+      ]
+    },
+    "humanScore": 14,
+    "humanDimensions": {
+      "relevance": 2,
+      "diversity": 1,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 1
+    },
+    "humanNotes": "Handheld implies organic, unstable motion — substituting six slow-dolly variants flips the character of the shot and offers no diversity.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e48ae-6274-7ed7-9d9b-3f945d1a13f7",
+    "inputContent": {
+      "highlightedText": "Slow motion",
+      "fullPrompt": "Slow motion shot of a hummingbird hovering near a hibiscus flower",
+      "highlightedCategory": "technical.frameRate"
+    },
+    "outputContent": {
+      "suggestions": ["24fps", "30fps", "48fps", "60fps", "120fps"]
+    },
+    "humanScore": 21,
+    "humanDimensions": {
+      "relevance": 3,
+      "diversity": 4,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 4
+    },
+    "humanNotes": "Genuine frame-rate values spanning standard to high-speed, but 24/30fps wouldn't read as slow motion in the prompt — relevance suffers because half the list contradicts the highlighted intent.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e48ae-5736-7a72-a30e-afb82328a602",
+    "inputContent": {
+      "highlightedText": "sunset",
+      "fullPrompt": "Aerial drone shot pulling back from a city skyline at sunset",
+      "highlightedCategory": "lighting.timeOfDay"
+    },
+    "outputContent": {
+      "suggestions": [
+        "pre-dawn",
+        "sunrise",
+        "morning",
+        "midday",
+        "afternoon",
+        "golden hour"
+      ]
+    },
+    "humanScore": 24,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 5,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 4
+    },
+    "humanNotes": "Clean sweep across the day from pre-dawn to golden hour — genuinely distinct times that would all slot grammatically, with midday as a bold tonal departure from sunset.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e48ae-5a8b-7953-9676-c5d12004ee2f",
+    "inputContent": {
+      "highlightedText": "shallow depth of field",
+      "fullPrompt": "Macro close-up of dewdrops on a spider web, shallow depth of field",
+      "highlightedCategory": "camera.focus"
+    },
+    "outputContent": {
+      "suggestions": [
+        "tight focus",
+        "tight rack focus",
+        "tight bokeh",
+        "shallow focus",
+        "shallow rack focus",
+        "shallow bokeh"
+      ]
+    },
+    "humanScore": 18,
+    "humanDimensions": {
+      "relevance": 4,
+      "diversity": 2,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 2
+    },
+    "humanNotes": "Pure {tight,shallow} × {focus, rack focus, bokeh} matrix — fidelity and plausibility are fine but it's six paraphrases of one idea with no bolder choice.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4925-ab99-7819-83bd-13452d0b4d08",
+    "inputContent": {
+      "highlightedText": "shallow focus",
+      "fullPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces",
+      "highlightedCategory": "camera.focus"
+    },
+    "outputContent": {
+      "suggestions": [
+        "tight focus",
+        "tight rack focus",
+        "tight bokeh",
+        "shallow bokeh",
+        "soft focus"
+      ]
+    },
+    "humanScore": 20,
+    "humanDimensions": {
+      "relevance": 4,
+      "diversity": 3,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 3
+    },
+    "humanNotes": "Same focus-matrix template, but 'soft focus' adds a genuinely distinct alternative — slightly better diversity than the dewdrops case.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e48ae-c336-7c4c-a032-7597e9f4bf97",
+    "inputContent": {
+      "highlightedText": "A red balloon",
+      "fullPrompt": "A red balloon floats up",
+      "highlightedCategory": "subject.identity"
+    },
+    "outputContent": {
+      "suggestions": ["A crimson balloon", "A bright balloon"]
+    },
+    "humanScore": 17,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 1,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 1
+    },
+    "humanNotes": "Only two suggestions and both are pure color-modifier swaps — no actual subject-identity exploration (e.g., 'a paper lantern', 'a child's kite').",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4920-997f-7d47-ad44-87cb51f79bfc",
+    "inputContent": {
+      "highlightedText": "sunset",
+      "fullPrompt": "Aerial drone shot pulling back from a city skyline at sunset",
+      "highlightedCategory": "lighting.timeOfDay"
+    },
+    "outputContent": {
+      "suggestions": [
+        "pre-dawn",
+        "sunrise",
+        "morning",
+        "midday",
+        "afternoon",
+        "golden hour"
+      ]
+    },
+    "humanScore": 24,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 5,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 4
+    },
+    "humanNotes": "Same sunset/timeOfDay case — full-day sweep is genuinely diverse, all real terms, and midday is the bolder departure from the prompt's mood.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4920-ed93-7cc7-9920-8a0fd995c0d0",
+    "inputContent": {
+      "highlightedText": "overgrown with vines",
+      "fullPrompt": "An abandoned 1950s diner overgrown with vines",
+      "highlightedCategory": "environment.context"
+    },
+    "outputContent": {
+      "suggestions": [
+        "surrounded by creeping ivy",
+        "choked with wild ivy",
+        "swallowed by jungle growth",
+        "blanketed in moss and vines",
+        "engulfed by tangled vines",
+        "overtaken by creeping ferns"
+      ]
     },
     "humanScore": 19,
     "humanDimensions": {
       "relevance": 5,
       "diversity": 3,
-      "categoryFidelity": 4,
+      "categoryFidelity": 3,
       "plausibility": 5,
-      "qualityRange": 2
+      "qualityRange": 3
     },
-    "humanNotes": "Each suggestion drops in cleanly: 'Raindrops on a window' / 'Water on a window' / 'Drops on a window' all read fine. Three variations on the same water/rain concept; no bold alternative like 'Condensation on' or 'Sleet on'.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
+    "humanNotes": "All slot in grammatically and feel evocative, but 'environment.context' isn't in the taxonomy, and these read more as action-state descriptors than environment values — minor category drift.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29af-4cd3-7dca-9a48-d8afd69e179f",
+    "scoredEventId": "019e4922-4efb-75c0-b399-b6d8dc39593d",
     "inputContent": {
-      "highlightedText": "A single",
-      "fullPrompt": "A single candle flickers",
-      "highlightedCategory": "subject"
-    },
-    "outputContent": {
-      "suggestions": [
-        "One lone",
-        "A solitary",
-        "An only",
-        "One tiny",
-        "A lone",
-        "One small"
-      ]
-    },
-    "humanScore": 14,
-    "humanDimensions": {
-      "relevance": 4,
-      "diversity": 3,
-      "categoryFidelity": 2,
-      "plausibility": 3,
-      "qualityRange": 2
-    },
-    "humanNotes": "'An only candle' is unidiomatic. Most fit grammatically but they're determiner+adjective fragments, not subject identities. Five of six paraphrase the singular/lone concept.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-a437-7c66-87f3-167fc123df62",
-    "inputContent": {
-      "highlightedText": "dewdrops",
-      "fullPrompt": "Macro close-up of dewdrops on a spider web, shallow depth of field",
-      "highlightedCategory": "subject.identity"
-    },
-    "outputContent": {
-      "suggestions": [
-        "water droplets",
-        "morning droplets",
-        "tiny pearls",
-        "glass-like beads",
-        "crystal drops",
-        "sparkling beads"
-      ]
-    },
-    "humanScore": 25,
-    "humanDimensions": {
-      "relevance": 5,
-      "diversity": 5,
-      "categoryFidelity": 5,
-      "plausibility": 5,
-      "qualityRange": 5
-    },
-    "humanNotes": "Excellent: each suggestion drops cleanly into the macro-shot slot, ranges from literal ('water droplets') to descriptive ('glass-like beads') to poetic ('tiny pearls'), and offers safe-to-bold variation.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-e7e2-72ed-8ba5-9adbe46144fc",
-    "inputContent": {
-      "highlightedText": "An abandoned 1950s diner",
-      "fullPrompt": "An abandoned 1950s diner overgrown with vines",
+      "highlightedText": "city skyline",
+      "fullPrompt": "Aerial drone shot pulling back from a city skyline at sunset",
       "highlightedCategory": "environment.location"
     },
     "outputContent": {
       "suggestions": [
-        "a derelict roadside gas station",
-        "a forgotten 1950s drive-in theater",
-        "a crumbling retro car wash",
-        "a weathered roadside snack bar",
-        "a neglected 1950s soda shop",
-        "a rusted motor court lodge"
+        "metropolitan skyline",
+        "urban landscape",
+        "city horizon",
+        "downtown view",
+        "cityscape silhouette",
+        "skyline panorama"
       ]
     },
-    "humanScore": 25,
+    "humanScore": 19,
     "humanDimensions": {
       "relevance": 5,
-      "diversity": 5,
+      "diversity": 2,
       "categoryFidelity": 5,
       "plausibility": 5,
-      "qualityRange": 5
+      "qualityRange": 2
     },
-    "humanNotes": "Excellent: all six are abandoned mid-century roadside establishments, drop in cleanly to 'overgrown with vines', and span gas-station-safe to motor-court-bold. Each suggestion offers a distinct 1950s archetype.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
+    "humanNotes": "Six near-synonyms of 'city skyline' — fine fidelity and plausibility but the list is basically thesaurus rewrites of the same idea, no genuinely alternative location.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   },
   {
     "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e29f3-fcdc-7f51-88ee-0b5d3c23141b",
+    "scoredEventId": "019e4923-9240-70bc-93f3-8a8ae1389ab4",
+    "inputContent": {
+      "highlightedText": "desert mesa",
+      "fullPrompt": "Time-lapse of clouds racing over a desert mesa",
+      "highlightedCategory": "environment.location"
+    },
+    "outputContent": {
+      "suggestions": [
+        "rocky plateau",
+        "arid canyon",
+        "sunlit mesa",
+        "barren hillside",
+        "dry savanna",
+        "windswept dune"
+      ]
+    },
+    "humanScore": 23,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 4,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 4
+    },
+    "humanNotes": "Genuine range across arid terrain — plateau and mesa hug the original, savanna and dune are bolder departures while still fitting the time-lapse-of-clouds frame.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4926-f356-74bd-a46e-551b8d19513a",
+    "inputContent": {
+      "highlightedText": "flickers",
+      "fullPrompt": "A single candle flickers",
+      "highlightedCategory": "action.movement"
+    },
+    "outputContent": {
+      "suggestions": [
+        "dances",
+        "sways",
+        "trembles",
+        "quivers",
+        "wobbles",
+        "gently sways"
+      ]
+    },
+    "humanScore": 20,
+    "humanDimensions": {
+      "relevance": 4,
+      "diversity": 3,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 3
+    },
+    "humanNotes": "Trembles/quivers/wobbles cluster tightly; 'dances' is the genuinely bolder pick. 'gently sways' is a near-duplicate of 'sways' that dings diversity.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e48ae-460c-7e0b-abb0-d97f171b501f",
+    "inputContent": {
+      "highlightedText": "misty forest",
+      "fullPrompt": "A young woman with red hair walks through a misty forest at dawn",
+      "highlightedCategory": "environment.location"
+    },
+    "outputContent": {
+      "suggestions": [
+        "fog-drenched woods",
+        "mist-covered grove",
+        "early morning thicket",
+        "hazy pine forest",
+        "damp cedar woods",
+        "morning mist glade"
+      ]
+    },
+    "humanScore": 21,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 3,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 3
+    },
+    "humanNotes": "All real, all fit — but four of six lean on a mist/fog modifier. Species-specific picks (pine, cedar) add some texture without breaking the brief.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4920-cf3d-7a8c-b836-5b5ee2c493c6",
+    "inputContent": {
+      "highlightedText": "pours steamed milk",
+      "fullPrompt": "A barista pours steamed milk creating a heart pattern in coffee",
+      "highlightedCategory": "action.movement"
+    },
+    "outputContent": {
+      "suggestions": [
+        "streams frothy milk",
+        "drizzles milk artfully",
+        "guides milk flow",
+        "directs milk stream",
+        "moves milk steadily",
+        "shapes milk with care"
+      ]
+    },
+    "humanScore": 20,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 3,
+      "categoryFidelity": 5,
+      "plausibility": 4,
+      "qualityRange": 3
+    },
+    "humanNotes": "Drizzles/streams are concrete and cinematic; 'guides milk flow', 'shapes milk with care', 'moves milk steadily' drift into adverb-padded generic phrasing that working baristas/directors wouldn't say.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4920-e577-76c3-a2b6-deaf1b190e28",
+    "inputContent": {
+      "highlightedText": "Bangkok",
+      "fullPrompt": "A bustling night market in Bangkok with neon signs reflected in puddles",
+      "highlightedCategory": "environment.location"
+    },
+    "outputContent": {
+      "suggestions": [
+        "Chiang Mai",
+        "Ho Chi Minh City",
+        "Phnom Penh",
+        "Kuala Lumpur",
+        "Singapore City"
+      ]
+    },
+    "humanScore": 23,
+    "humanDimensions": {
+      "relevance": 5,
+      "diversity": 4,
+      "categoryFidelity": 5,
+      "plausibility": 5,
+      "qualityRange": 4
+    },
+    "humanNotes": "Tight SE-Asia night-market belt — all plausible swaps with genuinely different vibes (Singapore's sterile gleam vs Phnom Penh's grit). Strong list.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4920-f424-7823-ac74-0cbc7094f741",
+    "inputContent": {
+      "highlightedText": "a chef",
+      "fullPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces",
+      "highlightedCategory": "subject.identity"
+    },
+    "outputContent": {
+      "suggestions": [
+        "a line cook",
+        "a food stylist",
+        "a kitchen manager",
+        "a dishwashing supervisor"
+      ]
+    },
+    "humanScore": 20,
+    "humanDimensions": {
+      "relevance": 3,
+      "diversity": 4,
+      "categoryFidelity": 5,
+      "plausibility": 4,
+      "qualityRange": 4
+    },
+    "humanNotes": "Genuinely different roles, but 'food stylist' breaks the busy-kitchen scene and 'dishwashing supervisor' sounds like contrived corporate jargon rather than a director's term.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4920-f9b2-78c0-a225-2a028f9bb66c",
+    "inputContent": {
+      "highlightedText": "busy restaurant kitchen",
+      "fullPrompt": "Handheld camera follows a chef through a busy restaurant kitchen, warm tungsten lighting, shallow focus pulls between faces",
+      "highlightedCategory": "environment.location"
+    },
+    "outputContent": {
+      "suggestions": [
+        "crowded urban market",
+        "chaotic food truck lot",
+        "packed catering kitchen",
+        "noisy street food alley",
+        "cluttered banquet kitchen",
+        "hustling food hall kitchen"
+      ]
+    },
+    "humanScore": 19,
+    "humanDimensions": {
+      "relevance": 3,
+      "diversity": 4,
+      "categoryFidelity": 4,
+      "plausibility": 4,
+      "qualityRange": 4
+    },
+    "humanNotes": "Several picks (urban market, food truck lot, street food alley) aren't actually kitchens — they'd require rewriting the surrounding 'follows a chef through' phrasing to land. 'Hustling food hall kitchen' reads as forced jargon.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
+    "authoredBy": "claude"
+  },
+  {
+    "scoredEvent": "suggestions.completed",
+    "scoredEventId": "019e4921-01e5-7788-9602-7e8b1b24d88a",
     "inputContent": {
       "highlightedText": "dolly forward",
       "fullPrompt": "Wide angle establishing shot of a snowy village, dolly forward toward a single illuminated window",
@@ -505,74 +570,14 @@
     },
     "humanScore": 19,
     "humanDimensions": {
-      "relevance": 3,
-      "diversity": 3,
+      "relevance": 5,
+      "diversity": 2,
       "categoryFidelity": 5,
       "plausibility": 5,
-      "qualityRange": 3
+      "qualityRange": 2
     },
-    "humanNotes": "Four are 'slow dolly ___' variants. 'Slow dolly backward toward a single illuminated window' contradicts 'toward' — most direction variants break the surrounding context. Only 'slow tracking forward' offers a genuine alternative.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e2899-07c7-7ed4-b557-28a861280533",
-    "inputContent": {
-      "highlightedText": "Macro close-up",
-      "fullPrompt": "Macro close-up of dewdrops on a spider web, shallow depth of field",
-      "highlightedCategory": "shot.type"
-    },
-    "outputContent": {
-      "suggestions": [
-        "extreme close-up",
-        "close-up",
-        "medium close-up",
-        "medium shot",
-        "medium wide shot",
-        "wide shot"
-      ]
-    },
-    "humanScore": 23,
-    "humanDimensions": {
-      "relevance": 3,
-      "diversity": 5,
-      "categoryFidelity": 5,
-      "plausibility": 5,
-      "qualityRange": 5
-    },
-    "humanNotes": "Full shot-type range from extreme close-up to wide shot. Most contradict the dewdrops subject — you can't see dewdrops in a wide shot — so only the close-up family works in this slot. Strong diversity and qualityRange offsets the relevance hit.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
-    "authoredBy": "claude"
-  },
-  {
-    "scoredEvent": "suggestions.completed",
-    "scoredEventId": "019e2879-868f-768c-9b24-1b8aee12ea40",
-    "inputContent": {
-      "highlightedText": "Macro close-up",
-      "fullPrompt": "Macro close-up of dewdrops on a spider web, shallow depth of field",
-      "highlightedCategory": "shot.type"
-    },
-    "outputContent": {
-      "suggestions": [
-        "extreme close-up",
-        "close-up",
-        "medium close-up",
-        "medium shot",
-        "medium wide shot",
-        "wide shot"
-      ]
-    },
-    "humanScore": 23,
-    "humanDimensions": {
-      "relevance": 3,
-      "diversity": 5,
-      "categoryFidelity": 5,
-      "plausibility": 5,
-      "qualityRange": 5
-    },
-    "humanNotes": "Same event content as another entry in this set (different scoredEventId, same prompt/highlight/suggestions). Same scoring.",
-    "authoredAt": "2026-05-15T05:50:00.000Z",
+    "humanNotes": "Dolly-direction matrix is on-brief here (the input is already 'dolly forward'), but there's no creative departure — no crane, no push-in, no handheld alternative for a bolder pick.",
+    "authoredAt": "2026-05-22T22:30:00.000Z",
     "authoredBy": "claude"
   }
 ]

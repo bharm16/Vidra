@@ -42,6 +42,16 @@ if (!POSTHOG_PROJECT_ID || !POSTHOG_PERSONAL_API_KEY) {
   );
 }
 
+/**
+ * Excludes pre-harness-rewrite synthetic-pool events. Commit 4bf218dd
+ * (2026-05-14T23:16:39Z) replaced canned synthesizeSpans/optimize/suggestions
+ * helpers with live AIModelService calls. Events emitted before that
+ * timestamp annotate themselves with provider/model fields but their content
+ * is fake. See docs/superpowers/programs/measurement.md reordering log
+ * 2026-05-22 entry.
+ */
+const MIN_EVENT_TIMESTAMP = "2026-05-14T23:16:39Z";
+
 interface HogQLResponse {
   results: Array<Array<unknown>>;
   columns: string[];
@@ -89,7 +99,8 @@ async function fetchScoredRows(
     FROM events
     WHERE event = 'quality.scored'
       AND properties.surface = '${surface}'
-      AND timestamp > now() - INTERVAL 7 DAY
+      AND timestamp > now() - INTERVAL 14 DAY
+      AND timestamp > parseDateTimeBestEffort('${MIN_EVENT_TIMESTAMP}')
     ORDER BY timestamp DESC
     LIMIT 500
   `;
@@ -124,7 +135,8 @@ async function fetchSourceRows(
     FROM events
     WHERE event = '${eventName}'
       AND toString(uuid) IN (${quotedUuids})
-      AND timestamp > now() - INTERVAL 7 DAY
+      AND timestamp > now() - INTERVAL 14 DAY
+      AND timestamp > parseDateTimeBestEffort('${MIN_EVENT_TIMESTAMP}')
   `;
   const r = await runHogQL(q);
   return r.results.map((row) => ({
