@@ -92,10 +92,29 @@ async function runForSurface(surface: QualityScoredSurface): Promise<boolean> {
     valid.map((r) => r.judgeScore),
   );
 
+  // D2 (2026-05-22): report additional diagnostics so operators can
+  // distinguish "rank disagreement" (low rho) from "absolute disagreement"
+  // (high MAE) from "ceiling-clustering artifact" (rho unreliable when many
+  // entries are at the max score — rank correlation can't differentiate
+  // the cluster). Max possible score is 25 (5 dimensions × 5 each).
+  const MAX_SCORE = 25;
+  const CEILING_THRESHOLD_PCT = 0.3;
+  const humanScores = valid.map((r) => r.humanScore);
+  const humanMean = humanScores.reduce((a, b) => a + b, 0) / humanScores.length;
+  const ceilingCount = humanScores.filter((s) => s >= MAX_SCORE).length;
+  const ceilingPct = ceilingCount / humanScores.length;
+
   // eslint-disable-next-line no-console
   console.log(
-    `[calibration] ${surface}: rho=${rho.toFixed(3)}  MAE=${mae.toFixed(2)}  (n=${valid.length})`,
+    `[calibration] ${surface}: rho=${rho.toFixed(3)}  MAE=${mae.toFixed(2)}  humanMean=${humanMean.toFixed(2)}  ceilingPct=${(ceilingPct * 100).toFixed(0)}%  (n=${valid.length})`,
   );
+
+  if (ceilingPct > CEILING_THRESHOLD_PCT) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[calibration] ${surface}: NOTE — ${(ceilingPct * 100).toFixed(0)}% of human scores are at the ceiling (${MAX_SCORE}/${MAX_SCORE}); rho is unreliable for this distribution. Prefer MAE as the primary signal. See docs/superpowers/programs/measurement.md D2 entry.`,
+    );
+  }
 
   if (rho < 0.7) {
     // eslint-disable-next-line no-console
