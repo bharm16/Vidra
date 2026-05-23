@@ -59,6 +59,12 @@ export async function driveOptimize(
     await runInSyntheticContext(requestId, async () => {
       const trace = deps.optimize.startOptimizeTrace(requestId, distinctId);
 
+      // C4 (2026-05-22): capture previewPrompt via onMetadata callback so
+      // we can distinguish pre-compile output (renderer) from post-compile
+      // output (target-model-specific freeform). Comparing the two answers
+      // whether the LLM populates camera_lens (visible in previewPrompt as
+      // "on {lens}") and whether the compile step strips it.
+      let capturedPreviewPrompt: string | null = null;
       try {
         const response = await optimizer.optimize({
           prompt: prompt.text,
@@ -75,7 +81,25 @@ export async function driveOptimize(
           // "To re-enable" instructions), set this back to true to keep
           // synthetic mirroring prod.
           useConstitutionalAI: false,
+          onMetadata: (metadata: Record<string, unknown>) => {
+            const preview = metadata.previewPrompt;
+            if (typeof preview === "string" && preview.length > 0) {
+              capturedPreviewPrompt = preview;
+            }
+          },
         });
+
+        // Fallback: cache-hit path skips the structuredArtifact branch that
+        // calls onMetadata, but exposes the cached metadata on
+        // response.metadata. Pull previewPrompt from there if onMetadata
+        // didn't deliver it.
+        if (
+          capturedPreviewPrompt === null &&
+          response.metadata &&
+          typeof response.metadata.previewPrompt === "string"
+        ) {
+          capturedPreviewPrompt = response.metadata.previewPrompt;
+        }
 
         const outputPrompt = response.prompt;
         trace.complete({
@@ -91,6 +115,10 @@ export async function driveOptimize(
           useConstitutionalAI: false,
           inputPrompt: prompt.text,
           outputPrompt,
+          // C4 telemetry: previewPrompt is the renderer's pre-compile output.
+          // Joined to outputPrompt in dashboards to detect compile-stage
+          // wash-out of slot-level details (camera_lens, lighting, etc.).
+          previewPrompt: capturedPreviewPrompt,
           modelVariant: deps.variantTag,
         });
         surfaceEvents++;
