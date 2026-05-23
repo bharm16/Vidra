@@ -66,6 +66,18 @@ export const VARIANTS: VariantPreset[] = [
     },
     description: "GPT-4o-mini for suggestions",
   },
+  {
+    // Sub-project B2 (2026-05-22): same env as `qwen`, distinct tag.
+    // Events emitted under this tag run with the imperative + one-shot
+    // scene_summary prompt change merged to main. Compare against
+    // historical events tagged `qwen` (which captured the pre-B2
+    // behavior, ~39.7% emission rate) to measure the lift.
+    name: "qwen-with-imperative",
+    surface: "suggestions",
+    env: { ENHANCE_PROVIDER: "qwen", ENHANCE_MODEL: "qwen/qwen3-32b" },
+    description:
+      "Qwen 3 32B (post-Sub-project-B2 imperative + one-shot prompt)",
+  },
 
   // -- optimize --
   {
@@ -88,6 +100,18 @@ export const VARIANTS: VariantPreset[] = [
     surface: "optimize",
     env: { OPTIMIZE_PROVIDER: "qwen", OPTIMIZE_MODEL: "qwen/qwen3-32b" },
     description: "Qwen 3 32B for optimize",
+  },
+  {
+    // Sub-project C (2026-05-22): same env as `openai`, distinct tag.
+    // Events emitted under this tag run with the camera_lens slot
+    // redesign merged to main. Compare against historical events tagged
+    // `openai` (which captured the pre-C behavior, with the "lens at,"
+    // fragment in ~50% of outputs and a 17.35 mean per Sub-project D's
+    // calibration labeling) to measure the recovery.
+    name: "openai-with-camera-lens",
+    surface: "optimize",
+    env: { OPTIMIZE_PROVIDER: "openai", OPTIMIZE_MODEL: "gpt-4o-2024-08-06" },
+    description: "GPT-4o (post-Sub-project-C camera_lens slot redesign)",
   },
 
   // -- span-labeling --
