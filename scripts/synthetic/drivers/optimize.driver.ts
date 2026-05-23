@@ -81,6 +81,14 @@ export async function driveOptimize(
           // "To re-enable" instructions), set this back to true to keep
           // synthetic mirroring prod.
           useConstitutionalAI: false,
+          // C5 (2026-05-22): bypass the optimization cache. The harness
+          // re-runs the same 20 prompts each matrix run; without skipCache,
+          // every event after the first hits cached metadata that may
+          // predate telemetry-payload additions (previewPrompt, future
+          // fields). Synthetic should always exercise the live pipeline so
+          // measurement matches the prompt-builder + renderer + compile
+          // path operators actually maintain.
+          skipCache: true,
           onMetadata: (metadata: Record<string, unknown>) => {
             const preview = metadata.previewPrompt;
             if (typeof preview === "string" && preview.length > 0) {
