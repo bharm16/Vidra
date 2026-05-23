@@ -51,7 +51,10 @@ function isQualityVideoPromptLintError(error: string): boolean {
     /`action` is too short/i.test(error) ||
     /`action` must be ONE continuous action/i.test(error) ||
     /`action` looks like multiple actions/i.test(error) ||
-    /appears to contain multiple actions/i.test(error)
+    /appears to contain multiple actions/i.test(error) ||
+    /`camera_lens` must contain aperture/i.test(error) ||
+    /`camera_lens` ends in a dangling preposition/i.test(error) ||
+    /`camera_lens` is too long/i.test(error)
   );
 }
 

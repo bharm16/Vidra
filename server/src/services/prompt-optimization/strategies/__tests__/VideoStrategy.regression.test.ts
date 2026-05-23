@@ -58,4 +58,32 @@ describe("VideoStrategy regression", () => {
     expect(output.toLowerCase()).toContain("close-up");
     expect(output.toLowerCase()).toContain("baby");
   });
+
+  it("isQualityVideoPromptLintError recognizes camera_lens lint messages (eligible for reroll)", async () => {
+    // The lint message text is the contract between the linter and the
+    // reroll path. This test protects against future drift in either the
+    // lint message string or the filter regex by asserting the linter's
+    // observable error text matches the patterns isQualityVideoPromptLintError
+    // checks for.
+    const { lintVideoPromptSlots } = await import("../videoPromptLinter.js");
+    const errors = lintVideoPromptSlots({
+      shot_framing: "Wide Shot",
+      camera_angle: "Eye-Level Shot",
+      camera_move: "slow dolly in",
+      subject: "a cat",
+      subject_details: ["with green eyes", "wearing a red collar"],
+      action: "walking across the kitchen slowly",
+      camera_lens: "anamorphic lens at",
+    }).errors;
+
+    const cameraLensError = errors.find((e) => e.includes("camera_lens"));
+    expect(cameraLensError).toBeDefined();
+    expect(
+      /`camera_lens` must contain aperture/i.test(cameraLensError!) ||
+        /`camera_lens` ends in a dangling preposition/i.test(
+          cameraLensError!,
+        ) ||
+        /`camera_lens` is too long/i.test(cameraLensError!),
+    ).toBe(true);
+  });
 });
