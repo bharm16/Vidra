@@ -89,6 +89,9 @@ export class OptimizeTrace {
       stages,
       inputPrompt: summary.inputPrompt,
       outputPrompt: summary.outputPrompt,
+      // C4 (2026-05-22): pre-compile renderer output. Null when the
+      // structuredArtifact branch didn't run.
+      previewPrompt: summary.previewPrompt ?? null,
       modelVariant: summary.modelVariant ?? null,
     };
 

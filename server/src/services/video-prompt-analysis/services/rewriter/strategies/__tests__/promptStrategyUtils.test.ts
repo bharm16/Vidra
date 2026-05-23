@@ -48,6 +48,15 @@ describe("buildBaseHeader — Sub-project C6 tech-spec tail guard", () => {
     const result = buildBaseHeader(makeContext());
     expect(result).toContain("complete sentence terminated by punctuation");
   });
+
+  it("forbids the colon-list tech-spec prefix variant (C7)", () => {
+    // C7 (2026-05-22): previewPrompt telemetry exposed a colon-tail variant
+    // ("100mm at: An extreme close-up...") that C6's parenthetical-tail
+    // guard didn't catch. The OUTPUT FORMAT RULES now also forbid
+    // colon-list prefixes.
+    const result = buildBaseHeader(makeContext());
+    expect(result).toContain("DO NOT prefix the prompt with a colon-list");
+  });
 });
 
 describe("buildBaseHeader", () => {

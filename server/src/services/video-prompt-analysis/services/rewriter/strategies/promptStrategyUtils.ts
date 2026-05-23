@@ -45,7 +45,8 @@ Below is the structured Intermediate Representation (IR) of the user's request, 
 OUTPUT FORMAT RULES (apply to every model strategy):
 - Integrate technical specs (duration, aspect ratio, frame rate, lens, aperture) NATURALLY into the prose narrative when they belong. Example: "captured on 35mm at f/2.8" inside a sentence is fine.
 - DO NOT append a parenthetical or comma-separated tech-spec tail at the end of the prompt (e.g. "(5s, 16:9, 24fps, 50mm at f/2.8)"). Such tails are prone to mid-phrase truncation when the response length runs out, producing fragments like "...50mm at" with no completion.
-- End the prompt with a complete sentence terminated by punctuation. No trailing commas, no half-finished parenthetical lists.
+- DO NOT prefix the prompt with a colon-list of tech specs (e.g. "Static tripod, eye-level, 100mm at: ..." or "Wide shot, 24fps, 35mm at f/4: ..."). Same truncation hazard, just at the beginning instead of the end. If you must mention specs early, fold them into the first sentence as a clause, NOT a list with a trailing colon.
+- End the prompt with a complete sentence terminated by punctuation. No trailing commas, no half-finished parenthetical lists, no orphaned prepositions like "...at" or "...with".
 
 Video Prompt IR:
 \`\`\`json

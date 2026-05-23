@@ -25,6 +25,14 @@ export interface OptimizeTraceCompleteSummary {
   /** Final optimized output. Null on error/abort when no output was produced. */
   outputPrompt: string | null;
   /**
+   * Pre-compile renderer output (C4, 2026-05-22). Captures the renderer's
+   * structured composition BEFORE the compile step's LLM rewrite. Null when
+   * the structuredArtifact branch didn't run (cache-hit + no cached preview).
+   * Lets dashboards distinguish "renderer produced the lens phrase but compile
+   * stripped it" from "LLM never populated the slot."
+   */
+  previewPrompt?: string | null;
+  /**
    * Optional variant tag set by Sub-project E's matrix runs. Null when
    * the synthetic harness runs without `--variant-tag`.
    */
@@ -62,6 +70,11 @@ export interface OptimizeEventProperties {
   /** Content fields — let dashboards show what was actually produced (vs counts only). */
   inputPrompt: string;
   outputPrompt: string | null;
+  /**
+   * Pre-compile renderer output (C4, 2026-05-22). See OptimizeTraceSummary's
+   * previewPrompt comment.
+   */
+  previewPrompt?: string | null;
   modelVariant?: string | null;
 }
 
