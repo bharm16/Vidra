@@ -114,6 +114,7 @@ export function normalizeSlots(
     shot_framing: normalizeString(raw.shot_framing, "Wide Shot"),
     camera_angle: normalizeString(raw.camera_angle, "Eye-Level Shot"),
     camera_move: normalizeStringOrNull(raw.camera_move),
+    camera_lens: normalizeStringOrNull(raw.camera_lens),
     subject,
     subject_details: subjectDetails,
     action,

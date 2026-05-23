@@ -26,6 +26,7 @@ const makeSlots = (overrides: Partial<VideoPromptSlots>): VideoPromptSlots => ({
   shot_framing: "Wide Shot",
   camera_angle: "Eye-Level Shot",
   camera_move: null,
+  camera_lens: null,
   subject: "astronaut",
   subject_details: ["pressure suit", "visor reflection"],
   action: "walking across dunes",

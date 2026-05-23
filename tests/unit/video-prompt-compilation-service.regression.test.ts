@@ -97,6 +97,7 @@ function createStructuredPrompt(
     shot_framing: "close-up",
     camera_angle: "eye level",
     camera_move: "static tripod",
+    camera_lens: null,
     subject: "baby",
     subject_details: ["round cheeks"],
     action: "driving a tiny toy car",

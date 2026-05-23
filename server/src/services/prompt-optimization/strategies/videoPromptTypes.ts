@@ -29,6 +29,7 @@ const VideoPromptSlotsSchema = z
     shot_framing: z.string().optional(),
     camera_angle: z.string().optional(),
     camera_move: z.string().nullable().optional(),
+    camera_lens: z.string().nullable().optional(),
     subject: z.string().nullable().optional(),
     subject_details: z.array(z.string()).nullable().optional(),
     action: z.string().nullable().optional(),

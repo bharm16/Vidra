@@ -13,6 +13,7 @@ export interface VideoPromptSlots {
   shot_framing: string;
   camera_angle: string;
   camera_move: string | null;
+  camera_lens: string | null;
   subject: string | null;
   subject_details: string[] | null;
   action: string | null;

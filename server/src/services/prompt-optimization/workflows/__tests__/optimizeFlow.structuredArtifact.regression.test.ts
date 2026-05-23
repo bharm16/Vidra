@@ -10,6 +10,7 @@ function createArtifact(): StructuredOptimizationArtifact {
       shot_framing: "close-up",
       camera_angle: "eye level",
       camera_move: "static tripod",
+      camera_lens: null,
       subject: "baby",
       subject_details: ["wide eyes"],
       action: "driving a toy car",
