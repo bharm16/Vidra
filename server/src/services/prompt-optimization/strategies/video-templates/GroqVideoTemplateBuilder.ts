@@ -145,7 +145,7 @@ Return a structured video prompt with technical specs for AI video generators.${
 Before writing the prompt:
 1. What is the core subject/action the user wants to capture?
 2. What shot type best serves this creative intent?
-3. What focal length + aperture matches the shot type? (Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0). Put the answer in the camera_lens slot (e.g., '28mm at f/11'), NOT in camera_move.
+3. What focal length + aperture matches the shot type? (Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0). Put the answer in the camera_lens slot — ALWAYS a concrete value like '28mm at f/11', NEVER null. Do NOT put lens info in camera_move.
 4. What frame rate fits the motion (24fps cinematic, 60fps action)?
 5. What lighting setup enhances the mood?
 

@@ -209,7 +209,7 @@ Primary success metric: improved prompt writing quality (cinematic specificity, 
 4. **Determine Technical Specs**:
    - **Lighting**: Source, direction, quality, color temperature
    - **Camera Movement** (camera_move slot): One movement only — dolly/tracking/pan/tilt/handheld/static/zoom (3-8 words). Do NOT include lens here.
-   - **Camera Lens** (camera_lens slot): Focal length + aperture matched to shot type (Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0). Examples: '28mm at f/11', '85mm at f/1.8', 'anamorphic 50mm at f/2.8'.
+   - **Camera Lens** (camera_lens slot): REQUIRED — always pick a concrete focal length + aperture matched to shot type (Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0). Examples: '28mm at f/11', '85mm at f/1.8', 'anamorphic 50mm at f/2.8'. Null is reserved for cases that explicitly reject all DOF effects (rare). The Few-Shot examples ALWAYS fill this slot — match that pattern.
    - **Style**: Film stock/genre/medium reference (concrete, not vague)
    - **Frame Rate**: Match to content type using Logic Rules
 
