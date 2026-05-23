@@ -49,6 +49,14 @@ if (!POSTHOG_PROJECT_ID || !POSTHOG_PERSONAL_API_KEY) {
  * timestamp annotate themselves with provider/model fields but their content
  * is fake. See docs/superpowers/programs/measurement.md reordering log
  * 2026-05-22 entry.
+ *
+ * F5 (2026-05-22) shipped harnessVersion stamping in PostHogClient — every
+ * event captured after commit 970f6122 carries `properties.harnessVersion`.
+ * Once all post-cutoff-pre-F5 events (Sub-projects A/B/C/D era, with null
+ * harnessVersion) age out of common lookback windows (~mid-June 2026), this
+ * constant can be retired in favor of `properties.harnessVersion IS NOT NULL`.
+ * Until then, MIN_EVENT_TIMESTAMP is the canonical filter; harnessVersion
+ * stamping is forward-looking defense-in-depth.
  */
 const MIN_EVENT_TIMESTAMP = "2026-05-14T23:16:39Z";
 
