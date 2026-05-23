@@ -282,6 +282,40 @@ export function lintVideoPromptSlots(
     }
   }
 
+  // camera_lens validation (Sub-project C). Non-null values must contain an
+  // aperture marker ("f/") or a cinematographic focal-length keyword, and
+  // must not end in a dangling preposition (the "lens at," fragment pattern
+  // surfaced by Sub-project D's calibration labeling).
+  const cameraLens =
+    typeof slots.camera_lens === "string" ? slots.camera_lens.trim() : null;
+  if (cameraLens) {
+    const hasAperture = cameraLens.includes("f/");
+    const focalLengthOrLensKeywords =
+      /\b(?:mm|prime|lens|anamorphic|telephoto|wide-angle|macro)\b/i;
+    const hasFocalUnit = focalLengthOrLensKeywords.test(cameraLens);
+
+    if (!hasAperture && !hasFocalUnit) {
+      errors.push(
+        '`camera_lens` must contain aperture ("f/X") or focal-length unit (mm/prime/lens/anamorphic/telephoto/wide-angle/macro); avoid orphaned-preposition fragments.',
+      );
+    }
+
+    const endsInDanglingPreposition =
+      /\b(?:at|of|on|in|with|by|for)\s*[,.]?\s*$/i.test(cameraLens);
+    if (endsInDanglingPreposition) {
+      errors.push(
+        '`camera_lens` ends in a dangling preposition ("at", "of", "with", etc.) with no following value; complete the aperture specification or set the slot to null.',
+      );
+    }
+
+    const wordCount = cameraLens.split(/\s+/).filter(Boolean).length;
+    if (wordCount > 12) {
+      errors.push(
+        "`camera_lens` is too long; keep to a single focal-length+aperture phrase (≤12 words).",
+      );
+    }
+  }
+
   for (const { key, value } of collectStringFields(slots)) {
     if (VIEWER_LANGUAGE.some((re) => re.test(value))) {
       errors.push(
