@@ -65,6 +65,7 @@ function getOpenAIVideoOptimizationSchema(): JSONSchema {
       "shot_framing",
       "camera_angle",
       "camera_move",
+      "camera_lens",
       "subject",
       "subject_details",
       "action",
@@ -97,7 +98,12 @@ function getOpenAIVideoOptimizationSchema(): JSONSchema {
       camera_move: {
         type: ["string", "null"],
         description:
-          'Camera movement (e.g., "handheld tracking", "slow dolly in", "static tripod").',
+          'Camera movement only (e.g., "handheld tracking", "slow dolly in", "static tripod"). Do NOT include lens or aperture here — those go in camera_lens.',
+      },
+      camera_lens: {
+        type: ["string", "null"],
+        description:
+          "Focal length plus aperture (e.g., '28mm at f/11', 'anamorphic 50mm at f/2.8', '85mm prime at f/1.8'). Match aperture to shot type: Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0. May be null when no specific lens preference.",
       },
       subject: {
         type: ["string", "null"],
@@ -232,6 +238,7 @@ function getGroqVideoOptimizationSchema(): JSONSchema {
       shot_framing: { type: "string" },
       camera_angle: { type: "string" },
       camera_move: { type: ["string", "null"] },
+      camera_lens: { type: ["string", "null"] },
       subject: { type: ["string", "null"] },
       subject_details: { type: ["array", "null"], items: { type: "string" } },
       action: { type: ["string", "null"] },
