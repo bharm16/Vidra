@@ -189,6 +189,10 @@ export const SLOT_POLICIES: SlotPolicy[] = [
     scorerWeights: defaultWeights,
   },
   {
+    // B3 (2026-05-22): Sub-project D labeled this policy's template space as
+    // a "slow dolly {direction}" diversity collapse — 6 picks span too few
+    // distinct shapes. See docs/superpowers/specs/2026-05-22-suggestions-diversity-design.md
+    // for Option A (template expansion) / B (hybrid) / C (full guided_llm) options.
     categoryId: "camera.movement",
     mode: "templated",
     grammar: { kind: "technical_phrase", minWords: 1, maxWords: 5 },
@@ -293,6 +297,8 @@ export const SLOT_POLICIES: SlotPolicy[] = [
     scorerWeights: defaultWeights,
   },
   {
+    // B3 (2026-05-22): Sub-project D labeled the {tight,shallow} × {focus,
+    // rack focus, bokeh} matrix as low-diversity. See 2026-05-22-suggestions-diversity-design.md.
     categoryId: "camera.focus",
     mode: "templated",
     grammar: { kind: "technical_phrase", minWords: 2, maxWords: 5 },
@@ -325,6 +331,8 @@ export const SLOT_POLICIES: SlotPolicy[] = [
     scorerWeights: defaultWeights,
   },
   {
+    // B3 (2026-05-22): Sub-project D labeled the "soft {source}" pattern as
+    // low-diversity. See 2026-05-22-suggestions-diversity-design.md.
     categoryId: "lighting.source",
     mode: "templated",
     grammar: { kind: "technical_phrase", minWords: 2, maxWords: 6 },
