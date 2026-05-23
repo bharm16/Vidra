@@ -2,6 +2,8 @@ import { PostHog } from "posthog-node";
 import { randomUUID } from "node:crypto";
 import { userInfo } from "node:os";
 
+import { resolveHarnessVersion } from "../../server/src/infrastructure/harnessVersion.js";
+
 export interface EmitArgs {
   distinctId: string;
   event: string;
@@ -29,7 +31,15 @@ class EvalEmitterReal implements IEvalEmitter {
       this.client.capture({
         distinctId: args.distinctId,
         event: args.event,
-        properties: args.properties,
+        // F5 (2026-05-23): stamp harnessVersion onto every emitted event so
+        // judge output (`quality.scored`) carries the same process-build
+        // attribution as surface events from the server's PostHogClient.
+        // Caller-supplied properties take precedence — allows tests +
+        // targeted attribution to override.
+        properties: {
+          harnessVersion: resolveHarnessVersion(),
+          ...args.properties,
+        },
       });
     } catch {
       // never throw upstream
