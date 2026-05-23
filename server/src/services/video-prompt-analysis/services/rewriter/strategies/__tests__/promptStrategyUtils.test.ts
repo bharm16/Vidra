@@ -24,6 +24,32 @@ const makeContext = (
   ...overrides,
 });
 
+describe("buildBaseHeader — Sub-project C6 tech-spec tail guard", () => {
+  // Sub-project C5 discovered that the compile step's LLM rewriter would
+  // sometimes append a parenthetical tech-spec tail like
+  // "(5s, 16:9, 24fps, 50mm at" which can be truncated mid-phrase by
+  // max_tokens, reproducing the "lens at" fragment Sub-project C thought
+  // it eliminated. The buildBaseHeader now carries an OUTPUT FORMAT RULES
+  // block forbidding the pattern. This regression test guards against
+  // accidental removal.
+
+  it("includes the OUTPUT FORMAT RULES block in every prompt", () => {
+    const result = buildBaseHeader(makeContext());
+    expect(result).toContain("OUTPUT FORMAT RULES");
+  });
+
+  it("explicitly forbids the parenthetical tech-spec tail pattern", () => {
+    const result = buildBaseHeader(makeContext());
+    expect(result).toContain("DO NOT append a parenthetical");
+    expect(result).toContain("tech-spec tail");
+  });
+
+  it("requires the prompt to end with completed punctuation", () => {
+    const result = buildBaseHeader(makeContext());
+    expect(result).toContain("complete sentence terminated by punctuation");
+  });
+});
+
 describe("buildBaseHeader", () => {
   describe("error handling and edge cases", () => {
     it("omits constraint block when constraints object is empty", () => {
