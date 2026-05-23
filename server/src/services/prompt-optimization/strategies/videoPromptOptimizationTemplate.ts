@@ -42,6 +42,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       shot_framing: "Wide Shot",
       camera_angle: "Low-Angle Shot",
       camera_move: "slow tracking shot",
+      camera_lens: "28mm at f/11",
       subject: "a cybernetic cat",
       subject_details: [
         "brushed metal fur panels",
@@ -58,7 +59,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       technical_specs: {
         lighting:
           "Neon signs overhead as key light, soft fill from wet pavement, cool cyan highlights with magenta accents",
-        camera: "Wide tracking shot, low angle, 28mm lens at f/11",
+        camera: "Wide tracking shot, low angle",
         style: "Shot on Kodak Ektachrome 100D, cyberpunk noir",
         duration: "5s",
         aspect_ratio: "16:9",
@@ -81,6 +82,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       shot_framing: "Wide Shot",
       camera_angle: "High-Angle Shot",
       camera_move: "slow dolly in",
+      camera_lens: "24mm at f/11",
       subject: null,
       subject_details: null,
       action: null,
@@ -93,7 +95,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       technical_specs: {
         lighting:
           "Sunbeams as key light through broken panes, soft haze diffusion, cool ambient fill from the fog",
-        camera: "Wide dolly-in, high angle, 24mm lens at f/11",
+        camera: "Wide dolly-in, high angle",
         style: "Fujifilm Pro 400H, naturalistic palette",
         duration: "6s",
         aspect_ratio: "16:9",
@@ -116,6 +118,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       shot_framing: "Medium Shot",
       camera_angle: "Eye-Level Shot",
       camera_move: "handheld tracking shot",
+      camera_lens: "35mm at f/4",
       subject: "a street drummer",
       subject_details: [
         "worn leather jacket",
@@ -131,7 +134,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       technical_specs: {
         lighting:
           "Warm side key from late sun, soft fill from storefront signs, mild rim light on chrome hardware",
-        camera: "Handheld tracking, eye-level, 35mm lens at f/4",
+        camera: "Handheld tracking, eye-level",
         style: "Kodak Tri-X 400, urban documentary",
         duration: "5s",
         aspect_ratio: "16:9",
@@ -154,6 +157,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       shot_framing: "Close-Up",
       camera_angle: "Eye-Level Shot",
       camera_move: "static tripod",
+      camera_lens: "85mm at f/2.2",
       subject: "a paper boat",
       subject_details: [
         "creased white paper",
@@ -169,7 +173,7 @@ export const VIDEO_FEW_SHOT_EXAMPLES = [
       technical_specs: {
         lighting:
           "Soft overhead diffusion, cool ambient fill, warm rim as sunlight drops lower",
-        camera: "Static tripod, eye-level, 85mm lens at f/2.2",
+        camera: "Static tripod, eye-level",
         style: "Stop-motion animation on textured paper, Laika-inspired",
         duration: "6s",
         aspect_ratio: "4:3",
@@ -328,7 +332,8 @@ Return ONLY JSON (no markdown, no prose):
   "_creative_strategy": "Brief summary of why you chose this specific Angle, DOF, and FPS to serve the intent",
   "shot_framing": "Framing shot type from dictionary (e.g., 'Wide Shot', 'Medium Shot', 'Close-Up')",
   "camera_angle": "Camera angle/viewpoint from dictionary (e.g., 'Low-Angle Shot', 'Bird's-Eye View')",
-  "camera_move": "Camera movement term (e.g., 'tracking shot', 'dolly in', 'static tripod')",
+  "camera_move": "Single camera movement only (e.g., 'tracking shot', 'dolly in', 'static tripod'). 3-8 words. Do NOT include lens or aperture here — those go in camera_lens.",
+  "camera_lens": "Focal length plus aperture (e.g., '28mm at f/11', 'anamorphic 50mm at f/2.8', '85mm prime at f/1.8'). Match aperture to shot type: Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0. Null is allowed when no specific lens preference.",
   "subject": "Main subject or null",
   "subject_details": ["2-3 visible identifiers (1-6 words each; noun phrases only)"],
   "action": "ONE continuous action as a single present-participle (-ing) verb phrase (4-12 words; no second verb) or null",
@@ -338,7 +343,7 @@ Return ONLY JSON (no markdown, no prose):
   "style": "Specific aesthetic reference; avoid generic 'cinematic' or null",
   "technical_specs": {
     "lighting": "Precise setup with source, direction, quality, and color temp",
-    "camera": "Camera behavior + angle + lens + aperture. (Examples: 'Wide shot on 16mm with deep focus f/11' OR 'Close-up on 85mm with shallow focus f/1.8'). MATCH APERTURE TO SHOT TYPE.",
+    "camera": "Camera behavior summary echoing camera_move + camera_angle (e.g., 'Wide tracking shot, low angle'). Lens/aperture lives in the top-level camera_lens slot, not here.",
     "style": "Film stock/genre/medium reference (e.g., 'Shot on 35mm, film noir aesthetic', 'Pencil storyboard panel')",
     "aspect_ratio": "16:9 | 9:16 | 4:3 | 1:1 | 2.35:1 | 2.39:1 (pick best fit)",
     "frame_rate": "24fps | 30fps | 60fps (Choose 60fps for smooth action, 24fps for cinematic feel)",
@@ -505,7 +510,8 @@ Return ONLY JSON (no markdown, no prose):
   "_creative_strategy": "Brief summary of why you chose this specific Angle, DOF, and FPS to serve the intent",
   "shot_framing": "Framing shot type from dictionary (e.g., 'Wide Shot', 'Medium Shot', 'Close-Up')",
   "camera_angle": "Camera angle/viewpoint from dictionary (e.g., 'Low-Angle Shot', 'Bird's-Eye View')",
-  "camera_move": "Camera movement term (e.g., 'tracking shot', 'dolly in', 'static tripod')",
+  "camera_move": "Single camera movement only (e.g., 'tracking shot', 'dolly in', 'static tripod'). 3-8 words. Do NOT include lens or aperture here — those go in camera_lens.",
+  "camera_lens": "Focal length plus aperture (e.g., '28mm at f/11', 'anamorphic 50mm at f/2.8', '85mm prime at f/1.8'). Match aperture to shot type: Wide=f/8-f/11, Medium=f/2.8-f/4, Close-up=f/1.4-f/2.0. Null is allowed when no specific lens preference.",
   "subject": "Main subject or null",
   "subject_details": ["2-3 visible identifiers (1-6 words each; noun phrases only)"],
   "action": "ONE continuous action as a single present-participle (-ing) verb phrase (4-12 words; no second verb) or null",
@@ -515,7 +521,7 @@ Return ONLY JSON (no markdown, no prose):
   "style": "Specific aesthetic reference; avoid generic 'cinematic' or null",
   "technical_specs": {
     "lighting": "Precise setup with source, direction, quality, and color temp",
-    "camera": "Camera behavior + angle + lens + aperture. (Examples: 'Wide shot on 16mm with deep focus f/11' OR 'Close-up on 85mm with shallow focus f/1.8'). MATCH APERTURE TO SHOT TYPE.",
+    "camera": "Camera behavior summary echoing camera_move + camera_angle (e.g., 'Wide tracking shot, low angle'). Lens/aperture lives in the top-level camera_lens slot, not here.",
     "style": "Film stock/genre/medium reference (e.g., 'Shot on 35mm, film noir aesthetic', 'Pencil storyboard panel')",
     "aspect_ratio": "16:9 | 9:16 | 4:3 | 1:1 | 2.35:1 | 2.39:1 (pick best fit)",
     "frame_rate": "24fps | 30fps | 60fps (Choose 60fps for smooth action, 24fps for cinematic feel)",
