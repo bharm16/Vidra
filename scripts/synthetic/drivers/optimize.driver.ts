@@ -64,7 +64,17 @@ export async function driveOptimize(
           prompt: prompt.text,
           mode: "video",
           targetModel,
-          useConstitutionalAI: true,
+          // C3 (2026-05-22): aligned with prod. The constitutional review
+          // feature is dormant — no production caller sets it (see the JSDoc
+          // at server/src/services/prompt-optimization/workflows/constitutional
+          // Review.ts). Setting it true here made the synthetic harness
+          // measure a non-production code path, diverging from what real
+          // users would see. Sub-projects C/B2/D measurements all ran
+          // through the constitutional-review pipeline. Fix: false to match
+          // prod. If the feature is reactivated in prod (per the JSDoc's
+          // "To re-enable" instructions), set this back to true to keep
+          // synthetic mirroring prod.
+          useConstitutionalAI: false,
         });
 
         const outputPrompt = response.prompt;
@@ -78,7 +88,7 @@ export async function driveOptimize(
           hasContext: false,
           hasBrainstormContext: false,
           hasShotPlan: false,
-          useConstitutionalAI: true,
+          useConstitutionalAI: false,
           inputPrompt: prompt.text,
           outputPrompt,
           modelVariant: deps.variantTag,
@@ -98,7 +108,7 @@ export async function driveOptimize(
           hasContext: false,
           hasBrainstormContext: false,
           hasShotPlan: false,
-          useConstitutionalAI: true,
+          useConstitutionalAI: false,
           inputPrompt: prompt.text,
           outputPrompt: "",
           modelVariant: deps.variantTag,
