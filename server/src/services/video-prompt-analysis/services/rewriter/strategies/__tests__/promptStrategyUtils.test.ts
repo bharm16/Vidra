@@ -57,6 +57,27 @@ describe("buildBaseHeader — Sub-project C6 tech-spec tail guard", () => {
     const result = buildBaseHeader(makeContext());
     expect(result).toContain("DO NOT prefix the prompt with a colon-list");
   });
+
+  it("requires PRESERVING tech specs from the IR (C8)", () => {
+    // C8 (2026-05-23): PostHog matrix showed PREVIEW had aperture in 20/20
+    // events but OUTPUT had aperture in 0/20 — the compile LLM was reading
+    // the lens from the IR and dropping it from the prose to avoid the
+    // forbidden parenthetical-tail / colon-prefix patterns. The C6/C7
+    // guards only forbade BAD placement; the LLM took the safe escape
+    // hatch of omission. C8 adds a positive PRESERVE directive at the top
+    // of OUTPUT FORMAT RULES that makes presence required.
+    const result = buildBaseHeader(makeContext());
+    expect(result).toContain("PRESERVE technical specs from the IR");
+    expect(result).toContain("MUST include those exact values in the prose");
+  });
+
+  it("no longer carries the 'when they belong' escape hatch (C8)", () => {
+    // The C6 version said "Integrate ... NATURALLY into the prose narrative
+    // when they belong." That softness let the LLM drop specs entirely.
+    // C8 removes the conditional clause so integration is unconditional.
+    const result = buildBaseHeader(makeContext());
+    expect(result).not.toContain("when they belong");
+  });
 });
 
 describe("buildBaseHeader", () => {
