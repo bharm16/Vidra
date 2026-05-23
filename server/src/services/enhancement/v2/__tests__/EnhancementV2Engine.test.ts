@@ -249,4 +249,69 @@ describe("EnhancementV2Engine", () => {
       expect(execution.finalSuggestions.length).toBeGreaterThan(0);
     });
   });
+
+  describe("scene_summary capture on custom-request path (Sub-project B2)", () => {
+    it("captures scene_summary from siblings when present on custom requests", async () => {
+      const engine = createEngine();
+      mockEnforceJSON.mockResolvedValueOnce({
+        value: [
+          { text: "dreamlike haze of mist" },
+          { text: "soft veil of drizzle" },
+          { text: "silken curtain of rain" },
+          { text: "luminous downpour at dusk" },
+          { text: "gentle whisper of evening rain" },
+        ],
+        siblings: {
+          scene_summary:
+            "diner exterior, dusk, atmospheric romance — keep weather literal",
+        },
+      });
+
+      const execution = await engine.execute(
+        createContext({
+          highlightedText: "soft rain",
+          highlightedCategory: "environment.weather",
+          phraseRole: "environment.weather",
+          contextBefore: "A couple walks through ",
+          contextAfter: " beside the diner.",
+          fullPrompt: "A couple walks through soft rain beside the diner.",
+          customRequest: "make it sound dreamier and more romantic",
+        }),
+      );
+
+      expect(execution.debug.sceneSummary).toBe(
+        "diner exterior, dusk, atmospheric romance — keep weather literal",
+      );
+      expect(execution.finalSuggestions.length).toBeGreaterThan(0);
+    });
+
+    it("returns sceneSummary: null on custom-request path when siblings absent (back-compat)", async () => {
+      const engine = createEngine();
+      mockEnforceJSON.mockResolvedValueOnce({
+        value: [
+          { text: "dreamlike haze of mist" },
+          { text: "soft veil of drizzle" },
+          { text: "silken curtain of rain" },
+          { text: "luminous downpour at dusk" },
+          { text: "gentle whisper of evening rain" },
+        ],
+        siblings: {},
+      });
+
+      const execution = await engine.execute(
+        createContext({
+          highlightedText: "soft rain",
+          highlightedCategory: "environment.weather",
+          phraseRole: "environment.weather",
+          contextBefore: "A couple walks through ",
+          contextAfter: " beside the diner.",
+          fullPrompt: "A couple walks through soft rain beside the diner.",
+          customRequest: "make it sound dreamier and more romantic",
+        }),
+      );
+
+      expect(execution.debug.sceneSummary).toBeNull();
+      expect(execution.finalSuggestions.length).toBeGreaterThan(0);
+    });
+  });
 });

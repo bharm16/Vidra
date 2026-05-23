@@ -270,9 +270,11 @@ export class EnhancementV2Engine {
         ? getCustomSuggestionSchema(schemaOptions)
         : getEnhancementSchema(context.isPlaceholder, schemaOptions);
 
-    // Custom-request path doesn't carry scene_summary — preserve the old shape.
+    // Custom-request path: Sub-project B2 extended this to capture
+    // scene_summary alongside the unwrapped suggestions. Mirrors the
+    // enhancement path's captureSiblings pattern below.
     if (schemaName === "custom") {
-      const customSuggestions = await StructuredOutputEnforcer.enforceJSON<
+      const customCaptured = (await StructuredOutputEnforcer.enforceJSON<
         Suggestion[]
       >(this.dependencies.aiService, prompt, {
         operation,
@@ -284,16 +286,28 @@ export class EnhancementV2Engine {
         isArray: true,
         maxRetries: 1,
         temperature,
+        captureSiblings: true,
         ...(provider ? { provider } : {}),
-      });
+      })) as unknown as {
+        value: Suggestion[];
+        siblings: Record<string, unknown>;
+      };
+
+      const customRawSceneSummary = customCaptured.siblings?.scene_summary;
+      const customSceneSummary =
+        typeof customRawSceneSummary === "string" &&
+        customRawSceneSummary.trim().length > 0
+          ? customRawSceneSummary
+          : null;
+
       return {
-        suggestions: Array.isArray(customSuggestions)
-          ? customSuggestions.map((suggestion) => ({
+        suggestions: Array.isArray(customCaptured.value)
+          ? customCaptured.value.map((suggestion) => ({
               ...suggestion,
               category: suggestion.category || policy.categoryId,
             }))
           : [],
-        sceneSummary: null,
+        sceneSummary: customSceneSummary,
       };
     }
 
