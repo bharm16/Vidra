@@ -248,6 +248,8 @@ export function renderMainVideoPrompt(slots: VideoPromptSlots): string {
   if (settingTime) firstSentenceParts.push(settingTime);
   const sentence1 = ensurePeriod(firstSentenceParts.join(" "));
 
+  const cameraLens = clean(slots.camera_lens);
+
   const sentence2Parts: string[] = [];
   if (cameraMove) {
     sentence2Parts.push(
@@ -257,7 +259,12 @@ export function renderMainVideoPrompt(slots: VideoPromptSlots): string {
     sentence2Parts.push(`The camera holds ${anglePhrase}`);
   }
 
-  if (focus) {
+  if (cameraLens) {
+    // LLM-provided lens wins; hardcoded focusFromFraming fallback is suppressed
+    // to eliminate the aperture duplication that produced "lens at," fragments
+    // (Sub-project C, 2026-05-22-optimize-camera-lens-slot-design.md).
+    sentence2Parts.push(`on ${cameraLens}`);
+  } else if (focus) {
     if (focus === "deep focus") {
       sentence2Parts.push(
         "with deep focus (f/11-f/16) to keep background detail readable",
@@ -305,6 +312,7 @@ export function renderCompactVideoPrompt(
   const shotFraming = clean(slots.shot_framing) ?? "Wide Shot";
   const anglePhrase = angleToPhrase(slots.camera_angle);
   const cameraMove = clean(slots.camera_move);
+  const cameraLens = clean(slots.camera_lens);
 
   const subjectPhrase = formatSubject(
     slots.subject,
@@ -330,11 +338,19 @@ export function renderCompactVideoPrompt(
   let text = ensurePeriod(baseParts.join(" "));
 
   const cameraSentence = (() => {
-    if (!cameraMove && !anglePhrase) return null;
-    if (cameraMove && anglePhrase)
-      return ensurePeriod(`The camera uses ${cameraMove} ${anglePhrase}`);
-    if (cameraMove) return ensurePeriod(`The camera uses ${cameraMove}`);
-    return ensurePeriod(`The camera holds ${anglePhrase}`);
+    if (!cameraMove && !anglePhrase && !cameraLens) return null;
+    const parts: string[] = [];
+    if (cameraMove && anglePhrase) {
+      parts.push(`The camera uses ${cameraMove} ${anglePhrase}`);
+    } else if (cameraMove) {
+      parts.push(`The camera uses ${cameraMove}`);
+    } else if (anglePhrase) {
+      parts.push(`The camera holds ${anglePhrase}`);
+    }
+    if (cameraLens) {
+      parts.push(`on ${cameraLens}`);
+    }
+    return parts.length > 0 ? ensurePeriod(parts.join(" ")) : null;
   })();
 
   const lightingSentence = lighting
@@ -376,6 +392,7 @@ export function renderCompactVideoPrompt(
 export function renderPreviewPrompt(slots: VideoPromptSlots): string {
   const shotFraming = clean(slots.shot_framing) ?? "Wide Shot";
   const anglePhrase = angleToPhrase(slots.camera_angle);
+  const cameraLens = clean(slots.camera_lens);
   const subjectPhrase = formatSubject(
     slots.subject,
     (slots.subject_details || []).slice(0, 2),
@@ -399,6 +416,10 @@ export function renderPreviewPrompt(slots: VideoPromptSlots): string {
   }
   if (settingTime) baseParts.push(settingTime);
   let text = ensurePeriod(baseParts.join(" ").replace(/\s+/g, " ").trim());
+
+  if (cameraLens) {
+    text = `${text} ${ensurePeriod(`on ${cameraLens}`)}`.trim();
+  }
 
   const lightingSentence = lighting
     ? ensurePeriod(`Lit by ${shortenToFirstClause(lighting)}`)
