@@ -327,6 +327,11 @@ export class VideoStrategy implements OptimizationStrategy {
         "style",
         "technical_specs",
       ],
+      // camera_lens is intentionally NOT in required — slot is optional
+      // (Sub-project C, 2026-05-22-optimize-camera-lens-slot-design.md).
+      // StructuredOutputEnforcer accepts extra fields the LLM emits, so the
+      // field is preserved on roundtrip without needing an explicit
+      // properties declaration here.
     };
 
     const parsedResponse = (await StructuredOutputEnforcer.enforceJSON(

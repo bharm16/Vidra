@@ -59,6 +59,21 @@ describe("VideoStrategy regression", () => {
     expect(output.toLowerCase()).toContain("baby");
   });
 
+  it("fallback looseSchema does NOT require camera_lens (slot is optional)", async () => {
+    // Defense against future hardening that would break optional-null
+    // semantics. camera_lens is intentionally OUT of the required array;
+    // any change should be a deliberate decision, not an accident.
+    const { readFile } = await import("node:fs/promises");
+    const url = new URL("../VideoStrategy.ts", import.meta.url);
+    const src = await readFile(url, "utf8");
+    const looseSchemaMatch = src.match(
+      /const looseSchema = \{[\s\S]*?required: \[([\s\S]*?)\]/,
+    );
+    expect(looseSchemaMatch).not.toBeNull();
+    const requiredArrayContents = looseSchemaMatch![1]!;
+    expect(requiredArrayContents).not.toContain("camera_lens");
+  });
+
   it("isQualityVideoPromptLintError recognizes camera_lens lint messages (eligible for reroll)", async () => {
     // The lint message text is the contract between the linter and the
     // reroll path. This test protects against future drift in either the
