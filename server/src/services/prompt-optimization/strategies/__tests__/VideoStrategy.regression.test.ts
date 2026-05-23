@@ -59,6 +59,60 @@ describe("VideoStrategy regression", () => {
     expect(output.toLowerCase()).toContain("baby");
   });
 
+  it("full pipeline: with camera_lens present, rendered output contains lens once and no duplicated f-stop", async () => {
+    // Regression for the dominant Sub-project D failure mode: the "lens at,"
+    // fragment in optimize outputs. With a well-formed camera_lens slot,
+    // the rendered output must:
+    //   (a) contain the lens phrase exactly once
+    //   (b) NOT contain the renderer's hardcoded focusFromFraming f-stop
+    //       fallback (eliminates duplication root cause)
+    const { renderMainVideoPrompt } = await import("../videoPromptRenderer.js");
+    const slots = {
+      shot_framing: "Wide Shot",
+      camera_angle: "Eye-Level Shot",
+      camera_move: "slow dolly in",
+      camera_lens: "28mm at f/11",
+      subject: "a ginger cat",
+      subject_details: ["with green eyes", "wearing a red collar"],
+      action: "walking slowly across the sunlit kitchen floor",
+      setting: "a sunlit kitchen",
+      time: "golden hour",
+      lighting: "warm key from a tall window, soft fill",
+      style: "Wes Anderson aesthetic, pastel palette",
+    };
+    const output = renderMainVideoPrompt(
+      slots as unknown as Parameters<typeof renderMainVideoPrompt>[0],
+    );
+
+    const lensPhraseCount = (output.match(/28mm at f\/11/g) || []).length;
+    expect(lensPhraseCount).toBe(1);
+    expect(output).not.toContain("(f/11-f/16)");
+    expect(output).not.toContain("(f/1.8-f/2.8)");
+    expect(output).not.toContain("(f/4-f/5.6)");
+    expect(output).not.toMatch(/lens at[,.]\s/);
+  });
+
+  it("regression: linter rejects the labeled 'anamorphic lens at' fragment", async () => {
+    // Direct link to Sub-project D's calibration entry pattern:
+    // "captured with an anamorphic lens at. An abstract..." appeared in
+    // ~50% of labeled optimize entries. The lint rule must catch this exact
+    // shape — orphaned preposition with no aperture value following.
+    const { lintVideoPromptSlots } = await import("../videoPromptLinter.js");
+    const result = lintVideoPromptSlots({
+      shot_framing: "Wide Shot",
+      camera_angle: "Eye-Level Shot",
+      camera_move: "static tripod",
+      camera_lens: "anamorphic lens at",
+      subject: "an abstract pattern",
+      subject_details: ["geometric shapes", "high contrast"],
+      action: "shifting slowly across the frame",
+    });
+    const cameraLensErrors = result.errors.filter((e) =>
+      e.includes("camera_lens"),
+    );
+    expect(cameraLensErrors.length).toBeGreaterThan(0);
+  });
+
   it("fallback looseSchema does NOT require camera_lens (slot is optional)", async () => {
     // Defense against future hardening that would break optional-null
     // semantics. camera_lens is intentionally OUT of the required array;
