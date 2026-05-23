@@ -208,6 +208,12 @@ export const SLOT_POLICIES: SlotPolicy[] = [
     promptGuidance: "Compose a single camera move or support-style phrase.",
     rescueStrategy: { enabled: true, maxCalls: 1 },
     templated: {
+      // B3 Option A (2026-05-22): expanded vocabulary + new templates to
+      // increase variety within a 6-pick response. Sub-project D's labeling
+      // surfaced "slow dolly {direction}" repetition because the picker
+      // concentrated on one template shape with a small tempo×direction
+      // permutation. Named cinematic shots, tempo extensions, and motivated-
+      // qualifier templates give the picker more distinct shapes to span.
       templates: [
         {
           name: "movement-direction",
@@ -221,9 +227,18 @@ export const SLOT_POLICIES: SlotPolicy[] = [
           name: "static-frame",
           orderedSlots: ["technique", "stabilityQualifier"],
         },
+        // New (B3 Option A):
+        {
+          name: "named-cinematic-shot",
+          orderedSlots: ["namedShot"],
+        },
+        {
+          name: "tempo-extended",
+          orderedSlots: ["tempoQualifier", "technique"],
+        },
       ],
       slots: {
-        tempo: ["slow", "gentle", "smooth"],
+        tempo: ["slow", "gentle", "smooth", "deliberate", "languid"],
         technique: [
           "dolly",
           "tracking",
@@ -232,10 +247,36 @@ export const SLOT_POLICIES: SlotPolicy[] = [
           "crane",
           "handheld",
           "static",
+          "steadicam",
+          "jib",
         ],
         direction: ["forward", "backward", "lateral", "upward", "downward"],
-        supportQualifier: ["with subtle drift", "following the subject"],
+        supportQualifier: [
+          "with subtle drift",
+          "following the subject",
+          "with breathing micro-motion",
+          "anchored on the subject",
+        ],
         stabilityQualifier: ["locked-off frame"],
+        // New (B3 Option A) — named cinematic shots that don't permute slots:
+        namedShot: [
+          "Dutch tilt",
+          "Steadicam push-in",
+          "crane reveal",
+          "vertigo dolly zoom",
+          "POV float",
+          "whip pan",
+          "rack focus pull",
+          "match-on-action cut-in",
+        ],
+        // New (B3 Option A) — tempo with cinematic feel rather than direction:
+        tempoQualifier: [
+          "languid",
+          "deliberate",
+          "patient",
+          "tense rapid",
+          "slow building",
+        ],
       },
       requiredSlots: ["technique"],
       optionalSlots: [
@@ -243,6 +284,8 @@ export const SLOT_POLICIES: SlotPolicy[] = [
         "direction",
         "supportQualifier",
         "stabilityQualifier",
+        "namedShot",
+        "tempoQualifier",
       ],
       invalidCombinations: [
         {
@@ -309,14 +352,36 @@ export const SLOT_POLICIES: SlotPolicy[] = [
     promptGuidance: "Compose a focus or depth-of-field phrase only.",
     rescueStrategy: { enabled: true, maxCalls: 1 },
     templated: {
+      // B3 Option A: added named-effect template + lens-style template so
+      // 6 picks span more vocabulary than just {descriptor} × {focusTerm}.
       templates: [
         { name: "descriptor-focus", orderedSlots: ["descriptor", "focusTerm"] },
         { name: "descriptor-depth", orderedSlots: ["descriptor", "depthTerm"] },
+        { name: "named-effect", orderedSlots: ["namedEffect"] },
+        { name: "lens-style", orderedSlots: ["lensStyle", "focusTerm"] },
       ],
       slots: {
-        descriptor: ["tight", "shallow", "soft", "selective", "creamy"],
-        focusTerm: ["focus", "rack focus", "bokeh"],
-        depthTerm: ["depth of field", "rear-plane blur"],
+        descriptor: [
+          "tight",
+          "shallow",
+          "soft",
+          "selective",
+          "creamy",
+          "razor-thin",
+          "feathered",
+        ],
+        focusTerm: ["focus", "rack focus", "bokeh", "split diopter"],
+        depthTerm: ["depth of field", "rear-plane blur", "foreground swim"],
+        // New (B3 Option A) — named effects that fill a single slot:
+        namedEffect: [
+          "tilt-shift miniature",
+          "anamorphic bokeh swirl",
+          "swirling Petzval bokeh",
+          "macro foreground bloom",
+          "hyperfocal stack",
+        ],
+        // New (B3 Option A) — lens-style adjectives paired with focusTerm:
+        lensStyle: ["anamorphic", "vintage cine", "Petzval", "tilt-shift"],
       },
       invalidCombinations: [],
       renderRules: {
@@ -344,20 +409,54 @@ export const SLOT_POLICIES: SlotPolicy[] = [
       "Compose a light-source phrase with natural lighting language.",
     rescueStrategy: { enabled: true, maxCalls: 1 },
     templated: {
+      // B3 Option A: added motivated-source + practical templates so picks
+      // span more than just quality × source. Sub-project D labeled "soft
+      // {source}" repetition; now the picker has motivated-light vocab
+      // (key/fill/rim) and practical-light vocab to draw from.
       templates: [
         { name: "quality-source", orderedSlots: ["quality", "source"] },
         { name: "source-direction", orderedSlots: ["source", "direction"] },
+        { name: "motivated-source", orderedSlots: ["role", "source"] },
+        { name: "practical-light", orderedSlots: ["practicalSource"] },
+        { name: "atmospheric", orderedSlots: ["atmosphericSource"] },
       ],
       slots: {
-        quality: ["soft", "harsh", "warm", "cool"],
+        quality: ["soft", "harsh", "warm", "cool", "diffused", "directional"],
         source: [
           "window light",
           "sunlight",
           "neon glow",
           "candlelight",
           "streetlamp spill",
+          "moonlight",
+          "firelight",
         ],
-        direction: ["from the left", "from the right", "from overhead"],
+        direction: [
+          "from the left",
+          "from the right",
+          "from overhead",
+          "from behind",
+          "raking across",
+        ],
+        // New (B3 Option A) — motivated-light role + source pairing:
+        role: ["key", "fill", "rim", "back", "side"],
+        // New (B3 Option A) — practical (in-scene) light sources:
+        practicalSource: [
+          "table lamp",
+          "TV glow",
+          "phone screen",
+          "fireplace",
+          "fluorescent overhead",
+          "string lights",
+        ],
+        // New (B3 Option A) — atmospheric / motivated by environment:
+        atmosphericSource: [
+          "shaft of dust-lit sun",
+          "haze-diffused dusk light",
+          "rain-streak refraction",
+          "smoke-filtered sodium vapor",
+          "skylight bounce",
+        ],
       },
       invalidCombinations: [],
       renderRules: {
