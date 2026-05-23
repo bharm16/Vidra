@@ -213,6 +213,58 @@ describe("cleanJSONResponse", () => {
   });
 });
 
+describe("extractAndParse — Gemini-style malformed JSON repair (F1)", () => {
+  it("repairs trailing comma before closing array bracket", () => {
+    // Gemini-style: "Expected ',' or ']' after array element..."
+    const input = '[{"a": 1}, {"b": 2},]';
+    const result = extractAndParse<Array<Record<string, number>>>(input, true);
+    expect(result).toEqual([{ a: 1 }, { b: 2 }]);
+  });
+
+  it("repairs trailing comma before closing object brace", () => {
+    const input = '{"a": 1, "b": 2,}';
+    const result = extractAndParse<Record<string, number>>(input, false);
+    expect(result).toEqual({ a: 1, b: 2 });
+  });
+
+  it("repairs multiple trailing commas in nested structures", () => {
+    const input = '{"items": [1, 2, 3,], "meta": {"x": 1,},}';
+    const result = extractAndParse<{
+      items: number[];
+      meta: { x: number };
+    }>(input, false);
+    expect(result).toEqual({ items: [1, 2, 3], meta: { x: 1 } });
+  });
+
+  it("repairs smart double-quotes (curly quotes around keys/values)", () => {
+    // U+201C and U+201D are smart double-quote characters.
+    const input = "{“key”: “value”}";
+    const result = extractAndParse<Record<string, string>>(input, false);
+    expect(result).toEqual({ key: "value" });
+  });
+
+  it("repairs mixed trailing commas + smart quotes", () => {
+    const input = "{“key”: “value”,}";
+    const result = extractAndParse<Record<string, string>>(input, false);
+    expect(result).toEqual({ key: "value" });
+  });
+
+  it("does not break already-valid JSON when no repair is needed", () => {
+    const input = '{"clean": true, "list": [1, 2]}';
+    const result = extractAndParse<{ clean: boolean; list: number[] }>(
+      input,
+      false,
+    );
+    expect(result).toEqual({ clean: true, list: [1, 2] });
+  });
+
+  it("still throws when JSON is structurally broken beyond repair", () => {
+    // Missing colon, no amount of comma/quote repair can fix this.
+    const input = '{"key" "value"}';
+    expect(() => extractAndParse(input, false)).toThrow();
+  });
+});
+
 describe("extractAndParse", () => {
   describe("error handling", () => {
     it("throws for invalid JSON syntax", () => {
