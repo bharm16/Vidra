@@ -266,11 +266,6 @@ const observabilitySchema = z.object({
   LOG_STACK_DEPTH: coercePositiveInt(6),
   LOG_STACK_LIMIT: z.coerce.number().int().positive().optional(),
   LOG_CALLER: coerceBooleanString(false),
-  // OpenTelemetry tracing (production distributed tracing)
-  ENABLE_TRACING: coerceBooleanString(false),
-  OTEL_EXPORTER_OTLP_ENDPOINT: optionalString(),
-  OTEL_EXPORTER_OTLP_HEADERS: optionalString(),
-  OTEL_EXPORTER_OTLP_TIMEOUT: z.coerce.number().int().positive().optional(),
 });
 
 const startupSchema = z.object({
