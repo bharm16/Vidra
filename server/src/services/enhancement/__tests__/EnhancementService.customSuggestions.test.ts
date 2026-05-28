@@ -121,13 +121,16 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
   it("routes through V2 engine and applies its post-processing (no legacy buildCustomPrompt call)", async () => {
     const { service, promptBuilder, filterOriginalEchoesSpy } = createService();
 
-    mockEnforceJSON.mockResolvedValueOnce([
-      { text: "long flowing scarlet gown", category: "subject.appearance" },
-      { text: "long flowing scarlet gown", category: "subject.appearance" },
-      { text: "tailored navy peacoat", category: "subject.appearance" },
-      { text: "weathered leather duster", category: "subject.appearance" },
-      { text: "minimalist linen tunic", category: "subject.appearance" },
-    ]);
+    mockEnforceJSON.mockResolvedValueOnce({
+      value: [
+        { text: "long flowing scarlet gown", category: "subject.appearance" },
+        { text: "long flowing scarlet gown", category: "subject.appearance" },
+        { text: "tailored navy peacoat", category: "subject.appearance" },
+        { text: "weathered leather duster", category: "subject.appearance" },
+        { text: "minimalist linen tunic", category: "subject.appearance" },
+      ],
+      siblings: {},
+    });
 
     const result = await service.getCustomSuggestions({
       highlightedText: "the dress",
@@ -165,18 +168,24 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
     // Primary call returns 1 unique candidate after V2 dedupe; below
     // CustomPolicy.minAcceptableCount (4) → triggers the single rescue call.
     mockEnforceJSON
-      .mockResolvedValueOnce([
-        { text: "tailored navy peacoat", category: "subject.appearance" },
-      ])
-      .mockResolvedValueOnce([
-        { text: "weathered leather duster", category: "subject.appearance" },
-        { text: "minimalist linen tunic", category: "subject.appearance" },
-        {
-          text: "wool overcoat with brass buttons",
-          category: "subject.appearance",
-        },
-        { text: "vintage tweed blazer", category: "subject.appearance" },
-      ]);
+      .mockResolvedValueOnce({
+        value: [
+          { text: "tailored navy peacoat", category: "subject.appearance" },
+        ],
+        siblings: {},
+      })
+      .mockResolvedValueOnce({
+        value: [
+          { text: "weathered leather duster", category: "subject.appearance" },
+          { text: "minimalist linen tunic", category: "subject.appearance" },
+          {
+            text: "wool overcoat with brass buttons",
+            category: "subject.appearance",
+          },
+          { text: "vintage tweed blazer", category: "subject.appearance" },
+        ],
+        siblings: {},
+      });
 
     const result = await service.getCustomSuggestions({
       highlightedText: "the outfit",
@@ -197,9 +206,12 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
   it("partitions cache from the legacy custom-suggestions key shape (engineVersion + policyVersion encoded)", async () => {
     const { service, generateKeySpy } = createService();
 
-    mockEnforceJSON.mockResolvedValue([
-      { text: "tailored navy peacoat", category: "subject.appearance" },
-    ]);
+    mockEnforceJSON.mockResolvedValue({
+      value: [
+        { text: "tailored navy peacoat", category: "subject.appearance" },
+      ],
+      siblings: {},
+    });
 
     await service.getCustomSuggestions({
       highlightedText: "the dress",

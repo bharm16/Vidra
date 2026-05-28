@@ -78,6 +78,7 @@ describe("optimize.completed event schema (contract)", () => {
           "outcome",
           "outputLength",
           "outputPrompt",
+          "previewPrompt",
           "promptLength",
           "requestId",
           "stages",
