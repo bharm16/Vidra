@@ -257,6 +257,39 @@ const resolveAcceptedGenerationStatus = (
   status?: string | null,
 ): Generation["status"] => (status === "processing" ? "generating" : "pending");
 
+/**
+ * Build the faceSwap fields for a generation update from a preview/job
+ * response. Single source of truth for the draft and render success paths,
+ * which previously hand-mirrored this merge.
+ */
+const buildFaceSwapUpdate = (
+  response: {
+    faceSwapApplied?: boolean | null | undefined;
+    faceSwapUrl?: string | null | undefined;
+  },
+  generation: Generation,
+): Partial<Generation> =>
+  response.faceSwapApplied || response.faceSwapUrl
+    ? {
+        faceSwapApplied: response.faceSwapApplied ?? true,
+        faceSwapUrl: response.faceSwapUrl ?? generation.faceSwapUrl ?? null,
+      }
+    : {};
+
+/**
+ * Build the mediaAssetIds field, preferring an explicit asset id over a
+ * storage path. Shared by the draft/render accept and finalize paths.
+ */
+const buildMediaAssetIdsUpdate = (
+  videoAssetId: string | null,
+  videoStoragePath: string | null,
+): Partial<Generation> =>
+  videoAssetId
+    ? { mediaAssetIds: [extractAssetId(videoAssetId)] }
+    : videoStoragePath
+      ? { mediaAssetIds: [extractAssetId(videoStoragePath)] }
+      : {};
+
 export function useGenerationActions(
   dispatch: React.Dispatch<GenerationsAction>,
   options: UseGenerationActionsOptions = {},
@@ -778,18 +811,8 @@ export function useGenerationActions(
             status: "completed",
             completedAt: Date.now(),
             mediaUrls: [response.videoUrl],
-            ...(response.faceSwapApplied || response.faceSwapUrl
-              ? {
-                  faceSwapApplied: response.faceSwapApplied ?? true,
-                  faceSwapUrl:
-                    response.faceSwapUrl ?? generation.faceSwapUrl ?? null,
-                }
-              : {}),
-            ...(videoAssetId
-              ? { mediaAssetIds: [extractAssetId(videoAssetId)] }
-              : videoStoragePath
-                ? { mediaAssetIds: [extractAssetId(videoStoragePath)] }
-                : {}),
+            ...buildFaceSwapUpdate(response, generation),
+            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
           });
           inFlightRef.current.delete(generation.id);
           setSubmissionPending(false);
@@ -800,13 +823,7 @@ export function useGenerationActions(
             status: resolveAcceptedGenerationStatus(response.status),
             jobId: response.jobId,
             ...(response.status ? { serverJobStatus: response.status } : {}),
-            ...(response.faceSwapApplied || response.faceSwapUrl
-              ? {
-                  faceSwapApplied: response.faceSwapApplied ?? true,
-                  faceSwapUrl:
-                    response.faceSwapUrl ?? generation.faceSwapUrl ?? null,
-                }
-              : {}),
+            ...buildFaceSwapUpdate(response, generation),
           });
           setSubmissionPending(false);
           log.debug("Waiting for video draft job to complete", {
@@ -876,11 +893,7 @@ export function useGenerationActions(
             jobId: null,
             serverProgress: 100,
             serverJobStatus: "completed",
-            ...(videoAssetId
-              ? { mediaAssetIds: [extractAssetId(videoAssetId)] }
-              : videoStoragePath
-                ? { mediaAssetIds: [extractAssetId(videoStoragePath)] }
-                : {}),
+            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
           });
         }
       } catch (error) {
@@ -1321,18 +1334,8 @@ export function useGenerationActions(
             status: "completed",
             completedAt: Date.now(),
             mediaUrls: [response.videoUrl],
-            ...(response.faceSwapApplied || response.faceSwapUrl
-              ? {
-                  faceSwapApplied: response.faceSwapApplied ?? true,
-                  faceSwapUrl:
-                    response.faceSwapUrl ?? generation.faceSwapUrl ?? null,
-                }
-              : {}),
-            ...(videoAssetId
-              ? { mediaAssetIds: [extractAssetId(videoAssetId)] }
-              : videoStoragePath
-                ? { mediaAssetIds: [extractAssetId(videoStoragePath)] }
-                : {}),
+            ...buildFaceSwapUpdate(response, generation),
+            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
           });
           inFlightRef.current.delete(generation.id);
           setSubmissionPending(false);
@@ -1343,13 +1346,7 @@ export function useGenerationActions(
             status: resolveAcceptedGenerationStatus(response.status),
             jobId: response.jobId,
             ...(response.status ? { serverJobStatus: response.status } : {}),
-            ...(response.faceSwapApplied || response.faceSwapUrl
-              ? {
-                  faceSwapApplied: response.faceSwapApplied ?? true,
-                  faceSwapUrl:
-                    response.faceSwapUrl ?? generation.faceSwapUrl ?? null,
-                }
-              : {}),
+            ...buildFaceSwapUpdate(response, generation),
           });
           setSubmissionPending(false);
           log.debug("Waiting for render job to complete", {
@@ -1419,11 +1416,7 @@ export function useGenerationActions(
             jobId: null,
             serverProgress: 100,
             serverJobStatus: "completed",
-            ...(videoAssetId
-              ? { mediaAssetIds: [extractAssetId(videoAssetId)] }
-              : videoStoragePath
-                ? { mediaAssetIds: [extractAssetId(videoStoragePath)] }
-                : {}),
+            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
           });
         }
       } catch (error) {
