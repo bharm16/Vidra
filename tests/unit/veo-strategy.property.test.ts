@@ -1,32 +1,23 @@
 /**
- * Property-based tests for Veo JSON Schema Validity
+ * Property-based tests for VeoStrategy prose output
  *
  * Tests the following correctness property:
- * - Property 5: Veo JSON Schema Validity
+ * - Property 5: Veo Cinematic Prose Output
  *
- * For any Veo prompt, the transform phase SHALL produce a valid JSON object
- * containing at minimum: subject.description, subject.action, camera.type,
- * camera.movement, environment.lighting fields.
+ * For any Veo prompt, the transform phase SHALL produce a non-empty prose
+ * string carrying cinematic descriptors (subject, action, camera, lighting,
+ * and style references) rather than a JSON schema.
  *
- * @module veo-json-schema.property.test
+ * @module veo-strategy.property.test
  */
 
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 
-import {
-  VeoStrategy,
-  type VeoPromptSchema,
-} from "@services/video-prompt-analysis/strategies/VeoStrategy";
+import { VeoStrategy } from "@services/video-prompt-analysis/strategies/VeoStrategy";
 
 describe("VeoStrategy Property Tests", () => {
   const strategy = new VeoStrategy();
-  const getSchema = (value: unknown): VeoPromptSchema => {
-    if (!strategy.isValidSchema(value)) {
-      throw new Error("Expected VeoPromptSchema");
-    }
-    return value;
-  };
 
   // Sample prompts for testing
   const samplePrompts = [
@@ -211,45 +202,6 @@ describe("VeoStrategy Property Tests", () => {
             // Should be a string
             expect(typeof prose).toBe("string");
             expect(prose.length).toBeGreaterThan(0);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("isValidSchema correctly validates schema structure", async () => {
-      // Note: isValidSchema expects VeoPromptSchema (JSON), not prose strings.
-      // This test validates that the method correctly rejects strings.
-      fc.assert(
-        fc.property(
-          fc.string({ minLength: 1, maxLength: 100 }),
-          (anyString) => {
-            expect(strategy.isValidSchema(anyString)).toBe(false);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("isValidSchema rejects invalid schemas", () => {
-      fc.assert(
-        fc.property(
-          fc.oneof(
-            fc.constant(null),
-            fc.constant(undefined),
-            fc.constant("string"),
-            fc.constant(123),
-            fc.constant({}),
-            fc.constant({ subject: {} }),
-            fc.constant({ subject: { description: "test" } }),
-            fc.constant({ subject: { description: "test", action: "test" } }),
-            fc.constant({
-              subject: { description: "test", action: "test" },
-              camera: {},
-            }),
-          ),
-          (invalidSchema) => {
-            expect(strategy.isValidSchema(invalidSchema)).toBe(false);
           },
         ),
         { numRuns: 100 },

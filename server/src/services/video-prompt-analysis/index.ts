@@ -63,7 +63,6 @@ export type {
   NormalizeResult,
   TransformResult,
   AugmentResult,
-  VeoPromptSchema,
 } from "./strategies";
 
 // Export types

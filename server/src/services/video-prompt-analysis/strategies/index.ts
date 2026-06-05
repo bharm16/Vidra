@@ -18,5 +18,4 @@ export { LumaStrategy } from "./LumaStrategy";
 export { KlingStrategy } from "./KlingStrategy";
 export { SoraStrategy } from "./SoraStrategy";
 export { VeoStrategy } from "./VeoStrategy";
-export type { VeoPromptSchema } from "./VeoStrategy";
 export { WanStrategy } from "./WanStrategy";
