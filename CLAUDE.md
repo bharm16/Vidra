@@ -95,10 +95,10 @@ The client and server are **strictly decoupled**. Neither side may import from t
 no file I/O, no database access. Pure functions that operate on data (validation, parsing,
 condition matching) are acceptable and encouraged to prevent client/server implementation drift.
 
-**Anti-corruption layer:** Each client feature's `api/` directory insulates UI from server DTOs:
+**Anti-corruption layer:** Each client feature's `api/` directory validates server responses at the wire (Zod). Where the UI shape diverges from the server DTO (e.g. `continuity` flattens a nested session, `span-highlighting` reshapes label spans) the `api/` layer additionally transforms — that transform is the anti-corruption layer. Where the shapes match, it is a validation boundary, not a transform:
 
 ```
-Server DTO → feature/api/schemas.ts (Zod) → feature/api/*.ts (transform) → hook → component
+Server DTO → feature/api/schemas.ts (Zod) → feature/api/*.ts (validate; transform only where the shape diverges) → hook → component
 ```
 
 Cross-layer change protocol: see `.claude/skills/cross-layer-change/SKILL.md`.

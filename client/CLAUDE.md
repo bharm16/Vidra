@@ -75,8 +75,8 @@ FeatureName/
 ### API Calls
 
 - All API calls go in `api/` or feature-specific `api/` folders — never fetch inline in components
-- Use Zod to validate API responses
-- Feature `api/` directories transform server DTOs into client-friendly shapes (anti-corruption layer)
+- Use Zod to validate API responses at the wire
+- Feature `api/` directories validate server responses; where the UI shape diverges from the server DTO (e.g. `continuity` flattens a nested session, `span-highlighting` reshapes label spans) they also transform — that transform is the anti-corruption layer. Where the shapes match, the `api/` layer is a validation boundary, not a transform.
 
 ### Frontend-Backend Boundary
 
