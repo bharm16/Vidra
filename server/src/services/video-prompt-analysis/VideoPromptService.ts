@@ -2,11 +2,9 @@ import { logger } from "@infrastructure/Logger";
 import { VideoPromptDetectionService } from "./services/detection/VideoPromptDetectionService";
 import { PhraseRoleAnalysisService } from "./services/analysis/PhraseRoleAnalysisService";
 import { ConstraintGenerationService } from "./services/analysis/ConstraintGenerationService";
-import { FallbackStrategyService } from "./services/guidance/FallbackStrategyService";
 import { CategoryGuidanceService } from "./services/guidance/CategoryGuidanceService";
 import { ModelDetectionService } from "./services/detection/ModelDetectionService";
 import { SectionDetectionService } from "./services/detection/SectionDetectionService";
-import { TaxonomyValidationService } from "@services/video-prompt-analysis/services/taxonomy-validation/TaxonomyValidationService";
 import { countWords } from "./utils/textHelpers";
 import { resolvePromptModelId } from "@config/videoModelRegistry";
 import { createDefaultStrategyRegistry, StrategyRegistry } from "./strategies";
@@ -17,13 +15,6 @@ import type {
   GuidanceSpan,
   EditHistoryEntry,
 } from "./types";
-import type {
-  ValidationOptions,
-  ValidationResult,
-  ValidationStats,
-} from "@services/video-prompt-analysis/services/taxonomy-validation/types";
-import type { ModelCapabilities } from "./services/detection/ModelDetectionService";
-import type { SectionConstraints } from "./services/detection/SectionDetectionService";
 import type { VideoPromptLlmGateway } from "./services/llm/VideoPromptLlmGateway";
 import type {
   PromptOptimizationResult,
@@ -35,11 +26,9 @@ export interface VideoPromptServiceDeps {
   detector?: VideoPromptDetectionService;
   phraseRoleAnalyzer?: PhraseRoleAnalysisService;
   constraintGenerator?: ConstraintGenerationService;
-  fallbackStrategy?: FallbackStrategyService;
   categoryGuidance?: CategoryGuidanceService;
   modelDetector?: ModelDetectionService;
   sectionDetector?: SectionDetectionService;
-  taxonomyValidator?: TaxonomyValidationService;
   strategyRegistry?: StrategyRegistry;
   videoPromptLlmGateway?: VideoPromptLlmGateway | null;
 }
@@ -56,11 +45,9 @@ export class VideoPromptService {
   private readonly detector: VideoPromptDetectionService;
   private readonly phraseRoleAnalyzer: PhraseRoleAnalysisService;
   private readonly constraintGenerator: ConstraintGenerationService;
-  private readonly fallbackStrategy: FallbackStrategyService;
   private readonly categoryGuidance: CategoryGuidanceService;
   private readonly modelDetector: ModelDetectionService;
   private readonly sectionDetector: SectionDetectionService;
-  private readonly taxonomyValidator: TaxonomyValidationService;
   private readonly strategyRegistry: StrategyRegistry;
   private readonly log = logger.child({ service: "VideoPromptService" });
 
@@ -74,15 +61,11 @@ export class VideoPromptService {
       deps.phraseRoleAnalyzer ?? new PhraseRoleAnalysisService();
     this.constraintGenerator =
       deps.constraintGenerator ?? new ConstraintGenerationService();
-    this.fallbackStrategy =
-      deps.fallbackStrategy ?? new FallbackStrategyService();
     this.categoryGuidance =
       deps.categoryGuidance ?? new CategoryGuidanceService();
     this.modelDetector = deps.modelDetector ?? new ModelDetectionService();
     this.sectionDetector =
       deps.sectionDetector ?? new SectionDetectionService();
-    this.taxonomyValidator =
-      deps.taxonomyValidator ?? new TaxonomyValidationService();
 
     this.strategyRegistry =
       deps.strategyRegistry ??
@@ -150,22 +133,6 @@ export class VideoPromptService {
   }
 
   /**
-   * Determine the next fallback constraint mode to try
-   */
-  getVideoFallbackConstraints(
-    currentConstraints: ConstraintConfig | null | undefined,
-    details: ConstraintDetails = {},
-    attemptedModes: Set<string> = new Set(),
-  ): ConstraintConfig | null {
-    return this.fallbackStrategy.getVideoFallbackConstraints(
-      currentConstraints,
-      details,
-      attemptedModes,
-      (d, o) => this.getVideoReplacementConstraints(d, o),
-    );
-  }
-
-  /**
    * Get category-specific focus guidance for better suggestions
    * NEW: Now context-aware with full prompt, spans, and edit history
    */
@@ -194,32 +161,6 @@ export class VideoPromptService {
   }
 
   /**
-   * Get model capabilities (strengths and weaknesses)
-   */
-  getModelCapabilities(
-    model: string | null | undefined,
-  ): ModelCapabilities | null {
-    return this.modelDetector.getModelCapabilities(model);
-  }
-
-  /**
-   * Get model-specific guidance for a category
-   */
-  getModelSpecificGuidance(
-    model: string | null | undefined,
-    category: string | null | undefined,
-  ): string[] {
-    return this.modelDetector.getModelSpecificGuidance(model, category);
-  }
-
-  /**
-   * Format model context for prompt inclusion
-   */
-  formatModelContext(model: string | null | undefined): string {
-    return this.modelDetector.formatModelContext(model);
-  }
-
-  /**
    * Detect which section of the prompt template is being edited
    */
   detectPromptSection(
@@ -232,72 +173,6 @@ export class VideoPromptService {
       fullPrompt,
       contextBefore,
     );
-  }
-
-  /**
-   * Get section-specific constraints
-   */
-  getSectionConstraints(
-    section: string | null | undefined,
-  ): SectionConstraints | null {
-    return this.sectionDetector.getSectionConstraints(section);
-  }
-
-  /**
-   * Get section-specific guidance for a category
-   */
-  getSectionGuidance(
-    section: string | null | undefined,
-    category: string | null | undefined,
-  ): string[] {
-    return this.sectionDetector.getSectionGuidance(section, category);
-  }
-
-  /**
-   * Format section context for prompt inclusion
-   */
-  formatSectionContext(section: string | null | undefined): string {
-    return this.sectionDetector.formatSectionContext(section);
-  }
-
-  /**
-   * Validate taxonomy hierarchy in spans
-   * NEW: Detects orphaned attributes and hierarchy violations
-   */
-  validateSpanHierarchy(
-    spans: GuidanceSpan[],
-    options: ValidationOptions = {},
-  ): ValidationResult {
-    return this.taxonomyValidator.validateSpans(spans, options);
-  }
-
-  /**
-   * Check if spans have orphaned attributes
-   * Quick check for UI warnings
-   */
-  hasOrphanedAttributes(spans: GuidanceSpan[]): boolean {
-    return this.taxonomyValidator.hasOrphanedAttributes(spans);
-  }
-
-  /**
-   * Get missing parent categories for validation suggestions
-   */
-  getMissingParentCategories(spans: GuidanceSpan[]): string[] {
-    return this.taxonomyValidator.getMissingParents(spans);
-  }
-
-  /**
-   * Validate before adding a category to spans
-   */
-  validateCategoryBeforeAdd(categoryId: string, existingSpans: GuidanceSpan[]) {
-    return this.taxonomyValidator.validateBeforeAdd(categoryId, existingSpans);
-  }
-
-  /**
-   * Get validation statistics for analytics
-   */
-  getValidationStats(spans: GuidanceSpan[]): ValidationStats {
-    return this.taxonomyValidator.getValidationStats(spans);
   }
 
   /**

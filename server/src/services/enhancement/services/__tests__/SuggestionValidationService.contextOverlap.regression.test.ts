@@ -17,7 +17,6 @@ function createService(): SuggestionValidationService {
     detectTargetModel: vi.fn(() => null),
     detectPromptSection: vi.fn(() => null),
     getCategoryFocusGuidance: vi.fn(() => null),
-    getVideoFallbackConstraints: vi.fn(() => null),
   };
 
   return new SuggestionValidationService(videoPromptService);

@@ -415,11 +415,6 @@ export interface VideoService {
     allSpans: Array<{ category?: string; text?: string }>,
     editHistory: EditHistoryEntry[],
   ): string[] | null;
-  getVideoFallbackConstraints(
-    currentConstraints: VideoConstraints | null | undefined,
-    details?: Record<string, unknown>,
-    attemptedModes?: Set<string>,
-  ): VideoConstraints | null;
 }
 
 /** @deprecated Use AIExecutionPort from @services/ai-model/ports/AIExecutionPort */

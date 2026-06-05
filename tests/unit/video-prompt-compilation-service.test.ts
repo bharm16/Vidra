@@ -6,7 +6,6 @@ describe("VideoPromptCompilationService", () => {
   it("keeps generic output when no target model is provided", async () => {
     const videoPromptService = {
       optimizeForModel: vi.fn(),
-      detectTargetModel: vi.fn(),
     } as unknown as VideoPromptService;
     const service = new VideoPromptCompilationService(videoPromptService);
 
@@ -28,7 +27,6 @@ describe("VideoPromptCompilationService", () => {
       }),
     });
     expect(videoPromptService.optimizeForModel).not.toHaveBeenCalled();
-    expect(videoPromptService.detectTargetModel).not.toHaveBeenCalled();
   });
 
   it("compiles when an explicit target model is provided", async () => {
@@ -44,7 +42,6 @@ describe("VideoPromptCompilationService", () => {
           triggersInjected: [],
         },
       }),
-      detectTargetModel: vi.fn(),
     } as unknown as VideoPromptService;
     const service = new VideoPromptCompilationService(videoPromptService);
 
@@ -83,7 +80,6 @@ describe("VideoPromptCompilationService", () => {
         prompt: "Tabby cat walks along a sandy beach at golden hour.",
         metadata: { phases: [{ changes: ["trimmed for wan"] }] },
       }),
-      detectTargetModel: vi.fn(),
     } as unknown as VideoPromptService;
     const service = new VideoPromptCompilationService(videoPromptService);
 

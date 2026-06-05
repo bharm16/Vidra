@@ -42,7 +42,6 @@ function createService() {
     detectTargetModel: vi.fn(() => null),
     detectPromptSection: vi.fn(() => null),
     getCategoryFocusGuidance: vi.fn(() => []),
-    getVideoFallbackConstraints: vi.fn(() => null),
   } as unknown as VideoService;
 
   const brainstormBuilder = {
