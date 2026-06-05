@@ -127,6 +127,20 @@ export const VARIANTS: VariantPreset[] = [
     env: { SPAN_PROVIDER: "gemini", SPAN_MODEL: "gemini-2.5-pro" },
     description: "Gemini 2.5 Pro (slower, possibly higher quality)",
   },
+  {
+    name: "openai-mini",
+    surface: "span-labeling",
+    env: { SPAN_PROVIDER: "openai", SPAN_MODEL: "gpt-4o-mini-2024-07-18" },
+    description:
+      "GPT-4o-mini for span labeling (golden-set baseline this session: F1 0.6716)",
+  },
+  {
+    name: "openai-5-mini",
+    surface: "span-labeling",
+    env: { SPAN_PROVIDER: "openai", SPAN_MODEL: "gpt-5-mini" },
+    description:
+      "GPT-5-mini for span labeling (model comparison — tests whether the F1-0 categories action.gesture/camera.angle are a 4o-mini-specific prior or a general schema-description weakness)",
+  },
 ];
 
 const VALID_ENV_KEY_SET = new Set<string>(VALID_ENV_KEYS);
