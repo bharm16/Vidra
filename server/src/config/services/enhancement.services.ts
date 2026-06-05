@@ -3,11 +3,8 @@ import type { VideoService } from "@services/enhancement/services/types";
 import { AIModelService } from "@services/ai-model/index";
 import { EnhancementService } from "@services/enhancement/index";
 import { BrainstormContextBuilder } from "@services/enhancement/services/BrainstormContextBuilder";
-import { CategoryAlignmentService } from "@services/enhancement/services/CategoryAlignmentService";
-import { CleanPromptBuilder } from "@services/enhancement/services/CleanPromptBuilder";
 import { PromptCoherenceService } from "@services/enhancement/services/PromptCoherenceService";
 import { SuggestionDiversityEnforcer } from "@services/enhancement/services/SuggestionDeduplicator";
-import { SuggestionValidationService } from "@services/enhancement/services/SuggestionValidationService";
 import { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
 import type { CacheService } from "@services/cache/CacheService";
 import { VideoPromptService } from "@services/video-prompt-analysis/index";
@@ -28,26 +25,10 @@ export function registerEnhancementServices(container: DIContainer): void {
     () => new BrainstormContextBuilder(),
     [],
   );
-  container.register("promptBuilder", () => new CleanPromptBuilder(), []);
-
-  container.register(
-    "validationService",
-    (videoPromptService: VideoService) =>
-      new SuggestionValidationService(videoPromptService),
-    ["videoPromptService"],
-  );
-
   container.register(
     "diversityEnforcer",
     (aiService: AIModelService) => new SuggestionDiversityEnforcer(aiService),
     ["aiService"],
-  );
-
-  container.register(
-    "categoryAligner",
-    (validationService: SuggestionValidationService) =>
-      new CategoryAlignmentService(validationService),
-    ["validationService"],
   );
 
   container.register(
@@ -56,10 +37,7 @@ export function registerEnhancementServices(container: DIContainer): void {
       aiService: AIModelService,
       videoPromptService: VideoService,
       brainstormBuilder: BrainstormContextBuilder,
-      promptBuilder: CleanPromptBuilder,
-      validationService: SuggestionValidationService,
       diversityEnforcer: SuggestionDiversityEnforcer,
-      categoryAligner: CategoryAlignmentService,
       cacheService: CacheService,
       config: ServiceConfig,
     ) =>
@@ -67,10 +45,7 @@ export function registerEnhancementServices(container: DIContainer): void {
         aiService,
         videoPromptService,
         brainstormBuilder,
-        promptBuilder,
-        validationService,
         diversityEnforcer,
-        categoryAligner,
         cacheService,
         enhancementConfig: config.enhancement,
       }),
@@ -78,10 +53,7 @@ export function registerEnhancementServices(container: DIContainer): void {
       "aiService",
       "videoPromptService",
       "brainstormBuilder",
-      "promptBuilder",
-      "validationService",
       "diversityEnforcer",
-      "categoryAligner",
       "cacheService",
       "config",
     ],

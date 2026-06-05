@@ -5,10 +5,7 @@ import type { SuggestionsTrace } from "@services/observability/SuggestionsTeleme
 import type {
   AIService,
   BrainstormBuilder,
-  CategoryAligner,
   DiversityEnforcer,
-  PromptBuilder,
-  ValidationService,
   VideoService,
 } from "../services/types";
 
@@ -59,25 +56,10 @@ describe("EnhancementService telemetry trace lifecycle (regression)", () => {
       buildBrainstormSignature: vi.fn(() => null),
     } as unknown as BrainstormBuilder;
 
-    const promptBuilder = {
-      buildPlaceholderPrompt: vi.fn(),
-      buildRewritePrompt: vi.fn(),
-      buildCustomPrompt: vi.fn(),
-    } as unknown as PromptBuilder;
-
-    const validationService = {
-      sanitizeSuggestions: vi.fn(),
-      groupSuggestionsByCategory: vi.fn(),
-    } as unknown as ValidationService;
-
     const diversityEnforcer = {
       ensureDiverseSuggestions: vi.fn(),
       filterOriginalEchoes: vi.fn(),
     } as unknown as DiversityEnforcer;
-
-    const categoryAligner = {
-      enforceCategoryAlignment: vi.fn(),
-    } as unknown as CategoryAligner;
 
     const cacheService = {
       getConfig: vi.fn(() => ({ ttl: 60, namespace: "enhancement" })),
@@ -93,10 +75,7 @@ describe("EnhancementService telemetry trace lifecycle (regression)", () => {
       aiService,
       videoPromptService,
       brainstormBuilder,
-      promptBuilder,
-      validationService,
       diversityEnforcer,
-      categoryAligner,
       cacheService,
     });
 

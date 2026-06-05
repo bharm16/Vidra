@@ -4,10 +4,7 @@ import { EnhancementService } from "../EnhancementService";
 import type {
   AIService,
   BrainstormBuilder,
-  CategoryAligner,
   DiversityEnforcer,
-  PromptBuilder,
-  ValidationService,
   VideoService,
   Suggestion,
 } from "../services/types";
@@ -48,18 +45,6 @@ function createService() {
     buildBrainstormSignature: vi.fn(() => null),
   } as unknown as BrainstormBuilder;
 
-  const promptBuilder = {
-    buildPlaceholderPrompt: vi.fn(),
-    buildRewritePrompt: vi.fn(),
-    buildCustomPrompt: vi.fn(() => "legacy custom prompt (should NOT be used)"),
-  } as unknown as PromptBuilder;
-
-  const validationService = {
-    sanitizeSuggestions: vi.fn((suggestions: Suggestion[]) => suggestions),
-    groupSuggestionsByCategory: vi.fn(() => []),
-    validateSuggestions: vi.fn((suggestions: Suggestion[]) => suggestions),
-  } as unknown as ValidationService;
-
   const filterOriginalEchoesSpy = vi.fn(
     (suggestions: Suggestion[]) => suggestions,
   );
@@ -70,14 +55,6 @@ function createService() {
     ),
     filterOriginalEchoes: filterOriginalEchoesSpy,
   } as unknown as DiversityEnforcer;
-
-  const categoryAligner = {
-    enforceCategoryAlignment: vi.fn((suggestions: Suggestion[]) => ({
-      suggestions,
-      fallbackApplied: false,
-      context: {},
-    })),
-  } as unknown as CategoryAligner;
 
   const generateKeySpy = vi.fn(
     (_namespace: string, params: Record<string, unknown>) =>
@@ -95,17 +72,13 @@ function createService() {
     aiService,
     videoPromptService,
     brainstormBuilder,
-    promptBuilder,
-    validationService,
     diversityEnforcer,
-    categoryAligner,
     cacheService,
     enhancementConfig: { policyVersion: "2026-03-v2a" },
   });
 
   return {
     service,
-    promptBuilder,
     filterOriginalEchoesSpy,
     generateKeySpy,
   };
@@ -118,7 +91,7 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
   });
 
   it("routes through V2 engine and applies its post-processing (no legacy buildCustomPrompt call)", async () => {
-    const { service, promptBuilder, filterOriginalEchoesSpy } = createService();
+    const { service, filterOriginalEchoesSpy } = createService();
 
     mockEnforceJSON.mockResolvedValueOnce({
       value: [
@@ -139,10 +112,9 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
       contextAfter: " at dusk.",
     });
 
-    // The V2 engine was invoked exactly once. The legacy CleanPromptBuilder
-    // path is no longer reachable from this method.
+    // The V2 engine was invoked exactly once; the legacy CleanPromptBuilder
+    // path no longer exists (the dependency was removed from the service).
     expect(mockEnforceJSON).toHaveBeenCalledTimes(1);
-    expect(promptBuilder.buildCustomPrompt).not.toHaveBeenCalled();
 
     // The prompt sent to the LLM is the V2 custom-mode prompt (steered by
     // the user's request), not the legacy one.

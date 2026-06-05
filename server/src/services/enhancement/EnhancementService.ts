@@ -20,10 +20,7 @@ import type {
   AIService,
   VideoService,
   BrainstormBuilder,
-  PromptBuilder,
-  ValidationService,
   DiversityEnforcer,
-  CategoryAligner,
   EnhancementRequestParams,
   CustomSuggestionRequestParams,
   EnhancementResult,
@@ -47,10 +44,7 @@ interface EnhancementServiceDependencies {
   aiService: AIService;
   videoPromptService: VideoService;
   brainstormBuilder: BrainstormBuilder;
-  promptBuilder: PromptBuilder;
-  validationService: ValidationService;
   diversityEnforcer: DiversityEnforcer;
-  categoryAligner: CategoryAligner;
   cacheService: CacheService;
   enhancementConfig?: EnhancementV2Config;
 }
@@ -59,10 +53,6 @@ interface EnhancementCoreServices {
   ai: AIService;
   videoPromptService: VideoService;
   brainstormBuilder: BrainstormBuilder;
-  promptBuilder: PromptBuilder;
-  validationService: ValidationService;
-  diversityEnforcer: DiversityEnforcer;
-  categoryAligner: CategoryAligner;
 }
 
 interface EnhancementPipelineServices {
@@ -93,10 +83,7 @@ export class EnhancementService {
       aiService,
       videoPromptService,
       brainstormBuilder,
-      promptBuilder,
-      validationService,
       diversityEnforcer,
-      categoryAligner,
       cacheService,
       enhancementConfig = {
         policyVersion: "2026-03-v2a",
@@ -107,10 +94,6 @@ export class EnhancementService {
       ai: aiService,
       videoPromptService,
       brainstormBuilder,
-      promptBuilder,
-      validationService,
-      diversityEnforcer,
-      categoryAligner,
     };
 
     this.log = logger.child({ service: "EnhancementService" });
