@@ -289,44 +289,10 @@ export class AIModelService {
       };
       const isClientAbort = this._isClientAbortError(error);
 
-      // Some providers/models reject `logprobs`; retry once without it.
-      const hasLogprobs = requestOptions.logprobs === true;
-      const logprobsUnsupported =
-        typeof err.message === "string" &&
-        err.message.toLowerCase().includes("logprobs") &&
-        err.message.toLowerCase().includes("not supported");
-
-      if (hasLogprobs && logprobsUnsupported) {
-        logger.warn("Retrying AI operation without logprobs", {
-          operation,
-          client: config.client,
-          model: requestOptions.model,
-        });
-
-        const retryOptions: RequestOptions = { ...requestOptions };
-        delete (retryOptions as Record<string, unknown>).logprobs;
-        delete (retryOptions as Record<string, unknown>).topLogprobs;
-
-        try {
-          const response = await client.complete(
-            params.systemPrompt,
-            retryOptions,
-          );
-          logger.info("AI operation succeeded after disabling logprobs", {
-            operation,
-            client: config.client,
-            model: retryOptions.model,
-          });
-          return response;
-        } catch (retryError) {
-          // Fall through to normal fallback handling using the original error.
-          logger.warn("Retry without logprobs failed", {
-            operation,
-            client: config.client,
-            error: (retryError as Error).message,
-          });
-        }
-      }
+      // Provider-quirk recovery (e.g. retrying once without logprobs when a
+      // model rejects it) lives behind the adapter seam — see
+      // OpenAICompatibleAdapter._executeRequest. This layer owns only routing
+      // and intelligent fallback, not per-provider parameter quirks.
 
       logger.warn("AI operation failed on primary client", {
         operation,

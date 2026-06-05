@@ -177,7 +177,10 @@ describe("AIModelService", () => {
     expect(response.text).toBe("fallback-ok");
   });
 
-  it("retries once without logprobs when provider rejects logprobs", async () => {
+  it("does not retry logprobs itself — the adapter seam owns that quirk", async () => {
+    // The logprobs-strip retry was relocated into OpenAICompatibleAdapter.
+    // AIModelService must NOT re-grow it: a logprobs rejection surfaces after a
+    // single client call, with no service-level second attempt.
     buildRequestOptionsMock.mockReturnValue({
       model: "gpt-4o",
       temperature: 0.2,
@@ -189,21 +192,16 @@ describe("AIModelService", () => {
     });
     const complete = vi
       .fn()
-      .mockRejectedValueOnce(new Error("logprobs not supported by model"))
-      .mockResolvedValueOnce({ text: "ok", metadata: {} });
+      .mockRejectedValue(new Error("logprobs not supported by model"));
     const service = new AIModelService({
       clients: { openai: { complete } as never },
     });
 
-    const response = await service.execute("test_operation", {
-      systemPrompt: "prompt",
-    });
+    await expect(
+      service.execute("test_operation", { systemPrompt: "prompt" }),
+    ).rejects.toBeDefined();
 
-    expect(complete).toHaveBeenCalledTimes(2);
-    const retryOptions = complete.mock.calls[1]?.[1] as Record<string, unknown>;
-    expect(retryOptions.logprobs).toBeUndefined();
-    expect(retryOptions.topLogprobs).toBeUndefined();
-    expect(response.text).toBe("ok");
+    expect(complete).toHaveBeenCalledTimes(1);
   });
 
   it("streams with onChunk callback and seed when configured", async () => {

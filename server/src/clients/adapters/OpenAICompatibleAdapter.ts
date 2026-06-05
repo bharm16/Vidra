@@ -33,6 +33,7 @@ import type {
   CompletionOptions,
   AdapterConfig,
   OpenAIResponseData,
+  OpenAiPayload,
   AIResponse,
 } from "./openai/types.ts";
 
@@ -236,6 +237,94 @@ export class OpenAICompatibleAdapter {
 
       if (!response.ok) {
         const errorBody = await response.text();
+
+        // gpt-5/o1/o3/o4 reject `max_tokens` and require `max_completion_tokens`.
+        // OpenAI's error message explicitly names the replacement field, so we
+        // retry once with the rename when we see it — same behavior-driven
+        // pattern as the logprobs retry in AIModelService. No model-name
+        // classification needed; the API itself tells us what to do.
+        if (
+          response.status === 400 &&
+          errorBody.includes("max_completion_tokens") &&
+          payload.max_tokens !== undefined
+        ) {
+          const retryPayload: OpenAiPayload = { ...payload };
+          retryPayload.max_completion_tokens = payload.max_tokens;
+          delete retryPayload.max_tokens;
+
+          this.log.warn(
+            "OpenAI rejected max_tokens; retrying with max_completion_tokens",
+            {
+              operation: "_executeRequest",
+              model: payload.model,
+            },
+          );
+
+          const retryResponse = await fetch(
+            `${this.baseURL}/chat/completions`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(retryPayload),
+              signal: controller.signal,
+            },
+          );
+
+          if (retryResponse.ok) {
+            const data = (await retryResponse.json()) as OpenAIResponseData;
+            return this.responseParser.parseResponse(data, options);
+          }
+          // Fall through to error reporting using the original errorBody so
+          // callers see the API's actual rejection message, not a follow-up.
+        }
+
+        // Some models reject `logprobs` when they don't support it, naming
+        // "logprobs" in the rejection. The status varies by model family
+        // (gpt-4o → 400 "not supported"; gpt-5 → 403 "not allowed"), so we
+        // match the API's own error body — NOT the status — and retry once
+        // without logprobs. Behavior-driven, like the max_tokens retry above;
+        // no model-name classification.
+        const lowerErrorBody = errorBody.toLowerCase();
+        if (
+          payload.logprobs !== undefined &&
+          lowerErrorBody.includes("logprobs") &&
+          (lowerErrorBody.includes("not supported") ||
+            lowerErrorBody.includes("not allowed") ||
+            lowerErrorBody.includes("unsupported"))
+        ) {
+          const retryPayload: OpenAiPayload = { ...payload };
+          delete retryPayload.logprobs;
+          delete retryPayload.top_logprobs;
+
+          this.log.warn("OpenAI rejected logprobs; retrying without logprobs", {
+            operation: "_executeRequest",
+            model: payload.model,
+          });
+
+          const retryResponse = await fetch(
+            `${this.baseURL}/chat/completions`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(retryPayload),
+              signal: controller.signal,
+            },
+          );
+
+          if (retryResponse.ok) {
+            const data = (await retryResponse.json()) as OpenAIResponseData;
+            return this.responseParser.parseResponse(data, options);
+          }
+          // Fall through to error reporting using the original errorBody so
+          // callers see the API's actual rejection message, not a follow-up.
+        }
+
         const isRetryable = response.status >= 500 || response.status === 429;
         const apiError = new APIError(
           `${this.providerName} API error: ${response.status} - ${errorBody}`,
