@@ -272,6 +272,19 @@ export function applyCompressionMiddleware(app: Application): void {
 export const FALLBACK_LIMIT_DIVISOR = 4;
 
 /**
+ * Subscribe the rate-limit health flag to a Redis client's connection
+ * lifecycle: `ready` flips it healthy; `error`/`end`/`close` flip it
+ * unhealthy. Shared by the distributed-store and fallback paths, which
+ * previously wired these four listeners inline and identically.
+ */
+const subscribeRedisRateLimitHealthEvents = (client: Redis): void => {
+  client.on("ready", () => setRedisRateLimitHealth(true));
+  client.on("error", () => setRedisRateLimitHealth(false));
+  client.on("end", () => setRedisRateLimitHealth(false));
+  client.on("close", () => setRedisRateLimitHealth(false));
+};
+
+/**
  * Apply rate limiting middleware
  * Disabled in test environments
  */
@@ -315,18 +328,7 @@ export function applyRateLimitingMiddleware(
     // when unhealthy; non-LLM routes are allowed to degrade to in-memory.
     setRedisRateLimitHealth(true);
     if (redisClient) {
-      redisClient.on("error", () => {
-        setRedisRateLimitHealth(false);
-      });
-      redisClient.on("end", () => {
-        setRedisRateLimitHealth(false);
-      });
-      redisClient.on("close", () => {
-        setRedisRateLimitHealth(false);
-      });
-      redisClient.on("ready", () => {
-        setRedisRateLimitHealth(true);
-      });
+      subscribeRedisRateLimitHealthEvents(redisClient);
     }
   } else {
     logger.warn(
@@ -344,10 +346,7 @@ export function applyRateLimitingMiddleware(
       // Subscribe to recovery events so the health flag flips back if the
       // client reconnects later.
       if (redisClient) {
-        redisClient.on("ready", () => setRedisRateLimitHealth(true));
-        redisClient.on("error", () => setRedisRateLimitHealth(false));
-        redisClient.on("end", () => setRedisRateLimitHealth(false));
-        redisClient.on("close", () => setRedisRateLimitHealth(false));
+        subscribeRedisRateLimitHealthEvents(redisClient);
       }
     }
   }
