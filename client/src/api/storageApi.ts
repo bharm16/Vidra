@@ -1,7 +1,26 @@
+import { z } from "zod";
 import { API_CONFIG } from "@/config/api.config";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 
-async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+/**
+ * Storage endpoints return a uniform envelope: `{ success, data }` on success
+ * and `{ error | message }` on failure. We validate the envelope at the wire so
+ * a malformed (non-object) response fails loudly here instead of surfacing as a
+ * silent `undefined` inside a consumer. Per-endpoint `data` shapes are
+ * intentionally left as `unknown` — callers narrow what they read. (Validation
+ * boundary, not a transform — see CLAUDE.md "Anti-corruption layer".)
+ */
+const StorageEnvelopeSchema = z.object({
+  success: z.boolean().optional(),
+  data: z.unknown().optional(),
+  error: z.string().optional(),
+  message: z.string().optional(),
+});
+
+async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<unknown> {
   const authHeaders = await buildFirebaseAuthHeaders();
   const response = await fetch(`${API_CONFIG.baseURL}/storage${endpoint}`, {
     ...options,
@@ -12,12 +31,12 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     },
   });
 
-  const payload = await response.json();
+  const envelope = StorageEnvelopeSchema.parse(await response.json());
   if (!response.ok) {
-    throw new Error(payload?.error || payload?.message || "Storage API error");
+    throw new Error(envelope.error || envelope.message || "Storage API error");
   }
 
-  return payload.data;
+  return envelope.data;
 }
 
 export const storageApi = {
