@@ -29,24 +29,6 @@ vi.mock("@clients/utils/abortController", () => ({
   },
 }));
 
-vi.mock("opossum", () => ({
-  default: class FakeBreaker {
-    private readonly fn: (...args: unknown[]) => Promise<unknown>;
-    constructor(fn: (...args: unknown[]) => Promise<unknown>) {
-      this.fn = fn;
-    }
-    fire(...args: unknown[]) {
-      return this.fn(...args);
-    }
-    fallback() {
-      return this;
-    }
-    on() {
-      return this;
-    }
-  },
-}));
-
 import { GeminiAdapter } from "../GeminiAdapter";
 
 describe("GeminiAdapter", () => {

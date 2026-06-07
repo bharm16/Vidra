@@ -1,6 +1,6 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
-import { LLMClient } from "@clients/LLMClient";
+import { LLMClient, APIError, ClientAbortError } from "@clients/LLMClient";
 import { GeminiAdapter } from "@clients/adapters/GeminiAdapter";
 import { GroqLlamaAdapter } from "@clients/adapters/GroqLlamaAdapter";
 import { GroqQwenAdapter } from "@clients/adapters/GroqQwenAdapter";
@@ -146,6 +146,24 @@ export function registerLLMServices(container: DIContainer): void {
         circuitBreakerConfig: {
           errorThresholdPercentage: 55,
           resetTimeout: 20000,
+          // Migrated from GeminiAdapter's former inner breaker: client/input
+          // errors (aborts, 4xx except 429) must not trip circuit health.
+          errorFilter: (err: Error) => {
+            if (
+              err instanceof ClientAbortError ||
+              err.name === "ClientAbortError"
+            ) {
+              return true;
+            }
+            if (err instanceof APIError) {
+              return (
+                err.statusCode >= 400 &&
+                err.statusCode < 500 &&
+                err.statusCode !== 429
+              );
+            }
+            return false;
+          },
         },
         concurrencyLimiter: geminiLimiter,
       });

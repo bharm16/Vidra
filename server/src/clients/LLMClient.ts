@@ -119,6 +119,9 @@ interface CircuitBreakerConfig {
   rollingCountBuckets?: number;
   volumeThreshold?: number;
   name?: string;
+  // Returns true for errors that must NOT count as circuit failures
+  // (e.g. client aborts, 4xx). Overrides the default abort-only filter.
+  errorFilter?: (err: Error) => boolean;
 }
 
 interface ConcurrencyLimiterOptions {

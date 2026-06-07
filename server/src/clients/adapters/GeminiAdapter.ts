@@ -11,7 +11,6 @@ import { APIError, TimeoutError, ClientAbortError } from "../LLMClient.ts";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
 import { createAbortController } from "@clients/utils/abortController";
-import CircuitBreaker from "opossum";
 import { GeminiMessageBuilder } from "./gemini/GeminiMessageBuilder.ts";
 import { GeminiResponseParser } from "./gemini/GeminiResponseParser.ts";
 import { z } from "zod";
@@ -32,7 +31,6 @@ export class GeminiAdapter {
   private readonly messageBuilder: GeminiMessageBuilder;
   private readonly responseParser: GeminiResponseParser;
   public capabilities: { streaming: boolean };
-  private breaker: CircuitBreaker;
 
   constructor({
     apiKey,
@@ -58,48 +56,9 @@ export class GeminiAdapter {
     this.responseParser = new GeminiResponseParser();
     this.capabilities = { streaming: true };
 
-    // Initialize Circuit Breaker
-    this.breaker = new CircuitBreaker(this._executeRequest.bind(this), {
-      timeout: this.defaultTimeout + 5000, // Slightly higher than internal timeout
-      errorThresholdPercentage: 50,
-      resetTimeout: 10000, // Wait 10s before retrying after open
-      name: "GeminiAPI",
-      // Client/input errors should not trip circuit health.
-      errorFilter: (err: Error) => {
-        if (
-          err instanceof ClientAbortError ||
-          err.name === "ClientAbortError"
-        ) {
-          return true;
-        }
-
-        if (err instanceof APIError) {
-          return (
-            err.statusCode >= 400 &&
-            err.statusCode < 500 &&
-            err.statusCode !== 429
-          );
-        }
-
-        return false;
-      },
-    });
-
-    this.breaker.fallback(() =>
-      Promise.reject(
-        new APIError("Gemini API Circuit Breaker Open", 503, true),
-      ),
-    );
-
-    this.breaker.on("open", () =>
-      this.log.warn("Gemini Circuit Breaker OPENED"),
-    );
-    this.breaker.on("halfOpen", () =>
-      this.log.info("Gemini Circuit Breaker HALF-OPEN"),
-    );
-    this.breaker.on("close", () =>
-      this.log.info("Gemini Circuit Breaker CLOSED"),
-    );
+    // Circuit breaking is owned by LLMClient (the sole breaker seam). This
+    // adapter is a stateless HTTP transport — its 4xx-aware errorFilter is
+    // registered on the wrapping LLMClient in config/services/llm.services.ts.
   }
 
   /**
@@ -197,14 +156,9 @@ export class GeminiAdapter {
       options.responseSchema = options.schema;
     }
 
-    // Fire the circuit breaker
-    try {
-      return (await this.breaker.fire(systemPrompt, options)) as AIResponse;
-    } catch (error) {
-      // If it's a 4xx error that we allowed through, re-throw it.
-      // If it's the breaker open error, let it bubble.
-      throw error;
-    }
+    // Stateless transport: execute directly. Circuit breaking and retry are
+    // applied by the wrapping LLMClient.
+    return await this._executeRequest(systemPrompt, options);
   }
 
   async streamComplete(
