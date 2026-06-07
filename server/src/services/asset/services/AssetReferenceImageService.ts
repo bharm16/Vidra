@@ -3,14 +3,14 @@ import type {
   AssetStorePort,
   ReferenceImageMetadataInput,
 } from "../ports/AssetStorePort";
-import ReferenceImageService from "../ReferenceImageService";
+import { ReferenceImageProcessingService } from "../ReferenceImageProcessingService";
 import { logger } from "@infrastructure/Logger";
 import type { AssetCrudService } from "./AssetCrudService";
 import type { AssetEmbeddingService } from "./AssetEmbeddingService";
 
 export class AssetReferenceImageService {
   private readonly repository: AssetStorePort;
-  private readonly imageService: ReferenceImageService;
+  private readonly imageService: ReferenceImageProcessingService;
   private readonly assetCrud: AssetCrudService;
   private readonly embeddingService: AssetEmbeddingService | null;
   private readonly log = logger.child({
@@ -19,7 +19,7 @@ export class AssetReferenceImageService {
 
   constructor(
     repository: AssetStorePort,
-    imageService: ReferenceImageService,
+    imageService: ReferenceImageProcessingService,
     assetCrud: AssetCrudService,
     embeddingService: AssetEmbeddingService | null,
   ) {

@@ -9,7 +9,7 @@ import type {
   AssetStorePort,
   ReferenceImageMetadataInput,
 } from "./ports/AssetStorePort";
-import ReferenceImageService from "./ReferenceImageService";
+import { ReferenceImageProcessingService } from "./ReferenceImageProcessingService";
 import AssetResolverService from "./AssetResolverService";
 import TriggerValidationService from "./TriggerValidationService";
 import type FaceEmbeddingService from "./FaceEmbeddingService";
@@ -31,7 +31,7 @@ export class AssetService {
 
   constructor(
     assetRepository: AssetStorePort,
-    referenceImageRepository: ReferenceImageService,
+    referenceImageRepository: ReferenceImageProcessingService,
     resolverService = new AssetResolverService(assetRepository),
     triggerValidation = new TriggerValidationService(),
     embeddingService: FaceEmbeddingService | null = null,
