@@ -150,10 +150,9 @@ describe("useGenerationActions", () => {
 
     it("marks render generation as failed when preview generation fails", async () => {
       const dispatch = vi.fn();
-      mockGenerateVideoPreview.mockResolvedValue({
-        success: false,
-        error: "No credits",
-      });
+      // generateVideoPreview throws on failure (non-2xx); it never resolves a
+      // success:false body. Mock the real failure mode.
+      mockGenerateVideoPreview.mockRejectedValue(new Error("No credits"));
 
       const { result } = renderHook(() =>
         useGenerationActions(dispatch, { promptVersionId: "version-1" }),

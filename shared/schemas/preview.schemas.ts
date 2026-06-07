@@ -125,7 +125,11 @@ export const FaceSwapPreviewResponseSchema = z
 
 export const GenerateVideoResponseSchema = z
   .object({
-    success: z.boolean(),
+    // Discriminant: this schema describes the success body only. The server
+    // hardcodes success:true here; failures return non-2xx and are thrown by
+    // the client transport before reaching this parse, so a literal is correct
+    // and prevents a success:false body from masquerading as a success.
+    success: z.literal(true),
     videoUrl: z.string().optional(),
     assetId: z.string().optional(),
     storagePath: z.string().optional(),

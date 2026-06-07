@@ -30,10 +30,11 @@ describe("useVideoPreview", () => {
 
   describe("error handling", () => {
     it("surfaces API errors when preview generation fails", async () => {
-      mockGenerateVideoPreview.mockResolvedValue({
-        success: false,
-        error: "Generation failed",
-      });
+      // generateVideoPreview throws on failure (non-2xx); it never resolves a
+      // success:false body. Mock the real failure mode.
+      mockGenerateVideoPreview.mockRejectedValue(
+        new Error("Generation failed"),
+      );
 
       const { result } = renderHook(() =>
         useVideoPreview({
