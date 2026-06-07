@@ -155,6 +155,11 @@ export const GenerateVideoResponseSchema = z
 
 export const VideoJobStatusResponseSchema = z
   .object({
+    // Intentionally a boolean, NOT z.literal(true) (cf. GenerateVideoResponse).
+    // pollJobStatus has explicit graceful-degradation handling for success:false
+    // (`if (!status.success) throw status.error ...`). A literal would turn that
+    // into a zod parse error instead of surfacing the server's message, so the
+    // permissive shape is deliberate here.
     success: z.boolean(),
     jobId: z.string(),
     status: z.enum(["queued", "processing", "completed", "failed"]),
