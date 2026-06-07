@@ -3,8 +3,6 @@
  * Shared type definitions used across cache service modules
  */
 
-import type { ICacheService } from "@interfaces/ICacheService";
-
 /**
  * Cache configuration options
  */
@@ -13,16 +11,6 @@ export interface CacheConfig {
   checkperiod?: number;
   useClones?: boolean;
   [key: string]: unknown;
-}
-
-/**
- * Cache statistics
- */
-export interface CacheStatistics {
-  hits: number;
-  misses: number;
-  sets: number;
-  hitRate: string;
 }
 
 /**
@@ -47,29 +35,12 @@ export interface SemanticEnhancer {
 }
 
 /**
- * Metrics collector interface for cache statistics
- */
-export interface MetricsCollector {
-  recordCacheHit?: (cacheType: string) => void;
-  recordCacheMiss?: (cacheType: string) => void;
-  updateCacheHitRate?: (cacheType: string, hitRate: number) => void;
-}
-
-/**
  * Cache adapter constructor options
  */
 export interface CacheAdapterOptions {
   config?: CacheConfig;
   keyGenerator: CacheKeyGenerator;
   logger?: Logger | null;
-}
-
-/**
- * Cache service with statistics constructor options
- */
-export interface CacheServiceWithStatisticsOptions {
-  cacheService: ICacheService;
-  statisticsTracker: CacheStatisticsTracker;
 }
 
 /**
@@ -87,16 +58,6 @@ export interface Logger {
   info?: (message: string, meta?: Record<string, unknown>) => void;
   warn?: (message: string, meta?: Record<string, unknown>) => void;
   error?: (message: string, error?: Error) => void;
-}
-
-/**
- * Cache statistics tracker (forward declaration)
- */
-export interface CacheStatisticsTracker {
-  recordHit(cacheType?: string): void;
-  recordMiss(cacheType?: string): void;
-  recordSet(): void;
-  getStatistics(): CacheStatistics;
 }
 
 /**
