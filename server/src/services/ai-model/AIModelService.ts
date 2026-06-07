@@ -358,16 +358,7 @@ export class AIModelService {
     const config = plan.primaryConfig;
     const client = this.clientResolver.getClient(config);
 
-    if (
-      typeof (
-        client as {
-          streamComplete?: (
-            systemPrompt: string,
-            options: unknown,
-          ) => Promise<string>;
-        }
-      ).streamComplete !== "function"
-    ) {
+    if (typeof client.streamComplete !== "function") {
       throw new Error(
         `Client '${config.client}' does not support streaming. ` +
           `Use execute() instead or configure a streaming-capable client.`,
@@ -405,13 +396,13 @@ export class AIModelService {
         jsonMode: streamOptions.jsonMode,
       });
 
-      const streamClient = client as unknown as {
-        streamComplete: (
-          systemPrompt: string,
-          options: StreamParams,
-        ) => Promise<string>;
-      };
-      const text = await streamClient.streamComplete(
+      // streamComplete presence is verified above. Streaming deliberately does
+      // NOT run execute()'s request-shaping pipeline (ProviderDetector,
+      // buildRequestOptions, response-format, developerMessage) — those are
+      // non-streaming concerns. The streaming wire is eval-gated (span labeling),
+      // so options pass through unchanged; unifying the pipelines would force a
+      // baseline re-bless and is intentionally deferred.
+      const text = await client.streamComplete(
         params.systemPrompt as string,
         streamOptions,
       );
