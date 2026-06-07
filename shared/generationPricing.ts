@@ -71,6 +71,35 @@ export const GENERATION_PRICING = {
     kind: "per-second",
     creditsPerSecond: 6,
   },
+
+  // Full model-id keys. The server registry (VIDEO_CREDITS_PER_SECOND) keys off
+  // VIDEO_MODELS values, which are full provider/model ids — not the short
+  // aliases above. Without these entries the server lookups miss and fall back
+  // to per-call literals. Values mirror the current effective server pricing so
+  // the lookup is authoritative (see server/config/__tests__ regression test).
+  // NOTE: "wan-video/wan-2.2-t2v-fast" is deliberately absent — VIDEO_MODELS.DRAFT
+  // and VIDEO_MODELS.PRO both map to it with conflicting intended rates (3.5 vs 5),
+  // so a single shared value would require a pricing decision. Flagged, not resolved.
+  "sora-2-pro": {
+    kind: "per-second",
+    creditsPerSecond: 14,
+  },
+  "minimax/video-02": {
+    kind: "per-second",
+    creditsPerSecond: 4,
+  },
+  "genmo/mochi-1-final": {
+    kind: "per-second",
+    creditsPerSecond: 6,
+  },
+  "wan-video/wan-2.2-i2v-fast": {
+    kind: "per-second",
+    creditsPerSecond: 3.5,
+  },
+  "wan-video/wan-2.5-i2v": {
+    kind: "per-second",
+    creditsPerSecond: 3.5,
+  },
 } as const satisfies Record<string, GenerationPricing>;
 
 export const getGenerationPricing = (
