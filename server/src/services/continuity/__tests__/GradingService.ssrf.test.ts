@@ -39,7 +39,7 @@ describe("GradingService SSRF guard (regression)", () => {
   });
 
   it("matchImagePalette throws before any fetch when sourceImageUrl is unsafe", async () => {
-    const storage = { saveFromBuffer: vi.fn() };
+    const storage = { savePreviewImage: vi.fn() };
     const service = new GradingService(
       {
         getPublicUrl: vi.fn(),
@@ -57,11 +57,11 @@ describe("GradingService SSRF guard (regression)", () => {
     ).rejects.toThrow(/Invalid URL for sourceImageUrl/);
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(storage.saveFromBuffer).not.toHaveBeenCalled();
+    expect(storage.savePreviewImage).not.toHaveBeenCalled();
   });
 
   it("matchImagePalette throws before any fetch when referenceImageUrl is unsafe", async () => {
-    const storage = { saveFromBuffer: vi.fn() };
+    const storage = { savePreviewImage: vi.fn() };
     const service = new GradingService(
       {
         getPublicUrl: vi.fn(),
@@ -79,7 +79,7 @@ describe("GradingService SSRF guard (regression)", () => {
     ).rejects.toThrow(/Invalid URL for referenceImageUrl/);
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(storage.saveFromBuffer).not.toHaveBeenCalled();
+    expect(storage.savePreviewImage).not.toHaveBeenCalled();
   });
 
   it("matchPalette throws for localhost referenceImageUrl", async () => {
@@ -101,7 +101,7 @@ describe("GradingService SSRF guard (regression)", () => {
   });
 
   it("matchImagePalette throws for file:// scheme sourceImageUrl", async () => {
-    const storage = { saveFromBuffer: vi.fn() };
+    const storage = { savePreviewImage: vi.fn() };
     const service = new GradingService(
       {
         getPublicUrl: vi.fn(),

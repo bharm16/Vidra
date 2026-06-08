@@ -7,7 +7,6 @@ import { logger } from "@infrastructure/Logger";
 import { assertUrlSafe } from "@server/shared/urlValidation";
 import { FaceEmbeddingService } from "@services/asset/FaceEmbeddingService";
 import type { StorageService } from "@services/storage/StorageService";
-import { STORAGE_TYPES } from "@services/storage/config/storageConfig";
 import type { QualityGateResult } from "./types";
 import { DEFAULT_QUALITY_THRESHOLDS } from "./constants";
 
@@ -59,11 +58,9 @@ export class QualityGateService {
         const ref = await this.faceEmbedding.extractEmbedding(
           options.characterReferenceUrl,
         );
-        const stored = await this.storage.saveFromBuffer(
+        const stored = await this.storage.savePreviewImage(
           options.userId,
           frameBuffer,
-          STORAGE_TYPES.PREVIEW_IMAGE,
-          "image/png",
           { source: "quality-gate" },
         );
         const candidate = await this.faceEmbedding.extractEmbedding(

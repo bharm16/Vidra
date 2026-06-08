@@ -271,4 +271,29 @@ describe("StorageService", () => {
       ),
     ).rejects.toThrow("upstream failed");
   });
+
+  it("savePreviewImage fixes the preview-image type and png mime behind the verb", async () => {
+    const { service } = buildStorageService();
+    const saveSpy = vi.spyOn(service, "saveFromBuffer").mockResolvedValue({
+      storagePath: "users/user123/previews/images/x.png",
+      viewUrl: "https://storage.googleapis.com/view",
+      expiresAt: "2024-01-21T12:00:00Z",
+      sizeBytes: 10,
+      contentType: "image/png",
+      createdAt: "2024-01-21T12:00:00Z",
+    });
+    const buffer = Buffer.from("preview");
+
+    await service.savePreviewImage("user123", buffer, {
+      source: "scene-proxy",
+    });
+
+    expect(saveSpy).toHaveBeenCalledWith(
+      "user123",
+      buffer,
+      "preview-image",
+      "image/png",
+      { source: "scene-proxy" },
+    );
+  });
 });

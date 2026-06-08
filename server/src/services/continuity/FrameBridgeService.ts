@@ -5,7 +5,6 @@ import { spawn } from "node:child_process";
 import { logger } from "@infrastructure/Logger";
 import { generateId } from "@utils/uid";
 import { StorageService } from "@services/storage/StorageService";
-import { STORAGE_TYPES } from "@services/storage/config/storageConfig";
 import type { FrameBridge } from "./types";
 import sharp from "sharp";
 
@@ -36,17 +35,11 @@ export class FrameBridgeService {
 
     const frameBuffer = await this.extractFrameAt(videoUrl, timestamp);
 
-    const stored = await this.storage.saveFromBuffer(
-      userId,
-      frameBuffer,
-      STORAGE_TYPES.PREVIEW_IMAGE,
-      "image/png",
-      {
-        sourceVideo: videoId,
-        position,
-        timestamp: timestamp.toString(),
-      },
-    );
+    const stored = await this.storage.savePreviewImage(userId, frameBuffer, {
+      sourceVideo: videoId,
+      position,
+      timestamp: timestamp.toString(),
+    });
 
     return {
       id: this.generateId("frame"),
@@ -88,17 +81,11 @@ export class FrameBridgeService {
       throw new Error("Failed to extract representative frame");
     }
 
-    const stored = await this.storage.saveFromBuffer(
-      userId,
-      bestFrame,
-      STORAGE_TYPES.PREVIEW_IMAGE,
-      "image/png",
-      {
-        sourceVideo: videoId,
-        position: "representative",
-        timestamp: bestTimestamp.toString(),
-      },
-    );
+    const stored = await this.storage.savePreviewImage(userId, bestFrame, {
+      sourceVideo: videoId,
+      position: "representative",
+      timestamp: bestTimestamp.toString(),
+    });
 
     return {
       id: this.generateId("frame"),

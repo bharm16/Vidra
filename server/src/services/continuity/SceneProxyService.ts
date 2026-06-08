@@ -2,7 +2,6 @@ import { logger } from "@infrastructure/Logger";
 import { assertUrlSafe } from "@server/shared/urlValidation";
 import { generateId } from "@utils/uid";
 import { StorageService } from "@services/storage/StorageService";
-import { STORAGE_TYPES } from "@services/storage/config/storageConfig";
 import sharp from "sharp";
 import type { DepthEstimationFactory } from "./ports/DepthEstimationFactory";
 import type { FrameBridgeService } from "./FrameBridgeService";
@@ -65,11 +64,9 @@ export class SceneProxyService {
         );
         depthBuffer = await this.estimateDepth(referenceBuffer);
 
-        const depthStored = await this.storage.saveFromBuffer(
+        const depthStored = await this.storage.savePreviewImage(
           userId,
           depthBuffer,
-          STORAGE_TYPES.PREVIEW_IMAGE,
-          "image/png",
           { source: "scene-proxy-depth" },
         );
         depthMapUrl = depthStored.viewUrl;
@@ -162,13 +159,9 @@ export class SceneProxyService {
       normalizedCameraPose,
     );
 
-    const stored = await this.storage.saveFromBuffer(
-      userId,
-      rendered,
-      STORAGE_TYPES.PREVIEW_IMAGE,
-      "image/png",
-      { source: "scene-proxy-render" },
-    );
+    const stored = await this.storage.savePreviewImage(userId, rendered, {
+      source: "scene-proxy-render",
+    });
 
     const pose = normalizedCameraPose
       ? {

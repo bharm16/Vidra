@@ -3,7 +3,6 @@ import { assertUrlSafe } from "@server/shared/urlValidation";
 import type { AssetService } from "@services/asset/AssetService";
 import type KeyframeGenerationService from "@services/video-generation/KeyframeGenerationService";
 import { StorageService } from "@services/storage/StorageService";
-import { STORAGE_TYPES } from "@services/storage/config/storageConfig";
 import type { CharacterKeyframeOptions } from "./types";
 
 export class CharacterKeyframeService {
@@ -50,16 +49,10 @@ export class CharacterKeyframeService {
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    const stored = await this.storage.saveFromBuffer(
-      userId,
-      buffer,
-      STORAGE_TYPES.PREVIEW_IMAGE,
-      "image/png",
-      {
-        source: "pulid",
-        characterAssetId,
-      },
-    );
+    const stored = await this.storage.savePreviewImage(userId, buffer, {
+      source: "pulid",
+      characterAssetId,
+    });
 
     return stored.viewUrl;
   }

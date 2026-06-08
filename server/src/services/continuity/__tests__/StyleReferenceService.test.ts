@@ -28,7 +28,7 @@ beforeAll(async () => {
 
 describe("StyleReferenceService", () => {
   const storage = {
-    saveFromBuffer: vi.fn().mockResolvedValue({
+    savePreviewImage: vi.fn().mockResolvedValue({
       viewUrl: "https://storage.example.com/keyframe.png",
     }),
   };
@@ -73,7 +73,7 @@ describe("StyleReferenceService", () => {
     });
 
     expect(replicateRun).toHaveBeenCalled();
-    expect(storage.saveFromBuffer).toHaveBeenCalled();
+    expect(storage.savePreviewImage).toHaveBeenCalled();
     expect(url).toBe("https://storage.example.com/keyframe.png");
   });
 

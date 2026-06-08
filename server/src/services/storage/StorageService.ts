@@ -254,6 +254,32 @@ export class StorageService {
     return result;
   }
 
+  /**
+   * Persist a preview image. The storage type (PREVIEW_IMAGE) and content
+   * type (image/png) are fixed for this verb, so callers never name
+   * STORAGE_TYPES or the mime — the type catalogue stays internal to storage.
+   */
+  async savePreviewImage(
+    userId: string,
+    buffer: Buffer,
+    metadata: Record<string, unknown> = {},
+  ): Promise<{
+    storagePath: string;
+    viewUrl: string;
+    expiresAt: string;
+    sizeBytes: number;
+    contentType: string;
+    createdAt: string;
+  }> {
+    return this.saveFromBuffer(
+      userId,
+      buffer,
+      STORAGE_TYPES.PREVIEW_IMAGE,
+      "image/png",
+      metadata,
+    );
+  }
+
   async uploadBuffer(
     userId: string,
     type: StorageType,

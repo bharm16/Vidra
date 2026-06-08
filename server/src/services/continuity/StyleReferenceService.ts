@@ -2,7 +2,6 @@ import Replicate from "replicate";
 import { logger } from "@infrastructure/Logger";
 import { generateId } from "@utils/uid";
 import { StorageService } from "@services/storage/StorageService";
-import { STORAGE_TYPES } from "@services/storage/config/storageConfig";
 import { assertUrlSafe } from "@server/shared/urlValidation";
 import type { FrameBridge, StyleMatchOptions, StyleReference } from "./types";
 
@@ -121,17 +120,11 @@ export class StyleReferenceService {
     }
     const buffer = Buffer.from(await response.arrayBuffer());
 
-    const stored = await this.storage.saveFromBuffer(
-      userId,
-      buffer,
-      STORAGE_TYPES.PREVIEW_IMAGE,
-      "image/png",
-      {
-        prompt: options.prompt.slice(0, 200),
-        strength: options.strength.toString(),
-        source: "ip-adapter",
-      },
-    );
+    const stored = await this.storage.savePreviewImage(userId, buffer, {
+      prompt: options.prompt.slice(0, 200),
+      strength: options.strength.toString(),
+      source: "ip-adapter",
+    });
 
     return stored.viewUrl;
   }

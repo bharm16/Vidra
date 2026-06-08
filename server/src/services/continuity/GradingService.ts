@@ -4,7 +4,6 @@ import { promises as fs } from "node:fs";
 import { spawn } from "node:child_process";
 import { logger } from "@infrastructure/Logger";
 import { StorageService } from "@services/storage/StorageService";
-import { STORAGE_TYPES } from "@services/storage/config/storageConfig";
 import type { VideoAssetStore } from "@services/video-generation/storage";
 import { assertUrlSafe } from "@server/shared/urlValidation";
 
@@ -146,13 +145,9 @@ export class GradingService {
       await this.exec("ffmpeg", args);
 
       const outputBuffer = await fs.readFile(outputPath);
-      const stored = await this.storage.saveFromBuffer(
-        userId,
-        outputBuffer,
-        STORAGE_TYPES.PREVIEW_IMAGE,
-        "image/png",
-        { source: "continuity-style-transfer" },
-      );
+      const stored = await this.storage.savePreviewImage(userId, outputBuffer, {
+        source: "continuity-style-transfer",
+      });
 
       return { applied: true, imageUrl: stored.viewUrl };
     } catch (error) {

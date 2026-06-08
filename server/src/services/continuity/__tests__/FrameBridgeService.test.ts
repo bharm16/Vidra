@@ -9,7 +9,7 @@ beforeAll(async () => {
 
 describe("FrameBridgeService", () => {
   const storage = {
-    saveFromBuffer: vi
+    savePreviewImage: vi
       .fn()
       .mockResolvedValue({ viewUrl: "https://storage.example.com/frame.png" }),
   };
@@ -39,11 +39,9 @@ describe("FrameBridgeService", () => {
       "last",
     );
 
-    expect(storage.saveFromBuffer).toHaveBeenCalledWith(
+    expect(storage.savePreviewImage).toHaveBeenCalledWith(
       "user-1",
       expect.any(Buffer),
-      expect.any(String),
-      "image/png",
       expect.objectContaining({
         sourceVideo: "video-1",
         position: "last",
@@ -81,6 +79,6 @@ describe("FrameBridgeService", () => {
     );
 
     expect(result.frameTimestamp).toBeCloseTo(6, 2);
-    expect(storage.saveFromBuffer).toHaveBeenCalledTimes(1);
+    expect(storage.savePreviewImage).toHaveBeenCalledTimes(1);
   });
 });

@@ -77,7 +77,7 @@ describe("GradingService", () => {
 
   it("stores transformed image when image palette matching succeeds", async () => {
     const storage = {
-      saveFromBuffer: vi.fn().mockResolvedValue({
+      savePreviewImage: vi.fn().mockResolvedValue({
         viewUrl: "https://example.com/stored.png",
       }),
     };
@@ -117,11 +117,9 @@ describe("GradingService", () => {
       "https://example.com/ref.png",
     );
 
-    expect(storage.saveFromBuffer).toHaveBeenCalledWith(
+    expect(storage.savePreviewImage).toHaveBeenCalledWith(
       "user-1",
       expect.any(Buffer),
-      "preview-image",
-      "image/png",
       expect.objectContaining({ source: "continuity-style-transfer" }),
     );
     expect(result).toEqual({

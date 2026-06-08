@@ -68,7 +68,7 @@ describe("QualityGateService", () => {
       computeSimilarity: vi.fn().mockReturnValue(0.2),
     };
     const storage = {
-      saveFromBuffer: vi
+      savePreviewImage: vi
         .fn()
         .mockResolvedValue({ viewUrl: "https://example.com/frame.png" }),
     };
@@ -94,7 +94,7 @@ describe("QualityGateService", () => {
       identityThreshold: 0.6,
     });
 
-    expect(storage.saveFromBuffer).toHaveBeenCalled();
+    expect(storage.savePreviewImage).toHaveBeenCalled();
     expect(result.styleScore).toBeCloseTo(0.92, 5);
     expect(result.identityScore).toBeCloseTo(0.2, 5);
     expect(result.passed).toBe(false);
@@ -109,7 +109,7 @@ describe("QualityGateService", () => {
       computeSimilarity: vi.fn(),
     };
     const storage = {
-      saveFromBuffer: vi
+      savePreviewImage: vi
         .fn()
         .mockResolvedValue({ viewUrl: "https://example.com/frame.png" }),
     };
