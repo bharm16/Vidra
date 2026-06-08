@@ -20,13 +20,12 @@ import {
 
 export type { ListAssetsByTypeResult } from "./services/AssetCrudService";
 import { AssetReferenceImageService } from "./services/AssetReferenceImageService";
-import { AssetPromptService } from "./services/AssetPromptService";
 import { AssetEmbeddingService } from "./services/AssetEmbeddingService";
 
 export class AssetService {
   private readonly crud: AssetCrudService;
   private readonly referenceImages: AssetReferenceImageService;
-  private readonly prompts: AssetPromptService;
+  private readonly resolver: AssetResolverService;
   private readonly embeddings: AssetEmbeddingService | null;
 
   constructor(
@@ -46,7 +45,7 @@ export class AssetService {
       this.crud,
       this.embeddings,
     );
-    this.prompts = new AssetPromptService(resolverService);
+    this.resolver = resolverService;
   }
 
   async createAsset(
@@ -121,15 +120,15 @@ export class AssetService {
   }
 
   async resolvePrompt(userId: string, rawPrompt: string) {
-    return this.prompts.resolvePrompt(userId, rawPrompt);
+    return this.resolver.resolvePrompt(userId, rawPrompt);
   }
 
   async getSuggestions(userId: string, partialTrigger: string) {
-    return this.prompts.getSuggestions(userId, partialTrigger);
+    return this.resolver.getSuggestions(userId, partialTrigger);
   }
 
   async validateTriggers(userId: string, rawPrompt: string) {
-    return this.prompts.validateTriggers(userId, rawPrompt);
+    return this.resolver.validateTriggers(userId, rawPrompt);
   }
 
   async getAssetForGeneration(
