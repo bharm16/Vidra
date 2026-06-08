@@ -92,4 +92,77 @@ describe("SuggestionValidationService", () => {
 
     expect(result.map((item) => item.text)).toEqual(["dolly in past subject"]);
   });
+
+  // Composition tests: exercise the ordering gauntlet and inter-step text
+  // mutation through the public interface, not just the leaf detectors.
+
+  it("strips a disallowed lead-in prefix and keeps the mutated remainder", () => {
+    const service = createService();
+
+    const result = service.sanitizeSuggestions(
+      [{ text: "consider a slow dolly in" }],
+      {
+        highlightedText: "tracking shot",
+        highlightedCategory: "camera.movement",
+        isVideoPrompt: true,
+        isPlaceholder: false,
+      },
+    );
+
+    expect(result.map((item) => item.text)).toEqual(["a slow dolly in"]);
+  });
+
+  it("rejects a suggestion that is nothing but a disallowed prefix", () => {
+    const service = createService();
+
+    const result = service.sanitizeSuggestions([{ text: "consider" }], {
+      highlightedText: "tracking shot",
+      highlightedCategory: "camera.movement",
+      isVideoPrompt: true,
+      isPlaceholder: false,
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it("strips a leading list number and collapses internal whitespace", () => {
+    const service = createService();
+
+    const result = service.sanitizeSuggestions(
+      [{ text: "2.   Add   subtle  haze for depth" }],
+      {
+        highlightedText: "tracking shot",
+        isVideoPrompt: true,
+        isPlaceholder: false,
+      },
+    );
+
+    expect(result.map((item) => item.text)).toEqual([
+      "Add subtle haze for depth",
+    ]);
+  });
+
+  it("rejects one-clip continuation phrasing only when the prompt is a video prompt", () => {
+    const service = createService();
+    const suggestions = [{ text: "slowly starts to push in" }];
+    const base = {
+      highlightedText: "tracking shot",
+      highlightedCategory: "camera.movement",
+      isPlaceholder: false,
+    };
+
+    const asVideo = service.sanitizeSuggestions(suggestions, {
+      ...base,
+      isVideoPrompt: true,
+    });
+    const asProse = service.sanitizeSuggestions(suggestions, {
+      ...base,
+      isVideoPrompt: false,
+    });
+
+    expect(asVideo).toEqual([]);
+    expect(asProse.map((item) => item.text)).toEqual([
+      "slowly starts to push in",
+    ]);
+  });
 });
