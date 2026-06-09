@@ -4,31 +4,13 @@
  * Now uses unified taxonomy system with namespaced IDs
  */
 
-import { VALID_CATEGORIES, TAXONOMY } from "@shared/taxonomy";
+import { TAXONOMY, normalizeRole } from "@shared/taxonomy";
 import { logger } from "@/services/LoggingService";
 
 const log = logger.child("highlightConversion");
 
 const LLM_PARSER_VERSION = "llm-v2-taxonomy";
 const CONTEXT_WINDOW_CHARS = 20;
-
-/**
- * Legacy mapping for backward compatibility (deprecated)
- * Will be removed once all cached responses are using taxonomy IDs
- */
-const LEGACY_ROLE_TO_CATEGORY: Record<string, string> = {
-  Subject: "subject",
-  Appearance: "subject.appearance",
-  Wardrobe: "subject.wardrobe",
-  Movement: "action.movement",
-  Environment: "environment",
-  Lighting: "lighting",
-  Camera: "camera",
-  Framing: "shot.type",
-  Specs: "technical",
-  Style: "style",
-  Quality: "style.aesthetic",
-};
 
 export interface LLMSpan {
   id?: string;
@@ -65,43 +47,6 @@ export interface Highlight {
 
 export interface CanonicalText {
   graphemeIndexForCodeUnit?: (index: number) => number | undefined;
-}
-
-/**
- * Normalize a role to a valid taxonomy ID
- */
-function normalizeRole(role: string | null | undefined): string {
-  if (!role || typeof role !== "string") {
-    return TAXONOMY.SUBJECT.id;
-  }
-
-  // If it's already a valid taxonomy ID, use it directly
-  if (VALID_CATEGORIES.has(role)) {
-    return role;
-  }
-
-  // Check for legacy capitalized format
-  if (LEGACY_ROLE_TO_CATEGORY[role]) {
-    if (import.meta.env.DEV) {
-      log.warn("Legacy role mapped to taxonomy category", {
-        operation: "normalizeRole",
-        role,
-        mappedTo: LEGACY_ROLE_TO_CATEGORY[role],
-      });
-    }
-    return LEGACY_ROLE_TO_CATEGORY[role];
-  }
-
-  // Debugging: Log invalid roles to help identify drift
-  log.warn("Invalid role not in taxonomy; defaulting", {
-    operation: "normalizeRole",
-    role,
-    defaultingTo: TAXONOMY.SUBJECT.id,
-    validCategoryCount: VALID_CATEGORIES.size,
-  });
-
-  // Fallback for unknown roles
-  return TAXONOMY.SUBJECT.id;
 }
 
 /**

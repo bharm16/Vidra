@@ -6,6 +6,7 @@ import {
   TAXONOMY_VERSION,
   isValidCategory,
   resolveCategory,
+  normalizeRole,
   parseCategoryId,
   getParentCategory,
   isAttribute,
@@ -97,6 +98,34 @@ describe("resolveCategory", () => {
     it("returns the ID unchanged", () => {
       expect(resolveCategory("subject.wardrobe")).toBe("subject.wardrobe");
       expect(resolveCategory("camera")).toBe("camera");
+    });
+  });
+});
+
+describe("normalizeRole", () => {
+  describe("error handling and edge cases", () => {
+    it("defaults null/undefined/empty to the subject root", () => {
+      expect(normalizeRole(null)).toBe(TAXONOMY.SUBJECT.id);
+      expect(normalizeRole(undefined)).toBe(TAXONOMY.SUBJECT.id);
+      expect(normalizeRole("")).toBe(TAXONOMY.SUBJECT.id);
+    });
+
+    it("defaults unknown roles to the subject root", () => {
+      expect(normalizeRole("nonexistent.category")).toBe(TAXONOMY.SUBJECT.id);
+      expect(normalizeRole("garbage")).toBe(TAXONOMY.SUBJECT.id);
+    });
+  });
+
+  describe("core behavior", () => {
+    it("passes valid taxonomy ids through unchanged", () => {
+      expect(normalizeRole("subject")).toBe("subject");
+      expect(normalizeRole("camera.movement")).toBe("camera.movement");
+    });
+
+    it("maps legacy capitalized roles to current taxonomy ids", () => {
+      expect(normalizeRole("Lighting")).toBe("lighting");
+      expect(normalizeRole("Camera")).toBe("camera");
+      expect(normalizeRole("Wardrobe")).toBe("subject.wardrobe");
     });
   });
 });

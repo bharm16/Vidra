@@ -1,3 +1,4 @@
+import { normalizeRole } from "@shared/taxonomy";
 import type {
   LabelSpansResult,
   LLMSpan,
@@ -21,12 +22,13 @@ export const toPublicSpan = (span: LLMSpan | SpanLike): PublicSpan => ({
   text: span.text,
   ...(typeof span.start === "number" ? { start: span.start } : {}),
   ...(typeof span.end === "number" ? { end: span.end } : {}),
-  category:
+  category: normalizeRole(
     typeof span.role === "string"
       ? span.role
       : "category" in span && typeof span.category === "string"
         ? span.category
-        : "unknown",
+        : undefined,
+  ),
   ...(typeof span.confidence === "number"
     ? { confidence: span.confidence }
     : {}),

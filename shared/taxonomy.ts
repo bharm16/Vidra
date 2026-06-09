@@ -326,6 +326,45 @@ export function resolveCategory(id: string | null | undefined): string {
   return id;
 }
 
+/**
+ * Legacy capitalized role aliases from pre-3.0 span-labeling responses.
+ * Cached responses may still carry these; map them to current taxonomy ids.
+ */
+export const LEGACY_ROLE_TO_CATEGORY: Record<string, string> = {
+  Subject: "subject",
+  Appearance: "subject.appearance",
+  Wardrobe: "subject.wardrobe",
+  Movement: "action.movement",
+  Environment: "environment",
+  Lighting: "lighting",
+  Camera: "camera",
+  Framing: "shot.type",
+  Specs: "technical",
+  Style: "style",
+  Quality: "style.aesthetic",
+};
+
+/**
+ * Normalize a raw span role/category to a valid taxonomy id.
+ *
+ * The single home for taxonomy normalization, shared by the span-labeling
+ * route transform (server) and the highlight conversion (client) so the two
+ * sides cannot drift. Valid ids pass through; legacy capitalized roles map
+ * via LEGACY_ROLE_TO_CATEGORY; anything unknown defaults to the subject root.
+ *
+ * @example
+ * normalizeRole('subject.wardrobe') // 'subject.wardrobe'
+ * normalizeRole('Lighting')         // 'lighting'
+ * normalizeRole('garbage')          // 'subject'
+ */
+export function normalizeRole(role: string | null | undefined): string {
+  if (typeof role !== "string" || !role) return TAXONOMY.SUBJECT.id;
+  if (VALID_CATEGORIES.has(role)) return role;
+  const legacy = LEGACY_ROLE_TO_CATEGORY[role];
+  if (legacy) return legacy;
+  return TAXONOMY.SUBJECT.id;
+}
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================

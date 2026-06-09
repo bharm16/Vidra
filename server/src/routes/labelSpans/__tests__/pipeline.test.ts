@@ -151,7 +151,7 @@ describe("labelSpans transform", () => {
     });
   });
 
-  it("falls back to category or unknown when role is unavailable", () => {
+  it("normalizes the public category, defaulting to a valid taxonomy id when role is unavailable", () => {
     expect(
       toPublicSpan({
         text: "city",
@@ -174,7 +174,7 @@ describe("labelSpans transform", () => {
       }),
     ).toEqual({
       text: "mystery",
-      category: "unknown",
+      category: "subject",
       start: 10,
       end: 17,
     });
