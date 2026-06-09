@@ -120,6 +120,7 @@ const parseArgs = (): { writePath: string | null } => {
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
+    if (arg === undefined) continue;
     if (arg === "--write") {
       const next = argv[i + 1];
       if (!next) throw new Error("--write requires a file path");
@@ -288,7 +289,7 @@ const buildAudit = (): {
 
   const recordByFileSingleSymbol = new Map<string, HookRecord>();
   for (const [filePath, hooks] of hooksByFile.entries()) {
-    if (hooks.length === 1) {
+    if (hooks.length === 1 && hooks[0]) {
       recordByFileSingleSymbol.set(filePath, hooks[0]);
     }
   }
@@ -311,12 +312,21 @@ const buildAudit = (): {
 
     if (record.bucket === "single-consumer") {
       const singleConsumer = safeSort(record.productionCallerFiles)[0];
-      const consumerRecord = recordByFileSingleSymbol.get(singleConsumer);
-      if (consumerRecord) {
-        const consumerNext = safeSort(consumerRecord.productionCallerFiles)[0];
-        record.chainPattern = `${record.symbol} -> ${consumerRecord.symbol} -> ${relativeToRepo(consumerNext)}`;
+      if (singleConsumer === undefined) {
+        record.chainPattern = "none";
       } else {
-        record.chainPattern = `${record.symbol} -> ${relativeToRepo(singleConsumer)}`;
+        const consumerRecord = recordByFileSingleSymbol.get(singleConsumer);
+        if (consumerRecord) {
+          const consumerNext = safeSort(
+            consumerRecord.productionCallerFiles,
+          )[0];
+          record.chainPattern =
+            consumerNext === undefined
+              ? `${record.symbol} -> ${consumerRecord.symbol}`
+              : `${record.symbol} -> ${consumerRecord.symbol} -> ${relativeToRepo(consumerNext)}`;
+        } else {
+          record.chainPattern = `${record.symbol} -> ${relativeToRepo(singleConsumer)}`;
+        }
       }
     } else if (record.bucket === "multi-consumer") {
       record.chainPattern = "fan-out";
