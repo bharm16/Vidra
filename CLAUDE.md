@@ -52,6 +52,8 @@ These terms have specific meanings in this codebase. Do not conflate them.
 | **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation before final render                               | `server/src/services/image-generation/`, `server/src/services/video-generation/` | `/api/preview`                           |
 | **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway                                                       | `server/src/services/video-generation/`                                          | `/api/preview` (shared routes)           |
 
+> **Product priority (see [ADR-0002](docs/adr/0002-vidra-is-an-authoring-tool-for-non-experts.md)).** These terms name capabilities, not equal priorities. Vidra's active product is the **authoring loop** (Span labeling, Enhancement, Optimization, plus first-frame Generation and motion). **Generation economics** (credits, payment, video-job resilience) and the **multi-shot/consistency stack** (Continuity, Convergence) are **frozen, not active** — dormant until ADR-0002 is revisited. Do not treat the frozen stacks as load-bearing when planning work.
+
 ## Service Architecture
 
 ### DI Registration
