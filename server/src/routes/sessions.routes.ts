@@ -1,6 +1,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireRouteParam } from "@middleware/requireRouteParam";
 import {
   SessionAccessDeniedError,
   SessionNotFoundError,
@@ -85,19 +86,6 @@ const UpdateVersionsSchema = z
     versions: z.array(z.record(z.string(), z.unknown())).optional(),
   })
   .strip();
-
-function requireRouteParam(
-  req: Request,
-  res: Response,
-  key: string,
-): string | null {
-  const value = req.params[key];
-  if (typeof value !== "string" || value.trim().length === 0) {
-    res.status(400).json({ success: false, error: `Invalid ${key}` });
-    return null;
-  }
-  return value;
-}
 
 function handleSessionMutationError(error: unknown, res: Response): boolean {
   if (error instanceof SessionAccessDeniedError) {

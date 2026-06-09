@@ -6,6 +6,8 @@ import {
 } from "@utils/upload";
 import { validateImageBuffer } from "@utils/validateFileType";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
+import { requireRouteParam } from "@middleware/requireRouteParam";
 import type { ReferenceImageStorePort } from "@services/asset/reference-images/ports/ReferenceImageStorePort";
 
 const upload = createDiskUpload({
@@ -18,30 +20,6 @@ const upload = createDiskUpload({
     cb(new Error("Only image files allowed"));
   },
 });
-
-type RequestWithUser = Request & { user?: { uid?: string } };
-
-function requireUserId(req: RequestWithUser, res: Response): string | null {
-  const userId = req.user?.uid;
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return null;
-  }
-  return userId;
-}
-
-function requireRouteParam(
-  req: Request,
-  res: Response,
-  key: string,
-): string | null {
-  const value = req.params[key];
-  if (typeof value !== "string" || value.trim().length === 0) {
-    res.status(400).json({ error: `Invalid ${key}` });
-    return null;
-  }
-  return value;
-}
 
 function normalizeOptionalString(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
