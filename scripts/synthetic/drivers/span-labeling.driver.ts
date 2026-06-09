@@ -64,7 +64,7 @@ export async function driveSpanLabels(
 
         const spans: SpanLabelSpan[] = result.spans.map((s) => ({
           text: s.text,
-          category: s.role ?? s.category ?? "subject",
+          category: s.role,
         }));
 
         trace.complete({

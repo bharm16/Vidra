@@ -47,9 +47,13 @@ export interface GuidanceSpan {
 
 /**
  * Edit history entry
+ *
+ * `category` admits null because enhancement's EditHistoryEntry
+ * (the upstream producer wired in via the VideoService seam) carries
+ * `category: string | null`; consumers guard with truthiness checks.
  */
 export interface EditHistoryEntry {
-  category?: string;
+  category?: string | null;
   original?: string;
   replacement?: string;
 }

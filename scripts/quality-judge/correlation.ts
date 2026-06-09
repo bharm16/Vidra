@@ -10,13 +10,13 @@ function rankAverageTies(xs: number[]): number[] {
   let i = 0;
   while (i < indexed.length) {
     let j = i;
-    while (j + 1 < indexed.length && indexed[j + 1].v === indexed[i].v) {
+    while (j + 1 < indexed.length && indexed[j + 1]!.v === indexed[i]!.v) {
       j += 1;
     }
     // 1-based ranks; average across the tie group [i..j]
     const avg = (i + j + 2) / 2;
     for (let k = i; k <= j; k += 1) {
-      ranks[indexed[k].i] = avg;
+      ranks[indexed[k]!.i] = avg;
     }
     i = j + 1;
   }
@@ -31,8 +31,8 @@ function pearson(xs: number[], ys: number[]): number {
   let denX = 0;
   let denY = 0;
   for (let i = 0; i < n; i += 1) {
-    const dx = xs[i] - meanX;
-    const dy = ys[i] - meanY;
+    const dx = xs[i]! - meanX;
+    const dy = ys[i]! - meanY;
     num += dx * dy;
     denX += dx * dx;
     denY += dy * dy;
@@ -66,7 +66,7 @@ export function meanAbsoluteError(xs: number[], ys: number[]): number {
   if (xs.length === 0) return 0;
   let sum = 0;
   for (let i = 0; i < xs.length; i += 1) {
-    sum += Math.abs(xs[i] - ys[i]);
+    sum += Math.abs(xs[i]! - ys[i]!);
   }
   return sum / xs.length;
 }

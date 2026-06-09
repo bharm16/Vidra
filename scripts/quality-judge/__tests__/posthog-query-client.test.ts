@@ -57,7 +57,7 @@ describe("posthog-query-client", () => {
       },
     ]);
 
-    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(call[0]).toContain("/api/projects/123/query");
     const body = JSON.parse(call[1].body);
     expect(body.query.kind).toBe("HogQLQuery");
@@ -115,8 +115,8 @@ describe("posthog-query-client", () => {
     const events = await client.fetchEventsToScore("optimize.completed", 24, 1);
     // Both rows are returned. The malformed row gets an empty properties object.
     expect(events).toHaveLength(2);
-    expect(events[0].properties).toEqual({});
-    expect(events[1].properties).toEqual({
+    expect(events[0]!.properties).toEqual({});
+    expect(events[1]!.properties).toEqual({
       inputPrompt: "ok",
       source: "synthetic",
     });
@@ -132,7 +132,7 @@ describe("posthog-query-client", () => {
     const client = createPostHogQueryClient();
     await client.fetchEventsToScore("optimize.completed", 24, 0.1);
 
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    const body = JSON.parse(fetchMock.mock.calls[0]![1].body);
     const q = body.query.query as string;
     expect(q).toContain("'synthetic'");
     expect(q).toContain("'dogfood'");

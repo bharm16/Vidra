@@ -80,7 +80,7 @@ describe("run-judge orchestrator", () => {
     await runJudgeForSurface("optimize", { hoursBack: 24, userSampleRate: 1 });
 
     expect(emitMock).toHaveBeenCalledOnce();
-    const args = emitMock.mock.calls[0][0];
+    const args = emitMock.mock.calls[0]![0];
     expect(args.event).toBe("quality.scored");
     expect(args.properties.scoredEvent).toBe("optimize.completed");
     expect(args.properties.scoredEventId).toBe("e1");

@@ -46,7 +46,7 @@ describe("runJudge", () => {
     });
 
     expect(createMock).toHaveBeenCalledOnce();
-    const call = createMock.mock.calls[0][0];
+    const call = createMock.mock.calls[0]![0];
     const userMessage = call.messages.find(
       (m: { role: string }) => m.role === "user",
     );

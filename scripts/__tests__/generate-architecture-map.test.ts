@@ -18,8 +18,8 @@ describe("generate-architecture-map", () => {
       (f: { envName: string }) => f.envName === "ENABLE_FACE_EMBEDDING",
     );
     expect(faceEmbedding).toBeDefined();
-    expect(faceEmbedding.requiresEnv).toEqual(["REPLICATE_API_TOKEN"]);
-    expect(faceEmbedding.dependsOn).toEqual(["ENABLE_CONVERGENCE"]);
+    expect(faceEmbedding!.requiresEnv).toEqual(["REPLICATE_API_TOKEN"]);
+    expect(faceEmbedding!.dependsOn).toEqual(["ENABLE_CONVERGENCE"]);
   });
 
   it("routes entries are non-empty", () => {
@@ -39,7 +39,7 @@ describe("generate-architecture-map", () => {
         e.from === "promptOptimizationService" && e.to === "aiService",
     );
     expect(edge).toBeDefined();
-    expect(edge.file).toContain("optimization.services.ts");
+    expect(edge!.file).toContain("optimization.services.ts");
   });
 
   it("each dependency edge has from, to, and file fields", () => {
