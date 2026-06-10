@@ -100,6 +100,8 @@ interface CompletionOptions {
   isArray?: boolean;
   responseFormat?: { type: string; [key: string]: unknown };
   messages?: Array<{ role: string; content: MessageContent }>;
+  /** Gemini 2.5+: cap thinking tokens (0 disables thinking). Thinking tokens count against maxTokens. */
+  thinkingBudget?: number;
 }
 
 interface StreamCompletionOptions extends CompletionOptions {

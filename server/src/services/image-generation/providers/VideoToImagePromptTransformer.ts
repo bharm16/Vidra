@@ -439,6 +439,9 @@ export class VideoToImagePromptTransformer {
           temperature: 0.2, // Low temperature for consistent transformations
           timeout: this.timeoutMs,
           jsonMode: false,
+          // Gemini 2.5 thinking tokens count against maxTokens; uncapped
+          // thinking eats the 500 budget and truncates the prompt mid-phrase.
+          thinkingBudget: 0,
         },
       );
 
@@ -466,6 +469,7 @@ export class VideoToImagePromptTransformer {
               temperature: 0, // Deterministic repair for missing camera cues
               timeout: this.timeoutMs,
               jsonMode: false,
+              thinkingBudget: 0,
             },
           );
 
