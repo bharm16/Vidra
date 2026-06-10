@@ -25,6 +25,8 @@ export interface CompletionOptions {
   seed?: number;
   logprobs?: boolean;
   topLogprobs?: number;
+  /** Gemini 2.5+ only: caps thinking tokens, which count against maxTokens. 0 disables thinking. */
+  thinkingBudget?: number;
   prediction?: { type: "content"; content: string };
   retryOnValidationFailure?: boolean;
   maxRetries?: number;

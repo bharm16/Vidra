@@ -32,6 +32,8 @@ interface ModelConfigEntry {
   useSeed?: boolean;
   /** Use developer message for hard constraints (OpenAI only) */
   useDeveloperMessage?: boolean;
+  /** Gemini 2.5+ only: caps thinking tokens, which count against maxTokens. 0 disables thinking. */
+  thinkingBudget?: number;
 }
 
 type OperationName = keyof typeof ModelConfig;
@@ -445,6 +447,9 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     timeout: 45000,
     strictClient: true,
     useDeveloperMessage: true,
+    // Thinking tokens count against maxTokens on Gemini 2.5; uncapped dynamic
+    // thinking consumed most of the budget and truncated rewrites mid-sentence.
+    thinkingBudget: 0,
   },
 
   // ============================================================================

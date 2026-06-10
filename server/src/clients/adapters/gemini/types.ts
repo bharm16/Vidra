@@ -25,6 +25,7 @@ export interface CompletionOptions {
   onChunk?: (chunk: string) => void;
   responseSchema?: object;
   schema?: object;
+  thinkingBudget?: number;
 }
 
 /**
@@ -70,6 +71,7 @@ export interface GeminiGenerationConfig {
   maxOutputTokens: number;
   responseMimeType?: string;
   responseSchema?: object;
+  thinkingConfig?: { thinkingBudget: number };
 }
 
 /**

@@ -69,5 +69,10 @@ export function buildRequestOptions(
     }
   }
 
+  const thinkingBudget = params.thinkingBudget ?? config.thinkingBudget;
+  if (thinkingBudget !== undefined) {
+    requestOptions.thinkingBudget = thinkingBudget;
+  }
+
   return requestOptions;
 }

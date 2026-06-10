@@ -32,6 +32,15 @@ export class GeminiMessageBuilder {
       maxOutputTokens: options.maxTokens || 8192,
     };
 
+    // Gemini 2.5+ thinking tokens count against maxOutputTokens; an uncapped
+    // budget can consume it and truncate output mid-sentence. Only sent when
+    // explicitly configured — eval-gated callers keep the provider default.
+    if (options.thinkingBudget !== undefined) {
+      generationConfig.thinkingConfig = {
+        thinkingBudget: options.thinkingBudget,
+      };
+    }
+
     // Only set JSON mode for non-array responses (Gemini limitation)
     if (options.jsonMode && !options.isArray) {
       generationConfig.responseMimeType = "application/json";

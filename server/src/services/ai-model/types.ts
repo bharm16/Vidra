@@ -51,6 +51,7 @@ export interface ModelConfigEntry {
   responseFormat?: "json_object";
   useSeed?: boolean;
   useDeveloperMessage?: boolean;
+  thinkingBudget?: number;
 }
 
 export interface RequestOptions extends CompletionOptions {
