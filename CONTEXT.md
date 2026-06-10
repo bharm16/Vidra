@@ -32,6 +32,10 @@ The interaction model where Vidra converts a creator's thin idea (a one-liner) i
 
 The interaction model where Vidra improves a draft the creator already wrote — span labeling plus click-to-enhance. Assumes the creator can produce a workable draft; demoted to a secondary layer under ADR-0002. Resolved 2026-06-09 during validation-study grilling. Avoid synonyms: enhancement (the CLAUDE.md-glossary mechanism is one _part_ of refinement), editing.
 
+### Idea Box
+
+The empty-canvas entry surface of the workspace: a creator's submit runs the expansion loop (expand → first frame → gate → motion → render) with one explicit gate at the first frame. Every empty-canvas submit expands — no mode, no toggle, no input classification. Resolved 2026-06-10 during front-door design grilling. Avoid synonyms: wizard, onboarding flow, create page.
+
 ### First frame
 
 The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Resolved 2026-06-08 during scope-clarification grilling. Avoid synonyms: source image, still.
