@@ -107,6 +107,30 @@ pre-registered behavioral signal.
   are bad, fix the expansion prompt before burning participants. (b) Rehearse the
   script end-to-end. The study does not go live until the pilot passes.
 
+## Facilitator card
+
+Run this in every session — friendly or counted. Unstructured sessions produce
+"they liked it," which measures politeness, not the bet.
+
+1. Before anything: _"What's the clip for — where would it actually go?"_
+2. After the expanded prompt appears: _"Is this still your idea?"_ (note drift)
+3. Side-by-side, placement randomized: _"Pick one — or neither."_
+4. Whichever they pick: _"What specifically makes it better?"_ (a concrete
+   reason, or the pick doesn't count)
+5. _"Would you actually post/use this, today, for that real thing?"_ (per clip)
+6. Say nothing and wait: do they ask to run another idea, or ask for access?
+
+Tag any disappointing clip with the stage that lost it: expansion text / frame /
+motion / render.
+
+### 2026-06-10 — friendly session (unstructured): rehearsal incomplete
+
+A friendly saw the loop and reacted positively. No forced choice, absolute
+question, or intent probe was run — the session was a demo, not a protocol
+rehearsal, so it neither counts toward n nor completes pilot purpose (b). The
+facilitator card above was added as the corrective. Positive reaction noted as
+morale, not evidence.
+
 ## Pilot log
 
 ### 2026-06-10 — facilitator dry-run (expansion stage only): conditional GO
