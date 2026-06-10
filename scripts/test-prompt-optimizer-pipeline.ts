@@ -341,7 +341,8 @@ async function main(): Promise<void> {
 
   const promptOptimizationService =
     container.resolve<PromptOptimizationService>("promptOptimizationService");
-  const videoService = container.resolve<VideoPromptService>("videoService");
+  const videoService =
+    container.resolve<VideoPromptService>("videoPromptService");
 
   const supportedModels = videoService.getSupportedModelIds();
   const selectedModels = selectModels(cli.modelFilter, supportedModels);
