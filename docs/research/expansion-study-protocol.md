@@ -162,3 +162,34 @@ Both arms completed and produced stored clips. Spend: ~$1–2; cap intact.
 
 **Remaining before go-live:** one friendly participant (rehearse the human
 protocol: intent probe, forced choice, absolute question).
+
+### 2026-06-10 — clip analysis caught a wrong-subject blocker (D5): FIXED
+
+Frame-level analysis of the dry-run clips (ffmpeg frame extraction) found the
+raw arm produced a coherent dog-with-frisbee clip while the **expanded arm
+rendered a millipede on gravel** — the creator's subject was lost entirely.
+
+Root cause: same family as D1, at a second call site. The video→image prompt
+transformer (`VideoToImagePromptTransformer`) calls the Gemini client directly
+(bypassing `aiService`, so the D1 plumbing could not reach it) with
+`maxTokens: 500` and no thinking budget; Gemini 2.5 thinking consumed the
+budget and the transformed prompt truncated before the subject. Flux received
+"medium shot, low angle (worm's-eye view), 50mm lens, … features a" — its only
+concrete noun was "worm's-eye" — and drew a worm. Fixed (thinkingBudget 0 on
+both transformer passes, with regression test); verified live: 3/3 complete
+transforms with subject intact, and the re-rendered expanded clip shows a
+dramatic low-angle mid-air catch, visibly more cinematic than the raw arm.
+
+Lessons recorded:
+
+- **Look at the artifacts, not just the pipeline exit codes.** Every stage
+  reported success; only viewing frames caught the wrong subject.
+- The facilitator script should include a **subject check on the first frame**
+  before render (does the frame contain the creator's subject?) — it costs
+  nothing and would have caught this live.
+- Architectural note (out of study scope): the transformer's direct
+  `geminiClient` dependency violates the "all LLM calls go through `aiService`"
+  rule; `storyboardFramePlanner` (frozen stack) shares the same wiring and the
+  same latent bug if ever thawed.
+
+**Spend to date:** ~$2–3 of the $50 cap (3 Luma renders, 5 Flux frames).
