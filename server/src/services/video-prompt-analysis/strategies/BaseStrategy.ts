@@ -30,6 +30,21 @@ import type {
  */
 const PIPELINE_VERSION = "2.0.0";
 
+const SENTENCE_TERMINATORS = new Set([".", "!", "?"]);
+const CLOSING_WRAPPERS = new Set(['"', "'", ")", "]", "”", "’"]);
+
+/**
+ * Whether a word ends a sentence (terminal punctuation, optionally followed
+ * by closing quotes/brackets).
+ */
+function endsSentence(word: string): boolean {
+  let i = word.length - 1;
+  while (i >= 0 && CLOSING_WRAPPERS.has(word[i] ?? "")) {
+    i -= 1;
+  }
+  return i >= 0 && SENTENCE_TERMINATORS.has(word[i] ?? "");
+}
+
 export interface BaseStrategyDeps {
   techStripper?: TechStripper;
   safetySanitizer?: SafetySanitizer;
@@ -567,8 +582,10 @@ export abstract class BaseStrategy implements PromptOptimizationStrategy {
       return trimmedTriggers.join(", ");
     }
 
+    // The trimmed body may end with sentence punctuation; strip it before the
+    // comma join (same convention as appendTrigger) to avoid "., trigger".
     return this.cleanWhitespace(
-      `${trimmedBody}, ${trimmedTriggers.join(", ")}`,
+      `${trimmedBody.replace(/[.!?]+\s*$/, "")}, ${trimmedTriggers.join(", ")}`,
     );
   }
 
@@ -615,7 +632,18 @@ export abstract class BaseStrategy implements PromptOptimizationStrategy {
     if (words.length <= maxWords) {
       return text.trim();
     }
-    return words.slice(0, Math.max(0, maxWords)).join(" ").trim();
+    const kept = words.slice(0, Math.max(0, maxWords));
+    // A raw word-count chop strands fragments like "...underscored by the".
+    // Back up to the last completed sentence inside the budget when one exists.
+    for (let i = kept.length - 1; i >= 0; i -= 1) {
+      if (endsSentence(kept[i] ?? "")) {
+        return kept
+          .slice(0, i + 1)
+          .join(" ")
+          .trim();
+      }
+    }
+    return kept.join(" ").trim();
   }
 }
 
