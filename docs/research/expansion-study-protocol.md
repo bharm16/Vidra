@@ -142,3 +142,23 @@ input.
 
 **Remaining before go-live:** D1 fixed → full-loop dry-run (frame → motion →
 render, spends from the $50 cap) → one friendly participant.
+
+### 2026-06-10 — full-loop dry-run (both arms, real render): PASS
+
+Driver: `scripts/research/expansion-study-driver.ts` (the protocol's fixed
+script — expansion → first frame → motion → Luma render; first motion idea
+always taken). Idea: "my golden retriever catching a frisbee at the park."
+Both arms completed and produced stored clips. Spend: ~$1–2; cap intact.
+
+- **Session timing:** ~2 min machine time per arm (render ≈ 95 s dominates) —
+  both arms ≈ 4–5 min per idea, comfortable inside a 45-minute session.
+- **Motion stage is terse by design** (template demands 2–6-word motion
+  vocabulary; the frame carries the scene). The arms may receive different
+  top motion ideas because the ideas derive from each arm's own frame — that
+  is downstream of the treatment, not a confound.
+- **D3 recurrence (minor, watch):** the expanded frame prompt again contained
+  a dangling phrase ("captured on a 50mm lens at,"). Cosmetic; participants
+  see this text, so worth a cleanup pass if it persists in the friendly pilot.
+
+**Remaining before go-live:** one friendly participant (rehearse the human
+protocol: intent probe, forced choice, absolute question).
