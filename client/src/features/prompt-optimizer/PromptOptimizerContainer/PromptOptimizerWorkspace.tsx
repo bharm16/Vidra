@@ -62,6 +62,7 @@ import {
 } from "./hooks";
 import { useI2VContext } from "../hooks/useI2VContext";
 import { useMotionIdeas } from "../hooks/useMotionIdeas";
+import { useIdeaBox } from "@/features/idea-box";
 import { PromptOptimizerWorkspaceView } from "./components/PromptOptimizerWorkspaceView";
 import {
   WorkspaceSessionProvider,
@@ -655,6 +656,21 @@ function PromptOptimizerContent({
     [currentShotId, hasActiveContinuityShot, toast, updateShot],
   );
 
+  // Idea Box: on empty canvas (no start frame), optimization continues into
+  // first-frame generation; setting the frame flips the workspace to I2V.
+  const { stage: ideaBoxStage, continueAfterOptimization } = useIdeaBox({
+    startImageUrl: i2vContext.startImageUrl,
+    setStartFrame,
+  });
+
+  const handleOptimizationApplied = useCallback(
+    async (optimizedPrompt: string): Promise<void> => {
+      await handleSequenceOptimizationApplied(optimizedPrompt);
+      await continueAfterOptimization(optimizedPrompt);
+    },
+    [handleSequenceOptimizationApplied, continueAfterOptimization],
+  );
+
   const promptForAssets = useMemo(() => {
     if (showResults && promptOptimizer.displayedPrompt) {
       return promptOptimizer.displayedPrompt;
@@ -697,7 +713,7 @@ function PromptOptimizerContent({
     persistedSignatureRef,
     skipLoadFromUrlRef,
     navigate,
-    onOptimizationApplied: handleSequenceOptimizationApplied,
+    onOptimizationApplied: handleOptimizationApplied,
   });
 
   // Improvement flow
@@ -865,6 +881,7 @@ function PromptOptimizerContent({
           i2vContext={i2vContext}
           motionIdeas={motionIdeas.ideas}
           isMotionIdeasLoading={motionIdeas.isLoading}
+          ideaBoxStage={ideaBoxStage}
           onMotionIdeaSelect={handleMotionIdeaSelect}
           onMotionIdeasReroll={handleMotionIdeasReroll}
         >

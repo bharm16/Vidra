@@ -18,6 +18,7 @@ import type {
 import type { SuggestionsData } from "@/features/prompt-optimizer/PromptCanvas/types";
 import type { OptimizationOptions } from "@/features/prompt-optimizer/types";
 import type { I2VContext } from "@/features/prompt-optimizer/types/i2v";
+import type { IdeaBoxStage } from "@/features/idea-box";
 import type { User } from "./types";
 import { useAutoSave } from "@/features/prompt-optimizer/PromptOptimizerContainer/hooks/useAutoSave";
 import { useGenerationControlsContext } from "@/features/prompt-optimizer/context/GenerationControlsContext";
@@ -68,6 +69,8 @@ interface PromptResultsDataOnly {
   motionIdeas?: readonly string[] | undefined;
   /** I2V Motion Ideas — true while a fetch is in flight. */
   isMotionIdeasLoading?: boolean | undefined;
+  /** Idea Box — stage of the expand→frame chain (idle when inactive). */
+  ideaBoxStage?: IdeaBoxStage | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -145,6 +148,7 @@ export function PromptResultsActionsProvider({
   i2vContext,
   motionIdeas,
   isMotionIdeasLoading,
+  ideaBoxStage,
   onMotionIdeaSelect,
   onMotionIdeasReroll,
 }: PromptResultsActionsProviderProps): React.ReactElement {
@@ -228,6 +232,7 @@ export function PromptResultsActionsProvider({
       i2vContext,
       motionIdeas,
       isMotionIdeasLoading,
+      ideaBoxStage,
     }),
     [
       suggestionsData,
@@ -239,6 +244,7 @@ export function PromptResultsActionsProvider({
       i2vContext,
       motionIdeas,
       isMotionIdeasLoading,
+      ideaBoxStage,
     ],
   );
 

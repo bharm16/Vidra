@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { MotionIdeasPanel } from "@/features/prompt-optimizer/components/MotionIdeasPanel";
+import { IdeaBoxStatusChip } from "@/features/idea-box";
 import {
   usePromptResultsActions,
   usePromptResultsData,
@@ -40,7 +41,7 @@ export function CanvasPromptBar({
     });
   }, [onContinueScene]);
 
-  const { motionIdeas, isMotionIdeasLoading, i2vContext } =
+  const { motionIdeas, isMotionIdeasLoading, i2vContext, ideaBoxStage } =
     usePromptResultsData();
   const { onMotionIdeaSelect, onMotionIdeasReroll } = usePromptResultsActions();
   const showMotionIdeas =
@@ -62,6 +63,7 @@ export function CanvasPromptBar({
     >
       {tuneSlot}
       <PromptEditorSurface {...surfaceProps} variant="active" />
+      {ideaBoxStage ? <IdeaBoxStatusChip stage={ideaBoxStage} /> : null}
       {showMotionIdeas && onMotionIdeaSelect && onMotionIdeasReroll ? (
         <div className="px-3 pb-2">
           <MotionIdeasPanel

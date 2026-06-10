@@ -396,6 +396,8 @@ export function usePromptOptimization({
             }
           }
         }
+
+        await onOptimizationApplied?.(result.optimized);
       }
     },
     [
