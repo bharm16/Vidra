@@ -113,9 +113,19 @@ export const createOptimizeHandler =
       }
     };
 
+    // Do NOT listen on req "close": since Node 16, IncomingMessage emits
+    // "close" once the request has been fully consumed (express.json reads
+    // the body before this handler runs), not when the client disconnects —
+    // wiring abort to it killed every request milliseconds in. Disconnects
+    // are detected via res "close" while the response is still unwritten.
+    const abortIfDisconnected = (): void => {
+      if (!res.writableEnded) {
+        abortInFlight();
+      }
+    };
+
     req.once("aborted", abortInFlight);
-    req.once("close", abortInFlight);
-    res.once("close", abortInFlight);
+    res.once("close", abortIfDisconnected);
     res.once("finish", abortInFlight);
 
     try {
@@ -217,8 +227,7 @@ export const createOptimizeHandler =
       throw error;
     } finally {
       req.removeListener("aborted", abortInFlight);
-      req.removeListener("close", abortInFlight);
-      res.removeListener("close", abortInFlight);
+      res.removeListener("close", abortIfDisconnected);
       res.removeListener("finish", abortInFlight);
     }
   };
