@@ -51,6 +51,10 @@ interface PromptResultsActionsOnly {
   onMotionIdeaSelect?: ((idea: string) => void) | undefined;
   /** I2V Motion Ideas — re-roll regenerates with higher temperature. */
   onMotionIdeasReroll?: (() => void) | undefined;
+  /** Idea Box gate — accept the generated frame (dismisses the gate). */
+  onIdeaBoxAccept?: (() => void) | undefined;
+  /** Idea Box gate — reject: regenerate the frame from the current prompt. */
+  onIdeaBoxRegenerate?: (() => Promise<void> | void) | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -151,6 +155,8 @@ export function PromptResultsActionsProvider({
   ideaBoxStage,
   onMotionIdeaSelect,
   onMotionIdeasReroll,
+  onIdeaBoxAccept,
+  onIdeaBoxRegenerate,
 }: PromptResultsActionsProviderProps): React.ReactElement {
   // Pause auto-save while a generation is in-flight to prevent prompt edits
   // from overwriting the session identity tied to the active render.
@@ -199,6 +205,8 @@ export function PromptResultsActionsProvider({
       onScrollToCoherenceSpan,
       onMotionIdeaSelect,
       onMotionIdeasReroll,
+      onIdeaBoxAccept,
+      onIdeaBoxRegenerate,
     }),
     [
       user,
@@ -217,6 +225,8 @@ export function PromptResultsActionsProvider({
       onScrollToCoherenceSpan,
       onMotionIdeaSelect,
       onMotionIdeasReroll,
+      onIdeaBoxAccept,
+      onIdeaBoxRegenerate,
     ],
   );
 

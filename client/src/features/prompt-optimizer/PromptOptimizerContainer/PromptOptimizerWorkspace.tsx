@@ -658,7 +658,12 @@ function PromptOptimizerContent({
 
   // Idea Box: on empty canvas (no start frame), optimization continues into
   // first-frame generation; setting the frame flips the workspace to I2V.
-  const { stage: ideaBoxStage, continueAfterOptimization } = useIdeaBox({
+  const {
+    stage: ideaBoxStage,
+    continueAfterOptimization,
+    regenerateFrame,
+    acceptFrame,
+  } = useIdeaBox({
     startImageUrl: i2vContext.startImageUrl,
     setStartFrame,
   });
@@ -670,6 +675,23 @@ function PromptOptimizerContent({
     },
     [handleSequenceOptimizationApplied, continueAfterOptimization],
   );
+
+  const handleIdeaBoxRegenerate = useCallback(async (): Promise<void> => {
+    // The current prompt text — including any edits made after seeing the
+    // frame. Resubmitting can't do this: with a frame set, optimize is
+    // bypassed, so regeneration is the gate's only reject path.
+    const prompt = (
+      promptOptimizer.displayedPrompt ||
+      promptOptimizer.inputPrompt ||
+      ""
+    ).trim();
+    if (!prompt) return;
+    await regenerateFrame(prompt);
+  }, [
+    promptOptimizer.displayedPrompt,
+    promptOptimizer.inputPrompt,
+    regenerateFrame,
+  ]);
 
   const promptForAssets = useMemo(() => {
     if (showResults && promptOptimizer.displayedPrompt) {
@@ -882,6 +904,8 @@ function PromptOptimizerContent({
           motionIdeas={motionIdeas.ideas}
           isMotionIdeasLoading={motionIdeas.isLoading}
           ideaBoxStage={ideaBoxStage}
+          onIdeaBoxAccept={acceptFrame}
+          onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
           onMotionIdeaSelect={handleMotionIdeaSelect}
           onMotionIdeasReroll={handleMotionIdeasReroll}
         >

@@ -125,6 +125,51 @@ describe("useIdeaBox", () => {
     });
   });
 
+  it("regenerateFrame replaces the frame even when a start frame exists", async () => {
+    generatePreviewMock.mockResolvedValue(successResponse);
+    const setStartFrame = vi.fn();
+    const { result } = renderHook(() =>
+      useIdeaBox({
+        startImageUrl: "https://existing.example/wrong-frame.webp",
+        setStartFrame,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park, golden hour");
+    });
+
+    expect(generatePreviewMock).toHaveBeenCalledWith(
+      "dog at the park, golden hour",
+      { aspectRatio: "16:9" },
+    );
+    expect(setStartFrame).toHaveBeenCalledTimes(1);
+    expect(setStartFrame.mock.calls[0]?.[0]).toMatchObject({
+      url: "https://signed.example/frame.webp",
+      source: "generation",
+      sourcePrompt: "dog at the park, golden hour",
+    });
+    expect(result.current.stage).toEqual({ kind: "ready" });
+  });
+
+  it("acceptFrame dismisses the gate back to idle", async () => {
+    generatePreviewMock.mockResolvedValue(successResponse);
+    const setStartFrame = vi.fn();
+    const { result } = renderHook(() =>
+      useIdeaBox({ startImageUrl: null, setStartFrame }),
+    );
+
+    await act(async () => {
+      await result.current.continueAfterOptimization("dog at the park");
+    });
+    expect(result.current.stage).toEqual({ kind: "ready" });
+
+    act(() => {
+      result.current.acceptFrame();
+    });
+    expect(result.current.stage).toEqual({ kind: "idle" });
+  });
+
   it("treats an unsuccessful response as failure", async () => {
     generatePreviewMock.mockResolvedValue({
       success: false,

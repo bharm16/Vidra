@@ -45,6 +45,16 @@ export interface UseIdeaBoxResult {
    * ideas and arms the render gate — no further orchestration here.
    */
   continueAfterOptimization: (optimizedPrompt: string) => Promise<void>;
+  /**
+   * The gate's reject path: re-generate the first frame from the current
+   * prompt, replacing the existing start frame. Deliberately not gated on
+   * startImageUrl — replacing a wrong frame is its purpose. (Resubmitting the
+   * composer cannot do this: with a frame set, optimization is bypassed and
+   * the chain's guard holds.)
+   */
+  regenerateFrame: (prompt: string) => Promise<void>;
+  /** The gate's accept path: dismisses the gate prompt (stage back to idle). */
+  acceptFrame: () => void;
 }
 
 export function useIdeaBox({
@@ -54,11 +64,10 @@ export function useIdeaBox({
   const [stage, dispatch] = useReducer(ideaBoxReducer, { kind: "idle" });
   const runIdRef = useRef(0);
 
-  const continueAfterOptimization = useCallback(
-    async (optimizedPrompt: string): Promise<void> => {
-      const prompt = optimizedPrompt.trim();
+  const runFrameGeneration = useCallback(
+    async (rawPrompt: string): Promise<void> => {
+      const prompt = rawPrompt.trim();
       if (!prompt) return;
-      if (startImageUrl) return;
 
       const runId = runIdRef.current + 1;
       runIdRef.current = runId;
@@ -95,8 +104,25 @@ export function useIdeaBox({
         });
       }
     },
-    [setStartFrame, startImageUrl],
+    [setStartFrame],
   );
 
-  return { stage, continueAfterOptimization };
+  const continueAfterOptimization = useCallback(
+    async (optimizedPrompt: string): Promise<void> => {
+      if (startImageUrl) return;
+      await runFrameGeneration(optimizedPrompt);
+    },
+    [runFrameGeneration, startImageUrl],
+  );
+
+  const acceptFrame = useCallback((): void => {
+    dispatch({ type: "RESET" });
+  }, []);
+
+  return {
+    stage,
+    continueAfterOptimization,
+    regenerateFrame: runFrameGeneration,
+    acceptFrame,
+  };
 }

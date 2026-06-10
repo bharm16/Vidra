@@ -43,7 +43,12 @@ export function CanvasPromptBar({
 
   const { motionIdeas, isMotionIdeasLoading, i2vContext, ideaBoxStage } =
     usePromptResultsData();
-  const { onMotionIdeaSelect, onMotionIdeasReroll } = usePromptResultsActions();
+  const {
+    onMotionIdeaSelect,
+    onMotionIdeasReroll,
+    onIdeaBoxAccept,
+    onIdeaBoxRegenerate,
+  } = usePromptResultsActions();
   const showMotionIdeas =
     Boolean(i2vContext?.isI2VMode) &&
     Boolean(onMotionIdeaSelect) &&
@@ -63,7 +68,13 @@ export function CanvasPromptBar({
     >
       {tuneSlot}
       <PromptEditorSurface {...surfaceProps} variant="active" />
-      {ideaBoxStage ? <IdeaBoxStatusChip stage={ideaBoxStage} /> : null}
+      {ideaBoxStage ? (
+        <IdeaBoxStatusChip
+          stage={ideaBoxStage}
+          onAccept={onIdeaBoxAccept}
+          onRegenerate={onIdeaBoxRegenerate}
+        />
+      ) : null}
       {showMotionIdeas && onMotionIdeaSelect && onMotionIdeasReroll ? (
         <div className="px-3 pb-2">
           <MotionIdeasPanel
