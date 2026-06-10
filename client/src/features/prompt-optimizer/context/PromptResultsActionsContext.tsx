@@ -55,6 +55,12 @@ interface PromptResultsActionsOnly {
   onIdeaBoxAccept?: (() => void) | undefined;
   /** Idea Box gate — reject: regenerate the frame from the current prompt. */
   onIdeaBoxRegenerate?: (() => Promise<void> | void) | undefined;
+  /**
+   * Idea Box — run the expansion loop from the current prompt (optimize; the
+   * chain then auto-generates a first frame). The canvas generate action
+   * routes here when no start frame exists.
+   */
+  onIdeaBoxExpand?: (() => Promise<void> | void) | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,6 +163,7 @@ export function PromptResultsActionsProvider({
   onMotionIdeasReroll,
   onIdeaBoxAccept,
   onIdeaBoxRegenerate,
+  onIdeaBoxExpand,
 }: PromptResultsActionsProviderProps): React.ReactElement {
   // Pause auto-save while a generation is in-flight to prevent prompt edits
   // from overwriting the session identity tied to the active render.
@@ -207,6 +214,7 @@ export function PromptResultsActionsProvider({
       onMotionIdeasReroll,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
+      onIdeaBoxExpand,
     }),
     [
       user,
@@ -227,6 +235,7 @@ export function PromptResultsActionsProvider({
       onMotionIdeasReroll,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
+      onIdeaBoxExpand,
     ],
   );
 
@@ -305,6 +314,15 @@ export function usePromptResultsActions(): PromptResultsActionsOnly {
     );
   }
   return context;
+}
+
+/**
+ * Actions only, tolerant variant — returns null outside the provider. For
+ * shared chrome (e.g. workspace settings row) that must keep working when
+ * mounted without the prompt-results tree.
+ */
+export function usePromptResultsActionsOptional(): PromptResultsActionsOnly | null {
+  return useContext(ActionsOnlyContext);
 }
 
 /**

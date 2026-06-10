@@ -738,6 +738,13 @@ function PromptOptimizerContent({
     onOptimizationApplied: handleOptimizationApplied,
   });
 
+  // Idea Box entry: the canvas generate action routes here when no start
+  // frame exists. Optimization's onOptimizationApplied continues the chain
+  // (expand -> first frame -> gate).
+  const handleIdeaBoxExpand = useCallback(async (): Promise<void> => {
+    await handleOptimize();
+  }, [handleOptimize]);
+
   // Improvement flow
   const { handleImproveFirst, handleImprovementComplete } = useImprovementFlow({
     promptOptimizer,
@@ -906,6 +913,7 @@ function PromptOptimizerContent({
           ideaBoxStage={ideaBoxStage}
           onIdeaBoxAccept={acceptFrame}
           onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
+          onIdeaBoxExpand={handleIdeaBoxExpand}
           onMotionIdeaSelect={handleMotionIdeaSelect}
           onMotionIdeasReroll={handleMotionIdeasReroll}
         >

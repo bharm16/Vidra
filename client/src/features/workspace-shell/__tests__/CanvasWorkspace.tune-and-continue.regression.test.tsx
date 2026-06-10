@@ -11,6 +11,7 @@ vi.mock(
       motionIdeas: undefined,
       isMotionIdeasLoading: false,
     }),
+    usePromptResultsActionsOptional: () => null,
     usePromptResultsActions: () => ({
       user: null,
       onDisplayedPromptChange: () => {},

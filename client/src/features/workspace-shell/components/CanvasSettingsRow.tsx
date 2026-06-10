@@ -15,6 +15,7 @@ import {
 } from "@/components/ToolSidebar/config/modelConfig";
 import { getDefaultGenerationDurationSeconds } from "@shared/generationPricing";
 import { useGenerationControlsContext } from "@/features/prompt-optimizer/context/GenerationControlsContext";
+import { usePromptResultsActionsOptional } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import { useCreditBalance } from "@/contexts/CreditBalanceContext";
 import {
   useGenerationControlsStoreActions,
@@ -109,6 +110,9 @@ export function CanvasSettingsRow({
   const { balance: creditBalance } = useCreditBalance();
   const { domain } = useGenerationControlsStoreState();
   const storeActions = useGenerationControlsStoreActions();
+  // Tolerant: this chrome also mounts outside the prompt-results tree
+  // (and in credit-gate tests); no provider simply means no idea-box routing.
+  const onIdeaBoxExpand = usePromptResultsActionsOptional()?.onIdeaBoxExpand;
 
   const aspectRatio = useMemo(
     () => parseAspectRatio(domain.generationParams as Record<string, unknown>),
@@ -241,6 +245,13 @@ export function CanvasSettingsRow({
   );
 
   const handleGenerate = useCallback(() => {
+    // Idea Box: with no start frame, generate means "run the expansion loop"
+    // (expand -> first frame -> gate). Render happens on the next press,
+    // after the frame gate — never on the first action from a bare prompt.
+    if (!hasStartFrame && onIdeaBoxExpand) {
+      void onIdeaBoxExpand();
+      return;
+    }
     if (hasInsufficientCredits) {
       onInsufficientCredits?.(creditCost, operationLabel);
       return;
@@ -256,6 +267,8 @@ export function CanvasSettingsRow({
     controls,
     creditCost,
     hasInsufficientCredits,
+    hasStartFrame,
+    onIdeaBoxExpand,
     onInsufficientCredits,
     operationLabel,
     renderModelId,
@@ -316,13 +329,13 @@ export function CanvasSettingsRow({
           disabled
           aria-label="Voice input — coming soon"
           title="Voice input — coming soon"
-          className="inline-flex h-[28px] w-[28px] items-center justify-center rounded-md text-tool-text-muted opacity-60 cursor-not-allowed"
+          className="text-tool-text-muted inline-flex h-[28px] w-[28px] cursor-not-allowed items-center justify-center rounded-md opacity-60"
         >
           <Microphone size={14} aria-hidden="true" />
         </button>
 
         {domain.extendVideo ? (
-          <div className="inline-flex h-[28px] items-center gap-1 rounded-full border border-surface-2 bg-tool-nav-hover pl-2.5 pr-1 text-xs font-semibold text-foreground">
+          <div className="border-surface-2 bg-tool-nav-hover text-foreground inline-flex h-[28px] items-center gap-1 rounded-full border pl-2.5 pr-1 text-xs font-semibold">
             <svg
               width="11"
               height="11"
@@ -339,7 +352,7 @@ export function CanvasSettingsRow({
             Extending
             <button
               type="button"
-              className="ml-0.5 flex h-5 w-5 items-center justify-center rounded text-tool-text-dim transition-colors hover:bg-tool-nav-active hover:text-foreground"
+              className="text-tool-text-dim hover:bg-tool-nav-active hover:text-foreground ml-0.5 flex h-5 w-5 items-center justify-center rounded transition-colors"
               onClick={() => storeActions.clearExtendVideo()}
               aria-label="Clear extend mode"
             >
@@ -361,7 +374,7 @@ export function CanvasSettingsRow({
             "inline-flex h-[28px] items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors",
             tuneOpen
               ? "border-tool-accent-neutral/50 bg-tool-accent-neutral/10 text-foreground"
-              : "border-tool-rail-border bg-transparent text-tool-text-dim hover:border-tool-text-label hover:text-foreground",
+              : "border-tool-rail-border text-tool-text-dim hover:border-tool-text-label hover:text-foreground bg-transparent",
           )}
         >
           <MagicWand size={12} aria-hidden="true" />
@@ -407,7 +420,7 @@ export function CanvasSettingsRow({
           <button
             type="button"
             data-testid="canvas-preview-button"
-            className="inline-flex h-[28px] w-[28px] items-center justify-center rounded-full text-tool-text-muted transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:text-tool-text-label"
+            className="text-tool-text-muted hover:text-foreground disabled:text-tool-text-label inline-flex h-[28px] w-[28px] items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed"
             onClick={() => {
               if (hasInsufficientPreviewCredits) {
                 onInsufficientCredits?.(STORYBOARD_COST, "Storyboard preview");
@@ -498,7 +511,7 @@ export function CanvasSettingsRow({
               Make it
               <kbd
                 aria-hidden="true"
-                className="ml-1 inline-flex items-center gap-0.5 rounded bg-tool-surface-deep/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-tool-surface-deep/70"
+                className="bg-tool-surface-deep/15 text-tool-surface-deep/70 ml-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold"
               >
                 ⌘↵
               </kbd>
