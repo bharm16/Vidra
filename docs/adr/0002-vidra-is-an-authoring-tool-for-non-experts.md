@@ -55,6 +55,9 @@ users. We are betting **expansion-first** and centering v1 on it, but this is th
 **primary thing the validation must answer**, not a settled fact. If real creators
 arrive with drafts, span-labeling returns to center and this bet flips.
 
+> Validation protocol (pre-registered 2026-06-09):
+> [`docs/research/expansion-study-protocol.md`](../research/expansion-study-protocol.md)
+
 ## Consequences / things to know
 
 - This **re-prioritizes the CLAUDE.md Domain Glossary**, which presents

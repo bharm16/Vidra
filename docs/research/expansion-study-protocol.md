@@ -1,0 +1,144 @@
+# Expansion study — pre-registered protocol
+
+**Status:** protocol locked 2026-06-09 · facilitator dry-run done 2026-06-10 (conditional
+go — see Pilot log) · friendly-participant pilot pending · study not yet run
+**Operationalizes:** the open hypothesis in
+[ADR-0002](../adr/0002-vidra-is-an-authoring-tool-for-non-experts.md) — whether
+creators need **expansion** (blank page → generation-ready first-frame prompt) or
+**refinement** (polish a draft they wrote). Terms per [`CONTEXT.md`](../../CONTEXT.md).
+
+This document exists so the success criteria are fixed **before** any participant is
+observed. If the thresholds below feel wrong after the sessions, that feeling is the
+bias the pre-registration exists to contain. Changing them requires a written
+amendment _before_ the next session, never after.
+
+## The two claims under test
+
+1. **Relative** — expansion is what makes the difference: the same idea produces a
+   meaningfully better clip when Vidra expands it than when the creator's raw
+   one-liner goes straight through the pipeline.
+2. **Absolute** — the creator gets a clip they would actually use: preference alone
+   can hide "both are useless."
+
+## Design — within-subject, identical-except-expansion
+
+Each participant brings **one real idea** (screened for: a clip they genuinely want
+for something they actually make). The idea runs through the pipeline twice:
+
+- **Raw arm:** their one-liner, verbatim, zero help → first frame → motion → clip.
+- **Expanded arm:** same one-liner → Vidra expansion → expanded first-frame prompt
+  (shown to the participant) → first frame → motion → clip.
+
+Everything except the expansion step is identical: same image model, same video
+model, same motion step, same retry policy (fixed in the script), same operator.
+Raw arm runs first, while the participant talks through what they hoped for.
+
+Rejected designs, for the record: observational (no baseline — can only confirm);
+between-tools vs. the two-tab workflow (tests ergonomics, not the expansion bet).
+
+## Participants — n = 5
+
+Recruiting screen, three questions:
+
+1. _Do you make or need short videos for something real?_ — must be **yes**
+2. _Have you ever gotten a video you were happy with out of an AI tool?_ — must be **no**
+3. _Do you regularly write prompts for AI image tools (Midjourney etc.)?_ — must be **no**
+
+Q3 excludes the image-prompt-fluent: their fluency is the same craft expansion
+automates, so they dilute the test. They are a separate stratum to study later if
+expansion wins. Recruiting from personal network is acceptable — rigor lives in the
+comparison structure, not the sampling. Participants must arrive with their idea.
+
+## Session — facilitator-driven, fixed script, ~45 min
+
+The facilitator operates Vidra (no expansion front-door UI exists, and building one
+before the bet is validated is the pattern ADR-0002 forbids). Discipline rule: a
+**written script of the exact calls**, identical for every participant and both
+arms. The moment the facilitator improvises a prompt tweak, the study measures the
+facilitator, not Vidra.
+
+Order: (1) participant states the idea and what they hope for; (2) raw arm runs;
+(3) expanded arm runs — participant is shown the expanded prompt and asked the
+intent probe: **"Is this still your idea?"** (watching for expansion overriding
+creator intent — the biggest known risk of expansion-first); (4) side-by-side
+forced choice; (5) absolute question; (6) offer nothing — note whether they _ask_
+for a second idea or for access.
+
+A second idea runs only on participant enthusiasm — that enthusiasm is itself a
+pre-registered behavioral signal.
+
+## Measures
+
+- **Forced choice** — both clips side-by-side, placement randomized; pick one or
+  "neither." A pick counts only with a **concrete reason** ("the lighting looks
+  intentional"), not "idk, nicer."
+- **Absolute** — "Would you actually post/use this, today, for the real thing you
+  make?" per clip.
+- **Behavioral** — unprompted request to run another idea or to get access.
+  Outranks both stated measures.
+- **Per-stage failure tags** — when a clip disappoints, the facilitator tags which
+  scripted stage lost it: expansion text / first frame / motion / render. "Great
+  expanded prompt, mushy frame" and "expansion invented details the creator never
+  wanted" demand opposite fixes.
+
+## Pre-registered thresholds
+
+| Outcome           | Criteria                                                                             | Consequence                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **Bet confirmed** | ≥4/5 prefer the expanded clip with a concrete reason, AND ≥3/5 would actually use it | Build the expansion front door; refinement stays demoted                                               |
+| **Bet dead**      | ≤2/5 prefer the expanded clip                                                        | Expansion-first is wrong — reopen the interaction-model fork in ADR-0002                               |
+| **Loop alarm**    | <2/5 would use _either_ clip                                                         | The single-shot loop itself isn't delivering; diagnose per stage before touching the interaction model |
+| **Murky**         | 3/5 prefer                                                                           | No verdict — fix the dominant tagged failure stage, rerun with 5 new participants                      |
+
+## Logistics
+
+- **Video model:** Luma `ray-2`, hardcoded, **both arms**. The absolute threshold
+  ("would you post this") makes render quality load-bearing for the measurement
+  even though generation is commodity in the product — the draft tier (Wan 2.2
+  fast) risks a false loop alarm. If the Luma key is unavailable, fall back to Wan
+  2.2 **and** reword the absolute question to "…if it rendered at final quality?"
+  so instrument and threshold stay matched.
+- **First frame:** Flux Schnell, both arms.
+- **Spend:** worst case ≈ 20 clips + images. **Hard cap $50** — hitting it means
+  the script is wrong, not the budget.
+- **Pilot gate (go/no-go):** before any counted participant — facilitator dry-run
+  plus one friendly (neither counts toward n). Purpose: (a) does `optimize`
+  expand a one-liner acceptably? It is tuned for refinement; if pilot expansions
+  are bad, fix the expansion prompt before burning participants. (b) Rehearse the
+  script end-to-end. The study does not go live until the pilot passes.
+
+## Pilot log
+
+### 2026-06-10 — facilitator dry-run (expansion stage only): conditional GO
+
+Three persona-matched one-liners ("a cozy ad for my coffee shop", "my golden
+retriever catching a frisbee at the park", "hype video for leg day at my gym") run
+through the real `optimize` pipeline via `scripts/test-prompt-optimizer-pipeline.ts`
+(generic + `--models luma`). Cost: ~6 LLM calls; $0 of the video cap spent.
+
+**Capability verdict — the bet's mechanism works.** All 3 Luma-targeted expansions
+preserved creator intent (no intent-override observed) and injected real craft
+(shot type, lens, camera move, lighting, atmosphere). The retriever expansion is
+the value proposition verbatim: complete, vivid, expert-grade from an eleven-word
+input.
+
+**Defects — fix D1 before any participant:**
+
+- **D1 (blocker) — FIXED 2026-06-10:** Luma-targeted rewrite truncated mid-sentence
+  (2/3 runs). Root cause confirmed: Gemini 2.5 thinking tokens count against
+  `maxOutputTokens`, and no `thinkingConfig` was sent, so dynamic thinking consumed
+  the 8192 budget. Fix: `thinkingBudget: 0` on the `video_prompt_rewrite` config
+  entry, plumbed opt-in through to the Gemini payload (other Gemini callers,
+  including eval-gated span labeling, keep an unchanged wire shape). Regression
+  test: `server/src/services/ai-model/__tests__/videoPromptRewrite.thinkingBudget.regression.test.ts`.
+  Verified live: all 3 pilot rewrites now end in complete sentences.
+- **D2 (watch, not a blocker):** the generic draft stage mangles the subject slot
+  on subject-less one-liners ("Cozy ad my.", "Hype video leg performing squats").
+  The model-targeted rewrite recovers, and participants see only the Luma prompt.
+  Notable as evidence the pipeline assumes refinement-shaped input — the very
+  assumption the study tests.
+- **D3 (minor):** occasional grammar glitches/duplication; describes audio the
+  render model won't produce.
+
+**Remaining before go-live:** D1 fixed → full-loop dry-run (frame → motion →
+render, spends from the $50 cap) → one friendly participant.

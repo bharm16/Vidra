@@ -24,6 +24,14 @@ Vidra's core capability and reason to exist: converting a creator's vague intent
 
 The generation paradigm Vidra targets, where a source image (the first frame) is the primary control over the result; the text motion description is secondary. Contrast T2V (text-to-video), where text is the only control surface. Resolved 2026-06-08 during scope-clarification grilling. Avoid synonyms: img2vid, animation.
 
+### Expansion
+
+The interaction model where Vidra converts a creator's thin idea (a one-liner) into a generation-ready first-frame prompt — authoring _for_ them from a blank page. ADR-0002's primary unvalidated hypothesis is that creators need expansion, not refinement. Resolved 2026-06-09 during validation-study grilling. Avoid synonyms: brainstorm, generation (which means rendering video).
+
+### Refinement
+
+The interaction model where Vidra improves a draft the creator already wrote — span labeling plus click-to-enhance. Assumes the creator can produce a workable draft; demoted to a secondary layer under ADR-0002. Resolved 2026-06-09 during validation-study grilling. Avoid synonyms: enhancement (the CLAUDE.md-glossary mechanism is one _part_ of refinement), editing.
+
 ### First frame
 
 The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Resolved 2026-06-08 during scope-clarification grilling. Avoid synonyms: source image, still.
