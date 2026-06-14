@@ -33,6 +33,23 @@ export function extractUserId(req: Request): string {
 }
 
 /**
+ * Extract the authenticated Firebase uid, or null when the request is
+ * unauthenticated.
+ *
+ * Unlike extractUserId, this does NOT fall back to API key, request-body
+ * userId, or "anonymous" — handlers that must reject unauthenticated callers
+ * (e.g. preview generation/asset access) depend on the null to do so. The cast
+ * bridges Express's untyped Request to the shape the Firebase auth middleware
+ * attaches; centralising it keeps that unsafe cast in one place.
+ *
+ * @param req - Express request object
+ * @returns Firebase uid string, or null if unauthenticated
+ */
+export function extractFirebaseUid(req: Request): string | null {
+  return (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
+}
+
+/**
  * Extract standard request metadata for logging
  *
  * @param req - Express request object

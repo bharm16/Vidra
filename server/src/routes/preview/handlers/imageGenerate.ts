@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
+import { extractFirebaseUid } from "@utils/requestHelpers";
 import { logger } from "@infrastructure/Logger";
 import { sendApiError } from "@middleware/apiErrorResponse";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
@@ -166,8 +167,7 @@ export const createImageGenerateHandler =
       });
     }
 
-    const userId =
-      (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
+    const userId = extractFirebaseUid(req);
     const requestId = (req as Request & { id?: string }).id;
     if (!userId) {
       return sendApiError(res, req, 401, {

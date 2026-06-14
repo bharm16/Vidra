@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { extractFirebaseUid } from "@utils/requestHelpers";
 import { logger } from "@infrastructure/Logger";
 import type { PreviewRoutesServices } from "@routes/types";
 import { cleanupUploadFile, readUploadBuffer } from "@utils/upload";
@@ -39,8 +40,7 @@ type ImageUploadServices = Pick<PreviewRoutesServices, "storageService">;
 export const createImageUploadHandler =
   ({ storageService }: ImageUploadServices) =>
   async (req: Request, res: Response): Promise<Response | void> => {
-    const userId =
-      (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
+    const userId = extractFirebaseUid(req);
     if (!userId) {
       return res.status(401).json({
         success: false,

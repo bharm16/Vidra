@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { extractFirebaseUid } from "@utils/requestHelpers";
 import type { PreviewRoutesServices } from "@routes/types";
 import { logger } from "@infrastructure/Logger";
 
@@ -36,8 +37,7 @@ export const createImageAssetViewBatchHandler =
       });
     }
 
-    const userId =
-      (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
+    const userId = extractFirebaseUid(req);
     if (!userId) {
       return res.status(401).json({
         success: false,
