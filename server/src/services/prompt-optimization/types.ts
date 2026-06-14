@@ -6,6 +6,7 @@ import type { VideoPromptStructuredResponse } from "@server/contracts/prompt-ana
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type { CapabilityValues } from "@shared/capabilities";
+import type { LockedSpan } from "@shared/schemas/optimization.schemas";
 
 /**
  * Optimization mode type
@@ -21,15 +22,10 @@ export interface InferredContext {
   intendedUse: string;
 }
 
-export interface LockedSpan {
-  id?: string;
-  text: string;
-  leftCtx?: string | null;
-  rightCtx?: string | null;
-  category?: string | null;
-  source?: string | null;
-  confidence?: number | null;
-}
+// Canonical definition lives in the shared contract layer; re-exported here
+// so service-internal consumers (strategies, cache, template builders) keep
+// their existing import path.
+export type { LockedSpan };
 
 /**
  * Shot plan from interpreter

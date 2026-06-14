@@ -12,6 +12,7 @@
 
 import { logger } from "@infrastructure/Logger";
 import { wrapUserData } from "@utils/provider/PromptBuilder";
+import type { LockedSpan } from "@shared/schemas/optimization.schemas";
 import { VIDEO_FEW_SHOT_EXAMPLES } from "../videoPromptOptimizationTemplate";
 
 /**
@@ -27,12 +28,7 @@ export interface VideoTemplateContext {
   /** Whether to include full instructions or just core guidance */
   includeInstructions?: boolean;
   /** Spans that must be preserved in the optimized output */
-  lockedSpans?: Array<{
-    text: string;
-    leftCtx?: string | null;
-    rightCtx?: string | null;
-    category?: string | null;
-  }>;
+  lockedSpans?: LockedSpan[];
   /** Generation parameters selected by the user (aspect ratio, duration, etc.) */
   generationParams?: Record<string, string | number | boolean>;
 }

@@ -16,6 +16,7 @@ import type { CapabilityValues } from "@shared/capabilities";
 import type {
   AIService,
   TemplateService,
+  LockedSpan,
   OptimizationRequest,
   ShotPlan,
   OptimizationStrategy,
@@ -280,11 +281,7 @@ export class VideoStrategy implements OptimizationStrategy {
   private async _fallbackOptimization(
     prompt: string,
     shotPlan: ShotPlan | null,
-    lockedSpans: Array<{
-      text: string;
-      leftCtx?: string | null;
-      rightCtx?: string | null;
-    }>,
+    lockedSpans: LockedSpan[],
     config: { maxTokens: number; temperature: number; timeout: number },
     generationParams?: CapabilityValues | null,
     sourcePrompt?: string | null,

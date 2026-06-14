@@ -6,6 +6,7 @@ import type {
   CompileContext,
   CompileSource,
   InferredContext,
+  LockedSpan,
   OptimizationMode,
   OptimizationRequest,
   ShotPlan,
@@ -22,22 +23,14 @@ export type OptimizationCacheLike = {
     brainstormContext: Record<string, unknown> | null,
     targetModel?: string,
     generationParams?: Record<string, unknown> | null,
-    lockedSpans?: Array<{
-      text: string;
-      leftCtx?: string | null;
-      rightCtx?: string | null;
-    }>,
+    lockedSpans?: LockedSpan[],
   ): string;
   buildStructuredArtifactKeyFromInputs(params: {
     prompt: string;
     sourcePrompt?: string | null;
     shotPlan?: ShotPlan | null;
     generationParams?: Record<string, unknown> | null;
-    lockedSpans?: Array<{
-      text: string;
-      leftCtx?: string | null;
-      rightCtx?: string | null;
-    }>;
+    lockedSpans?: LockedSpan[];
   }): string;
   getCachedResult(key: string): Promise<string | null>;
   getCachedMetadata(key: string): Promise<MetadataMap | null>;

@@ -5,6 +5,7 @@
  */
 
 import { z } from "zod";
+import { LockedSpanSchema } from "@shared/schemas/optimization.schemas";
 
 export const promptSchema = z.object({
   prompt: z
@@ -47,20 +48,7 @@ export const promptSchema = z.object({
     .max(10000, "sourcePrompt must not exceed 10,000 characters")
     .optional(),
   skipCache: z.boolean().optional().default(false),
-  lockedSpans: z
-    .array(
-      z.object({
-        id: z.string().max(512).optional(),
-        text: z.string().min(1).max(2000),
-        leftCtx: z.string().max(2000).optional().nullable(),
-        rightCtx: z.string().max(2000).optional().nullable(),
-        category: z.string().max(256).optional().nullable(),
-        source: z.string().max(256).optional().nullable(),
-        confidence: z.number().optional().nullable(),
-      }),
-    )
-    .optional()
-    .default([]),
+  lockedSpans: z.array(LockedSpanSchema).optional().default([]),
 });
 
 export type PromptRequest = z.infer<typeof promptSchema>;

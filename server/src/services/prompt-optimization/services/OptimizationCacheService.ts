@@ -84,11 +84,7 @@ export class OptimizationCacheService {
     brainstormContext: Record<string, unknown> | null,
     targetModel?: string,
     generationParams?: Record<string, unknown> | null,
-    lockedSpans?: Array<{
-      text: string;
-      leftCtx?: string | null;
-      rightCtx?: string | null;
-    }>,
+    lockedSpans?: LockedSpan[],
   ): string {
     const lockedSpanSignature = this.buildLockedSpanSignature(lockedSpans);
     const generationSignature =
@@ -172,13 +168,7 @@ export class OptimizationCacheService {
     });
   }
 
-  private buildLockedSpanSignature(
-    lockedSpans?: Array<{
-      text: string;
-      leftCtx?: string | null;
-      rightCtx?: string | null;
-    }>,
-  ): string {
+  private buildLockedSpanSignature(lockedSpans?: LockedSpan[]): string {
     if (!lockedSpans || lockedSpans.length === 0) {
       return "";
     }

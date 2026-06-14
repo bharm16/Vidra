@@ -1,6 +1,7 @@
 // Import vocabulary from centralized vocab.json
 import vocab from "../../../llm/span-labeling/nlp/vocab.json" with { type: "json" };
 import { SECURITY_REMINDER } from "@utils/SecurityPrompts.js";
+import type { LockedSpan } from "../types";
 
 interface ShotPlan {
   shot_type?: string;
@@ -16,13 +17,6 @@ interface ShotPlan {
   style?: string;
   mood?: string;
   [key: string]: unknown;
-}
-
-interface LockedSpan {
-  text: string;
-  leftCtx?: string | null;
-  rightCtx?: string | null;
-  category?: string | null;
 }
 
 /**
