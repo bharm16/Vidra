@@ -105,4 +105,88 @@ describe("usePromptOptimization", () => {
     expect(mocks.setCurrentPromptUuid).not.toHaveBeenCalled();
     expect(mocks.setCurrentPromptDocId).not.toHaveBeenCalled();
   });
+
+  // The Idea Box expansion chain (expand -> first frame -> gate) hangs off
+  // onOptimizationApplied: the workspace's continueAfterOptimization only
+  // runs when this hook awaits the callback with the optimized text.
+  describe("onOptimizationApplied contract", () => {
+    it("awaits the callback with the optimized text after persistence", async () => {
+      const { params, mocks } = buildBaseParams();
+      const callOrder: string[] = [];
+      mocks.saveToHistory.mockImplementation(async () => {
+        callOrder.push("saveToHistory");
+        return { uuid: "uuid-1", id: "session-1" };
+      });
+      const onOptimizationApplied = vi.fn(async () => {
+        callOrder.push("onOptimizationApplied");
+      });
+      const { result } = renderHook(() =>
+        usePromptOptimization({ ...params, onOptimizationApplied }),
+      );
+
+      await act(async () => {
+        await result.current.handleOptimize("Original shot prompt");
+      });
+
+      expect(onOptimizationApplied).toHaveBeenCalledWith(
+        "Optimized sequence prompt",
+      );
+      expect(callOrder).toEqual(["saveToHistory", "onOptimizationApplied"]);
+    });
+
+    it("invokes the callback on the preserveSessionView path", async () => {
+      const { params } = buildBaseParams();
+      const onOptimizationApplied = vi.fn();
+      const { result } = renderHook(() =>
+        usePromptOptimization({ ...params, onOptimizationApplied }),
+      );
+
+      await act(async () => {
+        await result.current.handleOptimize("Original shot prompt", undefined, {
+          preserveSessionView: true,
+        });
+      });
+
+      expect(onOptimizationApplied).toHaveBeenCalledWith(
+        "Optimized sequence prompt",
+      );
+    });
+
+    it("does not invoke the callback on the I2V bypass (start image set)", async () => {
+      const { params, mocks } = buildBaseParams();
+      const onOptimizationApplied = vi.fn();
+      const { result } = renderHook(() =>
+        usePromptOptimization({
+          ...params,
+          startImageUrl: "https://example.com/frame.png",
+          onOptimizationApplied,
+        }),
+      );
+
+      await act(async () => {
+        await result.current.handleOptimize("Original shot prompt");
+      });
+
+      expect(mocks.optimize).not.toHaveBeenCalled();
+      expect(onOptimizationApplied).not.toHaveBeenCalled();
+    });
+
+    it("does not invoke the callback when optimization returns null", async () => {
+      const { params, mocks } = buildBaseParams();
+      mocks.optimize.mockResolvedValueOnce(
+        null as unknown as Awaited<ReturnType<typeof mocks.optimize>>,
+      );
+      const onOptimizationApplied = vi.fn();
+      const { result } = renderHook(() =>
+        usePromptOptimization({ ...params, onOptimizationApplied }),
+      );
+
+      await act(async () => {
+        await result.current.handleOptimize("Original shot prompt");
+      });
+
+      expect(mocks.saveToHistory).not.toHaveBeenCalled();
+      expect(onOptimizationApplied).not.toHaveBeenCalled();
+    });
+  });
 });
