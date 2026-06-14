@@ -1,7 +1,11 @@
 # Expansion study — pre-registered protocol
 
-**Status:** protocol locked 2026-06-09 · facilitator dry-run done 2026-06-10 (conditional
-go — see Pilot log) · friendly-participant pilot pending · study not yet run
+**Status:** CANCELLED 2026-06-10 — owner decision to move forward without the
+n=5 study. Expansion-first is adopted unvalidated (see the ADR-0002 amendment);
+the pre-registered thresholds below were never tested and no session counts as
+evidence. The protocol and facilitator card are retained for any future
+sessions. History: protocol locked 2026-06-09 · facilitator dry-run done
+2026-06-10 (conditional go — see Pilot log) · friendly session unstructured.
 **Operationalizes:** the open hypothesis in
 [ADR-0002](../adr/0002-vidra-is-an-authoring-tool-for-non-experts.md) — whether
 creators need **expansion** (blank page → generation-ready first-frame prompt) or

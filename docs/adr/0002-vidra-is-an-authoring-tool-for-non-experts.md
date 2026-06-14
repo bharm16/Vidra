@@ -1,6 +1,10 @@
 # Vidra is an authoring tool for non-expert creators; generation is commodity; the multi-shot/consistency play is deferred
 
-**Status:** accepted (2026-06-08)
+**Status:** accepted (2026-06-08) · amended 2026-06-10 — the n=5 validation
+study was cancelled by owner decision; expansion-first is adopted on builder
+conviction plus the dry-run/live-loop evidence (n=1, facilitator-judged), not
+on the pre-registered thresholds. The falsification signal moves from the
+study to live usage. The frozen-stack boundaries below still stand.
 
 Vidra had grown to 23 server service domains and 14 client features with **no
 canonical product definition** — the root `CONTEXT.md` and `docs/agents/domain.md`
