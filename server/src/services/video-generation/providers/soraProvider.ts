@@ -1,4 +1,5 @@
 import type OpenAI from "openai";
+import sharp from "sharp";
 import type { ReadableStream } from "node:stream/web";
 import type { VideoGenerationOptions, SoraModelId } from "../types";
 import { sleep, pollingDelay } from "@utils/sleep";
@@ -58,26 +59,43 @@ function resolveSoraSize(
   return SORA_SIZES_BY_ASPECT_RATIO["16:9"];
 }
 
-async function resolveSoraInputReference(
-  inputReference: string,
+function deriveAspectRatioFromSize(size: SoraVideoSize): string {
+  if (size === "720x1280" || size === "1024x1792") return "9:16";
+  return "16:9";
+}
+
+/**
+ * The videos API takes input_reference as an image-reference object
+ * ({ image_url }) — uploading bytes as a multipart file is rejected with
+ * "expected an object, but got a file instead" — and requires the image's
+ * dimensions to exactly match the requested output size ("Inpaint image must
+ * match the requested width and height"). Fetch the frame, resize-cover to
+ * the requested size, and pass it as a base64 data URL.
+ */
+async function buildSoraInputReference(
+  imageUrl: string,
+  size: SoraVideoSize,
   log: LogSink,
-): Promise<Response> {
-  log.debug("Fetching Sora input reference", { inputReference });
-  const response = await fetch(inputReference);
+): Promise<{ image_url: string }> {
+  if (imageUrl.startsWith("data:")) {
+    return { image_url: imageUrl };
+  }
+  const [width, height] = size.split("x").map(Number) as [number, number];
+  log.debug("Fetching Sora input reference", { size });
+  const response = await fetch(imageUrl, { redirect: "follow" });
   if (!response.ok) {
     log.warn("Failed to fetch Sora input reference", {
-      inputReference,
       status: response.status,
       statusText: response.statusText,
     });
     throw new Error(`Failed to fetch inputReference (${response.status})`);
   }
-  return response;
-}
-
-function deriveAspectRatioFromSize(size: SoraVideoSize): string {
-  if (size === "720x1280" || size === "1024x1792") return "9:16";
-  return "16:9";
+  const source = Buffer.from(await response.arrayBuffer());
+  const resized = await sharp(source)
+    .resize(width, height, { fit: "cover" })
+    .jpeg({ quality: 92 })
+    .toBuffer();
+  return { image_url: `data:image/jpeg;base64,${resized.toString("base64")}` };
 }
 
 export async function generateSoraVideo(
@@ -89,13 +107,13 @@ export async function generateSoraVideo(
   log: LogSink,
 ): Promise<{ asset: StoredVideoAsset; resolvedAspectRatio?: string }> {
   const timeoutMs = getProviderPollTimeoutMs();
-  const resolvedInputReference = options.inputReference || options.startImage;
-  const inputReference = resolvedInputReference
-    ? await resolveSoraInputReference(resolvedInputReference, log)
-    : undefined;
-
   const seconds = resolveSoraSeconds(options.seconds);
   const size = resolveSoraSize(options.aspectRatio, options.size, log);
+
+  const resolvedInputReference = options.inputReference || options.startImage;
+  const inputReference = resolvedInputReference
+    ? await buildSoraInputReference(resolvedInputReference, size, log)
+    : undefined;
 
   const job = await openai.videos.create({
     model: modelId,
