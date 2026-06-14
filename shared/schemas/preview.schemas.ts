@@ -7,6 +7,24 @@
  */
 import { z } from "zod";
 
+/**
+ * Image-preview speed modes — the user-facing latency/quality tiers a creator
+ * picks for a first-frame preview, sent as `speedMode` on a generate-preview
+ * request. Canonical across client and server: the client offers exactly these
+ * and the server validates against them, so they must never drift. Derive the
+ * type, the Zod enum, validation Sets, and option strings from this one array.
+ */
+export const IMAGE_PREVIEW_SPEED_MODES = [
+  "Lightly Juiced",
+  "Juiced",
+  "Extra Juiced",
+  "Real Time",
+] as const;
+
+export const ImagePreviewSpeedModeSchema = z.enum(IMAGE_PREVIEW_SPEED_MODES);
+
+export type ImagePreviewSpeedMode = z.infer<typeof ImagePreviewSpeedModeSchema>;
+
 const PreviewMetadataSchema = z.object({
   aspectRatio: z.string(),
   model: z.string(),

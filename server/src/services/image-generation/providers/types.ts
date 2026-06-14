@@ -2,6 +2,8 @@
  * Image preview provider types
  */
 
+import type { ImagePreviewSpeedMode } from "@shared/schemas/preview.schemas";
+
 export const IMAGE_PREVIEW_PROVIDER_IDS = [
   "replicate-flux-schnell",
   "replicate-flux-kontext-fast",
@@ -12,11 +14,7 @@ export type ImagePreviewProviderId =
 
 export type ImagePreviewProviderSelection = ImagePreviewProviderId | "auto";
 
-export type ImagePreviewSpeedMode =
-  | "Lightly Juiced"
-  | "Juiced"
-  | "Extra Juiced"
-  | "Real Time";
+export type { ImagePreviewSpeedMode };
 
 export interface ImagePreviewRequest {
   prompt: string;

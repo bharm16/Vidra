@@ -23,6 +23,7 @@ import {
   UploadPreviewImageResponseSchema,
   VideoJobStatusResponseSchema,
 } from "./schemas";
+import type { ImagePreviewSpeedMode } from "@shared/schemas/preview.schemas";
 
 const log = logger.child("previewApi");
 const VIDEO_OPERATION = "generateVideoPreview";
@@ -58,11 +59,7 @@ export type PreviewProvider =
   | "replicate-flux-kontext-fast"
   | "auto";
 
-export type PreviewSpeedMode =
-  | "Lightly Juiced"
-  | "Juiced"
-  | "Extra Juiced"
-  | "Real Time";
+export type PreviewSpeedMode = ImagePreviewSpeedMode;
 
 export interface GeneratePreviewRequest {
   prompt: string;

@@ -10,6 +10,7 @@ import type {
   ImagePreviewProviderSelection,
   ImagePreviewSpeedMode,
 } from "@services/image-generation/providers/types";
+import { IMAGE_PREVIEW_SPEED_MODES } from "@shared/schemas/preview.schemas";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 
 type ImageGenerateServices = Pick<
@@ -24,12 +25,9 @@ type ImageGenerateServices = Pick<
 const IMAGE_PREVIEW_CREDIT_COST = 1;
 const TRIGGER_REGEX = /@([a-zA-Z][a-zA-Z0-9_-]*)/g;
 
-const SPEED_MODE_OPTIONS = new Set<ImagePreviewSpeedMode>([
-  "Lightly Juiced",
-  "Juiced",
-  "Extra Juiced",
-  "Real Time",
-]);
+const SPEED_MODE_OPTIONS = new Set<ImagePreviewSpeedMode>(
+  IMAGE_PREVIEW_SPEED_MODES,
+);
 
 const hasPromptTriggers = (prompt: string): boolean =>
   Array.from(prompt.matchAll(TRIGGER_REGEX)).length > 0;
@@ -136,8 +134,7 @@ export const createImageGenerateHandler =
       }
       if (!SPEED_MODE_OPTIONS.has(speedMode as ImagePreviewSpeedMode)) {
         return sendApiError(res, req, 400, {
-          error:
-            "speedMode must be one of: Lightly Juiced, Juiced, Extra Juiced, Real Time",
+          error: `speedMode must be one of: ${IMAGE_PREVIEW_SPEED_MODES.join(", ")}`,
           code: GENERATION_ERROR_CODES.INVALID_REQUEST,
         });
       }

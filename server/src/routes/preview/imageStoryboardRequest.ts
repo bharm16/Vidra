@@ -1,16 +1,9 @@
 import { z } from "zod";
 import type { ImagePreviewSpeedMode } from "@services/image-generation/providers/types";
+import { IMAGE_PREVIEW_SPEED_MODES } from "@shared/schemas/preview.schemas";
 
-const SPEED_MODE_OPTIONS = [
-  "Lightly Juiced",
-  "Juiced",
-  "Extra Juiced",
-  "Real Time",
-] as const;
-
-const SPEED_MODE_SET = new Set<string>(SPEED_MODE_OPTIONS);
-const SPEED_MODE_MESSAGE =
-  "speedMode must be one of: Lightly Juiced, Juiced, Extra Juiced, Real Time";
+const SPEED_MODE_SET = new Set<string>(IMAGE_PREVIEW_SPEED_MODES);
+const SPEED_MODE_MESSAGE = `speedMode must be one of: ${IMAGE_PREVIEW_SPEED_MODES.join(", ")}`;
 
 const SpeedModeSchema = z
   .string()
