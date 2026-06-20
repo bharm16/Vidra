@@ -7,6 +7,8 @@ import {
   ModelRecommendationRequestSchema,
   ModelRecommendationEventSchema,
 } from "@services/model-intelligence/schemas/requests";
+import type { ZodIssue } from "zod";
+import type { ApiResponse } from "@shared/types/api";
 /** Narrow metrics interface — avoids importing the concrete MetricsService class. */
 export interface ModelIntelligenceRouteMetrics {
   recordModelRecommendationEvent(
@@ -22,13 +24,6 @@ export interface ModelIntelligenceRouteMetrics {
 
 interface RequestWithUser extends Request {
   user?: { uid?: string };
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  details?: unknown;
 }
 
 type IncomingRecommendationSpan = {
@@ -51,6 +46,16 @@ const normalizeRecommendationSpans = (
     ...(span.end !== undefined ? { end: span.end } : {}),
     ...(span.confidence !== undefined ? { confidence: span.confidence } : {}),
   }));
+
+/**
+ * Summarize Zod validation issues into the canonical `details` string. The
+ * shared ApiResponse error contract types `details` as a string, so structured
+ * issues are flattened to "path: message" pairs.
+ */
+const formatValidationDetails = (issues: readonly ZodIssue[]): string =>
+  issues
+    .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+    .join("; ");
 
 const log = logger.child({ routes: "model-intelligence" });
 
@@ -84,7 +89,7 @@ export function createModelIntelligenceRoutes(
           return res.status(400).json({
             success: false,
             error: "Invalid request",
-            details: parsed.error.issues,
+            details: formatValidationDetails(parsed.error.issues),
           } satisfies ApiResponse<never>);
         }
 
@@ -141,7 +146,7 @@ export function createModelIntelligenceRoutes(
           return res.status(400).json({
             success: false,
             error: "Invalid request",
-            details: parsed.error.issues,
+            details: formatValidationDetails(parsed.error.issues),
           } satisfies ApiResponse<never>);
         }
 
@@ -185,9 +190,10 @@ export function createModelIntelligenceRoutes(
           userId: req.user?.uid ?? null,
         });
 
-        return res.json({ success: true } satisfies ApiResponse<{
-          success: true;
-        }>);
+        return res.json({
+          success: true,
+          data: { tracked: true },
+        } satisfies ApiResponse<{ tracked: true }>);
       },
     ),
   );
