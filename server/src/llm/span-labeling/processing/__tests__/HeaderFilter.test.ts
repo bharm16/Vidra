@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { getAllParentCategories } from "#shared/taxonomy.ts";
 import { filterHeaders, isLikelyHeader } from "../HeaderFilter";
 
 const buildSpan = (
@@ -43,6 +44,26 @@ describe("HeaderFilter", () => {
       expect(result.spans).toHaveLength(1);
       expect(result.spans[0]?.text).toBe("slow pan across dunes");
       expect(result.notes[0]).toContain("Dropped header/label");
+    });
+  });
+
+  describe("taxonomy-sourced category headers", () => {
+    it("treats every taxonomy parent-category word as a header", () => {
+      // The category words are derived from the canonical TAXONOMY rather than
+      // hardcoded, so adding a category cannot let this filter drift.
+      for (const category of getAllParentCategories()) {
+        expect(isLikelyHeader(category)).toBe(true);
+      }
+    });
+
+    it("keeps taxonomy attribute words that are real content (no over-filter)", () => {
+      // Attribute words (children, not parent categories) are legitimate
+      // content — "a remote location", "fluid movement". Deriving the filter
+      // set from attribute keys would wrongly drop them; deriving from parent
+      // categories only must not.
+      expect(isLikelyHeader("location")).toBe(false);
+      expect(isLikelyHeader("movement")).toBe(false);
+      expect(isLikelyHeader("appearance")).toBe(false);
     });
   });
 });

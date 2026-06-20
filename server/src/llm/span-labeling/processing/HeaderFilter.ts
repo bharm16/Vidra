@@ -10,6 +10,7 @@
  * - "## Technical Specs" markdown headers being labeled
  */
 import type { SpanLike } from "../types.js";
+import { getAllParentCategories } from "#shared/taxonomy.ts";
 
 interface FilterResult {
   spans: SpanLike[];
@@ -22,9 +23,6 @@ interface FilterResult {
 const HEADER_PATTERNS: RegExp[] = [
   // Markdown headers
   /^#{1,6}\s+/,
-
-  // Standalone category names (case-insensitive)
-  /^(camera|lighting|style|technical|audio|subject|action|environment|shot|composition)\s*:?$/i,
 
   // Common spec labels
   /^(aspect ratio|frame rate|resolution|duration|fps|format)\s*:?$/i,
@@ -41,23 +39,21 @@ const HEADER_PATTERNS: RegExp[] = [
 ];
 
 /**
- * Labels that should be filtered when they appear as standalone spans
- * These are common section headers in optimized prompts
+ * Section-header words filtered when they appear as standalone spans.
+ *
+ * The taxonomy parent-category words (camera, lighting, subject, …) are sourced
+ * from the canonical TAXONOMY via getAllParentCategories(), so this filter cannot
+ * drift when a category is added or renamed — the sibling VisualOnlyFilter derives
+ * its meta-labels from the same source. Only words that are NOT taxonomy parent
+ * categories are listed explicitly: spec labels are taxonomy *attributes* (not
+ * parents) and have no parent-category source to derive from; "composition", the
+ * multi-word headers, and the angle labels are not in the taxonomy at all.
  */
-const STANDALONE_LABELS = new Set([
-  // Main categories
-  "camera",
-  "lighting",
-  "style",
-  "technical",
-  "audio",
-  "subject",
-  "action",
-  "environment",
-  "shot",
+const NON_TAXONOMY_HEADER_LABELS = [
+  // Section header that is not a taxonomy parent category
   "composition",
 
-  // Technical spec labels
+  // Technical spec labels (taxonomy attributes, not parent categories)
   "aspect ratio",
   "frame rate",
   "resolution",
@@ -65,7 +61,7 @@ const STANDALONE_LABELS = new Set([
   "fps",
   "format",
 
-  // Common headers
+  // Common multi-word headers
   "technical specs",
   "technical specifications",
   "alternative approaches",
@@ -79,6 +75,11 @@ const STANDALONE_LABELS = new Set([
   "eye level",
   "high angle",
   "low angle",
+];
+
+const STANDALONE_LABELS = new Set<string>([
+  ...getAllParentCategories(),
+  ...NON_TAXONOMY_HEADER_LABELS,
 ]);
 
 /**
