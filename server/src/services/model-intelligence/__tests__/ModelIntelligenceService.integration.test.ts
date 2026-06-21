@@ -9,7 +9,6 @@ import {
 import { ModelIntelligenceService } from "../ModelIntelligenceService";
 import { ModelCapabilityRegistry } from "../services/ModelCapabilityRegistry";
 import { ModelScoringService } from "../services/ModelScoringService";
-import { PromptRequirementsService } from "../services/PromptRequirementsService";
 import { RecommendationExplainerService } from "../services/RecommendationExplainerService";
 import { AvailabilityGateService } from "../services/AvailabilityGateService";
 import type { PromptSpanProvider } from "@llm/span-labeling/ports/PromptSpanProvider";
@@ -58,7 +57,6 @@ describe("ModelIntelligenceService (integration)", () => {
 
     const service = new ModelIntelligenceService({
       promptSpanProvider,
-      requirementsService: new PromptRequirementsService(),
       registry,
       scoringService: new ModelScoringService(),
       explainerService: new RecommendationExplainerService(),

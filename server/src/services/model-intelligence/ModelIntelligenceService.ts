@@ -11,7 +11,8 @@ import { getVideoCost } from "@config/modelCosts";
 import type { CanonicalPromptModelId } from "@shared/videoModels";
 import { ModelCapabilityRegistry } from "./services/ModelCapabilityRegistry";
 import { ModelScoringService } from "./services/ModelScoringService";
-import { PromptRequirementsService } from "./services/PromptRequirementsService";
+import type { RequirementsClassifier } from "./services/RequirementsClassifier";
+import { deriveRequirementsFromRoles } from "./services/requirementsMapper";
 import { RecommendationExplainerService } from "./services/RecommendationExplainerService";
 import type { AvailabilityGateService } from "./services/AvailabilityGateService";
 import type { PromptSpanProvider } from "@llm/span-labeling/ports/PromptSpanProvider";
@@ -26,7 +27,7 @@ interface ModelIntelligenceDependencies {
   promptSpanProvider: PromptSpanProvider;
   availabilityGate: AvailabilityGateService;
   metricsService?: ModelIntelligenceMetrics;
-  requirementsService?: PromptRequirementsService;
+  requirementsClassifier?: RequirementsClassifier;
   registry?: ModelCapabilityRegistry;
   scoringService?: ModelScoringService;
   explainerService?: RecommendationExplainerService;
@@ -42,7 +43,7 @@ interface RecommendationOptions {
 const log = logger.child({ service: "ModelIntelligenceService" });
 
 export class ModelIntelligenceService {
-  private readonly requirementsService: PromptRequirementsService;
+  private readonly requirementsClassifier: RequirementsClassifier;
   private readonly registry: ModelCapabilityRegistry;
   private readonly scoringService: ModelScoringService;
   private readonly explainerService: RecommendationExplainerService;
@@ -51,8 +52,11 @@ export class ModelIntelligenceService {
 
   constructor(private readonly deps: ModelIntelligenceDependencies) {
     this.metrics = deps.metricsService;
-    this.requirementsService =
-      deps.requirementsService ?? new PromptRequirementsService();
+    // Default to role-only derivation (no LLM) when no classifier is injected.
+    // DI supplies the LLM-backed AIServiceRequirementsClassifier in production.
+    this.requirementsClassifier = deps.requirementsClassifier ?? {
+      classify: async (_prompt, spans) => deriveRequirementsFromRoles(spans),
+    };
     this.registry = deps.registry ?? new ModelCapabilityRegistry();
     this.scoringService = deps.scoringService ?? new ModelScoringService();
     this.explainerService =
@@ -80,7 +84,7 @@ export class ModelIntelligenceService {
       }
     }
 
-    const requirements = this.requirementsService.extractRequirements(
+    const requirements = await this.requirementsClassifier.classify(
       prompt,
       spans,
     );

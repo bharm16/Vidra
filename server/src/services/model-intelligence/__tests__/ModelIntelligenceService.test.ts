@@ -5,7 +5,7 @@ import type { LLMSpan } from "@llm/span-labeling/types";
 import type { CanonicalPromptModelId } from "@shared/videoModels";
 import type { ModelCapabilityRegistry } from "../services/ModelCapabilityRegistry";
 import type { ModelScoringService } from "../services/ModelScoringService";
-import type { PromptRequirementsService } from "../services/PromptRequirementsService";
+import type { RequirementsClassifier } from "../services/RequirementsClassifier";
 import type { RecommendationExplainerService } from "../services/RecommendationExplainerService";
 import type { AvailabilityGateService } from "../services/AvailabilityGateService";
 import type { PromptSpanProvider } from "@llm/span-labeling/ports/PromptSpanProvider";
@@ -64,8 +64,8 @@ describe("ModelIntelligenceService", () => {
         getCapabilities: () => dummyCapabilities,
       } as unknown as ModelCapabilityRegistry;
 
-      const requirementsService = {
-        extractRequirements: () => ({
+      const requirementsClassifier = {
+        classify: async () => ({
           physics: {
             hasComplexPhysics: true,
             hasParticleSystems: false,
@@ -111,7 +111,7 @@ describe("ModelIntelligenceService", () => {
           detectedCategories: [],
           confidenceScore: 0.7,
         }),
-      } as unknown as PromptRequirementsService;
+      } as unknown as RequirementsClassifier;
 
       const explainerService = {
         explainRecommendation: () => "Top match.",
@@ -144,7 +144,7 @@ describe("ModelIntelligenceService", () => {
         promptSpanProvider,
         registry,
         scoringService: scoringService as unknown as ModelScoringService,
-        requirementsService,
+        requirementsClassifier,
         explainerService,
         availabilityGate:
           availabilityGate as unknown as AvailabilityGateService,
@@ -264,10 +264,10 @@ describe("ModelIntelligenceService", () => {
         getCapabilities: () => dummyCapabilities,
       } as unknown as ModelCapabilityRegistry;
 
-      const requirementsService = {
-        extractRequirements: () =>
+      const requirementsClassifier = {
+        classify: async () =>
           createBaseRequirements({ confidenceScore: requirementsConfidence }),
-      } as unknown as PromptRequirementsService;
+      } as unknown as RequirementsClassifier;
 
       const explainerService = {
         explainRecommendation: () => "Top match.",
@@ -297,7 +297,7 @@ describe("ModelIntelligenceService", () => {
         promptSpanProvider,
         registry,
         scoringService: scoringMock as unknown as ModelScoringService,
-        requirementsService,
+        requirementsClassifier,
         explainerService,
         availabilityGate:
           availabilityGate as unknown as AvailabilityGateService,
@@ -372,9 +372,6 @@ describe("ModelIntelligenceService", () => {
       const { ModelScoringService } = await import(
         "../services/ModelScoringService"
       );
-      const { PromptRequirementsService } = await import(
-        "../services/PromptRequirementsService"
-      );
       const { RecommendationExplainerService } = await import(
         "../services/RecommendationExplainerService"
       );
@@ -409,7 +406,6 @@ describe("ModelIntelligenceService", () => {
           availabilityGate as unknown as AvailabilityGateService,
         registry,
         scoringService: new ModelScoringService(),
-        requirementsService: new PromptRequirementsService(),
         explainerService: new RecommendationExplainerService(),
       });
 
