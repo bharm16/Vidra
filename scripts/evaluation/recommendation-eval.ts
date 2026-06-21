@@ -39,7 +39,6 @@ import { fileURLToPath } from "node:url";
 import { ModelIntelligenceService } from "../../server/src/services/model-intelligence/ModelIntelligenceService.js";
 import { ModelCapabilityRegistry } from "../../server/src/services/model-intelligence/services/ModelCapabilityRegistry.js";
 import { ModelScoringService } from "../../server/src/services/model-intelligence/services/ModelScoringService.js";
-import { PromptRequirementsService } from "../../server/src/services/model-intelligence/services/PromptRequirementsService.js";
 import { RecommendationExplainerService } from "../../server/src/services/model-intelligence/services/RecommendationExplainerService.js";
 import { AvailabilityGateService } from "../../server/src/services/model-intelligence/services/AvailabilityGateService.js";
 import type { PromptSpanProvider } from "../../server/src/llm/span-labeling/ports/PromptSpanProvider.js";
@@ -461,7 +460,8 @@ export async function runEval(options: {
   const service = new ModelIntelligenceService({
     promptSpanProvider: spanProvider,
     availabilityGate,
-    requirementsService: new PromptRequirementsService(),
+    // Offline drift eval stays deterministic: the role-only default classifier
+    // (no LLM) derives requirements from each prompt's mock span roles.
     registry,
     scoringService: new ModelScoringService(),
     explainerService: new RecommendationExplainerService(),

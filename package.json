@@ -166,6 +166,7 @@
     "eval:golden-set:bless": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts --bless",
     "eval:recommendation": "tsx --tsconfig server/tsconfig.json scripts/evaluation/recommendation-eval.ts",
     "eval:recommendation:bless": "tsx --tsconfig server/tsconfig.json scripts/evaluation/recommendation-eval.ts --bless",
+    "eval:requirements": "tsx --tsconfig server/tsconfig.json scripts/evaluation/requirements-extraction-eval.ts",
     "eval:suggestions": "tsx --tsconfig server/tsconfig.json tests/evaluation/suggestions/SuggestionBenchmark.ts",
     "eval:optimization": "tsx --tsconfig server/tsconfig.json tests/evaluation/optimization/OptimizationBenchmark.ts",
     "eval:regression": "tsx --tsconfig server/tsconfig.json tests/evaluation/regression/RegressionRunner.ts",
