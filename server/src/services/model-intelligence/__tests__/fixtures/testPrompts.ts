@@ -1,4 +1,7 @@
-import type { PromptRequirements, PromptSpan } from "../../types";
+import type {
+  PromptRequirements,
+  PromptSpan,
+} from "@services/model-intelligence/types";
 
 export const SAMPLE_PROMPT =
   "A robot walks through heavy rain in a neon city, dramatic cinematic lighting.";

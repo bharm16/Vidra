@@ -1,4 +1,7 @@
-import type { PromptRequirements, PromptSpan } from "../../types";
+import type {
+  PromptRequirements,
+  PromptSpan,
+} from "@services/model-intelligence/types";
 
 /**
  * Hand-labeled golden set for model-intelligence requirements extraction.
