@@ -500,6 +500,26 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     useDeveloperMessage: true,
   },
 
+  /**
+   * Requirements extraction for model-intelligence recommendations.
+   * Reads a prompt and reports objective visual/physical observations as JSON.
+   * Full GPT-4o (not mini) — recommendation quality hinges on this perception
+   * correctly handling negation, synonyms, and inflected forms. Temperature 0
+   * for deterministic perception.
+   */
+  requirements_extraction: {
+    client: process.env.REQUIREMENTS_PROVIDER || "openai",
+    model: process.env.REQUIREMENTS_MODEL || "gpt-4o-2024-08-06",
+    temperature: 0,
+    maxTokens: 1024,
+    timeout: 30000,
+    responseFormat: "json_object",
+    fallbackTo: "qwen",
+    fallbackConfig: QWEN_FALLBACK,
+    useSeed: true, // Same prompt should perceive identically
+    useDeveloperMessage: true,
+  },
+
   // ============================================================================
   // LLM-as-a-Judge Operations
   // ============================================================================

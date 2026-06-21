@@ -1,5 +1,6 @@
 export type {
   CameraComplexity,
+  ComplexityLevel,
   CostTier,
   EnvironmentType,
   EmotionalIntensity,
