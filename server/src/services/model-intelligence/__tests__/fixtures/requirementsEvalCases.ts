@@ -1,22 +1,15 @@
 import type { PromptRequirements, PromptSpan } from "../../types";
 
 /**
- * Deterministic golden set for PromptRequirementsService.extractRequirements.
+ * Hand-labeled golden set for model-intelligence requirements extraction.
  *
- * Each case carries hand-labeled GROUND TRUTH — what a human says the
- * requirement flags should be for the prompt, independent of how the service
- * derives them. The accompanying eval (PromptRequirementsService.eval.test.ts)
- * scores the current implementation against this truth and gates on a recorded
- * baseline.
- *
- * Purpose: the current extractRequirements derives most flags from keyword
- * REGEX over the prompt/span text (see analyzePhysics/analyzeCharacter/…). The
- * project forbids regex for semantic classification, so the intended direction
- * is to derive these flags from the ML span-labeler's taxonomy roles instead.
- * That is a behaviour change with no other safety net, so this set exists to
- * validate it: a rewrite must not regress the cases the regex gets right, and
- * should close the `regexBlindSpot` cases below (negation / synonyms the
- * keyword lists structurally miss).
+ * Each case carries GROUND TRUTH — what a human says the requirement flags
+ * should be for the prompt, independent of how they are derived. The live eval
+ * (scripts/evaluation/requirements-extraction-eval.ts, `npm run eval:requirements`)
+ * scores the LLM perception classifier against this truth. The `regexBlindSpot`
+ * flags mark cases the former keyword-regex implementation structurally missed
+ * (negation, out-of-vocabulary synonyms, inflected forms); the classifier
+ * closes them — see ADR-0006.
  *
  * Spans use real taxonomy role ids (see shared/taxonomy.ts): subject.identity,
  * subject.emotion, action.movement, environment.location, environment.weather,
