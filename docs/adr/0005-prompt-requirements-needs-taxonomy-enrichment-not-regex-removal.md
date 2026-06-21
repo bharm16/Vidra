@@ -1,6 +1,6 @@
 # PromptRequirements stays text-derived until the taxonomy carries the semantics
 
-**Status:** accepted
+**Status:** superseded by [ADR-0006](0006-model-intelligence-requirements-use-an-llm-perception-classifier.md) — the regex was removed by introducing a dedicated LLM perception classifier rather than the taxonomy-enrichment program this ADR proposed. Retained for the analysis of why role-derivation alone cannot work.
 
 `PromptRequirementsService.extractRequirements`
 (`server/src/services/model-intelligence/services/PromptRequirementsService.ts`)
