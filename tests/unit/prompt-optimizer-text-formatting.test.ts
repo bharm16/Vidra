@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  escapeHTMLForMLHighlighting,
-  formatTextToHTML,
-} from "@features/prompt-optimizer/utils/textFormatting";
+import { escapeHTMLForMLHighlighting } from "@features/prompt-optimizer/utils/textFormatting";
 
 describe("textFormatting", () => {
   it("escapes HTML and strips inline event handlers", () => {
@@ -21,11 +18,5 @@ describe("textFormatting", () => {
 
     expect(result).toContain("whitespace-pre-wrap");
     expect(result).toContain("Test");
-  });
-
-  it("formatTextToHTML returns HTML payload", () => {
-    const payload = formatTextToHTML("Line 1");
-
-    expect(payload).toEqual({ html: expect.stringContaining("Line 1") });
   });
 });

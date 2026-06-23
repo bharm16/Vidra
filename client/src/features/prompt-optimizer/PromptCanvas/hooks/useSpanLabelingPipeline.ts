@@ -24,10 +24,7 @@ import type { SpanLabelingResult } from "@/features/span-highlighting/hooks/type
 import type { HighlightSnapshot } from "../types";
 import { useSpanDataConversion } from "./useSpanDataConversion";
 import { useParseResult } from "./useParseResult";
-import {
-  escapeHTMLForMLHighlighting,
-  formatTextToHTML,
-} from "../../utils/textFormatting";
+import { escapeHTMLForMLHighlighting } from "../../utils/textFormatting";
 
 export interface SpanLabelingPipelineInput {
   displayedPrompt: string | null;
@@ -185,15 +182,11 @@ export function useSpanLabelingPipeline({
     displayText: parseResult.displayText,
   });
 
-  // Formatted HTML — bypass formatting when ML highlighting is active
-  const { html: formattedHTML } = useMemo(() => {
-    if (enableMLHighlighting) {
-      return {
-        html: escapeHTMLForMLHighlighting(normalizedDisplayedPrompt || ""),
-      };
-    }
-    return formatTextToHTML(normalizedDisplayedPrompt ?? "");
-  }, [normalizedDisplayedPrompt, enableMLHighlighting]);
+  // Formatted HTML for the editor surface (ML highlighting container)
+  const formattedHTML = useMemo(
+    () => escapeHTMLForMLHighlighting(normalizedDisplayedPrompt || ""),
+    [normalizedDisplayedPrompt],
+  );
 
   // DOM highlight rendering
   useHighlightRendering({

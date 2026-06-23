@@ -2,7 +2,6 @@
  * useImagePreview Hook
  *
  * Manages image preview state and generation.
- * Handles debouncing to prevent excessive API calls.
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -16,7 +15,6 @@ import {
 interface UseImagePreviewOptions {
   prompt: string;
   isVisible: boolean;
-  debounceMs?: number;
   aspectRatio?: string;
   provider?: PreviewProvider;
   seedImageUrl?: string | null;
@@ -43,7 +41,6 @@ interface UseImagePreviewReturn {
 export function useImagePreview({
   prompt,
   isVisible,
-  debounceMs = 1000,
   aspectRatio,
   provider,
   seedImageUrl = null,
@@ -57,7 +54,6 @@ export function useImagePreview({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastPromptRef = useRef<string>("");
   const requestIdRef = useRef(0);
@@ -221,12 +217,6 @@ export function useImagePreview({
    * (Automatic generation disabled - use regenerate button instead)
    */
   useEffect(() => {
-    // Clear any existing debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-
     // Don't generate if not visible - clear state
     if (!isVisible) {
       setLoading(false);
@@ -249,9 +239,6 @@ export function useImagePreview({
    */
   useEffect(() => {
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

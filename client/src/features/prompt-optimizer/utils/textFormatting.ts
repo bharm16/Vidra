@@ -35,13 +35,3 @@ export function escapeHTMLForMLHighlighting(text: string): string {
 
   return `<div class="whitespace-pre-wrap break-words text-body-xl text-foreground-warm">${withParagraphGaps}</div>`;
 }
-
-/**
- * Legacy export for backward compatibility during migration.
- * Now aliases to escapeHTMLForMLHighlighting since Standard Mode is removed.
- */
-export const formatTextToHTML = (
-  text: string | null | undefined,
-): { html: string } => {
-  return { html: escapeHTMLForMLHighlighting(text ?? "") };
-};
