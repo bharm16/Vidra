@@ -1,87 +1,24 @@
-export interface FactorScore {
-  factor: string;
-  label: string;
-  weight: number;
-  capability: number;
-  contribution: number;
-  explanation: string;
-}
+import type { z } from "zod";
+import type {
+  FactorScoreSchema,
+  ModelScoreSchema,
+  PromptRequirementsSchema,
+  RecommendationSummarySchema,
+  ModelRecommendationSchema,
+} from "@shared/schemas/model-intelligence.schemas";
 
-export interface PromptRequirements {
-  physics: {
-    hasComplexPhysics: boolean;
-    hasParticleSystems: boolean;
-    hasFluidDynamics: boolean;
-    hasSoftBodyPhysics: boolean;
-    physicsComplexity: "none" | "simple" | "moderate" | "complex";
-  };
-  character: {
-    hasHumanCharacter: boolean;
-    hasAnimalCharacter: boolean;
-    hasMechanicalCharacter: boolean;
-    requiresFacialPerformance: boolean;
-    requiresBodyLanguage: boolean;
-    requiresLipSync: boolean;
-    emotionalIntensity: "none" | "subtle" | "moderate" | "intense";
-  };
-  environment: {
-    complexity: "simple" | "moderate" | "complex";
-    type: "interior" | "exterior" | "abstract" | "mixed";
-    hasArchitecture: boolean;
-    hasNature: boolean;
-    hasUrbanElements: boolean;
-  };
-  lighting: {
-    requirements: "natural" | "stylized" | "dramatic" | "mixed";
-    complexity: "simple" | "moderate" | "complex";
-    hasPracticalLights: boolean;
-    requiresAtmospherics: boolean;
-  };
-  style: {
-    isPhotorealistic: boolean;
-    isStylized: boolean;
-    isAbstract: boolean;
-    requiresCinematicLook: boolean;
-    hasSpecificAesthetic: string | null;
-  };
-  motion: {
-    cameraComplexity: "static" | "simple" | "moderate" | "complex";
-    subjectComplexity: "static" | "simple" | "moderate" | "complex";
-    hasMorphing: boolean;
-    hasTransitions: boolean;
-  };
-  detectedCategories: string[];
-  confidenceScore: number;
-}
+// Response types are derived from the canonical Zod schema in shared/ — the
+// wire contract has a single source of truth. Do not re-declare these by hand.
+export type FactorScore = z.infer<typeof FactorScoreSchema>;
+export type ModelScore = z.infer<typeof ModelScoreSchema>;
+export type PromptRequirements = z.infer<typeof PromptRequirementsSchema>;
+export type ModelRecommendationSummary = z.infer<
+  typeof RecommendationSummarySchema
+>;
+export type ModelRecommendation = z.infer<typeof ModelRecommendationSchema>;
 
-export interface ModelScore {
-  modelId: string;
-  overallScore: number;
-  factorScores: FactorScore[];
-  strengths: string[];
-  weaknesses: string[];
-  warnings: string[];
-}
-
-export interface ModelRecommendationSummary {
-  modelId: string;
-  confidence?: "high" | "medium" | "low";
-  reasoning: string;
-}
-
-export interface ModelRecommendation {
-  promptId: string;
-  prompt: string;
-  requirements?: PromptRequirements;
-  recommendations: ModelScore[];
-  recommended: ModelRecommendationSummary;
-  alsoConsider?: ModelRecommendationSummary;
-  suggestComparison: boolean;
-  comparisonModels?: [string, string];
-  filteredOut?: Array<{ modelId: string; reason: string }>;
-  computedAt?: string;
-}
-
+// Request-only types (client → server). These have no canonical Zod schema on
+// the client, so they stay hand-written here.
 export interface ModelRecommendationSpan {
   text: string;
   role?: string;

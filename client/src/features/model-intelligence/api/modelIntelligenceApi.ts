@@ -17,5 +17,5 @@ export async function fetchModelRecommendation(
     throw new Error(parsed.error || "Failed to load model recommendation");
   }
 
-  return parsed.data as ModelRecommendation;
+  return parsed.data;
 }

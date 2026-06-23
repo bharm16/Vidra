@@ -18,7 +18,7 @@
  *     LLMs makes the eval slow, flaky, and budget-sensitive — and worse,
  *     conflates two failure modes (recommender drift vs span-labeling drift).
  *   - We mock spans per-prompt so this eval isolates the recommender.
- *   - All other dependencies (PromptRequirementsService, ModelScoringService,
+ *   - All other dependencies (deriveRequirementsFromRoles, ModelScoringService,
  *     ModelCapabilityRegistry, AvailabilityGateService) run as production code.
  *
  * Usage:
@@ -45,7 +45,7 @@ import type { PromptSpanProvider } from "../../server/src/llm/span-labeling/port
 import type {
   ModelRecommendation,
   PromptSpan,
-} from "../../server/src/services/model-intelligence/types/index.js";
+} from "../../server/src/services/model-intelligence/types.js";
 import type { VideoGenerationService } from "../../server/src/services/video-generation/VideoGenerationService.js";
 import type {
   VideoAvailabilitySnapshot,
@@ -382,7 +382,7 @@ function diffSnapshot(
     });
   }
 
-  // Requirements — drift here points at PromptRequirementsService changes
+  // Requirements — drift here points at requirementsMapper (deriveRequirementsFromRoles) changes
   for (const field of Object.keys(baseline.requirements) as Array<
     keyof PromptSnapshot["requirements"]
   >) {
