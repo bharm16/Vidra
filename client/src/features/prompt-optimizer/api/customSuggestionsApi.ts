@@ -12,10 +12,7 @@
 
 import { API_ENDPOINTS } from "@components/SuggestionsPanel/config/panelConfig";
 import { CustomSuggestionsResponseSchema } from "./customSuggestionsSchema";
-import {
-  CancellationError,
-  combineSignals,
-} from "@features/prompt-optimizer/utils/signalUtils";
+import { createTimeoutScope } from "@features/prompt-optimizer/utils/signalUtils";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import type { SuggestionItem } from "@components/SuggestionsPanel/hooks/types";
 
@@ -56,16 +53,10 @@ export async function fetchCustomSuggestions({
     throw new Error("Fetch API unavailable");
   }
 
-  // Create timeout controller for 3-second timeout
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => {
-    timeoutController.abort(new Error("Request timeout"));
-  }, CUSTOM_SUGGESTION_TIMEOUT_MS);
-
-  // Combine external signal (user cancellation) with timeout signal
-  const signal = externalSignal
-    ? combineSignals(externalSignal, timeoutController.signal)
-    : timeoutController.signal;
+  const timeout = createTimeoutScope(
+    externalSignal,
+    CUSTOM_SUGGESTION_TIMEOUT_MS,
+  );
 
   try {
     const authHeaders = await buildFirebaseAuthHeaders();
@@ -83,10 +74,10 @@ export async function fetchCustomSuggestions({
         contextAfter,
         metadata: metadata ?? undefined,
       }),
-      signal,
+      signal: timeout.signal,
     });
 
-    clearTimeout(timeoutId);
+    timeout.clear();
 
     if (!response.ok) {
       throw new Error(
@@ -103,25 +94,9 @@ export async function fetchCustomSuggestions({
         (item) => typeof item.text === "string" && item.text.trim().length > 0,
       );
   } catch (error: unknown) {
-    clearTimeout(timeoutId);
-
-    // Handle AbortError - distinguish between timeout and user cancellation
-    if (error instanceof Error && error.name === "AbortError") {
-      // Check if this was a timeout (our internal abort) vs user cancellation (external signal)
-      const isTimeout =
-        timeoutController.signal.aborted &&
-        (!externalSignal || !externalSignal.aborted);
-
-      if (isTimeout) {
-        // Timeout should be treated as an error, not silent cancellation
-        throw new Error("Request timed out after 3 seconds");
-      }
-
-      // User cancellation - throw CancellationError for silent handling
-      throw new CancellationError("Request cancelled by user");
-    }
-
-    // Re-throw other errors as-is
+    timeout.clear();
+    timeout.throwOnAbort(error);
+    // Re-throw non-abort errors as-is
     throw error;
   }
 }

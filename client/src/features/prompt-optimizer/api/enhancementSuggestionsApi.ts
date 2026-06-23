@@ -14,7 +14,7 @@ import {
   postEnhancementSuggestions,
   type EnhancementSuggestionsResponse,
 } from "@/api/enhancementSuggestionsApi";
-import { CancellationError, combineSignals } from "../utils/signalUtils";
+import { createTimeoutScope } from "../utils/signalUtils";
 
 /** Timeout for suggestion requests in milliseconds */
 const SUGGESTION_TIMEOUT_MS = 8000;
@@ -60,16 +60,7 @@ export async function fetchEnhancementSuggestions({
   editHistory = [],
   signal: externalSignal,
 }: FetchEnhancementSuggestionsParams): Promise<EnhancementSuggestionsResponse> {
-  // Create timeout controller for suggestion request timeout
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => {
-    timeoutController.abort(new Error("Request timeout"));
-  }, SUGGESTION_TIMEOUT_MS);
-
-  // Combine external signal (user cancellation) with timeout signal
-  const signal = externalSignal
-    ? combineSignals(externalSignal, timeoutController.signal)
-    : timeoutController.signal;
+  const timeout = createTimeoutScope(externalSignal, SUGGESTION_TIMEOUT_MS);
 
   try {
     // MAKE API CALL with cancellation support
@@ -95,10 +86,10 @@ export async function fetchEnhancementSuggestions({
         nearbySpans,
         editHistory,
       },
-      { signal },
+      { signal: timeout.signal },
     );
 
-    clearTimeout(timeoutId);
+    timeout.clear();
 
     return {
       suggestions: data.suggestions || [],
@@ -107,27 +98,9 @@ export async function fetchEnhancementSuggestions({
       ...(data._debug ? { _debug: data._debug } : {}),
     };
   } catch (error: unknown) {
-    clearTimeout(timeoutId);
-
-    // Handle AbortError - distinguish between timeout and user cancellation
-    if (error instanceof Error && error.name === "AbortError") {
-      // Check if this was a timeout (our internal abort) vs user cancellation (external signal)
-      const isTimeout =
-        timeoutController.signal.aborted &&
-        (!externalSignal || !externalSignal.aborted);
-
-      if (isTimeout) {
-        // Timeout should be treated as an error, not silent cancellation
-        throw new Error(
-          `Request timed out after ${Math.round(SUGGESTION_TIMEOUT_MS / 1000)} seconds`,
-        );
-      }
-
-      // User cancellation (new selection) - throw CancellationError for silent handling
-      throw new CancellationError("Request cancelled by user");
-    }
-
-    // Re-throw other errors as-is
+    timeout.clear();
+    timeout.throwOnAbort(error);
+    // Re-throw non-abort errors as-is
     throw error;
   }
 }

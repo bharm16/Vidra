@@ -78,3 +78,49 @@ export function isCancellationError(
 export function combineSignals(...signals: AbortSignal[]): AbortSignal {
   return AbortSignal.any(signals);
 }
+
+/**
+ * Create a timeout scope for a fetch-style request.
+ *
+ * Returns an AbortSignal that fires after `timeoutMs` (combined with an
+ * optional external cancellation signal), a `clear()` to cancel the timer once
+ * the request settles, and `throwOnAbort()` which translates an AbortError into
+ * either a timeout Error or a CancellationError (so user cancellation can be
+ * handled silently). Centralizes the timeout-vs-cancellation discrimination
+ * shared by the suggestion request APIs.
+ */
+export function createTimeoutScope(
+  externalSignal: AbortSignal | undefined,
+  timeoutMs: number,
+): {
+  signal: AbortSignal;
+  clear: () => void;
+  throwOnAbort: (error: unknown) => void;
+} {
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => {
+    timeoutController.abort(new Error("Request timeout"));
+  }, timeoutMs);
+
+  const signal = externalSignal
+    ? combineSignals(externalSignal, timeoutController.signal)
+    : timeoutController.signal;
+
+  return {
+    signal,
+    clear: () => clearTimeout(timeoutId),
+    throwOnAbort: (error: unknown) => {
+      if (error instanceof Error && error.name === "AbortError") {
+        const isTimeout =
+          timeoutController.signal.aborted &&
+          (!externalSignal || !externalSignal.aborted);
+        if (isTimeout) {
+          throw new Error(
+            `Request timed out after ${Math.round(timeoutMs / 1000)} seconds`,
+          );
+        }
+        throw new CancellationError("Request cancelled by user");
+      }
+    },
+  };
+}
