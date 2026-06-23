@@ -4,7 +4,7 @@ import { AIModelService } from "@services/ai-model/index";
 import { EnhancementService } from "@services/enhancement/index";
 import { BrainstormContextBuilder } from "@services/enhancement/services/BrainstormContextBuilder";
 import { PromptCoherenceService } from "@services/enhancement/services/PromptCoherenceService";
-import { SuggestionDiversityEnforcer } from "@services/enhancement/services/SuggestionDeduplicator";
+import { SuggestionDiversityEnforcer } from "@services/enhancement/services/SuggestionDiversityEnforcer";
 import { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
 import type { CacheService } from "@services/cache/CacheService";
 import { VideoPromptService } from "@services/video-prompt-analysis/index";

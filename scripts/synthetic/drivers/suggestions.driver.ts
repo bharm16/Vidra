@@ -16,7 +16,7 @@ import type {
 } from "../../../server/src/services/enhancement/v2/types.js";
 import { VideoPromptService } from "../../../server/src/services/video-prompt-analysis/index.js";
 import { AIServiceVideoPromptLlmGateway } from "../../../server/src/services/video-prompt-analysis/services/llm/VideoPromptLlmGateway.js";
-import { SuggestionDiversityEnforcer } from "../../../server/src/services/enhancement/services/SuggestionDeduplicator.js";
+import { SuggestionDiversityEnforcer } from "../../../server/src/services/enhancement/services/SuggestionDiversityEnforcer.js";
 import type { AIModelService } from "../../../server/src/services/ai-model/index.js";
 import type { SuggestionsTelemetryService } from "../../../server/src/services/observability/SuggestionsTelemetryService.js";
 import { validateSuggestionsFixtures } from "../utils/fixture-validation.js";

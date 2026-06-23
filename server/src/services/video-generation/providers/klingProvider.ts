@@ -130,7 +130,7 @@ function resolveKlingDuration(
   return undefined;
 }
 
-async function _rawKlingFetch(
+async function klingFetch(
   baseUrl: string,
   apiKey: string,
   path: string,
@@ -182,15 +182,6 @@ async function _rawKlingFetch(
   }
 
   return json;
-}
-
-async function klingFetch(
-  baseUrl: string,
-  apiKey: string,
-  path: string,
-  init: RequestInit,
-): Promise<unknown> {
-  return _rawKlingFetch(baseUrl, apiKey, path, init);
 }
 
 function parseKlingResponse<T>(

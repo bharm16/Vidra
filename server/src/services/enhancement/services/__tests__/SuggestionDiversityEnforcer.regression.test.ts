@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SuggestionDiversityEnforcer } from "../SuggestionDeduplicator";
+import { SuggestionDiversityEnforcer } from "../SuggestionDiversityEnforcer";
 import type { AIService } from "../types";
 
 function createService(): SuggestionDiversityEnforcer {
