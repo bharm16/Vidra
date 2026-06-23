@@ -8,6 +8,7 @@ import {
   extractVideoContentAssetId,
   hasGcsSignedUrlParams,
   parseGcsSignedUrlExpiryMs,
+  safeParseUrl,
 } from "@/utils/storageUrl";
 import { logger } from "@/services/LoggingService";
 
@@ -82,24 +83,9 @@ const isTransientApiFailure = (error: unknown): boolean => {
   return false;
 };
 
-const parseCandidateUrl = (rawUrl: string): URL | null => {
-  const trimmed = rawUrl.trim();
-  if (!trimmed) return null;
-  try {
-    return new URL(trimmed);
-  } catch {
-    if (typeof window === "undefined") return null;
-    try {
-      return new URL(trimmed, window.location.origin);
-    } catch {
-      return null;
-    }
-  }
-};
-
 const isBlockedRawPreviewUrl = (rawUrl: string | null | undefined): boolean => {
   if (typeof rawUrl !== "string" || rawUrl.trim().length === 0) return false;
-  const parsed = parseCandidateUrl(rawUrl);
+  const parsed = safeParseUrl(rawUrl);
   if (!parsed) return false;
   const path = parsed.pathname;
   if (!path.startsWith(PREVIEW_ROUTE_PREFIX)) return false;

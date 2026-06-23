@@ -18,6 +18,15 @@ import type { ParseResult, ParseResultStatus } from "../types";
 
 const EMPTY_SPANS: HighlightSpan[] = [];
 
+const VALID_STATUSES = new Set<ParseResultStatus>([
+  "idle",
+  "loading",
+  "refreshing",
+  "success",
+  "stale",
+  "error",
+]);
+
 export interface UseParseResultOptions {
   labeledSpans: Array<{
     start: number;
@@ -82,14 +91,6 @@ export function useParseResult({
 
   // Map upstream SpanLabelingStatus to ParseResultStatus, keeping recognized
   // values and falling back to 'idle' for unexpected strings.
-  const VALID_STATUSES = new Set<ParseResultStatus>([
-    "idle",
-    "loading",
-    "refreshing",
-    "success",
-    "stale",
-    "error",
-  ]);
   const status: ParseResultStatus = VALID_STATUSES.has(
     labelingStatus as ParseResultStatus,
   )

@@ -1,6 +1,6 @@
 const VIDEO_CONTENT_PREFIX = "/api/preview/video/content/";
 
-function safeParseUrl(rawUrl: string): URL | null {
+export function safeParseUrl(rawUrl: string): URL | null {
   const trimmed = rawUrl.trim();
   if (!trimmed) return null;
   try {

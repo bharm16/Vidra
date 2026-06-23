@@ -76,20 +76,5 @@ export function isCancellationError(
  * ```
  */
 export function combineSignals(...signals: AbortSignal[]): AbortSignal {
-  const controller = new AbortController();
-
-  for (const signal of signals) {
-    // If any signal is already aborted, abort immediately
-    if (signal.aborted) {
-      controller.abort(signal.reason);
-      return controller.signal;
-    }
-
-    // Listen for abort on each signal
-    signal.addEventListener("abort", () => controller.abort(signal.reason), {
-      once: true,
-    });
-  }
-
-  return controller.signal;
+  return AbortSignal.any(signals);
 }
