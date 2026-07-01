@@ -35,7 +35,6 @@ import { useInlineSuggestionState } from "./useInlineSuggestionState";
 import { useCanvasEditorState } from "./useCanvasEditorState";
 import { useCanvasGenerations } from "./useCanvasGenerations";
 import { useCanvasCoherence } from "./useCanvasCoherence";
-import { scrollToSpan } from "@features/prompt-optimizer/SpanCategoryAccordion/utils/spanFormatting";
 import { postEnhancementSuggestions } from "@/api/enhancementSuggestionsApi";
 import { buildSuggestionContext } from "@features/prompt-optimizer/utils/enhancementSuggestionContext";
 import { prepareSpanContext } from "@features/span-highlighting/utils/spanProcessing";
@@ -608,72 +607,6 @@ export function usePromptCanvasOrchestration({
     onApplyCoherenceFix,
     onScrollToCoherenceSpan,
   });
-
-  const focusSpan = useCallback(
-    (spanId: string | null): void => {
-      if (!spanId) return;
-
-      setSelectedSpanId(spanId);
-
-      const span = Array.isArray(parseResult?.spans)
-        ? parseResult.spans.find((candidate) => {
-            const candidateId =
-              typeof candidate?.id === "string" && candidate.id.length > 0
-                ? candidate.id
-                : `span_${candidate.start}_${candidate.end}`;
-            return candidateId === spanId;
-          })
-        : null;
-
-      if (span) {
-        scrollToSpan(editorRef as React.RefObject<HTMLElement>, { id: spanId });
-      }
-
-      if (!span || !onFetchSuggestions) {
-        return;
-      }
-
-      const quote =
-        typeof span.quote === "string" && span.quote.trim().length > 0
-          ? span.quote
-          : typeof span.text === "string"
-            ? span.text
-            : "";
-
-      onFetchSuggestions({
-        highlightedText: quote,
-        originalText: quote,
-        displayedPrompt: normalizedDisplayedPrompt ?? "",
-        range: null,
-        offsets: { start: span.start, end: span.end },
-        metadata: {
-          category: span.category,
-          source: span.source,
-          spanId,
-          start: span.start,
-          end: span.end,
-          startGrapheme: span.startGrapheme,
-          endGrapheme: span.endGrapheme,
-          validatorPass: span.validatorPass,
-          confidence: span.confidence,
-          quote,
-          leftCtx: span.leftCtx,
-          rightCtx: span.rightCtx,
-          idempotencyKey: span.idempotencyKey,
-          span: span,
-        },
-        trigger: "category-accordion",
-        allLabeledSpans: parseResult.spans,
-      });
-    },
-    [
-      onFetchSuggestions,
-      normalizedDisplayedPrompt,
-      parseResult.spans,
-      editorRef,
-      setSelectedSpanId,
-    ],
-  );
 
   const handleEnhance = useCallback((): void => {
     if (isOptimizing) {
