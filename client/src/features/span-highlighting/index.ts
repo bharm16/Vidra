@@ -36,7 +36,6 @@ export {
 
 // Validation - Most commonly used
 export {
-  validateSpan,
   sanitizeSpans,
   normalizeSpan,
   snapSpanToTokenBoundaries,
@@ -65,8 +64,6 @@ export { SpanLabelingApi } from "./api/index.ts";
 // ============================================================================
 
 export { DEFAULT_POLICY, DEFAULT_OPTIONS } from "./config/index.ts";
-
-export { CATEGORY_CAPS } from "./utils/index.ts";
 
 // ============================================================================
 // NAMESPACE EXPORTS (For organized imports)

@@ -4,11 +4,18 @@ import { convertLabeledSpansToHighlights } from "@features/span-highlighting/uti
 import { TAXONOMY } from "@shared/taxonomy";
 
 describe("highlightConversion", () => {
-  it("maps legacy roles to taxonomy ids", () => {
+  it("trusts the server-normalized category and drops spans without one", () => {
+    // Public span category contract: normalization happens once, server-side
+    // (toPublicSpan). The client trusts `category`; role-only spans are
+    // structurally invalid.
     const text = "Subject";
-    const spans = [{ start: 0, end: 7, role: "Subject" }];
-
-    const result = convertLabeledSpansToHighlights({ spans, text });
+    const result = convertLabeledSpansToHighlights({
+      spans: [
+        { start: 0, end: 7, category: TAXONOMY.SUBJECT.id },
+        { start: 0, end: 7, role: "Subject" },
+      ],
+      text,
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0]?.category).toBe(TAXONOMY.SUBJECT.id);

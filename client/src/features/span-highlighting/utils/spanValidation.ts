@@ -62,10 +62,17 @@ export function normalizeSpan(span: unknown): NormalizedSpan | null {
 
   const text = (span.quote || span.text || "").trim();
 
+  // Public span category contract: `category` is normalized server-side and
+  // always valid. A span without one is structurally invalid — drop it
+  // rather than inventing the invalid "unknown".
+  if (!span.category) {
+    return null;
+  }
+
   const normalized: NormalizedSpan = {
     text,
-    role: span.role || span.category || "unknown",
-    category: span.category || span.role || "unknown",
+    role: span.category,
+    category: span.category,
   };
 
   if (typeof span.confidence === "number") {

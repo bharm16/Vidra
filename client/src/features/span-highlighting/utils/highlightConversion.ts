@@ -4,7 +4,6 @@
  * Now uses unified taxonomy system with namespaced IDs
  */
 
-import { TAXONOMY, normalizeRole } from "@shared/taxonomy";
 import { logger } from "@/services/LoggingService";
 
 const log = logger.child("highlightConversion");
@@ -14,8 +13,7 @@ const CONTEXT_WINDOW_CHARS = 20;
 
 export interface LLMSpan {
   id?: string;
-  role?: string;
-  category?: string; // API returns 'category', legacy responses may have 'role'
+  category?: string; // Public span category: normalized once, server-side
   start: number;
   end: number;
   confidence?: number;
@@ -173,16 +171,22 @@ export const convertLabeledSpansToHighlights = ({
         return null;
       }
 
-      // Normalize role to valid taxonomy ID (handles both new and legacy formats)
-      // API returns 'category', but legacy responses may have 'role'
-      const rawRole =
-        typeof span.category === "string"
+      // The server normalizes once (toPublicSpan): `category` is always a
+      // valid taxonomy id. Trust it; a span without one is structurally
+      // invalid, same as a span with bad indices.
+      const category =
+        typeof span.category === "string" && span.category
           ? span.category
-          : typeof span.role === "string"
-            ? span.role
-            : TAXONOMY.SUBJECT.id;
-      const category = normalizeRole(rawRole);
-      const role = rawRole;
+          : null;
+      if (!category) {
+        if (import.meta.env.DEV) {
+          log.debug("convertLabeledSpansToHighlights missing category", {
+            span,
+          });
+        }
+        return null;
+      }
+      const role = category;
 
       const start = Number(span.start);
       const end = Number(span.end);

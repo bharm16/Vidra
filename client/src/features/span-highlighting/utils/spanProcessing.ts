@@ -102,10 +102,12 @@ export function findNearbySpans(
       const position: "before" | "after" =
         distanceBefore >= 0 ? "before" : "after";
 
+      // Public span category contract: `category` is normalized server-side
+      // and always valid; spans without one are dropped below.
       return {
         text: (span.quote || span.text || "").trim(),
-        role: span.role || span.category || "unknown",
-        category: span.category || span.role || "unknown",
+        role: span.category ?? "",
+        category: span.category ?? "",
         distance,
         position,
         start: span.start,
@@ -115,7 +117,7 @@ export function findNearbySpans(
           : {}),
       };
     })
-    .filter((span) => span.text) // Filter out spans with empty text
+    .filter((span) => span.text && span.category) // Drop empty text or category
     .sort((a, b) => a.distance - b.distance); // Sort by proximity
 }
 

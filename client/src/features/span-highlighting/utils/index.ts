@@ -24,13 +24,6 @@ export {
 // DOM utilities - Coverage tracking
 export { hasOverlap, addToCoverage } from "./coverageTracking";
 
-// Validation - Category and taxonomy validation
-export {
-  validateSpan,
-  CATEGORY_CAPS,
-  LEGACY_MAPPINGS,
-} from "./categoryValidators";
-
 // Validation - Span structure validation
 export { sanitizeSpans, normalizeSpan } from "./spanValidation";
 

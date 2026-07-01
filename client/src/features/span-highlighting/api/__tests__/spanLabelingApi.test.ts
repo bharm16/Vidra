@@ -48,6 +48,9 @@ describe("SpanLabelingApi", () => {
               confidence: 0.9,
               text: "Hero",
             },
+            // The server contract (toPublicSpan) always emits `category`;
+            // a role-only span is structurally invalid and must be dropped,
+            // not re-derived client-side.
             { start: 5, end: 10, role: "camera", confidence: 0.7 },
           ],
           meta: { source: "blocking" },
@@ -84,13 +87,6 @@ describe("SpanLabelingApi", () => {
           category: "subject",
           confidence: 0.9,
           text: "Hero",
-        },
-        {
-          start: 5,
-          end: 10,
-          category: "camera",
-          confidence: 0.7,
-          role: "camera",
         },
       ],
       meta: { source: "blocking" },

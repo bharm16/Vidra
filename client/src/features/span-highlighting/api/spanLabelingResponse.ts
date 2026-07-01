@@ -11,12 +11,9 @@ export function parseSpanLabel(value: unknown): SpanLabel | null {
 
   const start = typeof value.start === "number" ? value.start : null;
   const end = typeof value.end === "number" ? value.end : null;
-  const category =
-    typeof value.category === "string"
-      ? value.category
-      : typeof value.role === "string"
-        ? value.role
-        : null;
+  // The server normalizes once (toPublicSpan): `category` is always a valid
+  // taxonomy id. The client trusts it — no role fallback, no re-derivation.
+  const category = typeof value.category === "string" ? value.category : null;
   const confidence =
     typeof value.confidence === "number" ? value.confidence : null;
   if (start === null || end === null || !category || confidence === null)
@@ -31,9 +28,6 @@ export function parseSpanLabel(value: unknown): SpanLabel | null {
 
   if (typeof value.text === "string") {
     span.text = value.text;
-  }
-  if (typeof value.role === "string") {
-    span.role = value.role;
   }
 
   return span;
