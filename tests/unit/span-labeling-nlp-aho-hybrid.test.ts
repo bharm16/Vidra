@@ -97,6 +97,7 @@ describe("Aho-Corasick + hybrid NLP/LLM coordination", () => {
     ]);
     vi.spyOn(spanValidator, "validateSpans").mockReturnValue({
       ok: true,
+      verdict: "pass" as const,
       errors: [],
       result: {
         spans: [{ text: "shot", role: "shot.type", confidence: 0.3 }],

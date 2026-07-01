@@ -51,8 +51,9 @@ describe("normalizeAndCorrectSpans", () => {
       );
 
       expect(result.errors.length).toBe(4);
-      expect(result.errors[0]).toContain("span[0]");
-      expect(result.errors[0]).toContain("invalid span object");
+      expect(result.errors[0]?.message).toContain("span[0]");
+      expect(result.errors[0]?.message).toContain("invalid span object");
+      expect(result.errors[0]?.kind).toBe("retryable");
     });
 
     it("drops non-object span in lenient mode", () => {
@@ -79,7 +80,8 @@ describe("normalizeAndCorrectSpans", () => {
         false,
       );
 
-      expect(result.errors[0]).toContain("missing text");
+      expect(result.errors[0]?.message).toContain("missing text");
+      expect(result.errors[0]?.kind).toBe("retryable");
     });
 
     it("reports error when span text is empty in strict mode", () => {
@@ -92,7 +94,7 @@ describe("normalizeAndCorrectSpans", () => {
         false,
       );
 
-      expect(result.errors[0]).toContain("missing text");
+      expect(result.errors[0]?.message).toContain("missing text");
     });
 
     it("reports error when span text not found in source in strict mode", () => {
@@ -105,7 +107,8 @@ describe("normalizeAndCorrectSpans", () => {
         false,
       );
 
-      expect(result.errors[0]).toContain("not found in source");
+      expect(result.errors[0]?.message).toContain("not found in source");
+      expect(result.errors[0]?.kind).toBe("retryable");
     });
 
     it("drops span when text not found in lenient mode", () => {

@@ -247,6 +247,7 @@ describe("repair.attemptRepair", () => {
         .spyOn(SpanValidator, "validateSpans")
         .mockReturnValue({
           ok: true,
+          verdict: "pass" as const,
           errors: [],
           result: { spans: [], meta: { version: "v1", notes: "" } },
         });
@@ -274,7 +275,11 @@ describe("repair.attemptRepair", () => {
             enableLogprobs: false,
           },
           providerName: "openai",
-          parseResponseText: () => ({ ok: false, error: "parse-fail" }),
+          parseResponseText: () => ({
+            ok: false,
+            verdict: "retryable" as const,
+            error: "parse-fail",
+          }),
           normalizeParsedResponse: (value) => value,
           injectDefensiveMeta: () => undefined,
         }),
@@ -293,6 +298,7 @@ describe("repair.attemptRepair", () => {
       );
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: false,
+        verdict: "retryable" as const,
         errors: ["bad span"],
         result: { spans: [], meta: { version: "v1", notes: "" } },
       });
@@ -320,7 +326,11 @@ describe("repair.attemptRepair", () => {
             enableLogprobs: false,
           },
           providerName: "openai",
-          parseResponseText: (text) => ({ ok: true, value: JSON.parse(text) }),
+          parseResponseText: (text) => ({
+            ok: true,
+            verdict: "pass" as const,
+            value: JSON.parse(text),
+          }),
           normalizeParsedResponse: (value) => value,
           injectDefensiveMeta: () => undefined,
         }),
@@ -343,6 +353,7 @@ describe("repair.attemptRepair", () => {
           receivedMeta = meta as Record<string, unknown>;
           return {
             ok: true,
+            verdict: "pass" as const,
             errors: [],
             result: {
               spans: [],
@@ -374,7 +385,11 @@ describe("repair.attemptRepair", () => {
           enableLogprobs: false,
         },
         providerName: "gemini",
-        parseResponseText: (text) => ({ ok: true, value: JSON.parse(text) }),
+        parseResponseText: (text) => ({
+          ok: true,
+          verdict: "pass" as const,
+          value: JSON.parse(text),
+        }),
         normalizeParsedResponse: (value) => value,
         injectDefensiveMeta: (value) => {
           value.meta = { version: "v9", notes: "" };
@@ -398,6 +413,7 @@ describe("repair.attemptRepair", () => {
           validationInput = meta as Record<string, unknown>;
           return {
             ok: true,
+            verdict: "pass" as const,
             errors: [],
             result: {
               spans: [],
@@ -429,7 +445,11 @@ describe("repair.attemptRepair", () => {
           enableLogprobs: false,
         },
         providerName: "openai",
-        parseResponseText: (text) => ({ ok: true, value: JSON.parse(text) }),
+        parseResponseText: (text) => ({
+          ok: true,
+          verdict: "pass" as const,
+          value: JSON.parse(text),
+        }),
         normalizeParsedResponse: (value) => ({
           ...value,
           meta: { version: "v1", notes: "" },
@@ -451,6 +471,7 @@ describe("repair.attemptRepair", () => {
       );
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: true,
+        verdict: "pass" as const,
         errors: [],
         result: { spans: [], meta: { version: "v1", notes: "ok" } },
       });
@@ -477,7 +498,11 @@ describe("repair.attemptRepair", () => {
           enableLogprobs: false,
         },
         providerName: "openai",
-        parseResponseText: (text) => ({ ok: true, value: JSON.parse(text) }),
+        parseResponseText: (text) => ({
+          ok: true,
+          verdict: "pass" as const,
+          value: JSON.parse(text),
+        }),
         normalizeParsedResponse: (value) => value,
         injectDefensiveMeta: () => undefined,
       });

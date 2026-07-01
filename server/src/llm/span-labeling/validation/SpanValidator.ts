@@ -87,7 +87,13 @@ export function validateSpans({
     lenient,
   );
   const sanitized = phase1Result.sanitized;
-  const errors = phase1Result.errors;
+  const errors = phase1Result.errors.map((error) => error.message);
+  const verdict =
+    phase1Result.errors.length === 0
+      ? "pass"
+      : phase1Result.errors.some((error) => error.kind === "retryable")
+        ? "retryable"
+        : "terminal";
   const phase1Notes = phase1Result.notes;
 
   // Phase 2: Sort by position
@@ -167,6 +173,7 @@ export function validateSpans({
 
   return {
     ok: errors.length === 0,
+    verdict,
     errors,
     result: {
       spans: finalSpans,

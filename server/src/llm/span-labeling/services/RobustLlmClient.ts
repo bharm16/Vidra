@@ -315,8 +315,19 @@ export class RobustLlmClient implements ILlmClient {
       return this._postProcessResult(validation.result);
     }
 
-    // Handle validation failure
-    if (!enableRepair) {
+    // Handle validation failure. A `terminal` verdict means every error can
+    // only be resolved by dropping the offending span (the repair prompt
+    // forbids changing span text) — a repair round-trip would burn a model
+    // call to reach the same lenient outcome, so skip straight to it.
+    if (!enableRepair || validation.verdict === "terminal") {
+      if (enableRepair) {
+        logger.info("Skipping repair: all validation errors are terminal", {
+          operation: "span_labeling",
+          provider: providerName,
+          errorCount: validation.errors.length,
+        });
+      }
+
       validation = validateSpans({
         spans: parsedValue.spans || [],
         meta,

@@ -3,7 +3,7 @@ import { getParentCategory } from "#shared/taxonomy.ts";
 import { wordCount } from "../utils/textUtils.js";
 import { normalizeSpan } from "../processing/SpanNormalizer.js";
 import type { SubstringPositionCache } from "../cache/SubstringPositionCache.js";
-import type { ValidationPolicy } from "../types.js";
+import type { SpanValidationError, ValidationPolicy } from "../types.js";
 import type {
   SpanInput,
   NormalizedSpan,
@@ -119,7 +119,7 @@ function refineSpanBoundaries(
 
 export interface NormalizeAndCorrectResult {
   sanitized: NormalizedSpan[];
-  errors: string[];
+  errors: SpanValidationError[];
   notes: string[];
 }
 
@@ -146,7 +146,7 @@ export function normalizeAndCorrectSpans(
   cache: SubstringPositionCache,
   lenient: boolean,
 ): NormalizeAndCorrectResult {
-  const errors: string[] = [];
+  const errors: SpanValidationError[] = [];
   const validationNotes: string[] = [];
   const autoFixNotes: string[] = [];
   const sanitized: NormalizedSpan[] = [];
@@ -159,7 +159,11 @@ export function normalizeAndCorrectSpans(
       : originalSpan;
 
     if (!span || typeof span !== "object") {
-      if (!lenient) errors.push(`${label} invalid span object`);
+      if (!lenient)
+        errors.push({
+          message: `${label} invalid span object`,
+          kind: "retryable",
+        });
       else validationNotes.push(`${label} dropped: invalid span object`);
       return;
     }
@@ -168,7 +172,8 @@ export function normalizeAndCorrectSpans(
 
     // Check for text field
     if (typeof spanObj.text !== "string" || spanObj.text.length === 0) {
-      if (!lenient) errors.push(`${label} missing text`);
+      if (!lenient)
+        errors.push({ message: `${label} missing text`, kind: "retryable" });
       else validationNotes.push(`${label} dropped: missing text`);
       return;
     }
@@ -230,7 +235,10 @@ export function normalizeAndCorrectSpans(
 
     if (!corrected) {
       if (!lenient) {
-        errors.push(`${label} text "${spanObj.text}" not found in source`);
+        errors.push({
+          message: `${label} text "${spanObj.text}" not found in source`,
+          kind: "retryable",
+        });
       } else {
         validationNotes.push(`${label} dropped: text not found in source`);
       }
@@ -278,9 +286,10 @@ export function normalizeAndCorrectSpans(
     const normalized = normalizeSpan(correctedSpan, text, lenient);
     if (!normalized || !normalized.role) {
       if (!lenient) {
-        errors.push(
-          `${label} role "${spanObj.role}" is not in the allowed set (${Array.from(ROLE_SET).join(", ")})`,
-        );
+        errors.push({
+          message: `${label} role "${spanObj.role}" is not in the allowed set (${Array.from(ROLE_SET).join(", ")})`,
+          kind: "retryable",
+        });
       }
       return;
     }
@@ -309,9 +318,12 @@ export function normalizeAndCorrectSpans(
       wordCount(normalized.text) > adjustedLimit
     ) {
       if (!lenient) {
-        errors.push(
-          `${label} exceeds non-technical word limit (${adjustedLimit} words)`,
-        );
+        // Terminal: the repair prompt forbids changing span text, so an
+        // over-limit span can only ever be resolved by dropping it.
+        errors.push({
+          message: `${label} exceeds non-technical word limit (${adjustedLimit} words)`,
+          kind: "terminal",
+        });
       } else {
         validationNotes.push(
           `${label} dropped: exceeds non-technical word limit`,

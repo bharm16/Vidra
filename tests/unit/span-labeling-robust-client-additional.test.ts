@@ -93,11 +93,13 @@ describe("RobustLlmClient (additional)", () => {
       validateSpansSpy
         .mockReturnValueOnce({
           ok: false,
+          verdict: "retryable" as const,
           errors: ["bad"],
           result: { spans: [], meta: { version: "v1", notes: "" } },
         })
         .mockReturnValueOnce({
           ok: true,
+          verdict: "pass" as const,
           errors: [],
           result: { spans: [], meta: { version: "v1", notes: "lenient" } },
         });
@@ -118,6 +120,7 @@ describe("RobustLlmClient (additional)", () => {
       vi.spyOn(SpanValidator, "validateSpans").mockImplementation(
         ({ options }) => ({
           ok: true,
+          verdict: "pass" as const,
           errors: [],
           result: {
             spans: [],
@@ -153,6 +156,7 @@ describe("RobustLlmClient (additional)", () => {
 
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: true,
+        verdict: "pass" as const,
         errors: [],
         result: {
           spans: [{ text: "two-pass", role: "style" }],
@@ -175,6 +179,7 @@ describe("RobustLlmClient (additional)", () => {
 
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: false,
+        verdict: "retryable" as const,
         errors: ["bad"],
         result: { spans: [], meta: { version: "v1", notes: "" } },
       });
@@ -193,6 +198,51 @@ describe("RobustLlmClient (additional)", () => {
       });
 
       expect(result.meta.notes).toBe("repaired");
+    });
+
+    it("skips the repair round-trip when all validation errors are terminal", async () => {
+      const callModelSpy = vi
+        .spyOn(ModelInvocation, "callModel")
+        .mockResolvedValue({
+          text: JSON.stringify({
+            spans: [],
+            meta: { version: "v1", notes: "" },
+          }),
+        });
+
+      // Strict validation fails with terminal-only errors (e.g. word-limit
+      // violations the repair prompt is forbidden from fixing); the lenient
+      // pass drops the offending spans and succeeds.
+      const validateSpansSpy = vi.spyOn(SpanValidator, "validateSpans");
+      validateSpansSpy
+        .mockReturnValueOnce({
+          ok: false,
+          verdict: "terminal" as const,
+          errors: ["span[0] exceeds non-technical word limit (8 words)"],
+          result: { spans: [], meta: { version: "v1", notes: "" } },
+        })
+        .mockReturnValueOnce({
+          ok: true,
+          verdict: "pass" as const,
+          errors: [],
+          result: { spans: [], meta: { version: "v1", notes: "lenient" } },
+        });
+
+      const repairSpy = vi.spyOn(RepairModule, "attemptRepair");
+
+      const client = new TestRobustClient("openai");
+      const result = await client.getSpans({
+        ...createParams(),
+        enableRepair: true,
+      });
+
+      expect(repairSpy).not.toHaveBeenCalled();
+      expect(callModelSpy).toHaveBeenCalledTimes(1);
+      expect(result.meta.notes).toBe("lenient");
+      expect(validateSpansSpy).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ attempt: 2 }),
+      );
     });
   });
 });

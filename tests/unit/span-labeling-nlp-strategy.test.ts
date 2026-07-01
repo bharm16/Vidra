@@ -90,6 +90,7 @@ describe("NlpSpanStrategy", () => {
       ]);
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: true,
+        verdict: "pass" as const,
         errors: [],
         result: {
           spans: [{ text: "shot", role: "shot.type", confidence: 0.4 }],
@@ -138,6 +139,7 @@ describe("NlpSpanStrategy", () => {
       vi.mocked(NlpSpanService.isGlinerAvailable).mockReturnValue(false);
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: true,
+        verdict: "pass" as const,
         errors: [],
         result: {
           spans: [{ text: "subject", role: "subject", confidence: 0.9 }],
@@ -171,6 +173,7 @@ describe("NlpSpanStrategy", () => {
       ]);
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: true,
+        verdict: "pass" as const,
         errors: [],
         result: {
           spans: [
@@ -203,6 +206,7 @@ describe("NlpSpanStrategy", () => {
       ]);
       vi.spyOn(SpanValidator, "validateSpans").mockReturnValue({
         ok: true,
+        verdict: "pass" as const,
         errors: [],
         result: {
           spans: [{ text: "hero", role: "subject", confidence: 0.8 }],
