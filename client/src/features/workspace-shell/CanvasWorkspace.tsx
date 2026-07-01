@@ -84,31 +84,6 @@ interface CanvasWorkspaceProps {
   onAutocompleteSelect: (asset: AssetSuggestion) => void;
   onAutocompleteClose: () => void;
   onAutocompleteIndexChange: (index: number) => void;
-  selectedSpanId: string | null;
-  suggestionCount: number;
-  suggestionsListRef: React.RefObject<HTMLDivElement>;
-  inlineSuggestions: InlineSuggestion[];
-  activeSuggestionIndex: number;
-  onActiveSuggestionChange: (index: number) => void;
-  interactionSourceRef: React.MutableRefObject<"keyboard" | "mouse" | "auto">;
-  onSuggestionClick: (suggestion: SuggestionItem | string) => void;
-  onCloseInlinePopover: () => void;
-  selectionLabel: string;
-  onApplyActiveSuggestion: () => void;
-  isInlineLoading: boolean;
-  isInlineError: boolean;
-  inlineErrorMessage: string;
-  isInlineEmpty: boolean;
-  customRequest: string;
-  onCustomRequestChange: (value: string) => void;
-  customRequestError: string;
-  onCustomRequestErrorChange: (value: string) => void;
-  onCustomRequestSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  isCustomRequestDisabled: boolean;
-  isCustomLoading: boolean;
-  responseMetadata?: Record<string, unknown> | null;
-  onCopyAllDebug?: () => void;
-  isBulkCopyLoading?: boolean;
   onReuseGeneration: (generation: Generation) => void;
   onToggleGenerationFavorite: (
     generationId: string,
@@ -150,31 +125,6 @@ export function CanvasWorkspace({
   onAutocompleteSelect,
   onAutocompleteClose,
   onAutocompleteIndexChange,
-  selectedSpanId,
-  suggestionCount,
-  suggestionsListRef,
-  inlineSuggestions,
-  activeSuggestionIndex,
-  onActiveSuggestionChange,
-  interactionSourceRef,
-  onSuggestionClick,
-  onCloseInlinePopover,
-  selectionLabel,
-  onApplyActiveSuggestion,
-  isInlineLoading,
-  isInlineError,
-  inlineErrorMessage,
-  isInlineEmpty,
-  customRequest,
-  onCustomRequestChange,
-  customRequestError,
-  onCustomRequestErrorChange,
-  onCustomRequestSubmit,
-  isCustomRequestDisabled,
-  isCustomLoading,
-  responseMetadata = null,
-  onCopyAllDebug,
-  isBulkCopyLoading = false,
   onReuseGeneration,
   onToggleGenerationFavorite,
   onEnhance,
@@ -429,31 +379,6 @@ export function CanvasWorkspace({
     onAutocompleteSelect,
     onAutocompleteClose,
     onAutocompleteIndexChange,
-    selectedSpanId,
-    suggestionCount,
-    suggestionsListRef,
-    inlineSuggestions,
-    activeSuggestionIndex,
-    onActiveSuggestionChange,
-    interactionSourceRef,
-    onSuggestionClick,
-    onCloseInlinePopover,
-    selectionLabel,
-    onApplyActiveSuggestion,
-    isInlineLoading,
-    isInlineError,
-    inlineErrorMessage,
-    isInlineEmpty,
-    customRequest,
-    onCustomRequestChange,
-    customRequestError,
-    onCustomRequestErrorChange,
-    onCustomRequestSubmit,
-    isCustomRequestDisabled,
-    isCustomLoading,
-    responseMetadata: responseMetadata ?? null,
-    ...(onCopyAllDebug ? { onCopyAllDebug } : {}),
-    ...(typeof isBulkCopyLoading === "boolean" ? { isBulkCopyLoading } : {}),
     isI2VMode: Boolean(domain.startFrame?.url),
   };
 

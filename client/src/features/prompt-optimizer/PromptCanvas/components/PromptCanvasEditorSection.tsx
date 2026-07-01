@@ -81,31 +81,6 @@ type PromptCanvasEditorSectionProps = Pick<
   | "onCancelHideLockButton"
   | "onLockButtonMouseLeave"
   | "isHoveredLocked"
-  | "selectedSpanId"
-  | "suggestionCount"
-  | "suggestionsListRef"
-  | "inlineSuggestions"
-  | "activeSuggestionIndex"
-  | "onActiveSuggestionChange"
-  | "interactionSourceRef"
-  | "onSuggestionClick"
-  | "onCloseInlinePopover"
-  | "selectionLabel"
-  | "onApplyActiveSuggestion"
-  | "customRequest"
-  | "onCustomRequestChange"
-  | "customRequestError"
-  | "onCustomRequestErrorChange"
-  | "onCustomRequestSubmit"
-  | "isCustomRequestDisabled"
-  | "isCustomLoading"
-  | "responseMetadata"
-  | "onCopyAllDebug"
-  | "isBulkCopyLoading"
-  | "isInlineLoading"
-  | "isInlineError"
-  | "inlineErrorMessage"
-  | "isInlineEmpty"
 >;
 
 export function PromptCanvasEditorSection({
@@ -157,31 +132,6 @@ export function PromptCanvasEditorSection({
   onCancelHideLockButton,
   onLockButtonMouseLeave,
   isHoveredLocked,
-  selectedSpanId,
-  suggestionCount,
-  suggestionsListRef,
-  inlineSuggestions,
-  activeSuggestionIndex,
-  onActiveSuggestionChange,
-  interactionSourceRef,
-  onSuggestionClick,
-  onCloseInlinePopover,
-  selectionLabel,
-  onApplyActiveSuggestion,
-  customRequest,
-  onCustomRequestChange,
-  customRequestError,
-  onCustomRequestErrorChange,
-  onCustomRequestSubmit,
-  isCustomRequestDisabled,
-  isCustomLoading,
-  responseMetadata = null,
-  onCopyAllDebug,
-  isBulkCopyLoading = false,
-  isInlineLoading,
-  isInlineError,
-  inlineErrorMessage,
-  isInlineEmpty,
 }: PromptCanvasEditorSectionProps): React.ReactElement {
   const { isI2VMode } = useI2VContext();
   const { motionIdeas, isMotionIdeasLoading } = usePromptResultsData();
@@ -495,33 +445,7 @@ export function PromptCanvasEditorSection({
             />
           ) : null}
 
-          <PromptCanvasSuggestionsPanel
-            selectedSpanId={selectedSpanId}
-            suggestionCount={suggestionCount}
-            suggestionsListRef={suggestionsListRef}
-            inlineSuggestions={inlineSuggestions}
-            activeSuggestionIndex={activeSuggestionIndex}
-            onActiveSuggestionChange={onActiveSuggestionChange}
-            interactionSourceRef={interactionSourceRef}
-            onSuggestionClick={onSuggestionClick}
-            onCloseInlinePopover={onCloseInlinePopover}
-            selectionLabel={selectionLabel}
-            onApplyActiveSuggestion={onApplyActiveSuggestion}
-            customRequest={customRequest}
-            onCustomRequestChange={onCustomRequestChange}
-            customRequestError={customRequestError}
-            onCustomRequestErrorChange={onCustomRequestErrorChange}
-            onCustomRequestSubmit={onCustomRequestSubmit}
-            isCustomRequestDisabled={isCustomRequestDisabled}
-            isCustomLoading={isCustomLoading}
-            responseMetadata={responseMetadata ?? null}
-            {...(onCopyAllDebug ? { onCopyAllDebug } : {})}
-            {...(isBulkCopyLoading ? { isBulkCopyLoading } : {})}
-            isInlineLoading={isInlineLoading}
-            isInlineError={isInlineError}
-            inlineErrorMessage={inlineErrorMessage}
-            isInlineEmpty={isInlineEmpty}
-          />
+          <PromptCanvasSuggestionsPanel />
         </div>
       </div>
     </div>

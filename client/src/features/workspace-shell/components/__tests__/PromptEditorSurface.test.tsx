@@ -1,6 +1,7 @@
 import { createRef } from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import { PromptEditorSurface } from "../PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "../PromptEditorSurface";
 
@@ -29,35 +30,15 @@ function makeProps(
     onAutocompleteSelect: noop,
     onAutocompleteClose: noop,
     onAutocompleteIndexChange: noop,
-    selectedSpanId: null,
-    suggestionCount: 0,
-    suggestionsListRef: createRef<HTMLDivElement>(),
-    inlineSuggestions: [],
-    activeSuggestionIndex: -1,
-    onActiveSuggestionChange: noop,
-    interactionSourceRef: { current: "auto" },
-    onSuggestionClick: noop,
-    onCloseInlinePopover: noop,
-    selectionLabel: "",
-    onApplyActiveSuggestion: noop,
-    isInlineLoading: false,
-    isInlineError: false,
-    inlineErrorMessage: "",
-    isInlineEmpty: false,
-    customRequest: "",
-    onCustomRequestChange: noop,
-    customRequestError: "",
-    onCustomRequestErrorChange: noop,
-    onCustomRequestSubmit: vi.fn((e) => e.preventDefault()),
-    isCustomRequestDisabled: false,
-    isCustomLoading: false,
     ...overrides,
   };
 }
 
 describe("PromptEditorSurface", () => {
   it("renders the prompt editor with a placeholder", () => {
-    const { container } = render(<PromptEditorSurface {...makeProps()} />);
+    const { container } = render(
+      withSelectedSpan(<PromptEditorSurface {...makeProps()} />),
+    );
     const editor = container.querySelector("[data-placeholder]");
     expect(editor).not.toBeNull();
     expect(editor?.getAttribute("data-placeholder") ?? "").toMatch(
@@ -66,7 +47,7 @@ describe("PromptEditorSurface", () => {
   });
 
   it("does not render the suggestion tray when no span is selected", () => {
-    render(<PromptEditorSurface {...makeProps()} />);
+    render(withSelectedSpan(<PromptEditorSurface {...makeProps()} />));
     expect(
       screen.queryByTestId("canvas-suggestion-tray"),
     ).not.toBeInTheDocument();
@@ -74,7 +55,9 @@ describe("PromptEditorSurface", () => {
 
   it("renders the suggestion tray when a span is selected", () => {
     render(
-      <PromptEditorSurface {...makeProps({ selectedSpanId: "span-1" })} />,
+      withSelectedSpan(<PromptEditorSurface {...makeProps()} />, {
+        selectedSpanId: "span-1",
+      }),
     );
     expect(screen.getByTestId("canvas-suggestion-tray")).toBeInTheDocument();
   });

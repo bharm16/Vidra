@@ -116,6 +116,7 @@ vi.mock("@/components/modals/CameraMotionModal", () => ({
 }));
 
 import { CanvasWorkspace } from "../CanvasWorkspace";
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 
 const buildProps = (
   prompt: string,
@@ -151,41 +152,20 @@ const buildProps = (
   onAutocompleteSelect: vi.fn(),
   onAutocompleteClose: vi.fn(),
   onAutocompleteIndexChange: vi.fn(),
-  selectedSpanId: null,
-  suggestionCount: 0,
-  suggestionsListRef:
-    React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
-  inlineSuggestions: [],
-  activeSuggestionIndex: 0,
-  onActiveSuggestionChange: vi.fn(),
-  interactionSourceRef: { current: "auto" },
-  onSuggestionClick: vi.fn(),
-  onCloseInlinePopover: vi.fn(),
-  selectionLabel: "",
-  onApplyActiveSuggestion: vi.fn(),
-  isInlineLoading: false,
-  isInlineError: false,
-  inlineErrorMessage: "",
-  isInlineEmpty: true,
-  customRequest: "",
-  onCustomRequestChange: vi.fn(),
-  customRequestError: "",
-  onCustomRequestErrorChange: vi.fn(),
-  onCustomRequestSubmit: vi.fn(),
-  isCustomRequestDisabled: true,
-  isCustomLoading: false,
   onReuseGeneration: vi.fn(),
   onToggleGenerationFavorite: vi.fn(),
 });
 
 describe("CanvasWorkspace layout", () => {
   it("renders the workspace topbar landmark", () => {
-    render(<CanvasWorkspace {...buildProps("")} />);
+    render(withSelectedSpan(<CanvasWorkspace {...buildProps("")} />));
     expect(screen.getByRole("banner")).toBeInTheDocument();
   });
 
   it("mounts the floating composer with absolute positioning", () => {
-    const { container } = render(<CanvasWorkspace {...buildProps("")} />);
+    const { container } = render(
+      withSelectedSpan(<CanvasWorkspace {...buildProps("")} />),
+    );
     // The CanvasPromptBar wrapper is the floating glass dock; it must be
     // absolutely positioned so it does not reflow between WorkspaceMoments.
     const composer = container.querySelector(".absolute.left-1\\/2");

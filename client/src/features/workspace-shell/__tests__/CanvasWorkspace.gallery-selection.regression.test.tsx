@@ -27,6 +27,7 @@ vi.mock(
 );
 
 import { CanvasWorkspace } from "../CanvasWorkspace";
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import type {
   Generation,
   GenerationsPanelProps,
@@ -166,29 +167,6 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
   onAutocompleteSelect: vi.fn(),
   onAutocompleteClose: vi.fn(),
   onAutocompleteIndexChange: vi.fn(),
-  selectedSpanId: null,
-  suggestionCount: 0,
-  suggestionsListRef:
-    React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
-  inlineSuggestions: [],
-  activeSuggestionIndex: 0,
-  onActiveSuggestionChange: vi.fn(),
-  interactionSourceRef: { current: "auto" },
-  onSuggestionClick: vi.fn(),
-  onCloseInlinePopover: vi.fn(),
-  selectionLabel: "",
-  onApplyActiveSuggestion: vi.fn(),
-  isInlineLoading: false,
-  isInlineError: false,
-  inlineErrorMessage: "",
-  isInlineEmpty: true,
-  customRequest: "",
-  onCustomRequestChange: vi.fn(),
-  customRequestError: "",
-  onCustomRequestErrorChange: vi.fn(),
-  onCustomRequestSubmit: vi.fn(),
-  isCustomRequestDisabled: true,
-  isCustomLoading: false,
   onReuseGeneration: vi.fn(),
   onToggleGenerationFavorite: vi.fn(),
 });
@@ -210,7 +188,9 @@ describe("regression: canvas closes stale generation popovers when gallery items
 
     const user = userEvent.setup();
     const props = buildProps();
-    const { container, rerender } = render(<CanvasWorkspace {...props} />);
+    const { container, rerender } = render(
+      withSelectedSpan(<CanvasWorkspace {...props} />),
+    );
 
     // The unified workspace renders gallery entries as <article
     // data-generation-id={id}> tiles inside ShotRow. Clicking a completed
@@ -245,7 +225,7 @@ describe("regression: canvas closes stale generation popovers when gallery items
       ],
     };
 
-    rerender(<CanvasWorkspace {...props} />);
+    rerender(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     await waitFor(() => {
       expect(

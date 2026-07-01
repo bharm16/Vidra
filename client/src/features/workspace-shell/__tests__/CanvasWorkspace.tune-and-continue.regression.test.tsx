@@ -27,6 +27,7 @@ vi.mock(
 );
 
 import { CanvasWorkspace } from "../CanvasWorkspace";
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import { dispatchContinueScene } from "../events";
 import type {
   Generation,
@@ -163,29 +164,6 @@ const buildProps = (
   onAutocompleteSelect: vi.fn(),
   onAutocompleteClose: vi.fn(),
   onAutocompleteIndexChange: vi.fn(),
-  selectedSpanId: null,
-  suggestionCount: 0,
-  suggestionsListRef:
-    React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
-  inlineSuggestions: [],
-  activeSuggestionIndex: 0,
-  onActiveSuggestionChange: vi.fn(),
-  interactionSourceRef: { current: "auto" },
-  onSuggestionClick: vi.fn(),
-  onCloseInlinePopover: vi.fn(),
-  selectionLabel: "",
-  onApplyActiveSuggestion: vi.fn(),
-  isInlineLoading: false,
-  isInlineError: false,
-  inlineErrorMessage: "",
-  isInlineEmpty: true,
-  customRequest: "",
-  onCustomRequestChange: vi.fn(),
-  customRequestError: "",
-  onCustomRequestErrorChange: vi.fn(),
-  onCustomRequestSubmit: vi.fn(),
-  isCustomRequestDisabled: true,
-  isCustomLoading: false,
   onReuseGeneration: vi.fn(),
   onToggleGenerationFavorite: vi.fn(),
 });
@@ -222,7 +200,7 @@ describe("regression: tune chips reach the runtime submit closure", () => {
   // sees only "a dancer" with no taste cues.
   it("forwards the chip-suffixed prompt into useGenerationsRuntime", async () => {
     const props = buildProps("a dancer");
-    render(<CanvasWorkspace {...props} />);
+    render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     // Baseline: with no chips, runtime prompt equals raw prompt verbatim.
     expect(capturedRuntimePrompt).toBe("a dancer");
@@ -248,7 +226,7 @@ describe("regression: tune chips reach the runtime submit closure", () => {
   // contenteditable so its visible text isn't asserted here.)
   it("surfaces the active chip count on the Tune toggle", () => {
     const props = buildProps("a dancer");
-    render(<CanvasWorkspace {...props} />);
+    render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     expect(screen.getByRole("button", { name: "Tune" })).toBeInTheDocument();
 
@@ -272,7 +250,7 @@ describe("regression: continue scene seeds the start frame", () => {
     mockRuntimeGenerations = [source];
 
     const props = buildProps("a dancer");
-    render(<CanvasWorkspace {...props} />);
+    render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     dispatchContinueScene({ fromGenerationId: "gen-source" });
 
@@ -298,7 +276,7 @@ describe("regression: continue scene seeds the start frame", () => {
     mockRuntimeGenerations = [source];
 
     const props = buildProps("a dancer");
-    render(<CanvasWorkspace {...props} />);
+    render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     dispatchContinueScene({ fromGenerationId: "gen-source" });
 
@@ -318,7 +296,7 @@ describe("regression: continue scene seeds the start frame", () => {
     mockRuntimeGenerations = [completedVideoGeneration({ id: "gen-other" })];
 
     const props = buildProps("a dancer");
-    render(<CanvasWorkspace {...props} />);
+    render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     dispatchContinueScene({ fromGenerationId: "missing-gen-id" });
 

@@ -25,6 +25,7 @@ vi.mock(
   }),
 );
 
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import { CanvasPromptBar } from "../CanvasPromptBar";
 import type { PromptEditorSurfaceProps } from "../PromptEditorSurface";
 
@@ -51,35 +52,13 @@ function makeSurfaceProps(): PromptEditorSurfaceProps {
     onAutocompleteSelect: noop,
     onAutocompleteClose: noop,
     onAutocompleteIndexChange: noop,
-    selectedSpanId: null,
-    suggestionCount: 0,
-    suggestionsListRef: createRef<HTMLDivElement>(),
-    inlineSuggestions: [],
-    activeSuggestionIndex: -1,
-    onActiveSuggestionChange: noop,
-    interactionSourceRef: { current: "auto" },
-    onSuggestionClick: noop,
-    onCloseInlinePopover: noop,
-    selectionLabel: "",
-    onApplyActiveSuggestion: noop,
-    isInlineLoading: false,
-    isInlineError: false,
-    inlineErrorMessage: "",
-    isInlineEmpty: false,
-    customRequest: "",
-    onCustomRequestChange: noop,
-    customRequestError: "",
-    onCustomRequestErrorChange: noop,
-    onCustomRequestSubmit: vi.fn((e) => e.preventDefault()),
-    isCustomRequestDisabled: false,
-    isCustomLoading: false,
   };
 }
 
 describe("CanvasPromptBar", () => {
   it("renders as a floating dock with absolute positioning", () => {
     const { container } = render(
-      <CanvasPromptBar surfaceProps={makeSurfaceProps()} />,
+      withSelectedSpan(<CanvasPromptBar surfaceProps={makeSurfaceProps()} />),
     );
     const root = container.firstChild as HTMLElement;
     expect(root.className).toMatch(/absolute/);
@@ -87,7 +66,7 @@ describe("CanvasPromptBar", () => {
 
   it("renders the editor surface", () => {
     const { container } = render(
-      <CanvasPromptBar surfaceProps={makeSurfaceProps()} />,
+      withSelectedSpan(<CanvasPromptBar surfaceProps={makeSurfaceProps()} />),
     );
     // PromptEditor uses a contenteditable div with data-placeholder, not a real
     // <input placeholder>. Confirm via the data attribute.
@@ -107,13 +86,16 @@ describe("CanvasPromptBar", () => {
       ...makeSurfaceProps(),
       prompt: "a dancer in a sunlit studio",
       autocompleteOpen: true,
-      isInlineLoading: true,
     };
     const { container, rerender } = render(
-      <CanvasPromptBar surfaceProps={empty} />,
+      withSelectedSpan(<CanvasPromptBar surfaceProps={empty} />),
     );
     const initial = (container.firstChild as HTMLElement).className;
-    rerender(<CanvasPromptBar surfaceProps={filled} />);
+    rerender(
+      withSelectedSpan(<CanvasPromptBar surfaceProps={filled} />, {
+        isInlineLoading: true,
+      }),
+    );
     const rerendered = (container.firstChild as HTMLElement).className;
     expect(initial).toBe(rerendered);
   });

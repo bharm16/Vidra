@@ -2,65 +2,37 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Textarea } from "@promptstudio/system/components/ui/textarea";
 import { MAX_REQUEST_LENGTH } from "@components/SuggestionsPanel/config/panelConfig";
 import { cn } from "@/utils/cn";
-import type { PromptCanvasViewProps } from "./PromptCanvasView.types";
+import { useSelectedSpan } from "../../context/SelectedSpanContext";
 import { CanvasButton } from "./PromptCanvasView.shared";
 
-type PromptCanvasSuggestionsPanelProps = Pick<
-  PromptCanvasViewProps,
-  | "selectedSpanId"
-  | "suggestionCount"
-  | "suggestionsListRef"
-  | "inlineSuggestions"
-  | "activeSuggestionIndex"
-  | "onActiveSuggestionChange"
-  | "interactionSourceRef"
-  | "onSuggestionClick"
-  | "onCloseInlinePopover"
-  | "selectionLabel"
-  | "onApplyActiveSuggestion"
-  | "customRequest"
-  | "onCustomRequestChange"
-  | "customRequestError"
-  | "onCustomRequestErrorChange"
-  | "onCustomRequestSubmit"
-  | "isCustomRequestDisabled"
-  | "isCustomLoading"
-  | "responseMetadata"
-  | "onCopyAllDebug"
-  | "isBulkCopyLoading"
-  | "isInlineLoading"
-  | "isInlineError"
-  | "inlineErrorMessage"
-  | "isInlineEmpty"
->;
-
-export function PromptCanvasSuggestionsPanel({
-  selectedSpanId,
-  suggestionCount,
-  suggestionsListRef,
-  inlineSuggestions,
-  activeSuggestionIndex,
-  onActiveSuggestionChange,
-  interactionSourceRef,
-  onSuggestionClick,
-  onCloseInlinePopover,
-  selectionLabel,
-  onApplyActiveSuggestion,
-  customRequest,
-  onCustomRequestChange,
-  customRequestError,
-  onCustomRequestErrorChange,
-  onCustomRequestSubmit,
-  isCustomRequestDisabled,
-  isCustomLoading,
-  responseMetadata,
-  onCopyAllDebug,
-  isBulkCopyLoading = false,
-  isInlineLoading,
-  isInlineError,
-  inlineErrorMessage,
-  isInlineEmpty,
-}: PromptCanvasSuggestionsPanelProps): React.ReactElement | null {
+export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
+  const {
+    selectedSpanId,
+    suggestionCount,
+    suggestionsListRef,
+    inlineSuggestions,
+    activeSuggestionIndex,
+    onActiveSuggestionChange,
+    interactionSourceRef,
+    onSuggestionClick,
+    onCloseInlinePopover,
+    selectionLabel,
+    onApplyActiveSuggestion,
+    customRequest,
+    onCustomRequestChange,
+    customRequestError,
+    onCustomRequestErrorChange,
+    onCustomRequestSubmit,
+    isCustomRequestDisabled,
+    isCustomLoading,
+    responseMetadata,
+    onCopyAllDebug,
+    isBulkCopyLoading = false,
+    isInlineLoading,
+    isInlineError,
+    inlineErrorMessage,
+    isInlineEmpty,
+  } = useSelectedSpan();
   const [isDebugCopied, setIsDebugCopied] = useState(false);
   const debugPayload = useMemo(() => {
     if (!import.meta.env.DEV) {

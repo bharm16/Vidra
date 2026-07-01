@@ -56,31 +56,6 @@ export function PromptCanvasView({
   onCancelHideLockButton,
   onLockButtonMouseLeave,
   isOutputLoading,
-  selectedSpanId,
-  suggestionCount,
-  suggestionsListRef,
-  inlineSuggestions,
-  activeSuggestionIndex,
-  onActiveSuggestionChange,
-  interactionSourceRef,
-  onSuggestionClick,
-  onCloseInlinePopover,
-  selectionLabel,
-  onApplyActiveSuggestion,
-  customRequest,
-  onCustomRequestChange,
-  customRequestError,
-  onCustomRequestErrorChange,
-  onCustomRequestSubmit,
-  isCustomRequestDisabled,
-  isCustomLoading,
-  responseMetadata = null,
-  onCopyAllDebug,
-  isBulkCopyLoading = false,
-  isInlineLoading,
-  isInlineError,
-  inlineErrorMessage,
-  isInlineEmpty,
   coherenceIssues,
   isCoherenceChecking,
   isCoherencePanelExpanded,
@@ -151,31 +126,6 @@ export function PromptCanvasView({
         onAutocompleteSelect={onAutocompleteSelect}
         onAutocompleteClose={onAutocompleteClose}
         onAutocompleteIndexChange={onAutocompleteIndexChange}
-        selectedSpanId={selectedSpanId}
-        suggestionCount={suggestionCount}
-        suggestionsListRef={suggestionsListRef}
-        inlineSuggestions={inlineSuggestions}
-        activeSuggestionIndex={activeSuggestionIndex}
-        onActiveSuggestionChange={onActiveSuggestionChange}
-        interactionSourceRef={interactionSourceRef}
-        onSuggestionClick={onSuggestionClick}
-        onCloseInlinePopover={onCloseInlinePopover}
-        selectionLabel={selectionLabel}
-        onApplyActiveSuggestion={onApplyActiveSuggestion}
-        isInlineLoading={isInlineLoading}
-        isInlineError={isInlineError}
-        inlineErrorMessage={inlineErrorMessage}
-        isInlineEmpty={isInlineEmpty}
-        customRequest={customRequest}
-        onCustomRequestChange={onCustomRequestChange}
-        customRequestError={customRequestError}
-        onCustomRequestErrorChange={onCustomRequestErrorChange}
-        onCustomRequestSubmit={onCustomRequestSubmit}
-        isCustomRequestDisabled={isCustomRequestDisabled}
-        isCustomLoading={isCustomLoading}
-        responseMetadata={responseMetadata ?? null}
-        {...(onCopyAllDebug ? { onCopyAllDebug } : {})}
-        {...(isBulkCopyLoading ? { isBulkCopyLoading } : {})}
         {...(onEnhance ? { onEnhance } : {})}
         isEnhancing={isEnhancing}
       />
@@ -318,31 +268,6 @@ export function PromptCanvasView({
                       onCancelHideLockButton={onCancelHideLockButton}
                       onLockButtonMouseLeave={onLockButtonMouseLeave}
                       isHoveredLocked={isHoveredLocked}
-                      selectedSpanId={selectedSpanId}
-                      suggestionCount={suggestionCount}
-                      suggestionsListRef={suggestionsListRef}
-                      inlineSuggestions={inlineSuggestions}
-                      activeSuggestionIndex={activeSuggestionIndex}
-                      onActiveSuggestionChange={onActiveSuggestionChange}
-                      interactionSourceRef={interactionSourceRef}
-                      onSuggestionClick={onSuggestionClick}
-                      onCloseInlinePopover={onCloseInlinePopover}
-                      selectionLabel={selectionLabel}
-                      onApplyActiveSuggestion={onApplyActiveSuggestion}
-                      customRequest={customRequest}
-                      onCustomRequestChange={onCustomRequestChange}
-                      customRequestError={customRequestError}
-                      onCustomRequestErrorChange={onCustomRequestErrorChange}
-                      onCustomRequestSubmit={onCustomRequestSubmit}
-                      isCustomRequestDisabled={isCustomRequestDisabled}
-                      isCustomLoading={isCustomLoading}
-                      responseMetadata={responseMetadata ?? null}
-                      {...(onCopyAllDebug ? { onCopyAllDebug } : {})}
-                      {...(isBulkCopyLoading ? { isBulkCopyLoading } : {})}
-                      isInlineLoading={isInlineLoading}
-                      isInlineError={isInlineError}
-                      inlineErrorMessage={inlineErrorMessage}
-                      isInlineEmpty={isInlineEmpty}
                     />
                   </div>
                 </div>

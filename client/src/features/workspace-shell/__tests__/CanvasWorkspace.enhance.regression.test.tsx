@@ -6,6 +6,7 @@ import type {
   GenerationsPanelProps,
 } from "@features/generations/types";
 import { CanvasWorkspace } from "../CanvasWorkspace";
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 
 vi.mock(
   "@/features/prompt-optimizer/context/PromptResultsActionsContext",
@@ -150,29 +151,6 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
   onAutocompleteSelect: vi.fn(),
   onAutocompleteClose: vi.fn(),
   onAutocompleteIndexChange: vi.fn(),
-  selectedSpanId: null,
-  suggestionCount: 0,
-  suggestionsListRef:
-    React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
-  inlineSuggestions: [],
-  activeSuggestionIndex: 0,
-  onActiveSuggestionChange: vi.fn(),
-  interactionSourceRef: { current: "auto" },
-  onSuggestionClick: vi.fn(),
-  onCloseInlinePopover: vi.fn(),
-  selectionLabel: "",
-  onApplyActiveSuggestion: vi.fn(),
-  isInlineLoading: false,
-  isInlineError: false,
-  inlineErrorMessage: "",
-  isInlineEmpty: true,
-  customRequest: "",
-  onCustomRequestChange: vi.fn(),
-  customRequestError: "",
-  onCustomRequestErrorChange: vi.fn(),
-  onCustomRequestSubmit: vi.fn(),
-  isCustomRequestDisabled: true,
-  isCustomLoading: false,
   onReuseGeneration: vi.fn((_generation: Generation) => undefined),
   onToggleGenerationFavorite: vi.fn(),
 });
@@ -185,7 +163,9 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
   it("clicking enhance invokes the provided callback", () => {
     const onEnhance = vi.fn();
     const props = buildProps();
-    render(<CanvasWorkspace {...props} onEnhance={onEnhance} />);
+    render(
+      withSelectedSpan(<CanvasWorkspace {...props} onEnhance={onEnhance} />),
+    );
 
     // Open the Tune drawer so the Enhance button mounts.
     fireEvent.click(screen.getByTestId("canvas-tune-chip"));
@@ -202,13 +182,15 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
     // to be a floating corner selector — moved to match the screenshot).
     const props = buildProps();
     render(
-      <CanvasWorkspace
-        {...props}
-        generationsPanelProps={{
-          ...(props.generationsPanelProps as GenerationsPanelProps),
-          prompt: "",
-        }}
-      />,
+      withSelectedSpan(
+        <CanvasWorkspace
+          {...props}
+          generationsPanelProps={{
+            ...(props.generationsPanelProps as GenerationsPanelProps),
+            prompt: "",
+          }}
+        />,
+      ),
     );
 
     expect(
@@ -229,14 +211,16 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
     // has content.
     const props = buildProps();
     render(
-      <CanvasWorkspace
-        {...props}
-        generationsPanelProps={{
-          ...(props.generationsPanelProps as GenerationsPanelProps),
-          prompt: "The camera tracks a subject through warm golden light.",
-          promptVersionId: "",
-        }}
-      />,
+      withSelectedSpan(
+        <CanvasWorkspace
+          {...props}
+          generationsPanelProps={{
+            ...(props.generationsPanelProps as GenerationsPanelProps),
+            prompt: "The camera tracks a subject through warm golden light.",
+            promptVersionId: "",
+          }}
+        />,
+      ),
     );
 
     expect(screen.queryByText("What are you making?")).not.toBeInTheDocument();

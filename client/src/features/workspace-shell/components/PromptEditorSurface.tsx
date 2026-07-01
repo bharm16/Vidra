@@ -11,10 +11,7 @@ import { MAX_REQUEST_LENGTH } from "@/components/SuggestionsPanel/config/panelCo
 import { TriggerAutocomplete } from "@/features/assets/components/TriggerAutocomplete";
 import type { AssetSuggestion } from "@/features/assets/hooks/useTriggerAutocomplete";
 import { PromptEditor } from "@/features/prompt-optimizer/components/PromptEditor";
-import type {
-  InlineSuggestion,
-  SuggestionItem,
-} from "@/features/prompt-optimizer/PromptCanvas/types";
+import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { addPromptFocusIntentListener } from "@features/workspace-shell/events";
 import { useAnimatedPresence } from "@/hooks/useAnimatedPresence";
 import { cn } from "@/utils/cn";
@@ -41,31 +38,6 @@ export interface PromptEditorSurfaceProps {
   onAutocompleteSelect: (asset: AssetSuggestion) => void;
   onAutocompleteClose: () => void;
   onAutocompleteIndexChange: (index: number) => void;
-  selectedSpanId: string | null;
-  suggestionCount: number;
-  suggestionsListRef: React.RefObject<HTMLDivElement>;
-  inlineSuggestions: InlineSuggestion[];
-  activeSuggestionIndex: number;
-  onActiveSuggestionChange: (index: number) => void;
-  interactionSourceRef: React.MutableRefObject<"keyboard" | "mouse" | "auto">;
-  onSuggestionClick: (suggestion: SuggestionItem | string) => void;
-  onCloseInlinePopover: () => void;
-  selectionLabel: string;
-  onApplyActiveSuggestion: () => void;
-  isInlineLoading: boolean;
-  isInlineError: boolean;
-  inlineErrorMessage: string;
-  isInlineEmpty: boolean;
-  customRequest: string;
-  onCustomRequestChange: (value: string) => void;
-  customRequestError: string;
-  onCustomRequestErrorChange: (value: string) => void;
-  onCustomRequestSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  isCustomRequestDisabled: boolean;
-  isCustomLoading: boolean;
-  responseMetadata?: Record<string, unknown> | null;
-  onCopyAllDebug?: (() => void) | undefined;
-  isBulkCopyLoading?: boolean | undefined;
   /** When true, the editor shows an I2V-aware placeholder explaining that
    *  the prompt is optional once a start image is set. Defaults to false. */
   isI2VMode?: boolean;
@@ -94,33 +66,35 @@ export function PromptEditorSurface({
   onAutocompleteSelect,
   onAutocompleteClose,
   onAutocompleteIndexChange,
-  selectedSpanId,
-  suggestionCount,
-  suggestionsListRef,
-  inlineSuggestions,
-  activeSuggestionIndex,
-  onActiveSuggestionChange,
-  interactionSourceRef,
-  onSuggestionClick,
-  onCloseInlinePopover,
-  selectionLabel,
-  onApplyActiveSuggestion,
-  isInlineLoading,
-  isInlineError,
-  inlineErrorMessage,
-  isInlineEmpty,
-  customRequest,
-  onCustomRequestChange,
-  customRequestError,
-  onCustomRequestErrorChange,
-  onCustomRequestSubmit,
-  isCustomRequestDisabled,
-  isCustomLoading,
-  responseMetadata = null,
-  onCopyAllDebug,
-  isBulkCopyLoading = false,
   isI2VMode = false,
 }: PromptEditorSurfaceProps): React.ReactElement {
+  const {
+    selectedSpanId,
+    suggestionCount,
+    suggestionsListRef,
+    inlineSuggestions,
+    activeSuggestionIndex,
+    onActiveSuggestionChange,
+    interactionSourceRef,
+    onSuggestionClick,
+    onCloseInlinePopover,
+    selectionLabel,
+    onApplyActiveSuggestion,
+    isInlineLoading,
+    isInlineError,
+    inlineErrorMessage,
+    isInlineEmpty,
+    customRequest,
+    onCustomRequestChange,
+    customRequestError,
+    onCustomRequestErrorChange,
+    onCustomRequestSubmit,
+    isCustomRequestDisabled,
+    isCustomLoading,
+    responseMetadata,
+    onCopyAllDebug,
+    isBulkCopyLoading = false,
+  } = useSelectedSpan();
   const isEmptyLayout = variant === "empty";
   const placeholderText = isI2VMode
     ? "Optional: add motion direction (or leave blank to animate the image)"

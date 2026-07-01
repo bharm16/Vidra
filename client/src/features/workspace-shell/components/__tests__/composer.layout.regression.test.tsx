@@ -25,6 +25,8 @@ vi.mock(
   }),
 );
 
+import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
+import type { SelectedSpanContextValue } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { CanvasPromptBar } from "../CanvasPromptBar";
 import type { PromptEditorSurfaceProps } from "../PromptEditorSurface";
 
@@ -53,28 +55,6 @@ function makeSurfaceProps(
     onAutocompleteSelect: noop,
     onAutocompleteClose: noop,
     onAutocompleteIndexChange: noop,
-    selectedSpanId: null,
-    suggestionCount: 0,
-    suggestionsListRef: createRef<HTMLDivElement>(),
-    inlineSuggestions: [],
-    activeSuggestionIndex: -1,
-    onActiveSuggestionChange: noop,
-    interactionSourceRef: { current: "auto" },
-    onSuggestionClick: noop,
-    onCloseInlinePopover: noop,
-    selectionLabel: "",
-    onApplyActiveSuggestion: noop,
-    isInlineLoading: false,
-    isInlineError: false,
-    inlineErrorMessage: "",
-    isInlineEmpty: false,
-    customRequest: "",
-    onCustomRequestChange: noop,
-    customRequestError: "",
-    onCustomRequestErrorChange: noop,
-    onCustomRequestSubmit: vi.fn((e) => e.preventDefault()),
-    isCustomRequestDisabled: false,
-    isCustomLoading: false,
     ...overrides,
   };
 }
@@ -92,19 +72,25 @@ function makeSurfaceProps(
  * `moment` prop. The prop was removed (it carried no behavior); the
  * contract is now expressed via materially different surface state.
  */
-const SURFACE_VARIANTS: ReadonlyArray<Partial<PromptEditorSurfaceProps>> = [
+const SURFACE_VARIANTS: ReadonlyArray<{
+  surface?: Partial<PromptEditorSurfaceProps>;
+  span?: Partial<SelectedSpanContextValue>;
+}> = [
   {}, // empty editor
-  { prompt: "a dancer in a sunlit studio" }, // filled
-  { autocompleteOpen: true }, // autocomplete dropped down
-  { isInlineLoading: true }, // inline suggestions fetching
-  { isInlineError: true, inlineErrorMessage: "boom" }, // error surfaced
+  { surface: { prompt: "a dancer in a sunlit studio" } }, // filled
+  { surface: { autocompleteOpen: true } }, // autocomplete dropped down
+  { span: { isInlineLoading: true } }, // inline suggestions fetching
+  { span: { isInlineError: true, inlineErrorMessage: "boom" } }, // error surfaced
 ];
 
 describe("composer layout regression — no reflow across surface state", () => {
   it("the wrapper class list is identical across all surface state variants", () => {
     const classes = SURFACE_VARIANTS.map((variant) => {
       const { container, unmount } = render(
-        <CanvasPromptBar surfaceProps={makeSurfaceProps(variant)} />,
+        withSelectedSpan(
+          <CanvasPromptBar surfaceProps={makeSurfaceProps(variant.surface)} />,
+          variant.span,
+        ),
       );
       const cls = (container.firstChild as HTMLElement).className;
       unmount();
@@ -116,7 +102,10 @@ describe("composer layout regression — no reflow across surface state", () => 
   it("the wrapper has position:absolute styling regardless of surface state", () => {
     for (const variant of SURFACE_VARIANTS) {
       const { container, unmount } = render(
-        <CanvasPromptBar surfaceProps={makeSurfaceProps(variant)} />,
+        withSelectedSpan(
+          <CanvasPromptBar surfaceProps={makeSurfaceProps(variant.surface)} />,
+          variant.span,
+        ),
       );
       expect((container.firstChild as HTMLElement).className).toMatch(
         /absolute/,

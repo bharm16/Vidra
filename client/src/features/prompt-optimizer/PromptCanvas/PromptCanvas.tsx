@@ -15,6 +15,10 @@ import { useOutlineOverlay } from "./hooks/useOutlineOverlay";
 import { useEditorInput } from "./hooks/useEditorInput";
 
 import type { PromptCanvasProps } from "./types";
+import {
+  SelectedSpanProvider,
+  type SelectedSpanContextValue,
+} from "../context/SelectedSpanContext";
 
 import { useSpanLabelingPipeline } from "./hooks/useSpanLabelingPipeline";
 import { useSuggestionDetection } from "./hooks/useSuggestionDetection";
@@ -874,112 +878,119 @@ export function PromptCanvas({
 
   // Render the component
 
+  const selectedSpanValue: SelectedSpanContextValue = {
+    selectedSpanId,
+    selectionLabel,
+    suggestionCount,
+    suggestionsListRef,
+    inlineSuggestions,
+    activeSuggestionIndex,
+    onActiveSuggestionChange: setActiveSuggestionIndex,
+    interactionSourceRef,
+    onSuggestionClick: handleSuggestionClickWithFeedback,
+    onCloseInlinePopover: closeInlinePopover,
+    onApplyActiveSuggestion: handleApplyActiveSuggestion,
+    customRequest,
+    onCustomRequestChange: setCustomRequest,
+    customRequestError,
+    onCustomRequestErrorChange: setCustomRequestError,
+    onCustomRequestSubmit: handleCustomRequestSubmit,
+    isCustomRequestDisabled,
+    isCustomLoading,
+    responseMetadata: suggestionsData?.responseMetadata ?? null,
+    onCopyAllDebug: handleCopyAllDebug,
+    isBulkCopyLoading,
+    isInlineLoading,
+    isInlineError,
+    inlineErrorMessage,
+    isInlineEmpty,
+  };
+
   return (
-    <PromptCanvasView
-      selectedMode={selectedMode}
-      outlineOverlayActive={outlineOverlayActive}
-      outlineOverlayState={outlineOverlayState}
-      outlineOverlayRef={outlineOverlayRef}
-      categorySpans={categorySpans}
-      editorRef={editorRef}
-      onCategorySpanHoverChange={setHoveredSpanId}
-      showLegend={showLegend}
-      onCloseLegend={() => setShowLegend(false)}
-      promptContext={promptContext}
-      isSuggestionsOpen={isSuggestionsOpen}
-      hasCanvasContent={hasCanvasContent}
-      editorColumnRef={editorColumnRef}
-      editorWrapperRef={editorWrapperRef}
-      outputLocklineRef={outputLocklineRef}
-      lockButtonRef={lockButtonRef}
-      onTextSelection={handleTextSelection}
-      onHighlightClick={handleHighlightClick}
-      onHighlightMouseDown={handleHighlightMouseDown}
-      onHighlightMouseEnter={handleHighlightMouseEnter}
-      onHighlightMouseLeave={handleHighlightMouseLeave}
-      onCopyEvent={handleCopyEvent}
-      onInput={handleInput}
-      onEditorKeyDown={handleEditorKeyDown}
-      onEditorBlur={closeAutocomplete}
-      autocompleteOpen={autocompleteOpen}
-      autocompleteSuggestions={autocompleteSuggestions}
-      autocompleteSelectedIndex={autocompleteSelectedIndex}
-      autocompletePosition={autocompletePosition}
-      autocompleteLoading={autocompleteLoading}
-      onAutocompleteSelect={insertTrigger}
-      onAutocompleteClose={closeAutocomplete}
-      onAutocompleteIndexChange={setAutocompleteSelectedIndex}
-      enableMLHighlighting={enableMLHighlighting}
-      hoveredSpanId={hoveredSpanId}
-      lockButtonPosition={lockButtonPosition}
-      isHoveredLocked={isHoveredLocked}
-      onToggleLock={handleToggleLock}
-      onCancelHideLockButton={cancelHideLockButton}
-      onLockButtonMouseLeave={handleLockButtonMouseLeave}
-      isOutputLoading={isOutputLoading}
-      selectedSpanId={selectedSpanId}
-      suggestionCount={suggestionCount}
-      suggestionsListRef={suggestionsListRef}
-      inlineSuggestions={inlineSuggestions}
-      activeSuggestionIndex={activeSuggestionIndex}
-      onActiveSuggestionChange={setActiveSuggestionIndex}
-      interactionSourceRef={interactionSourceRef}
-      onSuggestionClick={handleSuggestionClickWithFeedback}
-      onCloseInlinePopover={closeInlinePopover}
-      selectionLabel={selectionLabel}
-      onApplyActiveSuggestion={handleApplyActiveSuggestion}
-      customRequest={customRequest}
-      onCustomRequestChange={setCustomRequest}
-      customRequestError={customRequestError}
-      onCustomRequestErrorChange={setCustomRequestError}
-      onCustomRequestSubmit={handleCustomRequestSubmit}
-      isCustomRequestDisabled={isCustomRequestDisabled}
-      isCustomLoading={isCustomLoading}
-      responseMetadata={suggestionsData?.responseMetadata ?? null}
-      onCopyAllDebug={handleCopyAllDebug}
-      isBulkCopyLoading={isBulkCopyLoading}
-      isInlineLoading={isInlineLoading}
-      isInlineError={isInlineError}
-      inlineErrorMessage={inlineErrorMessage}
-      isInlineEmpty={isInlineEmpty}
-      coherenceIssues={coherence.coherenceIssues}
-      isCoherenceChecking={coherence.isCoherenceChecking}
-      isCoherencePanelExpanded={coherence.isCoherencePanelExpanded}
-      onToggleCoherencePanelExpanded={coherence.onToggleCoherencePanelExpanded}
-      onDismissCoherenceIssue={coherence.onDismissCoherenceIssue}
-      onDismissAllCoherenceIssues={coherence.onDismissAllCoherenceIssues}
-      onApplyCoherenceFix={coherence.onApplyCoherenceFix}
-      onScrollToCoherenceSpan={coherence.onScrollToCoherenceSpan}
-      versionsDrawer={versionsDrawer}
-      versionsPanelProps={versionsPanelProps}
-      generationsPanelProps={generationsPanelProps}
-      onReuseGeneration={handleReuseGeneration}
-      onToggleGenerationFavorite={handleToggleGenerationFavorite}
-      generationsSheetOpen={generationsSheetOpen}
-      onGenerationsSheetOpenChange={setGenerationsSheetOpen}
-      showDiff={showDiff}
-      onShowDiffChange={setShowDiff}
-      inputPrompt={inputPrompt}
-      normalizedDisplayedPrompt={normalizedDisplayedPrompt}
-      openOutlineOverlay={openOutlineOverlay}
-      copied={copied}
-      onCopy={handleCopy}
-      modelFormatValue={modelFormatValue}
-      modelFormatLabel={modelFormatLabel}
-      modelFormatOptions={modelFormatOptions}
-      modelFormatDisabled={isOptimizing || modelFormatOptions.length === 0}
-      onModelFormatChange={handleModelFormatChange}
-      onUndo={onUndo}
-      onRedo={onRedo}
-      canUndo={canUndo}
-      canRedo={canRedo}
-      exportMenuRef={exportMenuRef}
-      showExportMenu={showExportMenu}
-      onToggleExportMenu={setShowExportMenu}
-      onExport={handleExport}
-      onShare={handleShare}
-      onEnhance={handleEnhance}
-      isEnhancing={isOptimizing}
-    />
+    <SelectedSpanProvider value={selectedSpanValue}>
+      <PromptCanvasView
+        selectedMode={selectedMode}
+        outlineOverlayActive={outlineOverlayActive}
+        outlineOverlayState={outlineOverlayState}
+        outlineOverlayRef={outlineOverlayRef}
+        categorySpans={categorySpans}
+        editorRef={editorRef}
+        onCategorySpanHoverChange={setHoveredSpanId}
+        showLegend={showLegend}
+        onCloseLegend={() => setShowLegend(false)}
+        promptContext={promptContext}
+        isSuggestionsOpen={isSuggestionsOpen}
+        hasCanvasContent={hasCanvasContent}
+        editorColumnRef={editorColumnRef}
+        editorWrapperRef={editorWrapperRef}
+        outputLocklineRef={outputLocklineRef}
+        lockButtonRef={lockButtonRef}
+        onTextSelection={handleTextSelection}
+        onHighlightClick={handleHighlightClick}
+        onHighlightMouseDown={handleHighlightMouseDown}
+        onHighlightMouseEnter={handleHighlightMouseEnter}
+        onHighlightMouseLeave={handleHighlightMouseLeave}
+        onCopyEvent={handleCopyEvent}
+        onInput={handleInput}
+        onEditorKeyDown={handleEditorKeyDown}
+        onEditorBlur={closeAutocomplete}
+        autocompleteOpen={autocompleteOpen}
+        autocompleteSuggestions={autocompleteSuggestions}
+        autocompleteSelectedIndex={autocompleteSelectedIndex}
+        autocompletePosition={autocompletePosition}
+        autocompleteLoading={autocompleteLoading}
+        onAutocompleteSelect={insertTrigger}
+        onAutocompleteClose={closeAutocomplete}
+        onAutocompleteIndexChange={setAutocompleteSelectedIndex}
+        enableMLHighlighting={enableMLHighlighting}
+        hoveredSpanId={hoveredSpanId}
+        lockButtonPosition={lockButtonPosition}
+        isHoveredLocked={isHoveredLocked}
+        onToggleLock={handleToggleLock}
+        onCancelHideLockButton={cancelHideLockButton}
+        onLockButtonMouseLeave={handleLockButtonMouseLeave}
+        isOutputLoading={isOutputLoading}
+        coherenceIssues={coherence.coherenceIssues}
+        isCoherenceChecking={coherence.isCoherenceChecking}
+        isCoherencePanelExpanded={coherence.isCoherencePanelExpanded}
+        onToggleCoherencePanelExpanded={
+          coherence.onToggleCoherencePanelExpanded
+        }
+        onDismissCoherenceIssue={coherence.onDismissCoherenceIssue}
+        onDismissAllCoherenceIssues={coherence.onDismissAllCoherenceIssues}
+        onApplyCoherenceFix={coherence.onApplyCoherenceFix}
+        onScrollToCoherenceSpan={coherence.onScrollToCoherenceSpan}
+        versionsDrawer={versionsDrawer}
+        versionsPanelProps={versionsPanelProps}
+        generationsPanelProps={generationsPanelProps}
+        onReuseGeneration={handleReuseGeneration}
+        onToggleGenerationFavorite={handleToggleGenerationFavorite}
+        generationsSheetOpen={generationsSheetOpen}
+        onGenerationsSheetOpenChange={setGenerationsSheetOpen}
+        showDiff={showDiff}
+        onShowDiffChange={setShowDiff}
+        inputPrompt={inputPrompt}
+        normalizedDisplayedPrompt={normalizedDisplayedPrompt}
+        openOutlineOverlay={openOutlineOverlay}
+        copied={copied}
+        onCopy={handleCopy}
+        modelFormatValue={modelFormatValue}
+        modelFormatLabel={modelFormatLabel}
+        modelFormatOptions={modelFormatOptions}
+        modelFormatDisabled={isOptimizing || modelFormatOptions.length === 0}
+        onModelFormatChange={handleModelFormatChange}
+        onUndo={onUndo}
+        onRedo={onRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        exportMenuRef={exportMenuRef}
+        showExportMenu={showExportMenu}
+        onToggleExportMenu={setShowExportMenu}
+        onExport={handleExport}
+        onShare={handleShare}
+        onEnhance={handleEnhance}
+        isEnhancing={isOptimizing}
+      />
+    </SelectedSpanProvider>
   );
 }

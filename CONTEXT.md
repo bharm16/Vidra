@@ -48,6 +48,10 @@ The storage concern of saving a draft preview image (always PNG). Owned by the `
 
 The `category` field on a span in the labelSpans route DTO (`toPublicSpan`): a normalized, valid taxonomy id — never a raw role and never the invalid `unknown`. Normalized once, server-side, via the shared `normalizeRole` in `@shared/taxonomy`; the client trusts it rather than re-deriving. Resolved 2026-06-08 during architecture-deepening review. Avoid synonyms: span role, raw role.
 
+### Selected span
+
+The span the creator clicked for click-to-enhance, together with the suggestion session it opens (inline suggestions, custom request, apply/close). Owned by one client module — `SelectedSpanContext` in `client/src/features/prompt-optimizer/context/` — provided by PromptCanvas and consumed via `useSelectedSpan()`; never threaded through component props. Resolved 2026-07-01 during architecture-deepening review. Avoid synonyms: highlighted span (that is the Enhancement request field), active span.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
