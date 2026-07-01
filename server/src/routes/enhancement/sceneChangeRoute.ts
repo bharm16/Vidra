@@ -3,18 +3,10 @@ import { logger } from "@infrastructure/Logger";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { validateRequest } from "@middleware/validateRequest";
 import { sceneChangeSchema } from "@config/schemas";
-
-interface SceneChangeResult {
-  isSceneChange?: boolean;
-  [key: string]: unknown;
-}
+import type { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
 
 interface SceneChangeDeps {
-  sceneDetectionService: {
-    detectSceneChange: (
-      payload: Record<string, unknown>,
-    ) => Promise<SceneChangeResult>;
-  };
+  sceneDetectionService: Pick<SceneChangeDetectionService, "detectSceneChange">;
 }
 
 export function registerSceneChangeRoute(

@@ -4,14 +4,10 @@ import { asyncHandler } from "@middleware/asyncHandler";
 import { validateRequest } from "@middleware/validateRequest";
 import { PerformanceMonitor } from "@middleware/performanceMonitor";
 import { coherenceCheckSchema } from "@config/schemas";
-import type { CoherenceCheckResult } from "@shared/types/coherence";
+import type { PromptCoherenceService } from "@services/enhancement/services/PromptCoherenceService";
 
 interface CoherenceCheckDeps {
-  promptCoherenceService: {
-    checkCoherence: (
-      payload: Record<string, unknown>,
-    ) => Promise<CoherenceCheckResult>;
-  };
+  promptCoherenceService: Pick<PromptCoherenceService, "checkCoherence">;
   perfMonitor: PerformanceMonitor;
 }
 

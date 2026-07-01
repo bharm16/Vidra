@@ -10,7 +10,7 @@ import {
 } from "./SlotPolicyRegistry.js";
 import { EnhancementV2PromptBuilder } from "./EnhancementV2PromptBuilder.js";
 import { V2CandidateScorer } from "./V2CandidateScorer.js";
-import type { Suggestion } from "../services/types.js";
+import type { EnhancementResult, Suggestion } from "../services/types.js";
 import type {
   EnhancementV2Dependencies,
   EnhancementV2Execution,
@@ -103,27 +103,36 @@ export class EnhancementV2Engine {
 
     stageCounts.finalCount = finalSuggestions.length;
 
-    const resultSuggestions = context.isPlaceholder
-      ? this._groupSuggestionsByCategory(finalSuggestions)
-      : finalSuggestions;
+    const resultBase = {
+      phraseRole: context.phraseRole,
+      appliedConstraintMode: context.videoConstraints?.mode || null,
+      fallbackApplied: modelCallCount > 1,
+      ...(context.videoConstraints
+        ? { appliedVideoConstraints: context.videoConstraints }
+        : {}),
+      ...(finalSuggestions.length === 0
+        ? { noSuggestionsReason: "No V2 suggestions satisfied slot policy." }
+        : {}),
+    };
+
+    const result: EnhancementResult = context.isPlaceholder
+      ? {
+          ...resultBase,
+          isPlaceholder: true,
+          hasCategories: finalSuggestions.some((suggestion) =>
+            Boolean(suggestion.category),
+          ),
+          suggestions: this._groupSuggestionsByCategory(finalSuggestions),
+        }
+      : {
+          ...resultBase,
+          isPlaceholder: false,
+          hasCategories: false,
+          suggestions: finalSuggestions,
+        };
 
     return {
-      result: {
-        suggestions: resultSuggestions,
-        isPlaceholder: context.isPlaceholder,
-        hasCategories:
-          context.isPlaceholder &&
-          finalSuggestions.some((suggestion) => Boolean(suggestion.category)),
-        phraseRole: context.phraseRole,
-        appliedConstraintMode: context.videoConstraints?.mode || null,
-        fallbackApplied: modelCallCount > 1,
-        ...(context.videoConstraints
-          ? { appliedVideoConstraints: context.videoConstraints }
-          : {}),
-        ...(finalSuggestions.length === 0
-          ? { noSuggestionsReason: "No V2 suggestions satisfied slot policy." }
-          : {}),
-      },
+      result,
       rawSuggestions: primaryCandidates,
       finalSuggestions,
       debug: {

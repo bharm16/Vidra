@@ -27,6 +27,11 @@ function createApp(overrides?: {
       suggestions: [
         { text: "Use a low-angle tracking shot", category: "camera.movement" },
       ],
+      isPlaceholder: false as const,
+      hasCategories: false as const,
+      phraseRole: null,
+      appliedConstraintMode: null,
+      fallbackApplied: false,
       fromCache: false,
     })),
     getCustomSuggestions: vi.fn(async () => ({
@@ -126,6 +131,11 @@ describe("enhancement routes", () => {
             ],
           },
         ],
+        isPlaceholder: true as const,
+        hasCategories: true,
+        phraseRole: null,
+        appliedConstraintMode: null,
+        fallbackApplied: false,
         fromCache: true,
       };
       const { app, enhancementService } = createApp({
@@ -146,7 +156,7 @@ describe("enhancement routes", () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual(groupedResult);
       expect(enhancementService.getEnhancementSuggestions).toHaveBeenCalled();
-      expect(countSuggestions(groupedResult.suggestions)).toBe(2);
+      expect(countSuggestions(groupedResult)).toBe(2);
     });
 
     it("returns 500 when enhancement service throws", async () => {

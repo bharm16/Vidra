@@ -3,18 +3,10 @@ import { logger } from "@infrastructure/Logger";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { validateRequest } from "@middleware/validateRequest";
 import { customSuggestionSchema } from "@config/schemas";
-
-interface CustomSuggestionsResult {
-  suggestions?: unknown[];
-  [key: string]: unknown;
-}
+import type { EnhancementService } from "@services/enhancement/EnhancementService";
 
 interface CustomSuggestionsDeps {
-  enhancementService: {
-    getCustomSuggestions: (
-      payload: Record<string, unknown>,
-    ) => Promise<CustomSuggestionsResult>;
-  };
+  enhancementService: Pick<EnhancementService, "getCustomSuggestions">;
 }
 
 export function registerCustomSuggestionsRoute(

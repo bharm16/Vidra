@@ -91,11 +91,23 @@ const createApiServices = (
     deleteFiles: vi.fn(),
   } as never,
   enhancementService: {
-    getEnhancementSuggestions: vi.fn(async () => ({})),
-    getCustomSuggestions: vi.fn(async () => ({})),
+    getEnhancementSuggestions: vi.fn(async () => ({
+      suggestions: [],
+      isPlaceholder: false as const,
+      hasCategories: false as const,
+      phraseRole: null,
+      appliedConstraintMode: null,
+      fallbackApplied: false,
+    })),
+    getCustomSuggestions: vi.fn(async () => ({ suggestions: [] })),
   },
   sceneDetectionService: {
-    detectSceneChange: vi.fn(async () => ({})),
+    detectSceneChange: vi.fn(async () => ({
+      isSceneChange: false,
+      confidence: "low" as const,
+      reasoning: "",
+      suggestedUpdates: {},
+    })),
   },
   promptCoherenceService: {
     checkCoherence: vi.fn(async () => ({ conflicts: [], harmonizations: [] })),

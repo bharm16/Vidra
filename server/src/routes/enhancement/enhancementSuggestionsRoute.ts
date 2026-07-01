@@ -6,23 +6,11 @@ import { PerformanceMonitor } from "@middleware/performanceMonitor";
 import { suggestionSchema } from "@config/schemas";
 import { extractUserId } from "@utils/requestHelpers";
 import { countSuggestions } from "./utils";
-import type {
-  SuggestionsTelemetryService,
-  SuggestionsTrace,
-} from "@services/observability/SuggestionsTelemetryService";
-
-interface EnhancementSuggestionsResult {
-  suggestions?: unknown[];
-  fromCache?: boolean;
-  [key: string]: unknown;
-}
+import type { SuggestionsTelemetryService } from "@services/observability/SuggestionsTelemetryService";
+import type { EnhancementService } from "@services/enhancement/EnhancementService";
 
 interface EnhancementSuggestionsDeps {
-  enhancementService: {
-    getEnhancementSuggestions: (
-      payload: Record<string, unknown> & { trace?: SuggestionsTrace },
-    ) => Promise<EnhancementSuggestionsResult>;
-  };
+  enhancementService: Pick<EnhancementService, "getEnhancementSuggestions">;
   perfMonitor: PerformanceMonitor;
   suggestionsTelemetryService: Pick<
     SuggestionsTelemetryService,
@@ -107,11 +95,11 @@ export function registerEnhancementSuggestionsRoute(
           trace,
         });
 
-        const suggestionCount = countSuggestions(result.suggestions);
+        const suggestionCount = countSuggestions(result);
 
         if (req.perfMonitor) {
           req.perfMonitor.end("service_call");
-          req.perfMonitor.addMetadata("cacheHit", result.fromCache || false);
+          req.perfMonitor.addMetadata("cacheHit", result.fromCache ?? false);
           req.perfMonitor.addMetadata("suggestionCount", suggestionCount);
           req.perfMonitor.addMetadata(
             "category",
@@ -124,7 +112,7 @@ export function registerEnhancementSuggestionsRoute(
           requestId,
           duration: Date.now() - startTime,
           suggestionCount,
-          fromCache: result.fromCache || false,
+          fromCache: result.fromCache ?? false,
           category: highlightedCategory,
         });
 

@@ -1,35 +1,22 @@
 import express, { type Router } from "express";
 import { PerformanceMonitor } from "@middleware/performanceMonitor";
-import type { CoherenceCheckResult } from "@shared/types/coherence";
 import { registerEnhancementSuggestionsRoute } from "./enhancement/enhancementSuggestionsRoute";
 import { registerCustomSuggestionsRoute } from "./enhancement/customSuggestionsRoute";
 import { registerSceneChangeRoute } from "./enhancement/sceneChangeRoute";
 import { registerNlpTestRoute } from "./enhancement/nlpTestRoute";
 import { registerCoherenceCheckRoute } from "./enhancement/coherenceCheckRoute";
-import type {
-  SuggestionsTelemetryService,
-  SuggestionsTrace,
-} from "@services/observability/SuggestionsTelemetryService";
+import type { EnhancementService } from "@services/enhancement/EnhancementService";
+import type { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
+import type { PromptCoherenceService } from "@services/enhancement/services/PromptCoherenceService";
+import type { SuggestionsTelemetryService } from "@services/observability/SuggestionsTelemetryService";
 
 export interface EnhancementServices {
-  enhancementService: {
-    getEnhancementSuggestions: (
-      payload: Record<string, unknown> & { trace?: SuggestionsTrace },
-    ) => Promise<Record<string, unknown>>;
-    getCustomSuggestions: (
-      payload: Record<string, unknown>,
-    ) => Promise<Record<string, unknown>>;
-  };
-  sceneDetectionService: {
-    detectSceneChange: (
-      payload: Record<string, unknown>,
-    ) => Promise<Record<string, unknown>>;
-  };
-  promptCoherenceService: {
-    checkCoherence: (
-      payload: Record<string, unknown>,
-    ) => Promise<CoherenceCheckResult>;
-  };
+  enhancementService: Pick<
+    EnhancementService,
+    "getEnhancementSuggestions" | "getCustomSuggestions"
+  >;
+  sceneDetectionService: Pick<SceneChangeDetectionService, "detectSceneChange">;
+  promptCoherenceService: Pick<PromptCoherenceService, "checkCoherence">;
   suggestionsTelemetryService: Pick<
     SuggestionsTelemetryService,
     "startSuggestionsTrace"

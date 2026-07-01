@@ -362,12 +362,9 @@ export interface EnhancementDebugContext {
 }
 
 /**
- * Final result structure
+ * Fields common to both enhancement result shapes.
  */
-export interface EnhancementResult {
-  suggestions: Suggestion[] | GroupedSuggestions[];
-  isPlaceholder: boolean;
-  hasCategories: boolean;
+interface EnhancementResultBase {
   phraseRole: string | null;
   appliedConstraintMode: string | null;
   fallbackApplied: boolean;
@@ -376,9 +373,39 @@ export interface EnhancementResult {
   /** Server-computed span fingerprint — authoritative cache invalidation key.
    *  Clients should prefer this over locally-computed fingerprints. */
   spanFingerprint?: string | null;
+  /** True when the result was served from the enhancement cache. */
+  fromCache?: boolean;
   metadata?: Record<string, unknown>;
+  /** Present only when the request carried `x-debug: true` outside
+   *  production. Never populated on the hot path. */
   _debug?: EnhancementDebugContext;
 }
+
+/**
+ * Span-targeted enhancement: a flat list of replacement suggestions.
+ */
+export interface FlatEnhancementResult extends EnhancementResultBase {
+  isPlaceholder: false;
+  hasCategories: false;
+  suggestions: Suggestion[];
+}
+
+/**
+ * Placeholder enhancement: suggestions grouped by taxonomy category.
+ */
+export interface GroupedEnhancementResult extends EnhancementResultBase {
+  isPlaceholder: true;
+  hasCategories: boolean;
+  suggestions: GroupedSuggestions[];
+}
+
+/**
+ * Final result structure. Discriminated on `isPlaceholder`: placeholder
+ * requests group suggestions by category, span requests return a flat list.
+ */
+export type EnhancementResult =
+  | FlatEnhancementResult
+  | GroupedEnhancementResult;
 
 /**
  * Service dependencies

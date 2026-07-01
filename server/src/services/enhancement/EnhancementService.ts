@@ -295,7 +295,7 @@ export class EnhancementService {
           fullPrompt: fullPrompt ?? "",
           suggestions: this._flattenSuggestionTexts(cached.suggestions),
         });
-        return cached;
+        return { ...cached, fromCache: true };
       }
 
       if (cached && debug) {
