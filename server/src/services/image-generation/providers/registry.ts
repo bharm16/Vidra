@@ -19,6 +19,8 @@ export interface ProviderPlanOptions {
   providers: ImagePreviewProvider[];
   requestedProvider: ImagePreviewProviderSelection;
   fallbackOrder?: ImagePreviewProviderId[];
+  /** Whether the request carries an input image. Defaults to false. */
+  hasInputImage?: boolean;
 }
 
 export function isImagePreviewProviderId(
@@ -83,18 +85,27 @@ export function buildProviderPlan(
     availableProviders.map((provider) => [provider.id, provider]),
   );
 
+  // An explicitly requested provider is honored as-is: if it can't serve
+  // the request it fails with its own (clear) error.
   if (options.requestedProvider !== "auto") {
     const provider = providerById.get(options.requestedProvider);
     return provider ? [provider] : [];
   }
 
+  // Auto plans only include providers capable of serving the request:
+  // img2img-only providers are skipped for text-only requests so their
+  // "input image required" errors never mask the real failure.
+  const canServe = (provider: ImagePreviewProvider): boolean =>
+    Boolean(options.hasInputImage) || !provider.requiresInputImage;
+
   if (options.fallbackOrder && options.fallbackOrder.length > 0) {
     return options.fallbackOrder
       .map((id) => providerById.get(id))
-      .filter((provider): provider is ImagePreviewProvider =>
-        Boolean(provider),
+      .filter(
+        (provider): provider is ImagePreviewProvider =>
+          Boolean(provider) && canServe(provider as ImagePreviewProvider),
       );
   }
 
-  return availableProviders;
+  return availableProviders.filter(canServe);
 }

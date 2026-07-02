@@ -140,6 +140,7 @@ export interface ReplicateFluxKontextFastProviderOptions {
 export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
   public readonly id = "replicate-flux-kontext-fast" as const;
   public readonly displayName = "Replicate Flux Kontext Fast";
+  public readonly requiresInputImage = true;
 
   private readonly replicate: ReplicateClient | null;
   private readonly promptTransformer: VideoToImagePromptTransformer | null;

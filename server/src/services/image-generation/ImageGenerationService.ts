@@ -59,6 +59,7 @@ export class ImageGenerationService {
       providers: this.providers,
       requestedProvider,
       fallbackOrder: this.fallbackOrder,
+      hasInputImage: Boolean(options.inputImageUrl?.trim()),
     });
 
     if (providerPlan.length === 0) {

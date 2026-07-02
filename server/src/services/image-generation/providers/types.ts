@@ -38,6 +38,14 @@ export interface ImagePreviewProvider {
   id: ImagePreviewProviderId;
   displayName: string;
 
+  /**
+   * True for img2img-only providers (e.g. Kontext) that cannot serve a
+   * text-only request. Auto provider plans skip them when no input image
+   * is present, so their "input image required" errors never mask the
+   * real failure from a capable provider.
+   */
+  requiresInputImage?: boolean;
+
   isAvailable(): boolean;
 
   generatePreview(request: ImagePreviewRequest): Promise<ImagePreviewResult>;

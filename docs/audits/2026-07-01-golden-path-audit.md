@@ -39,16 +39,29 @@ storyboard frame planner, and span labeling's primary provider
 > Media storage and keys must be re-homed to `flibberai` or a dedicated project —
 > do not wait on the appeal to do this.
 
-### 3. First-frame generation 400s for every user, always (not environmental)
+### 3. First-frame failure — GCS outage masked by an img2img provider error
 
-The client's single image model constant is the **img2img edit provider**:
+**Corrected 2026-07-01 (same day, deeper trace).** The original finding blamed a
+client-side kontext hardcode; the full server log disproves that. The client
+sends **no provider** — the server's auto plan ran Flux Schnell (t2i) first, as
+designed. Schnell **failed at the storage step** with `invalid_grant` (the dead
+GCS account, Finding 1), then the loop fell through to Flux Kontext (img2img),
+whose _"requires inputImageUrl"_ refusal became the surfaced 400 — masking the
+real cause. Two conclusions:
 
-- `client/src/components/ToolSidebar/config/modelConfig.ts:56` — `IMAGE_MODEL = { id: "replicate-flux-kontext-fast", … }`
-- Server correctly refuses: _"Flux Kontext Fast requires inputImageUrl for img2img edits. Generate a base image first."_ → 400
-- `replicateFluxSchnellProvider` (text-to-image) is registered server-side but unreachable from the client for the empty-canvas case.
+- The frame step should recover on its own once GCS is restored.
+- The real defect is the fallback design: an img2img-only provider sat in the
+  auto plan for text-only requests, so its irrelevant error masked the root
+  failure. **Fixed** same day: providers declare `requiresInputImage`, and auto
+  plans skip incapable providers
+  (`ImageGenerationService.text-only-provider-plan.regression.test.ts`).
+- `IMAGE_MODEL` in `client/src/components/ToolSidebar/config/modelConfig.ts:56`
+  (kontext) turned out to be an unconsumed constant — dead config, noted but
+  left in place.
 
-Result in UI: "Couldn't create a frame — Image generation failed." on the very
-first submit, and the creator's typed prompt is cleared from the box.
+Result in UI either way: "Couldn't create a frame — Image generation failed."
+on the very first submit, and the creator's typed prompt is cleared from the
+box.
 
 ### 4. All previously generated media is unviewable
 
