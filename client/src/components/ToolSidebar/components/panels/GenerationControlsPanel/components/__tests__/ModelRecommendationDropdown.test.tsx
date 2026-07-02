@@ -10,8 +10,9 @@ vi.mock("@promptstudio/system/components/ui", () => {
     <svg {...props} />
   );
   return {
+    Badge: ({ children }: { children: React.ReactNode }): React.ReactElement =>
+      React.createElement("span", null, children),
     CaretDown: Icon,
-    Star: Icon,
     WarningCircle: Icon,
     X: Icon,
   };
@@ -80,10 +81,81 @@ describe("ModelRecommendationDropdown", () => {
 
     await user.click(screen.getByRole("button", { name: "Video model" }));
 
-    expect(screen.getByText("Render Models")).toBeInTheDocument();
-    expect(screen.getByText("Draft Models")).toBeInTheDocument();
+    expect(screen.getByText("Render models")).toBeInTheDocument();
+    expect(screen.getByText("Draft models")).toBeInTheDocument();
     expect(
       screen.getByText("High-quality models for final production output."),
     ).toBeInTheDocument();
+  });
+
+  it("shows no credit costs and no gradient placeholders in the showroom", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ModelRecommendationDropdown
+        renderModelOptions={VIDEO_RENDER_MODELS.map((model) => ({
+          id: model.id,
+          label: model.label,
+        }))}
+        renderModelId="sora-2"
+        onModelChange={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Video model" }));
+
+    // Strength copy leads each card (ADR-0008 showroom reskin).
+    expect(
+      screen.getAllByText("Cinematic motion and high fidelity").length,
+    ).toBeGreaterThan(0);
+    // Generation economics never speak in the showroom ("~48 cr" chips).
+    expect(screen.queryByText(/~\s*\d/)).not.toBeInTheDocument();
+    // Gradient placeholder rectangles are banned.
+    expect(document.querySelector('[style*="gradient"]')).toBeNull();
+  });
+
+  it("selects a model from the showroom and closes it", async () => {
+    const user = userEvent.setup();
+    const onModelChange = vi.fn();
+
+    render(
+      <ModelRecommendationDropdown
+        renderModelOptions={[
+          { id: "sora-2", label: "Sora" },
+          { id: "google/veo-3", label: "Veo" },
+        ]}
+        renderModelId="sora-2"
+        onModelChange={onModelChange}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Video model" });
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByRole("option", { name: /Veo/i }));
+
+    expect(onModelChange).toHaveBeenCalledWith("google/veo-3");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes the showroom on escape", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ModelRecommendationDropdown
+        renderModelOptions={[{ id: "sora-2", label: "Sora" }]}
+        renderModelId="sora-2"
+        onModelChange={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Video model" });
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+    await user.keyboard("{Escape}");
+
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
 });

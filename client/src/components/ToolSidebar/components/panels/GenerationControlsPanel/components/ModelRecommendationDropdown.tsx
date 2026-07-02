@@ -7,18 +7,18 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import {
+  Badge,
   CaretDown,
-  Star,
   WarningCircle,
   X,
 } from "@promptstudio/system/components/ui";
 import {
   VIDEO_DRAFT_MODEL,
   VIDEO_RENDER_MODELS,
-  getVideoCost,
 } from "@components/ToolSidebar/config/modelConfig";
 import { cn } from "@/utils/cn";
 import { resolveModelMeta } from "@/config/videoModels";
+import { FullscreenDialog } from "@/components/ui/FullscreenDialog";
 import type { ModelRecommendation } from "@/features/model-intelligence/types";
 import { normalizeModelIdForSelection } from "@/features/model-intelligence/utils/modelLabels";
 
@@ -29,9 +29,7 @@ import { normalizeModelIdForSelection } from "@/features/model-intelligence/util
 interface ModelEntry {
   id: string;
   label: string;
-  creditsPerSecond: number;
   badge: "draft" | "render";
-  badgeColor: string;
 }
 
 interface RecInfo {
@@ -46,8 +44,10 @@ interface UnavailableEntry {
   reason: string;
 }
 
+/* Generation economics never speak in the showroom (ADR-0008), so the
+   insufficient-credits reason collapses into the generic label. */
 const REASON_LABELS: Record<string, string> = {
-  insufficient_credits: "Need more credits",
+  insufficient_credits: "Unavailable",
   missing_credentials: "Not configured",
   unsupported_model: "Unsupported",
   image_input_unsupported: "No image input",
@@ -92,13 +92,16 @@ const buildModelEntries = (
   const renders = VIDEO_RENDER_MODELS.filter(
     (m) => !hasFilter || labels.has(m.id),
   ).map((m) => ({
-    ...m,
+    id: m.id,
     label: labels.get(m.id) ?? m.label,
     badge: "render" as const,
-    badgeColor: "#6C5CE7",
   }));
   return [
-    { ...VIDEO_DRAFT_MODEL, badge: "draft" as const, badgeColor: "#4ADE80" },
+    {
+      id: VIDEO_DRAFT_MODEL.id,
+      label: VIDEO_DRAFT_MODEL.label,
+      badge: "draft" as const,
+    },
     ...renders,
   ];
 };
@@ -178,63 +181,22 @@ function sortModels(
    Shared visual components
    ─────────────────────────────────────────────────────── */
 
-/** Quality/speed 1-3 from model traits (thresholds based on per-second rates) */
-function getRatings(m: ModelEntry) {
-  return {
-    quality: m.creditsPerSecond >= 10 ? 3 : m.creditsPerSecond >= 5 ? 2 : 1,
-    speed: m.badge === "draft" ? 3 : m.creditsPerSecond >= 10 ? 1 : 2,
-  };
-}
-
-/** Krea-style 3-pip indicator */
-function Pips({ filled, color }: { filled: number; color: string }) {
-  return (
-    <div className="flex gap-[3px]">
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="h-[6px] w-[6px] rounded-full"
-          style={{ background: i < filled ? color : "#2A2D35" }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/** Radio circle */
+/** Radio circle — monochrome selection treatment: strong ring + filled dot. */
 function Radio({ on }: { on: boolean }) {
   return (
     <div
       className={cn(
-        "h-[18px] w-[18px] flex-none rounded-full border-2 transition-colors",
-        "flex items-center justify-center",
-        on
-          ? "border-white bg-white"
-          : "border-tool-text-disabled bg-transparent",
+        "flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border transition-colors",
+        on ? "border-foreground" : "border-tool-text-disabled",
       )}
     >
-      {on && (
-        <div className="h-[7px] w-[7px] rounded-full bg-tool-surface-card" />
-      )}
+      {on && <div className="bg-foreground h-2 w-2 rounded-full" />}
     </div>
   );
 }
 
-/** Card gradient placeholder (in lieu of preview thumbnails) */
-const GRADIENTS: Record<string, string> = {
-  "sora-2": "linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)",
-  "google/veo-3": "linear-gradient(135deg, #141E30 0%, #243B55 100%)",
-  "kling-v2-1-master":
-    "linear-gradient(135deg, #2C1810 0%, #5D3A1A 50%, #3E2712 100%)",
-  "luma-ray3": "linear-gradient(135deg, #1A0530 0%, #3D1560 50%, #250940 100%)",
-  "runway-gen45":
-    "linear-gradient(135deg, #1F1013 0%, #4A1D28 50%, #2B1018 100%)",
-  "wan-2.5": "linear-gradient(135deg, #0A1F0A 0%, #1A4A1A 50%, #0D2B0D 100%)",
-  "wan-2.2": "linear-gradient(135deg, #0D1F15 0%, #1A3A28 50%, #0F2B1C 100%)",
-};
-
 /* ───────────────────────────────────────────────────────
-   LIST VIEW — compact sidebar rows (Krea Image 2)
+   LIST VIEW — compact sidebar rows
    ─────────────────────────────────────────────────────── */
 
 function ListRow({
@@ -249,14 +211,13 @@ function ListRow({
   onSelect: (id: string) => void;
 }) {
   const meta = resolveModelMeta(model.id);
-  const r = getRatings(model);
   return (
     <button
       type="button"
       role="option"
       aria-selected={selected}
       onClick={() => onSelect(model.id)}
-      className="flex w-full gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+      className="hover:bg-tool-nav-hover flex w-full gap-3 px-4 py-3.5 text-left transition-colors"
     >
       <div className="pt-[3px]">
         <Radio on={selected} />
@@ -266,34 +227,29 @@ function ListRow({
           <span
             className={cn(
               "text-[14px] leading-tight",
-              selected ? "font-bold text-white" : "font-medium text-muted",
+              selected
+                ? "text-foreground font-semibold"
+                : "text-muted font-medium",
             )}
           >
             {model.label}
           </span>
           {recInfo?.isTop && (
-            <Star className="h-3 w-3 text-amber-400" weight="fill" />
+            <Badge variant="subtle" size="xs">
+              Recommended
+            </Badge>
           )}
         </div>
-        <span className="text-[12px] leading-relaxed text-tool-text-dim">
+        <span className="text-tool-text-dim text-[12px] leading-relaxed">
           {meta.strength}
         </span>
-        <div className="flex items-center gap-3 pt-1">
-          <Pips filled={r.quality} color="#CDD1DC" />
-          <Pips filled={r.speed} color="#FBBF24" />
-          <div className="flex-1" />
-          <span className="tabular-nums text-[12px] text-tool-text-dim">
-            ~{getVideoCost(model.id)}{" "}
-            <span className="text-[10px] opacity-60">cr</span>
-          </span>
-        </div>
       </div>
     </button>
   );
 }
 
 /* ───────────────────────────────────────────────────────
-   CARD VIEW — grid cards (Krea Image 1)
+   CARD VIEW — showroom gallery cards
    ─────────────────────────────────────────────────────── */
 
 function ModelCard({
@@ -308,9 +264,6 @@ function ModelCard({
   onSelect: (id: string) => void;
 }) {
   const meta = resolveModelMeta(model.id);
-  const r = getRatings(model);
-  const gradient =
-    GRADIENTS[model.id] ?? "linear-gradient(135deg, #1E2030, #2A2D3E)";
 
   return (
     <button
@@ -319,44 +272,44 @@ function ModelCard({
       aria-selected={selected}
       onClick={() => onSelect(model.id)}
       className={cn(
-        "flex flex-col overflow-hidden rounded-xl text-left transition-shadow",
+        "flex flex-col overflow-hidden rounded-xl border text-left transition-colors",
         selected
-          ? "ring-2 ring-tool-accent-neutral ring-offset-2 ring-offset-tool-surface-card"
-          : "ring-1 ring-tool-nav-active hover:ring-tool-text-disabled",
+          ? "border-border-strong"
+          : "border-border hover:border-border-strong",
       )}
     >
-      {/* Gradient header (thumbnail placeholder) */}
-      <div className="relative h-36 w-full" style={{ background: gradient }}>
+      {/* Sample-still slot — flat monochrome "sample still pending" slate.
+          A real per-model sample still drops in later as an absolutely
+          positioned <img> cover without any layout change. */}
+      <div className="border-border bg-surface-2 relative h-36 w-full border-b">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="border-border text-overline text-faint rounded-sm border px-3 py-1.5">
+            {model.label}
+          </span>
+        </div>
         {recInfo?.isTop && (
-          <div className="absolute left-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-black/40">
-            <Star className="h-3.5 w-3.5 text-amber-400" weight="fill" />
-          </div>
+          <Badge variant="subtle" size="xs" className="absolute left-3 top-3">
+            Recommended
+          </Badge>
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex flex-col gap-2 bg-tool-surface-card px-4 pb-4 pt-3.5">
+      {/* Info — the strength copy leads; the radio row carries selection. */}
+      <div className="bg-tool-surface-card flex flex-col gap-2 px-4 pb-4 pt-3.5">
+        <span className="text-foreground text-[13px] leading-relaxed">
+          {meta.strength}
+        </span>
         <div className="flex items-center gap-2">
           <Radio on={selected} />
           <span
             className={cn(
-              "text-[15px] leading-tight",
-              selected ? "font-bold text-white" : "font-semibold text-muted",
+              "text-[12px] leading-tight",
+              selected
+                ? "text-foreground font-semibold"
+                : "text-muted font-medium",
             )}
           >
             {model.label}
-          </span>
-        </div>
-        <span className="text-[12.5px] leading-relaxed text-tool-text-dim">
-          {meta.strength}
-        </span>
-        <div className="flex items-center gap-3 pt-0.5">
-          <Pips filled={r.quality} color="#CDD1DC" />
-          <Pips filled={r.speed} color="#FBBF24" />
-          <div className="flex-1" />
-          <span className="tabular-nums text-[13px] text-tool-text-dim">
-            ~{getVideoCost(model.id)}{" "}
-            <span className="text-[11px] opacity-60">cr</span>
           </span>
         </div>
       </div>
@@ -532,10 +485,11 @@ export function ModelRecommendationDropdown({
     setMode((prev) => (prev === "cards" ? "closed" : "cards"));
   }, []);
 
-  /* ── Escape to close ── */
+  /* ── Escape to close the list popover (the showroom dialog handles
+        its own Escape via the system Dialog) ── */
 
   useEffect(() => {
-    if (mode === "closed") return;
+    if (mode !== "list") return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMode("closed");
     };
@@ -571,8 +525,8 @@ export function ModelRecommendationDropdown({
           onMouseEnter={onEnterTrigger}
           onMouseLeave={onLeaveTrigger}
           className={cn(
-            "flex h-9 items-center gap-1.5 rounded-lg border border-tool-nav-active bg-tool-surface-card px-3 text-xs font-semibold text-foreground transition-[border-color,transform,background-color]",
-            "duration-[160ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px hover:border-tool-text-disabled",
+            "border-tool-nav-active bg-tool-surface-card text-foreground flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-[border-color,transform,background-color]",
+            "hover:border-tool-text-disabled duration-[160ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px",
             mode !== "closed" && "border-tool-accent-neutral",
             triggerClassName,
           )}
@@ -586,14 +540,14 @@ export function ModelRecommendationDropdown({
             </span>
           ) : null}
           {triggerPrefixLabel && (
-            <span className="text-[11px] font-medium text-tool-text-subdued">
+            <span className="text-tool-text-subdued text-[11px] font-medium">
               {triggerPrefixLabel}
             </span>
           )}
           {current?.label ?? "Model"}
           <CaretDown
             className={cn(
-              "h-2.5 w-2.5 text-tool-text-dim transition-transform",
+              "text-tool-text-dim h-2.5 w-2.5 transition-transform",
               mode !== "closed" && "rotate-180",
             )}
           />
@@ -601,7 +555,7 @@ export function ModelRecommendationDropdown({
       </div>
 
       {/* ═══════════════════════════════════════════════════
-         LIST VIEW — hover popover (Krea sidebar style)
+         LIST VIEW — hover popover
          ═══════════════════════════════════════════════════ */}
       {mode === "list" &&
         createPortal(
@@ -610,7 +564,7 @@ export function ModelRecommendationDropdown({
             role="listbox"
             aria-label="Model selection"
             style={listStyle}
-            className="motion-presence-panel z-dropdown overflow-y-auto overflow-x-hidden rounded-xl border border-tool-nav-active bg-tool-surface-card py-1 shadow-[0_16px_48px_rgba(0,0,0,0.6)] ps-animate-scale-in"
+            className="motion-presence-panel z-dropdown border-border bg-tool-surface-card shadow-floating ps-animate-scale-in overflow-y-auto overflow-x-hidden rounded-xl border py-1"
             data-motion-state="entered"
             onMouseEnter={onEnterList}
             onMouseLeave={onLeaveList}
@@ -619,13 +573,13 @@ export function ModelRecommendationDropdown({
             <button
               type="button"
               onClick={() => setMode("cards")}
-              className="flex w-full items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium text-tool-text-dim transition-colors hover:text-white"
+              className="text-tool-text-dim hover:text-foreground flex w-full items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors"
             >
               Click to view all models
               <CaretDown className="h-3 w-3" />
             </button>
 
-            <div className="mx-3.5 h-px bg-tool-nav-active" />
+            <div className="bg-border mx-3.5 h-px" />
 
             {sorted.map((m) => (
               <ListRow
@@ -639,18 +593,18 @@ export function ModelRecommendationDropdown({
 
             {unavail.length > 0 && (
               <>
-                <div className="mx-3.5 h-px bg-tool-nav-active" />
+                <div className="bg-border mx-3.5 h-px" />
                 {unavail.map((e) => (
                   <div
                     key={e.id}
                     className="flex items-center gap-2 px-4 py-2 opacity-40"
                   >
-                    <WarningCircle className="h-4 w-4 flex-none text-amber-400" />
-                    <span className="text-[13px] text-tool-text-dim">
+                    <WarningCircle className="text-faint h-4 w-4 flex-none" />
+                    <span className="text-tool-text-dim text-[13px]">
                       {e.label}
                     </span>
                     <div className="flex-1" />
-                    <span className="text-[10px] italic text-tool-text-label">
+                    <span className="text-tool-text-label text-[10px] italic">
                       {formatReasonLabel(e.reason)}
                     </span>
                   </div>
@@ -662,112 +616,109 @@ export function ModelRecommendationDropdown({
         )}
 
       {/* ═══════════════════════════════════════════════════
-         CARD VIEW — full overlay grid (Krea expanded style)
+         CARD VIEW — the model showroom (system Dialog)
          ═══════════════════════════════════════════════════ */}
-      {mode === "cards" &&
-        createPortal(
-          <>
-            {/* Backdrop */}
-            <div
-              className="motion-presence-overlay fixed inset-0 z-modal-backdrop bg-black/60 backdrop-blur-sm ps-animate-fade-in"
-              data-motion-state="entered"
+      <FullscreenDialog
+        open={mode === "cards"}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setMode("closed");
+        }}
+        title="Choose a model"
+        description="Browse render and draft models and pick one."
+        contentClassName="overflow-y-auto"
+      >
+        <div
+          className="flex min-h-full w-full items-start justify-center px-6 py-16"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setMode("closed");
+          }}
+        >
+          <div className="border-border bg-tool-surface-card shadow-floating relative w-full max-w-4xl rounded-2xl border p-8">
+            {/* Close */}
+            <button
+              type="button"
               onClick={() => setMode("closed")}
-            />
+              aria-label="Close model showroom"
+              className="text-tool-text-dim hover:bg-tool-nav-active hover:text-foreground absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+            >
+              <X className="h-5 w-5" weight="bold" />
+            </button>
 
-            {/* Scrollable card panel */}
-            <div className="fixed inset-0 z-modal overflow-y-auto">
-              <div className="flex min-h-full items-start justify-center px-6 py-16">
-                <div
-                  className="motion-presence-panel relative w-full max-w-[900px] rounded-2xl border border-tool-nav-active bg-tool-surface-card p-8 shadow-[0_24px_80px_rgba(0,0,0,0.7)] ps-animate-scale-in"
-                  data-motion-state="entered"
-                >
-                  {/* Close */}
-                  <button
-                    type="button"
-                    onClick={() => setMode("closed")}
-                    className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-tool-text-dim transition-colors hover:bg-tool-nav-active hover:text-white"
-                  >
-                    <X className="h-5 w-5" weight="bold" />
-                  </button>
-
-                  {/* Render models */}
-                  {renders.length > 0 && (
-                    <section className="mb-10">
-                      <h3 className="text-[18px] font-bold text-white">
-                        Render Models
-                      </h3>
-                      <p className="mb-5 mt-1 text-[13px] text-tool-text-dim">
-                        High-quality models for final production output.
-                      </p>
-                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-                        {renders.map((m) => (
-                          <ModelCard
-                            key={m.id}
-                            model={m}
-                            selected={m.id === renderModelId}
-                            recInfo={recMap.get(m.id)}
-                            onSelect={handleSelect}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Draft models */}
-                  {drafts.length > 0 && (
-                    <section>
-                      <h3 className="text-[18px] font-bold text-white">
-                        Draft Models
-                      </h3>
-                      <p className="mb-5 mt-1 text-[13px] text-tool-text-dim">
-                        Fast, affordable models for previewing and iterating.
-                      </p>
-                      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-                        {drafts.map((m) => (
-                          <ModelCard
-                            key={m.id}
-                            model={m}
-                            selected={m.id === renderModelId}
-                            recInfo={recMap.get(m.id)}
-                            onSelect={handleSelect}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Unavailable */}
-                  {unavail.length > 0 && (
-                    <section className="mt-10 border-t border-tool-nav-active pt-6">
-                      <h3 className="mb-4 text-[14px] font-semibold text-tool-text-dim">
-                        Unavailable
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {unavail.map((e) => (
-                          <div
-                            key={e.id}
-                            className="flex items-center gap-3 rounded-xl bg-tool-surface-card px-4 py-3 opacity-50"
-                          >
-                            <WarningCircle className="h-5 w-5 flex-none text-amber-400" />
-                            <div>
-                              <div className="text-[14px] font-medium text-tool-text-dim">
-                                {e.label}
-                              </div>
-                              <div className="text-[11px] italic text-tool-text-label">
-                                {formatReasonLabel(e.reason)}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+            {/* Render models */}
+            {renders.length > 0 && (
+              <section className="mb-10">
+                <h3 className="text-overline text-tool-text-subdued">
+                  Render models
+                </h3>
+                <p className="text-tool-text-dim mb-5 mt-1 text-[13px]">
+                  High-quality models for final production output.
+                </p>
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                  {renders.map((m) => (
+                    <ModelCard
+                      key={m.id}
+                      model={m}
+                      selected={m.id === renderModelId}
+                      recInfo={recMap.get(m.id)}
+                      onSelect={handleSelect}
+                    />
+                  ))}
                 </div>
-              </div>
-            </div>
-          </>,
-          document.body,
-        )}
+              </section>
+            )}
+
+            {/* Draft models */}
+            {drafts.length > 0 && (
+              <section>
+                <h3 className="text-overline text-tool-text-subdued">
+                  Draft models
+                </h3>
+                <p className="text-tool-text-dim mb-5 mt-1 text-[13px]">
+                  Fast models for previewing and iterating.
+                </p>
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                  {drafts.map((m) => (
+                    <ModelCard
+                      key={m.id}
+                      model={m}
+                      selected={m.id === renderModelId}
+                      recInfo={recMap.get(m.id)}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Unavailable */}
+            {unavail.length > 0 && (
+              <section className="border-border mt-10 border-t pt-6">
+                <h3 className="text-overline text-tool-text-subdued mb-4">
+                  Unavailable
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {unavail.map((e) => (
+                    <div
+                      key={e.id}
+                      className="border-border bg-surface-2 flex items-center gap-3 rounded-xl border px-4 py-3 opacity-50"
+                    >
+                      <WarningCircle className="text-faint h-5 w-5 flex-none" />
+                      <div>
+                        <div className="text-tool-text-dim text-[14px] font-medium">
+                          {e.label}
+                        </div>
+                        <div className="text-tool-text-label text-[11px] italic">
+                          {formatReasonLabel(e.reason)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
+      </FullscreenDialog>
     </>
   );
 }
