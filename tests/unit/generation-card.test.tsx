@@ -38,6 +38,15 @@ vi.mock("@features/generations/components/VideoThumbnail", () => ({
   },
 }));
 
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, CONTINUITY_UI: true },
+  };
+});
+
 const createGeneration = (overrides: Partial<Generation> = {}): Generation => ({
   id: "gen-1",
   tier: "draft",

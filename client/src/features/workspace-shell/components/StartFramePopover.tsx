@@ -3,6 +3,7 @@ import { X, Image } from "@promptstudio/system/components/ui";
 import type { CameraPath } from "@/features/convergence/types";
 import type { KeyframeTile } from "@features/generation-controls";
 import { cn } from "@/utils/cn";
+import { FEATURES } from "@/config/features.config";
 import { useResolvedMediaUrl } from "@/hooks/useResolvedMediaUrl";
 import { hasGcsSignedUrlParams } from "@/utils/storageUrl";
 
@@ -141,13 +142,13 @@ export function StartFramePopover({
         <div
           role="dialog"
           data-testid="start-frame-popover"
-          className="absolute bottom-[calc(100%+8px)] left-0 z-[100] w-[220px] overflow-hidden rounded-xl border border-tool-nav-active bg-tool-surface-card shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-2"
+          className="border-tool-nav-active bg-tool-surface-card animate-in fade-in slide-in-from-bottom-2 absolute bottom-[calc(100%+8px)] left-0 z-[100] w-[220px] overflow-hidden rounded-xl border shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
           onClick={(e) => e.stopPropagation()}
         >
           {previewUrl ? (
             <>
               {/* Thumbnail with close button */}
-              <div className="relative aspect-video bg-tool-surface-deep">
+              <div className="bg-tool-surface-deep relative aspect-video">
                 <img
                   src={previewUrl}
                   alt="Start frame"
@@ -163,43 +164,46 @@ export function StartFramePopover({
                 </button>
               </div>
 
-              {/* Camera motion pills */}
-              <div className="px-2.5 py-2">
-                <div className="mb-1.5 text-[10px] font-semibold tracking-[0.06em] text-tool-text-label">
-                  CAMERA MOTION
+              {/* Camera motion pills — depth-warp picker is part of the
+                  frozen convergence stack (ADR-0002) */}
+              {FEATURES.CONVERGENCE_UI ? (
+                <div className="px-2.5 py-2">
+                  <div className="text-tool-text-label mb-1.5 text-[10px] font-semibold tracking-[0.06em]">
+                    CAMERA MOTION
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="start-frame-motion-button"
+                    className={cn(
+                      "h-[26px] rounded-md border px-2 text-[11px] transition-colors",
+                      cameraMotion
+                        ? "border-tool-accent-neutral/40 bg-tool-accent-neutral/8 text-tool-accent-neutral"
+                        : "border-tool-nav-active text-tool-text-dim hover:border-tool-text-disabled",
+                    )}
+                    onClick={onOpenMotion}
+                  >
+                    {cameraMotion?.label ?? "Select motion…"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  data-testid="start-frame-motion-button"
-                  className={cn(
-                    "h-[26px] rounded-md border px-2 text-[11px] transition-colors",
-                    cameraMotion
-                      ? "border-tool-accent-neutral/40 bg-tool-accent-neutral/8 text-tool-accent-neutral"
-                      : "border-tool-nav-active text-tool-text-dim hover:border-tool-text-disabled",
-                  )}
-                  onClick={onOpenMotion}
-                >
-                  {cameraMotion?.label ?? "Select motion…"}
-                </button>
-              </div>
+              ) : null}
             </>
           ) : (
             /* Empty upload state */
             <div className="p-4 text-center">
               <button
                 type="button"
-                className="flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed border-tool-nav-active py-5 transition-colors hover:border-tool-text-disabled"
+                className="border-tool-nav-active hover:border-tool-text-disabled flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-[1.5px] border-dashed py-5 transition-colors"
                 onClick={() => inputRef.current?.click()}
                 disabled={isUploading}
               >
-                <span className="flex text-tool-text-label">
+                <span className="text-tool-text-label flex">
                   <Image size={13} />
                 </span>
-                <span className="text-[11px] text-tool-text-subdued">
+                <span className="text-tool-text-subdued text-[11px]">
                   {isUploading ? "Uploading…" : "Drop image or click to upload"}
                 </span>
               </button>
-              <span className="mt-2 block text-[10px] text-tool-text-label">
+              <span className="text-tool-text-label mt-2 block text-[10px]">
                 Or select from storyboard previews
               </span>
             </div>

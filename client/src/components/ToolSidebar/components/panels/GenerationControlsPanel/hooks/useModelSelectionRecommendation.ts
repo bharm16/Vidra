@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { FEATURES } from "@/config/features.config";
 import { useModelRecommendation } from "@/features/model-intelligence";
 import { MIN_PROMPT_LENGTH_FOR_RECOMMENDATION } from "@/features/model-intelligence/constants";
 import { normalizeModelIdForSelection } from "@/features/model-intelligence/utils/modelLabels";
@@ -87,6 +88,9 @@ export function useModelSelectionRecommendation({
 
   const shouldLoadRecommendations = useMemo(
     () =>
+      // ADR-0002: model-intelligence is premature — v1 hardcodes the model,
+      // so recommendation calls stay off the canvas hot path.
+      FEATURES.MODEL_INTELLIGENCE_UI &&
       activeTab === "video" &&
       trimmedPromptLength >= MIN_PROMPT_LENGTH_FOR_RECOMMENDATION,
     [activeTab, trimmedPromptLength],

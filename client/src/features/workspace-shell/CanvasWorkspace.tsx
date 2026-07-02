@@ -41,6 +41,7 @@ import { useWorkspaceKeyboardShortcuts } from "./hooks/useWorkspaceKeyboardShort
 import { ShotRow } from "./components/ShotRow";
 import { ShotDivider } from "./components/ShotDivider";
 import { TileStateAnnouncer } from "./components/TileStateAnnouncer";
+import { FEATURES } from "@/config/features.config";
 import { WorkspaceTopBar } from "./components/WorkspaceTopBar";
 import { CanvasPromptBar } from "./components/CanvasPromptBar";
 import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
@@ -560,7 +561,7 @@ export function CanvasWorkspace({
         />
       ) : null}
 
-      {domain.startFrame ? (
+      {FEATURES.CONVERGENCE_UI && domain.startFrame ? (
         <Suspense fallback={null}>
           <CameraMotionModal
             isOpen={showCameraMotionModal}

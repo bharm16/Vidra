@@ -21,6 +21,15 @@ vi.mock("@/services/LoggingService", () => ({
   },
 }));
 
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, MODEL_INTELLIGENCE_UI: true },
+  };
+});
+
 describe("trackModelRecommendationEvent", () => {
   beforeEach(() => {
     vi.clearAllMocks();

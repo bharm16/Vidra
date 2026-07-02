@@ -1,5 +1,6 @@
 import { apiClient } from "@/services/ApiClient";
 import { logger } from "@/services/LoggingService";
+import { FEATURES } from "@/config/features.config";
 
 export type ModelRecommendationEvent = {
   event:
@@ -21,6 +22,8 @@ const log = logger.child("modelIntelligenceTelemetry");
 export async function trackModelRecommendationEvent(
   event: ModelRecommendationEvent,
 ): Promise<void> {
+  // ADR-0002: model-intelligence is frozen — no telemetry traffic while off.
+  if (!FEATURES.MODEL_INTELLIGENCE_UI) return;
   try {
     await apiClient.post("/model-intelligence/track", event);
   } catch (error) {

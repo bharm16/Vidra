@@ -12,6 +12,15 @@ vi.mock("@/utils/storageUrl", () => ({
   hasGcsSignedUrlParams: () => false,
 }));
 
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, CONVERGENCE_UI: true },
+  };
+});
+
 const buildStartFrame = (): KeyframeTile => ({
   id: "frame-1",
   url: "https://example.com/frame.png",

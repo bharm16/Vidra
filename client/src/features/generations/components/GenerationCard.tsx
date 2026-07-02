@@ -9,6 +9,7 @@ import {
 import { Button } from "@promptstudio/system/components/ui/button";
 
 import { cn } from "@/utils/cn";
+import { FEATURES } from "@/config/features.config";
 import { ContinueSceneButton } from "@/features/continuity/components/ContinueSceneButton";
 import { extractStorageObjectPath } from "@/utils/storageUrl";
 import { ImagePreview } from "@/components/MediaViewer/components/ImagePreview";
@@ -70,6 +71,7 @@ export const GenerationCard = memo(function GenerationCard({
     ? extractStorageObjectPath(generation.thumbnailUrl)
     : null;
   const showContinueScene =
+    FEATURES.CONTINUITY_UI &&
     Boolean(onContinueSequence) &&
     !isSequenceMode &&
     generation.mediaType === "video" &&
@@ -187,20 +189,20 @@ export const GenerationCard = memo(function GenerationCard({
       )}
 
       {hasSelectedFrame && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg border border-tool-nav-active bg-tool-surface-card px-3 py-2">
+        <div className="border-tool-nav-active bg-tool-surface-card mt-3 flex items-center gap-2 rounded-lg border px-3 py-2">
           <Check
             size={14}
             weight="bold"
             className="text-tool-accent-neutral"
             aria-hidden="true"
           />
-          <span className="flex-1 text-xs font-medium text-tool-text-dim">
+          <span className="text-tool-text-dim flex-1 text-xs font-medium">
             Frame selected as start frame
           </span>
           {onClearSelectedFrame && (
             <button
               type="button"
-              className="text-tool-text-subdued transition-colors hover:text-tool-text-dim"
+              className="text-tool-text-subdued hover:text-tool-text-dim transition-colors"
               onClick={(event) => {
                 event.stopPropagation();
                 onClearSelectedFrame();
@@ -214,14 +216,14 @@ export const GenerationCard = memo(function GenerationCard({
       )}
 
       {generation.faceSwapUrl && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg border border-tool-nav-active bg-tool-surface-card px-3 py-2">
-          <div className="h-10 w-10 overflow-hidden rounded-md border border-tool-nav-active">
+        <div className="border-tool-nav-active bg-tool-surface-card mt-3 flex items-center gap-2 rounded-lg border px-3 py-2">
+          <div className="border-tool-nav-active h-10 w-10 overflow-hidden rounded-md border">
             <ImagePreview
               src={generation.faceSwapUrl}
               alt="Face swap preview"
             />
           </div>
-          <span className="flex-1 text-xs font-medium text-tool-text-dim">
+          <span className="text-tool-text-dim flex-1 text-xs font-medium">
             Face swap applied
           </span>
         </div>
@@ -229,7 +231,7 @@ export const GenerationCard = memo(function GenerationCard({
 
       <div className="flex items-center justify-end gap-2 pt-1.5">
         {generation.status === "failed" && (
-          <span className="mr-auto inline-flex items-center gap-1 text-label-sm font-medium text-red-500/40">
+          <span className="text-label-sm mr-auto inline-flex items-center gap-1 font-medium text-red-500/40">
             <WarningCircle size={14} aria-hidden="true" />
             {generation.error ?? "Generation failed"}
           </span>
@@ -239,7 +241,7 @@ export const GenerationCard = memo(function GenerationCard({
           <Button
             type="button"
             variant="ghost"
-            className="h-6 gap-1 rounded-[5px] border border-tool-nav-active bg-transparent px-2 text-[11px] font-medium text-tool-text-subdued transition-colors hover:border-tool-text-disabled hover:text-tool-text-dim"
+            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-[5px] border bg-transparent px-2 text-[11px] font-medium transition-colors"
             onClick={(event) => {
               event.stopPropagation();
               onRetry(generation);
@@ -253,7 +255,7 @@ export const GenerationCard = memo(function GenerationCard({
           <Button
             type="button"
             variant="ghost"
-            className="h-6 gap-1 rounded-[5px] border border-tool-nav-active bg-transparent px-2 text-[11px] font-medium text-tool-text-subdued transition-colors hover:border-tool-text-disabled hover:text-tool-text-dim"
+            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-[5px] border bg-transparent px-2 text-[11px] font-medium transition-colors"
             onClick={(event) => {
               event.stopPropagation();
               onDownload(generation);
@@ -267,7 +269,7 @@ export const GenerationCard = memo(function GenerationCard({
           <Button
             type="button"
             variant="ghost"
-            className="h-6 gap-1 rounded-[5px] border border-tool-nav-active bg-transparent px-2 text-[11px] font-medium text-tool-text-subdued transition-colors hover:border-tool-text-disabled hover:text-tool-text-dim"
+            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-[5px] border bg-transparent px-2 text-[11px] font-medium transition-colors"
             onClick={(event) => {
               event.stopPropagation();
               onExtend(generation);
@@ -284,7 +286,7 @@ export const GenerationCard = memo(function GenerationCard({
             label="Continue as Sequence"
             className={cn(
               showRetry || showDownload ? "" : "ml-auto",
-              "[&>button]:h-6 [&>button]:rounded-[5px] [&>button]:border [&>button]:border-tool-nav-active [&>button]:bg-transparent [&>button]:px-2 [&>button]:text-[11px] [&>button]:font-medium [&>button]:text-tool-text-subdued [&>button]:transition-colors [&>button]:hover:border-tool-text-disabled [&>button]:hover:text-tool-text-dim [&>button]:disabled:border-tool-nav-active [&>button]:disabled:text-tool-text-label",
+              "[&>button]:border-tool-nav-active [&>button]:text-tool-text-subdued [&>button]:hover:border-tool-text-disabled [&>button]:hover:text-tool-text-dim [&>button]:disabled:border-tool-nav-active [&>button]:disabled:text-tool-text-label [&>button]:h-6 [&>button]:rounded-[5px] [&>button]:border [&>button]:bg-transparent [&>button]:px-2 [&>button]:text-[11px] [&>button]:font-medium [&>button]:transition-colors",
             )}
           />
         )}
