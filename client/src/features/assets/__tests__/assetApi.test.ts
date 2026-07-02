@@ -55,7 +55,7 @@ describe("assetApi", () => {
       };
       fetchMock.mockResolvedValue({
         ok: true,
-        json: async () => response,
+        json: async () => ({ success: true, data: response }),
       });
 
       const result = await assetApi.list("character");
@@ -71,19 +71,22 @@ describe("assetApi", () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({
-          image: {
-            id: "img-1",
-            url: "https://example.com/image.png",
-            thumbnailUrl: "https://example.com/thumb.png",
-            isPrimary: false,
-            metadata: {
-              uploadedAt: "now",
-              width: 100,
-              height: 100,
-              sizeBytes: 1234,
+          success: true,
+          data: {
+            image: {
+              id: "img-1",
+              url: "https://example.com/image.png",
+              thumbnailUrl: "https://example.com/thumb.png",
+              isPrimary: false,
+              metadata: {
+                uploadedAt: "now",
+                width: 100,
+                height: 100,
+                sizeBytes: 1234,
+              },
             },
+            warnings: [],
           },
-          warnings: [],
         }),
       });
 
@@ -122,7 +125,7 @@ describe("assetApi", () => {
 
       fetchMock.mockResolvedValue({
         ok: true,
-        json: async () => asset,
+        json: async () => ({ success: true, data: asset }),
       });
 
       const result = await assetApi.create({

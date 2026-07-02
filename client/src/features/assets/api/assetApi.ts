@@ -10,6 +10,8 @@ import {
   TriggerValidationSchema,
 } from "./schemas";
 
+import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
+
 const API_BASE = "/api/assets";
 
 async function handleError(
@@ -39,7 +41,8 @@ export const assetApi = {
       return await handleError(response, "Failed to fetch assets");
     }
     const payload = await response.json();
-    return AssetListResponseSchema.parse(payload) as AssetListResponse;
+    return ApiSuccessResponseSchema(AssetListResponseSchema).parse(payload)
+      .data as AssetListResponse;
   },
 
   async get(assetId: string): Promise<Asset> {
@@ -52,7 +55,7 @@ export const assetApi = {
       return await handleError(response, "Failed to fetch asset");
     }
     const payload = await response.json();
-    return AssetSchema.parse(payload) as Asset;
+    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data as Asset;
   },
 
   async create(data: {
@@ -76,7 +79,7 @@ export const assetApi = {
       return await handleError(response, "Failed to create asset");
     }
     const payload = await response.json();
-    return AssetSchema.parse(payload) as Asset;
+    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data as Asset;
   },
 
   async update(
@@ -102,7 +105,7 @@ export const assetApi = {
       return await handleError(response, "Failed to update asset");
     }
     const payload = await response.json();
-    return AssetSchema.parse(payload) as Asset;
+    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data as Asset;
   },
 
   async delete(assetId: string): Promise<boolean> {
@@ -131,7 +134,9 @@ export const assetApi = {
       return await handleError(response, "Failed to get suggestions");
     }
     const payload = await response.json();
-    return AssetSuggestionSchema.array().parse(payload);
+    return ApiSuccessResponseSchema(AssetSuggestionSchema.array()).parse(
+      payload,
+    ).data;
   },
 
   async resolve(prompt: string) {
@@ -149,7 +154,7 @@ export const assetApi = {
       return await handleError(response, "Failed to resolve prompt");
     }
     const payload = await response.json();
-    return ResolvedPromptSchema.parse(payload);
+    return ApiSuccessResponseSchema(ResolvedPromptSchema).parse(payload).data;
   },
 
   async validate(prompt: string) {
@@ -167,7 +172,8 @@ export const assetApi = {
       return await handleError(response, "Failed to validate triggers");
     }
     const payload = await response.json();
-    return TriggerValidationSchema.parse(payload);
+    return ApiSuccessResponseSchema(TriggerValidationSchema).parse(payload)
+      .data;
   },
 
   async addImage(
@@ -194,7 +200,9 @@ export const assetApi = {
       return await handleError(response, "Failed to upload image");
     }
     const payload = await response.json();
-    return AssetImageUploadResponseSchema.parse(payload);
+    return ApiSuccessResponseSchema(AssetImageUploadResponseSchema).parse(
+      payload,
+    ).data;
   },
 
   async deleteImage(assetId: string, imageId: string): Promise<boolean> {
@@ -224,7 +232,7 @@ export const assetApi = {
       return await handleError(response, "Failed to set primary image");
     }
     const payload = await response.json();
-    return AssetSchema.parse(payload) as Asset;
+    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data as Asset;
   },
 
   async getForGeneration(assetId: string) {
@@ -237,7 +245,8 @@ export const assetApi = {
       return await handleError(response, "Asset not ready for generation");
     }
     const payload = await response.json();
-    return AssetForGenerationSchema.parse(payload);
+    return ApiSuccessResponseSchema(AssetForGenerationSchema).parse(payload)
+      .data;
   },
 };
 

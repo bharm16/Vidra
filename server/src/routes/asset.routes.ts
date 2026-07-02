@@ -10,6 +10,7 @@ import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import type { AssetType } from "@shared/types/asset";
 import type { AssetService } from "@services/asset/AssetService";
+import type { ApiResponse } from "@shared/types/api";
 
 const upload = createDiskUpload({
   fileSizeBytes: 5 * 1024 * 1024,
@@ -45,7 +46,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
       const type = normalizeAssetType(typeParam);
 
       if (typeParam && !type) {
-        res.status(400).json({ error: "Invalid asset type filter" });
+        res.status(400).json({
+          success: false,
+          error: "Invalid asset type filter",
+        } satisfies ApiResponse<never>);
         return;
       }
 
@@ -56,12 +60,16 @@ export function createAssetRoutes(assetService: AssetService): Router {
         );
         const byType = { character: 0, style: 0, location: 0, object: 0 };
         byType[type] = items.length;
-        res.json({ assets: items, total: items.length, byType, hasMore });
+        const data = { assets: items, total: items.length, byType, hasMore };
+        res.json({ success: true, data } satisfies ApiResponse<typeof data>);
         return;
       }
 
       const result = await assetService.listAssets(userId);
-      res.json(result);
+      res.json({
+        success: true,
+        data: result,
+      } satisfies ApiResponse<typeof result>);
     }),
   );
 
@@ -81,7 +89,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
         negativePrompt,
       });
 
-      res.status(201).json(asset);
+      res.status(201).json({
+        success: true,
+        data: asset,
+      } satisfies ApiResponse<typeof asset>);
     }),
   );
 
@@ -93,12 +104,18 @@ export function createAssetRoutes(assetService: AssetService): Router {
 
       const query = typeof req.query.q === "string" ? req.query.q : "";
       if (!query.trim()) {
-        res.json([]);
+        res.json({
+          success: true,
+          data: [],
+        } satisfies ApiResponse<never[]>);
         return;
       }
 
       const suggestions = await assetService.getSuggestions(userId, query);
-      res.json(suggestions);
+      res.json({
+        success: true,
+        data: suggestions,
+      } satisfies ApiResponse<typeof suggestions>);
     }),
   );
 
@@ -110,12 +127,18 @@ export function createAssetRoutes(assetService: AssetService): Router {
 
       const { prompt } = req.body || {};
       if (!prompt || typeof prompt !== "string") {
-        res.status(400).json({ error: "prompt is required" });
+        res.status(400).json({
+          success: false,
+          error: "prompt is required",
+        } satisfies ApiResponse<never>);
         return;
       }
 
       const resolved = await assetService.resolvePrompt(userId, prompt);
-      res.json(resolved);
+      res.json({
+        success: true,
+        data: resolved,
+      } satisfies ApiResponse<typeof resolved>);
     }),
   );
 
@@ -127,12 +150,18 @@ export function createAssetRoutes(assetService: AssetService): Router {
 
       const { prompt } = req.body || {};
       if (!prompt || typeof prompt !== "string") {
-        res.status(400).json({ error: "prompt is required" });
+        res.status(400).json({
+          success: false,
+          error: "prompt is required",
+        } satisfies ApiResponse<never>);
         return;
       }
 
       const validation = await assetService.validateTriggers(userId, prompt);
-      res.json(validation);
+      res.json({
+        success: true,
+        data: validation,
+      } satisfies ApiResponse<typeof validation>);
     }),
   );
 
@@ -145,7 +174,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
       const assetId = requireRouteParam(req, res, "id");
       if (!assetId) return;
       const asset = await assetService.getAsset(userId, assetId);
-      res.json(asset);
+      res.json({
+        success: true,
+        data: asset,
+      } satisfies ApiResponse<typeof asset>);
     }),
   );
 
@@ -164,7 +196,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
         textDefinition,
         negativePrompt,
       });
-      res.json(asset);
+      res.json({
+        success: true,
+        data: asset,
+      } satisfies ApiResponse<typeof asset>);
     }),
   );
 
@@ -191,7 +226,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
       const assetId = requireRouteParam(req, res, "id");
       if (!assetId) return;
       if (!req.file) {
-        res.status(400).json({ error: "No image file provided" });
+        res.status(400).json({
+          success: false,
+          error: "No image file provided",
+        } satisfies ApiResponse<never>);
         return;
       }
 
@@ -213,7 +251,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
           metadata,
         );
 
-        res.status(201).json(result);
+        res.status(201).json({
+          success: true,
+          data: result,
+        } satisfies ApiResponse<typeof result>);
       } finally {
         await cleanupUploadFile(req.file);
       }
@@ -250,7 +291,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
         assetId,
         imageId,
       );
-      res.json(asset);
+      res.json({
+        success: true,
+        data: asset,
+      } satisfies ApiResponse<typeof asset>);
     }),
   );
 
@@ -266,7 +310,10 @@ export function createAssetRoutes(assetService: AssetService): Router {
         userId,
         assetId,
       );
-      res.json(assetData);
+      res.json({
+        success: true,
+        data: assetData,
+      } satisfies ApiResponse<typeof assetData>);
     }),
   );
 
