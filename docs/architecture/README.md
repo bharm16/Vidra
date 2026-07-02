@@ -31,15 +31,6 @@ This directory contains the architectural standards and patterns for the Prompt 
 - File size limits by file type
 - Pre-implementation checks
 
-### 📝 .claude-code-template.md
-
-**Request Template**
-
-- Standard format for Claude Code feature requests
-- Ensures architecture requirements are communicated
-- References key documentation
-- Requests design approval before implementation
-
 ### SERVICE_BOUNDARIES.md
 
 **Service Ownership Map**
@@ -55,9 +46,6 @@ For TypeScript patterns and migration guides, see [typescript/](./typescript/REA
 
 **Refactoring a large component?**
 → Read `REFACTORING_PATTERN.md` and follow the checklist
-
-**Asking Claude Code to build a feature?**
-→ Use `.claude-code-template.md` format
 
 **Reviewing a PR?**
 → Check against `REFACTORING_STANDARD.md` requirements

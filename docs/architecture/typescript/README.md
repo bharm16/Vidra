@@ -71,8 +71,6 @@ Track migration progress here:
 ## Related Documentation
 
 - [../REFACTORING_STANDARD.md](../REFACTORING_STANDARD.md) - File size limits (still apply)
-- [../CLAUDE_CODE_TEMPLATES.md](../CLAUDE_CODE_TEMPLATES.md) - Original JS templates
-- [../CLAUDE_CODE_TEST_TEMPLATES.md](../CLAUDE_CODE_TEST_TEMPLATES.md) - Testing patterns
 - [../../DEBUGGING_GUIDE.md](../../DEBUGGING_GUIDE.md) - Full debugging guide (quick start, browser commands)
 
 ---
