@@ -18,6 +18,7 @@ import type {
 import { continuityApi } from "@/features/continuity/api/continuityApi";
 import { apiClient } from "@/services/ApiClient";
 import { logger } from "@/services/LoggingService";
+import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
 
 interface StartSequenceInput {
   sourceVideoId: string;
@@ -87,11 +88,6 @@ const sessionFetchCache = new Map<
 >();
 const sessionFetchInFlight = new Map<string, Promise<SessionDto | null>>();
 const sessionFetchRetryAt = new Map<string, number>();
-
-const isRemoteSessionId = (value: string): boolean => {
-  const normalized = value.trim();
-  return normalized.length > 0 && !normalized.startsWith("draft-");
-};
 
 const getErrorStatus = (error: unknown): number | null => {
   if (!error || typeof error !== "object") return null;

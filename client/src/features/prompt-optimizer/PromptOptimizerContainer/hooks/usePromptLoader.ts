@@ -13,12 +13,9 @@ import type { Toast } from "@hooks/types";
 import type { HighlightSnapshot } from "@features/prompt-optimizer/context/types";
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
+import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
 
 const log = logger.child("usePromptLoader");
-const isRemoteSessionId = (value: string): boolean => {
-  const normalized = value.trim();
-  return normalized.length > 0 && !normalized.startsWith("draft-");
-};
 
 interface PromptData {
   id?: string;
@@ -267,8 +264,15 @@ export function usePromptLoader({
         return;
       }
 
+      // Auth has resolved and there is no user: a server session can never
+      // load for them. Send them to sign in instead of spinning forever.
       if (isRemoteSessionId(normalizedSessionId) && !user?.uid) {
-        setIsLoading(true);
+        setIsLoading(false);
+        toastRef.current.error("Sign in to open this session");
+        navigateRef.current(
+          `/signin?redirect=${encodeURIComponent(`/session/${normalizedSessionId}`)}`,
+          { replace: true },
+        );
         return;
       }
 

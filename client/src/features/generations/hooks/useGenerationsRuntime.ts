@@ -41,16 +41,9 @@ import {
   peekPendingGenerationIntent,
   setPendingGenerationIntent,
 } from "../utils/pendingGenerationIntent";
+import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
 
 const log = logger.child("useGenerationsRuntime");
-
-const isRemoteSessionId = (
-  value: string | null | undefined,
-): value is string => {
-  if (typeof value !== "string") return false;
-  const normalized = value.trim();
-  return normalized.length > 0 && !normalized.startsWith("draft-");
-};
 
 interface UseGenerationsRuntimeOptions {
   prompt: string;

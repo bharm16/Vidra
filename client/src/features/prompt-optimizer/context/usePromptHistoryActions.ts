@@ -3,6 +3,7 @@ import type { NavigateFunction } from "react-router-dom";
 import { PromptContext } from "@utils/PromptContext/PromptContext";
 import type { CapabilityValues } from "@shared/capabilities";
 import type { useDebugLogger } from "@hooks/useDebugLogger";
+import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
 import type { usePromptOptimizer } from "@hooks/usePromptOptimizer";
 import type {
   HighlightSnapshot,
@@ -52,14 +53,6 @@ interface PromptHistoryActionsResult {
   handleCreateNew: () => void;
   loadFromHistory: (entry: PromptHistoryEntry) => void;
 }
-
-const isRemoteSessionId = (
-  value: string | null | undefined,
-): value is string => {
-  if (typeof value !== "string") return false;
-  const normalized = value.trim();
-  return normalized.length > 0 && !normalized.startsWith("draft-");
-};
 
 const hasMeaningfulDraftState = (
   inputPrompt: string,
