@@ -217,4 +217,3 @@ describe("capabilities.routes — canonical envelope contract", () => {
     expect(response.body).not.toHaveProperty("provider");
   });
 });
-
