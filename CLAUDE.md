@@ -364,7 +364,7 @@ These are on-demand — loaded via skills when the task applies:
 
 Cross-cutting initiatives in flight. Read the program doc before working on any of its sub-projects — it's where the end state and decomposition live.
 
-- **Measurement Program** — [`docs/superpowers/programs/measurement.md`](docs/superpowers/programs/measurement.md) — every surface emits operational + quality telemetry to PostHog with traffic-source discrimination. Sub-project #0 (source discriminator + synthetic-traffic harness) in design.
+- **Measurement Program** — [`docs/superpowers/programs/measurement.md`](docs/superpowers/programs/measurement.md) — every active-loop surface emits operational + quality telemetry to PostHog with traffic-source discrimination. #0 (eval visibility), #1 (source discriminator + synthetic harness), #3 (LLM judge) shipped. Next: set GH Actions secrets (both nightly quality crons have never run), then #2 (route telemetry coverage, rescoped to active-loop surfaces per ADR-0002 — see the 2026-07-01 Reordering entry).
 
 ## Subsystem Guides
 
