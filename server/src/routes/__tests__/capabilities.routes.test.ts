@@ -3,6 +3,8 @@ import request from "supertest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createCapabilitiesRoutes } from "../capabilities.routes";
 import type { CapabilitiesSchema } from "@shared/capabilities";
+import { z } from "zod";
+import { ApiResponseSchema } from "@shared/schemas/api.schemas";
 import {
   getCapabilities,
   listModels,
@@ -122,7 +124,10 @@ describe("capabilities.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ provider: "google", model: "veo-4" });
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { provider: "google", model: "veo-4" },
+    });
     expect(resolveModelIdMock).toHaveBeenCalledWith("google/veo-3");
     expect(resolveProviderForModelMock).toHaveBeenCalledWith("veo-4");
     expect(getCapabilitiesMock).toHaveBeenCalledWith("google", "veo-4");
@@ -146,8 +151,70 @@ describe("capabilities.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ provider: "google", model: "veo-4" });
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { provider: "google", model: "veo-4" },
+    });
     expect(resolveProviderForModelMock).not.toHaveBeenCalled();
     expect(getCapabilitiesMock).toHaveBeenCalledWith("google", "veo-4");
   });
 });
+
+describe("capabilities.routes — canonical envelope contract", () => {
+  const AnyEnvelope = ApiResponseSchema(z.unknown());
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    listProvidersMock.mockReturnValue(["google"]);
+    listModelsMock.mockReturnValue(["veo-4"]);
+    resolveModelIdMock.mockImplementation((modelId) => modelId ?? null);
+    resolveProviderForModelMock.mockReturnValue(null);
+    getCapabilitiesMock.mockReturnValue(VEO_SCHEMA);
+  });
+
+  it("GET /providers returns the success envelope", async () => {
+    const response = await runSupertestOrSkip(() =>
+      request(createTestApp()).get("/providers"),
+    );
+    if (!response) return;
+    expect(response.status).toBe(200);
+    const parsed = AnyEnvelope.parse(response.body);
+    expect(parsed.success).toBe(true);
+    expect(response.body.data).toEqual({ providers: ["google"] });
+  });
+
+  it("GET /models without provider returns the error envelope", async () => {
+    const response = await runSupertestOrSkip(() =>
+      request(createTestApp()).get("/models"),
+    );
+    if (!response) return;
+    expect(response.status).toBe(400);
+    const parsed = AnyEnvelope.parse(response.body);
+    expect(parsed.success).toBe(false);
+  });
+
+  it("GET /capabilities for an unknown model returns string details", async () => {
+    getCapabilitiesMock.mockReturnValue(null);
+    const response = await runSupertestOrSkip(() =>
+      request(createTestApp()).get("/capabilities?provider=x&model=y"),
+    );
+    if (!response) return;
+    expect(response.status).toBe(404);
+    const parsed = AnyEnvelope.parse(response.body);
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(typeof parsed.details).toBe("string");
+    }
+  });
+
+  it("GET /capabilities wraps the schema under data only", async () => {
+    const response = await runSupertestOrSkip(() =>
+      request(createTestApp()).get("/capabilities?provider=google&model=veo-4"),
+    );
+    if (!response) return;
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({ provider: "google" });
+    expect(response.body).not.toHaveProperty("provider");
+  });
+});
+

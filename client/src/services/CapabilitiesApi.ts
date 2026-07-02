@@ -8,6 +8,7 @@ import type {
   CapabilityValueRule,
   ModelFeatures,
 } from "@shared/capabilities";
+import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 import { ApiClient, apiClient } from "./ApiClient";
 
 const CapabilityValueSchema = z.union([z.string(), z.number(), z.boolean()]);
@@ -224,26 +225,27 @@ export class CapabilitiesApi {
   ): Promise<CapabilitiesSchema> {
     const encodedProvider = encodeURIComponent(provider);
     const encodedModel = encodeURIComponent(model);
-    const parsed = CapabilitiesSchemaSchema.parse(
+    const parsed = ApiSuccessResponseSchema(CapabilitiesSchemaSchema).parse(
       await this.client.get(
         `/capabilities?provider=${encodedProvider}&model=${encodedModel}`,
       ),
     );
-    return normalizeCapabilitiesSchema(parsed);
+    return normalizeCapabilitiesSchema(parsed.data);
   }
 
   async listProviders(): Promise<string[]> {
-    const data = ProvidersResponseSchema.parse(
+    const parsed = ApiSuccessResponseSchema(ProvidersResponseSchema).parse(
       await this.client.get("/providers"),
     );
-    return data.providers;
+    return parsed.data.providers;
   }
 
   async listModels(provider: string): Promise<ModelsResponse> {
     const encodedProvider = encodeURIComponent(provider);
-    return ModelsResponseSchema.parse(
+    const parsed = ApiSuccessResponseSchema(ModelsResponseSchema).parse(
       await this.client.get(`/models?provider=${encodedProvider}`),
     );
+    return parsed.data;
   }
 
   // Coalesces concurrent callers (useModelRegistry + useCapabilityRegistry mount
@@ -254,9 +256,9 @@ export class CapabilitiesApi {
       return this.registryInFlight;
     }
     const request = (async (): Promise<RegistryResponse> => {
-      const parsed = CapabilitiesRegistrySchema.parse(
+      const parsed = ApiSuccessResponseSchema(CapabilitiesRegistrySchema).parse(
         await this.client.get("/registry"),
-      );
+      ).data;
       return Object.fromEntries(
         Object.entries(parsed).map(([provider, models]) => [
           provider,

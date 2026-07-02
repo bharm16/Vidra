@@ -1,6 +1,7 @@
 import express, { type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
 import {
   getCapabilities,
   listModels,
@@ -20,7 +21,8 @@ export function createCapabilitiesRoutes(): Router {
     "/providers",
     asyncHandler(async (_req, res) => {
       res.setHeader("Cache-Control", CACHE_1D);
-      res.json({ providers: listProviders() });
+      const data = { providers: listProviders() };
+      res.json({ success: true, data } satisfies ApiResponse<typeof data>);
     }),
   );
 
@@ -31,7 +33,8 @@ export function createCapabilitiesRoutes(): Router {
         "@services/capabilities"
       );
       res.setHeader("Cache-Control", CACHE_1D);
-      res.json(getCapabilitiesRegistry());
+      const data = getCapabilitiesRegistry();
+      res.json({ success: true, data } satisfies ApiResponse<typeof data>);
     }),
   );
 
@@ -41,11 +44,15 @@ export function createCapabilitiesRoutes(): Router {
       const provider =
         typeof req.query.provider === "string" ? req.query.provider : "";
       if (!provider) {
-        res.status(400).json({ error: "provider is required" });
+        res.status(400).json({
+          success: false,
+          error: "provider is required",
+        } satisfies ApiResponse<never>);
         return;
       }
       res.setHeader("Cache-Control", CACHE_1D);
-      res.json({ provider, models: listModels(provider) });
+      const data = { provider, models: listModels(provider) };
+      res.json({ success: true, data } satisfies ApiResponse<typeof data>);
     }),
   );
 
@@ -89,17 +96,18 @@ export function createCapabilitiesRoutes(): Router {
           resolvedProvider,
         });
         res.status(404).json({
+          success: false,
           error: "Capabilities not found",
-          provider: requestedProvider,
-          model,
-          resolvedModel,
-          resolvedProvider,
-        });
+          details: `provider=${requestedProvider}; model=${model}; resolvedModel=${resolvedModel}; resolvedProvider=${resolvedProvider ?? "none"}`,
+        } satisfies ApiResponse<never>);
         return;
       }
 
       res.setHeader("Cache-Control", CACHE_1H);
-      res.json(schema);
+      res.json({
+        success: true,
+        data: schema,
+      } satisfies ApiResponse<typeof schema>);
     }),
   );
 
