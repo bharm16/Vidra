@@ -923,6 +923,9 @@ function PromptOptimizerContent({
           isMotionIdeasLoading={motionIdeas.isLoading}
           ideaBoxStage={ideaBoxStage}
           isExpanding={promptOptimizer.isProcessing}
+          hasExpandedPrompt={
+            showResults && promptOptimizer.displayedPrompt.trim().length > 0
+          }
           onIdeaBoxAccept={acceptFrame}
           onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
           onIdeaBoxExpand={handleIdeaBoxExpand}

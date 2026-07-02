@@ -89,6 +89,11 @@ interface PromptResultsDataOnly {
   /** True while the expansion (optimize) round-trip is in flight — the beat
    *  BEFORE ideaBoxStage flips to "framing". Drives the canvas FrameStage. */
   isExpanding?: boolean | undefined;
+  /** True when the session's content includes an expanded prompt (results
+   *  view with a non-empty displayed prompt) — set both by the live loop and
+   *  by session restore. Drives canvas ownership: a session with an expanded
+   *  prompt engages the FrameStage, never the first-run hero. */
+  hasExpandedPrompt?: boolean | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,6 +173,7 @@ export function PromptResultsActionsProvider({
   isMotionIdeasLoading,
   ideaBoxStage,
   isExpanding,
+  hasExpandedPrompt,
   onMotionIdeaSelect,
   onMotionIdeasReroll,
   onIdeaBoxAccept,
@@ -265,6 +271,7 @@ export function PromptResultsActionsProvider({
       isMotionIdeasLoading,
       ideaBoxStage,
       isExpanding,
+      hasExpandedPrompt,
     }),
     [
       suggestionsData,
@@ -278,6 +285,7 @@ export function PromptResultsActionsProvider({
       isMotionIdeasLoading,
       ideaBoxStage,
       isExpanding,
+      hasExpandedPrompt,
     ],
   );
 

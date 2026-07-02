@@ -5,6 +5,7 @@ import {
   usePromptResultsActions,
   usePromptResultsData,
 } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
+import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { PromptEditorSurface } from "./PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "./PromptEditorSurface";
 import { addContinueSceneListener } from "../events";
@@ -26,6 +27,11 @@ export interface CanvasPromptBarProps {
  * The Tune drawer renders above the editor surface; the surface grows
  * upward while the bottom edge stays pinned at --workspace-composer-bottom
  * from the canvas bottom.
+ *
+ * The glass is conditional: while the bar is expanded (Tune drawer or the
+ * suggestion tray open) it grows over canvas content, and translucency
+ * would smear whatever sits behind it into unreadable blur — so the
+ * expanded surface goes fully opaque and the blur comes off.
  */
 export function CanvasPromptBar({
   surfaceProps,
@@ -43,10 +49,12 @@ export function CanvasPromptBar({
   const { motionIdeas, isMotionIdeasLoading, i2vContext } =
     usePromptResultsData();
   const { onMotionIdeaSelect, onMotionIdeasReroll } = usePromptResultsActions();
+  const { selectedSpanId } = useSelectedSpan();
   const showMotionIdeas =
     Boolean(i2vContext?.isI2VMode) &&
     Boolean(onMotionIdeaSelect) &&
     Boolean(onMotionIdeasReroll);
+  const isExpanded = Boolean(tuneSlot) || Boolean(selectedSpanId);
 
   return (
     <div
@@ -54,7 +62,9 @@ export function CanvasPromptBar({
         "absolute left-1/2 z-10 -translate-x-1/2",
         "w-[min(100%-48px,var(--workspace-composer-max-w))]",
         "rounded-[14px] border border-white/[0.08]",
-        "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
+        isExpanded
+          ? "bg-tool-surface-prompt-compact"
+          : "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
         "shadow-[0_16px_48px_-8px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]",
         "transition-[transform,box-shadow,bottom] duration-[240ms]",
       )}
