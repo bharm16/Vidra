@@ -30,14 +30,23 @@ describe("spanLabelingResponse", () => {
 
   it("parses label spans response", () => {
     const response = parseLabelSpansResponse({
-      spans: [
-        { start: 1, end: 4, category: "style", confidence: 0.5 },
-        { start: 0 },
-      ],
-      meta: { source: "test" },
+      success: true,
+      data: {
+        spans: [
+          { start: 1, end: 4, category: "style", confidence: 0.5 },
+          { start: 0 },
+        ],
+        meta: { source: "test" },
+      },
     });
 
     expect(response.spans).toHaveLength(1);
     expect(response.meta).toEqual({ source: "test" });
+  });
+
+  it("throws on a success:false envelope", () => {
+    expect(() =>
+      parseLabelSpansResponse({ success: false, error: "labeling failed" }),
+    ).toThrow("labeling failed");
   });
 });

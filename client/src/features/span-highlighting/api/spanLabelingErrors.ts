@@ -6,7 +6,11 @@ export async function buildRequestError(res: Response): Promise<RequestError> {
   let message = `Request failed with status ${res.status}`;
   try {
     const errorBody: unknown = await res.json();
-    if (isRecord(errorBody) && typeof errorBody.message === "string") {
+    // Canonical ApiResponse errors carry the message in `error`; the
+    // streaming handler's pre-stream 502 still uses `message`.
+    if (isRecord(errorBody) && typeof errorBody.error === "string") {
+      message = errorBody.error;
+    } else if (isRecord(errorBody) && typeof errorBody.message === "string") {
       message = errorBody.message;
     }
   } catch {

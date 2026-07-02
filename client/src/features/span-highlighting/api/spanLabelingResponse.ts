@@ -1,4 +1,11 @@
+import { z } from "zod";
+import { ApiResponseSchema } from "@shared/schemas/api.schemas";
 import type { LabelSpansResponse, SpanLabel } from "./spanLabelingTypes";
+
+// The envelope is the hard contract; the payload stays `unknown` because the
+// span reshaping below is intentionally tolerant (invalid spans are dropped,
+// not rejected wholesale).
+const LabelSpansEnvelopeSchema = ApiResponseSchema(z.unknown());
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -33,7 +40,13 @@ export function parseSpanLabel(value: unknown): SpanLabel | null {
   return span;
 }
 
-export function parseLabelSpansResponse(data: unknown): LabelSpansResponse {
+export function parseLabelSpansResponse(body: unknown): LabelSpansResponse {
+  const envelope = LabelSpansEnvelopeSchema.parse(body);
+  if (!envelope.success) {
+    throw new Error(envelope.error);
+  }
+
+  const data = envelope.data;
   if (!isRecord(data)) {
     return { spans: [], meta: null };
   }

@@ -6,10 +6,12 @@ import { requestCoalescing } from "@middleware/requestCoalescing";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type { SpanLabelingTelemetryService } from "@services/observability/SpanLabelingTelemetryService";
+import type { ApiResponse } from "@shared/types/api";
 import { createLabelSpansCoordinator } from "./labelSpans/coordinator";
 import { parseLabelSpansRequest } from "./labelSpans/requestParser";
 import { handleLabelSpansStreamRequest } from "./labelSpans/streamingHandler";
 import { toPublicLabelSpansResult, toPublicSpan } from "./labelSpans/transform";
+import type { PublicLabelSpansResult } from "./labelSpans/transform";
 
 /**
  * Create label spans route with dependency injection
@@ -25,7 +27,10 @@ export function createLabelSpansRoute(
   router.post("/stream", async (req: Request, res: Response) => {
     const parsed = parseLabelSpansRequest(req.body);
     if (!parsed.ok) {
-      return res.status(parsed.status).json({ error: parsed.error });
+      return res.status(parsed.status).json({
+        success: false,
+        error: parsed.error,
+      } satisfies ApiResponse<never>);
     }
 
     const { payload, text, policy, templateVersion } = parsed.data;
@@ -61,7 +66,10 @@ export function createLabelSpansRoute(
     async (req: Request, res: Response) => {
       const parsed = parseLabelSpansRequest(req.body);
       if (!parsed.ok) {
-        return res.status(parsed.status).json({ error: parsed.error });
+        return res.status(parsed.status).json({
+          success: false,
+          error: parsed.error,
+        } satisfies ApiResponse<never>);
       }
 
       const {
@@ -117,9 +125,10 @@ export function createLabelSpansRoute(
             inputText: text,
             spans: [],
           });
-          return res
-            .status(502)
-            .json({ error: "Span labeling failed to produce a result" });
+          return res.status(502).json({
+            success: false,
+            error: "Span labeling failed to produce a result",
+          } satisfies ApiResponse<never>);
         }
 
         // Only TTL cache hits count toward cacheHit. Coordinator may also return
@@ -149,7 +158,10 @@ export function createLabelSpansRoute(
           spans: spanContent,
         });
 
-        return res.json(toPublicLabelSpansResult(result));
+        return res.json({
+          success: true,
+          data: toPublicLabelSpansResult(result),
+        } satisfies ApiResponse<PublicLabelSpansResult>);
       } catch (error) {
         trace?.recordError(
           "llm_call",
@@ -174,9 +186,10 @@ export function createLabelSpansRoute(
           textLength: text?.length,
         });
         return res.status(502).json({
+          success: false,
           error: "LLM span labeling failed",
-          message: (error as { message?: string })?.message || "Unknown error",
-        });
+          details: (error as { message?: string })?.message || "Unknown error",
+        } satisfies ApiResponse<never>);
       }
     },
   );
