@@ -480,7 +480,9 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
    */
   frame_verification: {
     client: process.env.FRAME_VERIFICATION_PROVIDER || "openai",
-    model: process.env.FRAME_VERIFICATION_MODEL || "gpt-4o-mini-2024-07-18",
+    // gpt-4o (not mini): the eval gate (P>=0.85, R>=0.75) only passes with
+    // gpt-4o + detail:"high" — mini stalls at R~0.64 on fine-detail spans.
+    model: process.env.FRAME_VERIFICATION_MODEL || "gpt-4o-2024-08-06",
     temperature: 0,
     maxTokens: 2048,
     timeout: 45000,

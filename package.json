@@ -164,6 +164,7 @@
     "eval:span": "tsx --tsconfig server/tsconfig.json scripts/evaluation/run-golden-set-evaluation.ts",
     "eval:golden-set": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts",
     "eval:golden-set:bless": "tsx --tsconfig server/tsconfig.json scripts/evaluation/golden-set-relaxed-f1.ts --bless",
+    "eval:frame-verification": "tsx --tsconfig server/tsconfig.json scripts/evaluation/frame-verification/frame-verification-eval.ts",
     "eval:recommendation": "tsx --tsconfig server/tsconfig.json scripts/evaluation/recommendation-eval.ts",
     "eval:recommendation:bless": "tsx --tsconfig server/tsconfig.json scripts/evaluation/recommendation-eval.ts --bless",
     "eval:requirements": "tsx --tsconfig server/tsconfig.json scripts/evaluation/requirements-extraction-eval.ts",

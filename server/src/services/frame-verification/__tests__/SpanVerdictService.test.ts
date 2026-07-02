@@ -89,9 +89,10 @@ describe('SpanVerdictService', () => {
     const userContent = params.messages[1]?.content;
     expect(Array.isArray(userContent)).toBe(true);
     const imagePart = (
-      userContent as Array<{ image_url?: { url: string } }>
+      userContent as Array<{ image_url?: { url: string; detail?: string } }>
     ).find((part) => part.image_url);
     expect(imagePart?.image_url?.url).toBe(DATA_URI);
+    expect(imagePart?.image_url?.detail).toBe('high');
   });
 
   it('fetches https URLs and converts them to data URIs', async () => {

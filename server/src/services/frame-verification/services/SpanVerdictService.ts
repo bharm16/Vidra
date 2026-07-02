@@ -94,7 +94,12 @@ export class SpanVerdictService {
               'Return the verdicts JSON.',
             ].join('\n'),
           },
-          { type: 'image_url', image_url: { url: imageDataUri } },
+          {
+            type: 'image_url',
+            // detail: 'high' — fine-grained spans (skin details, small props)
+            // are unresolvable at the default downscaled resolution.
+            image_url: { url: imageDataUri, detail: 'high' as const },
+          },
         ],
       },
     ];

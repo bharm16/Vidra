@@ -1,0 +1,4 @@
+# Per-run eval output — regenerate with:
+#   npm run eval:frame-verification
+# The committed ground truth is manifest.json + frames/ (do not regenerate frames).
+results-latest.json
