@@ -56,6 +56,22 @@ The span the creator clicked for click-to-enhance, together with the suggestion 
 
 The single end-to-end walkthrough that defines a working product: empty canvas → creator submits a one-liner → expansion → first frame (explicit gate) → motion → render → a clip the creator can watch and keep. "Complete product" and "works end to end" mean the golden path runs green — nothing else counts as done. Composed from the Idea Box and ADR-0002 definitions. Resolved 2026-07-01 during ship-definition grilling; first audit: [docs/audits/2026-07-01-golden-path-audit.md](docs/audits/2026-07-01-golden-path-audit.md). Avoid synonyms: happy path, main flow, E2E flow.
 
+### Span palette
+
+The semantic color set carried by span categories — the only color in the product that carries meaning. All chrome (buttons, surfaces, accents, marketing) stays neutral so color always reads as span category, never as brand — governed by [docs/adr/0008-one-design-language-across-all-shells.md](docs/adr/0008-one-design-language-across-all-shells.md). Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: highlight colors, accent palette, brand colors.
+
+### Model showroom
+
+The full-screen gallery where a creator browses draft/render models as large sample-still cards and picks one — a deliberate showcase moment, not a settings dropdown. Speaks the workspace monochrome language; generation economics (credits, prices) never appear in it. Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: model picker, render-models modal, model selector.
+
+### Session library
+
+The full-archive presentation of Sessions on its own page: same entity, titles, thumbnails, and vocabulary as the rail panel, which remains the quick switcher. Replaces the prompt-level "History" page; a session's internal generation attempts are not library entries. Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: history, prompt history, archive.
+
+### Gallery landing
+
+The public landing page whose content is clips made with Vidra, under the product one-liner. Its zero-content state is the one-screen manifesto (wordmark, one-liner, single auth-aware CTA) — the gallery grows as dogfooding produces clips. Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: marketing site, homepage, splash page.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
