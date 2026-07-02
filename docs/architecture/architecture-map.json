@@ -1118,11 +1118,6 @@
       "file": "video-generation.services.ts"
     },
     {
-      "from": "categoryAligner",
-      "to": "validationService",
-      "file": "enhancement.services.ts"
-    },
-    {
       "from": "characterKeyframeService",
       "to": "assetService",
       "file": "continuity.services.ts"
@@ -1319,27 +1314,12 @@
     },
     {
       "from": "enhancementService",
-      "to": "categoryAligner",
-      "file": "enhancement.services.ts"
-    },
-    {
-      "from": "enhancementService",
       "to": "config",
       "file": "enhancement.services.ts"
     },
     {
       "from": "enhancementService",
       "to": "diversityEnforcer",
-      "file": "enhancement.services.ts"
-    },
-    {
-      "from": "enhancementService",
-      "to": "promptBuilder",
-      "file": "enhancement.services.ts"
-    },
-    {
-      "from": "enhancementService",
-      "to": "validationService",
       "file": "enhancement.services.ts"
     },
     {
@@ -1475,6 +1455,11 @@
     {
       "from": "modelIntelligenceAvailabilityGate",
       "to": "videoGenerationService",
+      "file": "model-intelligence.services.ts"
+    },
+    {
+      "from": "modelIntelligenceService",
+      "to": "aiService",
       "file": "model-intelligence.services.ts"
     },
     {
@@ -1766,11 +1751,6 @@
       "from": "userCreditService",
       "to": "firestoreCircuitExecutor",
       "file": "credit.services.ts"
-    },
-    {
-      "from": "validationService",
-      "to": "videoPromptService",
-      "file": "enhancement.services.ts"
     },
     {
       "from": "videoAssetRetentionService",
