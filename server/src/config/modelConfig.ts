@@ -475,6 +475,20 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
   },
 
   /**
+   * Frame verification: per-span presence verdicts against a generated frame.
+   * Requires a vision-capable model. Temperature 0 for deterministic judging.
+   */
+  frame_verification: {
+    client: process.env.FRAME_VERIFICATION_PROVIDER || "openai",
+    model: process.env.FRAME_VERIFICATION_MODEL || "gpt-4o-mini-2024-07-18",
+    temperature: 0,
+    maxTokens: 2048,
+    timeout: 45000,
+    responseFormat: "json_object",
+    useSeed: true, // Same (spans, frame) should judge identically
+  },
+
+  /**
    * Generate motion idea phrases from an image observation (I2V).
    * Fast model favored for short JSON outputs.
    */
