@@ -15,8 +15,8 @@ export interface FrameVerificationSpan {
   text: string;
   /** Taxonomy category id (e.g. "subject.identity", "lighting.timeOfDay") */
   category: string;
-  start?: number;
-  end?: number;
+  start?: number | undefined;
+  end?: number | undefined;
 }
 
 export interface FrameVerificationRequest {
