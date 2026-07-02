@@ -365,17 +365,24 @@ export function CanvasWorkspace({
     promptFocused: false, // Phase 3 wires this
   });
 
-  // Pre-work: nothing has happened yet — no shots, no frame, loop idle.
-  // Unlike moment === "empty" this survives focus and typing, so the hero
-  // stays on screen while the creator answers it and the raised composer
-  // doesn't jump away from the cursor on click. Once work starts (submit),
-  // the composer glides to its docked position and the stage takes over.
-  const { ideaBoxStage, isExpanding } = usePromptResultsData();
+  // Pre-work: nothing has happened yet — no shots, no frame, loop idle, and
+  // the session holds no expanded prompt. Unlike moment === "empty" this
+  // survives focus and typing, so the hero stays on screen while the creator
+  // answers it and the raised composer doesn't jump away from the cursor on
+  // click. Once work starts (submit), the composer glides to its docked
+  // position and the stage takes over. Every input here is session or loop
+  // content — never transient UI state — so restored sessions with an
+  // expanded prompt land on the FrameStage, and the hero cannot flicker when
+  // panels like the suggestion tray open or close (CONTEXT.md, "First
+  // frame": the frame or its empty/failed state owns the canvas).
+  const { ideaBoxStage, isExpanding, hasExpandedPrompt } =
+    usePromptResultsData();
   const isPreWork =
     shots.length === 0 &&
     !domain.startFrame &&
     !isExpanding &&
-    (ideaBoxStage?.kind ?? "idle") === "idle";
+    (ideaBoxStage?.kind ?? "idle") === "idle" &&
+    !hasExpandedPrompt;
 
   const surfaceProps: PromptEditorSurfaceProps = {
     editorRef,

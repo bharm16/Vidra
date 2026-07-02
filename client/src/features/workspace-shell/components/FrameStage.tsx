@@ -35,6 +35,47 @@ function StageCopy({
   );
 }
 
+/**
+ * The stage's single designed notice: one tile, one message, at most one
+ * action — all inside the frame slot, so the no-frame beat still reads as
+ * "the frame owns the canvas" rather than copy floating over a void.
+ */
+function StageNoticeTile({
+  headline,
+  detail,
+  actionLabel,
+  onAction,
+}: {
+  headline: string;
+  detail?: string | undefined;
+  actionLabel?: string | undefined;
+  onAction?: (() => void) | undefined;
+}): React.ReactElement {
+  return (
+    <div
+      className={cn(
+        TILE_CLASS,
+        "bg-tool-surface-card flex flex-col items-center justify-center gap-3 px-6",
+      )}
+      data-testid="frame-stage-notice"
+    >
+      <StageCopy headline={headline} detail={detail} />
+      {actionLabel && onAction ? (
+        <button
+          type="button"
+          className={cn(
+            "border-tool-rail-border rounded-md border px-3 py-1.5 text-[12.5px]",
+            "text-foreground transition-colors hover:bg-white/10",
+          )}
+          onClick={onAction}
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function SkeletonTile(): React.ReactElement {
   return (
     <div className={cn(TILE_CLASS, "bg-tool-surface-card")} aria-hidden>
@@ -58,7 +99,8 @@ export function FrameStage({
   startFrame,
   prompt,
 }: FrameStageProps): React.ReactElement | null {
-  const { ideaBoxStage, isExpanding } = usePromptResultsData();
+  const { ideaBoxStage, isExpanding, hasExpandedPrompt } =
+    usePromptResultsData();
   const { onIdeaBoxAccept, onIdeaBoxRegenerate } = usePromptResultsActions();
 
   const stageKind = ideaBoxStage?.kind ?? "idle";
@@ -167,6 +209,22 @@ export function FrameStage({
           />
         )}
       </>
+    );
+  } else if (hasExpandedPrompt) {
+    // Restored session with an expanded prompt but no frame asset: the
+    // stage's no-frame state owns the canvas (never the first-run hero).
+    // The single action re-runs frame generation from the current prompt.
+    body = (
+      <StageNoticeTile
+        headline="No frame yet"
+        detail="Create a first frame to put this prompt on the canvas."
+        {...(onIdeaBoxRegenerate
+          ? {
+              actionLabel: "Create frame",
+              onAction: () => void onIdeaBoxRegenerate(),
+            }
+          : {})}
+      />
     );
   }
 
