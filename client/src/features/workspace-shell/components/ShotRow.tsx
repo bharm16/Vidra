@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge, type BadgeProps } from "@promptstudio/system/components/ui";
 import { cn } from "@/utils/cn";
 import type { Shot } from "../utils/groupShots";
 import { formatRelative } from "../utils/formatRelative";
@@ -18,12 +19,15 @@ export interface ShotRowProps {
   onRetryTile: (generationId: string) => void;
 }
 
-const STATUS_PILL_CLASS: Record<Shot["status"], string> = {
-  ready: "text-[var(--tool-status-ready,#9ec4a8)]",
-  rendering: "text-[var(--tool-status-rendering,#d4b486)]",
-  queued: "text-tool-text-subdued",
-  failed: "text-red-400",
-  mixed: "text-[var(--tool-status-rendering,#d4b486)]",
+const STATUS_BADGE_VARIANT: Record<
+  Shot["status"],
+  NonNullable<BadgeProps["variant"]>
+> = {
+  ready: "success",
+  rendering: "warning",
+  queued: "neutral",
+  failed: "danger",
+  mixed: "warning",
 };
 
 export function ShotRow({
@@ -38,24 +42,23 @@ export function ShotRow({
     <section
       data-layout={layout}
       aria-labelledby={`shot-${shot.id}-header`}
-      className="rounded-lg border border-tool-rail-border bg-tool-surface-card/40 p-4"
+      className="border-tool-rail-border bg-tool-surface-card/40 rounded-lg border p-4"
     >
       <header
         id={`shot-${shot.id}-header`}
         className="mb-3 flex items-center gap-3"
       >
-        <h2 className="m-0 flex-1 truncate text-sm font-medium text-foreground">
+        <h2 className="text-foreground m-0 flex-1 truncate text-sm font-medium">
           {shot.promptSummary || "Untitled shot"}
         </h2>
-        <span
-          className={cn(
-            "rounded-full border border-tool-rail-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
-            STATUS_PILL_CLASS[shot.status],
-          )}
+        <Badge
+          variant={STATUS_BADGE_VARIANT[shot.status]}
+          size="xs"
+          className="px-2 capitalize"
         >
           {shot.status}
-        </span>
-        <time className="font-mono text-[10px] text-tool-text-subdued">
+        </Badge>
+        <time className="text-tool-text-subdued font-mono text-[10px]">
           {formatRelative(shot.createdAt, now)}
         </time>
       </header>

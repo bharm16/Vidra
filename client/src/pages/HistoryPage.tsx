@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Search, X } from "@promptstudio/system/components/ui";
+import { Badge, Search, X } from "@promptstudio/system/components/ui";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { usePromptHistory } from "@hooks/usePromptHistory";
 import type { PromptHistoryEntry } from "@features/prompt-optimizer";
@@ -43,7 +43,7 @@ function deriveSnippet(value: string): string {
 function Tag({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
     <span
-      className="px-2 py-0.5 rounded-full text-[11px] font-medium"
+      className="rounded-full px-2 py-0.5 text-[11px] font-medium"
       style={{
         background: AUTH_COLORS.inputBg,
         border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -80,9 +80,9 @@ export function HistoryPage(): React.ReactElement {
           borderBottom: `1px solid ${AUTH_COLORS.divider}`,
         }}
       >
-        <div className="mx-auto max-w-3xl flex flex-col gap-3">
+        <div className="mx-auto flex max-w-3xl flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-[15px] font-semibold text-white tracking-tight">
+            <h1 className="text-[15px] font-semibold tracking-tight text-white">
               History
             </h1>
             <div className="flex items-center gap-3">
@@ -94,21 +94,14 @@ export function HistoryPage(): React.ReactElement {
                 {promptHistory.searchQuery ? " results" : " prompts"}
               </span>
               {user ? (
-                <span
-                  className="px-2 py-0.5 rounded-full text-[11px] font-medium"
-                  style={{
-                    background: `${AUTH_COLORS.success}15`,
-                    border: `1px solid ${AUTH_COLORS.success}30`,
-                    color: AUTH_COLORS.success,
-                  }}
-                >
+                <Badge variant="success" size="sm">
                   Synced
-                </span>
+                </Badge>
               ) : (
                 <Button
                   asChild
                   variant="ghost"
-                  className="h-auto px-2 py-0.5 rounded-full text-[11px] font-medium"
+                  className="h-auto rounded-full px-2 py-0.5 text-[11px] font-medium"
                   style={{
                     background: AUTH_COLORS.card,
                     border: `1px solid ${AUTH_COLORS.cardBorder}`,
@@ -120,7 +113,7 @@ export function HistoryPage(): React.ReactElement {
               )}
               <Link
                 to="/"
-                className="text-[12px] font-medium hover:text-white transition-colors"
+                className="text-[12px] font-medium transition-colors hover:text-white"
                 style={{ color: AUTH_COLORS.textDim }}
               >
                 Back to app
@@ -130,12 +123,12 @@ export function HistoryPage(): React.ReactElement {
 
           <div className="relative">
             <Search
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5"
+              className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
               style={{ color: AUTH_COLORS.textPlaceholder }}
               aria-hidden="true"
             />
             <Input
-              className="w-full rounded-lg pl-10 pr-10 py-2 text-[13px] text-white outline-none transition"
+              className="w-full rounded-lg py-2 pl-10 pr-10 text-[13px] text-white outline-none transition"
               style={{
                 background: AUTH_COLORS.inputBg,
                 border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -169,7 +162,7 @@ export function HistoryPage(): React.ReactElement {
       </div>
 
       {/* Results */}
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 pb-16">
+      <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
         {promptHistory.isLoadingHistory ? (
           <div className="py-12 text-center">
             <div className="ps-spinner-sm mx-auto mb-3" />
@@ -224,7 +217,7 @@ export function HistoryPage(): React.ReactElement {
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <h2
-                        className="text-[13px] font-semibold text-white truncate"
+                        className="truncate text-[13px] font-semibold text-white"
                         title={title}
                       >
                         {title}
@@ -247,7 +240,7 @@ export function HistoryPage(): React.ReactElement {
                     {sessionId ? (
                       <Link
                         to={`/session/${sessionId}`}
-                        className="shrink-0 text-[12px] font-semibold hover:text-white transition-colors"
+                        className="shrink-0 text-[12px] font-semibold transition-colors hover:text-white"
                         style={{ color: AUTH_COLORS.accent }}
                         aria-label="Open prompt"
                       >
@@ -264,13 +257,13 @@ export function HistoryPage(): React.ReactElement {
                     }}
                   >
                     <span
-                      className="text-[10px] font-semibold tracking-[0.18em]"
+                      className="text-overline"
                       style={{ color: AUTH_COLORS.textLabel }}
                     >
-                      OUTPUT
+                      Output
                     </span>
                     <p
-                      className="mt-1.5 text-[13px] leading-snug ps-line-clamp-3 whitespace-pre-wrap break-words"
+                      className="ps-line-clamp-3 mt-1.5 whitespace-pre-wrap break-words text-[13px] leading-snug"
                       style={{ color: AUTH_COLORS.textSecondary }}
                     >
                       {deriveSnippet(entry.output)}
@@ -279,7 +272,7 @@ export function HistoryPage(): React.ReactElement {
 
                   {uuid ? (
                     <p
-                      className="mt-2.5 text-[11px] font-mono"
+                      className="mt-2.5 font-mono text-[11px]"
                       style={{ color: AUTH_COLORS.textLabel }}
                     >
                       {uuid}

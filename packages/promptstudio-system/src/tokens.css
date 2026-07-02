@@ -28,6 +28,7 @@
     --ps-ls-normal: 0em;
     --ps-ls-label: 0.02em;
     --ps-ls-caps: 0.06em;
+    --ps-ls-overline: 0.08em;
     --ps-ls-reading: 0.015em;
 
     /* Dense UI guideline: primary sizes 11px, 13px, 14px, 16px (Runway reference) */
@@ -281,6 +282,39 @@
     --ps-brand-text-primary: #222222;
     --ps-brand-text-secondary: #484848;
     --ps-brand-borders-lines: #e3e3e3;
+
+    /* Status badge tints — Badge success/warning/danger variants.
+       Derived from the dark-UI status colors; neutral badges use the
+       plain border/text tokens. */
+    --ps-badge-success-bg: color-mix(
+      in srgb,
+      var(--ps-success) 12%,
+      transparent
+    );
+    --ps-badge-success-border: color-mix(
+      in srgb,
+      var(--ps-success) 30%,
+      transparent
+    );
+    --ps-badge-success-text: var(--ps-success);
+    --ps-badge-warning-bg: color-mix(
+      in srgb,
+      var(--ps-warning) 12%,
+      transparent
+    );
+    --ps-badge-warning-border: color-mix(
+      in srgb,
+      var(--ps-warning) 30%,
+      transparent
+    );
+    --ps-badge-warning-text: var(--ps-warning);
+    --ps-badge-danger-bg: color-mix(in srgb, var(--ps-danger) 12%, transparent);
+    --ps-badge-danger-border: color-mix(
+      in srgb,
+      var(--ps-danger) 30%,
+      transparent
+    );
+    --ps-badge-danger-text: var(--ps-danger);
 
     /* Component tokens */
     --ps-input-padding-y: 12px;

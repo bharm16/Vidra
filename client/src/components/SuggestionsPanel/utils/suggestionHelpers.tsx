@@ -4,7 +4,12 @@
  * Pure functions for compatibility rendering, keyboard hints, and data normalization.
  */
 
-import { CheckCircle, AlertCircle } from "@promptstudio/system/components/ui";
+import {
+  Badge,
+  type BadgeProps,
+  CheckCircle,
+  AlertCircle,
+} from "@promptstudio/system/components/ui";
 import {
   COMPATIBILITY_THRESHOLDS,
   MAX_KEYBOARD_SHORTCUTS,
@@ -16,13 +21,13 @@ import type { SuggestionItem } from "../hooks/types";
 // ===========================
 
 export interface CompatibilityStyles {
-  tone: string;
+  variant: NonNullable<BadgeProps["variant"]>;
   IconComponent: typeof CheckCircle | typeof AlertCircle | null;
   percent: number;
 }
 
 /**
- * Get styling classes for compatibility badge based on score
+ * Map a compatibility score onto a Badge variant
  */
 export function getCompatibilityStyles(
   compatibility: number | undefined,
@@ -31,19 +36,19 @@ export function getCompatibilityStyles(
     return null;
   }
 
-  let tone = "text-muted bg-surface-1 border border-border";
+  let variant: NonNullable<BadgeProps["variant"]> = "neutral";
   let IconComponent: typeof CheckCircle | typeof AlertCircle | null = null;
 
   if (compatibility >= COMPATIBILITY_THRESHOLDS.HIGH) {
-    tone = "text-emerald-600 bg-emerald-50 border border-emerald-200";
+    variant = "success";
     IconComponent = CheckCircle;
   } else if (compatibility < COMPATIBILITY_THRESHOLDS.LOW) {
-    tone = "text-amber-600 bg-amber-50 border border-amber-200";
+    variant = "warning";
     IconComponent = AlertCircle;
   }
 
   return {
-    tone,
+    variant,
     IconComponent,
     percent: Math.round(compatibility * 100),
   };
@@ -58,17 +63,15 @@ export function renderCompatibilityBadge(
   const styles = getCompatibilityStyles(compatibility);
   if (!styles) return null;
 
-  const { tone, IconComponent, percent } = styles;
+  const { variant, IconComponent, percent } = styles;
 
   return (
-    <div
-      className={`text-label-12 inline-flex items-center gap-1 rounded-full px-2 py-1 ${tone}`}
-    >
+    <Badge variant={variant} className="gap-1">
       {IconComponent ? (
         <IconComponent className="h-3.5 w-3.5" aria-hidden="true" />
       ) : null}
       <span>{percent}% fit</span>
-    </div>
+    </Badge>
   );
 }
 

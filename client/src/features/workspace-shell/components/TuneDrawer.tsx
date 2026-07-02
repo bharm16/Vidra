@@ -85,9 +85,7 @@ export function TuneDrawer({
       aria-label="Tune render settings"
     >
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-tool-text-subdued m-0 text-xs font-semibold uppercase tracking-wider">
-          Tune
-        </h3>
+        <h3 className="text-tool-text-subdued text-overline m-0">Tune</h3>
         <button
           type="button"
           aria-label="Close"
@@ -108,7 +106,7 @@ export function TuneDrawer({
               className="m-0 flex items-center gap-2 border-0 p-0"
             >
               <legend className="contents">
-                <span className="text-tool-text-subdued mr-1 inline-block w-[44px] font-mono text-[10px] uppercase tracking-wider">
+                <span className="text-tool-text-subdued text-overline mr-1 inline-block w-[44px]">
                   {section.label}
                 </span>
               </legend>
@@ -137,9 +135,7 @@ export function TuneDrawer({
       </div>
       {showEnhance ? (
         <div className="border-tool-rail-border mt-3 flex items-center justify-between border-t pt-3">
-          <span className="text-tool-text-subdued font-mono text-[10px] uppercase tracking-wider">
-            Prompt
-          </span>
+          <span className="text-tool-text-subdued text-overline">Prompt</span>
           <button
             type="button"
             data-testid="tune-drawer-enhance"

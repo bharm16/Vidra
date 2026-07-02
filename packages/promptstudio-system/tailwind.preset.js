@@ -399,6 +399,18 @@ export default {
             textTransform: "uppercase",
           },
         ],
+        /* Overline — the uppercase micro-label (Tune drawer section labels,
+           history OUTPUT labels). The only sanctioned uppercase treatment;
+           everything else is sentence case (ADR-0008). */
+        overline: [
+          "var(--ps-fs-10)",
+          {
+            lineHeight: "var(--ps-lh-normal)",
+            letterSpacing: "var(--ps-ls-overline)",
+            fontWeight: "var(--ps-fw-semibold)",
+            textTransform: "uppercase",
+          },
+        ],
         meta: [
           "var(--ps-fs-12)",
           {

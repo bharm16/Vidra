@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "@promptstudio/system/components/ui";
 import { cn } from "@/utils/cn";
 import type { Generation } from "@features/generations/types";
 import { dispatchContinueScene } from "../events";
@@ -31,8 +32,8 @@ export function GenTile({
       data-state={dataState}
       data-generation-id={generation.id}
       className={cn(
-        "group relative aspect-video overflow-hidden rounded-lg border border-tool-rail-border bg-tool-surface-card",
-        isFeatured && "ring-2 ring-tool-accent-neutral/40",
+        "border-tool-rail-border bg-tool-surface-card group relative aspect-video overflow-hidden rounded-lg border",
+        isFeatured && "ring-tool-accent-neutral/40 ring-2",
         status === "completed" && "cursor-pointer",
       )}
       onClick={status === "completed" ? onSelect : undefined}
@@ -46,7 +47,7 @@ export function GenTile({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
           <button
             type="button"
-            className="pointer-events-auto rounded-md bg-tool-surface-deep/80 px-2 py-1 text-[10px] font-medium text-foreground"
+            className="bg-tool-surface-deep/80 text-foreground pointer-events-auto rounded-md px-2 py-1 text-[10px] font-medium"
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
@@ -57,7 +58,7 @@ export function GenTile({
           {isFeatured && (
             <button
               type="button"
-              className="pointer-events-auto rounded-md bg-tool-accent-neutral px-2 py-1 text-[10px] font-semibold text-tool-surface-deep"
+              className="bg-tool-accent-neutral text-tool-surface-deep pointer-events-auto rounded-md px-2 py-1 text-[10px] font-semibold"
               onClick={(e) => {
                 e.stopPropagation();
                 dispatchContinueScene({ fromGenerationId: generation.id });
@@ -75,9 +76,9 @@ export function GenTile({
 function QueuedPlaceholder(): React.ReactElement {
   return (
     <div className="flex h-full items-center justify-center">
-      <span className="rounded-full border border-tool-rail-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-tool-text-subdued">
-        queued
-      </span>
+      <Badge variant="neutral" size="xs" className="px-2">
+        Queued
+      </Badge>
     </div>
   );
 }
@@ -85,11 +86,11 @@ function QueuedPlaceholder(): React.ReactElement {
 function RenderingPlaceholder(): React.ReactElement {
   return (
     <div className="relative h-full">
-      <div className="absolute inset-0 animate-pulse bg-tool-rail-border/40" />
+      <div className="bg-tool-rail-border/40 absolute inset-0 animate-pulse" />
       <div className="absolute inset-x-0 bottom-2 text-center">
-        <span className="rounded-full border border-tool-rail-border bg-tool-surface-deep/80 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--tool-status-rendering,#d4b486)]">
-          rendering
-        </span>
+        <Badge variant="warning" size="xs" className="px-2">
+          Rendering
+        </Badge>
       </div>
     </div>
   );
@@ -117,10 +118,10 @@ function ReadyMedia({
 function FailedState({ onRetry }: { onRetry: () => void }): React.ReactElement {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center">
-      <p className="text-xs text-tool-text-subdued">Render failed.</p>
+      <p className="text-tool-text-subdued text-xs">Render failed.</p>
       <button
         type="button"
-        className="rounded-md border border-tool-rail-border px-2 py-1 text-[10px] font-semibold text-tool-text-dim hover:text-foreground"
+        className="border-tool-rail-border text-tool-text-dim hover:text-foreground rounded-md border px-2 py-1 text-[10px] font-semibold"
         onClick={(e) => {
           e.stopPropagation();
           onRetry();

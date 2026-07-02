@@ -77,7 +77,7 @@ export const StepCreditBadge: React.FC<StepCreditBadgeProps> = ({
     <div
       className={cn(
         "inline-flex items-center rounded-full",
-        "bg-amber-50 text-amber-700 border border-amber-200",
+        "border border-[var(--ps-badge-warning-border)] bg-[var(--ps-badge-warning-bg)] text-[var(--ps-badge-warning-text)]",
         "font-medium",
         sizeClasses[size],
         className,
@@ -85,13 +85,10 @@ export const StepCreditBadge: React.FC<StepCreditBadgeProps> = ({
       role="status"
       aria-label={`This step costs ${creditCost} credit${creditCost !== 1 ? "s" : ""}`}
     >
-      <Coins
-        className={cn(iconSizes[size], "text-amber-500")}
-        aria-hidden="true"
-      />
+      <Coins className={iconSizes[size]} aria-hidden="true" />
       <span>{creditCost}</span>
       {showLabel && (
-        <span className="text-amber-600/80">
+        <span className="opacity-80">
           {creditCost === 1 ? "credit" : "credits"}
         </span>
       )}

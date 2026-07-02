@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { Badge, type BadgeProps } from "@promptstudio/system/components/ui";
 import { useModelRecommendation } from "../../hooks/useModelRecommendation";
 import { useModelComparison } from "../../hooks/useModelComparison";
 import {
@@ -17,10 +18,16 @@ import { ModelComparison } from "../ModelComparison/ModelComparison";
 import { cn } from "@/utils/cn";
 import { trackModelRecommendationEvent } from "../../api";
 
-const confidenceStyles: Record<string, string> = {
-  high: "bg-green-500/15 text-green-400",
-  medium: "bg-yellow-500/15 text-yellow-400",
-  low: "bg-zinc-500/20 text-zinc-300",
+const confidenceVariants: Record<string, NonNullable<BadgeProps["variant"]>> = {
+  high: "success",
+  medium: "warning",
+  low: "neutral",
+};
+
+const confidenceLabels: Record<string, string> = {
+  high: "High confidence",
+  medium: "Medium confidence",
+  low: "Low confidence",
 };
 
 const reasonLabels: Record<string, string> = {
@@ -249,12 +256,12 @@ export function ModelRecommendation({
     return (
       <div
         className={cn(
-          "rounded-lg border border-tool-border-dark bg-tool-nav-active p-3",
+          "border-tool-border-dark bg-tool-nav-active rounded-lg border p-3",
           className,
         )}
       >
-        <div className="h-3 w-32 rounded bg-surface-2 animate-pulse" />
-        <div className="mt-2 h-6 w-full rounded bg-surface-2 animate-pulse" />
+        <div className="bg-surface-2 h-3 w-32 animate-pulse rounded" />
+        <div className="bg-surface-2 mt-2 h-6 w-full animate-pulse rounded" />
       </div>
     );
   }
@@ -264,37 +271,34 @@ export function ModelRecommendation({
   }
 
   const confidenceKey = summary.confidence ?? "low";
-  const confidenceClass =
-    confidenceStyles[confidenceKey] ?? confidenceStyles.low;
+  const confidenceVariant =
+    confidenceVariants[confidenceKey] ?? confidenceVariants["low"] ?? "neutral";
+  const confidenceLabel =
+    confidenceLabels[confidenceKey] ?? confidenceLabels["low"];
 
   return (
     <div
       className={cn(
-        "rounded-lg border border-tool-border-dark bg-tool-nav-active p-3",
+        "border-tool-border-dark bg-tool-nav-active rounded-lg border p-3",
         className,
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-ghost">
+        <span className="text-ghost text-xs font-semibold">
           Model Recommendation
         </span>
-        <span
-          className={cn(
-            "text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide",
-            confidenceClass,
-          )}
-        >
-          {confidenceKey} confidence
-        </span>
+        <Badge variant={confidenceVariant} size="xs" className="px-2">
+          {confidenceLabel}
+        </Badge>
       </div>
 
       {requirementSummary && (
-        <div className="mt-1 text-[11px] text-tool-text-dim">
+        <div className="text-tool-text-dim mt-1 text-[11px]">
           Prompt requires: {requirementSummary}
         </div>
       )}
       {summary.reasoning && (
-        <div className="mt-1 text-[11px] text-ghost">{summary.reasoning}</div>
+        <div className="text-ghost mt-1 text-[11px]">{summary.reasoning}</div>
       )}
 
       {recommendedScore && (
@@ -311,7 +315,7 @@ export function ModelRecommendation({
       {efficientScore && efficient && efficient.modelId !== summary.modelId && (
         <div className="mt-2">
           {efficient.reasoning && (
-            <div className="mb-1 text-[11px] text-tool-text-dim">
+            <div className="text-tool-text-dim mb-1 text-[11px]">
               {efficient.reasoning}
             </div>
           )}
@@ -326,7 +330,7 @@ export function ModelRecommendation({
 
       {comparisonModels && canCompare && (
         <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="text-[11px] text-tool-text-dim">
+          <div className="text-tool-text-dim text-[11px]">
             Compare {getModelLabel(comparisonModels[0])} vs{" "}
             {getModelLabel(comparisonModels[1])}
           </div>
@@ -352,7 +356,7 @@ export function ModelRecommendation({
               onCompareModels?.(comparisonModels);
               openComparison(comparisonModels);
             }}
-            className="h-7 px-2 rounded-md border border-tool-border-dark text-ghost text-xs font-semibold hover:bg-surface-1"
+            className="border-tool-border-dark text-ghost hover:bg-surface-1 h-7 rounded-md border px-2 text-xs font-semibold"
           >
             {isOpen ? "Hide" : "Compare Both"}
           </button>
@@ -371,7 +375,7 @@ export function ModelRecommendation({
       )}
 
       {filteredSummary && (
-        <div className="mt-2 text-[11px] text-tool-text-dim">
+        <div className="text-tool-text-dim mt-2 text-[11px]">
           {filteredSummary}
         </div>
       )}

@@ -11,6 +11,7 @@ import {
 } from "@promptstudio/system/components/ui";
 import { getAuthRepository } from "@repositories/index";
 import { useToast } from "@components/Toast";
+import { Badge } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { useCreditBalance } from "@/contexts/CreditBalanceContext";
@@ -203,24 +204,9 @@ export function AccountPage(): React.ReactElement {
                 </p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span
-                    className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide"
-                    style={
-                      isVerified
-                        ? {
-                            borderColor: `${AUTH_COLORS.success}30`,
-                            background: `${AUTH_COLORS.success}15`,
-                            color: AUTH_COLORS.success,
-                          }
-                        : {
-                            borderColor: "#f5c05c30",
-                            background: "#f5c05c15",
-                            color: "#f5c05c",
-                          }
-                    }
-                  >
-                    {isVerified ? "VERIFIED" : "NOT VERIFIED"}
-                  </span>
+                  <Badge variant={isVerified ? "success" : "warning"} size="sm">
+                    {isVerified ? "Verified" : "Not verified"}
+                  </Badge>
 
                   {!isVerified ? (
                     <Button

@@ -97,6 +97,19 @@
     text-transform: uppercase;
   }
 
+  /* Overline — the uppercase micro-label (Tune drawer MOTION/MOOD/STYLE
+     section labels, history OUTPUT field labels). The only sanctioned
+     uppercase type treatment; everything else is sentence case
+     (ADR-0008). Tailwind equivalent: text-overline. */
+  .ps-overline {
+    font-family: var(--ps-font-sans);
+    font-size: var(--ps-fs-10);
+    line-height: var(--ps-lh-normal);
+    font-weight: var(--ps-fw-semibold);
+    letter-spacing: var(--ps-ls-overline);
+    text-transform: uppercase;
+  }
+
   /* Meta + Code */
   .ps-meta {
     font-family: var(--ps-font-sans);

@@ -30,21 +30,21 @@ describe("suggestionHelpers", () => {
       expect(styles?.percent).toBe(
         Math.round(COMPATIBILITY_THRESHOLDS.HIGH * 100),
       );
-      expect(styles?.tone).toContain("text-emerald-600");
+      expect(styles?.variant).toBe("success");
     });
 
     it("returns low compatibility styles", () => {
       const styles = getCompatibilityStyles(COMPATIBILITY_THRESHOLDS.LOW - 0.1);
 
       expect(styles?.IconComponent).toBeTruthy();
-      expect(styles?.tone).toContain("text-amber-600");
+      expect(styles?.variant).toBe("warning");
     });
 
     it("returns neutral styles for mid-range compatibility", () => {
       const styles = getCompatibilityStyles(0.7);
 
       expect(styles?.IconComponent).toBeNull();
-      expect(styles?.tone).toContain("text-muted");
+      expect(styles?.variant).toBe("neutral");
     });
   });
 
