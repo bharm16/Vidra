@@ -1,0 +1,2239 @@
+{
+  "metadata": {
+    "description": "Self-labeling frame-verification eval set. Ground truth constructed by pre-generation span perturbation.",
+    "sourceGoldenSet": [
+      "core-prompts.json",
+      "appearance-prompts.json",
+      "lighting-prompts.json",
+      "pattern-overlap-prompts.json"
+    ],
+    "generator": "black-forest-labs/flux-schnell via ReplicateFluxSchnellProvider",
+    "variantCount": 57
+  },
+  "variants": [
+    {
+      "variantId": "core-001-base",
+      "promptId": "core-001",
+      "kind": "base",
+      "generationPrompt": "A young painter in a worn apron stands before a canvas in a sunlit studio, carefully blending colors with a vibrant brush.",
+      "originalPrompt": "A young painter in a worn apron stands before a canvas in a sunlit studio, carefully blending colors with a vibrant brush.",
+      "spans": [
+        {
+          "text": "young painter",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "worn apron",
+          "category": "subject.wardrobe",
+          "expected": "present"
+        },
+        {
+          "text": "stands before a canvas",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "sunlit studio",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "carefully blending colors",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "vibrant brush",
+          "category": "subject.wardrobe",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-001-base.webp"
+    },
+    {
+      "variantId": "core-001-perturbed",
+      "promptId": "core-001",
+      "kind": "contradicted",
+      "generationPrompt": "An elderly historian in a worn apron stands before a canvas in a sunlit studio, carefully blending colors with a vibrant brush.",
+      "originalPrompt": "A young painter in a worn apron stands before a canvas in a sunlit studio, carefully blending colors with a vibrant brush.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "young painter",
+      "replacementText": "elderly historian",
+      "spans": [
+        {
+          "text": "young painter",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "worn apron",
+          "category": "subject.wardrobe",
+          "expected": "present"
+        },
+        {
+          "text": "stands before a canvas",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "sunlit studio",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "carefully blending colors",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "vibrant brush",
+          "category": "subject.wardrobe",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-001-perturbed.webp"
+    },
+    {
+      "variantId": "core-002-base",
+      "promptId": "core-002",
+      "kind": "base",
+      "generationPrompt": "An elderly historian with weathered hands turning pages of an ancient manuscript in a dimly lit library.",
+      "originalPrompt": "An elderly historian with weathered hands turning pages of an ancient manuscript in a dimly lit library.",
+      "spans": [
+        {
+          "text": "elderly historian",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "weathered hands",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "turning pages",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "ancient manuscript",
+          "category": "environment.context",
+          "expected": "present"
+        },
+        {
+          "text": "dimly lit library",
+          "category": "environment.location",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-002-base.webp"
+    },
+    {
+      "variantId": "core-002-perturbed",
+      "promptId": "core-002",
+      "kind": "contradicted",
+      "generationPrompt": "An elderly historian with weathered hands turning pages of an ancient manuscript in a foggy forest.",
+      "originalPrompt": "An elderly historian with weathered hands turning pages of an ancient manuscript in a dimly lit library.",
+      "perturbedCategory": "environment.location",
+      "perturbedSpanText": "dimly lit library",
+      "replacementText": "foggy forest",
+      "spans": [
+        {
+          "text": "elderly historian",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "weathered hands",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "turning pages",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "ancient manuscript",
+          "category": "environment.context",
+          "expected": "present"
+        },
+        {
+          "text": "dimly lit library",
+          "category": "environment.location",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/core-002-perturbed.webp"
+    },
+    {
+      "variantId": "core-003-base",
+      "promptId": "core-003",
+      "kind": "base",
+      "generationPrompt": "A Siberian husky running through fresh snow in a foggy forest at dawn, breath visible in cold air.",
+      "originalPrompt": "A Siberian husky running through fresh snow in a foggy forest at dawn, breath visible in cold air.",
+      "spans": [
+        {
+          "text": "Siberian husky",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "running through fresh snow",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "foggy forest",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "foggy",
+          "category": "environment.weather",
+          "expected": "present"
+        },
+        {
+          "text": "at dawn",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-003-base.webp"
+    },
+    {
+      "variantId": "core-003-perturbed",
+      "promptId": "core-003",
+      "kind": "contradicted",
+      "generationPrompt": "A Siberian husky running through fresh snow in a foggy forest at midday, breath visible in cold air.",
+      "originalPrompt": "A Siberian husky running through fresh snow in a foggy forest at dawn, breath visible in cold air.",
+      "perturbedCategory": "lighting.timeOfDay",
+      "perturbedSpanText": "at dawn",
+      "replacementText": "at midday",
+      "spans": [
+        {
+          "text": "Siberian husky",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "running through fresh snow",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "foggy forest",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "foggy",
+          "category": "environment.weather",
+          "expected": "present"
+        },
+        {
+          "text": "at dawn",
+          "category": "lighting.timeOfDay",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/core-003-perturbed.webp"
+    },
+    {
+      "variantId": "core-004-base",
+      "promptId": "core-004",
+      "kind": "base",
+      "generationPrompt": "Close-up of gnarled hands holding a vintage compass, illuminated by warm candlelight.",
+      "originalPrompt": "Close-up of gnarled hands holding a vintage compass, illuminated by warm candlelight.",
+      "spans": [
+        {
+          "text": "Close-up",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "gnarled hands",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "holding a vintage compass",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "illuminated by warm candlelight",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "candlelight",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-004-base.webp"
+    },
+    {
+      "variantId": "core-004-perturbed",
+      "promptId": "core-004",
+      "kind": "dropped",
+      "generationPrompt": "Close-up of gnarled hands holding a vintage compass.",
+      "originalPrompt": "Close-up of gnarled hands holding a vintage compass, illuminated by warm candlelight.",
+      "perturbedCategory": "lighting.quality",
+      "perturbedSpanText": "illuminated by warm candlelight",
+      "spans": [
+        {
+          "text": "Close-up",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "gnarled hands",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "holding a vintage compass",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "illuminated by warm candlelight",
+          "category": "lighting.quality",
+          "expected": "absent"
+        },
+        {
+          "text": "candlelight",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-004-perturbed.webp"
+    },
+    {
+      "variantId": "core-005-base",
+      "promptId": "core-005",
+      "kind": "base",
+      "generationPrompt": "A man in a leather jacket leaning against a graffiti-covered wall in a gritty alleyway, rain falling.",
+      "originalPrompt": "A man in a leather jacket leaning against a graffiti-covered wall in a gritty alleyway, rain falling.",
+      "spans": [
+        {
+          "text": "man",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "leather jacket",
+          "category": "subject.wardrobe",
+          "expected": "present"
+        },
+        {
+          "text": "leaning against a graffiti-covered wall",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "gritty alleyway",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "rain falling",
+          "category": "environment.weather",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/core-005-base.webp"
+    },
+    {
+      "variantId": "core-005-perturbed",
+      "promptId": "core-005",
+      "kind": "dropped",
+      "generationPrompt": "A man in a leather jacket leaning against a graffiti-covered wall in a gritty alleyway.",
+      "originalPrompt": "A man in a leather jacket leaning against a graffiti-covered wall in a gritty alleyway, rain falling.",
+      "perturbedCategory": "environment.weather",
+      "perturbedSpanText": "rain falling",
+      "spans": [
+        {
+          "text": "man",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "leather jacket",
+          "category": "subject.wardrobe",
+          "expected": "present"
+        },
+        {
+          "text": "leaning against a graffiti-covered wall",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "gritty alleyway",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "rain falling",
+          "category": "environment.weather",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/core-005-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-001-base",
+      "promptId": "appearance-001",
+      "kind": "base",
+      "generationPrompt": "A violinist with long braided hair and ink-stained fingers practices in a quiet attic under soft window light.",
+      "originalPrompt": "A violinist with long braided hair and ink-stained fingers practices in a quiet attic under soft window light.",
+      "spans": [
+        {
+          "text": "violinist",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "long braided hair",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "ink-stained fingers",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "practices",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "quiet attic",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "soft window light",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-001-base.webp"
+    },
+    {
+      "variantId": "appearance-001-perturbed",
+      "promptId": "appearance-001",
+      "kind": "contradicted",
+      "generationPrompt": "A violinist with broken nose and ink-stained fingers practices in a quiet attic under soft window light.",
+      "originalPrompt": "A violinist with long braided hair and ink-stained fingers practices in a quiet attic under soft window light.",
+      "perturbedCategory": "subject.appearance",
+      "perturbedSpanText": "long braided hair",
+      "replacementText": "broken nose",
+      "spans": [
+        {
+          "text": "violinist",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "long braided hair",
+          "category": "subject.appearance",
+          "expected": "absent"
+        },
+        {
+          "text": "ink-stained fingers",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "practices",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "quiet attic",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "soft window light",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-001-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-002-base",
+      "promptId": "appearance-002",
+      "kind": "base",
+      "generationPrompt": "A tired boxer with a broken nose and bruised knuckles sits on a stool in a gritty gym, harsh overhead fluorescents buzzing.",
+      "originalPrompt": "A tired boxer with a broken nose and bruised knuckles sits on a stool in a gritty gym, harsh overhead fluorescents buzzing.",
+      "spans": [
+        {
+          "text": "tired boxer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "broken nose",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "bruised knuckles",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sits on a stool",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "gritty gym",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "harsh overhead fluorescents",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-002-base.webp"
+    },
+    {
+      "variantId": "appearance-002-perturbed",
+      "promptId": "appearance-002",
+      "kind": "contradicted",
+      "generationPrompt": "A tired boxer with a broken nose and bruised knuckles rehearses in a gritty gym, harsh overhead fluorescents buzzing.",
+      "originalPrompt": "A tired boxer with a broken nose and bruised knuckles sits on a stool in a gritty gym, harsh overhead fluorescents buzzing.",
+      "perturbedCategory": "action.state",
+      "perturbedSpanText": "sits on a stool",
+      "replacementText": "rehearses",
+      "spans": [
+        {
+          "text": "tired boxer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "broken nose",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "bruised knuckles",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sits on a stool",
+          "category": "action.state",
+          "expected": "absent"
+        },
+        {
+          "text": "gritty gym",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "harsh overhead fluorescents",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-002-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-003-base",
+      "promptId": "appearance-003",
+      "kind": "base",
+      "generationPrompt": "A street photographer with a silver eyebrow piercing and sunburned shoulders wanders through a seaside boardwalk at midday.",
+      "originalPrompt": "A street photographer with a silver eyebrow piercing and sunburned shoulders wanders through a seaside boardwalk at midday.",
+      "spans": [
+        {
+          "text": "street photographer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "silver eyebrow piercing",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sunburned shoulders",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "wanders",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "seaside boardwalk",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "at midday",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-003-base.webp"
+    },
+    {
+      "variantId": "appearance-003-perturbed",
+      "promptId": "appearance-003",
+      "kind": "contradicted",
+      "generationPrompt": "A ceramicist with a silver eyebrow piercing and sunburned shoulders wanders through a seaside boardwalk at midday.",
+      "originalPrompt": "A street photographer with a silver eyebrow piercing and sunburned shoulders wanders through a seaside boardwalk at midday.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "street photographer",
+      "replacementText": "ceramicist",
+      "spans": [
+        {
+          "text": "street photographer",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "silver eyebrow piercing",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sunburned shoulders",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "wanders",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "seaside boardwalk",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "at midday",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-003-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-004-base",
+      "promptId": "appearance-004",
+      "kind": "base",
+      "generationPrompt": "A ceramicist with clay-dusted eyelashes and rough, calloused palms shapes a vase in a warm kiln room, orange glow from the kiln flickering.",
+      "originalPrompt": "A ceramicist with clay-dusted eyelashes and rough, calloused palms shapes a vase in a warm kiln room, orange glow from the kiln flickering.",
+      "spans": [
+        {
+          "text": "ceramicist",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "clay-dusted eyelashes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "rough, calloused palms",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "shapes a vase",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "warm kiln room",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "orange glow from the kiln",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-004-base.webp"
+    },
+    {
+      "variantId": "appearance-004-perturbed",
+      "promptId": "appearance-004",
+      "kind": "contradicted",
+      "generationPrompt": "A ranger with clay-dusted eyelashes and rough, calloused palms shapes a vase in a warm kiln room, orange glow from the kiln flickering.",
+      "originalPrompt": "A ceramicist with clay-dusted eyelashes and rough, calloused palms shapes a vase in a warm kiln room, orange glow from the kiln flickering.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "ceramicist",
+      "replacementText": "ranger",
+      "spans": [
+        {
+          "text": "ceramicist",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "clay-dusted eyelashes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "rough, calloused palms",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "shapes a vase",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "warm kiln room",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "orange glow from the kiln",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-004-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-005-base",
+      "promptId": "appearance-005",
+      "kind": "base",
+      "generationPrompt": "A ranger with wind-chapped lips and frost in his beard hikes along a pine trail at dawn.",
+      "originalPrompt": "A ranger with wind-chapped lips and frost in his beard hikes along a pine trail at dawn.",
+      "spans": [
+        {
+          "text": "ranger",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "wind-chapped lips",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "frost in his beard",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "hikes along",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "pine trail",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "at dawn",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-005-base.webp"
+    },
+    {
+      "variantId": "appearance-005-perturbed",
+      "promptId": "appearance-005",
+      "kind": "contradicted",
+      "generationPrompt": "A ranger with wind-chapped lips and frost in his beard hikes along an empty stage at dawn.",
+      "originalPrompt": "A ranger with wind-chapped lips and frost in his beard hikes along a pine trail at dawn.",
+      "perturbedCategory": "environment.location",
+      "perturbedSpanText": "pine trail",
+      "replacementText": "empty stage",
+      "spans": [
+        {
+          "text": "ranger",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "wind-chapped lips",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "frost in his beard",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "hikes along",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "pine trail",
+          "category": "environment.location",
+          "expected": "absent"
+        },
+        {
+          "text": "at dawn",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-005-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-006-base",
+      "promptId": "appearance-006",
+      "kind": "base",
+      "generationPrompt": "A ballet dancer with blistered toes and shimmering sweat on her shoulders rehearses on an empty stage under a single spotlight.",
+      "originalPrompt": "A ballet dancer with blistered toes and shimmering sweat on her shoulders rehearses on an empty stage under a single spotlight.",
+      "spans": [
+        {
+          "text": "ballet dancer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "blistered toes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "shimmering sweat on her shoulders",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "rehearses",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "empty stage",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "single spotlight",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-006-base.webp"
+    },
+    {
+      "variantId": "appearance-006-perturbed",
+      "promptId": "appearance-006",
+      "kind": "contradicted",
+      "generationPrompt": "A ballet dancer with blistered toes and shimmering sweat on her shoulders rehearses on an empty stage under a warm lamplight.",
+      "originalPrompt": "A ballet dancer with blistered toes and shimmering sweat on her shoulders rehearses on an empty stage under a single spotlight.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "single spotlight",
+      "replacementText": "warm lamplight",
+      "spans": [
+        {
+          "text": "ballet dancer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "blistered toes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "shimmering sweat on her shoulders",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "rehearses",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "empty stage",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "single spotlight",
+          "category": "lighting.source",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/appearance-006-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-007-base",
+      "promptId": "appearance-007",
+      "kind": "base",
+      "generationPrompt": "A fisherman with salt-crusted eyebrows and a weathered face mends nets beside a rocky pier in overcast light.",
+      "originalPrompt": "A fisherman with salt-crusted eyebrows and a weathered face mends nets beside a rocky pier in overcast light.",
+      "spans": [
+        {
+          "text": "fisherman",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "salt-crusted eyebrows",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "weathered face",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "mends nets",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "rocky pier",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "overcast light",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-007-base.webp"
+    },
+    {
+      "variantId": "appearance-007-perturbed",
+      "promptId": "appearance-007",
+      "kind": "contradicted",
+      "generationPrompt": "A fisherman with tired eyes and a weathered face mends nets beside a rocky pier in overcast light.",
+      "originalPrompt": "A fisherman with salt-crusted eyebrows and a weathered face mends nets beside a rocky pier in overcast light.",
+      "perturbedCategory": "subject.appearance",
+      "perturbedSpanText": "salt-crusted eyebrows",
+      "replacementText": "tired eyes",
+      "spans": [
+        {
+          "text": "fisherman",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "salt-crusted eyebrows",
+          "category": "subject.appearance",
+          "expected": "absent"
+        },
+        {
+          "text": "weathered face",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "mends nets",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "rocky pier",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "overcast light",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-007-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-008-base",
+      "promptId": "appearance-008",
+      "kind": "base",
+      "generationPrompt": "A librarian with tired eyes and pale ink smudges on her wrist arranges books in a quiet reading room, warm lamplight.",
+      "originalPrompt": "A librarian with tired eyes and pale ink smudges on her wrist arranges books in a quiet reading room, warm lamplight.",
+      "spans": [
+        {
+          "text": "librarian",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "tired eyes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "pale ink smudges on her wrist",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "arranges books",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "quiet reading room",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "warm lamplight",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-008-base.webp"
+    },
+    {
+      "variantId": "appearance-008-perturbed",
+      "promptId": "appearance-008",
+      "kind": "dropped",
+      "generationPrompt": "A librarian with tired eyes and pale ink smudges on her wrist arranges books in a quiet reading room.",
+      "originalPrompt": "A librarian with tired eyes and pale ink smudges on her wrist arranges books in a quiet reading room, warm lamplight.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "warm lamplight",
+      "spans": [
+        {
+          "text": "librarian",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "tired eyes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "pale ink smudges on her wrist",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "arranges books",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "quiet reading room",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "warm lamplight",
+          "category": "lighting.source",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/appearance-008-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-009-base",
+      "promptId": "appearance-009",
+      "kind": "base",
+      "generationPrompt": "A mountain climber with wind-whipped hair and a scraped cheek steadies herself on a narrow ledge in bright noon sun.",
+      "originalPrompt": "A mountain climber with wind-whipped hair and a scraped cheek steadies herself on a narrow ledge in bright noon sun.",
+      "spans": [
+        {
+          "text": "mountain climber",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "wind-whipped hair",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "scraped cheek",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "steadies herself",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "narrow ledge",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "bright noon sun",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-009-base.webp"
+    },
+    {
+      "variantId": "appearance-009-perturbed",
+      "promptId": "appearance-009",
+      "kind": "contradicted",
+      "generationPrompt": "A mountain climber with singed forearm and a scraped cheek steadies herself on a narrow ledge in bright noon sun.",
+      "originalPrompt": "A mountain climber with wind-whipped hair and a scraped cheek steadies herself on a narrow ledge in bright noon sun.",
+      "perturbedCategory": "subject.appearance",
+      "perturbedSpanText": "wind-whipped hair",
+      "replacementText": "singed forearm",
+      "spans": [
+        {
+          "text": "mountain climber",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "wind-whipped hair",
+          "category": "subject.appearance",
+          "expected": "absent"
+        },
+        {
+          "text": "scraped cheek",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "steadies herself",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "narrow ledge",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "bright noon sun",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-009-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-010-base",
+      "promptId": "appearance-010",
+      "kind": "base",
+      "generationPrompt": "A chef with a singed forearm and sweat-soaked temples flips vegetables in a sizzling wok, steam rising.",
+      "originalPrompt": "A chef with a singed forearm and sweat-soaked temples flips vegetables in a sizzling wok, steam rising.",
+      "spans": [
+        {
+          "text": "chef",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "singed forearm",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sweat-soaked temples",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "flips vegetables",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "sizzling wok",
+          "category": "environment.context",
+          "expected": "present"
+        },
+        {
+          "text": "steam rising",
+          "category": "environment.context",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-010-base.webp"
+    },
+    {
+      "variantId": "appearance-010-perturbed",
+      "promptId": "appearance-010",
+      "kind": "dropped",
+      "generationPrompt": "A chef with a singed forearm and sweat-soaked temples flips vegetables in a sizzling wok.",
+      "originalPrompt": "A chef with a singed forearm and sweat-soaked temples flips vegetables in a sizzling wok, steam rising.",
+      "perturbedCategory": "environment.context",
+      "perturbedSpanText": "steam rising",
+      "spans": [
+        {
+          "text": "chef",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "singed forearm",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sweat-soaked temples",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "flips vegetables",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "sizzling wok",
+          "category": "environment.context",
+          "expected": "present"
+        },
+        {
+          "text": "steam rising",
+          "category": "environment.context",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/appearance-010-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-011-base",
+      "promptId": "appearance-011",
+      "kind": "base",
+      "generationPrompt": "A mechanic with grease-blackened fingernails and a scar across his jaw tightens bolts in an auto shop under a flickering shop light.",
+      "originalPrompt": "A mechanic with grease-blackened fingernails and a scar across his jaw tightens bolts in an auto shop under a flickering shop light.",
+      "spans": [
+        {
+          "text": "mechanic",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "grease-blackened fingernails",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "scar across his jaw",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "tightens bolts",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "auto shop",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "flickering shop light",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-011-base.webp"
+    },
+    {
+      "variantId": "appearance-011-perturbed",
+      "promptId": "appearance-011",
+      "kind": "contradicted",
+      "generationPrompt": "A surfer with grease-blackened fingernails and a scar across his jaw tightens bolts in an auto shop under a flickering shop light.",
+      "originalPrompt": "A mechanic with grease-blackened fingernails and a scar across his jaw tightens bolts in an auto shop under a flickering shop light.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "mechanic",
+      "replacementText": "surfer",
+      "spans": [
+        {
+          "text": "mechanic",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "grease-blackened fingernails",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "scar across his jaw",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "tightens bolts",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "auto shop",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "flickering shop light",
+          "category": "lighting.source",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-011-perturbed.webp"
+    },
+    {
+      "variantId": "appearance-012-base",
+      "promptId": "appearance-012",
+      "kind": "base",
+      "generationPrompt": "A surfer with wet, tangled hair and sand stuck to his eyelashes jogs toward the shoreline at golden hour.",
+      "originalPrompt": "A surfer with wet, tangled hair and sand stuck to his eyelashes jogs toward the shoreline at golden hour.",
+      "spans": [
+        {
+          "text": "surfer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "wet, tangled hair",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sand stuck to his eyelashes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "jogs toward",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "shoreline",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "golden hour",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-012-base.webp"
+    },
+    {
+      "variantId": "appearance-012-perturbed",
+      "promptId": "appearance-012",
+      "kind": "contradicted",
+      "generationPrompt": "A detective with wet, tangled hair and sand stuck to his eyelashes jogs toward the shoreline at golden hour.",
+      "originalPrompt": "A surfer with wet, tangled hair and sand stuck to his eyelashes jogs toward the shoreline at golden hour.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "surfer",
+      "replacementText": "detective",
+      "spans": [
+        {
+          "text": "surfer",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "wet, tangled hair",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "sand stuck to his eyelashes",
+          "category": "subject.appearance",
+          "expected": "present"
+        },
+        {
+          "text": "jogs toward",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "shoreline",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "golden hour",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/appearance-012-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-001-base",
+      "promptId": "lighting-001",
+      "kind": "base",
+      "generationPrompt": "Low-angle shot of a detective in an office: a practical tungsten desk lamp casts warm pools of light while cool moonlight spills through blinds, creating striped shadows.",
+      "originalPrompt": "Low-angle shot of a detective in an office: a practical tungsten desk lamp casts warm pools of light while cool moonlight spills through blinds, creating striped shadows.",
+      "spans": [
+        {
+          "text": "Low-angle shot",
+          "category": "camera.angle",
+          "expected": "present"
+        },
+        {
+          "text": "detective",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "office",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "practical tungsten desk lamp",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "warm pools of light",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "cool moonlight",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "striped shadows",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-001-base.webp"
+    },
+    {
+      "variantId": "lighting-001-perturbed",
+      "promptId": "lighting-001",
+      "kind": "contradicted",
+      "generationPrompt": "Low-angle shot of a detective in a stage: a practical tungsten desk lamp casts warm pools of light while cool moonlight spills through blinds, creating striped shadows.",
+      "originalPrompt": "Low-angle shot of a detective in an office: a practical tungsten desk lamp casts warm pools of light while cool moonlight spills through blinds, creating striped shadows.",
+      "perturbedCategory": "environment.location",
+      "perturbedSpanText": "office",
+      "replacementText": "stage",
+      "spans": [
+        {
+          "text": "Low-angle shot",
+          "category": "camera.angle",
+          "expected": "present"
+        },
+        {
+          "text": "detective",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "office",
+          "category": "environment.location",
+          "expected": "absent"
+        },
+        {
+          "text": "practical tungsten desk lamp",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "warm pools of light",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "cool moonlight",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "striped shadows",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-001-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-002-base",
+      "promptId": "lighting-002",
+      "kind": "base",
+      "generationPrompt": "Wide shot of a dancer on a stage, rim-lit by a white follow spot with deep black fill around the edges.",
+      "originalPrompt": "Wide shot of a dancer on a stage, rim-lit by a white follow spot with deep black fill around the edges.",
+      "spans": [
+        {
+          "text": "Wide shot",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "dancer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "stage",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "rim-lit",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "white follow spot",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "deep black fill",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-002-base.webp"
+    },
+    {
+      "variantId": "lighting-002-perturbed",
+      "promptId": "lighting-002",
+      "kind": "contradicted",
+      "generationPrompt": "Wide shot of a dancer on a stage, rim-lit by a diffused skylight with deep black fill around the edges.",
+      "originalPrompt": "Wide shot of a dancer on a stage, rim-lit by a white follow spot with deep black fill around the edges.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "white follow spot",
+      "replacementText": "diffused skylight",
+      "spans": [
+        {
+          "text": "Wide shot",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "dancer",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "stage",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "rim-lit",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "white follow spot",
+          "category": "lighting.source",
+          "expected": "absent"
+        },
+        {
+          "text": "deep black fill",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-002-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-003-base",
+      "promptId": "lighting-003",
+      "kind": "base",
+      "generationPrompt": "Close-up of a watchmaker at his bench, lit by diffused skylight and a flickering candle, soft bokeh highlights in the background.",
+      "originalPrompt": "Close-up of a watchmaker at his bench, lit by diffused skylight and a flickering candle, soft bokeh highlights in the background.",
+      "spans": [
+        {
+          "text": "Close-up",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "watchmaker",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "bench",
+          "category": "environment.context",
+          "expected": "present"
+        },
+        {
+          "text": "diffused skylight",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "flickering candle",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "soft bokeh highlights",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-003-base.webp"
+    },
+    {
+      "variantId": "lighting-003-perturbed",
+      "promptId": "lighting-003",
+      "kind": "contradicted",
+      "generationPrompt": "Close-up of a watchmaker at his bench, lit by intermittent neon signs and a flickering candle, soft bokeh highlights in the background.",
+      "originalPrompt": "Close-up of a watchmaker at his bench, lit by diffused skylight and a flickering candle, soft bokeh highlights in the background.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "diffused skylight",
+      "replacementText": "intermittent neon signs",
+      "spans": [
+        {
+          "text": "Close-up",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "watchmaker",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "bench",
+          "category": "environment.context",
+          "expected": "present"
+        },
+        {
+          "text": "diffused skylight",
+          "category": "lighting.source",
+          "expected": "absent"
+        },
+        {
+          "text": "flickering candle",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "soft bokeh highlights",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-003-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-004-base",
+      "promptId": "lighting-004",
+      "kind": "base",
+      "generationPrompt": "Handheld tracking shot through a hallway, illuminated by intermittent neon signs and sodium street spill, alternating cyan and amber color temperature.",
+      "originalPrompt": "Handheld tracking shot through a hallway, illuminated by intermittent neon signs and sodium street spill, alternating cyan and amber color temperature.",
+      "spans": [
+        {
+          "text": "hallway",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "intermittent neon signs",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "sodium street spill",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "cyan and amber color temperature",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-004-base.webp"
+    },
+    {
+      "variantId": "lighting-004-perturbed",
+      "promptId": "lighting-004",
+      "kind": "contradicted",
+      "generationPrompt": "Handheld tracking shot through a hallway, illuminated by soft key light and sodium street spill, alternating cyan and amber color temperature.",
+      "originalPrompt": "Handheld tracking shot through a hallway, illuminated by intermittent neon signs and sodium street spill, alternating cyan and amber color temperature.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "intermittent neon signs",
+      "replacementText": "soft key light",
+      "spans": [
+        {
+          "text": "hallway",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "intermittent neon signs",
+          "category": "lighting.source",
+          "expected": "absent"
+        },
+        {
+          "text": "sodium street spill",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "cyan and amber color temperature",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-004-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-005-base",
+      "promptId": "lighting-005",
+      "kind": "base",
+      "generationPrompt": "Medium shot of a chef plating food under high-key studio lighting, glossy specular highlights on the sauce.",
+      "originalPrompt": "Medium shot of a chef plating food under high-key studio lighting, glossy specular highlights on the sauce.",
+      "spans": [
+        {
+          "text": "Medium shot",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "chef",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "plating food",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "high-key studio lighting",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "glossy specular highlights",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-005-base.webp"
+    },
+    {
+      "variantId": "lighting-005-perturbed",
+      "promptId": "lighting-005",
+      "kind": "contradicted",
+      "generationPrompt": "Medium shot of a cyclist plating food under high-key studio lighting, glossy specular highlights on the sauce.",
+      "originalPrompt": "Medium shot of a chef plating food under high-key studio lighting, glossy specular highlights on the sauce.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "chef",
+      "replacementText": "cyclist",
+      "spans": [
+        {
+          "text": "Medium shot",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "chef",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "plating food",
+          "category": "action.gesture",
+          "expected": "present"
+        },
+        {
+          "text": "high-key studio lighting",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "glossy specular highlights",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-005-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-006-base",
+      "promptId": "lighting-006",
+      "kind": "base",
+      "generationPrompt": "A cyclist rides downhill, backlit by a low sun, lens flare streaking across the frame, silhouettes forming sharp edges.",
+      "originalPrompt": "A cyclist rides downhill, backlit by a low sun, lens flare streaking across the frame, silhouettes forming sharp edges.",
+      "spans": [
+        {
+          "text": "cyclist",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "rides downhill",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "backlit",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "low sun",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        },
+        {
+          "text": "lens flare",
+          "category": "camera.lens",
+          "expected": "present"
+        },
+        {
+          "text": "silhouettes",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-006-base.webp"
+    },
+    {
+      "variantId": "lighting-006-perturbed",
+      "promptId": "lighting-006",
+      "kind": "contradicted",
+      "generationPrompt": "A cyclist walks down, backlit by a low sun, lens flare streaking across the frame, silhouettes forming sharp edges.",
+      "originalPrompt": "A cyclist rides downhill, backlit by a low sun, lens flare streaking across the frame, silhouettes forming sharp edges.",
+      "perturbedCategory": "action.movement",
+      "perturbedSpanText": "rides downhill",
+      "replacementText": "walks down",
+      "spans": [
+        {
+          "text": "cyclist",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "rides downhill",
+          "category": "action.movement",
+          "expected": "absent"
+        },
+        {
+          "text": "backlit",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "low sun",
+          "category": "lighting.timeOfDay",
+          "expected": "present"
+        },
+        {
+          "text": "lens flare",
+          "category": "camera.lens",
+          "expected": "present"
+        },
+        {
+          "text": "silhouettes",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-006-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-007-base",
+      "promptId": "lighting-007",
+      "kind": "base",
+      "generationPrompt": "An actor in Rembrandt lighting: one soft key light and a dim bounce fill, warm skin tones.",
+      "originalPrompt": "An actor in Rembrandt lighting: one soft key light and a dim bounce fill, warm skin tones.",
+      "spans": [
+        {
+          "text": "actor",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "Rembrandt lighting",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "soft key light",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "dim bounce fill",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "warm skin tones",
+          "category": "style.colorGrade",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-007-base.webp"
+    },
+    {
+      "variantId": "lighting-007-perturbed",
+      "promptId": "lighting-007",
+      "kind": "dropped",
+      "generationPrompt": "An actor in Rembrandt lighting: one soft key light and a dim bounce fill.",
+      "originalPrompt": "An actor in Rembrandt lighting: one soft key light and a dim bounce fill, warm skin tones.",
+      "perturbedCategory": "style.colorGrade",
+      "perturbedSpanText": "warm skin tones",
+      "spans": [
+        {
+          "text": "actor",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "Rembrandt lighting",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "soft key light",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "dim bounce fill",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "warm skin tones",
+          "category": "style.colorGrade",
+          "expected": "absent"
+        }
+      ],
+      "imagePath": "frames/lighting-007-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-008-base",
+      "promptId": "lighting-008",
+      "kind": "base",
+      "generationPrompt": "A traveler walks down a night street; practical lanterns create pools of warm light, while cold fog diffuses the beams into volumetric rays.",
+      "originalPrompt": "A traveler walks down a night street; practical lanterns create pools of warm light, while cold fog diffuses the beams into volumetric rays.",
+      "spans": [
+        {
+          "text": "traveler",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "walks down",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "night street",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "practical lanterns",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "pools of warm light",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "cold fog",
+          "category": "environment.weather",
+          "expected": "present"
+        },
+        {
+          "text": "volumetric rays",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-008-base.webp"
+    },
+    {
+      "variantId": "lighting-008-perturbed",
+      "promptId": "lighting-008",
+      "kind": "contradicted",
+      "generationPrompt": "A surgeon walks down a night street; practical lanterns create pools of warm light, while cold fog diffuses the beams into volumetric rays.",
+      "originalPrompt": "A traveler walks down a night street; practical lanterns create pools of warm light, while cold fog diffuses the beams into volumetric rays.",
+      "perturbedCategory": "subject.identity",
+      "perturbedSpanText": "traveler",
+      "replacementText": "surgeon",
+      "spans": [
+        {
+          "text": "traveler",
+          "category": "subject.identity",
+          "expected": "absent"
+        },
+        {
+          "text": "walks down",
+          "category": "action.movement",
+          "expected": "present"
+        },
+        {
+          "text": "night street",
+          "category": "environment.location",
+          "expected": "present"
+        },
+        {
+          "text": "practical lanterns",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "pools of warm light",
+          "category": "lighting.quality",
+          "expected": "present"
+        },
+        {
+          "text": "cold fog",
+          "category": "environment.weather",
+          "expected": "present"
+        },
+        {
+          "text": "volumetric rays",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-008-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-009-base",
+      "promptId": "lighting-009",
+      "kind": "base",
+      "generationPrompt": "Overhead shot of a surgeon, lit by a ring light with clinical, neutral color temperature and hard shadows.",
+      "originalPrompt": "Overhead shot of a surgeon, lit by a ring light with clinical, neutral color temperature and hard shadows.",
+      "spans": [
+        {
+          "text": "Overhead shot",
+          "category": "camera.angle",
+          "expected": "present"
+        },
+        {
+          "text": "surgeon",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "ring light",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "clinical, neutral color temperature",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        },
+        {
+          "text": "hard shadows",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-009-base.webp"
+    },
+    {
+      "variantId": "lighting-009-perturbed",
+      "promptId": "lighting-009",
+      "kind": "contradicted",
+      "generationPrompt": "Overhead shot of a surgeon, lit by a rotating LED light with clinical, neutral color temperature and hard shadows.",
+      "originalPrompt": "Overhead shot of a surgeon, lit by a ring light with clinical, neutral color temperature and hard shadows.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "ring light",
+      "replacementText": "rotating LED light",
+      "spans": [
+        {
+          "text": "Overhead shot",
+          "category": "camera.angle",
+          "expected": "present"
+        },
+        {
+          "text": "surgeon",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "ring light",
+          "category": "lighting.source",
+          "expected": "absent"
+        },
+        {
+          "text": "clinical, neutral color temperature",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        },
+        {
+          "text": "hard shadows",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-009-perturbed.webp"
+    },
+    {
+      "variantId": "lighting-010-base",
+      "promptId": "lighting-010",
+      "kind": "base",
+      "generationPrompt": "Macro shot: a gemstone sparkles under a rotating LED light, prismatic highlights dancing.",
+      "originalPrompt": "Macro shot: a gemstone sparkles under a rotating LED light, prismatic highlights dancing.",
+      "spans": [
+        {
+          "text": "Macro shot",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "gemstone",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "sparkles",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "rotating LED light",
+          "category": "lighting.source",
+          "expected": "present"
+        },
+        {
+          "text": "prismatic highlights",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-010-base.webp"
+    },
+    {
+      "variantId": "lighting-010-perturbed",
+      "promptId": "lighting-010",
+      "kind": "contradicted",
+      "generationPrompt": "Macro shot: a gemstone sparkles under a candlelight, prismatic highlights dancing.",
+      "originalPrompt": "Macro shot: a gemstone sparkles under a rotating LED light, prismatic highlights dancing.",
+      "perturbedCategory": "lighting.source",
+      "perturbedSpanText": "rotating LED light",
+      "replacementText": "candlelight",
+      "spans": [
+        {
+          "text": "Macro shot",
+          "category": "shot.type",
+          "expected": "present"
+        },
+        {
+          "text": "gemstone",
+          "category": "subject.identity",
+          "expected": "present"
+        },
+        {
+          "text": "sparkles",
+          "category": "action.state",
+          "expected": "present"
+        },
+        {
+          "text": "rotating LED light",
+          "category": "lighting.source",
+          "expected": "absent"
+        },
+        {
+          "text": "prismatic highlights",
+          "category": "lighting.quality",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/lighting-010-perturbed.webp"
+    },
+    {
+      "variantId": "pattern-001-base",
+      "promptId": "pattern-001",
+      "kind": "base",
+      "generationPrompt": "**TECHNICAL SPECS**\n- **Duration:** 6s\n- **Aspect Ratio:** 2.39:1\n- **Frame Rate:** 48fps\n- **Resolution:** 4K\n- **Lens:** 50mm\n- **Aperture:** f/2.8\n- **Color Temp:** 5600K",
+      "originalPrompt": "**TECHNICAL SPECS**\n- **Duration:** 6s\n- **Aspect Ratio:** 2.39:1\n- **Frame Rate:** 48fps\n- **Resolution:** 4K\n- **Lens:** 50mm\n- **Aperture:** f/2.8\n- **Color Temp:** 5600K",
+      "spans": [
+        {
+          "text": "50mm",
+          "category": "camera.lens",
+          "expected": "present"
+        },
+        {
+          "text": "f/2.8",
+          "category": "camera.focus",
+          "expected": "present"
+        },
+        {
+          "text": "5600K",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/pattern-001-base.webp"
+    },
+    {
+      "variantId": "pattern-002-base",
+      "promptId": "pattern-002",
+      "kind": "base",
+      "generationPrompt": "Warm tones dominate the frame.",
+      "originalPrompt": "Warm tones dominate the frame.",
+      "spans": [
+        {
+          "text": "Warm tones",
+          "category": "style.colorGrade",
+          "expected": "present"
+        },
+        {
+          "text": "Warm",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/pattern-002-base.webp"
+    },
+    {
+      "variantId": "pattern-002-perturbed",
+      "promptId": "pattern-002",
+      "kind": "contradicted",
+      "generationPrompt": "warm skin tones dominate the frame.",
+      "originalPrompt": "Warm tones dominate the frame.",
+      "perturbedCategory": "style.colorGrade",
+      "perturbedSpanText": "Warm tones",
+      "replacementText": "warm skin tones",
+      "spans": [
+        {
+          "text": "Warm tones",
+          "category": "style.colorGrade",
+          "expected": "absent"
+        },
+        {
+          "text": "Warm",
+          "category": "lighting.colorTemp",
+          "expected": "present"
+        }
+      ],
+      "imagePath": "frames/pattern-002-perturbed.webp"
+    }
+  ]
+}

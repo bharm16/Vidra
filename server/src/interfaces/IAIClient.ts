@@ -36,7 +36,7 @@ export interface CompletionOptions {
 export type MessageContentPart = {
   type?: string;
   text?: string;
-  image_url?: { url: string };
+  image_url?: { url: string; detail?: "low" | "high" | "auto" };
   [key: string]: unknown;
 };
 

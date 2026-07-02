@@ -25,6 +25,7 @@ import { createAssetRoutes } from "./asset.routes";
 import { createConsistentGenerationRoutes } from "./consistentGeneration.routes";
 import { createReferenceImagesRoutes } from "./reference-images.routes";
 import { createImageObservationRoutes } from "./image-observation.routes";
+import { createFrameVerificationRoutes } from "./frame-verification.routes";
 import { createMotionIdeasRoutes } from "./i2v/motionIdeas.routes";
 import { createContinuityRoutes } from "./continuity.routes";
 import { createSessionRoutes } from "./sessions.routes";
@@ -38,6 +39,7 @@ import type { AssetService } from "@services/asset/AssetService";
 import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
 import type { UserCreditService } from "@services/credits/UserCreditService";
 import type { ImageObservationService } from "@services/image-observation";
+import type { FrameVerificationService } from "@services/frame-verification";
 import type { MotionIdeaService } from "@services/i2v-motion-ideas/MotionIdeaService";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
@@ -50,6 +52,7 @@ interface ApiServices extends OptimizeServices, EnhancementServices {
   userCreditService?: UserCreditService;
   referenceImageRepository?: ReferenceImageStorePort | null;
   imageObservationService?: ImageObservationService | null;
+  frameVerificationService?: FrameVerificationService | null;
   motionIdeaService?: MotionIdeaService | null;
   continuitySessionService?: ContinuitySessionService | null;
   modelIntelligenceService?: ModelIntelligenceService | null;
@@ -77,6 +80,7 @@ export function createAPIRoutes(services: ApiServices): Router {
     userCreditService,
     referenceImageRepository,
     imageObservationService,
+    frameVerificationService,
     motionIdeaService,
     continuitySessionService,
     modelIntelligenceService,
@@ -121,6 +125,10 @@ export function createAPIRoutes(services: ApiServices): Router {
 
   if (imageObservationService) {
     router.use("/", createImageObservationRoutes(imageObservationService));
+  }
+
+  if (frameVerificationService) {
+    router.use("/", createFrameVerificationRoutes(frameVerificationService));
   }
 
   if (motionIdeaService) {
