@@ -332,7 +332,7 @@ export function PromptEditorSurface({
               {!isInlineLoading && !isInlineError && suggestionCount > 0 ? (
                 <div
                   ref={suggestionsListRef}
-                  className="mt-2 flex gap-2 overflow-x-auto pb-1"
+                  className="ps-scrollbar-thin mt-2 flex gap-2 overflow-x-auto pb-1"
                 >
                   {inlineSuggestions.map((suggestion, index) => (
                     <button

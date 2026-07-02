@@ -61,7 +61,7 @@ export function AuthShell({
       <main
         className={cn(
           "flex flex-1 flex-col items-center px-5 pb-10",
-          isAuth ? "justify-center" : "pt-8",
+          isAuth ? "justify-center pt-10" : "pt-8",
         )}
       >
         <div className={cn("w-full", isAuth ? "max-w-[400px]" : "max-w-3xl")}>
