@@ -138,31 +138,19 @@ export function FrameStage({
     const message = isRepeatedFailure
       ? "This looks like a problem on our side — give it a minute and try again."
       : (failedStage?.message ?? "Image generation failed");
+    // One designed state: the message and its single retry live inside the
+    // frame slot — no competing "No frame yet" placeholder beside the error.
     body = (
-      <>
-        <div
-          className={cn(
-            TILE_CLASS,
-            "bg-tool-surface-card flex items-center justify-center",
-          )}
-        >
-          <span className="text-tool-text-subdued text-[13px]">
-            No frame yet
-          </span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <StageCopy headline={headline} detail={message} />
-          {onIdeaBoxRegenerate ? (
-            <button
-              type="button"
-              className={gateButtonClass}
-              onClick={() => void onIdeaBoxRegenerate()}
-            >
-              Try again
-            </button>
-          ) : null}
-        </div>
-      </>
+      <StageNoticeTile
+        headline={headline}
+        detail={message}
+        {...(onIdeaBoxRegenerate
+          ? {
+              actionLabel: "Try again",
+              onAction: () => void onIdeaBoxRegenerate(),
+            }
+          : {})}
+      />
     );
   } else if (startFrame) {
     const isGate = stageKind === "ready";

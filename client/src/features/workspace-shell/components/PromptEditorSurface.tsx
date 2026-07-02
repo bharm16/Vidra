@@ -153,12 +153,18 @@ export function PromptEditorSurface({
   }, [selectedSpanId]);
 
   return (
-    <>
+    // Inset from the composer card edge so the editor text and the tray's
+    // scrolling chip row never clip against the border/rounded corner
+    // (matches the TuneDrawer's own px-4 inset).
+    <div className="px-4 pb-2.5 pt-3">
       <div className="relative">
         <PromptEditor
           ref={editorRef}
           className={cn(
-            "ps-scrollbar-hide max-h-[180px] overflow-y-auto outline-none [&:empty]:min-h-[56px]",
+            // ps-scrollbar-thin (not -hide): long expanded prompts overflow
+            // this 180px window — the scrollbar is the visible affordance
+            // that there is more prompt below the fold.
+            "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none [&:empty]:min-h-[56px]",
             isEmptyLayout
               ? "text-foreground caret-foreground min-h-[56px] text-[15px] leading-[1.7]"
               : "text-tool-text-dim min-h-[56px] text-[15px] leading-[1.75]",
@@ -407,6 +413,6 @@ export function PromptEditorSurface({
           ) : null}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
