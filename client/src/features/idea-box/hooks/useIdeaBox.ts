@@ -10,19 +10,43 @@ type IdeaBoxAction =
   | { type: "FAILED"; message: string }
   | { type: "RESET" };
 
+/**
+ * Reducer state. `consecutiveFailures` lives beside the stage (not only inside
+ * the failed variant) because a retry passes through "framing" before the next
+ * FAILED — the count must survive that transition to escalate on repeat
+ * failures. It resets on success (READY) or reset.
+ */
+interface IdeaBoxState {
+  stage: IdeaBoxStage;
+  consecutiveFailures: number;
+}
+
+const INITIAL_STATE: IdeaBoxState = {
+  stage: { kind: "idle" },
+  consecutiveFailures: 0,
+};
+
 function ideaBoxReducer(
-  _state: IdeaBoxStage,
+  state: IdeaBoxState,
   action: IdeaBoxAction,
-): IdeaBoxStage {
+): IdeaBoxState {
   switch (action.type) {
     case "FRAMING":
-      return { kind: "framing" };
+      return {
+        stage: { kind: "framing" },
+        consecutiveFailures: state.consecutiveFailures,
+      };
     case "READY":
-      return { kind: "ready" };
-    case "FAILED":
-      return { kind: "failed", message: action.message };
+      return { stage: { kind: "ready" }, consecutiveFailures: 0 };
+    case "FAILED": {
+      const consecutiveFailures = state.consecutiveFailures + 1;
+      return {
+        stage: { kind: "failed", message: action.message, consecutiveFailures },
+        consecutiveFailures,
+      };
+    }
     case "RESET":
-      return { kind: "idle" };
+      return { stage: { kind: "idle" }, consecutiveFailures: 0 };
   }
 }
 
@@ -61,7 +85,7 @@ export function useIdeaBox({
   startImageUrl,
   setStartFrame,
 }: UseIdeaBoxParams): UseIdeaBoxResult {
-  const [stage, dispatch] = useReducer(ideaBoxReducer, { kind: "idle" });
+  const [state, dispatch] = useReducer(ideaBoxReducer, INITIAL_STATE);
   const runIdRef = useRef(0);
 
   const runFrameGeneration = useCallback(
@@ -120,7 +144,7 @@ export function useIdeaBox({
   }, []);
 
   return {
-    stage,
+    stage: state.stage,
     continueAfterOptimization,
     regenerateFrame: runFrameGeneration,
     acceptFrame,

@@ -122,6 +122,112 @@ describe("useIdeaBox", () => {
     expect(result.current.stage).toEqual({
       kind: "failed",
       message: "Flux down",
+      consecutiveFailures: 1,
+    });
+  });
+
+  it("increments consecutiveFailures across repeated failed retries", async () => {
+    generatePreviewMock.mockRejectedValue(new Error("storage down"));
+    const setStartFrame = vi.fn();
+    const { result } = renderHook(() =>
+      useIdeaBox({ startImageUrl: null, setStartFrame }),
+    );
+
+    await act(async () => {
+      await result.current.continueAfterOptimization("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 1,
+    });
+
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 2,
+    });
+
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 3,
+    });
+  });
+
+  it("resets the failure count after a successful frame", async () => {
+    generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
+    generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
+    generatePreviewMock.mockResolvedValueOnce(successResponse);
+    generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
+    const setStartFrame = vi.fn();
+    const { result } = renderHook(() =>
+      useIdeaBox({ startImageUrl: null, setStartFrame }),
+    );
+
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 2,
+    });
+
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({ kind: "ready" });
+
+    // The next failure starts a fresh streak — not a continuation of the old one.
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 1,
+    });
+  });
+
+  it("resets the failure count when the stage is reset via acceptFrame", async () => {
+    generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
+    const setStartFrame = vi.fn();
+    const { result } = renderHook(() =>
+      useIdeaBox({ startImageUrl: null, setStartFrame }),
+    );
+
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 1,
+    });
+
+    act(() => {
+      result.current.acceptFrame();
+    });
+    expect(result.current.stage).toEqual({ kind: "idle" });
+
+    generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
+    await act(async () => {
+      await result.current.regenerateFrame("dog at the park");
+    });
+    expect(result.current.stage).toEqual({
+      kind: "failed",
+      message: "storage down",
+      consecutiveFailures: 1,
     });
   });
 
@@ -188,6 +294,7 @@ describe("useIdeaBox", () => {
     expect(result.current.stage).toEqual({
       kind: "failed",
       message: "quota exceeded",
+      consecutiveFailures: 1,
     });
   });
 });

@@ -86,10 +86,16 @@ export function FrameStage({
       </>
     );
   } else if (stageKind === "failed") {
-    const message =
-      ideaBoxStage?.kind === "failed"
-        ? ideaBoxStage.message
-        : "Image generation failed";
+    const failedStage = ideaBoxStage?.kind === "failed" ? ideaBoxStage : null;
+    // After repeated identical failures, retrying is clearly not working —
+    // acknowledge a systemic problem instead of looping the same copy (B7).
+    const isRepeatedFailure = (failedStage?.consecutiveFailures ?? 1) >= 2;
+    const headline = isRepeatedFailure
+      ? "Still couldn’t create a frame"
+      : "Couldn’t create a frame";
+    const message = isRepeatedFailure
+      ? "This looks like a problem on our side — give it a minute and try again."
+      : (failedStage?.message ?? "Image generation failed");
     body = (
       <>
         <div
@@ -103,7 +109,7 @@ export function FrameStage({
           </span>
         </div>
         <div className="flex flex-col items-center gap-2">
-          <StageCopy headline="Couldn’t create a frame" detail={message} />
+          <StageCopy headline={headline} detail={message} />
           {onIdeaBoxRegenerate ? (
             <button
               type="button"

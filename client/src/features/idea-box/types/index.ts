@@ -9,4 +9,13 @@ export type IdeaBoxStage =
   | { kind: "idle" }
   | { kind: "framing" }
   | { kind: "ready" }
-  | { kind: "failed"; message: string };
+  | {
+      kind: "failed";
+      message: string;
+      /**
+       * How many frame generations have failed in a row (>= 1). Resets on a
+       * successful frame or a stage reset. Lets the failed-state UI escalate
+       * its copy when retrying identically is clearly not working.
+       */
+      consecutiveFailures: number;
+    };
