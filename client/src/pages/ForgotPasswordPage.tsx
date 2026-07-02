@@ -6,17 +6,6 @@ import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { AuthShell } from "./auth/AuthShell";
-import {
-  AUTH_COLORS,
-  AUTH_INPUT_CLASS,
-  AUTH_INPUT_STYLE,
-  AUTH_INPUT_FOCUS_STYLE,
-  AUTH_CTA_CLASS,
-  AUTH_CTA_STYLE,
-  AUTH_LABEL_CLASS,
-  AUTH_ERROR_STYLE,
-  AUTH_CARD_STYLE,
-} from "./auth/auth-styles";
 
 function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
@@ -81,21 +70,6 @@ function mapAuthError(error: unknown): string {
   }
 }
 
-function useFocusStyle(): {
-  style: React.CSSProperties;
-  onFocus: () => void;
-  onBlur: () => void;
-} {
-  const [focused, setFocused] = React.useState(false);
-  return {
-    style: focused
-      ? { ...AUTH_INPUT_STYLE, ...AUTH_INPUT_FOCUS_STYLE }
-      : AUTH_INPUT_STYLE,
-    onFocus: () => setFocused(true),
-    onBlur: () => setFocused(false),
-  };
-}
-
 export function ForgotPasswordPage(): React.ReactElement {
   const toast = useToast();
   const location = useLocation();
@@ -107,8 +81,6 @@ export function ForgotPasswordPage(): React.ReactElement {
   const [isBusy, setIsBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [sentTo, setSentTo] = React.useState<string | null>(null);
-
-  const emailFocus = useFocusStyle();
 
   React.useEffect(() => {
     setEmail(getInitialEmail(location.search));
@@ -154,7 +126,7 @@ export function ForgotPasswordPage(): React.ReactElement {
       footer={
         <>
           Remembered it?{" "}
-          <Link to={signInLink} className="text-white hover:underline">
+          <Link to={signInLink} className="text-foreground hover:underline">
             Back to sign in
           </Link>
           .
@@ -162,10 +134,7 @@ export function ForgotPasswordPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p
-          className="text-[13px] leading-relaxed"
-          style={{ color: AUTH_COLORS.textSecondary }}
-        >
+        <p className="text-muted text-[13px] leading-relaxed">
           Enter the email for your account. If it exists, we'll send a reset
           link.
         </p>
@@ -173,48 +142,35 @@ export function ForgotPasswordPage(): React.ReactElement {
         {error ? (
           <div
             role="alert"
-            className="px-3.5 py-2.5 text-[13px]"
-            style={AUTH_ERROR_STYLE}
+            className="text-danger rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
           >
-            <span style={{ color: AUTH_COLORS.danger }}>{error}</span>
+            {error}
           </div>
         ) : null}
 
         {sentTo ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
-            <p className="text-[13px] font-semibold text-white">
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
+            <p className="text-foreground text-[13px] font-semibold">
               Check your inbox
             </p>
-            <p
-              className="mt-1 text-[13px] leading-snug"
-              style={{ color: AUTH_COLORS.textSecondary }}
-            >
+            <p className="text-muted mt-1 text-[13px] leading-snug">
               We sent a reset link to{" "}
-              <span className="font-medium text-white">{sentTo}</span>. If you
-              don't see it, check spam.
+              <span className="text-foreground font-medium">{sentTo}</span>. If
+              you don't see it, check spam.
             </p>
           </div>
         ) : null}
 
         <form onSubmit={handleSend} className="flex flex-col gap-3.5">
           <div>
-            <label
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              EMAIL
-            </label>
-            <div className="relative">
+            <label className="text-overline text-faint">Email</label>
+            <div className="relative mt-1">
               <Mail
-                className="pointer-events-none absolute left-3.5 top-[14px] h-4 w-4"
-                style={{ color: AUTH_COLORS.textPlaceholder }}
+                className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
                 aria-hidden="true"
               />
               <Input
-                className={`${AUTH_INPUT_CLASS} pl-10`}
-                style={emailFocus.style}
-                onFocus={emailFocus.onFocus}
-                onBlur={emailFocus.onBlur}
+                className="pl-10"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -226,13 +182,7 @@ export function ForgotPasswordPage(): React.ReactElement {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={isBusy}
-            variant="ghost"
-            className={AUTH_CTA_CLASS}
-            style={AUTH_CTA_STYLE}
-          >
+          <Button type="submit" disabled={isBusy} className="w-full">
             {isBusy ? <Spinner /> : null}
             Send reset email
           </Button>
@@ -240,15 +190,13 @@ export function ForgotPasswordPage(): React.ReactElement {
           <div className="flex items-center justify-between gap-3">
             <Link
               to={signInLink}
-              className="text-[12px] font-medium transition hover:text-white"
-              style={{ color: AUTH_COLORS.textDim }}
+              className="text-faint hover:text-foreground text-[12px] font-medium transition"
             >
               Back to sign in
             </Link>
             <Link
               to="/privacy-policy"
-              className="text-[12px] font-medium transition hover:text-white"
-              style={{ color: AUTH_COLORS.textLabel }}
+              className="text-ghost hover:text-foreground text-[12px] font-medium transition"
             >
               Privacy
             </Link>
