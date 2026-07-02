@@ -136,7 +136,7 @@ describe("usePromptOptimization", () => {
     const setters = createSetters();
 
     const optimizeResult: OptimizationResult = {
-      optimized: "Optimized prompt",
+      optimized: "Shot description",
       score: 91,
     };
 
@@ -193,7 +193,7 @@ describe("usePromptOptimization", () => {
 
     expect(mockSaveToHistory).toHaveBeenCalledWith(
       "Original prompt",
-      "Optimized prompt",
+      "Shot description",
       91,
       "video",
       "model-a",
@@ -209,7 +209,7 @@ describe("usePromptOptimization", () => {
     // (START_OPTIMIZATION now zeros displayedPrompt), so the setter is only
     // called once with the final optimized value.
     expect(setters.setDisplayedPromptSilently).toHaveBeenCalledWith(
-      "Optimized prompt",
+      "Shot description",
     );
     expect(setters.applyInitialHighlightSnapshot).toHaveBeenCalledWith(null, {
       bumpVersion: true,

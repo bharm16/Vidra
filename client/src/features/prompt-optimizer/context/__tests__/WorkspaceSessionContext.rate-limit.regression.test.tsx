@@ -37,7 +37,7 @@ const buildSession = (): SessionDto => ({
   updatedAt: "2026-02-12T00:00:00.000Z",
   prompt: {
     input: "Input prompt",
-    output: "Optimized prompt",
+    output: "Shot description",
   },
 });
 

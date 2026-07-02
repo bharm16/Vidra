@@ -197,7 +197,7 @@ test("regression: detected assets prompt churn does not hit max update depth", a
 
   await page.goto("/");
 
-  const promptInput = page.getByLabel("Optimized prompt");
+  const promptInput = page.getByLabel("Shot description");
   await expect(promptInput).toBeVisible({ timeout: 15000 });
 
   await promptInput.fill("@hero");

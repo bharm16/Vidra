@@ -9,7 +9,7 @@ import { injectAuthUser } from "./helpers/auth";
 test.fixme(
   "workspace smoke: optimize, preview, and session persistence flow",
   async ({ page }) => {
-    // Auth injection must happen before navigation. The Optimized prompt
+    // Auth injection must happen before navigation. The Shot description
     // contenteditable is auth-gated; unauthenticated users only see a static
     // placeholder and can't interact with the editor.
     await injectAuthUser(page);
@@ -133,7 +133,7 @@ test.fixme(
 
     await page.goto("/");
 
-    const promptInput = page.getByLabel("Optimized prompt");
+    const promptInput = page.getByLabel("Shot description");
     await expect(promptInput).toBeVisible();
     await promptInput.fill(
       "Wide shot of a cyclist crossing a rainy bridge at dusk.",

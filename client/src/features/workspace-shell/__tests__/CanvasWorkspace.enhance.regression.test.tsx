@@ -194,7 +194,7 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
     );
 
     expect(
-      screen.getAllByRole("textbox", { name: "Optimized prompt" }),
+      screen.getAllByRole("textbox", { name: "Shot description" }),
     ).toHaveLength(1);
     expect(
       screen.getAllByRole("button", { name: /Video model/i }),
@@ -225,7 +225,7 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
 
     expect(screen.queryByText("What are you making?")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("textbox", { name: "Optimized prompt" }),
+      screen.getByRole("textbox", { name: "Shot description" }),
     ).toBeInTheDocument();
   });
 });

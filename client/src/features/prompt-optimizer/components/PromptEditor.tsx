@@ -52,7 +52,7 @@ export const PromptEditor = forwardRef<HTMLDivElement, PromptEditorProps>(
         className={cn("min-h-px w-full break-words", className)}
         data-placeholder={placeholder}
         role="textbox"
-        aria-label="Optimized prompt"
+        aria-label="Shot description"
       />
     );
   },

@@ -106,7 +106,7 @@ test.describe("video generation (authenticated)", () => {
       await page.goto("/");
 
       // Type a prompt and optimize
-      const promptInput = page.getByLabel("Optimized prompt");
+      const promptInput = page.getByLabel("Shot description");
       await expect(promptInput).toBeVisible();
       await promptInput.fill(
         "Wide shot of a cyclist crossing a rainy bridge at dusk.",

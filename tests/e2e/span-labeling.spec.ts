@@ -48,7 +48,7 @@ test.describe("span labeling and suggestions", () => {
       });
 
       await page.goto("/");
-      const promptInput = page.getByLabel("Optimized prompt");
+      const promptInput = page.getByLabel("Shot description");
       await expect(promptInput).toBeVisible({ timeout: 15000 });
       await promptInput.fill(
         "Wide shot of a cyclist crossing a bridge at dusk.",
@@ -125,7 +125,7 @@ test.describe("span labeling and suggestions", () => {
       });
 
       await page.goto("/");
-      const promptInput = page.getByLabel("Optimized prompt");
+      const promptInput = page.getByLabel("Shot description");
       await expect(promptInput).toBeVisible({ timeout: 15000 });
       await promptInput.fill("Drone shot of mountains.");
 

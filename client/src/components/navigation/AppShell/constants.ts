@@ -15,6 +15,7 @@ import {
   Video,
 } from "@promptstudio/system/components/ui";
 import type { NavItem } from "./types";
+import { FEATURES } from "@/config/features.config";
 
 // -----------------------------------------------------------------------------
 // Route Configuration
@@ -50,7 +51,7 @@ export const WORKSPACE_ROUTES_EXACT = ["/", "/assets", "/consistent"] as const;
  * - showInTopNav: Visible in horizontal marketing navbar
  * - showInSidebar: Visible in vertical workspace sidebar
  */
-export const NAV_ITEMS: readonly NavItem[] = [
+const ALL_NAV_ITEMS: readonly NavItem[] = [
   {
     to: "/home",
     label: "Home",
@@ -108,6 +109,16 @@ export const NAV_ITEMS: readonly NavItem[] = [
     showInSidebar: false,
   },
 ] as const;
+
+/** Destinations owned by ADR-0002 frozen stacks, hidden while their flag is off. */
+const FROZEN_NAV_DESTINATIONS: ReadonlyMap<string, boolean> = new Map([
+  ["/consistent", FEATURES.CONTINUITY_UI],
+  ["/pricing", FEATURES.BILLING_UI],
+]);
+
+export const NAV_ITEMS: readonly NavItem[] = ALL_NAV_ITEMS.filter(
+  (item) => FROZEN_NAV_DESTINATIONS.get(item.to) ?? true,
+);
 
 // -----------------------------------------------------------------------------
 // Type Utilities
