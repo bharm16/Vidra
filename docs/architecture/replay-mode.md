@@ -1,7 +1,9 @@
 # Replay Mode — contract-validated record/replay for the authoring loop
 
-Status: **in progress** — seams, contracts, flag, and drift gate are live; the
-golden-path scenario pack and the replay integration suite land next.
+Status: **live** — seams, contracts, flag, drift gate, the golden-path
+scenario pack, and the replay integration suite
+(`tests/integration/replay-mode.integration.test.ts`) all ship. The suite
+runs the full authoring loop offline with zero network.
 
 ## What it is
 
@@ -67,9 +69,29 @@ replay integration suite handles them as follows:
 
 ## Running
 
+Replay suite (offline, no credentials needed — this is the per-change gate):
+
 ```bash
-REPLAY_MODE=replay NODE_ENV=test <boot the app / run the replay suite>
+PORT=0 npx vitest run tests/integration/replay-mode.integration.test.ts \
+  --config config/test/vitest.integration.config.js
 ```
+
+Re-record the golden scenario pack (live provider calls; needs OpenAI/Groq/
+Replicate keys in `.env`; never uses Gemini/GCP):
+
+```bash
+REPLAY_MODE=record NODE_ENV=test \
+SPAN_PROVIDER=qwen SPAN_MODEL=qwen/qwen3-32b \
+API_KEY=replay-golden-key ALLOWED_API_KEYS=replay-golden-key \
+npx tsx --tsconfig server/tsconfig.json scripts/replay/record-golden-scenarios.ts
+```
+
+Canonical inputs live in `scripts/replay/goldenScenarios.ts` — the recorder
+and the suite must send byte-identical bodies, so change inputs there only.
+Gotcha: `ModelConfig` snapshots env at module load — recording sets
+`SPAN_PROVIDER=qwen` before boot, and the suite mirrors it via dynamic
+imports after env setup. A prompt-template or provider-default change makes
+replay miss loudly; re-record to resolve.
 
 Follow-up for the main checkout (worktrees must not run servers or e2e):
 

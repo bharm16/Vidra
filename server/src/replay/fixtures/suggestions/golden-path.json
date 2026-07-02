@@ -1,0 +1,160 @@
+{
+  "formatVersion": 1,
+  "surface": "suggestions",
+  "scenario": "golden-path",
+  "recordedAt": "2026-07-02T09:18:08.110Z",
+  "entries": [
+    {
+      "seam": "ai-model",
+      "key": "ai-model:a2463d9000f8858a8d29520e5747b8b856f7999e83086f9df9a74f1ab720602f",
+      "contract": "suggestions-payload",
+      "request": {
+        "operation": "enhance_suggestions",
+        "systemPrompt": "Generate up to 8 replacement phrases for a highlighted prompt span.\nCategory: subject — Subject & Character: The focal point of the shot\nMode: guided_llm\nGrammar shape: freeform\nWord range: 1-8\nCONTEXT:\n<full_prompt>a lighthouse keeper reading by lamplight during a storm</full_prompt>\n<highlighted_text>lamplight</highlighted_text>\n<context_before>a lighthouse keeper reading by </context_before>\n<context_after> during a storm</context_after>\nEXAMPLE (shape only — do not copy the words):\nInput: full_prompt=\"Wide aerial shot at dusk\", highlighted=\"aerial\", category=camera.angle\nOutput:\n{\n  \"scene_summary\": \"Dusk aerial wide shot — elevated viewpoint, fading natural light, broad scene context.\",\n  \"suggestions\": [\n    {\"text\": \"high-angle drone\", \"category\": \"camera.angle\", \"explanation\": \"preserves elevated viewpoint\"},\n    {\"text\": \"bird's-eye\", \"category\": \"camera.angle\", \"explanation\": \"stronger top-down framing\"}\n  ]\n}\nRULES:\n- You MUST emit `scene_summary` FIRST. Begin your response with the literal text `{\"scene_summary\":` — the `suggestions` array MAY NOT appear before `scene_summary`. This is a hard requirement, not a preference.\n- The `scene_summary` is one sentence: identify the scene's setting, tone, and constraints visible in `full_prompt`. Name any modifiers that constrain the slot (e.g., aerial vs ground-level, handheld vs stabilized, dim vs bright, abandoned vs occupied). State what would make a suggestion fit — and what would make it fail.\n- Every suggestion in `suggestions` must satisfy the constraints you named in `scene_summary`.\n- Stay inside taxonomy category \"subject\". Each suggestion's \"category\" field MUST equal \"subject\".\n- Drop-in test: replacing `highlighted_text` with your suggestion inside `full_prompt` must leave a grammatical, coherent prompt. If substitution breaks the scene's meaning, the suggestion is invalid.\n- Suggest literal, camera-visible alternatives.\n- Keep the replacement literal and camera-visible.\n- Do not return advice, headings, or explanation text in the suggestion itself.\n- Do not repeat the highlighted text exactly.\n- Avoid semantic drift into: camera_movement, camera_lens, lighting_direction.\nReturn EXACTLY this JSON shape — `scene_summary` MUST be the first key:\n1. `scene_summary` (string): the one-sentence scene constraint statement.\n2. `suggestions` (array): each item is a suggestion object with `text`, `category`, `explanation`.\n\nIMPORTANT: Return ONLY valid JSON in this exact wrapper format:\n{\"suggestions\": [...your suggestions array here...]}",
+        "userMessage": "Please provide the output as specified.",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"scene_summary\": \"A lighthouse keeper is reading by lamplight during a storm — the scene is set in a confined, dimly lit interior space with a focus on the light source and its effect on the subject.\", \"suggestions\": [{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]}",
+        "metadata": {
+          "usage": {
+            "queue_time": 0.068832685,
+            "prompt_tokens": 595,
+            "prompt_time": 0.027147098,
+            "completion_tokens": 321,
+            "completion_time": 0.629708569,
+            "total_tokens": 916,
+            "total_time": 0.656855667
+          },
+          "raw": {
+            "id": "chatcmpl-4d30e89f-e4d9-4e9a-9645-84acebebd68c",
+            "object": "chat.completion",
+            "created": 1782983888,
+            "model": "qwen/qwen3-32b",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"scene_summary\": \"A lighthouse keeper is reading by lamplight during a storm — the scene is set in a confined, dimly lit interior space with a focus on the light source and its effect on the subject.\", \"suggestions\": [{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]}"
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "queue_time": 0.068832685,
+              "prompt_tokens": 595,
+              "prompt_time": 0.027147098,
+              "completion_tokens": 321,
+              "completion_time": 0.629708569,
+              "total_tokens": 916,
+              "total_time": 0.656855667
+            },
+            "usage_breakdown": null,
+            "system_fingerprint": "fp_d58dbe76cd",
+            "x_groq": {
+              "id": "req_01kwh1y2gzfw7r5t2rdg030sz3",
+              "seed": 1127977911
+            },
+            "service_tier": "on_demand"
+          },
+          "_original": {
+            "id": "chatcmpl-4d30e89f-e4d9-4e9a-9645-84acebebd68c",
+            "object": "chat.completion",
+            "created": 1782983888,
+            "model": "qwen/qwen3-32b",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"scene_summary\": \"A lighthouse keeper is reading by lamplight during a storm — the scene is set in a confined, dimly lit interior space with a focus on the light source and its effect on the subject.\", \"suggestions\": [{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]}"
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "queue_time": 0.068832685,
+              "prompt_tokens": 595,
+              "prompt_time": 0.027147098,
+              "completion_tokens": 321,
+              "completion_time": 0.629708569,
+              "total_tokens": 916,
+              "total_time": 0.656855667
+            },
+            "usage_breakdown": null,
+            "system_fingerprint": "fp_d58dbe76cd",
+            "x_groq": {
+              "id": "req_01kwh1y2gzfw7r5t2rdg030sz3",
+              "seed": 1127977911
+            },
+            "service_tier": "on_demand"
+          },
+          "provider": "groq-qwen",
+          "optimizations": [
+            "qwen3-reasoning-effort",
+            "higher-temp-tolerance"
+          ],
+          "finishReason": "stop",
+          "systemFingerprint": "fp_d58dbe76cd",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": [
+              {
+                "text": "candlelight",
+                "category": "subject",
+                "explanation": "provides a similar dim, warm light source in a confined interior setting"
+              },
+              {
+                "text": "oil lamp glow",
+                "category": "subject",
+                "explanation": "offers a comparable soft, flickering light typical of lighthouse interiors"
+              },
+              {
+                "text": "flickering bulb",
+                "category": "subject",
+                "explanation": "maintains the dim, artificial light source in a confined interior"
+              },
+              {
+                "text": "desk lamp",
+                "category": "subject",
+                "explanation": "offers a focused, warm light source suitable for reading in a confined space"
+              },
+              {
+                "text": "glow of a lantern",
+                "category": "subject",
+                "explanation": "provides a warm, contained light source fitting the lighthouse setting"
+              },
+              {
+                "text": "dim overhead light",
+                "category": "subject",
+                "explanation": "offers a subdued, artificial light source appropriate for an interior scene"
+              },
+              {
+                "text": "reading lamp",
+                "category": "subject",
+                "explanation": "provides a focused, warm light source suitable for reading in a confined interior"
+              },
+              {
+                "text": "faded bulb light",
+                "category": "subject",
+                "explanation": "offers a soft, dim light source fitting the stormy, interior scene"
+              }
+            ],
+            "cleanedText": "[{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]"
+          }
+        }
+      }
+    }
+  ]
+}
