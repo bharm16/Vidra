@@ -23,6 +23,40 @@ const FLAG_DEFS = {
       "Renders the canvas-first workspace. Set to 'false' to fall back to the legacy sidebar layout.",
     migrationFlag: true,
   } satisfies ClientFlagDef<boolean>,
+  // ── ADR-0002 frozen-stack surfaces ──────────────────────────────
+  // These gate the client UI for stacks ADR-0002 froze. Default off during
+  // the authoring-loop validation phase; thawing a stack means flipping its
+  // default here in a reviewed change, not setting env vars in prod.
+  BILLING_UI: {
+    envName: "VITE_FEATURE_BILLING_UI",
+    default: false,
+    description:
+      "Credits badge, per-generation pricing, billing/pricing pages, low-balance warnings. Frozen: validation-phase generation is a hard-capped passthrough (ADR-0002).",
+  } satisfies ClientFlagDef<boolean>,
+  CONTINUITY_UI: {
+    envName: "VITE_FEATURE_CONTINUITY_UI",
+    default: false,
+    description:
+      "Continuity session hydration and continue-scene affordances. Frozen: multi-shot stack (ADR-0002).",
+  } satisfies ClientFlagDef<boolean>,
+  CONVERGENCE_UI: {
+    envName: "VITE_FEATURE_CONVERGENCE_UI",
+    default: false,
+    description:
+      "Camera-motion picker and depth-warp preview (/api/motion/depth). Frozen: convergence pipeline (ADR-0002).",
+  } satisfies ClientFlagDef<boolean>,
+  SEQUENCE_EDITOR_UI: {
+    envName: "VITE_FEATURE_SEQUENCE_EDITOR_UI",
+    default: false,
+    description:
+      "Shot strip, pipeline status, and scene-proxy panels in the results layout. Frozen: multi-shot stack (ADR-0002).",
+  } satisfies ClientFlagDef<boolean>,
+  MODEL_INTELLIGENCE_UI: {
+    envName: "VITE_FEATURE_MODEL_INTELLIGENCE_UI",
+    default: false,
+    description:
+      "Model recommendation calls and dropdown hints on the canvas. Premature per ADR-0002: v1 hardcodes the best model.",
+  } satisfies ClientFlagDef<boolean>,
 } as const;
 
 function resolveBoolFlag(envName: string, fallback: boolean): boolean {
@@ -42,6 +76,26 @@ export const FEATURES = {
   CANVAS_FIRST_LAYOUT: resolveBoolFlag(
     FLAG_DEFS.CANVAS_FIRST_LAYOUT.envName,
     FLAG_DEFS.CANVAS_FIRST_LAYOUT.default,
+  ),
+  BILLING_UI: resolveBoolFlag(
+    FLAG_DEFS.BILLING_UI.envName,
+    FLAG_DEFS.BILLING_UI.default,
+  ),
+  CONTINUITY_UI: resolveBoolFlag(
+    FLAG_DEFS.CONTINUITY_UI.envName,
+    FLAG_DEFS.CONTINUITY_UI.default,
+  ),
+  CONVERGENCE_UI: resolveBoolFlag(
+    FLAG_DEFS.CONVERGENCE_UI.envName,
+    FLAG_DEFS.CONVERGENCE_UI.default,
+  ),
+  SEQUENCE_EDITOR_UI: resolveBoolFlag(
+    FLAG_DEFS.SEQUENCE_EDITOR_UI.envName,
+    FLAG_DEFS.SEQUENCE_EDITOR_UI.default,
+  ),
+  MODEL_INTELLIGENCE_UI: resolveBoolFlag(
+    FLAG_DEFS.MODEL_INTELLIGENCE_UI.envName,
+    FLAG_DEFS.MODEL_INTELLIGENCE_UI.default,
   ),
 } as const;
 
