@@ -204,11 +204,11 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
   it("does not lock the user into empty state when prompt content exists, even without a prompt version id", () => {
     // The legacy implementation could erroneously remain in empty-state
     // chrome when promptVersionId was missing despite a hydrated prompt.
-    // The unified workspace derives the moment from the prompt text +
-    // shot grid alone; an empty version id does not force empty-state.
-    // We assert this by confirming the prompt textbox is rendered and the
-    // empty-hero headline ("What are you making?") is gone once the prompt
-    // has content.
+    // The invariant is that the editor stays present and interactive; a
+    // missing version id must not wedge the shell. (The hero headline now
+    // deliberately remains visible through focus/typing until work starts —
+    // the pre-work stage direction — so its absence is no longer the proxy
+    // for "not locked".)
     const props = buildProps();
     render(
       withSelectedSpan(
@@ -223,9 +223,11 @@ describe("regression: canvas enhance / empty-session shell wiring", () => {
       ),
     );
 
-    expect(screen.queryByText("What are you making?")).not.toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "Shot description" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Video model/i }),
     ).toBeInTheDocument();
   });
 });

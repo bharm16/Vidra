@@ -56,7 +56,7 @@ export function CanvasPromptBar({
         "rounded-[14px] border border-white/[0.08]",
         "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
         "shadow-[0_16px_48px_-8px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]",
-        "transition-[transform,box-shadow] duration-[240ms]",
+        "transition-[transform,box-shadow,bottom] duration-[240ms]",
       )}
       style={{ bottom: "var(--workspace-composer-bottom)" }}
     >

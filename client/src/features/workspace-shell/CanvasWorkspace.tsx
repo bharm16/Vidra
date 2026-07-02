@@ -42,7 +42,10 @@ import { ShotRow } from "./components/ShotRow";
 import { ShotDivider } from "./components/ShotDivider";
 import { TileStateAnnouncer } from "./components/TileStateAnnouncer";
 import { FEATURES } from "@/config/features.config";
-import { usePromptResultsActions } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
+import {
+  usePromptResultsActions,
+  usePromptResultsData,
+} from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import { WorkspaceTopBar } from "./components/WorkspaceTopBar";
 import { FrameStage } from "./components/FrameStage";
 import { CanvasPromptBar } from "./components/CanvasPromptBar";
@@ -362,6 +365,18 @@ export function CanvasWorkspace({
     promptFocused: false, // Phase 3 wires this
   });
 
+  // Pre-work: nothing has happened yet — no shots, no frame, loop idle.
+  // Unlike moment === "empty" this survives focus and typing, so the hero
+  // stays on screen while the creator answers it and the raised composer
+  // doesn't jump away from the cursor on click. Once work starts (submit),
+  // the composer glides to its docked position and the stage takes over.
+  const { ideaBoxStage, isExpanding } = usePromptResultsData();
+  const isPreWork =
+    shots.length === 0 &&
+    !domain.startFrame &&
+    !isExpanding &&
+    (ideaBoxStage?.kind ?? "idle") === "idle";
+
   const surfaceProps: PromptEditorSurfaceProps = {
     editorRef,
     prompt,
@@ -507,6 +522,15 @@ export function CanvasWorkspace({
         "text-foreground grid h-full grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden [background:var(--tool-canvas-bg)]",
         workspaceMomentClass(moment),
       )}
+      style={
+        // Pre-work: the composer rises to mid-screen so the hero question and
+        // its answer box read as one unit; it glides down once work starts.
+        isPreWork
+          ? ({
+              "--workspace-composer-bottom": "40vh",
+            } as React.CSSProperties)
+          : undefined
+      }
     >
       <WorkspaceTopBar />
       <div className="grid min-h-0 grid-cols-[var(--tool-rail-width)_1fr]">
@@ -521,7 +545,7 @@ export function CanvasWorkspace({
         <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
           <TileStateAnnouncer shots={shots} />
 
-          {moment === "empty" ? (
+          {isPreWork ? (
             <EmptyHero />
           ) : shots.length === 0 ? (
             /* Pre-render beats: the first frame (or its pending/failed state)
@@ -596,8 +620,12 @@ function EmptyHero(): React.ReactElement {
   // submit, so editing stays explicit. Expansion turns the thin phrase into
   // a full shot description, which is the product's whole pitch.
   const { onComposerFill } = usePromptResultsActions();
+  // Sized to bottom out just above the raised pre-work composer: its bottom
+  // sits at 40vh, so its top edge is ~60vh-minus-composer-height from the
+  // viewport top. 160px covers the composer plus a breathing gap, keeping
+  // the question directly over its answer box without sliding behind it.
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-var(--workspace-topbar-h)-240px)] max-w-[640px] flex-col items-center justify-center gap-[18px] text-center">
+    <div className="mx-auto flex min-h-[calc(60vh-var(--workspace-topbar-h)-160px)] max-w-[640px] flex-col items-center justify-end gap-[18px] text-center">
       <h1 className="text-[40px] font-semibold leading-[1.1] tracking-[-0.02em]">
         What are you making?
       </h1>
