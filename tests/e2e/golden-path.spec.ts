@@ -42,6 +42,12 @@ test.describe("golden path", () => {
     await editor.fill(ONE_LINER);
     await page.getByTestId("canvas-generate-button").click();
 
+    // The canvas stage narrates the loop from the first beat — the frame
+    // (or its pending/failed state) owns the canvas, never a blank void.
+    await expect(page.getByTestId("frame-stage")).toBeVisible({
+      timeout: 15_000,
+    });
+
     // Expansion lands the creator on a session URL...
     await page.waitForURL((url) => url.pathname.startsWith("/session/"), {
       timeout: 60_000,

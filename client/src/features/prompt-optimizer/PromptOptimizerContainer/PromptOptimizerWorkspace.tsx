@@ -745,6 +745,17 @@ function PromptOptimizerContent({
     await handleOptimize();
   }, [handleOptimize]);
 
+  // First-run example chips: fill the composer, never submit — editing stays
+  // explicit. Both prompt states update so the editor surface re-renders.
+  const composerFillSetInputPrompt = promptOptimizer.setInputPrompt;
+  const handleComposerFill = useCallback(
+    (text: string): void => {
+      composerFillSetInputPrompt(text);
+      setDisplayedPromptSilently(text);
+    },
+    [composerFillSetInputPrompt, setDisplayedPromptSilently],
+  );
+
   // Improvement flow
   const { handleImproveFirst, handleImprovementComplete } = useImprovementFlow({
     promptOptimizer,
@@ -911,9 +922,11 @@ function PromptOptimizerContent({
           motionIdeas={motionIdeas.ideas}
           isMotionIdeasLoading={motionIdeas.isLoading}
           ideaBoxStage={ideaBoxStage}
+          isExpanding={promptOptimizer.isProcessing}
           onIdeaBoxAccept={acceptFrame}
           onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
           onIdeaBoxExpand={handleIdeaBoxExpand}
+          onComposerFill={handleComposerFill}
           onMotionIdeaSelect={handleMotionIdeaSelect}
           onMotionIdeasReroll={handleMotionIdeasReroll}
         >

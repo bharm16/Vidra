@@ -38,7 +38,7 @@ The empty-canvas entry surface of the workspace: a creator's submit runs the exp
 
 ### First frame
 
-The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Resolved 2026-06-08 during scope-clarification grilling. Avoid synonyms: source image, still.
+The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Consequently the frame (or its pending/failed state) owns the workspace canvas at every beat of the expansion loop, and the prompt renders as its editable caption — never the reverse. Resolved 2026-06-08 during scope-clarification grilling; canvas-ownership corollary resolved 2026-07-02 during UX-review grilling. Avoid synonyms: source image, still.
 
 ### Preview-image persistence
 

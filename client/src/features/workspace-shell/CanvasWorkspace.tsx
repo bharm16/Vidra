@@ -42,7 +42,9 @@ import { ShotRow } from "./components/ShotRow";
 import { ShotDivider } from "./components/ShotDivider";
 import { TileStateAnnouncer } from "./components/TileStateAnnouncer";
 import { FEATURES } from "@/config/features.config";
+import { usePromptResultsActions } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import { WorkspaceTopBar } from "./components/WorkspaceTopBar";
+import { FrameStage } from "./components/FrameStage";
 import { CanvasPromptBar } from "./components/CanvasPromptBar";
 import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
@@ -521,6 +523,10 @@ export function CanvasWorkspace({
 
           {moment === "empty" ? (
             <EmptyHero />
+          ) : shots.length === 0 ? (
+            /* Pre-render beats: the first frame (or its pending/failed state)
+               owns the canvas — see CONTEXT.md, "First frame". */
+            <FrameStage startFrame={domain.startFrame} prompt={prompt} />
           ) : (
             <div className="mx-auto flex max-w-[1280px] flex-col gap-6">
               {shots.map((shot, idx) => (
@@ -586,11 +592,10 @@ const STARTER_CHIPS = [
 ] as const;
 
 function EmptyHero(): React.ReactElement {
-  // Chips are non-interactive idea-prompts — they suggest the kind of phrase
-  // the composer accepts. They rendered as <button> previously but the click
-  // handler was never wired, so we ship them as <span> until the prompt
-  // setter is exposed to consumers (a button that does nothing violates the
-  // project's "browsing is read-only, editing is explicit" UX rule).
+  // Chips fill the composer with a starter one-liner — fill-only, never
+  // submit, so editing stays explicit. Expansion turns the thin phrase into
+  // a full shot description, which is the product's whole pitch.
+  const { onComposerFill } = usePromptResultsActions();
   return (
     <div className="mx-auto flex min-h-[calc(100vh-var(--workspace-topbar-h)-240px)] max-w-[640px] flex-col items-center justify-center gap-[18px] text-center">
       <span className="text-tool-text-subdued text-[11px] font-medium uppercase tracking-[0.18em]">
@@ -608,12 +613,14 @@ function EmptyHero(): React.ReactElement {
         aria-label="Example prompts"
       >
         {STARTER_CHIPS.map((chip) => (
-          <span
+          <button
             key={chip}
-            className="border-tool-rail-border bg-tool-surface-card text-tool-text-dim rounded-full border px-3 py-1 text-xs"
+            type="button"
+            onClick={() => onComposerFill?.(chip)}
+            className="border-tool-rail-border bg-tool-surface-card text-tool-text-dim hover:border-tool-text-label hover:text-foreground rounded-full border px-3 py-1 text-xs transition-colors"
           >
             {chip}
-          </span>
+          </button>
         ))}
       </div>
     </div>

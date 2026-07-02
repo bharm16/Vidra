@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { MotionIdeasPanel } from "@/features/prompt-optimizer/components/MotionIdeasPanel";
-import { IdeaBoxStatusChip } from "@/features/idea-box";
 import {
   usePromptResultsActions,
   usePromptResultsData,
@@ -41,14 +40,9 @@ export function CanvasPromptBar({
     });
   }, [onContinueScene]);
 
-  const { motionIdeas, isMotionIdeasLoading, i2vContext, ideaBoxStage } =
+  const { motionIdeas, isMotionIdeasLoading, i2vContext } =
     usePromptResultsData();
-  const {
-    onMotionIdeaSelect,
-    onMotionIdeasReroll,
-    onIdeaBoxAccept,
-    onIdeaBoxRegenerate,
-  } = usePromptResultsActions();
+  const { onMotionIdeaSelect, onMotionIdeasReroll } = usePromptResultsActions();
   const showMotionIdeas =
     Boolean(i2vContext?.isI2VMode) &&
     Boolean(onMotionIdeaSelect) &&
@@ -68,13 +62,8 @@ export function CanvasPromptBar({
     >
       {tuneSlot}
       <PromptEditorSurface {...surfaceProps} variant="active" />
-      {ideaBoxStage ? (
-        <IdeaBoxStatusChip
-          stage={ideaBoxStage}
-          onAccept={onIdeaBoxAccept}
-          onRegenerate={onIdeaBoxRegenerate}
-        />
-      ) : null}
+      {/* Idea Box progress/gate renders on the canvas stage (FrameStage),
+          not in the composer — the frame owns the canvas. */}
       {showMotionIdeas && onMotionIdeaSelect && onMotionIdeasReroll ? (
         <div className="px-3 pb-2">
           <MotionIdeasPanel

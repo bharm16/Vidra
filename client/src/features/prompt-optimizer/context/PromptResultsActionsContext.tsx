@@ -61,6 +61,11 @@ interface PromptResultsActionsOnly {
    * routes here when no start frame exists.
    */
   onIdeaBoxExpand?: (() => Promise<void> | void) | undefined;
+  /**
+   * Fill the composer with starter text (first-run example chips). Fill-only:
+   * never submits — editing stays explicit.
+   */
+  onComposerFill?: ((text: string) => void) | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,6 +86,9 @@ interface PromptResultsDataOnly {
   isMotionIdeasLoading?: boolean | undefined;
   /** Idea Box — stage of the expand→frame chain (idle when inactive). */
   ideaBoxStage?: IdeaBoxStage | undefined;
+  /** True while the expansion (optimize) round-trip is in flight — the beat
+   *  BEFORE ideaBoxStage flips to "framing". Drives the canvas FrameStage. */
+  isExpanding?: boolean | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,11 +167,13 @@ export function PromptResultsActionsProvider({
   motionIdeas,
   isMotionIdeasLoading,
   ideaBoxStage,
+  isExpanding,
   onMotionIdeaSelect,
   onMotionIdeasReroll,
   onIdeaBoxAccept,
   onIdeaBoxRegenerate,
   onIdeaBoxExpand,
+  onComposerFill,
 }: PromptResultsActionsProviderProps): React.ReactElement {
   // Pause auto-save while a generation is in-flight to prevent prompt edits
   // from overwriting the session identity tied to the active render.
@@ -215,6 +225,7 @@ export function PromptResultsActionsProvider({
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
       onIdeaBoxExpand,
+      onComposerFill,
     }),
     [
       user,
@@ -236,6 +247,7 @@ export function PromptResultsActionsProvider({
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
       onIdeaBoxExpand,
+      onComposerFill,
     ],
   );
 
@@ -252,6 +264,7 @@ export function PromptResultsActionsProvider({
       motionIdeas,
       isMotionIdeasLoading,
       ideaBoxStage,
+      isExpanding,
     }),
     [
       suggestionsData,
@@ -264,6 +277,7 @@ export function PromptResultsActionsProvider({
       motionIdeas,
       isMotionIdeasLoading,
       ideaBoxStage,
+      isExpanding,
     ],
   );
 
