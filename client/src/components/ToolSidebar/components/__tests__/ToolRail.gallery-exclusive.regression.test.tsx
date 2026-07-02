@@ -30,7 +30,7 @@ describe("regression: nav rail buttons reflect activePanel", () => {
       </MemoryRouter>,
     );
 
-    const charsButton = screen.getByRole("button", { name: "Chars" });
+    const charsButton = screen.getByRole("button", { name: "Characters" });
     expect(charsButton).toHaveAttribute("aria-pressed", "true");
     expect(charsButton.className).toContain("bg-tool-nav-active");
   });

@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import type { AppIcon } from "@/types";
 
 import { ToolNavButton } from "@components/ToolSidebar/components/ToolNavButton";
+import { TooltipProvider } from "@promptstudio/system/components/ui/tooltip";
 import { ToolPanel } from "@components/ToolSidebar/components/ToolPanel";
 import { StylesPanel } from "@components/ToolSidebar/components/panels/StylesPanel";
 
@@ -19,13 +20,15 @@ describe("ToolSidebar simple components", () => {
   describe("error handling", () => {
     it("renders header variant with the label and icon", () => {
       render(
-        <ToolNavButton
-          icon={DummyIcon}
-          label="Sessions"
-          isActive
-          onClick={vi.fn()}
-          variant="header"
-        />,
+        <TooltipProvider>
+          <ToolNavButton
+            icon={DummyIcon}
+            label="Sessions"
+            isActive
+            onClick={vi.fn()}
+            variant="header"
+          />
+        </TooltipProvider>,
       );
 
       // The header variant is currently not visually distinct (the prop is
@@ -59,12 +62,14 @@ describe("ToolSidebar simple components", () => {
   describe("edge cases", () => {
     it("renders inactive nav button styling and aria-pressed false", () => {
       render(
-        <ToolNavButton
-          icon={DummyIcon}
-          label="Create"
-          isActive={false}
-          onClick={vi.fn()}
-        />,
+        <TooltipProvider>
+          <ToolNavButton
+            icon={DummyIcon}
+            label="Create"
+            isActive={false}
+            onClick={vi.fn()}
+          />
+        </TooltipProvider>,
       );
 
       const button = screen.getByRole("button", { name: "Create" });
@@ -89,12 +94,14 @@ describe("ToolSidebar simple components", () => {
       const onClick = vi.fn();
 
       render(
-        <ToolNavButton
-          icon={DummyIcon}
-          label="Studio"
-          isActive
-          onClick={onClick}
-        />,
+        <TooltipProvider>
+          <ToolNavButton
+            icon={DummyIcon}
+            label="Studio"
+            isActive
+            onClick={onClick}
+          />
+        </TooltipProvider>,
       );
 
       const button = screen.getByRole("button", { name: "Studio" });

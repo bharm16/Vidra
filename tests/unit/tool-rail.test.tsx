@@ -100,14 +100,14 @@ describe("ToolRail", () => {
       expect(toolButton).toHaveAttribute("aria-pressed", "true");
     });
 
-    it("marks Chars as active when active panel is characters", () => {
+    it("marks Characters as active when active panel is characters", () => {
       renderToolRail({
         activePanel: "characters",
         user: null,
         onPanelChange: vi.fn(),
       });
 
-      const charsButton = screen.getByRole("button", { name: "Chars" });
+      const charsButton = screen.getByRole("button", { name: "Characters" });
       expect(charsButton).toHaveAttribute("aria-pressed", "true");
     });
   });

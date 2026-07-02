@@ -22,7 +22,7 @@ export const toolNavItems: ToolNavItem[] = [
   {
     id: "characters",
     icon: Users,
-    label: "Chars",
+    label: "Characters",
     variant: "default",
   },
   {
