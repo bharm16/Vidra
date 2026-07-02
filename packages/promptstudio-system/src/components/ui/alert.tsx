@@ -3,19 +3,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@promptstudio/system/lib/utils";
 
+/**
+ * Status variants tint from the --ps-badge-* tokens (same family Badge
+ * uses). Alpha-modifier classes like border-danger/30 or bg-danger/5 are
+ * deliberately avoided: the preset's colors are plain var(--ps-*) strings
+ * without <alpha-value>, so Tailwind silently emits nothing for them.
+ */
 const alertVariants = cva(
   "relative w-full rounded-lg border px-ps-4 py-ps-3 text-body-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-ps-4 [&>svg]:top-ps-4 [&>svg]:text-foreground [&>svg~*]:pl-ps-7",
   {
     variants: {
       variant: {
         default: "border-border bg-surface-1 text-foreground",
-        info: "border-info/30 bg-info/5 text-foreground [&>svg]:text-info",
+        info: "border-[color:var(--ps-badge-info-border)] bg-[color:var(--ps-badge-info-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-info-text)]",
         success:
-          "border-success/30 bg-success/5 text-foreground [&>svg]:text-success",
+          "border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-success-text)]",
         warning:
-          "border-warning/30 bg-warning/5 text-foreground [&>svg]:text-warning",
+          "border-[color:var(--ps-badge-warning-border)] bg-[color:var(--ps-badge-warning-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-warning-text)]",
         error:
-          "border-danger/30 bg-danger/5 text-foreground [&>svg]:text-danger",
+          "border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-danger-text)]",
       },
     },
     defaultVariants: {

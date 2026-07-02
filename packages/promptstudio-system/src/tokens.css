@@ -283,7 +283,7 @@
     --ps-brand-text-secondary: #484848;
     --ps-brand-borders-lines: #e3e3e3;
 
-    /* Status badge tints — Badge success/warning/danger variants.
+    /* Status badge tints — Badge and Alert status variants.
        Derived from the dark-UI status colors; neutral badges use the
        plain border/text tokens. */
     --ps-badge-success-bg: color-mix(
@@ -315,6 +315,9 @@
       transparent
     );
     --ps-badge-danger-text: var(--ps-danger);
+    --ps-badge-info-bg: color-mix(in srgb, var(--ps-info) 12%, transparent);
+    --ps-badge-info-border: color-mix(in srgb, var(--ps-info) 30%, transparent);
+    --ps-badge-info-text: var(--ps-info);
 
     /* Component tokens */
     --ps-input-padding-y: 12px;

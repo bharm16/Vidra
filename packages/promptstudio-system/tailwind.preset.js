@@ -1,3 +1,4 @@
+import plugin from "tailwindcss/plugin";
 import animate from "tailwindcss-animate";
 
 /** @type {import('tailwindcss').Config} */
@@ -595,5 +596,17 @@ export default {
       },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    /* Tailwind's fontSize plugin only emits font-size / line-height /
+       letter-spacing / font-weight from the size tuple — the textTransform
+       entries above are silently dropped. Emit the overline's uppercase here
+       so text-overline actually uppercases (matching .ps-overline in
+       type.css) instead of depending on source casing. */
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        ".text-overline": { textTransform: "uppercase" },
+      });
+    }),
+  ],
 };
