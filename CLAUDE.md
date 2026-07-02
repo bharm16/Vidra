@@ -155,9 +155,10 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 
 #### Debug
 
-| Env Var                    | Default      | Legacy Aliases | Description                                                                                                    |
-| -------------------------- | ------------ | -------------- | -------------------------------------------------------------------------------------------------------------- |
-| `UNHANDLED_REJECTION_MODE` | `classified` | —              | How unhandled promise rejections are categorized. `strict` exits the process; `classified` logs and continues. |
+| Env Var                    | Default      | Legacy Aliases | Description                                                                                                                                                                                                                       |
+| -------------------------- | ------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `REPLAY_MODE`              | `off`        | —              | Record/replay seam at the LLM boundary and provider adapters. `record` captures live provider responses into contract-validated fixtures; `replay` serves those fixtures with zero network. See docs/architecture/replay-mode.md. |
+| `UNHANDLED_REJECTION_MODE` | `classified` | —              | How unhandled promise rejections are categorized. `strict` exits the process; `classified` logs and continues.                                                                                                                    |
 
 <!-- END: feature-flag-table -->
 
