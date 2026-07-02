@@ -1,9 +1,11 @@
 /**
- * Regression test: /home hero CTA hides "Create account" for authenticated users.
+ * Regression test: the gallery landing renders a single auth-aware CTA.
  *
- * Previously, the HomePage rendered "Create account" unconditionally, even
- * when the user was already signed in. The hero now conditionally hides the
- * signup CTA when useAuthUser returns a user object.
+ * Previously the hero stacked two CTAs ("Open workspace" + "Create account")
+ * and showed the signup CTA even for authenticated users. The manifesto
+ * zero-state now renders exactly one CTA: "Sign in" (to /signin) when signed
+ * out, "Open workspace" (to the workspace) when signed in (ADR-0008,
+ * design-overhaul decision 6).
  */
 import React from "react";
 import { render, screen } from "@testing-library/react";
@@ -17,8 +19,8 @@ vi.mock("@hooks/useAuthUser", () => ({
   useAuthUser: mockUseAuthUser,
 }));
 
-describe("regression: HomePage auth-conditional CTA", () => {
-  it('hides "Create account" when user is authenticated', () => {
+describe("regression: HomePage single auth-aware CTA", () => {
+  it('shows only "Open workspace" when authenticated', () => {
     mockUseAuthUser.mockReturnValue({ uid: "user-1", email: "test@test.com" });
 
     render(
@@ -27,11 +29,14 @@ describe("regression: HomePage auth-conditional CTA", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Open workspace")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Open workspace" }),
+    ).toHaveAttribute("href", "/");
+    expect(screen.queryByText("Sign in")).toBeNull();
     expect(screen.queryByText("Create account")).toBeNull();
   });
 
-  it('shows "Create account" when user is not authenticated', () => {
+  it('shows only "Sign in" when signed out', () => {
     mockUseAuthUser.mockReturnValue(null);
 
     render(
@@ -40,7 +45,11 @@ describe("regression: HomePage auth-conditional CTA", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Open workspace")).toBeTruthy();
-    expect(screen.getByText("Create account")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+      "href",
+      "/signin",
+    );
+    expect(screen.queryByText("Open workspace")).toBeNull();
+    expect(screen.queryByText("Create account")).toBeNull();
   });
 });

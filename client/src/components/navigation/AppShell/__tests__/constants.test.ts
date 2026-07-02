@@ -42,11 +42,11 @@ describe("AppShell constants", () => {
   });
 
   describe("core behavior", () => {
-    it("includes core navigation items for top nav and sidebar", () => {
+    it("parks every marketing link out of the top nav (gallery landing nav is wordmark + auth action only)", () => {
       const topNavItems = NAV_ITEMS.filter((item) => item.showInTopNav);
       const sidebarItems = NAV_ITEMS.filter((item) => item.showInSidebar);
 
-      expect(topNavItems.length).toBeGreaterThan(0);
+      expect(topNavItems).toHaveLength(0);
       expect(sidebarItems.length).toBeGreaterThan(0);
     });
 

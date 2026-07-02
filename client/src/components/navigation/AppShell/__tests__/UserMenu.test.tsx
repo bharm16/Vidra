@@ -85,14 +85,14 @@ describe("UserMenu", () => {
         "/pricing?plan=pro",
       );
 
-      const link = screen.getByRole("link", { name: "Log in" });
+      const link = screen.getByRole("link", { name: "Sign in" });
       expect(link).toHaveAttribute(
         "href",
         "/signin?redirect=%2Fpricing%3Fplan%3Dpro",
       );
     });
 
-    it("closes the menu on Escape key", async () => {
+    it("renders a single workspace link for signed-in top nav", () => {
       const user = {
         uid: "u1",
         displayName: "Ada Lovelace",
@@ -100,15 +100,12 @@ describe("UserMenu", () => {
       };
       renderWithRouter(<UserMenu user={user} variant="topnav" />);
 
-      const button = screen.getByRole("button", { name: "Account menu" });
-      fireEvent.click(button);
-      expect(button).toHaveAttribute("aria-expanded", "true");
-
-      fireEvent.keyDown(document, { key: "Escape" });
-
-      await waitFor(() => {
-        expect(button).toHaveAttribute("aria-expanded", "false");
-      });
+      expect(
+        screen.getByRole("link", { name: "Open workspace" }),
+      ).toHaveAttribute("href", "/");
+      // The marketing nav carries no account dropdown and no second CTA.
+      expect(screen.queryByRole("button", { name: "Account menu" })).toBeNull();
+      expect(screen.queryByText("Try Vidra")).toBeNull();
     });
   });
 

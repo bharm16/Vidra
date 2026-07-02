@@ -50,6 +50,11 @@ export const WORKSPACE_ROUTES_EXACT = ["/", "/assets", "/consistent"] as const;
  *
  * - showInTopNav: Visible in horizontal marketing navbar
  * - showInSidebar: Visible in vertical workspace sidebar
+ *
+ * Marketing destinations are parked out of the top nav until they have real
+ * content — the gallery landing's nav carries only the wordmark and the
+ * auth-aware action (ADR-0008, design-overhaul decision 6). Their routes
+ * stay live; only the nav links are gone.
  */
 const ALL_NAV_ITEMS: readonly NavItem[] = [
   {
@@ -77,35 +82,35 @@ const ALL_NAV_ITEMS: readonly NavItem[] = [
     to: "/products",
     label: "Products",
     icon: Package,
-    showInTopNav: true,
+    showInTopNav: false,
     showInSidebar: true,
   },
   {
     to: "/pricing",
     label: "Pricing",
     icon: CreditCard,
-    showInTopNav: true,
+    showInTopNav: false,
     showInSidebar: true,
   },
   {
     to: "/docs",
     label: "Docs",
     icon: FileText,
-    showInTopNav: true,
+    showInTopNav: false,
     showInSidebar: true,
   },
   {
     to: "/contact",
     label: "Support",
     icon: MessageCircle,
-    showInTopNav: true,
+    showInTopNav: false,
     showInSidebar: true,
   },
   {
     to: "/history",
     label: "History",
     icon: Clock,
-    showInTopNav: true,
+    showInTopNav: false,
     showInSidebar: false,
   },
 ] as const;

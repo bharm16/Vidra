@@ -12,11 +12,9 @@ import {
 } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  ChevronDown,
   CreditCard,
   LogIn,
   LogOut,
-  Settings,
   User as UserIcon,
 } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
@@ -125,22 +123,9 @@ export function UserMenu({
     }
 
     return (
-      <div className={cn("flex items-center gap-2", className)}>
-        <Button
-          asChild
-          variant="ghost"
-          className="h-auto rounded-lg px-3 py-1.5 text-[13px] font-semibold text-white transition-colors"
-          style={{ background: "#22252C", border: "1px solid #2C3037" }}
-        >
-          <Link to={`/signin?redirect=${returnTo}`}>Log in</Link>
-        </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="h-auto gap-2 rounded-lg px-4 py-1.5 text-[13px] font-semibold transition"
-          style={{ background: "#B3AFFD", color: "#131416" }}
-        >
-          <Link to="/">Try Vidra</Link>
+      <div className={cn("flex items-center", className)}>
+        <Button asChild className="rounded-full">
+          <Link to={`/signin?redirect=${returnTo}`}>Sign in</Link>
         </Button>
       </div>
     );
@@ -167,22 +152,22 @@ export function UserMenu({
               className="h-9 w-9 flex-shrink-0 rounded-full"
             />
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-blue-500 text-[13px] font-semibold text-white">
+            <div className="bg-surface-3 text-foreground flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold">
               {initial}
             </div>
           )}
           <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-[13px] font-semibold text-foreground">
+            <p className="text-foreground truncate text-[13px] font-semibold">
               {displayName || firstName}
             </p>
-            <p className="truncate text-[12px] font-normal text-muted">
+            <p className="text-muted truncate text-[12px] font-normal">
               {email}
             </p>
           </div>
         </Button>
 
         {open && (
-          <div className="absolute bottom-full left-0 mb-2 w-full rounded-lg border border-border bg-app py-1 shadow-md">
+          <div className="border-border bg-app absolute bottom-full left-0 mb-2 w-full rounded-lg border py-1 shadow-md">
             <Button
               asChild
               variant="ghost"
@@ -203,7 +188,7 @@ export function UserMenu({
                 <CreditCard className="h-3.5 w-3.5" /> Billing
               </Link>
             </Button>
-            <div className="my-1 h-px bg-border" />
+            <div className="bg-border my-1 h-px" />
             <Button
               variant="ghost"
               size="sm"
@@ -218,123 +203,14 @@ export function UserMenu({
     );
   }
 
+  // Marketing nav (gallery landing): signed-in users get the single
+  // "Open workspace" action — account management lives in the workspace
+  // (ADR-0008, design-overhaul decision 6).
   return (
-    <div
-      className={cn("flex items-center gap-2", className)}
-      ref={containerRef}
-    >
-      <Button
-        asChild
-        variant="ghost"
-        className="h-auto gap-2 rounded-lg px-4 py-1.5 text-[13px] font-semibold transition"
-        style={{ background: "#B3AFFD", color: "#131416" }}
-      >
-        <Link to="/">Try Vidra</Link>
+    <div className={cn("flex items-center", className)}>
+      <Button asChild className="rounded-full">
+        <Link to="/">Open workspace</Link>
       </Button>
-
-      <Button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        data-open={open}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label="Account menu"
-        variant="ghost"
-        className="relative top-[-1px] inline-flex h-8 items-center rounded-full pl-1.5 pr-2 transition"
-        style={{
-          background: "#22252C",
-          border: "1px solid #2C3037",
-        }}
-      >
-        <span className="relative ml-1 grid h-5 w-5 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-violet-600 to-blue-500 text-[11px] font-semibold leading-5 text-white">
-          {initial}
-          {photoURL && (
-            <img
-              src={photoURL}
-              alt=""
-              className="absolute inset-0 h-5 w-5 rounded-full object-cover"
-              referrerPolicy="no-referrer"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-        </span>
-        <ChevronDown
-          className={cn(
-            "ml-1 mr-1 h-3 w-3 transition-transform",
-            open && "rotate-180",
-          )}
-          style={{ color: "#8B92A5" }}
-        />
-      </Button>
-
-      <div
-        role="menu"
-        aria-hidden={!open}
-        data-state={open ? "open" : "closed"}
-        className={cn(
-          "absolute right-0 top-[calc(100%+8px)] z-dropdown w-[220px] rounded-xl p-2 origin-top-right transition",
-          !open && "pointer-events-none -translate-y-1 opacity-0",
-        )}
-        style={{
-          background: "#16181E",
-          border: "1px solid #22252C",
-          boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-        }}
-      >
-        <Button
-          asChild
-          variant="ghost"
-          className="h-8 w-full items-center gap-2.5 rounded-[10px] px-2.5 text-[13px] font-medium text-white hover:bg-white/[0.06]"
-        >
-          <Link to="/account" role="menuitem" onClick={() => setOpen(false)}>
-            <UserIcon className="h-3.5 w-3.5" style={{ color: "#8B92A5" }} />{" "}
-            Account
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="h-8 w-full items-center gap-2.5 rounded-[10px] px-2.5 text-[13px] font-medium text-white hover:bg-white/[0.06]"
-        >
-          <Link
-            to="/settings/billing"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            <CreditCard className="h-3.5 w-3.5" style={{ color: "#8B92A5" }} />{" "}
-            Billing
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="h-8 w-full items-center gap-2.5 rounded-[10px] px-2.5 text-[13px] font-medium text-white hover:bg-white/[0.06]"
-        >
-          <Link
-            to="/?settings=1"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            <Settings className="h-3.5 w-3.5" style={{ color: "#8B92A5" }} />{" "}
-            Settings
-          </Link>
-        </Button>
-        <div className="my-2.5 h-px w-full" style={{ background: "#22252C" }} />
-        <Button
-          variant="ghost"
-          onClick={handleSignOut}
-          className="h-8 w-full items-center gap-2.5 rounded-[10px] px-2.5 text-[13px] font-medium hover:bg-white/[0.06]"
-          style={{ color: "#fa6e7c" }}
-        >
-          <LogOut
-            className="h-3.5 w-3.5"
-            style={{ color: "#fa6e7c", opacity: 0.8 }}
-          />{" "}
-          Sign out
-        </Button>
-      </div>
     </div>
   );
 }
