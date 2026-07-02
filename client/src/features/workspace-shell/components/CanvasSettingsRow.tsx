@@ -26,11 +26,17 @@ import { useVideoInputCapabilities } from "@/components/ToolSidebar/components/p
 import { ModelRecommendationDropdown } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ModelRecommendationDropdown";
 import type { ModelRecommendation } from "@/features/model-intelligence/types";
 import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@promptstudio/system/components/ui/dropdown-menu";
 import { cn } from "@/utils/cn";
 import { StartFramePopover } from "./StartFramePopover";
 import { EndFramePopover } from "./EndFramePopover";
 import { VideoReferencesPopover } from "./VideoReferencesPopover";
-import { MiniDropdown } from "./MiniDropdown";
 
 interface CanvasSettingsRowProps {
   prompt: string;
@@ -86,6 +92,12 @@ const parseDuration = (generationParams: Record<string, unknown>): number => {
 // repeat clicks. Sized to outlast the multi-step prelude (optimize →
 // session-create) that gates the upstream isSubmittingRef flip.
 const PREVIEW_CLICK_COOLDOWN_MS = 2000;
+
+// Ghost-text chip trigger for the aspect/duration menus — matches the
+// retired MiniDropdown's quiet trigger, while the menu itself is the system
+// DropdownMenu (opaque popover surface on the named z-index scale).
+const MENU_TRIGGER_CLASS =
+  "inline-flex h-[28px] items-center gap-[5px] whitespace-nowrap rounded-md px-2 text-xs text-tool-text-muted transition-colors hover:text-foreground data-[state=open]:text-foreground";
 
 export function CanvasSettingsRow({
   prompt,
@@ -373,20 +385,46 @@ export function CanvasSettingsRow({
           <CaretDown size={10} aria-hidden="true" />
         </button>
 
-        {/* Aspect ratio dropdown */}
-        <MiniDropdown
-          value={aspectRatio}
-          options={aspectRatioOptions}
-          onChange={handleAspectRatioChange}
-        />
+        {/* Aspect ratio menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className={MENU_TRIGGER_CLASS}>
+            {aspectRatio}
+            <CaretDown size={10} aria-hidden="true" className="opacity-50" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start">
+            <DropdownMenuRadioGroup
+              value={aspectRatio}
+              onValueChange={handleAspectRatioChange}
+            >
+              {aspectRatioOptions.map((option) => (
+                <DropdownMenuRadioItem key={option} value={option}>
+                  {option}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        {/* Duration dropdown */}
-        <MiniDropdown
-          value={duration}
-          options={durationOptions}
-          onChange={handleDurationChange}
-          formatLabel={formatDurationLabel}
-        />
+        {/* Duration menu (Radix radio values are strings; the store keeps
+            duration numeric) */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className={MENU_TRIGGER_CLASS}>
+            {formatDurationLabel(duration)}
+            <CaretDown size={10} aria-hidden="true" className="opacity-50" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start">
+            <DropdownMenuRadioGroup
+              value={String(duration)}
+              onValueChange={(value) => handleDurationChange(Number(value))}
+            >
+              {durationOptions.map((option) => (
+                <DropdownMenuRadioItem key={option} value={String(option)}>
+                  {formatDurationLabel(option)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Model picker — replaces the floating ModelCornerSelector. The
             bullseye icon prefix mirrors the screenshot's model chip glyph. */}
