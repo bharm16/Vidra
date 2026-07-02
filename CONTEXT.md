@@ -52,6 +52,10 @@ The `category` field on a span in the labelSpans route DTO (`toPublicSpan`): a n
 
 The span the creator clicked for click-to-enhance, together with the suggestion session it opens (inline suggestions, custom request, apply/close). Owned by one client module — `SelectedSpanContext` in `client/src/features/prompt-optimizer/context/` — provided by PromptCanvas and consumed via `useSelectedSpan()`; never threaded through component props. Resolved 2026-07-01 during architecture-deepening review. Avoid synonyms: highlighted span (that is the Enhancement request field), active span.
 
+### Golden path
+
+The single end-to-end walkthrough that defines a working product: empty canvas → creator submits a one-liner → expansion → first frame (explicit gate) → motion → render → a clip the creator can watch and keep. "Complete product" and "works end to end" mean the golden path runs green — nothing else counts as done. Composed from the Idea Box and ADR-0002 definitions. Resolved 2026-07-01 during ship-definition grilling; first audit: [docs/audits/2026-07-01-golden-path-audit.md](docs/audits/2026-07-01-golden-path-audit.md). Avoid synonyms: happy path, main flow, E2E flow.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
