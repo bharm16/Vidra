@@ -3,7 +3,7 @@
 ## 1. Core Technologies
 
 - **Language:** TypeScript (Primary), JavaScript (ESM)
-- **Frontend:** React 18, Vite, Tailwind CSS, DaisyUI
+- **Frontend:** React 18, Vite, Tailwind CSS, `@promptstudio/system` (design system)
 - **Backend:** Node.js (Express), `tsx` (TypeScript execution)
 - **Monorepo Structure:** Managed with npm workspaces (`client/`, `server/`, `shared/`)
 

@@ -3,7 +3,7 @@
 ## Stack
 
 - React 18 + Vite
-- Tailwind CSS + DaisyUI
+- Tailwind CSS + @promptstudio/system (design system)
 - TypeScript/JavaScript mix (migration in progress)
 
 ## Structure
@@ -94,7 +94,7 @@ API placement rules:
 ## Conventions
 
 - Prefer functional components and hooks.
-- Keep UI styling in Tailwind/DaisyUI and reuse existing components/styles when possible.
+- Keep UI styling in Tailwind/@promptstudio/system and reuse existing components/styles when possible.
 - If a change needs backend data, add the client call in client/src/api first.
 
 ## Commit Protocol (MANDATORY)

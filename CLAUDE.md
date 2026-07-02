@@ -5,7 +5,7 @@ Interactive editing canvas for AI video prompts with semantic span labeling, cli
 ## Tech Stack
 
 - **Monorepo**: Node.js >= 20, ESM (`"type": "module"` in all package.json files)
-- **Client**: React 18 + Vite, Tailwind CSS + DaisyUI, Radix UI primitives, TypeScript (migration in progress)
+- **Client**: React 18 + Vite, Tailwind CSS + `@promptstudio/system` (design system), Radix UI primitives, TypeScript (migration in progress)
 - **Server**: Express + tsx (TypeScript), LLM providers (OpenAI, Gemini, Groq), Firebase Admin, Stripe
 - **Shared**: Import via `#shared/*` path alias
 - **Testing**: Vitest (unit), Playwright (e2e), fast-check (property)

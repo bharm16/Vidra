@@ -22,7 +22,7 @@ These constraints are absolute. No task justifies violating them.
 ## Project Snapshot
 
 - Monorepo: Node.js 20+, ESM (`"type": "module"`).
-- Client: React 18 + Vite + Tailwind + DaisyUI + Radix UI primitives.
+- Client: React 18 + Vite + Tailwind + `@promptstudio/system` (design system) + Radix UI primitives.
 - Server: Express + TypeScript (`tsx`) with LLM/Firebase/Stripe integrations.
 - Shared imports: `#shared/*`.
 

@@ -7,7 +7,7 @@ Root `AGENTS.md` rules apply here — especially the non-negotiable rules and co
 ## Stack
 
 - React 18 + Vite
-- Tailwind CSS + DaisyUI + Radix UI primitives
+- Tailwind CSS + `@promptstudio/system` (design system) + Radix UI primitives
 - TypeScript/JavaScript mix (migration in progress)
 - Lucide React for icons
 
@@ -61,7 +61,7 @@ Server DTO → feature/api/schemas.ts (Zod) → feature/api/*.ts (transform) →
 ### Styling
 
 - Tailwind CSS for all styling
-- DaisyUI components for UI primitives
+- `@promptstudio/system` components for UI primitives
 - Radix UI for accessible primitives (dialogs, popovers, tooltips)
 - Check `client/src/components/` for existing shared components before creating new ones
 

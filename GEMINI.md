@@ -7,7 +7,7 @@
 ## Tech stack
 
 - Monorepo, Node.js >= 20, ESM (package.json has "type": "module").
-- Client: React 18 + Vite, Tailwind CSS + DaisyUI, TypeScript migration in progress.
+- Client: React 18 + Vite, Tailwind CSS + @promptstudio/system (design system), TypeScript migration in progress.
 - Server: Express + tsx (TypeScript), LLM providers (OpenAI, Gemini, Groq), Firebase, Stripe.
 - Shared code is in shared/ and can be imported via #shared/\*.
 
