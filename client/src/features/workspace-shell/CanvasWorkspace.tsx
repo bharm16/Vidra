@@ -598,9 +598,6 @@ function EmptyHero(): React.ReactElement {
   const { onComposerFill } = usePromptResultsActions();
   return (
     <div className="mx-auto flex min-h-[calc(100vh-var(--workspace-topbar-h)-240px)] max-w-[640px] flex-col items-center justify-center gap-[18px] text-center">
-      <span className="text-tool-text-subdued text-[11px] font-medium uppercase tracking-[0.18em]">
-        Untitled project
-      </span>
       <h1 className="text-[40px] font-semibold leading-[1.1] tracking-[-0.02em]">
         What are you making?
       </h1>

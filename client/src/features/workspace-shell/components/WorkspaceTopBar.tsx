@@ -50,11 +50,12 @@ export function WorkspaceTopBar(): React.ReactElement {
       <VidraMark />
       <CaretRight size={12} className="text-tool-text-subdued" weight="bold" />
       {/*
-        Static project label until a real project store + persistence land. A
-        clickable rename was previously wired to component-state-only, which
-        silently dropped the new name on remount — see UX rule "browsing is
-        read-only, editing is explicit". The CaretDown is decorative until the
-        project switcher menu lands.
+        Display-only session label — the current session's derived title (or
+        "Untitled"), read via useWorkspaceProject. A clickable rename was
+        previously wired to component-state-only, which silently dropped the
+        new name on remount — see UX rule "browsing is read-only, editing is
+        explicit"; renames live in the Sessions panel. The CaretDown is
+        decorative until the project switcher menu lands.
       */}
       <span className="text-foreground inline-flex items-center gap-1 px-1 py-1 text-sm">
         {project.name}
