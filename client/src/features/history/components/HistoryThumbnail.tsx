@@ -33,7 +33,12 @@ export function HistoryThumbnail({
   isActive = false,
   className,
 }: HistoryThumbnailProps): React.ReactElement {
-  const [didError, setDidError] = React.useState<boolean>(false);
+  // The src that last fired onError. Deciding the fallback at render time
+  // (rather than inside the async onError handler) guarantees a failed fetch
+  // can never leave a broken <img> behind: either the refresh applies a
+  // genuinely new URL (re-rendering the <img> with a fresh candidate), or the
+  // rendered src still equals the errored one and the letter avatar shows.
+  const [erroredSrc, setErroredSrc] = React.useState<string | null>(null);
   const refreshAttemptedRef = React.useRef(false);
   const { url: resolvedUrl, refresh } = useResolvedMediaUrl({
     kind: "image",
@@ -43,13 +48,13 @@ export function HistoryThumbnail({
   });
 
   React.useEffect(() => {
-    setDidError(false);
+    setErroredSrc(null);
     refreshAttemptedRef.current = false;
   }, [src]);
 
   const normalizedSrc = resolvedUrl?.trim?.() ?? "";
   const hasSrc = normalizedSrc.length > 0;
-  const showFallback = !hasSrc || didError;
+  const showFallback = !hasSrc || normalizedSrc === erroredSrc;
 
   const fallbackChar = React.useMemo(() => {
     const raw = (label ?? "").trim();
@@ -82,7 +87,7 @@ export function HistoryThumbnail({
               {fallbackChar}
             </span>
           ) : (
-            <Image className="h-4 w-4 text-faint" aria-hidden="true" />
+            <Image className="text-faint h-4 w-4" aria-hidden="true" />
           )}
         </div>
       ) : (
@@ -91,16 +96,17 @@ export function HistoryThumbnail({
           alt={label}
           className="h-full w-full object-cover"
           loading="lazy"
-          onError={async () => {
+          onError={() => {
+            // Mark this src dead first — if the refresh below cannot apply a
+            // different URL (same URL, no URL, or the resolver failed), the
+            // render-time check falls back to the letter avatar instead of
+            // leaving a broken <img> (blank tile) behind.
+            setErroredSrc(normalizedSrc);
             if (refreshAttemptedRef.current) {
-              setDidError(true);
               return;
             }
             refreshAttemptedRef.current = true;
-            const refreshed = await refresh("error");
-            if (!refreshed.url || refreshed.url === normalizedSrc) {
-              setDidError(true);
-            }
+            void refresh("error");
           }}
         />
       )}
