@@ -123,15 +123,16 @@ export function useInlineSuggestionState({
           return null;
         }
 
+        // Chip subtitle: compatibility beats explanation. The raw taxonomy
+        // category is deliberately NOT shown — every chip in the tray shares
+        // the span's category, so it read as noise ("shot.type") to creators.
         const meta =
           typeof item === "object" && item
             ? typeof item.compatibility === "number"
               ? `${Math.round(item.compatibility * 100)}% match`
-              : typeof item.category === "string"
-                ? item.category
-                : typeof item.explanation === "string"
-                  ? item.explanation
-                  : null
+              : typeof item.explanation === "string"
+                ? item.explanation
+                : null
             : null;
 
         return {

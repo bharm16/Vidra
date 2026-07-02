@@ -209,10 +209,12 @@ export function PromptEditorSurface({
               <span
                 key={suggestionCount}
                 className="motion-count-bump bg-tool-rail-border text-tool-text-subdued rounded-full px-2 py-0.5 text-[9px] font-semibold"
+                title={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
+                aria-label={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
               >
                 {suggestionCount}
               </span>
-              {debugPayload ? (
+              {import.meta.env.DEV && debugPayload ? (
                 <button
                   type="button"
                   className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md px-2 py-1 text-[10px] font-medium transition-colors"
@@ -398,7 +400,7 @@ export function PromptEditorSurface({
                   }}
                   disabled={suggestionCount === 0}
                 >
-                  Apply
+                  Use selected
                 </button>
               </div>
             </>
