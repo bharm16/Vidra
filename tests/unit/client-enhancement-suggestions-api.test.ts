@@ -68,6 +68,28 @@ describe("client enhancementSuggestionsApi", () => {
       expect(parsed.suggestions).toEqual([]);
       expect(parsed.isPlaceholder).toBe(false);
     });
+
+    it("unwraps suggestions from the canonical success envelope", async () => {
+      const response = new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            suggestions: ["Use a low-angle shot", "Add rim lighting"],
+            isPlaceholder: false,
+            spanFingerprint: "fp-1",
+          },
+        }),
+      );
+
+      const parsed =
+        await parseEnhancementSuggestionsResponse<string>(response);
+
+      expect(parsed.suggestions).toEqual([
+        "Use a low-angle shot",
+        "Add rim lighting",
+      ]);
+      expect(parsed.spanFingerprint).toBe("fp-1");
+    });
   });
 
   describe("core behavior", () => {

@@ -72,7 +72,7 @@ describe("sceneChangeApi", () => {
           ok: true,
           status: 200,
           statusText: "OK",
-          json: async () => payload,
+          json: async () => ({ success: true, data: payload }),
         } as Response);
 
       const result = await detectSceneChange(request, fetchImpl);

@@ -1,5 +1,6 @@
 import type { Router } from "express";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { validateRequest } from "@middleware/validateRequest";
 import { PerformanceMonitor } from "@middleware/performanceMonitor";
@@ -67,7 +68,10 @@ export function registerCoherenceCheckRoute(
           harmonizationCount: result?.harmonizations?.length || 0,
         });
 
-        res.json(result);
+        res.json({
+          success: true,
+          data: result,
+        } satisfies ApiResponse<typeof result>);
       } catch (error) {
         logger.error(
           "Coherence check request failed",

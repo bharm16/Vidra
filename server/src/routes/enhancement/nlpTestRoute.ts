@@ -1,5 +1,6 @@
 import type { Router } from "express";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { extractSemanticSpans } from "@llm/span-labeling/nlp/NlpSpanService";
 
@@ -40,7 +41,10 @@ export function registerNlpTestRoute(router: Router): void {
           spanCount: result?.spans?.length || 0,
         });
 
-        return res.json(result);
+        return res.json({
+          success: true,
+          data: result,
+        } satisfies ApiResponse<typeof result>);
       } catch (error) {
         logger.error(
           "NLP test request failed",

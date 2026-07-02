@@ -80,7 +80,10 @@ describe("fetchCustomSuggestions", () => {
       ok: true,
       status: 200,
       statusText: "OK",
-      json: async () => ({ suggestions: ["one", "two"] }),
+      json: async () => ({
+        success: true,
+        data: { suggestions: ["one", "two"] },
+      }),
     } as Response);
     global.fetch = mockFetch as typeof fetch;
 

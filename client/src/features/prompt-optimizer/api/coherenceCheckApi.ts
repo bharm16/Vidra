@@ -4,6 +4,7 @@ import type {
   CoherenceCheckRequest,
   CoherenceCheckResult,
 } from "../types/coherence";
+import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 
 export interface CoherenceCheckFetchOptions {
   signal?: AbortSignal;
@@ -72,5 +73,7 @@ export async function checkPromptCoherence(
   }
 
   const responsePayload = (await response.json()) as unknown;
-  return CoherenceCheckResultSchema.parse(responsePayload);
+  return ApiSuccessResponseSchema(CoherenceCheckResultSchema).parse(
+    responsePayload,
+  ).data;
 }

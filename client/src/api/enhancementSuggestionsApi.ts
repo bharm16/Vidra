@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 
 export interface EnhancementSuggestionsRequest {
@@ -69,12 +70,15 @@ export async function requestEnhancementSuggestions(
 export async function parseEnhancementSuggestionsResponse<TSuggestion = string>(
   response: Response,
 ): Promise<EnhancementSuggestionsResponse<TSuggestion>> {
-  const data = await response.json();
-  const result = EnhancementSuggestionsResponseSchema.safeParse(data);
+  const body = await response.json();
+  // Canonical envelope: the payload lives under `data` on success.
+  const result = ApiSuccessResponseSchema(
+    EnhancementSuggestionsResponseSchema,
+  ).safeParse(body);
   if (!result.success) {
     return { suggestions: [], isPlaceholder: false };
   }
-  const parsed = result.data;
+  const parsed = result.data.data;
 
   return {
     suggestions: parsed.suggestions as TSuggestion[],

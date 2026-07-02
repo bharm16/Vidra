@@ -26,5 +26,7 @@ export async function detectSceneChange(
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
 
-  return (await response.json()) as SceneChangeResponse;
+  // Canonical envelope: the payload lives under `data` on success.
+  const body = (await response.json()) as { data?: SceneChangeResponse };
+  return body.data as SceneChangeResponse;
 }

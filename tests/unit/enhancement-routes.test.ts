@@ -154,7 +154,7 @@ describe("enhancement routes", () => {
         });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(groupedResult);
+      expect(response.body).toEqual({ success: true, data: groupedResult });
       expect(enhancementService.getEnhancementSuggestions).toHaveBeenCalled();
       expect(countSuggestions(groupedResult)).toBe(2);
     });
@@ -239,9 +239,12 @@ describe("enhancement routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      spans: [
-        { text: "runner", role: "subject", category: "subject.identity" },
-      ],
+      success: true,
+      data: {
+        spans: [
+          { text: "runner", role: "subject", category: "subject.identity" },
+        ],
+      },
     });
   });
 });

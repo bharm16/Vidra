@@ -53,8 +53,11 @@ describe("checkPromptCoherence", () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            conflicts: [],
-            harmonizations: [],
+            success: true,
+            data: {
+              conflicts: [],
+              harmonizations: [],
+            },
           }),
       });
 

@@ -1,5 +1,6 @@
 import type { Router } from "express";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { validateRequest } from "@middleware/validateRequest";
 import { sceneChangeSchema } from "@config/schemas";
@@ -58,7 +59,10 @@ export function registerSceneChangeRoute(
           isSceneChange: result?.isSceneChange || false,
         });
 
-        res.json(result);
+        res.json({
+          success: true,
+          data: result,
+        } satisfies ApiResponse<typeof result>);
       } catch (error) {
         logger.error(
           "Scene change detection request failed",

@@ -15,6 +15,7 @@ import { CustomSuggestionsResponseSchema } from "./customSuggestionsSchema";
 import { createTimeoutScope } from "@features/prompt-optimizer/utils/signalUtils";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import type { SuggestionItem } from "@components/SuggestionsPanel/hooks/types";
+import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 
 /** Timeout for custom suggestion requests in milliseconds */
 const CUSTOM_SUGGESTION_TIMEOUT_MS = 3000;
@@ -85,8 +86,10 @@ export async function fetchCustomSuggestions({
       );
     }
 
-    const data = (await response.json()) as unknown;
-    const parsed = CustomSuggestionsResponseSchema.parse(data);
+    const body = (await response.json()) as unknown;
+    const parsed = ApiSuccessResponseSchema(
+      CustomSuggestionsResponseSchema,
+    ).parse(body).data;
 
     return parsed.suggestions
       .map((item) => (typeof item === "string" ? { text: item } : item))
