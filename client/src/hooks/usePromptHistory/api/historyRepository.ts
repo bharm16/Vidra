@@ -10,6 +10,7 @@ import {
   getPromptRepositoryForUser,
 } from "../../../repositories";
 import { logger } from "../../../services/LoggingService";
+import { isBlankLocalDraft } from "../utils/blankLocalDraft";
 import type {
   PromptHistoryEntry,
   PromptVersionEntry,
@@ -108,13 +109,20 @@ export async function loadFromLocalStorage(): Promise<PromptHistoryEntry[]> {
 
 /**
  * Save history to localStorage (for syncing Firestore data)
+ *
+ * Blank bootstrap drafts never reach the store: they are in-memory
+ * scaffolding (created on every blank session load), and persisting one
+ * turns it into a durable "Untitled" entry that resurfaces on every later
+ * load. A rehydrated blank draft is indistinguishable from a fresh
+ * bootstrap, so dropping them loses nothing.
  */
 export function syncToLocalStorage(entries: PromptHistoryEntry[]): {
   success: boolean;
   trimmed: boolean;
 } {
   const repository = getLocalPromptRepository();
-  return repository.syncEntries(entries);
+  const persistable = entries.filter((entry) => !isBlankLocalDraft(entry));
+  return repository.syncEntries(persistable);
 }
 
 /**
