@@ -40,20 +40,23 @@ describe("SpanLabelingApi", () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          spans: [
-            {
-              start: 0,
-              end: 4,
-              category: "subject",
-              confidence: 0.9,
-              text: "Hero",
-            },
-            // The server contract (toPublicSpan) always emits `category`;
-            // a role-only span is structurally invalid and must be dropped,
-            // not re-derived client-side.
-            { start: 5, end: 10, role: "camera", confidence: 0.7 },
-          ],
-          meta: { source: "blocking" },
+          success: true,
+          data: {
+            spans: [
+              {
+                start: 0,
+                end: 4,
+                category: "subject",
+                confidence: 0.9,
+                text: "Hero",
+              },
+              // The server contract (toPublicSpan) always emits `category`;
+              // a role-only span is structurally invalid and must be dropped,
+              // not re-derived client-side.
+              { start: 5, end: 10, role: "camera", confidence: 0.7 },
+            ],
+            meta: { source: "blocking" },
+          },
         }),
         { status: 200, headers: { "content-type": "application/json" } },
       ),
@@ -93,7 +96,29 @@ describe("SpanLabelingApi", () => {
     });
   });
 
-  it("labelSpans throws mapped request error on non-ok response", async () => {
+  it("labelSpans throws mapped request error on non-ok canonical envelope", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ success: false, error: "Labeling failed" }),
+          {
+            status: 422,
+            headers: { "content-type": "application/json" },
+          },
+        ),
+      ),
+    );
+
+    await expect(
+      SpanLabelingApi.labelSpans({ text: "x" }),
+    ).rejects.toMatchObject({
+      message: "Labeling failed",
+      status: 422,
+    });
+  });
+
+  it("labelSpans falls back to legacy message field on non-envelope error bodies", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -110,6 +135,38 @@ describe("SpanLabelingApi", () => {
       message: "Labeling failed",
       status: 422,
     });
+  });
+
+  it("labelSpans narrows on a success:false envelope body", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ success: false, error: "labeling degraded" }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        ),
+    );
+
+    await expect(SpanLabelingApi.labelSpans({ text: "x" })).rejects.toThrow(
+      "labeling degraded",
+    );
+  });
+
+  it("labelSpans rejects a bare (non-enveloped) success body", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ spans: [], meta: null }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+
+    await expect(SpanLabelingApi.labelSpans({ text: "x" })).rejects.toThrow();
   });
 
   it("labelSpansStream returns streamed spans and invokes chunk callback", async () => {
