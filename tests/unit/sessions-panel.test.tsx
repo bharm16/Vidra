@@ -283,6 +283,32 @@ describe("SessionsPanel", () => {
   });
 
   describe("core behavior", () => {
+    it("renders the unified panel header — icon title and New action, no back arrow", async () => {
+      const user = userEvent.setup();
+      const entries = [createEntry()];
+
+      render(
+        <SessionsPanel
+          history={entries}
+          filteredHistory={entries}
+          isLoading={false}
+          searchQuery=""
+          onSearchChange={onSearchChange}
+          onLoadFromHistory={onLoadFromHistory}
+          onCreateNew={onCreateNew}
+          onDelete={onDelete}
+        />,
+      );
+
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Sessions" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
+
+      await user.click(screen.getByRole("button", { name: /New/ }));
+      expect(onCreateNew).toHaveBeenCalledTimes(1);
+    });
+
     it("shows more history entries when toggled", async () => {
       const user = userEvent.setup();
       const entries = Array.from({ length: 6 }).map((_, index) =>

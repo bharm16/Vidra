@@ -1,11 +1,12 @@
 import type { ReactElement } from "react";
-import { Plus, Users } from "@promptstudio/system/components/ui";
+import { Users } from "@promptstudio/system/components/ui";
 import type { Asset, AssetType } from "@shared/types/asset";
 import { AssetThumbnail } from "@features/prompt-optimizer/components/AssetsSidebar/AssetThumbnail";
 import {
   useSidebarAssetsDomain,
   useSidebarPromptInteractionDomain,
 } from "@/components/ToolSidebar/context";
+import { PanelHeader } from "./PanelHeader";
 
 interface CharactersPanelProps {
   assets?: Asset[];
@@ -41,35 +42,24 @@ export function CharactersPanel(props: CharactersPanelProps): ReactElement {
     : assets.filter((asset) => asset.type === "character");
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="h-12 px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-ghost" />
-          <h2 className="text-sm font-semibold text-white">Characters</h2>
-        </div>
-        <button
-          type="button"
-          onClick={() => onCreateAsset("character")}
-          className="h-7 px-2.5 rounded-md bg-surface-2 text-xs font-medium text-ghost"
-        >
-          <span className="inline-flex items-center gap-1">
-            <Plus className="h-3 w-3" />
-            New
-          </span>
-        </button>
-      </div>
+    <div className="flex h-full flex-col">
+      <PanelHeader
+        icon={Users}
+        title="Characters"
+        onNew={() => onCreateAsset("character")}
+      />
 
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-tool-accent-soft border-t-transparent" />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="border-tool-accent-soft h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-3">
-          <div className="text-sm text-ghost">No characters yet</div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+          <div className="text-ghost text-sm">No characters yet</div>
           <button
             type="button"
             onClick={() => onCreateAsset("character")}
-            className="h-8 px-3 rounded-md border border-tool-border-primary text-sm text-ghost"
+            className="border-tool-border-primary text-ghost h-8 rounded-md border px-3 text-sm"
           >
             Create character
           </button>

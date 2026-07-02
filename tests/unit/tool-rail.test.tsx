@@ -110,6 +110,22 @@ describe("ToolRail", () => {
       const charsButton = screen.getByRole("button", { name: "Characters" });
       expect(charsButton).toHaveAttribute("aria-pressed", "true");
     });
+
+    it("wraps every rail item in a hover tooltip", () => {
+      renderToolRail({
+        activePanel: "studio",
+        user: null,
+        onPanelChange: vi.fn(),
+      });
+
+      // Radix stamps tooltip triggers with data-state; its presence proves
+      // each rail glyph keeps its hover label without racing tooltip timers.
+      for (const name of ["Tool", "Characters", "Styles", "Sessions"]) {
+        expect(screen.getByRole("button", { name })).toHaveAttribute(
+          "data-state",
+        );
+      }
+    });
   });
 
   describe("core behavior", () => {

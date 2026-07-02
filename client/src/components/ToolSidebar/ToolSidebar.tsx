@@ -90,9 +90,6 @@ export function ToolSidebar(props: ToolSidebarProps): ReactElement {
     },
     [isCanvasFirstLayout, setActivePanel],
   );
-  const handleSessionsBack = useCallback((): void => {
-    setActivePanel("studio");
-  }, [setActivePanel]);
   const handleStudioBack = useCallback((): void => {
     setActivePanel("sessions");
   }, [setActivePanel]);
@@ -118,7 +115,6 @@ export function ToolSidebar(props: ToolSidebarProps): ReactElement {
     if (panel === "sessions") {
       return (
         <SessionsPanel
-          onBack={handleSessionsBack}
           onCreateNew={handleSessionCreateNew}
           onLoadFromHistory={handleSessionLoad}
         />
@@ -167,13 +163,15 @@ export function ToolSidebar(props: ToolSidebarProps): ReactElement {
       {isCanvasFirstLayout ? (
         overlayPanelContent ? (
           <div
-            className="absolute left-full top-0 z-20 h-full w-[400px] border-r border-tool-rail-border bg-[var(--tool-surface-deep)] text-white shadow-[8px_0_24px_rgba(0,0,0,0.3)]"
+            // Starts below the workspace top bar so the breadcrumb
+            // (project / session title) stays visible while a panel is open.
+            className="border-tool-rail-border absolute left-full top-[var(--workspace-topbar-h)] z-20 h-[calc(100%-var(--workspace-topbar-h))] w-[400px] border-r bg-[var(--tool-surface-deep)] text-white shadow-[8px_0_24px_rgba(0,0,0,0.3)]"
             data-testid="tool-sidebar-overlay-panel"
           >
             <div className="flex h-full flex-col">
               <div
                 key={activePanel}
-                className="motion-presence-panel h-full ps-animate-fade-in"
+                className="motion-presence-panel ps-animate-fade-in h-full"
                 data-motion-state="entered"
               >
                 {overlayPanelContent}
@@ -185,7 +183,7 @@ export function ToolSidebar(props: ToolSidebarProps): ReactElement {
         <ToolPanel activePanel={activePanel}>
           <div
             key={activePanel}
-            className="motion-presence-panel h-full ps-animate-fade-in"
+            className="motion-presence-panel ps-animate-fade-in h-full"
             data-motion-state="entered"
           >
             {renderPanelContent(activePanel)}
