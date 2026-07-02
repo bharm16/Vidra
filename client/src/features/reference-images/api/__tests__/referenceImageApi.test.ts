@@ -47,10 +47,13 @@ describe("referenceImageApi", () => {
 
   it("list sends auth headers, applies limit query, and parses schema", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ success: true, data: { images: [sampleImage] } }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
+      new Response(
+        JSON.stringify({ success: true, data: { images: [sampleImage] } }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      ),
     );
     vi.stubGlobal("fetch", fetchMock);
 
