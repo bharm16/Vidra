@@ -10,6 +10,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useBillingStatus } from "@/features/billing/hooks/useBillingStatus";
 import { BalancePill } from "@/components/navigation/AppShell/shared/BalancePill";
 import { ToolNavButton } from "./ToolNavButton";
+import { AccountPopover } from "./AccountPopover";
 import { toolNavItems } from "../config/toolNavConfig";
 import type { ToolRailProps } from "../types";
 
@@ -22,14 +23,7 @@ export function ToolRail({
   const { status, isLoading: isLoadingStatus } = useBillingStatus();
   const sessionsItem = toolNavItems.find((item) => item.variant === "header");
   const navItems = toolNavItems.filter((item) => item.variant === "default");
-  const photoURL = typeof user?.photoURL === "string" ? user.photoURL : null;
-  const displayName =
-    typeof user?.displayName === "string" ? user.displayName.trim() : "";
-  const email = typeof user?.email === "string" ? user.email.trim() : "";
-  const initial = (displayName || email || "U").slice(0, 1).toUpperCase();
   const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
-  const userActionLink = user ? "/account" : `/signin?redirect=${returnTo}`;
-  const userActionLabel = user ? "Account" : "Sign in";
   const planLabel = useMemo((): string => {
     if (isLoadingStatus) return "…";
     if (!user) return "Sign in";
@@ -120,37 +114,31 @@ export function ToolRail({
             aria-hidden="true"
           />
 
-          {/* ── Profile avatar ── */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                to={userActionLink}
-                className="flex h-8 w-8 items-center justify-center"
-                aria-label={userActionLabel}
-              >
-                {photoURL ? (
-                  <img
-                    src={photoURL}
-                    alt=""
-                    className="h-8 w-8 rounded-lg object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
+          {/* ── The single account affordance: signed-in users get a
+            popover (no navigation mid-work); guests get the sign-in link. ── */}
+          {user ? (
+            <AccountPopover user={user} />
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to={`/signin?redirect=${returnTo}`}
+                  className="flex h-8 w-8 items-center justify-center"
+                  aria-label="Sign in"
+                >
                   <div className="bg-surface-2 flex h-8 w-8 items-center justify-center rounded-lg">
-                    <span className="text-body-sm font-bold text-white">
-                      {initial}
-                    </span>
+                    <span className="text-body-sm font-bold text-white">U</span>
                   </div>
-                )}
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent
-              side="right"
-              className="text-body-sm text-foreground rounded-lg border border-[rgb(67,70,81)] bg-[rgb(24,25,28)] shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-            >
-              {userActionLabel}
-            </TooltipContent>
-          </Tooltip>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="text-body-sm text-foreground rounded-lg border border-[rgb(67,70,81)] bg-[rgb(24,25,28)] shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+              >
+                Sign in
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </aside>
     </TooltipProvider>

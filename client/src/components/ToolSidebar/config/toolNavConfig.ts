@@ -1,5 +1,5 @@
 import {
-  List,
+  Layers,
   SlidersHorizontal,
   Users,
   Palette,
@@ -9,7 +9,9 @@ import type { ToolNavItem } from "../types";
 export const toolNavItems: ToolNavItem[] = [
   {
     id: "sessions",
-    icon: List,
+    // Layered-stack glyph — the hamburger (List) read as "menu", not
+    // "your sessions".
+    icon: Layers,
     label: "Sessions",
     variant: "header",
   },

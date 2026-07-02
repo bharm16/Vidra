@@ -249,6 +249,19 @@ describe("ToolSidebar", () => {
     expect(sidebarState.setActivePanel).not.toHaveBeenCalled();
   });
 
+  it("keeps the workspace breadcrumb visible — the overlay panel starts below the top bar", async () => {
+    sidebarState.activePanel = "sessions";
+
+    render(<ToolSidebar user={null} />);
+
+    const overlay = await screen.findByTestId("tool-sidebar-overlay-panel");
+    expect(overlay.className).toContain("top-[var(--workspace-topbar-h)]");
+    expect(overlay.className).toContain(
+      "h-[calc(100%-var(--workspace-topbar-h))]",
+    );
+    expect(overlay.className).not.toContain("top-0");
+  });
+
   it("keeps legacy inline panel path when canvas-first layout is disabled", async () => {
     mockFeatures.CANVAS_FIRST_LAYOUT = false;
     sidebarState.activePanel = "studio";

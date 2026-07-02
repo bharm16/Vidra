@@ -6,7 +6,7 @@ import React, {
   useState,
   type ReactElement,
 } from "react";
-import { ArrowLeft, Search } from "@promptstudio/system/components/ui";
+import { Layers, Search } from "@promptstudio/system/components/ui";
 import { HistoryEmptyState } from "@components/EmptyState";
 import { useToast } from "@components/Toast";
 import { modKey } from "@components/KeyboardShortcuts/shortcuts.config";
@@ -20,12 +20,6 @@ import {
   DialogTitle,
 } from "@promptstudio/system/components/ui/dialog";
 import { Input } from "@promptstudio/system/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@promptstudio/system/components/ui/tooltip";
 import type { PromptHistoryEntry } from "@features/prompt-optimizer";
 import { cn } from "@utils/cn";
 import { HistoryItem } from "@features/history/components/HistoryItem";
@@ -46,6 +40,7 @@ import {
   isRecentEntry,
   resolveHistoryThumbnail,
 } from "@features/history/utils/historyMedia";
+import { PanelHeader } from "./PanelHeader";
 
 const INITIAL_HISTORY_LIMIT = 5;
 const EMPTY_HISTORY: PromptHistoryEntry[] = [];
@@ -56,7 +51,6 @@ interface SessionsPanelProps {
   isLoading?: boolean;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  onBack?: (() => void) | undefined;
   onLoadFromHistory?: (entry: PromptHistoryEntry) => void;
   onCreateNew?: () => void;
   onDelete?: (id: string) => void;
@@ -81,7 +75,6 @@ export function SessionsPanel(props: SessionsPanelProps): ReactElement {
   const searchQuery = props.searchQuery ?? domain?.searchQuery ?? "";
   const onSearchChange =
     props.onSearchChange ?? domain?.onSearchChange ?? noopSearch;
-  const onBack = props.onBack;
   const onLoadFromHistory =
     props.onLoadFromHistory ?? domain?.onLoadFromHistory ?? noopLoad;
   const onCreateNew = props.onCreateNew ?? domain?.onCreateNew ?? noop;
@@ -393,47 +386,17 @@ export function SessionsPanel(props: SessionsPanelProps): ReactElement {
 
   return (
     <>
-      <div className="flex flex-col h-full">
-        <div className="h-12 px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="w-7 h-7 -ml-1 rounded-md flex items-center justify-center text-ghost hover:bg-surface-1"
-              onClick={onBack}
-              aria-label="Back"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <h2 className="text-sm font-semibold text-white">Sessions</h2>
-          </div>
-          <TooltipProvider delayDuration={120}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onCreateNew}
-                  className="h-7 px-2.5 bg-surface-2 rounded-md text-xs font-medium text-ghost"
-                  variant="ghost"
-                  size="sm"
-                >
-                  + New
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent
-                className={cn(
-                  "text-body-sm text-foreground",
-                  "rounded-lg border border-[rgb(67,70,81)] bg-[rgb(24,25,28)]",
-                  "shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
-                )}
-              >
-                New prompt ({modKey === "Cmd" ? "Cmd+N" : "Ctrl+N"})
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+      <div className="flex h-full flex-col">
+        <PanelHeader
+          icon={Layers}
+          title="Sessions"
+          onNew={onCreateNew}
+          newTooltip={`New prompt (${modKey === "Cmd" ? "Cmd+N" : "Ctrl+N"})`}
+        />
 
         <div className="px-4 py-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tool-text-placeholder" />
+            <Search className="text-tool-text-placeholder absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
             <Input
               ref={searchInputRef}
               type="text"
@@ -442,20 +405,20 @@ export function SessionsPanel(props: SessionsPanelProps): ReactElement {
               placeholder="Search..."
               aria-label="Search sessions"
               className={cn(
-                "w-full h-9 pl-9 pr-3 rounded-lg",
-                "bg-tool-nav-active border border-tool-border-dark",
-                "text-sm text-white placeholder:text-tool-text-placeholder",
+                "h-9 w-full rounded-lg pl-9 pr-3",
+                "bg-tool-nav-active border-tool-border-dark border",
+                "placeholder:text-tool-text-placeholder text-sm text-white",
               )}
             />
           </div>
         </div>
 
-        <div className="px-4 py-2 flex gap-2">
+        <div className="flex gap-2 px-4 py-2">
           <button
             type="button"
             className={cn(
-              "h-7 px-2.5 rounded-md border border-tool-border-primary bg-tool-nav-active text-xs font-medium text-ghost",
-              "transition-colors hover:bg-surface-2 hover:text-white",
+              "border-tool-border-primary bg-tool-nav-active text-ghost h-7 rounded-md border px-2.5 text-xs font-medium",
+              "hover:bg-surface-2 transition-colors hover:text-white",
               filterState.videosOnly && "bg-surface-2 text-white",
             )}
             onClick={() =>
@@ -470,8 +433,8 @@ export function SessionsPanel(props: SessionsPanelProps): ReactElement {
           <button
             type="button"
             className={cn(
-              "h-7 px-2.5 rounded-md border border-tool-border-primary bg-tool-nav-active text-xs font-medium text-ghost",
-              "transition-colors hover:bg-surface-2 hover:text-white",
+              "border-tool-border-primary bg-tool-nav-active text-ghost h-7 rounded-md border px-2.5 text-xs font-medium",
+              "hover:bg-surface-2 transition-colors hover:text-white",
               filterState.recentOnly && "bg-surface-2 text-white",
             )}
             onClick={() =>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { ToolRail } from "@components/ToolSidebar/components/ToolRail";
@@ -12,6 +12,13 @@ vi.mock("@utils/cn", () => ({
 
 const useCreditBalanceMock = vi.hoisted(() => vi.fn());
 const useBillingStatusMock = vi.hoisted(() => vi.fn());
+const signOutMock = vi.hoisted(() => vi.fn());
+const toastMocks = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+}));
 
 vi.mock("@/contexts/CreditBalanceContext", () => ({
   useCreditBalance: (...args: unknown[]) => useCreditBalanceMock(...args),
@@ -19,6 +26,14 @@ vi.mock("@/contexts/CreditBalanceContext", () => ({
 
 vi.mock("@/features/billing/hooks/useBillingStatus", () => ({
   useBillingStatus: (...args: unknown[]) => useBillingStatusMock(...args),
+}));
+
+vi.mock("@repositories/index", () => ({
+  getAuthRepository: () => ({ signOut: signOutMock }),
+}));
+
+vi.mock("@components/Toast", () => ({
+  useToast: () => toastMocks,
 }));
 
 const renderToolRail = (props: {
@@ -82,8 +97,10 @@ describe("ToolRail", () => {
         onPanelChange: vi.fn(),
       });
 
-      const link = screen.getByRole("link", { name: "Account" });
-      expect(link.getAttribute("href")).toBe("/account");
+      // Signed-in: the avatar chip is a popover trigger, never a link.
+      const trigger = screen.getByRole("button", { name: "Account" });
+      expect(trigger).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Account" })).toBeNull();
       expect(screen.getByText("T")).toBeInTheDocument();
     });
   });
@@ -110,6 +127,22 @@ describe("ToolRail", () => {
       const charsButton = screen.getByRole("button", { name: "Characters" });
       expect(charsButton).toHaveAttribute("aria-pressed", "true");
     });
+
+    it("wraps every rail item in a hover tooltip", () => {
+      renderToolRail({
+        activePanel: "studio",
+        user: null,
+        onPanelChange: vi.fn(),
+      });
+
+      // Radix stamps tooltip triggers with data-state; its presence proves
+      // each rail glyph keeps its hover label without racing tooltip timers.
+      for (const name of ["Tool", "Characters", "Styles", "Sessions"]) {
+        expect(screen.getByRole("button", { name })).toHaveAttribute(
+          "data-state",
+        );
+      }
+    });
   });
 
   describe("core behavior", () => {
@@ -128,10 +161,10 @@ describe("ToolRail", () => {
       expect(onPanelChange).toHaveBeenCalledWith("studio");
     });
 
-    it("renders account link for a subscribed user", () => {
+    it("opens the account popover in place — email, sync status, manage link, sign out", async () => {
       // The visible plan-tier text was removed in the 52px icon rail redesign
-      // (planLabel is still computed but intentionally not rendered). Assert
-      // the authenticated user still gets the account affordance.
+      // (planLabel is still computed but intentionally not rendered). The
+      // authenticated affordance is a popover trigger, not a navigation.
       useBillingStatusMock.mockReturnValue({
         status: {
           isSubscribed: true,
@@ -154,11 +187,23 @@ describe("ToolRail", () => {
         onPanelChange: vi.fn(),
       });
 
-      const accountLink = screen.getByRole("link", { name: "Account" });
-      expect(accountLink.getAttribute("href")).toBe("/account");
+      fireEvent.click(screen.getByRole("button", { name: "Account" }));
+
+      expect(await screen.findByText("user@example.com")).toBeInTheDocument();
+      expect(screen.getByText("Synced to cloud")).toBeInTheDocument();
+
+      // Leaving the workspace is an explicit, labeled action inside the
+      // popover — the only place /account appears.
+      const manageLink = screen.getByRole("link", { name: /Manage account/ });
+      expect(manageLink.getAttribute("href")).toBe("/account");
+      expect(
+        screen.getByRole("button", { name: /Sign out/ }),
+      ).toBeInTheDocument();
     });
 
-    it("renders account link for an unsubscribed user", () => {
+    it("signs out from the popover without navigating", async () => {
+      signOutMock.mockResolvedValue(undefined);
+
       renderToolRail({
         activePanel: "studio",
         user: {
@@ -169,8 +214,10 @@ describe("ToolRail", () => {
         onPanelChange: vi.fn(),
       });
 
-      const accountLink = screen.getByRole("link", { name: "Account" });
-      expect(accountLink.getAttribute("href")).toBe("/account");
+      fireEvent.click(screen.getByRole("button", { name: "Account" }));
+      fireEvent.click(await screen.findByRole("button", { name: /Sign out/ }));
+
+      await waitFor(() => expect(signOutMock).toHaveBeenCalledTimes(1));
     });
   });
 });
