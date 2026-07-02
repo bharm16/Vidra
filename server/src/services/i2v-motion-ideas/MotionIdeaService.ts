@@ -10,19 +10,19 @@
  * the static fallback phrases so the UI is never empty.
  */
 
-import { promises as fs } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-import { z } from "zod";
-import { logger } from "@infrastructure/Logger";
-import type { AIExecutionPort as AIService } from "@services/ai-model/ports/AIExecutionPort";
-import type { ImageObservationService } from "@services/image-observation/ImageObservationService";
-import type { MotionIdeaRequest, MotionIdeaResponse } from "./types";
-import { MOTION_IDEAS_FALLBACK } from "./types";
+import { promises as fs } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { z } from 'zod';
+import { logger } from '@infrastructure/Logger';
+import type { AIExecutionPort as AIService } from '@services/ai-model/ports/AIExecutionPort';
+import type { ImageObservationService } from '@services/image-observation/ImageObservationService';
+import type { MotionIdeaRequest, MotionIdeaResponse } from './types';
+import { MOTION_IDEAS_FALLBACK } from './types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const TEMPLATE_PATH = join(__dirname, "templates", "motion-ideas-prompt.md");
+const TEMPLATE_PATH = join(__dirname, 'templates', 'motion-ideas-prompt.md');
 
 const MAX_IDEAS = 5;
 const MIN_IDEAS = 3;
@@ -36,7 +36,7 @@ export class MotionIdeaService {
   private static cachedTemplate: string | null = null;
   private readonly ai: AIService;
   private readonly observationService: ImageObservationService;
-  private readonly log = logger.child({ service: "MotionIdeaService" });
+  private readonly log = logger.child({ service: 'MotionIdeaService' });
 
   constructor(ai: AIService, observationService: ImageObservationService) {
     this.ai = ai;
@@ -68,7 +68,7 @@ export class MotionIdeaService {
         observationCached = observeResult.cached;
         observationUsedFastPath = observeResult.usedFastPath;
       } catch (error) {
-        this.log.warn("Image observation failed; returning fallback ideas", {
+        this.log.warn('Image observation failed; returning fallback ideas', {
           error: error instanceof Error ? error.message : String(error),
         });
         return this.fallback(startedAt);
@@ -76,18 +76,22 @@ export class MotionIdeaService {
     }
 
     const template = await this.loadTemplate();
+    // observedAt is capture bookkeeping, not scene content — embedding it
+    // makes the prompt non-deterministic (busts provider prompt caching and
+    // record/replay matching) without giving the model anything to use.
+    const { observedAt: _observedAt, ...promptObservation } = observation;
     const systemPrompt = template.replace(
-      "{{observation}}",
-      JSON.stringify(observation, null, 2),
+      '{{observation}}',
+      JSON.stringify(promptObservation, null, 2)
     );
 
     try {
-      const response = await this.ai.execute("i2v_motion_ideas", {
+      const response = await this.ai.execute('i2v_motion_ideas', {
         systemPrompt,
-        userMessage: "Generate motion ideas now.",
+        userMessage: 'Generate motion ideas now.',
         maxTokens: 200,
         temperature:
-          typeof request.temperature === "number"
+          typeof request.temperature === 'number'
             ? request.temperature
             : DEFAULT_TEMPERATURE,
         jsonMode: true,
@@ -98,7 +102,7 @@ export class MotionIdeaService {
         return this.fallback(
           startedAt,
           observationCached,
-          observationUsedFastPath,
+          observationUsedFastPath
         );
       }
 
@@ -109,21 +113,21 @@ export class MotionIdeaService {
         durationMs: Math.round(performance.now() - startedAt),
       };
     } catch (error) {
-      this.log.warn("Motion-idea LLM pass failed; returning fallback", {
+      this.log.warn('Motion-idea LLM pass failed; returning fallback', {
         error: error instanceof Error ? error.message : String(error),
       });
       return this.fallback(
         startedAt,
         observationCached,
-        observationUsedFastPath,
+        observationUsedFastPath
       );
     }
   }
 
   private parseAndClamp(text: string): string[] {
     const cleaned = text
-      .replace(/```json\s*/g, "")
-      .replace(/```\s*/g, "")
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
       .trim();
     let parsed: unknown;
     try {
@@ -146,7 +150,7 @@ export class MotionIdeaService {
     if (MotionIdeaService.cachedTemplate) {
       return MotionIdeaService.cachedTemplate;
     }
-    const content = await fs.readFile(TEMPLATE_PATH, "utf-8");
+    const content = await fs.readFile(TEMPLATE_PATH, 'utf-8');
     MotionIdeaService.cachedTemplate = content;
     return content;
   }
@@ -154,7 +158,7 @@ export class MotionIdeaService {
   private fallback(
     startedAt: number,
     observationCached = false,
-    observationUsedFastPath = false,
+    observationUsedFastPath = false
   ): MotionIdeaResponse {
     return {
       ideas: [...MOTION_IDEAS_FALLBACK],
