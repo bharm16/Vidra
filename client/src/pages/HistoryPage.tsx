@@ -1,97 +1,155 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Badge, Search, X } from "@promptstudio/system/components/ui";
+import { Button } from "@promptstudio/system/components/ui/button";
+import { Input } from "@promptstudio/system/components/ui/input";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { usePromptHistory } from "@hooks/usePromptHistory";
 import type { PromptHistoryEntry } from "@features/prompt-optimizer";
-import { Button } from "@promptstudio/system/components/ui/button";
-import { Input } from "@promptstudio/system/components/ui/input";
-import { AUTH_COLORS } from "./auth/auth-styles";
+import { HistoryThumbnail } from "@features/history/components/HistoryThumbnail";
+import { formatRelativeOrDate } from "@features/history/utils/historyDates";
+import { resolveEntryTitle } from "@features/history/utils/historyTitles";
+import { resolveEntryStage } from "@features/history/utils/historyStages";
+import {
+  hasVideoArtifact,
+  isRecentEntry,
+  resolveHistoryThumbnail,
+} from "@features/history/utils/historyMedia";
+import { cn } from "@utils/cn";
 
-function formatRelativeOrDate(iso: string | undefined): string {
-  if (!iso) return "—";
-  const t = new Date(iso);
-  const ms = t.getTime();
-  if (Number.isNaN(ms)) return "—";
-  const diffMs = Date.now() - ms;
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes < 0) return t.toLocaleDateString();
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 14) return `${diffDays}d ago`;
-  return t.toLocaleDateString();
+/**
+ * Session library — the full-archive presentation of Sessions on its own
+ * page. Same entity, titles, thumbnails, and vocabulary as the rail Sessions
+ * panel (the quick switcher): entries come from the same usePromptHistory
+ * source and the same derivation utils, so the two surfaces cannot drift.
+ */
+
+const CHIP_CLASS =
+  "h-7 rounded-md border border-border bg-surface-1 px-2.5 text-xs font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground";
+
+interface FilterChipProps {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }
 
-function deriveTitle(entry: PromptHistoryEntry): string {
-  const storedTitle = typeof entry.title === "string" ? entry.title.trim() : "";
-  if (storedTitle) return storedTitle;
-  const source = (entry.output || "").trim().replace(/\s+/g, " ");
-  if (!source) return "Untitled prompt";
-  return source.length > 96 ? `${source.slice(0, 96).trim()}…` : source;
-}
-
-function deriveSnippet(value: string): string {
-  const normalized = value.trim();
-  if (!normalized) return "—";
-  return normalized;
-}
-
-/** Tag pill reused across history entries */
-function Tag({ children }: { children: React.ReactNode }): React.ReactElement {
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: FilterChipProps): React.ReactElement {
   return (
-    <span
-      className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-      style={{
-        background: AUTH_COLORS.inputBg,
-        border: `1px solid ${AUTH_COLORS.inputBorder}`,
-        color: AUTH_COLORS.textDim,
-      }}
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(CHIP_CLASS, active && "bg-surface-2 text-foreground")}
     >
       {children}
-    </span>
+    </Button>
+  );
+}
+
+function SessionRow({
+  entry,
+}: {
+  entry: PromptHistoryEntry;
+}): React.ReactElement {
+  const title = resolveEntryTitle(entry);
+  const stage = resolveEntryStage(entry);
+  const thumbnail = resolveHistoryThumbnail(entry);
+  const when = formatRelativeOrDate(entry.timestamp);
+  const sessionId =
+    typeof entry.id === "string" && entry.id.trim() ? entry.id.trim() : null;
+
+  const body = (
+    <>
+      <HistoryThumbnail
+        src={thumbnail.url}
+        storagePath={thumbnail.storagePath ?? null}
+        assetId={thumbnail.assetId ?? null}
+        label={title}
+        size="lg"
+        variant="muted"
+        className="border-border rounded-md border"
+      />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-foreground min-w-0 truncate text-[13px] font-medium">
+            {title}
+          </span>
+          {stage === "draft" ? (
+            <Badge variant="subtle" size="sm">
+              Draft
+            </Badge>
+          ) : stage === "error" ? (
+            <Badge variant="danger" size="sm">
+              Failed
+            </Badge>
+          ) : null}
+        </div>
+        <span className="text-faint text-[11px]">{when}</span>
+      </div>
+    </>
+  );
+
+  const rowClass =
+    "flex items-center gap-3 rounded-lg border border-border bg-surface-1 p-3 transition-colors";
+
+  if (!sessionId) {
+    return <div className={rowClass}>{body}</div>;
+  }
+
+  return (
+    <Link
+      to={`/session/${sessionId}`}
+      className={cn(rowClass, "hover:bg-surface-2")}
+      aria-label={`Open session: ${title}`}
+    >
+      {body}
+    </Link>
   );
 }
 
 export function HistoryPage(): React.ReactElement {
   const user = useAuthUser();
-
   const promptHistory = usePromptHistory(user);
-  const filteredOutputs = React.useMemo(() => {
-    const q = promptHistory.searchQuery.trim().toLowerCase();
-    if (!q) return promptHistory.history;
-    return promptHistory.history.filter((entry) =>
-      entry.output.toLowerCase().includes(q),
-    );
-  }, [promptHistory.history, promptHistory.searchQuery]);
+  const [videosOnly, setVideosOnly] = React.useState<boolean>(false);
+  const [recentOnly, setRecentOnly] = React.useState<boolean>(false);
+
+  const searchQuery = promptHistory.searchQuery;
+
+  const sessions = React.useMemo(() => {
+    return promptHistory.filteredHistory.filter((entry) => {
+      if (videosOnly && !hasVideoArtifact(entry)) return false;
+      if (recentOnly && !isRecentEntry(entry)) return false;
+      return true;
+    });
+  }, [promptHistory.filteredHistory, videosOnly, recentOnly]);
+
+  const hasActiveFilters = videosOnly || recentOnly;
+  const countNoun = searchQuery
+    ? sessions.length === 1
+      ? "result"
+      : "results"
+    : sessions.length === 1
+      ? "session"
+      : "sessions";
 
   return (
-    <div
-      className="h-full overflow-y-auto"
-      style={{ background: AUTH_COLORS.bg }}
-    >
+    <div className="bg-app h-full overflow-y-auto">
       {/* Toolbar — compact, functional */}
-      <div
-        className="sticky top-0 z-10 px-4 py-3 sm:px-6"
-        style={{
-          background: AUTH_COLORS.bg,
-          borderBottom: `1px solid ${AUTH_COLORS.divider}`,
-        }}
-      >
+      <div className="z-sticky border-border bg-app sticky top-0 border-b px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-3">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-[15px] font-semibold tracking-tight text-white">
-              History
+            <h1 className="text-foreground text-[15px] font-semibold tracking-tight">
+              Sessions
             </h1>
             <div className="flex items-center gap-3">
-              <span
-                className="text-[12px] tabular-nums"
-                style={{ color: AUTH_COLORS.textDim }}
-              >
-                {filteredOutputs.length}
-                {promptHistory.searchQuery ? " results" : " prompts"}
+              <span className="text-muted text-[12px] tabular-nums">
+                {sessions.length} {countNoun}
               </span>
               {user ? (
                 <Badge variant="success" size="sm">
@@ -101,20 +159,15 @@ export function HistoryPage(): React.ReactElement {
                 <Button
                   asChild
                   variant="ghost"
-                  className="h-auto rounded-full px-2 py-0.5 text-[11px] font-medium"
-                  style={{
-                    background: AUTH_COLORS.card,
-                    border: `1px solid ${AUTH_COLORS.cardBorder}`,
-                    color: AUTH_COLORS.textDim,
-                  }}
+                  size="sm"
+                  className={CHIP_CLASS}
                 >
                   <Link to="/signin?redirect=/history">Sign in to sync</Link>
                 </Button>
               )}
               <Link
                 to="/"
-                className="text-[12px] font-medium transition-colors hover:text-white"
-                style={{ color: AUTH_COLORS.textDim }}
+                className="text-muted hover:text-foreground text-[12px] font-medium transition-colors"
               >
                 Back to app
               </Link>
@@ -123,165 +176,85 @@ export function HistoryPage(): React.ReactElement {
 
           <div className="relative">
             <Search
-              className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
-              style={{ color: AUTH_COLORS.textPlaceholder }}
+              className="text-faint absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
               aria-hidden="true"
             />
             <Input
-              className="w-full rounded-lg py-2 pl-10 pr-10 text-[13px] text-white outline-none transition"
-              style={{
-                background: AUTH_COLORS.inputBg,
-                border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                color: AUTH_COLORS.text,
-              }}
+              className="border-border bg-surface-1 text-foreground h-9 w-full rounded-lg pl-9 pr-10 text-sm"
               type="search"
-              value={promptHistory.searchQuery}
+              value={searchQuery}
               onChange={(e) => promptHistory.setSearchQuery(e.target.value)}
-              placeholder="Search prompts…"
-              aria-label="Search prompt history"
+              placeholder="Search sessions..."
+              aria-label="Search sessions"
             />
-            {promptHistory.searchQuery ? (
+            {searchQuery ? (
               <Button
                 type="button"
                 onClick={() => promptHistory.setSearchQuery("")}
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-md p-0 transition-colors"
+                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-md p-0"
                 aria-label="Clear search"
                 title="Clear"
               >
-                <X
-                  className="h-3.5 w-3.5"
-                  style={{ color: AUTH_COLORS.textDim }}
-                  aria-hidden="true"
-                />
+                <X className="text-muted h-3.5 w-3.5" aria-hidden="true" />
               </Button>
             ) : null}
+          </div>
+
+          <div className="flex gap-2">
+            <FilterChip
+              active={videosOnly}
+              onClick={() => setVideosOnly((prev) => !prev)}
+            >
+              Videos only
+            </FilterChip>
+            <FilterChip
+              active={recentOnly}
+              onClick={() => setRecentOnly((prev) => !prev)}
+            >
+              Last 7 days
+            </FilterChip>
           </div>
         </div>
       </div>
 
-      {/* Results */}
+      {/* Session archive */}
       <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
         {promptHistory.isLoadingHistory ? (
           <div className="py-12 text-center">
             <div className="ps-spinner-sm mx-auto mb-3" />
-            <p
-              className="text-[13px]"
-              style={{ color: AUTH_COLORS.textSecondary }}
-            >
-              Loading history…
-            </p>
+            <p className="text-muted text-[13px]">Loading sessions...</p>
           </div>
-        ) : filteredOutputs.length === 0 ? (
-          <div className="py-16 text-center">
-            <p
-              className="text-[13px]"
-              style={{ color: AUTH_COLORS.textSecondary }}
-            >
-              {promptHistory.searchQuery
-                ? `No results for "${promptHistory.searchQuery}".`
-                : "No prompts saved yet."}
+        ) : sessions.length === 0 ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <p className="text-muted text-[13px]">
+              {searchQuery
+                ? `No results for "${searchQuery}".`
+                : hasActiveFilters
+                  ? "No sessions match these filters."
+                  : "No sessions yet."}
             </p>
+            {!searchQuery && !hasActiveFilters ? (
+              <Button asChild variant="secondary" size="sm">
+                <Link to="/">Start creating</Link>
+              </Button>
+            ) : null}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2.5 pt-4">
-            {filteredOutputs.map((entry, index) => {
-              const title = deriveTitle(entry);
-              const uuid = typeof entry.uuid === "string" ? entry.uuid : null;
-              const sessionId = typeof entry.id === "string" ? entry.id : null;
-              const when = formatRelativeOrDate(entry.timestamp);
-              const mode =
-                typeof entry.mode === "string" && entry.mode.trim()
-                  ? entry.mode.trim()
-                  : null;
-              const model =
-                typeof entry.targetModel === "string" &&
-                entry.targetModel.trim()
-                  ? entry.targetModel.trim()
-                  : null;
-
-              return (
-                <article
-                  key={
-                    entry.id ??
-                    entry.uuid ??
-                    `${entry.timestamp ?? "no-ts"}-${index}`
-                  }
-                  className="rounded-[10px] p-4"
-                  style={{
-                    background: AUTH_COLORS.card,
-                    border: `1px solid ${AUTH_COLORS.cardBorder}`,
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h2
-                        className="truncate text-[13px] font-semibold text-white"
-                        title={title}
-                      >
-                        {title}
-                      </h2>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <span
-                          className="text-[11px] tabular-nums"
-                          style={{ color: AUTH_COLORS.textDim }}
-                        >
-                          {when}
-                        </span>
-                        {mode ? <Tag>{mode}</Tag> : null}
-                        {model ? <Tag>{model}</Tag> : null}
-                        {typeof entry.score === "number" ? (
-                          <Tag>Score {Math.round(entry.score)}</Tag>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {sessionId ? (
-                      <Link
-                        to={`/session/${sessionId}`}
-                        className="shrink-0 text-[12px] font-semibold transition-colors hover:text-white"
-                        style={{ color: AUTH_COLORS.accent }}
-                        aria-label="Open prompt"
-                      >
-                        Open
-                      </Link>
-                    ) : null}
-                  </div>
-
-                  <div
-                    className="mt-3 rounded-lg p-3"
-                    style={{
-                      background: AUTH_COLORS.inputBg,
-                      border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                    }}
-                  >
-                    <span
-                      className="text-overline"
-                      style={{ color: AUTH_COLORS.textLabel }}
-                    >
-                      Output
-                    </span>
-                    <p
-                      className="ps-line-clamp-3 mt-1.5 whitespace-pre-wrap break-words text-[13px] leading-snug"
-                      style={{ color: AUTH_COLORS.textSecondary }}
-                    >
-                      {deriveSnippet(entry.output)}
-                    </p>
-                  </div>
-
-                  {uuid ? (
-                    <p
-                      className="mt-2.5 font-mono text-[11px]"
-                      style={{ color: AUTH_COLORS.textLabel }}
-                    >
-                      {uuid}
-                    </p>
-                  ) : null}
-                </article>
-              );
-            })}
-          </div>
+          <ul className="flex flex-col gap-2 pt-4">
+            {sessions.map((entry, index) => (
+              <li
+                key={
+                  entry.id ??
+                  entry.uuid ??
+                  `${entry.timestamp ?? "no-ts"}-${index}`
+                }
+              >
+                <SessionRow entry={entry} />
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>
