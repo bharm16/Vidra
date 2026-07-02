@@ -13,19 +13,6 @@ import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { AuthShell } from "./auth/AuthShell";
-import {
-  AUTH_COLORS,
-  AUTH_INPUT_CLASS,
-  AUTH_INPUT_STYLE,
-  AUTH_INPUT_FOCUS_STYLE,
-  AUTH_CTA_CLASS,
-  AUTH_CTA_STYLE,
-  AUTH_SECONDARY_BTN_CLASS,
-  AUTH_SECONDARY_BTN_STYLE,
-  AUTH_LABEL_CLASS,
-  AUTH_ERROR_STYLE,
-  AUTH_DIVIDER_STYLE,
-} from "./auth/auth-styles";
 
 function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
@@ -110,21 +97,6 @@ function secureEquals(left: string, right: string): boolean {
   return diff === 0;
 }
 
-function useFocusStyle(): {
-  style: React.CSSProperties;
-  onFocus: () => void;
-  onBlur: () => void;
-} {
-  const [focused, setFocused] = React.useState(false);
-  return {
-    style: focused
-      ? { ...AUTH_INPUT_STYLE, ...AUTH_INPUT_FOCUS_STYLE }
-      : AUTH_INPUT_STYLE,
-    onFocus: () => setFocused(true),
-    onBlur: () => setFocused(false),
-  };
-}
-
 export function SignUpPage(): React.ReactElement {
   const toast = useToast();
   const navigate = useNavigate();
@@ -144,10 +116,6 @@ export function SignUpPage(): React.ReactElement {
   const [isBusy, setIsBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const nameFocus = useFocusStyle();
-  const emailFocus = useFocusStyle();
-  const passwordFocus = useFocusStyle();
-  const confirmFocus = useFocusStyle();
   const nameId = React.useId();
   const emailId = React.useId();
   const passwordId = React.useId();
@@ -238,7 +206,7 @@ export function SignUpPage(): React.ReactElement {
       footer={
         <>
           Already have an account?{" "}
-          <Link to={signInLink} className="text-white hover:underline">
+          <Link to={signInLink} className="text-foreground hover:underline">
             Sign in
           </Link>
           .
@@ -246,10 +214,7 @@ export function SignUpPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p
-          className="text-[13px] leading-relaxed"
-          style={{ color: AUTH_COLORS.textSecondary }}
-        >
+        <p className="text-muted text-[13px] leading-relaxed">
           Create an account to sync history, save versions, and pick up where
           you left off.
         </p>
@@ -257,10 +222,9 @@ export function SignUpPage(): React.ReactElement {
         {error ? (
           <div
             role="alert"
-            className="px-3.5 py-2.5 text-[13px]"
-            style={AUTH_ERROR_STYLE}
+            className="text-danger rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
           >
-            <span style={{ color: AUTH_COLORS.danger }}>{error}</span>
+            {error}
           </div>
         ) : null}
 
@@ -268,9 +232,8 @@ export function SignUpPage(): React.ReactElement {
           type="button"
           onClick={handleGoogleSignUp}
           disabled={isBusy}
-          variant="ghost"
-          className={AUTH_SECONDARY_BTN_CLASS}
-          style={AUTH_SECONDARY_BTN_STYLE}
+          variant="secondary"
+          className="w-full"
         >
           {isBusy ? (
             <Spinner />
@@ -281,40 +244,24 @@ export function SignUpPage(): React.ReactElement {
         </Button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1" style={AUTH_DIVIDER_STYLE} />
-          <span
-            className="text-[11px] font-medium"
-            style={{ color: AUTH_COLORS.textLabel }}
-          >
-            or
-          </span>
-          <div className="flex-1" style={AUTH_DIVIDER_STYLE} />
+          <div className="bg-border h-px flex-1" />
+          <span className="text-faint text-[11px] font-medium">or</span>
+          <div className="bg-border h-px flex-1" />
         </div>
 
         <form onSubmit={handleEmailSignUp} className="flex flex-col gap-3.5">
           <div>
-            <label
-              htmlFor={nameId}
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              NAME{" "}
-              <span style={{ color: AUTH_COLORS.textPlaceholder }}>
-                (OPTIONAL)
-              </span>
+            <label htmlFor={nameId} className="text-overline text-faint">
+              Name <span className="text-ghost">(optional)</span>
             </label>
-            <div className="relative">
+            <div className="relative mt-1">
               <UserIcon
-                className="pointer-events-none absolute left-3.5 top-[14px] h-4 w-4"
-                style={{ color: AUTH_COLORS.textPlaceholder }}
+                className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
                 aria-hidden="true"
               />
               <Input
                 id={nameId}
-                className={`${AUTH_INPUT_CLASS} pl-10`}
-                style={nameFocus.style}
-                onFocus={nameFocus.onFocus}
-                onBlur={nameFocus.onBlur}
+                className="pl-10"
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -325,25 +272,17 @@ export function SignUpPage(): React.ReactElement {
           </div>
 
           <div>
-            <label
-              htmlFor={emailId}
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              EMAIL
+            <label htmlFor={emailId} className="text-overline text-faint">
+              Email
             </label>
-            <div className="relative">
+            <div className="relative mt-1">
               <Mail
-                className="pointer-events-none absolute left-3.5 top-[14px] h-4 w-4"
-                style={{ color: AUTH_COLORS.textPlaceholder }}
+                className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
                 aria-hidden="true"
               />
               <Input
                 id={emailId}
-                className={`${AUTH_INPUT_CLASS} pl-10`}
-                style={emailFocus.style}
-                onFocus={emailFocus.onFocus}
-                onBlur={emailFocus.onBlur}
+                className="pl-10"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -355,20 +294,13 @@ export function SignUpPage(): React.ReactElement {
           </div>
 
           <div>
-            <label
-              htmlFor={passwordId}
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              PASSWORD
+            <label htmlFor={passwordId} className="text-overline text-faint">
+              Password
             </label>
-            <div className="relative">
+            <div className="relative mt-1">
               <Input
                 id={passwordId}
-                className={`${AUTH_INPUT_CLASS} pr-10`}
-                style={passwordFocus.style}
-                onFocus={passwordFocus.onFocus}
-                onBlur={passwordFocus.onBlur}
+                className="pr-10"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -380,8 +312,7 @@ export function SignUpPage(): React.ReactElement {
                 onClick={() => setShowPassword((v) => !v)}
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-md p-0 transition"
-                style={{ color: AUTH_COLORS.textPlaceholder }}
+                className="absolute right-1.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md p-0"
                 disabled={isBusy}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -395,57 +326,40 @@ export function SignUpPage(): React.ReactElement {
           </div>
 
           <div>
-            <label
-              htmlFor={confirmId}
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              CONFIRM PASSWORD
+            <label htmlFor={confirmId} className="text-overline text-faint">
+              Confirm password
             </label>
-            <Input
-              id={confirmId}
-              className={AUTH_INPUT_CLASS}
-              style={confirmFocus.style}
-              onFocus={confirmFocus.onFocus}
-              onBlur={confirmFocus.onBlur}
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Repeat your password"
-            />
+            <div className="mt-1">
+              <Input
+                id={confirmId}
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                placeholder="Repeat your password"
+              />
+            </div>
           </div>
 
-          <p
-            className="text-[12px] leading-relaxed"
-            style={{ color: AUTH_COLORS.textLabel }}
-          >
+          <p className="text-ghost text-[12px] leading-relaxed">
             By creating an account, you agree to our{" "}
             <Link
               to="/terms-of-service"
-              className="hover:text-white hover:underline"
-              style={{ color: AUTH_COLORS.textDim }}
+              className="text-faint hover:text-foreground hover:underline"
             >
               terms
             </Link>{" "}
             and{" "}
             <Link
               to="/privacy-policy"
-              className="hover:text-white hover:underline"
-              style={{ color: AUTH_COLORS.textDim }}
+              className="text-faint hover:text-foreground hover:underline"
             >
               privacy policy
             </Link>
             .
           </p>
 
-          <Button
-            type="submit"
-            disabled={isBusy}
-            variant="ghost"
-            className={AUTH_CTA_CLASS}
-            style={AUTH_CTA_STYLE}
-          >
+          <Button type="submit" disabled={isBusy} className="w-full">
             {isBusy ? <Spinner /> : null}
             Create account
           </Button>

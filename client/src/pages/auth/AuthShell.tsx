@@ -17,18 +17,10 @@ type AuthShellProps = {
 };
 
 /**
- * Auth shell styled to match the workspace tool-panel aesthetic.
+ * Auth shell — the one page frame for auth and account/billing surfaces.
  *
- * Uses the exact tool-sidebar palette so auth pages feel like they're
- * inside the app rather than a separate marketing site.
- *
- * Key colors (from --tool-* CSS vars):
- *   #131416  — rail / panel bg
- *   #16181E  — card surface
- *   #1B1E23  — rail border (subtle)
- *   #2C3037  — border-primary (cards, inputs)
- *   #22252C  — nav-active bg (card borders)
- *   #0F1118  — inset surface (input bg)
+ * Styled entirely from @promptstudio/system semantic tokens so these pages
+ * speak the workspace's monochrome language (ADR-0008).
  */
 export function AuthShell({
   title,
@@ -39,18 +31,12 @@ export function AuthShell({
   const isAuth = variant === "auth";
 
   return (
-    <div
-      className="flex min-h-full flex-col text-white"
-      style={{ background: "#131416" }}
-    >
+    <div className="bg-app text-foreground flex min-h-full flex-col">
       {/* Header — mimics the rail's top area */}
-      <header
-        className="flex items-center justify-between px-5 py-4"
-        style={{ borderBottom: "1px solid #1B1E23" }}
-      >
+      <header className="border-border flex items-center justify-between border-b px-5 py-4">
         <Link
           to="/home"
-          className="text-[14px] font-semibold tracking-tight text-white transition hover:opacity-80"
+          className="text-foreground text-[14px] font-semibold tracking-tight transition hover:opacity-80"
           aria-label="Go to Vidra home"
         >
           Vidra
@@ -67,7 +53,7 @@ export function AuthShell({
         <div className={cn("w-full", isAuth ? "max-w-[400px]" : "max-w-3xl")}>
           <h1
             className={cn(
-              "mb-5 text-[15px] font-semibold tracking-tight text-white",
+              "text-foreground mb-5 text-[15px] font-semibold tracking-tight",
               isAuth && "text-center",
             )}
           >
@@ -75,15 +61,7 @@ export function AuthShell({
           </h1>
 
           {isAuth ? (
-            <div
-              className="rounded-[10px] p-5"
-              style={{
-                background: "#16181E",
-                border: "1px solid #22252C",
-                boxShadow:
-                  "inset 0 1px 0 rgba(255,255,255,0.02), 0 4px 12px rgba(0,0,0,0.4)",
-              }}
-            >
+            <div className="ps-edge-lit border-border bg-surface-1 rounded-lg border p-5 shadow-md">
               {children}
             </div>
           ) : (
@@ -92,8 +70,10 @@ export function AuthShell({
 
           {footer ? (
             <div
-              className={cn("mt-4 text-[13px]", isAuth && "text-center")}
-              style={{ color: "#8B92A5" }}
+              className={cn(
+                "text-faint mt-4 text-[13px]",
+                isAuth && "text-center",
+              )}
             >
               {footer}
             </div>

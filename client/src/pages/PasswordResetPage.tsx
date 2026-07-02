@@ -12,20 +12,6 @@ import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { AuthShell } from "./auth/AuthShell";
-import {
-  AUTH_COLORS,
-  AUTH_INPUT_CLASS,
-  AUTH_INPUT_STYLE,
-  AUTH_INPUT_FOCUS_STYLE,
-  AUTH_CTA_CLASS,
-  AUTH_CTA_STYLE,
-  AUTH_SECONDARY_BTN_CLASS,
-  AUTH_SECONDARY_BTN_STYLE,
-  AUTH_LABEL_CLASS,
-  AUTH_ERROR_STYLE,
-  AUTH_SUCCESS_STYLE,
-  AUTH_CARD_STYLE,
-} from "./auth/auth-styles";
 
 function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
@@ -95,21 +81,6 @@ function mapResetError(error: unknown): string {
   }
 }
 
-function useFocusStyle(): {
-  style: React.CSSProperties;
-  onFocus: () => void;
-  onBlur: () => void;
-} {
-  const [focused, setFocused] = React.useState(false);
-  return {
-    style: focused
-      ? { ...AUTH_INPUT_STYLE, ...AUTH_INPUT_FOCUS_STYLE }
-      : AUTH_INPUT_STYLE,
-    onFocus: () => setFocused(true),
-    onBlur: () => setFocused(false),
-  };
-}
-
 type ResetState = "idle" | "checking" | "ready" | "success" | "error";
 
 export function PasswordResetPage(): React.ReactElement {
@@ -130,9 +101,6 @@ export function PasswordResetPage(): React.ReactElement {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isBusy, setIsBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
-  const passwordFocus = useFocusStyle();
-  const confirmFocus = useFocusStyle();
 
   React.useEffect(() => {
     setError(null);
@@ -223,7 +191,7 @@ export function PasswordResetPage(): React.ReactElement {
       footer={
         <>
           Remembered it?{" "}
-          <Link to={signInLink} className="text-white hover:underline">
+          <Link to={signInLink} className="text-foreground hover:underline">
             Back to sign in
           </Link>
           .
@@ -231,32 +199,25 @@ export function PasswordResetPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p
-          className="text-[13px] leading-relaxed"
-          style={{ color: AUTH_COLORS.textSecondary }}
-        >
+        <p className="text-muted text-[13px] leading-relaxed">
           Choose a strong password you'll remember.
         </p>
 
         {error ? (
-          <div role="alert" className="px-3.5 py-2.5" style={AUTH_ERROR_STYLE}>
+          <div
+            role="alert"
+            className="rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5"
+          >
             <div className="flex items-start gap-2.5">
               <ShieldAlert
-                className="mt-0.5 h-4 w-4 shrink-0"
-                style={{ color: AUTH_COLORS.danger }}
+                className="text-danger mt-0.5 h-4 w-4 shrink-0"
                 aria-hidden="true"
               />
               <div className="min-w-0">
-                <p
-                  className="text-[13px] font-semibold"
-                  style={{ color: AUTH_COLORS.danger }}
-                >
+                <p className="text-danger text-[13px] font-semibold">
                   Action required
                 </p>
-                <p
-                  className="mt-0.5 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.danger, opacity: 0.8 }}
-                >
+                <p className="text-danger mt-0.5 text-[13px] leading-snug opacity-80">
                   {error}
                 </p>
               </div>
@@ -265,39 +226,21 @@ export function PasswordResetPage(): React.ReactElement {
         ) : null}
 
         {resetState === "idle" ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: AUTH_COLORS.inputBg,
-                  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                }}
-              >
-                <KeyRound
-                  className="h-4 w-4"
-                  style={{ color: AUTH_COLORS.textDim }}
-                  aria-hidden="true"
-                />
+              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+                <KeyRound className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-foreground text-[13px] font-semibold">
                   Open your reset link
                 </p>
-                <p
-                  className="mt-1 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.textSecondary }}
-                >
+                <p className="text-muted mt-1 text-[13px] leading-snug">
                   This page needs a secure code from your email. Use the link we
                   sent you.
                 </p>
                 <div className="mt-3">
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className={AUTH_CTA_CLASS}
-                    style={AUTH_CTA_STYLE}
-                  >
+                  <Button asChild className="w-full">
                     <Link to={forgotPasswordLink}>
                       Request a new reset email
                     </Link>
@@ -309,25 +252,16 @@ export function PasswordResetPage(): React.ReactElement {
         ) : null}
 
         {resetState === "checking" ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: AUTH_COLORS.inputBg,
-                  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                }}
-              >
+              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <Spinner />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-foreground text-[13px] font-semibold">
                   Validating link…
                 </p>
-                <p
-                  className="mt-1 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.textSecondary }}
-                >
+                <p className="text-muted mt-1 text-[13px] leading-snug">
                   Checking that your reset link is still active.
                 </p>
               </div>
@@ -336,47 +270,24 @@ export function PasswordResetPage(): React.ReactElement {
         ) : null}
 
         {resetState === "error" ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: AUTH_COLORS.inputBg,
-                  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                }}
-              >
-                <KeyRound
-                  className="h-4 w-4"
-                  style={{ color: AUTH_COLORS.textDim }}
-                  aria-hidden="true"
-                />
+              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+                <KeyRound className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-foreground text-[13px] font-semibold">
                   Get a fresh link
                 </p>
-                <p
-                  className="mt-1 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.textSecondary }}
-                >
+                <p className="text-muted mt-1 text-[13px] leading-snug">
                   If this link expired or was already used, request a new reset
                   email.
                 </p>
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className={AUTH_CTA_CLASS}
-                    style={AUTH_CTA_STYLE}
-                  >
+                  <Button asChild className="w-full">
                     <Link to={forgotPasswordLink}>Request new email</Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className={AUTH_SECONDARY_BTN_CLASS}
-                    style={AUTH_SECONDARY_BTN_STYLE}
-                  >
+                  <Button asChild variant="secondary" className="w-full">
                     <Link to={signInLink}>Back to sign in</Link>
                   </Button>
                 </div>
@@ -386,32 +297,19 @@ export function PasswordResetPage(): React.ReactElement {
         ) : null}
 
         {resetState === "success" ? (
-          <div className="px-3.5 py-2.5" style={AUTH_SUCCESS_STYLE}>
+          <div className="rounded-lg border border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)] px-3.5 py-2.5">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: `${AUTH_COLORS.success}15`,
-                  border: `1px solid ${AUTH_COLORS.success}30`,
-                }}
-              >
+              <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)]">
                 <CheckCircle2
-                  className="h-4 w-4 animate-scale-in"
-                  style={{ color: AUTH_COLORS.success }}
+                  className="animate-scale-in h-4 w-4 text-[color:var(--ps-badge-success-text)]"
                   aria-hidden="true"
                 />
               </span>
               <div className="min-w-0">
-                <p
-                  className="text-[13px] font-semibold"
-                  style={{ color: AUTH_COLORS.success }}
-                >
+                <p className="text-[13px] font-semibold text-[color:var(--ps-badge-success-text)]">
                   Password updated
                 </p>
-                <p
-                  className="mt-0.5 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.success, opacity: 0.7 }}
-                >
+                <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--ps-badge-success-text)] opacity-70">
                   You're good. Sign in with your new password.
                 </p>
               </div>
@@ -421,29 +319,18 @@ export function PasswordResetPage(): React.ReactElement {
 
         {resetState === "ready" ? (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-            <div className="px-3.5 py-2.5" style={AUTH_CARD_STYLE}>
-              <p
-                className="text-[11px] font-semibold tracking-[0.18em]"
-                style={{ color: AUTH_COLORS.textLabel }}
-              >
-                RESETTING FOR
+            <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-2.5">
+              <p className="text-overline text-faint">Resetting for</p>
+              <p className="text-foreground mt-1 text-[13px] font-medium">
+                {email}
               </p>
-              <p className="mt-1 text-[13px] font-medium text-white">{email}</p>
             </div>
 
             <div>
-              <label
-                className={AUTH_LABEL_CLASS}
-                style={{ color: AUTH_COLORS.textLabel }}
-              >
-                NEW PASSWORD
-              </label>
-              <div className="relative">
+              <label className="text-overline text-faint">New password</label>
+              <div className="relative mt-1">
                 <Input
-                  className={`${AUTH_INPUT_CLASS} pr-10`}
-                  style={passwordFocus.style}
-                  onFocus={passwordFocus.onFocus}
-                  onBlur={passwordFocus.onBlur}
+                  className="pr-10"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -456,8 +343,7 @@ export function PasswordResetPage(): React.ReactElement {
                   onClick={() => setShowPassword((v) => !v)}
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-md p-0 transition"
-                  style={{ color: AUTH_COLORS.textPlaceholder }}
+                  className="absolute right-1.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md p-0"
                   disabled={isBusy}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
@@ -471,33 +357,22 @@ export function PasswordResetPage(): React.ReactElement {
             </div>
 
             <div>
-              <label
-                className={AUTH_LABEL_CLASS}
-                style={{ color: AUTH_COLORS.textLabel }}
-              >
-                CONFIRM PASSWORD
+              <label className="text-overline text-faint">
+                Confirm password
               </label>
-              <Input
-                className={AUTH_INPUT_CLASS}
-                style={confirmFocus.style}
-                onFocus={confirmFocus.onFocus}
-                onBlur={confirmFocus.onBlur}
-                type={showPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                placeholder="Repeat your password"
-                disabled={isBusy}
-              />
+              <div className="mt-1">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Repeat your password"
+                  disabled={isBusy}
+                />
+              </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isBusy}
-              variant="ghost"
-              className={AUTH_CTA_CLASS}
-              style={AUTH_CTA_STYLE}
-            >
+            <Button type="submit" disabled={isBusy} className="w-full">
               {isBusy ? <Spinner /> : null}
               Update password
             </Button>
@@ -505,15 +380,13 @@ export function PasswordResetPage(): React.ReactElement {
             <div className="flex items-center justify-between gap-3">
               <Link
                 to={signInLink}
-                className="text-[12px] font-medium transition hover:text-white"
-                style={{ color: AUTH_COLORS.textDim }}
+                className="text-faint hover:text-foreground text-[12px] font-medium transition"
               >
                 Back to sign in
               </Link>
               <Link
                 to={forgotPasswordLink}
-                className="text-[12px] font-medium transition hover:text-white"
-                style={{ color: AUTH_COLORS.textLabel }}
+                className="text-ghost hover:text-foreground text-[12px] font-medium transition"
               >
                 New link
               </Link>
@@ -525,9 +398,8 @@ export function PasswordResetPage(): React.ReactElement {
           <Button
             type="button"
             onClick={handleContinue}
-            variant="ghost"
-            className={AUTH_SECONDARY_BTN_CLASS}
-            style={AUTH_SECONDARY_BTN_STYLE}
+            variant="secondary"
+            className="w-full"
           >
             Continue to sign in
           </Button>

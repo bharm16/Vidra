@@ -7,19 +7,6 @@ import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { AuthShell } from "./auth/AuthShell";
-import {
-  AUTH_COLORS,
-  AUTH_INPUT_CLASS,
-  AUTH_INPUT_STYLE,
-  AUTH_INPUT_FOCUS_STYLE,
-  AUTH_CTA_CLASS,
-  AUTH_CTA_STYLE,
-  AUTH_SECONDARY_BTN_CLASS,
-  AUTH_SECONDARY_BTN_STYLE,
-  AUTH_LABEL_CLASS,
-  AUTH_ERROR_STYLE,
-  AUTH_DIVIDER_STYLE,
-} from "./auth/auth-styles";
 
 function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
@@ -95,21 +82,6 @@ function mapAuthError(error: unknown, flow: AuthFlow): string {
   }
 }
 
-function useFocusStyle(): {
-  style: React.CSSProperties;
-  onFocus: () => void;
-  onBlur: () => void;
-} {
-  const [focused, setFocused] = React.useState(false);
-  return {
-    style: focused
-      ? { ...AUTH_INPUT_STYLE, ...AUTH_INPUT_FOCUS_STYLE }
-      : AUTH_INPUT_STYLE,
-    onFocus: () => setFocused(true),
-    onBlur: () => setFocused(false),
-  };
-}
-
 export function SignInPage(): React.ReactElement {
   const toast = useToast();
   const navigate = useNavigate();
@@ -126,8 +98,6 @@ export function SignInPage(): React.ReactElement {
   const [isBusy, setIsBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const emailFocus = useFocusStyle();
-  const passwordFocus = useFocusStyle();
   const emailId = React.useId();
   const passwordId = React.useId();
 
@@ -202,7 +172,7 @@ export function SignInPage(): React.ReactElement {
       footer={
         <>
           New here?{" "}
-          <Link to={signUpLink} className="text-white hover:underline">
+          <Link to={signUpLink} className="text-foreground hover:underline">
             Create an account
           </Link>
           .
@@ -210,20 +180,16 @@ export function SignInPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p
-          className="text-[13px] leading-relaxed"
-          style={{ color: AUTH_COLORS.textSecondary }}
-        >
+        <p className="text-muted text-[13px] leading-relaxed">
           Sign in to sync prompt history and keep your work across devices.
         </p>
 
         {error ? (
           <div
             role="alert"
-            className="px-3.5 py-2.5 text-[13px]"
-            style={AUTH_ERROR_STYLE}
+            className="text-danger rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
           >
-            <span style={{ color: AUTH_COLORS.danger }}>{error}</span>
+            {error}
           </div>
         ) : null}
 
@@ -231,9 +197,8 @@ export function SignInPage(): React.ReactElement {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={isBusy}
-          variant="ghost"
-          className={AUTH_SECONDARY_BTN_CLASS}
-          style={AUTH_SECONDARY_BTN_STYLE}
+          variant="secondary"
+          className="w-full"
         >
           {isBusy ? (
             <Spinner />
@@ -244,37 +209,24 @@ export function SignInPage(): React.ReactElement {
         </Button>
 
         <div className="flex items-center gap-3">
-          <div className="flex-1" style={AUTH_DIVIDER_STYLE} />
-          <span
-            className="text-[11px] font-medium"
-            style={{ color: AUTH_COLORS.textLabel }}
-          >
-            or
-          </span>
-          <div className="flex-1" style={AUTH_DIVIDER_STYLE} />
+          <div className="bg-border h-px flex-1" />
+          <span className="text-faint text-[11px] font-medium">or</span>
+          <div className="bg-border h-px flex-1" />
         </div>
 
         <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3.5">
           <div>
-            <label
-              htmlFor={emailId}
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              EMAIL
+            <label htmlFor={emailId} className="text-overline text-faint">
+              Email
             </label>
-            <div className="relative">
+            <div className="relative mt-1">
               <Mail
-                className="pointer-events-none absolute left-3.5 top-[14px] h-4 w-4"
-                style={{ color: AUTH_COLORS.textPlaceholder }}
+                className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
                 aria-hidden="true"
               />
               <Input
                 id={emailId}
-                className={`${AUTH_INPUT_CLASS} pl-10`}
-                style={emailFocus.style}
-                onFocus={emailFocus.onFocus}
-                onBlur={emailFocus.onBlur}
+                className="pl-10"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -286,20 +238,13 @@ export function SignInPage(): React.ReactElement {
           </div>
 
           <div>
-            <label
-              htmlFor={passwordId}
-              className={AUTH_LABEL_CLASS}
-              style={{ color: AUTH_COLORS.textLabel }}
-            >
-              PASSWORD
+            <label htmlFor={passwordId} className="text-overline text-faint">
+              Password
             </label>
-            <div className="relative">
+            <div className="relative mt-1">
               <Input
                 id={passwordId}
-                className={`${AUTH_INPUT_CLASS} pr-10`}
-                style={passwordFocus.style}
-                onFocus={passwordFocus.onFocus}
-                onBlur={passwordFocus.onBlur}
+                className="pr-10"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -311,8 +256,7 @@ export function SignInPage(): React.ReactElement {
                 onClick={() => setShowPassword((v) => !v)}
                 variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-md p-0 transition"
-                style={{ color: AUTH_COLORS.textPlaceholder }}
+                className="absolute right-1.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md p-0"
                 disabled={isBusy}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -328,27 +272,19 @@ export function SignInPage(): React.ReactElement {
           <div className="flex items-center justify-between gap-3">
             <Link
               to={forgotPasswordLink}
-              className="text-[12px] font-medium transition hover:text-white"
-              style={{ color: AUTH_COLORS.textDim }}
+              className="text-faint hover:text-foreground text-[12px] font-medium transition"
             >
               Forgot password?
             </Link>
             <Link
               to="/privacy-policy"
-              className="text-[12px] font-medium transition hover:text-white"
-              style={{ color: AUTH_COLORS.textLabel }}
+              className="text-ghost hover:text-foreground text-[12px] font-medium transition"
             >
               Privacy
             </Link>
           </div>
 
-          <Button
-            type="submit"
-            disabled={isBusy}
-            variant="ghost"
-            className={AUTH_CTA_CLASS}
-            style={AUTH_CTA_STYLE}
-          >
+          <Button type="submit" disabled={isBusy} className="w-full">
             {isBusy ? <Spinner /> : null}
             Sign in
           </Button>

@@ -1,6 +1,12 @@
 /**
  * Shared style constants for all auth pages.
  *
+ * @deprecated Being retired under ADR-0008 (one design language across all
+ * shells) — do not add consumers. The auth/account pages now style from
+ * `@promptstudio/system` semantic tokens; the remaining importers
+ * (marketing/billing/legal pages) are being migrated in parallel, after
+ * which this file is deleted.
+ *
  * These map directly to the tool-sidebar CSS variables so auth pages
  * match the workspace aesthetic exactly.
  */

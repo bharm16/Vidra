@@ -11,16 +11,6 @@ import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { AuthShell } from "./auth/AuthShell";
-import {
-  AUTH_COLORS,
-  AUTH_CTA_CLASS,
-  AUTH_CTA_STYLE,
-  AUTH_SECONDARY_BTN_CLASS,
-  AUTH_SECONDARY_BTN_STYLE,
-  AUTH_ERROR_STYLE,
-  AUTH_SUCCESS_STYLE,
-  AUTH_CARD_STYLE,
-} from "./auth/auth-styles";
 
 function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
@@ -254,7 +244,7 @@ export function EmailVerificationPage(): React.ReactElement {
           Need to sign in?{" "}
           <Link
             to={`/signin?redirect=${encodeURIComponent(continuePath)}`}
-            className="text-white hover:underline"
+            className="text-foreground hover:underline"
           >
             Sign in
           </Link>
@@ -263,34 +253,22 @@ export function EmailVerificationPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p
-          className="text-[13px] leading-relaxed"
-          style={{ color: AUTH_COLORS.textSecondary }}
-        >
+        <p className="text-muted text-[13px] leading-relaxed">
           We use verification to keep accounts secure and deliver resets
           reliably.
         </p>
 
         {showVerifyInProgress ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: AUTH_COLORS.inputBg,
-                  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                }}
-              >
+              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <Spinner />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-foreground text-[13px] font-semibold">
                   Verifying…
                 </p>
-                <p
-                  className="mt-1 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.textSecondary }}
-                >
+                <p className="text-muted mt-1 text-[13px] leading-snug">
                   Applying your confirmation code. This should take a moment.
                 </p>
               </div>
@@ -299,32 +277,19 @@ export function EmailVerificationPage(): React.ReactElement {
         ) : null}
 
         {showVerifiedPanel ? (
-          <div className="px-3.5 py-2.5" style={AUTH_SUCCESS_STYLE}>
+          <div className="rounded-lg border border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)] px-3.5 py-2.5">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: `${AUTH_COLORS.success}15`,
-                  border: `1px solid ${AUTH_COLORS.success}30`,
-                }}
-              >
+              <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)]">
                 <CheckCircle2
-                  className="h-4 w-4 animate-scale-in"
-                  style={{ color: AUTH_COLORS.success }}
+                  className="animate-scale-in h-4 w-4 text-[color:var(--ps-badge-success-text)]"
                   aria-hidden="true"
                 />
               </span>
               <div className="min-w-0">
-                <p
-                  className="text-[13px] font-semibold"
-                  style={{ color: AUTH_COLORS.success }}
-                >
+                <p className="text-[13px] font-semibold text-[color:var(--ps-badge-success-text)]">
                   Email verified
                 </p>
-                <p
-                  className="mt-0.5 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.success, opacity: 0.7 }}
-                >
+                <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--ps-badge-success-text)] opacity-70">
                   You're confirmed. Jump back into the app.
                 </p>
               </div>
@@ -333,24 +298,20 @@ export function EmailVerificationPage(): React.ReactElement {
         ) : null}
 
         {showInlineError ? (
-          <div role="alert" className="px-3.5 py-2.5" style={AUTH_ERROR_STYLE}>
+          <div
+            role="alert"
+            className="rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5"
+          >
             <div className="flex items-start gap-2.5">
               <ShieldAlert
-                className="mt-0.5 h-4 w-4 shrink-0"
-                style={{ color: AUTH_COLORS.danger }}
+                className="text-danger mt-0.5 h-4 w-4 shrink-0"
                 aria-hidden="true"
               />
               <div className="min-w-0">
-                <p
-                  className="text-[13px] font-semibold"
-                  style={{ color: AUTH_COLORS.danger }}
-                >
+                <p className="text-danger text-[13px] font-semibold">
                   {inlineErrorTitle}
                 </p>
-                <p
-                  className="mt-0.5 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.danger, opacity: 0.8 }}
-                >
+                <p className="text-danger mt-0.5 text-[13px] leading-snug opacity-80">
                   {error}
                 </p>
               </div>
@@ -359,33 +320,23 @@ export function EmailVerificationPage(): React.ReactElement {
         ) : null}
 
         {showDeliveryFailurePanel ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: AUTH_COLORS.inputBg,
-                  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                }}
-              >
+              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <ShieldAlert
-                  className="h-4 w-4"
-                  style={{ color: AUTH_COLORS.danger }}
+                  className="text-danger h-4 w-4"
                   aria-hidden="true"
                 />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-foreground text-[13px] font-semibold">
                   Verification email not sent
                 </p>
-                <p
-                  className="mt-1 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.textSecondary }}
-                >
+                <p className="text-muted mt-1 text-[13px] leading-snug">
                   {displayEmail ? (
                     <>
                       Your account was created for{" "}
-                      <span className="font-medium text-white">
+                      <span className="text-foreground font-medium">
                         {displayEmail}
                       </span>
                       , but we couldn&apos;t send the verification email yet.
@@ -403,9 +354,8 @@ export function EmailVerificationPage(): React.ReactElement {
                     type="button"
                     onClick={handleResend}
                     disabled={!user || isResending || resendCooldown > 0}
-                    variant="ghost"
-                    className={AUTH_SECONDARY_BTN_CLASS}
-                    style={AUTH_SECONDARY_BTN_STYLE}
+                    variant="secondary"
+                    className="w-full"
                   >
                     {isResending ? (
                       <Spinner />
@@ -417,15 +367,7 @@ export function EmailVerificationPage(): React.ReactElement {
                       : "Resend email"}
                   </Button>
 
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className={AUTH_SECONDARY_BTN_CLASS}
-                    style={{
-                      ...AUTH_SECONDARY_BTN_STYLE,
-                      background: AUTH_COLORS.inputBg,
-                    }}
-                  >
+                  <Button asChild variant="outline" className="w-full">
                     <Link
                       to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
                     >
@@ -435,10 +377,7 @@ export function EmailVerificationPage(): React.ReactElement {
                 </div>
 
                 {!user ? (
-                  <p
-                    className="mt-3 text-[12px] leading-relaxed"
-                    style={{ color: AUTH_COLORS.textLabel }}
-                  >
+                  <p className="text-faint mt-3 text-[12px] leading-relaxed">
                     Sign in first to resend a verification email. If you&apos;re
                     on a different device, just click the link in your inbox.
                   </p>
@@ -449,33 +388,20 @@ export function EmailVerificationPage(): React.ReactElement {
         ) : null}
 
         {showInboxPanel ? (
-          <div className="px-3.5 py-3" style={AUTH_CARD_STYLE}>
+          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  background: AUTH_COLORS.inputBg,
-                  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-                }}
-              >
-                <Mail
-                  className="h-4 w-4"
-                  style={{ color: AUTH_COLORS.textDim }}
-                  aria-hidden="true"
-                />
+              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+                <Mail className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-foreground text-[13px] font-semibold">
                   Check your inbox
                 </p>
-                <p
-                  className="mt-1 text-[13px] leading-snug"
-                  style={{ color: AUTH_COLORS.textSecondary }}
-                >
+                <p className="text-muted mt-1 text-[13px] leading-snug">
                   {displayEmail ? (
                     <>
                       We sent a verification link to{" "}
-                      <span className="font-medium text-white">
+                      <span className="text-foreground font-medium">
                         {displayEmail}
                       </span>
                       . Click it to confirm.
@@ -491,9 +417,8 @@ export function EmailVerificationPage(): React.ReactElement {
                     type="button"
                     onClick={handleResend}
                     disabled={!user || isResending || resendCooldown > 0}
-                    variant="ghost"
-                    className={AUTH_SECONDARY_BTN_CLASS}
-                    style={AUTH_SECONDARY_BTN_STYLE}
+                    variant="secondary"
+                    className="w-full"
                   >
                     {isResending ? (
                       <Spinner />
@@ -505,15 +430,7 @@ export function EmailVerificationPage(): React.ReactElement {
                       : "Resend email"}
                   </Button>
 
-                  <Button
-                    asChild
-                    variant="ghost"
-                    className={AUTH_SECONDARY_BTN_CLASS}
-                    style={{
-                      ...AUTH_SECONDARY_BTN_STYLE,
-                      background: AUTH_COLORS.inputBg,
-                    }}
-                  >
+                  <Button asChild variant="outline" className="w-full">
                     <Link
                       to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
                     >
@@ -523,10 +440,7 @@ export function EmailVerificationPage(): React.ReactElement {
                 </div>
 
                 {!user ? (
-                  <p
-                    className="mt-3 text-[12px] leading-relaxed"
-                    style={{ color: AUTH_COLORS.textLabel }}
-                  >
+                  <p className="text-faint mt-3 text-[12px] leading-relaxed">
                     Sign in first to resend a verification email. If you're on a
                     different device, just click the link in your inbox.
                   </p>
@@ -536,13 +450,7 @@ export function EmailVerificationPage(): React.ReactElement {
           </div>
         ) : null}
 
-        <Button
-          type="button"
-          onClick={handleContinue}
-          variant="ghost"
-          className={AUTH_CTA_CLASS}
-          style={AUTH_CTA_STYLE}
-        >
+        <Button type="button" onClick={handleContinue} className="w-full">
           Continue
         </Button>
       </div>
