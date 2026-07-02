@@ -352,13 +352,12 @@ npm run arch:check  # Architecture gates (cycles + forbidden imports)
 
 ## Documentation
 
-| Doc                                                                                      | Contents                             |
-| ---------------------------------------------------------------------------------------- | ------------------------------------ |
-| **[docs/QUICKSTART.md](docs/QUICKSTART.md)**                                             | Minimal local setup                  |
-| **[docs/API.md](docs/API.md)**                                                           | API reference                        |
-| **[docs/billing/BILLING_SYSTEM_JAN2026.md](docs/billing/BILLING_SYSTEM_JAN2026.md)**     | Current billing system documentation |
-| **[docs/development/IMPLEMENTATION_GUIDE.md](docs/development/IMPLEMENTATION_GUIDE.md)** | Development guide                    |
-| **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**                                 | Deployment instructions              |
+| Doc                                                                                      | Contents                |
+| ---------------------------------------------------------------------------------------- | ----------------------- |
+| **[docs/QUICKSTART.md](docs/QUICKSTART.md)**                                             | Minimal local setup     |
+| **[docs/API.md](docs/API.md)**                                                           | API reference           |
+| **[docs/development/IMPLEMENTATION_GUIDE.md](docs/development/IMPLEMENTATION_GUIDE.md)** | Development guide       |
+| **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**                                 | Deployment instructions |
 
 ---
 

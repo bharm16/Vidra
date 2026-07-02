@@ -141,6 +141,5 @@ VALIDATION:
 - Each file testable with ≤2 mocks
 - Main file has no business logic
 
-REFERENCE: docs/archive/refactoring/video-concept-refactoring.md
 SHOW PLAN FIRST
 ```

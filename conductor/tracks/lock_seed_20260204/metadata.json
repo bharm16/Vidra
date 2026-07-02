@@ -1,8 +1,0 @@
-{
-  "track_id": "lock_seed_20260204",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-04T12:00:00Z",
-  "updated_at": "2026-02-04T12:00:00Z",
-  "description": "Implement Image-to-Video continuity workflow (Lock & Seed) to allow using a preview image as a reference for video generation."
-}
