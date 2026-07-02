@@ -5,6 +5,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { useUserCreditBalance } from "@/hooks/useUserCreditBalance";
+import { FEATURES } from "@/config/features.config";
 
 interface CreditBalanceContextValue {
   balance: number | null;
@@ -25,7 +26,9 @@ export function CreditBalanceProvider({
   userId: string | null;
   children: ReactNode;
 }): React.ReactElement {
-  const state = useUserCreditBalance(userId);
+  // ADR-0002: billing is frozen — passing null skips the Firestore
+  // balance subscription entirely while keeping the provider mounted.
+  const state = useUserCreditBalance(FEATURES.BILLING_UI ? userId : null);
   const value = useMemo<CreditBalanceContextValue>(
     () => ({
       balance: state.balance,

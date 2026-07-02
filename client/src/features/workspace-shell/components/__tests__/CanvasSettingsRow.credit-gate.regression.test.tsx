@@ -57,6 +57,15 @@ vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),
 }));
 
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, BILLING_UI: true },
+  };
+});
+
 // Fake balance source — overridden per test.
 let mockBalance: number | null = null;
 vi.mock("@/contexts/CreditBalanceContext", () => ({

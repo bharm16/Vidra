@@ -20,6 +20,7 @@ import { LoadingDots } from "./components/LoadingDots";
 import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import { apiClient } from "./services/ApiClient";
 import { trackPageView } from "./services/analytics";
+import { FEATURES } from "./config/features.config";
 
 // HomePage is eagerly imported — it's tiny (~40 LOC, no heavy deps) and is the
 // marketing landing page, so lazy-loading it just adds a visible blank-shell delay.
@@ -212,7 +213,11 @@ function AppRoutes(): React.ReactElement {
         {/* Marketing / company navigation */}
         <Route path="/home" element={<HomePage />} />
         <Route path="/products" element={<ProductsPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
+        {FEATURES.BILLING_UI ? (
+          <Route path="/pricing" element={<PricingPage />} />
+        ) : (
+          <Route path="/pricing" element={<Navigate to="/home" replace />} />
+        )}
         <Route path="/docs" element={<DocsPage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/signin" element={<SignInPage />} />
@@ -227,15 +232,31 @@ function AppRoutes(): React.ReactElement {
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         <Route path="/contact" element={<ContactSupportPage />} />
         <Route path="/support" element={<Navigate to="/contact" replace />} />
-        <Route path="/settings/billing" element={<BillingPage />} />
-        <Route
-          path="/settings/billing/invoices"
-          element={<BillingInvoicesPage />}
-        />
-        <Route
-          path="/billing"
-          element={<Navigate to="/settings/billing" replace />}
-        />
+        {FEATURES.BILLING_UI ? (
+          <>
+            <Route path="/settings/billing" element={<BillingPage />} />
+            <Route
+              path="/settings/billing/invoices"
+              element={<BillingInvoicesPage />}
+            />
+            <Route
+              path="/billing"
+              element={<Navigate to="/settings/billing" replace />}
+            />
+          </>
+        ) : (
+          <>
+            <Route
+              path="/settings/billing"
+              element={<Navigate to="/" replace />}
+            />
+            <Route
+              path="/settings/billing/invoices"
+              element={<Navigate to="/" replace />}
+            />
+            <Route path="/billing" element={<Navigate to="/" replace />} />
+          </>
+        )}
         <Route
           path="/share/:uuid"
           element={

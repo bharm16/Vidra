@@ -1,5 +1,6 @@
 import React from "react";
 import { useToast } from "@components/Toast";
+import { FEATURES } from "@/config/features.config";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useBillingStatus } from "@/features/billing/hooks/useBillingStatus";
 import { CreditOnboardingBanner } from "@/features/billing/components/CreditOnboardingBanner";
@@ -208,58 +209,67 @@ export const PromptResultsLayout = (): React.ReactElement => {
   return (
     <main
       id="main-content"
-      className="relative flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden bg-app transition-colors duration-300"
+      className="bg-app relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-colors duration-300"
     >
-      <CreditOnboardingBanner
-        userId={user?.uid ?? null}
-        starterGrantCredits={status?.starterGrantCredits ?? null}
-        currentBalance={currentCreditBalance}
-      />
-
-      {isSequenceMode && orderedShots.length > 1 && (
-        <ShotVisualStrip
-          shots={orderedShots}
-          currentShotId={currentShotId}
-          onShotSelect={setCurrentShotId}
-          onAddShot={() => void handleAddShot()}
+      {FEATURES.BILLING_UI ? (
+        <CreditOnboardingBanner
+          userId={user?.uid ?? null}
+          starterGrantCredits={status?.starterGrantCredits ?? null}
+          currentBalance={currentCreditBalance}
         />
-      )}
+      ) : null}
 
-      {isSequenceMode && currentShot && currentShotIndex > 0 && (
-        <div className="border-b border-border bg-surface-1 px-3 py-3">
-          <div className="space-y-3">
-            {previousShot && (
-              <PreviousShotContext
-                previousShot={previousShot}
-                continuityMode={currentShot.continuityMode}
+      {FEATURES.SEQUENCE_EDITOR_UI &&
+        isSequenceMode &&
+        orderedShots.length > 1 && (
+          <ShotVisualStrip
+            shots={orderedShots}
+            currentShotId={currentShotId}
+            onShotSelect={setCurrentShotId}
+            onAddShot={() => void handleAddShot()}
+          />
+        )}
+
+      {FEATURES.SEQUENCE_EDITOR_UI &&
+        isSequenceMode &&
+        currentShot &&
+        currentShotIndex > 0 && (
+          <div className="border-border bg-surface-1 border-b px-3 py-3">
+            <div className="space-y-3">
+              {previousShot && (
+                <PreviousShotContext
+                  previousShot={previousShot}
+                  continuityMode={currentShot.continuityMode}
+                />
+              )}
+
+              <ContinuityIntentPicker
+                mode={currentShot.continuityMode}
+                onModeChange={handleModeChange}
+                strength={currentShot.styleStrength ?? 0.6}
+                onStrengthChange={handleStrengthChange}
               />
-            )}
 
-            <ContinuityIntentPicker
-              mode={currentShot.continuityMode}
-              onModeChange={handleModeChange}
-              strength={currentShot.styleStrength ?? 0.6}
-              onStrengthChange={handleStrengthChange}
-            />
-
-            {shouldShowSceneProxyPreview && (
-              <SceneProxyPreviewPanel
-                previewImageUrl={previewImageUrl}
-                onPreviewImageError={handlePreviewImageError}
-                isSceneProxyReady={isSceneProxyReady}
-                isPreviewingSceneProxy={isPreviewingSceneProxy}
-                onPreviewSceneProxy={() => void handlePreviewSceneProxy()}
-                previewCamera={previewCamera}
-              />
-            )}
+              {shouldShowSceneProxyPreview && (
+                <SceneProxyPreviewPanel
+                  previewImageUrl={previewImageUrl}
+                  onPreviewImageError={handlePreviewImageError}
+                  isSceneProxyReady={isSceneProxyReady}
+                  isPreviewingSceneProxy={isPreviewingSceneProxy}
+                  onPreviewSceneProxy={() => void handlePreviewSceneProxy()}
+                  previewCamera={previewCamera}
+                />
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <PromptResultsSection />
-      <div className="bg-app px-3 py-2">
-        <PipelineStatus shot={currentShot} isGenerating={isGeneratingShot} />
-      </div>
+      {FEATURES.SEQUENCE_EDITOR_UI ? (
+        <div className="bg-app px-3 py-2">
+          <PipelineStatus shot={currentShot} isGenerating={isGeneratingShot} />
+        </div>
+      ) : null}
     </main>
   );
 };

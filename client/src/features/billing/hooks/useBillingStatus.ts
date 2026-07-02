@@ -4,6 +4,7 @@ import {
   type BillingStatus,
 } from "@/features/billing/api/billingApi";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { FEATURES } from "@/config/features.config";
 
 interface UseBillingStatusResult {
   status: BillingStatus | null;
@@ -14,7 +15,9 @@ interface UseBillingStatusResult {
 
 export function useBillingStatus(): UseBillingStatusResult {
   const user = useAuthUser();
-  const userId = user?.uid ?? null;
+  // ADR-0002: billing is frozen — with the flag off this hook never fetches,
+  // so every consumer goes quiet without per-call-site gating.
+  const userId = FEATURES.BILLING_UI ? (user?.uid ?? null) : null;
   const [status, setStatus] = React.useState<BillingStatus | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(Boolean(userId));
   const [error, setError] = React.useState<string | null>(null);

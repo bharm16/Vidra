@@ -1,5 +1,6 @@
 import React from "react";
 import { useToast } from "@components/Toast";
+import { FEATURES } from "@/config/features.config";
 
 interface UseLowBalanceWarningInput {
   userId: string | null;
@@ -22,7 +23,7 @@ export function useLowBalanceWarning({
   const toast = useToast();
 
   React.useEffect(() => {
-    if (!enabled || !userId) return;
+    if (!FEATURES.BILLING_UI || !enabled || !userId) return;
     if (balance === null || balance === undefined) return;
     if (!Number.isFinite(requiredCredits) || requiredCredits <= 0) return;
     if (balance >= requiredCredits) return;

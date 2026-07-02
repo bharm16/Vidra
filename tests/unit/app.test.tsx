@@ -8,6 +8,15 @@ const { mockSetActiveTool } = vi.hoisted(() => ({
   mockSetActiveTool: vi.fn(),
 }));
 
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, BILLING_UI: true },
+  };
+});
+
 vi.mock("@components/navigation/AppShell", () => ({
   AppShell: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));

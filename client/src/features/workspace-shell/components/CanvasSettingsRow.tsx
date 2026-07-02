@@ -3,10 +3,10 @@ import {
   CaretDown,
   Eye,
   MagicWand,
-  Microphone,
   Target,
   X,
 } from "@promptstudio/system/components/ui";
+import { FEATURES } from "@/config/features.config";
 import type { SidebarUploadedImage } from "@features/generation-controls";
 import {
   VIDEO_DRAFT_MODELS,
@@ -188,10 +188,16 @@ export function CanvasSettingsRow({
     selectedDraftModel?.id ?? renderModelId,
     duration,
   );
+  // ADR-0002: with BILLING_UI frozen, credits never gate generation —
+  // validation-phase renders run as a hard-capped passthrough.
   const hasInsufficientCredits =
-    typeof creditBalance === "number" && creditBalance < creditCost;
+    FEATURES.BILLING_UI &&
+    typeof creditBalance === "number" &&
+    creditBalance < creditCost;
   const hasInsufficientPreviewCredits =
-    typeof creditBalance === "number" && creditBalance < STORYBOARD_COST;
+    FEATURES.BILLING_UI &&
+    typeof creditBalance === "number" &&
+    creditBalance < STORYBOARD_COST;
   const operationLabel = isDraftModelSelected
     ? `${selectedDraftModel?.label ?? "Draft"} preview`
     : "Video render";
@@ -213,6 +219,7 @@ export function CanvasSettingsRow({
 
   const trackGenerationStart = useCallback(
     (selectedModelId: string) => {
+      if (!FEATURES.MODEL_INTELLIGENCE_UI) return;
       void trackModelRecommendationEvent({
         event: "generation_started",
         ...(recommendationPromptId
@@ -317,22 +324,6 @@ export function CanvasSettingsRow({
             disabled={isGenerating}
           />
         ) : null}
-
-        {/*
-          Mic chip — placeholder for voice input. Rendered disabled so the
-          button is visibly an inert affordance (matches the screenshot's chip
-          row count). Once voice input ships, swap the disabled prop and wire
-          onClick — the visual treatment stays the same.
-        */}
-        <button
-          type="button"
-          disabled
-          aria-label="Voice input — coming soon"
-          title="Voice input — coming soon"
-          className="text-tool-text-muted inline-flex h-[28px] w-[28px] cursor-not-allowed items-center justify-center rounded-md opacity-60"
-        >
-          <Microphone size={14} aria-hidden="true" />
-        </button>
 
         {domain.extendVideo ? (
           <div className="border-surface-2 bg-tool-nav-hover text-foreground inline-flex h-[28px] items-center gap-1 rounded-full border pl-2.5 pr-1 text-xs font-semibold">
@@ -442,14 +433,18 @@ export function CanvasSettingsRow({
                 ? "Starting storyboard generation"
                 : hasInsufficientPreviewCredits
                   ? `Need ${STORYBOARD_COST} credits for preview — top up in billing`
-                  : `Preview storyboard ${STORYBOARD_COST} credits`
+                  : FEATURES.BILLING_UI
+                    ? `Preview storyboard ${STORYBOARD_COST} credits`
+                    : "Preview storyboard"
             }
             title={
               isSubmitting
                 ? "Starting..."
                 : hasInsufficientPreviewCredits
                   ? `Need ${STORYBOARD_COST} credits`
-                  : `Preview · ${STORYBOARD_COST} cr`
+                  : FEATURES.BILLING_UI
+                    ? `Preview · ${STORYBOARD_COST} cr`
+                    : "Preview"
             }
           >
             <Eye size={14} />
@@ -469,14 +464,22 @@ export function CanvasSettingsRow({
               ? "Starting generation"
               : hasInsufficientCredits
                 ? `Need ${creditCost} credits — top up in billing`
-                : `${isDraftModelSelected ? "Draft" : "Generate"} ${creditCost} credits`
+                : FEATURES.BILLING_UI
+                  ? `${isDraftModelSelected ? "Draft" : "Generate"} ${creditCost} credits`
+                  : isDraftModelSelected
+                    ? "Draft"
+                    : "Generate"
           }
           title={
             isGenerationBusy
               ? "Starting..."
               : hasInsufficientCredits
                 ? `Need ${creditCost} credits`
-                : `${isDraftModelSelected ? "Draft" : "Generate"} · ${creditCost} cr`
+                : FEATURES.BILLING_UI
+                  ? `${isDraftModelSelected ? "Draft" : "Generate"} · ${creditCost} cr`
+                  : isDraftModelSelected
+                    ? "Draft"
+                    : "Generate"
           }
           className={cn(
             "inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition-opacity",

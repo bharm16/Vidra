@@ -12,6 +12,15 @@ vi.mock("@components/Toast", () => ({
   }),
 }));
 
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, BILLING_UI: true },
+  };
+});
+
 import { useLowBalanceWarning } from "../useLowBalanceWarning";
 
 describe("useLowBalanceWarning", () => {
