@@ -126,12 +126,17 @@ export async function runOptimization({
   }
   actions.bumpOptimizationResultVersion();
 
-  if (score >= 80) {
-    toast.success(`Excellent prompt! Quality score: ${score}%`);
-  } else if (score >= 60) {
-    toast.info(`Good prompt! Quality score: ${score}%`);
-  } else {
-    toast.warning(`Prompt could be improved. Score: ${score}%`);
+  // Self-scoring quality toasts are dogfood-only: the frozen quality-feedback
+  // stack never speaks in the creator loop (ADR-0008, decision 3). Gated by
+  // the same dev-only mechanism as the debug chrome (the Copy Debug buttons).
+  if (import.meta.env.DEV) {
+    if (score >= 80) {
+      toast.success(`Excellent prompt! Quality score: ${score}%`);
+    } else if (score >= 60) {
+      toast.info(`Good prompt! Quality score: ${score}%`);
+    } else {
+      toast.warning(`Prompt could be improved. Score: ${score}%`);
+    }
   }
 
   const duration = logger.endTimer("optimize");
