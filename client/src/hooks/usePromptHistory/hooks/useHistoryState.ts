@@ -31,6 +31,31 @@ const normalizeIdentifier = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+/**
+ * Local "draft-" entries are workspace scaffolding: usePromptLoader bootstraps
+ * one on every blank session load (persist: false) so draft sync and in-memory
+ * hydration can find it in `history`. They earn a row in the visible sessions
+ * list only once they hold creator content. generationParams deliberately do
+ * not count as content — the bootstrap copies persisted workspace settings
+ * onto the draft, so params alone are not evidence of user work.
+ */
+const isBlankLocalDraft = (entry: PromptHistoryEntry): boolean => {
+  const id = normalizeIdentifier(entry.id);
+  if (id === null || !id.startsWith("draft-")) return false;
+  if (typeof entry.title === "string" && entry.title.trim().length > 0) {
+    return false;
+  }
+  if (entry.input.trim().length > 0) return false;
+  if (entry.output.trim().length > 0) return false;
+  if (Array.isArray(entry.keyframes) && entry.keyframes.length > 0) {
+    return false;
+  }
+  if (Array.isArray(entry.versions) && entry.versions.length > 0) {
+    return false;
+  }
+  return true;
+};
+
 const dedupeEntries = (entries: PromptHistoryEntry[]): PromptHistoryEntry[] => {
   const seenIds = new Set<string>();
   const seenUuids = new Set<string>();
@@ -111,11 +136,13 @@ export function useHistoryState(): UseHistoryStateReturn {
     setHistoryInternal([]);
   }, []);
 
-  // Memoized filtered history based on search query
+  // Memoized visible history: blank local drafts are hidden until they hold
+  // creator content, then the remainder is filtered by the search query.
   const filteredHistory = useMemo(() => {
-    if (!searchQuery) return history;
+    const visibleHistory = history.filter((entry) => !isBlankLocalDraft(entry));
+    if (!searchQuery) return visibleHistory;
     const query = searchQuery.toLowerCase();
-    return history.filter(
+    return visibleHistory.filter(
       (entry) =>
         entry.input.toLowerCase().includes(query) ||
         (entry.title && entry.title.toLowerCase().includes(query)),
