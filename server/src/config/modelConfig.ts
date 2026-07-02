@@ -431,7 +431,9 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     maxTokens: 4096,
     timeout: 30000,
     responseFormat: "json_object",
-    strictClient: true,
+    // Expansion is the product's core loop — never let a single dead
+    // provider silently degrade it to the deterministic template.
+    fallbackTo: "openai",
     useSeed: true,
     useDeveloperMessage: true,
   },
@@ -445,7 +447,9 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     temperature: 0.4,
     maxTokens: 8192,
     timeout: 45000,
-    strictClient: true,
+    // Expansion is the product's core loop — never let a single dead
+    // provider silently degrade it to the deterministic template.
+    fallbackTo: "openai",
     useDeveloperMessage: true,
     // Thinking tokens count against maxTokens on Gemini 2.5; uncapped dynamic
     // thinking consumed most of the budget and truncated rewrites mid-sentence.
