@@ -19,6 +19,9 @@ import type {
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { CreateSessionRequest as ContinuityCreateSessionRequest } from "@services/continuity/types";
 import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { SessionDto } from "@shared/types/session";
+import type { ApiResponse } from "@shared/types/api";
+import { formatValidationDetails } from "@utils/apiResponseHelpers";
 import { logger } from "@infrastructure/Logger";
 import {
   ContinuitySessionInputSchema,
@@ -89,14 +92,36 @@ const UpdateVersionsSchema = z
 
 function handleSessionMutationError(error: unknown, res: Response): boolean {
   if (error instanceof SessionAccessDeniedError) {
-    res.status(403).json({ success: false, error: "Access denied" });
+    res.status(403).json({
+      success: false,
+      error: "Access denied",
+    } satisfies ApiResponse<never>);
     return true;
   }
   if (error instanceof SessionNotFoundError) {
-    res.status(404).json({ success: false, error: "Session not found" });
+    res.status(404).json({
+      success: false,
+      error: "Session not found",
+    } satisfies ApiResponse<never>);
     return true;
   }
   return false;
+}
+
+/**
+ * Canonical 400 for schema validation failures: `details` is the flattened
+ * string the shared ApiResponse contract requires; the structured Zod issues
+ * are logged server-side instead of leaking onto the wire.
+ */
+function respondInvalidRequest(res: Response, error: z.ZodError): void {
+  logger.debug("Session request validation failed", {
+    issues: error.issues,
+  });
+  res.status(400).json({
+    success: false,
+    error: "Invalid request",
+    details: formatValidationDetails(error.issues),
+  } satisfies ApiResponse<never>);
 }
 
 function toContinuityCreateSessionRequest(
@@ -267,7 +292,10 @@ export function createSessionRoutes(
           });
           return;
         }
-        res.json({ success: true, data: sessionService.toDto(session) });
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       }),
     );
   }
@@ -293,7 +321,7 @@ export function createSessionRoutes(
       res.json({
         success: true,
         data: sessions.map((session) => sessionService.toDto(session)),
-      });
+      } satisfies ApiResponse<SessionDto[]>);
     }),
   );
 
@@ -309,7 +337,10 @@ export function createSessionRoutes(
         res.status(404).json({ success: false, error: "Session not found" });
         return;
       }
-      res.json({ success: true, data: sessionService.toDto(session) });
+      res.json({
+        success: true,
+        data: sessionService.toDto(session),
+      } satisfies ApiResponse<SessionDto>);
     }),
   );
 
@@ -339,7 +370,10 @@ export function createSessionRoutes(
           requestUserId: userId,
         });
       }
-      res.json({ success: true, data: sessionService.toDto(session) });
+      res.json({
+        success: true,
+        data: sessionService.toDto(session),
+      } satisfies ApiResponse<SessionDto>);
     }),
   );
 
@@ -350,18 +384,17 @@ export function createSessionRoutes(
       if (!userId) return;
       const parsed = CreateSessionSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
+        respondInvalidRequest(res, parsed.error);
         return;
       }
       const session = await sessionService.createPromptSession(
         userId,
         toSessionCreateRequest(parsed.data),
       );
-      res.json({ success: true, data: sessionService.toDto(session) });
+      res.json({
+        success: true,
+        data: sessionService.toDto(session),
+      } satisfies ApiResponse<SessionDto>);
     }),
   );
 
@@ -372,11 +405,7 @@ export function createSessionRoutes(
       if (!userId) return;
       const parsed = UpdateSessionSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
+        respondInvalidRequest(res, parsed.error);
         return;
       }
       const sessionId = requireRouteParam(req, res, "sessionId");
@@ -387,7 +416,10 @@ export function createSessionRoutes(
           sessionId,
           toSessionUpdateRequest(parsed.data),
         );
-        res.json({ success: true, data: sessionService.toDto(session) });
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;
@@ -404,7 +436,10 @@ export function createSessionRoutes(
       if (!sessionId) return;
       try {
         await sessionService.deleteSessionForUser(userId, sessionId);
-        res.json({ success: true });
+        res.json({
+          success: true,
+          data: { deleted: true },
+        } satisfies ApiResponse<{ deleted: true }>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;
@@ -419,11 +454,7 @@ export function createSessionRoutes(
       if (!userId) return;
       const parsed = UpdatePromptSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
+        respondInvalidRequest(res, parsed.error);
         return;
       }
       const sessionId = requireRouteParam(req, res, "sessionId");
@@ -434,7 +465,10 @@ export function createSessionRoutes(
           sessionId,
           toSessionPromptUpdate(parsed.data),
         );
-        res.json({ success: true, data: sessionService.toDto(session) });
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;
@@ -449,11 +483,7 @@ export function createSessionRoutes(
       if (!userId) return;
       const parsed = UpdateHighlightsSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
+        respondInvalidRequest(res, parsed.error);
         return;
       }
       const sessionId = requireRouteParam(req, res, "sessionId");
@@ -464,7 +494,10 @@ export function createSessionRoutes(
           sessionId,
           toSessionHighlightUpdate(parsed.data),
         );
-        res.json({ success: true, data: sessionService.toDto(session) });
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;
@@ -479,11 +512,7 @@ export function createSessionRoutes(
       if (!userId) return;
       const parsed = UpdateOutputSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
+        respondInvalidRequest(res, parsed.error);
         return;
       }
       const sessionId = requireRouteParam(req, res, "sessionId");
@@ -494,7 +523,10 @@ export function createSessionRoutes(
           sessionId,
           toSessionOutputUpdate(parsed.data),
         );
-        res.json({ success: true, data: sessionService.toDto(session) });
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;
@@ -509,11 +541,7 @@ export function createSessionRoutes(
       if (!userId) return;
       const parsed = UpdateVersionsSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
+        respondInvalidRequest(res, parsed.error);
         return;
       }
       const sessionId = requireRouteParam(req, res, "sessionId");
@@ -524,7 +552,10 @@ export function createSessionRoutes(
           sessionId,
           toSessionVersionsUpdate(parsed.data),
         );
-        res.json({ success: true, data: sessionService.toDto(session) });
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;
