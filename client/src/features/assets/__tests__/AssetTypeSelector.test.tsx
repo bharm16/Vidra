@@ -35,7 +35,7 @@ describe("AssetTypeSelector", () => {
 
       const active = screen.getByText("Style").closest("button");
       expect(active).not.toBeNull();
-      expect(active).toHaveClass("text-amber-600");
+      expect(active).toHaveClass("text-foreground");
     });
   });
 

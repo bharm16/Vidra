@@ -131,7 +131,7 @@ export function AssetEditor({
     >
       <DialogContent className="border-border bg-surface-1 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border p-6 shadow-lg">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-lg font-semibold text-foreground">
+          <DialogTitle className="text-foreground text-lg font-semibold">
             {mode === "create" ? "Create asset" : "Edit asset"}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -144,11 +144,11 @@ export function AssetEditor({
         <div className="space-y-5">
           {mode === "create" ? (
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
+              <label className="text-foreground mb-2 block text-sm font-medium">
                 Asset type
               </label>
               <AssetTypeSelector value={type} onChange={setType} />
-              <p className="mt-2 text-xs text-muted">
+              <p className="text-muted mt-2 text-xs">
                 {ASSET_TYPES[type].description}
               </p>
             </div>
@@ -159,13 +159,13 @@ export function AssetEditor({
               >
                 {config.label}
               </span>
-              <span className="text-xs text-muted">Type is locked</span>
+              <span className="text-muted text-xs">Type is locked</span>
             </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
+              <label className="text-foreground mb-1 block text-sm font-medium">
                 Name
               </label>
               <Input
@@ -175,7 +175,7 @@ export function AssetEditor({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
+              <label className="text-foreground mb-1 block text-sm font-medium">
                 Trigger
               </label>
               <Input
@@ -187,9 +187,9 @@ export function AssetEditor({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">
+            <label className="text-foreground mb-1 block text-sm font-medium">
               Description
-              <span className="ml-2 text-xs text-muted">
+              <span className="text-muted ml-2 text-xs">
                 {type === "character"
                   ? "Optional - images drive consistency"
                   : "Required"}
@@ -204,7 +204,7 @@ export function AssetEditor({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">
+            <label className="text-foreground mb-1 block text-sm font-medium">
               Negative prompt (optional)
             </label>
             <Input
@@ -215,7 +215,7 @@ export function AssetEditor({
           </div>
 
           {error && (
-            <p className="motion-shake-x text-sm text-red-600">{error}</p>
+            <p className="motion-shake-x text-danger text-sm">{error}</p>
           )}
 
           <div className="flex items-center justify-end gap-2">
@@ -238,7 +238,7 @@ export function AssetEditor({
               data-motion-state="entered"
             >
               {asset.type === "character" && (
-                <div className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs text-muted">
+                <div className="border-border bg-surface-2 text-muted rounded-lg border px-3 py-2 text-xs">
                   Character consistency comes from strong reference photos. Add
                   a few clear face shots below.
                 </div>
@@ -261,7 +261,7 @@ export function AssetEditor({
 
           {!showReferenceImages && (
             <p
-              className="motion-presence-panel text-xs text-muted"
+              className="motion-presence-panel text-muted text-xs"
               data-motion-state="entered"
             >
               You can add reference images after saving this asset.

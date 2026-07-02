@@ -83,11 +83,11 @@ export function AssetCard({
       onClick={() => onSelect(asset)}
       className={`group relative overflow-hidden rounded-xl border transition-[transform,border-color,box-shadow] duration-[180ms] [transition-timing-function:var(--motion-ease-emphasized)] ${
         isSelected
-          ? "border-border-strong shadow-sm scale-[1.01]"
+          ? "border-border-strong scale-[1.01] shadow-sm"
           : "border-border hover:-translate-y-0.5 hover:shadow-sm"
       }`}
     >
-      <div className="aspect-square bg-surface-2">
+      <div className="bg-surface-2 aspect-square">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -120,7 +120,7 @@ export function AssetCard({
                   event.stopPropagation();
                   onUseInGeneration(asset);
                 }}
-                className="rounded-md bg-violet-600 p-1.5 text-white transition-colors hover:bg-violet-500"
+                className="bg-primary text-primary-foreground rounded-md p-1.5 transition-[background-color,filter] hover:brightness-110"
                 title="Use in generation"
               >
                 <Wand2 className="h-4 w-4" />
@@ -146,7 +146,7 @@ export function AssetCard({
                 onDelete(asset.id);
               }
             }}
-            className="rounded-md bg-black/60 p-1.5 text-white transition-colors hover:bg-red-600"
+            className="hover:bg-danger rounded-md bg-black/60 p-1.5 text-white transition-colors"
             title="Delete"
           >
             <Trash2 className="h-4 w-4" />
@@ -154,10 +154,10 @@ export function AssetCard({
         </div>
       </div>
 
-      <div className="space-y-1 bg-surface-1 px-3 py-2.5">
+      <div className="bg-surface-1 space-y-1 px-3 py-2.5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-foreground">
+            <h3 className="text-foreground truncate text-sm font-semibold">
               {asset.name}
             </h3>
             <p className={`truncate text-xs ${config.colorClass}`}>
@@ -165,10 +165,10 @@ export function AssetCard({
             </p>
           </div>
         </div>
-        <p className="ps-line-clamp-2 text-xs text-muted">
+        <p className="ps-line-clamp-2 text-muted text-xs">
           {asset.textDefinition}
         </p>
-        <p className="text-xs text-muted">
+        <p className="text-muted text-xs">
           {(asset.referenceImages?.length || 0).toString()} image
           {asset.referenceImages?.length !== 1 ? "s" : ""}
           {asset.usageCount > 0 ? ` · Used ${asset.usageCount}x` : ""}

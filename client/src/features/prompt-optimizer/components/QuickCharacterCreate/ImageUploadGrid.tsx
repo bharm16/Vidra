@@ -41,7 +41,7 @@ export function ImageUploadGrid({
         {images.map((image, index) => (
           <div
             key={index}
-            className="relative aspect-square overflow-hidden rounded-lg bg-surface-2"
+            className="bg-surface-2 relative aspect-square overflow-hidden rounded-lg"
           >
             <img
               src={image.preview}
@@ -53,7 +53,7 @@ export function ImageUploadGrid({
               onClick={() => onSetPrimary(index)}
               className={cn(
                 "absolute left-1 top-1 rounded bg-black/50 p-1 text-white/60 transition",
-                image.isPrimary && "text-amber-400",
+                image.isPrimary && "text-foreground",
               )}
               title={image.isPrimary ? "Primary image" : "Set as primary"}
             >
@@ -65,7 +65,7 @@ export function ImageUploadGrid({
             <button
               type="button"
               onClick={() => onRemove(index)}
-              className="absolute right-1 top-1 rounded bg-black/50 p-1 text-white/70 transition hover:bg-red-500"
+              className="hover:bg-danger absolute right-1 top-1 rounded bg-black/50 p-1 text-white/70 transition"
               title="Remove image"
             >
               <X className="h-3 w-3" />
@@ -74,7 +74,7 @@ export function ImageUploadGrid({
         ))}
 
         {images.length < maxImages && (
-          <label className="flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border text-muted transition hover:border-violet-500 hover:bg-violet-500/5">
+          <label className="border-border text-muted hover:border-border-strong hover:bg-surface-2 flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition">
             <input
               type="file"
               accept="image/*"
@@ -95,7 +95,7 @@ export function ImageUploadGrid({
       </div>
 
       {images.length === 0 && (
-        <p className="text-center text-xs text-muted">
+        <p className="text-muted text-center text-xs">
           Drop images here or click to upload
         </p>
       )}

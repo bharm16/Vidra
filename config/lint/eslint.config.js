@@ -24,6 +24,34 @@ import tsParser from '@typescript-eslint/parser';
 import tsEslint from '@typescript-eslint/eslint-plugin';
 import noHardcodedCss from './eslint-plugin-no-hardcoded-css.js';
 
+// Shared no-restricted-syntax entry. The design-system guardrail block below
+// re-declares no-restricted-syntax for active client surfaces (flat config
+// replaces the whole rule entry, so the base restriction must ride along).
+const hookWholeObjectDependencyRestriction = {
+  selector:
+    "ArrayExpression[parent.type='CallExpression'][parent.callee.name=/^use(?:Effect|LayoutEffect|Memo|Callback)$/] > Identifier[name=/^(params|options|props|promptOptimizer|promptHistory|workspaceDomain|versioning)$/]",
+  message:
+    'Do not use whole-object dependencies in hook arrays. Depend on specific stable members/functions instead.',
+};
+
+// Design-system guardrails (ADR-0008 / issue #58) — shared exclusions.
+// Frozen stacks (ADR-0002) get mechanical swaps only, never redesigns, so
+// they are exempt from the raw-<button> and raw-palette bans.
+const designGuardrailFrozenAndTestIgnores = [
+  // Frozen stacks (ADR-0002)
+  'client/src/features/convergence/**',
+  'client/src/features/continuity/**',
+  'client/src/features/generations/**',
+  'client/src/features/sequence-editor/**',
+  'client/src/features/billing/**',
+  'client/src/components/modals/FaceSwapPreviewModal.tsx',
+  'client/src/components/modals/InsufficientCreditsModal.tsx',
+  // Tests
+  'client/src/**/__tests__/**',
+  'client/src/**/*.test.{js,jsx,ts,tsx}',
+  'client/src/**/*.spec.{js,jsx,ts,tsx}',
+];
+
 export default [
   {
     ignores: [
@@ -74,15 +102,7 @@ export default [
       'react/no-unescaped-entities': 'warn',
       'react-hooks/rules-of-hooks': 'warn',
       'react-hooks/exhaustive-deps': 'error',
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector:
-            "ArrayExpression[parent.type='CallExpression'][parent.callee.name=/^use(?:Effect|LayoutEffect|Memo|Callback)$/] > Identifier[name=/^(params|options|props|promptOptimizer|promptHistory|workspaceDomain|versioning)$/]",
-          message:
-            'Do not use whole-object dependencies in hook arrays. Depend on specific stable members/functions instead.',
-        },
-      ],
+      'no-restricted-syntax': ['error', hookWholeObjectDependencyRestriction],
       // Keep baseline signal useful while this branch is being stabilized.
       'no-console': 'warn',
       'no-eval': 'error',
@@ -284,6 +304,114 @@ export default [
     rules: {
       'no-console': 'off',
       'no-secrets/no-secrets': 'off',
+    },
+  },
+  // ==========================================================================
+  // Design-system guardrails (ADR-0008 / issue #58)
+  //
+  // Active client surfaces must use @promptstudio/system primitives and
+  // semantic tokens. The system package itself (packages/**) is outside this
+  // config's scope; frozen stacks and tests are excluded above.
+  // ==========================================================================
+  // Guardrail (a): raw <button> elements are banned in active surfaces.
+  {
+    files: ['client/src/**/*.{jsx,tsx}'],
+    ignores: [
+      ...designGuardrailFrozenAndTestIgnores,
+      // Legacy raw-<button> files — migration backlog. Migrate a file to the
+      // system Button, then DELETE its entry here. Never add new entries.
+      'client/src/components/ToolSidebar/components/AccountPopover.tsx',
+      'client/src/components/ToolSidebar/components/ToolNavButton.tsx',
+      'client/src/components/ToolSidebar/components/panels/CharactersPanel.tsx',
+      'client/src/components/ToolSidebar/components/panels/EndFrameControl.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/GenerationFooter.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ImageSubTabSelector.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ImageSubTabToolbar.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ModelRecommendationDropdown.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/PanelHeader.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ReferencesOnboardingCard.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/VideoPromptToolbar.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/VideoReferenceSlots.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/VideoSettingsRow.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/VideoTabContent.tsx',
+      'client/src/components/ToolSidebar/components/panels/ImageReferenceSlotsRow.tsx',
+      'client/src/components/ToolSidebar/components/panels/SessionsPanel.tsx',
+      'client/src/components/ToolSidebar/components/panels/StartFrameControl.tsx',
+      'client/src/components/ToolSidebar/components/panels/StylesPanel.tsx',
+      'client/src/components/modals/CameraMotionModal.tsx',
+      'client/src/features/assets/AssetLibrary.tsx',
+      'client/src/features/assets/components/AssetCard.tsx',
+      'client/src/features/assets/components/AssetTypeSelector.tsx',
+      'client/src/features/assets/components/TriggerAutocomplete.tsx',
+      'client/src/features/assets/components/TriggerChip.tsx',
+      'client/src/features/model-intelligence/components/ModelComparison/ModelComparison.tsx',
+      'client/src/features/model-intelligence/components/ModelRecommendation/ModelRecommendation.tsx',
+      'client/src/features/model-intelligence/components/ModelRecommendation/ModelScoreCard.tsx',
+      'client/src/features/preview/components/VisualPreview.tsx',
+      'client/src/features/prompt-optimizer/PromptCanvas/components/PromptCanvasSuggestionsPanel.tsx',
+      'client/src/features/prompt-optimizer/components/AssetsSidebar/AssetThumbnail.tsx',
+      'client/src/features/prompt-optimizer/components/AssetsSidebar/AssetTypeSection.tsx',
+      'client/src/features/prompt-optimizer/components/AssetsSidebar/AssetsSidebar.tsx',
+      'client/src/features/prompt-optimizer/components/DetectedAssets/AssetChip.tsx',
+      'client/src/features/prompt-optimizer/components/DetectedAssets/AssetPopover.tsx',
+      'client/src/features/prompt-optimizer/components/DetectedAssets/DetectedAssets.tsx',
+      'client/src/features/prompt-optimizer/components/GalleryPanel/GalleryThumbnail.tsx',
+      'client/src/features/prompt-optimizer/components/GenerationPopover/PopoverDetail.tsx',
+      'client/src/features/prompt-optimizer/components/GenerationPopover/PopoverPreview.tsx',
+      'client/src/features/prompt-optimizer/components/GenerationPopover/PopoverThumbnailRail.tsx',
+      'client/src/features/prompt-optimizer/components/MotionIdeasPanel.tsx',
+      'client/src/features/prompt-optimizer/components/QuickCharacterCreate/ImageUploadGrid.tsx',
+      'client/src/features/prompt-optimizer/components/QuickCharacterCreate/QuickCharacterCreate.tsx',
+      'client/src/features/prompt-optimizer/components/ShotTimeline/WorkspaceShotTimeline.tsx',
+      'client/src/features/prompt-optimizer/components/StyleReferenceControls/StyleReferenceControls.tsx',
+      'client/src/features/prompt-optimizer/components/TriggerAutocomplete/TriggerAutocomplete.tsx',
+      'client/src/features/prompt-optimizer/components/TriggerAutocomplete/TriggerSuggestion.tsx',
+      'client/src/features/prompt-optimizer/components/VersionRow.tsx',
+      'client/src/features/prompt-optimizer/components/VersionsPanel.tsx',
+      'client/src/features/prompt-optimizer/components/coherence/CoherenceIssueCard.tsx',
+      'client/src/features/prompt-optimizer/components/coherence/CoherencePanel.tsx',
+      'client/src/features/reference-images/ReferenceImageLibrary.tsx',
+      'client/src/features/workspace-shell/CanvasWorkspace.tsx',
+      'client/src/features/workspace-shell/components/CanvasSettingsRow.tsx',
+      'client/src/features/workspace-shell/components/EndFramePopover.tsx',
+      'client/src/features/workspace-shell/components/FrameStage.tsx',
+      'client/src/features/workspace-shell/components/GenTile.tsx',
+      'client/src/features/workspace-shell/components/StartFramePopover.tsx',
+      'client/src/features/workspace-shell/components/TuneDrawer.tsx',
+      'client/src/features/workspace-shell/components/VideoReferencesPopover.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        hookWholeObjectDependencyRestriction,
+        {
+          selector: "JSXOpeningElement[name.name='button']",
+          message:
+            'Raw <button> is banned in active client surfaces (ADR-0008). Use Button from @promptstudio/system/components/ui/button.',
+        },
+      ],
+    },
+  },
+  // Guardrail (b): raw Tailwind palette classes are banned in active surfaces.
+  {
+    files: ['client/src/**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      ...designGuardrailFrozenAndTestIgnores,
+      // Legacy raw-palette files — migration backlog. Migrate a file to
+      // semantic tokens, then DELETE its entry here. Never add new entries.
+      'client/src/PromptImprovementForm/PromptImprovementForm.tsx',
+      'client/src/components/EmptyState.tsx',
+      'client/src/components/ErrorBoundary/ErrorBoundary.tsx',
+      'client/src/components/ErrorBoundary/FeatureErrorBoundary.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/GenerationFooter.tsx',
+      'client/src/components/ToolSidebar/components/panels/GenerationControlsPanel/components/VideoTabContent.tsx',
+      'client/src/components/navigation/AppShell/shared/UserMenu.tsx',
+      'client/src/features/model-intelligence/components/ModelRecommendation/RecommendationReasons.tsx',
+      'client/src/features/model-intelligence/components/ModelRecommendation/ScoreBar.tsx',
+      'client/src/features/span-highlighting/components/HighlightingErrorBoundary.tsx',
+    ],
+    rules: {
+      'no-hardcoded-css/no-raw-palette': 'error',
     },
   },
 ];

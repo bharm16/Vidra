@@ -71,24 +71,24 @@ export function QuickCharacterCreate({
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">
+            <label className="text-foreground mb-1 block text-sm font-medium">
               Trigger
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted">@</span>
+              <span className="text-muted text-sm">@</span>
               <Input
                 value={trigger}
                 onChange={(event) => setTrigger(event.target.value)}
                 placeholder="marcus"
               />
             </div>
-            <p className="mt-1 text-xs text-muted">
+            <p className="text-muted mt-1 text-xs">
               How you will reference this character in prompts.
             </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">
+            <label className="text-foreground mb-1 block text-sm font-medium">
               Name
             </label>
             <Input
@@ -99,10 +99,10 @@ export function QuickCharacterCreate({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">
+            <label className="text-foreground mb-1 block text-sm font-medium">
               Reference Photos
             </label>
-            <p className="mb-2 text-xs text-muted">
+            <p className="text-muted mb-2 text-xs">
               Upload 3-5 clear photos showing the face from different angles.
             </p>
             <ImageUploadGrid
@@ -117,7 +117,7 @@ export function QuickCharacterCreate({
           <button
             type="button"
             onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-            className="flex items-center gap-1 text-sm text-muted"
+            className="text-muted flex items-center gap-1 text-sm"
           >
             <ChevronRight
               className={cn(
@@ -129,9 +129,9 @@ export function QuickCharacterCreate({
           </button>
 
           {isAdvancedOpen && (
-            <div className="space-y-4 border-l border-border pl-4">
+            <div className="border-border space-y-4 border-l pl-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
+                <label className="text-foreground mb-1 block text-sm font-medium">
                   Description (optional)
                 </label>
                 <Textarea
@@ -140,13 +140,13 @@ export function QuickCharacterCreate({
                   placeholder="Asian man in his 40s, salt-and-pepper hair..."
                   rows={2}
                 />
-                <p className="mt-1 text-xs text-muted">
+                <p className="text-muted mt-1 text-xs">
                   Added to prompts when @{trigger || "trigger"} is used.
                 </p>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
+                <label className="text-foreground mb-1 block text-sm font-medium">
                   Negative prompt (optional)
                 </label>
                 <Textarea
@@ -159,7 +159,7 @@ export function QuickCharacterCreate({
             </div>
           )}
 
-          {error && <div className="text-sm text-red-600">{error}</div>}
+          {error && <div className="text-danger text-sm">{error}</div>}
         </div>
 
         <DialogFooter className="mt-4">

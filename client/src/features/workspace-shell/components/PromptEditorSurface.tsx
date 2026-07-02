@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { X } from "@promptstudio/system/components/ui";
+import { Button } from "@promptstudio/system/components/ui/button";
 import { Textarea } from "@promptstudio/system/components/ui/textarea";
 import { MAX_REQUEST_LENGTH } from "@/components/SuggestionsPanel/config/panelConfig";
 import { TriggerAutocomplete } from "@/features/assets/components/TriggerAutocomplete";
@@ -221,21 +222,25 @@ export function PromptEditorSurface({
                 {suggestionCount}
               </span>
               {import.meta.env.DEV && debugPayload ? (
-                <button
+                <Button
                   type="button"
-                  className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md px-2 py-1 text-[10px] font-medium transition-colors"
+                  variant="ghost"
+                  size="xs"
+                  className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
                   onClick={(event) => {
                     event.stopPropagation();
                     handleCopyDebug();
                   }}
                 >
                   {isDebugCopied ? "Copied!" : "Copy Debug"}
-                </button>
+                </Button>
               ) : null}
               {import.meta.env.DEV && onCopyAllDebug ? (
-                <button
+                <Button
                   type="button"
-                  className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md px-2 py-1 text-[10px] font-medium transition-colors"
+                  variant="ghost"
+                  size="xs"
+                  className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
                   onClick={(event) => {
                     event.stopPropagation();
                     onCopyAllDebug();
@@ -243,23 +248,27 @@ export function PromptEditorSurface({
                   disabled={isBulkCopyLoading}
                 >
                   {isBulkCopyLoading ? "Copying All..." : "Copy All Debug"}
-                </button>
+                </Button>
               ) : null}
             </div>
             <div className="flex items-center gap-1">
-              <button
+              <Button
                 type="button"
-                className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md px-2 py-1 text-[10px] font-medium transition-colors"
+                variant="ghost"
+                size="xs"
+                className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
                 onClick={(event) => {
                   event.stopPropagation();
                   setIsSuggestionTrayCollapsed((prev) => !prev);
                 }}
               >
                 {isSuggestionTrayCollapsed ? "Expand" : "Collapse"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="text-tool-text-label hover:bg-tool-rail-border hover:text-tool-text-dim flex h-6 w-6 items-center justify-center rounded-md transition-colors"
+                variant="ghost"
+                size="icon-xs"
+                className="text-tool-text-label hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
                 onClick={(event) => {
                   event.stopPropagation();
                   onCloseInlinePopover();
@@ -267,7 +276,7 @@ export function PromptEditorSurface({
                 aria-label="Close suggestions"
               >
                 <X size={10} weight="bold" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -296,21 +305,19 @@ export function PromptEditorSurface({
                     rows={1}
                     aria-label="Custom suggestion request"
                   />
-                  <button
+                  <Button
                     type="submit"
-                    className={cn(
-                      "border-tool-accent-neutral/25 bg-tool-accent-neutral text-tool-surface-deep h-9 rounded-lg border px-3 text-xs font-semibold transition-opacity hover:opacity-90",
-                      isCustomRequestDisabled && "opacity-50",
-                    )}
+                    size="sm"
+                    className="border-tool-accent-neutral/25 bg-tool-accent-neutral text-tool-surface-deep rounded-lg border font-semibold hover:opacity-90"
                     disabled={isCustomRequestDisabled}
                     aria-busy={isCustomLoading}
                   >
                     {isCustomLoading ? "Applying..." : "Apply"}
-                  </button>
+                  </Button>
                 </form>
                 {customRequestError ? (
                   <div
-                    className="motion-shake-x mt-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
+                    className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3 py-2 text-xs"
                     role="alert"
                   >
                     {customRequestError}
@@ -320,7 +327,7 @@ export function PromptEditorSurface({
 
               {isInlineError ? (
                 <div
-                  className="motion-shake-x mt-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400"
+                  className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3 py-2 text-xs"
                   role="alert"
                 >
                   {inlineErrorMessage}
@@ -341,12 +348,14 @@ export function PromptEditorSurface({
                   className="ps-scrollbar-thin mt-2 flex gap-2 overflow-x-auto pb-1"
                 >
                   {inlineSuggestions.map((suggestion, index) => (
-                    <button
+                    <Button
                       key={suggestion.key}
                       type="button"
+                      variant="outline"
+                      size="sm"
                       data-index={index}
                       className={cn(
-                        "flex-shrink-0 rounded-lg border px-3 py-1.5 text-xs transition-[transform,border-color,color,background-color] duration-[160ms] [transition-timing-function:var(--motion-ease-standard)]",
+                        "flex-shrink-0 rounded-lg text-xs font-normal transition-[transform,border-color,color,background-color] duration-[160ms] [transition-timing-function:var(--motion-ease-standard)]",
                         activeSuggestionIndex === index
                           ? "border-tool-accent-neutral/50 bg-tool-accent-neutral/10 text-foreground -translate-y-px"
                           : "border-tool-nav-active bg-tool-surface-prompt-compact text-tool-text-dim hover:border-tool-text-label hover:text-foreground hover:-translate-y-px",
@@ -371,7 +380,7 @@ export function PromptEditorSurface({
                           {suggestion.meta}
                         </span>
                       ) : null}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               ) : null}
@@ -383,22 +392,22 @@ export function PromptEditorSurface({
               ) : null}
 
               <div className="border-tool-rail-border mt-2 flex items-center gap-2 border-t pt-2">
-                <button
+                <Button
                   type="button"
-                  className="border-tool-nav-active text-tool-text-dim hover:border-tool-text-label hover:text-foreground h-8 rounded-lg border bg-transparent px-3 text-xs font-semibold transition-colors"
+                  variant="outline"
+                  size="sm"
+                  className="border-tool-nav-active text-tool-text-dim hover:border-tool-text-label hover:text-foreground rounded-lg font-semibold"
                   onClick={(event) => {
                     event.stopPropagation();
                     onCloseInlinePopover();
                   }}
                 >
                   Clear
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className={cn(
-                    "border-tool-accent-neutral/25 bg-tool-accent-neutral text-tool-surface-deep h-8 rounded-lg border px-3 text-xs font-semibold transition-opacity hover:opacity-90",
-                    suggestionCount === 0 && "opacity-50",
-                  )}
+                  size="sm"
+                  className="border-tool-accent-neutral/25 bg-tool-accent-neutral text-tool-surface-deep rounded-lg border font-semibold hover:opacity-90"
                   onClick={(event) => {
                     event.stopPropagation();
                     onApplyActiveSuggestion();
@@ -407,7 +416,7 @@ export function PromptEditorSurface({
                   disabled={suggestionCount === 0}
                 >
                   Use selected
-                </button>
+                </Button>
               </div>
             </>
           ) : null}

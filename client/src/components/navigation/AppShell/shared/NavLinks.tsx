@@ -31,8 +31,8 @@ export function NavLinks({
                     cn(
                       "flex h-8 w-8 items-center justify-center rounded-md",
                       "text-muted transition-colors",
-                      "hover:bg-[rgb(36,42,56)] hover:text-foreground",
-                      isActive && "bg-[rgb(44,48,55)] text-foreground",
+                      "hover:text-foreground hover:bg-[rgb(36,42,56)]",
+                      isActive && "text-foreground bg-[rgb(44,48,55)]",
                     )
                   }
                   aria-label={item.label}
@@ -42,7 +42,7 @@ export function NavLinks({
               </TooltipTrigger>
               <TooltipContent
                 side="right"
-                className="rounded-lg border border-[rgb(67,70,81)] bg-[rgb(24,25,28)] text-body-sm text-foreground shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+                className="text-body-sm text-foreground rounded-lg border border-[rgb(67,70,81)] bg-[rgb(24,25,28)] shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
               >
                 {item.label}
               </TooltipContent>
@@ -63,9 +63,9 @@ export function NavLinks({
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2",
-                "text-[13px] font-medium text-muted transition-colors",
-                "hover:bg-[rgba(255,255,255,0.05)] hover:text-foreground",
-                isActive && "bg-[rgba(255,255,255,0.08)] text-foreground",
+                "text-muted text-[13px] font-medium transition-colors",
+                "hover:text-foreground hover:bg-[rgba(255,255,255,0.05)]",
+                isActive && "text-foreground bg-[rgba(255,255,255,0.08)]",
               )
             }
           >
@@ -85,15 +85,12 @@ export function NavLinks({
           to={item.to}
           className={({ isActive }) =>
             cn(
-              "block rounded-md px-4 py-2 text-[13px] font-medium leading-4 uppercase tracking-[0.5px] transition-colors",
-              isActive ? "text-white" : "hover:text-white",
+              "text-overline block rounded-md px-4 py-2 uppercase transition-colors",
+              isActive
+                ? "bg-surface-3 text-foreground"
+                : "text-muted hover:text-foreground",
             )
           }
-          style={({ isActive }) => ({
-            color: isActive ? "#FFFFFF" : "#8B92A5",
-            background: isActive ? "#22252C" : "transparent",
-            ...(isActive ? {} : {}),
-          })}
         >
           {item.label}
         </NavLink>

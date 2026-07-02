@@ -74,6 +74,68 @@ export default {
         };
       },
     },
+    /**
+     * no-raw-palette: Flags classic Tailwind palette classes (bg-red-500,
+     * text-violet-600, border-amber-400/20, …) in className strings. The
+     * design language is monochrome with semantic tokens (ADR-0008) — status
+     * colors go through danger/success/warning tokens or the --ps-badge-*
+     * variables, chrome through surface/border/foreground tokens.
+     *
+     * Families the @promptstudio/system preset redefines as token-backed
+     * (neutral, success, warning, error, info, primary, secondary, accent)
+     * are NOT flagged — those resolve to CSS variables, not the raw palette.
+     */
+    'no-raw-palette': {
+      meta: {
+        type: 'suggestion',
+        docs: {
+          description:
+            'Disallow raw Tailwind palette classes in favor of semantic design tokens (ADR-0008)',
+          category: 'Best Practices',
+          recommended: true,
+        },
+        messages: {
+          noRawPalette:
+            'Raw Tailwind palette class "{{value}}" found. Use semantic tokens instead (ADR-0008): danger/success/warning or --ps-badge-* for status, surface/border/foreground tokens for chrome.',
+        },
+        schema: [],
+      },
+      create(context) {
+        // Matches color-utility + classic palette family + numeric shade,
+        // e.g. bg-red-500, hover:text-violet-600, border-amber-400/20.
+        const PALETTE_PATTERN =
+          /(?:bg|text|border|ring|divide|decoration|from|to|via|caret|shadow|placeholder|outline|fill|stroke|accent)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|stone)-\d{2,3}\b/g;
+
+        function checkString(node, value) {
+          if (typeof value !== 'string') return;
+
+          let match;
+          PALETTE_PATTERN.lastIndex = 0;
+          while ((match = PALETTE_PATTERN.exec(value)) !== null) {
+            context.report({
+              node,
+              messageId: 'noRawPalette',
+              data: { value: match[0] },
+            });
+          }
+        }
+
+        return {
+          Literal(node) {
+            if (typeof node.value === 'string') {
+              checkString(node, node.value);
+            }
+          },
+          TemplateLiteral(node) {
+            node.quasis.forEach((quasi) => {
+              if (quasi.value?.raw) {
+                checkString(quasi, quasi.value.raw);
+              }
+            });
+          },
+        };
+      },
+    },
     'no-hardcoded-css': {
       meta: {
         type: 'problem',

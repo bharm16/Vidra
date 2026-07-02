@@ -176,25 +176,25 @@ export function AssetLibrary({
   );
 
   return (
-    <div className="flex h-full flex-col bg-surface-1">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+    <div className="bg-surface-1 flex h-full flex-col">
+      <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <Layers className="h-5 w-5 text-muted" />
-          <h2 className="text-lg font-semibold text-foreground">
+          <Layers className="text-muted h-5 w-5" />
+          <h2 className="text-foreground text-lg font-semibold">
             Asset Library
           </h2>
         </div>
         <button
           type="button"
           onClick={() => actions.openEditor("create")}
-          className="flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white transition-[background-color,transform,box-shadow] duration-[140ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px hover:bg-violet-500 hover:shadow-[0_12px_30px_rgba(124,58,237,0.25)]"
+          className="bg-primary text-primary-foreground flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-[background-color,transform,box-shadow,filter] duration-[140ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px hover:shadow-md hover:brightness-110"
         >
           <Plus className="h-4 w-4" />
           New Asset
         </button>
       </div>
 
-      <div className="flex items-center gap-2 border-b border-border px-4 py-2 overflow-x-auto">
+      <div className="border-border flex items-center gap-2 overflow-x-auto border-b px-4 py-2">
         <button
           type="button"
           onClick={() => actions.setFilter(null)}
@@ -205,7 +205,7 @@ export function AssetLibrary({
           }`}
         >
           All
-          <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-xs">
+          <span className="bg-surface-3 rounded-full px-1.5 py-0.5 text-xs">
             {assets.length}
           </span>
         </button>
@@ -227,7 +227,7 @@ export function AssetLibrary({
             >
               <Icon className="h-4 w-4" />
               {typeConfig.label}
-              <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-xs">
+              <span className="bg-surface-3 rounded-full px-1.5 py-0.5 text-xs">
                 {count}
               </span>
             </button>
@@ -236,14 +236,14 @@ export function AssetLibrary({
       </div>
 
       {error && (
-        <div className="motion-shake-x border-b border-border bg-red-50 px-4 py-2">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="motion-shake-x border-border border-b bg-[color:var(--ps-badge-danger-bg)] px-4 py-2">
+          <p className="text-danger text-sm">{error}</p>
         </div>
       )}
 
       {isLoading && assets.length === 0 && (
         <div className="flex flex-1 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+          <div className="border-tool-accent-soft h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
         </div>
       )}
 
@@ -252,14 +252,14 @@ export function AssetLibrary({
           className="motion-presence-panel flex flex-1 flex-col items-center justify-center px-4 text-center"
           data-motion-state="entered"
         >
-          <Layers className="mb-3 h-12 w-12 text-muted" />
-          <h3 className="text-lg font-semibold text-foreground">
+          <Layers className="text-muted mb-3 h-12 w-12" />
+          <h3 className="text-foreground text-lg font-semibold">
             No assets yet
           </h3>
-          <p className="mt-2 max-w-md text-sm text-muted">
+          <p className="text-muted mt-2 max-w-md text-sm">
             Create characters, styles, locations, and objects to keep visual
             consistency. Use
-            <code className="rounded bg-surface-2 px-1.5 py-0.5 text-violet-600">
+            <code className="text-foreground bg-surface-2 rounded px-1.5 py-0.5">
               @triggers
             </code>{" "}
             in your prompts to reference them.
@@ -288,7 +288,7 @@ export function AssetLibrary({
                     >
                       {typeConfig.label}
                     </p>
-                    <p className="text-xs text-muted">
+                    <p className="text-muted text-xs">
                       {typeConfig.description.split(",")[0]}
                     </p>
                   </div>

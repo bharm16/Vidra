@@ -56,14 +56,14 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
     }, [showExportMenu, onToggleExportMenu]);
 
     return (
-      <div className="w-full flex items-center justify-between px-4 py-2 ps-glass-card rounded-lg">
+      <div className="ps-glass-card flex w-full items-center justify-between rounded-lg px-4 py-2">
         <div className="flex items-center gap-1">
           <Button
             onClick={onCopy}
             variant="ghost"
-            className={`gap-2 px-3 py-1 text-button-12 rounded-md transition-colors ${
+            className={`text-button-12 gap-2 rounded-md px-3 py-1 transition-colors ${
               copied
-                ? "text-green-700 bg-green-50"
+                ? "bg-[color:var(--ps-badge-success-bg)] text-[color:var(--ps-badge-success-text)]"
                 : "text-foreground hover:bg-surface-1"
             }`}
             aria-label={copied ? "Prompt copied" : "Copy prompt"}
@@ -80,9 +80,9 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
           <Button
             onClick={onShare}
             variant="ghost"
-            className={`gap-2 px-3 py-1 text-button-12 rounded-md transition-colors ${
+            className={`text-button-12 gap-2 rounded-md px-3 py-1 transition-colors ${
               shared
-                ? "text-green-700 bg-green-50"
+                ? "bg-[color:var(--ps-badge-success-bg)] text-[color:var(--ps-badge-success-text)]"
                 : "text-foreground hover:bg-surface-1"
             }`}
             aria-label={shared ? "Link copied" : "Share prompt"}
@@ -99,9 +99,9 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
           <Button
             onClick={() => onToggleLegend(!showLegend)}
             variant="ghost"
-            className={`gap-2 px-3 py-1 text-button-12 rounded-md transition-colors ${
+            className={`text-button-12 gap-2 rounded-md px-3 py-1 transition-colors ${
               showLegend
-                ? "text-blue-700 bg-blue-50"
+                ? "bg-surface-3 text-foreground"
                 : "text-foreground hover:bg-surface-1"
             }`}
             aria-label="Toggle highlight legend"
@@ -114,7 +114,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
             <Button
               onClick={() => onToggleExportMenu(!showExportMenu)}
               variant="ghost"
-              className="gap-2 px-3 py-1 text-button-12 text-foreground rounded-md transition-colors hover:bg-surface-1"
+              className="text-button-12 text-foreground hover:bg-surface-1 gap-2 rounded-md px-3 py-1 transition-colors"
               aria-expanded={showExportMenu}
               title="Export"
             >
@@ -126,11 +126,11 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
               />
             </Button>
             {showExportMenu && (
-              <div className="absolute top-full left-0 mt-2 w-36 ps-glass-card rounded-lg py-1 z-dropdown">
+              <div className="ps-glass-card z-dropdown absolute left-0 top-full mt-2 w-36 rounded-lg py-1">
                 <Button
                   onClick={() => onExport("text")}
                   variant="ghost"
-                  className="w-full justify-start gap-2 px-3 py-2 text-label-12 text-foreground transition-colors hover:bg-surface-1"
+                  className="text-label-12 text-foreground hover:bg-surface-1 w-full justify-start gap-2 px-3 py-2 transition-colors"
                 >
                   <Icon
                     icon={FileText}
@@ -143,7 +143,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
                 <Button
                   onClick={() => onExport("markdown")}
                   variant="ghost"
-                  className="w-full justify-start gap-2 px-3 py-2 text-label-12 text-foreground transition-colors hover:bg-surface-1"
+                  className="text-label-12 text-foreground hover:bg-surface-1 w-full justify-start gap-2 px-3 py-2 transition-colors"
                 >
                   <Icon
                     icon={FileText}
@@ -156,7 +156,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
                 <Button
                   onClick={() => onExport("json")}
                   variant="ghost"
-                  className="w-full justify-start gap-2 px-3 py-2 text-label-12 text-foreground transition-colors hover:bg-surface-1"
+                  className="text-label-12 text-foreground hover:bg-surface-1 w-full justify-start gap-2 px-3 py-2 transition-colors"
                 >
                   <Icon
                     icon={FileText}
@@ -177,7 +177,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
             disabled={!canUndo}
             variant="ghost"
             size="icon"
-            className={`border border-border p-1 rounded-md transition ${
+            className={`border-border rounded-md border p-1 transition ${
               canUndo
                 ? "hover:bg-surface-1 text-foreground"
                 : "text-faint cursor-not-allowed"
@@ -196,7 +196,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
             disabled={!canRedo}
             variant="ghost"
             size="icon"
-            className={`border border-border p-1 rounded-md transition ${
+            className={`border-border rounded-md border p-1 transition ${
               canRedo
                 ? "hover:bg-surface-1 text-foreground"
                 : "text-faint cursor-not-allowed"
@@ -213,7 +213,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
           <Button
             onClick={onCreateNew}
             variant="ghost"
-            className="gap-2 px-3 py-1 text-button-12 text-foreground border border-border bg-transparent rounded-md transition-colors hover:bg-surface-1"
+            className="text-button-12 text-foreground border-border hover:bg-surface-1 gap-2 rounded-md border bg-transparent px-3 py-1 transition-colors"
             title="New prompt"
           >
             <Icon icon={Plus} size="sm" weight="bold" aria-hidden="true" />

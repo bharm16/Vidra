@@ -64,25 +64,25 @@ export function AssetPopover({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-foreground">
+          <h4 className="text-foreground text-sm font-semibold">
             {asset.name}
           </h4>
-          <p className="text-xs text-muted">{triggerLabel}</p>
-          <p className="mt-1 text-xs text-muted">
+          <p className="text-muted text-xs">{triggerLabel}</p>
+          <p className="text-muted mt-1 text-xs">
             {asset.referenceImages?.length || 0} reference images
           </p>
         </div>
       </div>
 
       {asset.type === "character" && asset.faceEmbedding && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-emerald-600">
+        <div className="mt-2 flex items-center gap-1 text-xs text-[color:var(--ps-badge-success-text)]">
           <Check className="h-3 w-3" />
           Face embedding ready
         </div>
       )}
 
       {asset.textDefinition && (
-        <p className="mt-2 text-xs text-muted line-clamp-3">
+        <p className="text-muted mt-2 line-clamp-3 text-xs">
           {asset.textDefinition}
         </p>
       )}
@@ -91,7 +91,7 @@ export function AssetPopover({
         <button
           type="button"
           onClick={onEdit}
-          className="mt-3 w-full rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-surface-2"
+          className="border-border text-foreground hover:bg-surface-2 mt-3 w-full rounded-md border px-3 py-1.5 text-xs font-semibold transition"
         >
           Edit Asset
         </button>
