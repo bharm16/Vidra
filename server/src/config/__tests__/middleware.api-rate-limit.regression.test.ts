@@ -6,6 +6,9 @@ import {
   applyRateLimitingMiddleware,
   FALLBACK_LIMIT_DIVISOR,
 } from "../middleware.config";
+import { closeLoopbackServers, listenOnLoopback } from "./loopbackTestServer";
+
+afterEach(closeLoopbackServers);
 
 describe("regression: api rate-limit responses keep the JSON error contract", () => {
   const originalNodeEnv = process.env.NODE_ENV;
@@ -51,12 +54,14 @@ describe("regression: api rate-limit responses keep the JSON error contract", ()
       1,
       Math.floor(apiDevLimit / FALLBACK_LIMIT_DIVISOR),
     );
+    const server = await listenOnLoopback(app);
+
     const exhaustRequests = effectiveLimit + 5;
     for (let i = 0; i < exhaustRequests; i += 1) {
-      await request(app).get("/api/test");
+      await request(server).get("/api/test");
     }
 
-    const response = await request(app).get("/api/test");
+    const response = await request(server).get("/api/test");
 
     expect(response.status).toBe(429);
     expect(response.headers["content-type"]).toContain("application/json");

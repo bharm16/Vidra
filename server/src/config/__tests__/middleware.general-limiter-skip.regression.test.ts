@@ -3,6 +3,9 @@ import request from "supertest";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { applyRateLimitingMiddleware } from "../middleware.config";
+import { closeLoopbackServers, listenOnLoopback } from "./loopbackTestServer";
+
+afterEach(closeLoopbackServers);
 
 /**
  * Regression: general limiter must not double-count routes with dedicated limiters.
@@ -61,18 +64,20 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
       res.status(200).send("OK");
     });
 
+    const server = await listenOnLoopback(app);
+
     // Fire enough API requests to exhaust the old general budget (dev: 500).
     // Under the old regime, the next non-API request would get 429.
     const apiRequests = Array.from({ length: 250 }, (_, i) =>
       i % 2 === 0
-        ? request(app).get("/api/sessions/list")
-        : request(app).get("/api/payment/status"),
+        ? request(server).get("/api/sessions/list")
+        : request(server).get("/api/payment/status"),
     );
     await Promise.all(apiRequests);
 
     // A non-API request must still succeed because the general budget
     // was NOT consumed by the /api/ traffic above.
-    const staticResponse = await request(app).get("/static/page");
+    const staticResponse = await request(server).get("/static/page");
     expect(staticResponse.status).toBe(200);
   });
 
@@ -91,15 +96,17 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
       res.status(200).send("OK");
     });
 
+    const server = await listenOnLoopback(app);
+
     // Fire LLM requests
     await Promise.all(
       Array.from({ length: 100 }, () =>
-        request(app).post("/api/llm/label-spans"),
+        request(server).post("/api/llm/label-spans"),
       ),
     );
 
     // Non-API request must still work
-    const staticResponse = await request(app).get("/static/page");
+    const staticResponse = await request(server).get("/static/page");
     expect(staticResponse.status).toBe(200);
   });
 });
