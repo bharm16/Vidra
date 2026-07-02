@@ -409,7 +409,8 @@ describe("suggestions.routes", () => {
     if (!invalid) return;
 
     expect(invalid.status).toBe(400);
-    expect(invalid.body.message).toContain("suggestions");
+    expect(invalid.body.success).toBe(false);
+    expect(invalid.body.details).toContain("suggestions");
   });
 
   it("returns evaluation results for valid requests", async () => {
@@ -430,8 +431,8 @@ describe("suggestions.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body.evaluation.overallScore).toBe(87);
-    expect(typeof response.body.responseTime).toBe("number");
+    expect(response.body.data.evaluation.overallScore).toBe(87);
+    expect(typeof response.body.data.responseTime).toBe("number");
   });
 
   it("supports single and compare evaluation endpoints", async () => {
@@ -452,7 +453,7 @@ describe("suggestions.routes", () => {
     if (!single) return;
 
     expect(single.status).toBe(200);
-    expect(single.body.evaluation.overallScore).toBe(91);
+    expect(single.body.data.evaluation.overallScore).toBe(91);
 
     const compare = await runSupertestOrSkip(() =>
       request(app)
@@ -466,7 +467,7 @@ describe("suggestions.routes", () => {
     if (!compare) return;
 
     expect(compare.status).toBe(200);
-    expect(compare.body.comparison.winner).toBe("A");
+    expect(compare.body.data.comparison.winner).toBe("A");
   });
 
   it("exposes rubric definitions", async () => {
@@ -481,7 +482,7 @@ describe("suggestions.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body.rubrics).toHaveProperty("video");
-    expect(response.body.rubrics).toHaveProperty("general");
+    expect(response.body.data.rubrics).toHaveProperty("video");
+    expect(response.body.data.rubrics).toHaveProperty("general");
   });
 });

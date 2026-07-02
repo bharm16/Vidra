@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
 import { extractUserId } from "@utils/requestHelpers";
 import type { SuggestionsServices } from "./serviceFactory";
 import {
@@ -26,9 +27,10 @@ export function createSuggestionsHandlers({
 
       if (!validation.ok) {
         return res.status(validation.status).json({
+          success: false,
           error: validation.error,
-          message: validation.message,
-        });
+          details: validation.message,
+        } satisfies ApiResponse<never>);
       }
 
       const { suggestions, context, rubric } = validation.data;
@@ -63,10 +65,10 @@ export function createSuggestionsHandlers({
         overallScore: evaluation.overallScore,
       });
 
-      return res.json({
-        evaluation,
-        responseTime,
-      });
+      const data = { evaluation, responseTime };
+      return res.json({ success: true, data } satisfies ApiResponse<
+        typeof data
+      >);
     },
 
     async evaluateSingle(req, res) {
@@ -78,9 +80,10 @@ export function createSuggestionsHandlers({
       const validation = validateSingleEvaluationRequest(req.body);
       if (!validation.ok) {
         return res.status(validation.status).json({
+          success: false,
           error: validation.error,
-          message: validation.message,
-        });
+          details: validation.message,
+        } satisfies ApiResponse<never>);
       }
 
       const { suggestion, context, rubric } = validation.data;
@@ -111,10 +114,10 @@ export function createSuggestionsHandlers({
         overallScore: evaluation.overallScore,
       });
 
-      return res.json({
-        evaluation,
-        responseTime,
-      });
+      const data = { evaluation, responseTime };
+      return res.json({ success: true, data } satisfies ApiResponse<
+        typeof data
+      >);
     },
 
     async compare(req, res) {
@@ -125,9 +128,10 @@ export function createSuggestionsHandlers({
       const validation = validateCompareRequest(req.body);
       if (!validation.ok) {
         return res.status(validation.status).json({
+          success: false,
           error: validation.error,
-          message: validation.message,
-        });
+          details: validation.message,
+        } satisfies ApiResponse<never>);
       }
 
       const { setA, setB, context, rubric } = validation.data;
@@ -158,10 +162,10 @@ export function createSuggestionsHandlers({
         scoreDifference: comparison.scoreDifference,
       });
 
-      return res.json({
-        comparison,
-        responseTime,
-      });
+      const data = { comparison, responseTime };
+      return res.json({ success: true, data } satisfies ApiResponse<
+        typeof data
+      >);
     },
 
     getRubrics(req, res) {
@@ -175,9 +179,10 @@ export function createSuggestionsHandlers({
 
       const rubrics = loadRubrics();
 
-      return res.json({
-        rubrics,
-      });
+      const data = { rubrics };
+      return res.json({ success: true, data } satisfies ApiResponse<
+        typeof data
+      >);
     },
   };
 }
