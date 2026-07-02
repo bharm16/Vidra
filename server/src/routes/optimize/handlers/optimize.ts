@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
+import { formatValidationDetails } from "@utils/apiResponseHelpers";
 import { extractUserId } from "@utils/requestHelpers";
 import { normalizeGenerationParams } from "@routes/optimize/normalizeGenerationParams";
 import type { OptimizeTelemetryService } from "@services/observability/OptimizeTelemetryService";
@@ -43,8 +45,8 @@ export const createOptimizeHandler =
       return res.status(400).json({
         success: false,
         error: "Invalid request",
-        details: parsed.error.issues,
-      });
+        details: formatValidationDetails(parsed.error.issues),
+      } satisfies ApiResponse<never>);
     }
 
     const {
@@ -84,9 +86,11 @@ export const createOptimizeHandler =
       ...(userId ? { userId } : {}),
     });
     if (error) {
-      return res
-        .status(error.status)
-        .json({ success: false, error: error.error, details: error.details });
+      return res.status(error.status).json({
+        success: false,
+        error: error.error,
+        ...(error.details !== undefined ? { details: error.details } : {}),
+      } satisfies ApiResponse<never>);
     }
 
     logger.info("Optimize request received", {
@@ -192,15 +196,11 @@ export const createOptimizeHandler =
         metadata: responseMetadata,
       };
 
-      res.setHeader("X-Response-Version", "2");
+      res.setHeader("X-Response-Version", "3");
       return res.json({
         success: true,
-        // DEPRECATED: `data` envelope duplicates top-level fields.
-        // Clients should read top-level fields directly (prompt, metadata, etc.).
-        // This wrapper will be removed in a future version.
         data: responsePayload,
-        ...responsePayload,
-      });
+      } satisfies ApiResponse<typeof responsePayload>);
     } catch (error: unknown) {
       if (res.headersSent || res.writableEnded) {
         logger.warn(

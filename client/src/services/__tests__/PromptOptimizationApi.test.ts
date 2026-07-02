@@ -17,9 +17,12 @@ describe("PromptOptimizationApi", () => {
   it("posts optimize requests to /optimize", async () => {
     const client = createClient();
     client.post.mockResolvedValue({
-      prompt: "optimized prompt",
-      optimizedPrompt: "optimized prompt",
-      metadata: { previewPrompt: "preview output" },
+      success: true,
+      data: {
+        prompt: "optimized prompt",
+        optimizedPrompt: "optimized prompt",
+        metadata: { previewPrompt: "preview output" },
+      },
     });
 
     const api = new PromptOptimizationApi(client as never);
@@ -66,7 +69,10 @@ describe("PromptOptimizationApi", () => {
 
   it("posts compile requests to /optimize-compile", async () => {
     const client = createClient();
-    client.post.mockResolvedValue({ compiledPrompt: "compiled output" });
+    client.post.mockResolvedValue({
+      success: true,
+      data: { compiledPrompt: "compiled output" },
+    });
     const api = new PromptOptimizationApi(client as never);
 
     const result = await api.compilePrompt({
@@ -90,8 +96,11 @@ describe("PromptOptimizationApi", () => {
   it("includes artifactKey when compiling from a cached artifact", async () => {
     const client = createClient();
     client.post.mockResolvedValue({
-      compiledPrompt: "compiled output",
-      artifactKey: "artifact-123",
+      success: true,
+      data: {
+        compiledPrompt: "compiled output",
+        artifactKey: "artifact-123",
+      },
     });
     const api = new PromptOptimizationApi(client as never);
 

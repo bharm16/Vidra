@@ -289,7 +289,7 @@ describe("api.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body.optimizedPrompt).toBe("optimized prompt");
+    expect(response.body.data.optimizedPrompt).toBe("optimized prompt");
     expect(promptOptimizationService.optimize).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "Hello world",
@@ -325,7 +325,7 @@ describe("api.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body.optimizedPrompt).toBe("optimized prompt");
+    expect(response.body.data.optimizedPrompt).toBe("optimized prompt");
     expect(promptOptimizationService.optimize).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "Hello world",
@@ -371,7 +371,7 @@ describe("api.routes", () => {
     if (!response) return;
 
     expect(response.status).toBe(200);
-    expect(response.body.optimizedPrompt).toBe("optimized prompt");
+    expect(response.body.data.optimizedPrompt).toBe("optimized prompt");
     expect(promptOptimizationService.optimize).toHaveBeenCalledWith(
       expect.objectContaining({
         prompt: "Hello world",

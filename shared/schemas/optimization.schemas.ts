@@ -6,6 +6,7 @@
  * existing consumers.
  */
 import { z } from "zod";
+import { ApiSuccessResponseSchema } from "./api.schemas.js";
 
 // ---------------------------------------------------------------------------
 // Shared enums / atoms
@@ -88,7 +89,8 @@ export type CompilationState = z.infer<typeof CompilationStateSchema>;
 // Optimize response (wire format from POST /api/optimize)
 // ---------------------------------------------------------------------------
 
-export const OptimizeResponseSchema = z
+/** The `data` payload of a successful optimize response. */
+export const OptimizeDataSchema = z
   .object({
     prompt: z.string(),
     optimizedPrompt: z.string().optional(),
@@ -98,13 +100,21 @@ export const OptimizeResponseSchema = z
   })
   .passthrough();
 
+export type OptimizeData = z.infer<typeof OptimizeDataSchema>;
+
+/** Canonical success envelope for POST /api/optimize (errors surface as
+ *  thrown ApiErrors on the client — see shared/types/api.ts). */
+export const OptimizeResponseSchema =
+  ApiSuccessResponseSchema(OptimizeDataSchema);
+
 export type OptimizeResponse = z.infer<typeof OptimizeResponseSchema>;
 
 // ---------------------------------------------------------------------------
 // Compile response (wire format from POST /api/optimize-compile)
 // ---------------------------------------------------------------------------
 
-export const CompileResponseSchema = z
+/** The `data` payload of a successful compile response. */
+export const CompileDataSchema = z
   .object({
     compiledPrompt: z.string(),
     artifactKey: z.string().optional(),
@@ -113,5 +123,11 @@ export const CompileResponseSchema = z
     targetModel: z.string().optional(),
   })
   .passthrough();
+
+export type CompileData = z.infer<typeof CompileDataSchema>;
+
+/** Canonical success envelope for POST /api/optimize-compile. */
+export const CompileResponseSchema =
+  ApiSuccessResponseSchema(CompileDataSchema);
 
 export type CompileResponse = z.infer<typeof CompileResponseSchema>;

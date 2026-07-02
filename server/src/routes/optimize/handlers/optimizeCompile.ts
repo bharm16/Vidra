@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { logger } from "@infrastructure/Logger";
+import type { ApiResponse } from "@shared/types/api";
+import { formatValidationDetails } from "@utils/apiResponseHelpers";
 import { extractUserId } from "@utils/requestHelpers";
 import type { PromptOptimizationServiceContract } from "../types";
 import { compileSchema } from "@config/schemas/promptSchemas";
@@ -28,8 +30,8 @@ export const createOptimizeCompileHandler =
       return res.status(400).json({
         success: false,
         error: "Invalid request",
-        details: parsed.error.issues,
-      });
+        details: formatValidationDetails(parsed.error.issues),
+      } satisfies ApiResponse<never>);
     }
 
     const { prompt, artifactKey, targetModel, context } = parsed.data;
@@ -128,8 +130,7 @@ export const createOptimizeCompileHandler =
       return res.json({
         success: true,
         data: responsePayload,
-        ...responsePayload,
-      });
+      } satisfies ApiResponse<typeof responsePayload>);
     } catch (error: unknown) {
       if (res.headersSent || res.writableEnded) {
         logger.warn(
