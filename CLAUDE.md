@@ -141,9 +141,10 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 
 #### Provider
 
-| Env Var                  | Default | Legacy Aliases | Description                                                                                                |
-| ------------------------ | ------- | -------------- | ---------------------------------------------------------------------------------------------------------- |
-| `ALLOW_UNHEALTHY_GEMINI` | `false` | —              | Use Gemini even when the provider health check fails. Useful for dev/debug; not recommended in production. |
+| Env Var                         | Default | Legacy Aliases | Description                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LLM_PROVIDER_FAILOVER_ENABLED` | `true`  | —              | Health-based LLM provider failover in the aiService routing layer: a per-provider circuit breaker opens after consecutive failures and routes operations to their configured fallback provider until the primary recovers. Tune via LLM_FAILOVER_CONSECUTIVE_FAILURES (default 5) and LLM_FAILOVER_COOLDOWN_MS (default 30000). |
+| `ALLOW_UNHEALTHY_GEMINI`        | `false` | —              | Use Gemini even when the provider health check fails. Useful for dev/debug; not recommended in production.                                                                                                                                                                                                                      |
 
 #### Experimental
 

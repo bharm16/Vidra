@@ -984,6 +984,14 @@
       "category": "killswitch"
     },
     {
+      "name": "llmProviderFailoverEnabled",
+      "envName": "LLM_PROVIDER_FAILOVER_ENABLED",
+      "aliases": [],
+      "defaultValue": "true",
+      "description": "Health-based LLM provider failover in the aiService routing layer: a per-provider circuit breaker opens after consecutive failures and routes operations to their configured fallback provider until the primary recovers. Tune via LLM_FAILOVER_CONSECUTIVE_FAILURES (default 5) and LLM_FAILOVER_COOLDOWN_MS (default 30000).",
+      "category": "provider"
+    },
+    {
       "name": "allowUnhealthyGemini",
       "envName": "ALLOW_UNHEALTHY_GEMINI",
       "aliases": [],
@@ -1055,6 +1063,11 @@
     {
       "from": "aiService",
       "to": "llmCallTelemetryService",
+      "file": "llm.services.ts"
+    },
+    {
+      "from": "aiService",
+      "to": "llmProviderCircuitManager",
       "file": "llm.services.ts"
     },
     {
