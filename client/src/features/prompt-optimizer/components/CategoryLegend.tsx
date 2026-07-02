@@ -63,7 +63,7 @@ export const CategoryLegend = memo<CategoryLegendProps>(
 
     return (
       <div
-        className="absolute z-30 w-80 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-md"
+        className="absolute z-popover w-80 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-md"
         style={{ right: rightOffset }}
         role="dialog"
         aria-label="Highlight categories"

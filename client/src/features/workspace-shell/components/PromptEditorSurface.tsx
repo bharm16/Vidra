@@ -285,7 +285,7 @@ export function PromptEditorSurface({
                       }
                     }}
                     placeholder="Add a specific change (e.g. football field)"
-                    className="border-tool-nav-active bg-tool-surface-prompt-compact text-foreground placeholder:text-tool-text-subdued min-h-9 flex-1 resize-none rounded-lg border px-3 py-2 text-xs focus-visible:ring-2 focus-visible:ring-white/10 focus-visible:ring-offset-0"
+                    className="border-tool-nav-active bg-tool-surface-prompt-compact text-foreground placeholder:text-tool-text-subdued min-h-9 flex-1 resize-none rounded-lg border px-3 py-2 text-xs"
                     maxLength={MAX_REQUEST_LENGTH}
                     rows={1}
                     aria-label="Custom suggestion request"

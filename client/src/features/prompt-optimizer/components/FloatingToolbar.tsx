@@ -126,7 +126,7 @@ export const FloatingToolbar = memo<FloatingToolbarProps>(
               />
             </Button>
             {showExportMenu && (
-              <div className="absolute top-full left-0 mt-2 w-36 ps-glass-card rounded-lg py-1 z-30">
+              <div className="absolute top-full left-0 mt-2 w-36 ps-glass-card rounded-lg py-1 z-dropdown">
                 <Button
                   onClick={() => onExport("text")}
                   variant="ghost"

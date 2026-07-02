@@ -142,7 +142,7 @@ export function StartFramePopover({
         <div
           role="dialog"
           data-testid="start-frame-popover"
-          className="border-tool-nav-active bg-tool-surface-card animate-in fade-in slide-in-from-bottom-2 absolute bottom-[calc(100%+8px)] left-0 z-[100] w-[220px] overflow-hidden rounded-xl border shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+          className="border-tool-nav-active bg-tool-surface-card animate-in fade-in slide-in-from-bottom-2 absolute bottom-[calc(100%+8px)] left-0 z-popover w-[220px] overflow-hidden rounded-xl border shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
           onClick={(e) => e.stopPropagation()}
         >
           {previewUrl ? (

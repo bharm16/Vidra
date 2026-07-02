@@ -131,7 +131,7 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
               }
             }}
             placeholder="Add a specific change (e.g. football field)"
-            className="border-border bg-surface-2 text-body-sm text-foreground placeholder:text-faint focus-visible:ring-accent min-h-9 flex-1 resize-none rounded-lg border px-3 py-2 focus-visible:ring-2 focus-visible:ring-offset-0"
+            className="border-border bg-surface-2 text-body-sm text-foreground placeholder:text-faint min-h-9 flex-1 resize-none rounded-lg border px-3 py-2"
             maxLength={MAX_REQUEST_LENGTH}
             rows={1}
             aria-label="Custom suggestion request"

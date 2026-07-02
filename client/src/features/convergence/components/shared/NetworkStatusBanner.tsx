@@ -87,7 +87,7 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
     return (
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 z-50",
+          "fixed top-0 left-0 right-0 z-fixed",
           "bg-warning/95 backdrop-blur-sm",
           "border-b border-warning/20",
           "px-4 py-3",
@@ -122,7 +122,7 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
     return (
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 z-50",
+          "fixed top-0 left-0 right-0 z-fixed",
           "bg-success/95 backdrop-blur-sm",
           "border-b border-success/20",
           "px-4 py-3",
@@ -158,7 +158,6 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
                   "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md",
                   "bg-success-foreground/20 text-success-foreground",
                   "hover:bg-success-foreground/30",
-                  "focus:outline-none focus:ring-2 focus:ring-success-foreground/50",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   "transition-colors",
                 )}
@@ -177,7 +176,7 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
               onClick={handleDismiss}
               className={cn(
                 "text-success-foreground/70 hover:text-success-foreground",
-                "focus:outline-none focus:ring-2 focus:ring-success-foreground/50 rounded",
+                "rounded",
                 "transition-colors",
               )}
               aria-label="Dismiss"

@@ -36,16 +36,12 @@
     top: 0;
   }
 
+  /* The single focus treatment — same rule the global *:focus-visible in
+     base.css applies. Use this class only where that global rule has been
+     suppressed. Both are driven by the one --ps-focus-ring token. */
   .ps-focus-ring:focus-visible {
     outline: 2px solid var(--ps-focus-ring);
     outline-offset: 2px;
-  }
-
-  .ps-focus-depth:focus-visible {
-    outline: none;
-    box-shadow:
-      0 0 0 2px var(--ps-bg),
-      0 0 0 4px var(--ps-accent);
   }
 
   /* ===== EDGE LIT ===== */

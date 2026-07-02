@@ -180,7 +180,6 @@ export const HistoryItem = memo<HistoryItemProps>(
                       className={cn(
                         "flex h-12 w-full min-w-0 items-center text-left",
                         "gap-[10px] px-2 py-[6px] pr-12",
-                        "ring-0 focus-visible:ring-0 focus:ring-0",
                       )}
                       aria-label={`Load prompt: ${title}`}
                       title={title}

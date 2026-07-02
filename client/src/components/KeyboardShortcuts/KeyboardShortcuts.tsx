@@ -96,7 +96,7 @@ export default function KeyboardShortcuts({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search actions"
             aria-label="Search actions"
-            className="h-auto border-none bg-transparent p-0 text-body-sm text-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="h-auto border-none bg-transparent p-0 text-body-sm text-foreground"
           />
         </div>
 

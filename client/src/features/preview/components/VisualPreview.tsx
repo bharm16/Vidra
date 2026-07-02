@@ -265,7 +265,6 @@ export const VisualPreview: React.FC<VisualPreviewProps> = ({
             }}
             className={cn(
               "relative overflow-hidden rounded-md bg-surface-3 transition-all",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               "hover:ring-2 hover:ring-accent/50",
               selectedImageIndex === index && "ring-2 ring-accent",
               !url && "cursor-default",

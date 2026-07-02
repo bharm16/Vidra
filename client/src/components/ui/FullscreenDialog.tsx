@@ -50,7 +50,7 @@ export function FullscreenDialog({
           }
         }}
         className={cn(
-          "motion-presence-panel left-0 top-0 z-[91] h-screen max-h-none max-w-none translate-x-0 translate-y-0 gap-0 border-0 bg-transparent p-0 shadow-none duration-0 sm:rounded-none [&>button:last-child]:hidden",
+          "motion-presence-panel left-0 top-0 h-screen max-h-none max-w-none translate-x-0 translate-y-0 gap-0 border-0 bg-transparent p-0 shadow-none duration-0 sm:rounded-none [&>button:last-child]:hidden",
           contentClassName,
         )}
       >

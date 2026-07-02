@@ -76,14 +76,13 @@ export default function DebugButton({
 
   return (
     <div
-      className={`debug-button-container ${className}`}
+      className={`debug-button-container z-toast ${className}`}
       style={{
         position: "fixed",
         bottom: "20px",
         right: "20px",
         display: "flex",
         gap: "10px",
-        zIndex: 9999,
         ...style,
       }}
     >

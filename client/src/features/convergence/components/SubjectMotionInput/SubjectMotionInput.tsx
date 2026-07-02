@@ -276,7 +276,7 @@ export const SubjectMotionInput: React.FC<SubjectMotionInputProps> = ({
             rows={4}
             className={cn(
               "w-full px-4 py-3 bg-transparent text-foreground placeholder:text-muted",
-              "resize-none focus:outline-none",
+              "resize-none",
               "text-base leading-relaxed",
               isDisabled && "cursor-not-allowed",
             )}
@@ -383,7 +383,6 @@ export const SubjectMotionInput: React.FC<SubjectMotionInputProps> = ({
             "border border-border bg-surface-1 text-foreground",
             "transition-all duration-200",
             !isDisabled && "hover:bg-surface-2 hover:border-primary/30",
-            "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
             isDisabled && "opacity-50 cursor-not-allowed",
           )}
           aria-label="Skip subject motion and proceed to preview"
@@ -403,7 +402,6 @@ export const SubjectMotionInput: React.FC<SubjectMotionInputProps> = ({
             "bg-primary text-primary-foreground",
             "transition-all duration-200",
             canGeneratePreview && "hover:bg-primary/90",
-            "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
             !canGeneratePreview && "opacity-50 cursor-not-allowed",
           )}
           aria-label={`Generate preview for ${PREVIEW_CREDIT_COST} credits`}
@@ -443,7 +441,6 @@ export const SubjectMotionInput: React.FC<SubjectMotionInputProps> = ({
               "bg-success text-success-foreground",
               "transition-all duration-200",
               !isDisabled && "hover:bg-success/90",
-              "focus:outline-none focus:ring-2 focus:ring-success/50 focus:ring-offset-2",
               isDisabled && "opacity-50 cursor-not-allowed",
             )}
             aria-label="Continue to preview"

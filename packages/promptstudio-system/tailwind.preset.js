@@ -269,14 +269,17 @@ export default {
         base: "var(--ps-motion-base)",
         slow: "var(--ps-motion-slow)",
       },
+      // Ordered stacking scale (see tokens.css):
+      // base < sticky < fixed < dropdown < popover < drawer < modal < tooltip < toast
       zIndex: {
         base: "var(--ps-z-base)",
-        dropdown: "var(--ps-z-dropdown)",
         sticky: "var(--ps-z-sticky)",
         fixed: "var(--ps-z-fixed)",
+        dropdown: "var(--ps-z-dropdown)",
+        popover: "var(--ps-z-popover)",
+        drawer: "var(--ps-z-drawer)",
         "modal-backdrop": "var(--ps-z-modal-backdrop)",
         modal: "var(--ps-z-modal)",
-        popover: "var(--ps-z-popover)",
         tooltip: "var(--ps-z-tooltip)",
         toast: "var(--ps-z-toast)",
       },

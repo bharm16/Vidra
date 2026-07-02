@@ -231,7 +231,7 @@ export const CapabilitiesPanel = ({
                       >
                         <SelectTrigger
                           id={`cap-${id}`}
-                          className="mt-2 w-full rounded-md border border-border bg-app px-2 py-1.5 text-xs text-foreground focus-visible:ring-2 focus-visible:ring-accent"
+                          className="mt-2 w-full rounded-md border border-border bg-app px-2 py-1.5 text-xs text-foreground"
                         >
                           <SelectValue placeholder="Select..." />
                         </SelectTrigger>
@@ -271,7 +271,7 @@ export const CapabilitiesPanel = ({
                       min={field.constraints?.min}
                       max={field.constraints?.max}
                       step={field.constraints?.step}
-                      className="mt-2 w-full rounded-md border border-border bg-app px-2 py-1.5 text-xs text-foreground focus-visible:ring-2 focus-visible:ring-accent"
+                      className="mt-2 w-full rounded-md border border-border bg-app px-2 py-1.5 text-xs text-foreground"
                     />
                   )}
 
@@ -285,7 +285,7 @@ export const CapabilitiesPanel = ({
                       }
                       disabled={isDisabled}
                       placeholder={field.ui?.placeholder}
-                      className="mt-2 w-full rounded-md border border-border bg-app px-2 py-1.5 text-xs text-foreground focus-visible:ring-2 focus-visible:ring-accent"
+                      className="mt-2 w-full rounded-md border border-border bg-app px-2 py-1.5 text-xs text-foreground"
                     />
                   )}
 

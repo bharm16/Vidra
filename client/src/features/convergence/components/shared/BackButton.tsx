@@ -62,8 +62,6 @@ export const BackButton: React.FC<BackButtonProps> = ({
         "transition-all duration-200",
         // Hover state
         !disabled && "hover:bg-surface-2 hover:border-primary/30",
-        // Focus state
-        "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
         // Disabled state
         disabled && "opacity-50 cursor-not-allowed",
         sizeClasses[size],

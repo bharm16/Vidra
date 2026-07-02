@@ -146,7 +146,6 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md",
                     "bg-error/20 text-error hover:bg-error/30",
-                    "focus:outline-none focus:ring-2 focus:ring-error/50 focus:ring-offset-1",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     "transition-colors",
                   )}
@@ -170,7 +169,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
             onClick={onDismiss}
             className={cn(
               "text-error/70 hover:text-error transition-colors",
-              "focus:outline-none focus:ring-2 focus:ring-error/50 rounded",
+              "rounded",
             )}
             aria-label="Dismiss error"
           >

@@ -159,7 +159,7 @@ export const PromptActions = memo<FloatingToolbarProps>(
             <Icon icon={Download} size="xs" weight="bold" aria-hidden="true" />
           </Button>
           {showExportMenu && (
-            <div className="absolute bottom-full right-0 mb-2 w-36 bg-app border border-border rounded-lg shadow-md py-1 z-30">
+            <div className="absolute bottom-full right-0 mb-2 w-36 bg-app border border-border rounded-lg shadow-md py-1 z-dropdown">
               <Button
                 onClick={() => onExport("text")}
                 variant="ghost"

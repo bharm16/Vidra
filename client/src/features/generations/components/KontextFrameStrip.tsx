@@ -142,7 +142,6 @@ export function KontextFrameStrip({
               isSelected
                 ? "border-tool-accent-neutral ring-2 ring-tool-accent-neutral"
                 : "border-tool-nav-active transition hover:border-tool-text-disabled",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-tool-accent-neutral/50",
             )}
             onClick={() => {
               if (!frame || hasFailed) return;

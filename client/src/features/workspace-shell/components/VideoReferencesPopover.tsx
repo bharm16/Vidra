@@ -166,7 +166,7 @@ export function VideoReferencesPopover({
         <div
           role="dialog"
           data-testid="video-references-popover"
-          className="absolute bottom-[calc(100%+8px)] left-0 z-[100] w-[260px] rounded-xl border border-tool-nav-active bg-tool-surface-card p-2 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-2"
+          className="absolute bottom-[calc(100%+8px)] left-0 z-popover w-[260px] rounded-xl border border-tool-nav-active bg-tool-surface-card p-2 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-2"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="mb-1.5 flex items-center justify-between px-1">

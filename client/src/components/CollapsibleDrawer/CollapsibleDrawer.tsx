@@ -121,8 +121,8 @@ export function CollapsibleDrawer({
             ? "w-full min-w-0 overflow-hidden"
             : "h-full min-h-0 overflow-visible",
           isBottom && !isOverlay && "transition-[height] duration-200 ease-out",
-          isOverlay && !isBottom && "absolute inset-y-0 z-50",
-          isOverlay && isBottom && "absolute inset-x-0 bottom-0 z-50",
+          isOverlay && !isBottom && "absolute inset-y-0 z-drawer",
+          isOverlay && isBottom && "absolute inset-x-0 bottom-0 z-drawer",
           !isBottom && (position === "left" ? "left-0" : "right-0"),
           className,
         )}

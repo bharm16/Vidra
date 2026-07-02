@@ -51,7 +51,7 @@ export function TriggerAutocomplete({
   return (
     <div
       ref={containerRef}
-      className="fixed z-50 w-72 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-1 shadow-lg"
+      className="fixed z-dropdown w-72 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-1 shadow-lg"
       style={{ top: position.top, left: position.left }}
     >
       {suggestions.length > 0 ? (

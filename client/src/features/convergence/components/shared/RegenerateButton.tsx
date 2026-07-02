@@ -87,8 +87,6 @@ export const RegenerateButton: React.FC<RegenerateButtonProps> = ({
         "transition-all duration-200",
         // Hover state
         !isDisabled && "hover:bg-surface-2 hover:border-primary/30",
-        // Focus state
-        "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
         // Disabled state
         isDisabled && "opacity-50 cursor-not-allowed",
         // Loading state

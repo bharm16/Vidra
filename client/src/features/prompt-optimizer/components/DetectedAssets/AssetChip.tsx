@@ -49,7 +49,7 @@ export function AssetChip({
       </button>
       <div
         className={cn(
-          "pointer-events-none absolute left-0 top-full z-50 mt-1",
+          "pointer-events-none absolute left-0 top-full z-popover mt-1",
           "opacity-0 transition-opacity duration-150",
           "group-hover:pointer-events-auto group-hover:opacity-100",
           "group-focus-within:pointer-events-auto group-focus-within:opacity-100",

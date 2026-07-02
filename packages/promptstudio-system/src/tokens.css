@@ -495,17 +495,22 @@
     --ps-opacity-100: 1;
 
     /* =========================
-       Z-index
+       Z-index — the only stacking scale.
+       Layer order: base < sticky < fixed < dropdown < popover < drawer
+       < modal < tooltip < toast. Same-layer portals resolve by DOM order.
+       Consume via Tailwind (z-dropdown, z-popover, z-drawer, z-modal,
+       z-toast…) — never arbitrary z-[N] or inline zIndex.
        ========================= */
     --ps-z-base: 0;
+    --ps-z-sticky: 100;
+    --ps-z-fixed: 200;
     --ps-z-dropdown: 1000;
-    --ps-z-sticky: 1020;
-    --ps-z-fixed: 1030;
-    --ps-z-modal-backdrop: 1040;
-    --ps-z-modal: 1050;
-    --ps-z-popover: 1060;
-    --ps-z-tooltip: 1070;
-    --ps-z-toast: 1080;
+    --ps-z-popover: 1100;
+    --ps-z-drawer: 1200;
+    --ps-z-modal-backdrop: 1290;
+    --ps-z-modal: 1300;
+    --ps-z-tooltip: 1400;
+    --ps-z-toast: 1500;
 
     /* =========================
        Blur
@@ -514,8 +519,11 @@
     --ps-blur-md: 10px;
     --ps-blur-lg: 20px;
 
-    /* Focus */
-    --ps-focus-ring: rgba(104, 134, 255, 0.75);
+    /* Focus — the single focus-ring token. Every focusable primitive gets
+       it via the global *:focus-visible rule in base.css (or the
+       .ps-focus-ring utility); components must not roll their own ring.
+       Neutral by design: chrome never carries color (ADR-0008). */
+    --ps-focus-ring: rgba(224, 224, 228, 0.75);
 
     /* =========================
        Glass surfaces (dark-tuned)

@@ -185,7 +185,7 @@ export function PromptCanvasEditorSection({
           <CanvasButton
             type="button"
             size="icon-sm"
-            className="h-7 w-7 shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:size-[14px]"
+            className="h-7 w-7 shadow-none [&_svg]:size-[14px]"
             onClick={openOutlineOverlay}
             aria-label="Prompt structure"
             title="Prompt structure"
@@ -202,7 +202,7 @@ export function PromptCanvasEditorSection({
         <CanvasButton
           type="button"
           size="icon-sm"
-          className="h-7 w-7 shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:size-[14px]"
+          className="h-7 w-7 shadow-none [&_svg]:size-[14px]"
           onClick={onCopy}
           aria-label={copied ? "Copied to clipboard" : "Copy to clipboard"}
           title={copied ? "Copied" : "Copy"}
@@ -216,7 +216,7 @@ export function PromptCanvasEditorSection({
         <CanvasButton
           type="button"
           size="icon-sm"
-          className="h-7 w-7 shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:size-[14px]"
+          className="h-7 w-7 shadow-none [&_svg]:size-[14px]"
           onClick={onUndo}
           disabled={!canUndo}
           aria-label="Undo"
@@ -231,7 +231,7 @@ export function PromptCanvasEditorSection({
         <CanvasButton
           type="button"
           size="icon-sm"
-          className="h-7 w-7 shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:size-[14px]"
+          className="h-7 w-7 shadow-none [&_svg]:size-[14px]"
           onClick={onRedo}
           disabled={!canRedo}
           aria-label="Redo"
@@ -248,7 +248,7 @@ export function PromptCanvasEditorSection({
           <CanvasButton
             type="button"
             size="icon-sm"
-            className="h-7 w-7 shadow-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:size-[14px]"
+            className="h-7 w-7 shadow-none [&_svg]:size-[14px]"
             onClick={() => onToggleExportMenu(!showExportMenu)}
             aria-expanded={showExportMenu}
             aria-haspopup="menu"

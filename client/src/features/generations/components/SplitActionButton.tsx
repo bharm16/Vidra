@@ -91,7 +91,7 @@ export function SplitActionButton({
         <button
           type="button"
           className={cn(
-            "flex h-ps-9 min-w-0 flex-1 items-center gap-ps-2 px-ps-3 text-label-sm text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-ps-9 min-w-0 flex-1 items-center gap-ps-2 px-ps-3 text-label-sm text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50",
             styles.action,
           )}
           onClick={onRun}
@@ -119,7 +119,7 @@ export function SplitActionButton({
           size="xs"
           variant="ghost"
           className={cn(
-            "h-ps-9 w-ps-8 rounded-none border-0 bg-transparent px-0 justify-center transition-colors hover:border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20 [&>svg:last-child]:hidden",
+            "h-ps-9 w-ps-8 rounded-none border-0 bg-transparent px-0 justify-center transition-colors hover:border-0 [&>svg:last-child]:hidden",
             styles.trigger,
           )}
           aria-label={`${label} model selection`}

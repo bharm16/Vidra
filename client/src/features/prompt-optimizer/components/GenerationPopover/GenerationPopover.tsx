@@ -32,7 +32,7 @@ export function GenerationPopover({
       }}
       title="Generation detail viewer"
       description="Preview a generated result, switch versions, and reuse the active prompt and settings."
-      contentClassName="z-[1000] bg-[rgba(2,2,4,0.92)] p-0"
+      contentClassName="bg-[rgba(2,2,4,0.92)] p-0"
     >
       <div className="flex h-full w-full" data-testid="generation-popover">
         <PopoverPreview

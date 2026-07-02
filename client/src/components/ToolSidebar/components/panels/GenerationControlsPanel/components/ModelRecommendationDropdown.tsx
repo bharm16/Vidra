@@ -610,7 +610,7 @@ export function ModelRecommendationDropdown({
             role="listbox"
             aria-label="Model selection"
             style={listStyle}
-            className="motion-presence-panel z-[9999] overflow-y-auto overflow-x-hidden rounded-xl border border-tool-nav-active bg-tool-surface-card py-1 shadow-[0_16px_48px_rgba(0,0,0,0.6)] ps-animate-scale-in"
+            className="motion-presence-panel z-dropdown overflow-y-auto overflow-x-hidden rounded-xl border border-tool-nav-active bg-tool-surface-card py-1 shadow-[0_16px_48px_rgba(0,0,0,0.6)] ps-animate-scale-in"
             data-motion-state="entered"
             onMouseEnter={onEnterList}
             onMouseLeave={onLeaveList}
@@ -669,13 +669,13 @@ export function ModelRecommendationDropdown({
           <>
             {/* Backdrop */}
             <div
-              className="motion-presence-overlay fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm ps-animate-fade-in"
+              className="motion-presence-overlay fixed inset-0 z-modal-backdrop bg-black/60 backdrop-blur-sm ps-animate-fade-in"
               data-motion-state="entered"
               onClick={() => setMode("closed")}
             />
 
             {/* Scrollable card panel */}
-            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+            <div className="fixed inset-0 z-modal overflow-y-auto">
               <div className="flex min-h-full items-start justify-center px-6 py-16">
                 <div
                   className="motion-presence-panel relative w-full max-w-[900px] rounded-2xl border border-tool-nav-active bg-tool-surface-card p-8 shadow-[0_24px_80px_rgba(0,0,0,0.7)] ps-animate-scale-in"

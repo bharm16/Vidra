@@ -77,7 +77,7 @@ export const EstimatedCostBadge: React.FC<EstimatedCostBadgeProps> = ({
                 "transition-all duration-200",
                 "w-48 p-2.5 rounded-lg",
                 "bg-zinc-900 border border-white/[0.06] text-[12px]",
-                "z-50",
+                "z-tooltip",
               )}
               role="tooltip"
             >

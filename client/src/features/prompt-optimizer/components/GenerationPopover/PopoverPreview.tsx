@@ -269,7 +269,7 @@ export function PopoverPreview({
 
   return (
     <section className="relative flex min-h-0 flex-1 flex-col">
-      <div className="pointer-events-none absolute left-0 right-0 top-0 z-[2] flex h-14 items-center px-6">
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 flex h-14 items-center px-6">
         <div className="pointer-events-auto">
           <button
             type="button"

@@ -114,7 +114,7 @@ export const PromptImprovementForm = ({
                           handleInputChange(question.field, e.target.value)
                         }
                         placeholder="Type your answer here..."
-                        className="w-full resize-none rounded-lg border-2 border-gray-300 p-3 focus:border-blue-500 focus:outline-none"
+                        className="w-full resize-none rounded-lg border-2 border-gray-300 p-3"
                         rows={3}
                       />
 

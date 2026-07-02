@@ -72,7 +72,7 @@ export function MiniDropdown<T extends string | number>({
       </button>
 
       {open ? (
-        <div className="absolute bottom-full left-0 z-50 mb-1.5 min-w-[80px] overflow-hidden rounded-[10px] bg-tool-rail-border shadow-[0_12px_40px_rgba(0,0,0,0.55)]">
+        <div className="absolute bottom-full left-0 z-dropdown mb-1.5 min-w-[80px] overflow-hidden rounded-[10px] bg-tool-rail-border shadow-[0_12px_40px_rgba(0,0,0,0.55)]">
           {options.map((opt) => {
             const optLabel = formatLabel ? formatLabel(opt) : String(opt);
             const isActive = opt === value;

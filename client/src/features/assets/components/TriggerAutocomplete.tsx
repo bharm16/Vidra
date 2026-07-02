@@ -79,7 +79,7 @@ export function TriggerAutocomplete({
   return (
     <div
       ref={containerRef}
-      className="motion-presence-panel fixed z-50 overflow-hidden rounded-lg border border-border bg-surface-1 shadow-lg"
+      className="motion-presence-panel fixed z-dropdown overflow-hidden rounded-lg border border-border bg-surface-1 shadow-lg"
       data-motion-state={motionPhase}
       style={{
         top: position.top,

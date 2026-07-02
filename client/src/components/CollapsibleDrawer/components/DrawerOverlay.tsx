@@ -17,7 +17,7 @@ export function DrawerOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-0 z-40 bg-black/40 backdrop-blur-sm",
+        "absolute inset-0 z-drawer bg-black/40 backdrop-blur-sm",
         className,
       )}
       onClick={onClick}

@@ -11,7 +11,7 @@ import type { TopNavbarProps } from "../types";
 export function TopNavbar({ navItems, user }: TopNavbarProps): ReactElement {
   return (
     <header
-      className="fixed inset-x-0 top-0 z-50 box-border w-full py-4"
+      className="fixed inset-x-0 top-0 z-fixed box-border w-full py-4"
       style={{
         height: "var(--global-top-nav-height)",
         background: "#131416",

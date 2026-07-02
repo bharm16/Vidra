@@ -147,7 +147,7 @@ export function SuggestionsList({
                 type="button"
                 onClick={() => handleSuggestionSelect(suggestionObj)}
                 variant="ghost"
-                className="text-body-sm text-foreground focus-visible:ring-accent min-w-0 flex-1 rounded-md text-left font-medium leading-snug focus:outline-none focus-visible:ring-2"
+                className="text-body-sm text-foreground min-w-0 flex-1 rounded-md text-left font-medium leading-snug"
                 aria-label={`Apply suggestion: ${suggestionText}`}
               >
                 {suggestionText}
@@ -157,7 +157,7 @@ export function SuggestionsList({
                 type="button"
                 onClick={() => handleSuggestionSelect(suggestionObj)}
                 variant="ghost"
-                className="text-label-12 text-muted hover:text-foreground focus-visible:ring-accent mt-0.5 h-6 flex-shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 font-medium transition-all duration-150 hover:-translate-y-px hover:border-white/20 hover:bg-white/10 focus:outline-none focus-visible:ring-2"
+                className="text-label-12 text-muted hover:text-foreground mt-0.5 h-6 flex-shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 font-medium transition-all duration-150 hover:-translate-y-px hover:border-white/20 hover:bg-white/10"
                 aria-label={`Apply ${suggestionText}`}
               >
                 Apply
@@ -198,7 +198,7 @@ export function SuggestionsList({
               <Button
                 onClick={() => handleSuggestionSelect(suggestionObj)}
                 variant="ghost"
-                className="focus-visible:ring-accent w-full cursor-pointer rounded text-left transition-transform focus:outline-none focus-visible:ring-2 active:scale-95"
+                className="w-full cursor-pointer rounded text-left transition-transform active:scale-95"
                 aria-label={`Apply suggestion: ${suggestionText.substring(0, 50)}...`}
               >
                 {/* Keyboard Shortcut Badge */}
@@ -240,7 +240,7 @@ export function SuggestionsList({
                       handleCopyKeyDown(suggestionText, index, e)
                     }
                     variant="ghost"
-                    className="text-label-sm text-muted hover:text-foreground focus-visible:ring-accent rounded px-1 font-medium uppercase tracking-widest transition-colors focus:outline-none focus-visible:ring-1"
+                    className="text-label-sm text-muted hover:text-foreground rounded px-1 font-medium uppercase tracking-widest transition-colors"
                     aria-label={`Copy suggestion ${index + 1}`}
                   >
                     {copiedIndex === index ? "Copied!" : "Copy"}

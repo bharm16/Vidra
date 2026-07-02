@@ -51,7 +51,7 @@ export function CustomRequestForm({
             value={customRequest}
             onChange={(e) => onCustomRequestChange(e.target.value)}
             placeholder={tokenEditorPlaceholder}
-            className="border-border bg-surface-1 text-label-12 text-foreground placeholder:text-faint focus-visible:ring-accent/10 focus-visible:border-border-strong min-h-12 w-full resize-y rounded-md border px-3 py-2 focus-visible:outline-none focus-visible:ring-2"
+            className="border-border bg-surface-1 text-label-12 text-foreground placeholder:text-faint focus-visible:border-border-strong min-h-12 w-full resize-y rounded-md border px-3 py-2"
             maxLength={MAX_REQUEST_LENGTH}
           />
 
@@ -98,7 +98,7 @@ export function CustomRequestForm({
           value={customRequest}
           onChange={(e) => onCustomRequestChange(e.target.value)}
           placeholder={placeholder ?? defaultPlaceholder}
-          className="text-label-12 text-foreground bg-app border-border focus:ring-foreground/10 focus:border-border-strong h-10 w-full rounded-md border px-2 py-1 focus:outline-none focus:ring-2"
+          className="text-label-12 text-foreground bg-app border-border focus:border-border-strong h-10 w-full rounded-md border px-2 py-1"
           maxLength={MAX_REQUEST_LENGTH}
         />
 

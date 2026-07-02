@@ -445,7 +445,6 @@ export function SessionsPanel(props: SessionsPanelProps): ReactElement {
                 "w-full h-9 pl-9 pr-3 rounded-lg",
                 "bg-tool-nav-active border border-tool-border-dark",
                 "text-sm text-white placeholder:text-tool-text-placeholder",
-                "focus-visible:border-blue-500 focus-visible:ring-0",
               )}
             />
           </div>
