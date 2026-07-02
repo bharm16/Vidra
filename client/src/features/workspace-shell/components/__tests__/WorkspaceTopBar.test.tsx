@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const projectState = { name: "Untitled" };
@@ -7,7 +7,7 @@ vi.mock("../../hooks/useWorkspaceProject", () => ({
   useWorkspaceProject: () => ({ name: projectState.name }),
 }));
 vi.mock("../../hooks/useWorkspaceCredits", () => ({
-  useWorkspaceCredits: () => ({ credits: 1234, avatarUrl: null }),
+  useWorkspaceCredits: () => ({ credits: 1234 }),
 }));
 
 vi.mock("@/config/features.config", async (importOriginal) => {
@@ -50,5 +50,15 @@ describe("WorkspaceTopBar", () => {
   it("renders the credits formatted with thousands separator", () => {
     render(<WorkspaceTopBar />);
     expect(screen.getByText(/1,234/)).toBeInTheDocument();
+  });
+
+  it("carries no account affordance — the rail avatar popover is the single one", () => {
+    render(<WorkspaceTopBar />);
+    const banner = screen.getByRole("banner");
+    // The dead decorative avatar circle (an <img>/<div> that did nothing on
+    // click) was removed; nothing clickable may claim to be the account here.
+    expect(within(banner).queryByRole("img")).toBeNull();
+    expect(within(banner).queryByRole("link")).toBeNull();
+    expect(within(banner).queryByRole("button")).toBeNull();
   });
 });

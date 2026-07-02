@@ -78,15 +78,8 @@ export function WorkspaceTopBar(): React.ReactElement {
           <span className="text-tool-text-subdued ml-1">cr</span>
         </span>
       ) : null}
-      {credits.avatarUrl ? (
-        <img
-          src={credits.avatarUrl}
-          alt=""
-          className="border-tool-rail-border h-7 w-7 rounded-full border"
-        />
-      ) : (
-        <div className="border-tool-rail-border bg-tool-surface-card h-7 w-7 rounded-full border" />
-      )}
+      {/* The decorative avatar circle that lived here did nothing when
+        clicked — the rail's AccountPopover is the one account affordance. */}
     </header>
   );
 }
