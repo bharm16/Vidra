@@ -193,6 +193,27 @@ describe("CanvasSettingsRow", () => {
     expect(screen.getByTestId("video-references-popover")).toBeInTheDocument();
   });
 
+  it("renders the model chip with a muted 'Model ·' prefix before the model name", () => {
+    renderRow({
+      controls: {
+        onStoryboard: vi.fn(),
+        onDraft: vi.fn(),
+        onRender: vi.fn(),
+        isGenerating: false,
+        activeDraftModel: null,
+      },
+    });
+
+    const trigger = screen.getByRole("button", { name: "Video model" });
+    // Prefix and model name are separate flex children (spaced via gap),
+    // so assert each visible piece rather than a single concatenated string.
+    expect(trigger).toHaveTextContent("Model ·");
+    expect(trigger).toHaveTextContent("Sora 2");
+
+    const prefix = screen.getByText("Model ·");
+    expect(prefix).toHaveClass("text-tool-text-subdued");
+  });
+
   it("shows extend chip and clears extend mode from prompt row", () => {
     renderRow({
       controls: {

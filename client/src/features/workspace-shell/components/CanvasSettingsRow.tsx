@@ -398,6 +398,7 @@ export function CanvasSettingsRow({
           {...(recommendedModelId ? { recommendedModelId } : {})}
           {...(efficientModelId ? { efficientModelId } : {})}
           triggerAriaLabel="Video model"
+          triggerPrefixLabel="Model ·"
           triggerPrefixIcon={<Target size={12} aria-hidden="true" />}
           triggerClassName="inline-flex h-[28px] items-center gap-1.5 rounded-full border border-tool-rail-border bg-transparent px-2.5 text-xs font-normal text-tool-text-dim transition-colors hover:border-tool-text-label hover:text-foreground"
         />
