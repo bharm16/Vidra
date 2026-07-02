@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import type { PreviewRoutesServices } from "@routes/types";
 
 type VideoAssetViewServices = Pick<
@@ -12,7 +13,18 @@ export const createVideoAssetViewHandler =
     videoJobStore,
     storageService,
   }: VideoAssetViewServices) =>
-  async (req: Request, res: Response): Promise<Response | void> => {
+  async (
+    req: Request,
+    res: Response<
+      PreviewApiResponse<{
+        viewUrl: string;
+        assetId: string;
+        source: string;
+        expiresAt?: string | undefined;
+        storagePath?: string | undefined;
+      }>
+    >,
+  ): Promise<Response | void> => {
     if (!videoGenerationService) {
       return res.status(503).json({
         success: false,

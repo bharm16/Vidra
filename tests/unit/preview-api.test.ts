@@ -31,8 +31,31 @@ describe("previewApi", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    apiClientMocks.post.mockResolvedValue({ success: true });
-    apiClientMocks.get.mockResolvedValue({ success: true });
+    // Parse-valid superset defaults: the tightened preview schemas require
+    // `data` on the success arm; unknown data keys are stripped, so one
+    // kitchen-sink body satisfies every endpoint schema.
+    apiClientMocks.post.mockResolvedValue({
+      success: true,
+      data: {
+        imageUrl: "https://cdn.example.com/i.png",
+        metadata: {
+          aspectRatio: "16:9",
+          model: "test-model",
+          duration: 1,
+          generatedAt: "2026-01-01T00:00:00Z",
+        },
+        imageUrls: ["https://cdn.example.com/i.png"],
+        deltas: [],
+        baseImageUrl: "https://cdn.example.com/i.png",
+        faceSwapUrl: "https://cdn.example.com/f.png",
+        creditsDeducted: 0,
+        results: [],
+      },
+    });
+    apiClientMocks.get.mockResolvedValue({
+      success: true,
+      data: { viewUrl: "https://cdn.example.com/v.png", results: [] },
+    });
     authMocks.buildFirebaseAuthHeaders.mockResolvedValue({
       "X-Test-Auth": "token",
     });

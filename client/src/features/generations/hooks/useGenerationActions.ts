@@ -567,20 +567,27 @@ export function useGenerationActions(
             clearSubmissionPendingIfNeeded(generationAccepted);
             return;
           }
-          if (!response.success || !response.data?.imageUrls?.length) {
+          if (!response.success) {
+            const reason =
+              response.message || response.error || "Failed to generate frames";
             log.warn("Storyboard draft response invalid", {
               generationId: generation.id,
-              success: response.success,
-              hasImageUrls: Boolean(response.data?.imageUrls?.length),
-              error:
-                response.message ||
-                response.error ||
-                "Failed to generate frames",
+              success: false,
+              hasImageUrls: false,
+              error: reason,
               ...motionMeta,
             });
-            throw new Error(
-              response.message || response.error || "Failed to generate frames",
-            );
+            throw new Error(reason);
+          }
+          if (!response.data.imageUrls?.length) {
+            log.warn("Storyboard draft response invalid", {
+              generationId: generation.id,
+              success: true,
+              hasImageUrls: false,
+              error: "Failed to generate frames",
+              ...motionMeta,
+            });
+            throw new Error("Failed to generate frames");
           }
           const urls = response.data.imageUrls;
           const storagePaths = response.data.storagePaths;
@@ -1017,22 +1024,29 @@ export function useGenerationActions(
           clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
-        if (!response.success || !response.data?.imageUrls?.length) {
+        if (!response.success) {
+          const reason =
+            response.message ||
+            response.error ||
+            "Failed to generate storyboard";
           log.warn("Storyboard generation response invalid", {
             generationId: generation.id,
-            success: response.success,
-            hasImageUrls: Boolean(response.data?.imageUrls?.length),
-            error:
-              response.message ||
-              response.error ||
-              "Failed to generate storyboard",
+            success: false,
+            hasImageUrls: false,
+            error: reason,
             ...motionMeta,
           });
-          throw new Error(
-            response.message ||
-              response.error ||
-              "Failed to generate storyboard",
-          );
+          throw new Error(reason);
+        }
+        if (!response.data.imageUrls?.length) {
+          log.warn("Storyboard generation response invalid", {
+            generationId: generation.id,
+            success: true,
+            hasImageUrls: false,
+            error: "Failed to generate storyboard",
+            ...motionMeta,
+          });
+          throw new Error("Failed to generate storyboard");
         }
         const urls = response.data.imageUrls;
         const storagePaths = response.data.storagePaths;

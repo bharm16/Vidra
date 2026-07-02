@@ -6,13 +6,17 @@
  */
 
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import { logger } from "@infrastructure/Logger";
 
 const log = logger.child({ handler: "imageContent" });
 
 export const createImageContentHandler =
   () =>
-  async (req: Request, res: Response): Promise<Response | void> => {
+  async (
+    req: Request,
+    res: Response<PreviewApiResponse<never>>,
+  ): Promise<Response | void> => {
     const { contentId } = req.params as { contentId?: string };
 
     if (!contentId) {

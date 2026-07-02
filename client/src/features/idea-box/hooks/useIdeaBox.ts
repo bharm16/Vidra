@@ -79,10 +79,10 @@ export function useIdeaBox({
         });
         if (runIdRef.current !== runId) return; // superseded by a newer run
 
-        const data = response.data;
-        if (!response.success || !data) {
+        if (!response.success) {
           throw new Error(response.error ?? "Frame generation failed");
         }
+        const data = response.data;
 
         setStartFrame({
           id: `idea-box-${runId}-${Date.now()}`,

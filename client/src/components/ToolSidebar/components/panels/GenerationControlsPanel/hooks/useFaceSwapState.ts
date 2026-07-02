@@ -161,10 +161,13 @@ export function useFaceSwapState({
         targetImageUrl: startFrameUrl,
         ...(aspectRatio ? { aspectRatio } : {}),
       });
-      if (!response.success || !response.data?.faceSwapUrl) {
+      if (!response.success) {
         throw new Error(
           response.error || response.message || "Failed to preview face swap",
         );
+      }
+      if (!response.data.faceSwapUrl) {
+        throw new Error("Failed to preview face swap");
       }
       setFaceSwapPreview({
         url: response.data.faceSwapUrl,

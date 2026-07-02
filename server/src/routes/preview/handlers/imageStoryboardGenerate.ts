@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import { extractFirebaseUid } from "@utils/requestHelpers";
 import { logger } from "@infrastructure/Logger";
 import { sendApiError } from "@middleware/apiErrorResponse";
@@ -413,19 +414,20 @@ export const createImageStoryboardGenerateHandler =
         );
       }
 
+      const storyboardData = {
+        imageUrls: result.imageUrls,
+        storagePaths: result.storagePaths,
+        deltas: result.deltas,
+        baseImageUrl: result.baseImageUrl,
+        ...(persistedGenerationId
+          ? { generationId: persistedGenerationId }
+          : {}),
+      };
       const responseBody = {
         success: true,
-        data: {
-          imageUrls: result.imageUrls,
-          storagePaths: result.storagePaths,
-          deltas: result.deltas,
-          baseImageUrl: result.baseImageUrl,
-          ...(persistedGenerationId
-            ? { generationId: persistedGenerationId }
-            : {}),
-        },
+        data: storyboardData,
         ...(typeof remainingCredits === "number" ? { remainingCredits } : {}),
-      } as Record<string, unknown>;
+      } satisfies PreviewApiResponse<typeof storyboardData>;
 
       if (idempotencyRecordId && requestIdempotencyService) {
         await requestIdempotencyService.markCompleted({

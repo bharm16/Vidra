@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import { extractFirebaseUid } from "@utils/requestHelpers";
 import { logger } from "@infrastructure/Logger";
 import type { PreviewRoutesServices } from "@routes/types";
@@ -39,7 +40,19 @@ type ImageUploadServices = Pick<PreviewRoutesServices, "storageService">;
 
 export const createImageUploadHandler =
   ({ storageService }: ImageUploadServices) =>
-  async (req: Request, res: Response): Promise<Response | void> => {
+  async (
+    req: Request,
+    res: Response<
+      PreviewApiResponse<{
+        imageUrl: string;
+        storagePath?: string | undefined;
+        viewUrl?: string | undefined;
+        viewUrlExpiresAt?: string | undefined;
+        sizeBytes?: number | undefined;
+        contentType?: string | undefined;
+      }>
+    >,
+  ): Promise<Response | void> => {
     const userId = extractFirebaseUid(req);
     if (!userId) {
       return res.status(401).json({

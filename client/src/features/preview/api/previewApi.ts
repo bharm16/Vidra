@@ -238,12 +238,13 @@ export async function faceSwapPreview(options: {
 
   const parsed = FaceSwapPreviewResponseSchema.parse(payload);
 
+  const swapData = parsed.success ? parsed.data : null;
   log.info("Face-swap preview request completed", {
-    hasFaceSwapUrl: Boolean(parsed.data?.faceSwapUrl),
-    faceSwapUrlHost: parsed.data?.faceSwapUrl
-      ? safeUrlHost(parsed.data.faceSwapUrl)
+    hasFaceSwapUrl: Boolean(swapData?.faceSwapUrl),
+    faceSwapUrlHost: swapData?.faceSwapUrl
+      ? safeUrlHost(swapData.faceSwapUrl)
       : null,
-    creditsDeducted: parsed.data?.creditsDeducted ?? null,
+    creditsDeducted: swapData?.creditsDeducted ?? null,
   });
 
   return parsed;

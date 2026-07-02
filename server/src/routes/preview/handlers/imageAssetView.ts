@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import { extractFirebaseUid } from "@utils/requestHelpers";
 import type { PreviewRoutesServices } from "@routes/types";
 import { logger } from "@infrastructure/Logger";
@@ -11,7 +12,12 @@ const log = logger.child({ handler: "imageAssetView" });
 
 export const createImageAssetViewHandler =
   ({ imageGenerationService }: ImageAssetViewServices) =>
-  async (req: Request, res: Response): Promise<Response | void> => {
+  async (
+    req: Request,
+    res: Response<
+      PreviewApiResponse<{ viewUrl: string; assetId: string; source: string }>
+    >,
+  ): Promise<Response | void> => {
     if (!imageGenerationService) {
       return res.status(503).json({
         success: false,

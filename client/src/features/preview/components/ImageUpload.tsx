@@ -41,7 +41,7 @@ export function ImageUpload({
       setError(null);
       try {
         const response = await uploadPreviewImage(file);
-        if (!response.success || !response.data) {
+        if (!response.success) {
           throw new Error(
             response.error || response.message || "Failed to upload image",
           );

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import { extractFirebaseUid } from "@utils/requestHelpers";
 import { logger } from "@infrastructure/Logger";
 import { sendApiError } from "@middleware/apiErrorResponse";
@@ -393,7 +394,7 @@ export const createImageGenerateHandler =
       const responseBody = {
         success: true,
         data: responseData,
-      } as Record<string, unknown>;
+      } satisfies PreviewApiResponse<typeof responseData>;
 
       if (idempotencyRecordId && requestIdempotencyService) {
         await requestIdempotencyService.markCompleted({

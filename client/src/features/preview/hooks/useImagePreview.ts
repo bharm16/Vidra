@@ -124,7 +124,14 @@ export function useImagePreview({
             return;
           }
 
-          if (response.success && Array.isArray(response.data?.imageUrls)) {
+          if (!response.success) {
+            throw new Error(
+              response.message ||
+                response.error ||
+                "Failed to generate storyboard",
+            );
+          }
+          if (Array.isArray(response.data.imageUrls)) {
             const urls = response.data.imageUrls;
             if (urls.length === 0) {
               throw new Error("Storyboard response contained no images");
@@ -133,11 +140,7 @@ export function useImagePreview({
             setImageUrl(baseUrl);
             setImageUrls(urls);
           } else {
-            throw new Error(
-              response.message ||
-                response.error ||
-                "Failed to generate storyboard",
-            );
+            throw new Error("Failed to generate storyboard");
           }
           return;
         }
@@ -158,12 +161,15 @@ export function useImagePreview({
           return;
         }
 
-        if (response.success && response.data?.imageUrl) {
-          setImageUrl(response.data.imageUrl);
-        } else {
+        if (!response.success) {
           throw new Error(
             response.message || response.error || "Failed to generate preview",
           );
+        }
+        if (response.data.imageUrl) {
+          setImageUrl(response.data.imageUrl);
+        } else {
+          throw new Error("Failed to generate preview");
         }
       } catch (err) {
         // Don't set error if request was aborted

@@ -560,7 +560,7 @@ function PromptOptimizerContent({
         {},
         { source: "tool-sidebar" },
       );
-      if (!response.success || !response.data) {
+      if (!response.success) {
         throw new Error(
           response.error || response.message || "Failed to upload image",
         );

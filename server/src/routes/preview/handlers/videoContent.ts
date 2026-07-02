@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
 import { isIP } from "node:net";
 import type { PreviewRoutesServices } from "@routes/types";
 import { sendVideoContent } from "@routes/preview/videoRequest";
@@ -15,7 +16,10 @@ export const createVideoContentHandler =
     videoJobStore,
     videoContentAccessService,
   }: VideoContentServices) =>
-  async (req: Request, res: Response): Promise<Response | void> => {
+  async (
+    req: Request,
+    res: Response<PreviewApiResponse<never>>,
+  ): Promise<Response | void> => {
     if (!videoGenerationService) {
       return res.status(503).json({
         success: false,

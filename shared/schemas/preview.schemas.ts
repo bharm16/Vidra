@@ -6,6 +6,8 @@
  * `.passthrough()` allows forward-compatible additions.
  */
 import { z } from "zod";
+import { ApiErrorCodeSchema } from "./api.schemas.js";
+import type { ApiErrorCode } from "../types/api.js";
 
 /**
  * Image-preview speed modes — the user-facing latency/quality tiers a creator
@@ -25,6 +27,56 @@ export const ImagePreviewSpeedModeSchema = z.enum(IMAGE_PREVIEW_SPEED_MODES);
 
 export type ImagePreviewSpeedMode = z.infer<typeof ImagePreviewSpeedModeSchema>;
 
+// ---------------------------------------------------------------------------
+// Preview response envelope
+// ---------------------------------------------------------------------------
+
+/**
+ * Preview's error arm: the canonical ApiResponse error shape plus the legacy
+ * `message` field the preview handlers emit alongside `error`. `error` is
+ * always present on the wire (verified across every handler emission).
+ */
+const PreviewErrorArmSchema = z
+  .object({
+    success: z.literal(false),
+    error: z.string(),
+    message: z.string().optional(),
+    code: ApiErrorCodeSchema.optional(),
+    details: z.string().optional(),
+    requestId: z.string().optional(),
+  })
+  .passthrough();
+
+/**
+ * Canonical discriminated envelope for preview endpoints. Mirrors
+ * `ApiResponseSchema` (api.schemas.ts) with the preview error arm above.
+ * `data` is required on success — every handler sends it.
+ */
+const previewEnvelope = <T extends z.ZodTypeAny>(dataSchema: T) =>
+  z.discriminatedUnion("success", [
+    z
+      .object({
+        success: z.literal(true),
+        data: dataSchema,
+        requestId: z.string().optional(),
+      })
+      .passthrough(),
+    PreviewErrorArmSchema,
+  ]);
+
+/** Server-side pinning type for preview handler responses (pairs with
+ *  `previewEnvelope`; keep the two in sync). */
+export type PreviewApiResponse<T> =
+  | { success: true; data: T; requestId?: string }
+  | {
+      success: false;
+      error: string;
+      message?: string;
+      code?: ApiErrorCode;
+      details?: string;
+      requestId?: string;
+    };
+
 const PreviewMetadataSchema = z.object({
   aspectRatio: z.string(),
   model: z.string(),
@@ -32,82 +84,65 @@ const PreviewMetadataSchema = z.object({
   generatedAt: z.string(),
 });
 
-export const GeneratePreviewResponseSchema = z
-  .object({
-    success: z.boolean(),
-    data: z
-      .object({
-        imageUrl: z.string(),
-        storagePath: z.string().optional(),
-        viewUrl: z.string().optional(),
-        viewUrlExpiresAt: z.string().optional(),
-        sizeBytes: z.number().optional(),
-        metadata: PreviewMetadataSchema,
-      })
-      .optional(),
-    error: z.string().optional(),
-    message: z.string().optional(),
-  })
-  .passthrough();
+export const GeneratePreviewResponseSchema = previewEnvelope(
+  z.object({
+    imageUrl: z.string(),
+    storagePath: z.string().optional(),
+    viewUrl: z.string().optional(),
+    viewUrlExpiresAt: z.string().optional(),
+    sizeBytes: z.number().optional(),
+    metadata: PreviewMetadataSchema,
+  }),
+);
 
-export const UploadPreviewImageResponseSchema = z
-  .object({
-    success: z.boolean(),
-    data: z
-      .object({
-        imageUrl: z.string(),
-        storagePath: z.string().optional(),
-        viewUrl: z.string().optional(),
-        viewUrlExpiresAt: z.string().optional(),
-        sizeBytes: z.number().optional(),
-        contentType: z.string().optional(),
-      })
-      .optional(),
-    error: z.string().optional(),
-    message: z.string().optional(),
-  })
-  .passthrough();
+export const UploadPreviewImageResponseSchema = previewEnvelope(
+  z.object({
+    imageUrl: z.string(),
+    storagePath: z.string().optional(),
+    viewUrl: z.string().optional(),
+    viewUrlExpiresAt: z.string().optional(),
+    sizeBytes: z.number().optional(),
+    contentType: z.string().optional(),
+  }),
+);
 
-export const GenerateStoryboardPreviewResponseSchema = z
-  .object({
-    success: z.boolean(),
-    data: z
+export const GenerateStoryboardPreviewResponseSchema = z.discriminatedUnion(
+  "success",
+  [
+    z
       .object({
-        imageUrls: z.array(z.string()),
-        storagePaths: z.array(z.string()).optional(),
-        deltas: z.array(z.string()),
-        baseImageUrl: z.string(),
-        // ISSUE-12: present when the server persisted the generation into the
-        // named session version. Absent for legacy (no-session) POSTs.
-        generationId: z.string().optional(),
+        success: z.literal(true),
+        data: z.object({
+          imageUrls: z.array(z.string()),
+          storagePaths: z.array(z.string()).optional(),
+          deltas: z.array(z.string()),
+          baseImageUrl: z.string(),
+          // ISSUE-12: present when the server persisted the generation into
+          // the named session version. Absent for legacy (no-session) POSTs.
+          generationId: z.string().optional(),
+        }),
+        // Server-authoritative post-billing balance. The client uses this to
+        // refresh its credit pill in one round-trip after a successful
+        // storyboard preview, falling back to a /payment/credits/balance
+        // fetch when the field is absent. Mirrors GenerateVideoResponseSchema
+        // (ISSUE-37).
+        remainingCredits: z.number().optional(),
+        requestId: z.string().optional(),
       })
-      .optional(),
-    // Server-authoritative post-billing balance. The client uses this to
-    // refresh its credit pill in one round-trip after a successful
-    // storyboard preview, falling back to a /payment/credits/balance fetch
-    // when the field is absent. Mirrors GenerateVideoResponseSchema (ISSUE-37).
-    remainingCredits: z.number().optional(),
-    error: z.string().optional(),
-    message: z.string().optional(),
-  })
-  .passthrough();
+      .passthrough(),
+    PreviewErrorArmSchema,
+  ],
+);
 
-export const MediaViewUrlResponseSchema = z
-  .object({
-    success: z.boolean(),
-    data: z
-      .object({
-        viewUrl: z.string(),
-        expiresAt: z.string().optional(),
-        storagePath: z.string().optional(),
-        assetId: z.string().optional(),
-        source: z.string().optional(),
-      })
-      .optional(),
-    error: z.string().optional(),
-    message: z.string().optional(),
-  })
-  .passthrough();
+export const MediaViewUrlResponseSchema = previewEnvelope(
+  z.object({
+    viewUrl: z.string(),
+    expiresAt: z.string().optional(),
+    storagePath: z.string().optional(),
+    assetId: z.string().optional(),
+    source: z.string().optional(),
+  }),
+);
 
 export const MediaViewUrlBatchItemSchema = z.object({
   assetId: z.string(),
@@ -115,31 +150,18 @@ export const MediaViewUrlBatchItemSchema = z.object({
   error: z.string().optional(),
 });
 
-export const MediaViewUrlBatchResponseSchema = z
-  .object({
-    success: z.boolean(),
-    data: z
-      .object({
-        results: z.array(MediaViewUrlBatchItemSchema),
-      })
-      .optional(),
-    error: z.string().optional(),
-  })
-  .passthrough();
+export const MediaViewUrlBatchResponseSchema = previewEnvelope(
+  z.object({
+    results: z.array(MediaViewUrlBatchItemSchema),
+  }),
+);
 
-export const FaceSwapPreviewResponseSchema = z
-  .object({
-    success: z.boolean(),
-    data: z
-      .object({
-        faceSwapUrl: z.string(),
-        creditsDeducted: z.number(),
-      })
-      .optional(),
-    error: z.string().optional(),
-    message: z.string().optional(),
-  })
-  .passthrough();
+export const FaceSwapPreviewResponseSchema = previewEnvelope(
+  z.object({
+    faceSwapUrl: z.string(),
+    creditsDeducted: z.number(),
+  }),
+);
 
 export const GenerateVideoResponseSchema = z
   .object({
