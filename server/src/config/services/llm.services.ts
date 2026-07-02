@@ -6,6 +6,8 @@ import { GroqLlamaAdapter } from '@clients/adapters/GroqLlamaAdapter';
 import { GroqQwenAdapter } from '@clients/adapters/GroqQwenAdapter';
 import { OpenAICompatibleAdapter } from '@clients/adapters/OpenAICompatibleAdapter';
 import { AIModelService } from '@services/ai-model/index';
+import type { CassetteStore } from '@server/replay/CassetteStore';
+import { RecordReplayAiService } from '@server/replay/RecordReplayAiService';
 import type { LlmCallTelemetryService } from '@services/observability/LlmCallTelemetryService';
 import { setProviderSettings } from '@services/ai-model/routing/ExecutionPlan';
 import { LlmProviderCircuitManager } from '@llm/failover/LlmProviderCircuitManager';
@@ -201,7 +203,8 @@ export function registerLLMServices(container: DIContainer): void {
       geminiClient: LLMClient | null,
       config: ServiceConfig,
       llmCallTelemetry: LlmCallTelemetryService | undefined,
-      llmProviderCircuitManager: LlmProviderCircuitManager | null
+      llmProviderCircuitManager: LlmProviderCircuitManager | null,
+      replayCassetteStore: CassetteStore | null
     ) => {
       setProviderSettings({
         openai: { model: config.openai.model, timeout: config.openai.timeout },
@@ -210,13 +213,30 @@ export function registerLLMServices(container: DIContainer): void {
         gemini: { model: config.gemini.model, timeout: config.gemini.timeout },
       });
 
+      const clients = {
+        openai: openAIClient,
+        groq: groqClient,
+        qwen: qwenClient,
+        gemini: geminiClient,
+      };
+
+      if (replayCassetteStore) {
+        const { flags } = resolveAllFlags(process.env);
+        if (flags.replayMode !== 'off') {
+          // Telemetry only in record mode — replay stays free of Firestore writes.
+          const telemetry =
+            flags.replayMode === 'record' ? llmCallTelemetry : undefined;
+          return new RecordReplayAiService({
+            clients,
+            mode: flags.replayMode,
+            store: replayCassetteStore,
+            ...(telemetry ? { llmCallTelemetry: telemetry } : {}),
+          });
+        }
+      }
+
       return new AIModelService({
-        clients: {
-          openai: openAIClient,
-          groq: groqClient,
-          qwen: qwenClient,
-          gemini: geminiClient,
-        },
+        clients,
         ...(llmCallTelemetry ? { llmCallTelemetry } : {}),
         ...(llmProviderCircuitManager
           ? { providerCircuit: llmProviderCircuitManager }
@@ -231,6 +251,7 @@ export function registerLLMServices(container: DIContainer): void {
       'config',
       'llmCallTelemetryService',
       'llmProviderCircuitManager',
+      'replayCassetteStore',
     ]
   );
 }

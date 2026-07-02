@@ -221,6 +221,15 @@ const EXPERIMENTAL_FLAGS = {
 } as const satisfies Record<string, FlagDef>;
 
 const DEBUG_FLAGS = {
+  replayMode: {
+    kind: 'enum',
+    envName: 'REPLAY_MODE',
+    values: ['off', 'record', 'replay'] as const,
+    default: 'off',
+    description:
+      'Record/replay seam at the LLM boundary and provider adapters. `record` captures live provider responses into contract-validated fixtures; `replay` serves those fixtures with zero network. See docs/architecture/replay-mode.md.',
+    category: 'debug',
+  },
   unhandledRejectionMode: {
     kind: 'enum',
     envName: 'UNHANDLED_REJECTION_MODE',

@@ -1,0 +1,26 @@
+{
+  "formatVersion": 1,
+  "surface": "first-frame-preview",
+  "scenario": "golden-path",
+  "recordedAt": "2026-07-02T09:18:20.545Z",
+  "entries": [
+    {
+      "seam": "image-preview",
+      "key": "image-preview:fc215a6ee91d84d5aadc409ddb962a4d0883d226340f76217f277e5fb6174770",
+      "contract": "image-preview-result",
+      "request": {
+        "prompt": "a lighthouse keeper reading by lamplight during a storm",
+        "aspectRatio": "16:9",
+        "inputImageUrl": null,
+        "seed": null,
+        "speedMode": null
+      },
+      "response": {
+        "imageUrl": "https://replicate.delivery/yhqm/jTiaXLHTEgLgCNfjzMJomkz7FBixaGDsBgq1gEUWLj9t9e0WA/out-0.webp",
+        "model": "black-forest-labs/flux-schnell",
+        "durationMs": 2395,
+        "aspectRatio": "16:9"
+      }
+    }
+  ]
+}
