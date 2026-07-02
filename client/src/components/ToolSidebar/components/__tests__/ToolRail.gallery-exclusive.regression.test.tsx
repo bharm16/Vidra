@@ -18,10 +18,6 @@ vi.mock("@/features/billing/hooks/useBillingStatus", () => ({
   }),
 }));
 
-vi.mock("../../context", () => ({
-  useSidebarWorkspaceDomain: () => null,
-}));
-
 describe("regression: nav rail buttons reflect activePanel", () => {
   it("marks nav button matching activePanel as active", () => {
     render(
@@ -53,36 +49,5 @@ describe("regression: nav rail buttons reflect activePanel", () => {
     const stylesButton = screen.getByRole("button", { name: "Styles" });
     expect(stylesButton).toHaveAttribute("aria-pressed", "false");
     expect(stylesButton.className).not.toContain("bg-tool-nav-active");
-  });
-
-  it("Gallery button never shows active state (toggle, not a panel)", () => {
-    render(
-      <MemoryRouter>
-        <ToolRail activePanel="studio" onPanelChange={vi.fn()} user={null} />
-      </MemoryRouter>,
-    );
-
-    const galleryButton = screen.getByRole("button", { name: "Gallery" });
-    expect(galleryButton.className).not.toContain("bg-tool-nav-active");
-  });
-
-  it("Gallery button switches panel to studio to close any open drawer", () => {
-    const onPanelChange = vi.fn();
-
-    render(
-      <MemoryRouter>
-        <ToolRail
-          activePanel="styles"
-          onPanelChange={onPanelChange}
-          user={null}
-        />
-      </MemoryRouter>,
-    );
-
-    const galleryButton = screen.getByRole("button", { name: "Gallery" });
-    galleryButton.click();
-
-    // Gallery click switches to studio to close the active drawer
-    expect(onPanelChange).toHaveBeenCalledWith("studio");
   });
 });

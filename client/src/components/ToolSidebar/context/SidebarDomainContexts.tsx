@@ -4,7 +4,6 @@ import type {
   OptionalToolSidebarGenerationDomain,
   OptionalToolSidebarPromptInteractionDomain,
   OptionalToolSidebarSessionsDomain,
-  OptionalToolSidebarWorkspaceDomain,
 } from "../types";
 
 export interface SidebarDataContextValue {
@@ -12,7 +11,6 @@ export interface SidebarDataContextValue {
   promptInteraction: OptionalToolSidebarPromptInteractionDomain;
   generation: OptionalToolSidebarGenerationDomain;
   assets: OptionalToolSidebarAssetsDomain;
-  workspace: OptionalToolSidebarWorkspaceDomain;
 }
 
 const SidebarDataContext = createContext<SidebarDataContextValue | null>(null);
@@ -35,10 +33,6 @@ export function useSidebarGenerationDomain(): OptionalToolSidebarGenerationDomai
 
 export function useSidebarAssetsDomain(): OptionalToolSidebarAssetsDomain {
   return useContext(SidebarDataContext)?.assets ?? null;
-}
-
-export function useSidebarWorkspaceDomain(): OptionalToolSidebarWorkspaceDomain {
-  return useContext(SidebarDataContext)?.workspace ?? null;
 }
 
 export function SidebarDataContextProvider({

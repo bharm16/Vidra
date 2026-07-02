@@ -1,5 +1,5 @@
 import { useMemo, type ReactElement } from "react";
-import { GridFour, Home } from "@promptstudio/system/components/ui";
+import { Home } from "@promptstudio/system/components/ui";
 import { Link, useLocation } from "react-router-dom";
 import { useBillingStatus } from "@/features/billing/hooks/useBillingStatus";
 import { BalancePill } from "@/components/navigation/AppShell/shared/BalancePill";
@@ -10,7 +10,6 @@ import type { ToolRailProps } from "../types";
 export function ToolRail({
   activePanel,
   onPanelChange,
-  onGalleryToggle,
   user,
 }: ToolRailProps): ReactElement {
   const location = useLocation();
@@ -69,15 +68,6 @@ export function ToolRail({
             onClick={() => handlePanelChange(item.id)}
           />
         ))}
-        <ToolNavButton
-          icon={GridFour}
-          label="Gallery"
-          isActive={false}
-          onClick={() => {
-            onPanelChange("studio");
-            onGalleryToggle?.();
-          }}
-        />
         <div
           className="my-1.5 h-px w-6 bg-tool-rail-border"
           aria-hidden="true"

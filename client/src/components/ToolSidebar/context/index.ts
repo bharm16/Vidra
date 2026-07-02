@@ -5,6 +5,5 @@ export {
   useSidebarPromptInteractionDomain,
   useSidebarGenerationDomain,
   useSidebarAssetsDomain,
-  useSidebarWorkspaceDomain,
 } from "./SidebarDomainContexts";
 export type { SidebarDataContextValue } from "./SidebarDomainContexts";

@@ -32,7 +32,7 @@ const StylesPanel = lazy(() =>
 );
 import { useToolSidebarState } from "./hooks/useToolSidebarState";
 import type { ToolPanelType, ToolSidebarProps } from "./types";
-import { useSidebarSessionsDomain, useSidebarWorkspaceDomain } from "./context";
+import { useSidebarSessionsDomain } from "./context";
 
 /**
  * ToolSidebar - Main orchestrator for the Runway-style sidebar
@@ -47,7 +47,6 @@ import { useSidebarSessionsDomain, useSidebarWorkspaceDomain } from "./context";
 export function ToolSidebar(props: ToolSidebarProps): ReactElement {
   const { user, forceDefaultPanel } = props;
   const sessions = useSidebarSessionsDomain();
-  const workspace = useSidebarWorkspaceDomain();
   const onSessionCreateNew = sessions?.onCreateNew;
   const onSessionLoadFromHistory = sessions?.onLoadFromHistory;
 
@@ -163,7 +162,6 @@ export function ToolSidebar(props: ToolSidebarProps): ReactElement {
       <ToolRail
         activePanel={activePanel}
         onPanelChange={handlePanelChange}
-        onGalleryToggle={workspace?.toggleGallery}
         user={user}
       />
       {isCanvasFirstLayout ? (

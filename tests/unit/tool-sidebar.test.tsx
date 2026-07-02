@@ -169,7 +169,6 @@ describe("ToolSidebar", () => {
             onEditAsset: vi.fn(),
             onCreateAsset: vi.fn(),
           },
-          workspace: null,
         }}
       >
         <ToolSidebar user={null} />
@@ -192,7 +191,6 @@ describe("ToolSidebar", () => {
             onEditAsset: vi.fn(),
             onCreateAsset: vi.fn(),
           },
-          workspace: null,
         }}
       >
         <ToolSidebar user={null} />
@@ -218,7 +216,6 @@ describe("ToolSidebar", () => {
             onEditAsset: vi.fn(),
             onCreateAsset: vi.fn(),
           },
-          workspace: null,
         }}
       >
         <ToolSidebar user={null} />
@@ -282,7 +279,6 @@ describe("ToolSidebar", () => {
           promptInteraction: null,
           generation: null,
           assets: null,
-          workspace: null,
         }}
       >
         <ToolSidebar user={null} />
