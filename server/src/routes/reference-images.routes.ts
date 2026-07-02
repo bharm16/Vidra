@@ -9,6 +9,7 @@ import { asyncHandler } from "@middleware/asyncHandler";
 import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import type { ReferenceImageStorePort } from "@services/asset/reference-images/ports/ReferenceImageStorePort";
+import type { ApiResponse } from "@shared/types/api";
 
 const upload = createDiskUpload({
   fileSizeBytes: 10 * 1024 * 1024,
@@ -49,7 +50,8 @@ export function createReferenceImagesRoutes(
         userId,
         listOptions,
       );
-      res.json({ images });
+      const data = { images };
+      res.json({ success: true, data } satisfies ApiResponse<typeof data>);
     }),
   );
 
@@ -62,7 +64,10 @@ export function createReferenceImagesRoutes(
 
       const file = (req as Request & { file?: Express.Multer.File }).file;
       if (!file) {
-        res.status(400).json({ error: "No file provided" });
+        res.status(400).json({
+          success: false,
+          error: "No file provided",
+        } satisfies ApiResponse<never>);
         return;
       }
 
@@ -87,7 +92,10 @@ export function createReferenceImagesRoutes(
           createInput,
         );
 
-        res.status(201).json(image);
+        res.status(201).json({
+          success: true,
+          data: image,
+        } satisfies ApiResponse<typeof image>);
       } finally {
         await cleanupUploadFile(file);
       }
@@ -107,7 +115,10 @@ export function createReferenceImagesRoutes(
       };
 
       if (!sourceUrl || typeof sourceUrl !== "string") {
-        res.status(400).json({ error: "sourceUrl is required" });
+        res.status(400).json({
+          success: false,
+          error: "sourceUrl is required",
+        } satisfies ApiResponse<never>);
         return;
       }
 
@@ -123,7 +134,10 @@ export function createReferenceImagesRoutes(
         createInput,
       );
 
-      res.status(201).json(image);
+      res.status(201).json({
+        success: true,
+        data: image,
+      } satisfies ApiResponse<typeof image>);
     }),
   );
 
@@ -140,7 +154,10 @@ export function createReferenceImagesRoutes(
         imageId,
       );
       if (!deleted) {
-        res.status(404).json({ error: "Reference image not found" });
+        res.status(404).json({
+          success: false,
+          error: "Reference image not found",
+        } satisfies ApiResponse<never>);
         return;
       }
 

@@ -1,6 +1,7 @@
 import { API_CONFIG } from "@/config/api.config";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import { ReferenceImageListSchema, ReferenceImageSchema } from "./schemas";
+import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 import type { ReferenceImage } from "@shared/schemas/asset.schemas";
 
 export type { ReferenceImage };
@@ -50,11 +51,13 @@ export const referenceImageApi = {
   async list(limit?: number): Promise<ReferenceImage[]> {
     const query = Number.isFinite(limit) ? `?limit=${limit}` : "";
     const payload = await fetchWithAuth(query);
-    const parsed = ReferenceImageListSchema.safeParse(payload);
+    const parsed = ApiSuccessResponseSchema(ReferenceImageListSchema).safeParse(
+      payload,
+    );
     if (!parsed.success) {
       throw new Error("Invalid reference image list response");
     }
-    return parsed.data.images;
+    return parsed.data.data.images;
   },
 
   async upload(
@@ -75,7 +78,7 @@ export const referenceImageApi = {
       body: formData,
     });
 
-    return ReferenceImageSchema.parse(payload);
+    return ApiSuccessResponseSchema(ReferenceImageSchema).parse(payload).data;
   },
 
   async uploadFromUrl(
@@ -90,7 +93,7 @@ export const referenceImageApi = {
         ...(options.source ? { source: options.source } : {}),
       }),
     });
-    return ReferenceImageSchema.parse(payload);
+    return ApiSuccessResponseSchema(ReferenceImageSchema).parse(payload).data;
   },
 
   async delete(imageId: string): Promise<void> {

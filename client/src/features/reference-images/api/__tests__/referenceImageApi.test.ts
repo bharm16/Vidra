@@ -47,7 +47,7 @@ describe("referenceImageApi", () => {
 
   it("list sends auth headers, applies limit query, and parses schema", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ images: [sampleImage] }), {
+      new Response(JSON.stringify({ success: true, data: { images: [sampleImage] } }), {
         status: 200,
         headers: { "content-type": "application/json" },
       }),
@@ -86,7 +86,7 @@ describe("referenceImageApi", () => {
 
   it("upload sends form-data body without forcing JSON content-type", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(sampleImage), {
+      new Response(JSON.stringify({ success: true, data: sampleImage }), {
         status: 200,
         headers: { "content-type": "application/json" },
       }),
@@ -111,7 +111,7 @@ describe("referenceImageApi", () => {
 
   it("uploadFromUrl sends JSON body and returns parsed image", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(sampleImage), {
+      new Response(JSON.stringify({ success: true, data: sampleImage }), {
         status: 200,
         headers: { "content-type": "application/json" },
       }),
