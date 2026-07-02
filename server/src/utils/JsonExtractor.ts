@@ -77,8 +77,7 @@ export function cleanJSONResponse(text: string, isArray: boolean): string {
  * Repairs handled:
  *   - Smart double quotes (U+201C/U+201D) → straight `"`
  *   - Smart single quotes (U+2018/U+2019) → straight `'`
- *   - Trailing commas before `]` or `}` (the dominant Gemini failure mode
- *     per docs/superpowers/handoff/2026-05-22-next-session.md § F1)
+ *   - Trailing commas before `]` or `}` (the dominant Gemini failure mode)
  *
  * Caveat: trailing-comma removal uses a syntactic regex, not a string-
  * aware tokenizer. If a JSON string value literally contains `,]` or `,}`,

@@ -156,7 +156,7 @@ describe("run-judge orchestrator", () => {
     // see at least one log line stating how many events will be scored. Without
     // this signal, the operator thinks the process is hung and re-invokes,
     // racing the first invocation's flush and creating duplicate quality.scored
-    // events. See docs/superpowers/handoff/2026-05-22-next-session.md § F2.
+    // events. See docs/superpowers/handoff/2026-05-23-next-session.md (F2).
     fetchEventsMock.mockResolvedValue([
       {
         uuid: "e1",

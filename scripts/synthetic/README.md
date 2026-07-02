@@ -1,6 +1,6 @@
 # Synthetic Harness
 
-Generates `source: "synthetic"` telemetry events for the three judgeable surfaces (suggestions, optimize, span-labeling) without booting the HTTP server. Each driver invokes the real production service code in-process; events flow into PostHog with the same shape real user traffic produces. See `docs/superpowers/specs/2026-05-10-source-discriminator-and-harness-design.md` for the original design.
+Generates `source: "synthetic"` telemetry events for the three judgeable surfaces (suggestions, optimize, span-labeling) without booting the HTTP server. Each driver invokes the real production service code in-process; events flow into PostHog with the same shape real user traffic produces.
 
 Sub-project #1 of the [Measurement Program](../../docs/superpowers/programs/measurement.md). Pre-launch the harness is the **only** way to produce operational telemetry — there are no real users yet.
 
@@ -102,6 +102,4 @@ Direct emission constructs the telemetry services in-process and emits events th
 
 - Measurement Program (parent): `docs/superpowers/programs/measurement.md`
 - Spec: `docs/superpowers/specs/2026-05-21-synthetic-model-matrix-design.md`
-- Plan: `docs/superpowers/plans/2026-05-21-synthetic-model-matrix.md`
-- Source discriminator design: `docs/superpowers/specs/2026-05-10-source-discriminator-and-harness-design.md`
 - Quality judge: `scripts/quality-judge/` (run-judge.ts source)
