@@ -331,7 +331,7 @@ Content-Type: application/json
 }
 ```
 
-> 📖 **[Full API docs →](docs/API.md)**
+> 📖 **[Full route map →](docs/architecture/ROUTE_MAP.md)**
 
 ---
 
@@ -355,7 +355,7 @@ npm run arch:check  # Architecture gates (cycles + forbidden imports)
 | Doc                                                                                      | Contents                |
 | ---------------------------------------------------------------------------------------- | ----------------------- |
 | **[docs/QUICKSTART.md](docs/QUICKSTART.md)**                                             | Minimal local setup     |
-| **[docs/API.md](docs/API.md)**                                                           | API reference           |
+| **[docs/architecture/ROUTE_MAP.md](docs/architecture/ROUTE_MAP.md)**                     | Generated route map     |
 | **[docs/development/IMPLEMENTATION_GUIDE.md](docs/development/IMPLEMENTATION_GUIDE.md)** | Development guide       |
 | **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**                                 | Deployment instructions |
 
@@ -394,4 +394,4 @@ MIT
 
 ---
 
-**[→ API reference](docs/API.md)** · **[→ Quickstart](docs/QUICKSTART.md)**
+**[→ API route map](docs/architecture/ROUTE_MAP.md)** · **[→ Quickstart](docs/QUICKSTART.md)**
