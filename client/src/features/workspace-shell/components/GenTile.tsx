@@ -1,6 +1,7 @@
 import React from "react";
 import { Badge } from "@promptstudio/system/components/ui";
 import { cn } from "@/utils/cn";
+import { useResolvedMediaUrl } from "@/hooks/useResolvedMediaUrl";
 import type { Generation } from "@features/generations/types";
 import { dispatchContinueScene } from "../events";
 
@@ -40,7 +41,9 @@ export function GenTile({
     >
       {status === "pending" && <QueuedPlaceholder />}
       {status === "generating" && <RenderingPlaceholder />}
-      {status === "completed" && <ReadyMedia generation={generation} />}
+      {status === "completed" && (
+        <ReadyMedia generation={generation} isFeatured={isFeatured} />
+      )}
       {status === "failed" && <FailedState onRetry={onRetry} />}
 
       {status === "completed" && (
@@ -98,18 +101,59 @@ function RenderingPlaceholder(): React.ReactElement {
 
 function ReadyMedia({
   generation,
+  isFeatured,
 }: {
   generation: Generation;
+  isFeatured: boolean;
 }): React.ReactElement {
-  // Phase 2 baseline: poster-first. No <video> elements per shot to avoid
-  // 32+ concurrent autoplays. Phase 2.5 (out of scope here) introduces
-  // on-interaction video swap for the featured tile.
+  // Only the featured tile carries a <video> (hard cap: one per shot — see
+  // GenTile.perf.regression.test). Non-featured tiles stay poster-only.
   const poster = generation.thumbnailUrl ?? generation.mediaUrls[0] ?? "";
+  const videoUrl =
+    generation.mediaType === "video" ? (generation.mediaUrls[0] ?? null) : null;
+  if (isFeatured && videoUrl) {
+    return <FeaturedVideo generation={generation} poster={poster} />;
+  }
   return (
     <img
       src={poster}
       alt="Generation preview"
       loading="lazy"
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
+function FeaturedVideo({
+  generation,
+  poster,
+}: {
+  generation: Generation;
+  poster: string;
+}): React.ReactElement {
+  const { url } = useResolvedMediaUrl({
+    kind: "video",
+    url: generation.mediaUrls[0] ?? null,
+    assetId: generation.mediaAssetIds?.[0] ?? null,
+  });
+  if (!url) {
+    return (
+      <img
+        src={poster}
+        alt="Generation preview"
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
+    );
+  }
+  return (
+    <video
+      src={url}
+      poster={generation.thumbnailUrl ?? undefined}
+      autoPlay
+      loop
+      muted
+      playsInline
       className="h-full w-full object-cover"
     />
   );

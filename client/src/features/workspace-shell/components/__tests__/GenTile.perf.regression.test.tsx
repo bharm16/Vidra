@@ -6,6 +6,12 @@ import type { Generation } from "@features/generations/types";
 
 vi.mock("../../events", () => ({ dispatchContinueScene: vi.fn() }));
 
+vi.mock("@/hooks/useResolvedMediaUrl", () => ({
+  useResolvedMediaUrl: ({ url }: { url?: string | null }) => ({
+    url: url ?? null,
+  }),
+}));
+
 function gen(id: string, status: Generation["status"]): Generation {
   return {
     id,
@@ -25,17 +31,15 @@ function gen(id: string, status: Generation["status"]): Generation {
 }
 
 /**
- * GenTile poster-only baseline lock.
+ * GenTile featured-video cap lock (ADR-0010 M1).
  *
- * The current implementation always renders an <img> poster, never a <video>
- * — this is the simplest path that satisfies spec §10's "only featured tile
- * preloads video" mitigation (zero videos is ≤ 1, so we trivially pass the
- * spec's perf budget). When the featured-tile video swap lands later, this
- * test should relax to `videos.length <= 1` rather than be deleted — the
- * cap is the actual contract; "zero videos" is just the current floor.
+ * The featured tile — the player — carries the shot's single inline <video>
+ * (autoplay, loop, muted). Every other tile stays poster-only. The perf
+ * contract is the cap: at most one <video> per shot, so a 32-tile grid can
+ * never trigger 32 concurrent autoplays.
  */
-describe("GenTile — poster-only baseline (no <video> elements rendered)", () => {
-  it("renders 8 completed tiles with poster <img> only and no <video>", () => {
+describe("GenTile — featured tile plays inline video, others stay posters", () => {
+  it("renders 8 completed tiles with exactly one <video> (the featured tile)", () => {
     const tiles = Array.from({ length: 8 }, (_, i) =>
       gen(`g${i}`, "completed"),
     );
@@ -58,13 +62,44 @@ describe("GenTile — poster-only baseline (no <video> elements rendered)", () =
       />,
     );
     const videos = container.querySelectorAll("video");
-    // Hard cap: at most 1 active <video> per shot. Today the implementation
-    // chooses 0 (poster-only); this assertion will keep holding when the
-    // featured-tile video swap is wired and a single <video> appears for the
-    // featured slot.
+    // Hard cap: at most 1 active <video> per shot — the actual perf contract.
     expect(videos.length).toBeLessThanOrEqual(1);
-    expect(videos.length).toBe(0); // current floor — remove when video swap lands
+    expect(videos.length).toBe(1);
+    const featuredVideo = videos[0];
+    expect(featuredVideo?.closest("[data-generation-id]")).toHaveAttribute(
+      "data-generation-id",
+      "g0",
+    );
+    expect(featuredVideo).toHaveAttribute("loop");
+    expect(featuredVideo?.muted).toBe(true);
+    expect(featuredVideo).toHaveAttribute("playsinline");
     const imgs = container.querySelectorAll("img");
-    expect(imgs.length).toBe(8);
+    expect(imgs.length).toBe(7);
+  });
+
+  it("keeps every tile poster-only when no tile is featured", () => {
+    const tiles = Array.from({ length: 4 }, (_, i) =>
+      gen(`g${i}`, "completed"),
+    );
+    const shot: Shot = {
+      id: "v",
+      promptSummary: "p",
+      modelId: "m",
+      createdAt: 1,
+      tiles,
+      status: "ready",
+    };
+    const { container } = render(
+      <ShotRow
+        shot={shot}
+        now={1_000}
+        layout="compact"
+        featuredTileId={null}
+        onSelectTile={vi.fn()}
+        onRetryTile={vi.fn()}
+      />,
+    );
+    expect(container.querySelectorAll("video").length).toBe(0);
+    expect(container.querySelectorAll("img").length).toBe(4);
   });
 });
