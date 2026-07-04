@@ -40,6 +40,25 @@ export const AI_MODEL_PROVIDERS: Record<AIModelId, string> = {
   "wan-2.2": "wan",
 } as const;
 
+/**
+ * Showroom sample stills — static bundled assets served from
+ * client/public/model-stills. Art-directed to visualize each model's
+ * strength copy; generated with the app's own draft pipeline
+ * (flux-schnell, 16:9 webp), not the named provider's output.
+ * Matched by model family (same idiom as resolveModelMeta) because
+ * runtime ids vary in form (e.g. "kling-v2-1-master", "google/veo-3").
+ */
+export const resolveModelStill = (modelId: string): string | undefined => {
+  const id = modelId.toLowerCase();
+  if (id.includes("sora")) return "/model-stills/sora-2.webp";
+  if (id.includes("veo")) return "/model-stills/veo-3.webp";
+  if (id.includes("kling")) return "/model-stills/kling-2.1.webp";
+  if (id.includes("luma")) return "/model-stills/luma-ray3.webp";
+  if (id.includes("wan-2.5")) return "/model-stills/wan-2.5.webp";
+  if (id.includes("wan")) return "/model-stills/wan-2.2.webp";
+  return undefined;
+};
+
 export type ModelMeta = {
   strength: string;
   badges: string[];

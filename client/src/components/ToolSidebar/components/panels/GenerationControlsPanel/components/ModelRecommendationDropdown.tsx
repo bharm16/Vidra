@@ -17,7 +17,7 @@ import {
   VIDEO_RENDER_MODELS,
 } from "@components/ToolSidebar/config/modelConfig";
 import { cn } from "@/utils/cn";
-import { resolveModelMeta } from "@/config/videoModels";
+import { resolveModelMeta, resolveModelStill } from "@/config/videoModels";
 import { FullscreenDialog } from "@/components/ui/FullscreenDialog";
 import type { ModelRecommendation } from "@/features/model-intelligence/types";
 import { normalizeModelIdForSelection } from "@/features/model-intelligence/utils/modelLabels";
@@ -264,6 +264,7 @@ function ModelCard({
   onSelect: (id: string) => void;
 }) {
   const meta = resolveModelMeta(model.id);
+  const still = resolveModelStill(model.id);
 
   return (
     <button
@@ -278,15 +279,23 @@ function ModelCard({
           : "border-border hover:border-border-strong",
       )}
     >
-      {/* Sample-still slot — flat monochrome "sample still pending" slate.
-          A real per-model sample still drops in later as an absolutely
-          positioned <img> cover without any layout change. */}
+      {/* Sample-still slot — per-model still as an absolute <img> cover;
+          the flat "pending" slate remains the fallback for unmapped ids. */}
       <div className="border-border bg-surface-2 relative h-36 w-full border-b">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="border-border text-overline text-faint rounded-sm border px-3 py-1.5">
-            {model.label}
-          </span>
-        </div>
+        {still ? (
+          <img
+            src={still}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="border-border text-overline text-faint rounded-sm border px-3 py-1.5">
+              {model.label}
+            </span>
+          </div>
+        )}
         {recInfo?.isTop && (
           <Badge variant="subtle" size="xs" className="absolute left-3 top-3">
             Recommended
