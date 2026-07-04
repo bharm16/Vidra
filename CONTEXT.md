@@ -70,7 +70,31 @@ The full-archive presentation of Sessions on its own page: same entity, titles, 
 
 ### Gallery landing
 
-The public landing page whose content is clips made with Vidra, under the product one-liner. Its zero-content state is the one-screen manifesto (wordmark, one-liner, single auth-aware CTA) — the gallery grows as dogfooding produces clips. Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: marketing site, homepage, splash page.
+The logged-out front door is the page itself: a stranger lands on the input (one quiet product line above it, starter chips below) and can type immediately — auth appears at Go, and the typed draft survives sign-up and runs right after. Vidra-made clips render under the input once dogfooding produces them; no empty grid, no separate manifesto screen. Revised 2026-07-04 during entry-spec grilling (supersedes the 2026-07-02 manifesto zero-state); original resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: marketing site, homepage, splash page, manifesto.
+
+### The input
+
+The single text box on the workspace. It starts holding the creator's one-liner; after go, the same box holds the full shot description Vidra wrote, with clickable highlights for swapping words. There is never a second text surface on the page. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: composer, prompt bar, caption, prompt artifact.
+
+### The player
+
+The single rectangle where every result appears: the waiting state, then the picture (first frame), then the video — same spot, no layout swap. It appears with the first go and never before — no real product shows an empty player, and neither does Vidra (resolved against a built-and-rejected empty-stage mock). Before the first go the page is just the input with its starter chips, sized to its content. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: canvas, stage, viewport, FrameStage (that is a component name, not a domain term).
+
+### The next-step button
+
+The workspace shows only the action that advances the work right now: Go → Use this / Try again → Make it move → Keep. Controls for other moments stay hidden until their moment. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: CTA, gate controls, action bar.
+
+### The page
+
+The workspace is exactly three things: the input, the player, and the next-step button. Everything else is a setting summoned on demand or lives off the page (past work in the session library). When a design discussion adds a fourth resident element, the discussion is wrong. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: workspace shell, editing canvas.
+
+### Take
+
+One generated result — a picture or a clip — permanently paired with the exact text that produced it. Browsing takes is read-only; "Use this take" is the explicit action that restores both the media and its paired text together. Resolved 2026-07-04 during untangling decision (ADR-0010). Avoid synonyms: generation, tile, shot, variant.
+
+### Keep
+
+The action that ends the loop: the creator saves the clip they're proud of to the library. Everything upstream of Keep is free; Keep is where the subscription offer lives (ADR-0010). Resolved 2026-07-04 during untangling decision. Avoid synonyms: save, export, download (downloading is what happens after Keep).
 
 <!-- New terms go here, following the format above. -->
 
