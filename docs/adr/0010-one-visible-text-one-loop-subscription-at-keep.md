@@ -1,6 +1,6 @@
 # One visible text, one loop, subscription at Keep: the untangling decision
 
-**Status:** accepted (2026-07-04)
+**Status:** accepted (2026-07-04) · amended by [ADR-0012](0012-the-space-lineage-network.md) — the player is redefined as the space's live node and the takes strip is superseded by the space; the state machine, text contract, dispositions, and payment decision stand
 
 A 2026-07-04 deep audit (64 research agents, adversarially verified) found the authoring
 workspace had accreted five parallel representations of the prompt, three interlocked state

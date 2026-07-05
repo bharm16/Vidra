@@ -76,17 +76,21 @@ The logged-out front door is the page itself: a stranger lands on the input (one
 
 The single text box on the workspace. It starts holding the creator's one-liner; after go, the same box holds the full shot description Vidra wrote, with clickable highlights for swapping words. There is never a second text surface on the page. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: composer, prompt bar, caption, prompt artifact.
 
+### The space
+
+The structured lineage network that fills the page once work exists: every take is a node, laid out automatically into three fixed generations (words → pictures → clips), with edges typed by the creator's verbs (roll, reword, move). Nodes are never dragged, wired, or manually placed — the space grows behind the work; it is history made visible, not a tool the creator operates. First run with no branches renders as a straight line; the network appears only when branching creates it. Resolved 2026-07-05 during lineage-canvas brainstorm (ADR-0012, amending ADR-0010). Avoid synonyms: canvas, board, graph view, node editor, workspace (that means the whole page).
+
 ### The player
 
-The single rectangle where every result appears: the waiting state, then the picture (first frame), then the video — same spot, no layout swap. It appears with the first go and never before — no real product shows an empty player, and neither does Vidra (resolved against a built-and-rejected empty-stage mock). Before the first go the page is just the input with its starter chips, sized to its content. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: canvas, stage, viewport, FrameStage (that is a component name, not a domain term).
+The live node in the space — whichever take is current, enlarged, with the camera centered on it: the waiting state, then the picture, then the video, in place. Selecting another node slides the camera and restores that take's paired words into the input. Nothing plays anywhere else. It appears with the first go and never before. Originally resolved 2026-07-04 as a fixed rectangle; redefined 2026-07-05 as the live node (ADR-0012). Avoid synonyms: stage, viewport, FrameStage (a component name, not a domain term).
 
 ### The next-step button
 
-The workspace shows only the action that advances the work right now: Go → Use this / Try again → Make it move → Keep. Controls for other moments stay hidden until their moment. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: CTA, gate controls, action bar.
+The page shows only the action that advances the work right now: Go → Use this / Try again → Make it move → Keep. Controls for other moments stay hidden until their moment. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: CTA, gate controls, action bar.
 
 ### The page
 
-The workspace is exactly three things: the input, the player, and the next-step button. Everything else is a setting summoned on demand or lives off the page (past work in the session library). When a design discussion adds a fourth resident element, the discussion is wrong. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: workspace shell, editing canvas.
+The workspace is exactly the space, the input, and the next-step button. Before the first go there is no space — just the centered input with its starter chips; on first submit the input docks to its permanent position and the space is born with the first node. Everything else is a setting summoned on demand or lives off the page (past work in the session library). When a design discussion adds a fourth resident element, the discussion is wrong. Resolved 2026-07-04; anatomy revised 2026-07-05 (ADR-0012). Avoid synonyms: workspace shell, editing canvas.
 
 ### Take
 

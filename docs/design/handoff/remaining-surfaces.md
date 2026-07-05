@@ -1,87 +1,99 @@
 # Remaining surfaces — contents and function
 
 Everything still un-specced, in the same format as the empty-state, toolbar, and navbar
-docs. Contents and function only.
+docs. Contents and function only. Reflects ADR-0012: the page is the space + the docked
+input + the next-step button; the player is the space's live node.
 
 Already done: **empty state · toolbar · navbar**, and — from the empty-state design set —
 **the settings surface · the auth dialog · the daily-cap moment · restored-draft-on-load**.
 
 ---
 
-## Loop moments
+## The space
 
-Each moment is a configuration of the player, the input, and the next step (the button
-per moment is in the toolbar doc).
+The content area of the page once work exists.
+
+- **Within it:** nodes (one per take) in three fixed generations — words → pictures →
+  clips; edges between them, typed by the verb that created them (roll · reword · move);
+  the live node, enlarged, with the camera centered on it.
+- **Function:** lays itself out — nodes are never dragged, wired, or placed. Grows a node
+  whenever a generation starts (the node forms where it will permanently live, shows the
+  waiting state, then fills with the result). Selecting a node slides the camera to it
+  and puts its paired words in the input. A kept clip's node is marked. With no branches
+  the space is a straight line; born with the first node at first submit, when the input
+  docks.
+
+## Loop moments (states of the space + input + button)
 
 ### Writing
 
-- **Player** — waiting state; it has just appeared.
-- **Input** — the one-liner grows into the full shot description in place. A "your words"
-  control appears, holding the original one-liner and restoring it when activated.
+- **Space** — the first words-node is forming; nothing else exists yet (or, mid-session,
+  a new words-node buds from the current branch).
+- **Input** — just docked; the one-liner grows into the full shot description in place. A
+  "your words" control appears, holding the original one-liner and restoring it when
+  activated.
 - **Next step** — in progress; non-advancing.
 
 ### Painting
 
-- **Player** — waiting state; the picture is being made. Starts on its own after writing.
+- **Space** — a picture-node forms off the words-node, showing the waiting state. Camera
+  on it.
 - **Input** — the full description, editable. Phrases are highlighted and open
-  alternatives (see phrase-alternatives). The phrases that describe motion are shown
-  distinct from the rest, marked as not part of the picture.
+  alternatives; the phrases that describe motion are shown distinct from the rest, marked
+  as not part of the picture.
 - **Next step** — in progress; non-advancing.
 
 ### Picture (the gate)
 
-- **Player** — the still. The takes strip is present once more than one take exists.
-- **Input** — the description, phrases still open alternatives. Editing the words marks the
-  picture as no longer matching.
-- **Next step** — advance to motion; re-roll the picture from the same words; or, if the
-  words were edited, remake the picture.
+- **Space** — the picture-node is live: filled, enlarged, camera centered. Sibling
+  pictures (earlier rolls) sit beside it; the words-version(s) behind it.
+- **Input** — the description, phrases still open alternatives. Editing the words marks
+  the live picture as no longer matching.
+- **Next step** — advance to motion (a roll adds a sibling picture-node; a reword adds a
+  words-node and its new picture).
 
 ### Moving
 
-- **Player** — the approved still under a progress indication.
+- **Space** — a clip-node forms off the approved picture, waiting state. Camera on it.
 - **Input** — the description, editable; edits arm the next action.
 - **Next step** — in progress; non-advancing.
 
 ### Clip
 
-- **Player** — the clip, playing on its own, looping, muted. Takes strip present.
+- **Space** — the clip-node is live: playing on its own, looping, muted. Sibling clips
+  from earlier motion rolls sit beside it.
 - **Input** — the description.
-- **Next step** — keep (carries the subscription offer for non-subscribers); or re-roll
-  the motion.
+- **Next step** — keep (carries the subscription offer for non-subscribers); a motion
+  re-roll adds a sibling clip-node.
 
 ### Kept
 
-- **Player** — the kept clip.
+- **Space** — the kept clip's node is marked; camera on it.
 - **Input** — the description.
 - **Next step** — download; share; start a new clip.
 
 ---
 
-## Shared components (span the loop)
+## Shared components
 
 ### The input (beyond entry)
 
 - Holds the one text: the one-liner, then the full description it becomes.
 - **Within it:** the text; highlighted phrases (activating one opens alternatives); the
-  "your words" control (holds the original one-liner, restores it); motion phrases shown
-  as distinct from the rest and marked as not in the picture.
-- **Function:** editable in every moment; its content at the moment of any generation is
-  exactly what is sent; editing after a picture exists marks that picture stale.
+  "your words" control; motion phrases shown as distinct and marked as not in the
+  picture.
+- **Function:** docked from first submit onward; editable in every moment; its content at
+  the moment of any generation is exactly what is sent; editing after a picture exists
+  marks that picture stale. Selecting a node replaces its content with that node's
+  paired words.
 
-### The player
+### Nodes
 
-- One rectangle; the single place any result appears.
-- **Shows, in sequence:** a waiting state; the still picture; the still under a progress
-  indication; the clip (playing, looping, muted).
-- Absent before the first submission.
-
-### The takes strip
-
-- A row of prior takes for the current work.
-- **Each take:** a prior picture or clip, paired with the words that produced it.
-- **Function:** activating a take browses it read-only — the player shows it and the input
-  shows its words, both non-editable; a restore action loads that take's media and words
-  together into the live work.
+- **A words-node:** the description text, as a card.
+- **A picture-node:** the still.
+- **A clip-node:** the clip; plays when live.
+- **Every node:** its state (forming · ready · kept · stale), and its paired words
+  retrievable by selecting it.
 
 ### The phrase-alternatives surface
 
@@ -96,18 +108,19 @@ per moment is in the toolbar doc).
 
 ### Writing failed
 
-- Input returns to the one-liner, unchanged. A line states it failed. Next step returns to
-  submit.
+- No node results. Input returns to the one-liner, unchanged. A line states it failed.
+  Next step returns to submit.
 
 ### Picture failed
 
-- The description is kept. A line states it failed and that nothing was charged. Next step
-  is retry.
+- The forming node reports the failure at the live position; no node persists. The
+  description is kept. A line states it failed and that nothing was charged. Next step is
+  retry.
 
 ### Motion failed
 
-- The picture is kept. A line states it failed and that nothing was charged. Next step is
-  to move again.
+- Same as picture failed: the picture is kept, a line states it failed and that nothing
+  was charged, next step is to move again.
 
 ### Render (keep) failed
 
@@ -121,8 +134,8 @@ per moment is in the toolbar doc).
 
 - A list of past sessions and kept clips.
 - **Each entry:** title, a picture or clip, timestamp.
-- **Function:** activating an entry opens that session at its current point; the list is
-  searchable and filterable.
+- **Function:** activating an entry opens that session's space at its live node; the list
+  is searchable and filterable.
 
 ### Account
 
@@ -136,5 +149,5 @@ per moment is in the toolbar doc).
 
 ### Docs
 
-- Explanation of the workflow (type → picture → motion → keep) and how editing phrases
-  works. Content only.
+- Explanation of the workflow (type → picture → motion → keep), how editing phrases
+  works, and what the space shows. Content only.
