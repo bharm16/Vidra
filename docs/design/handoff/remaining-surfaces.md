@@ -3,7 +3,8 @@
 Everything still un-specced, in the same format as the empty-state, toolbar, and navbar
 docs. Contents and function only.
 
-Already done: **empty state · toolbar · navbar**.
+Already done: **empty state · toolbar · navbar**, and — from the empty-state design set —
+**the settings surface · the auth dialog · the daily-cap moment · restored-draft-on-load**.
 
 ---
 
@@ -91,22 +92,6 @@ per moment is in the toolbar doc).
 
 ---
 
-## Summoned surfaces
-
-### Settings surface
-
-- **Within it:** two controls — aspect ratio and clip duration.
-- **Function:** options constrained to allowed values; commit immediately; persist.
-
-### Auth dialog
-
-- **Within it:** Google sign-in; email + password; a switch to account creation; inline
-  error; dismiss.
-- **Function:** opens when a signed-out user submits, or from the nav's sign-in. The draft
-  is held behind it; on success a pending submission continues, otherwise it closes.
-
----
-
 ## Failure conditions
 
 ### Writing failed
@@ -127,11 +112,6 @@ per moment is in the toolbar doc).
 ### Render (keep) failed
 
 - A line states the keep failed and that nothing was charged. Next step is to keep again.
-
-### Daily cap reached
-
-- Current work stays. A line states the free limit is reached and the work is saved. The
-  generation action is unavailable; a subscribe action is offered.
 
 ---
 
