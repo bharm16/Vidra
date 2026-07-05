@@ -78,7 +78,7 @@ The single text box on the workspace. It starts holding the creator's one-liner;
 
 ### The space
 
-The structured lineage network that fills the page once work exists: every take is a node, laid out automatically into three fixed generations (words → pictures → clips), with edges typed by the creator's verbs (roll, reword, move). Nodes are never dragged, wired, or manually placed — the space grows behind the work; it is history made visible, not a tool the creator operates. First run with no branches renders as a straight line; the network appears only when branching creates it. Resolved 2026-07-05 during lineage-canvas brainstorm (ADR-0012, amending ADR-0010). Avoid synonyms: canvas, board, graph view, node editor, workspace (that means the whole page).
+The structured lineage network that fills the page once work exists: every take is a node, laid out automatically into three fixed generations (words → pictures → clips), with edges typed by the creator's verbs (roll, reword, move). Nodes are never dragged, wired, or manually placed — the space grows behind the work; it is history made visible, not a tool the creator operates. First run with no branches renders as a straight line; the network appears only when branching creates it. One space holds exactly one root — one idea, one words-origin, one tree; a new idea is a new session, born at the centered empty state. Resolved 2026-07-05 during lineage-canvas brainstorm (ADR-0012, amending ADR-0010); single-root resolved same day during wireframe review. Avoid synonyms: canvas, board, graph view, node editor, workspace (that means the whole page).
 
 ### The player
 
