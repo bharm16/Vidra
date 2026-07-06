@@ -1,6 +1,6 @@
 # The space: the page's content is a structured lineage network, and the player is its live node
 
-**Status:** accepted (2026-07-05) · amends [ADR-0010](0010-one-visible-text-one-loop-subscription-at-keep.md)
+**Status:** accepted (2026-07-05) · amends [ADR-0010](0010-one-visible-text-one-loop-subscription-at-keep.md) · clarified by [ADR-0013](0013-space-lineage-is-persisted-not-derived.md) (lineage is persisted, not derived)
 
 A 2026-07-05 design exploration (empty-state wireframe review → lineage brainstorm)
 resolved that the flat takes strip was a lossy projection of structure the product

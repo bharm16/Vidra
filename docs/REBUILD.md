@@ -1,7 +1,7 @@
 # Vidra rebuild — status and pickup point
 
-_Last updated: 2026-07-05. This is the entry document for the workspace rebuild. A fresh
-session should read this, then ADR-0010 → 0011 → 0012, then the glossary terms in
+_Last updated: 2026-07-06. This is the entry document for the workspace rebuild. A fresh
+session should read this, then ADR-0010 → 0011 → 0012 → 0013, then the glossary terms in
 [CONTEXT.md](../CONTEXT.md) (the space, the input, the player, the page, Take, Keep)._
 
 ## What this program is
@@ -20,7 +20,7 @@ The workspace is being rebuilt around three locked decisions:
   edges typed by verb: roll · reword · move). The player is its live node. The input
   docks on first submit; one space holds exactly one root.
 
-Two tracks run in parallel: **design** (active) and **build** (paused).
+Two tracks: **design** (closed 2026-07-06) and **build** (active — resuming at M2a).
 
 ## Design track — where it stands
 
@@ -55,8 +55,10 @@ delta is ruled (RULINGS.md: prompt caption kept, zoom kept, knobs removed, exist
 tokens stay, node removal = leaf-only archive prune, Duplicate dropped). The handoff's
 clickable prototypes satisfy the prototype step.
 
-**Next:** the scope-doc revision pass (fold ADR-0012 + handoff deltas into M2–M7), owner
-sign-off, then implementation starting at M2a.
+**Scope revision + sign-off complete (2026-07-06):** both scope docs revised (M4 split →
+M4 failures+auth + M5 the space; deletions M6, instrumentation M7, site coherence M8),
+ADR-0013 added (lineage persisted, not derived), owner signed off. **Next:**
+implementation at M2a, test-first via `/tdd`.
 
 **The design bet to validate before build:** a non-expert must read the space as "my
 work's history," not "a diagram to understand" (~6-node mock test; fallback documented in
@@ -65,20 +67,18 @@ ADR-0012).
 ## Build track — where it stands
 
 - **M1 shipped:** inline video player, `5c63aa43` (+ ADR-0010 `72e0e824`).
-- **M2–M7 scoped, not signed off, nothing built:**
+- **M2a–M8 scoped and signed off (2026-07-06):**
   [build scope](design/2026-07-05-untangle-build-scope.md) +
-  [site scope](design/2026-07-05-site-scope.md). Owner mandate: no build step before
-  scope sign-off.
-- **Known stale spot:** the scope docs predate ADR-0012 — M4 still says "takes strip";
-  it becomes the space (lineage layout + camera; player → live node). Revise before
-  sign-off.
+  [site scope](design/2026-07-05-site-scope.md), both revised for ADR-0012/0013 + the
+  handoff. Building resumes at M2a (test-first via `/tdd`).
+- **Design track closed:** hi-fi handoff accepted, all deltas ruled, scope signed.
 
 ## Open items
 
 1. Hi-fi board accepted 2026-07-05 (all app frames incl. public clip + docs; accent and
    state colors accepted, ADR-0008 amended; empty state carries no rail; no daily-cap
    frame needed). Next: coded prototype from the board.
-2. Scope docs need the ADR-0012 revision pass (M4 reshaped) before M2 sign-off.
+2. Scope revision + sign-off complete (2026-07-06): M4 split into M4 + M5 (the space); ADR-0013 added; building at M2a.
 3. Account page (take 36) uses credits/usage language copied from a reference; credits
    don't exist in the product. Owner chose to leave it for now — fix before Account goes
    hi-fi/ships.

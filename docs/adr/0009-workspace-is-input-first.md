@@ -1,6 +1,6 @@
 # The workspace is input-first: three residents, and no player before the first result
 
-**Status:** accepted (2026-07-04)
+**Status:** accepted (2026-07-04) · the player is redefined by [ADR-0012](0012-the-space-lineage-network.md) as the space's live node — the "one rectangle" framing below predates the space
 
 The workspace's pre-work state had drifted into a floating hero ("What are you making?")
 raised over a full-viewport black void, with a settings-laden composer and no visible
