@@ -38,6 +38,8 @@ server/.secrets/
 # Test artifacts
 playwright-report/
 test-results/
+# Playwright MCP session artifacts (screenshots + accessibility snapshots)
+.playwright-mcp/
 coverage/
 .nyc_output/
 *.lcov
@@ -117,3 +119,6 @@ scripts/quick-fix-cursor.sh
 # docs/architecture/architecture-map.json. Open the HTML locally after running
 # `npm run architecture:map:write` to regenerate it.
 docs/architecture/architecture-map.html
+
+# Ralph loop local agent state
+.claude/ralph/
