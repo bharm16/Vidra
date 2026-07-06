@@ -31,10 +31,6 @@ import { useSidebarGenerationDomain } from "@/components/ToolSidebar/context";
 import { GenerationPopover } from "@/features/prompt-optimizer/components/GenerationPopover";
 import { cn } from "@/utils/cn";
 import { buildGalleryGenerationEntries } from "./utils/galleryGeneration";
-import {
-  computeWorkspaceMoment,
-  workspaceMomentClass,
-} from "./utils/computeWorkspaceMoment";
 import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
 import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
 import { groupShots } from "./utils/groupShots";
@@ -354,19 +350,6 @@ export function CanvasWorkspace({
     setShowCameraMotionModal(true);
   }, [domain.startFrame]);
 
-  const promptIsEmpty = prompt.trim().length === 0;
-  const activeShotStatuses = useMemo<ReadonlyArray<Generation["status"]>>(
-    () => shots[0]?.tiles.map((tile) => tile.status) ?? [],
-    [shots],
-  );
-  const moment = computeWorkspaceMoment({
-    galleryEntriesCount: galleryEntries.length,
-    activeShotStatuses,
-    promptIsEmpty,
-    tuneOpen,
-    promptFocused: false, // Phase 3 wires this
-  });
-
   // Pre-work: nothing has happened yet — no shots, no frame, loop idle, and
   // the session holds no expanded prompt. Unlike moment === "empty" this
   // survives focus and typing, so the hero stays on screen while the creator
@@ -531,10 +514,7 @@ export function CanvasWorkspace({
 
   return (
     <div
-      className={cn(
-        "text-foreground grid h-full grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden [background:var(--tool-canvas-bg)]",
-        workspaceMomentClass(moment),
-      )}
+      className="text-foreground grid h-full grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden [background:var(--tool-canvas-bg)]"
       style={
         // Pre-work: the composer rises to mid-screen so the hero question and
         // its answer box read as one unit; it glides down once work starts.
