@@ -34,12 +34,6 @@ export interface UseTextSelectionOptions {
   onFetchSuggestions: ((payload: SuggestionPayload) => void) | undefined;
   onSpanSelect?: ((spanId: string | null) => void) | undefined;
   onIntentRefine?: (() => void) | undefined;
-  /**
-   * When true (I2V mode is active), span clicks and category-row clicks
-   * are no-ops — the suggestions popover is intentionally disabled because
-   * the start image dictates the constraints.
-   */
-  isI2VMode?: boolean;
 }
 
 export interface UseTextSelectionReturn {
@@ -58,7 +52,6 @@ export function useTextSelection({
   onFetchSuggestions,
   onSpanSelect,
   onIntentRefine,
-  isI2VMode = false,
 }: UseTextSelectionOptions): UseTextSelectionReturn {
   const spanContextSpans = useMemo(
     () => (Array.isArray(parseResult?.spans) ? parseResult.spans : []),
@@ -67,9 +60,6 @@ export function useTextSelection({
 
   const handleTextSelection = useCallback((): void => {
     if (selectedMode !== "video") {
-      return;
-    }
-    if (isI2VMode) {
       return;
     }
 
@@ -105,7 +95,6 @@ export function useTextSelection({
     displayedPrompt,
     spanContextSpans,
     onFetchSuggestions,
-    isI2VMode,
   ]);
 
   const triggerSuggestionsFromTarget = useCallback(
@@ -113,10 +102,6 @@ export function useTextSelection({
       if (selectedMode !== "video" || !editorRef.current) {
         return;
       }
-      if (isI2VMode) {
-        return;
-      }
-
       // Find the highlighted word element
       const node = findHighlightNode(
         targetElement as HTMLElement | null,
@@ -199,7 +184,6 @@ export function useTextSelection({
       spanContextSpans,
       onSpanSelect,
       onIntentRefine,
-      isI2VMode,
     ],
   );
 
@@ -233,10 +217,6 @@ export function useTextSelection({
       if (!onFetchSuggestions || selectedMode !== "video") {
         return;
       }
-      if (isI2VMode) {
-        return;
-      }
-
       // Strong intent signal: user clicked a labeled token → refinement wins.
       if (onIntentRefine) {
         onIntentRefine();
@@ -286,7 +266,6 @@ export function useTextSelection({
       spanContextSpans,
       onSpanSelect,
       onIntentRefine,
-      isI2VMode,
     ],
   );
 

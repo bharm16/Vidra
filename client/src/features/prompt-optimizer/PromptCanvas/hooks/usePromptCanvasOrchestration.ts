@@ -437,7 +437,6 @@ export function usePromptCanvasOrchestration({
     onFetchSuggestions,
     onSpanSelect: handleSpanSelect,
     onIntentRefine: () => setRightPaneMode("refine"),
-    isI2VMode: Boolean(i2vContext?.isI2VMode),
   });
 
   const {
