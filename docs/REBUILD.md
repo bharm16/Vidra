@@ -43,14 +43,14 @@ deviations → rulings captured into glossary/ADRs/specs → hi-fi → coded pro
 - **Rulings captured** (commit `76b4cb7a`): the collapsible labeled rail is the chrome;
   settings are two inline selectors on the input (16:9 ▾ · 6s ▾); one root per space.
 
-**In flight:** a fix prompt was written for the board's one semantic error — take 23a's
-"(starts a new root)" input placeholder implies multi-root spaces; single-root is the
-ruling. The docked input always holds the live take's words; blank input exists only at
-the centered empty state; "New clip" = new session.
+**Hi-fi board accepted (2026-07-05, "All Frames"):** entry, the loop as states of the
+space (forming-node and failure-at-node patterns generalize across columns), editing +
+phrase alternatives, failures, Library, auth, Account, public clip, Docs. Single-root
+fixed; accent + state colors accepted (ADR-0008 amended); empty state carries a minimal
+top bar, the rail arrives with the space.
 
-**Next:** hi-fi designs (suggested start: empty state + the picture gate 25c; check both
-at laptop width — the board has no width variants). Then the coded prototype, which is
-where the three transitions get proven: the dock moment, node birth, camera slide.
+**Next:** the coded prototype from the board — where the three transitions get proven:
+the dock moment, node birth, camera slide.
 
 **The design bet to validate before build:** a non-expert must read the space as "my
 work's history," not "a diagram to understand" (~6-node mock test; fallback documented in
