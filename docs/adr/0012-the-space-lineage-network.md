@@ -53,6 +53,12 @@ creates it.
   positions — layout is derived, so nothing spatial is stored.
 - Failures still produce no nodes; a failed roll reports at the live node. Keep marks a
   node (the tree bears visible fruit); soft-cap and truth contracts are untouched.
+- **Node removal (ruled 2026-07-05):** leaf-only, archive semantics — Remove appears only
+  on childless takes, the record persists server-side excluded from render, the camera
+  falls back to the parent, kept nodes and the root are not removable (the root's
+  deletion is the session's, owned by the Library). Leaf-only makes orphans
+  unrepresentable, so lineage integrity needs no reconciliation logic. **Duplicate does
+  not exist** — reword already carries that intent with an honest edge.
 - **Riskiest assumption, to be tested in design before build:** a non-expert reads the
   growing structure as "my work's history," not "a diagram to understand." The test is a
   mock of the space at ~6 nodes; if it reads as homework, the fallback is the
