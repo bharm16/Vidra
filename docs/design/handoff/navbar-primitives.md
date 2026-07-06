@@ -1,7 +1,9 @@
 # The rail
 
 Persistent chrome of the app: a slim left rail, collapsible between labeled and icon-only.
-Present over the workspace; supporting pages carry the same identity in their own header.
+Present over the workspace once the space exists — the empty state carries only a minimal
+top bar (wordmark, Library, account); the rail arrives with the space. Supporting pages
+carry the same identity in their own header.
 
 ## Contains
 

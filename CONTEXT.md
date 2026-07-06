@@ -58,7 +58,7 @@ The single end-to-end walkthrough that defines a working product: empty canvas �
 
 ### Span palette
 
-The semantic color set carried by span categories — the only color in the product that carries meaning. All chrome (buttons, surfaces, accents, marketing) stays neutral so color always reads as span category, never as brand — governed by [docs/adr/0008-one-design-language-across-all-shells.md](docs/adr/0008-one-design-language-across-all-shells.md). Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: highlight colors, accent palette, brand colors.
+The semantic color set carried by span categories — the only color inside the text that carries meaning. Chrome carries a restrained accent and the space carries state colors (accepted 2026-07-05 with the hi-fi board); span hues stay reserved for categories — governed by [docs/adr/0008-one-design-language-across-all-shells.md](docs/adr/0008-one-design-language-across-all-shells.md). Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: highlight colors, accent palette, brand colors.
 
 ### Model showroom
 

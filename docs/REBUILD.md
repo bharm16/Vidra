@@ -69,7 +69,9 @@ ADR-0012).
 
 ## Open items
 
-1. Owner: run the multi-root fix prompt on the board, then start hi-fi.
+1. Hi-fi board accepted 2026-07-05 (all app frames incl. public clip + docs; accent and
+   state colors accepted, ADR-0008 amended; empty state carries no rail; no daily-cap
+   frame needed). Next: coded prototype from the board.
 2. Scope docs need the ADR-0012 revision pass (M4 reshaped) before M2 sign-off.
 3. Account page (take 36) uses credits/usage language copied from a reference; credits
    don't exist in the product. Owner chose to leave it for now — fix before Account goes

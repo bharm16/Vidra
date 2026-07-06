@@ -1,6 +1,6 @@
 # One design language across all shells: workspace monochrome, span palette as the only semantic color
 
-**Status:** accepted (2026-07-02)
+**Status:** accepted (2026-07-02) · amended 2026-07-05 — the rebuild's hi-fi design (owner-accepted) adds a restrained indigo accent for primary actions/live emphasis and state colors in the space (kept/reword/failure); the span palette remains the only semantic color inside the text
 
 Vidra's UI had drifted into three coexisting shells from three product eras — the canvas
 workspace, a marketing site with its own purple accent (`/home`, `/products`, `/docs`), and
