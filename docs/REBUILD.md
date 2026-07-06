@@ -57,8 +57,7 @@ clickable prototypes satisfy the prototype step.
 
 **Scope revision + sign-off complete (2026-07-06):** both scope docs revised (M4 split →
 M4 failures+auth + M5 the space; deletions M6, instrumentation M7, site coherence M8),
-ADR-0013 added (lineage persisted, not derived), owner signed off. **Next:**
-implementation at M2a, test-first via `/tdd`.
+ADR-0013 added (lineage persisted, not derived), owner signed off.
 
 **The design bet to validate before build:** a non-expert must read the space as "my
 work's history," not "a diagram to understand" (~6-node mock test; fallback documented in
@@ -67,11 +66,24 @@ ADR-0012).
 ## Build track — where it stands
 
 - **M1 shipped:** inline video player, `5c63aa43` (+ ADR-0010 `72e0e824`).
-- **M2a–M8 scoped and signed off (2026-07-06):**
-  [build scope](design/2026-07-05-untangle-build-scope.md) +
-  [site scope](design/2026-07-05-site-scope.md), both revised for ADR-0012/0013 + the
-  handoff. Building resumes at M2a (test-first via `/tdd`).
-- **Design track closed:** hi-fi handoff accepted, all deltas ruled, scope signed.
+- **M2a complete + certified (2026-07-06):** one derived `WorkspaceStage` replaces the
+  five-flag derivation. Commits `19242476` · `fa04bd23` · `d22c7162`.
+- **M2b complete + certified (2026-07-06):** the dispatched payload is byte-for-byte the
+  visible text on both paths — tune chips + server motion splice removed, the Gemini
+  picture transformer off the golden path, each with a truth regression. Commits
+  `fac77e6b` · `9a34e011` · `d9981dde`. (D1 already satisfied; slot-render quality + the
+  motion/transformer plumbing deletion are M6 follow-ups.)
+- **M3 core done (2026-07-06):** click-to-enhance no longer gated by a start frame — the
+  three `isI2VMode` gates removed. Commit `8a149c2a`. **Next: M3's four remaining slices**
+  (see TaskList task #3), then M4 → M8.
+- **Build state:** 8 commits this session (`f7923064`…`8a149c2a`); full unit suite green at
+  every milestone boundary. The TaskList (#1–#8) carries per-milestone detail; the fresh
+  session brief is `/private/tmp/vidra-rebuild-handoff-2026-07-06.md`.
+- **Scope docs + design track:** both scope docs signed off; hi-fi handoff accepted, all
+  deltas ruled.
+- **Worktree note:** this build ran in a git worktree; running client tests there requires
+  `.env`/`gcs-service-account.json` symlinked from main and the project vitest config (see
+  the session brief).
 
 ## Open items
 
