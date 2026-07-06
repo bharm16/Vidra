@@ -49,8 +49,14 @@ phrase alternatives, failures, Library, auth, Account, public clip, Docs. Single
 fixed; accent + state colors accepted (ADR-0008 amended); empty state carries a minimal
 top bar, the rail arrives with the space.
 
-**Next:** the coded prototype from the board — where the three transitions get proven:
-the dock moment, node birth, camera slide.
+**Design phase complete (2026-07-05):** the Claude Design handoff landed
+(docs/design/handoff/returns/ — 9 screens, all workspace states, motion spec) and every
+delta is ruled (RULINGS.md: prompt caption kept, zoom kept, knobs removed, existing
+tokens stay, node removal = leaf-only archive prune, Duplicate dropped). The handoff's
+clickable prototypes satisfy the prototype step.
+
+**Next:** the scope-doc revision pass (fold ADR-0012 + handoff deltas into M2–M7), owner
+sign-off, then implementation starting at M2a.
 
 **The design bet to validate before build:** a non-expert must read the space as "my
 work's history," not "a diagram to understand" (~6-node mock test; fallback documented in
