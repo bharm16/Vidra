@@ -35,6 +35,8 @@ import {
   computeWorkspaceMoment,
   workspaceMomentClass,
 } from "./utils/computeWorkspaceMoment";
+import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
+import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
 import { groupShots } from "./utils/groupShots";
 import { useFeaturedTile } from "./hooks/useFeaturedTile";
 import { useWorkspaceKeyboardShortcuts } from "./hooks/useWorkspaceKeyboardShortcuts";
@@ -377,12 +379,16 @@ export function CanvasWorkspace({
   // frame": the frame or its empty/failed state owns the canvas).
   const { ideaBoxStage, isExpanding, hasExpandedPrompt } =
     usePromptResultsData();
-  const isPreWork =
-    shots.length === 0 &&
-    !domain.startFrame &&
-    !isExpanding &&
-    (ideaBoxStage?.kind ?? "idle") === "idle" &&
-    !hasExpandedPrompt;
+  const workspaceStage = deriveWorkspaceStage(
+    computeWorkspaceArtifacts({
+      tiles: shots.flatMap((shot) => shot.tiles),
+      ideaBoxStageKind: ideaBoxStage?.kind ?? "idle",
+      isExpanding: isExpanding ?? false,
+      hasExpandedPrompt: hasExpandedPrompt ?? false,
+      hasStartFrame: Boolean(domain.startFrame),
+    }),
+  );
+  const isPreWork = workspaceStage.stage === "empty";
 
   const surfaceProps: PromptEditorSurfaceProps = {
     editorRef,
