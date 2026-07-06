@@ -376,7 +376,6 @@ export function CanvasWorkspace({
     onAutocompleteSelect,
     onAutocompleteClose,
     onAutocompleteIndexChange,
-    isI2VMode: Boolean(domain.startFrame?.url),
   };
 
   const handleToggleChip = useCallback((id: TuneChipId) => {

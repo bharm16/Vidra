@@ -39,9 +39,6 @@ export interface PromptEditorSurfaceProps {
   onAutocompleteSelect: (asset: AssetSuggestion) => void;
   onAutocompleteClose: () => void;
   onAutocompleteIndexChange: (index: number) => void;
-  /** When true, the editor shows an I2V-aware placeholder explaining that
-   *  the prompt is optional once a start image is set. Defaults to false. */
-  isI2VMode?: boolean;
 }
 
 export function PromptEditorSurface({
@@ -67,7 +64,6 @@ export function PromptEditorSurface({
   onAutocompleteSelect,
   onAutocompleteClose,
   onAutocompleteIndexChange,
-  isI2VMode = false,
 }: PromptEditorSurfaceProps): React.ReactElement {
   const {
     selectedSpanId,
@@ -97,9 +93,7 @@ export function PromptEditorSurface({
     isBulkCopyLoading = false,
   } = useSelectedSpan();
   const isEmptyLayout = variant === "empty";
-  const placeholderText = isI2VMode
-    ? "Optional: add motion direction (or leave blank to animate the image)"
-    : "Describe your shot…";
+  const placeholderText = "Describe your shot…";
   const [, setIsFocused] = useState(false);
   const [isSuggestionTrayCollapsed, setIsSuggestionTrayCollapsed] =
     useState(false);
