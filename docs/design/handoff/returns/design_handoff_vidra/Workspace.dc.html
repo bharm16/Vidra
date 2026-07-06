@@ -1,0 +1,2850 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+        <script src="./image-slot.js"></script>
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            background: #050607;
+          }
+          @keyframes esRise {
+            from {
+              opacity: 0;
+              transform: translateY(14px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes esLive {
+            0%,
+            100% {
+              box-shadow:
+                0 0 0 4px
+                  color-mix(in srgb, var(--accent, #5b6cff) 16%, transparent),
+                0 0 34px
+                  color-mix(in srgb, var(--accent, #5b6cff) 26%, transparent),
+                0 22px 50px -18px rgba(0, 0, 0, 0.8);
+            }
+            50% {
+              box-shadow:
+                0 0 0 5px
+                  color-mix(in srgb, var(--accent, #5b6cff) 22%, transparent),
+                0 0 46px
+                  color-mix(in srgb, var(--accent, #5b6cff) 36%, transparent),
+                0 22px 50px -18px rgba(0, 0, 0, 0.8);
+            }
+          }
+          @keyframes esLiveG {
+            0%,
+            100% {
+              box-shadow:
+                0 0 0 4px rgba(63, 191, 111, 0.16),
+                0 0 34px rgba(63, 191, 111, 0.26),
+                0 22px 50px -18px rgba(0, 0, 0, 0.8);
+            }
+            50% {
+              box-shadow:
+                0 0 0 5px rgba(63, 191, 111, 0.22),
+                0 0 46px rgba(63, 191, 111, 0.36),
+                0 22px 50px -18px rgba(0, 0, 0, 0.8);
+            }
+          }
+          @keyframes esShim {
+            0% {
+              background-position: -140% 0;
+            }
+            100% {
+              background-position: 240% 0;
+            }
+          }
+          @keyframes esPulse {
+            0%,
+            100% {
+              opacity: 0.5;
+            }
+            50% {
+              opacity: 1;
+            }
+          }
+          @keyframes esDot {
+            0%,
+            100% {
+              opacity: 0.28;
+              transform: translateY(0);
+            }
+            50% {
+              opacity: 1;
+              transform: translateY(-4px);
+            }
+          }
+          @keyframes esCaret {
+            0%,
+            50% {
+              opacity: 1;
+            }
+            50.01%,
+            100% {
+              opacity: 0;
+            }
+          }
+          @keyframes esSettle {
+            0% {
+              opacity: 0;
+              transform: scale(0.9);
+              filter: blur(8px);
+            }
+            55% {
+              filter: blur(0);
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1);
+              filter: blur(0);
+            }
+          }
+          @keyframes esGrow {
+            0% {
+              opacity: 0;
+              transform: scale(0.5);
+            }
+            70% {
+              opacity: 1;
+            }
+            100% {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+          image-slot {
+            --is-bg: #111318;
+            --is-fg: #5b616f;
+          }
+        </style>
+      </helmet>
+      <div
+        ref="{{ rootRef }}"
+        style="
+          position: relative;
+          width: 1440px;
+          height: 900px;
+          overflow: hidden;
+          background: #0a0b0e;
+          font-family: &quot;Space Grotesk&quot;, system-ui, sans-serif;
+          color: #f2f3f6;
+          display: flex;
+          isolation: isolate;
+          --accent: #5b6cff;
+          --glow: 1;
+          --grain: 0.4;
+        "
+      >
+        <!-- LEFT RAIL -->
+        <dc-import
+          name="Rail"
+          active="none"
+          hint-size="240px,100%"
+          style="flex: none; align-self: stretch; z-index: 5"
+        ></dc-import>
+
+        <!-- MAIN -->
+        <div
+          style="
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            position: relative;
+          "
+        >
+          <!-- TOP BAR -->
+          <div
+            style="
+              height: 54px;
+              flex: none;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 0 22px;
+              border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+              z-index: 4;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 11px">
+              <span
+                style="
+                  font:
+                    500 15px &quot;Space Grotesk&quot;,
+                    sans-serif;
+                  color: #f2f3f6;
+                  letter-spacing: -0.01em;
+                "
+                >Coastal town at dawn</span
+              >
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                font:
+                  400 12px &quot;Space Mono&quot;,
+                  monospace;
+                color: #8b909c;
+              "
+            >
+              <span style="cursor: pointer; width: 20px; text-align: center"
+                >−</span
+              ><span style="color: #c3c7d0">90%</span
+              ><span style="cursor: pointer; width: 20px; text-align: center"
+                >+</span
+              >
+            </div>
+          </div>
+
+          <!-- CANVAS -->
+          <div
+            style="
+              flex: 1;
+              position: relative;
+              overflow: hidden;
+              background-color: #0a0b0e;
+              background-image: radial-gradient(
+                rgba(255, 255, 255, 0.05) 1px,
+                transparent 1px
+              );
+              background-size: 24px 24px;
+            "
+          >
+            <!-- ambient spotlight behind live node -->
+            <div
+              style="
+                position: absolute;
+                left: 430px;
+                top: 150px;
+                width: 540px;
+                height: 430px;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 0;
+                filter: blur(12px);
+                opacity: calc(var(--glow, 1) * 0.7);
+                background: radial-gradient(
+                  ellipse at 50% 50%,
+                  color-mix(in srgb, var(--accent, #5b6cff) 32%, transparent),
+                  color-mix(in srgb, var(--accent, #5b6cff) 7%, transparent) 46%,
+                  rgba(0, 0, 0, 0) 72%
+                );
+              "
+            ></div>
+
+            <!-- ============ WRITING (space born) ============ -->
+            <sc-if value="{{ isWriting }}" hint-placeholder-val="{{ true }}">
+              <div
+                style="
+                  position: absolute;
+                  left: 262px;
+                  top: 302px;
+                  width: 240px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 126px;
+                    border: 1.5px solid var(--accent, #5b6cff);
+                    border-radius: 14px;
+                    overflow: hidden;
+                    animation: esLive 4.5s ease-in-out infinite;
+                    background: linear-gradient(
+                      100deg,
+                      #14161c,
+                      #1c1f27 50%,
+                      #14161c
+                    );
+                    background-size: 220% 100%;
+                    animation:
+                      esSettle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      esShim 2.2s linear infinite,
+                      esLive 4.5s ease-in-out infinite;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <div style="display: flex; gap: 6px; align-items: center">
+                    <span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out infinite;
+                      "
+                    ></span
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out 0.16s infinite;
+                      "
+                    ></span
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out 0.32s infinite;
+                      "
+                    ></span>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 11px;
+                      left: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        500 10px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      border-radius: 6px;
+                      padding: 4px 9px;
+                    "
+                  >
+                    <span
+                      style="
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: #fff;
+                        animation: esPulse 1.4s ease-in-out infinite;
+                      "
+                    ></span
+                    >LIVE
+                  </div>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: color-mix(
+                      in srgb,
+                      var(--accent, #5b6cff) 55%,
+                      #ffffff
+                    );
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  prompt
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ PAINTING ============ -->
+            <sc-if value="{{ isPainting }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <path
+                  d="M274,343 C362,343 402,365 468,365"
+                  style="stroke: var(--accent, #5b6cff)"
+                  stroke-width="2.2"
+                ></path>
+              </svg>
+              <div
+                style="
+                  position: absolute;
+                  left: 92px;
+                  top: 314px;
+                  width: 182px;
+                  z-index: 2;
+                "
+              >
+                <div
+                  style="
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.035);
+                    backdrop-filter: blur(8px);
+                    padding: 12px 13px;
+                    font:
+                      400 12px &quot;Space Grotesk&quot;,
+                      sans-serif;
+                    color: #aeb3c0;
+                    line-height: 1.4;
+                  "
+                >
+                  A drone shot over a coastal town…
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: #6b7180;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  prompt
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    border: 1.5px solid var(--accent, #5b6cff);
+                    border-radius: 16px;
+                    overflow: hidden;
+                    height: 194px;
+                    background: linear-gradient(
+                      100deg,
+                      #14161c,
+                      #1c1f27 50%,
+                      #14161c
+                    );
+                    background-size: 220% 100%;
+                    animation:
+                      esSettle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      esShim 2.2s linear infinite,
+                      esLive 4.5s ease-in-out infinite;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <div style="display: flex; gap: 6px; align-items: center">
+                    <span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out infinite;
+                      "
+                    ></span
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out 0.16s infinite;
+                      "
+                    ></span
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out 0.32s infinite;
+                      "
+                    ></span>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 11px;
+                      left: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        500 10px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      border-radius: 6px;
+                      padding: 4px 9px;
+                    "
+                  >
+                    <span
+                      style="
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: #fff;
+                        animation: esPulse 1.4s ease-in-out infinite;
+                      "
+                    ></span
+                    >LIVE
+                  </div>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: color-mix(
+                      in srgb,
+                      var(--accent, #5b6cff) 55%,
+                      #ffffff
+                    );
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ PICTURE (gate) ============ -->
+            <sc-if value="{{ isPicture }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <sc-if value="{{ reworded }}">
+                  <path
+                    d="M274,343 C384,343 404,160 486,160"
+                    stroke="#d3a44e"
+                    stroke-width="1.8"
+                    stroke-dasharray="6 4"
+                  ></path>
+                </sc-if>
+                <sc-if value="{{ picRolled }}">
+                  <path
+                    d="M274,343 C384,343 404,572 486,572"
+                    stroke="rgba(255,255,255,.16)"
+                    stroke-width="1.5"
+                  ></path>
+                </sc-if>
+                <path
+                  d="M274,343 C362,343 402,365 468,365"
+                  style="stroke: var(--accent, #5b6cff)"
+                  stroke-width="2.2"
+                ></path>
+              </svg>
+              <sc-if value="{{ reworded }}">
+                <div
+                  style="
+                    position: absolute;
+                    left: 384px;
+                    top: 244px;
+                    z-index: 2;
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    color: #d9ac57;
+                    background: #191509;
+                    border: 1px solid rgba(211, 164, 78, 0.34);
+                    border-radius: 6px;
+                    padding: 3px 8px;
+                  "
+                >
+                  reword
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    left: 486px;
+                    top: 108px;
+                    width: 184px;
+                    z-index: 2;
+                    opacity: 0.85;
+                    animation: esGrow 0.5s cubic-bezier(0.2, 0.85, 0.25, 1);
+                    transform-origin: 0% 100%;
+                  "
+                >
+                  <div
+                    style="
+                      position: relative;
+                      height: 104px;
+                      border: 1px solid rgba(211, 164, 78, 0.42);
+                      border-radius: 12px;
+                      overflow: hidden;
+                      box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                      transition: all 0.2s;
+                    "
+                    style-hover="opacity:1;border-color:rgba(211,164,78,.72)"
+                  >
+                    <image-slot
+                      id="wf_img3"
+                      style="width: 100%; height: 100%; display: block"
+                      shape="rounded"
+                      radius="12"
+                      fit="cover"
+                      placeholder="frame"
+                    ></image-slot>
+                  </div>
+                  <div
+                    style="
+                      font:
+                        400 10.5px &quot;Space Mono&quot;,
+                        monospace;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: #c79a54;
+                      margin-top: 7px;
+                      text-align: center;
+                    "
+                  >
+                    image 3
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ picRolled }}">
+                <div
+                  style="
+                    position: absolute;
+                    left: 392px;
+                    top: 500px;
+                    z-index: 2;
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    color: #8b909c;
+                    background: #121319;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 6px;
+                    padding: 3px 8px;
+                  "
+                >
+                  roll
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    left: 486px;
+                    top: 520px;
+                    width: 184px;
+                    z-index: 2;
+                    opacity: 0.8;
+                    animation: esGrow 0.5s cubic-bezier(0.2, 0.85, 0.25, 1);
+                    transform-origin: 0% 0%;
+                  "
+                >
+                  <div
+                    style="
+                      position: relative;
+                      height: 104px;
+                      border: 1px solid rgba(255, 255, 255, 0.13);
+                      border-radius: 12px;
+                      overflow: hidden;
+                      box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                      transition: all 0.2s;
+                    "
+                    style-hover="opacity:1;border-color:rgba(255,255,255,.28)"
+                  >
+                    <image-slot
+                      id="wf_img2"
+                      style="width: 100%; height: 100%; display: block"
+                      shape="rounded"
+                      radius="12"
+                      fit="cover"
+                      placeholder="frame"
+                    ></image-slot>
+                  </div>
+                  <div
+                    style="
+                      font:
+                        400 10.5px &quot;Space Mono&quot;,
+                        monospace;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: #8b909c;
+                      margin-top: 7px;
+                      text-align: center;
+                    "
+                  >
+                    image 2
+                  </div>
+                </div>
+              </sc-if>
+              <div
+                style="
+                  position: absolute;
+                  left: 92px;
+                  top: 314px;
+                  width: 182px;
+                  z-index: 2;
+                  animation: esRise 0.6s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+                "
+              >
+                <div
+                  style="
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.035);
+                    backdrop-filter: blur(8px);
+                    padding: 12px 13px;
+                    font:
+                      400 12px &quot;Space Grotesk&quot;,
+                      sans-serif;
+                    color: #aeb3c0;
+                    line-height: 1.4;
+                  "
+                >
+                  A drone shot over a coastal town…
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: #6b7180;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  prompt
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                  animation: esRise 0.7s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+                "
+              >
+                <div
+                  onContextMenu="{{ openMenu }}"
+                  style="
+                    position: relative;
+                    border: 1.5px solid var(--accent, #5b6cff);
+                    border-radius: 16px;
+                    overflow: hidden;
+                    animation:
+                      esSettle 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      esLive 4.5s ease-in-out infinite;
+                  "
+                >
+                  <image-slot
+                    id="wf_img1"
+                    style="width: 100%; height: 194px; display: block"
+                    shape="rounded"
+                    radius="16"
+                    fit="cover"
+                    placeholder="Drop your still"
+                  ></image-slot>
+                  <div
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      pointer-events: none;
+                      background: linear-gradient(
+                        180deg,
+                        rgba(10, 11, 14, 0.5),
+                        rgba(10, 11, 14, 0) 26%,
+                        rgba(10, 11, 14, 0) 74%,
+                        rgba(10, 11, 14, 0.35)
+                      );
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 11px;
+                      left: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        500 10px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      letter-spacing: 0.03em;
+                      border-radius: 6px;
+                      padding: 4px 9px;
+                      box-shadow: 0 4px 12px -3px
+                        color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 70%,
+                          transparent
+                        );
+                    "
+                  >
+                    <span
+                      style="
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: #fff;
+                      "
+                    ></span
+                    >LIVE
+                  </div>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: color-mix(
+                      in srgb,
+                      var(--accent, #5b6cff) 55%,
+                      #ffffff
+                    );
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ MOVING ============ -->
+            <sc-if value="{{ isMoving }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <path
+                  d="M344,368 L468,365"
+                  style="stroke: var(--accent, #5b6cff)"
+                  stroke-width="2.2"
+                ></path>
+              </svg>
+              <div
+                style="
+                  position: absolute;
+                  left: 388px;
+                  top: 340px;
+                  z-index: 2;
+                  font:
+                    400 10.5px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.08em;
+                  color: color-mix(in srgb, var(--accent, #5b6cff) 60%, #fff);
+                  background: #121319;
+                  border: 1px solid
+                    color-mix(in srgb, var(--accent, #5b6cff) 30%, transparent);
+                  border-radius: 6px;
+                  padding: 3px 8px;
+                "
+              >
+                move
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 168px;
+                  top: 318px;
+                  width: 176px;
+                  z-index: 2;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 99px;
+                    border: 1px solid rgba(255, 255, 255, 0.13);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                  "
+                >
+                  <image-slot
+                    id="wf_img1"
+                    style="width: 100%; height: 100%; display: block"
+                    shape="rounded"
+                    radius="12"
+                    fit="cover"
+                    placeholder="still"
+                  ></image-slot>
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #8b909c;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    border: 1.5px solid var(--accent, #5b6cff);
+                    border-radius: 16px;
+                    overflow: hidden;
+                    height: 194px;
+                    background: linear-gradient(
+                      100deg,
+                      #14161c,
+                      #1c1f27 50%,
+                      #14161c
+                    );
+                    background-size: 220% 100%;
+                    animation:
+                      esSettle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      esShim 2.2s linear infinite,
+                      esLive 4.5s ease-in-out infinite;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <div style="display: flex; gap: 6px; align-items: center">
+                    <span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out infinite;
+                      "
+                    ></span
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out 0.16s infinite;
+                      "
+                    ></span
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 75%,
+                          #fff
+                        );
+                        animation: esDot 1.05s ease-in-out 0.32s infinite;
+                      "
+                    ></span>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 11px;
+                      left: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        500 10px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      border-radius: 6px;
+                      padding: 4px 9px;
+                    "
+                  >
+                    <span
+                      style="
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: #fff;
+                        animation: esPulse 1.4s ease-in-out infinite;
+                      "
+                    ></span
+                    >LIVE
+                  </div>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: color-mix(
+                      in srgb,
+                      var(--accent, #5b6cff) 55%,
+                      #ffffff
+                    );
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  clip 1
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ CLIP ============ -->
+            <sc-if value="{{ isClip }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <path
+                  d="M344,368 L468,365"
+                  style="stroke: var(--accent, #5b6cff)"
+                  stroke-width="2.2"
+                ></path>
+                <sc-if value="{{ clipRolled }}">
+                  <path
+                    d="M566,462 C566,492 566,500 566,522"
+                    stroke="rgba(255,255,255,.16)"
+                    stroke-width="1.5"
+                  ></path>
+                </sc-if>
+              </svg>
+              <div
+                style="
+                  position: absolute;
+                  left: 392px;
+                  top: 344px;
+                  z-index: 2;
+                  font:
+                    400 10.5px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.08em;
+                  color: color-mix(in srgb, var(--accent, #5b6cff) 60%, #fff);
+                  background: #121319;
+                  border: 1px solid
+                    color-mix(in srgb, var(--accent, #5b6cff) 30%, transparent);
+                  border-radius: 6px;
+                  padding: 3px 8px;
+                "
+              >
+                move
+              </div>
+              <sc-if value="{{ clipRolled }}">
+                <div
+                  style="
+                    position: absolute;
+                    left: 596px;
+                    top: 492px;
+                    z-index: 2;
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    color: #8b909c;
+                    background: #121319;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 6px;
+                    padding: 3px 8px;
+                  "
+                >
+                  roll
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    left: 474px;
+                    top: 522px;
+                    width: 184px;
+                    z-index: 2;
+                    opacity: 0.78;
+                    animation: esGrow 0.5s cubic-bezier(0.2, 0.85, 0.25, 1);
+                    transform-origin: 0% 0%;
+                  "
+                >
+                  <div
+                    style="
+                      position: relative;
+                      height: 104px;
+                      border: 1px solid rgba(255, 255, 255, 0.13);
+                      border-radius: 12px;
+                      overflow: hidden;
+                      box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                      transition: all 0.2s;
+                    "
+                    style-hover="opacity:1;border-color:rgba(255,255,255,.28)"
+                  >
+                    <image-slot
+                      id="wf_clip2"
+                      style="width: 100%; height: 100%; display: block"
+                      shape="rounded"
+                      radius="12"
+                      fit="cover"
+                      placeholder="frame"
+                    ></image-slot>
+                    <div
+                      style="
+                        position: absolute;
+                        left: 50%;
+                        top: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 50%;
+                        background: rgba(10, 11, 14, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <span
+                        style="
+                          width: 0;
+                          height: 0;
+                          border-left: 9px solid #fff;
+                          border-top: 6px solid transparent;
+                          border-bottom: 6px solid transparent;
+                          margin-left: 2px;
+                        "
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      font:
+                        400 10.5px &quot;Space Mono&quot;,
+                        monospace;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: #8b909c;
+                      margin-top: 7px;
+                      text-align: center;
+                    "
+                  >
+                    clip 2
+                  </div>
+                </div>
+              </sc-if>
+              <div
+                style="
+                  position: absolute;
+                  left: 168px;
+                  top: 318px;
+                  width: 176px;
+                  z-index: 2;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 99px;
+                    border: 1px solid rgba(255, 255, 255, 0.13);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                  "
+                >
+                  <image-slot
+                    id="wf_img1"
+                    style="width: 100%; height: 100%; display: block"
+                    shape="rounded"
+                    radius="12"
+                    fit="cover"
+                    placeholder="still"
+                  ></image-slot>
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #8b909c;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  onContextMenu="{{ openMenu }}"
+                  style="
+                    position: relative;
+                    border: 1.5px solid var(--accent, #5b6cff);
+                    border-radius: 16px;
+                    overflow: hidden;
+                    animation:
+                      esSettle 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      esLive 4.5s ease-in-out infinite;
+                  "
+                >
+                  <image-slot
+                    id="wf_clip1"
+                    style="width: 100%; height: 194px; display: block"
+                    shape="rounded"
+                    radius="16"
+                    fit="cover"
+                    placeholder="Drop your clip frame"
+                  ></image-slot>
+                  <div
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      pointer-events: none;
+                      background: linear-gradient(
+                        180deg,
+                        rgba(10, 11, 14, 0.5),
+                        rgba(10, 11, 14, 0) 26%,
+                        rgba(10, 11, 14, 0) 68%,
+                        rgba(10, 11, 14, 0.45)
+                      );
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      transform: translate(-50%, -50%);
+                      width: 54px;
+                      height: 54px;
+                      border-radius: 50%;
+                      background: rgba(10, 11, 14, 0.5);
+                      backdrop-filter: blur(3px);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      border: 1px solid rgba(255, 255, 255, 0.22);
+                    "
+                  >
+                    <span
+                      style="
+                        width: 0;
+                        height: 0;
+                        border-left: 14px solid #fff;
+                        border-top: 9px solid transparent;
+                        border-bottom: 9px solid transparent;
+                        margin-left: 3px;
+                      "
+                    ></span>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 11px;
+                      left: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        500 10px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      border-radius: 6px;
+                      padding: 4px 9px;
+                    "
+                  >
+                    <span
+                      style="
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: #fff;
+                      "
+                    ></span
+                    >LIVE
+                  </div>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: color-mix(
+                      in srgb,
+                      var(--accent, #5b6cff) 55%,
+                      #ffffff
+                    );
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  clip 1
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ KEPT ============ -->
+            <sc-if value="{{ isKept }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <path
+                  d="M344,368 L468,365"
+                  stroke="#3fbf6f"
+                  stroke-width="2.2"
+                ></path>
+              </svg>
+              <div
+                style="
+                  position: absolute;
+                  left: 388px;
+                  top: 344px;
+                  z-index: 2;
+                  font:
+                    400 10.5px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.08em;
+                  color: #68d492;
+                  background: #121319;
+                  border: 1px solid rgba(63, 191, 111, 0.3);
+                  border-radius: 6px;
+                  padding: 3px 8px;
+                "
+              >
+                move
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 168px;
+                  top: 318px;
+                  width: 176px;
+                  z-index: 2;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 99px;
+                    border: 1px solid rgba(255, 255, 255, 0.13);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                  "
+                >
+                  <image-slot
+                    id="wf_img1"
+                    style="width: 100%; height: 100%; display: block"
+                    shape="rounded"
+                    radius="12"
+                    fit="cover"
+                    placeholder="still"
+                  ></image-slot>
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #8b909c;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  onContextMenu="{{ openMenu }}"
+                  style="
+                    position: relative;
+                    border: 1.5px solid #3fbf6f;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    animation:
+                      esSettle 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+                      esLiveG 4.5s ease-in-out infinite;
+                  "
+                >
+                  <image-slot
+                    id="wf_clip1"
+                    style="width: 100%; height: 194px; display: block"
+                    shape="rounded"
+                    radius="16"
+                    fit="cover"
+                    placeholder="Drop your clip frame"
+                  ></image-slot>
+                  <div
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      pointer-events: none;
+                      background: linear-gradient(
+                        180deg,
+                        rgba(10, 11, 14, 0.5),
+                        rgba(10, 11, 14, 0) 26%,
+                        rgba(10, 11, 14, 0) 70%,
+                        rgba(10, 11, 14, 0.4)
+                      );
+                    "
+                  ></div>
+                  <div
+                    style="
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      transform: translate(-50%, -50%);
+                      width: 54px;
+                      height: 54px;
+                      border-radius: 50%;
+                      background: rgba(10, 11, 14, 0.5);
+                      backdrop-filter: blur(3px);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      border: 1px solid rgba(255, 255, 255, 0.22);
+                    "
+                  >
+                    <span
+                      style="
+                        width: 0;
+                        height: 0;
+                        border-left: 14px solid #fff;
+                        border-top: 9px solid transparent;
+                        border-bottom: 9px solid transparent;
+                        margin-left: 3px;
+                      "
+                    ></span>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      top: 11px;
+                      left: 12px;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      background: #3fbf6f;
+                      color: #06210f;
+                      font:
+                        600 10px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      border-radius: 6px;
+                      padding: 4px 9px;
+                    "
+                  >
+                    ✓ kept
+                  </div>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #68d492;
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  clip 1
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ PICTURE FAILED ============ -->
+            <sc-if value="{{ isPictureFail }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <path
+                  d="M274,343 C362,343 402,365 468,365"
+                  stroke="rgba(255,255,255,.14)"
+                  stroke-width="1.8"
+                  stroke-dasharray="6 5"
+                ></path>
+              </svg>
+              <div
+                style="
+                  position: absolute;
+                  left: 92px;
+                  top: 314px;
+                  width: 182px;
+                  z-index: 2;
+                "
+              >
+                <div
+                  style="
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.035);
+                    backdrop-filter: blur(8px);
+                    padding: 12px 13px;
+                    font:
+                      400 12px &quot;Space Grotesk&quot;,
+                      sans-serif;
+                    color: #aeb3c0;
+                    line-height: 1.4;
+                  "
+                >
+                  A drone shot over a coastal town…
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    color: #6b7180;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  prompt
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 214px;
+                    border: 1.5px dashed rgba(224, 138, 122, 0.5);
+                    border-radius: 16px;
+                    background: rgba(224, 138, 122, 0.06);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 7px;
+                    padding: 20px 26px;
+                    text-align: center;
+                  "
+                >
+                  <svg
+                    width="25"
+                    height="25"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#e8a99d"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M10.3 3.9 2.4 18a1.9 1.9 0 0 0 1.7 2.8h15.8A1.9 1.9 0 0 0 21.6 18L13.7 3.9a1.9 1.9 0 0 0-3.4 0z"
+                    ></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                  <div
+                    style="
+                      font:
+                        600 15px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      color: #f0d3cc;
+                    "
+                  >
+                    Couldn't generate
+                  </div>
+                  <div
+                    style="
+                      font:
+                        400 12px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      color: #9a908b;
+                      line-height: 1.45;
+                      max-width: 250px;
+                    "
+                  >
+                    The model timed out before finishing this frame. Nothing was
+                    charged.
+                  </div>
+                  <button
+                    onClick="{{ retryPicture }}"
+                    style="
+                      margin-top: 5px;
+                      display: flex;
+                      align-items: center;
+                      gap: 7px;
+                      border: 0;
+                      border-radius: 10px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        600 12.5px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      padding: 9px 16px;
+                      cursor: pointer;
+                      box-shadow: 0 8px 20px -8px
+                        color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 65%,
+                          transparent
+                        );
+                      transition: all 0.18s;
+                    "
+                    style-hover="filter:brightness(1.08);transform:translateY(-1px)"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                      <path d="M3 4v4h4"></path></svg
+                    >Try again
+                  </button>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #a8776e;
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- ============ MOTION FAILED ============ -->
+            <sc-if value="{{ isClipFail }}">
+              <svg
+                width="100%"
+                height="100%"
+                style="position: absolute; inset: 0; z-index: 1"
+                fill="none"
+              >
+                <path
+                  d="M344,368 L468,365"
+                  stroke="rgba(255,255,255,.14)"
+                  stroke-width="1.8"
+                  stroke-dasharray="6 5"
+                ></path>
+              </svg>
+              <div
+                style="
+                  position: absolute;
+                  left: 168px;
+                  top: 318px;
+                  width: 176px;
+                  z-index: 2;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 99px;
+                    border: 1px solid rgba(255, 255, 255, 0.13);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+                  "
+                >
+                  <image-slot
+                    id="wf_img1"
+                    style="width: 100%; height: 100%; display: block"
+                    shape="rounded"
+                    radius="12"
+                    fit="cover"
+                    placeholder="still"
+                  ></image-slot>
+                </div>
+                <div
+                  style="
+                    font:
+                      400 10.5px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #8b909c;
+                    margin-top: 7px;
+                    text-align: center;
+                  "
+                >
+                  image 1
+                </div>
+              </div>
+              <div
+                style="
+                  position: absolute;
+                  left: 468px;
+                  top: 268px;
+                  width: 344px;
+                  z-index: 3;
+                "
+              >
+                <div
+                  style="
+                    position: relative;
+                    height: 214px;
+                    border: 1.5px dashed rgba(224, 138, 122, 0.5);
+                    border-radius: 16px;
+                    background: rgba(224, 138, 122, 0.06);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 7px;
+                    padding: 20px 26px;
+                    text-align: center;
+                  "
+                >
+                  <svg
+                    width="25"
+                    height="25"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#e8a99d"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M10.3 3.9 2.4 18a1.9 1.9 0 0 0 1.7 2.8h15.8A1.9 1.9 0 0 0 21.6 18L13.7 3.9a1.9 1.9 0 0 0-3.4 0z"
+                    ></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                  <div
+                    style="
+                      font:
+                        600 15px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      color: #f0d3cc;
+                    "
+                  >
+                    Couldn't animate
+                  </div>
+                  <div
+                    style="
+                      font:
+                        400 12px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      color: #9a908b;
+                      line-height: 1.45;
+                      max-width: 250px;
+                    "
+                  >
+                    The model timed out before finishing this clip. Nothing was
+                    charged.
+                  </div>
+                  <button
+                    onClick="{{ retryMotion }}"
+                    style="
+                      margin-top: 5px;
+                      display: flex;
+                      align-items: center;
+                      gap: 7px;
+                      border: 0;
+                      border-radius: 10px;
+                      background: var(--accent, #5b6cff);
+                      color: #fff;
+                      font:
+                        600 12.5px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      padding: 9px 16px;
+                      cursor: pointer;
+                      box-shadow: 0 8px 20px -8px
+                        color-mix(
+                          in srgb,
+                          var(--accent, #5b6cff) 65%,
+                          transparent
+                        );
+                      transition: all 0.18s;
+                    "
+                    style-hover="filter:brightness(1.08);transform:translateY(-1px)"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                      <path d="M3 4v4h4"></path></svg
+                    >Try again
+                  </button>
+                </div>
+                <div
+                  style="
+                    font:
+                      500 11px &quot;Space Mono&quot;,
+                      monospace;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #a8776e;
+                    margin-top: 9px;
+                    text-align: center;
+                  "
+                >
+                  clip 1
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- DOCKED INPUT (live take's words) -->
+          <div
+            style="
+              position: absolute;
+              left: 50%;
+              bottom: 24px;
+              margin-left: -332px;
+              width: 664px;
+              z-index: 6;
+              animation: esRise 0.9s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+              animation-delay: 0.24s;
+            "
+          >
+            <div
+              style="
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 18px;
+                background: rgba(20, 21, 27, 0.72);
+                backdrop-filter: blur(18px);
+                -webkit-backdrop-filter: blur(18px);
+                box-shadow:
+                  0 30px 70px -26px rgba(0, 0, 0, 0.85),
+                  0 6px 20px rgba(0, 0, 0, 0.5);
+                padding: 18px 20px 15px;
+              "
+            >
+              <sc-if value="{{ isWriting }}" hint-placeholder-val="{{ true }}">
+                <div
+                  style="
+                    font:
+                      400 18px &quot;Space Grotesk&quot;,
+                      sans-serif;
+                    color: #e9ebf0;
+                    line-height: 1.55;
+                  "
+                >
+                  A drone shot pulling back over a coastal town at dawn, mist
+                  over the rooftops<span
+                    style="
+                      display: inline-block;
+                      width: 2px;
+                      height: 19px;
+                      background: var(--accent, #5b6cff);
+                      vertical-align: -3px;
+                      margin-left: 2px;
+                      animation: esCaret 1.1s step-end infinite;
+                    "
+                  ></span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ showHighlighted }}">
+                <div
+                  onClick="{{ onEditWords }}"
+                  title="Click text to edit · tap a phrase for alternatives"
+                  style="
+                    font:
+                      400 18px &quot;Space Grotesk&quot;,
+                      sans-serif;
+                    color: #e9ebf0;
+                    line-height: 1.55;
+                    cursor: text;
+                  "
+                >
+                  A
+                  <span
+                    onClick="{{ openMotion }}"
+                    style="
+                      position: relative;
+                      color: #e2b866;
+                      border-bottom: 1.6px dashed
+                        color-mix(in srgb, #e2b866 68%, transparent);
+                      padding-bottom: 1px;
+                      cursor: pointer;
+                    "
+                    >drone shot pulling back<sc-if value="{{ openMotionPop }}"
+                      ><div
+                        style="
+                          position: absolute;
+                          bottom: calc(100% + 12px);
+                          left: -8px;
+                          width: 236px;
+                          background: #14151b;
+                          border: 1px solid rgba(211, 164, 78, 0.3);
+                          border-radius: 13px;
+                          box-shadow: 0 20px 44px -12px rgba(0, 0, 0, 0.85);
+                          padding: 7px;
+                          z-index: 20;
+                          cursor: default;
+                        "
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px &quot;Space Mono&quot;,
+                              monospace;
+                            letter-spacing: 0.14em;
+                            text-transform: uppercase;
+                            color: #c79a54;
+                            padding: 6px 9px 8px;
+                          "
+                        >
+                          motion
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #e9ebf0;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:rgba(211,164,78,.16)"
+                        >
+                          slow push in
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #c8ccd6;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:rgba(211,164,78,.16)"
+                        >
+                          crane up and back
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #c8ccd6;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:rgba(211,164,78,.16)"
+                        >
+                          orbit slowly left
+                        </div>
+                        <div
+                          style="
+                            height: 1px;
+                            background: rgba(255, 255, 255, 0.08);
+                            margin: 6px 9px;
+                          "
+                        ></div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 13px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #8b909c;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:rgba(255,255,255,.05);color:#c8ccd6"
+                        >
+                          ✎ Type your own motion…
+                        </div>
+                      </div></sc-if
+                    ></span
+                  >
+                  over a
+                  <span
+                    onClick="{{ openCoastal }}"
+                    style="
+                      position: relative;
+                      background: color-mix(
+                        in srgb,
+                        var(--accent, #5b6cff) 20%,
+                        transparent
+                      );
+                      box-shadow: inset 0 -1.6px var(--accent, #5b6cff);
+                      border-radius: 3px;
+                      padding: 0 3px;
+                      color: #eef1fb;
+                      cursor: pointer;
+                    "
+                    >coastal town<sc-if value="{{ openCoastalPop }}"
+                      ><div
+                        style="
+                          position: absolute;
+                          bottom: calc(100% + 12px);
+                          left: -8px;
+                          width: 224px;
+                          background: #14151b;
+                          border: 1px solid
+                            color-mix(
+                              in srgb,
+                              var(--accent, #5b6cff) 30%,
+                              transparent
+                            );
+                          border-radius: 13px;
+                          box-shadow: 0 20px 44px -12px rgba(0, 0, 0, 0.85);
+                          padding: 7px;
+                          z-index: 20;
+                          cursor: default;
+                        "
+                      >
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #e9ebf0;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:color-mix(in srgb,var(--accent,#5b6cff) 16%,transparent)"
+                        >
+                          seaside village
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #c8ccd6;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:color-mix(in srgb,var(--accent,#5b6cff) 16%,transparent)"
+                        >
+                          harbor town
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #c8ccd6;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:color-mix(in srgb,var(--accent,#5b6cff) 16%,transparent)"
+                        >
+                          fishing port
+                        </div>
+                        <div
+                          style="
+                            height: 1px;
+                            background: rgba(255, 255, 255, 0.08);
+                            margin: 6px 9px;
+                          "
+                        ></div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 13px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #8b909c;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:rgba(255,255,255,.05);color:#c8ccd6"
+                        >
+                          ✎ Type your own…
+                        </div>
+                      </div></sc-if
+                    ></span
+                  >
+                  at
+                  <span
+                    onClick="{{ openDawn }}"
+                    style="
+                      position: relative;
+                      background: color-mix(
+                        in srgb,
+                        var(--accent, #5b6cff) 20%,
+                        transparent
+                      );
+                      box-shadow: inset 0 -1.6px var(--accent, #5b6cff);
+                      border-radius: 3px;
+                      padding: 0 3px;
+                      color: #eef1fb;
+                      cursor: pointer;
+                    "
+                    >dawn<sc-if value="{{ openDawnPop }}"
+                      ><div
+                        style="
+                          position: absolute;
+                          bottom: calc(100% + 12px);
+                          left: -8px;
+                          width: 210px;
+                          background: #14151b;
+                          border: 1px solid
+                            color-mix(
+                              in srgb,
+                              var(--accent, #5b6cff) 30%,
+                              transparent
+                            );
+                          border-radius: 13px;
+                          box-shadow: 0 20px 44px -12px rgba(0, 0, 0, 0.85);
+                          padding: 7px;
+                          z-index: 20;
+                          cursor: default;
+                        "
+                      >
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #e9ebf0;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:color-mix(in srgb,var(--accent,#5b6cff) 16%,transparent)"
+                        >
+                          first light
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #c8ccd6;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:color-mix(in srgb,var(--accent,#5b6cff) 16%,transparent)"
+                        >
+                          golden hour
+                        </div>
+                        <div
+                          onClick="{{ choosePhrase }}"
+                          style="
+                            font:
+                              400 14px &quot;Space Grotesk&quot;,
+                              sans-serif;
+                            color: #c8ccd6;
+                            padding: 9px 10px;
+                            border-radius: 9px;
+                            cursor: pointer;
+                          "
+                          style-hover="background:color-mix(in srgb,var(--accent,#5b6cff) 16%,transparent)"
+                        >
+                          blue hour
+                        </div>
+                      </div></sc-if
+                    ></span
+                  >, mist over the rooftops
+                </div>
+              </sc-if>
+              <sc-if value="{{ editing }}">
+                <textarea
+                  ref="{{ editRef }}"
+                  onKeyDown="{{ onWordsKey }}"
+                  defaultValue="A drone shot pulling back over a coastal town at dawn, mist over the rooftops"
+                  spellcheck="false"
+                  style="
+                    width: 100%;
+                    border: 0;
+                    outline: 0;
+                    resize: none;
+                    background: transparent;
+                    font:
+                      400 18px &quot;Space Grotesk&quot;,
+                      sans-serif;
+                    color: #f2f3f6;
+                    line-height: 1.55;
+                    caret-color: var(--accent, #5b6cff);
+                    min-height: 56px;
+                    display: block;
+                    padding: 0;
+                    margin: 0;
+                  "
+                ></textarea>
+              </sc-if>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-top: 15px;
+                  min-height: 40px;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 11px">
+                  <button
+                    title="Revert to original prompt"
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      justify-content: center;
+                      width: 30px;
+                      height: 30px;
+                      border: 1px solid rgba(255, 255, 255, 0.12);
+                      border-radius: 999px;
+                      background: transparent;
+                      color: #aeb3c0;
+                      cursor: pointer;
+                      transition: all 0.18s;
+                    "
+                    style-hover="border-color:rgba(255,255,255,.24);color:#f2f3f6"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M9 14 4 9l5-5"></path>
+                      <path d="M4 9h11a6 6 0 0 1 0 12h-3"></path>
+                    </svg>
+                  </button>
+                  <span
+                    style="
+                      font:
+                        400 11.5px &quot;Space Mono&quot;,
+                        monospace;
+                      color: #6b7180;
+                    "
+                    >16:9 · 6s</span
+                  >
+                </div>
+
+                <sc-if value="{{ editing }}">
+                  <div style="display: flex; align-items: center; gap: 10px">
+                    <button
+                      onClick="{{ onCancelEdit }}"
+                      style="
+                        border: 1px solid rgba(255, 255, 255, 0.14);
+                        background: transparent;
+                        color: #9298a5;
+                        border-radius: 11px;
+                        padding: 10px 16px;
+                        font:
+                          500 13px &quot;Space Grotesk&quot;,
+                          sans-serif;
+                        cursor: pointer;
+                        transition: all 0.18s;
+                      "
+                      style-hover="color:#f2f3f6;border-color:rgba(255,255,255,.24)"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick="{{ onReword }}"
+                      style="
+                        border: 0;
+                        border-radius: 11px;
+                        background: #d3a44e;
+                        color: #241a06;
+                        font:
+                          600 14px &quot;Space Grotesk&quot;,
+                          sans-serif;
+                        padding: 11px 22px;
+                        cursor: pointer;
+                        box-shadow: 0 8px 22px -8px rgba(211, 164, 78, 0.55);
+                        transition: all 0.18s;
+                      "
+                      style-hover="filter:brightness(1.06);transform:translateY(-1px)"
+                    >
+                      Reword
+                    </button>
+                  </div>
+                </sc-if>
+                <sc-if
+                  value="{{ isWriting }}"
+                  hint-placeholder-val="{{ true }}"
+                >
+                  <span
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 8px;
+                      background: rgba(255, 255, 255, 0.06);
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      color: #aeb3c0;
+                      border-radius: 11px;
+                      padding: 10px 18px;
+                      font:
+                        500 13px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                    "
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: var(--accent, #5b6cff);
+                        animation: esPulse 1.4s ease-in-out infinite;
+                      "
+                    ></span
+                    >Generating…</span
+                  >
+                </sc-if>
+                <sc-if value="{{ isPainting }}">
+                  <span
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 8px;
+                      background: rgba(255, 255, 255, 0.06);
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      color: #aeb3c0;
+                      border-radius: 11px;
+                      padding: 10px 18px;
+                      font:
+                        500 13px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                    "
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: var(--accent, #5b6cff);
+                        animation: esPulse 1.4s ease-in-out infinite;
+                      "
+                    ></span
+                    >Generating…</span
+                  >
+                </sc-if>
+                <sc-if value="{{ pictureActions }}">
+                  <div style="display: flex; align-items: center; gap: 10px">
+                    <button
+                      onClick="{{ onReroll }}"
+                      title="Re-roll"
+                      style="
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        border: 1px solid rgba(255, 255, 255, 0.14);
+                        background: rgba(255, 255, 255, 0.04);
+                        color: #c3c7d0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.18s;
+                      "
+                      style-hover="background:rgba(255,255,255,.09);color:#f2f3f6;transform:rotate(-40deg)"
+                      style-active="transform:rotate(-180deg)"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                        <path d="M3 4v4h4"></path>
+                      </svg>
+                    </button>
+                    <button
+                      onClick="{{ onAnimate }}"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        border: 0;
+                        border-radius: 11px;
+                        background: var(--accent, #5b6cff);
+                        color: #fff;
+                        font:
+                          600 14px &quot;Space Grotesk&quot;,
+                          sans-serif;
+                        padding: 11px 20px;
+                        cursor: pointer;
+                        box-shadow: 0 8px 22px -8px
+                          color-mix(
+                            in srgb,
+                            var(--accent, #5b6cff) 65%,
+                            transparent
+                          );
+                        transition: all 0.18s;
+                      "
+                      style-hover="filter:brightness(1.08);transform:translateY(-1px)"
+                      style-active="transform:translateY(0)"
+                    >
+                      Animate
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.1"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M5 12h14"></path>
+                        <path d="M13 6l6 6-6 6"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ isMoving }}">
+                  <span
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 8px;
+                      background: rgba(255, 255, 255, 0.06);
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                      color: #aeb3c0;
+                      border-radius: 11px;
+                      padding: 10px 18px;
+                      font:
+                        500 13px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                    "
+                    ><span
+                      style="
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: var(--accent, #5b6cff);
+                        animation: esPulse 1.4s ease-in-out infinite;
+                      "
+                    ></span
+                    >Generating…</span
+                  >
+                </sc-if>
+                <sc-if value="{{ isClip }}">
+                  <div style="display: flex; align-items: center; gap: 10px">
+                    <button
+                      onClick="{{ onReroll }}"
+                      title="Re-roll motion"
+                      style="
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        border: 1px solid rgba(255, 255, 255, 0.14);
+                        background: rgba(255, 255, 255, 0.04);
+                        color: #c3c7d0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.18s;
+                      "
+                      style-hover="background:rgba(255,255,255,.09);color:#f2f3f6;transform:rotate(-40deg)"
+                      style-active="transform:rotate(-180deg)"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                        <path d="M3 4v4h4"></path>
+                      </svg>
+                    </button>
+                    <div
+                      style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 3px;
+                      "
+                    >
+                      <button
+                        onClick="{{ onKeep }}"
+                        style="
+                          border: 0;
+                          border-radius: 11px;
+                          background: var(--accent, #5b6cff);
+                          color: #fff;
+                          font:
+                            600 14px &quot;Space Grotesk&quot;,
+                            sans-serif;
+                          padding: 11px 24px;
+                          cursor: pointer;
+                          box-shadow: 0 8px 22px -8px
+                            color-mix(
+                              in srgb,
+                              var(--accent, #5b6cff) 65%,
+                              transparent
+                            );
+                          transition: all 0.18s;
+                        "
+                        style-hover="filter:brightness(1.08);transform:translateY(-1px)"
+                        style-active="transform:translateY(0)"
+                      >
+                        Keep
+                      </button>
+                      <span
+                        style="
+                          font:
+                            400 9.5px &quot;Space Mono&quot;,
+                            monospace;
+                          color: #c79a54;
+                        "
+                        >subscribe to keep</span
+                      >
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ isKept }}">
+                  <button
+                    onClick="{{ openMenu }}"
+                    onContextMenu="{{ openMenu }}"
+                    title="Actions"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      border: 1px solid rgba(255, 255, 255, 0.14);
+                      background: rgba(255, 255, 255, 0.04);
+                      color: #c3c7d0;
+                      border-radius: 11px;
+                      padding: 10px 15px;
+                      font:
+                        500 13px &quot;Space Grotesk&quot;,
+                        sans-serif;
+                      cursor: pointer;
+                      transition: all 0.18s;
+                    "
+                    style-hover="background:rgba(255,255,255,.09);color:#f2f3f6"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <circle cx="5" cy="12" r="1.7"></circle>
+                      <circle cx="12" cy="12" r="1.7"></circle>
+                      <circle cx="19" cy="12" r="1.7"></circle></svg
+                    >Actions
+                  </button>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- context menu -->
+        <sc-if value="{{ menuOpen }}">
+          <div
+            onClick="{{ closeMenu }}"
+            onContextMenu="{{ closeMenu }}"
+            style="position: absolute; inset: 0; z-index: 20"
+          ></div>
+          <div style="{{ menuStyle }}">
+            <sc-for list="{{ menuItems }}" as="mi" hint-placeholder-count="4">
+              <sc-if value="{{ mi.divider }}"
+                ><div
+                  style="
+                    height: 1px;
+                    background: rgba(255, 255, 255, 0.08);
+                    margin: 5px 8px;
+                  "
+                ></div
+              ></sc-if>
+              <sc-if value="{{ mi.label }}"
+                ><button
+                  onClick="{{ mi.act }}"
+                  style="{{ mi.style }}"
+                  style-hover="background:rgba(255,255,255,.06)"
+                >
+                  {{ mi.label }}
+                </button></sc-if
+              >
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- grain -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 8;
+            mix-blend-mode: overlay;
+            opacity: var(--grain, 0.4);
+            background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E&quot;);
+            background-size: 170px 170px;
+          "
+        ></div>
+        <!-- vignette -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 7;
+            box-shadow: inset 0 0 220px 10px rgba(0, 0, 0, 0.5);
+          "
+        ></div>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{
+  "$preview": { "width": 1440, "height": 900 },
+  "accent": { "editor": "color", "default": "#5b6cff", "options": ["#5b6cff", "#22d3ee", "#a3e635", "#ff5d8f"], "tsType": "string", "section": "Theme" },
+  "atmosphere": { "editor": "range", "default": 1, "min": 0, "max": 1.6, "step": 0.1, "tsType": "number", "section": "Theme" },
+  "grain": { "editor": "boolean", "default": true, "tsType": "boolean", "section": "Theme" }
+}'
+    >
+      class Component extends DCLogic {
+        constructor(props){
+          super(props);
+          const p = props || {};
+          this.state = { moment: p.demoMoment || 'writing', picRolled: !!p.demoRoll, clipRolled: false, editing: !!p.demoEditing, reworded: !!p.demoReword, openPhrase: p.demoPhrase || null, menu: null };
+          this.rootRef = React.createRef();
+          this.editRef = React.createRef();
+        }
+        componentDidMount(){ this.applyTheme(); if (!(this.props && this.props.demoMoment)) this.startBirth(); }
+        componentDidUpdate(prevProps, prevState){ this.applyTheme(); if (this.state.editing && prevState && !prevState.editing) { const el = this.editRef && this.editRef.current; if (el) { el.focus(); try { el.setSelectionRange(el.value.length, el.value.length); } catch(e){} } } }
+        componentWillUnmount(){ clearTimeout(this._t); clearTimeout(this._t2); }
+        applyTheme(){
+          const r = this.rootRef.current; if (!r) return;
+          const p = this.props || {};
+          r.style.setProperty('--accent', p.accent || '#5b6cff');
+          r.style.setProperty('--glow', (p.atmosphere == null ? 1 : p.atmosphere));
+          r.style.setProperty('--grain', p.grain === false ? 0 : 0.4);
+        }
+        startBirth(){
+          clearTimeout(this._t); clearTimeout(this._t2);
+          this.setState({ moment: 'writing', picRolled: false, clipRolled: false, editing: false, reworded: false, openPhrase: null });
+          this._t = setTimeout(() => {
+            this.setState({ moment: 'painting' });
+            this._t2 = setTimeout(() => this.setState({ moment: 'picture' }), 1700);
+          }, 1500);
+        }
+        go(m){ clearTimeout(this._t); clearTimeout(this._t2); this.setState({ moment: m }); }
+        renderVals(){
+          const s = this.state; const moment = s.moment || 'writing';
+          const isWriting = moment === 'writing';
+          const isPainting = moment === 'painting';
+          const isPicture = moment === 'picture';
+          const isMoving = moment === 'moving';
+          const isClip = moment === 'clip';
+          const isKept = moment === 'kept';
+          const isPictureFail = moment === 'pictureFail';
+          const isClipFail = moment === 'clipFail';
+
+          const onReroll = () => {
+            const m = this.state.moment;
+            if (m === 'picture') this.setState({ picRolled: true });
+            else if (m === 'clip') this.setState({ clipRolled: true });
+          };
+          const editing = !!s.editing;
+          const onAnimate = () => {
+            clearTimeout(this._t); clearTimeout(this._t2);
+            this.setState({ moment: 'moving', clipRolled: false, editing: false, openPhrase: null });
+            this._t = setTimeout(() => this.setState({ moment: 'clip' }), 1800);
+          };
+          const onWordsKey = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.setState({ editing: false, reworded: true }); }
+            else if (e.key === 'Escape') { this.setState({ editing: false }); }
+          };
+
+          const togglePhrase = (p) => (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ openPhrase: this.state.openPhrase === p ? null : p }); };
+          const choosePhrase = (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ openPhrase: null, reworded: true }); };
+
+          const closeMenu = () => this.setState({ menu: null });
+          const openMenu = (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+            if (e && e.stopPropagation) e.stopPropagation();
+            const r = this.rootRef.current; const rect = r ? r.getBoundingClientRect() : { left: 0, top: 0 };
+            let x = (e.clientX || 0) - rect.left;
+            let y = (e.clientY || 0) - rect.top;
+            x = Math.min(x, 1230);
+            this.setState({ menu: { x: x, y: y, up: y > 560 }, openPhrase: null });
+          };
+          const item = (label, act, danger) => ({ label: label, danger: !!danger, act: (ev) => { if (ev && ev.stopPropagation) ev.stopPropagation(); this.setState({ menu: null }); if (act) act(); } });
+          const sep = () => ({ divider: true });
+          let mItems = [];
+          if (isPicture) mItems = [ item('Animate', onAnimate), item('Re-roll', onReroll), item('Reword', () => this.setState({ editing: true })), sep(), item('Duplicate'), item('Delete', null, true) ];
+          else if (isClip) mItems = [ item('Keep', () => this.go('kept')), item('Re-roll motion', onReroll), item('Download'), sep(), item('Duplicate'), item('Delete', null, true) ];
+          else if (isKept) mItems = [ item('Share'), item('Download'), item('New clip', () => { if (this.props && this.props.demoMoment) return; window.location.href = encodeURI('Empty State - Anchor.dc.html'); }), sep(), item('Duplicate'), item('Delete', null, true) ];
+          else if (isPictureFail) mItems = [ item('Try again', () => { clearTimeout(this._t); clearTimeout(this._t2); this.setState({ moment: 'painting' }); this._t = setTimeout(() => this.setState({ moment: 'picture' }), 1700); }), sep(), item('Delete', null, true) ];
+          else if (isClipFail) mItems = [ item('Try again', () => { clearTimeout(this._t); clearTimeout(this._t2); this.setState({ moment: 'moving' }); this._t = setTimeout(() => this.setState({ moment: 'clip' }), 1800); }), sep(), item('Delete', null, true) ];
+          const menuItems = mItems.map((mi) => mi.divider ? mi : Object.assign({}, mi, { style: { display: 'block', width: '100%', textAlign: 'left', border: '0', background: 'transparent', borderRadius: '8px', padding: '8px 11px', font: "500 13px 'Space Grotesk',sans-serif", color: mi.danger ? '#e08a7a' : '#d7dae2', cursor: 'pointer', transition: 'background .14s' } }));
+          const m = s.menu;
+          const menuStyle = m ? { position: 'absolute', left: m.x + 'px', top: m.y + 'px', transform: m.up ? 'translateY(-100%)' : 'none', zIndex: 21, minWidth: '184px', background: '#16181f', border: '1px solid rgba(255,255,255,.1)', borderRadius: '12px', boxShadow: '0 24px 54px -16px rgba(0,0,0,.82)', padding: '6px' } : { display: 'none' };
+
+          return {
+            rootRef: this.rootRef,
+            editRef: this.editRef,
+            openMotion: togglePhrase('motion'), openCoastal: togglePhrase('coastal'), openDawn: togglePhrase('dawn'), choosePhrase,
+            openMotionPop: s.openPhrase === 'motion', openCoastalPop: s.openPhrase === 'coastal', openDawnPop: s.openPhrase === 'dawn',
+            isWriting, isPainting, isPicture, isMoving, isClip, isKept,
+            isPictureFail, isClipFail, anyFail: isPictureFail || isClipFail,
+            editing,
+            showHighlighted: !isWriting && !editing,
+            pictureActions: isPicture && !editing,
+            notWriting: !isWriting,
+            picRolled: !!s.picRolled,
+            reworded: !!s.reworded,
+            clipRolled: !!s.clipRolled,
+            onReroll, onAnimate, onWordsKey,
+            openMenu, closeMenu, menuOpen: !!s.menu, menuItems, menuStyle,
+            onEditWords: () => { if (this.state.moment === 'picture') this.setState({ editing: true, openPhrase: null }); },
+            onCancelEdit: () => this.setState({ editing: false }),
+            onReword: () => this.setState({ editing: false, reworded: true }),
+            retryPicture: () => { clearTimeout(this._t); clearTimeout(this._t2); this.setState({ moment: 'painting', openPhrase: null }); this._t = setTimeout(() => this.setState({ moment: 'picture' }), 1700); },
+            retryMotion: () => { clearTimeout(this._t); clearTimeout(this._t2); this.setState({ moment: 'moving', openPhrase: null }); this._t = setTimeout(() => this.setState({ moment: 'clip' }), 1800); },
+            onKeep: () => this.go('kept'),
+            onNewClip: () => { if (this.props && this.props.demoMoment) return; window.location.href = encodeURI('Empty State - Anchor.dc.html'); }
+          };
+        }
+      }
+    </script>
+  </body>
+</html>

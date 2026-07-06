@@ -63,6 +63,8 @@ export default [
       '**/.vite/**',
       '**/.cache/**',
       '**/tmp/**',
+      // Design-tool reference bundles (visual specs, not code)
+      'docs/design/handoff/returns/**',
     ],
   },
   {
