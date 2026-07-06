@@ -2,7 +2,10 @@ import React from "react";
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { useTextSelection } from "../useTextSelection";
-import type { ParseResult, SpanClickPayload } from "../../types";
+import type {
+  ParseResult,
+  SpanClickPayload,
+} from "@/features/prompt-optimizer/PromptCanvas/types";
 
 // Minimal payload — only `span.id` is branched on; the rest passes straight
 // through to onFetchSuggestions, so a focused cast keeps the test on the gate.
