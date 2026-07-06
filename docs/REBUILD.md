@@ -82,9 +82,9 @@ ADR-0012).
 3. Account page (take 36) uses credits/usage language copied from a reference; credits
    don't exist in the product. Owner chose to leave it for now — fix before Account goes
    hi-fi/ships.
-4. Working tree carries a sibling session's uncommitted frame-verification/replay files —
-   never touch them; the frame-verification deletion (M5) is blocked until that branch
-   closes.
+4. Working tree is clean (2026-07-05 cleanup: the "sibling session files" turned out to
+   be formatter churn over already-merged work). The frame-verification deletion (M5)
+   just needs the ADR-0010 procedure: archive the feature to a branch, then delete.
 5. The A–D wireframe defaults: A (takes-strip timing) is superseded by the space; B
    (dirty text demotes, not hides), C (share at kept only), D (description stays present
    when kept) are drawn into the board and stand unless re-ruled.
