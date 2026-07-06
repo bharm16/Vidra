@@ -94,7 +94,7 @@ The workspace is exactly the space, the input, and the next-step button. Before 
 
 ### Take
 
-One generated result — a picture or a clip — permanently paired with the exact text that produced it. Browsing takes is read-only; "Use this take" is the explicit action that restores both the media and its paired text together. Resolved 2026-07-04 during untangling decision (ADR-0010). Avoid synonyms: generation, tile, shot, variant.
+One generated result — a picture or a clip — permanently paired with the exact text that produced it. Every take is a node in the space; selecting it makes it live — the camera moves to it and its paired words return to the input. Nothing is displaced or lost by moving between takes, so no separate browse/restore step exists. Resolved 2026-07-04 (ADR-0010); selection semantics revised 2026-07-05 with the space (ADR-0012). Avoid synonyms: generation, tile, shot, variant.
 
 ### Keep
 

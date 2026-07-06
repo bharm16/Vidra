@@ -15,5 +15,4 @@ The control strip attached to the input. Its contents change with the workflow m
   - picture → re-roll the picture (same words)
   - picture, words edited → make it move
   - clip → re-roll the motion
-  - browsing a take → use this take; back
 - **Settings** — two inline selectors on the input: aspect ratio and clip duration.
