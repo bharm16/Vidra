@@ -2,11 +2,7 @@ import { getVideoCost } from "@config/modelCosts";
 import { normalizeGenerationParams } from "@routes/optimize/normalizeGenerationParams";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import type { VideoGenerationOptions } from "@services/video-generation/types";
-import {
-  appendMotionGuidance,
-  extractMotionMeta,
-  resolveMotionContext,
-} from "./motion";
+import { extractMotionMeta, resolveMotionContext } from "./motion";
 import type {
   VideoErrorResult,
   VideoRequestPlan,
@@ -171,7 +167,10 @@ export const buildVideoRequestPlan = (
   const isI2VRequest = Boolean(resolvedStartImage || inputReference);
   const disablePromptExtend =
     isI2VRequest && Boolean(motionContext.cameraMotionId);
-  const promptWithMotion = appendMotionGuidance(cleanedPrompt, motionContext);
+  // Truth (ADR-0010): the queued prompt is the creator's text verbatim — motion
+  // params are no longer spliced in. The side-channel plumbing (client params,
+  // store fields, SubjectMotionInput) is removed in M6; here we sever the splice.
+  const promptWithMotion = cleanedPrompt;
   const normalizedMotionMeta = extractMotionMeta(normalizedParams);
   const promptLengthBeforeMotion = cleanedPrompt.trim().length;
   const promptLengthAfterMotion = promptWithMotion.trim().length;

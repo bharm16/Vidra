@@ -38,12 +38,12 @@ const buildAtomicReservation = (
   };
 };
 
-describe("videoGenerate motion guidance", () => {
+describe("videoGenerate prompt truth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("appends camera and subject motion guidance to the queued prompt", async () => {
+  it("queues the prompt verbatim — motion params never splice into it", async () => {
     const createJobMock = vi.fn(async (payload: Record<string, unknown>) => ({
       id: "job-1",
       status: "queued",
@@ -103,10 +103,10 @@ describe("videoGenerate motion guidance", () => {
       | undefined;
     const prompt = jobPayload?.request?.prompt ?? "";
 
-    expect(prompt).toContain("Camera motion:");
-    expect(prompt).toContain("Camera rotates left while staying in place");
-    expect(prompt).toContain(
-      "Subject motion: running steadily toward the horizon",
-    );
+    // ADR-0010 truth: the queued prompt is byte-for-byte the input; motion
+    // params (camera_motion_id / subject_motion) are never spliced in as text.
+    expect(prompt).toBe("A cinematic shot of a runner at dawn.");
+    expect(prompt).not.toContain("Camera motion:");
+    expect(prompt).not.toContain("Subject motion:");
   });
 });
