@@ -35,9 +35,9 @@ import type {
 } from "@features/generations/types";
 
 // Capture the prompt the runtime closure will see at submit time. The
-// production wiring forwards `effectivePrompt` into useGenerationsRuntime so
-// the chip suffixes ride along with handleDraft / handleRenderWithFaceSwap /
-// handleStoryboard. The mock records that prop on each render.
+// production wiring forwards the raw editor prompt into useGenerationsRuntime;
+// tune chips never ride along (ADR-0010: the text you see is the only thing
+// that runs). The mock records that prop on each render.
 let capturedRuntimePrompt: string | null = null;
 const setStartFrameMock = vi.fn();
 
@@ -191,33 +191,27 @@ beforeEach(() => {
   mockRuntimeGenerations = [];
 });
 
-describe("regression: tune chips reach the runtime submit closure", () => {
-  // Selecting Tune chips must rewrite the prompt that handleDraft /
-  // handleRenderWithFaceSwap / handleStoryboard close over inside
-  // useGenerationsRuntime — those handlers take no prompt argument, so the
-  // chip suffix has to ride in via the runtime prop. Without this wiring
-  // the user picks "Handheld" + "Soft", clicks Generate, and the model
-  // sees only "a dancer" with no taste cues.
-  it("forwards the chip-suffixed prompt into useGenerationsRuntime", async () => {
+describe("regression: tune chips never leak into the dispatched prompt (truth)", () => {
+  // ADR-0010: the text the creator sees is the only thing that runs. Selecting
+  // Tune chips changes only the badge/taste UI — it must NOT append hidden
+  // suffixes to the prompt the runtime dispatches. The dispatched prompt stays
+  // byte-for-byte the editor text.
+  it("dispatches the raw editor prompt regardless of selected chips", () => {
     const props = buildProps("a dancer");
     render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     // Baseline: with no chips, runtime prompt equals raw prompt verbatim.
     expect(capturedRuntimePrompt).toBe("a dancer");
 
-    // Open the Tune drawer (the count badge is on the toggle button).
+    // Open the Tune drawer and toggle two chips.
     const tuneToggle = screen.getByRole("button", { name: /^Tune/ });
     fireEvent.click(tuneToggle);
-
-    // Toggle two chips. The labels are rendered inside the drawer; we
-    // target by accessible name.
     fireEvent.click(screen.getByRole("button", { name: "Handheld" }));
     fireEvent.click(screen.getByRole("button", { name: "Soft" }));
 
-    // After both toggles, the runtime should now see the suffixed prompt.
-    expect(capturedRuntimePrompt).toBe(
-      "a dancer, handheld camera, soft warm light",
-    );
+    // Truth: the dispatched prompt is unchanged by chip selection — no hidden
+    // suffixes ride along.
+    expect(capturedRuntimePrompt).toBe("a dancer");
   });
 
   // The Tune toggle's count badge reflects the active chip count — proves

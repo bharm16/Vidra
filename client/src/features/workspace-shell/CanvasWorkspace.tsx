@@ -59,7 +59,6 @@ const CameraMotionModal = lazy(() =>
 );
 import { TuneDrawer } from "./components/TuneDrawer";
 import type { TuneChipId } from "./utils/tuneChips";
-import { applyTuneChips } from "./utils/tuneChips";
 
 interface CanvasWorkspaceProps {
   generationsPanelProps: GenerationsPanelProps;
@@ -152,16 +151,6 @@ export function CanvasWorkspace({
   >([]);
 
   const prompt = generationsPanelProps.prompt;
-  // Effective prompt = raw prompt + selected Tune chip suffixes. The editor
-  // surface still shows the raw prompt (the user's text + chip badges remain
-  // truthful), but generations use the suffixed form so picks like "Handheld"
-  // / "Soft" actually reach the model. Enhance (re-optimize) deliberately
-  // continues to use the raw editor text — chips are a render-time taste
-  // signal, not input the optimizer should rewrite.
-  const effectivePrompt = useMemo(
-    () => applyTuneChips(prompt, selectedChipIds),
-    [prompt, selectedChipIds],
-  );
   const durationSeconds = parseDurationSeconds(
     domain.generationParams as Record<string, unknown>,
   );
@@ -243,12 +232,6 @@ export function CanvasWorkspace({
 
   const generationsRuntime = useGenerationsRuntime({
     ...generationsPanelProps,
-    // Override the prompt with the chip-suffixed form so handleDraft /
-    // handleRenderWithFaceSwap / handleStoryboard close over the prompt the
-    // user actually wants rendered. This is the single interception point —
-    // the runtime's prompt closure flows into generateDraft/generateRender
-    // and the storyboard prompt resolution.
-    prompt: effectivePrompt,
     presentation: "hero",
     onStateSnapshot: handleSnapshot,
   });
