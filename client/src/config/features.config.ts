@@ -57,6 +57,12 @@ const FLAG_DEFS = {
     description:
       "Model recommendation calls and dropdown hints on the canvas. Premature per ADR-0002: v1 hardcodes the best model.",
   } satisfies ClientFlagDef<boolean>,
+  SPACE_LINEAGE: {
+    envName: "VITE_FEATURE_SPACE_LINEAGE",
+    default: false,
+    description:
+      "Renders the workspace's takes as the space — the lineage network (ADR-0012/0013). First cut: lineage is derived per session; off by default pending server-persisted lineage, camera, and removal.",
+  } satisfies ClientFlagDef<boolean>,
 } as const;
 
 function resolveBoolFlag(envName: string, fallback: boolean): boolean {
@@ -96,6 +102,10 @@ export const FEATURES = {
   MODEL_INTELLIGENCE_UI: resolveBoolFlag(
     FLAG_DEFS.MODEL_INTELLIGENCE_UI.envName,
     FLAG_DEFS.MODEL_INTELLIGENCE_UI.default,
+  ),
+  SPACE_LINEAGE: resolveBoolFlag(
+    FLAG_DEFS.SPACE_LINEAGE.envName,
+    FLAG_DEFS.SPACE_LINEAGE.default,
   ),
 } as const;
 
