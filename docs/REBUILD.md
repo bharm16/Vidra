@@ -86,6 +86,32 @@ ADR-0012).
   confirmed all three: gold note on camera + action clicks, the chip with the original
   one-liner, camera→templated dolly alternatives and action→LLM strides/glides/marches.
   (`9c2aba91` de-flaked an unrelated OptimizeTelemetryService timing test found en route.)
+- **M4 substantially done (2026-07-07) — the two big pieces shipped; two low-value items
+  deferred.** "Nothing punishes" failures: `0838c035` the pure per-stage `failureCopy` map,
+  then `dac9db1e` the **writing (expansion) failure** end-to-end — `handleOptimize` had no
+  else on a null `optimize()` result (silent dead composer); now `onOptimizationFailed` →
+  `writingFailed` threaded through the PromptResults context into the `{stage,failure}` flag →
+  `CanvasWorkspace` renders `FailureNotice` with a retry (full cross-layer regression). Auth:
+  `8fea859b` the **401 handler + auth-at-Go** over one framework-agnostic gate
+  (`authGateController`) — `AuthRetryTransport` decorates the HTTP transport (unauthenticated
+  401 → dialog → retry once with fresh Firebase headers; authed 401s pass through, no loop),
+  `CanvasSettingsRow` gates the only submit via `runWhenAuthenticated`; a thin `AuthGateDialog`
+  was built (no prior modal existed) reusing existing Firebase flows, mounted at App root. 18
+  auth tests. **Deferred (low value):** the `labeling` silent failure (needs a state-lift from
+  `useSpanLabelingPipeline`) and consolidating FrameStage/GenTile failures onto the one flag.
+  **Deferred headed pass:** the auth dialog's logged-out flow.
+- **M5 foundation + flag-gated wiring (2026-07-07) — the space's core is built and tested; the
+  big remainder (persistence/camera/removal) is not.** `647a2028` the pure lineage core in
+  `client/src/features/space/`: `computeLineageLayout` (derived columns/rows, archived
+  excluded), `deriveEdgeKind` (spine/roll/reword/move from endpoints — ADR-0013, never
+  stored), `buildSpaceNodes` (takes → nodes), and `TheSpace` (the auto-laid-out render — typed
+  SVG edges, live node enlarged, take-restore on select). `14eb4883` wires it into
+  `CanvasWorkspace` behind `FEATURES.SPACE_LINEAGE` (off by default) via `deriveSpaceNodes`
+  (session generations → nodes; lineage derived per session). 22 space tests. **Remaining M5
+  (the L-size bulk):** server-persisted lineage (picture records + ancestor ref + `archived`,
+  ADR-0013 / D4), camera (slide-on-select + zoom), leaf-only removal with server enforcement,
+  context menus, and the in-app visual (needs a session with gallery generations). Fresh
+  brief: `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
