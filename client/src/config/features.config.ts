@@ -61,7 +61,7 @@ const FLAG_DEFS = {
     envName: "VITE_FEATURE_SPACE_LINEAGE",
     default: false,
     description:
-      "Renders the workspace's takes as the space — the lineage network (ADR-0012/0013). First cut: lineage is derived per session; off by default pending server-persisted lineage, camera, and removal.",
+      "Renders the workspace's takes as the space — the lineage network (ADR-0012/0013). Persisted lineage (survives reload), live-node camera, leaf-only removal, take-restore, and the node context menu have shipped; off by default pending the in-app visual pass and the remaining menu actions (Animate/Re-roll/Share/Download/New clip).",
   } satisfies ClientFlagDef<boolean>,
 } as const;
 
