@@ -91,4 +91,18 @@ describe("computeWorkspaceArtifacts", () => {
       }).failure,
     ).toBe("video");
   });
+
+  it("maps a failed expansion to a writing failure, but only once nothing is in flight", () => {
+    expect(
+      computeWorkspaceArtifacts({ ...base, writingFailed: true }).failure,
+    ).toBe("writing");
+    // A running expansion is not a failure yet — in-flight wins.
+    expect(
+      computeWorkspaceArtifacts({
+        ...base,
+        writingFailed: true,
+        isExpanding: true,
+      }).failure,
+    ).toBeUndefined();
+  });
 });

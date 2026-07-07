@@ -9,7 +9,7 @@
  * - Conditional layout rendering
  */
 
-import React, { useCallback, useMemo, useEffect } from "react";
+import React, { useCallback, useMemo, useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useKeyboardShortcuts } from "@components/KeyboardShortcuts";
 import { useToast } from "@components/Toast";
@@ -714,6 +714,9 @@ function PromptOptimizerContent({
   );
 
   // Prompt optimization
+  // A failed expansion (optimize produced no result) surfaces as a "writing"
+  // failure on the canvas instead of a silently dead composer (M4).
+  const [writingFailed, setWritingFailed] = useState(false);
   const { handleOptimize } = usePromptOptimization({
     promptOptimizer,
     promptHistory,
@@ -736,12 +739,14 @@ function PromptOptimizerContent({
     skipLoadFromUrlRef,
     navigate,
     onOptimizationApplied: handleOptimizationApplied,
+    onOptimizationFailed: () => setWritingFailed(true),
   });
 
   // Idea Box entry: the canvas generate action routes here when no start
   // frame exists. Optimization's onOptimizationApplied continues the chain
   // (expand -> first frame -> gate).
   const handleIdeaBoxExpand = useCallback(async (): Promise<void> => {
+    setWritingFailed(false);
     await handleOptimize();
   }, [handleOptimize]);
 
@@ -923,6 +928,7 @@ function PromptOptimizerContent({
           isMotionIdeasLoading={motionIdeas.isLoading}
           ideaBoxStage={ideaBoxStage}
           isExpanding={promptOptimizer.isProcessing}
+          writingFailed={writingFailed}
           hasExpandedPrompt={
             showResults && promptOptimizer.displayedPrompt.trim().length > 0
           }

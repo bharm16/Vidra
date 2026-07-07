@@ -147,6 +147,8 @@ export interface UsePromptOptimizationParams {
   skipLoadFromUrlRef: React.MutableRefObject<boolean>;
   navigate: NavigateFunction;
   onOptimizationApplied?: (optimizedPrompt: string) => Promise<void> | void;
+  /** The expansion produced no result — surfaced as a "writing" failure (M4). */
+  onOptimizationFailed?: () => void;
 }
 
 export interface UsePromptOptimizationReturn {
@@ -186,6 +188,7 @@ export function usePromptOptimization({
   skipLoadFromUrlRef,
   navigate,
   onOptimizationApplied,
+  onOptimizationFailed,
 }: UsePromptOptimizationParams): UsePromptOptimizationReturn {
   const {
     inputPrompt,
@@ -398,6 +401,10 @@ export function usePromptOptimization({
         }
 
         await onOptimizationApplied?.(result.optimized);
+      } else {
+        // The expansion produced no result — surface a "writing" failure (M4)
+        // instead of silently returning to a dead composer.
+        onOptimizationFailed?.();
       }
     },
     [
@@ -431,6 +438,7 @@ export function usePromptOptimization({
       skipLoadFromUrlRef,
       navigate,
       onOptimizationApplied,
+      onOptimizationFailed,
     ],
   );
 

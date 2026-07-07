@@ -49,6 +49,7 @@ import { FrameStage } from "./components/FrameStage";
 import { CanvasPromptBar } from "./components/CanvasPromptBar";
 import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
 import { YourWordsChip } from "./components/YourWordsChip";
+import { FailureNotice } from "./components/FailureNotice";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
 
 // Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
@@ -139,7 +140,7 @@ export function CanvasWorkspace({
   const promptHighlights = useOptionalPromptHighlights();
   const { session, hasActiveContinuityShot, currentShot, updateShot } =
     useWorkspaceSession();
-  const { onComposerFill } = usePromptResultsActions();
+  const { onComposerFill, onIdeaBoxExpand } = usePromptResultsActions();
   // Generation domain provides the upload handlers wired through to
   // CanvasSettingsRow's start-frame / video-reference popovers. Null when
   // SidebarDataContextProvider isn't mounted (tests, isolated stories).
@@ -345,7 +346,7 @@ export function CanvasWorkspace({
   // expanded prompt land on the FrameStage, and the hero cannot flicker when
   // panels like the suggestion tray open or close (CONTEXT.md, "First
   // frame": the frame or its empty/failed state owns the canvas).
-  const { ideaBoxStage, isExpanding, hasExpandedPrompt } =
+  const { ideaBoxStage, isExpanding, hasExpandedPrompt, writingFailed } =
     usePromptResultsData();
   const workspaceStage = deriveWorkspaceStage(
     computeWorkspaceArtifacts({
@@ -354,6 +355,7 @@ export function CanvasWorkspace({
       isExpanding: isExpanding ?? false,
       hasExpandedPrompt: hasExpandedPrompt ?? false,
       hasStartFrame: Boolean(domain.startFrame),
+      writingFailed: writingFailed ?? false,
     }),
   );
   const isPreWork = workspaceStage.stage === "empty";
@@ -538,6 +540,14 @@ export function CanvasWorkspace({
 
           {isPreWork ? (
             <EmptyHero />
+          ) : workspaceStage.failure === "writing" ? (
+            // Expansion failed — surface it with a retry instead of a silently
+            // dead composer (M4). Picture/motion/video failures keep their own
+            // surfaces (FrameStage / tiles); the flag drives this one.
+            <FailureNotice
+              failure="writing"
+              onRetry={() => void onIdeaBoxExpand?.()}
+            />
           ) : shots.length === 0 ? (
             /* Pre-render beats: the first frame (or its pending/failed state)
                owns the canvas — see CONTEXT.md, "First frame". */

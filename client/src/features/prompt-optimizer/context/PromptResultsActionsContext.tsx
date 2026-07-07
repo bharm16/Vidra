@@ -94,6 +94,9 @@ interface PromptResultsDataOnly {
    *  by session restore. Drives canvas ownership: a session with an expanded
    *  prompt engages the FrameStage, never the first-run hero. */
   hasExpandedPrompt?: boolean | undefined;
+  /** The last expansion (optimize) run failed — drives the "writing" failure
+   *  line on the canvas (M4 "nothing punishes"). */
+  writingFailed?: boolean | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -174,6 +177,7 @@ export function PromptResultsActionsProvider({
   ideaBoxStage,
   isExpanding,
   hasExpandedPrompt,
+  writingFailed,
   onMotionIdeaSelect,
   onMotionIdeasReroll,
   onIdeaBoxAccept,
@@ -272,6 +276,7 @@ export function PromptResultsActionsProvider({
       ideaBoxStage,
       isExpanding,
       hasExpandedPrompt,
+      writingFailed,
     }),
     [
       suggestionsData,
@@ -286,6 +291,7 @@ export function PromptResultsActionsProvider({
       ideaBoxStage,
       isExpanding,
       hasExpandedPrompt,
+      writingFailed,
     ],
   );
 

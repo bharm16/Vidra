@@ -18,6 +18,8 @@ export interface WorkspaceArtifactsInput {
   isExpanding: boolean;
   hasExpandedPrompt: boolean;
   hasStartFrame: boolean;
+  /** The last expansion (optimize) run ended in failure. */
+  writingFailed?: boolean;
 }
 
 const isPending = (status: GenerationStatus): boolean =>
@@ -61,7 +63,9 @@ export function computeWorkspaceArtifacts(
 
   let failure: WorkspaceArtifacts["failure"];
   if (!inFlight) {
-    if (ideaBoxStageKind === "failed") {
+    if (input.writingFailed) {
+      failure = "writing";
+    } else if (ideaBoxStageKind === "failed") {
       failure = "picture";
     } else {
       const failed = tiles.find((t) => t.status === "failed");
