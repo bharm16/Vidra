@@ -28,12 +28,14 @@ const build = (hex: string): CategoryHighlightColor => ({
 export const categoryColors = {
   // Cool — technical
   shot: build("#3b82f6"), // Steel blue — framing is technical
-  camera: build("#0ea5e9"), // Sky blue — optics, precision
   lighting: build("#06b6d4"), // Cyan/teal — light = cool spectrum
+
+  // Gold — motion: drives the video, not the picture (M3, ADR-0010 S2)
+  camera: build("#d3a44e"), // camera movement — gold "not in the picture"
+  action: build("#d3a44e"), // subject action — gold "not in the picture"
 
   // Warm — human/creative
   subject: build("#f59e0b"), // Amber/gold — human element, warm
-  action: build("#f97316"), // Orange/coral — energy, movement
   style: build("#ec4899"), // Pink/rose — aesthetic, emotional
 
   // Neutral — contextual
