@@ -100,18 +100,26 @@ ADR-0012).
   auth tests. **Deferred (low value):** the `labeling` silent failure (needs a state-lift from
   `useSpanLabelingPipeline`) and consolidating FrameStage/GenTile failures onto the one flag.
   **Deferred headed pass:** the auth dialog's logged-out flow.
-- **M5 foundation + flag-gated wiring (2026-07-07) — the space's core is built and tested; the
-  big remainder (persistence/camera/removal) is not.** `647a2028` the pure lineage core in
-  `client/src/features/space/`: `computeLineageLayout` (derived columns/rows, archived
-  excluded), `deriveEdgeKind` (spine/roll/reword/move from endpoints — ADR-0013, never
-  stored), `buildSpaceNodes` (takes → nodes), and `TheSpace` (the auto-laid-out render — typed
-  SVG edges, live node enlarged, take-restore on select). `14eb4883` wires it into
-  `CanvasWorkspace` behind `FEATURES.SPACE_LINEAGE` (off by default) via `deriveSpaceNodes`
-  (session generations → nodes; lineage derived per session). 22 space tests. **Remaining M5
-  (the L-size bulk):** server-persisted lineage (picture records + ancestor ref + `archived`,
-  ADR-0013 / D4), camera (slide-on-select + zoom), leaf-only removal with server enforcement,
-  context menus, and the in-app visual (needs a session with gallery generations). Fresh
-  brief: `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
+- **M5 underway (2026-07-07) — foundation + zoom + picture-persistence shipped; the
+  lineage-graph bulk is not.** `647a2028` the pure lineage core in `client/src/features/space/`:
+  `computeLineageLayout` (derived columns/rows, archived excluded), `deriveEdgeKind`
+  (spine/roll/reword/move from endpoints — ADR-0013, never stored), `buildSpaceNodes`, and
+  `TheSpace` (auto-laid-out render — typed SVG edges, live node enlarged, `onSelectNode`).
+  `14eb4883` wires it into `CanvasWorkspace` behind `FEATURES.SPACE_LINEAGE` (off by default)
+  via `deriveSpaceNodes` (session generations → nodes; lineage derived per session).
+  `236fad4e` ephemeral zoom (`SpaceViewport`). `ff950ac0` **D4 picture persistence** — quick
+  pictures now persist as session generation records (server `imageGenerate.ts` mirrors the
+  storyboard path: accepts sessionId+promptVersionId → `sessionService.appendGenerationToVersion`,
+  soft-fail, returns `generationId`; shared `GeneratePreviewResponseSchema` + client
+  `generatePreview` grew the fields; additive, zero migration). 27 space/persist tests.
+  **Remaining M5 (in order, the bulk):** (1) caller wiring — a caller must actually PASS
+  sessionId+promptVersionId to `generatePreview` (the API can, `useIdeaBox`/`useImagePreview`
+  don't yet; mirror the storyboard client's id source); (2) lineage fields ancestor+archived on
+  records, set at generation; (3) persisted-lineage rendering (reload survival + multi-version
+  reword branches from `versions`); (4) leaf-only removal + server enforcement; (5) camera
+  center-on-live; (6) take-restore-on-select; (7) context menus; (8) in-app visual (needs a
+  session with gallery generations). Full detail + gotchas:
+  `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
