@@ -19,8 +19,12 @@ describe("categoryColors", () => {
     }
   });
 
+  // Motion categories (camera, action) are gold — "drives the video, not the
+  // picture" (ADR-0010 S2). Their hue is asserted by
+  // categoryColors.motion-gold.regression.test.ts, so they are deliberately
+  // absent from the warm/cool groupings below.
   it("warm categories use warm hues (red/orange/amber RGB channels)", () => {
-    const warmCategories = ["subject", "action", "style"];
+    const warmCategories = ["subject", "style"];
     for (const cat of warmCategories) {
       const entry = categoryColors[cat as keyof typeof categoryColors];
       const match = entry.bg.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
@@ -34,7 +38,7 @@ describe("categoryColors", () => {
   });
 
   it("cool categories use cool hues (blue/teal RGB channels)", () => {
-    const coolCategories = ["camera", "lighting", "shot"];
+    const coolCategories = ["lighting", "shot"];
     for (const cat of coolCategories) {
       const entry = categoryColors[cat as keyof typeof categoryColors];
       const match = entry.bg.match(/rgba\((\d+),\s*(\d+),\s*(\d+)/);
