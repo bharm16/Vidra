@@ -56,7 +56,7 @@ import { YourWordsChip } from "./components/YourWordsChip";
 import { FailureNotice } from "./components/FailureNotice";
 import { TheSpace } from "@/features/space/components/TheSpace";
 import { SpaceViewport } from "@/features/space/components/SpaceViewport";
-import { deriveSpaceNodes } from "@/features/space/lineage/deriveSpaceNodes";
+import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpaceNodes";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
 
 // Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
@@ -394,23 +394,14 @@ export function CanvasWorkspace({
     ) : null;
 
   // The space (M5, ADR-0012/0013) — the session's takes as a lineage network,
-  // behind FEATURES.SPACE_LINEAGE. First cut: lineage is derived per session.
+  // behind FEATURES.SPACE_LINEAGE. Read from the PERSISTED versions so the
+  // space survives reload and shows the full reword chain (each version's
+  // synced generations become picture/clip nodes). Deliberately NOT gated on
+  // an empty runtime the way the gallery is: on reload the runtime starts
+  // empty but the persisted history is exactly what the space must render.
   const spaceNodes = useMemo(
-    () =>
-      deriveSpaceNodes({
-        prompt,
-        promptVersionId: generationsPanelProps.promptVersionId,
-        generations: shotInputGenerations.map((generation) => ({
-          id: generation.id,
-          mediaType: generation.mediaType,
-          status: generation.status,
-          ...(generation.thumbnailUrl
-            ? { thumbnailUrl: generation.thumbnailUrl }
-            : {}),
-          ...(generation.mediaUrls ? { mediaUrls: generation.mediaUrls } : {}),
-        })),
-      }),
-    [prompt, generationsPanelProps.promptVersionId, shotInputGenerations],
+    () => deriveSpaceNodesFromVersions(generationsPanelProps.versions),
+    [generationsPanelProps.versions],
   );
 
   const surfaceProps: PromptEditorSurfaceProps = {
