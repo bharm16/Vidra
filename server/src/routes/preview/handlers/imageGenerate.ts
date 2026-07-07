@@ -422,6 +422,9 @@ export const createImageGenerateHandler =
           ...(mediaAssetId ? { mediaAssetIds: [mediaAssetId] } : {}),
           thumbnailUrl: finalImageUrl,
           promptVersionId,
+          // ADR-0013: a picture roots at its words-version — the version→picture
+          // edge is structural (this record lives in that version's generations).
+          ancestorGenerationId: null,
           completedAt: new Date().toISOString(),
         };
         try {

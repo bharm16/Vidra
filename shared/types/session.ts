@@ -40,6 +40,31 @@ export interface SessionPromptVersionVideo {
   viewUrlExpiresAt?: string | null;
 }
 
+/**
+ * A generation record persisted under a version — a picture or a clip, and a
+ * node in the space (ADR-0013). Historically an untyped bag; M5 adds the two
+ * lineage fields the space reads. The index signature keeps the change
+ * additive: existing writers/readers that treat it as a loose record still
+ * type-check.
+ */
+export interface SessionGenerationRecord {
+  /** Stable generation id (randomUUID / job id at persist time). */
+  id?: string;
+  /**
+   * The generation this one descends from (ADR-0013). `null`/absent = root:
+   * a picture roots at its words-version (that edge is structural — the
+   * picture lives in the version's `generations`). A clip names its source
+   * picture's generation id here, yielding the picture→clip edge.
+   */
+  ancestorGenerationId?: string | null;
+  /**
+   * Soft-removal flag (M5 leaf-only removal). Archived records persist for
+   * history but are excluded from the rendered space.
+   */
+  archived?: boolean;
+  [key: string]: unknown;
+}
+
 export interface SessionPromptVersionEntry {
   versionId: string;
   label?: string;
@@ -51,7 +76,7 @@ export interface SessionPromptVersionEntry {
   edits?: SessionPromptVersionEdit[];
   preview?: SessionPromptVersionPreview;
   video?: SessionPromptVersionVideo;
-  generations?: Array<Record<string, unknown>>;
+  generations?: SessionGenerationRecord[];
 }
 
 export interface SessionPrompt {
