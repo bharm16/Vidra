@@ -8,6 +8,7 @@ import type {
   SuggestionsData,
 } from "../types";
 import { buildSuggestionContext } from "../../utils/enhancementSuggestionContext";
+import { isMotionCategory } from "../../config/motionCategories";
 import { useSuggestionFeedback } from "./useSuggestionFeedback";
 
 interface UseInlineSuggestionStateOptions {
@@ -32,6 +33,8 @@ interface UseInlineSuggestionStateResult {
   ) => void;
   closeInlinePopover: () => void;
   selectionLabel: string;
+  /** True when the selected span is a motion phrase (camera/action) — ADR-0010 S2. */
+  isMotionSelection: boolean;
   customRequest: string;
   setCustomRequest: (value: string) => void;
   customRequestError: string;
@@ -173,6 +176,7 @@ export function useInlineSuggestionState({
 
   const selectionLabel =
     selectedSpanText || suggestionsData?.selectedText || "";
+  const isMotionSelection = isMotionCategory(selectedSpan?.category);
   const customRequestSelection = selectionLabel.trim();
   const customRequestPrompt = (
     suggestionsData?.fullPrompt ||
@@ -349,6 +353,7 @@ export function useInlineSuggestionState({
     handleSuggestionClickWithFeedback,
     closeInlinePopover,
     selectionLabel,
+    isMotionSelection,
     customRequest,
     setCustomRequest,
     customRequestError,

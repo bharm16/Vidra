@@ -16,6 +16,7 @@ export function makeSelectedSpanValue(
   return {
     selectedSpanId: null,
     selectionLabel: "",
+    isMotionSelection: false,
     suggestionCount: 0,
     suggestionsListRef:
       React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,

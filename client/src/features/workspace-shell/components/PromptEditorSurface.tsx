@@ -12,6 +12,7 @@ import { MAX_REQUEST_LENGTH } from "@/components/SuggestionsPanel/config/panelCo
 import { TriggerAutocomplete } from "@/features/assets/components/TriggerAutocomplete";
 import type { AssetSuggestion } from "@/features/assets/hooks/useTriggerAutocomplete";
 import { PromptEditor } from "@/features/prompt-optimizer/components/PromptEditor";
+import { MOTION_GOLD_HEX } from "@/features/prompt-optimizer/config/categoryColors";
 import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { addPromptFocusIntentListener } from "@features/workspace-shell/events";
 import { useAnimatedPresence } from "@/hooks/useAnimatedPresence";
@@ -76,6 +77,7 @@ export function PromptEditorSurface({
     onSuggestionClick,
     onCloseInlinePopover,
     selectionLabel,
+    isMotionSelection,
     onApplyActiveSuggestion,
     isInlineLoading,
     isInlineError,
@@ -273,6 +275,21 @@ export function PromptEditorSurface({
               </Button>
             </div>
           </div>
+
+          {isMotionSelection ? (
+            <div
+              data-testid="motion-not-in-picture-note"
+              className="mb-2 flex items-center gap-1.5 text-[10px] font-medium"
+              style={{ color: MOTION_GOLD_HEX }}
+            >
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: MOTION_GOLD_HEX }}
+                aria-hidden="true"
+              />
+              Not in the picture — this drives the video
+            </div>
+          ) : null}
 
           {!isSuggestionTrayCollapsed ? (
             <>

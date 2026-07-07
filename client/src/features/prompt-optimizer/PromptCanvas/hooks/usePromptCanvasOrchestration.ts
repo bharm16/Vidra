@@ -574,6 +574,7 @@ export function usePromptCanvasOrchestration({
     handleSuggestionClickWithFeedback,
     closeInlinePopover,
     selectionLabel,
+    isMotionSelection,
     customRequest,
     setCustomRequest,
     customRequestError,
@@ -819,6 +820,7 @@ export function usePromptCanvasOrchestration({
   const selectedSpanValue: SelectedSpanContextValue = {
     selectedSpanId,
     selectionLabel,
+    isMotionSelection,
     suggestionCount,
     suggestionsListRef,
     inlineSuggestions,

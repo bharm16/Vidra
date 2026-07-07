@@ -61,4 +61,28 @@ describe("PromptEditorSurface", () => {
     );
     expect(screen.getByTestId("canvas-suggestion-tray")).toBeInTheDocument();
   });
+
+  it("marks a selected motion phrase as not in the picture", () => {
+    render(
+      withSelectedSpan(<PromptEditorSurface {...makeProps()} />, {
+        selectedSpanId: "span-1",
+        isMotionSelection: true,
+      }),
+    );
+    const note = screen.getByTestId("motion-not-in-picture-note");
+    expect(note).toBeInTheDocument();
+    expect(note).toHaveTextContent(/not in the picture/i);
+  });
+
+  it("does not mark a non-motion selection as not in the picture", () => {
+    render(
+      withSelectedSpan(<PromptEditorSurface {...makeProps()} />, {
+        selectedSpanId: "span-1",
+        isMotionSelection: false,
+      }),
+    );
+    expect(
+      screen.queryByTestId("motion-not-in-picture-note"),
+    ).not.toBeInTheDocument();
+  });
 });

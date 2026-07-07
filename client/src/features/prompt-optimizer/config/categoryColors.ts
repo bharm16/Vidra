@@ -20,6 +20,13 @@ const build = (hex: string): CategoryHighlightColor => ({
 });
 
 /**
+ * Motion gold (ADR-0010 S2). The single source for the color that marks
+ * camera/action phrases as "drives the video, not the picture" — shared by the
+ * span highlight and the "not in the picture" note on the selection surface.
+ */
+export const MOTION_GOLD_HEX = "#d3a44e";
+
+/**
  * Semantic warm/cool color mapping:
  * - WARM tones (amber, coral, rose) → human/creative categories
  * - COOL tones (steel blue, teal, indigo) → technical categories
@@ -31,8 +38,8 @@ export const categoryColors = {
   lighting: build("#06b6d4"), // Cyan/teal — light = cool spectrum
 
   // Gold — motion: drives the video, not the picture (M3, ADR-0010 S2)
-  camera: build("#d3a44e"), // camera movement — gold "not in the picture"
-  action: build("#d3a44e"), // subject action — gold "not in the picture"
+  camera: build(MOTION_GOLD_HEX), // camera movement — gold "not in the picture"
+  action: build(MOTION_GOLD_HEX), // subject action — gold "not in the picture"
 
   // Warm — human/creative
   subject: build("#f59e0b"), // Amber/gold — human element, warm

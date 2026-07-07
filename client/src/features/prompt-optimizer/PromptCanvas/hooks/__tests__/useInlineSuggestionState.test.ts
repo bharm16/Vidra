@@ -268,4 +268,48 @@ describe("useInlineSuggestionState", () => {
     rerender();
     expect(result.current.isCustomRequestDisabled).toBe(true);
   });
+
+  it("flags the selection as motion only when the selected span is camera/action", () => {
+    const motionSpans: HighlightSpan[] = [
+      {
+        id: "cam-1",
+        start: 0,
+        end: 4,
+        text: "pans",
+        quote: "pans",
+        category: "camera.movement",
+        confidence: 0.9,
+      } as HighlightSpan,
+      {
+        id: "sty-1",
+        start: 5,
+        end: 9,
+        text: "warm",
+        quote: "warm",
+        category: "style",
+        confidence: 0.9,
+      } as HighlightSpan,
+    ];
+
+    const { result, rerender } = renderHook(
+      ({ selectedSpanId }: { selectedSpanId: string | null }) =>
+        useInlineSuggestionState({
+          suggestionsData: baseSuggestions([{ text: "tracks" }]),
+          selectedSpanId,
+          setSelectedSpanId: vi.fn(),
+          parseResultSpans: motionSpans,
+          normalizedDisplayedPrompt: "pans warm",
+          setState: vi.fn(),
+        }),
+      { initialProps: { selectedSpanId: "cam-1" as string | null } },
+    );
+
+    expect(result.current.isMotionSelection).toBe(true);
+
+    rerender({ selectedSpanId: "sty-1" });
+    expect(result.current.isMotionSelection).toBe(false);
+
+    rerender({ selectedSpanId: null });
+    expect(result.current.isMotionSelection).toBe(false);
+  });
 });

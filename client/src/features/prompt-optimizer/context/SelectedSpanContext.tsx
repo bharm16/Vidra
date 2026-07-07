@@ -13,6 +13,8 @@ import type { InlineSuggestion, SuggestionItem } from "../PromptCanvas/types";
 export interface SelectedSpanContextValue {
   selectedSpanId: string | null;
   selectionLabel: string;
+  /** True when the selected span is a motion phrase (camera/action) — ADR-0010 S2. */
+  isMotionSelection: boolean;
   suggestionCount: number;
   suggestionsListRef: React.RefObject<HTMLDivElement>;
   inlineSuggestions: InlineSuggestion[];
