@@ -10,6 +10,12 @@ export interface KeyframeTile {
   sourcePrompt?: string;
   storagePath?: string;
   viewUrlExpiresAt?: string;
+  /**
+   * M5 / ADR-0013: when this frame is a persisted generated picture, its
+   * generation id. Threaded to video generation as sourceGenerationId so the
+   * resulting clip names its source picture in the space.
+   */
+  generationId?: string;
 }
 
 export interface StartImage {
@@ -18,6 +24,8 @@ export interface StartImage {
   assetId?: string;
   storagePath?: string;
   viewUrlExpiresAt?: string;
+  /** M5 / ADR-0013: source picture generation id (carried from the tile). */
+  generationId?: string;
 }
 
 export interface SidebarUploadedImage {

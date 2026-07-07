@@ -763,6 +763,9 @@ export function useGenerationActions(
             ...(resolvedStartImage?.url
               ? { startImage: resolvedStartImage.url }
               : {}),
+            ...(resolvedStartImage?.generationId
+              ? { sourceGenerationId: resolvedStartImage.generationId }
+              : {}),
             ...(resolvedEndImage?.url
               ? { endImage: resolvedEndImage.url }
               : {}),
@@ -1289,6 +1292,9 @@ export function useGenerationActions(
           {
             ...(!isCharacterAsset && resolvedStartImage?.url
               ? { startImage: resolvedStartImage.url }
+              : {}),
+            ...(!isCharacterAsset && resolvedStartImage?.generationId
+              ? { sourceGenerationId: resolvedStartImage.generationId }
               : {}),
             ...(resolvedEndImage?.url
               ? { endImage: resolvedEndImage.url }

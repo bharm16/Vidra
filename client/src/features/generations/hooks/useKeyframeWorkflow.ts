@@ -39,6 +39,7 @@ const toStartImage = (
   ...(frame.viewUrlExpiresAt
     ? { viewUrlExpiresAt: frame.viewUrlExpiresAt }
     : {}),
+  ...(frame.generationId ? { generationId: frame.generationId } : {}),
 });
 
 const hasExplicitRenderInputs = (overrides?: GenerationOverrides): boolean =>

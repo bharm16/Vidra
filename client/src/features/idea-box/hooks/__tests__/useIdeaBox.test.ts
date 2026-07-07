@@ -116,6 +116,32 @@ describe("useIdeaBox", () => {
     });
   });
 
+  it("captures the persisted generationId onto the start frame (M5 2b)", async () => {
+    generatePreviewMock.mockResolvedValue({
+      success: true,
+      data: {
+        imageUrl: "https://img.example/frame.webp",
+        viewUrl: "https://signed.example/frame.webp",
+        generationId: "pic-gen-77",
+        metadata: {},
+      },
+    });
+    const setStartFrame = vi.fn();
+    const { result } = renderHook(() =>
+      useIdeaBox({ startImageUrl: null, setStartFrame }),
+    );
+
+    await act(async () => {
+      await result.current.continueAfterOptimization("a lighthouse at dusk");
+    });
+
+    // The tile carries the picture's generation id so a later animate can name
+    // it as the clip's source (ancestorGenerationId) in the space.
+    expect(setStartFrame.mock.calls[0]?.[0]).toMatchObject({
+      generationId: "pic-gen-77",
+    });
+  });
+
   it("does nothing when a start frame already exists", async () => {
     const setStartFrame = vi.fn();
     const { result } = renderHook(() =>

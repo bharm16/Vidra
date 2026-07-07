@@ -146,6 +146,9 @@ export function useIdeaBox({
           ...(data.viewUrlExpiresAt
             ? { viewUrlExpiresAt: data.viewUrlExpiresAt }
             : {}),
+          // M5 2b: carry the persisted picture's id so animating this frame
+          // links the clip to its source picture in the space.
+          ...(data.generationId ? { generationId: data.generationId } : {}),
         });
         dispatch({ type: "READY" });
       } catch (error) {

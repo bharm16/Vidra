@@ -412,6 +412,11 @@ export function useGenerationsRuntime({
         ...(startFrame.viewUrlExpiresAt
           ? { viewUrlExpiresAt: startFrame.viewUrlExpiresAt }
           : {}),
+        // M5 2b: carry the source picture id so animating this frame links the
+        // clip to its source picture (ancestorGenerationId) in the space.
+        ...(startFrame.generationId
+          ? { generationId: startFrame.generationId }
+          : {}),
       };
     }
 

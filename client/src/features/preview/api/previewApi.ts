@@ -394,6 +394,9 @@ export interface GenerateVideoPreviewOptions {
   // markCompleted — makes video generation server-authoritative.
   sessionId?: string | undefined;
   promptVersionId?: string | undefined;
+  // M5 / ADR-0013: the source picture's generation id. The worker persists it
+  // as the clip's ancestorGenerationId, yielding the picture→clip edge.
+  sourceGenerationId?: string | undefined;
 }
 
 /**
@@ -445,6 +448,9 @@ export async function generateVideoPreview(
     ...(options?.sessionId ? { sessionId: options.sessionId } : {}),
     ...(options?.promptVersionId
       ? { promptVersionId: options.promptVersionId }
+      : {}),
+    ...(options?.sourceGenerationId
+      ? { sourceGenerationId: options.sourceGenerationId }
       : {}),
   };
   const idempotencyKey =

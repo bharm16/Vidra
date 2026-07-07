@@ -64,6 +64,9 @@ export interface GenerationParams {
         source?: string | undefined;
         storagePath?: string | undefined;
         viewUrlExpiresAt?: string | undefined;
+        // M5 / ADR-0013: source picture generation id, forwarded to video
+        // generation as sourceGenerationId for the clip's lineage edge.
+        generationId?: string | undefined;
       }
     | null
     | undefined;
