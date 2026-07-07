@@ -119,12 +119,29 @@ ADR-0012).
   `PromptOptimizerContent`, which adds the route sessionId gated through `isRemoteSessionId` —
   the storyboard runtime's exact id source; blanks omitted so the server keeps its legacy path).
   +20 idea-box tests; `useImagePreview` intentionally left (not the golden-path first-frame caller).
-  **Remaining M5 (in order, the bulk):** (2) lineage fields ancestor+archived on
-  records, set at generation; (3) persisted-lineage rendering (reload survival + multi-version
-  reword branches from `versions`); (4) leaf-only removal + server enforcement; (5) camera
-  center-on-live; (6) take-restore-on-select; (7) context menus; (8) in-app visual (needs a
-  session with gallery generations). Full detail + gotchas:
-  `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
+  **M5 steps 2–8 SHIPPED (2026-07-07):** (2a `ec5a7f01`) `SessionGenerationRecord` gains
+  `ancestorGenerationId`+`archived` (index-signature keeps it additive); pictures set
+  `ancestorGenerationId: null`. (3 `c70200b2`) `deriveSpaceNodesFromVersions` renders from the
+  persisted `versions[]` — survives reload, linear reword chain, clips link via
+  `ancestorGenerationId` with a first-picture fallback; `CanvasWorkspace` feeds it (NOT gated on
+  empty runtime). (4 `b7fe6e16`) `SessionService.archiveGeneration` — leaf-only (no LIVE record
+  names it as ancestor), soft `archived:true`, `POST /sessions/:id/generations/:gid/archive`
+  (409 non-leaf / 404 unknown), client `spaceApi.archiveGeneration`. (5 `7e1e95c9`) camera —
+  `SpaceViewport` centers the live node via pure `computeCenteredScroll` (rects are
+  post-transform, so zoom is baked in). (6 `1f047ca4`) take-restore — `resolveWordsForNode` +
+  `onComposerFill` (fill-only, read-only browsing). (7 `9227ac28`) node context menu
+  (`SpaceNodeMenu`, corner sibling) — Reword + leaf-only Remove (client `nonLeafIds`/
+  `isRemovableLeaf` mirror the server; optimistic local archival). (8 `048e2a65`) live app
+  Chrome-verified healthy with the flag-gated changes present (workspace renders, zero console
+  errors); flag description refreshed. **~50 new tests across 2–8.**
+  **Deferred (precise):** (2b) clip→source-picture ref through the video job (VideoJobStore/
+  types/schemas/parse/processVideoJob + client capture of the picture's `generationId` onto the
+  KeyframeTile → `sourceGenerationId`) — ~10 files; today clips fall back to the first picture.
+  (7b) the other RULINGS §5 actions (Animate/Re-roll/Share/Download/New clip) route through
+  existing generation/session flows. (8b) the full flag-on visual pass needs the owner: restart
+  Vite with `VITE_FEATURE_SPACE_LINEAGE=true`, log in (persistence is remote-only), reach a
+  session with gallery generations (or temporarily widen the `shots.length>0` render gate to
+  `hasExpandedPrompt`). Full detail + gotchas: `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
