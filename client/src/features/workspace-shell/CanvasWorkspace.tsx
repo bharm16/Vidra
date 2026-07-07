@@ -51,6 +51,7 @@ import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
 import { YourWordsChip } from "./components/YourWordsChip";
 import { FailureNotice } from "./components/FailureNotice";
 import { TheSpace } from "@/features/space/components/TheSpace";
+import { SpaceViewport } from "@/features/space/components/SpaceViewport";
 import { deriveSpaceNodes } from "@/features/space/lineage/deriveSpaceNodes";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
 
@@ -577,10 +578,12 @@ export function CanvasWorkspace({
           ) : FEATURES.SPACE_LINEAGE ? (
             // The space (M5, ADR-0012/0013): the session's takes as a lineage
             // network. Off by default; replaces the shots grid when enabled.
-            <TheSpace
-              nodes={spaceNodes}
-              liveNodeId={heroGeneration?.id ?? null}
-            />
+            <SpaceViewport>
+              <TheSpace
+                nodes={spaceNodes}
+                liveNodeId={heroGeneration?.id ?? null}
+              />
+            </SpaceViewport>
           ) : (
             <div className="mx-auto flex max-w-[1280px] flex-col gap-6">
               {shots.map((shot, idx) => (
