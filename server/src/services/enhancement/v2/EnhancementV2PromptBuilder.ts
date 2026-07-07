@@ -5,6 +5,7 @@ import {
 } from "#shared/taxonomy.ts";
 
 import type { EnhancementV2RequestContext, SlotPolicy } from "./types.js";
+import { buildMotionGuidance } from "./motionVocabulary.js";
 
 /**
  * Resolve the human-readable label and description for a category id.
@@ -35,6 +36,10 @@ export class EnhancementV2PromptBuilder {
     const categoryHeader = semantic
       ? `Category: ${policy.categoryId} — ${semantic.label}: ${semantic.description}`
       : `Category: ${policy.categoryId}`;
+
+    // Motion spans (camera/action) serve motion alternatives, not still-frame
+    // rephrasings — ADR-0011 D6. Empty when the span is not a motion span.
+    const motionGuidance = buildMotionGuidance(policy.categoryId);
 
     const lines = [
       `Generate up to ${policy.targetCount + 2} replacement phrases for a highlighted prompt span.`,
@@ -76,6 +81,7 @@ export class EnhancementV2PromptBuilder {
       `- Stay inside taxonomy category "${policy.categoryId}". Each suggestion's "category" field MUST equal "${policy.categoryId}".`,
       "- Drop-in test: replacing `highlighted_text` with your suggestion inside `full_prompt` must leave a grammatical, coherent prompt. If substitution breaks the scene's meaning, the suggestion is invalid.",
       `- ${policy.promptGuidance}`,
+      motionGuidance ? `- ${motionGuidance}` : "",
       "- Keep the replacement literal and camera-visible.",
       "- Do not return advice, headings, or explanation text in the suggestion itself.",
       "- Do not repeat the highlighted text exactly.",

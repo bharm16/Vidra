@@ -89,4 +89,33 @@ describe("EnhancementV2PromptBuilder — imperative + one-shot scene_summary", (
       expect(prompt).toContain('"scene_summary": "Dusk aerial');
     });
   });
+
+  describe("buildPrompt motion-vocabulary bias (D6)", () => {
+    it("folds camera-motion vocabulary into the prompt for a camera-movement span", () => {
+      const prompt = builder.buildPrompt(
+        makeContext({ highlightedCategory: "camera.movement" }),
+        makePolicy({ categoryId: "camera.movement" }),
+      );
+      expect(prompt).toContain("camera-move vocabulary");
+      expect(prompt).toContain("dolly");
+    });
+
+    it("folds subject-motion vocabulary into the prompt for an action span", () => {
+      const prompt = builder.buildPrompt(
+        makeContext({ highlightedCategory: "action" }),
+        makePolicy({ categoryId: "action" }),
+      );
+      expect(prompt).toContain("action vocabulary");
+      expect(prompt).toContain("gesturing");
+    });
+
+    it("adds no motion vocabulary for a still-picture span", () => {
+      const prompt = builder.buildPrompt(
+        makeContext({ highlightedCategory: "shot.type" }),
+        makePolicy({ categoryId: "shot.type" }),
+      );
+      expect(prompt).not.toContain("camera-move vocabulary");
+      expect(prompt).not.toContain("action vocabulary");
+    });
+  });
 });
