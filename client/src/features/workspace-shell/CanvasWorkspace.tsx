@@ -57,6 +57,7 @@ import { FailureNotice } from "./components/FailureNotice";
 import { TheSpace } from "@/features/space/components/TheSpace";
 import { SpaceViewport } from "@/features/space/components/SpaceViewport";
 import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpaceNodes";
+import { resolveWordsForNode } from "@/features/space/lineage/resolveWordsForNode";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
 
 // Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
@@ -404,6 +405,17 @@ export function CanvasWorkspace({
     [generationsPanelProps.versions],
   );
 
+  // Take-restore-on-select (M5, ADR-0012): selecting a node refills the
+  // composer with its paired words. Fill-only via onComposerFill — never
+  // submits — so browsing the space stays read-only until the creator acts.
+  const handleSelectSpaceNode = useCallback(
+    (nodeId: string): void => {
+      const words = resolveWordsForNode(nodeId, spaceNodes);
+      if (words) onComposerFill?.(words);
+    },
+    [spaceNodes, onComposerFill],
+  );
+
   const surfaceProps: PromptEditorSurfaceProps = {
     editorRef,
     prompt,
@@ -589,6 +601,7 @@ export function CanvasWorkspace({
               <TheSpace
                 nodes={spaceNodes}
                 liveNodeId={heroGeneration?.id ?? null}
+                onSelectNode={handleSelectSpaceNode}
               />
             </SpaceViewport>
           ) : (
