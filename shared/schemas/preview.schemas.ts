@@ -92,6 +92,10 @@ export const GeneratePreviewResponseSchema = previewEnvelope(
     viewUrlExpiresAt: z.string().optional(),
     sizeBytes: z.number().optional(),
     metadata: PreviewMetadataSchema,
+    // Present when the picture was persisted as a session generation record
+    // (client supplied sessionId + promptVersionId) — so it can be a node in
+    // the space (ADR-0013 / M5 D4). Absent for anonymous quick pictures.
+    generationId: z.string().optional(),
   }),
 );
 

@@ -22,6 +22,7 @@ type ImageGenerateServices = Pick<
   | "assetService"
   | "storageService"
   | "requestIdempotencyService"
+  | "sessionService"
 >;
 
 const IMAGE_PREVIEW_CREDIT_COST = 1;
@@ -41,6 +42,7 @@ export const createImageGenerateHandler =
     assetService,
     storageService,
     requestIdempotencyService,
+    sessionService,
   }: ImageGenerateServices) =>
   async (req: Request, res: Response): Promise<Response | void> => {
     if (!imageGenerationService) {
@@ -59,6 +61,8 @@ export const createImageGenerateHandler =
       seed,
       speedMode,
       outputQuality,
+      sessionId,
+      promptVersionId,
     } = (req.body || {}) as {
       prompt?: unknown;
       aspectRatio?: unknown;
@@ -67,6 +71,8 @@ export const createImageGenerateHandler =
       seed?: unknown;
       speedMode?: unknown;
       outputQuality?: unknown;
+      sessionId?: unknown;
+      promptVersionId?: unknown;
     };
 
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
@@ -386,16 +392,78 @@ export const createImageGenerateHandler =
         );
       }
 
-      const responseData = storageResult
-        ? {
-            ...result,
-            imageUrl: storageResult.viewUrl,
-            viewUrl: storageResult.viewUrl,
-            viewUrlExpiresAt: storageResult.expiresAt,
-            storagePath: storageResult.storagePath,
-            sizeBytes: storageResult.sizeBytes,
-          }
-        : result;
+      // M5 / D4 (ADR-0013): when the client supplies sessionId + promptVersionId,
+      // persist the picture as a session generation record so it can be a node
+      // in the space. Mirrors the storyboard + video-job persistence path. Soft
+      // fail: a persist error never voids the already-produced (and charged)
+      // image — the media URLs are still returned.
+      const finalImageUrl = storageResult?.viewUrl ?? result.imageUrl;
+      let persistedGenerationId: string | null = null;
+      if (
+        typeof sessionId === "string" &&
+        sessionId.length > 0 &&
+        typeof promptVersionId === "string" &&
+        promptVersionId.length > 0 &&
+        sessionService
+      ) {
+        const generationId = randomUUID();
+        const mediaAssetId = storageResult?.storagePath
+          ? (storageResult.storagePath.split("/").filter(Boolean).pop() ??
+            storageResult.storagePath)
+          : null;
+        const generationRecord: Record<string, unknown> = {
+          id: generationId,
+          tier: "draft",
+          model: result.metadata.model,
+          mediaType: "image",
+          prompt,
+          status: "completed",
+          mediaUrls: [finalImageUrl],
+          ...(mediaAssetId ? { mediaAssetIds: [mediaAssetId] } : {}),
+          thumbnailUrl: finalImageUrl,
+          promptVersionId,
+          completedAt: new Date().toISOString(),
+        };
+        try {
+          await sessionService.appendGenerationToVersion(
+            userId,
+            sessionId,
+            promptVersionId,
+            generationRecord,
+          );
+          persistedGenerationId = generationId;
+          logger.info("Quick picture persisted to session", {
+            userId,
+            sessionId,
+            promptVersionId,
+            generationId,
+          });
+        } catch (persistError) {
+          logger.error(
+            "Quick picture session persist failed; returning media without session write",
+            persistError instanceof Error
+              ? persistError
+              : new Error(String(persistError)),
+            { userId, sessionId, promptVersionId },
+          );
+        }
+      }
+
+      const responseData = {
+        ...(storageResult
+          ? {
+              ...result,
+              imageUrl: storageResult.viewUrl,
+              viewUrl: storageResult.viewUrl,
+              viewUrlExpiresAt: storageResult.expiresAt,
+              storagePath: storageResult.storagePath,
+              sizeBytes: storageResult.sizeBytes,
+            }
+          : result),
+        ...(persistedGenerationId
+          ? { generationId: persistedGenerationId }
+          : {}),
+      };
 
       const responseBody = {
         success: true,

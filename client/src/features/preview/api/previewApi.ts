@@ -69,6 +69,10 @@ export interface GeneratePreviewRequest {
   seed?: number;
   speedMode?: PreviewSpeedMode;
   outputQuality?: number;
+  /** When both are set, the picture persists as a session generation record —
+   *  a node in the space — and the response returns its generationId (M5 D4). */
+  sessionId?: string;
+  promptVersionId?: string;
 }
 
 // Response types are derived from canonical Zod schemas so the inferred TS
@@ -166,6 +170,12 @@ export async function generatePreview(
         : {}),
       ...(resolvedOptions?.outputQuality !== undefined
         ? { outputQuality: resolvedOptions.outputQuality }
+        : {}),
+      ...(resolvedOptions?.sessionId
+        ? { sessionId: resolvedOptions.sessionId }
+        : {}),
+      ...(resolvedOptions?.promptVersionId
+        ? { promptVersionId: resolvedOptions.promptVersionId }
         : {}),
     },
     {
