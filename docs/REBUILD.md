@@ -112,9 +112,14 @@ ADR-0012).
   storyboard path: accepts sessionId+promptVersionId → `sessionService.appendGenerationToVersion`,
   soft-fail, returns `generationId`; shared `GeneratePreviewResponseSchema` + client
   `generatePreview` grew the fields; additive, zero migration). 27 space/persist tests.
-  **Remaining M5 (in order, the bulk):** (1) caller wiring — a caller must actually PASS
-  sessionId+promptVersionId to `generatePreview` (the API can, `useIdeaBox`/`useImagePreview`
-  don't yet; mirror the storyboard client's id source); (2) lineage fields ancestor+archived on
+  `e33aa7b8` **caller wiring (step 1 DONE)** — the golden-path first frame now PASSES
+  sessionId+promptVersionId: `useIdeaBox` gained an optional `resolvePersistenceTarget()`
+  invoked per frame; a `PersistenceTargetRegistrar` bridges the tree upward (the always-mounted
+  `CanvasWorkspace`, which owns `onCreateVersionIfNeeded`, registers a version resolver up to
+  `PromptOptimizerContent`, which adds the route sessionId gated through `isRemoteSessionId` —
+  the storyboard runtime's exact id source; blanks omitted so the server keeps its legacy path).
+  +20 idea-box tests; `useImagePreview` intentionally left (not the golden-path first-frame caller).
+  **Remaining M5 (in order, the bulk):** (2) lineage fields ancestor+archived on
   records, set at generation; (3) persisted-lineage rendering (reload survival + multi-version
   reword branches from `versions`); (4) leaf-only removal + server enforcement; (5) camera
   center-on-live; (6) take-restore-on-select; (7) context menus; (8) in-app visual (needs a
