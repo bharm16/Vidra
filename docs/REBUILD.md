@@ -73,12 +73,20 @@ ADR-0012).
   picture transformer off the golden path, each with a truth regression. Commits
   `fac77e6b` · `9a34e011` · `d9981dde`. (D1 already satisfied; slot-render quality + the
   motion/transformer plumbing deletion are M6 follow-ups.)
-- **M3 core done (2026-07-06):** click-to-enhance no longer gated by a start frame — the
-  three `isI2VMode` gates removed. Commit `8a149c2a`. **Next: M3's four remaining slices**
-  (see TaskList task #3), then M4 → M8.
-- **Build state:** 8 commits this session (`f7923064`…`8a149c2a`); full unit suite green at
-  every milestone boundary. The TaskList (#1–#8) carries per-milestone detail; the fresh
-  session brief is `/private/tmp/vidra-rebuild-handoff-2026-07-06.md`.
+- **M3 core + slices 1–3a done (2026-07-06):** `isI2VMode` click gates removed (`8a149c2a`);
+  slice 1 — input stays the description in every stage, the I2V placeholder box-repurposing
+  removed (`456bd786`); slice 2 — guard that click-to-enhance is reachable during painting
+  (`1e8334e0`); slice 3a — motion phrases (camera/action) render gold (`ee79b5fc`).
+  **Remaining M3 slices are visual — build them in the main checkout: 3b** ("not in the
+  picture" note), **4** ("your words" chip), **5** (motion-idea rebirth, D6). See TaskList
+  task #3 and the session brief.
+- **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
+  `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
+  verification of the span-based slices needs the main checkout** — a worktree client can't
+  complete the expansion, so no labeled spans render there; (2) the pre-commit hook runs
+  tsc + eslint but **not** `test:unit`, so run the full suite per commit (a deep-import
+  ratchet failure from `8a149c2a` had slipped past CI, fixed in `c7cf6acc`). Fresh session
+  brief: `/private/tmp/vidra-rebuild-handoff-M3-remaining.md`.
 - **Scope docs + design track:** both scope docs signed off; hi-fi handoff accepted, all
   deltas ruled.
 - **Worktree note:** this build ran in a git worktree; running client tests there requires
