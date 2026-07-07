@@ -3,6 +3,7 @@ import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSessionRoutes } from "../sessions.routes";
 import {
+  GenerationNotRemovableError,
   SessionAccessDeniedError,
   SessionService,
 } from "@services/sessions/SessionService";
@@ -86,6 +87,7 @@ const buildServices = () => {
     updateHighlights: vi.fn(),
     updateOutput: vi.fn(),
     updateVersions: vi.fn(),
+    archiveGeneration: vi.fn(),
   };
 
   const continuityService = {
@@ -315,6 +317,52 @@ describe("sessions.routes", () => {
       "session-1",
     );
     expect(sessionService.deleteSession).not.toHaveBeenCalled();
+  });
+
+  it("archives a leaf generation via the generation archive route", async () => {
+    const { sessionService, continuityService } = buildServices();
+    sessionService.archiveGeneration.mockResolvedValueOnce({
+      id: "session-1",
+      userId: "user-1",
+      status: "active",
+    });
+    const app = createApp(sessionService, continuityService);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/generations/pic-1/archive")
+        .set("x-user-id", "user-1"),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(sessionService.archiveGeneration).toHaveBeenCalledWith(
+      "user-1",
+      "session-1",
+      "pic-1",
+    );
+  });
+
+  it("returns 409 when removing a generation that still has a descendant", async () => {
+    const { sessionService, continuityService } = buildServices();
+    sessionService.archiveGeneration.mockRejectedValueOnce(
+      new GenerationNotRemovableError("pic-1"),
+    );
+    const app = createApp(sessionService, continuityService);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/generations/pic-1/archive")
+        .set("x-user-id", "user-1"),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      success: false,
+      error: "Only a childless node can be removed",
+    });
   });
 
   it("never mutates stored state on unauthorized PATCH", async () => {

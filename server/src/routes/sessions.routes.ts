@@ -3,6 +3,8 @@ import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import {
+  GenerationNotFoundError,
+  GenerationNotRemovableError,
   SessionAccessDeniedError,
   SessionNotFoundError,
   type SessionService,
@@ -102,6 +104,22 @@ function handleSessionMutationError(error: unknown, res: Response): boolean {
     res.status(404).json({
       success: false,
       error: "Session not found",
+    } satisfies ApiResponse<never>);
+    return true;
+  }
+  if (error instanceof GenerationNotFoundError) {
+    res.status(404).json({
+      success: false,
+      error: "Generation not found",
+    } satisfies ApiResponse<never>);
+    return true;
+  }
+  if (error instanceof GenerationNotRemovableError) {
+    // 409: the request is well-formed but conflicts with the leaf-only rule —
+    // the node still has a live descendant (ADR-0012).
+    res.status(409).json({
+      success: false,
+      error: "Only a childless node can be removed",
     } satisfies ApiResponse<never>);
     return true;
   }
@@ -440,6 +458,34 @@ export function createSessionRoutes(
           success: true,
           data: { deleted: true },
         } satisfies ApiResponse<{ deleted: true }>);
+      } catch (error) {
+        if (handleSessionMutationError(error, res)) return;
+        throw error;
+      }
+    }),
+  );
+
+  // M5 leaf-only removal (ADR-0012): soft-archive a childless generation node.
+  // Enforced server-side — a node with a live descendant returns 409.
+  router.post(
+    "/:sessionId/generations/:generationId/archive",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireUserId(req as RequestWithUser, res);
+      if (!userId) return;
+      const sessionId = requireRouteParam(req, res, "sessionId");
+      if (!sessionId) return;
+      const generationId = requireRouteParam(req, res, "generationId");
+      if (!generationId) return;
+      try {
+        const session = await sessionService.archiveGeneration(
+          userId,
+          sessionId,
+          generationId,
+        );
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
       } catch (error) {
         if (handleSessionMutationError(error, res)) return;
         throw error;

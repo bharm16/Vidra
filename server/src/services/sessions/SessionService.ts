@@ -448,6 +448,58 @@ export class SessionService {
     return next;
   }
 
+  /**
+   * Soft-remove a generation (M5 / ADR-0012). Leaf-only: a generation is
+   * removable iff no LIVE record in the session names it as ancestor — an
+   * already-archived child is gone from the space, so it doesn't keep its
+   * parent alive. The record persists with `archived: true`; the space
+   * excludes it (computeLineageLayout skips archived). Ownership is enforced
+   * by requireOwnedSession; throws GenerationNotRemovableError for a non-leaf
+   * and GenerationNotFoundError for an unknown id.
+   */
+  async archiveGeneration(
+    userId: string,
+    sessionId: string,
+    generationId: string,
+  ): Promise<SessionRecord> {
+    const current = await this.requireOwnedSession(userId, sessionId);
+    const prompt = current.prompt ?? { input: "", output: "" };
+    const versions = Array.isArray(prompt.versions) ? prompt.versions : [];
+
+    const hasLiveChild = versions.some((version) =>
+      (version.generations ?? []).some(
+        (gen) =>
+          gen.archived !== true && gen.ancestorGenerationId === generationId,
+      ),
+    );
+    if (hasLiveChild) {
+      throw new GenerationNotRemovableError(generationId);
+    }
+
+    let found = false;
+    const nextVersions = versions.map((version) => {
+      const generations = version.generations;
+      if (!Array.isArray(generations)) return version;
+      const idx = generations.findIndex((gen) => gen.id === generationId);
+      if (idx < 0) return version;
+      found = true;
+      const nextGenerations = [...generations];
+      nextGenerations[idx] = { ...generations[idx], archived: true };
+      return { ...version, generations: nextGenerations };
+    });
+    if (!found) {
+      throw new GenerationNotFoundError(generationId);
+    }
+
+    const next: SessionRecord = {
+      ...current,
+      prompt: { ...prompt, versions: nextVersions },
+      updatedAt: new Date(),
+    };
+    await this.sessionStore.save(next);
+    return next;
+  }
+
   async deleteSession(sessionId: string): Promise<void> {
     await this.cascadeVideoJobs(sessionId);
     await this.sessionStore.delete(sessionId);
@@ -638,5 +690,19 @@ export class SessionNotFoundError extends Error {
   constructor(readonly sessionId: string) {
     super(`Session not found: ${sessionId}`);
     this.name = "SessionNotFoundError";
+  }
+}
+
+export class GenerationNotFoundError extends Error {
+  constructor(readonly generationId: string) {
+    super(`Generation not found: ${generationId}`);
+    this.name = "GenerationNotFoundError";
+  }
+}
+
+export class GenerationNotRemovableError extends Error {
+  constructor(readonly generationId: string) {
+    super(`Generation has descendants and cannot be removed: ${generationId}`);
+    this.name = "GenerationNotRemovableError";
   }
 }

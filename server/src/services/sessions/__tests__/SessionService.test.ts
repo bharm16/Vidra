@@ -5,6 +5,8 @@ import type {
   ContinuityShot,
 } from "@server/domain/continuity/types";
 import {
+  GenerationNotFoundError,
+  GenerationNotRemovableError,
   SessionAccessDeniedError,
   SessionNotFoundError,
   SessionService,
@@ -530,6 +532,113 @@ describe("SessionService", () => {
       expect((generations[0] as { mediaUrls: string[] }).mediaUrls).toEqual([
         "https://new.png",
       ]);
+    });
+  });
+
+  describe("archiveGeneration (M5 leaf-only removal, ADR-0012)", () => {
+    const recordWith = (
+      generations: Array<Record<string, unknown>>,
+    ): SessionRecord =>
+      buildRecord({
+        prompt: {
+          input: "in",
+          output: "out",
+          versions: [
+            {
+              versionId: "v-1",
+              signature: "sig",
+              prompt: "p",
+              timestamp: "2026-07-07T00:00:00.000Z",
+              generations,
+            },
+          ],
+        },
+      });
+
+    it("archives a leaf generation that no record names as ancestor", async () => {
+      sessionStore.get.mockResolvedValue(
+        recordWith([
+          { id: "pic-1", mediaType: "image", ancestorGenerationId: null },
+        ]),
+      );
+      const service = new SessionService(sessionStore as never);
+
+      await service.archiveGeneration("user-1", "session-1", "pic-1");
+
+      const saved = sessionStore.save.mock.calls[0]![0] as SessionRecord;
+      expect(saved.prompt?.versions?.[0]?.generations?.[0]).toMatchObject({
+        id: "pic-1",
+        archived: true,
+      });
+    });
+
+    it("refuses to archive a generation another record names as ancestor", async () => {
+      sessionStore.get.mockResolvedValue(
+        recordWith([
+          { id: "pic-1", mediaType: "image", ancestorGenerationId: null },
+          { id: "clip-1", mediaType: "video", ancestorGenerationId: "pic-1" },
+        ]),
+      );
+      const service = new SessionService(sessionStore as never);
+
+      await expect(
+        service.archiveGeneration("user-1", "session-1", "pic-1"),
+      ).rejects.toBeInstanceOf(GenerationNotRemovableError);
+      expect(sessionStore.save).not.toHaveBeenCalled();
+    });
+
+    it("archives the childless clip but not its still-parenting picture", async () => {
+      sessionStore.get.mockResolvedValue(
+        recordWith([
+          { id: "pic-1", mediaType: "image", ancestorGenerationId: null },
+          { id: "clip-1", mediaType: "video", ancestorGenerationId: "pic-1" },
+        ]),
+      );
+      const service = new SessionService(sessionStore as never);
+
+      await service.archiveGeneration("user-1", "session-1", "clip-1");
+
+      const saved = sessionStore.save.mock.calls[0]![0] as SessionRecord;
+      const gens = saved.prompt?.versions?.[0]?.generations ?? [];
+      expect(gens.find((g) => g.id === "clip-1")).toMatchObject({
+        archived: true,
+      });
+      expect(gens.find((g) => g.id === "pic-1")?.archived).toBeUndefined();
+    });
+
+    it("throws when the generation id is absent from the session", async () => {
+      sessionStore.get.mockResolvedValue(recordWith([]));
+      const service = new SessionService(sessionStore as never);
+
+      await expect(
+        service.archiveGeneration("user-1", "session-1", "missing"),
+      ).rejects.toBeInstanceOf(GenerationNotFoundError);
+      expect(sessionStore.save).not.toHaveBeenCalled();
+    });
+
+    it("ignores an already-archived record when deciding leaf status", async () => {
+      // An archived clip is gone from the space, so its former parent is now a
+      // leaf and may be removed.
+      sessionStore.get.mockResolvedValue(
+        recordWith([
+          { id: "pic-1", mediaType: "image", ancestorGenerationId: null },
+          {
+            id: "clip-1",
+            mediaType: "video",
+            ancestorGenerationId: "pic-1",
+            archived: true,
+          },
+        ]),
+      );
+      const service = new SessionService(sessionStore as never);
+
+      await service.archiveGeneration("user-1", "session-1", "pic-1");
+
+      const saved = sessionStore.save.mock.calls[0]![0] as SessionRecord;
+      expect(saved.prompt?.versions?.[0]?.generations?.[0]).toMatchObject({
+        id: "pic-1",
+        archived: true,
+      });
     });
   });
 });
