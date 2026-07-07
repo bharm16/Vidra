@@ -73,13 +73,19 @@ ADR-0012).
   picture transformer off the golden path, each with a truth regression. Commits
   `fac77e6b` · `9a34e011` · `d9981dde`. (D1 already satisfied; slot-render quality + the
   motion/transformer plumbing deletion are M6 follow-ups.)
-- **M3 core + slices 1–3a done (2026-07-06):** `isI2VMode` click gates removed (`8a149c2a`);
-  slice 1 — input stays the description in every stage, the I2V placeholder box-repurposing
-  removed (`456bd786`); slice 2 — guard that click-to-enhance is reachable during painting
-  (`1e8334e0`); slice 3a — motion phrases (camera/action) render gold (`ee79b5fc`).
-  **Remaining M3 slices are visual — build them in the main checkout: 3b** ("not in the
-  picture" note), **4** ("your words" chip), **5** (motion-idea rebirth, D6). See TaskList
-  task #3 and the session brief.
+- **M3 COMPLETE (2026-07-07) — all slices done, unit-locked, and visually verified in real
+  Chrome (main checkout).** Core + 1/2/3a on 2026-07-06 (`8a149c2a` gates removed; `456bd786`
+  input-is-description; `1e8334e0` click-reachable guard; `ee79b5fc` gold motion phrases).
+  Remaining slices landed 2026-07-07: **3b** — "Not in the picture — this drives the video"
+  gold note on the selection surface, keyed off a new shared `isMotionCategory` threaded as
+  `SelectedSpanContext.isMotionSelection` (`3ee169d1`, plus `c8cef690` fixing a slice-3a
+  stale test that had slipped the hook); **4** — "Your words" chip restores the immutable
+  `SessionPrompt.input` via `onComposerFill` (`ec1eafa2`); **5** — motion vocabulary in the
+  suggestions path (D6): shared predicate lifted to `shared/motionCategories.ts` (`7a41a592`),
+  `buildMotionGuidance` folded into `EnhancementV2PromptBuilder` (`2b60b7eb`). Visual pass
+  confirmed all three: gold note on camera + action clicks, the chip with the original
+  one-liner, camera→templated dolly alternatives and action→LLM strides/glides/marches.
+  (`9c2aba91` de-flaked an unrelated OptimizeTelemetryService timing test found en route.)
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
