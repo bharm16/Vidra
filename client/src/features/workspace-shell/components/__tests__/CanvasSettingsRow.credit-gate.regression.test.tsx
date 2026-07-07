@@ -57,6 +57,13 @@ vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),
 }));
 
+// Auth-at-Go: this suite exercises the credit gate, which is orthogonal to the
+// logged-out sign-in gate. Run as an authenticated user so `handleGenerate`
+// reaches the credit logic synchronously.
+vi.mock("@hooks/useAuthUser", () => ({
+  useAuthUser: () => ({ uid: "test-user", emailVerified: true }),
+}));
+
 vi.mock("@/config/features.config", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/config/features.config")>();

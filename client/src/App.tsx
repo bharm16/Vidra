@@ -18,6 +18,7 @@ import { ToastProvider } from "./components/Toast";
 import { AppShellProvider } from "./contexts/AppShellContext";
 import { LoadingDots } from "./components/LoadingDots";
 import { GenerationControlsStoreProvider } from "@features/generation-controls";
+import { AuthGateDialog } from "@features/auth-gate";
 import { apiClient } from "./services/ApiClient";
 import { trackPageView } from "./services/analytics";
 import { FEATURES } from "./config/features.config";
@@ -329,6 +330,10 @@ function App(): React.ReactElement {
             <Suspense fallback={<RouteFallback />}>
               <AppRoutes />
             </Suspense>
+            {/* Global auth gate: the single sign-in dialog opened by the 401
+                handler and the pre-Go check. Overlays whatever page is
+                mounted so the user's draft stays visible behind it. */}
+            <AuthGateDialog />
           </Router>
         </AppShellProvider>
       </ToastProvider>

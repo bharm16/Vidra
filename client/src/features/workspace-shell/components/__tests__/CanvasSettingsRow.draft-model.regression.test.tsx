@@ -40,6 +40,12 @@ vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),
 }));
 
+// Auth-at-Go: this suite verifies draft-model routing, not the logged-out gate.
+// Run as an authenticated user so `handleGenerate` calls the action directly.
+vi.mock("@hooks/useAuthUser", () => ({
+  useAuthUser: () => ({ uid: "test-user", emailVerified: true }),
+}));
+
 vi.mock("@/config/features.config", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@/config/features.config")>();

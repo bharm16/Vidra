@@ -50,6 +50,14 @@ vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),
 }));
 
+// Auth-at-Go: these tests verify the generate wiring (draft vs render), not the
+// logged-out gate. Run as an authenticated user so `handleGenerate` calls the
+// action synchronously. The logged-out gate is covered by runWhenAuthenticated
+// and AuthGateController unit tests.
+vi.mock("@hooks/useAuthUser", () => ({
+  useAuthUser: () => ({ uid: "test-user", emailVerified: true }),
+}));
+
 function ControlsBridge({
   controls,
 }: {

@@ -11,11 +11,16 @@ import { HttpClientConfig } from "./http/HttpClientConfig";
 import { ApiRequestBuilder } from "./http/ApiRequestBuilder";
 import { InterceptorManager } from "./http/InterceptorManager";
 import { FetchHttpTransport } from "./http/FetchHttpTransport";
+import type { HttpTransport } from "./http/AuthRetryTransport";
 import { ApiError } from "./http/ApiError";
 import { ApiErrorFactory } from "./http/ApiErrorFactory";
 import { ApiResponseHandler } from "./http/ApiResponseHandler";
 import { setupApiAuth } from "./http/AuthInterceptors";
 import { setupTelemetrySource } from "./http/TelemetrySourceInterceptor";
+import { AuthRetryTransport } from "./http/AuthRetryTransport";
+import { buildFirebaseAuthHeaders } from "./http/firebaseAuth";
+import { auth } from "@/config/firebase";
+import { authGateController } from "@/features/auth-gate/authGateController";
 
 interface BuiltRequest {
   url: string;
@@ -33,7 +38,7 @@ interface RequestOptions {
 
 interface ApiClientOptions {
   config?: HttpClientConfig;
-  transport?: FetchHttpTransport;
+  transport?: HttpTransport;
   requestBuilder?: ApiRequestBuilder;
   responseHandler?: ApiResponseHandler;
   requestInterceptors?: InterceptorManager<BuiltRequest>;
@@ -42,7 +47,7 @@ interface ApiClientOptions {
 
 export class ApiClient {
   private readonly config: HttpClientConfig;
-  private readonly transport: FetchHttpTransport;
+  private readonly transport: HttpTransport;
   private readonly requestBuilder: ApiRequestBuilder;
   private readonly responseHandler: ApiResponseHandler;
   private readonly requestInterceptors: InterceptorManager<BuiltRequest>;
@@ -166,7 +171,17 @@ export class ApiClient {
 
 export { ApiError } from "./http/ApiError";
 
-export const apiClient = new ApiClient();
+// Global 401 handler (M4): wrap the default transport so any 401 for a
+// logged-out user opens the auth dialog and retries once after sign-in. The
+// wrapped transport re-runs the request with freshly-minted Firebase headers.
+const authRetryTransport = new AuthRetryTransport({
+  transport: new FetchHttpTransport(),
+  authGate: authGateController,
+  isAuthenticated: () => auth.currentUser !== null,
+  buildAuthHeaders: buildFirebaseAuthHeaders,
+});
+
+export const apiClient = new ApiClient({ transport: authRetryTransport });
 
 setupApiAuth(apiClient);
 setupTelemetrySource(apiClient);

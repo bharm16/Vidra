@@ -34,6 +34,8 @@ import {
   DropdownMenuTrigger,
 } from "@promptstudio/system/components/ui/dropdown-menu";
 import { cn } from "@/utils/cn";
+import { useAuthUser } from "@hooks/useAuthUser";
+import { authGateController, runWhenAuthenticated } from "@features/auth-gate";
 import { StartFramePopover } from "./StartFramePopover";
 import { EndFramePopover } from "./EndFramePopover";
 import { VideoReferencesPopover } from "./VideoReferencesPopover";
@@ -120,6 +122,10 @@ export function CanvasSettingsRow({
 }: CanvasSettingsRowProps): React.ReactElement {
   const { controls, onInsufficientCredits } = useGenerationControlsContext();
   const { balance: creditBalance } = useCreditBalance();
+  // Auth-at-Go (M4): the primary generate action is gated behind sign-in for
+  // logged-out users. We read auth state here and resume the action after a
+  // successful login rather than clearing the typed draft.
+  const authUser = useAuthUser();
   const { domain } = useGenerationControlsStoreState();
   const storeActions = useGenerationControlsStoreActions();
   // Tolerant: this chrome also mounts outside the prompt-results tree
@@ -263,7 +269,7 @@ export function CanvasSettingsRow({
     ],
   );
 
-  const handleGenerate = useCallback(() => {
+  const runGenerate = useCallback(() => {
     // Idea Box: with no start frame, generate means "run the expansion loop"
     // (expand -> first frame -> gate). Render happens on the next press,
     // after the frame gate — never on the first action from a bare prompt.
@@ -294,6 +300,17 @@ export function CanvasSettingsRow({
     selectedDraftModel,
     trackGenerationStart,
   ]);
+
+  const handleGenerate = useCallback(() => {
+    // Pre-Go auth gate (ADR-0009): logged-out users get the sign-in dialog
+    // over the page; the generate action resumes after a successful login.
+    void runWhenAuthenticated({
+      isAuthenticated: authUser !== null,
+      reason: "pre-go",
+      authGate: authGateController,
+      action: runGenerate,
+    });
+  }, [authUser, runGenerate]);
 
   const formatDurationLabel = useCallback((v: number) => `${v}s`, []);
 
