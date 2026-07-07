@@ -15,21 +15,29 @@ export interface SpaceNodeMenuProps {
   removable: boolean;
   onReword: (node: SpaceNode) => void;
   onRemove: (node: SpaceNode) => void;
+  /** Animate a picture into a clip (arms the video loop from this frame). */
+  onAnimate?: (node: SpaceNode) => void;
+  /** Download a clip's media. */
+  onDownload?: (node: SpaceNode) => void;
 }
 
 /**
- * A space node's context menu (RULINGS §5). Two actions are wired today:
- * Reword restores the node's paired words for re-editing, and Remove
- * soft-archives a childless leaf (server-enforced). The remaining RULINGS
- * actions (Animate / Re-roll / Share / Download / New clip) route through
- * existing generation and session flows and are wired separately.
+ * A space node's context menu (RULINGS §5), adapting to node kind: a picture
+ * offers Animate, a clip offers Download, all takes offer Reword, and a
+ * childless leaf offers Remove (server-enforced). The remaining RULINGS actions
+ * (Re-roll / Share / New clip) route through generation and session flows that
+ * don't fit the per-node handler and are wired separately.
  */
 export function SpaceNodeMenu({
   node,
   removable,
   onReword,
   onRemove,
+  onAnimate,
+  onDownload,
 }: SpaceNodeMenuProps): React.ReactElement {
+  const showAnimate = node.kind === "picture" && Boolean(onAnimate);
+  const showDownload = node.kind === "clip" && Boolean(onDownload);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -45,6 +53,22 @@ export function SpaceNodeMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {showAnimate ? (
+          <DropdownMenuItem
+            onSelect={() => onAnimate?.(node)}
+            data-testid={`space-node-animate-${node.id}`}
+          >
+            Animate
+          </DropdownMenuItem>
+        ) : null}
+        {showDownload ? (
+          <DropdownMenuItem
+            onSelect={() => onDownload?.(node)}
+            data-testid={`space-node-download-${node.id}`}
+          >
+            Download
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onSelect={() => onReword(node)}>
           Reword
         </DropdownMenuItem>

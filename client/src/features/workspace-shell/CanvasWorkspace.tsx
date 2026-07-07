@@ -447,6 +447,34 @@ export function CanvasWorkspace({
     [session?.id],
   );
 
+  // Animate (RULINGS §5): set a picture as the start frame, arming the video
+  // loop from it. Its generationId rides through as sourceGenerationId (M5 2b)
+  // so the resulting clip names this picture as its source.
+  const handleAnimateSpaceNode = useCallback(
+    (node: SpaceNode): void => {
+      if (!node.mediaUrl) return;
+      const words = resolveWordsForNode(node.id, spaceNodes);
+      storeActions.setStartFrame({
+        id: `space-animate-${node.id}`,
+        url: node.mediaUrl,
+        source: "generation",
+        generationId: node.id,
+        ...(words ? { sourcePrompt: words } : {}),
+      });
+    },
+    [spaceNodes, storeActions],
+  );
+
+  // Download (RULINGS §5): reuse the gallery's download handler for the clip's
+  // underlying generation record.
+  const handleDownloadSpaceNode = useCallback(
+    (node: SpaceNode): void => {
+      const generation = generationLookup.get(node.id);
+      if (generation) generationsRuntime.handleDownload(generation);
+    },
+    [generationLookup, generationsRuntime],
+  );
+
   const renderSpaceNodeMenu = useCallback(
     (node: SpaceNode): React.ReactNode => (
       <SpaceNodeMenu
@@ -454,9 +482,17 @@ export function CanvasWorkspace({
         removable={isRemovableLeaf(node, spaceNonLeafIds)}
         onReword={(target) => handleSelectSpaceNode(target.id)}
         onRemove={handleRemoveSpaceNode}
+        onAnimate={handleAnimateSpaceNode}
+        onDownload={handleDownloadSpaceNode}
       />
     ),
-    [spaceNonLeafIds, handleSelectSpaceNode, handleRemoveSpaceNode],
+    [
+      spaceNonLeafIds,
+      handleSelectSpaceNode,
+      handleRemoveSpaceNode,
+      handleAnimateSpaceNode,
+      handleDownloadSpaceNode,
+    ],
   );
 
   const surfaceProps: PromptEditorSurfaceProps = {
