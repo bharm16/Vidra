@@ -83,6 +83,10 @@ export const VideoJobRecordSchema = z.object({
   status: z.enum(VIDEO_JOB_STATUSES),
   userId: z.string(),
   sessionId: z.string().optional(),
+  // ISSUE-12 / M5: round-trip these so the async worker's Firestore read-back
+  // still knows where to persist the completed clip and its lineage edge.
+  promptVersionId: z.string().optional(),
+  sourceGenerationId: z.string().optional(),
   requestId: z.string().optional(),
   request: VideoJobRequestSchema,
   creditsReserved: z.number().nonnegative(),

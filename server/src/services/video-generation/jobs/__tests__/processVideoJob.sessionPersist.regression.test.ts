@@ -151,6 +151,34 @@ describe("processVideoJob session-persist regression (ISSUE-12)", () => {
     });
   });
 
+  it("sets the clip's ancestorGenerationId from the job's sourceGenerationId (M5 2b)", async () => {
+    vi.clearAllMocks();
+    const job = createJob({
+      sessionId: "session-7",
+      promptVersionId: "v-3",
+      sourceGenerationId: "pic-source-9",
+    });
+    const { result, appendGenerationToVersion } = runPipeline(job);
+    await result;
+
+    const generation = appendGenerationToVersion.mock.calls[0]![3];
+    // ADR-0013: the clip names its source picture, yielding the picture→clip edge.
+    expect(generation).toMatchObject({
+      id: "job-42",
+      ancestorGenerationId: "pic-source-9",
+    });
+  });
+
+  it("roots a clip at null when no sourceGenerationId is provided", async () => {
+    vi.clearAllMocks();
+    const job = createJob({ sessionId: "session-7", promptVersionId: "v-3" });
+    const { result, appendGenerationToVersion } = runPipeline(job);
+    await result;
+
+    const generation = appendGenerationToVersion.mock.calls[0]![3];
+    expect(generation.ancestorGenerationId).toBeNull();
+  });
+
   it("does not call appendGenerationToVersion when sessionId is missing (legacy async flow)", async () => {
     vi.clearAllMocks();
     const job = createJob({ promptVersionId: "v-3" });

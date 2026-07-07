@@ -41,6 +41,8 @@ interface CreateJobInput {
    * after successful markCompleted.
    */
   promptVersionId?: string;
+  /** M5 / ADR-0013: source picture id, persisted for the clip's lineage edge. */
+  sourceGenerationId?: string;
   requestId?: string;
   request: VideoJobRequest;
   creditsReserved: number;
@@ -126,6 +128,9 @@ export class VideoJobStore {
       ...(input.promptVersionId
         ? { promptVersionId: input.promptVersionId }
         : {}),
+      ...(input.sourceGenerationId
+        ? { sourceGenerationId: input.sourceGenerationId }
+        : {}),
       ...(input.requestId ? { requestId: input.requestId } : {}),
       request: input.request,
       creditsReserved: input.creditsReserved,
@@ -188,6 +193,9 @@ export class VideoJobStore {
       ...(input.sessionId ? { sessionId: input.sessionId } : {}),
       ...(input.promptVersionId
         ? { promptVersionId: input.promptVersionId }
+        : {}),
+      ...(input.sourceGenerationId
+        ? { sourceGenerationId: input.sourceGenerationId }
         : {}),
       ...(input.requestId ? { requestId: input.requestId } : {}),
       request: input.request,

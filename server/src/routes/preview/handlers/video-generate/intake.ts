@@ -106,6 +106,7 @@ export async function runVideoGenerateIntake(
     generationParams,
     sessionId: requestedSessionId,
     promptVersionId: requestedPromptVersionId,
+    sourceGenerationId: requestedSourceGenerationId,
   } = payload;
 
   let characterAssetId = args.characterAssetId;
@@ -282,6 +283,9 @@ export async function runVideoGenerateIntake(
         ...(requestedSessionId ? { sessionId: requestedSessionId } : {}),
         ...(requestedPromptVersionId
           ? { promptVersionId: requestedPromptVersionId }
+          : {}),
+        ...(requestedSourceGenerationId
+          ? { sourceGenerationId: requestedSourceGenerationId }
           : {}),
         request: {
           prompt: plan.promptWithMotion,

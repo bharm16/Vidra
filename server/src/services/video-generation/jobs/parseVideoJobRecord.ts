@@ -50,6 +50,12 @@ export function parseVideoJobRecord(
     ...(typeof parsed.sessionId === "string"
       ? { sessionId: parsed.sessionId }
       : {}),
+    ...(typeof parsed.promptVersionId === "string"
+      ? { promptVersionId: parsed.promptVersionId }
+      : {}),
+    ...(typeof parsed.sourceGenerationId === "string"
+      ? { sourceGenerationId: parsed.sourceGenerationId }
+      : {}),
     request: {
       ...parsed.request,
       options: normalizedOptions,

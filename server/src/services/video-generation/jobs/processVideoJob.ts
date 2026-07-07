@@ -360,6 +360,9 @@ export async function processVideoJob(
               ? { storagePath: resultWithStorage.storagePath }
               : {}),
             promptVersionId: job.promptVersionId,
+            // ADR-0013: name the source picture (or null = root) so the space
+            // draws the picture→clip edge from real lineage.
+            ancestorGenerationId: job.sourceGenerationId ?? null,
             completedAt: new Date().toISOString(),
           },
         );

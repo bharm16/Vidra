@@ -65,6 +65,12 @@ export interface VideoJobRecord {
    * analogue of the synchronous storyboard persist path.
    */
   promptVersionId?: string;
+  /**
+   * M5 / ADR-0013: the source picture this clip is animated from. Persisted as
+   * the clip record's `ancestorGenerationId`, yielding the picture→clip edge in
+   * the space. Absent for legacy/text-to-video jobs (the clip roots at null).
+   */
+  sourceGenerationId?: string;
   requestId?: string;
   request: VideoJobRequest;
   creditsReserved: number;

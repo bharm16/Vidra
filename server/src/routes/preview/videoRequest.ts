@@ -22,6 +22,9 @@ export interface VideoPreviewPayload {
   // successful markCompleted. Matches the storyboard handler behaviour.
   sessionId?: string;
   promptVersionId?: string;
+  // M5 / ADR-0013: the source picture's generation id, persisted as the clip
+  // record's ancestorGenerationId so the space draws the picture→clip edge.
+  sourceGenerationId?: string;
 }
 
 interface VideoPreviewParseSuccess {
@@ -64,6 +67,7 @@ export const parseVideoPreviewRequest = (
     faceSwapAlreadyApplied,
     sessionId,
     promptVersionId,
+    sourceGenerationId,
   } = (body || {}) as {
     prompt?: unknown;
     aspectRatio?: unknown;
@@ -79,6 +83,7 @@ export const parseVideoPreviewRequest = (
     faceSwapAlreadyApplied?: unknown;
     sessionId?: unknown;
     promptVersionId?: unknown;
+    sourceGenerationId?: unknown;
   };
 
   if (prompt !== undefined && typeof prompt !== "string") {
@@ -261,6 +266,22 @@ export const parseVideoPreviewRequest = (
       ? promptVersionId.trim()
       : undefined;
 
+  if (
+    sourceGenerationId !== undefined &&
+    typeof sourceGenerationId !== "string"
+  ) {
+    return {
+      ok: false,
+      status: 400,
+      error: "sourceGenerationId must be a string",
+    };
+  }
+  const resolvedSourceGenerationId =
+    typeof sourceGenerationId === "string" &&
+    sourceGenerationId.trim().length > 0
+      ? sourceGenerationId.trim()
+      : undefined;
+
   return {
     ok: true,
     payload: {
@@ -283,6 +304,9 @@ export const parseVideoPreviewRequest = (
       ...(resolvedSessionId ? { sessionId: resolvedSessionId } : {}),
       ...(resolvedPromptVersionId
         ? { promptVersionId: resolvedPromptVersionId }
+        : {}),
+      ...(resolvedSourceGenerationId
+        ? { sourceGenerationId: resolvedSourceGenerationId }
         : {}),
     },
   };
