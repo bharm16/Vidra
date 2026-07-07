@@ -585,7 +585,7 @@ export function CanvasWorkspace({
           ) : FEATURES.SPACE_LINEAGE ? (
             // The space (M5, ADR-0012/0013): the session's takes as a lineage
             // network. Off by default; replaces the shots grid when enabled.
-            <SpaceViewport>
+            <SpaceViewport liveNodeId={heroGeneration?.id ?? null}>
               <TheSpace
                 nodes={spaceNodes}
                 liveNodeId={heroGeneration?.id ?? null}

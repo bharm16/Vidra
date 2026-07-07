@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
+import { computeCenteredScroll } from "./spaceCamera";
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
@@ -11,18 +12,57 @@ const clampZoom = (n: number): number =>
 
 /**
  * The space's camera/zoom viewport (ADR-0012 / M5). Scales the lineage network
- * in place; the zoom level is ephemeral — nothing spatial is stored, so it
- * resets on reload. A −/%/+ control floats over the space.
+ * in place and, on a live-node change, pans so the live node lands dead-center.
+ * Both the zoom level and the camera are ephemeral — nothing spatial is stored,
+ * so they reset on reload. A −/%/+ control floats over the space.
  */
 export function SpaceViewport({
   children,
+  liveNodeId,
 }: {
   children: React.ReactNode;
+  /** The current take; when it changes the camera recenters on it. */
+  liveNodeId?: string | null;
 }): React.ReactElement {
   const [zoom, setZoom] = useState(1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Camera: center the live node when it changes. Read the rendered rects
+  // (post-transform, so zoom is already baked in) and scroll the container so
+  // the node's center meets the viewport's. Ephemeral by design.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || !liveNodeId) return;
+    if (typeof container.scrollTo !== "function") return;
+    const node = container.querySelector<HTMLElement>('[data-live="true"]');
+    if (!node) return;
+    const containerRect = container.getBoundingClientRect();
+    const nodeRect = node.getBoundingClientRect();
+    const { scrollLeft, scrollTop } = computeCenteredScroll(
+      {
+        scrollLeft: container.scrollLeft,
+        scrollTop: container.scrollTop,
+        left: containerRect.left,
+        top: containerRect.top,
+        width: containerRect.width,
+        height: containerRect.height,
+      },
+      {
+        left: nodeRect.left,
+        top: nodeRect.top,
+        width: nodeRect.width,
+        height: nodeRect.height,
+      },
+    );
+    container.scrollTo({
+      left: scrollLeft,
+      top: scrollTop,
+      behavior: "smooth",
+    });
+  }, [liveNodeId]);
 
   return (
-    <div className="relative h-full w-full overflow-auto">
+    <div ref={scrollRef} className="relative h-full w-full overflow-auto">
       <div
         data-testid="space-viewport-content"
         className="origin-top"
