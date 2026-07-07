@@ -142,6 +142,20 @@ ADR-0012).
   Vite with `VITE_FEATURE_SPACE_LINEAGE=true`, log in (persistence is remote-only), reach a
   session with gallery generations (or temporarily widen the `shots.length>0` render gate to
   `hasExpandedPrompt`). Full detail + gotchas: `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
+- **M5 COMPLETE + SPACE IS DEFAULT (2026-07-07 pm, `a29ec84b`→`c7d29a12`):** deferred items
+  finished and the space flipped on by default. **2b** (`a29ec84b` server + `7a06feaa` client):
+  clip `sourceGenerationId` threaded end-to-end so a clip's `ancestorGenerationId` names its
+  source picture; the server fix also round-trips `promptVersionId` through the worker's Firestore
+  read-back (schema/parse had dropped it, so async-flow clips never persisted — latent bug fixed).
+  **7b** (`8393d5fd`): Animate (picture → start frame, id rides as `sourceGenerationId`) + Download
+  (clip → gallery handler) wired; Re-roll/Share/New-clip still deferred (no-arg `onShare` /
+  generation-session plumbing). **Default** (`c7d29a12`): `SPACE_LINEAGE` default → true; the space
+  replaces the shots grid for `shots.length > 0`, FrameStage keeps `shots.length === 0` (its
+  Create-frame/gate isn't in the space — the reason the old layout stays). **8b**: Chrome-verified
+  against a real session (temp-widened gate) — words node + context menu + zoom rendered from real
+  `versions`, zero console errors, then reverted. **Old shots-grid layout NOT deleted** (now
+  unreachable-by-default, kept until all M done per owner). Next: M6 deletions (motion-ideas panel,
+  tune-chips/TuneDrawer, Gemini transformer, frame-verification — NOT the old layout) → M7 → M8.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
