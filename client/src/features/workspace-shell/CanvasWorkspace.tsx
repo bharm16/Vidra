@@ -56,8 +56,12 @@ import { YourWordsChip } from "./components/YourWordsChip";
 import { FailureNotice } from "./components/FailureNotice";
 import { TheSpace } from "@/features/space/components/TheSpace";
 import { SpaceViewport } from "@/features/space/components/SpaceViewport";
+import { SpaceNodeMenu } from "@/features/space/components/SpaceNodeMenu";
 import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpaceNodes";
 import { resolveWordsForNode } from "@/features/space/lineage/resolveWordsForNode";
+import { nonLeafIds, isRemovableLeaf } from "@/features/space/lineage/leaf";
+import type { SpaceNode } from "@/features/space/lineage/types";
+import { archiveGeneration } from "@/features/space/api/spaceApi";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
 
 // Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
@@ -400,10 +404,22 @@ export function CanvasWorkspace({
   // synced generations become picture/clip nodes). Deliberately NOT gated on
   // an empty runtime the way the gallery is: on reload the runtime starts
   // empty but the persisted history is exactly what the space must render.
-  const spaceNodes = useMemo(
-    () => deriveSpaceNodesFromVersions(generationsPanelProps.versions),
-    [generationsPanelProps.versions],
-  );
+  // Optimistic removal set: a just-archived node is dropped from the space
+  // immediately, before the server round-trip's archived:true lands on the
+  // persisted record (which makes it durable across reloads).
+  const [locallyArchivedIds, setLocallyArchivedIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+
+  const spaceNodes = useMemo(() => {
+    const nodes = deriveSpaceNodesFromVersions(generationsPanelProps.versions);
+    if (locallyArchivedIds.size === 0) return nodes;
+    return nodes.map((node) =>
+      locallyArchivedIds.has(node.id) ? { ...node, archived: true } : node,
+    );
+  }, [generationsPanelProps.versions, locallyArchivedIds]);
+
+  const spaceNonLeafIds = useMemo(() => nonLeafIds(spaceNodes), [spaceNodes]);
 
   // Take-restore-on-select (M5, ADR-0012): selecting a node refills the
   // composer with its paired words. Fill-only via onComposerFill — never
@@ -414,6 +430,33 @@ export function CanvasWorkspace({
       if (words) onComposerFill?.(words);
     },
     [spaceNodes, onComposerFill],
+  );
+
+  // Leaf-only removal (M5, ADR-0012). The server re-enforces the rule and
+  // returns 409 for a non-leaf; a rejection leaves the node in place.
+  const handleRemoveSpaceNode = useCallback(
+    (node: SpaceNode): void => {
+      const sessionId = session?.id;
+      if (!sessionId) return;
+      void archiveGeneration(sessionId, node.id)
+        .then(() => setLocallyArchivedIds((prev) => new Set(prev).add(node.id)))
+        .catch(() => {
+          /* leaf conflict or network — the node stays */
+        });
+    },
+    [session?.id],
+  );
+
+  const renderSpaceNodeMenu = useCallback(
+    (node: SpaceNode): React.ReactNode => (
+      <SpaceNodeMenu
+        node={node}
+        removable={isRemovableLeaf(node, spaceNonLeafIds)}
+        onReword={(target) => handleSelectSpaceNode(target.id)}
+        onRemove={handleRemoveSpaceNode}
+      />
+    ),
+    [spaceNonLeafIds, handleSelectSpaceNode, handleRemoveSpaceNode],
   );
 
   const surfaceProps: PromptEditorSurfaceProps = {
@@ -602,6 +645,7 @@ export function CanvasWorkspace({
                 nodes={spaceNodes}
                 liveNodeId={heroGeneration?.id ?? null}
                 onSelectNode={handleSelectSpaceNode}
+                renderNodeMenu={renderSpaceNodeMenu}
               />
             </SpaceViewport>
           ) : (

@@ -24,6 +24,12 @@ export interface TheSpaceProps {
   liveNodeId?: string | null;
   /** Selecting a node restores its paired words (the take-restore contract). */
   onSelectNode?: (id: string) => void;
+  /**
+   * Per-node context menu (RULINGS §5), rendered at the node's corner as a
+   * sibling of the select button — never nested — so its actions don't collide
+   * with selection. Return null to give a node no menu.
+   */
+  renderNodeMenu?: (node: SpaceNode) => React.ReactNode;
 }
 
 function nodeLeft(column: number): number {
@@ -43,6 +49,7 @@ export function TheSpace({
   nodes,
   liveNodeId,
   onSelectNode,
+  renderNodeMenu,
 }: TheSpaceProps): React.ReactElement {
   const positioned = computeLineageLayout(nodes);
   const byId = new Map(positioned.map((node) => [node.id, node]));
@@ -87,30 +94,43 @@ export function TheSpace({
 
       {positioned.map((node) => {
         const isLive = node.id === liveNodeId;
+        const menu = renderNodeMenu?.(node);
         return (
-          <Button
-            key={node.id}
-            type="button"
-            variant="ghost"
-            data-testid={`space-node-${node.id}`}
-            data-live={isLive ? "true" : "false"}
-            onClick={() => onSelectNode?.(node.id)}
-            className={cn(
-              "absolute flex flex-col items-start gap-1 overflow-hidden rounded-xl border p-3 text-left",
-              "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
-              isLive &&
-                "border-tool-text-label ring-tool-text-label/30 z-10 ring-2",
-            )}
-            style={{
-              left: nodeLeft(node.column),
-              top: nodeTop(node.row),
-              width: NODE_W,
-              height: NODE_H,
-              transform: isLive ? "scale(1.06)" : undefined,
-            }}
-          >
-            <SpaceNodeBody node={node} />
-          </Button>
+          <React.Fragment key={node.id}>
+            <Button
+              type="button"
+              variant="ghost"
+              data-testid={`space-node-${node.id}`}
+              data-live={isLive ? "true" : "false"}
+              onClick={() => onSelectNode?.(node.id)}
+              className={cn(
+                "absolute flex flex-col items-start gap-1 overflow-hidden rounded-xl border p-3 text-left",
+                "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
+                isLive &&
+                  "border-tool-text-label ring-tool-text-label/30 z-10 ring-2",
+              )}
+              style={{
+                left: nodeLeft(node.column),
+                top: nodeTop(node.row),
+                width: NODE_W,
+                height: NODE_H,
+                transform: isLive ? "scale(1.06)" : undefined,
+              }}
+            >
+              <SpaceNodeBody node={node} />
+            </Button>
+            {menu ? (
+              <div
+                className="absolute z-20"
+                style={{
+                  left: nodeLeft(node.column) + NODE_W - 30,
+                  top: nodeTop(node.row) + 6,
+                }}
+              >
+                {menu}
+              </div>
+            ) : null}
+          </React.Fragment>
         );
       })}
     </div>
