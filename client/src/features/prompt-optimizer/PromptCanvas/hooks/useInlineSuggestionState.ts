@@ -8,7 +8,7 @@ import type {
   SuggestionsData,
 } from "../types";
 import { buildSuggestionContext } from "../../utils/enhancementSuggestionContext";
-import { isMotionCategory } from "../../config/motionCategories";
+import { isMotionCategory } from "@shared/motionCategories";
 import { useSuggestionFeedback } from "./useSuggestionFeedback";
 
 interface UseInlineSuggestionStateOptions {
