@@ -55,6 +55,67 @@ describe("useIdeaBox", () => {
     expect(result.current.stage).toEqual({ kind: "ready" });
   });
 
+  it("sends sessionId + promptVersionId from the persistence-target resolver (M5 D4)", async () => {
+    generatePreviewMock.mockResolvedValue(successResponse);
+    const setStartFrame = vi.fn();
+    const resolvePersistenceTarget = vi.fn(() => ({
+      sessionId: "sess-remote-abc",
+      promptVersionId: "v-123-abc",
+    }));
+
+    const { result } = renderHook(() =>
+      useIdeaBox({
+        startImageUrl: null,
+        setStartFrame,
+        resolvePersistenceTarget,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.continueAfterOptimization("a cozy coffee shop ad");
+    });
+
+    // The resolver mints/reads the words-version at frame time, and its ids
+    // ride the generatePreview POST so the server persists the picture as a
+    // generation record on that version node.
+    expect(resolvePersistenceTarget).toHaveBeenCalledTimes(1);
+    expect(generatePreviewMock).toHaveBeenCalledWith("a cozy coffee shop ad", {
+      aspectRatio: "16:9",
+      sessionId: "sess-remote-abc",
+      promptVersionId: "v-123-abc",
+    });
+  });
+
+  it("omits blank persistence ids instead of sending empty keys (M5 D4)", async () => {
+    generatePreviewMock.mockResolvedValue(successResponse);
+    const setStartFrame = vi.fn();
+    // Golden-path early state: a version was minted, but the session is still a
+    // local draft, so isRemoteSessionId gates sessionId to blank. The empty
+    // field must not appear in the payload — the server's opt-in persistence
+    // keys off the presence of both, and a stray "" would break its contract.
+    const resolvePersistenceTarget = vi.fn(() => ({
+      sessionId: "",
+      promptVersionId: "v-456-def",
+    }));
+
+    const { result } = renderHook(() =>
+      useIdeaBox({
+        startImageUrl: null,
+        setStartFrame,
+        resolvePersistenceTarget,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.continueAfterOptimization("a quiet forest at dawn");
+    });
+
+    expect(generatePreviewMock).toHaveBeenCalledWith("a quiet forest at dawn", {
+      aspectRatio: "16:9",
+      promptVersionId: "v-456-def",
+    });
+  });
+
   it("does nothing when a start frame already exists", async () => {
     const setStartFrame = vi.fn();
     const { result } = renderHook(() =>

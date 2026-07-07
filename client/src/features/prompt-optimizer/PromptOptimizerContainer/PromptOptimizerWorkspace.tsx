@@ -62,7 +62,13 @@ import {
 } from "./hooks";
 import { useI2VContext } from "../hooks/useI2VContext";
 import { useMotionIdeas } from "../hooks/useMotionIdeas";
-import { useIdeaBox } from "@/features/idea-box";
+import {
+  useIdeaBox,
+  usePersistenceTargetRegistrar,
+  PersistenceTargetRegistrarContext,
+  type PersistenceTarget,
+} from "@/features/idea-box";
+import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
 import { PromptOptimizerWorkspaceView } from "./components/PromptOptimizerWorkspaceView";
 import {
   WorkspaceSessionProvider,
@@ -656,6 +662,23 @@ function PromptOptimizerContent({
     [currentShotId, hasActiveContinuityShot, toast, updateShot],
   );
 
+  // Persistence-target bridge (M5 D4): the canvas subtree below registers a
+  // resolver that mints/reads the words-version at frame time; this owner adds
+  // the session id (a route concern it already holds, gated through
+  // isRemoteSessionId so drafts/local ids the server has no record of are
+  // omitted rather than 404'd). useIdeaBox invokes the merged resolver so
+  // first frames persist as generation records on their version node. Both
+  // pieces are stable; the version half is blank until the canvas registers.
+  const { resolve: resolveVersionTarget, registrarValue } =
+    usePersistenceTargetRegistrar();
+  const resolvePersistenceTarget = useCallback<() => PersistenceTarget>(
+    () => ({
+      ...(isRemoteSessionId(sessionId) ? { sessionId } : {}),
+      ...resolveVersionTarget(),
+    }),
+    [resolveVersionTarget, sessionId],
+  );
+
   // Idea Box: on empty canvas (no start frame), optimization continues into
   // first-frame generation; setting the frame flips the workspace to I2V.
   const {
@@ -666,6 +689,7 @@ function PromptOptimizerContent({
   } = useIdeaBox({
     startImageUrl: i2vContext.startImageUrl,
     setStartFrame,
+    resolvePersistenceTarget,
   });
 
   const handleOptimizationApplied = useCallback(
@@ -879,110 +903,112 @@ function PromptOptimizerContent({
   const shouldShowLoading = isLoading;
 
   return (
-    <PromptInsertionBusProvider
-      inputPrompt={promptOptimizer.inputPrompt}
-      setInputPrompt={promptOptimizer.setInputPrompt}
-      clearResultsView={clearResultsView}
-    >
-      <SidebarDataProvider
-        assets={assetsSidebar.assets}
-        assetsByType={assetsSidebar.byType}
-        isLoadingAssets={assetsSidebar.isLoading}
-        onEditAsset={assetManagement.onEditAsset}
-        onCreateAsset={assetManagement.onCreateAsset}
-        onCreateFromTrigger={assetManagement.onCreateFromTrigger}
-        onImageUpload={handleImageUpload}
-        onStartFrameUpload={handleStartFrameUpload}
-        onUploadSidebarImage={uploadSidebarImage}
+    <PersistenceTargetRegistrarContext.Provider value={registrarValue}>
+      <PromptInsertionBusProvider
+        inputPrompt={promptOptimizer.inputPrompt}
+        setInputPrompt={promptOptimizer.setInputPrompt}
+        clearResultsView={clearResultsView}
       >
-        <PromptResultsActionsProvider
-          currentPromptUuid={currentPromptUuid}
-          currentPromptDocId={currentPromptDocId}
-          displayedPrompt={promptOptimizer.displayedPrompt}
-          isApplyingHistoryRef={isApplyingHistoryRef}
-          handleDisplayedPromptChange={handleDisplayedPromptChange}
-          updateEntryOutput={promptHistory.updateEntryOutput}
-          setOutputSaveState={setOutputSaveState}
-          setOutputLastSavedAt={setOutputLastSavedAt}
-          user={user}
-          onReoptimize={handleOptimize}
-          onFetchSuggestions={fetchEnhancementSuggestions}
-          onSuggestionClick={handleSuggestionClick}
-          onHighlightsPersist={handleHighlightsPersist}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          stablePromptContext={stablePromptContext}
-          suggestionsData={suggestionsData}
-          coherenceAffectedSpanIds={affectedSpanIds}
-          coherenceSpanIssueMap={spanIssueMap}
-          coherenceIssues={coherenceIssues}
-          isCoherenceChecking={isCoherenceChecking}
-          isCoherencePanelExpanded={isPanelExpanded}
-          onToggleCoherencePanelExpanded={toggleCoherencePanelExpanded}
-          onDismissCoherenceIssue={dismissIssue}
-          onDismissAllCoherenceIssues={dismissAll}
-          onApplyCoherenceFix={applyFix}
-          onScrollToCoherenceSpan={scrollToSpanById}
-          i2vContext={i2vContext}
-          motionIdeas={motionIdeas.ideas}
-          isMotionIdeasLoading={motionIdeas.isLoading}
-          ideaBoxStage={ideaBoxStage}
-          isExpanding={promptOptimizer.isProcessing}
-          writingFailed={writingFailed}
-          hasExpandedPrompt={
-            showResults && promptOptimizer.displayedPrompt.trim().length > 0
-          }
-          onIdeaBoxAccept={acceptFrame}
-          onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
-          onIdeaBoxExpand={handleIdeaBoxExpand}
-          onComposerFill={handleComposerFill}
-          onMotionIdeaSelect={handleMotionIdeaSelect}
-          onMotionIdeasReroll={handleMotionIdeasReroll}
+        <SidebarDataProvider
+          assets={assetsSidebar.assets}
+          assetsByType={assetsSidebar.byType}
+          isLoadingAssets={assetsSidebar.isLoading}
+          onEditAsset={assetManagement.onEditAsset}
+          onCreateAsset={assetManagement.onCreateAsset}
+          onCreateFromTrigger={assetManagement.onCreateFromTrigger}
+          onImageUpload={handleImageUpload}
+          onStartFrameUpload={handleStartFrameUpload}
+          onUploadSidebarImage={uploadSidebarImage}
         >
-          <PromptOptimizerWorkspaceView
-            showHistory={showHistory}
-            onToggleHistory={setShowHistory}
-            shouldShowLoading={shouldShowLoading}
-            promptModalsProps={{
-              onImprovementComplete: handleImprovementComplete,
-              onConceptComplete: handleConceptComplete,
-              onSkipBrainstorm: handleSkipBrainstorm,
-            }}
-            quickCreateState={quickCreateState}
-            onQuickCreateClose={assetManagement.onCloseQuickCreate}
-            onQuickCreateComplete={assetManagement.onQuickCreateComplete}
-            assetEditorState={assetEditorState}
-            assetEditorHandlers={{
-              onClose: assetManagement.onCloseAssetEditor,
-              onCreate: assetManagement.onCreate,
-              onUpdate: assetManagement.onUpdate,
-              onAddImage: assetManagement.onAddImage,
-              onDeleteImage: assetManagement.onDeleteImage,
-              onSetPrimaryImage: assetManagement.onSetPrimaryImage,
-            }}
-            detectedAssetsPrompt={promptForAssets}
-            detectedAssets={assetsSidebar.assets}
-            onEditAsset={assetManagement.onEditAsset}
-            onCreateFromTrigger={assetManagement.onCreateFromTrigger}
-            debugProps={{
-              enabled:
-                false &&
-                (import.meta.env.DEV ||
-                  new URLSearchParams(window.location.search).get("debug") ===
-                    "true"),
-              inputPrompt: promptOptimizer.inputPrompt,
-              displayedPrompt: promptOptimizer.displayedPrompt,
-              optimizedPrompt: promptOptimizer.optimizedPrompt,
-              selectedMode,
-              promptContext: stablePromptContext as unknown as Record<
-                string,
-                unknown
-              > | null,
-            }}
-          />
-        </PromptResultsActionsProvider>
-      </SidebarDataProvider>
-    </PromptInsertionBusProvider>
+          <PromptResultsActionsProvider
+            currentPromptUuid={currentPromptUuid}
+            currentPromptDocId={currentPromptDocId}
+            displayedPrompt={promptOptimizer.displayedPrompt}
+            isApplyingHistoryRef={isApplyingHistoryRef}
+            handleDisplayedPromptChange={handleDisplayedPromptChange}
+            updateEntryOutput={promptHistory.updateEntryOutput}
+            setOutputSaveState={setOutputSaveState}
+            setOutputLastSavedAt={setOutputLastSavedAt}
+            user={user}
+            onReoptimize={handleOptimize}
+            onFetchSuggestions={fetchEnhancementSuggestions}
+            onSuggestionClick={handleSuggestionClick}
+            onHighlightsPersist={handleHighlightsPersist}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            stablePromptContext={stablePromptContext}
+            suggestionsData={suggestionsData}
+            coherenceAffectedSpanIds={affectedSpanIds}
+            coherenceSpanIssueMap={spanIssueMap}
+            coherenceIssues={coherenceIssues}
+            isCoherenceChecking={isCoherenceChecking}
+            isCoherencePanelExpanded={isPanelExpanded}
+            onToggleCoherencePanelExpanded={toggleCoherencePanelExpanded}
+            onDismissCoherenceIssue={dismissIssue}
+            onDismissAllCoherenceIssues={dismissAll}
+            onApplyCoherenceFix={applyFix}
+            onScrollToCoherenceSpan={scrollToSpanById}
+            i2vContext={i2vContext}
+            motionIdeas={motionIdeas.ideas}
+            isMotionIdeasLoading={motionIdeas.isLoading}
+            ideaBoxStage={ideaBoxStage}
+            isExpanding={promptOptimizer.isProcessing}
+            writingFailed={writingFailed}
+            hasExpandedPrompt={
+              showResults && promptOptimizer.displayedPrompt.trim().length > 0
+            }
+            onIdeaBoxAccept={acceptFrame}
+            onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
+            onIdeaBoxExpand={handleIdeaBoxExpand}
+            onComposerFill={handleComposerFill}
+            onMotionIdeaSelect={handleMotionIdeaSelect}
+            onMotionIdeasReroll={handleMotionIdeasReroll}
+          >
+            <PromptOptimizerWorkspaceView
+              showHistory={showHistory}
+              onToggleHistory={setShowHistory}
+              shouldShowLoading={shouldShowLoading}
+              promptModalsProps={{
+                onImprovementComplete: handleImprovementComplete,
+                onConceptComplete: handleConceptComplete,
+                onSkipBrainstorm: handleSkipBrainstorm,
+              }}
+              quickCreateState={quickCreateState}
+              onQuickCreateClose={assetManagement.onCloseQuickCreate}
+              onQuickCreateComplete={assetManagement.onQuickCreateComplete}
+              assetEditorState={assetEditorState}
+              assetEditorHandlers={{
+                onClose: assetManagement.onCloseAssetEditor,
+                onCreate: assetManagement.onCreate,
+                onUpdate: assetManagement.onUpdate,
+                onAddImage: assetManagement.onAddImage,
+                onDeleteImage: assetManagement.onDeleteImage,
+                onSetPrimaryImage: assetManagement.onSetPrimaryImage,
+              }}
+              detectedAssetsPrompt={promptForAssets}
+              detectedAssets={assetsSidebar.assets}
+              onEditAsset={assetManagement.onEditAsset}
+              onCreateFromTrigger={assetManagement.onCreateFromTrigger}
+              debugProps={{
+                enabled:
+                  false &&
+                  (import.meta.env.DEV ||
+                    new URLSearchParams(window.location.search).get("debug") ===
+                      "true"),
+                inputPrompt: promptOptimizer.inputPrompt,
+                displayedPrompt: promptOptimizer.displayedPrompt,
+                optimizedPrompt: promptOptimizer.optimizedPrompt,
+                selectedMode,
+                promptContext: stablePromptContext as unknown as Record<
+                  string,
+                  unknown
+                > | null,
+              }}
+            />
+          </PromptResultsActionsProvider>
+        </SidebarDataProvider>
+      </PromptInsertionBusProvider>
+    </PersistenceTargetRegistrarContext.Provider>
   );
 }
 

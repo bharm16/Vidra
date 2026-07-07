@@ -50,6 +50,16 @@ function ideaBoxReducer(
   }
 }
 
+/**
+ * The session + words-version a generated frame should persist onto. Both
+ * fields are optional so a blank return (no remote session, no version yet)
+ * cleanly omits persistence — the picture stays client-only. (M5 D4)
+ */
+export interface PersistenceTarget {
+  sessionId?: string;
+  promptVersionId?: string;
+}
+
 export interface UseIdeaBoxParams {
   /**
    * Current start-image URL. The chain only runs when no start frame exists —
@@ -58,6 +68,14 @@ export interface UseIdeaBoxParams {
    */
   startImageUrl: string | null;
   setStartFrame: (tile: KeyframeTile) => void;
+  /**
+   * Resolves where this frame should persist, invoked once per generation.
+   * Mirrors the storyboard's create-on-demand semantics: the words-version is
+   * minted/reused at frame time (not at hook creation), so the returned id is
+   * the node the picture attaches to. Omitted — or returning blanks — keeps
+   * the legacy client-only path (server persistence is opt-in). (M5 D4)
+   */
+  resolvePersistenceTarget?: () => PersistenceTarget;
 }
 
 export interface UseIdeaBoxResult {
@@ -84,6 +102,7 @@ export interface UseIdeaBoxResult {
 export function useIdeaBox({
   startImageUrl,
   setStartFrame,
+  resolvePersistenceTarget,
 }: UseIdeaBoxParams): UseIdeaBoxResult {
   const [state, dispatch] = useReducer(ideaBoxReducer, INITIAL_STATE);
   const runIdRef = useRef(0);
@@ -97,9 +116,19 @@ export function useIdeaBox({
       runIdRef.current = runId;
       dispatch({ type: "FRAMING" });
 
+      // Resolve the persistence target lazily, at frame time, so the words-
+      // version is minted/reused for this exact generation. Blank fields are
+      // omitted (not sent as undefined/empty) to preserve the additive,
+      // opt-in contract the server relies on to take its legacy path.
+      const target = resolvePersistenceTarget?.() ?? {};
+
       try {
         const response = await generatePreview(prompt, {
           aspectRatio: IDEA_BOX_ASPECT_RATIO,
+          ...(target.sessionId ? { sessionId: target.sessionId } : {}),
+          ...(target.promptVersionId
+            ? { promptVersionId: target.promptVersionId }
+            : {}),
         });
         if (runIdRef.current !== runId) return; // superseded by a newer run
 
@@ -128,7 +157,7 @@ export function useIdeaBox({
         });
       }
     },
-    [setStartFrame],
+    [resolvePersistenceTarget, setStartFrame],
   );
 
   const continueAfterOptimization = useCallback(

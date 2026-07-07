@@ -14,6 +14,10 @@ import {
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
 import { useOptionalPromptHighlights } from "@/features/prompt-optimizer/context/PromptStateContext";
+import {
+  useRegisterPersistenceTarget,
+  type PersistenceTarget,
+} from "@/features/idea-box";
 import { useWorkspaceSession } from "@/features/prompt-optimizer/context/WorkspaceSessionContext";
 import { useGenerationsRuntime } from "@features/generations";
 import type {
@@ -144,6 +148,18 @@ export function CanvasWorkspace({
   const { session, hasActiveContinuityShot, currentShot, updateShot } =
     useWorkspaceSession();
   const { onComposerFill, onIdeaBoxExpand } = usePromptResultsActions();
+
+  // M5 D4: publish the words-version a golden-path first frame should persist
+  // onto. This lives here because the canvas owns version creation
+  // (onCreateVersionIfNeeded) while useIdeaBox — which posts the frame — sits
+  // above this subtree. Mints/reuses the version at frame time only; the
+  // owner adds the session id (a route concern it already holds).
+  const { onCreateVersionIfNeeded } = generationsPanelProps;
+  const resolvePersistenceTarget = useCallback<() => PersistenceTarget>(() => {
+    const versionId = onCreateVersionIfNeeded();
+    return versionId ? { promptVersionId: versionId } : {};
+  }, [onCreateVersionIfNeeded]);
+  useRegisterPersistenceTarget(resolvePersistenceTarget);
   // Generation domain provides the upload handlers wired through to
   // CanvasSettingsRow's start-frame / video-reference popovers. Null when
   // SidebarDataContextProvider isn't mounted (tests, isolated stories).
