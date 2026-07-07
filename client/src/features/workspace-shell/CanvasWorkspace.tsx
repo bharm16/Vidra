@@ -48,6 +48,7 @@ import { WorkspaceTopBar } from "./components/WorkspaceTopBar";
 import { FrameStage } from "./components/FrameStage";
 import { CanvasPromptBar } from "./components/CanvasPromptBar";
 import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
+import { YourWordsChip } from "./components/YourWordsChip";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
 
 // Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
@@ -136,8 +137,9 @@ export function CanvasWorkspace({
   const storeActions = useGenerationControlsStoreActions();
   const { domain } = useGenerationControlsStoreState();
   const promptHighlights = useOptionalPromptHighlights();
-  const { hasActiveContinuityShot, currentShot, updateShot } =
+  const { session, hasActiveContinuityShot, currentShot, updateShot } =
     useWorkspaceSession();
+  const { onComposerFill } = usePromptResultsActions();
   // Generation domain provides the upload handlers wired through to
   // CanvasSettingsRow's start-frame / video-reference popovers. Null when
   // SidebarDataContextProvider isn't mounted (tests, isolated stories).
@@ -356,6 +358,20 @@ export function CanvasWorkspace({
   );
   const isPreWork = workspaceStage.stage === "empty";
 
+  // "Your words" — once the one-liner has grown into the full description, offer
+  // an explicit way back to the immutable original (SessionPrompt.input, D1).
+  // Restoring refills the composer via onComposerFill (fill-only, never submit).
+  const originalWords = (session?.prompt?.input ?? "").trim();
+  const yourWordsSlot =
+    hasExpandedPrompt && originalWords && onComposerFill ? (
+      <div className="px-4 pt-2.5">
+        <YourWordsChip
+          originalWords={originalWords}
+          onRestore={() => onComposerFill(originalWords)}
+        />
+      </div>
+    ) : null;
+
   const surfaceProps: PromptEditorSurfaceProps = {
     editorRef,
     prompt,
@@ -550,6 +566,7 @@ export function CanvasWorkspace({
             surfaceProps={surfaceProps}
             tuneSlot={tuneSlot}
             chromeSlot={chromeSlot}
+            yourWordsSlot={yourWordsSlot}
             onContinueScene={handleContinueScene}
           />
         </div>

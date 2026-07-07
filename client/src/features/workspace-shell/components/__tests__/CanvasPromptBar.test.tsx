@@ -75,6 +75,18 @@ describe("CanvasPromptBar", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the your-words slot when provided", () => {
+    render(
+      withSelectedSpan(
+        <CanvasPromptBar
+          surfaceProps={makeSurfaceProps()}
+          yourWordsSlot={<div data-testid="yw-slot">your words</div>}
+        />,
+      ),
+    );
+    expect(screen.getByTestId("yw-slot")).toBeInTheDocument();
+  });
+
   it("does NOT change wrapper class list across surface state changes (no reflow fork)", () => {
     // The composer must stay structurally identical even as the editor's
     // internal state evolves (prompt fills, suggestions arrive, autocomplete

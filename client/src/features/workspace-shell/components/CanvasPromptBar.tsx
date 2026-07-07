@@ -18,6 +18,8 @@ export interface CanvasPromptBarProps {
   tuneSlot?: React.ReactNode;
   /** Settings row below the editor (chip set + Make-it pill). */
   chromeSlot?: React.ReactNode;
+  /** "Your words" restore control — renders above the editor post-expansion. */
+  yourWordsSlot?: React.ReactNode;
 }
 
 /**
@@ -38,6 +40,7 @@ export function CanvasPromptBar({
   onContinueScene,
   tuneSlot = null,
   chromeSlot = null,
+  yourWordsSlot = null,
 }: CanvasPromptBarProps): React.ReactElement {
   useEffect(() => {
     if (!onContinueScene) return;
@@ -71,6 +74,7 @@ export function CanvasPromptBar({
       style={{ bottom: "var(--workspace-composer-bottom)" }}
     >
       {tuneSlot}
+      {yourWordsSlot}
       <PromptEditorSurface {...surfaceProps} variant="active" />
       {/* Idea Box progress/gate renders on the canvas stage (FrameStage),
           not in the composer — the frame owns the canvas. */}
