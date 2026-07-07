@@ -26,6 +26,18 @@ vi.mock(
   }),
 );
 
+// This regression exercises the shots-grid gallery popovers — the pre-space
+// layout, kept until the M6 deletion pass. Pin SPACE_LINEAGE off so the flip's
+// new default (the space) doesn't hide the grid this test is about.
+vi.mock("@/config/features.config", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/config/features.config")>();
+  return {
+    ...actual,
+    FEATURES: { ...actual.FEATURES, SPACE_LINEAGE: false },
+  };
+});
+
 import { CanvasWorkspace } from "../CanvasWorkspace";
 import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import type {

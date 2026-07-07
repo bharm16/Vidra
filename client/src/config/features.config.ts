@@ -59,9 +59,9 @@ const FLAG_DEFS = {
   } satisfies ClientFlagDef<boolean>,
   SPACE_LINEAGE: {
     envName: "VITE_FEATURE_SPACE_LINEAGE",
-    default: false,
+    default: true,
     description:
-      "Renders the workspace's takes as the space — the lineage network (ADR-0012/0013). Persisted lineage (survives reload), live-node camera, leaf-only removal, take-restore, and the node context menu have shipped; off by default pending the in-app visual pass and the remaining menu actions (Animate/Re-roll/Share/Download/New clip).",
+      "Renders the workspace's takes as the space — the lineage network (ADR-0012/0013). DEFAULT ON: the space replaces the shots grid for multi-generation sessions (persisted lineage that survives reload, live-node camera, take-restore, leaf-only removal, node context menu with Animate/Download/Reword/Remove). The first-frame (FrameStage) and empty states still use the prior layout, kept until the M6 deletion pass. Set VITE_FEATURE_SPACE_LINEAGE=false to fall back to the shots grid.",
   } satisfies ClientFlagDef<boolean>,
 } as const;
 
