@@ -158,7 +158,10 @@ describe("OptimizeTelemetryService", () => {
     const service = new OptimizeTelemetryService(client);
     const trace = service.startOptimizeTrace("req-1", "user-1");
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Sleep well above the assertion floor: setTimeout(10) + a >=10 assertion
+    // has zero margin, so timer coalescing/rounding under full-suite load can
+    // measure 9ms and flake. 25ms keeps the elapsed comfortably above 10.
+    await new Promise((resolve) => setTimeout(resolve, 25));
 
     trace.complete({
       outcome: "success",
