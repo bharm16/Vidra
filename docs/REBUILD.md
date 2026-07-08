@@ -214,6 +214,23 @@ ADR-0012).
     (LAST)** (reachable only via the `!SPACE_LINEAGE` / `!CANVAS_FIRST_LAYOUT` branches or the old GenerationControlsPanel).
     **Remaining rebuild:** M7 (instrumentation — NDJSON streaming per ADR-0011 D5, first-try-quality metric, soft-cap knobs) →
     M8 (site coherence + rail death + the public `/share/:uuid` clip page + Docs rewrite) → the old-layout deletion LAST.
+- **M8 site-coherence — routing (D9–D12) + rail-death (D7) DONE (2026-07-08):** D9–D11 route
+  redirects (`/home`,`/products`,`/assets` → `/`) + D12 `/account` credit-strip
+  (`0f2cb64c` `ea1d03d6`). **D7 tool-rail death** (`67b3290a`→`44ae910e`→`36232665`, TDD,
+  Chrome-verified in main): the left tool rail + its Characters/Styles/Sessions panels are
+  deleted; the account popover + a new **Library** link now live in `WorkspaceTopBar`
+  (signed-out visitor gets a sign-in link). Relocated `AccountPopover` to
+  `features/workspace-shell/components/` and made it self-contained (wraps its own
+  `TooltipProvider`, system `Button` trigger per ADR-0008); removed `<ToolSidebar>` from
+  `AppShell`'s sidebar variant; deleted 10 rail files + 12 rail-only tests; narrowed
+  `types.ts` (dropped `ToolPanelType` + rail prop types) and barrel `index.ts`; dropped the
+  now-dead `var(--tool-rail-width)` spacer column in `CanvasWorkspace` (a gutter for the
+  overlapping rail → became dead 52px space). **Kept** (deep-path survivors): `context/`
+  (SidebarData\* domains), `config/modelConfig`, the studio `GenerationControlsPanel`
+  subtree (old-layout, dies LAST). No surviving code imports the barrel `@components/ToolSidebar`
+  — all survivors use deep paths — so `tsc` across client+tests certified the deletion;
+  full unit suite (7569) green per commit. **Remaining M8:** D8 public `/share/:uuid` clip
+  page → `/docs` rewrite → 404/redirect audit; then the old-layout deletion (LAST) → M7.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
