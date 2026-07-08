@@ -537,8 +537,11 @@ export function CanvasWorkspace({
 
   const chromeSlot = useMemo(
     () => (
-      <div className="border-tool-rail-border border-t">
+      <div
+        className={cn(isPreWork ? "mt-1" : "border-tool-rail-border border-t")}
+      >
         <CanvasSettingsRow
+          variant={isPreWork ? "sheet" : "docked"}
           prompt={prompt}
           renderModelId={renderModelId}
           renderModelOptions={renderModelOptions}
@@ -573,8 +576,29 @@ export function CanvasWorkspace({
       onStartFrameUpload,
       onUploadSidebarImage,
       hasGenerations,
+      isPreWork,
     ],
   );
+
+  // Fill-only starter pills below the Anchor sheet — clicking one loads the
+  // composer (never submits), so editing stays explicit.
+  const starterPillsSlot = isPreWork ? (
+    <div
+      className="mt-[26px] flex flex-wrap justify-center gap-[11px]"
+      aria-label="Example prompts"
+    >
+      {STARTER_CHIPS.map((chip) => (
+        <button
+          key={chip}
+          type="button"
+          onClick={() => onComposerFill?.(chip)}
+          className="text-tool-text-dim hover:text-foreground rounded-full border border-white/[0.10] bg-white/[0.03] px-[15px] py-[9px] text-sm backdrop-blur-[6px] transition-all hover:-translate-y-px hover:border-[color:var(--accent)] hover:bg-white/[0.06]"
+        >
+          {chip}
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   // Continue Scene seeds the next render's start frame from the visible
   // poster of the source generation. Memoized so CanvasPromptBar's
@@ -645,9 +669,7 @@ export function CanvasWorkspace({
         <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
           <TileStateAnnouncer shots={shots} />
 
-          {isPreWork ? (
-            <EmptyHero />
-          ) : workspaceStage.failure === "writing" ? (
+          {isPreWork ? null : workspaceStage.failure === "writing" ? (
             // Expansion failed — surface it with a retry instead of a silently
             // dead composer (M4). Picture/motion/video failures keep their own
             // surfaces (FrameStage / tiles); the flag drives this one.
@@ -695,6 +717,8 @@ export function CanvasWorkspace({
             chromeSlot={chromeSlot}
             yourWordsSlot={yourWordsSlot}
             onContinueScene={handleContinueScene}
+            isPreWork={isPreWork}
+            footerSlot={starterPillsSlot}
           />
         </div>
       </div>
@@ -733,40 +757,3 @@ const STARTER_CHIPS = [
   "An abstract loop",
   "B-roll establishing",
 ] as const;
-
-function EmptyHero(): React.ReactElement {
-  // Chips fill the composer with a starter one-liner — fill-only, never
-  // submit, so editing stays explicit. Expansion turns the thin phrase into
-  // a full shot description, which is the product's whole pitch.
-  const { onComposerFill } = usePromptResultsActions();
-  // Sized to bottom out just above the raised pre-work composer: its bottom
-  // sits at 40vh, so its top edge is ~60vh-minus-composer-height from the
-  // viewport top. 160px covers the composer plus a breathing gap, keeping
-  // the question directly over its answer box without sliding behind it.
-  return (
-    <div className="mx-auto flex min-h-[calc(60vh-var(--workspace-topbar-h)-160px)] max-w-[640px] flex-col items-center justify-end gap-[18px] text-center">
-      <h1 className="text-[40px] font-semibold leading-[1.1] tracking-[-0.02em]">
-        What are you making?
-      </h1>
-      <p className="text-tool-text-subdued m-0 max-w-[520px] text-[15px] leading-[1.55]">
-        Describe a shot below. Each generation lands on this canvas — iterate,
-        refine, and build up a scene.
-      </p>
-      <div
-        className="mt-3 flex flex-wrap justify-center gap-2"
-        aria-label="Example prompts"
-      >
-        {STARTER_CHIPS.map((chip) => (
-          <button
-            key={chip}
-            type="button"
-            onClick={() => onComposerFill?.(chip)}
-            className="border-tool-rail-border bg-tool-surface-card text-tool-text-dim hover:border-tool-text-label hover:text-foreground rounded-full border px-3 py-1 text-xs transition-colors"
-          >
-            {chip}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}

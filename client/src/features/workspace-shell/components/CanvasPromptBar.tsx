@@ -13,6 +13,14 @@ export interface CanvasPromptBarProps {
   chromeSlot?: React.ReactNode;
   /** "Your words" restore control — renders above the editor post-expansion. */
   yourWordsSlot?: React.ReactNode;
+  /**
+   * Pre-work (empty state): the composer becomes the Anchor's centered glass
+   * prompt sheet — wider, softer glass, its own padding, a 26px editor — with
+   * the starter pills below it. The docked/working form is untouched.
+   */
+  isPreWork?: boolean;
+  /** Rendered below the sheet in pre-work — the fill-only starter pills. */
+  footerSlot?: React.ReactNode;
 }
 
 /**
@@ -32,6 +40,8 @@ export function CanvasPromptBar({
   onContinueScene,
   chromeSlot = null,
   yourWordsSlot = null,
+  isPreWork = false,
+  footerSlot = null,
 }: CanvasPromptBarProps): React.ReactElement {
   useEffect(() => {
     if (!onContinueScene) return;
@@ -42,6 +52,25 @@ export function CanvasPromptBar({
 
   const { selectedSpanId } = useSelectedSpan();
   const isExpanded = Boolean(selectedSpanId);
+
+  if (isPreWork) {
+    // The Anchor sheet: a centered glass card (the input, at 26px) with the
+    // fill-only starter pills below it. Its bottom is pinned at the raised
+    // --workspace-composer-bottom and it grows upward as words arrive.
+    return (
+      <div
+        className="absolute left-1/2 z-10 flex w-[672px] max-w-[calc(100%-48px)] -translate-x-1/2 flex-col items-center transition-[bottom] duration-[240ms]"
+        style={{ bottom: "var(--workspace-composer-bottom)" }}
+      >
+        <div className="w-full rounded-[20px] border border-white/[0.10] bg-white/[0.045] px-7 pb-4 pt-6 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.8),0_8px_26px_rgba(0,0,0,0.5)] backdrop-blur-[16px] backdrop-saturate-150">
+          {yourWordsSlot}
+          <PromptEditorSurface {...surfaceProps} variant="empty" />
+          {chromeSlot}
+        </div>
+        {footerSlot}
+      </div>
+    );
+  }
 
   return (
     <div

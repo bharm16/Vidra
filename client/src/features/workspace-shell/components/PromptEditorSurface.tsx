@@ -95,7 +95,9 @@ export function PromptEditorSurface({
     isBulkCopyLoading = false,
   } = useSelectedSpan();
   const isEmptyLayout = variant === "empty";
-  const placeholderText = "Describe your shot…";
+  const placeholderText = isEmptyLayout
+    ? "Describe your idea…"
+    : "Describe your shot…";
   const [, setIsFocused] = useState(false);
   const [isSuggestionTrayCollapsed, setIsSuggestionTrayCollapsed] =
     useState(false);
@@ -151,8 +153,25 @@ export function PromptEditorSurface({
 
   return (
     // Inset from the composer card edge so the editor text and the tray's
-    // scrolling chip row never clip against the border/rounded corner.
-    <div className="px-4 pb-2.5 pt-3">
+    // scrolling chip row never clip against the border/rounded corner. The
+    // Anchor sheet supplies its own padding on the card, so the editor sits
+    // flush.
+    <div
+      className={cn("px-4 pb-2.5 pt-3", isEmptyLayout && "p-0")}
+      style={
+        isEmptyLayout
+          ? // Feed the global [contenteditable] !important sizing the Anchor's
+            // values (26px / 1.45 / no inner padding) rather than out-specifying
+            // it — the rule reads these vars.
+            ({
+              "--ps-editor-font-size": "26px",
+              "--ps-editor-line-height": "1.45",
+              "--ps-editor-padding-y": "0px",
+              "--ps-editor-padding-x": "0px",
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
       <div className="relative">
         <PromptEditor
           ref={editorRef}
@@ -160,10 +179,10 @@ export function PromptEditorSurface({
             // ps-scrollbar-thin (not -hide): long expanded prompts overflow
             // this 180px window — the scrollbar is the visible affordance
             // that there is more prompt below the fold.
-            "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none [&:empty]:min-h-[56px]",
+            "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none",
             isEmptyLayout
-              ? "text-foreground caret-foreground min-h-[56px] text-[15px] leading-[1.7]"
-              : "text-tool-text-dim min-h-[56px] text-[15px] leading-[1.75]",
+              ? "text-foreground caret-foreground min-h-[104px] font-light [&:empty]:min-h-[104px]"
+              : "text-tool-text-dim min-h-[56px] text-[15px] leading-[1.75] [&:empty]:min-h-[56px]",
           )}
           placeholder={placeholderText}
           onTextSelection={onTextSelection}
