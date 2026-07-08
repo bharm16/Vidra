@@ -10,7 +10,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useBillingStatus } from "@/features/billing/hooks/useBillingStatus";
 import { BalancePill } from "@/components/navigation/AppShell/shared/BalancePill";
 import { ToolNavButton } from "./ToolNavButton";
-import { AccountPopover } from "./AccountPopover";
+import { AccountPopover } from "@features/workspace-shell/components/AccountPopover";
 import { toolNavItems } from "../config/toolNavConfig";
 import type { ToolRailProps } from "../types";
 

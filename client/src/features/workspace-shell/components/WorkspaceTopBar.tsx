@@ -1,8 +1,12 @@
 import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import { CaretDown, CaretRight } from "@promptstudio/system/components/ui";
+import { Button } from "@promptstudio/system/components/ui/button";
+import { useAuthUser } from "@hooks/useAuthUser";
 import { FEATURES } from "@/config/features.config";
 import { useWorkspaceProject } from "../hooks/useWorkspaceProject";
 import { useWorkspaceCredits } from "../hooks/useWorkspaceCredits";
+import { AccountPopover } from "./AccountPopover";
 
 /* Vidra wordmark — rotated-square mark + text. Inline SVG so the logo travels
    with the component without a separate asset request. */
@@ -41,6 +45,9 @@ function VidraMark(): React.ReactElement {
 export function WorkspaceTopBar(): React.ReactElement {
   const project = useWorkspaceProject();
   const credits = useWorkspaceCredits();
+  const user = useAuthUser();
+  const location = useLocation();
+  const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
 
   return (
     <header
@@ -78,8 +85,24 @@ export function WorkspaceTopBar(): React.ReactElement {
           <span className="text-tool-text-subdued ml-1">cr</span>
         </span>
       ) : null}
-      {/* The decorative avatar circle that lived here did nothing when
-        clicked — the rail's AccountPopover is the one account affordance. */}
+
+      {/* Right-side chrome cluster (ADR-0010 site-scope D7): the tool rail is
+        gone, so the account affordance lives here. Library + avatar are
+        signed-in affordances; a signed-out visitor gets a sign-in link. */}
+      <div className="flex items-center gap-1">
+        {user ? (
+          <>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/history">Library</Link>
+            </Button>
+            <AccountPopover user={user} />
+          </>
+        ) : (
+          <Button asChild variant="ghost" size="sm">
+            <Link to={`/signin?redirect=${returnTo}`}>Sign in</Link>
+          </Button>
+        )}
+      </div>
     </header>
   );
 }
