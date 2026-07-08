@@ -141,7 +141,7 @@ ADR-0012).
   existing generation/session flows. (8b) the full flag-on visual pass needs the owner: restart
   Vite with `VITE_FEATURE_SPACE_LINEAGE=true`, log in (persistence is remote-only), reach a
   session with gallery generations (or temporarily widen the `shots.length>0` render gate to
-  `hasExpandedPrompt`). Full detail + gotchas: `/private/tmp/vidra-rebuild-handoff-M4-onward.md`.
+  `hasExpandedPrompt`). Full detail + gotchas: `/private/tmp/vidra-rebuild-handoff-M6-onward.md`.
 - **M5 COMPLETE + SPACE IS DEFAULT (2026-07-07 pm, `a29ec84b`→`c7d29a12`):** deferred items
   finished and the space flipped on by default. **2b** (`a29ec84b` server + `7a06feaa` client):
   clip `sourceGenerationId` threaded end-to-end so a clip's `ancestorGenerationId` names its
