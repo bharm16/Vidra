@@ -24,8 +24,8 @@ afterEach(() => {
   }
 });
 
-const MOTION_IDEAS_JSON =
-  '{"ideas":["slow dolly-in","curtains sway","dust drifts"]}';
+const SUGGESTIONS_JSON =
+  '[{"text":"warmer lighting"},{"text":"tighter framing"},{"text":"softer focus"}]';
 const SPAN_JSON =
   '{"analysis_trace":"one subject","spans":[{"text":"a cat","role":"subject.identity","confidence":0.9}],"meta":{"version":"1","notes":""}}';
 
@@ -61,22 +61,22 @@ describe("RecordReplayAiService", () => {
   it("records execute() through the live path, then replays with zero network", async () => {
     const dir = makeTempDir();
     const liveCalls = vi.fn();
-    const groq = fakeClient({ text: MOTION_IDEAS_JSON, onComplete: liveCalls });
+    const qwen = fakeClient({ text: SUGGESTIONS_JSON, onComplete: liveCalls });
 
     const recordStore = new CassetteStore({ fixturesDir: dir });
-    recordStore.beginScenario("motion-ideas", "seam-roundtrip");
+    recordStore.beginScenario("suggestions", "seam-roundtrip");
     const recorder = new RecordReplayAiService({
-      clients: { ...NO_CLIENTS, groq },
+      clients: { ...NO_CLIENTS, qwen },
       mode: "record",
       store: recordStore,
     });
 
     const params = {
-      systemPrompt: "generate motion ideas",
+      systemPrompt: "generate suggestions",
       userMessage: "a cat on a windowsill",
     };
-    const recorded = await recorder.execute("i2v_motion_ideas", params);
-    expect(recorded.text).toBe(MOTION_IDEAS_JSON);
+    const recorded = await recorder.execute("enhance_suggestions", params);
+    expect(recorded.text).toBe(SUGGESTIONS_JSON);
     expect(liveCalls).toHaveBeenCalledTimes(1);
     recordStore.flush();
 
@@ -89,22 +89,22 @@ describe("RecordReplayAiService", () => {
       store: replayStore,
     });
 
-    const replayed = await replayer.execute("i2v_motion_ideas", params);
-    expect(replayed.text).toBe(MOTION_IDEAS_JSON);
+    const replayed = await replayer.execute("enhance_suggestions", params);
+    expect(replayed.text).toBe(SUGGESTIONS_JSON);
     expect(liveCalls).toHaveBeenCalledTimes(1);
   });
 
   it("throws a loud miss when the request diverges from the recording", async () => {
     const dir = makeTempDir();
     const recordStore = new CassetteStore({ fixturesDir: dir });
-    recordStore.beginScenario("motion-ideas", "seam-miss");
+    recordStore.beginScenario("suggestions", "seam-miss");
     const recorder = new RecordReplayAiService({
-      clients: { ...NO_CLIENTS, groq: fakeClient({ text: MOTION_IDEAS_JSON }) },
+      clients: { ...NO_CLIENTS, qwen: fakeClient({ text: SUGGESTIONS_JSON }) },
       mode: "record",
       store: recordStore,
     });
-    await recorder.execute("i2v_motion_ideas", {
-      systemPrompt: "generate motion ideas",
+    await recorder.execute("enhance_suggestions", {
+      systemPrompt: "generate suggestions",
       userMessage: "a cat on a windowsill",
     });
     recordStore.flush();
@@ -118,8 +118,8 @@ describe("RecordReplayAiService", () => {
     });
 
     await expect(
-      replayer.execute("i2v_motion_ideas", {
-        systemPrompt: "generate motion ideas",
+      replayer.execute("enhance_suggestions", {
+        systemPrompt: "generate suggestions",
         userMessage: "a DIFFERENT prompt",
       }),
     ).rejects.toThrow(ReplayCassetteMissError);
@@ -127,19 +127,19 @@ describe("RecordReplayAiService", () => {
 
   it("record mode fails loudly when the provider answer violates the contract", async () => {
     const recordStore = new CassetteStore({ fixturesDir: makeTempDir() });
-    recordStore.beginScenario("motion-ideas", "bad-provider-answer");
+    recordStore.beginScenario("suggestions", "bad-provider-answer");
     const recorder = new RecordReplayAiService({
       clients: {
         ...NO_CLIENTS,
-        groq: fakeClient({ text: '{"wrong":"shape"}' }),
+        qwen: fakeClient({ text: '{"wrong":"shape"}' }),
       },
       mode: "record",
       store: recordStore,
     });
 
     await expect(
-      recorder.execute("i2v_motion_ideas", {
-        systemPrompt: "generate motion ideas",
+      recorder.execute("enhance_suggestions", {
+        systemPrompt: "generate suggestions",
         userMessage: "a cat",
       }),
     ).rejects.toThrow(ReplayContractViolationError);

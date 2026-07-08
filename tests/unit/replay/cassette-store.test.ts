@@ -24,22 +24,23 @@ afterEach(() => {
   }
 });
 
-function motionIdeasEntry(
+function suggestionsEntry(
   overrides: Partial<{ text: string; key: string }> = {},
 ): ReplayCassetteEntry {
   return {
     seam: "ai-model",
     key: overrides.key ?? "ai-model:test-key-1",
-    contract: "motion-ideas-payload",
+    contract: "suggestions-payload",
     request: {
-      operation: "i2v_motion_ideas",
-      systemPrompt: "generate motion ideas",
+      operation: "enhance_suggestions",
+      systemPrompt: "generate suggestions",
       userMessage: "a cat on a windowsill",
       messages: null,
       stream: false,
     },
     response: {
-      text: overrides.text ?? '{"ideas":["slow dolly-in","curtains sway"]}',
+      text:
+        overrides.text ?? '[{"text":"slow dolly-in"},{"text":"curtains sway"}]',
       metadata: { provider: "groq" },
     },
   };
@@ -49,11 +50,11 @@ describe("CassetteStore", () => {
   it("round-trips: record → flush → load → lookup", () => {
     const dir = makeTempDir();
     const writer = new CassetteStore({ fixturesDir: dir });
-    writer.beginScenario("motion-ideas", "unit-roundtrip");
-    writer.record(motionIdeasEntry());
+    writer.beginScenario("suggestions", "unit-roundtrip");
+    writer.record(suggestionsEntry());
     const written = writer.flush();
     expect(written).toHaveLength(1);
-    expect(written[0]).toContain(join("motion-ideas", "unit-roundtrip.json"));
+    expect(written[0]).toContain(join("suggestions", "unit-roundtrip.json"));
 
     const reader = new CassetteStore({ fixturesDir: dir });
     const { files, entries } = reader.loadAll();
@@ -68,26 +69,26 @@ describe("CassetteStore", () => {
 
   it("rejects recording before a scenario is declared", () => {
     const store = new CassetteStore({ fixturesDir: makeTempDir() });
-    expect(() => store.record(motionIdeasEntry())).toThrow(ReplayError);
+    expect(() => store.record(suggestionsEntry())).toThrow(ReplayError);
   });
 
   it("rejects a capture whose payload violates the live contract", () => {
     const store = new CassetteStore({ fixturesDir: makeTempDir() });
-    store.beginScenario("motion-ideas", "bad-capture");
+    store.beginScenario("suggestions", "bad-capture");
     expect(() =>
-      store.record(motionIdeasEntry({ text: '{"nope":true}' })),
+      store.record(suggestionsEntry({ text: '{"nope":true}' })),
     ).toThrow(ReplayContractViolationError);
   });
 
   it("fails loudly when a fixture on disk was tampered into invalidity", () => {
     const dir = makeTempDir();
     const writer = new CassetteStore({ fixturesDir: dir });
-    writer.beginScenario("motion-ideas", "tampered");
-    writer.record(motionIdeasEntry());
+    writer.beginScenario("suggestions", "tampered");
+    writer.record(suggestionsEntry());
     const [path] = writer.flush();
 
     const cassette = JSON.parse(readFileSync(path as string, "utf8"));
-    cassette.entries[0].response.text = '{"ideas":[]}';
+    cassette.entries[0].response.text = "[]";
     writeFileSync(path as string, JSON.stringify(cassette), "utf8");
 
     const reader = new CassetteStore({ fixturesDir: dir });
@@ -97,8 +98,8 @@ describe("CassetteStore", () => {
   it("fails loudly on fixtures that are not JSON at all", () => {
     const dir = makeTempDir();
     const writer = new CassetteStore({ fixturesDir: dir });
-    writer.beginScenario("motion-ideas", "corrupt");
-    writer.record(motionIdeasEntry());
+    writer.beginScenario("suggestions", "corrupt");
+    writer.record(suggestionsEntry());
     const [path] = writer.flush();
     writeFileSync(path as string, "not json {", "utf8");
 

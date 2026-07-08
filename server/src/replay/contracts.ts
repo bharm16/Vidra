@@ -19,7 +19,6 @@ const OPERATION_CONTRACTS: Record<string, ReplayContractName> = {
   enhance_suggestions: "suggestions-payload",
   custom_suggestions: "suggestions-payload",
   optimize_standard: "optimize-text",
-  i2v_motion_ideas: "motion-ideas-payload",
 };
 
 export function contractForOperation(operation: string): ReplayContractName {

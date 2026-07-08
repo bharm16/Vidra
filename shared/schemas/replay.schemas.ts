@@ -22,7 +22,6 @@ export const REPLAY_SURFACES = [
   "suggestions",
   "optimize",
   "first-frame-preview",
-  "motion-ideas",
 ] as const;
 
 export const ReplaySurfaceSchema = z.enum(REPLAY_SURFACES);
@@ -38,7 +37,6 @@ export const REPLAY_CONTRACT_NAMES = [
   "span-labeling-payload",
   "suggestions-payload",
   "optimize-text",
-  "motion-ideas-payload",
   "image-preview-result",
   "llm-text",
 ] as const;
@@ -81,10 +79,6 @@ export const SuggestionsReplayPayloadSchema = z.union([
   z.object({ suggestions: z.array(SuggestionItemSchema).min(1) }).passthrough(),
 ]);
 
-export const MotionIdeasReplayPayloadSchema = z
-  .object({ ideas: z.array(z.string().min(1)).min(1) })
-  .passthrough();
-
 /** optimize_standard is creative free text — the contract is a non-empty body. */
 export const OptimizeTextReplayPayloadSchema = z.string().min(1);
 
@@ -126,10 +120,6 @@ export const REPLAY_CONTRACTS: Record<ReplayContractName, ReplayContract> = {
   "optimize-text": {
     encoding: "text",
     schema: OptimizeTextReplayPayloadSchema,
-  },
-  "motion-ideas-payload": {
-    encoding: "json",
-    schema: MotionIdeasReplayPayloadSchema,
   },
   "image-preview-result": {
     encoding: "object",

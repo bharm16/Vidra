@@ -13,26 +13,13 @@ export const GOLDEN_PROMPT =
 
 export const GOLDEN_SCENARIO = "golden-path";
 
-/**
- * Deterministic 64x64 PNG (dark scene with a warm band) generated once and
- * frozen here. The motion-ideas surface runs a vision observation over it;
- * the bytes must never change or the recorded observation key won't match.
- */
-export const GOLDEN_IMAGE_DATA_URL =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAW0lEQVR42u3XMQ0AIAwAwSphRklFoBNN6MADnRoueQM3foyZrQsAAAAAAAAAAAAAAAAAAAAAAICHzl71AAAAAAAAAAAAAP4EGBoAAAAAAAAAAAAAAAAAAACAnl1QoKW/nFLBqQAAAABJRU5ErkJggg==";
-
 interface HttpScenario {
-  surface:
-    | "label-spans"
-    | "suggestions"
-    | "optimize"
-    | "motion-ideas"
-    | "first-frame-preview";
+  surface: "label-spans" | "suggestions" | "optimize" | "first-frame-preview";
   path: string;
   body: Record<string, unknown>;
 }
 
-/** The four LLM surfaces, driven through their real HTTP routes. */
+/** The three LLM surfaces, driven through their real HTTP routes. */
 export const HTTP_SCENARIOS: HttpScenario[] = [
   {
     surface: "label-spans",
@@ -54,15 +41,6 @@ export const HTTP_SCENARIOS: HttpScenario[] = [
     path: "/api/optimize",
     body: { prompt: GOLDEN_PROMPT },
   },
-  {
-    surface: "motion-ideas",
-    path: "/api/i2v/motion-ideas",
-    body: {
-      image: GOLDEN_IMAGE_DATA_URL,
-      sourcePrompt: GOLDEN_PROMPT,
-      skipCache: true,
-    },
-  },
 ];
 
 /**
@@ -76,6 +54,5 @@ export const PREVIEW_SCENARIO = {
     prompt: GOLDEN_PROMPT,
     aspectRatio: "16:9",
     userId: "replay-golden",
-    disablePromptTransformation: true,
   },
 };

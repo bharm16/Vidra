@@ -152,17 +152,6 @@ describe("Replay mode (integration)", () => {
     );
   });
 
-  it("motion-ideas replays the recorded golden path", async () => {
-    const { path, body } = scenarioBySurface("motion-ideas");
-    const { status, json } = await post(path, body);
-    expect(status).toBe(200);
-    expect(json.success).toBe(true);
-    const ideas = json.ideas as string[];
-    expect(Array.isArray(ideas)).toBe(true);
-    expect(ideas.length).toBeGreaterThanOrEqual(3);
-    expect(ideas.length).toBeLessThanOrEqual(5);
-  });
-
   it("first-frame preview replays at the provider seam without Replicate", async () => {
     // The preview HTTP route additionally needs Firestore credits + GCS
     // persistence (documented in docs/architecture/replay-mode.md); the
