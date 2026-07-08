@@ -1,0 +1,117 @@
+/*
+ * The space — node-network visuals (design_handoff_vidra / Workspace.dc.html).
+ * Keyframes + helper classes for the lineage cards; the live take pulses with an
+ * accent glow, a forming take shimmers, edges curve along the spine. The global
+ * prefers-reduced-motion rule (design-system base.css) freezes the animations.
+ */
+
+/* Live take — a breathing accent glow (kept clips use the green variant). */
+@keyframes es-live {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--accent, #5b6cff) 16%, transparent),
+      0 0 34px color-mix(in srgb, var(--accent, #5b6cff) 26%, transparent),
+      0 22px 50px -18px rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--accent, #5b6cff) 22%, transparent),
+      0 0 46px color-mix(in srgb, var(--accent, #5b6cff) 36%, transparent),
+      0 22px 50px -18px rgba(0, 0, 0, 0.8);
+  }
+}
+
+@keyframes es-live-green {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(63, 191, 111, 0.16),
+      0 0 34px rgba(63, 191, 111, 0.26),
+      0 22px 50px -18px rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(63, 191, 111, 0.22),
+      0 0 46px rgba(63, 191, 111, 0.36),
+      0 22px 50px -18px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Forming shimmer — a sheen sweeping the placeholder while the take renders. */
+@keyframes es-shim {
+  0% {
+    background-position: -140% 0;
+  }
+  100% {
+    background-position: 240% 0;
+  }
+}
+
+@keyframes es-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes es-dot {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes es-settle {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(8px);
+  }
+  55% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+.ps-node-live {
+  animation: es-live 4.5s ease-in-out infinite;
+}
+
+.ps-node-forming {
+  background: linear-gradient(100deg, #14161c, #1c1f27 50%, #14161c);
+  background-size: 220% 100%;
+  animation:
+    es-settle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
+    es-shim 2.2s linear infinite,
+    es-live 4.5s ease-in-out infinite;
+}
+
+.ps-node-dot {
+  animation: es-dot 1.05s ease-in-out infinite;
+}
+
+.ps-live-badge-dot {
+  animation: es-pulse 1.4s ease-in-out infinite;
+}
+
+/* The mono caption under each take (PROMPT · IMAGE 1 · CLIP 1). */
+.ps-node-caption {
+  font-family: var(--ps-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

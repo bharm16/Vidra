@@ -1,21 +1,34 @@
 import React from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
+
 import { cn } from "@/utils/cn";
 import { computeLineageLayout } from "../lineage/computeLineageLayout";
 import { deriveEdgeKind } from "../lineage/deriveEdgeKind";
-import type { EdgeKind, SpaceNode } from "../lineage/types";
+import { edgePath } from "../lineage/edgePath";
+import type { EdgeKind, LineageNodeKind, SpaceNode } from "../lineage/types";
+import "./space.css";
 
-const COL_W = 264;
-const ROW_H = 176;
-const NODE_W = 208;
-const NODE_H = 128;
+const COL_W = 300;
+const ROW_H = 210;
+const SIZE: Record<LineageNodeKind, { w: number; h: number }> = {
+  words: { w: 216, h: 120 },
+  picture: { w: 248, h: 155 },
+  clip: { w: 248, h: 155 },
+};
 
 /** Edge stroke by derived kind — the drawn relationship reads the verb. */
 const EDGE_STROKE: Record<EdgeKind, string> = {
-  spine: "rgba(255,255,255,0.20)",
+  spine: "rgba(255,255,255,0.22)",
   roll: "#d3a44e", // a re-roll sibling (motion gold)
   reword: "#8b8baa", // a reworded words-version
   move: "#6b8a6b", // picture → clip
+};
+
+/** The mono caption under each take. */
+const CAPTION: Record<LineageNodeKind, string> = {
+  words: "prompt",
+  picture: "image",
+  clip: "clip",
 };
 
 export interface TheSpaceProps {
@@ -30,13 +43,6 @@ export interface TheSpaceProps {
    * with selection. Return null to give a node no menu.
    */
   renderNodeMenu?: (node: SpaceNode) => React.ReactNode;
-}
-
-function nodeLeft(column: number): number {
-  return column * COL_W;
-}
-function nodeTop(row: number): number {
-  return row * ROW_H;
 }
 
 /**
@@ -59,34 +65,73 @@ export function TheSpace({
   const width = columns * COL_W;
   const height = rows * ROW_H;
 
-  const centerX = (column: number): number => nodeLeft(column) + NODE_W / 2;
-  const centerY = (row: number): number => nodeTop(row) + NODE_H / 2;
+  const nodeLeft = (n: { column: number; kind: LineageNodeKind }): number =>
+    n.column * COL_W + (COL_W - SIZE[n.kind].w) / 2;
+  const nodeTop = (n: { row: number; kind: LineageNodeKind }): number =>
+    n.row * ROW_H + (ROW_H - SIZE[n.kind].h) / 2;
+
+  const liveLeftAnchor = (n: {
+    column: number;
+    row: number;
+    kind: LineageNodeKind;
+  }): { x: number; y: number } => ({
+    x: nodeLeft(n),
+    y: nodeTop(n) + SIZE[n.kind].h / 2,
+  });
+  const rightAnchor = (n: {
+    column: number;
+    row: number;
+    kind: LineageNodeKind;
+  }): { x: number; y: number } => ({
+    x: nodeLeft(n) + SIZE[n.kind].w,
+    y: nodeTop(n) + SIZE[n.kind].h / 2,
+  });
+
+  const liveNode = positioned.find((n) => n.id === liveNodeId) ?? null;
 
   return (
     <div
-      className="relative mx-auto my-8"
+      className="relative mx-auto my-10"
       style={{ width, height }}
       data-testid="the-space"
     >
+      {/* Ambient spotlight behind the live take. */}
+      {liveNode ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute rounded-full blur-[12px]"
+          style={{
+            left: nodeLeft(liveNode) + SIZE[liveNode.kind].w / 2 - 270,
+            top: nodeTop(liveNode) + SIZE[liveNode.kind].h / 2 - 215,
+            width: 540,
+            height: 430,
+            opacity: 0.7,
+            background:
+              "radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--accent) 32%, transparent), color-mix(in srgb, var(--accent) 7%, transparent) 46%, transparent 72%)",
+          }}
+        />
+      ) : null}
+
       <svg
         className="pointer-events-none absolute inset-0"
         width={width}
         height={height}
+        fill="none"
         aria-hidden="true"
       >
         {positioned.map((node) => {
           if (!node.ancestorId) return null;
           const ancestor = byId.get(node.ancestorId);
           if (!ancestor) return null;
+          const kind = deriveEdgeKind(node, positioned);
+          const isLiveEdge = node.id === liveNodeId;
           return (
-            <line
+            <path
               key={`edge-${node.id}`}
-              x1={centerX(ancestor.column)}
-              y1={centerY(ancestor.row)}
-              x2={centerX(node.column)}
-              y2={centerY(node.row)}
-              stroke={EDGE_STROKE[deriveEdgeKind(node, positioned)]}
-              strokeWidth={2}
+              d={edgePath(rightAnchor(ancestor), liveLeftAnchor(node))}
+              stroke={isLiveEdge ? "var(--accent)" : EDGE_STROKE[kind]}
+              strokeWidth={isLiveEdge ? 2.2 : 1.8}
+              strokeDasharray={kind === "reword" ? "6 4" : undefined}
             />
           );
         })}
@@ -95,36 +140,55 @@ export function TheSpace({
       {positioned.map((node) => {
         const isLive = node.id === liveNodeId;
         const menu = renderNodeMenu?.(node);
+        const { w, h } = SIZE[node.kind];
         return (
           <React.Fragment key={node.id}>
             <Button
-              type="button"
               variant="ghost"
+              type="button"
               data-testid={`space-node-${node.id}`}
               data-live={isLive ? "true" : "false"}
               onClick={() => onSelectNode?.(node.id)}
-              className={cn(
-                "absolute flex flex-col items-start gap-1 overflow-hidden rounded-xl border p-3 text-left",
-                "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
-                isLive &&
-                  "border-tool-text-label ring-tool-text-label/30 z-10 ring-2",
-              )}
-              style={{
-                left: nodeLeft(node.column),
-                top: nodeTop(node.row),
-                width: NODE_W,
-                height: NODE_H,
-                transform: isLive ? "scale(1.06)" : undefined,
-              }}
+              className="absolute flex h-auto flex-col items-stretch p-0 text-left hover:bg-transparent"
+              style={{ left: nodeLeft(node), top: nodeTop(node), width: w }}
             >
-              <SpaceNodeBody node={node} />
+              <div
+                className={cn(
+                  "relative overflow-hidden rounded-[14px] border transition-transform",
+                  node.status === "forming"
+                    ? "ps-node-forming border-[color:var(--accent)]"
+                    : isLive
+                      ? "ps-node-live border-[color:var(--accent)]"
+                      : "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
+                  isLive && node.status !== "forming" && "scale-[1.02]",
+                )}
+                style={{ height: h }}
+              >
+                <SpaceNodeBody node={node} />
+                {isLive ? (
+                  <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 text-[10px] font-medium text-white">
+                    <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />
+                    LIVE
+                  </span>
+                ) : null}
+              </div>
+              <span
+                className={cn(
+                  "ps-node-caption mt-2 text-center",
+                  isLive
+                    ? "text-[color:color-mix(in_srgb,var(--accent)_55%,#fff)]"
+                    : "text-tool-text-label",
+                )}
+              >
+                {CAPTION[node.kind]}
+              </span>
             </Button>
             {menu ? (
               <div
                 className="absolute z-20"
                 style={{
-                  left: nodeLeft(node.column) + NODE_W - 30,
-                  top: nodeTop(node.row) + 6,
+                  left: nodeLeft(node) + w - 30,
+                  top: nodeTop(node) + 6,
                 }}
               >
                 {menu}
@@ -138,41 +202,40 @@ export function TheSpace({
 }
 
 function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
-  if (node.kind === "words") {
-    return (
-      <>
-        <span className="text-tool-text-subdued rounded bg-white/5 px-1.5 py-0.5 font-mono text-[9px]">
-          prompt
-        </span>
-        <span className="text-foreground line-clamp-3 text-[12px] leading-snug">
-          {node.label ?? "—"}
-        </span>
-      </>
-    );
-  }
   if (node.status === "forming") {
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-white/60" />
+      <div className="flex h-full w-full items-center justify-center gap-1.5">
+        <span className="ps-node-dot h-[7px] w-[7px] rounded-full bg-[color:color-mix(in_srgb,var(--accent)_75%,#fff)]" />
+        <span className="ps-node-dot h-[7px] w-[7px] rounded-full bg-[color:color-mix(in_srgb,var(--accent)_75%,#fff)] [animation-delay:0.16s]" />
+        <span className="ps-node-dot h-[7px] w-[7px] rounded-full bg-[color:color-mix(in_srgb,var(--accent)_75%,#fff)] [animation-delay:0.32s]" />
+      </div>
+    );
+  }
+  if (node.kind === "words") {
+    return (
+      <div className="flex h-full w-full items-center px-4 py-3">
+        <span className="text-foreground line-clamp-4 text-[13px] leading-snug">
+          {node.label ?? "—"}
+        </span>
       </div>
     );
   }
   return (
-    <div className="relative h-full w-full">
+    <>
       {node.mediaUrl ? (
         <img
           src={node.mediaUrl}
           alt=""
-          className="absolute inset-0 h-full w-full rounded-md object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
-        <div className="bg-tool-surface-deep absolute inset-0 rounded-md" />
+        <div className="bg-tool-surface-deep absolute inset-0" />
       )}
       {node.status === "kept" ? (
-        <span className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] text-white">
+        <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
           kept
         </span>
       ) : null}
-    </div>
+    </>
   );
 }
