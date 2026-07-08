@@ -144,7 +144,11 @@ import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/
 const EXPANDED_PROMPT =
   "A golden retriever sprinting across a dew-covered meadow at sunrise, low tracking shot, shallow depth of field.";
 
-const HERO_QUESTION = "What are you making?";
+// The pre-work empty state's marker: a fill-only starter pill. It renders on
+// the same isPreWork gate the (now-removed) "What are you making?" headline
+// used, so it discriminates empty-state ownership from the FrameStage the same
+// way (ADR-0014 rebuild).
+const STARTER_PILL = "A product hero shot";
 
 const buildProps = (
   prompt: string,
@@ -192,7 +196,7 @@ describe("regression: restored sessions engage the FrameStage", () => {
       withSelectedSpan(<CanvasWorkspace {...buildProps(EXPANDED_PROMPT)} />),
     );
 
-    expect(screen.queryByText(HERO_QUESTION)).toBeNull();
+    expect(screen.queryByRole("button", { name: STARTER_PILL })).toBeNull();
     expect(screen.getByTestId("frame-stage")).toBeInTheDocument();
     expect(screen.getByTestId("frame-stage-notice")).toBeInTheDocument();
     expect(screen.getByText("No frame yet")).toBeInTheDocument();
@@ -217,7 +221,7 @@ describe("regression: restored sessions engage the FrameStage", () => {
     const { rerender } = render(
       withSelectedSpan(<CanvasWorkspace {...buildProps(EXPANDED_PROMPT)} />),
     );
-    expect(screen.queryByText(HERO_QUESTION)).toBeNull();
+    expect(screen.queryByRole("button", { name: STARTER_PILL })).toBeNull();
     expect(screen.getByTestId("frame-stage")).toBeInTheDocument();
 
     // Open the suggestion tray (a span is selected). Canvas ownership must
@@ -228,7 +232,7 @@ describe("regression: restored sessions engage the FrameStage", () => {
         selectionLabel: "golden retriever",
       }),
     );
-    expect(screen.queryByText(HERO_QUESTION)).toBeNull();
+    expect(screen.queryByRole("button", { name: STARTER_PILL })).toBeNull();
     expect(screen.getByTestId("frame-stage")).toBeInTheDocument();
   });
 
@@ -238,14 +242,18 @@ describe("regression: restored sessions engage the FrameStage", () => {
     const { rerender } = render(
       withSelectedSpan(<CanvasWorkspace {...buildProps("")} />),
     );
-    expect(screen.getByText(HERO_QUESTION)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: STARTER_PILL }),
+    ).toBeInTheDocument();
 
     rerender(
       withSelectedSpan(<CanvasWorkspace {...buildProps("")} />, {
         selectedSpanId: "span-1",
       }),
     );
-    expect(screen.getByText(HERO_QUESTION)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: STARTER_PILL }),
+    ).toBeInTheDocument();
   });
 
   it("the hero still owns the canvas for truly-empty sessions", () => {
@@ -253,7 +261,9 @@ describe("regression: restored sessions engage the FrameStage", () => {
 
     render(withSelectedSpan(<CanvasWorkspace {...buildProps("")} />));
 
-    expect(screen.getByText(HERO_QUESTION)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: STARTER_PILL }),
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("frame-stage")).toBeNull();
   });
 });

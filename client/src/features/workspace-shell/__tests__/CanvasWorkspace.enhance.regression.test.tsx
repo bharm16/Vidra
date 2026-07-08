@@ -154,11 +154,12 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
 });
 
 describe("regression: canvas empty-session shell wiring", () => {
-  it("keeps a single prompt textbox and a model picker chip in the empty-session shell", () => {
+  it("keeps a single prompt textbox and the minimal sheet controls in the empty-session shell", () => {
     // Empty session = no prompt, no shots. Under the unified path the
-    // floating composer always mounts; the prompt textbox lives there.
-    // The model picker is now a chip in the composer's chip row (it used
-    // to be a floating corner selector — moved to match the screenshot).
+    // floating composer always mounts; the prompt textbox lives there. The
+    // pre-work sheet shows only the two inline selectors (16:9 · duration) +
+    // a circular submit — the model picker / frame chrome belongs to the
+    // working composer (ADR-0014 + rulings), so it is deliberately absent.
     const props = buildProps();
     render(
       withSelectedSpan(
@@ -175,19 +176,16 @@ describe("regression: canvas empty-session shell wiring", () => {
     expect(
       screen.getAllByRole("textbox", { name: "Shot description" }),
     ).toHaveLength(1);
-    expect(
-      screen.getAllByRole("button", { name: /Video model/i }),
-    ).toHaveLength(1);
+    // Minimal sheet: the settings row mounts, the model picker does not.
+    expect(screen.getByTestId("canvas-settings-row")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Video model/i })).toBeNull();
   });
 
   it("does not lock the user into empty state when prompt content exists, even without a prompt version id", () => {
     // The legacy implementation could erroneously remain in empty-state
     // chrome when promptVersionId was missing despite a hydrated prompt.
     // The invariant is that the editor stays present and interactive; a
-    // missing version id must not wedge the shell. (The hero headline now
-    // deliberately remains visible through focus/typing until work starts —
-    // the pre-work stage direction — so its absence is no longer the proxy
-    // for "not locked".)
+    // missing version id must not wedge the shell.
     const props = buildProps();
     render(
       withSelectedSpan(
@@ -205,8 +203,8 @@ describe("regression: canvas empty-session shell wiring", () => {
     expect(
       screen.getByRole("textbox", { name: "Shot description" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Video model/i }),
-    ).toBeInTheDocument();
+    // The composer chrome stays wired (the settings row mounts with the
+    // editor); the shell is not wedged into a dead empty state.
+    expect(screen.getByTestId("canvas-settings-row")).toBeInTheDocument();
   });
 });
