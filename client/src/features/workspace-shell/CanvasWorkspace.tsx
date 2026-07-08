@@ -41,6 +41,7 @@ import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
 import { groupShots } from "./utils/groupShots";
 import { useFeaturedTile } from "./hooks/useFeaturedTile";
 import { useWorkspaceKeyboardShortcuts } from "./hooks/useWorkspaceKeyboardShortcuts";
+import { useAnchorDraft } from "./hooks/useAnchorDraft";
 import { ShotRow } from "./components/ShotRow";
 import { ShotDivider } from "./components/ShotDivider";
 import { TileStateAnnouncer } from "./components/TileStateAnnouncer";
@@ -377,6 +378,10 @@ export function CanvasWorkspace({
     }),
   );
   const isPreWork = workspaceStage.stage === "empty";
+
+  // Persist the front-door prompt across reloads (the session autosave only
+  // covers post-submit words); restore replays through the editor's input path.
+  useAnchorDraft({ isPreWork, prompt, editorRef });
 
   // "Your words" — once the one-liner has grown into the full description, offer
   // an explicit way back to the immutable original (SessionPrompt.input, D1).
