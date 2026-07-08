@@ -1,4 +1,3 @@
-export { ToolSidebar } from "./ToolSidebar";
 export {
   SidebarDataContextProvider,
   useSidebarData,
@@ -9,7 +8,6 @@ export {
 } from "./context";
 export type { SidebarDataContextValue } from "./context";
 export type {
-  ToolSidebarProps,
   ToolSidebarSessionsDomain,
   ToolSidebarPromptInteractionDomain,
   ToolSidebarGenerationDomain,
@@ -18,10 +16,6 @@ export type {
   OptionalToolSidebarPromptInteractionDomain,
   OptionalToolSidebarGenerationDomain,
   OptionalToolSidebarAssetsDomain,
-  ToolPanelType,
-  ToolRailProps,
-  ToolPanelProps,
-  ToolNavItem,
   DraftModel,
   KeyframeTile,
   VideoTier,

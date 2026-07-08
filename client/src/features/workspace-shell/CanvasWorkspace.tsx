@@ -587,15 +587,9 @@ export function CanvasWorkspace({
       }
     >
       <WorkspaceTopBar />
-      <div className="grid min-h-0 grid-cols-[var(--tool-rail-width)_1fr]">
-        {/*
-          ToolSidebar already mounts elsewhere in the app shell. The
-          workspace shell does NOT render the rail itself. Leave this column
-          empty for now; the rail keeps mounting at its existing parent and
-          visually overlaps the empty column. The rail mount can be moved
-          into this column in a future polish pass if desired.
-        */}
-        <div aria-hidden="true" />
+      {/* The tool rail was removed (ADR-0010 site-scope D7); the workspace
+        content now spans the full width below the top bar. */}
+      <div className="grid min-h-0 grid-cols-1">
         <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
           <TileStateAnnouncer shots={shots} />
 

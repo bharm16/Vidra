@@ -1,17 +1,11 @@
-import type { ReactNode } from "react";
-import type { User, PromptHistoryEntry } from "@features/prompt-optimizer";
+import type { PromptHistoryEntry } from "@features/prompt-optimizer";
 import type { Asset, AssetType } from "@shared/types/asset";
-import type { AppIcon } from "@/types";
 import type {
   DraftModel,
   GenerationOverrides,
-  KeyframeTile,
   SidebarUploadedImage,
-  StartImage,
-  VideoTier,
 } from "@features/generation-controls";
 
-export type ToolPanelType = "sessions" | "studio" | "characters" | "styles";
 export type {
   DraftModel,
   GenerationOverrides,
@@ -68,26 +62,3 @@ export type OptionalToolSidebarPromptInteractionDomain =
 export type OptionalToolSidebarGenerationDomain =
   ToolSidebarGenerationDomain | null;
 export type OptionalToolSidebarAssetsDomain = ToolSidebarAssetsDomain | null;
-
-export interface ToolSidebarProps {
-  user: User | null;
-  forceDefaultPanel?: boolean | undefined;
-}
-
-export interface ToolRailProps {
-  activePanel: ToolPanelType;
-  onPanelChange: (panel: ToolPanelType) => void;
-  user: User | null;
-}
-
-export interface ToolPanelProps {
-  activePanel: ToolPanelType;
-  children: ReactNode;
-}
-
-export interface ToolNavItem {
-  id: ToolPanelType;
-  icon: AppIcon;
-  label: string;
-  variant: "header" | "default";
-}
