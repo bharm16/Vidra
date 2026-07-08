@@ -135,6 +135,7 @@
     "architecture:map": "tsx --tsconfig server/tsconfig.json scripts/generate-architecture-map.ts",
     "architecture:map:write": "tsx --tsconfig server/tsconfig.json scripts/generate-architecture-map.ts --write",
     "architecture:map:check": "tsx --tsconfig server/tsconfig.json scripts/generate-architecture-map.ts --check",
+    "obsidian:vault": "tsx scripts/generate-obsidian-vault.ts",
     "test:optimize-pipeline": "tsx --tsconfig server/tsconfig.json scripts/test-prompt-optimizer-pipeline.ts",
     "test:flash": "node scripts/test-gemini-flash-spans.js",
     "highlight-stats": "tsx scripts/get-highlight-stats.ts",

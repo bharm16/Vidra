@@ -179,7 +179,7 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 | `/api/capabilities`                                | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
 | `/api/continuity/*`                                | `continuity.routes.ts`                    | `features/continuity/api/`                          |
 | `/api/model-intelligence/*`                        | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
-| `POST /api/frame-verification`                     | `frame-verification.routes.ts`           | `features/frame-verification/api/`                  |
+| `POST /api/frame-verification`                     | `frame-verification.routes.ts`            | `features/frame-verification/api/`                  |
 | `/api/sessions/*`                                  | `sessions.routes.ts`                      | (no dedicated client — uses ApiClient directly)     |
 | `/api/assets/*`                                    | `asset.routes.ts`                         | `features/assets/`                                  |
 | `/api/reference-images/*`                          | `reference-images.routes.ts`              | `features/reference-images/`                        |
@@ -209,6 +209,7 @@ npm run eval:golden-set:bless # Bless a fresh baseline for the active provider
 npm run architecture:map        # Print architecture map JSON to stdout
 npm run architecture:map:write  # Regenerate docs/architecture/architecture-map.json
 npm run architecture:map:check  # CI drift gate — fails when JSON is stale
+npm run obsidian:vault          # Rebuild docs/graph/ Obsidian notes from the architecture map (docs/ is the vault root)
 ```
 
 ## Span Labeling Evaluation

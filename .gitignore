@@ -122,3 +122,9 @@ docs/architecture/architecture-map.html
 
 # Ralph loop local agent state
 .claude/ralph/
+
+# Obsidian vault (docs/ opened as a vault). Both are regenerable:
+# `npm run obsidian:vault` rebuilds docs/graph/ from the architecture map
+# and seeds docs/.obsidian/ graph settings on first run.
+docs/.obsidian/
+docs/graph/
