@@ -1,15 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  Sparkles,
-  Layers,
-  Zap,
-  Eye,
-  Video,
-  Palette,
-  Brain,
-  SlidersHorizontal,
-} from "@promptstudio/system/components/ui";
+import { Layers, Eye, Share } from "@promptstudio/system/components/ui";
 import { AUTH_COLORS } from "./auth/auth-styles";
 
 const CARD: React.CSSProperties = {
@@ -23,21 +14,6 @@ const INSET: React.CSSProperties = {
   border: `1px solid ${AUTH_COLORS.inputBorder}`,
   borderRadius: "8px",
 };
-
-function Kbd({ children }: { children: React.ReactNode }): React.ReactElement {
-  return (
-    <kbd
-      className="rounded px-1.5 py-0.5 font-mono text-[11px]"
-      style={{
-        background: AUTH_COLORS.inputBg,
-        border: `1px solid ${AUTH_COLORS.inputBorder}`,
-        color: AUTH_COLORS.textSecondary,
-      }}
-    >
-      {children}
-    </kbd>
-  );
-}
 
 interface FeatureRowProps {
   icon: React.ReactNode;
@@ -71,6 +47,29 @@ function FeatureRow({
   );
 }
 
+/** The four beats of the loop (ADR-0010 state machine: S0-S6). */
+const LOOP_STEPS: { label: string; desc: string }[] = [
+  {
+    label: "Type",
+    desc: "— describe your shot in plain words. Vidra expands it into a fuller description you can edit. What you see is exactly what gets made — no hidden rewrites.",
+  },
+  {
+    label: "Picture",
+    desc: "— Vidra paints a still from your words. This is the one place to check before spending on motion. Happy? Make it move. Not quite? Edit a phrase and remake.",
+  },
+  {
+    label: "Motion",
+    desc: "— turn the picture into a short, looping clip. Re-roll as many times as you like; draft motion is free and watermarked.",
+  },
+  {
+    label: "Keep",
+    desc: "— when a clip is right, keep it in HD without the watermark. Download it, or share a link anyone can watch.",
+  },
+];
+
+/** The space's spine (ADR-0012): words branch into pictures, pictures into clips. */
+const SPACE_SPINE = ["Words", "Picture", "Clip"];
+
 export function DocsPage(): React.ReactElement {
   return (
     <div
@@ -85,7 +84,7 @@ export function DocsPage(): React.ReactElement {
           borderBottom: `1px solid ${AUTH_COLORS.divider}`,
         }}
       >
-        <div className="mx-auto max-w-3xl flex items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
           <div className="min-w-0">
             <p
               className="text-[10px] font-semibold tracking-[0.2em]"
@@ -93,11 +92,11 @@ export function DocsPage(): React.ReactElement {
             >
               DOCS
             </p>
-            <h1 className="text-[15px] font-semibold text-white tracking-tight">
+            <h1 className="text-[15px] font-semibold tracking-tight text-white">
               How Vidra works
             </h1>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-3">
             <Link
               to="/contact"
               className="inline-flex h-7 items-center rounded-lg px-3 text-[12px] font-semibold transition"
@@ -111,7 +110,7 @@ export function DocsPage(): React.ReactElement {
             </Link>
             <Link
               to="/"
-              className="text-[12px] font-medium hover:text-white transition-colors"
+              className="text-[12px] font-medium transition-colors hover:text-white"
               style={{ color: AUTH_COLORS.textDim }}
             >
               Back to app
@@ -121,80 +120,33 @@ export function DocsPage(): React.ReactElement {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 pb-16">
+      <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
         <p
-          className="pt-5 pb-1 text-[13px] leading-relaxed"
+          className="pb-1 pt-5 text-[13px] leading-relaxed"
           style={{ color: AUTH_COLORS.textSecondary }}
         >
-          Interactive editing canvas for AI video prompts. Write once, optimize
-          for any model, preview before you render.
+          Vidra turns a sentence into a short video. Type what you&apos;re
+          making, get a picture, make it move, and keep the clip you love — all
+          on one page.
         </p>
 
-        {/* Getting started */}
+        {/* The loop */}
         <section className="mt-5">
           <div className="p-4" style={CARD}>
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <h2 className="text-[13px] font-semibold text-white">
-                Getting started
-              </h2>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-[13px] font-semibold text-white">The loop</h2>
               <span
                 className="text-[10px] font-semibold tracking-[0.2em]"
                 style={{ color: AUTH_COLORS.textLabel }}
               >
-                QUICKSTART
+                TYPE · PICTURE · MOTION · KEEP
               </span>
             </div>
-            <p
-              className="text-[12px] leading-relaxed"
-              style={{ color: AUTH_COLORS.textSecondary }}
-            >
-              Open the{" "}
-              <Link
-                to="/"
-                className="font-medium hover:underline"
-                style={{ color: AUTH_COLORS.accent }}
-              >
-                workspace
-              </Link>
-              . Type or paste a prompt, choose a target model, and hit{" "}
-              <Kbd>Optimize</Kbd>. Vidra rewrites your prompt for the selected
-              model in seconds.
-            </p>
-          </div>
-        </section>
-
-        {/* Workflow steps */}
-        <section className="mt-4">
-          <div className="p-4" style={CARD}>
-            <h2 className="text-[13px] font-semibold text-white mb-3">
-              Typical workflow
-            </h2>
             <div
               className="overflow-hidden rounded-lg"
               style={{ border: `1px solid ${AUTH_COLORS.inputBorder}` }}
             >
-              {[
-                {
-                  label: "Write or paste",
-                  desc: "a rough prompt describing your video idea.",
-                },
-                {
-                  label: "Optimize",
-                  desc: "— Vidra rewrites and enriches the prompt. Review the color-coded spans.",
-                },
-                {
-                  label: "Refine",
-                  desc: "— click any span for alternative suggestions. Swap, edit, or lock phrases.",
-                },
-                {
-                  label: "Preview",
-                  desc: "— generate a quick image to validate composition.",
-                },
-                {
-                  label: "Generate",
-                  desc: "— render the final video. Results save to session history.",
-                },
-              ].map((step, i) => (
+              {LOOP_STEPS.map((step, i) => (
                 <div
                   key={step.label}
                   className="flex items-start gap-3 px-3.5 py-2.5"
@@ -227,12 +179,51 @@ export function DocsPage(): React.ReactElement {
           </div>
         </section>
 
-        {/* Core features — stacked rows in a single card */}
+        {/* What the space shows */}
+        <section className="mt-4">
+          <div className="p-4" style={CARD}>
+            <h2 className="mb-1 text-[13px] font-semibold text-white">
+              What the space shows
+            </h2>
+            <p
+              className="text-[12px] leading-relaxed"
+              style={{ color: AUTH_COLORS.textSecondary }}
+            >
+              Every take lands in the space — a living map of your work. Your
+              words branch into pictures, pictures into clips, connected by what
+              you did to get there: roll a new take, reword the prompt, or move
+              the camera. Click any node to revisit it or branch a new
+              direction.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              {SPACE_SPINE.map((node, i) => (
+                <React.Fragment key={node}>
+                  {i > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      style={{ color: AUTH_COLORS.textLabel }}
+                    >
+                      →
+                    </span>
+                  ) : null}
+                  <span
+                    className="inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium"
+                    style={{ ...INSET, color: AUTH_COLORS.text }}
+                  >
+                    {node}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Good to know */}
         <section className="mt-4">
           <div className="overflow-hidden" style={CARD}>
-            <div className="px-4 pt-3.5 pb-2">
+            <div className="px-4 pb-2 pt-3.5">
               <h2 className="text-[13px] font-semibold text-white">
-                Core features
+                Good to know
               </h2>
             </div>
             <div
@@ -241,36 +232,19 @@ export function DocsPage(): React.ReactElement {
             >
               <FeatureRow
                 icon={
-                  <Sparkles
-                    className="h-3.5 w-3.5"
-                    style={{ color: AUTH_COLORS.textDim }}
-                    aria-hidden="true"
-                  />
-                }
-                title="Prompt Optimization"
-              >
-                <p>
-                  Two-stage pipeline: a fast model drafts in ~300ms, then a
-                  stronger model refines in the background. Modes:{" "}
-                  <strong className="text-white">enhance</strong>,{" "}
-                  <strong className="text-white">expand</strong>,{" "}
-                  <strong className="text-white">brainstorm</strong>.
-                </p>
-              </FeatureRow>
-              <FeatureRow
-                icon={
                   <Layers
                     className="h-3.5 w-3.5"
                     style={{ color: AUTH_COLORS.textDim }}
                     aria-hidden="true"
                   />
                 }
-                title="Span Labeling"
+                title="Click a phrase"
               >
                 <p>
-                  Prompts are analyzed into semantic categories (subject,
-                  camera, lighting, etc.) and color-highlighted. Click any span
-                  for AI-generated alternative suggestions.
+                  Any phrase in your description is clickable for alternative
+                  wordings. Camera phrases offer named moves like{" "}
+                  <strong className="text-white">dolly in</strong> or{" "}
+                  <strong className="text-white">crane up</strong>.
                 </p>
               </FeatureRow>
               <FeatureRow
@@ -281,111 +255,29 @@ export function DocsPage(): React.ReactElement {
                     aria-hidden="true"
                   />
                 }
-                title="Preview Generation"
+                title="One visible text"
               >
                 <p>
-                  Quick image preview (Flux Schnell) before committing to a full
-                  video render. Then render with Sora, Veo, Kling, Luma, Runway,
-                  and more.
+                  There is only ever one prompt: the text you can see is the
+                  only thing the models receive. Editing it is the way to steer
+                  the picture and the motion.
                 </p>
               </FeatureRow>
               <FeatureRow
                 icon={
-                  <Brain
+                  <Share
                     className="h-3.5 w-3.5"
                     style={{ color: AUTH_COLORS.textDim }}
                     aria-hidden="true"
                   />
                 }
-                title="Model Intelligence"
+                title="Share a clip"
               >
                 <p>
-                  Analyzes your prompt and recommends the best video model based
-                  on content, style, and complexity. Includes confidence score
-                  and explanation.
-                </p>
-              </FeatureRow>
-            </div>
-          </div>
-        </section>
-
-        {/* Advanced features */}
-        <section className="mt-4">
-          <div className="overflow-hidden" style={CARD}>
-            <div className="px-4 pt-3.5 pb-2">
-              <h2 className="text-[13px] font-semibold text-white">
-                Advanced features
-              </h2>
-            </div>
-            <div
-              className="divide-y"
-              style={{ borderColor: AUTH_COLORS.cardBorder }}
-            >
-              <FeatureRow
-                icon={
-                  <Video
-                    className="h-3.5 w-3.5"
-                    style={{ color: AUTH_COLORS.textDim }}
-                    aria-hidden="true"
-                  />
-                }
-                title="Continuity (Multi-Shot)"
-              >
-                <p>
-                  Multi-shot sequences with visual consistency. Strategies:{" "}
-                  <strong className="text-white">frame-bridge</strong> (last
-                  frame as anchor),{" "}
-                  <strong className="text-white">style-match</strong> (transfer
-                  color/lighting),{" "}
-                  <strong className="text-white">native</strong> (model
-                  built-in).
-                </p>
-              </FeatureRow>
-              <FeatureRow
-                icon={
-                  <Palette
-                    className="h-3.5 w-3.5"
-                    style={{ color: AUTH_COLORS.textDim }}
-                    aria-hidden="true"
-                  />
-                }
-                title="Video Concept Wizard"
-              >
-                <p>
-                  Guided flow: subject, action, location, camera angle,
-                  lighting, style. Curated suggestions at each step for a
-                  coherent, well-structured prompt.
-                </p>
-              </FeatureRow>
-              <FeatureRow
-                icon={
-                  <Zap
-                    className="h-3.5 w-3.5"
-                    style={{ color: AUTH_COLORS.textDim }}
-                    aria-hidden="true"
-                  />
-                }
-                title="Model Compilation"
-              >
-                <p>
-                  Compiles your prompt for a specific target model — adjusting
-                  terminology, structure, and emphasis to match model
-                  conventions.
-                </p>
-              </FeatureRow>
-              <FeatureRow
-                icon={
-                  <SlidersHorizontal
-                    className="h-3.5 w-3.5"
-                    style={{ color: AUTH_COLORS.textDim }}
-                    aria-hidden="true"
-                  />
-                }
-                title="Keyboard Shortcuts"
-              >
-                <p>
-                  <Kbd>Cmd+Enter</Kbd> optimize · <Kbd>Cmd+Shift+P</Kbd> preview
-                  · <Kbd>Escape</Kbd> dismiss panels
+                  From a clip&apos;s menu,{" "}
+                  <strong className="text-white">Share</strong> copies a public
+                  link. Whoever opens it sees just the clip and a way to make
+                  their own.
                 </p>
               </FeatureRow>
             </div>
@@ -395,7 +287,7 @@ export function DocsPage(): React.ReactElement {
         {/* Help */}
         <section className="mt-4">
           <div
-            className="p-4 flex items-center justify-between gap-3"
+            className="flex items-center justify-between gap-3 p-4"
             style={CARD}
           >
             <div className="min-w-0">
@@ -409,7 +301,7 @@ export function DocsPage(): React.ReactElement {
             </div>
             <Link
               to="/contact"
-              className="inline-flex h-8 items-center rounded-lg px-3.5 text-[12px] font-semibold transition shrink-0"
+              className="inline-flex h-8 shrink-0 items-center rounded-lg px-3.5 text-[12px] font-semibold transition"
               style={{ background: AUTH_COLORS.accent, color: AUTH_COLORS.bg }}
             >
               Contact support
@@ -430,13 +322,6 @@ export function DocsPage(): React.ReactElement {
               Go to app
             </Link>
             <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <Link
-                to="/pricing"
-                className="hover:text-white"
-                style={{ color: AUTH_COLORS.textDim }}
-              >
-                Pricing
-              </Link>
               <Link
                 to="/privacy-policy"
                 className="hover:text-white"
