@@ -85,14 +85,8 @@
   }
 
   body {
-    background-color: #131316;
-    font-family:
-      "Geist",
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      "Segoe UI",
-      sans-serif;
+    background-color: var(--ps-bg);
+    font-family: var(--ps-font-sans);
   }
 
   :root {
@@ -106,7 +100,7 @@
   }
 
   #root {
-    background-color: #131316;
+    background-color: var(--ps-bg);
   }
 }
 

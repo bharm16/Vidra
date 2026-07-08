@@ -4,15 +4,17 @@
        Typography (dark-first, 14px base)
        Reference: Runway/Midjourney style guide
        ========================= */
+    /* design_handoff_vidra / ADR-0014: Space Grotesk (UI + headings),
+       Space Mono (labels, metadata, uppercase eyebrows). */
     --ps-font-sans:
-      "Geist", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-      "SF Pro Text", "Segoe UI", sans-serif;
+      "Space Grotesk", ui-sans-serif, system-ui, -apple-system,
+      BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
     --ps-font-display:
-      "Plus Jakarta Sans", "Geist", ui-sans-serif, -apple-system,
-      BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+      "Space Grotesk", ui-sans-serif, -apple-system, BlinkMacSystemFont,
+      "SF Pro Display", system-ui, sans-serif;
     --ps-font-mono:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-      "Courier New", monospace;
+      "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
     --ps-font-serif:
       ui-serif, "Iowan Old Style", "Palatino", "Times New Roman", serif;
     --ps-fw-regular: 400;
@@ -156,7 +158,7 @@
     /* =========================
        Color (warm charcoal + violet accent)
        ========================= */
-    --ps-bg: #131316; /* Warm charcoal base */
+    --ps-bg: #0a0b0e; /* App background (design_handoff_vidra / ADR-0014) */
     --ps-surface-1: #1a1a1f; /* Card/panel surface */
     --ps-surface-2: #222228; /* Elevated surface */
     --ps-surface-3: #2a2a32; /* Tertiary surface */
@@ -167,8 +169,10 @@
     --ps-text-faint: #8b8b9e; /* Tertiary text */
     --ps-text-ghost: #6b6b7e; /* Ghost/placeholder text */
     --ps-text-warm: rgba(255, 255, 255, 0.95);
-    --ps-accent: #e0e0e4; /* Neutral accent */
-    --ps-accent-2: #c8c8d0; /* Neutral light variant */
+    /* Periwinkle accent — primary actions / live emphasis / focus
+       (design_handoff_vidra, ADR-0014; ADR-0008 amendment). Themeable. */
+    --ps-accent: #5b6cff;
+    --ps-accent-2: #9aa6ff; /* Accent light — logo/live gradient end */
     --ps-accent-runway: #e0e0e4; /* Map runway accent to neutral */
     --ps-accent-mj: #f2330d; /* Keep MJ orange */
     --ps-success: #4ec7a2;
