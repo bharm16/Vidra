@@ -372,7 +372,6 @@ export default [
       'client/src/features/prompt-optimizer/components/VersionsPanel.tsx',
       'client/src/features/prompt-optimizer/components/coherence/CoherenceIssueCard.tsx',
       'client/src/features/prompt-optimizer/components/coherence/CoherencePanel.tsx',
-      'client/src/features/reference-images/ReferenceImageLibrary.tsx',
       'client/src/features/workspace-shell/CanvasWorkspace.tsx',
       'client/src/features/workspace-shell/components/CanvasSettingsRow.tsx',
       'client/src/features/workspace-shell/components/EndFramePopover.tsx',
