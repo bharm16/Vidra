@@ -173,6 +173,12 @@
        (design_handoff_vidra, ADR-0014; ADR-0008 amendment). Themeable. */
     --ps-accent: #5b6cff;
     --ps-accent-2: #9aa6ff; /* Accent light — logo/live gradient end */
+    /* Atmosphere knobs (design_handoff_vidra / ADR-0014). --ps-glow scales the
+       ambient light-blob intensity (0 = dark, 1 = default, up to ~1.6);
+       --ps-grain the filmic-grain overlay opacity (0 = off). Consumed by the
+       atmosphere primitives (Grain / Vignette / AmbientLight). */
+    --ps-glow: 1;
+    --ps-grain: 0.45;
     --ps-accent-runway: #e0e0e4; /* Map runway accent to neutral */
     --ps-accent-mj: #f2330d; /* Keep MJ orange */
     --ps-success: #4ec7a2;
@@ -615,6 +621,8 @@
     --text-warm: var(--ps-text-warm);
     --accent: var(--ps-accent);
     --accent-2: var(--ps-accent-2);
+    --glow: var(--ps-glow);
+    --grain: var(--ps-grain);
     --accent-cyan: var(--ps-accent);
     --accent-purple: var(
       --ps-accent-2

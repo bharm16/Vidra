@@ -1,0 +1,146 @@
+/*
+ * Atmosphere primitives — the cinematic backdrop layers from the design
+ * handoff (design_handoff_vidra / ADR-0014). Kept as plain CSS classes so the
+ * heavy visual detail (noise tile, drift keyframes) lives outside the React
+ * tree; the components are thin wrappers that read the global --ps-glow /
+ * --ps-grain knobs. The app-wide prefers-reduced-motion rule (design-system
+ * base.css) freezes the drift animations automatically.
+ */
+
+/* Filmic grain: a feTurbulence noise tile blended over the stage. */
+.ps-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: var(--ps-grain, 0.45);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 170px 170px;
+}
+
+/* Vignette: edge-darkening inset shadow. Above content so it deepens the
+   frame without intercepting pointer events. Default = workspace weight. */
+.ps-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  box-shadow: inset 0 0 220px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Anchor carries a heavier double-layer vignette than the workspace. */
+.ps-vignette--anchor {
+  box-shadow:
+    inset 0 0 240px 20px rgba(0, 0, 0, 0.55),
+    inset 0 0 80px rgba(0, 0, 0, 0.4);
+}
+
+/* Ambient light: drifting blurred radial gradients behind the stage.
+   Intensity scales with --ps-glow; the accent bloom recolors with --accent. */
+.ps-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ps-ambient__blob {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.ps-ambient__blob--accent {
+  top: -180px;
+  left: 50%;
+  width: 1160px;
+  height: 820px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    color-mix(in srgb, var(--accent, #5b6cff) 40%, transparent),
+    color-mix(in srgb, var(--accent, #5b6cff) 14%, transparent) 42%,
+    transparent 72%
+  );
+  opacity: calc(var(--ps-glow, 1) * 0.5);
+  filter: blur(14px);
+  animation: esDrift1 18s ease-in-out infinite;
+}
+
+.ps-ambient__blob--warm {
+  right: -160px;
+  bottom: -220px;
+  width: 820px;
+  height: 720px;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 142, 86, 0.24),
+    rgba(220, 90, 60, 0.08) 46%,
+    rgba(60, 20, 10, 0) 72%
+  );
+  opacity: calc(var(--ps-glow, 1) * 0.34);
+  filter: blur(18px);
+  animation: esDrift2 22s ease-in-out infinite;
+}
+
+.ps-ambient__blob--core {
+  bottom: 120px;
+  left: 50%;
+  width: 900px;
+  height: 560px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    rgba(150, 160, 210, 0.14),
+    rgba(80, 90, 140, 0) 68%
+  );
+  opacity: calc(var(--ps-glow, 1) * 0.5);
+  animation: esCore 12s ease-in-out infinite;
+}
+
+@keyframes esDrift1 {
+  0%,
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  50% {
+    transform: translate(-46%, 26px) scale(1.1);
+  }
+}
+
+@keyframes esDrift2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-32px, -24px) scale(1.12);
+  }
+}
+
+@keyframes esCore {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+/* Dotted grid: the workspace's faint 24px dot lattice. Transparent overlay
+   so it layers over the canvas background beneath it. */
+.ps-dotgrid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.05) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
