@@ -641,9 +641,9 @@ export function CanvasWorkspace({
       }
     >
       {/* Anchor backdrop — the design-handoff atmosphere (ADR-0014). Ambient
-        light (z0) + grain (z1) sit under the content; the heavier anchor
-        vignette (z6) frames over it. Working states keep the plain canvas —
-        their atmosphere lands with the workspace rebuild. */}
+        light + grain sit behind the content (negative z, inside this isolated
+        root); the heavier anchor vignette frames over it. Working states keep
+        the plain canvas — their atmosphere lands with the workspace rebuild. */}
       {isPreWork ? (
         <>
           <AmbientLight />
@@ -651,21 +651,10 @@ export function CanvasWorkspace({
           <Vignette intensity="anchor" />
         </>
       ) : null}
-      {isPreWork ? (
-        <div className="relative z-[3]">
-          <WorkspaceTopBar minimal />
-        </div>
-      ) : (
-        <WorkspaceTopBar />
-      )}
+      <WorkspaceTopBar minimal={isPreWork} />
       {/* The tool rail was removed (ADR-0010 site-scope D7); the workspace
         content now spans the full width below the top bar. */}
-      <div
-        className={cn(
-          "grid min-h-0 grid-cols-1",
-          isPreWork && "relative z-[3]",
-        )}
-      >
+      <div className="grid min-h-0 grid-cols-1">
         <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
           <TileStateAnnouncer shots={shots} />
 
