@@ -65,7 +65,7 @@
   );
   opacity: calc(var(--ps-glow, 1) * 0.5);
   filter: blur(14px);
-  animation: esDrift1 18s ease-in-out infinite;
+  animation: es-drift-1 18s ease-in-out infinite;
 }
 
 .ps-ambient__blob--warm {
@@ -81,7 +81,7 @@
   );
   opacity: calc(var(--ps-glow, 1) * 0.34);
   filter: blur(18px);
-  animation: esDrift2 22s ease-in-out infinite;
+  animation: es-drift-2 22s ease-in-out infinite;
 }
 
 .ps-ambient__blob--core {
@@ -96,10 +96,10 @@
     rgba(80, 90, 140, 0) 68%
   );
   opacity: calc(var(--ps-glow, 1) * 0.5);
-  animation: esCore 12s ease-in-out infinite;
+  animation: es-core 12s ease-in-out infinite;
 }
 
-@keyframes esDrift1 {
+@keyframes es-drift-1 {
   0%,
   100% {
     transform: translate(-50%, 0) scale(1);
@@ -109,7 +109,7 @@
   }
 }
 
-@keyframes esDrift2 {
+@keyframes es-drift-2 {
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -119,7 +119,7 @@
   }
 }
 
-@keyframes esCore {
+@keyframes es-core {
   0%,
   100% {
     opacity: 0.5;
