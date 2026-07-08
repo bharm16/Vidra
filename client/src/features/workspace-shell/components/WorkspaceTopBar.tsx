@@ -8,41 +8,47 @@ import { useWorkspaceProject } from "../hooks/useWorkspaceProject";
 import { useWorkspaceCredits } from "../hooks/useWorkspaceCredits";
 import { AccountPopover } from "./AccountPopover";
 
-/* Vidra wordmark — rotated-square mark + text. Inline SVG so the logo travels
-   with the component without a separate asset request. */
+/* Vidra wordmark — the design-handoff brand mark: an accent-gradient rounded
+   square holding a play glyph, beside the wordtype. Inline SVG so the logo
+   travels with the component without a separate asset request. */
 function VidraMark(): React.ReactElement {
   return (
-    <span className="text-foreground inline-flex items-center gap-2">
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
-        fill="none"
-        aria-hidden="true"
+    <span className="inline-flex items-center gap-2.5">
+      <span
+        className="flex h-[26px] w-[26px] items-center justify-center rounded-lg"
+        style={{
+          background:
+            "linear-gradient(150deg, var(--accent, #5b6cff), var(--accent-2, #9aa6ff))",
+          boxShadow: "0 4px 14px -4px var(--accent, #5b6cff)",
+        }}
       >
-        <rect
-          x="3"
-          y="3"
-          width="12"
-          height="12"
-          rx="1.5"
-          transform="rotate(45 9 9)"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-        <path
-          d="M9 4.5L9 13.5M4.5 9L13.5 9"
-          stroke="currentColor"
-          strokeWidth="0.8"
-          opacity="0.6"
-        />
-      </svg>
-      <span className="text-sm font-medium tracking-tight">Vidra</span>
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 12 12"
+          fill="#0a0b0e"
+          aria-hidden="true"
+        >
+          <path d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z" />
+        </svg>
+      </span>
+      <span className="text-foreground text-[17px] font-semibold tracking-[-0.01em]">
+        Vidra
+      </span>
     </span>
   );
 }
 
-export function WorkspaceTopBar(): React.ReactElement {
+interface WorkspaceTopBarProps {
+  /** Pre-work (empty state): drop the session breadcrumb + credits so only the
+   *  wordmark and Library/avatar remain — the handoff's minimal top bar
+   *  (REBUILD.md: "empty state carries a minimal top bar"). */
+  minimal?: boolean;
+}
+
+export function WorkspaceTopBar({
+  minimal = false,
+}: WorkspaceTopBarProps = {}): React.ReactElement {
   const project = useWorkspaceProject();
   const credits = useWorkspaceCredits();
   const user = useAuthUser();
@@ -55,27 +61,36 @@ export function WorkspaceTopBar(): React.ReactElement {
       role="banner"
     >
       <VidraMark />
-      <CaretRight size={12} className="text-tool-text-subdued" weight="bold" />
       {/*
-        Display-only session label — the current session's derived title (or
-        "Untitled"), read via useWorkspaceProject. A clickable rename was
-        previously wired to component-state-only, which silently dropped the
-        new name on remount — see UX rule "browsing is read-only, editing is
-        explicit"; renames live in the Sessions panel. The CaretDown is
-        decorative until the project switcher menu lands.
+        Display-only session breadcrumb — the current session's derived title
+        (or "Untitled"), read via useWorkspaceProject. Hidden in the pre-work
+        empty state (no session yet). A clickable rename was previously wired to
+        component-state-only, which silently dropped the new name on remount —
+        see UX rule "browsing is read-only, editing is explicit"; renames live
+        in the Sessions panel. The CaretDown is decorative until the project
+        switcher menu lands.
       */}
-      <span className="text-foreground inline-flex items-center gap-1 px-1 py-1 text-sm">
-        {project.name}
-        <CaretDown
-          size={12}
-          className="text-tool-text-subdued"
-          aria-hidden="true"
-        />
-      </span>
+      {minimal ? null : (
+        <>
+          <CaretRight
+            size={12}
+            className="text-tool-text-subdued"
+            weight="bold"
+          />
+          <span className="text-foreground inline-flex items-center gap-1 px-1 py-1 text-sm">
+            {project.name}
+            <CaretDown
+              size={12}
+              className="text-tool-text-subdued"
+              aria-hidden="true"
+            />
+          </span>
+        </>
+      )}
 
       <div className="flex-1" />
 
-      {FEATURES.BILLING_UI ? (
+      {!minimal && FEATURES.BILLING_UI ? (
         <span
           className="text-tool-text-dim font-mono text-[11px]"
           aria-label="Credits remaining"

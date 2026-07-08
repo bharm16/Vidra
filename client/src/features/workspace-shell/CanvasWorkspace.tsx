@@ -34,6 +34,7 @@ import { useModelSelectionRecommendation } from "@/components/ToolSidebar/compon
 import { useSidebarGenerationDomain } from "@/components/ToolSidebar/context";
 import { GenerationPopover } from "@/features/prompt-optimizer/components/GenerationPopover";
 import { cn } from "@/utils/cn";
+import { AmbientLight, Grain, Vignette } from "@/components/atmosphere";
 import { buildGalleryGenerationEntries } from "./utils/galleryGeneration";
 import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
 import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
@@ -597,7 +598,14 @@ export function CanvasWorkspace({
 
   return (
     <div
-      className="text-foreground grid h-full grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden [background:var(--tool-canvas-bg)]"
+      className={cn(
+        "text-foreground relative isolate grid h-full grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden",
+        // The empty state is a flat cinematic stage — ambient light supplies
+        // the depth; the working canvas keeps its radial backdrop.
+        isPreWork
+          ? "[background:var(--ps-bg)]"
+          : "[background:var(--tool-canvas-bg)]",
+      )}
       style={
         // Pre-work: the composer rises to mid-screen so the hero question and
         // its answer box read as one unit; it glides down once work starts.
@@ -608,10 +616,32 @@ export function CanvasWorkspace({
           : undefined
       }
     >
-      <WorkspaceTopBar />
+      {/* Anchor backdrop — the design-handoff atmosphere (ADR-0014). Ambient
+        light (z0) + grain (z1) sit under the content; the heavier anchor
+        vignette (z6) frames over it. Working states keep the plain canvas —
+        their atmosphere lands with the workspace rebuild. */}
+      {isPreWork ? (
+        <>
+          <AmbientLight />
+          <Grain />
+          <Vignette intensity="anchor" />
+        </>
+      ) : null}
+      {isPreWork ? (
+        <div className="relative z-[3]">
+          <WorkspaceTopBar minimal />
+        </div>
+      ) : (
+        <WorkspaceTopBar />
+      )}
       {/* The tool rail was removed (ADR-0010 site-scope D7); the workspace
         content now spans the full width below the top bar. */}
-      <div className="grid min-h-0 grid-cols-1">
+      <div
+        className={cn(
+          "grid min-h-0 grid-cols-1",
+          isPreWork && "relative z-[3]",
+        )}
+      >
         <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
           <TileStateAnnouncer shots={shots} />
 
