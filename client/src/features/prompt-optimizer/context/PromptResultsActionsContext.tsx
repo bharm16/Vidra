@@ -47,10 +47,6 @@ interface PromptResultsActionsOnly {
     | ((issueId: string, recommendation: CoherenceRecommendation) => void)
     | undefined;
   onScrollToCoherenceSpan?: ((spanId: string) => void) | undefined;
-  /** I2V Motion Ideas — chip click inserts the phrase into the prompt. */
-  onMotionIdeaSelect?: ((idea: string) => void) | undefined;
-  /** I2V Motion Ideas — re-roll regenerates with higher temperature. */
-  onMotionIdeasReroll?: (() => void) | undefined;
   /** Idea Box gate — accept the generated frame (dismisses the gate). */
   onIdeaBoxAccept?: (() => void) | undefined;
   /** Idea Box gate — reject: regenerate the frame from the current prompt. */
@@ -80,10 +76,6 @@ interface PromptResultsDataOnly {
   isCoherenceChecking?: boolean | undefined;
   isCoherencePanelExpanded?: boolean | undefined;
   i2vContext?: I2VContext | null | undefined;
-  /** I2V Motion Ideas — current chip set (empty when not in I2V mode). */
-  motionIdeas?: readonly string[] | undefined;
-  /** I2V Motion Ideas — true while a fetch is in flight. */
-  isMotionIdeasLoading?: boolean | undefined;
   /** Idea Box — stage of the expand→frame chain (idle when inactive). */
   ideaBoxStage?: IdeaBoxStage | undefined;
   /** True while the expansion (optimize) round-trip is in flight — the beat
@@ -172,14 +164,10 @@ export function PromptResultsActionsProvider({
   onApplyCoherenceFix,
   onScrollToCoherenceSpan,
   i2vContext,
-  motionIdeas,
-  isMotionIdeasLoading,
   ideaBoxStage,
   isExpanding,
   hasExpandedPrompt,
   writingFailed,
-  onMotionIdeaSelect,
-  onMotionIdeasReroll,
   onIdeaBoxAccept,
   onIdeaBoxRegenerate,
   onIdeaBoxExpand,
@@ -230,8 +218,6 @@ export function PromptResultsActionsProvider({
       onDismissAllCoherenceIssues,
       onApplyCoherenceFix,
       onScrollToCoherenceSpan,
-      onMotionIdeaSelect,
-      onMotionIdeasReroll,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
       onIdeaBoxExpand,
@@ -252,8 +238,6 @@ export function PromptResultsActionsProvider({
       onDismissAllCoherenceIssues,
       onApplyCoherenceFix,
       onScrollToCoherenceSpan,
-      onMotionIdeaSelect,
-      onMotionIdeasReroll,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
       onIdeaBoxExpand,
@@ -271,8 +255,6 @@ export function PromptResultsActionsProvider({
       isCoherenceChecking,
       isCoherencePanelExpanded,
       i2vContext,
-      motionIdeas,
-      isMotionIdeasLoading,
       ideaBoxStage,
       isExpanding,
       hasExpandedPrompt,
@@ -286,8 +268,6 @@ export function PromptResultsActionsProvider({
       isCoherenceChecking,
       isCoherencePanelExpanded,
       i2vContext,
-      motionIdeas,
-      isMotionIdeasLoading,
       ideaBoxStage,
       isExpanding,
       hasExpandedPrompt,

@@ -23,8 +23,6 @@ vi.mock(
     usePromptResultsData: () => ({
       suggestionsData: null,
       i2vContext: null,
-      motionIdeas: undefined,
-      isMotionIdeasLoading: false,
       isExpanding: false,
       hasExpandedPrompt: false,
       writingFailed: dataState.writingFailed,

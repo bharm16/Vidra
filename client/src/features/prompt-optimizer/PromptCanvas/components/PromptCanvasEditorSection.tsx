@@ -22,7 +22,6 @@ import { cn } from "@/utils/cn";
 import { TriggerAutocomplete } from "@features/assets/components/TriggerAutocomplete";
 import { PromptEditor } from "@features/prompt-optimizer/components/PromptEditor";
 import { useI2VContext } from "@features/prompt-optimizer/hooks/useI2VContext";
-import { MotionIdeasPanel } from "@features/prompt-optimizer/components/MotionIdeasPanel";
 import {
   usePromptResultsActions,
   usePromptResultsData,
@@ -134,10 +133,6 @@ export function PromptCanvasEditorSection({
   isHoveredLocked,
 }: PromptCanvasEditorSectionProps): React.ReactElement {
   const { isI2VMode } = useI2VContext();
-  const { motionIdeas, isMotionIdeasLoading } = usePromptResultsData();
-  const { onMotionIdeaSelect, onMotionIdeasReroll } = usePromptResultsActions();
-  const showMotionIdeas =
-    isI2VMode && Boolean(onMotionIdeaSelect) && Boolean(onMotionIdeasReroll);
 
   return (
     <div
@@ -435,15 +430,6 @@ export function PromptCanvasEditorSection({
               </div>
             )}
           </div>
-
-          {showMotionIdeas && onMotionIdeaSelect && onMotionIdeasReroll ? (
-            <MotionIdeasPanel
-              ideas={[...(motionIdeas ?? [])]}
-              isLoading={Boolean(isMotionIdeasLoading)}
-              onChipClick={onMotionIdeaSelect}
-              onReroll={onMotionIdeasReroll}
-            />
-          ) : null}
 
           <PromptCanvasSuggestionsPanel />
         </div>

@@ -9,8 +9,6 @@ vi.mock(
     usePromptResultsData: () => ({
       suggestionsData: null,
       i2vContext: null,
-      motionIdeas: undefined,
-      isMotionIdeasLoading: false,
     }),
     usePromptResultsActions: () => ({
       user: null,

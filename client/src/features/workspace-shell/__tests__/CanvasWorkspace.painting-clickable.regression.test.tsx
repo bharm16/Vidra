@@ -23,8 +23,6 @@ vi.mock(
     usePromptResultsData: () => ({
       suggestionsData: null,
       i2vContext: null,
-      motionIdeas: undefined,
-      isMotionIdeasLoading: false,
       // Painting-stage signals (consumed by CanvasWorkspace stage derivation):
       ideaBoxStage: undefined,
       isExpanding: false,

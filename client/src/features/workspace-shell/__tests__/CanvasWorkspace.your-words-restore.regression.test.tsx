@@ -25,8 +25,6 @@ vi.mock(
     usePromptResultsData: () => ({
       suggestionsData: null,
       i2vContext: null,
-      motionIdeas: undefined,
-      isMotionIdeasLoading: false,
       hasExpandedPrompt: dataState.hasExpandedPrompt,
     }),
     usePromptResultsActionsOptional: () => null,

@@ -61,7 +61,6 @@ import {
   useEditorShotPromptBinding,
 } from "./hooks";
 import { useI2VContext } from "../hooks/useI2VContext";
-import { useMotionIdeas } from "../hooks/useMotionIdeas";
 import {
   useIdeaBox,
   usePersistenceTargetRegistrar,
@@ -256,26 +255,6 @@ function PromptOptimizerContent({
   const subjectMotion = domain.subjectMotion;
   const setInputPrompt = promptOptimizer.setInputPrompt;
   const i2vContext = useI2VContext();
-  const motionIdeas = useMotionIdeas({
-    isI2VMode: i2vContext.isI2VMode,
-    startImageUrl: i2vContext.startImageUrl,
-    startImageSourcePrompt: i2vContext.startImageSourcePrompt,
-  });
-  const promptInputPrompt = promptOptimizer.inputPrompt;
-  const promptSetInputPrompt = promptOptimizer.setInputPrompt;
-  const handleMotionIdeaSelect = useCallback(
-    (idea: string): void => {
-      const current = promptInputPrompt ?? "";
-      const trimmed = current.trim();
-      const next = trimmed.length === 0 ? idea : `${trimmed}, ${idea}`;
-      promptSetInputPrompt?.(next);
-    },
-    [promptInputPrompt, promptSetInputPrompt],
-  );
-  const motionIdeasReroll = motionIdeas.reroll;
-  const handleMotionIdeasReroll = useCallback((): void => {
-    void motionIdeasReroll();
-  }, [motionIdeasReroll]);
   const { hasActiveContinuityShot, currentShotId, currentShot, updateShot } =
     useWorkspaceSession();
 
@@ -949,8 +928,6 @@ function PromptOptimizerContent({
             onApplyCoherenceFix={applyFix}
             onScrollToCoherenceSpan={scrollToSpanById}
             i2vContext={i2vContext}
-            motionIdeas={motionIdeas.ideas}
-            isMotionIdeasLoading={motionIdeas.isLoading}
             ideaBoxStage={ideaBoxStage}
             isExpanding={promptOptimizer.isProcessing}
             writingFailed={writingFailed}
@@ -961,8 +938,6 @@ function PromptOptimizerContent({
             onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
             onIdeaBoxExpand={handleIdeaBoxExpand}
             onComposerFill={handleComposerFill}
-            onMotionIdeaSelect={handleMotionIdeaSelect}
-            onMotionIdeasReroll={handleMotionIdeasReroll}
           >
             <PromptOptimizerWorkspaceView
               showHistory={showHistory}

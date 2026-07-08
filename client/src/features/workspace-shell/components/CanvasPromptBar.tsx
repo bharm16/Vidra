@@ -1,10 +1,5 @@
 import React, { useEffect } from "react";
 import { cn } from "@/utils/cn";
-import { MotionIdeasPanel } from "@/features/prompt-optimizer/components/MotionIdeasPanel";
-import {
-  usePromptResultsActions,
-  usePromptResultsData,
-} from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { PromptEditorSurface } from "./PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "./PromptEditorSurface";
@@ -49,14 +44,7 @@ export function CanvasPromptBar({
     });
   }, [onContinueScene]);
 
-  const { motionIdeas, isMotionIdeasLoading, i2vContext } =
-    usePromptResultsData();
-  const { onMotionIdeaSelect, onMotionIdeasReroll } = usePromptResultsActions();
   const { selectedSpanId } = useSelectedSpan();
-  const showMotionIdeas =
-    Boolean(i2vContext?.isI2VMode) &&
-    Boolean(onMotionIdeaSelect) &&
-    Boolean(onMotionIdeasReroll);
   const isExpanded = Boolean(tuneSlot) || Boolean(selectedSpanId);
 
   return (
@@ -78,16 +66,6 @@ export function CanvasPromptBar({
       <PromptEditorSurface {...surfaceProps} variant="active" />
       {/* Idea Box progress/gate renders on the canvas stage (FrameStage),
           not in the composer — the frame owns the canvas. */}
-      {showMotionIdeas && onMotionIdeaSelect && onMotionIdeasReroll ? (
-        <div className="px-3 pb-2">
-          <MotionIdeasPanel
-            ideas={[...(motionIdeas ?? [])]}
-            isLoading={Boolean(isMotionIdeasLoading)}
-            onChipClick={onMotionIdeaSelect}
-            onReroll={onMotionIdeasReroll}
-          />
-        </div>
-      ) : null}
       {chromeSlot}
     </div>
   );

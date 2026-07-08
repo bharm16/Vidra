@@ -99,63 +99,6 @@ export async function observeImage(
   ) as ImageObservationResponse;
 }
 
-export interface GetMotionIdeasRequest {
-  image: string;
-  sourcePrompt?: string;
-  skipCache?: boolean;
-  temperature?: number;
-}
-
-export interface GetMotionIdeasResponse {
-  success: boolean;
-  ideas: string[];
-  observationCached: boolean;
-  observationUsedFastPath: boolean;
-  durationMs: number;
-}
-
-const GetMotionIdeasResponseSchema = z
-  .object({
-    success: z.boolean(),
-    ideas: z.array(z.string()),
-    observationCached: z.boolean(),
-    observationUsedFastPath: z.boolean(),
-    durationMs: z.number(),
-  })
-  .passthrough();
-
-export async function getMotionIdeas(
-  payload: GetMotionIdeasRequest,
-  options: ImageObservationFetchOptions = {},
-): Promise<GetMotionIdeasResponse> {
-  const fetchFn =
-    options.fetchImpl || (typeof fetch !== "undefined" ? fetch : undefined);
-  if (!fetchFn) {
-    throw new Error("Fetch is not available in this environment.");
-  }
-
-  const authHeaders = await buildFirebaseAuthHeaders();
-  const response = await fetchFn("/api/i2v/motion-ideas", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders,
-    },
-    body: JSON.stringify(payload),
-    ...(options.signal ? { signal: options.signal } : {}),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch motion ideas: ${response.status}`);
-  }
-
-  const responsePayload = (await response.json()) as unknown;
-  return GetMotionIdeasResponseSchema.parse(
-    responsePayload,
-  ) as GetMotionIdeasResponse;
-}
-
 export const i2vApi = {
   observeImage,
-  getMotionIdeas,
 };

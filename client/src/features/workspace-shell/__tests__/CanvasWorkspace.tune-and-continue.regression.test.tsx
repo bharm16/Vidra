@@ -8,8 +8,6 @@ vi.mock(
     usePromptResultsData: () => ({
       suggestionsData: null,
       i2vContext: null,
-      motionIdeas: undefined,
-      isMotionIdeasLoading: false,
     }),
     usePromptResultsActionsOptional: () => null,
     usePromptResultsActions: () => ({
