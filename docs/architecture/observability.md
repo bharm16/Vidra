@@ -146,7 +146,7 @@ The schema is locked by a snapshot test at [`server/src/services/observability/_
 
 Top-level event properties:
 
-- `executionType` — caller-supplied string identifying the call site (e.g. `"image_observation"`, `"i2v_motion_ideas"`, optimize-stage names)
+- `executionType` — caller-supplied string identifying the call site (e.g. `"image_observation"`, optimize-stage names)
 - `provider` — `"openai" | "groq" | "gemini"`, or `null` if the underlying call failed before resolving
 - `model` — concrete model id (e.g. `"gpt-4o-mini-2024-07-18"`); `null` on early failure
 - `durationMs` — wall-clock LLM call duration (integer ms)

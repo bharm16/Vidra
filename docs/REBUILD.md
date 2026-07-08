@@ -183,6 +183,24 @@ ADR-0012).
   **Remaining M6 (still design-sensitive, owner call):** the motion-ideas panel (`MotionIdeasPanel`
   - `i2v-motion-ideas` server stack, still renders in I2V) and tune-chips/TuneDrawer — both
     active-but-superseded, pending confirmation the M3/D6 replacements fully cover them. Then M7 → M8.
+- **M6 motion-ideas panel FULLY DELETED — panel + server stack (2026-07-08, `d587c09c`→`741f9476`→`e1caf9da` + this docs commit):**
+  owner ruled FULL DELETE after a 5-agent fan-out (reachability / coverage / design-intent / blast-radius).
+  Decisive vote — design intent: ADR-0011 D6 is a locked decision, "No standalone motion panel, ever — a
+  panel is a second text surface wearing a costume." The one real counterweight (a coverage gap: image→motion
+  ideation with zero typed words, which D6's per-span vocab structurally can't serve) was accepted as an
+  intentional drop under ADR-0010's "one visible text" — the motion vocabulary already lives in per-span
+  suggestions since M3. Three code commits, each green at its boundary: **(A)** client surface — `MotionIdeasPanel`
+  - `useMotionIdeas` + both mounts + `PromptResultsActionsContext` fields + `getMotionIdeas` from i2vApi + 13 dead
+    test stubs; **(B)** replay — `motion-ideas` surface/contract/`MotionIdeasReplayPayloadSchema` from the shared
+    replay contract + the `i2v_motion_ideas` mapping + golden HTTP scenario + integration test + fixture, with the
+    two replay MACHINERY unit tests repointed to the surviving `suggestions` surface (`enhance_suggestions`→qwen);
+    **(C)** server — the `i2v-motion-ideas/` service + `i2v/` route + `registerI2VServices` + DI unwiring +
+    `i2v_motion_ideas` modelConfig op, plus the expansion-study research driver (tied to ADR-0002 via its protocol
+    doc) rewired to a fixed motion prompt rather than dropped, to avoid a dangling reference. Archived to
+    `archive/i2v-motion-ideas-2026-07-07`. tsc + eslint + Integration Gate (8/8) + full suite (7663) green; also
+    cleaned a stray M6-1 `disablePromptTransformation` leftover in `scripts/` (outside the earlier grep scope).
+    **Pre-existing, NOT this work:** the label-spans replay integration test fails on a stale span-labeling cassette
+    (fails identically on main) — flagged to re-record with `REPLAY_MODE=record`. Remaining M6: tune-chips/TuneDrawer → M7 → M8.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't

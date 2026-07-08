@@ -92,6 +92,11 @@
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/:sessionId/generations/:generationId/archive",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
       "method": "PATCH",
       "fullPath": "/api/:sessionId/highlights",
       "sourceFile": "server/src/routes/sessions.routes.ts"
@@ -360,11 +365,6 @@
       "method": "POST",
       "fullPath": "/api/generate/consistent/video",
       "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/i2v/motion-ideas",
-      "sourceFile": "server/src/routes/i2v/motionIdeas.routes.ts"
     },
     {
       "method": "POST",
@@ -644,6 +644,11 @@
     {
       "method": "PATCH",
       "fullPath": "/api/sessions/:sessionId",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/generations/:generationId/archive",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
@@ -1036,6 +1041,14 @@
       "category": "experimental"
     },
     {
+      "name": "replayMode",
+      "envName": "REPLAY_MODE",
+      "aliases": [],
+      "defaultValue": "off",
+      "description": "Record/replay seam at the LLM boundary and provider adapters. `record` captures live provider responses into contract-validated fixtures; `replay` serves those fixtures with zero network. See docs/architecture/replay-mode.md.",
+      "category": "debug"
+    },
+    {
       "name": "unhandledRejectionMode",
       "envName": "UNHANDLED_REJECTION_MODE",
       "aliases": [],
@@ -1078,6 +1091,11 @@
     {
       "from": "aiService",
       "to": "qwenClient",
+      "file": "llm.services.ts"
+    },
+    {
+      "from": "aiService",
+      "to": "replayCassetteStore",
       "file": "llm.services.ts"
     },
     {
@@ -1486,16 +1504,6 @@
       "file": "model-intelligence.services.ts"
     },
     {
-      "from": "motionIdeaService",
-      "to": "aiService",
-      "file": "i2v.services.ts"
-    },
-    {
-      "from": "motionIdeaService",
-      "to": "imageObservationService",
-      "file": "i2v.services.ts"
-    },
-    {
       "from": "openAIClient",
       "to": "config",
       "file": "llm.services.ts"
@@ -1611,28 +1619,13 @@
       "file": "image-generation.services.ts"
     },
     {
-      "from": "replicateFluxKontextFastProvider",
-      "to": "videoPromptDetector",
-      "file": "image-generation.services.ts"
-    },
-    {
-      "from": "replicateFluxKontextFastProvider",
-      "to": "videoToImageTransformer",
-      "file": "image-generation.services.ts"
-    },
-    {
       "from": "replicateFluxSchnellProvider",
       "to": "config",
       "file": "image-generation.services.ts"
     },
     {
       "from": "replicateFluxSchnellProvider",
-      "to": "videoPromptDetector",
-      "file": "image-generation.services.ts"
-    },
-    {
-      "from": "replicateFluxSchnellProvider",
-      "to": "videoToImageTransformer",
+      "to": "replayCassetteStore",
       "file": "image-generation.services.ts"
     },
     {
@@ -1899,11 +1892,6 @@
       "from": "videoPromptService",
       "to": "aiService",
       "file": "enhancement.services.ts"
-    },
-    {
-      "from": "videoToImageTransformer",
-      "to": "geminiClient",
-      "file": "image-generation.services.ts"
     },
     {
       "from": "videoWorkerHeartbeatStore",

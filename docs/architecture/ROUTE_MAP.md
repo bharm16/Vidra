@@ -74,7 +74,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/generate/consistent/from-keyframe`                                | `server/src/routes/consistentGeneration.routes.ts`              |
 | POST   | `/api/generate/consistent/keyframe`                                     | `server/src/routes/consistentGeneration.routes.ts`              |
 | POST   | `/api/generate/consistent/video`                                        | `server/src/routes/consistentGeneration.routes.ts`              |
-| POST   | `/api/i2v/motion-ideas`                                                 | `server/src/routes/i2v/motionIdeas.routes.ts`                   |
 | POST   | `/api/keyframe`                                                         | `server/src/routes/consistentGeneration.routes.ts`              |
 | GET    | `/api/list`                                                             | `server/src/routes/storage.routes.ts`                           |
 | POST   | `/api/llm/label-spans`                                                  | `server/src/routes/labelSpansRoute.ts`                          |
