@@ -201,6 +201,19 @@ ADR-0012).
     cleaned a stray M6-1 `disablePromptTransformation` leftover in `scripts/` (outside the earlier grep scope).
     **Pre-existing, NOT this work:** the label-spans replay integration test fails on a stale span-labeling cassette
     (fails identically on main) — flagged to re-record with `REPLAY_MODE=record`. Remaining M6: tune-chips/TuneDrawer → M7 → M8.
+- **M6 deletion sweep — clean deletions DONE, entangled remainder folded into later milestones (2026-07-08, `b3954e0a` `fccefab7` `1218cb39` `31ba4ed3`):**
+  a 6-agent fan-out mapped the whole ADR-0010 "goes" list (decision locked; only blast-radius needed). Shipped the four
+  clean/non-entangled deletions: **ReferenceImageLibrary** (dead island, zero importers), the **dead model-intelligence
+  cluster** (ModelComparison/ModelSelector/ModelRecommendation-card — zero JSX mounts; kept the live ModelRecommendationDropdown
+  - useModelRecommendation), **tune chips + TuneDrawer + AI-Enhance** (composer; `isExpanded` now keys only on `selectedSpanId`;
+    onEnhance/isEnhancing threading gone), and **SubjectMotionInput** (barrel-only dead). Each `tsc`+eslint+targeted-tests green.
+    **Deferred (entangled) to the milestone that unblocks each — the build-scope rule "deletions land alongside their
+    replacements":** rail panels (Characters/Styles/Sessions) → **M8** (site-scope D7 kills the whole tool rail; deleting the 3
+    panels alone leaves a degenerate rail + orphaned studio back-button); ShotRow/GenTile/Continue-Scene(Path A)/GenerationPopover
+  - camera-motion store/modal/telemetry + model-picker Tier2 (needs default-model hardcoded first) → **the old-layout deletion
+    (LAST)** (reachable only via the `!SPACE_LINEAGE` / `!CANVAS_FIRST_LAYOUT` branches or the old GenerationControlsPanel).
+    **Remaining rebuild:** M7 (instrumentation — NDJSON streaming per ADR-0011 D5, first-try-quality metric, soft-cap knobs) →
+    M8 (site coherence + rail death + the public `/share/:uuid` clip page + Docs rewrite) → the old-layout deletion LAST.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
