@@ -112,6 +112,7 @@ vi.mock(
 vi.mock("../components/WorkspaceTopBar", () => ({
   WorkspaceTopBar: () => <header role="banner">topbar</header>,
 }));
+vi.mock("@/components/navigation/NavRail", () => ({ NavRail: () => null }));
 
 // CanvasSettingsRow depends on GenerationControlsContext + CreditBalanceContext
 // which this gallery-selection regression doesn't provide; stub it.

@@ -125,6 +125,7 @@ vi.mock(
 vi.mock("../components/WorkspaceTopBar", () => ({
   WorkspaceTopBar: () => <header role="banner">topbar</header>,
 }));
+vi.mock("@/components/navigation/NavRail", () => ({ NavRail: () => null }));
 
 vi.mock("../components/CanvasSettingsRow", () => ({
   CanvasSettingsRow: () => <div data-testid="canvas-settings-row" />,

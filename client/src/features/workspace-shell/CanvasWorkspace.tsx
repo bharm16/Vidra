@@ -34,7 +34,13 @@ import { useModelSelectionRecommendation } from "@/components/ToolSidebar/compon
 import { useSidebarGenerationDomain } from "@/components/ToolSidebar/context";
 import { GenerationPopover } from "@/features/prompt-optimizer/components/GenerationPopover";
 import { cn } from "@/utils/cn";
-import { AmbientLight, Grain, Vignette } from "@/components/atmosphere";
+import {
+  AmbientLight,
+  DottedGrid,
+  Grain,
+  Vignette,
+} from "@/components/atmosphere";
+import { NavRail } from "@/components/navigation/NavRail";
 import { buildGalleryGenerationEntries } from "./utils/galleryGeneration";
 import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
 import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
@@ -626,121 +632,121 @@ export function CanvasWorkspace({
   );
 
   return (
-    <div
-      className={cn(
-        "text-foreground relative isolate grid h-full grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden",
-        // The empty state is a flat cinematic stage — ambient light supplies
-        // the depth; the working canvas keeps its radial backdrop.
-        isPreWork
-          ? "[background:var(--ps-bg)]"
-          : "[background:var(--tool-canvas-bg)]",
-      )}
-      style={
-        // Pre-work: the composer rises to mid-screen so the hero question and
-        // its answer box read as one unit; it glides down once work starts.
-        isPreWork
-          ? ({
-              "--workspace-composer-bottom": "40vh",
-            } as React.CSSProperties)
-          : undefined
-      }
-    >
-      {/* Anchor backdrop — the design-handoff atmosphere (ADR-0014). Ambient
-        light + grain sit behind the content (negative z, inside this isolated
-        root); the heavier anchor vignette frames over it. Working states keep
-        the plain canvas — their atmosphere lands with the workspace rebuild. */}
-      {isPreWork ? (
-        <>
-          <AmbientLight />
-          <Grain />
-          <Vignette intensity="anchor" />
-        </>
-      ) : null}
-      <WorkspaceTopBar minimal={isPreWork} />
-      {/* The tool rail was removed (ADR-0010 site-scope D7); the workspace
-        content now spans the full width below the top bar. */}
-      <div className="grid min-h-0 grid-cols-1">
-        <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
-          <TileStateAnnouncer shots={shots} />
+    <div className="text-foreground flex h-full overflow-hidden">
+      {/* The nav rail is the workspace chrome once the space exists; the empty
+        state keeps a minimal top bar only (ADR-0014). */}
+      {isPreWork ? null : <NavRail active="new" />}
+      <div
+        className={cn(
+          "relative isolate grid h-full min-w-0 flex-1 grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden",
+          "[background:var(--ps-bg)]",
+        )}
+        style={
+          // Pre-work: the composer rises to mid-screen so the hero question and
+          // its answer box read as one unit; it glides down once work starts.
+          isPreWork
+            ? ({
+                "--workspace-composer-bottom": "40vh",
+              } as React.CSSProperties)
+            : undefined
+        }
+      >
+        {/* Backdrop — the design-handoff atmosphere (ADR-0014). The empty state
+          gets ambient light + grain behind + the anchor vignette over; the
+          working canvas gets the dotted grid (behind content, negative z). */}
+        {isPreWork ? (
+          <>
+            <AmbientLight />
+            <Grain />
+            <Vignette intensity="anchor" />
+          </>
+        ) : (
+          <DottedGrid />
+        )}
+        <WorkspaceTopBar minimal={isPreWork} />
+        <div className="grid min-h-0 grid-cols-1">
+          <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
+            <TileStateAnnouncer shots={shots} />
 
-          {isPreWork ? null : workspaceStage.failure === "writing" ? (
-            // Expansion failed — surface it with a retry instead of a silently
-            // dead composer (M4). Picture/motion/video failures keep their own
-            // surfaces (FrameStage / tiles); the flag drives this one.
-            <FailureNotice
-              failure="writing"
-              onRetry={() => void onIdeaBoxExpand?.()}
-            />
-          ) : shots.length === 0 ? (
-            /* Pre-render beats: the first frame (or its pending/failed state)
-               owns the canvas — see CONTEXT.md, "First frame". */
-            <FrameStage startFrame={domain.startFrame} prompt={prompt} />
-          ) : FEATURES.SPACE_LINEAGE ? (
-            // The space (M5, ADR-0012/0013): the session's takes as a lineage
-            // network. Off by default; replaces the shots grid when enabled.
-            <SpaceViewport liveNodeId={heroGeneration?.id ?? null}>
-              <TheSpace
-                nodes={spaceNodes}
-                liveNodeId={heroGeneration?.id ?? null}
-                onSelectNode={handleSelectSpaceNode}
-                renderNodeMenu={renderSpaceNodeMenu}
+            {isPreWork ? null : workspaceStage.failure === "writing" ? (
+              // Expansion failed — surface it with a retry instead of a silently
+              // dead composer (M4). Picture/motion/video failures keep their own
+              // surfaces (FrameStage / tiles); the flag drives this one.
+              <FailureNotice
+                failure="writing"
+                onRetry={() => void onIdeaBoxExpand?.()}
               />
-            </SpaceViewport>
-          ) : (
-            <div className="mx-auto flex max-w-[1280px] flex-col gap-6">
-              {shots.map((shot, idx) => (
-                <React.Fragment key={shot.id}>
-                  <ShotRow
-                    shot={shot}
-                    now={renderedAt}
-                    layout={idx === 0 ? "featured" : "compact"}
-                    featuredTileId={
-                      idx === 0 ? (featuredTile?.id ?? null) : null
-                    }
-                    onSelectTile={handleSelectGeneration}
-                    onRetryTile={handleRetryTile}
-                  />
-                  {idx < shots.length - 1 && <ShotDivider />}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
+            ) : shots.length === 0 ? (
+              /* Pre-render beats: the first frame (or its pending/failed state)
+               owns the canvas — see CONTEXT.md, "First frame". */
+              <FrameStage startFrame={domain.startFrame} prompt={prompt} />
+            ) : FEATURES.SPACE_LINEAGE ? (
+              // The space (M5, ADR-0012/0013): the session's takes as a lineage
+              // network. Off by default; replaces the shots grid when enabled.
+              <SpaceViewport liveNodeId={heroGeneration?.id ?? null}>
+                <TheSpace
+                  nodes={spaceNodes}
+                  liveNodeId={heroGeneration?.id ?? null}
+                  onSelectNode={handleSelectSpaceNode}
+                  renderNodeMenu={renderSpaceNodeMenu}
+                />
+              </SpaceViewport>
+            ) : (
+              <div className="mx-auto flex max-w-[1280px] flex-col gap-6">
+                {shots.map((shot, idx) => (
+                  <React.Fragment key={shot.id}>
+                    <ShotRow
+                      shot={shot}
+                      now={renderedAt}
+                      layout={idx === 0 ? "featured" : "compact"}
+                      featuredTileId={
+                        idx === 0 ? (featuredTile?.id ?? null) : null
+                      }
+                      onSelectTile={handleSelectGeneration}
+                      onRetryTile={handleRetryTile}
+                    />
+                    {idx < shots.length - 1 && <ShotDivider />}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
 
-          <CanvasPromptBar
-            surfaceProps={surfaceProps}
-            chromeSlot={chromeSlot}
-            yourWordsSlot={yourWordsSlot}
-            onContinueScene={handleContinueScene}
-            isPreWork={isPreWork}
-            footerSlot={starterPillsSlot}
-          />
+            <CanvasPromptBar
+              surfaceProps={surfaceProps}
+              chromeSlot={chromeSlot}
+              yourWordsSlot={yourWordsSlot}
+              onContinueScene={handleContinueScene}
+              isPreWork={isPreWork}
+              footerSlot={starterPillsSlot}
+            />
+          </div>
         </div>
-      </div>
 
-      {viewingId ? (
-        <GenerationPopover
-          generations={galleryGenerations}
-          activeId={viewingId}
-          onChange={setViewingId}
-          onClose={() => setViewingId(null)}
-          onReuse={handleReuse}
-          onToggleFavorite={onToggleGenerationFavorite}
-        />
-      ) : null}
-
-      {FEATURES.CONVERGENCE_UI && domain.startFrame ? (
-        <Suspense fallback={null}>
-          <CameraMotionModal
-            isOpen={showCameraMotionModal}
-            onClose={() => setShowCameraMotionModal(false)}
-            imageUrl={domain.startFrame.url}
-            imageStoragePath={domain.startFrame.storagePath ?? null}
-            imageAssetId={domain.startFrame.assetId ?? null}
-            initialSelection={domain.cameraMotion}
-            onSelect={handleCameraMotionSelect}
+        {viewingId ? (
+          <GenerationPopover
+            generations={galleryGenerations}
+            activeId={viewingId}
+            onChange={setViewingId}
+            onClose={() => setViewingId(null)}
+            onReuse={handleReuse}
+            onToggleFavorite={onToggleGenerationFavorite}
           />
-        </Suspense>
-      ) : null}
+        ) : null}
+
+        {FEATURES.CONVERGENCE_UI && domain.startFrame ? (
+          <Suspense fallback={null}>
+            <CameraMotionModal
+              isOpen={showCameraMotionModal}
+              onClose={() => setShowCameraMotionModal(false)}
+              imageUrl={domain.startFrame.url}
+              imageStoragePath={domain.startFrame.storagePath ?? null}
+              imageAssetId={domain.startFrame.assetId ?? null}
+              initialSelection={domain.cameraMotion}
+              onSelect={handleCameraMotionSelect}
+            />
+          </Suspense>
+        ) : null}
+      </div>
     </div>
   );
 }

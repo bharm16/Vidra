@@ -97,6 +97,7 @@ vi.mock(
 vi.mock("../components/WorkspaceTopBar", () => ({
   WorkspaceTopBar: () => <header role="banner">topbar</header>,
 }));
+vi.mock("@/components/navigation/NavRail", () => ({ NavRail: () => null }));
 
 // CanvasSettingsRow depends on GenerationControlsContext + CreditBalanceContext
 // which this layout test doesn't provide; stub it to keep the test focused on

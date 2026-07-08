@@ -108,6 +108,7 @@ vi.mock(
 vi.mock("../components/WorkspaceTopBar", () => ({
   WorkspaceTopBar: () => <header role="banner">topbar</header>,
 }));
+vi.mock("@/components/navigation/NavRail", () => ({ NavRail: () => null }));
 
 vi.mock("@/features/prompt-optimizer/components/GenerationPopover", () => ({
   GenerationPopover: () => null,
