@@ -1,8 +1,27 @@
 # Vidra rebuild — status and pickup point
 
-_Last updated: 2026-07-06. This is the entry document for the workspace rebuild. A fresh
-session should read this, then ADR-0010 → 0011 → 0012 → 0013, then the glossary terms in
-[CONTEXT.md](../CONTEXT.md) (the space, the input, the player, the page, Take, Keep)._
+_Last updated: 2026-07-08._
+
+> **⚠️ 2026-07-08 — DESIGN-HANDOFF REALIGNMENT. Read
+> [ADR-0014](adr/0014-the-design-handoff-is-the-authoritative-visual-spec.md) FIRST.**
+> M1–M8 implemented FUNCTIONALITY against the existing design system, but the authoritative
+> high-fidelity VISUAL design lives in **`design_handoff_vidra/`** (repo root, 9 screens) and
+> was never coded — and the site-scope text had diverged from it (D7's "no rail / top-bar
+> cluster" vs. the design's persistent nav rail). ADR-0014 makes the handoff the visual+chrome
+> source of truth (handoff wins on conflicts). Active work is now **rebuilding the screens to
+> `design_handoff_vidra/`**: the design-language **foundation is landed** (tokens: Space
+> Grotesk/Mono, `#5b6cff` accent, `#0a0b0e` bg — commit `13ef860a`); next = atmosphere
+> primitives → Anchor empty state → nav rail → workspace → Library/Account/Auth/Public-Clip/
+> Docs. Fresh-session brief: `/private/tmp/vidra-rebuild-handoff-M8-onward.md` (rewritten for
+> the design rebuild). The M1–M8 entries below are functional history — their VISUALS are being
+> redone; their salvageable logic (tool-rail deletion, share server endpoints, docs content) is
+> kept.
+
+_This is the entry document for the workspace rebuild. A fresh session should read
+[ADR-0014](adr/0014-the-design-handoff-is-the-authoritative-visual-spec.md) +
+`design_handoff_vidra/README.md`, then this, then ADR-0010 → 0011 → 0012 → 0013 (for
+behavior), then the glossary terms in [CONTEXT.md](../CONTEXT.md) (the space, the input, the
+player, the page, Take, Keep)._
 
 ## What this program is
 
