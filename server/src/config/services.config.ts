@@ -14,7 +14,6 @@ import { registerCreditServices } from "./services/credit.services.ts";
 import { registerVideoJobServices } from "./services/video-jobs.services.ts";
 import { registerReplayServices } from "./services/replay.services.ts";
 import { registerLLMServices } from "./services/llm.services.ts";
-import { registerI2VServices } from "./services/i2v.services.ts";
 import { registerSpanLabelingServices } from "./services/span-labeling.services.ts";
 import { registerEnhancementServices } from "./services/enhancement.services.ts";
 import { registerOptimizationServices } from "./services/optimization.services.ts";
@@ -53,8 +52,6 @@ export async function configureServices(): Promise<DIContainer> {
   // (aiService in llm.services, image preview provider in image-generation).
   registerReplayServices(container);
   registerLLMServices(container);
-  // I2V motion ideas — depends on aiService + imageObservationService
-  registerI2VServices(container);
   registerSpanLabelingServices(container);
   registerEnhancementServices(container);
   registerOptimizationServices(container);

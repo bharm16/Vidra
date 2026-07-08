@@ -25,7 +25,6 @@ import { createAssetRoutes } from "./asset.routes";
 import { createConsistentGenerationRoutes } from "./consistentGeneration.routes";
 import { createReferenceImagesRoutes } from "./reference-images.routes";
 import { createImageObservationRoutes } from "./image-observation.routes";
-import { createMotionIdeasRoutes } from "./i2v/motionIdeas.routes";
 import { createContinuityRoutes } from "./continuity.routes";
 import { createSessionRoutes } from "./sessions.routes";
 import {
@@ -38,7 +37,6 @@ import type { AssetService } from "@services/asset/AssetService";
 import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
 import type { UserCreditService } from "@services/credits/UserCreditService";
 import type { ImageObservationService } from "@services/image-observation";
-import type { MotionIdeaService } from "@services/i2v-motion-ideas/MotionIdeaService";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
 import type { SessionService } from "@services/sessions/SessionService";
@@ -50,7 +48,6 @@ interface ApiServices extends OptimizeServices, EnhancementServices {
   userCreditService?: UserCreditService;
   referenceImageRepository?: ReferenceImageStorePort | null;
   imageObservationService?: ImageObservationService | null;
-  motionIdeaService?: MotionIdeaService | null;
   continuitySessionService?: ContinuitySessionService | null;
   modelIntelligenceService?: ModelIntelligenceService | null;
   modelIntelligenceMetrics?: ModelIntelligenceRouteMetrics;
@@ -77,7 +74,6 @@ export function createAPIRoutes(services: ApiServices): Router {
     userCreditService,
     referenceImageRepository,
     imageObservationService,
-    motionIdeaService,
     continuitySessionService,
     modelIntelligenceService,
     modelIntelligenceMetrics,
@@ -121,10 +117,6 @@ export function createAPIRoutes(services: ApiServices): Router {
 
   if (imageObservationService) {
     router.use("/", createImageObservationRoutes(imageObservationService));
-  }
-
-  if (motionIdeaService) {
-    router.use("/", createMotionIdeasRoutes(motionIdeaService));
   }
 
   if (consistentVideoService) {

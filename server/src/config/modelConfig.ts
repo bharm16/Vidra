@@ -491,20 +491,6 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
   },
 
   /**
-   * Generate motion idea phrases from an image observation (I2V).
-   * Fast model favored for short JSON outputs.
-   */
-  i2v_motion_ideas: {
-    client: process.env.MOTION_IDEAS_PROVIDER || "groq",
-    model: process.env.MOTION_IDEAS_MODEL || "llama-3.3-70b-versatile",
-    temperature: 0.4,
-    maxTokens: 200,
-    timeout: 15000,
-    responseFormat: "json_object",
-    useSeed: false,
-  },
-
-  /**
    * Role classification for spans
    * Temperature 0.0 for deterministic classification
    */

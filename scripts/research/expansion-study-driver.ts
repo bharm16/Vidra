@@ -25,7 +25,6 @@ import { fileURLToPath } from "url";
 
 import type { PromptOptimizationService } from "../../server/src/services/prompt-optimization/PromptOptimizationService.ts";
 import type { ImageGenerationService } from "../../server/src/services/image-generation/ImageGenerationService.ts";
-import type { MotionIdeaService } from "../../server/src/services/i2v-motion-ideas/MotionIdeaService.ts";
 import type { VideoGenerationService } from "../../server/src/services/video-generation/VideoGenerationService.ts";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -50,8 +49,6 @@ interface ArmResult {
   framePrompt: string;
   frameUrl: string;
   motionPrompt: string;
-  motionIdeas: string[];
-  observationUsedFastPath: boolean;
   videoUrl?: string;
   stageDurationsMs: Record<string, number>;
 }
@@ -124,7 +121,6 @@ async function runArm(
   services: {
     promptOptimizationService: PromptOptimizationService;
     imageGenerationService: ImageGenerationService;
-    motionIdeaService: MotionIdeaService;
     videoGenerationService: VideoGenerationService;
   },
   skipRender: boolean,
@@ -160,17 +156,11 @@ async function runArm(
   const frameUrl = frame.providerUrl ?? frame.imageUrl;
   console.log(`\n[FIRST FRAME] ${frameUrl}`);
 
-  // Stage 3 — motion. The first idea is always taken (fixed script: no
-  // re-rolls, no facilitator selection).
-  const motion = await timed("motion", durations, () =>
-    services.motionIdeaService.generate({
-      image: frameUrl,
-      sourcePrompt: framePrompt,
-    }),
-  );
-  const motionPrompt = motion.ideas[0] ?? "subtle natural movement";
-  console.log(`\n[MOTION IDEAS] ${JSON.stringify(motion.ideas)}`);
-  console.log(`[MOTION PROMPT] ${motionPrompt} (fixed rule: first idea)`);
+  // Stage 3 — motion. The i2v-motion-ideas service was removed (ADR-0011 D6:
+  // no standalone motion surface), so the study uses one fixed motion prompt —
+  // identical across both arms, keeping expansion the only variable.
+  const motionPrompt = "subtle natural movement";
+  console.log(`\n[MOTION PROMPT] ${motionPrompt} (fixed)`);
 
   // Stage 4 — render.
   let videoUrl: string | undefined;
@@ -194,8 +184,6 @@ async function runArm(
     framePrompt,
     frameUrl,
     motionPrompt,
-    motionIdeas: motion.ideas,
-    observationUsedFastPath: motion.observationUsedFastPath,
     stageDurationsMs: durations,
   };
   if (videoUrl !== undefined) {
@@ -224,8 +212,6 @@ async function main(): Promise<void> {
     imageGenerationService: container.resolve<ImageGenerationService>(
       "imageGenerationService",
     ),
-    motionIdeaService:
-      container.resolve<MotionIdeaService>("motionIdeaService"),
     videoGenerationService: container.resolve<VideoGenerationService>(
       "videoGenerationService",
     ),
