@@ -363,12 +363,6 @@ export const createImageGenerateHandler =
           ...(normalizedOutputQuality !== undefined
             ? { outputQuality: normalizedOutputQuality }
             : {}),
-          // Truth (ADR-0010 / M2b D3): the golden-path draft picture never
-          // hidden-rewrites the prompt — the Gemini transformer leaves the
-          // golden path, so the picture model receives the creator's text
-          // verbatim. (Slot-render for unedited text is a follow-up needing
-          // client-sent slots; storyboard already disables the transformer.)
-          disablePromptTransformation: true,
         },
       );
 

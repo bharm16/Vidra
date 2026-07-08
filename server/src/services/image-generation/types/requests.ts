@@ -18,5 +18,4 @@ export interface ImageGenerationOptions {
   seed?: number;
   speedMode?: ImagePreviewSpeedMode;
   outputQuality?: number;
-  disablePromptTransformation?: boolean;
 }

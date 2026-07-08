@@ -24,7 +24,6 @@ export interface ImagePreviewRequest {
   seed?: number;
   speedMode?: ImagePreviewSpeedMode;
   outputQuality?: number;
-  disablePromptTransformation?: boolean;
 }
 
 export interface ImagePreviewResult {

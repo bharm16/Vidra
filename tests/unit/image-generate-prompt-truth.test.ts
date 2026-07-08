@@ -25,7 +25,7 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
     vi.clearAllMocks();
   });
 
-  it("disables the LLM prompt transformer on the golden-path draft picture", async () => {
+  it("sends the golden-path draft prompt to the image service verbatim", async () => {
     const generatePreviewMock = vi.fn(
       async (_prompt: string, _options: Record<string, unknown>) => ({
         imageUrl: "https://images.example.com/generated.webp",
@@ -46,9 +46,9 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
 
     const app = createApp(handler);
 
-    // A video-shaped prompt is exactly what the old transformer would have
-    // LLM-rewritten. ADR-0010 truth: the picture model receives it verbatim;
-    // the Gemini transformer leaves the golden path.
+    // A video-shaped prompt is exactly what the old Gemini transformer would
+    // have LLM-rewritten. ADR-0010 truth: the picture model receives it
+    // verbatim — the rewrite path no longer exists.
     const videoShapedPrompt = "A runner at dawn, camera pans left, 6 seconds";
     const response = await runSupertestOrSkip(() =>
       request(app)
@@ -59,8 +59,5 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
 
     expect(generatePreviewMock).toHaveBeenCalledTimes(1);
     expect(generatePreviewMock.mock.calls[0]?.[0]).toBe(videoShapedPrompt);
-    expect(generatePreviewMock.mock.calls[0]?.[1]).toMatchObject({
-      disablePromptTransformation: true,
-    });
   });
 });

@@ -276,7 +276,6 @@ describe("ImageGenerationService", () => {
         seed: 12,
         speedMode: "Juiced",
         outputQuality: 77,
-        disablePromptTransformation: true,
       });
 
       expect(provider.generatePreview).toHaveBeenCalledWith({
@@ -287,7 +286,6 @@ describe("ImageGenerationService", () => {
         seed: 12,
         speedMode: "Juiced",
         outputQuality: 77,
-        disablePromptTransformation: true,
       });
     });
 

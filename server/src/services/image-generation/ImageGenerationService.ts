@@ -88,10 +88,6 @@ export class ImageGenerationService {
           request.speedMode = options.speedMode;
         if (options.outputQuality !== undefined)
           request.outputQuality = options.outputQuality;
-        if (options.disablePromptTransformation !== undefined) {
-          request.disablePromptTransformation =
-            options.disablePromptTransformation;
-        }
 
         const result = await provider.generatePreview(request);
 

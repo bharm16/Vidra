@@ -175,7 +175,6 @@ export class StoryboardPreviewService {
           ...(referenceImageUrl ? { inputImageUrl: referenceImageUrl } : {}),
           ...(options.speedMode ? { speedMode: options.speedMode } : {}),
           userId: options.userId,
-          disablePromptTransformation: true,
         },
       );
     } catch (error) {
@@ -241,7 +240,6 @@ export class StoryboardPreviewService {
               ...(options.speedMode ? { speedMode: options.speedMode } : {}),
               userId: options.userId,
               ...(editSeed !== undefined ? { seed: editSeed } : {}),
-              disablePromptTransformation: true,
             },
           );
 

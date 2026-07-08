@@ -469,7 +469,6 @@ describe("StoryboardPreviewService", () => {
       const firstDelta = deltas[0];
 
       expect(baseCall?.[1]?.provider).toBe(BASE_PROVIDER);
-      expect(baseCall?.[1]?.disablePromptTransformation).toBe(true);
       expect(firstDelta).toBeDefined();
       if (firstDelta === undefined) {
         throw new Error("expected first storyboard delta");
