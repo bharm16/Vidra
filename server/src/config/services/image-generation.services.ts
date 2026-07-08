@@ -4,7 +4,6 @@ import type { LLMClient } from "@clients/LLMClient";
 import { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import { ReplicateFluxKontextFastProvider } from "@services/image-generation/providers/ReplicateFluxKontextFastProvider";
 import { ReplicateFluxSchnellProvider } from "@services/image-generation/providers/ReplicateFluxSchnellProvider";
-import { VideoToImagePromptTransformer } from "@services/image-generation/providers/VideoToImagePromptTransformer";
 import type { ImagePreviewProvider } from "@services/image-generation/providers/types";
 import type { ImageAssetStore } from "@services/image-generation/storage";
 import {
@@ -13,35 +12,12 @@ import {
 } from "@services/image-generation/providers/registry";
 import { StoryboardFramePlanner } from "@services/image-generation/storyboard/StoryboardFramePlanner";
 import { StoryboardPreviewService } from "@services/image-generation/storyboard/StoryboardPreviewService";
-import { VideoPromptDetectionService } from "@services/video-prompt-analysis/services/detection/VideoPromptDetectionService";
 import type { CassetteStore } from "@server/replay/CassetteStore";
 import { RecordReplayImagePreviewProvider } from "@server/replay/RecordReplayImagePreviewProvider";
 import { resolveAllFlags } from "../feature-flags.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerImageGenerationServices(container: DIContainer): void {
-  container.register(
-    "videoPromptDetector",
-    () => new VideoPromptDetectionService(),
-    [],
-  );
-
-  container.register(
-    "videoToImageTransformer",
-    (geminiClient: LLMClient | null) => {
-      if (!geminiClient) {
-        logger.warn(
-          "Gemini client not available, video-to-image transformation disabled",
-        );
-        return null;
-      }
-      return new VideoToImagePromptTransformer({
-        llmClient: geminiClient,
-      });
-    },
-    ["geminiClient"],
-  );
-
   container.register(
     "storyboardFramePlanner",
     (geminiClient: LLMClient | null, openAIClient: LLMClient | null) => {
@@ -66,18 +42,11 @@ export function registerImageGenerationServices(container: DIContainer): void {
 
   container.register(
     "replicateFluxSchnellProvider",
-    (
-      transformer: VideoToImagePromptTransformer | null,
-      videoPromptDetector: VideoPromptDetectionService,
-      config: ServiceConfig,
-      replayCassetteStore: CassetteStore | null,
-    ) => {
+    (config: ServiceConfig, replayCassetteStore: CassetteStore | null) => {
       const apiToken = config.replicate.apiToken;
       const liveProvider = apiToken
         ? new ReplicateFluxSchnellProvider({
             apiToken,
-            promptTransformer: transformer,
-            videoPromptDetector,
           })
         : null;
 
@@ -105,21 +74,12 @@ export function registerImageGenerationServices(container: DIContainer): void {
       }
       return liveProvider;
     },
-    [
-      "videoToImageTransformer",
-      "videoPromptDetector",
-      "config",
-      "replayCassetteStore",
-    ],
+    ["config", "replayCassetteStore"],
   );
 
   container.register(
     "replicateFluxKontextFastProvider",
-    (
-      transformer: VideoToImagePromptTransformer | null,
-      videoPromptDetector: VideoPromptDetectionService,
-      config: ServiceConfig,
-    ) => {
+    (config: ServiceConfig) => {
       const apiToken = config.replicate.apiToken;
       if (!apiToken) {
         logger.warn(
@@ -129,11 +89,9 @@ export function registerImageGenerationServices(container: DIContainer): void {
       }
       return new ReplicateFluxKontextFastProvider({
         apiToken,
-        promptTransformer: transformer,
-        videoPromptDetector,
       });
     },
-    ["videoToImageTransformer", "videoPromptDetector", "config"],
+    ["config"],
   );
 
   container.register(

@@ -15,7 +15,6 @@ import type {
   ImagePreviewResult,
   ImagePreviewSpeedMode,
 } from "./types";
-import { VideoToImagePromptTransformer } from "./VideoToImagePromptTransformer";
 import {
   parseRetryAfterMs,
   parseReplicateErrorDetail,
@@ -127,14 +126,8 @@ const normalizeSeed = (value?: number): number | undefined => {
   return Math.round(value);
 };
 
-interface VideoPromptDetector {
-  isVideoPrompt(prompt: string | null | undefined): boolean;
-}
-
 export interface ReplicateFluxKontextFastProviderOptions {
   apiToken?: string;
-  promptTransformer?: VideoToImagePromptTransformer | null;
-  videoPromptDetector?: VideoPromptDetector;
 }
 
 export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
@@ -143,8 +136,6 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
   public readonly requiresInputImage = true;
 
   private readonly replicate: ReplicateClient | null;
-  private readonly promptTransformer: VideoToImagePromptTransformer | null;
-  private readonly videoPromptDetector: VideoPromptDetector;
   private readonly log = logger.child({
     service: "ReplicateFluxKontextFastProvider",
   });
@@ -156,14 +147,6 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
           auth: apiToken,
         }) as ReplicateClient)
       : null;
-
-    this.promptTransformer = options.promptTransformer ?? null;
-    if (!options.videoPromptDetector) {
-      throw new Error(
-        "ReplicateFluxKontextFastProvider requires a videoPromptDetector",
-      );
-    }
-    this.videoPromptDetector = options.videoPromptDetector;
   }
 
   public isAvailable(): boolean {
@@ -203,32 +186,7 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
     );
     const cleanedPrompt = stripPreviewSections(trimmedPrompt);
 
-    let promptForModel = cleanedPrompt;
-    let promptWasTransformed = false;
-
-    const disablePromptTransformation =
-      request.disablePromptTransformation === true;
-    if (
-      !disablePromptTransformation &&
-      this.promptTransformer &&
-      this.shouldTransformPrompt(cleanedPrompt)
-    ) {
-      try {
-        promptForModel = await this.promptTransformer.transform(cleanedPrompt);
-        promptWasTransformed = promptForModel !== cleanedPrompt;
-      } catch (error) {
-        this.log.warn("Prompt transformation failed, using original", {
-          error: error instanceof Error ? error.message : String(error),
-          userId,
-        });
-      }
-    } else if (this.promptTransformer) {
-      this.log.debug("Skipping video-to-image prompt transformation", {
-        promptPreview: cleanedPrompt.substring(0, 100),
-        userId,
-        disabled: disablePromptTransformation,
-      });
-    }
+    const promptForModel = cleanedPrompt;
 
     const speedMode = request.speedMode
       ? SPEED_MODE_MAP[request.speedMode]
@@ -238,7 +196,6 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
 
     this.log.info("Generating image preview", {
       prompt: promptForModel.substring(0, 100),
-      promptWasTransformed,
       aspectRatio,
       speedMode,
       outputQuality,
@@ -358,7 +315,6 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
       this.log.info("Image preview generated successfully", {
         imageUrl: imageUrl.substring(0, 100),
         duration: durationMs,
-        promptWasTransformed,
         userId,
       });
 
@@ -402,7 +358,6 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
           parsedError,
           statusCode,
           prompt: promptForModel.substring(0, 100),
-          promptWasTransformed,
           userId,
         },
       );
@@ -464,21 +419,5 @@ export class ReplicateFluxKontextFastProvider implements ImagePreviewProvider {
       return;
     }
     await sleepForMs(ms);
-  }
-
-  private shouldTransformPrompt(prompt: string): boolean {
-    if (this.videoPromptDetector.isVideoPrompt(prompt)) {
-      return true;
-    }
-
-    const normalized = prompt.toLowerCase();
-    const temporalPatterns: RegExp[] = [
-      /\b(?:pan|pans|panning|tilt|tilts|tilting|dolly|dollies|dolly\s*(?:in|out)|push\s*(?:in|out)|pull\s*(?:in|out)|zoom|zooms|zooming|crane|cranes|crane\s*(?:up|down)|tracking|truck|trucking|orbit|arc|sweep|whip\s*pan|rack\s*focus|focus\s*pull)\b/i,
-      /\b(?:cut\s*to|fade\s*(?:in|out)|dissolve|montage|sequence|storyboard|shot\s*\d+)\b/i,
-      /\b(?:duration|seconds?|secs?|fps|frame\s*rate|time-?lapse|timelapse)\b/i,
-      /\b\d+(?:\.\d+)?\s*(?:s|sec|secs|seconds)\b/i,
-    ];
-
-    return temporalPatterns.some((pattern) => pattern.test(normalized));
   }
 }

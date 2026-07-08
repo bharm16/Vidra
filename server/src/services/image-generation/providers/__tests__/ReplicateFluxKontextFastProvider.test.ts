@@ -9,8 +9,6 @@ import {
 import { ReplicateFluxKontextFastProvider } from "../ReplicateFluxKontextFastProvider";
 import type { ImagePreviewRequest } from "../types";
 
-const mockDetector = { isVideoPrompt: vi.fn(() => false) };
-
 type PredictionStatus =
   | "starting"
   | "processing"
@@ -73,9 +71,7 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("throws when the provider is not configured", async () => {
       const previousToken = process.env.REPLICATE_API_TOKEN;
       delete process.env.REPLICATE_API_TOKEN;
-      const provider = new ReplicateFluxKontextFastProvider({
-        videoPromptDetector: mockDetector,
-      });
+      const provider = new ReplicateFluxKontextFastProvider({});
 
       const request: ImagePreviewRequest = {
         prompt: "test",
@@ -95,7 +91,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("rejects requests without inputImageUrl", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       const request: ImagePreviewRequest = {
         prompt: "valid prompt",
@@ -111,7 +106,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("maps rate limit errors to status 429 with parsed detail", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       const sleepSpy = vi
         .spyOn(provider as any, "sleep")
@@ -136,7 +130,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("throws when Replicate returns an invalid output payload", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -160,7 +153,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("defaults aspect ratio to match_input_image when an input image is provided", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -184,7 +176,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("normalizes output quality and seeds before sending to Replicate", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -211,7 +202,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("retries create prediction on rate limits before succeeding", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       const sleepSpy = vi
         .spyOn(provider as any, "sleep")
@@ -245,7 +235,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
     it("uses speed mode mapping and chaining input images in requests", async () => {
       const provider = new ReplicateFluxKontextFastProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -272,6 +261,30 @@ describe("ReplicateFluxKontextFastProvider", () => {
       );
       expect(result.imageUrl).toBe("https://images.example.com/output.webp");
       expect(result.model).toBe("prunaai/flux-kontext-fast");
+    });
+  });
+
+  describe("prompt truth (ADR-0010)", () => {
+    it("sends a video-shaped prompt to the model verbatim with no transformer wired", async () => {
+      const provider = new ReplicateFluxKontextFastProvider({
+        apiToken: "token",
+      });
+      createPredictionMock.mockResolvedValueOnce({
+        id: "pred-1",
+        status: "succeeded",
+        output: "https://images.example.com/output.webp",
+      });
+
+      const videoShapedPrompt = "A runner at dawn, camera pans left, 6 seconds";
+      await provider.generatePreview({
+        prompt: videoShapedPrompt,
+        userId: "user-1",
+        inputImageUrl: "https://images.example.com/base.webp",
+      });
+
+      const call = createPredictionMock.mock
+        .calls[0]?.[0] as CreatePredictionRequest;
+      expect(call.input.prompt).toBe(videoShapedPrompt);
     });
   });
 });

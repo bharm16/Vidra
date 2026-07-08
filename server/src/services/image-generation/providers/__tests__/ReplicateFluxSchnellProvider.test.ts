@@ -7,12 +7,7 @@ import {
   type MockedFunction,
 } from "vitest";
 import { ReplicateFluxSchnellProvider } from "../ReplicateFluxSchnellProvider";
-import { LLMClient } from "@clients/LLMClient";
-import type { AIResponse } from "@interfaces/IAIClient";
 import type { ImagePreviewRequest } from "../types";
-import { VideoToImagePromptTransformer } from "../VideoToImagePromptTransformer";
-
-const mockDetector = { isVideoPrompt: vi.fn(() => false) };
 
 type PredictionStatus =
   | "starting"
@@ -73,9 +68,7 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("throws when the provider is not configured", async () => {
       const previousToken = process.env.REPLICATE_API_TOKEN;
       delete process.env.REPLICATE_API_TOKEN;
-      const provider = new ReplicateFluxSchnellProvider({
-        videoPromptDetector: mockDetector,
-      });
+      const provider = new ReplicateFluxSchnellProvider({});
 
       const request: ImagePreviewRequest = { prompt: "test", userId: "user-1" };
 
@@ -91,7 +84,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("rejects empty prompts before hitting the API", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       const request: ImagePreviewRequest = { prompt: "   ", userId: "user-1" };
 
@@ -103,7 +95,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("maps insufficient credit errors to status 402 with parsed details", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockRejectedValueOnce(
         new Error('402 {"detail": "Out of credits"}'),
@@ -123,7 +114,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("throws when the Replicate response contains no output", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -144,7 +134,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("maps rate-limit errors to status 429 with parsed details", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       const sleepSpy = vi.spyOn(
         provider as unknown as { sleep: (ms: number) => Promise<void> },
@@ -173,7 +162,6 @@ describe("ReplicateFluxSchnellProvider", () => {
       async (status, predictionError) => {
         const provider = new ReplicateFluxSchnellProvider({
           apiToken: "token",
-          videoPromptDetector: mockDetector,
         });
         const sleepSpy = vi.spyOn(
           provider as unknown as { sleep: (ms: number) => Promise<void> },
@@ -211,7 +199,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("defaults invalid aspect ratios to 16:9", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -235,7 +222,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("passes through supported aspect ratios after trimming", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -254,29 +240,9 @@ describe("ReplicateFluxSchnellProvider", () => {
       expect(call.input.aspect_ratio).toBe("21:9");
     });
 
-    it("strips preview sections and skips prompt transformation when disabled", async () => {
-      const adapter = {
-        complete: vi.fn() as MockedFunction<
-          (
-            prompt: string,
-            options?: Record<string, unknown>,
-          ) => Promise<AIResponse>
-        >,
-      };
-      const llmClient = new LLMClient({
-        adapter,
-        providerName: "test-llm",
-        defaultTimeout: 1000,
-      });
-      const promptTransformer = new VideoToImagePromptTransformer({
-        llmClient,
-      });
-      vi.spyOn(promptTransformer, "transform").mockResolvedValue("transformed");
-      mockDetector.isVideoPrompt.mockReturnValue(true);
+    it("strips preview sections before sending the prompt to the model", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        promptTransformer,
-        videoPromptDetector: mockDetector,
       });
 
       createPredictionMock.mockResolvedValueOnce({
@@ -288,7 +254,6 @@ describe("ReplicateFluxSchnellProvider", () => {
       const request: ImagePreviewRequest = {
         prompt: "Cinematic shot of a skyline.\n\n**Technical specs**\nISO 200",
         userId: "user-1",
-        disablePromptTransformation: true,
       };
 
       await provider.generatePreview(request);
@@ -298,56 +263,9 @@ describe("ReplicateFluxSchnellProvider", () => {
       expect(call.input.prompt).toBe("Cinematic shot of a skyline.");
     });
 
-    it("transforms prompts for video-like input when transformation is enabled", async () => {
-      const adapter = {
-        complete: vi.fn() as MockedFunction<
-          (
-            prompt: string,
-            options?: Record<string, unknown>,
-          ) => Promise<AIResponse>
-        >,
-      };
-      const llmClient = new LLMClient({
-        adapter,
-        providerName: "test-llm",
-        defaultTimeout: 1000,
-      });
-      const promptTransformer = new VideoToImagePromptTransformer({
-        llmClient,
-      });
-      const transformSpy = vi
-        .spyOn(promptTransformer, "transform")
-        .mockResolvedValue("still frame of skyline at dusk");
-      mockDetector.isVideoPrompt.mockReturnValue(true);
-      const provider = new ReplicateFluxSchnellProvider({
-        apiToken: "token",
-        promptTransformer,
-        videoPromptDetector: mockDetector,
-      });
-
-      createPredictionMock.mockResolvedValueOnce({
-        id: "pred-1",
-        status: "succeeded",
-        output: "https://images.example.com/output.webp",
-      });
-
-      await provider.generatePreview({
-        prompt: "Slow pan over skyline at dusk",
-        userId: "user-1",
-      });
-
-      const call = createPredictionMock.mock
-        .calls[0]?.[0] as CreatePredictionRequest;
-      expect(transformSpy).toHaveBeenCalledWith(
-        "Slow pan over skyline at dusk",
-      );
-      expect(call.input.prompt).toBe("still frame of skyline at dusk");
-    });
-
     it("retries create prediction on rate limits before succeeding", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       const sleepSpy = vi
         .spyOn(provider as any, "sleep")
@@ -381,7 +299,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("extracts the image URL from array outputs", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -404,7 +321,6 @@ describe("ReplicateFluxSchnellProvider", () => {
     it("returns the image URL when the output is a string", async () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
-        videoPromptDetector: mockDetector,
       });
       createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
@@ -421,6 +337,31 @@ describe("ReplicateFluxSchnellProvider", () => {
 
       expect(result.imageUrl).toBe("https://images.example.com/output.webp");
       expect(result.model).toBe("black-forest-labs/flux-schnell");
+    });
+  });
+
+  describe("prompt truth (ADR-0010)", () => {
+    it("sends a video-shaped prompt to the model verbatim with no transformer wired", async () => {
+      // ADR-0010: the first-frame provider needs nothing but an API token and
+      // never LLM-rewrites the creator's text. A video-shaped prompt — exactly
+      // what the old Gemini transformer would have rewritten — reaches Replicate
+      // unchanged (after preview-section stripping, which this prompt has none of).
+      const provider = new ReplicateFluxSchnellProvider({ apiToken: "token" });
+      createPredictionMock.mockResolvedValueOnce({
+        id: "pred-1",
+        status: "succeeded",
+        output: "https://images.example.com/output.webp",
+      });
+
+      const videoShapedPrompt = "A runner at dawn, camera pans left, 6 seconds";
+      await provider.generatePreview({
+        prompt: videoShapedPrompt,
+        userId: "user-1",
+      });
+
+      const call = createPredictionMock.mock
+        .calls[0]?.[0] as CreatePredictionRequest;
+      expect(call.input.prompt).toBe(videoShapedPrompt);
     });
   });
 });
