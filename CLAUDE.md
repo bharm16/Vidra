@@ -179,7 +179,7 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 | `/api/capabilities`                                | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
 | `/api/continuity/*`                                | `continuity.routes.ts`                    | `features/continuity/api/`                          |
 | `/api/model-intelligence/*`                        | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
-| `POST /api/frame-verification`                     | `frame-verification.routes.ts`           | `features/frame-verification/api/`                  |
+| `POST /api/frame-verification`                     | `frame-verification.routes.ts`            | `features/frame-verification/api/`                  |
 | `/api/sessions/*`                                  | `sessions.routes.ts`                      | (no dedicated client — uses ApiClient directly)     |
 | `/api/assets/*`                                    | `asset.routes.ts`                         | `features/assets/`                                  |
 | `/api/reference-images/*`                          | `reference-images.routes.ts`              | `features/reference-images/`                        |

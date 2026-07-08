@@ -11,18 +11,18 @@
  * store, key derivation, and seam decorators live in `server/src/replay/`.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 /** Bump when the cassette file layout changes incompatibly. */
 export const REPLAY_CASSETTE_FORMAT_VERSION = 1 as const;
 
 /** The golden-path surfaces a cassette can belong to (fixture organization). */
 export const REPLAY_SURFACES = [
-  'label-spans',
-  'suggestions',
-  'optimize',
-  'first-frame-preview',
-  'motion-ideas',
+  "label-spans",
+  "suggestions",
+  "optimize",
+  "first-frame-preview",
+  "motion-ideas",
 ] as const;
 
 export const ReplaySurfaceSchema = z.enum(REPLAY_SURFACES);
@@ -35,12 +35,12 @@ export type ReplaySurface = z.infer<typeof ReplaySurfaceSchema>;
 // what makes contract drift detectable.
 
 export const REPLAY_CONTRACT_NAMES = [
-  'span-labeling-payload',
-  'suggestions-payload',
-  'optimize-text',
-  'motion-ideas-payload',
-  'image-preview-result',
-  'llm-text',
+  "span-labeling-payload",
+  "suggestions-payload",
+  "optimize-text",
+  "motion-ideas-payload",
+  "image-preview-result",
+  "llm-text",
 ] as const;
 
 export const ReplayContractNameSchema = z.enum(REPLAY_CONTRACT_NAMES);
@@ -107,7 +107,7 @@ export const LlmTextReplayPayloadSchema = z.string().min(1);
  * - "text": validate the AIResponse.text string itself
  * - "object": validate the recorded response object directly (non-LLM seams)
  */
-export type ReplayPayloadEncoding = 'json' | 'text' | 'object';
+export type ReplayPayloadEncoding = "json" | "text" | "object";
 
 export interface ReplayContract {
   encoding: ReplayPayloadEncoding;
@@ -115,27 +115,27 @@ export interface ReplayContract {
 }
 
 export const REPLAY_CONTRACTS: Record<ReplayContractName, ReplayContract> = {
-  'span-labeling-payload': {
-    encoding: 'json',
+  "span-labeling-payload": {
+    encoding: "json",
     schema: SpanLabelingReplayPayloadSchema,
   },
-  'suggestions-payload': {
-    encoding: 'json',
+  "suggestions-payload": {
+    encoding: "json",
     schema: SuggestionsReplayPayloadSchema,
   },
-  'optimize-text': {
-    encoding: 'text',
+  "optimize-text": {
+    encoding: "text",
     schema: OptimizeTextReplayPayloadSchema,
   },
-  'motion-ideas-payload': {
-    encoding: 'json',
+  "motion-ideas-payload": {
+    encoding: "json",
     schema: MotionIdeasReplayPayloadSchema,
   },
-  'image-preview-result': {
-    encoding: 'object',
+  "image-preview-result": {
+    encoding: "object",
     schema: ImagePreviewResultReplayPayloadSchema,
   },
-  'llm-text': { encoding: 'text', schema: LlmTextReplayPayloadSchema },
+  "llm-text": { encoding: "text", schema: LlmTextReplayPayloadSchema },
 };
 
 // ─── Cassette entry + file envelope ──────────────────────────────────
@@ -168,16 +168,16 @@ const RecordedAiResponseSchema = z
   })
   .passthrough();
 
-export const ReplayCassetteEntrySchema = z.discriminatedUnion('seam', [
+export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
   z.object({
-    seam: z.literal('ai-model'),
+    seam: z.literal("ai-model"),
     key: z.string().min(1),
     contract: ReplayContractNameSchema,
     request: ReplayAiModelRequestSchema,
     response: RecordedAiResponseSchema,
   }),
   z.object({
-    seam: z.literal('image-preview'),
+    seam: z.literal("image-preview"),
     key: z.string().min(1),
     contract: ReplayContractNameSchema,
     request: ReplayImagePreviewRequestSchema,

@@ -19,55 +19,55 @@
  * server/src/replay/fixtures/<surface>/golden-path.json.
  */
 
-import 'dotenv/config';
-import type { AddressInfo } from 'node:net';
+import "dotenv/config";
+import type { AddressInfo } from "node:net";
 import {
   GOLDEN_SCENARIO,
   HTTP_SCENARIOS,
   PREVIEW_SCENARIO,
-} from './goldenScenarios.ts';
+} from "./goldenScenarios.ts";
 
 function assertEnv(name: string, expected?: string): void {
   const actual = process.env[name];
   if (!actual || (expected && actual !== expected)) {
     console.error(
-      `FATAL: ${name} must be set${expected ? ` to "${expected}"` : ''} (got "${actual ?? ''}"). ` +
-        `See the usage block at the top of this script.`
+      `FATAL: ${name} must be set${expected ? ` to "${expected}"` : ""} (got "${actual ?? ""}"). ` +
+        `See the usage block at the top of this script.`,
     );
     process.exit(2);
   }
 }
 
-assertEnv('REPLAY_MODE', 'record');
-assertEnv('NODE_ENV', 'test');
-assertEnv('API_KEY');
-if (process.env.SPAN_PROVIDER === 'gemini' || !process.env.SPAN_PROVIDER) {
+assertEnv("REPLAY_MODE", "record");
+assertEnv("NODE_ENV", "test");
+assertEnv("API_KEY");
+if (process.env.SPAN_PROVIDER === "gemini" || !process.env.SPAN_PROVIDER) {
   console.error(
-    'FATAL: SPAN_PROVIDER must name a non-Gemini provider (use qwen) — GCP is off-limits for recording.'
+    "FATAL: SPAN_PROVIDER must name a non-Gemini provider (use qwen) — GCP is off-limits for recording.",
   );
   process.exit(2);
 }
 
 const { configureServices, initializeServices } = await import(
-  '../../server/src/config/services.config.ts'
+  "../../server/src/config/services.config.ts"
 );
-const { createApp } = await import('../../server/src/app.ts');
+const { createApp } = await import("../../server/src/app.ts");
 
 const container = await configureServices();
 await initializeServices(container);
 
-const store = container.resolve('replayCassetteStore') as
-  | import('../../server/src/replay/CassetteStore.ts').CassetteStore
+const store = container.resolve("replayCassetteStore") as
+  | import("../../server/src/replay/CassetteStore.ts").CassetteStore
   | null;
 if (!store) {
-  console.error('FATAL: replayCassetteStore is null — REPLAY_MODE not active?');
+  console.error("FATAL: replayCassetteStore is null — REPLAY_MODE not active?");
   process.exit(2);
 }
 
 const app = createApp(container);
-const server = app.listen(0, '127.0.0.1');
+const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolveListen) =>
-  server.once('listening', () => resolveListen())
+  server.once("listening", () => resolveListen()),
 );
 const { port } = server.address() as AddressInfo;
 const baseUrl = `http://127.0.0.1:${port}`;
@@ -81,10 +81,10 @@ for (const scenario of HTTP_SCENARIOS) {
   const startedAt = Date.now();
   try {
     const response = await fetch(`${baseUrl}${scenario.path}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
-        'x-api-key': process.env.API_KEY as string,
+        "content-type": "application/json",
+        "x-api-key": process.env.API_KEY as string,
       },
       body: JSON.stringify(scenario.body),
       signal: AbortSignal.timeout(180_000),
@@ -93,12 +93,12 @@ for (const scenario of HTTP_SCENARIOS) {
     if (!response.ok) {
       failures += 1;
       console.error(
-        `✗ ${scenario.surface} returned ${response.status}: ${bodyText.slice(0, 500)}`
+        `✗ ${scenario.surface} returned ${response.status}: ${bodyText.slice(0, 500)}`,
       );
       continue;
     }
     console.log(
-      `✓ ${scenario.surface} ok in ${Date.now() - startedAt}ms (${bodyText.length} bytes)`
+      `✓ ${scenario.surface} ok in ${Date.now() - startedAt}ms (${bodyText.length} bytes)`,
     );
   } catch (error) {
     failures += 1;
@@ -111,17 +111,17 @@ for (const scenario of HTTP_SCENARIOS) {
 store.beginScenario(PREVIEW_SCENARIO.surface, GOLDEN_SCENARIO);
 console.log(`\n→ ${PREVIEW_SCENARIO.surface}: provider.generatePreview`);
 try {
-  const provider = container.resolve('replicateFluxSchnellProvider') as {
+  const provider = container.resolve("replicateFluxSchnellProvider") as {
     generatePreview: (request: unknown) => Promise<{ imageUrl: string }>;
   } | null;
   if (!provider) {
-    throw new Error('replicateFluxSchnellProvider is null (missing token?)');
+    throw new Error("replicateFluxSchnellProvider is null (missing token?)");
   }
   const result = await provider.generatePreview(PREVIEW_SCENARIO.request);
   console.log(`✓ first-frame-preview ok: ${result.imageUrl.slice(0, 80)}...`);
 } catch (error) {
   failures += 1;
-  console.error('✗ first-frame-preview failed:', error);
+  console.error("✗ first-frame-preview failed:", error);
 }
 
 if (failures > 0) {
@@ -131,7 +131,7 @@ if (failures > 0) {
 }
 
 const written = store.flush();
-console.log('\nCassettes written:');
+console.log("\nCassettes written:");
 for (const path of written) {
   console.log(`  ${path}`);
 }

@@ -1,13 +1,13 @@
-import { describe, expect, it, vi, type Mock } from 'vitest';
-import { ModelConfig } from '@config/modelConfig';
-import { LlmProviderCircuitManager } from '@llm/failover/LlmProviderCircuitManager';
+import { describe, expect, it, vi, type Mock } from "vitest";
+import { ModelConfig } from "@config/modelConfig";
+import { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import {
   AIClientError,
   type AIResponse,
   type IAIClient,
-} from '@interfaces/IAIClient';
-import type { LlmCallTelemetryService } from '@services/observability/LlmCallTelemetryService';
-import { AIModelService } from '../AIModelService';
+} from "@interfaces/IAIClient";
+import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
+import { AIModelService } from "../AIModelService";
 
 /**
  * Fault-injection coverage for health-based LLM provider failover.
@@ -20,7 +20,7 @@ import { AIModelService } from '../AIModelService';
  * registered client, so operations falling back to it are excluded).
  */
 
-const REGISTERED_PROVIDERS = ['openai', 'groq', 'qwen', 'gemini'] as const;
+const REGISTERED_PROVIDERS = ["openai", "groq", "qwen", "gemini"] as const;
 
 function isRegistered(provider: string | undefined): provider is string {
   return (
@@ -34,7 +34,7 @@ const VIABLE_FALLBACK_OPERATIONS = Object.entries(ModelConfig)
     ([, cfg]) =>
       isRegistered(cfg.client) &&
       isRegistered(cfg.fallbackTo) &&
-      cfg.fallbackTo !== cfg.client
+      cfg.fallbackTo !== cfg.client,
   )
   .map(([operation, cfg]) => ({
     operation,
@@ -77,10 +77,10 @@ function buildHarness({
   cooldownMs = 30_000,
 }: { threshold?: number; cooldownMs?: number } = {}) {
   const providers = {
-    openai: fakeProvider('openai'),
-    groq: fakeProvider('groq'),
-    qwen: fakeProvider('qwen'),
-    gemini: fakeProvider('gemini'),
+    openai: fakeProvider("openai"),
+    groq: fakeProvider("groq"),
+    qwen: fakeProvider("qwen"),
+    gemini: fakeProvider("gemini"),
   };
   const providersByName: Record<string, FakeProvider> = providers;
   const provider = (name: string): FakeProvider => {
@@ -123,29 +123,29 @@ function buildHarness({
   };
 }
 
-const PARAMS = { systemPrompt: 'system', userMessage: 'user' };
+const PARAMS = { systemPrompt: "system", userMessage: "user" };
 
-describe('viable fallback matrix derived from ModelConfig', () => {
-  it('covers the three active authoring surfaces', () => {
+describe("viable fallback matrix derived from ModelConfig", () => {
+  it("covers the three active authoring surfaces", () => {
     const operations = VIABLE_FALLBACK_OPERATIONS.map((v) => v.operation);
     // span labeling / enhancement / optimization respectively
-    expect(operations).toContain('span_labeling');
-    expect(operations).toContain('enhance_suggestions');
-    expect(operations).toContain('optimize_standard');
+    expect(operations).toContain("span_labeling");
+    expect(operations).toContain("enhance_suggestions");
+    expect(operations).toContain("optimize_standard");
   });
 
-  it('excludes operations whose fallback provider is not registered', () => {
+  it("excludes operations whose fallback provider is not registered", () => {
     const operations = VIABLE_FALLBACK_OPERATIONS.map((v) => v.operation);
     // llm_judge_video falls back to "anthropic", which the DI layer never
     // registers — there is no viable second provider for it.
-    expect(operations).not.toContain('llm_judge_video');
+    expect(operations).not.toContain("llm_judge_video");
   });
 });
 
 describe.each(VIABLE_FALLBACK_OPERATIONS)(
-  'fault injection: $operation ($primary → $fallback)',
+  "fault injection: $operation ($primary → $fallback)",
   ({ operation, primary, fallback }) => {
-    it('completes on the fallback provider with correct telemetry attribution', async () => {
+    it("completes on the fallback provider with correct telemetry attribution", async () => {
       const { service, provider, record } = buildHarness();
       provider(primary).setHealthy(false);
 
@@ -160,23 +160,23 @@ describe.each(VIABLE_FALLBACK_OPERATIONS)(
           executionType: operation,
           provider: fallback,
           model: `${fallback}-fake-model`,
-          outcome: 'success',
-        })
+          outcome: "success",
+        }),
       );
     });
-  }
+  },
 );
 
-describe('circuit lifecycle through the routing layer', () => {
+describe("circuit lifecycle through the routing layer", () => {
   const spanLabeling = VIABLE_FALLBACK_OPERATIONS.find(
-    (v) => v.operation === 'span_labeling'
+    (v) => v.operation === "span_labeling",
   );
   if (!spanLabeling) {
-    throw new Error('span_labeling lost its viable fallback in ModelConfig');
+    throw new Error("span_labeling lost its viable fallback in ModelConfig");
   }
   const { operation, primary, fallback } = spanLabeling;
 
-  it('opens after N consecutive failures and stops dialing the primary', async () => {
+  it("opens after N consecutive failures and stops dialing the primary", async () => {
     const { service, provider, circuit, record } = buildHarness({
       threshold: 3,
     });
@@ -201,12 +201,12 @@ describe('circuit lifecycle through the routing layer', () => {
       expect.objectContaining({
         executionType: operation,
         provider: fallback,
-        outcome: 'success',
-      })
+        outcome: "success",
+      }),
     );
   });
 
-  it('half-opens after cooldown; a successful probe closes the circuit', async () => {
+  it("half-opens after cooldown; a successful probe closes the circuit", async () => {
     const { service, provider, circuit, advance } = buildHarness({
       threshold: 3,
       cooldownMs: 30_000,
@@ -228,13 +228,13 @@ describe('circuit lifecycle through the routing layer', () => {
     expect(provider(primary).complete).toHaveBeenCalledTimes(1);
     expect(provider(fallback).complete).not.toHaveBeenCalled();
     expect(probeResponse.metadata.provider).toBe(primary);
-    expect(circuit.getSnapshot(primary).state).toBe('closed');
+    expect(circuit.getSnapshot(primary).state).toBe("closed");
 
     const followUp = await service.execute(operation, PARAMS);
     expect(followUp.metadata.provider).toBe(primary);
   });
 
-  it('half-opens after cooldown; a failed probe reopens the circuit', async () => {
+  it("half-opens after cooldown; a failed probe reopens the circuit", async () => {
     const { service, provider, circuit, advance } = buildHarness({
       threshold: 3,
       cooldownMs: 30_000,
@@ -263,7 +263,7 @@ describe('circuit lifecycle through the routing layer', () => {
     expect(nextResponse.metadata.provider).toBe(fallback);
   });
 
-  it('fails open: when primary and fallback circuits are both open, the primary is still attempted', async () => {
+  it("fails open: when primary and fallback circuits are both open, the primary is still attempted", async () => {
     const { service, provider, circuit } = buildHarness({ threshold: 2 });
     provider(primary).setHealthy(false);
     provider(fallback).setHealthy(false);
@@ -279,7 +279,7 @@ describe('circuit lifecycle through the routing layer', () => {
     expect(provider(primary).complete).toHaveBeenCalledTimes(1);
   });
 
-  it('does not count client aborts or 4xx input errors toward circuit health', async () => {
+  it("does not count client aborts or 4xx input errors toward circuit health", async () => {
     const { service, provider, circuit } = buildHarness({ threshold: 2 });
     provider(primary).complete.mockImplementation(async () => {
       throw new AIClientError(`${primary} rejected the request`, 400);

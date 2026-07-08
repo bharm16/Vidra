@@ -1,17 +1,17 @@
-import type { AIResponse } from '@interfaces/IAIClient';
-import { AIModelService } from '@services/ai-model/index';
+import type { AIResponse } from "@interfaces/IAIClient";
+import { AIModelService } from "@services/ai-model/index";
 import type {
   ClientsMap,
   ExecuteParams,
   StreamParams,
-} from '@services/ai-model/types';
-import type { LlmCallTelemetryService } from '@services/observability/LlmCallTelemetryService';
-import type { ReplayAiModelRequest } from '@shared/schemas/replay.schemas';
-import type { CassetteStore } from './CassetteStore';
-import { contractForOperation, validateEntryPayload } from './contracts';
-import { aiModelRequestKey } from './requestKey';
+} from "@services/ai-model/types";
+import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
+import type { ReplayAiModelRequest } from "@shared/schemas/replay.schemas";
+import type { CassetteStore } from "./CassetteStore";
+import { contractForOperation, validateEntryPayload } from "./contracts";
+import { aiModelRequestKey } from "./requestKey";
 
-export type ReplayMode = 'record' | 'replay';
+export type ReplayMode = "record" | "replay";
 
 /**
  * Record/replay seam at the aiService boundary.
@@ -45,11 +45,11 @@ export class RecordReplayAiService extends AIModelService {
 
   override async execute(
     operation: string,
-    params: ExecuteParams
+    params: ExecuteParams,
   ): Promise<AIResponse> {
     const request = this.toRequest(operation, params, false);
 
-    if (this.mode === 'replay') {
+    if (this.mode === "replay") {
       return this.replayResponse(request);
     }
 
@@ -63,7 +63,7 @@ export class RecordReplayAiService extends AIModelService {
 
   override async stream(
     operation: string,
-    params: StreamParams
+    params: StreamParams,
   ): Promise<string> {
     // StreamParams' Omit collapses to an index signature, so the prompt
     // fields come back `unknown`; they are the same strings execute() sees.
@@ -72,12 +72,12 @@ export class RecordReplayAiService extends AIModelService {
       {
         systemPrompt: params.systemPrompt as string,
         userMessage: params.userMessage as string | undefined,
-        messages: params.messages as ExecuteParams['messages'],
+        messages: params.messages as ExecuteParams["messages"],
       },
-      true
+      true,
     );
 
-    if (this.mode === 'replay') {
+    if (this.mode === "replay") {
       const response = await this.replayResponse(request);
       // Deterministic single-chunk replay of the recorded stream.
       params.onChunk(response.text);
@@ -87,14 +87,14 @@ export class RecordReplayAiService extends AIModelService {
     const text = await super.stream(operation, params);
     this.recordResponse(request, {
       text,
-      metadata: { recordedFrom: 'stream' },
+      metadata: { recordedFrom: "stream" },
     });
     return text;
   }
 
   /** Streaming is always available in replay mode — no live client needed. */
   override supportsStreaming(operation: string): boolean {
-    if (this.mode === 'replay') {
+    if (this.mode === "replay") {
       return true;
     }
     return super.supportsStreaming(operation);
@@ -105,9 +105,9 @@ export class RecordReplayAiService extends AIModelService {
     params: {
       systemPrompt: string;
       userMessage?: string | undefined;
-      messages?: ExecuteParams['messages'] | undefined;
+      messages?: ExecuteParams["messages"] | undefined;
     },
-    stream: boolean
+    stream: boolean,
   ): ReplayAiModelRequest {
     return {
       operation,
@@ -119,21 +119,21 @@ export class RecordReplayAiService extends AIModelService {
   }
 
   private async replayResponse(
-    request: ReplayAiModelRequest
+    request: ReplayAiModelRequest,
   ): Promise<AIResponse> {
     const key = aiModelRequestKey(request);
     const entry = this.store.lookupOrThrow(
       key,
-      `aiService operation "${request.operation}" (stream=${String(request.stream)})`
+      `aiService operation "${request.operation}" (stream=${String(request.stream)})`,
     );
-    if (entry.seam !== 'ai-model') {
+    if (entry.seam !== "ai-model") {
       throw new Error(
-        `Replay entry for key ${key} is not an ai-model recording`
+        `Replay entry for key ${key} is not an ai-model recording`,
       );
     }
     // Replay-time contract validation: drifted contracts fail loudly here.
     validateEntryPayload(entry, {
-      surface: 'replay-lookup',
+      surface: "replay-lookup",
       scenario: request.operation,
     });
     return structuredClone(entry.response) as AIResponse;
@@ -141,10 +141,10 @@ export class RecordReplayAiService extends AIModelService {
 
   private recordResponse(
     request: ReplayAiModelRequest,
-    response: { text: string; metadata: Record<string, unknown> }
+    response: { text: string; metadata: Record<string, unknown> },
   ): void {
     this.store.record({
-      seam: 'ai-model',
+      seam: "ai-model",
       key: aiModelRequestKey(request),
       contract: contractForOperation(request.operation),
       request,

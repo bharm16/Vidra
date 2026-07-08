@@ -94,10 +94,7 @@
             "service_tier": "on_demand"
           },
           "provider": "groq-qwen",
-          "optimizations": [
-            "qwen3-reasoning-effort",
-            "higher-temp-tolerance"
-          ],
+          "optimizations": ["qwen3-reasoning-effort", "higher-temp-tolerance"],
           "finishReason": "stop",
           "systemFingerprint": "fp_d58dbe76cd",
           "validation": {

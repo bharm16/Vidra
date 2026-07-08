@@ -5,12 +5,12 @@
  * server DTO, so responses are Zod-validated at the wire and passed through.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 export const SpanVerdictValueSchema = z.enum([
-  'present',
-  'absent',
-  'uncertain',
+  "present",
+  "absent",
+  "uncertain",
 ]);
 
 export const FrameVerificationSpanSchema = z.object({

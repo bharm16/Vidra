@@ -1,6 +1,6 @@
-import { logger } from '@infrastructure/Logger';
+import { logger } from "@infrastructure/Logger";
 
-type LlmProviderCircuitState = 'closed' | 'open' | 'half-open';
+type LlmProviderCircuitState = "closed" | "open" | "half-open";
 
 interface LlmProviderCircuitRecord {
   state: LlmProviderCircuitState;
@@ -19,7 +19,7 @@ interface LlmProviderCircuitManagerOptions {
   metrics?: {
     recordAlert?: (
       alertName: string,
-      metadata?: Record<string, unknown>
+      metadata?: Record<string, unknown>,
     ) => void;
   };
 }
@@ -47,21 +47,21 @@ const DEFAULT_COOLDOWN_MS = 30_000;
  *   releaseHalfOpenProbe instead.
  */
 export class LlmProviderCircuitManager {
-  private readonly log = logger.child({ service: 'LlmProviderCircuitManager' });
+  private readonly log = logger.child({ service: "LlmProviderCircuitManager" });
   private readonly records = new Map<string, LlmProviderCircuitRecord>();
   private readonly consecutiveFailureThreshold: number;
   private readonly cooldownMs: number;
   private readonly now: () => number;
-  private readonly metrics: LlmProviderCircuitManagerOptions['metrics'];
+  private readonly metrics: LlmProviderCircuitManagerOptions["metrics"];
 
   constructor(options: LlmProviderCircuitManagerOptions = {}) {
     this.consecutiveFailureThreshold =
-      typeof options.consecutiveFailureThreshold === 'number' &&
+      typeof options.consecutiveFailureThreshold === "number" &&
       Number.isFinite(options.consecutiveFailureThreshold)
         ? Math.max(1, Math.trunc(options.consecutiveFailureThreshold))
         : DEFAULT_CONSECUTIVE_FAILURE_THRESHOLD;
     this.cooldownMs =
-      typeof options.cooldownMs === 'number' &&
+      typeof options.cooldownMs === "number" &&
       Number.isFinite(options.cooldownMs)
         ? Math.max(1_000, Math.trunc(options.cooldownMs))
         : DEFAULT_COOLDOWN_MS;
@@ -72,16 +72,16 @@ export class LlmProviderCircuitManager {
   canDispatch(provider: string): boolean {
     const record = this.getRecord(provider);
 
-    if (record.state === 'open') {
+    if (record.state === "open") {
       if (this.now() < record.cooldownUntilMs) {
         return false;
       }
-      record.state = 'half-open';
+      record.state = "half-open";
       record.halfOpenProbeInFlight = false;
-      this.log.warn('LLM provider circuit moved to half-open', { provider });
+      this.log.warn("LLM provider circuit moved to half-open", { provider });
     }
 
-    if (record.state === 'half-open') {
+    if (record.state === "half-open") {
       return !record.halfOpenProbeInFlight;
     }
 
@@ -90,7 +90,7 @@ export class LlmProviderCircuitManager {
 
   markDispatched(provider: string): void {
     const record = this.getRecord(provider);
-    if (record.state === 'half-open') {
+    if (record.state === "half-open") {
       record.halfOpenProbeInFlight = true;
     }
   }
@@ -98,15 +98,15 @@ export class LlmProviderCircuitManager {
   recordSuccess(provider: string): void {
     const record = this.getRecord(provider);
 
-    if (record.state !== 'closed') {
-      this.log.info('LLM provider circuit closed after successful call', {
+    if (record.state !== "closed") {
+      this.log.info("LLM provider circuit closed after successful call", {
         provider,
         previousState: record.state,
       });
-      this.metrics?.recordAlert?.('llm_provider_circuit_closed', { provider });
+      this.metrics?.recordAlert?.("llm_provider_circuit_closed", { provider });
     }
 
-    record.state = 'closed';
+    record.state = "closed";
     record.consecutiveFailures = 0;
     record.cooldownUntilMs = 0;
     record.halfOpenProbeInFlight = false;
@@ -115,18 +115,18 @@ export class LlmProviderCircuitManager {
   recordFailure(provider: string): void {
     const record = this.getRecord(provider);
 
-    if (record.state === 'half-open') {
-      this.openCircuit(provider, record, 'half-open probe failed');
+    if (record.state === "half-open") {
+      this.openCircuit(provider, record, "half-open probe failed");
       return;
     }
 
-    if (record.state === 'open') {
+    if (record.state === "open") {
       return;
     }
 
     record.consecutiveFailures += 1;
     if (record.consecutiveFailures >= this.consecutiveFailureThreshold) {
-      this.openCircuit(provider, record, 'consecutive failure threshold');
+      this.openCircuit(provider, record, "consecutive failure threshold");
     }
   }
 
@@ -137,14 +137,14 @@ export class LlmProviderCircuitManager {
    */
   releaseHalfOpenProbe(provider: string): void {
     const record = this.getRecord(provider);
-    if (record.state === 'half-open') {
+    if (record.state === "half-open") {
       record.halfOpenProbeInFlight = false;
     }
   }
 
   isOpen(provider: string): boolean {
     const record = this.getRecord(provider);
-    return record.state === 'open' && this.now() < record.cooldownUntilMs;
+    return record.state === "open" && this.now() < record.cooldownUntilMs;
   }
 
   getSnapshot(provider: string): LlmProviderCircuitSnapshot {
@@ -159,25 +159,25 @@ export class LlmProviderCircuitManager {
 
   getAllSnapshots(): LlmProviderCircuitSnapshot[] {
     return Array.from(this.records.keys()).map((provider) =>
-      this.getSnapshot(provider)
+      this.getSnapshot(provider),
     );
   }
 
   private openCircuit(
     provider: string,
     record: LlmProviderCircuitRecord,
-    reason: string
+    reason: string,
   ): void {
-    record.state = 'open';
+    record.state = "open";
     record.cooldownUntilMs = this.now() + this.cooldownMs;
     record.halfOpenProbeInFlight = false;
-    this.log.warn('LLM provider circuit opened', {
+    this.log.warn("LLM provider circuit opened", {
       provider,
       reason,
       cooldownMs: this.cooldownMs,
       consecutiveFailures: record.consecutiveFailures,
     });
-    this.metrics?.recordAlert?.('llm_provider_circuit_opened', {
+    this.metrics?.recordAlert?.("llm_provider_circuit_opened", {
       provider,
       reason,
       cooldownMs: this.cooldownMs,
@@ -190,7 +190,7 @@ export class LlmProviderCircuitManager {
       return existing;
     }
     const created: LlmProviderCircuitRecord = {
-      state: 'closed',
+      state: "closed",
       consecutiveFailures: 0,
       cooldownUntilMs: 0,
       halfOpenProbeInFlight: false,

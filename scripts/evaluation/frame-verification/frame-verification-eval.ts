@@ -18,25 +18,25 @@
  *   npx tsx scripts/evaluation/frame-verification/frame-verification-eval.ts --limit 6
  */
 
-import { config as loadEnv } from 'dotenv';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { config as loadEnv } from "dotenv";
+import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { AIModelService } from '../../../server/src/services/ai-model/AIModelService.js';
-import type { ClientsMap } from '../../../server/src/services/ai-model/types.js';
-import { OpenAICompatibleAdapter } from '../../../server/src/clients/adapters/OpenAICompatibleAdapter.js';
-import { SpanVerdictService } from '../../../server/src/services/frame-verification/services/SpanVerdictService.js';
-import type { SpanVerdict } from '../../../server/src/services/frame-verification/types.js';
-import type { ManifestVariant } from './generate-eval-set.js';
+import { AIModelService } from "../../../server/src/services/ai-model/AIModelService.js";
+import type { ClientsMap } from "../../../server/src/services/ai-model/types.js";
+import { OpenAICompatibleAdapter } from "../../../server/src/clients/adapters/OpenAICompatibleAdapter.js";
+import { SpanVerdictService } from "../../../server/src/services/frame-verification/services/SpanVerdictService.js";
+import type { SpanVerdict } from "../../../server/src/services/frame-verification/types.js";
+import type { ManifestVariant } from "./generate-eval-set.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-loadEnv({ path: join(__dirname, '../../..', '.env') });
+loadEnv({ path: join(__dirname, "../../..", ".env") });
 
-const MANIFEST_PATH = join(__dirname, 'manifest.json');
-const RESULTS_PATH = join(__dirname, 'results-latest.json');
+const MANIFEST_PATH = join(__dirname, "manifest.json");
+const RESULTS_PATH = join(__dirname, "results-latest.json");
 
 const PRECISION_THRESHOLD = 0.85;
 const RECALL_THRESHOLD = 0.75;
@@ -51,8 +51,8 @@ interface PairResult {
   kind: string;
   spanText: string;
   category: string;
-  expected: 'present' | 'absent';
-  predicted: 'present' | 'absent' | 'uncertain';
+  expected: "present" | "absent";
+  predicted: "present" | "absent" | "uncertain";
   confidence: number;
   evidence?: string;
 }
@@ -70,15 +70,15 @@ const createAIService = (): AIModelService => {
   if (process.env.OPENAI_API_KEY) {
     clients.openai = new OpenAICompatibleAdapter({
       apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-      defaultModel: 'gpt-4o-mini-2024-07-18',
+      baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+      defaultModel: "gpt-4o-mini-2024-07-18",
       defaultTimeout: Number(process.env.OPENAI_TIMEOUT_MS || 60000),
-      providerName: 'openai',
+      providerName: "openai",
     });
   }
   if (!clients.openai) {
     throw new Error(
-      'OPENAI_API_KEY is required (frame_verification routes to openai)'
+      "OPENAI_API_KEY is required (frame_verification routes to openai)",
     );
   }
   return new AIModelService({ clients });
@@ -86,7 +86,7 @@ const createAIService = (): AIModelService => {
 
 const toDataUri = (imagePath: string): string => {
   const buffer = readFileSync(join(__dirname, imagePath));
-  return `data:image/webp;base64,${buffer.toString('base64')}`;
+  return `data:image/webp;base64,${buffer.toString("base64")}`;
 };
 
 const presentMetrics = (pairs: PairResult[]): ClassMetrics => {
@@ -94,10 +94,10 @@ const presentMetrics = (pairs: PairResult[]): ClassMetrics => {
   let fp = 0;
   let fn = 0;
   for (const pair of pairs) {
-    if (pair.predicted === 'present') {
-      if (pair.expected === 'present') tp++;
+    if (pair.predicted === "present") {
+      if (pair.expected === "present") tp++;
       else fp++;
-    } else if (pair.expected === 'present') {
+    } else if (pair.expected === "present") {
       fn++;
     }
   }
@@ -115,10 +115,10 @@ const absentDetection = (pairs: PairResult[]): ClassMetrics => {
   let fp = 0;
   let fn = 0;
   for (const pair of pairs) {
-    if (pair.predicted === 'absent') {
-      if (pair.expected === 'absent') tp++;
+    if (pair.predicted === "absent") {
+      if (pair.expected === "absent") tp++;
       else fp++;
-    } else if (pair.expected === 'absent') {
+    } else if (pair.expected === "absent") {
       fn++;
     }
   }
@@ -133,16 +133,16 @@ const absentDetection = (pairs: PairResult[]): ClassMetrics => {
 
 const main = async (): Promise<void> => {
   const argv = process.argv.slice(2);
-  const concurrencyIndex = argv.indexOf('--concurrency');
+  const concurrencyIndex = argv.indexOf("--concurrency");
   const concurrency =
     concurrencyIndex >= 0 ? Number(argv[concurrencyIndex + 1]) : 4;
-  const limitIndex = argv.indexOf('--limit');
+  const limitIndex = argv.indexOf("--limit");
   const limit = limitIndex >= 0 ? Number(argv[limitIndex + 1]) : Infinity;
 
-  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as Manifest;
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8")) as Manifest;
   const variants = manifest.variants.slice(
     0,
-    Number.isFinite(limit) ? limit : manifest.variants.length
+    Number.isFinite(limit) ? limit : manifest.variants.length,
   );
 
   const aiService = createAIService();
@@ -158,7 +158,7 @@ const main = async (): Promise<void> => {
 
   const judgeWithRetry = async (
     image: string,
-    spans: Array<{ text: string; category: string }>
+    spans: Array<{ text: string; category: string }>,
   ): Promise<{ verdicts: SpanVerdict[] }> => {
     const maxAttempts = 6;
     for (let attempt = 1; ; attempt++) {
@@ -166,7 +166,7 @@ const main = async (): Promise<void> => {
         return await judge.judge(image, spans);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        const rateLimited = message.includes('429');
+        const rateLimited = message.includes("429");
         if (!rateLimited || attempt >= maxAttempts) throw error;
         await sleep(10000 * attempt);
       }
@@ -204,7 +204,7 @@ const main = async (): Promise<void> => {
         console.log(`[${completed}/${variants.length}] ${variant.variantId}`);
       } catch (error) {
         errors.push(
-          `${variant.variantId}: ${error instanceof Error ? error.message : String(error)}`
+          `${variant.variantId}: ${error instanceof Error ? error.message : String(error)}`,
         );
         console.error(`ERROR ${variant.variantId}`);
       }
@@ -212,44 +212,44 @@ const main = async (): Promise<void> => {
   };
 
   await Promise.all(
-    Array.from({ length: Math.max(1, concurrency) }, () => worker())
+    Array.from({ length: Math.max(1, concurrency) }, () => worker()),
   );
 
   const present = presentMetrics(pairs);
   const absent = absentDetection(pairs);
 
   const misses = pairs.filter((pair) =>
-    pair.expected === 'present'
-      ? pair.predicted !== 'present'
-      : pair.predicted === 'present'
+    pair.expected === "present"
+      ? pair.predicted !== "present"
+      : pair.predicted === "present",
   );
 
   const byCategory = new Map<string, PairResult[]>();
   for (const pair of pairs) {
-    const parent = pair.category.split('.')[0] ?? pair.category;
+    const parent = pair.category.split(".")[0] ?? pair.category;
     const list = byCategory.get(parent) ?? [];
     list.push(pair);
     byCategory.set(parent, list);
   }
 
-  console.log('\n=== Frame verification eval ===');
+  console.log("\n=== Frame verification eval ===");
   console.log(
-    `pairs: ${pairs.length} (from ${completed} frames, ${errors.length} errors)`
+    `pairs: ${pairs.length} (from ${completed} frames, ${errors.length} errors)`,
   );
   console.log(
     `present: precision ${present.precision.toFixed(3)} (tp ${present.tp} fp ${present.fp}) ` +
-      `recall ${present.recall.toFixed(3)} (fn ${present.fn})`
+      `recall ${present.recall.toFixed(3)} (fn ${present.fn})`,
   );
   console.log(
     `absent-detection: precision ${absent.precision.toFixed(3)} recall ${absent.recall.toFixed(3)} ` +
-      `(tp ${absent.tp} fp ${absent.fp} fn ${absent.fn})`
+      `(tp ${absent.tp} fp ${absent.fp} fn ${absent.fn})`,
   );
-  console.log('\nper-parent-category (present precision/recall):');
+  console.log("\nper-parent-category (present precision/recall):");
   for (const [parent, list] of [...byCategory.entries()].sort()) {
     const metrics = presentMetrics(list);
     console.log(
       `  ${parent.padEnd(12)} n=${String(list.length).padStart(3)} ` +
-        `P=${metrics.precision.toFixed(2)} R=${metrics.recall.toFixed(2)}`
+        `P=${metrics.precision.toFixed(2)} R=${metrics.recall.toFixed(2)}`,
     );
   }
 
@@ -269,8 +269,8 @@ const main = async (): Promise<void> => {
         pairs,
       },
       null,
-      2
-    )
+      2,
+    ),
   );
   console.log(`\nResults: ${RESULTS_PATH}`);
 
@@ -280,7 +280,7 @@ const main = async (): Promise<void> => {
   console.log(
     pass
       ? `\nGATE PASS (P ${present.precision.toFixed(3)} >= ${PRECISION_THRESHOLD}, R ${present.recall.toFixed(3)} >= ${RECALL_THRESHOLD})`
-      : `\nGATE FAIL (need P >= ${PRECISION_THRESHOLD} && R >= ${RECALL_THRESHOLD}, got P ${present.precision.toFixed(3)} R ${present.recall.toFixed(3)})`
+      : `\nGATE FAIL (need P >= ${PRECISION_THRESHOLD} && R >= ${RECALL_THRESHOLD}, got P ${present.precision.toFixed(3)} R ${present.recall.toFixed(3)})`,
   );
   if (!pass || errors.length > 0) {
     process.exitCode = 1;

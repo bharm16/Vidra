@@ -1,30 +1,30 @@
-import { logger } from '@infrastructure/Logger';
-import { ModelConfig, shouldUseSeed } from '@config/modelConfig';
-import { hashString } from '@utils/hash';
-import { detectAndGetCapabilities } from '@utils/provider/ProviderDetector';
+import { logger } from "@infrastructure/Logger";
+import { ModelConfig, shouldUseSeed } from "@config/modelConfig";
+import { hashString } from "@utils/hash";
+import { detectAndGetCapabilities } from "@utils/provider/ProviderDetector";
 import {
   AIClientError,
   type IAIClient,
   type AIResponse,
   type CompletionOptions,
-} from '@interfaces/IAIClient';
-import type { LlmCallTelemetryService } from '@services/observability/LlmCallTelemetryService';
-import type { LlmCallSummary } from '@services/observability/types';
-import type { LlmProviderCircuitManager } from '@llm/failover/LlmProviderCircuitManager';
-import { LLMUnavailableError } from './LLMUnavailableError';
-import { buildRequestOptions } from './request/RequestOptionsBuilder';
-import { buildResponseFormat } from './request/ResponseFormatBuilder';
-import { ClientResolver } from './routing/ClientResolver';
-import { ExecutionPlanResolver } from './routing/ExecutionPlan';
+} from "@interfaces/IAIClient";
+import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
+import type { LlmCallSummary } from "@services/observability/types";
+import type { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
+import { LLMUnavailableError } from "./LLMUnavailableError";
+import { buildRequestOptions } from "./request/RequestOptionsBuilder";
+import { buildResponseFormat } from "./request/ResponseFormatBuilder";
+import { ClientResolver } from "./routing/ClientResolver";
+import { ExecutionPlanResolver } from "./routing/ExecutionPlan";
 import type {
   ClientsMap,
   ExecuteParams,
   ModelConfigEntry,
   RequestOptions,
   StreamParams,
-} from './types';
+} from "./types";
 
-export type { ExecuteParams, StreamParams } from './types';
+export type { ExecuteParams, StreamParams } from "./types";
 
 /**
  * Builds the per-LLM-call telemetry summary from a successful response or an
@@ -55,13 +55,13 @@ function buildLlmCallSummary({
   const finishReason =
     (response?.metadata?.finishReason as string | undefined) ?? null;
   const promptTokens =
-    typeof usage?.prompt_tokens === 'number' ? usage.prompt_tokens : null;
+    typeof usage?.prompt_tokens === "number" ? usage.prompt_tokens : null;
   const completionTokens =
-    typeof usage?.completion_tokens === 'number'
+    typeof usage?.completion_tokens === "number"
       ? usage.completion_tokens
       : null;
   const totalTokens =
-    typeof usage?.total_tokens === 'number' ? usage.total_tokens : null;
+    typeof usage?.total_tokens === "number" ? usage.total_tokens : null;
 
   const errorMessage =
     error instanceof Error ? error.message : error ? String(error) : undefined;
@@ -75,7 +75,7 @@ function buildLlmCallSummary({
     completionTokens,
     totalTokens,
     finishReason,
-    outcome: error ? 'error' : 'success',
+    outcome: error ? "error" : "success",
     ...(errorMessage ? { errorMessage } : {}),
   };
 }
@@ -121,8 +121,8 @@ export class AIModelService {
   }) {
     this.llmCallTelemetry = llmCallTelemetry;
     this.providerCircuit = providerCircuit;
-    if (!clients || typeof clients !== 'object') {
-      throw new Error('AIModelService requires clients object');
+    if (!clients || typeof clients !== "object") {
+      throw new Error("AIModelService requires clients object");
     }
 
     this.clientResolver = new ClientResolver(clients);
@@ -133,17 +133,17 @@ export class AIModelService {
 
     if (!this.hasAnyClient) {
       logger.error(
-        'No AI clients configured; AI operations will be unavailable until a provider is enabled'
+        "No AI clients configured; AI operations will be unavailable until a provider is enabled",
       );
     }
 
-    if (!this.clientResolver.hasClient('openai')) {
+    if (!this.clientResolver.hasClient("openai")) {
       logger.warn(
-        'OpenAI client not configured; operations targeting OpenAI will require fallbacks'
+        "OpenAI client not configured; operations targeting OpenAI will require fallbacks",
       );
     }
 
-    logger.info('AIModelService initialized', {
+    logger.info("AIModelService initialized", {
       availableClients,
     });
   }
@@ -181,7 +181,7 @@ export class AIModelService {
             durationMs: performance.now() - startedAt,
             response,
             error: executionError,
-          })
+          }),
         );
       } catch {
         // Telemetry must never throw upstream.
@@ -191,15 +191,15 @@ export class AIModelService {
 
   private async _executeImpl(
     operation: string,
-    params: ExecuteParams
+    params: ExecuteParams,
   ): Promise<AIResponse> {
     if (!params.systemPrompt) {
-      throw new Error('systemPrompt is required');
+      throw new Error("systemPrompt is required");
     }
 
     if (!this.hasAnyClient) {
       throw new LLMUnavailableError(
-        'No AI providers configured; enable at least one LLM provider'
+        "No AI providers configured; enable at least one LLM provider",
       );
     }
 
@@ -217,7 +217,7 @@ export class AIModelService {
       this.clientResolver.hasClient(plan.fallback.client) &&
       this.providerCircuit.canDispatch(plan.fallback.client)
     ) {
-      logger.warn('Primary provider circuit open, routing to fallback', {
+      logger.warn("Primary provider circuit open, routing to fallback", {
         operation,
         primary: config.client,
         fallback: plan.fallback.client,
@@ -229,7 +229,7 @@ export class AIModelService {
         params.systemPrompt,
         params,
         config,
-        { model: plan.fallback.model, timeout: plan.fallback.timeout }
+        { model: plan.fallback.model, timeout: plan.fallback.timeout },
       );
     }
 
@@ -243,7 +243,7 @@ export class AIModelService {
         plan.fallback &&
         this.clientResolver.hasClient(plan.fallback.client)
       ) {
-        logger.warn('Primary client unavailable, using fallback', {
+        logger.warn("Primary client unavailable, using fallback", {
           operation,
           primary: config.client,
           fallback: plan.fallback.client,
@@ -255,7 +255,7 @@ export class AIModelService {
           params.systemPrompt,
           params,
           config,
-          { model: plan.fallback.model, timeout: plan.fallback.timeout }
+          { model: plan.fallback.model, timeout: plan.fallback.timeout },
         );
       }
 
@@ -273,7 +273,7 @@ export class AIModelService {
     const { responseFormat, jsonMode } = buildResponseFormat(
       params,
       config,
-      capabilities
+      capabilities,
     );
 
     // Build request options with provider-specific optimizations
@@ -288,7 +288,7 @@ export class AIModelService {
 
     const start = Date.now();
     try {
-      logger.debug('Executing AI operation', {
+      logger.debug("Executing AI operation", {
         operation,
         client: config.client,
         model: requestOptions.model,
@@ -301,12 +301,12 @@ export class AIModelService {
       this.providerCircuit?.markDispatched(config.client);
       const response = await client.complete(
         params.systemPrompt,
-        requestOptions
+        requestOptions,
       );
       this.providerCircuit?.recordSuccess(config.client);
       const durationMs = Date.now() - start;
 
-      logger.debug('AI operation completed', {
+      logger.debug("AI operation completed", {
         operation,
         client: config.client,
         success: true,
@@ -329,7 +329,7 @@ export class AIModelService {
       // OpenAICompatibleAdapter._executeRequest. This layer owns only routing
       // and intelligent fallback, not per-provider parameter quirks.
 
-      logger.warn('AI operation failed on primary client', {
+      logger.warn("AI operation failed on primary client", {
         operation,
         client: config.client,
         error: err.message,
@@ -337,7 +337,7 @@ export class AIModelService {
       });
 
       if (isClientAbort) {
-        logger.info('Primary AI request aborted by client; skipping fallback', {
+        logger.info("Primary AI request aborted by client; skipping fallback", {
           operation,
           client: config.client,
         });
@@ -351,7 +351,7 @@ export class AIModelService {
         err.isRetryable !== false;
 
       if (shouldFallback && plan.fallback) {
-        logger.info('Error is retryable, attempting fallback', {
+        logger.info("Error is retryable, attempting fallback", {
           operation,
           fallbackTo: plan.fallback.client,
         });
@@ -361,19 +361,19 @@ export class AIModelService {
           params.systemPrompt,
           params,
           config,
-          { model: plan.fallback.model, timeout: plan.fallback.timeout }
+          { model: plan.fallback.model, timeout: plan.fallback.timeout },
         );
       }
 
       logger.error(
-        'AI operation failed with no fallback',
+        "AI operation failed with no fallback",
         error instanceof Error ? error : undefined,
         {
           operation,
           client: config.client,
           error: err.message,
           isRetryable: err.isRetryable,
-        }
+        },
       );
       throw error;
     }
@@ -385,7 +385,7 @@ export class AIModelService {
   async stream(operation: string, params: StreamParams): Promise<string> {
     if (!this.hasAnyClient) {
       throw new LLMUnavailableError(
-        'No AI providers configured; enable at least one LLM provider'
+        "No AI providers configured; enable at least one LLM provider",
       );
     }
 
@@ -393,15 +393,15 @@ export class AIModelService {
     const config = plan.primaryConfig;
     const client = this.clientResolver.getClient(config);
 
-    if (typeof client.streamComplete !== 'function') {
+    if (typeof client.streamComplete !== "function") {
       throw new Error(
         `Client '${config.client}' does not support streaming. ` +
-          `Use execute() instead or configure a streaming-capable client.`
+          `Use execute() instead or configure a streaming-capable client.`,
       );
     }
 
-    if (!params.onChunk || typeof params.onChunk !== 'function') {
-      throw new Error('Streaming requires onChunk callback function');
+    if (!params.onChunk || typeof params.onChunk !== "function") {
+      throw new Error("Streaming requires onChunk callback function");
     }
 
     const streamOptions: StreamParams = {
@@ -414,7 +414,7 @@ export class AIModelService {
       maxTokens: params.maxTokens || config.maxTokens,
       timeout: params.timeout || config.timeout,
       jsonMode:
-        config.responseFormat === 'json_object' || params.jsonMode || false,
+        config.responseFormat === "json_object" || params.jsonMode || false,
       onChunk: params.onChunk,
     };
 
@@ -424,7 +424,7 @@ export class AIModelService {
     }
 
     try {
-      logger.debug('Streaming AI operation', {
+      logger.debug("Streaming AI operation", {
         operation,
         client: config.client,
         model: streamOptions.model,
@@ -439,10 +439,10 @@ export class AIModelService {
       // baseline re-bless and is intentionally deferred.
       const text = await client.streamComplete(
         params.systemPrompt as string,
-        streamOptions
+        streamOptions,
       );
 
-      logger.debug('AI streaming completed', {
+      logger.debug("AI streaming completed", {
         operation,
         client: config.client,
         textLength: text.length,
@@ -453,13 +453,13 @@ export class AIModelService {
       const err = error as { message: string };
 
       logger.error(
-        'AI streaming failed',
+        "AI streaming failed",
         error instanceof Error ? error : undefined,
         {
           operation,
           client: config.client,
           error: err.message,
-        }
+        },
       );
 
       throw error;
@@ -480,9 +480,9 @@ export class AIModelService {
     systemPrompt: string,
     params: ExecuteParams,
     primaryConfig: ModelConfigEntry,
-    fallbackConfig?: { model: string; timeout: number }
+    fallbackConfig?: { model: string; timeout: number },
   ): Promise<AIResponse> {
-    logger.info('Attempting fallback to alternative client', {
+    logger.info("Attempting fallback to alternative client", {
       operation,
       fallbackClient,
       fallbackModel: fallbackConfig?.model,
@@ -496,21 +496,21 @@ export class AIModelService {
         throw new Error(`Fallback client '${fallbackClient}' not available`);
       }
 
-      if (fallbackClient === 'qwen') {
+      if (fallbackClient === "qwen") {
         const circuitState = (
           client as {
-            getCircuitBreakerState?: () => 'OPEN' | 'HALF-OPEN' | 'CLOSED';
+            getCircuitBreakerState?: () => "OPEN" | "HALF-OPEN" | "CLOSED";
           }
         ).getCircuitBreakerState?.();
-        if (circuitState === 'OPEN') {
-          logger.warn('Skipping fallback due to open circuit breaker', {
+        if (circuitState === "OPEN") {
+          logger.warn("Skipping fallback due to open circuit breaker", {
             operation,
             fallbackClient,
             fallbackModel: fallbackConfig?.model,
           });
           throw new AIClientError(
             `${fallbackClient} API circuit breaker is open`,
-            503
+            503,
           );
         }
       }
@@ -534,13 +534,13 @@ export class AIModelService {
 
       // Normalize response — some providers populate content[] instead of text
       if (!response.text && response.content?.length) {
-        response.text = response.content[0]?.text || '';
+        response.text = response.content[0]?.text || "";
       }
 
-      logger.info('Fallback succeeded', {
+      logger.info("Fallback succeeded", {
         operation,
         fallbackClient,
-        model: fallbackConfig?.model || 'client-default',
+        model: fallbackConfig?.model || "client-default",
         durationMs: fallbackDurationMs,
       });
 
@@ -551,19 +551,19 @@ export class AIModelService {
         this._settleCircuitOutcome(
           fallbackClient,
           fallbackError,
-          this._isClientAbortError(fallbackError)
+          this._isClientAbortError(fallbackError),
         );
       }
 
       logger.error(
-        'Fallback also failed',
+        "Fallback also failed",
         fallbackError instanceof Error ? fallbackError : undefined,
         {
           operation,
           fallbackClient,
           fallbackModel: fallbackConfig?.model,
           error: err.message,
-        }
+        },
       );
       throw fallbackError;
     }
@@ -604,7 +604,7 @@ export class AIModelService {
     const { responseFormat, jsonMode } = buildResponseFormat(
       fallbackParams,
       fallbackEntry,
-      capabilities
+      capabilities,
     );
 
     return buildRequestOptions({
@@ -626,18 +626,18 @@ export class AIModelService {
   private _settleCircuitOutcome(
     provider: string,
     error: unknown,
-    isClientAbort: boolean
+    isClientAbort: boolean,
   ): void {
     if (!this.providerCircuit) {
       return;
     }
 
     const statusCode =
-      error && typeof error === 'object'
+      error && typeof error === "object"
         ? (error as { statusCode?: unknown }).statusCode
         : undefined;
     const isInputError =
-      typeof statusCode === 'number' &&
+      typeof statusCode === "number" &&
       statusCode >= 400 &&
       statusCode < 500 &&
       statusCode !== 408 &&
@@ -652,20 +652,20 @@ export class AIModelService {
   }
 
   private _isClientAbortError(error: unknown): boolean {
-    if (!error || typeof error !== 'object') {
+    if (!error || typeof error !== "object") {
       return false;
     }
 
     const err = error as { name?: unknown; message?: unknown; cause?: unknown };
-    const name = typeof err.name === 'string' ? err.name : '';
+    const name = typeof err.name === "string" ? err.name : "";
     const message =
-      typeof err.message === 'string' ? err.message.toLowerCase() : '';
+      typeof err.message === "string" ? err.message.toLowerCase() : "";
 
-    if (name === 'ClientAbortError') {
+    if (name === "ClientAbortError") {
       return true;
     }
 
-    if (message.includes('aborted by client')) {
+    if (message.includes("aborted by client")) {
       return true;
     }
 
@@ -703,10 +703,10 @@ export class AIModelService {
         client as {
           streamComplete?: (
             systemPrompt: string,
-            options: unknown
+            options: unknown,
           ) => Promise<string>;
         }
-      ).streamComplete === 'function'
+      ).streamComplete === "function"
     );
   }
 }

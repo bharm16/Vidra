@@ -1,18 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FrameVerificationParseError,
   SpanVerdictService,
   stripCodeFence,
-} from '../services/SpanVerdictService';
-import type { AIExecutionPort } from '@services/ai-model/ports/AIExecutionPort';
-import type { AIResponse } from '@interfaces/IAIClient';
-import type { FrameVerificationSpan } from '../types';
+} from "../services/SpanVerdictService";
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
+import type { AIResponse } from "@interfaces/IAIClient";
+import type { FrameVerificationSpan } from "../types";
 
-const DATA_URI = 'data:image/png;base64,ZmFrZS1pbWFnZQ==';
+const DATA_URI = "data:image/png;base64,ZmFrZS1pbWFnZQ==";
 
 const SPANS: FrameVerificationSpan[] = [
-  { text: 'young painter', category: 'subject.identity' },
-  { text: 'sunlit studio', category: 'environment.location' },
+  { text: "young painter", category: "subject.identity" },
+  { text: "sunlit studio", category: "environment.location" },
 ];
 
 const createAiResponse = (text: string, model?: string): AIResponse => ({
@@ -22,7 +22,7 @@ const createAiResponse = (text: string, model?: string): AIResponse => ({
 
 const createAIStub = (
   text: string,
-  model?: string
+  model?: string,
 ): { ai: AIExecutionPort; executeMock: ReturnType<typeof vi.fn> } => {
   const executeMock = vi.fn().mockResolvedValue(createAiResponse(text, model));
   return { ai: { execute: executeMock }, executeMock };
@@ -30,12 +30,12 @@ const createAIStub = (
 
 const VALID_RESPONSE = JSON.stringify({
   verdicts: [
-    { index: 0, verdict: 'present', confidence: 0.9, evidence: 'a painter' },
-    { index: 1, verdict: 'absent', confidence: 0.8 },
+    { index: 0, verdict: "present", confidence: 0.9, evidence: "a painter" },
+    { index: 1, verdict: "absent", confidence: 0.8 },
   ],
 });
 
-describe('SpanVerdictService', () => {
+describe("SpanVerdictService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (
@@ -47,34 +47,34 @@ describe('SpanVerdictService', () => {
     vi.unstubAllGlobals();
   });
 
-  it('maps verdicts back to spans by index', async () => {
-    const { ai, executeMock } = createAIStub(VALID_RESPONSE, 'gpt-4o-mini');
+  it("maps verdicts back to spans by index", async () => {
+    const { ai, executeMock } = createAIStub(VALID_RESPONSE, "gpt-4o-mini");
     const service = new SpanVerdictService(ai);
 
     const result = await service.judge(DATA_URI, SPANS);
 
-    expect(result.model).toBe('gpt-4o-mini');
+    expect(result.model).toBe("gpt-4o-mini");
     expect(result.verdicts).toHaveLength(2);
     expect(result.verdicts[0]).toMatchObject({
       span: SPANS[0],
-      verdict: 'present',
+      verdict: "present",
       confidence: 0.9,
-      evidence: 'a painter',
+      evidence: "a painter",
     });
     expect(result.verdicts[1]).toMatchObject({
       span: SPANS[1],
-      verdict: 'absent',
+      verdict: "absent",
       confidence: 0.8,
     });
     expect(executeMock).toHaveBeenCalledWith(
-      'frame_verification',
-      expect.objectContaining({ jsonMode: true, temperature: 0 })
+      "frame_verification",
+      expect.objectContaining({ jsonMode: true, temperature: 0 }),
     );
   });
 
-  it('passes data URIs to the model without fetching', async () => {
+  it("passes data URIs to the model without fetching", async () => {
     const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal("fetch", fetchMock);
     const { ai, executeMock } = createAIStub(VALID_RESPONSE);
     const service = new SpanVerdictService(ai);
 
@@ -92,30 +92,30 @@ describe('SpanVerdictService', () => {
       userContent as Array<{ image_url?: { url: string; detail?: string } }>
     ).find((part) => part.image_url);
     expect(imagePart?.image_url?.url).toBe(DATA_URI);
-    expect(imagePart?.image_url?.detail).toBe('high');
+    expect(imagePart?.image_url?.detail).toBe("high");
   });
 
-  it('fetches https URLs and converts them to data URIs', async () => {
+  it("fetches https URLs and converts them to data URIs", async () => {
     const response = {
       ok: true,
       status: 200,
-      statusText: 'OK',
+      statusText: "OK",
       headers: {
         get: vi.fn((key: string) =>
-          key.toLowerCase() === 'content-type' ? 'image/webp' : null
+          key.toLowerCase() === "content-type" ? "image/webp" : null,
         ),
       },
-      arrayBuffer: vi.fn(async () => Buffer.from('fake-image')),
+      arrayBuffer: vi.fn(async () => Buffer.from("fake-image")),
     } as unknown as Response;
     vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => response)
+      "fetch",
+      vi.fn(async () => response),
     );
 
     const { ai, executeMock } = createAIStub(VALID_RESPONSE);
     const service = new SpanVerdictService(ai);
 
-    await service.judge('https://example.com/frame.webp', SPANS);
+    await service.judge("https://example.com/frame.webp", SPANS);
 
     const params = executeMock.mock.calls[0]?.[1] as {
       messages: Array<{
@@ -127,13 +127,13 @@ describe('SpanVerdictService', () => {
     }>;
     const imagePart = userContent.find((part) => part.image_url);
     expect(imagePart?.image_url?.url).toBe(
-      `data:image/webp;base64,${Buffer.from('fake-image').toString('base64')}`
+      `data:image/webp;base64,${Buffer.from("fake-image").toString("base64")}`,
     );
   });
 
-  it('defaults omitted spans to uncertain with zero confidence', async () => {
+  it("defaults omitted spans to uncertain with zero confidence", async () => {
     const partial = JSON.stringify({
-      verdicts: [{ index: 0, verdict: 'present', confidence: 0.7 }],
+      verdicts: [{ index: 0, verdict: "present", confidence: 0.7 }],
     });
     const { ai } = createAIStub(partial);
     const service = new SpanVerdictService(ai);
@@ -142,53 +142,53 @@ describe('SpanVerdictService', () => {
 
     expect(result.verdicts[1]).toMatchObject({
       span: SPANS[1],
-      verdict: 'uncertain',
+      verdict: "uncertain",
       confidence: 0,
     });
   });
 
-  it('parses responses wrapped in markdown code fences', async () => {
-    const fenced = '```json\n' + VALID_RESPONSE + '\n```';
+  it("parses responses wrapped in markdown code fences", async () => {
+    const fenced = "```json\n" + VALID_RESPONSE + "\n```";
     const { ai } = createAIStub(fenced);
     const service = new SpanVerdictService(ai);
 
     const result = await service.judge(DATA_URI, SPANS);
 
-    expect(result.verdicts[0]?.verdict).toBe('present');
+    expect(result.verdicts[0]?.verdict).toBe("present");
   });
 
-  it('throws FrameVerificationParseError on non-JSON responses', async () => {
-    const { ai } = createAIStub('I cannot analyze this image.');
+  it("throws FrameVerificationParseError on non-JSON responses", async () => {
+    const { ai } = createAIStub("I cannot analyze this image.");
     const service = new SpanVerdictService(ai);
 
     await expect(service.judge(DATA_URI, SPANS)).rejects.toBeInstanceOf(
-      FrameVerificationParseError
+      FrameVerificationParseError,
     );
   });
 
-  it('throws FrameVerificationParseError on schema-invalid verdicts', async () => {
+  it("throws FrameVerificationParseError on schema-invalid verdicts", async () => {
     const invalid = JSON.stringify({
-      verdicts: [{ index: 0, verdict: 'maybe', confidence: 0.5 }],
+      verdicts: [{ index: 0, verdict: "maybe", confidence: 0.5 }],
     });
     const { ai } = createAIStub(invalid);
     const service = new SpanVerdictService(ai);
 
     await expect(service.judge(DATA_URI, SPANS)).rejects.toBeInstanceOf(
-      FrameVerificationParseError
+      FrameVerificationParseError,
     );
   });
 });
 
-describe('stripCodeFence', () => {
-  it('strips fences with a language tag', () => {
+describe("stripCodeFence", () => {
+  it("strips fences with a language tag", () => {
     expect(stripCodeFence('```json\n{"a":1}\n```')).toBe('{"a":1}');
   });
 
-  it('strips bare fences', () => {
+  it("strips bare fences", () => {
     expect(stripCodeFence('```\n{"a":1}\n```')).toBe('{"a":1}');
   });
 
-  it('leaves unfenced text untouched', () => {
+  it("leaves unfenced text untouched", () => {
     expect(stripCodeFence(' {"a":1} ')).toBe('{"a":1}');
   });
 });

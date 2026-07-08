@@ -1,19 +1,19 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { logger } from '@infrastructure/Logger';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { logger } from "@infrastructure/Logger";
 import {
   REPLAY_CASSETTE_FORMAT_VERSION,
   type ReplayCassette,
   type ReplayCassetteEntry,
   type ReplaySurface,
-} from '@shared/schemas/replay.schemas';
-import { validateCassette, validateEntryPayload } from './contracts';
-import { ReplayCassetteMissError, ReplayError } from './errors';
+} from "@shared/schemas/replay.schemas";
+import { validateCassette, validateEntryPayload } from "./contracts";
+import { ReplayCassetteMissError, ReplayError } from "./errors";
 
 const DEFAULT_FIXTURES_DIR = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  'fixtures'
+  "fixtures",
 );
 
 interface IndexedEntry {
@@ -52,12 +52,12 @@ export class CassetteStore {
       const label = relative(this.fixturesDir, path);
       let raw: unknown;
       try {
-        raw = JSON.parse(readFileSync(path, 'utf8'));
+        raw = JSON.parse(readFileSync(path, "utf8"));
       } catch (error) {
         throw new ReplayError(
           `Replay fixture ${label} is not valid JSON: ${
             error instanceof Error ? error.message : String(error)
-          }`
+          }`,
         );
       }
       const cassette = validateCassette(raw, label);
@@ -65,7 +65,7 @@ export class CassetteStore {
       for (const entry of cassette.entries) {
         const existing = this.entries.get(entry.key);
         if (existing) {
-          logger.warn('Duplicate replay cassette key; keeping first entry', {
+          logger.warn("Duplicate replay cassette key; keeping first entry", {
             key: entry.key,
             firstScenario: `${existing.surface}/${existing.scenario}`,
             duplicateScenario: `${cassette.surface}/${cassette.scenario}`,
@@ -114,8 +114,8 @@ export class CassetteStore {
   record(entry: ReplayCassetteEntry): void {
     if (!this.context) {
       throw new ReplayError(
-        'CassetteStore.record() called before beginScenario() — the record ' +
-          'script must declare surface + scenario before invoking a surface.'
+        "CassetteStore.record() called before beginScenario() — the record " +
+          "script must declare surface + scenario before invoking a surface.",
       );
     }
     const { surface, scenario } = this.context;
@@ -147,10 +147,10 @@ export class CassetteStore {
       const path = join(
         this.fixturesDir,
         cassette.surface,
-        `${cassette.scenario}.json`
+        `${cassette.scenario}.json`,
       );
       mkdirSync(dirname(path), { recursive: true });
-      writeFileSync(path, `${JSON.stringify(cassette, null, 2)}\n`, 'utf8');
+      writeFileSync(path, `${JSON.stringify(cassette, null, 2)}\n`, "utf8");
       written.push(path);
     }
     this.pending.clear();
@@ -169,7 +169,7 @@ export class CassetteStore {
       const path = join(dir, dirent.name);
       if (dirent.isDirectory()) {
         files.push(...this.listCassetteFiles(path));
-      } else if (dirent.isFile() && dirent.name.endsWith('.json')) {
+      } else if (dirent.isFile() && dirent.name.endsWith(".json")) {
         files.push(path);
       }
     }

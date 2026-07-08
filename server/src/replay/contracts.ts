@@ -5,8 +5,8 @@ import {
   type ReplayCassetteEntry,
   type ReplayContract,
   type ReplayContractName,
-} from '@shared/schemas/replay.schemas';
-import { ReplayContractViolationError } from './errors';
+} from "@shared/schemas/replay.schemas";
+import { ReplayContractViolationError } from "./errors";
 
 /**
  * Which payload contract each aiService operation's recorded response must
@@ -14,16 +14,16 @@ import { ReplayContractViolationError } from './errors';
  * listed fall back to the envelope-only "llm-text" contract.
  */
 const OPERATION_CONTRACTS: Record<string, ReplayContractName> = {
-  span_labeling: 'span-labeling-payload',
-  span_labeling_gemini: 'span-labeling-payload',
-  enhance_suggestions: 'suggestions-payload',
-  custom_suggestions: 'suggestions-payload',
-  optimize_standard: 'optimize-text',
-  i2v_motion_ideas: 'motion-ideas-payload',
+  span_labeling: "span-labeling-payload",
+  span_labeling_gemini: "span-labeling-payload",
+  enhance_suggestions: "suggestions-payload",
+  custom_suggestions: "suggestions-payload",
+  optimize_standard: "optimize-text",
+  i2v_motion_ideas: "motion-ideas-payload",
 };
 
 export function contractForOperation(operation: string): ReplayContractName {
-  return OPERATION_CONTRACTS[operation] ?? 'llm-text';
+  return OPERATION_CONTRACTS[operation] ?? "llm-text";
 }
 
 export type ReplayContractRegistry = Record<ReplayContractName, ReplayContract>;
@@ -44,7 +44,7 @@ interface EntryContext {
 export function validateEntryPayload(
   entry: ReplayCassetteEntry,
   context: EntryContext,
-  contracts: ReplayContractRegistry = REPLAY_CONTRACTS
+  contracts: ReplayContractRegistry = REPLAY_CONTRACTS,
 ): void {
   const contract = contracts[entry.contract];
   if (!contract) {
@@ -57,13 +57,13 @@ export function validateEntryPayload(
   }
 
   let payload: unknown;
-  if (contract.encoding === 'object') {
+  if (contract.encoding === "object") {
     payload = entry.response;
-  } else if (contract.encoding === 'text') {
-    payload = entry.seam === 'ai-model' ? entry.response.text : entry.response;
+  } else if (contract.encoding === "text") {
+    payload = entry.seam === "ai-model" ? entry.response.text : entry.response;
   } else {
     const text =
-      entry.seam === 'ai-model'
+      entry.seam === "ai-model"
         ? entry.response.text
         : JSON.stringify(entry.response);
     try {
@@ -73,7 +73,7 @@ export function validateEntryPayload(
         ...context,
         contract: entry.contract,
         key: entry.key,
-        detail: 'recorded response text is not parseable JSON',
+        detail: "recorded response text is not parseable JSON",
       });
     }
   }
@@ -84,7 +84,7 @@ export function validateEntryPayload(
       ...context,
       contract: entry.contract,
       key: entry.key,
-      detail: 'recorded payload does not satisfy the live contract',
+      detail: "recorded payload does not satisfy the live contract",
       issues: result.error,
     });
   }
@@ -97,15 +97,15 @@ export function validateEntryPayload(
 export function validateCassette(
   raw: unknown,
   sourceLabel: string,
-  contracts: ReplayContractRegistry = REPLAY_CONTRACTS
+  contracts: ReplayContractRegistry = REPLAY_CONTRACTS,
 ): ReplayCassette {
   const envelope = ReplayCassetteSchema.safeParse(raw);
   if (!envelope.success) {
     throw new ReplayContractViolationError({
-      surface: 'unknown',
+      surface: "unknown",
       scenario: sourceLabel,
-      contract: 'cassette-envelope',
-      key: 'n/a',
+      contract: "cassette-envelope",
+      key: "n/a",
       detail: `cassette file failed envelope validation (${sourceLabel})`,
       issues: envelope.error,
     });
@@ -116,7 +116,7 @@ export function validateCassette(
     validateEntryPayload(
       entry,
       { surface: cassette.surface, scenario: cassette.scenario },
-      contracts
+      contracts,
     );
   }
   return cassette;

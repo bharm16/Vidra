@@ -91,7 +91,7 @@ Legacy `*_DISABLED` env var names still work but emit a deprecation warning at s
 | `/api/capabilities`                     | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
 | `/api/continuity/*`                     | `continuity.routes.ts`                    | `features/continuity/api/`                          |
 | `/api/model-intelligence/*`             | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
-| `POST /api/frame-verification`          | `frame-verification.routes.ts`           | `features/frame-verification/api/`                  |
+| `POST /api/frame-verification`          | `frame-verification.routes.ts`            | `features/frame-verification/api/`                  |
 | `/api/sessions/*`                       | `sessions.routes.ts`                      | (uses ApiClient directly)                           |
 | `/api/video/*`                          | `video.routes.ts`                         | `services/VideoConceptApi.ts`                       |
 | `/api/assets/*`                         | `asset.routes.ts`                         | `features/assets/`                                  |

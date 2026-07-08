@@ -1,4 +1,4 @@
-export { verifyFrame, type VerifyFrameRequest } from './frameVerificationApi';
+export { verifyFrame, type VerifyFrameRequest } from "./frameVerificationApi";
 export {
   FrameVerificationDataSchema,
   FrameVerificationResponseSchema,
@@ -10,4 +10,4 @@ export {
   type FrameVerificationSpan,
   type SpanVerdict,
   type SpanVerdictValue,
-} from './schemas';
+} from "./schemas";

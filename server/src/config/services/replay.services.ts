@@ -1,7 +1,7 @@
-import type { DIContainer } from '@infrastructure/DIContainer';
-import { logger } from '@infrastructure/Logger';
-import { CassetteStore } from '@server/replay/CassetteStore';
-import { resolveAllFlags } from '../feature-flags.ts';
+import type { DIContainer } from "@infrastructure/DIContainer";
+import { logger } from "@infrastructure/Logger";
+import { CassetteStore } from "@server/replay/CassetteStore";
+import { resolveAllFlags } from "../feature-flags.ts";
 
 /**
  * Record/replay wiring (REPLAY_MODE flag, Debug category).
@@ -13,25 +13,25 @@ import { resolveAllFlags } from '../feature-flags.ts';
  */
 export function registerReplayServices(container: DIContainer): void {
   container.register(
-    'replayCassetteStore',
+    "replayCassetteStore",
     () => {
       const { flags } = resolveAllFlags(process.env);
-      if (flags.replayMode === 'off') {
+      if (flags.replayMode === "off") {
         return null;
       }
 
       const store = new CassetteStore();
-      if (flags.replayMode === 'replay') {
+      if (flags.replayMode === "replay") {
         const { files, entries } = store.loadAll();
-        logger.info('Replay mode active: cassettes loaded', {
+        logger.info("Replay mode active: cassettes loaded", {
           files,
           entries,
         });
       } else {
-        logger.info('Record mode active: provider responses will be captured');
+        logger.info("Record mode active: provider responses will be captured");
       }
       return store;
     },
-    []
+    [],
   );
 }

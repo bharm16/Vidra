@@ -1,6 +1,6 @@
-import { apiClient } from '@/services/ApiClient';
-import { FrameVerificationResponseSchema } from './schemas';
-import type { FrameVerificationData, FrameVerificationSpan } from './schemas';
+import { apiClient } from "@/services/ApiClient";
+import { FrameVerificationResponseSchema } from "./schemas";
+import type { FrameVerificationData, FrameVerificationSpan } from "./schemas";
 
 export interface VerifyFrameRequest {
   /** Image URL or base64 data URI of the generated frame */
@@ -10,17 +10,17 @@ export interface VerifyFrameRequest {
 
 export async function verifyFrame(
   payload: VerifyFrameRequest,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<FrameVerificationData> {
   const data = await apiClient.post(
-    '/frame-verification',
+    "/frame-verification",
     payload,
-    signal ? { signal } : undefined
+    signal ? { signal } : undefined,
   );
   const parsed = FrameVerificationResponseSchema.parse(data);
 
   if (!parsed.success) {
-    throw new Error(parsed.error || 'Frame verification failed');
+    throw new Error(parsed.error || "Frame verification failed");
   }
 
   return parsed.data;

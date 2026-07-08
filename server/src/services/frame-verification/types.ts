@@ -6,7 +6,7 @@
  * span labeling — this service never re-classifies text.
  */
 
-export const SPAN_VERDICT_VALUES = ['present', 'absent', 'uncertain'] as const;
+export const SPAN_VERDICT_VALUES = ["present", "absent", "uncertain"] as const;
 
 export type SpanVerdictValue = (typeof SPAN_VERDICT_VALUES)[number];
 
