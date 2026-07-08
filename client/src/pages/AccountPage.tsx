@@ -14,7 +14,6 @@ import { getAuthRepository } from "@repositories/index";
 import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
-import { useCreditBalance } from "@/contexts/CreditBalanceContext";
 import type { User } from "@features/prompt-optimizer";
 import { AuthShell } from "./auth/AuthShell";
 
@@ -35,8 +34,6 @@ export function AccountPage(): React.ReactElement {
   const navigate = useNavigate();
   const [isBusy, setIsBusy] = React.useState(false);
   const user = useAuthUser();
-  const { balance: creditBalance, isLoading: isLoadingBalance } =
-    useCreditBalance();
 
   const handleSignOut = async (): Promise<void> => {
     setIsBusy(true);
@@ -100,28 +97,6 @@ export function AccountPage(): React.ReactElement {
                 {label?.title}
               </h2>
               <p className="text-muted mt-0.5 text-[13px]">{label?.subtitle}</p>
-            </div>
-          </div>
-
-          <div className="border-border bg-surface-1 rounded-lg border px-3.5 py-3">
-            <div className="flex items-center gap-2.5">
-              <CreditCard
-                className="text-faint h-4 w-4 shrink-0"
-                aria-hidden="true"
-              />
-              <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                <p className="text-muted text-[13px]">Credit balance</p>
-                <p
-                  className="text-muted text-[13px] tabular-nums"
-                  data-testid="account-credit-balance"
-                >
-                  {isLoadingBalance
-                    ? "…"
-                    : typeof creditBalance === "number"
-                      ? `${creditBalance} credits`
-                      : "—"}
-                </p>
-              </div>
             </div>
           </div>
 
