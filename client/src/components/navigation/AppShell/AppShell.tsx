@@ -9,7 +9,6 @@
 
 import { memo, type ReactElement } from "react";
 
-import { ToolSidebar } from "@components/ToolSidebar";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { CreditBalanceProvider } from "@/contexts/CreditBalanceContext";
 
@@ -21,7 +20,7 @@ export const AppShell = memo(function AppShell(
   props: AppShellProps,
 ): ReactElement {
   const { children } = props;
-  const { variant, navItems, currentPath } = useNavigationConfig();
+  const { variant, navItems } = useNavigationConfig();
   const user = useAuthUser();
 
   // CreditBalanceProvider must wrap every variant so routes like /account
@@ -39,7 +38,7 @@ export const AppShell = memo(function AppShell(
 
   if (variant === "topnav") {
     return withCreditBalance(
-      <div className="flex min-h-full flex-col bg-app">
+      <div className="bg-app flex min-h-full flex-col">
         <TopNavbar navItems={navItems.topNav} user={user} />
         <div className="min-h-0 flex-1 pt-[var(--global-top-nav-height)]">
           {children}
@@ -48,12 +47,11 @@ export const AppShell = memo(function AppShell(
     );
   }
 
-  // Non-session sidebar routes (e.g. /assets) should not restore persisted panel state
-  const isNonSessionRoute = currentPath === "/assets";
-
+  // The workspace tool rail was removed (ADR-0010 site-scope D7); the sidebar
+  // variant now renders only the workspace content. The account affordance and
+  // Library link live in the page's WorkspaceTopBar.
   return withCreditBalance(
-    <div className="flex h-full min-h-0 overflow-hidden bg-app">
-      <ToolSidebar user={user} forceDefaultPanel={isNonSessionRoute} />
+    <div className="bg-app flex h-full min-h-0 overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-black">
         {children}
       </div>

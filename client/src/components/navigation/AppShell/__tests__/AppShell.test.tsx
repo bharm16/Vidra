@@ -8,7 +8,6 @@ const unsubscribeMock = vi.fn();
 const onAuthStateChangedMock = vi.fn(() => unsubscribeMock);
 const useNavigationConfigMock = vi.fn();
 const useUserCreditBalanceMock = vi.hoisted(() => vi.fn());
-let lastToolSidebarProps: any;
 
 vi.mock("@repositories/index", () => ({
   getAuthRepository: () => ({
@@ -23,13 +22,6 @@ vi.mock("../hooks/useNavigationConfig", () => ({
 vi.mock("@/hooks/useUserCreditBalance", () => ({
   useUserCreditBalance: (...args: unknown[]) =>
     useUserCreditBalanceMock(...args),
-}));
-
-vi.mock("@components/ToolSidebar", () => ({
-  ToolSidebar: (props: any) => {
-    lastToolSidebarProps = props;
-    return <div data-testid="tool-sidebar" />;
-  },
 }));
 
 vi.mock("../variants/TopNavbar", () => ({
@@ -102,20 +94,6 @@ describe("AppShell", () => {
 
       expect(screen.getByText("Auth Content")).toBeInTheDocument();
       expect(screen.queryByTestId("top-navbar")).toBeNull();
-      expect(screen.queryByTestId("tool-sidebar")).toBeNull();
-    });
-
-    it("renders ToolSidebar in sidebar variant", () => {
-      useNavigationConfigMock.mockReturnValue({
-        variant: "sidebar",
-        navItems,
-        currentPath: "/assets",
-      });
-
-      render(<AppShell>Content</AppShell>);
-
-      expect(screen.getByTestId("tool-sidebar")).toBeInTheDocument();
-      expect(lastToolSidebarProps.user).toBeNull();
     });
   });
 
@@ -133,7 +111,7 @@ describe("AppShell", () => {
       expect(screen.getByText("Marketing")).toBeInTheDocument();
     });
 
-    it("renders sidebar variant with ToolSidebar and workspace content", () => {
+    it("renders workspace content in the sidebar variant (no tool rail — ADR-0010 D7)", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "sidebar",
         navItems,
@@ -142,11 +120,14 @@ describe("AppShell", () => {
 
       render(<AppShell>Workspace</AppShell>);
 
-      expect(screen.getByTestId("tool-sidebar")).toBeInTheDocument();
       expect(screen.getByText("Workspace")).toBeInTheDocument();
+      // The left tool rail was removed in D7; the sidebar variant is now just
+      // the workspace content. Its chrome (Library + account) lives in the
+      // page's WorkspaceTopBar, not here.
+      expect(screen.queryByTestId("top-navbar")).toBeNull();
     });
 
-    it("provides credit context to both sidebar and workspace children in sidebar variant", () => {
+    it("provides credit context to workspace children in the sidebar variant", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "sidebar",
         navItems,
@@ -159,7 +140,6 @@ describe("AppShell", () => {
         </AppShell>,
       );
 
-      expect(screen.getByTestId("tool-sidebar")).toBeInTheDocument();
       expect(screen.getByTestId("credit-probe")).toHaveTextContent("42");
     });
   });
