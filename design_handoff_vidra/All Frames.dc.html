@@ -1,0 +1,1228 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="design_doc_mode" content="canvas" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            background: #070809;
+          }
+        </style>
+      </helmet>
+      <div
+        style="
+          width: 2040px;
+          background: #070809;
+          font-family: &quot;Space Grotesk&quot;, system-ui, sans-serif;
+          color: #f2f3f6;
+          padding: 48px 56px 72px;
+        "
+      >
+        <!-- title -->
+        <div style="margin-bottom: 40px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <div
+              style="
+                width: 30px;
+                height: 30px;
+                border-radius: 8px;
+                background: linear-gradient(150deg, #5b6cff, #9aa6ff);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 14px -4px #5b6cff;
+              "
+            >
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="#0a0b0e">
+                <path
+                  d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z"
+                ></path>
+              </svg>
+            </div>
+            <span
+              style="
+                font:
+                  600 26px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                letter-spacing: -0.015em;
+              "
+              >Vidra — every frame</span
+            >
+          </div>
+          <p
+            style="
+              max-width: 820px;
+              margin: 13px 0 0;
+              font:
+                400 14.5px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #9298a5;
+              line-height: 1.6;
+            "
+          >
+            The complete app as static frames. Nothing here needs the workflow —
+            each frame is a live screen frozen at a state. The clickable
+            prototypes are
+            <span style="color: #c3c7d0">Empty State - Anchor</span>,
+            <span style="color: #c3c7d0">Workspace</span>,
+            <span style="color: #c3c7d0">Library</span>,
+            <span style="color: #c3c7d0">Auth</span>,
+            <span style="color: #c3c7d0">Account</span>,
+            <span style="color: #c3c7d0">Public Clip</span> and
+            <span style="color: #c3c7d0">Docs</span>.
+          </p>
+        </div>
+
+        <!-- ===================== ENTRY ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >01 · Entry</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  background: #5b6cff;
+                  color: #fff;
+                  font:
+                    600 9px &quot;Space Grotesk&quot;,
+                    sans-serif;
+                  border-radius: 4px;
+                  padding: 2px 7px;
+                  letter-spacing: 0.04em;
+                "
+                >START</span
+              ><span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >empty state · the front door</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Empty State - Anchor"
+                  embedded="true"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== THE LOOP ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >02 · The loop</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  background: rgba(255, 255, 255, 0.08);
+                  color: #8b909c;
+                  font:
+                    600 9px &quot;Space Mono&quot;,
+                    monospace;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                >1</span
+              ><span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >writing · space born</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="writing"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  background: rgba(255, 255, 255, 0.08);
+                  color: #8b909c;
+                  font:
+                    600 9px &quot;Space Mono&quot;,
+                    monospace;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                >2</span
+              ><span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >painting · first picture</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="painting"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  background: rgba(255, 255, 255, 0.08);
+                  color: #8b909c;
+                  font:
+                    600 9px &quot;Space Mono&quot;,
+                    monospace;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                >3</span
+              ><span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >picture · the gate</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="picture"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  background: rgba(255, 255, 255, 0.08);
+                  color: #8b909c;
+                  font:
+                    600 9px &quot;Space Mono&quot;,
+                    monospace;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                >4</span
+              ><span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >clip · playing</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="clip"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  width: 16px;
+                  height: 16px;
+                  border-radius: 50%;
+                  background: rgba(63, 191, 111, 0.16);
+                  color: #68d492;
+                  font:
+                    600 9px &quot;Space Mono&quot;,
+                    monospace;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+                >5</span
+              ><span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >kept</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(63, 191, 111, 0.35);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="kept"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== EDITING THE PROMPT ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >03 · Editing the prompt</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >editable dock</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(91, 108, 255, 0.4);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="picture"
+                  demo-editing="true"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >reword · branch up</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(211, 164, 78, 0.45);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="picture"
+                  demo-reword="true"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >phrase alternatives</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(91, 108, 255, 0.4);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="picture"
+                  demo-phrase="motion"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== FAILURE ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >04 · When things fail</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >picture failed · nothing charged</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(224, 138, 122, 0.4);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="pictureFail"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >motion failed · nothing charged</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(224, 138, 122, 0.4);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Workspace"
+                  demo-moment="clipFail"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== LIBRARY ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >05 · Library</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >library · spaces &amp; clips</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Library"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== SIGN IN ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >06 · Sign in</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >sign in</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Auth"
+                  mode="signin"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >create account</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Auth"
+                  mode="create"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== ACCOUNT ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >07 · Account</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 26px 28px">
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >profile</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Account"
+                  tab="profile"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >subscription</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Account"
+                  tab="subscription"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >usage</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Account"
+                  tab="usage"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== PUBLIC & REFERENCE ===================== -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 8px 0 20px;
+          "
+        >
+          <span
+            style="
+              font:
+                600 13px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #c3c7d0;
+            "
+            >08 · Public &amp; reference</span
+          >
+          <span
+            style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08)"
+          ></span>
+        </div>
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px 28px;
+            margin-bottom: 52px;
+          "
+        >
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >public clip · signed-out</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Public Clip"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span
+                style="
+                  font:
+                    500 12px &quot;Space Mono&quot;,
+                    monospace;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                  color: #c3c7d0;
+                "
+                >docs · how it works</span
+              >
+            </div>
+            <div
+              style="
+                width: 619px;
+                height: 387px;
+                overflow: hidden;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 22px 54px -22px rgba(0, 0, 0, 0.75);
+              "
+            >
+              <div
+                style="
+                  width: 1440px;
+                  height: 900px;
+                  transform: scale(0.43);
+                  transform-origin: top left;
+                "
+              >
+                <dc-import
+                  name="Docs"
+                  hint-size="1440px,900px"
+                  style="display: block; width: 1440px; height: 900px"
+                ></dc-import>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </x-dc>
+  </body>
+</html>

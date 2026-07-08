@@ -1,0 +1,677 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            background: #050607;
+          }
+        </style>
+      </helmet>
+      <div
+        ref="{{ rootRef }}"
+        style="
+          position: relative;
+          width: 1440px;
+          height: 900px;
+          overflow: hidden;
+          background: #0a0b0e;
+          font-family: &quot;Space Grotesk&quot;, system-ui, sans-serif;
+          color: #f2f3f6;
+          display: flex;
+          isolation: isolate;
+          --accent: #5b6cff;
+          --grain: 0.35;
+        "
+      >
+        <!-- icon rail -->
+        <div
+          style="
+            width: 64px;
+            flex: none;
+            background: #0c0d11;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+            gap: 14px;
+          "
+        >
+          <div
+            style="
+              width: 30px;
+              height: 30px;
+              border-radius: 9px;
+              background: linear-gradient(
+                150deg,
+                var(--accent, #5b6cff),
+                #9aa6ff
+              );
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 4px 14px -4px var(--accent, #5b6cff);
+            "
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="#0a0b0e">
+              <path
+                d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z"
+              ></path>
+            </svg>
+          </div>
+          <button
+            title="Back to app"
+            style="
+              width: 38px;
+              height: 38px;
+              border: 0;
+              border-radius: 10px;
+              background: transparent;
+              color: #7a8090;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: all 0.16s;
+            "
+            style-hover="background:rgba(255,255,255,.06);color:#f2f3f6"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+          </button>
+          <div
+            style="
+              width: 38px;
+              height: 38px;
+              border-radius: 10px;
+              background: color-mix(
+                in srgb,
+                var(--accent, #5b6cff) 16%,
+                transparent
+              );
+              color: color-mix(in srgb, var(--accent, #5b6cff) 70%, #fff);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"
+              ></path>
+              <path
+                d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5A1.5 1.5 0 0 0 20 18.5z"
+              ></path>
+            </svg>
+          </div>
+          <div style="flex: 1"></div>
+          <span
+            style="
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              background: linear-gradient(150deg, #f4d3a2, #e6b487);
+              border: 1px solid rgba(255, 255, 255, 0.16);
+            "
+          ></span>
+        </div>
+
+        <!-- TOC -->
+        <div
+          style="
+            width: 222px;
+            flex: none;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 30px 22px;
+          "
+        >
+          <div
+            style="
+              font:
+                600 10px &quot;Space Mono&quot;,
+                monospace;
+              letter-spacing: 0.16em;
+              text-transform: uppercase;
+              color: #6b7180;
+              margin-bottom: 15px;
+            "
+          >
+            On this page
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <div
+              style="
+                font:
+                  600 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #f2f3f6;
+                border-left: 2px solid var(--accent, #5b6cff);
+                padding: 6px 0 6px 12px;
+              "
+            >
+              The workflow
+            </div>
+            <div
+              style="
+                font:
+                  400 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #8b909c;
+                padding: 6px 0 6px 14px;
+                cursor: pointer;
+                transition: color 0.15s;
+              "
+              style-hover="color:#d7dae2"
+            >
+              Editing phrases
+            </div>
+            <div
+              style="
+                font:
+                  400 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #8b909c;
+                padding: 6px 0 6px 14px;
+                cursor: pointer;
+                transition: color 0.15s;
+              "
+              style-hover="color:#d7dae2"
+            >
+              What the space shows
+            </div>
+          </div>
+        </div>
+
+        <!-- content -->
+        <div
+          style="flex: 1; min-width: 0; padding: 46px 56px; overflow: hidden"
+        >
+          <div
+            style="
+              font:
+                600 30px &quot;Space Grotesk&quot;,
+                sans-serif;
+              letter-spacing: -0.02em;
+              color: #f2f3f6;
+            "
+          >
+            How it works
+          </div>
+          <div
+            style="
+              font:
+                400 14.5px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #9298a5;
+              margin-top: 8px;
+              line-height: 1.55;
+              max-width: 560px;
+            "
+          >
+            Type an idea, shape it into a picture, set it moving, keep what you
+            love.
+          </div>
+
+          <!-- workflow -->
+          <div
+            style="
+              font:
+                600 17px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #f2f3f6;
+              margin-top: 34px;
+            "
+          >
+            The workflow
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              margin-top: 15px;
+            "
+          >
+            <span
+              style="
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                background: rgba(255, 255, 255, 0.04);
+                border-radius: 10px;
+                padding: 9px 16px;
+                font:
+                  500 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #d7dae2;
+              "
+              >Type</span
+            >
+            <svg
+              width="20"
+              height="12"
+              viewBox="0 0 20 12"
+              fill="none"
+              stroke="#5a606e"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M2 6h14"></path>
+              <path d="M12 2l4 4-4 4"></path>
+            </svg>
+            <span
+              style="
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                background: rgba(255, 255, 255, 0.04);
+                border-radius: 10px;
+                padding: 9px 16px;
+                font:
+                  500 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #d7dae2;
+              "
+              >Picture</span
+            >
+            <svg
+              width="20"
+              height="12"
+              viewBox="0 0 20 12"
+              fill="none"
+              stroke="#5a606e"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M2 6h14"></path>
+              <path d="M12 2l4 4-4 4"></path>
+            </svg>
+            <span
+              style="
+                border: 1px solid rgba(255, 255, 255, 0.14);
+                background: rgba(255, 255, 255, 0.04);
+                border-radius: 10px;
+                padding: 9px 16px;
+                font:
+                  500 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #d7dae2;
+              "
+              >Motion</span
+            >
+            <svg
+              width="20"
+              height="12"
+              viewBox="0 0 20 12"
+              fill="none"
+              stroke="#5a606e"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M2 6h14"></path>
+              <path d="M12 2l4 4-4 4"></path>
+            </svg>
+            <span
+              style="
+                border: 1px solid rgba(63, 191, 111, 0.4);
+                background: rgba(63, 191, 111, 0.12);
+                border-radius: 10px;
+                padding: 9px 16px;
+                font:
+                  600 13px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                color: #68d492;
+              "
+              >Keep</span
+            >
+          </div>
+          <div
+            style="
+              font:
+                400 13.5px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #9aa0ac;
+              line-height: 1.65;
+              margin-top: 14px;
+              max-width: 560px;
+            "
+          >
+            Start by typing an idea. It becomes a still picture, which you can
+            then set in motion as a short clip, and finally keep. Each step
+            waits for you &mdash; nothing advances on its own, and you can
+            re-roll or edit at any point.
+          </div>
+
+          <!-- editing phrases -->
+          <div
+            style="
+              font:
+                600 17px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #f2f3f6;
+              margin-top: 30px;
+            "
+          >
+            Editing phrases
+          </div>
+          <div
+            style="
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              background: rgba(255, 255, 255, 0.03);
+              border-radius: 12px;
+              padding: 14px 16px;
+              margin-top: 13px;
+              max-width: 560px;
+              font:
+                400 15px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #e9ebf0;
+              line-height: 1.6;
+            "
+          >
+            A
+            <span
+              style="
+                color: #e2b866;
+                border-bottom: 1.6px dashed
+                  color-mix(in srgb, #e2b866 60%, transparent);
+              "
+              >drone shot pulling back</span
+            >
+            over a
+            <span
+              style="
+                background: color-mix(
+                  in srgb,
+                  var(--accent, #5b6cff) 20%,
+                  transparent
+                );
+                box-shadow: inset 0 -1.6px var(--accent, #5b6cff);
+                border-radius: 3px;
+                padding: 0 3px;
+              "
+              >coastal town</span
+            >
+            at
+            <span
+              style="
+                background: color-mix(
+                  in srgb,
+                  var(--accent, #5b6cff) 20%,
+                  transparent
+                );
+                box-shadow: inset 0 -1.6px var(--accent, #5b6cff);
+                border-radius: 3px;
+                padding: 0 3px;
+              "
+              >dawn</span
+            >
+          </div>
+          <div
+            style="
+              font:
+                400 13.5px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #9aa0ac;
+              line-height: 1.65;
+              margin-top: 13px;
+              max-width: 560px;
+            "
+          >
+            Your description stays editable throughout.
+            <span style="color: #c8ccd6">Highlighted phrases</span> open a few
+            alternatives &mdash; or type your own.
+            <span style="color: #e2b866">Motion phrases</span> describe camera
+            or subject movement; they read differently and don&rsquo;t change
+            the still picture. The &ldquo;your words&rdquo; control always holds
+            your original line.
+          </div>
+
+          <!-- what the space shows -->
+          <div
+            style="
+              font:
+                600 17px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #f2f3f6;
+              margin-top: 30px;
+            "
+          >
+            What the space shows
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 22px;
+              margin-top: 14px;
+            "
+          >
+            <svg width="316" height="72" viewBox="0 0 316 72" fill="none">
+              <path
+                d="M42,36 L104,36"
+                stroke="#5b6cff"
+                stroke-width="2.2"
+              ></path>
+              <path
+                d="M42,36 C74,36 70,15 104,15"
+                stroke="rgba(255,255,255,.18)"
+                stroke-width="1.5"
+              ></path>
+              <path
+                d="M42,36 C74,36 70,57 104,57"
+                stroke="#c2a24e"
+                stroke-width="1.5"
+                stroke-dasharray="5 3"
+              ></path>
+              <path
+                d="M160,36 L222,36"
+                stroke="#5b6cff"
+                stroke-width="2.4"
+              ></path>
+              <path
+                d="M278,36 L304,36"
+                stroke="#3fbf6f"
+                stroke-width="2.4"
+              ></path>
+              <rect
+                x="6"
+                y="24"
+                width="36"
+                height="24"
+                rx="6"
+                fill="#14161c"
+                stroke="rgba(255,255,255,.16)"
+              ></rect>
+              <rect
+                x="104"
+                y="5"
+                width="56"
+                height="20"
+                rx="5"
+                fill="#14161c"
+                stroke="rgba(255,255,255,.14)"
+              ></rect>
+              <rect
+                x="104"
+                y="47"
+                width="56"
+                height="20"
+                rx="5"
+                fill="#191509"
+                stroke="rgba(211,164,78,.4)"
+              ></rect>
+              <rect
+                x="104"
+                y="24"
+                width="56"
+                height="24"
+                rx="6"
+                fill="#161821"
+                stroke="#5b6cff"
+                stroke-width="1.6"
+              ></rect>
+              <rect
+                x="222"
+                y="24"
+                width="56"
+                height="24"
+                rx="6"
+                fill="#161821"
+                stroke="#5b6cff"
+                stroke-width="1.6"
+              ></rect>
+              <rect
+                x="304"
+                y="26"
+                width="10"
+                height="20"
+                rx="4"
+                fill="#12211a"
+                stroke="#3fbf6f"
+                stroke-width="1.6"
+              ></rect>
+            </svg>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 7px;
+                font:
+                  400 11.5px &quot;Space Mono&quot;,
+                  monospace;
+                color: #9aa0ac;
+              "
+            >
+              <span style="display: flex; align-items: center; gap: 8px"
+                ><svg width="20" height="4">
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="20"
+                    y2="2"
+                    stroke="#5b6cff"
+                    stroke-width="2.4"
+                  ></line></svg
+                >move</span
+              >
+              <span style="display: flex; align-items: center; gap: 8px"
+                ><svg width="20" height="4">
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="20"
+                    y2="2"
+                    stroke="rgba(255,255,255,.2)"
+                    stroke-width="1.5"
+                  ></line></svg
+                >roll</span
+              >
+              <span style="display: flex; align-items: center; gap: 8px"
+                ><svg width="20" height="4">
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="20"
+                    y2="2"
+                    stroke="#c2a24e"
+                    stroke-width="1.5"
+                    stroke-dasharray="4 3"
+                  ></line></svg
+                >reword</span
+              >
+            </div>
+          </div>
+          <div
+            style="
+              font:
+                400 13.5px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #9aa0ac;
+              line-height: 1.65;
+              margin-top: 15px;
+              max-width: 560px;
+            "
+          >
+            Everything you make lives in one space, in three columns &mdash;
+            words, pictures, clips &mdash; connected by what you did. The node
+            you&rsquo;re viewing is the live one; selecting any node brings its
+            words back into the input.
+          </div>
+        </div>
+
+        <!-- grain -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 6;
+            mix-blend-mode: overlay;
+            opacity: var(--grain, 0.35);
+            background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E&quot;);
+            background-size: 170px 170px;
+          "
+        ></div>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{
+  "$preview": { "width": 1440, "height": 900 },
+  "accent": { "editor": "color", "default": "#5b6cff", "options": ["#5b6cff", "#22d3ee", "#a3e635", "#ff5d8f"], "tsType": "string", "section": "Theme" },
+  "grain": { "editor": "boolean", "default": true, "tsType": "boolean", "section": "Theme" }
+}'
+    >
+      class Component extends DCLogic {
+        constructor(props){ super(props); this.rootRef = React.createRef(); }
+        componentDidMount(){ this.applyTheme(); }
+        componentDidUpdate(){ this.applyTheme(); }
+        applyTheme(){
+          const r = this.rootRef.current; if (!r) return;
+          const p = this.props || {};
+          r.style.setProperty('--accent', p.accent || '#5b6cff');
+          r.style.setProperty('--grain', p.grain === false ? 0 : 0.35);
+        }
+        renderVals(){ return { rootRef: this.rootRef }; }
+      }
+    </script>
+  </body>
+</html>

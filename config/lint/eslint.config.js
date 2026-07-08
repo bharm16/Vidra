@@ -65,6 +65,7 @@ export default [
       '**/tmp/**',
       // Design-tool reference bundles (visual specs, not code)
       'docs/design/handoff/returns/**',
+      'design_handoff_vidra/**',
     ],
   },
   {

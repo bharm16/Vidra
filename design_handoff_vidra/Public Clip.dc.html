@@ -1,0 +1,451 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+        <script src="./image-slot.js"></script>
+        <style>
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            background: #050607;
+          }
+          @keyframes pcRise {
+            from {
+              opacity: 0;
+              transform: translateY(16px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          @keyframes pcDrift1 {
+            0%,
+            100% {
+              transform: translate(-50%, 0) scale(1);
+            }
+            50% {
+              transform: translate(-46%, 24px) scale(1.08);
+            }
+          }
+          @keyframes pcDrift2 {
+            0%,
+            100% {
+              transform: translate(0, 0) scale(1);
+            }
+            50% {
+              transform: translate(-30px, -22px) scale(1.1);
+            }
+          }
+          image-slot {
+            --is-bg: #101218;
+            --is-fg: #565c6b;
+          }
+        </style>
+      </helmet>
+      <div
+        ref="{{ rootRef }}"
+        style="
+          position: relative;
+          width: 1440px;
+          height: 900px;
+          overflow: hidden;
+          background: #0a0b0e;
+          font-family: &quot;Space Grotesk&quot;, system-ui, sans-serif;
+          color: #f2f3f6;
+          isolation: isolate;
+          --accent: #5b6cff;
+          --grain: 0.4;
+        "
+      >
+        <!-- ambient cinematic light -->
+        <div
+          style="
+            position: absolute;
+            top: -200px;
+            left: 50%;
+            width: 1100px;
+            height: 760px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(
+              ellipse at 50% 45%,
+              color-mix(in srgb, var(--accent, #5b6cff) 34%, transparent),
+              color-mix(in srgb, var(--accent, #5b6cff) 10%, transparent) 44%,
+              rgba(0, 0, 0, 0) 72%
+            );
+            opacity: 0.5;
+            transform: translateX(-50%);
+            filter: blur(16px);
+            animation: pcDrift1 20s ease-in-out infinite;
+          "
+        ></div>
+        <div
+          style="
+            position: absolute;
+            bottom: -240px;
+            right: -180px;
+            width: 760px;
+            height: 660px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            background: radial-gradient(
+              ellipse at 50% 50%,
+              rgba(255, 142, 86, 0.2),
+              rgba(220, 90, 60, 0.06) 46%,
+              rgba(60, 20, 10, 0) 72%
+            );
+            opacity: 0.3;
+            filter: blur(20px);
+            animation: pcDrift2 24s ease-in-out infinite;
+          "
+        ></div>
+
+        <!-- public chrome -->
+        <div
+          style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 5;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 11px">
+            <div
+              style="
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+                background: linear-gradient(
+                  150deg,
+                  var(--accent, #5b6cff),
+                  #9aa6ff
+                );
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 14px -4px var(--accent, #5b6cff);
+              "
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="#0a0b0e">
+                <path
+                  d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z"
+                ></path>
+              </svg>
+            </div>
+            <span
+              style="
+                font:
+                  600 20px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                letter-spacing: -0.01em;
+              "
+              >Vidra</span
+            >
+          </div>
+          <button
+            style="
+              border: 1px solid rgba(255, 255, 255, 0.16);
+              background: rgba(255, 255, 255, 0.04);
+              color: #d7dae2;
+              border-radius: 11px;
+              padding: 9px 18px;
+              font:
+                500 13.5px &quot;Space Grotesk&quot;,
+                sans-serif;
+              cursor: pointer;
+              transition: all 0.18s;
+            "
+            style-hover="background:rgba(255,255,255,.09);color:#f2f3f6"
+          >
+            Sign in
+          </button>
+        </div>
+
+        <!-- stage -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            padding-top: 44px;
+          "
+        >
+          <!-- player -->
+          <div
+            style="
+              position: relative;
+              width: 784px;
+              height: 441px;
+              border-radius: 20px;
+              overflow: hidden;
+              border: 1px solid rgba(255, 255, 255, 0.14);
+              box-shadow:
+                0 44px 96px -34px rgba(0, 0, 0, 0.82),
+                0 0 0 6px
+                  color-mix(in srgb, var(--accent, #5b6cff) 6%, transparent);
+              animation: pcRise 1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+            "
+          >
+            <image-slot
+              id="pub_clip"
+              style="
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                display: block;
+              "
+              shape="rect"
+              fit="cover"
+              placeholder="Kept clip"
+            ></image-slot>
+            <div
+              style="
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background: linear-gradient(
+                  180deg,
+                  rgba(10, 11, 14, 0.35),
+                  rgba(10, 11, 14, 0) 28%,
+                  rgba(10, 11, 14, 0) 60%,
+                  rgba(10, 11, 14, 0.55)
+                );
+              "
+            ></div>
+            <!-- play -->
+            <div
+              style="
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 68px;
+                height: 68px;
+                border-radius: 50%;
+                background: rgba(10, 11, 14, 0.5);
+                backdrop-filter: blur(4px);
+                border: 1px solid rgba(255, 255, 255, 0.24);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+              "
+            >
+              <span
+                style="
+                  width: 0;
+                  height: 0;
+                  border-left: 18px solid #fff;
+                  border-top: 12px solid transparent;
+                  border-bottom: 12px solid transparent;
+                  margin-left: 4px;
+                "
+              ></span>
+            </div>
+            <!-- scrubber -->
+            <div
+              style="
+                position: absolute;
+                left: 18px;
+                right: 18px;
+                bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 11px;
+              "
+            >
+              <span
+                style="
+                  font:
+                    400 11px &quot;Space Mono&quot;,
+                    monospace;
+                  color: #eceef3;
+                "
+                >0:02</span
+              >
+              <div
+                style="
+                  flex: 1;
+                  height: 3px;
+                  border-radius: 2px;
+                  background: rgba(255, 255, 255, 0.24);
+                  overflow: hidden;
+                "
+              >
+                <div
+                  style="
+                    width: 34%;
+                    height: 100%;
+                    background: #fff;
+                    border-radius: 2px;
+                  "
+                ></div>
+              </div>
+              <span
+                style="
+                  font:
+                    400 11px &quot;Space Mono&quot;,
+                    monospace;
+                  color: #c3c7d0;
+                "
+                >0:06</span
+              >
+            </div>
+          </div>
+
+          <!-- description -->
+          <div
+            style="
+              max-width: 600px;
+              margin-top: 24px;
+              text-align: center;
+              font:
+                italic 400 17px &quot;Space Grotesk&quot;,
+                sans-serif;
+              color: #aeb3c0;
+              line-height: 1.55;
+              animation: pcRise 1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+              animation-delay: 0.1s;
+            "
+          >
+            &ldquo;A drone shot pulling back over a coastal town at dawn, mist
+            over the rooftops&rdquo;
+          </div>
+
+          <!-- CTA -->
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 12px;
+              margin-top: 28px;
+              animation: pcRise 1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+              animation-delay: 0.2s;
+            "
+          >
+            <button
+              style="
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                border: 0;
+                border-radius: 13px;
+                background: #ffffff;
+                color: #0a0b0e;
+                font:
+                  600 15px &quot;Space Grotesk&quot;,
+                  sans-serif;
+                padding: 14px 25px;
+                cursor: pointer;
+                box-shadow: 0 12px 32px -10px rgba(255, 255, 255, 0.34);
+                transition: all 0.18s;
+              "
+              style-hover="transform:translateY(-1px);box-shadow:0 16px 40px -10px rgba(255,255,255,.46)"
+            >
+              Start your own clip
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.1"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 12h14"></path>
+                <path d="M13 6l6 6-6 6"></path>
+              </svg>
+            </button>
+            <span
+              style="
+                font:
+                  400 12px &quot;Space Mono&quot;,
+                  monospace;
+                color: #6b7180;
+              "
+              >Free to try &middot; no account needed to watch</span
+            >
+          </div>
+        </div>
+
+        <!-- grain -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 6;
+            mix-blend-mode: overlay;
+            opacity: var(--grain, 0.4);
+            background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E&quot;);
+            background-size: 170px 170px;
+          "
+        ></div>
+        <!-- vignette -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 7;
+            box-shadow: inset 0 0 240px 18px rgba(0, 0, 0, 0.5);
+          "
+        ></div>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{
+  "$preview": { "width": 1440, "height": 900 },
+  "accent": { "editor": "color", "default": "#5b6cff", "options": ["#5b6cff", "#22d3ee", "#a3e635", "#ff5d8f"], "tsType": "string", "section": "Theme" },
+  "grain": { "editor": "boolean", "default": true, "tsType": "boolean", "section": "Theme" }
+}'
+    >
+      class Component extends DCLogic {
+        constructor(props){ super(props); this.rootRef = React.createRef(); }
+        componentDidMount(){ this.applyTheme(); }
+        componentDidUpdate(){ this.applyTheme(); }
+        applyTheme(){
+          const r = this.rootRef.current; if (!r) return;
+          const p = this.props || {};
+          r.style.setProperty('--accent', p.accent || '#5b6cff');
+          r.style.setProperty('--grain', p.grain === false ? 0 : 0.4);
+        }
+        renderVals(){ return { rootRef: this.rootRef }; }
+      }
+    </script>
+  </body>
+</html>
