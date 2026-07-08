@@ -168,6 +168,21 @@ ADR-0012).
   golden-path Flux Schnell) — M2b only bypassed the prompt, so removal needs provider rewiring first;
   the motion-ideas panel + tune-chips/TuneDrawer are active-but-superseded UX needing design
   confirmation. Then M7 (touches config/feature-flags) → M8 (site-scope doc still not found).
+- **M6 Gemini transformer + side-channel removed (2026-07-07, `f651bb0f`→`993cdd0e`):** the
+  Gemini `VideoToImagePromptTransformer` — an LLM prompt-rewrite path (plus a temporal-pattern
+  regex classifier) wired into both active Flux providers incl. golden-path Flux Schnell — is
+  **excised**. Characterized first: every production caller (`imageGenerate` + storyboard
+  base/per-frame) already passed `disablePromptTransformation: true`, so the transform branch was
+  already dead in prod — removal is behavior-preserving (ADR-0010 truth: the picture model gets the
+  creator's text verbatim). Rewired both providers to `{ apiToken }` only, dropped the
+  `videoToImageTransformer` + `videoPromptDetector` DI registrations, deleted the transformer + its
+  2 tests + barrel export, then removed the now-inert `disablePromptTransformation` side-channel
+  (2 request types, service copy, 3 setters, 3 test assertions — zero refs repo-wide after). TDD:
+  provider tracer tests construct with `{ apiToken }` and assert a video-shaped prompt reaches the
+  model verbatim. tsc + eslint + integration gate + full suite (7669) green; two `refactor:` commits.
+  **Remaining M6 (still design-sensitive, owner call):** the motion-ideas panel (`MotionIdeasPanel`
+  - `i2v-motion-ideas` server stack, still renders in I2V) and tune-chips/TuneDrawer — both
+    active-but-superseded, pending confirmation the M3/D6 replacements fully cover them. Then M7 → M8.
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
