@@ -23,7 +23,6 @@ import { registerImageGenerationServices } from "./services/image-generation.ser
 import { registerContinuityServices } from "./services/continuity.services.ts";
 import { registerPaymentServices } from "./services/payment.services.ts";
 import { registerModelIntelligenceServices } from "./services/model-intelligence.services.ts";
-import { registerFrameVerificationServices } from "./services/frame-verification.services.ts";
 import { registerSessionServices } from "./services/session.services.ts";
 import { getRuntimeFlags } from "./feature-flags.ts";
 
@@ -63,8 +62,6 @@ export async function configureServices(): Promise<DIContainer> {
   // Image-generation: depends on imageAssetStore (storage) and geminiClient/openAIClient (llm),
   // both registered above.
   registerImageGenerationServices(container);
-  // Frame verification: vision judge over generated frames — depends on aiService (llm).
-  registerFrameVerificationServices(container);
 
   // Continuity (gated on ENABLE_CONVERGENCE).
   if (enableConvergence) {
