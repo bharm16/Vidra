@@ -156,6 +156,18 @@ ADR-0012).
   `versions`, zero console errors, then reverted. **Old shots-grid layout NOT deleted** (now
   unreachable-by-default, kept until all M done per owner). Next: M6 deletions (motion-ideas panel,
   tune-chips/TuneDrawer, Gemini transformer, frame-verification — NOT the old layout) → M7 → M8.
+- **Formatter churn resolved + M6 frame-verification deleted (2026-07-07 pm, `a06459fa`→`85b835b6`):**
+  a 45-file uncommitted "WIP" in the tree turned out to be **100% pure Prettier churn** (the
+  documented recurring reflow of stale-formatted committed files) — proved by regenerating it
+  byte-identically with `prettier --write` from a clean stash. Committed once (`a06459fa`), which
+  **stops the recurring churn**. Then **frame-verification excised** — it was dormant (server served
+  `POST /api/frame-verification`, zero client consumers): archived to `archive/frame-verification-2026-07-07`,
+  removed the client feature + server service/route/DI + eval scripts + all wiring + route-table rows
+  (`ffb7b86e` + `85b835b6`); integration gate + full suite green. **Remaining M6 is risky/design-sensitive:**
+  the Gemini `VideoToImagePromptTransformer` is still wired into both active Flux providers (incl.
+  golden-path Flux Schnell) — M2b only bypassed the prompt, so removal needs provider rewiring first;
+  the motion-ideas panel + tune-chips/TuneDrawer are active-but-superseded UX needing design
+  confirmation. Then M7 (touches config/feature-flags) → M8 (site-scope doc still not found).
 - **Build state (2026-07-06 M3 session):** 4 commits (`c7cf6acc` ratchet fix · `456bd786` ·
   `1e8334e0` · `ee79b5fc`), each gated. Two lessons carried in the brief: (1) **visual
   verification of the span-based slices needs the main checkout** — a worktree client can't
