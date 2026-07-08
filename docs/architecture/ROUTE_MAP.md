@@ -69,7 +69,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/enhancement/scene-change`                                         | `server/src/routes/enhancement/sceneChangeRoute.ts`             |
 | POST   | `/api/enhancement/suggestions`                                          | `server/src/routes/enhancement/enhancementSuggestionsRoute.ts`  |
 | GET    | `/api/enhancement/test-nlp`                                             | `server/src/routes/enhancement/nlpTestRoute.ts`                 |
-| POST   | `/api/frame-verification`                                               | `server/src/routes/frame-verification.routes.ts`                |
 | POST   | `/api/from-keyframe`                                                    | `server/src/routes/consistentGeneration.routes.ts`              |
 | POST   | `/api/from-url`                                                         | `server/src/routes/reference-images.routes.ts`                  |
 | POST   | `/api/generate/consistent/from-keyframe`                                | `server/src/routes/consistentGeneration.routes.ts`              |
