@@ -17,10 +17,9 @@ export const PublicClipDtoSchema = z.object({
 });
 export type PublicClipDto = z.infer<typeof PublicClipDtoSchema>;
 
-/** The authed mint request: which clip (by session/version/generation) to share. */
+/** The authed mint request: which clip to share (session + generation). */
 export const CreateShareRequestSchema = z.object({
   sessionId: z.string().min(1),
-  promptVersionId: z.string().min(1),
   generationId: z.string().min(1),
 });
 export type CreateShareRequest = z.infer<typeof CreateShareRequestSchema>;

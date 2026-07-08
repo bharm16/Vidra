@@ -59,7 +59,7 @@ function readerFor(session: SessionRecord | null): ShareSessionReader {
   };
 }
 
-const REQ = { sessionId: "s1", promptVersionId: "v1", generationId: "g1" };
+const REQ = { sessionId: "s1", generationId: "g1" };
 
 describe("ShareService", () => {
   let store: FakeShareStore;

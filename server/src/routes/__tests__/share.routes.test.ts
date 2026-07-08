@@ -43,7 +43,7 @@ function appWith(
   return app;
 }
 
-const BODY = { sessionId: "s", promptVersionId: "v", generationId: "g" };
+const BODY = { sessionId: "s", generationId: "g" };
 
 describe("share routes", () => {
   it("serves a public clip without auth", async () => {

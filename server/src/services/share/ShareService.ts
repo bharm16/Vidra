@@ -38,16 +38,26 @@ export class ShareService {
       throw new AppError("Clip not found", "SHARE_CLIP_NOT_FOUND", 404);
     }
 
+    // A generation lives in exactly one version — find it across all of them
+    // so the caller needs only the session + generation ids, not the version.
     const versions = Array.isArray(session.prompt?.versions)
       ? session.prompt.versions
       : [];
-    const version = versions.find((v) => v.versionId === req.promptVersionId);
-    const generations = Array.isArray(version?.generations)
-      ? version.generations
-      : [];
-    const generation = generations.find(
-      (g) => typeof g.id === "string" && g.id === req.generationId,
-    );
+    let generation: Record<string, unknown> | undefined;
+    let version: SessionPromptVersionEntry | undefined;
+    for (const candidate of versions) {
+      const gens = Array.isArray(candidate.generations)
+        ? candidate.generations
+        : [];
+      const match = gens.find(
+        (g) => typeof g.id === "string" && g.id === req.generationId,
+      );
+      if (match) {
+        generation = match;
+        version = candidate;
+        break;
+      }
+    }
     if (!generation) {
       throw new AppError("Clip not found", "SHARE_CLIP_NOT_FOUND", 404);
     }

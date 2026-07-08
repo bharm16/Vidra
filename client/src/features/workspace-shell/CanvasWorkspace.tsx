@@ -60,6 +60,8 @@ import { SpaceNodeMenu } from "@/features/space/components/SpaceNodeMenu";
 import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpaceNodes";
 import { resolveWordsForNode } from "@/features/space/lineage/resolveWordsForNode";
 import { nonLeafIds, isRemovableLeaf } from "@/features/space/lineage/leaf";
+import { createShare } from "@/features/share/api/createShare";
+import { useToast } from "@components/Toast";
 import type { SpaceNode } from "@/features/space/lineage/types";
 import { archiveGeneration } from "@/features/space/api/spaceApi";
 import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
@@ -146,6 +148,7 @@ export function CanvasWorkspace({
   const promptHighlights = useOptionalPromptHighlights();
   const { session, hasActiveContinuityShot, currentShot, updateShot } =
     useWorkspaceSession();
+  const toast = useToast();
   const { onComposerFill, onIdeaBoxExpand } = usePromptResultsActions();
 
   // M5 D4: publish the words-version a golden-path first frame should persist
@@ -465,6 +468,23 @@ export function CanvasWorkspace({
     [generationLookup, generationsRuntime],
   );
 
+  // Share (RULINGS §5, ADR-0010 D8): mint a public /share link for this clip
+  // and copy it. The server verifies ownership; node.id is the generation id.
+  const handleShareSpaceNode = useCallback(
+    (node: SpaceNode): void => {
+      const sessionId = session?.id;
+      if (!sessionId) return;
+      void createShare({ sessionId, generationId: node.id })
+        .then((shareId) =>
+          navigator.clipboard
+            .writeText(`${window.location.origin}/share/${shareId}`)
+            .then(() => toast.success("Share link copied")),
+        )
+        .catch(() => toast.error("Couldn't create a share link"));
+    },
+    [session?.id, toast],
+  );
+
   const renderSpaceNodeMenu = useCallback(
     (node: SpaceNode): React.ReactNode => (
       <SpaceNodeMenu
@@ -474,6 +494,7 @@ export function CanvasWorkspace({
         onRemove={handleRemoveSpaceNode}
         onAnimate={handleAnimateSpaceNode}
         onDownload={handleDownloadSpaceNode}
+        onShare={handleShareSpaceNode}
       />
     ),
     [
@@ -482,6 +503,7 @@ export function CanvasWorkspace({
       handleRemoveSpaceNode,
       handleAnimateSpaceNode,
       handleDownloadSpaceNode,
+      handleShareSpaceNode,
     ],
   );
 

@@ -19,14 +19,16 @@ export interface SpaceNodeMenuProps {
   onAnimate?: (node: SpaceNode) => void;
   /** Download a clip's media. */
   onDownload?: (node: SpaceNode) => void;
+  /** Share a clip publicly — mints a /share link (ADR-0010 D8). */
+  onShare?: (node: SpaceNode) => void;
 }
 
 /**
  * A space node's context menu (RULINGS §5), adapting to node kind: a picture
  * offers Animate, a clip offers Download, all takes offer Reword, and a
- * childless leaf offers Remove (server-enforced). The remaining RULINGS actions
- * (Re-roll / Share / New clip) route through generation and session flows that
- * don't fit the per-node handler and are wired separately.
+ * childless leaf offers Remove (server-enforced), and a clip offers Share —
+ * mints a public /share link (ADR-0010 D8). The remaining RULINGS actions
+ * (Re-roll / New clip) route through flows wired separately.
  */
 export function SpaceNodeMenu({
   node,
@@ -35,9 +37,11 @@ export function SpaceNodeMenu({
   onRemove,
   onAnimate,
   onDownload,
+  onShare,
 }: SpaceNodeMenuProps): React.ReactElement {
   const showAnimate = node.kind === "picture" && Boolean(onAnimate);
   const showDownload = node.kind === "clip" && Boolean(onDownload);
+  const showShare = node.kind === "clip" && Boolean(onShare);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -67,6 +71,14 @@ export function SpaceNodeMenu({
             data-testid={`space-node-download-${node.id}`}
           >
             Download
+          </DropdownMenuItem>
+        ) : null}
+        {showShare ? (
+          <DropdownMenuItem
+            onSelect={() => onShare?.(node)}
+            data-testid={`space-node-share-${node.id}`}
+          >
+            Share
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuItem onSelect={() => onReword(node)}>
