@@ -418,6 +418,20 @@ export class StorageService {
     );
   }
 
+  /**
+   * Resolve a fresh view URL for a storage path WITHOUT an owner check.
+   *
+   * The sole caller is public clip sharing (ADR-0010 site-scope D8): an
+   * explicit, owner-scoped Share already minted a record that IS the access
+   * grant, so the public read legitimately bypasses per-request ownership.
+   * Do NOT use for user-facing reads — use getViewUrl, which enforces it.
+   */
+  async getSharedViewUrl(
+    storagePath: string,
+  ): Promise<{ viewUrl: string; expiresAt: string }> {
+    return this.signedUrlService.getViewUrl(storagePath);
+  }
+
   async getDownloadUrl(
     userId: string,
     storagePath: string,

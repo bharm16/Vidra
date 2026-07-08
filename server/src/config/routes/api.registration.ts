@@ -16,6 +16,11 @@ import { createRoleClassifyRoute } from "@routes/roleClassifyRoute";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createSuggestionsRoute } from "@routes/suggestions";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
+import {
+  createShareRouter,
+  createPublicClipRouter,
+} from "@routes/share.routes";
+import type { ShareService } from "@services/share/ShareService";
 import type { StorageRoutesService } from "@routes/storage.routes";
 import type { LLMJudgeService } from "@services/quality-feedback/services/LLMJudgeService";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
@@ -74,6 +79,13 @@ export function registerApiRoutes(
     gcsBucket,
   );
   app.use("/api/storage", mediaProxyRoutes);
+
+  // Public clip share (ADR-0010 site-scope D8) — no auth. Returns only a
+  // denormalized clip snapshot (fresh view URL + description) for an
+  // explicitly-minted share id, so nothing is exposed without a prior Share.
+  // Registered before the /api auth middleware, like the media proxy above.
+  const shareService = container.resolve<ShareService>("shareService");
+  app.use("/api/public/share", createPublicClipRouter(shareService));
 
   // Main API routes
   const apiRoutes = createAPIRoutes({
@@ -141,4 +153,7 @@ export function registerApiRoutes(
     llmJudgeService: container.resolve<LLMJudgeService>("llmJudgeService"),
   });
   app.use("/api/suggestions", apiAuthMiddleware, suggestionsRoute);
+
+  // Authed mint of a public share for one owned clip (ADR-0010 site-scope D8).
+  app.use("/api/share", apiAuthMiddleware, createShareRouter(shareService));
 }

@@ -23,6 +23,7 @@ import { registerContinuityServices } from "./services/continuity.services.ts";
 import { registerPaymentServices } from "./services/payment.services.ts";
 import { registerModelIntelligenceServices } from "./services/model-intelligence.services.ts";
 import { registerSessionServices } from "./services/session.services.ts";
+import { registerShareServices } from "./services/share.services.ts";
 import { getRuntimeFlags } from "./feature-flags.ts";
 
 export type { ServiceConfig } from "./services/service-config.types.ts";
@@ -73,6 +74,7 @@ export async function configureServices(): Promise<DIContainer> {
   // videoGenerationService (generation) — must follow both.
   registerModelIntelligenceServices(container);
   registerSessionServices(container);
+  registerShareServices(container);
 
   return container;
 }

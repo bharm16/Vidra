@@ -568,6 +568,11 @@
     },
     {
       "method": "GET",
+      "fullPath": "/api/public/share/:shareId",
+      "sourceFile": "server/src/routes/share.routes.ts"
+    },
+    {
+      "method": "GET",
       "fullPath": "/api/reference-images",
       "sourceFile": "server/src/routes/reference-images.routes.ts"
     },
@@ -770,6 +775,11 @@
       "method": "POST",
       "fullPath": "/api/sessions/continuity",
       "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/share",
+      "sourceFile": "server/src/routes/share.routes.ts"
     },
     {
       "method": "DELETE",
@@ -1672,6 +1682,21 @@
       "from": "sessionService",
       "to": "videoJobStore",
       "file": "session.services.ts"
+    },
+    {
+      "from": "shareService",
+      "to": "sessionService",
+      "file": "share.services.ts"
+    },
+    {
+      "from": "shareService",
+      "to": "shareStore",
+      "file": "share.services.ts"
+    },
+    {
+      "from": "shareService",
+      "to": "storageService",
+      "file": "share.services.ts"
     },
     {
       "from": "spanLabelingCacheService",
