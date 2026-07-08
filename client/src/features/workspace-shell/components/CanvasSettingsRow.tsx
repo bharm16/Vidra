@@ -99,7 +99,7 @@ const MENU_TRIGGER_CLASS =
 // Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
 // pills inside the glass sheet, matching the handoff's two inline chips.
 const SHEET_MENU_TRIGGER_CLASS =
-  "inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-[10px] border border-white/[0.12] bg-white/[0.04] px-3 font-mono text-[13px] text-tool-text-muted transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-foreground data-[state=open]:text-foreground";
+  "inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-[10px] border border-white/[0.12] bg-white/[0.04] px-3 font-mono text-[13px] text-tool-text-dim transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-foreground data-[state=open]:text-foreground";
 
 export function CanvasSettingsRow({
   prompt,

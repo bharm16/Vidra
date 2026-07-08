@@ -122,6 +122,65 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  /* Anchor entrance — a staggered rise-in (design_handoff_vidra). Elements set
+     their own animation-delay to stagger. The global prefers-reduced-motion
+     rule zeroes the duration, snapping straight to the resting state. */
+  @keyframes es-rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .ps-rise {
+    animation: es-rise 0.95s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  }
+
+  /* Anchor focus affordances — an accent bloom that wakes behind the sheet and
+     an accent ring on the card when the input takes focus. Driven by the sheet's
+     :focus-within (the browser's own focus state — no JS events needed, which a
+     managed contenteditable doesn't reliably emit). Tints derive from --accent
+     so a theme swap recolors them. */
+  .ps-focus-bloom {
+    pointer-events: none;
+    border-radius: 9999px;
+    filter: blur(8px);
+    background: radial-gradient(
+      ellipse at 50% 55%,
+      color-mix(in srgb, var(--accent) 42%, transparent),
+      color-mix(in srgb, var(--accent) 12%, transparent) 44%,
+      transparent 72%
+    );
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9);
+    transition:
+      opacity 0.85s ease,
+      transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .ps-anchor-sheet:focus-within .ps-focus-bloom {
+    opacity: 0.85;
+    transform: translateX(-50%) scale(1.06);
+  }
+
+  .ps-focus-ring {
+    pointer-events: none;
+    border: 1.5px solid var(--accent);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent),
+      0 0 26px color-mix(in srgb, var(--accent) 28%, transparent);
+    opacity: 0;
+    transition: opacity 0.32s ease;
+  }
+
+  .ps-anchor-sheet:focus-within .ps-focus-ring {
+    opacity: 1;
+  }
+
   /* Borderless rendering-state outline — breathing 16:9 frame */
   .render-outline {
     --render-outline-radius: 14px;
@@ -160,6 +219,12 @@
     color: var(--ps-text-faint);
     pointer-events: none;
     position: absolute;
+  }
+
+  /* The Anchor sheet's 26px placeholder sits dimmer than the docked composer's,
+     matching the handoff (#676d7c ≈ --ps-text-ghost). */
+  .ps-anchor-sheet [contenteditable][data-placeholder]:empty:before {
+    color: var(--ps-text-ghost);
   }
 
   [contenteditable]:focus,

@@ -3,6 +3,7 @@ import { cn } from "@/utils/cn";
 import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { PromptEditorSurface } from "./PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "./PromptEditorSurface";
+import { AnchorSheet } from "./AnchorSheet";
 import { addContinueSceneListener } from "../events";
 
 export interface CanvasPromptBarProps {
@@ -55,20 +56,14 @@ export function CanvasPromptBar({
 
   if (isPreWork) {
     // The Anchor sheet: a centered glass card (the input, at 26px) with the
-    // fill-only starter pills below it. Its bottom is pinned at the raised
-    // --workspace-composer-bottom and it grows upward as words arrive.
+    // fill-only starter pills below it, plus its entrance / focus flourishes.
     return (
-      <div
-        className="absolute left-1/2 z-10 flex w-[672px] max-w-[calc(100%-48px)] -translate-x-1/2 flex-col items-center transition-[bottom] duration-[240ms]"
-        style={{ bottom: "var(--workspace-composer-bottom)" }}
-      >
-        <div className="w-full rounded-[20px] border border-white/[0.10] bg-white/[0.045] px-7 pb-4 pt-6 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.8),0_8px_26px_rgba(0,0,0,0.5)] backdrop-blur-[16px] backdrop-saturate-150">
-          {yourWordsSlot}
-          <PromptEditorSurface {...surfaceProps} variant="empty" />
-          {chromeSlot}
-        </div>
-        {footerSlot}
-      </div>
+      <AnchorSheet
+        surfaceProps={surfaceProps}
+        chromeSlot={chromeSlot}
+        yourWordsSlot={yourWordsSlot}
+        footerSlot={footerSlot}
+      />
     );
   }
 

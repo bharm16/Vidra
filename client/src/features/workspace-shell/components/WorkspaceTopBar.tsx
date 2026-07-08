@@ -60,7 +60,16 @@ export function WorkspaceTopBar({
       className="border-tool-rail-border bg-tool-surface-deep flex h-[var(--workspace-topbar-h)] items-center gap-3 border-b px-4"
       role="banner"
     >
-      <VidraMark />
+      {minimal ? (
+        <span
+          className="ps-rise inline-flex"
+          style={{ animationDelay: "0.1s" }}
+        >
+          <VidraMark />
+        </span>
+      ) : (
+        <VidraMark />
+      )}
       {/*
         Display-only session breadcrumb — the current session's derived title
         (or "Untitled"), read via useWorkspaceProject. Hidden in the pre-work
@@ -104,7 +113,10 @@ export function WorkspaceTopBar({
       {/* Right-side chrome cluster (ADR-0010 site-scope D7): the tool rail is
         gone, so the account affordance lives here. Library + avatar are
         signed-in affordances; a signed-out visitor gets a sign-in link. */}
-      <div className="flex items-center gap-1">
+      <div
+        className={`flex items-center gap-1${minimal ? "ps-rise" : ""}`}
+        style={minimal ? { animationDelay: "0.18s" } : undefined}
+      >
         {user ? (
           <>
             <Button asChild variant="ghost" size="sm">
