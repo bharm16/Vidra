@@ -30,8 +30,8 @@ vi.mock("@/components/ErrorBoundary", () => ({
   ),
 }));
 
-vi.mock("@/components/SharedPrompt", () => ({
-  default: () => <div>SharedPrompt</div>,
+vi.mock("@/features/share/SharedClip", () => ({
+  default: () => <div>SharedClip</div>,
 }));
 
 vi.mock("@/components/Toast", () => ({
@@ -123,11 +123,11 @@ describe("App routes", () => {
   });
 
   describe("edge cases", () => {
-    it("renders shared prompts for share routes", async () => {
+    it("renders the shared clip page for share routes", async () => {
       window.history.pushState({}, "", "/share/123");
       render(<App />);
 
-      expect(await screen.findByText("SharedPrompt")).toBeInTheDocument();
+      expect(await screen.findByText("SharedClip")).toBeInTheDocument();
     });
 
     it("renders nested billing invoices routes", async () => {

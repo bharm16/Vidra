@@ -91,7 +91,7 @@ const HistoryPage = lazy(() =>
     default: module.HistoryPage,
   })),
 );
-const SharedPrompt = lazy(() => import("./components/SharedPrompt"));
+const SharedClip = lazy(() => import("./features/share/SharedClip"));
 const MainWorkspace = lazy(() =>
   import("./components/layout/MainWorkspace").then((module) => ({
     default: module.MainWorkspace,
@@ -250,8 +250,8 @@ function AppRoutes(): React.ReactElement {
         <Route
           path="/share/:uuid"
           element={
-            <FeatureErrorBoundary featureName="Shared Prompt">
-              <SharedPrompt />
+            <FeatureErrorBoundary featureName="Shared Clip">
+              <SharedClip />
             </FeatureErrorBoundary>
           }
         />
