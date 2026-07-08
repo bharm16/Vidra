@@ -189,49 +189,6 @@ beforeEach(() => {
   mockRuntimeGenerations = [];
 });
 
-describe("regression: tune chips never leak into the dispatched prompt (truth)", () => {
-  // ADR-0010: the text the creator sees is the only thing that runs. Selecting
-  // Tune chips changes only the badge/taste UI — it must NOT append hidden
-  // suffixes to the prompt the runtime dispatches. The dispatched prompt stays
-  // byte-for-byte the editor text.
-  it("dispatches the raw editor prompt regardless of selected chips", () => {
-    const props = buildProps("a dancer");
-    render(withSelectedSpan(<CanvasWorkspace {...props} />));
-
-    // Baseline: with no chips, runtime prompt equals raw prompt verbatim.
-    expect(capturedRuntimePrompt).toBe("a dancer");
-
-    // Open the Tune drawer and toggle two chips.
-    const tuneToggle = screen.getByRole("button", { name: /^Tune/ });
-    fireEvent.click(tuneToggle);
-    fireEvent.click(screen.getByRole("button", { name: "Handheld" }));
-    fireEvent.click(screen.getByRole("button", { name: "Soft" }));
-
-    // Truth: the dispatched prompt is unchanged by chip selection — no hidden
-    // suffixes ride along.
-    expect(capturedRuntimePrompt).toBe("a dancer");
-  });
-
-  // The Tune toggle's count badge reflects the active chip count — proves
-  // the chip state reached state-driven UI without leaking the suffix into
-  // the editor surface's prop chain. (The editor body is uncontrolled
-  // contenteditable so its visible text isn't asserted here.)
-  it("surfaces the active chip count on the Tune toggle", () => {
-    const props = buildProps("a dancer");
-    render(withSelectedSpan(<CanvasWorkspace {...props} />));
-
-    expect(screen.getByRole("button", { name: "Tune" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Tune" }));
-    fireEvent.click(screen.getByRole("button", { name: "Handheld" }));
-    fireEvent.click(screen.getByRole("button", { name: "Soft" }));
-
-    expect(
-      screen.getByRole("button", { name: /Tune · 2/ }),
-    ).toBeInTheDocument();
-  });
-});
-
 describe("regression: continue scene seeds the start frame", () => {
   // CONTINUE_SCENE fires from a featured tile; the orchestrator must resolve
   // the source generation and seed the start-frame popover so the next render

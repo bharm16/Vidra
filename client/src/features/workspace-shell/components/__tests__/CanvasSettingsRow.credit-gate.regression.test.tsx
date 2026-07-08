@@ -135,9 +135,6 @@ function renderRow(options: {
           renderModelId="sora-2"
           renderModelOptions={[{ id: "sora-2", label: "Sora 2" }]}
           onModelChange={vi.fn()}
-          tuneOpen={false}
-          selectedChipCount={0}
-          onToggleTune={vi.fn()}
           onOpenMotion={vi.fn()}
         />
       </GenerationControlsProvider>
@@ -273,9 +270,6 @@ function renderSingle(
           renderModelId="sora-2"
           renderModelOptions={[{ id: "sora-2", label: "Sora 2" }]}
           onModelChange={vi.fn()}
-          tuneOpen={false}
-          selectedChipCount={0}
-          onToggleTune={vi.fn()}
           onOpenMotion={vi.fn()}
         />
       </GenerationControlsProvider>

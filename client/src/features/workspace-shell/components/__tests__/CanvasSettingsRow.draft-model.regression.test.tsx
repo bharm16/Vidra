@@ -105,9 +105,6 @@ describe("regression: draft model selections stay on the draft action path", () 
             renderModelId="wan-2.5"
             renderModelOptions={[{ id: "wan-2.5", label: "Wan 2.5" }]}
             onModelChange={vi.fn()}
-            tuneOpen={false}
-            selectedChipCount={0}
-            onToggleTune={vi.fn()}
             onOpenMotion={vi.fn()}
           />
         </GenerationControlsProvider>

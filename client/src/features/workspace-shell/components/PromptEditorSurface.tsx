@@ -151,8 +151,7 @@ export function PromptEditorSurface({
 
   return (
     // Inset from the composer card edge so the editor text and the tray's
-    // scrolling chip row never clip against the border/rounded corner
-    // (matches the TuneDrawer's own px-4 inset).
+    // scrolling chip row never clip against the border/rounded corner.
     <div className="px-4 pb-2.5 pt-3">
       <div className="relative">
         <PromptEditor

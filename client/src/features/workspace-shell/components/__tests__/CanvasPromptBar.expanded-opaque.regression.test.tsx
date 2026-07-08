@@ -87,18 +87,4 @@ describe("regression: expanded composer surface is opaque", () => {
     expect(wrapper.className).toContain(OPAQUE_CLASS);
     expect(wrapper.className).not.toMatch(/backdrop-blur/);
   });
-
-  it("goes opaque with no backdrop blur while the Tune drawer is open", () => {
-    const { container } = render(
-      withSelectedSpan(
-        <CanvasPromptBar
-          surfaceProps={makeSurfaceProps()}
-          tuneSlot={<div data-testid="tune-drawer-stub" />}
-        />,
-      ),
-    );
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.className).toContain(OPAQUE_CLASS);
-    expect(wrapper.className).not.toMatch(/backdrop-blur/);
-  });
 });

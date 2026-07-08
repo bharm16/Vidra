@@ -109,6 +109,4 @@ export interface PromptCanvasViewProps {
   onToggleExportMenu: (open: boolean) => void;
   onExport: (format: ExportFormat) => void;
   onShare: () => void;
-  onEnhance?: (() => void) | undefined;
-  isEnhancing?: boolean | undefined;
 }

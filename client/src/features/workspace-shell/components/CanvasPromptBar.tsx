@@ -9,8 +9,6 @@ export interface CanvasPromptBarProps {
   surfaceProps: PromptEditorSurfaceProps;
   /** Called when a featured tile dispatches CONTINUE_SCENE. */
   onContinueScene?: (fromGenerationId: string) => void;
-  /** TuneDrawer slot — renders above the editor when open. */
-  tuneSlot?: React.ReactNode;
   /** Settings row below the editor (chip set + Make-it pill). */
   chromeSlot?: React.ReactNode;
   /** "Your words" restore control — renders above the editor post-expansion. */
@@ -21,19 +19,17 @@ export interface CanvasPromptBarProps {
  * Floating glass composer for the unified workspace.
  *
  * Always docked at bottom-center; never reflows between WorkspaceMoments.
- * The Tune drawer renders above the editor surface; the surface grows
- * upward while the bottom edge stays pinned at --workspace-composer-bottom
- * from the canvas bottom.
+ * The surface grows upward while the bottom edge stays pinned at
+ * --workspace-composer-bottom from the canvas bottom.
  *
- * The glass is conditional: while the bar is expanded (Tune drawer or the
- * suggestion tray open) it grows over canvas content, and translucency
+ * The glass is conditional: while the bar is expanded (the suggestion
+ * tray open) it grows over canvas content, and translucency
  * would smear whatever sits behind it into unreadable blur — so the
  * expanded surface goes fully opaque and the blur comes off.
  */
 export function CanvasPromptBar({
   surfaceProps,
   onContinueScene,
-  tuneSlot = null,
   chromeSlot = null,
   yourWordsSlot = null,
 }: CanvasPromptBarProps): React.ReactElement {
@@ -45,7 +41,7 @@ export function CanvasPromptBar({
   }, [onContinueScene]);
 
   const { selectedSpanId } = useSelectedSpan();
-  const isExpanded = Boolean(tuneSlot) || Boolean(selectedSpanId);
+  const isExpanded = Boolean(selectedSpanId);
 
   return (
     <div
@@ -61,7 +57,6 @@ export function CanvasPromptBar({
       )}
       style={{ bottom: "var(--workspace-composer-bottom)" }}
     >
-      {tuneSlot}
       {yourWordsSlot}
       <PromptEditorSurface {...surfaceProps} variant="active" />
       {/* Idea Box progress/gate renders on the canvas stage (FrameStage),

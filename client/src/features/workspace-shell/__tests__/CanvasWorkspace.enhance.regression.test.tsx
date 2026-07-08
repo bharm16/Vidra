@@ -153,26 +153,7 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
   onToggleGenerationFavorite: vi.fn(),
 });
 
-describe("regression: canvas enhance / empty-session shell wiring", () => {
-  // The Enhance button now lives inside the Tune drawer (chip-row redesign
-  // moved it out of the chip row to keep the visible chip set tight). The
-  // contract is unchanged: clicking it must invoke the orchestrator's
-  // onEnhance exactly once. The test opens the drawer first.
-  it("clicking enhance invokes the provided callback", () => {
-    const onEnhance = vi.fn();
-    const props = buildProps();
-    render(
-      withSelectedSpan(<CanvasWorkspace {...props} onEnhance={onEnhance} />),
-    );
-
-    // Open the Tune drawer so the Enhance button mounts.
-    fireEvent.click(screen.getByTestId("canvas-tune-chip"));
-
-    fireEvent.click(screen.getByTestId("tune-drawer-enhance"));
-
-    expect(onEnhance).toHaveBeenCalledTimes(1);
-  });
-
+describe("regression: canvas empty-session shell wiring", () => {
   it("keeps a single prompt textbox and a model picker chip in the empty-session shell", () => {
     // Empty session = no prompt, no shots. Under the unified path the
     // floating composer always mounts; the prompt textbox lives there.

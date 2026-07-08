@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  CaretDown,
-  Eye,
-  MagicWand,
-  Target,
-  X,
-} from "@promptstudio/system/components/ui";
+import { CaretDown, Eye, Target, X } from "@promptstudio/system/components/ui";
 import { FEATURES } from "@/config/features.config";
 import type { SidebarUploadedImage } from "@features/generation-controls";
 import {
@@ -55,12 +49,6 @@ interface CanvasSettingsRowProps {
   recommendationMode?: "t2v" | "i2v" | undefined;
   recommendationAgeMs?: number | null | undefined;
   onModelChange: (modelId: string) => void;
-  /** Tune drawer state — lifted from parent so Tune is a chip in the row,
-   *  not a separate row above. The drawer itself still renders in the
-   *  parent above the editor. */
-  tuneOpen: boolean;
-  selectedChipCount: number;
-  onToggleTune: () => void;
   onOpenMotion: () => void;
   onStartFrameUpload?: ((file: File) => void | Promise<void>) | undefined;
   onUploadSidebarImage?:
@@ -112,9 +100,6 @@ export function CanvasSettingsRow({
   recommendationMode,
   recommendationAgeMs,
   onModelChange,
-  tuneOpen,
-  selectedChipCount,
-  onToggleTune,
   onOpenMotion,
   onStartFrameUpload,
   onUploadSidebarImage,
@@ -380,27 +365,6 @@ export function CanvasSettingsRow({
             </button>
           </div>
         ) : null}
-
-        {/* Tune chip — opens the drawer above the editor. The visible text
-            ("Tune" or "Tune · N") IS the chip's accessible name; aria-pressed
-            reflects open/closed state. The format matches the regression
-            test that pins `Tune · 2` after two chips toggled. */}
-        <button
-          type="button"
-          data-testid="canvas-tune-chip"
-          aria-pressed={tuneOpen}
-          onClick={onToggleTune}
-          className={cn(
-            "inline-flex h-[28px] items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors",
-            tuneOpen
-              ? "border-tool-accent-neutral/50 bg-tool-accent-neutral/10 text-foreground"
-              : "border-tool-rail-border text-tool-text-dim hover:border-tool-text-label hover:text-foreground bg-transparent",
-          )}
-        >
-          <MagicWand size={12} aria-hidden="true" />
-          Tune{selectedChipCount > 0 ? ` · ${selectedChipCount}` : ""}
-          <CaretDown size={10} aria-hidden="true" />
-        </button>
 
         {/* Aspect ratio menu */}
         <DropdownMenu>

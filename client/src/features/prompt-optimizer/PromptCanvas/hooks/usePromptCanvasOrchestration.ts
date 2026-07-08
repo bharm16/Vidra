@@ -608,19 +608,6 @@ export function usePromptCanvasOrchestration({
     onScrollToCoherenceSpan,
   });
 
-  const handleEnhance = useCallback((): void => {
-    if (isOptimizing) {
-      return;
-    }
-
-    const promptToEnhance = editorDisplayText.trim();
-    if (!promptToEnhance) {
-      return;
-    }
-
-    void onReoptimize(promptToEnhance);
-  }, [editorDisplayText, isOptimizing, onReoptimize]);
-
   const handleCopyAllDebug = useCallback(async (): Promise<void> => {
     if (!import.meta.env.DEV) {
       return;
@@ -924,8 +911,6 @@ export function usePromptCanvasOrchestration({
     onToggleExportMenu: setShowExportMenu,
     onExport: handleExport,
     onShare: handleShare,
-    onEnhance: handleEnhance,
-    isEnhancing: isOptimizing,
   };
 
   return { selectedSpanValue, viewProps };

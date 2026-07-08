@@ -92,8 +92,6 @@ export function PromptCanvasView({
   onToggleExportMenu,
   onExport,
   onShare,
-  onEnhance,
-  isEnhancing = false,
 }: PromptCanvasViewProps): React.ReactElement {
   if (FEATURES.CANVAS_FIRST_LAYOUT) {
     return (
@@ -126,8 +124,6 @@ export function PromptCanvasView({
         onAutocompleteSelect={onAutocompleteSelect}
         onAutocompleteClose={onAutocompleteClose}
         onAutocompleteIndexChange={onAutocompleteIndexChange}
-        {...(onEnhance ? { onEnhance } : {})}
-        isEnhancing={isEnhancing}
       />
     );
   }

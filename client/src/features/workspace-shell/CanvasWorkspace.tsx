@@ -71,8 +71,6 @@ const CameraMotionModal = lazy(() =>
     default: m.CameraMotionModal,
   })),
 );
-import { TuneDrawer } from "./components/TuneDrawer";
-import type { TuneChipId } from "./utils/tuneChips";
 
 interface CanvasWorkspaceProps {
   generationsPanelProps: GenerationsPanelProps;
@@ -106,8 +104,6 @@ interface CanvasWorkspaceProps {
     generationId: string,
     isFavorite: boolean,
   ) => void;
-  onEnhance?: () => void;
-  isEnhancing?: boolean;
 }
 
 const parseDurationSeconds = (
@@ -144,8 +140,6 @@ export function CanvasWorkspace({
   onAutocompleteIndexChange,
   onReuseGeneration,
   onToggleGenerationFavorite,
-  onEnhance,
-  isEnhancing = false,
 }: CanvasWorkspaceProps): React.ReactElement {
   const storeActions = useGenerationControlsStoreActions();
   const { domain } = useGenerationControlsStoreState();
@@ -172,10 +166,6 @@ export function CanvasWorkspace({
   useWorkspaceKeyboardShortcuts();
   const [showCameraMotionModal, setShowCameraMotionModal] = useState(false);
   const [viewingId, setViewingId] = useState<string | null>(null);
-  const [tuneOpen, setTuneOpen] = useState<boolean>(false);
-  const [selectedChipIds, setSelectedChipIds] = useState<
-    ReadonlyArray<TuneChipId>
-  >([]);
 
   const prompt = generationsPanelProps.prompt;
   const durationSeconds = parseDurationSeconds(
@@ -517,54 +507,10 @@ export function CanvasWorkspace({
     onAutocompleteIndexChange,
   };
 
-  const handleToggleChip = useCallback((id: TuneChipId) => {
-    setSelectedChipIds((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
-    );
-  }, []);
-  const handleCloseTune = useCallback(() => setTuneOpen(false), []);
-  const handleToggleTune = useCallback(() => setTuneOpen((open) => !open), []);
-
-  const selectedChipCount = selectedChipIds.length;
   const onStartFrameUpload = generationDomain?.onStartFrameUpload;
   const onUploadSidebarImage = generationDomain?.onUploadSidebarImage;
   const recommendationPromptId = modelRecommendation?.promptId;
   const hasGenerations = galleryEntries.length > 0;
-
-  // Enhance prompt is gated on a non-empty prompt — the upstream handler is
-  // a no-op for empty prompts (ISSUE-39). Disable the Tune-drawer Enhance
-  // button visually so users don't click into nothing.
-  const enhanceDrawerDisabled = !onEnhance || !prompt.trim();
-
-  // I2V mode (start image set) bypasses optimization — see Phase 4 of the
-  // i2v-pipeline-simplification spec. Hide the Enhance trigger entirely so
-  // the UX matches what the pipeline actually does.
-  const isI2VMode = Boolean(domain.startFrame?.url);
-
-  const tuneSlot = useMemo(
-    () =>
-      tuneOpen ? (
-        <TuneDrawer
-          selectedChipIds={selectedChipIds}
-          onToggleChip={handleToggleChip}
-          onClose={handleCloseTune}
-          {...(onEnhance ? { onEnhance } : {})}
-          isEnhancing={isEnhancing}
-          enhanceDisabled={enhanceDrawerDisabled}
-          isI2VMode={isI2VMode}
-        />
-      ) : null,
-    [
-      tuneOpen,
-      selectedChipIds,
-      handleToggleChip,
-      handleCloseTune,
-      onEnhance,
-      isEnhancing,
-      enhanceDrawerDisabled,
-      isI2VMode,
-    ],
-  );
 
   const chromeSlot = useMemo(
     () => (
@@ -582,9 +528,6 @@ export function CanvasWorkspace({
             ? { recommendationAgeMs }
             : {})}
           onModelChange={handleModelChange}
-          tuneOpen={tuneOpen}
-          selectedChipCount={selectedChipCount}
-          onToggleTune={handleToggleTune}
           onOpenMotion={handleOpenMotion}
           {...(onStartFrameUpload ? { onStartFrameUpload } : {})}
           {...(onUploadSidebarImage ? { onUploadSidebarImage } : {})}
@@ -603,9 +546,6 @@ export function CanvasWorkspace({
       recommendationMode,
       recommendationAgeMs,
       handleModelChange,
-      tuneOpen,
-      selectedChipCount,
-      handleToggleTune,
       handleOpenMotion,
       onStartFrameUpload,
       onUploadSidebarImage,
@@ -706,7 +646,6 @@ export function CanvasWorkspace({
 
           <CanvasPromptBar
             surfaceProps={surfaceProps}
-            tuneSlot={tuneSlot}
             chromeSlot={chromeSlot}
             yourWordsSlot={yourWordsSlot}
             onContinueScene={handleContinueScene}
