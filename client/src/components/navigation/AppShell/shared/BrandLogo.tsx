@@ -14,10 +14,10 @@ export function BrandLogo({
   if (variant === "sidebar-collapsed") {
     return (
       <Link
-        to="/home"
+        to="/"
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-md",
-          "bg-[rgb(44,48,55)] text-foreground",
+          "text-foreground bg-[rgb(44,48,55)]",
           "transition-colors hover:bg-[rgb(36,42,56)]",
           className,
         )}
@@ -30,9 +30,9 @@ export function BrandLogo({
 
   return (
     <Link
-      to="/home"
+      to="/"
       className={cn(
-        "text-foreground tracking-tight transition-colors hover:text-foreground/80",
+        "text-foreground hover:text-foreground/80 tracking-tight transition-colors",
         variant === "topnav" ? "text-heading-20" : "text-[16px] font-semibold",
         className,
       )}

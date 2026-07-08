@@ -23,14 +23,6 @@ import { apiClient } from "./services/ApiClient";
 import { trackPageView } from "./services/analytics";
 import { FEATURES } from "./config/features.config";
 
-// HomePage is eagerly imported — it's tiny (~40 LOC, no heavy deps) and is the
-// marketing landing page, so lazy-loading it just adds a visible blank-shell delay.
-import { HomePage } from "./pages/HomePage";
-const ProductsPage = lazy(() =>
-  import("./pages/ProductsPage").then((module) => ({
-    default: module.ProductsPage,
-  })),
-);
 const PricingPage = lazy(() =>
   import("./pages/PricingPage").then((module) => ({
     default: module.PricingPage,
@@ -97,11 +89,6 @@ const BillingInvoicesPage = lazy(() =>
 const HistoryPage = lazy(() =>
   import("./pages/HistoryPage").then((module) => ({
     default: module.HistoryPage,
-  })),
-);
-const AssetsPage = lazy(() =>
-  import("./pages/AssetsPage").then((module) => ({
-    default: module.AssetsPage,
   })),
 );
 const SharedPrompt = lazy(() => import("./components/SharedPrompt"));
@@ -211,13 +198,15 @@ function AppRoutes(): React.ReactElement {
   return (
     <Routes>
       <Route element={<MarketingShell />}>
-        {/* Marketing / company navigation */}
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/products" element={<ProductsPage />} />
+        {/* Marketing / company navigation. ADR-0010 site-scope (D9/D10): the
+            input at "/" is the only front door — /home and /products redirect
+            there; /pricing parks on "/" until the subscription rewrite. */}
+        <Route path="/home" element={<Navigate to="/" replace />} />
+        <Route path="/products" element={<Navigate to="/" replace />} />
         {FEATURES.BILLING_UI ? (
           <Route path="/pricing" element={<PricingPage />} />
         ) : (
-          <Route path="/pricing" element={<Navigate to="/home" replace />} />
+          <Route path="/pricing" element={<Navigate to="/" replace />} />
         )}
         <Route path="/docs" element={<DocsPage />} />
         <Route path="/history" element={<HistoryPage />} />
@@ -288,19 +277,10 @@ function AppRoutes(): React.ReactElement {
         path="/session/new/continuity"
         element={<Navigate to="/" replace />}
       />
-      <Route
-        path="/assets"
-        element={
-          <div
-            className="motion-presence-panel ps-animate-fade-in"
-            data-motion-state="entered"
-          >
-            <FeatureErrorBoundary featureName="Asset Library">
-              <AssetsPage />
-            </FeatureErrorBoundary>
-          </div>
-        }
-      />
+      {/* ADR-0010 site-scope D11: /assets parks on "/" while its consumption
+          surfaces (Characters/Styles panels, reference images) are removed;
+          the AssetsPage component is kept for un-parking if @-assets return. */}
+      <Route path="/assets" element={<Navigate to="/" replace />} />
       <Route path="/continuity" element={<Navigate to="/" replace />} />
       <Route
         path="/continuity/:sessionId"

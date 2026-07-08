@@ -29,7 +29,7 @@ describe("BrandLogo", () => {
       renderWithRouter(<BrandLogo variant="sidebar" />);
 
       const link = screen.getByRole("link", { name: "Vidra home" });
-      expect(link).toHaveAttribute("href", "/home");
+      expect(link).toHaveAttribute("href", "/");
     });
   });
 
