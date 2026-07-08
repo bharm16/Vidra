@@ -33,6 +33,7 @@ export const LogIn = icon("LogIn");
 export const LogOut = icon("LogOut");
 export const MapPin = icon("MapPin");
 export const MessageCircle = icon("MessageCircle");
+export const MoreVertical = icon("MoreVertical");
 export const Palette = icon("Palette");
 export const Package = icon("Package");
 export const Plus = icon("Plus");
