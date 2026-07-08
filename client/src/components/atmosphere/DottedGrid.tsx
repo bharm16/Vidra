@@ -14,8 +14,6 @@ export interface DottedGridProps {
  * canvas background sits beneath. Not used on the empty state; part of the
  * shared atmosphere set for the workspace rebuild.
  */
-export function DottedGrid({
-  className,
-}: DottedGridProps): React.ReactElement {
+export function DottedGrid({ className }: DottedGridProps): React.ReactElement {
   return <div aria-hidden className={cn("ps-dotgrid", className)} />;
 }
