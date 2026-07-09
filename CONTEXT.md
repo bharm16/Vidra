@@ -104,6 +104,18 @@ The action that ends the loop: the creator saves the clip they're proud of to th
 
 The space's node for a words-version — the text that made the takes beneath it (ADR-0013 persists it as every picture's immediate ancestor; a reword creates a sibling words-version). A words node is a node but not a Take (takes are pictures and clips only). Resolved 2026-07-09 during space-workflow grilling. Avoid synonyms: prompt node, text node, words card.
 
+### Sketchpad
+
+The drawing surface of the realtime sketch: where the creator lays rough strokes, whose current state is captured as a picture that conditions generation. A different thing from the space — the space is a lineage network that is never drawn on. Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: canvas, drawing canvas, board.
+
+### Live output
+
+The continuously updating generated image produced from the sketchpad and the prompt, and the pane that shows it. Ephemeral by definition — nothing is kept or paired durably, so a live output is not a Take and not a Preview (the Flux Schnell/Wan draft mechanism in the CLAUDE.md glossary). Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: preview, preview pane, render pane, result.
+
+### Realtime sketch
+
+The capability under test in the sketch spike: the creator draws on the sketchpad and the live output tracks the drawing at sub-second cadence — steering composition with strokes instead of words. A candidate expansion input for first frames. Lives on its own route outside the page's anatomy (the workspace remains exactly the space, the input, and the next-step button). Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: realtime editor, draw mode, sketch-to-image feature.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
