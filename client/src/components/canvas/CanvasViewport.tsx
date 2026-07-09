@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
+import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@promptstudio/system/components/ui/button';
 import {
   cameraToCenter,
   clampScale,
   panBy,
   zoomAtPoint,
   type CanvasCamera,
-} from "./canvasCamera";
+} from './canvasCamera';
 
 const ZOOM_STEP = 0.1;
 
@@ -99,7 +99,7 @@ export function CanvasViewport({
     // Only clean clicks reach here (the capture gate above kills drag
     // clicks). Anything inside a button is a node/menu click, not canvas.
     const target = event.target as HTMLElement;
-    if (target.closest("button")) return;
+    if (target.closest('button')) return;
     onBackgroundClick?.();
   };
 
@@ -120,29 +120,42 @@ export function CanvasViewport({
           y: event.clientY - rect.top,
         };
         setCamera((cam) =>
-          zoomAtPoint(cam, point, cam.scale * Math.exp(-event.deltaY * 0.01)),
+          zoomAtPoint(cam, point, cam.scale * Math.exp(-event.deltaY * 0.01))
         );
         return;
       }
       setCamera((cam) => panBy(cam, -event.deltaX, -event.deltaY));
     };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    return () => canvas.removeEventListener('wheel', onWheel);
   }, []);
+
+  // The camera the DOM currently renders — the frame of reference every
+  // getBoundingClientRect() belongs to. Tracked so recentering can be
+  // computed against the rects' real camera instead of the updater queue's
+  // in-flight value (which may be ahead of the un-repainted DOM). Declared
+  // before the recenter effect so it is current when that effect runs.
+  const committedCameraRef = useRef(camera);
+  useEffect(() => {
+    committedCameraRef.current = camera;
+  });
 
   // Camera: recenter on the live node when it changes. Rects are read
   // post-transform, so the delta is pure screen-space. Ephemeral by design.
+  // The target is set as an absolute value: re-runs against the same layout
+  // (StrictMode's double mount, Fast Refresh) converge instead of stacking
+  // the pan — the regression that left the live editor cut off-center.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !liveNodeId) return;
     const node = canvas.querySelector<HTMLElement>('[data-live="true"]');
     if (!node) return;
-    setCamera((cam) =>
+    setCamera(
       cameraToCenter(
-        cam,
+        committedCameraRef.current,
         canvas.getBoundingClientRect(),
-        node.getBoundingClientRect(),
-      ),
+        node.getBoundingClientRect()
+      )
     );
   }, [liveNodeId]);
 
@@ -157,8 +170,8 @@ export function CanvasViewport({
       zoomAtPoint(
         cam,
         center,
-        clampScale(round1(cam.scale + direction * ZOOM_STEP)),
-      ),
+        clampScale(round1(cam.scale + direction * ZOOM_STEP))
+      )
     );
   };
 
@@ -167,7 +180,7 @@ export function CanvasViewport({
       ref={canvasRef}
       data-testid="space-canvas"
       className="relative h-full w-full cursor-grab select-none overflow-hidden active:cursor-grabbing"
-      style={{ touchAction: "none" }}
+      style={{ touchAction: 'none' }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}
