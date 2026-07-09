@@ -181,3 +181,29 @@ skipped). Output quality: convincing product-photography lamps tracking sketch
 geometry. Honest framing for the feel verdict: this is a **responsive preview**
 (~1s cadence), not Krea's liquid 10/s — levers if faster matters: 512² (~2× rate),
 2-step, or accepting the cadence. Cold-start first frame after idle: ~1.3–3.9s.
+
+### Transport v2 — HTTP relay to z-image turbo (2026-07-09, later the same day)
+
+The WS numbers above were a mirage: two-different-sketch probes proved the lightning
+root realtime endpoint **ignores `image_url` entirely** (byte-identical outputs — pure
+t2i; the geometry "tracking" was prompt+seed coincidence), and every LCM realtime
+variant times out — **fal has retired realtime-WS i2i**. A speed matrix over HTTP sync
+(`fal.run`) found the new frontier point, and the owner's "1.5s is unacceptable" ruling
+picked it:
+
+| Config (HTTP sync, warm)            | Total         | Inference | Sketch honored     |
+| ----------------------------------- | ------------- | --------- | ------------------ |
+| lightning i2i 768² 4-step           | 1.2–1.9s      | 0.8–1.5s  | yes                |
+| lightning i2i 512² 4-step           | ~0.9–1.1s     | 0.5–0.8s  | yes                |
+| **z-image turbo i2i 512² 8-step**   | **~0.5–0.6s** | **0.19s** | **yes**            |
+| lcm-sd15-i2i 512² (the liquid tier) | ~0.3s         | 0.08s     | yes (2023 quality) |
+
+Shipped (`85484a84`): server relay `POST /api/fal/i2i` → z-image turbo i2i (model and
+FAL_KEY pinned server-side; ADR-0016 exception reverted), client fetch seam with
+AbortController (the watchdog now truly cancels), schemas back to the sync `url`
+data-URI shape, 512² snapshots, strength default 0.625 (5/8 — sparse sketches survive;
+0.75 let the prompt steamroll them into mode-collapse). Live Chrome verification:
+**warm round-trip 463ms, model 169ms**, renders visibly tracking stroke geometry
+(orange base/head placement follows the drawing). `lcm-sd15-i2i` remains the
+one-constant swap if liquid-over-quality is ever preferred; depth-2 request
+pipelining is the next rate lever if wanted (HTTP correlation makes it safe).

@@ -1,6 +1,6 @@
 # Realtime sketch frames flow browser→fal directly, authorized by server-minted scoped tokens
 
-**Status:** accepted (2026-07-09) · scope: the realtime-sketch spike (`/sketch`) only · spec: [2026-07-09-realtime-sketch-spike-design.md](../superpowers/specs/2026-07-09-realtime-sketch-spike-design.md)
+**Status:** accepted (2026-07-09), **amended same day — browser→fal exception REVERTED**: live probes showed fal has retired its realtime-WebSocket i2i runners (the lightning root WS answers but ignores `image_url`; all LCM realtime variants time out silently). Frames now flow browser → our server relay (`POST /api/fal/i2i`) → `fal.run` HTTP sync against `fal-ai/z-image/turbo/image-to-image` (measured 190ms inference / ~460ms warm round-trip at 512²). FAL_KEY **and the model choice** are pinned server-side; no browser→provider traffic remains. The sections below record the original decision and its reasoning. · spec: [2026-07-09-realtime-sketch-spike-design.md](../superpowers/specs/2026-07-09-realtime-sketch-spike-design.md)
 
 Vidra's standing pattern routes every provider call through the Express server — no
 browser ever talks to OpenAI, Groq, Replicate, or any provider directly. The realtime
