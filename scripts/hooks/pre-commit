@@ -15,4 +15,13 @@ npx tsc --noEmit
 echo ">> Pre-commit: lint (errors only)"
 npx eslint --config config/lint/eslint.config.js . --quiet
 
+# Keep the local Obsidian vault (docs/ opened as a vault) in sync with the
+# architecture map. Non-blocking: a docs visualization must never stop a
+# commit, and older branches don't have the generator.
+if [ -f scripts/generate-obsidian-vault.ts ]; then
+  echo ">> Pre-commit: refresh Obsidian vault notes"
+  npx tsx scripts/generate-obsidian-vault.ts ||
+    echo ">> Warning: Obsidian vault refresh failed (commit continues)"
+fi
+
 echo ">> Pre-commit checks passed"
