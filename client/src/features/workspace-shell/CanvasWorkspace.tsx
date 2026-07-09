@@ -560,15 +560,9 @@ export function CanvasWorkspace({
 
   const chromeSlot = useMemo(
     () => (
-      <div
-        className={cn(
-          isPreWork
-            ? "mt-1"
-            : wordsFocused
-              ? "border-tool-rail-border border-t"
-              : undefined,
-        )}
-      >
+      // No divider between text and controls — the handoff's open box is one
+      // uninterrupted surface (frame A).
+      <div className={cn(isPreWork ? "mt-1" : undefined)}>
         <CanvasSettingsRow
           variant={isPreWork ? "sheet" : "docked"}
           prompt={prompt}
@@ -600,7 +594,6 @@ export function CanvasWorkspace({
       handleModelChange,
       hasGenerations,
       isPreWork,
-      wordsFocused,
     ],
   );
 

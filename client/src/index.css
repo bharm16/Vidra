@@ -25,7 +25,7 @@
     /* Workspace shell layout (Phase 1 unified workspace) */
     --workspace-topbar-h: 44px;
     --workspace-composer-max-w: 720px;
-    --workspace-composer-bottom: 20px;
+    --workspace-composer-bottom: 24px;
 
     /* Workspace status hues + canvas backdrop (Phase 3) */
     --tool-status-rendering: #d4b486;

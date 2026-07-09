@@ -5,6 +5,7 @@ import { PromptEditorSurface } from "./PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "./PromptEditorSurface";
 import { AnchorSheet } from "./AnchorSheet";
 import { addContinueSceneListener } from "../events";
+import "./composer.css";
 
 export interface CanvasPromptBarProps {
   surfaceProps: PromptEditorSurfaceProps;
@@ -93,16 +94,31 @@ export function CanvasPromptBar({
               "shadow-[0_26px_60px_-26px_rgba(0,0,0,0.9),0_6px_20px_rgba(0,0,0,0.55)]",
             )
           : cn(
-              "w-[min(100%-48px,var(--workspace-composer-max-w))] rounded-[14px]",
+              // Frame A: 664px, radius 18, border .12, the deep double shadow.
+              "w-[min(100%-48px,664px)] rounded-[18px] !border-white/[0.12]",
               isExpanded
                 ? "bg-tool-surface-prompt-compact"
                 : "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
-              "shadow-[0_16px_48px_-8px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]",
+              "shadow-[0_30px_70px_-26px_rgba(0,0,0,0.85),0_6px_20px_rgba(0,0,0,0.5)]",
             ),
       )}
       style={{ bottom: "var(--workspace-composer-bottom)" }}
     >
-      <div hidden={collapsed}>
+      <div
+        hidden={collapsed}
+        className={cn(
+          // Frame A prompt text: 18px Space Grotesk at 1.55 with the accent
+          // caret; the vars feed the editor's [contenteditable] rules.
+          "[caret-color:var(--accent)]",
+          !collapsed && "ps-composer-reveal",
+        )}
+        style={
+          {
+            "--ps-editor-font-size": "18px",
+            "--ps-editor-line-height": "1.55",
+          } as React.CSSProperties
+        }
+      >
         {yourWordsSlot}
         <PromptEditorSurface {...surfaceProps} variant="active" />
       </div>
