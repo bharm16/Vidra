@@ -20,6 +20,25 @@ export const IN_FLIGHT_WATCHDOG_MS = 8_000;
 
 export const DEFAULT_PROMPT =
   "4k product photography of an ergonomic desk lamp glowing, studio lighting";
+
+/** Handoff ink palette — first entry is the default. */
+export const SKETCH_INKS = [
+  "#1e2c47",
+  "#e8862e",
+  "#f2c94c",
+  "#3b82f6",
+  "#f4f4f2",
+] as const;
+export const DEFAULT_INK = SKETCH_INKS[0];
+/** Brush sizes with their popover dot diameters (handoff: 7/12/19 → 8/18/34). */
+export const BRUSH_SIZES = [
+  { size: 8, dot: 7 },
+  { size: 18, dot: 12 },
+  { size: 34, dot: 19 },
+] as const;
+export const DEFAULT_BRUSH_SIZE = 18;
+/** The sketchpad's paper tone (handoff panel + eraser color). */
+export const SKETCHPAD_BACKGROUND = "#e9e9e6";
 /** 5/8 steps — sketch keeps real influence; 0.75+ let the prompt steamroll sparse strokes. */
 export const DEFAULT_STRENGTH = 0.625;
 export const DEFAULT_STEPS = 8;

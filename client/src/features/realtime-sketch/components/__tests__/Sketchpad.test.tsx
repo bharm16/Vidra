@@ -1,7 +1,8 @@
+import { createRef } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { Sketchpad } from "../Sketchpad";
+import { Sketchpad, type SketchpadHandle } from "../Sketchpad";
 
 function stubCanvas(): void {
   const context = {
@@ -25,19 +26,45 @@ function stubCanvas(): void {
   );
 }
 
+function drawStroke(surface: HTMLElement): void {
+  fireEvent.pointerDown(surface, { clientX: 40, clientY: 40, pointerId: 1 });
+  fireEvent.pointerMove(surface, { clientX: 80, clientY: 90, pointerId: 1 });
+  fireEvent.pointerUp(surface, { clientX: 80, clientY: 90, pointerId: 1 });
+}
+
 describe("Sketchpad", () => {
   beforeEach(() => {
     stubCanvas();
   });
 
-  it("emits a snapshot when a stroke ends", () => {
+  it("does not draw or snapshot while the select tool is active", () => {
     const onSnapshot = vi.fn();
-    render(<Sketchpad onSnapshot={onSnapshot} />);
-    const surface = screen.getByLabelText("Sketchpad");
+    render(
+      <Sketchpad
+        tool="select"
+        ink="#1e2c47"
+        brushSize={18}
+        onSnapshot={onSnapshot}
+      />,
+    );
 
-    fireEvent.pointerDown(surface, { clientX: 40, clientY: 40, pointerId: 1 });
-    fireEvent.pointerMove(surface, { clientX: 80, clientY: 90, pointerId: 1 });
-    fireEvent.pointerUp(surface, { clientX: 80, clientY: 90, pointerId: 1 });
+    drawStroke(screen.getByLabelText("Sketchpad"));
+
+    expect(onSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("draws and emits a snapshot when a brush stroke ends", () => {
+    const onSnapshot = vi.fn();
+    render(
+      <Sketchpad
+        tool="brush"
+        ink="#1e2c47"
+        brushSize={18}
+        onSnapshot={onSnapshot}
+      />,
+    );
+
+    drawStroke(screen.getByLabelText("Sketchpad"));
 
     expect(onSnapshot).toHaveBeenCalled();
     const [dataUri, encodeMs] = onSnapshot.mock.calls.at(-1) as [
@@ -48,17 +75,24 @@ describe("Sketchpad", () => {
     expect(typeof encodeMs).toBe("number");
   });
 
-  it("clear and undo re-render the drawing and emit fresh snapshots", () => {
+  it("undo and clear via the handle re-render and emit fresh snapshots", () => {
     const onSnapshot = vi.fn();
-    render(<Sketchpad onSnapshot={onSnapshot} />);
-    const surface = screen.getByLabelText("Sketchpad");
+    const handle = createRef<SketchpadHandle>();
+    render(
+      <Sketchpad
+        ref={handle}
+        tool="brush"
+        ink="#1e2c47"
+        brushSize={18}
+        onSnapshot={onSnapshot}
+      />,
+    );
 
-    fireEvent.pointerDown(surface, { clientX: 40, clientY: 40, pointerId: 1 });
-    fireEvent.pointerUp(surface, { clientX: 42, clientY: 42, pointerId: 1 });
+    drawStroke(screen.getByLabelText("Sketchpad"));
     const callsAfterStroke = onSnapshot.mock.calls.length;
 
-    fireEvent.click(screen.getByRole("button", { name: /undo/i }));
-    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+    handle.current?.undo();
+    handle.current?.clear();
 
     expect(onSnapshot.mock.calls.length).toBe(callsAfterStroke + 2);
   });

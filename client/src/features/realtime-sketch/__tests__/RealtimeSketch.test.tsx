@@ -28,17 +28,21 @@ function stubCanvas(): void {
 
 const fakeSendFrame: SendSketchFrame = () => new Promise(() => {});
 
-describe("RealtimeSketch", () => {
+describe("RealtimeSketch (floating-chrome design)", () => {
   beforeEach(stubCanvas);
 
-  it("renders the sketchpad, controls, and live output with HUD placeholders", () => {
+  it("renders the stage: sketchpad, tool bar, composer — and no HUD or header", () => {
     render(<RealtimeSketch sendFrameFn={fakeSendFrame} />);
 
     expect(screen.getByLabelText("Sketchpad")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Select" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Brush" })).toBeInTheDocument();
     expect(screen.getByLabelText("Prompt")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Draw on the sketchpad — the render tracks/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/frames/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Seed" })).toBeInTheDocument();
+
+    // Deleted per the handoff: header badge, live pill, stats readout.
+    expect(screen.queryByText("spike")).not.toBeInTheDocument();
+    expect(screen.queryByText(/round-trip/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/frames/)).not.toBeInTheDocument();
   });
 });
