@@ -98,6 +98,16 @@ beforeEach(() => {
 });
 
 describe("AccountPage behavior", () => {
+  it("carries the nav rail so every surface stays navigable", () => {
+    mockUseAuthUser.mockReturnValue(signedIn());
+    renderPage();
+
+    expect(
+      screen.getByRole("link", { name: /Live editor/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Library/ })).toBeInTheDocument();
+  });
+
   it("signs out through the settings nav, then navigates to /signin", async () => {
     mockUseAuthUser.mockReturnValue(signedIn());
     renderPage();

@@ -646,9 +646,10 @@ export function CanvasWorkspace({
 
   return (
     <div className="text-foreground flex h-full overflow-hidden">
-      {/* The nav rail is the workspace chrome once the space exists; the empty
-        state keeps a minimal top bar only (ADR-0014). */}
-      {isPreWork ? null : <NavRail active="new" />}
+      {/* The nav rail is chrome for every workspace moment — hiding it on the
+        empty state stranded the home page with no way to reach Library, the
+        Live editor, or Account. */}
+      <NavRail active="new" />
       <div
         className={cn(
           "relative isolate grid h-full min-w-0 flex-1 grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden",

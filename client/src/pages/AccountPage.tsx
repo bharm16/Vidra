@@ -9,6 +9,7 @@ import { useAuthUser } from "@hooks/useAuthUser";
 import type { User } from "@features/prompt-optimizer";
 
 import { AmbientLight, Grain, Vignette } from "@/components/atmosphere";
+import { NavRail } from "@/components/navigation/NavRail";
 
 import { AccountSettingsNav } from "./account/AccountSettingsNav";
 import {
@@ -345,34 +346,37 @@ export function AccountPage(): React.ReactElement {
     : `/forgot-password?redirect=${encodeURIComponent("/account")}`;
 
   return (
-    <div className="text-foreground relative isolate flex min-h-[calc(100vh-var(--global-top-nav-height))] w-full overflow-hidden font-sans [background:var(--ps-bg)]">
-      <AmbientLight />
-      <Grain />
+    <div className="flex h-screen overflow-hidden">
+      <NavRail active="account" />
+      <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 overflow-hidden font-sans [background:var(--ps-bg)]">
+        <AmbientLight />
+        <Grain />
 
-      <AccountSettingsNav
-        active={section}
-        onSelect={setSection}
-        onSignOut={handleSignOut}
-        isSigningOut={isBusy}
-      />
+        <AccountSettingsNav
+          active={section}
+          onSelect={setSection}
+          onSignOut={handleSignOut}
+          isSigningOut={isBusy}
+        />
 
-      <main className="min-w-0 flex-1 overflow-y-auto px-10 py-[34px]">
-        {section === "profile" ? (
-          <PersonalProfileSection
-            title={label.title}
-            emailLabel={label.subtitle}
-            avatarInitial={avatarInitial}
-            isVerified={isVerified}
-            resetPasswordLink={resetPasswordLink}
-            isBusy={isBusy}
-            onResend={handleResendVerification}
-          />
-        ) : null}
-        {section === "subscription" ? <SubscriptionSection /> : null}
-        {section === "usage" ? <UsageSection /> : null}
-      </main>
+        <main className="min-w-0 flex-1 overflow-y-auto px-10 py-[34px]">
+          {section === "profile" ? (
+            <PersonalProfileSection
+              title={label.title}
+              emailLabel={label.subtitle}
+              avatarInitial={avatarInitial}
+              isVerified={isVerified}
+              resetPasswordLink={resetPasswordLink}
+              isBusy={isBusy}
+              onResend={handleResendVerification}
+            />
+          ) : null}
+          {section === "subscription" ? <SubscriptionSection /> : null}
+          {section === "usage" ? <UsageSection /> : null}
+        </main>
 
-      <Vignette intensity="default" />
+        <Vignette intensity="default" />
+      </div>
     </div>
   );
 }

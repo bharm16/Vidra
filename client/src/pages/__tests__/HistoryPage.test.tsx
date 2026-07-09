@@ -95,6 +95,15 @@ beforeEach(() => {
 });
 
 describe("session library (/history)", () => {
+  it("carries the nav rail so every surface stays navigable", () => {
+    renderPage();
+
+    expect(
+      screen.getByRole("link", { name: /Live editor/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /New session/ })).toBeTruthy();
+  });
+
   it("lists sessions with panel vocabulary — stored and derived titles", () => {
     renderPage();
 

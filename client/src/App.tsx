@@ -210,13 +210,11 @@ function AppRoutes(): React.ReactElement {
           <Route path="/pricing" element={<Navigate to="/" replace />} />
         )}
         <Route path="/docs" element={<DocsPage />} />
-        <Route path="/history" element={<HistoryPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/email-verification" element={<EmailVerificationPage />} />
         <Route path="/reset-password" element={<PasswordResetPage />} />
-        <Route path="/account" element={<AccountPage />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/register" element={<Navigate to="/signup" replace />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
@@ -270,6 +268,10 @@ function AppRoutes(): React.ReactElement {
           </FeatureErrorBoundary>
         }
       />
+      {/* Rail surfaces — every app page carries the left rail itself, so
+          these live outside MarketingShell's topnav chrome. */}
+      <Route path="/history" element={<HistoryPage />} />
+      <Route path="/account" element={<AccountPage />} />
       <Route path="/create" element={<Navigate to="/" replace />} />
       <Route path="/session/:sessionId" element={<WorkspaceRoute />} />
       <Route
