@@ -81,3 +81,11 @@ LiveEditorPage (/live-editor)
 
 Accumulating board (renders dropping onto the plane), multiple editor pairs, camera
 persistence, any space/lineage integration, mobile.
+
+## Shipped (2026-07-09)
+
+`95c4554a` (promotion, 232 tests green from the new home) + `fe401ec6` (page, rail,
+route, pointer contract — 92 tests) + `8d23bbc8` (floating chrome pointer-events fix,
+found live: the stack's empty flex box ate strokes). Chrome-verified end to end:
+rail navigation, select-pan over the sketchpad, zoom to 70%, brush strokes that draw
+without panning, and a tracked render on the plane.
