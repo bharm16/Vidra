@@ -10,13 +10,16 @@
   height: 100%;
   overflow: hidden;
   background: #0b0c0f;
-  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
   color: #f2f3f6;
 }
 
 /* The editor pair is ONE fixed-size object on the infinite plane
    (ADR-0017); the camera centers it on mount and the creator pans/zooms
-   around it. Panel sizes keep the handoff's 1440×900 proportions. */
+   around it. Panels are SQUARE — the model's fast path is square frames
+   (measured 2026-07-09: 512²/640² ≈ 0.26s inference, every non-square
+   resolution 3–6× slower), so the page must be the generation frame:
+   every visible pixel drawable, every generated pixel visible. */
 .le-editor-pair {
   display: flex;
   gap: 12px;
@@ -25,7 +28,7 @@
 
 .le-panel-sketch {
   width: 700px;
-  height: 860px;
+  height: 700px;
   position: relative;
   border-radius: 16px;
   background: #e9e9e6;
@@ -34,7 +37,7 @@
 
 .le-panel-output {
   width: 700px;
-  height: 860px;
+  height: 700px;
   position: relative;
   border-radius: 16px;
   background: #0f1013;
@@ -42,15 +45,14 @@
   overflow: hidden;
 }
 
-/* Square bitmap letterboxed in the panel (panel bg matches, so invisible);
-   keeps generation geometry square, identical to the measured baselines. */
+/* The page IS the canvas: the square bitmap fills the square panel
+   edge-to-edge, so there is no dead margin where strokes silently vanish
+   (the regression that motivated the square panels above). */
 .le-canvas {
   position: absolute;
   inset: 0;
-  margin: auto;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
   touch-action: none;
 }
 
@@ -74,7 +76,7 @@
   align-items: center;
   justify-content: center;
   font:
-    400 14px "Space Grotesk",
+    400 14px 'Space Grotesk',
     system-ui,
     sans-serif;
   color: rgba(255, 255, 255, 0.28);
@@ -252,7 +254,7 @@
 
 .le-strength-value {
   font:
-    500 13px "Space Grotesk",
+    500 13px 'Space Grotesk',
     system-ui,
     sans-serif;
   color: #f2f3f6;
@@ -288,7 +290,7 @@
   outline: none;
   background: transparent;
   font:
-    400 17px "Space Grotesk",
+    400 17px 'Space Grotesk',
     system-ui,
     sans-serif;
   color: #f4f5f7;
@@ -322,7 +324,7 @@
   background: rgba(255, 255, 255, 0.1);
   color: #f2f3f6;
   font:
-    500 13px "Space Grotesk",
+    500 13px 'Space Grotesk',
     system-ui,
     sans-serif;
   cursor: pointer;
