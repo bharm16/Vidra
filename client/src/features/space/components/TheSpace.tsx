@@ -149,7 +149,7 @@ export function TheSpace({
               data-testid={`space-node-${node.id}`}
               data-live={isLive ? "true" : "false"}
               onClick={() => onSelectNode?.(node.id)}
-              className="absolute flex h-auto flex-col items-stretch p-0 text-left hover:bg-transparent"
+              className="absolute flex !h-auto flex-col items-stretch !p-0 text-left hover:bg-transparent"
               style={{ left: nodeLeft(node), top: nodeTop(node), width: w }}
             >
               <div
