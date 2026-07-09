@@ -35,9 +35,28 @@ function fakeConnectFactory(): {
 }
 
 describe("useRealtimeSketch", () => {
+  it("surfaces a failed token-mint preflight as a sticky error (fal's client is silent on auth failures)", async () => {
+    const { connectFn } = fakeConnectFactory();
+    const preflightFn = async (): Promise<string | null> =>
+      "fal token mint failed (403): balance exhausted";
+    const { result } = renderHook(() =>
+      useRealtimeSketch({ connectFn, preflightFn }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.state.stats.lastError?.message).toBe(
+      "fal token mint failed (403): balance exhausted",
+    );
+  });
+
   it("sends a captured snapshot once, with the generation settings and a request id", () => {
     const { wire, connectFn } = fakeConnectFactory();
-    const { result } = renderHook(() => useRealtimeSketch({ connectFn }));
+    const { result } = renderHook(() =>
+      useRealtimeSketch({ connectFn, preflightFn: async () => null }),
+    );
 
     act(() => {
       result.current.captureSnapshot("data:image/jpeg;base64,frame1", 3);
@@ -56,7 +75,9 @@ describe("useRealtimeSketch", () => {
 
   it("holds the newest snapshot while busy and sends it when the result lands", () => {
     const { wire, connectFn } = fakeConnectFactory();
-    const { result } = renderHook(() => useRealtimeSketch({ connectFn }));
+    const { result } = renderHook(() =>
+      useRealtimeSketch({ connectFn, preflightFn: async () => null }),
+    );
 
     act(() => {
       result.current.captureSnapshot("data:image/jpeg;base64,frame1", 3);
@@ -84,7 +105,9 @@ describe("useRealtimeSketch", () => {
 
   it("a malformed result becomes a sticky error and frees the loop for the next snapshot", () => {
     const { wire, connectFn } = fakeConnectFactory();
-    const { result } = renderHook(() => useRealtimeSketch({ connectFn }));
+    const { result } = renderHook(() =>
+      useRealtimeSketch({ connectFn, preflightFn: async () => null }),
+    );
 
     act(() => {
       result.current.captureSnapshot("data:image/jpeg;base64,frame1", 3);

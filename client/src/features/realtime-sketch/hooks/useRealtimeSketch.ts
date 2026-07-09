@@ -2,7 +2,9 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import {
   connectRealtimeSketch,
+  preflightTokenMint,
   type ConnectRealtimeSketch,
+  type PreflightTokenMint,
   type RealtimeSketchConnection,
 } from "../api/falRealtime";
 import { FalRealtimeResultSchema } from "../api/schemas";
@@ -37,12 +39,14 @@ export interface UseRealtimeSketchReturn {
 
 interface UseRealtimeSketchOptions {
   connectFn?: ConnectRealtimeSketch;
+  preflightFn?: PreflightTokenMint;
 }
 
 export function useRealtimeSketch(
   options?: UseRealtimeSketchOptions,
 ): UseRealtimeSketchReturn {
   const connectFn = options?.connectFn ?? connectRealtimeSketch;
+  const preflightFn = options?.preflightFn ?? preflightTokenMint;
   const [state, dispatch] = useReducer(
     generationReducer,
     undefined,
@@ -59,6 +63,20 @@ export function useRealtimeSketch(
   const lastSentRef = useRef<string | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  // fal's machine never reports auth failures; probe the mint ourselves so a
+  // dead key/balance shows up in the HUD instead of an eternal "connecting".
+  useEffect(() => {
+    let cancelled = false;
+    void preflightFn().then((message) => {
+      if (message !== null && !cancelled) {
+        dispatch({ type: "generationError", message, at: Date.now() });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [preflightFn, connectNonce]);
 
   useEffect(() => {
     const connection = connectFn({

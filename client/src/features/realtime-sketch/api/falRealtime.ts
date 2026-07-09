@@ -44,6 +44,37 @@ function ensureFalConfigured(): void {
   configured = true;
 }
 
+export type PreflightTokenMint = () => Promise<string | null>;
+
+/**
+ * fal's realtime machine is silent on auth failures (its unauthorized
+ * transition never calls onError), so a locked account renders as an
+ * eternal "connecting". This preflight exercises the exact mint the client
+ * will perform and returns a readable error message, or null when healthy.
+ */
+export const preflightTokenMint: PreflightTokenMint = async () => {
+  try {
+    const response = await fetch(FAL_PROXY_URL, {
+      method: "POST",
+      headers: {
+        "x-fal-target-url": "https://rest.alpha.fal.ai/tokens/",
+        "Content-Type": "application/json",
+        ...(await buildFirebaseAuthHeaders()),
+      },
+      body: JSON.stringify({}),
+    });
+    if (response.ok) {
+      return null;
+    }
+    const body = await response.text();
+    return `fal token mint failed (${response.status}): ${body.slice(0, 140)}`;
+  } catch (error) {
+    return `fal token mint unreachable: ${
+      error instanceof Error ? error.message : String(error)
+    }`;
+  }
+};
+
 export const connectRealtimeSketch: ConnectRealtimeSketch = (handlers) => {
   ensureFalConfigured();
   const connection = fal.realtime.connect(SKETCH_MODEL_ENDPOINT, {
