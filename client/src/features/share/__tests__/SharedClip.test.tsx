@@ -20,7 +20,7 @@ function renderAt(shareId = "abc") {
 describe("SharedClip", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("renders the clip video, its description, and a make-your-own CTA to /", async () => {
+  it("renders the clip video, its description, and a start-your-own CTA to /", async () => {
     (fetchPublicClip as Mock).mockResolvedValue({
       videoUrl: "https://cdn.example/clip.mp4",
       description: "a cat surfing a wave",
@@ -36,7 +36,7 @@ describe("SharedClip", () => {
       "https://cdn.example/clip.mp4",
     );
     expect(
-      screen.getByRole("link", { name: /make your own/i }),
+      screen.getByRole("link", { name: /start your own clip/i }),
     ).toHaveAttribute("href", "/");
   });
 
@@ -48,7 +48,7 @@ describe("SharedClip", () => {
     expect(await screen.findByText(/not found/i)).toBeInTheDocument();
     expect(document.querySelector("video")).toBeNull();
     expect(
-      screen.getByRole("link", { name: /make your own/i }),
+      screen.getByRole("link", { name: /start your own clip/i }),
     ).toHaveAttribute("href", "/");
   });
 
