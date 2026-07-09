@@ -14,11 +14,13 @@ import "dotenv/config";
 import sharp from "sharp";
 import { fal } from "@fal-ai/client";
 
-const TOKEN_ALLOWLIST_APP = "fal-ai/fast-lightning-sdxl";
-// Realtime runners live on the ROOT app; i2i mode is selected by sending
-// image_url in the payload (the /image-to-image subpath is the HTTP queue
-// route — its realtime forward fails with "Error while forwarding").
-const MODEL_ENDPOINT = "fal-ai/fast-lightning-sdxl";
+// Endpoint under test is overridable: npx tsx <script> <endpointId>
+// Findings so far: lightning /image-to-image subpath realtime-forwards to
+// nothing; lightning ROOT realtime answers but IGNORES image_url+strength
+// (pure t2i — byte-identical outputs for different sketches). The proven
+// realtime i2i reference is fal-ai/fast-lcm-diffusion/image-to-image.
+const MODEL_ENDPOINT = process.argv[2] ?? "fal-ai/fast-lightning-sdxl";
+const TOKEN_ALLOWLIST_APP = MODEL_ENDPOINT.split("/").slice(0, 2).join("/");
 const TOKEN_EXPIRATION_SECONDS = 120;
 const RESULT_TIMEOUT_MS = 45_000;
 
@@ -61,9 +63,16 @@ async function mintScopedToken(key: string): Promise<string> {
   return token;
 }
 
-async function makeSketchDataUri(): Promise<string> {
-  // A crude lamp sketch: gray field, dark arc arm, orange shade + base.
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="768" height="768">
+async function svgToDataUri(svg: string): Promise<string> {
+  const jpeg = await sharp(Buffer.from(svg)).jpeg({ quality: 85 }).toBuffer();
+  return `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+}
+
+async function makeSketchPair(): Promise<[string, string]> {
+  // Two DELIBERATELY different compositions. If the endpoint honors
+  // image_url, the two outputs must differ; byte-identical outputs mean the
+  // sketch is being ignored (t2i).
+  const lampSketch = `<svg xmlns="http://www.w3.org/2000/svg" width="768" height="768">
     <rect width="768" height="768" fill="#d9d9d9"/>
     <path d="M 260 640 C 260 360, 300 300, 430 300 C 530 300, 560 340, 560 400"
           stroke="#1e2430" stroke-width="30" fill="none" stroke-linecap="round"/>
@@ -71,24 +80,44 @@ async function makeSketchDataUri(): Promise<string> {
     <ellipse cx="560" cy="470" rx="45" ry="28" fill="#f4c542"/>
     <path d="M 170 660 L 350 660 L 300 620 L 220 620 Z" fill="#e07a1f"/>
   </svg>`;
-  const jpeg = await sharp(Buffer.from(svg)).jpeg({ quality: 85 }).toBuffer();
-  const dataUri = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  const barsSketch = `<svg xmlns="http://www.w3.org/2000/svg" width="768" height="768">
+    <rect width="768" height="768" fill="#2b2f3a"/>
+    <rect x="80" y="120" width="120" height="530" fill="#e07a1f"/>
+    <rect x="320" y="220" width="120" height="430" fill="#f4c542"/>
+    <rect x="560" y="60" width="120" height="590" fill="#f5f2ec"/>
+  </svg>`;
+  const pair: [string, string] = [
+    await svgToDataUri(lampSketch),
+    await svgToDataUri(barsSketch),
+  ];
   console.log(
-    `[2/3] sketch fixture ready (${Math.round(dataUri.length / 1024)}KB data URI)`,
+    `[2/3] two sketch fixtures ready (${Math.round(pair[0].length / 1024)}KB lamp, ${Math.round(pair[1].length / 1024)}KB bars)`,
   );
-  return dataUri;
+  return pair;
+}
+
+function imageBytes(result: Record<string, unknown>): Buffer | null {
+  const images = result.images as Array<Record<string, unknown>> | undefined;
+  const content = images?.[0]?.content;
+  if (content instanceof Uint8Array) {
+    return Buffer.from(content);
+  }
+  if (content && typeof content === "object") {
+    return Buffer.from(Object.values(content as Record<string, number>));
+  }
+  return null;
 }
 
 async function runRealtimeFrame(
   falKey: string,
-  imageDataUri: string,
+  sketches: [string, string],
 ): Promise<void> {
   // @fal-ai/client@1.8.4 has no tokenProvider option: in Node it auto-mints
   // its realtime token from credentials (in the browser, via proxyUrl — the
   // app path exercised by /sketch itself).
   fal.config({ credentials: falKey });
 
-  const payload = {
+  const payloadFor = (imageDataUri: string): Record<string, unknown> => ({
     prompt:
       "4k product photography of an ergonomic desk lamp glowing, studio lighting",
     image_url: imageDataUri,
@@ -98,7 +127,7 @@ async function runRealtimeFrame(
     seed: 42,
     sync_mode: true,
     enable_safety_checker: true,
-  };
+  });
 
   let resolveResult: (value: Record<string, unknown>) => void = () => {};
   let rejectResult: (reason: Error) => void = () => {};
@@ -114,7 +143,10 @@ async function runRealtimeFrame(
     },
   });
 
-  const sendFrame = async (label: string): Promise<Record<string, unknown>> => {
+  const sendFrame = async (
+    label: string,
+    imageDataUri: string,
+  ): Promise<Record<string, unknown>> => {
     const sentAt = Date.now();
     const result = await new Promise<Record<string, unknown>>(
       (resolve, reject) => {
@@ -130,20 +162,33 @@ async function runRealtimeFrame(
           clearTimeout(timeout);
           reject(reason);
         };
-        connection.send(payload);
+        connection.send(payloadFor(imageDataUri));
       },
     );
     const roundTripMs = Date.now() - sentAt;
     const timings = result.timings as Record<string, unknown> | undefined;
+    const bytes = imageBytes(result);
     console.log(
-      `      ${label}: round-trip ${roundTripMs}ms · timings ${timings ? JSON.stringify(timings) : "(absent)"} · seed ${String(result.seed)} · request_id ${String(result.request_id ?? "(absent)")}`,
+      `      ${label}: round-trip ${roundTripMs}ms · timings ${timings ? JSON.stringify(timings) : "(absent)"} · seed ${String(result.seed)} · output ${bytes ? `${bytes.length} bytes` : "NO BYTES"}`,
     );
     return result;
   };
 
-  console.log(`[3/3] sending two frames (cold runner, then warm)`);
-  const first = await sendFrame("cold");
-  const second = await sendFrame("warm");
+  console.log(
+    `[3/3] sending two DIFFERENT sketches to ${MODEL_ENDPOINT} — differing outputs = i2i honored, identical = sketch ignored`,
+  );
+  const first = await sendFrame("lamp sketch", sketches[0]);
+  const second = await sendFrame("bars sketch", sketches[1]);
+  const firstBytes = imageBytes(first);
+  const secondBytes = imageBytes(second);
+  if (firstBytes && secondBytes) {
+    const identical =
+      firstBytes.length === secondBytes.length &&
+      firstBytes.equals(secondBytes);
+    console.log(
+      `      VERDICT: outputs ${identical ? "BYTE-IDENTICAL — image_url is IGNORED (t2i)" : "DIFFER — i2i honored"}`,
+    );
+  }
 
   // Realtime binary protocol: the image arrives as raw JPEG bytes in
   // images[0].content (msgpack), NOT as a url — pinned here for the client.
@@ -165,18 +210,27 @@ async function runRealtimeFrame(
       `no image bytes — full result: ${JSON.stringify(second).slice(0, 300)}`,
     );
   }
-  const outPath = new URL("../../.smoke-lamp-render.jpg", import.meta.url)
-    .pathname;
-  await sharp(bytes).toFile(outPath);
-  console.log(`      render written to ${outPath}`);
-  void first;
+  const lampPath = new URL(
+    "../../.smoke-render-lamp-sketch.jpg",
+    import.meta.url,
+  ).pathname;
+  const barsPath = new URL(
+    "../../.smoke-render-bars-sketch.jpg",
+    import.meta.url,
+  ).pathname;
+  const firstOut = imageBytes(first);
+  if (firstOut) {
+    await sharp(firstOut).toFile(lampPath);
+  }
+  await sharp(bytes).toFile(barsPath);
+  console.log(`      renders written to ${lampPath} and ${barsPath}`);
 }
 
 const key = resolveFalKey();
 // Probe the mint contract our /api/fal/proxy route forwards to (the client
 // mints its own token internally when connecting below).
 await mintScopedToken(key);
-const sketch = await makeSketchDataUri();
-await runRealtimeFrame(key, sketch);
+const sketches = await makeSketchPair();
+await runRealtimeFrame(key, sketches);
 console.log("SMOKE GATE PASSED");
 process.exit(0);
