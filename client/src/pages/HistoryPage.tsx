@@ -1,260 +1,149 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Badge, Search, X } from "@promptstudio/system/components/ui";
+import { Image, Search } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { Input } from "@promptstudio/system/components/ui/input";
+import { AmbientLight, Grain } from "@/components/atmosphere";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { usePromptHistory } from "@hooks/usePromptHistory";
-import type { PromptHistoryEntry } from "@features/prompt-optimizer";
-import { HistoryThumbnail } from "@features/history/components/HistoryThumbnail";
-import { formatRelativeOrDate } from "@features/history/utils/historyDates";
-import { resolveEntryTitle } from "@features/history/utils/historyTitles";
-import { resolveEntryStage } from "@features/history/utils/historyStages";
-import {
-  hasVideoArtifact,
-  isRecentEntry,
-  resolveHistoryThumbnail,
-} from "@features/history/utils/historyMedia";
-import { cn } from "@utils/cn";
+import { hasVideoArtifact } from "@features/history/utils/historyMedia";
+import { LibraryCard } from "./library/LibraryCard";
+import { LibraryFilterChip } from "./library/LibraryFilterChip";
 
 /**
- * Session library — the full-archive presentation of Sessions on its own
- * page. Same entity, titles, thumbnails, and vocabulary as the rail Sessions
- * panel (the quick switcher): entries come from the same usePromptHistory
- * source and the same derivation utils, so the two surfaces cannot drift.
+ * Library — the full archive of the user's Sessions and Kept clips, presented
+ * as cinematic cards on the design-handoff atmosphere (ADR-0014). Entries come
+ * from the same usePromptHistory source and derivation utils as the rail
+ * Sessions panel, so the two surfaces cannot drift; this screen restyles that
+ * data to the handoff and keeps the real wiring (search, links, load states).
+ *
+ * The persistent nav rail is built separately and will wrap this page — this
+ * component owns the page content (header, filters, grid), not app-level nav.
  */
 
-const CHIP_CLASS =
-  "h-7 rounded-md border border-border bg-surface-1 px-2.5 text-xs font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground";
+type LibraryFilter = "all" | "sessions" | "clips";
 
-interface FilterChipProps {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: FilterChipProps): React.ReactElement {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(CHIP_CLASS, active && "bg-surface-2 text-foreground")}
-    >
-      {children}
-    </Button>
-  );
-}
-
-function SessionRow({
-  entry,
-}: {
-  entry: PromptHistoryEntry;
-}): React.ReactElement {
-  const title = resolveEntryTitle(entry);
-  const stage = resolveEntryStage(entry);
-  const thumbnail = resolveHistoryThumbnail(entry);
-  const when = formatRelativeOrDate(entry.timestamp);
-  const sessionId =
-    typeof entry.id === "string" && entry.id.trim() ? entry.id.trim() : null;
-
-  const body = (
-    <>
-      <HistoryThumbnail
-        src={thumbnail.url}
-        storagePath={thumbnail.storagePath ?? null}
-        assetId={thumbnail.assetId ?? null}
-        label={title}
-        size="lg"
-        variant="muted"
-        className="border-border rounded-md border"
-      />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-foreground min-w-0 truncate text-[13px] font-medium">
-            {title}
-          </span>
-          {stage === "draft" ? (
-            <Badge variant="subtle" size="sm">
-              Draft
-            </Badge>
-          ) : stage === "error" ? (
-            <Badge variant="danger" size="sm">
-              Failed
-            </Badge>
-          ) : null}
-        </div>
-        <span className="text-faint text-[11px]">{when}</span>
-      </div>
-    </>
-  );
-
-  const rowClass =
-    "flex items-center gap-3 rounded-lg border border-border bg-surface-1 p-3 transition-colors";
-
-  if (!sessionId) {
-    return <div className={rowClass}>{body}</div>;
-  }
-
-  return (
-    <Link
-      to={`/session/${sessionId}`}
-      className={cn(rowClass, "hover:bg-surface-2")}
-      aria-label={`Open session: ${title}`}
-    >
-      {body}
-    </Link>
-  );
-}
+const GRID_CLASS =
+  "grid grid-cols-2 gap-x-5 gap-y-[22px] sm:grid-cols-3 lg:grid-cols-4";
 
 export function HistoryPage(): React.ReactElement {
   const user = useAuthUser();
   const promptHistory = usePromptHistory(user);
-  const [videosOnly, setVideosOnly] = React.useState<boolean>(false);
-  const [recentOnly, setRecentOnly] = React.useState<boolean>(false);
+  const [filter, setFilter] = React.useState<LibraryFilter>("all");
 
   const searchQuery = promptHistory.searchQuery;
 
-  const sessions = React.useMemo(() => {
+  const entries = React.useMemo(() => {
     return promptHistory.filteredHistory.filter((entry) => {
-      if (videosOnly && !hasVideoArtifact(entry)) return false;
-      if (recentOnly && !isRecentEntry(entry)) return false;
-      return true;
+      if (filter === "all") return true;
+      const isClip = hasVideoArtifact(entry);
+      return filter === "clips" ? isClip : !isClip;
     });
-  }, [promptHistory.filteredHistory, videosOnly, recentOnly]);
+  }, [promptHistory.filteredHistory, filter]);
 
-  const hasActiveFilters = videosOnly || recentOnly;
-  const countNoun = searchQuery
-    ? sessions.length === 1
-      ? "result"
-      : "results"
-    : sessions.length === 1
-      ? "session"
-      : "sessions";
+  const emptyMessage = searchQuery
+    ? `No results for "${searchQuery}".`
+    : filter === "clips"
+      ? "No kept clips yet."
+      : filter === "sessions"
+        ? "No sessions yet."
+        : "Your library is empty.";
+  const showStartCta = !searchQuery && filter === "all";
 
   return (
-    <div className="bg-app h-full overflow-y-auto">
-      {/* Toolbar — compact, functional */}
-      <div className="z-sticky border-border bg-app sticky top-0 border-b px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-3">
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-foreground text-[15px] font-semibold tracking-tight">
-              Sessions
-            </h1>
-            <div className="flex items-center gap-3">
-              <span className="text-muted text-[12px] tabular-nums">
-                {sessions.length} {countNoun}
-              </span>
-              {user ? (
-                <Badge variant="success" size="sm">
-                  Synced
-                </Badge>
-              ) : (
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className={CHIP_CLASS}
-                >
-                  <Link to="/signin?redirect=/history">Sign in to sync</Link>
-                </Button>
-              )}
-              <Link
-                to="/"
-                className="text-muted hover:text-foreground text-[12px] font-medium transition-colors"
-              >
-                Back to app
-              </Link>
-            </div>
-          </div>
+    <div className="text-foreground relative isolate flex h-full flex-col overflow-hidden [background:var(--ps-bg)]">
+      {/* Design-handoff atmosphere — ambient bloom + filmic grain sit behind the
+          content (negative z, inside this isolated root). */}
+      <AmbientLight />
+      <Grain />
 
-          <div className="relative">
+      {/* Header — title, search pill, filter chips. */}
+      <header className="flex-none px-9 pb-[18px] pt-[30px]">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-foreground font-sans text-[27px] font-semibold tracking-[-0.015em]">
+            Library
+          </h1>
+          <div className="flex w-[264px] items-center gap-[9px] rounded-full border border-white/[0.12] bg-white/[0.04] px-[15px] py-[9px]">
             <Search
-              className="text-faint absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              className="text-tool-text-muted h-[15px] w-[15px] shrink-0"
               aria-hidden="true"
             />
-            <Input
-              className="border-border bg-surface-1 text-foreground h-9 w-full rounded-lg pl-9 pr-10 text-sm"
+            <input
               type="search"
               value={searchQuery}
-              onChange={(e) => promptHistory.setSearchQuery(e.target.value)}
-              placeholder="Search sessions..."
-              aria-label="Search sessions"
+              onChange={(event) =>
+                promptHistory.setSearchQuery(event.target.value)
+              }
+              placeholder="Search your work"
+              aria-label="Search your library"
+              className="placeholder:text-tool-text-muted text-foreground w-full bg-transparent font-sans text-[13px] leading-none outline-none"
             />
-            {searchQuery ? (
-              <Button
-                type="button"
-                onClick={() => promptHistory.setSearchQuery("")}
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 rounded-md p-0"
-                aria-label="Clear search"
-                title="Clear"
-              >
-                <X className="text-muted h-3.5 w-3.5" aria-hidden="true" />
-              </Button>
-            ) : null}
-          </div>
-
-          <div className="flex gap-2">
-            <FilterChip
-              active={videosOnly}
-              onClick={() => setVideosOnly((prev) => !prev)}
-            >
-              Videos only
-            </FilterChip>
-            <FilterChip
-              active={recentOnly}
-              onClick={() => setRecentOnly((prev) => !prev)}
-            >
-              Last 7 days
-            </FilterChip>
           </div>
         </div>
-      </div>
 
-      {/* Session archive */}
-      <div className="mx-auto max-w-3xl px-4 pb-16 sm:px-6">
+        <div className="mt-[18px] flex gap-[9px]">
+          <LibraryFilterChip
+            active={filter === "all"}
+            onClick={() => setFilter("all")}
+          >
+            All
+          </LibraryFilterChip>
+          <LibraryFilterChip
+            active={filter === "sessions"}
+            onClick={() => setFilter("sessions")}
+          >
+            Sessions
+          </LibraryFilterChip>
+          <LibraryFilterChip
+            active={filter === "clips"}
+            onClick={() => setFilter("clips")}
+          >
+            Kept clips
+          </LibraryFilterChip>
+        </div>
+      </header>
+
+      {/* Grid — the scrolling archive. */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-9 pb-[34px] pt-[6px]">
         {promptHistory.isLoadingHistory ? (
-          <div className="py-12 text-center">
-            <div className="ps-spinner-sm mx-auto mb-3" />
-            <p className="text-muted text-[13px]">Loading sessions...</p>
+          <div className={GRID_CLASS} aria-hidden="true">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="flex flex-col">
+                <div className="h-[172px] animate-pulse rounded-[13px] border border-white/10 bg-white/[0.04]" />
+                <div className="mt-2.5 h-3 w-3/4 animate-pulse rounded bg-white/[0.06]" />
+                <div className="mt-2 h-2.5 w-1/3 animate-pulse rounded bg-white/[0.04]" />
+              </div>
+            ))}
           </div>
-        ) : sessions.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p className="text-muted text-[13px]">
-              {searchQuery
-                ? `No results for "${searchQuery}".`
-                : hasActiveFilters
-                  ? "No sessions match these filters."
-                  : "No sessions yet."}
+        ) : entries.length === 0 ? (
+          <div className="flex min-h-[360px] flex-col items-center justify-center gap-4 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]">
+              <Image
+                className="text-tool-text-label h-6 w-6"
+                aria-hidden="true"
+              />
+            </div>
+            <p className="text-tool-text-muted font-sans text-[13px]">
+              {emptyMessage}
             </p>
-            {!searchQuery && !hasActiveFilters ? (
+            {showStartCta ? (
               <Button asChild variant="secondary" size="sm">
                 <Link to="/">Start creating</Link>
               </Button>
             ) : null}
           </div>
         ) : (
-          <ul className="flex flex-col gap-2 pt-4">
-            {sessions.map((entry, index) => (
-              <li
+          <div className={GRID_CLASS}>
+            {entries.map((entry, index) => (
+              <LibraryCard
                 key={
                   entry.id ??
                   entry.uuid ??
                   `${entry.timestamp ?? "no-ts"}-${index}`
                 }
-              >
-                <SessionRow entry={entry} />
-              </li>
+                entry={entry}
+              />
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
