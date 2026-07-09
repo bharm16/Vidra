@@ -38,9 +38,12 @@ export function SpaceViewport({
 
   // Drag-to-pan bookkeeping. `travelled` outlives the gesture so the click
   // browsers fire on release can be told apart from a deliberate selection.
-  const dragRef = useRef<{ pointerId: number; x: number; y: number } | null>(
-    null,
-  );
+  const dragRef = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    captured: boolean;
+  } | null>(null);
   const travelledRef = useRef(0);
 
   /** Past this many pixels of pointer travel, the gesture is a pan — the
@@ -53,11 +56,13 @@ export function SpaceViewport({
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
+      captured: false,
     };
     travelledRef.current = 0;
-    // Keep the gesture even when the pointer leaves the canvas (jsdom lacks
-    // pointer capture, hence the guard).
-    canvasRef.current?.setPointerCapture?.(event.pointerId);
+    // Deliberately NO pointer capture here: capturing on pointerdown makes
+    // the browser retarget the trailing click to the canvas, killing real
+    // mouse clicks on nodes. Capture engages in onPointerMove only once the
+    // gesture is genuinely a drag.
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
@@ -68,6 +73,12 @@ export function SpaceViewport({
     drag.x = event.clientX;
     drag.y = event.clientY;
     travelledRef.current += Math.abs(dx) + Math.abs(dy);
+    // Now a real drag: claim the pointer so the pan follows beyond the
+    // canvas bounds (jsdom lacks pointer capture, hence the guard).
+    if (travelledRef.current > CLICK_DRAG_THRESHOLD && !drag.captured) {
+      drag.captured = true;
+      canvasRef.current?.setPointerCapture?.(event.pointerId);
+    }
     setCamera((cam) => panBy(cam, dx, dy));
   };
 
