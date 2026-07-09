@@ -100,6 +100,10 @@ One generated result — a picture or a clip — permanently paired with the exa
 
 The action that ends the loop: the creator saves the clip they're proud of to the library. Everything upstream of Keep is free; Keep is where the subscription offer lives (ADR-0010). Resolved 2026-07-04 during untangling decision. Avoid synonyms: save, export, download (downloading is what happens after Keep).
 
+### Words node
+
+The space's node for a words-version — the text that made the takes beneath it (ADR-0013 persists it as every picture's immediate ancestor; a reword creates a sibling words-version). A words node is a node but not a Take (takes are pictures and clips only). Resolved 2026-07-09 during space-workflow grilling. Avoid synonyms: prompt node, text node, words card.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
