@@ -36,7 +36,7 @@ export interface GenerationStats {
 }
 
 export interface LiveOutput {
-  imageDataUri: string;
+  imageUrl: string;
   requestId: string;
   at: number;
 }
@@ -58,7 +58,7 @@ export type GenerationAction =
   | {
       type: "result";
       requestId: string;
-      imageDataUri: string;
+      imageUrl: string;
       inferenceSeconds: number | null;
       at: number;
     }
@@ -170,7 +170,7 @@ export function generationReducer(
           ...state,
           inFlight: null,
           liveOutput: {
-            imageDataUri: action.imageDataUri,
+            imageUrl: action.imageUrl,
             requestId: action.requestId,
             at: action.at,
           },
@@ -189,7 +189,7 @@ export function generationReducer(
         },
         pending: null,
         liveOutput: {
-          imageDataUri: action.imageDataUri,
+          imageUrl: action.imageUrl,
           requestId: action.requestId,
           at: action.at,
         },

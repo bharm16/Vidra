@@ -61,6 +61,7 @@ export function useRealtimeSketch(
   const [connectNonce, setConnectNonce] = useState(0);
   const connectionRef = useRef<RealtimeSketchConnection | null>(null);
   const lastSentRef = useRef<string | null>(null);
+  const previousImageUrlRef = useRef<string | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
@@ -96,10 +97,19 @@ export function useRealtimeSketch(
           });
           return;
         }
+        // Realtime binary protocol: raw JPEG bytes → object URL for <img>.
+        const blob = new Blob([image.content.slice().buffer], {
+          type: image.content_type ?? "image/jpeg",
+        });
+        // fal includes request_id as an empty string when nothing was echoed.
+        const echoed = parsed.data.request_id;
         dispatch({
           type: "result",
-          requestId: parsed.data.request_id ?? lastSentRef.current ?? "",
-          imageDataUri: image.url,
+          requestId:
+            echoed !== undefined && echoed.length > 0
+              ? echoed
+              : (lastSentRef.current ?? ""),
+          imageUrl: URL.createObjectURL(blob),
           inferenceSeconds: parsed.data.timings?.inference ?? null,
           at,
         });
@@ -146,6 +156,21 @@ export function useRealtimeSketch(
       request_id: frame.requestId,
     });
   }, [state.inFlight]);
+
+  // Each frame mints a fresh object URL; release the displaced one or a
+  // long drawing session leaks a blob per result.
+  useEffect(() => {
+    const current = state.liveOutput?.imageUrl ?? null;
+    const previous = previousImageUrlRef.current;
+    if (
+      previous !== null &&
+      previous !== current &&
+      previous.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(previous);
+    }
+    previousImageUrlRef.current = current;
+  }, [state.liveOutput]);
 
   const captureSnapshot = useCallback(
     (dataUri: string, encodeMs: number): void => {

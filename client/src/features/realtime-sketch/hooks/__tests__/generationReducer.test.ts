@@ -63,14 +63,12 @@ describe("generationReducer — send discipline", () => {
     state = generationReducer(state, {
       type: "result",
       requestId: "0-1",
-      imageDataUri: "data:image/jpeg;base64,rendered",
+      imageUrl: "data:image/jpeg;base64,rendered",
       inferenceSeconds: 0.32,
       at: 1_400,
     });
 
-    expect(state.liveOutput?.imageDataUri).toBe(
-      "data:image/jpeg;base64,rendered",
-    );
+    expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
     expect(state.inFlight).toBeNull();
     expect(state.stats.rttMs).toEqual([400]);
     expect(state.stats.modelMs).toEqual([320]);
@@ -86,7 +84,7 @@ describe("generationReducer — send discipline", () => {
     state = generationReducer(state, {
       type: "result",
       requestId: "0-1",
-      imageDataUri: "data:image/jpeg;base64,rendered",
+      imageUrl: "data:image/jpeg;base64,rendered",
       inferenceSeconds: null,
       at: 1_400,
     });
@@ -107,7 +105,7 @@ describe("generationReducer — send discipline", () => {
     const state = generationReducer(inFlightState, {
       type: "result",
       requestId: "0-99",
-      imageDataUri: "data:image/jpeg;base64,stale",
+      imageUrl: "data:image/jpeg;base64,stale",
       inferenceSeconds: null,
       at: 1_400,
     });
@@ -139,7 +137,7 @@ describe("generationReducer — send discipline", () => {
     state = generationReducer(state, {
       type: "result",
       requestId: "0-1",
-      imageDataUri: "data:image/jpeg;base64,rendered",
+      imageUrl: "data:image/jpeg;base64,rendered",
       inferenceSeconds: null,
       at: 1_400,
     });
@@ -147,9 +145,7 @@ describe("generationReducer — send discipline", () => {
 
     expect(state.epoch).toBe(1);
     expect(state.inFlight).toBeNull();
-    expect(state.liveOutput?.imageDataUri).toBe(
-      "data:image/jpeg;base64,rendered",
-    );
+    expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
   });
 
   it("an error is sticky until the next successful frame and never blanks the live output", () => {
@@ -160,7 +156,7 @@ describe("generationReducer — send discipline", () => {
     state = generationReducer(state, {
       type: "result",
       requestId: "0-1",
-      imageDataUri: "data:image/jpeg;base64,rendered",
+      imageUrl: "data:image/jpeg;base64,rendered",
       inferenceSeconds: null,
       at: 1_400,
     });
@@ -175,22 +171,18 @@ describe("generationReducer — send discipline", () => {
       message: "unexpected result shape",
       at: 1_600,
     });
-    expect(state.liveOutput?.imageDataUri).toBe(
-      "data:image/jpeg;base64,rendered",
-    );
+    expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
 
     state = generationReducer(state, {
       type: "result",
       requestId: "0-2",
-      imageDataUri: "data:image/jpeg;base64,rendered2",
+      imageUrl: "data:image/jpeg;base64,rendered2",
       inferenceSeconds: null,
       at: 1_800,
     });
 
     expect(state.stats.lastError).toBeNull();
-    expect(state.liveOutput?.imageDataUri).toBe(
-      "data:image/jpeg;base64,rendered2",
-    );
+    expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered2");
   });
 
   it("an error attributed to the in-flight frame frees the slot and promotes the pending drawing", () => {

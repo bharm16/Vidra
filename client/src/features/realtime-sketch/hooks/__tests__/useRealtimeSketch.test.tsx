@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useRealtimeSketch } from "../useRealtimeSketch";
 import type {
@@ -34,7 +34,27 @@ function fakeConnectFactory(): {
   return { wire, connectFn };
 }
 
+// Wire shape pinned by the smoke gate: raw JPEG bytes in images[0].content.
+const wireResult = (requestId: string): Record<string, unknown> => ({
+  images: [
+    {
+      content: new Uint8Array([255, 216, 255, 224]),
+      width: 768,
+      height: 768,
+      content_type: "image/jpeg",
+    },
+  ],
+  timings: { inference: 0.3 },
+  request_id: requestId,
+});
+
 describe("useRealtimeSketch", () => {
+  beforeEach(() => {
+    // jsdom has no object URLs; the hook turns result bytes into one.
+    URL.createObjectURL = vi.fn(() => "blob:mock-render");
+    URL.revokeObjectURL = vi.fn();
+  });
+
   it("surfaces a failed token-mint preflight as a sticky error (fal's client is silent on auth failures)", async () => {
     const { connectFn } = fakeConnectFactory();
     const preflightFn = async (): Promise<string | null> =>
@@ -86,16 +106,10 @@ describe("useRealtimeSketch", () => {
     expect(wire.sent).toHaveLength(1);
 
     act(() => {
-      wire.handlers?.onResult({
-        images: [{ url: "data:image/jpeg;base64,render1" }],
-        timings: { inference: 0.3 },
-        request_id: "0-1",
-      });
+      wire.handlers?.onResult(wireResult("0-1"));
     });
 
-    expect(result.current.state.liveOutput?.imageDataUri).toBe(
-      "data:image/jpeg;base64,render1",
-    );
+    expect(result.current.state.liveOutput?.imageUrl).toBe("blob:mock-render");
     expect(wire.sent).toHaveLength(2);
     expect(wire.sent[1]).toMatchObject({
       image_url: "data:image/jpeg;base64,frame2",

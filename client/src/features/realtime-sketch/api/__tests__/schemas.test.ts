@@ -2,8 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import { FalRealtimeResultSchema } from "../schemas";
 
+// Wire shape pinned live by scripts/spikes/fal-lightning-realtime-smoke.ts:
+// over the realtime msgpack socket the image arrives as raw JPEG bytes in
+// images[0].content — there is no url field.
 const validResult = {
-  images: [{ url: "data:image/jpeg;base64,abc123", width: 768, height: 768 }],
+  images: [
+    {
+      content: new Uint8Array([255, 216, 255, 224]),
+      width: 768,
+      height: 768,
+      content_type: "image/jpeg",
+    },
+  ],
   timings: { inference: 0.31 },
   seed: 42,
   request_id: "0-1",
@@ -13,15 +23,16 @@ describe("FalRealtimeResultSchema", () => {
   it("accepts a realtime result and strips unknown fields", () => {
     const parsed = FalRealtimeResultSchema.safeParse({
       ...validResult,
-      some_future_field: "ignored",
+      has_nsfw_concepts: [false],
     });
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.images[0]?.url).toBe("data:image/jpeg;base64,abc123");
+      expect(parsed.data.images[0]?.content).toBeInstanceOf(Uint8Array);
+      expect(parsed.data.images[0]?.content_type).toBe("image/jpeg");
       expect(parsed.data.timings?.inference).toBe(0.31);
       expect(parsed.data.request_id).toBe("0-1");
-      expect("some_future_field" in parsed.data).toBe(false);
+      expect("has_nsfw_concepts" in parsed.data).toBe(false);
     }
   });
 
@@ -32,7 +43,7 @@ describe("FalRealtimeResultSchema", () => {
     );
   });
 
-  it("rejects results with no usable image", () => {
+  it("rejects results with no usable image bytes", () => {
     expect(
       FalRealtimeResultSchema.safeParse({ ...validResult, images: [] }).success,
     ).toBe(false);
@@ -43,7 +54,7 @@ describe("FalRealtimeResultSchema", () => {
     expect(
       FalRealtimeResultSchema.safeParse({
         ...validResult,
-        images: [{ url: "" }],
+        images: [{ content: "not-bytes", width: 768, height: 768 }],
       }).success,
     ).toBe(false);
   });

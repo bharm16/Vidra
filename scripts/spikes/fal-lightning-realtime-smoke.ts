@@ -15,7 +15,10 @@ import sharp from "sharp";
 import { fal } from "@fal-ai/client";
 
 const TOKEN_ALLOWLIST_APP = "fal-ai/fast-lightning-sdxl";
-const MODEL_ENDPOINT = "fal-ai/fast-lightning-sdxl/image-to-image";
+// Realtime runners live on the ROOT app; i2i mode is selected by sending
+// image_url in the payload (the /image-to-image subpath is the HTTP queue
+// route — its realtime forward fails with "Error while forwarding").
+const MODEL_ENDPOINT = "fal-ai/fast-lightning-sdxl";
 const TOKEN_EXPIRATION_SECONDS = 120;
 const RESULT_TIMEOUT_MS = 45_000;
 
@@ -84,58 +87,89 @@ async function runRealtimeFrame(
   // its realtime token from credentials (in the browser, via proxyUrl — the
   // app path exercised by /sketch itself).
   fal.config({ credentials: falKey });
-  const sentAt = Date.now();
-  const result = await new Promise<Record<string, unknown>>(
-    (resolve, reject) => {
-      const timeout = setTimeout(
-        () => reject(new Error(`no result within ${RESULT_TIMEOUT_MS}ms`)),
-        RESULT_TIMEOUT_MS,
+
+  const payload = {
+    prompt:
+      "4k product photography of an ergonomic desk lamp glowing, studio lighting",
+    image_url: imageDataUri,
+    strength: 0.75,
+    num_inference_steps: 4,
+    image_size: { width: 768, height: 768 },
+    seed: 42,
+    sync_mode: true,
+    enable_safety_checker: true,
+  };
+
+  let resolveResult: (value: Record<string, unknown>) => void = () => {};
+  let rejectResult: (reason: Error) => void = () => {};
+  const connection = fal.realtime.connect(MODEL_ENDPOINT, {
+    connectionKey: "realtime-sketch-smoke",
+    onError: (error) => {
+      rejectResult(
+        error instanceof Error ? error : new Error(JSON.stringify(error)),
       );
-      const connection = fal.realtime.connect(MODEL_ENDPOINT, {
-        connectionKey: "realtime-sketch-smoke",
-        onError: (error) => {
-          clearTimeout(timeout);
-          reject(
-            error instanceof Error ? error : new Error(JSON.stringify(error)),
-          );
-        },
-        onResult: (result) => {
-          clearTimeout(timeout);
-          resolve(result as Record<string, unknown>);
-        },
-      });
-      connection.send({
-        prompt:
-          "4k product photography of an ergonomic desk lamp glowing, studio lighting",
-        image_url: imageDataUri,
-        strength: 0.75,
-        num_inference_steps: 4,
-        image_size: { width: 768, height: 768 },
-        seed: 42,
-        sync_mode: true,
-        enable_safety_checker: true,
-      });
     },
-  );
+    onResult: (result) => {
+      resolveResult(result as Record<string, unknown>);
+    },
+  });
 
-  const roundTripMs = Date.now() - sentAt;
-  const images = result.images as Array<Record<string, unknown>> | undefined;
-  const firstUrl =
-    typeof images?.[0]?.url === "string" ? (images[0].url as string) : "";
-  const timings = result.timings as Record<string, unknown> | undefined;
+  const sendFrame = async (label: string): Promise<Record<string, unknown>> => {
+    const sentAt = Date.now();
+    const result = await new Promise<Record<string, unknown>>(
+      (resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error(`no result within ${RESULT_TIMEOUT_MS}ms`)),
+          RESULT_TIMEOUT_MS,
+        );
+        resolveResult = (value) => {
+          clearTimeout(timeout);
+          resolve(value);
+        };
+        rejectResult = (reason) => {
+          clearTimeout(timeout);
+          reject(reason);
+        };
+        connection.send(payload);
+      },
+    );
+    const roundTripMs = Date.now() - sentAt;
+    const timings = result.timings as Record<string, unknown> | undefined;
+    console.log(
+      `      ${label}: round-trip ${roundTripMs}ms · timings ${timings ? JSON.stringify(timings) : "(absent)"} · seed ${String(result.seed)} · request_id ${String(result.request_id ?? "(absent)")}`,
+    );
+    return result;
+  };
 
-  console.log(`[3/3] realtime frame answered in ${roundTripMs}ms`);
-  console.log(`      result keys: ${Object.keys(result).join(", ")}`);
+  console.log(`[3/3] sending two frames (cold runner, then warm)`);
+  const first = await sendFrame("cold");
+  const second = await sendFrame("warm");
+
+  // Realtime binary protocol: the image arrives as raw JPEG bytes in
+  // images[0].content (msgpack), NOT as a url — pinned here for the client.
+  const images = second.images as Array<Record<string, unknown>> | undefined;
+  const image = images?.[0];
+  const content = image?.content;
+  const bytes =
+    content instanceof Uint8Array
+      ? Buffer.from(content)
+      : content && typeof content === "object"
+        ? Buffer.from(Object.values(content as Record<string, number>))
+        : null;
   console.log(
-    `      images[0]: ${images?.length ?? 0} image(s), url starts "${firstUrl.slice(0, 30)}", ${String(images?.[0]?.width)}x${String(images?.[0]?.height)}`,
-  );
-  console.log(
-    `      timings: ${timings ? JSON.stringify(timings) : "(absent)"} · seed: ${String(result.seed)}`,
+    `      images[0]: keys [${image ? Object.keys(image).join(", ") : ""}], ${String(image?.width)}x${String(image?.height)}, ${bytes ? `${Math.round(bytes.length / 1024)}KB bytes (JPEG magic: ${bytes[0] === 0xff && bytes[1] === 0xd8})` : "NO CONTENT BYTES"}`,
   );
 
-  if (!firstUrl) {
-    throw new Error("result contained no image url");
+  if (!bytes) {
+    throw new Error(
+      `no image bytes — full result: ${JSON.stringify(second).slice(0, 300)}`,
+    );
   }
+  const outPath = new URL("../../.smoke-lamp-render.jpg", import.meta.url)
+    .pathname;
+  await sharp(bytes).toFile(outPath);
+  console.log(`      render written to ${outPath}`);
+  void first;
 }
 
 const key = resolveFalKey();

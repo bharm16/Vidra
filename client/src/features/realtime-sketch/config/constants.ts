@@ -4,8 +4,10 @@
  * The model is deliberately a constant, not a setting: the server's token
  * allowlist (ADR-0016) is the real enforcement; this must match it.
  */
-export const SKETCH_MODEL_ENDPOINT =
-  "fal-ai/fast-lightning-sdxl/image-to-image";
+// Realtime runners live on the ROOT app — i2i mode is selected by sending
+// image_url in the payload. The /image-to-image subpath is the HTTP queue
+// route only; its realtime forward fails (pinned by the smoke gate).
+export const SKETCH_MODEL_ENDPOINT = "fal-ai/fast-lightning-sdxl";
 export const FAL_PROXY_URL = "/api/fal/proxy";
 
 export const SNAPSHOT_INTERVAL_MS = 150;

@@ -67,7 +67,7 @@ export function LiveOutput({
           </p>
         ) : (
           <img
-            src={liveOutput.imageDataUri}
+            src={liveOutput.imageUrl}
             alt="Live output"
             className="h-full w-full object-cover"
           />
