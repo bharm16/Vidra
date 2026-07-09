@@ -92,9 +92,7 @@ const HistoryPage = lazy(() =>
   })),
 );
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
-const RealtimeSketch = lazy(
-  () => import("./features/realtime-sketch/RealtimeSketch"),
-);
+const LiveEditor = lazy(() => import("./features/realtime-sketch/LiveEditor"));
 const MainWorkspace = lazy(() =>
   import("./components/layout/MainWorkspace").then((module) => ({
     default: module.MainWorkspace,
@@ -262,13 +260,13 @@ function AppRoutes(): React.ReactElement {
 
       {/* App routes */}
       <Route path="/" element={<WorkspaceRoute />} />
-      {/* Realtime-sketch spike (ADR-0016) — outside the page's anatomy;
-          promotion or shelving is decided by the spec's verdict addendum. */}
+      {/* The Live editor (ADR-0017) — the realtime sketch's own rail surface
+          on its own infinite plane, outside the page's anatomy. */}
       <Route
-        path="/sketch"
+        path="/live-editor"
         element={
-          <FeatureErrorBoundary featureName="Realtime Sketch">
-            <RealtimeSketch />
+          <FeatureErrorBoundary featureName="Live Editor">
+            <LiveEditor />
           </FeatureErrorBoundary>
         }
       />

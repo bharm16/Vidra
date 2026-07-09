@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   CircleHelp,
   Library as LibraryIcon,
+  Paintbrush,
   PanelLeft,
   Plus,
 } from "lucide-react";
@@ -10,7 +11,7 @@ import { Button } from "@promptstudio/system/components/ui/button";
 import { cn } from "@/utils/cn";
 import { useAuthUser } from "@hooks/useAuthUser";
 
-type RailActive = "new" | "library" | "account" | "none";
+type RailActive = "new" | "library" | "live-editor" | "account" | "none";
 
 interface NavRailProps {
   /** Which destination the current route represents, for the active highlight. */
@@ -142,6 +143,13 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           collapsed={collapsed}
           active={active === "library"}
           icon={<LibraryIcon size={18} strokeWidth={1.8} />}
+        />
+        <RailItem
+          to="/live-editor"
+          label="Live editor"
+          collapsed={collapsed}
+          active={active === "live-editor"}
+          icon={<Paintbrush size={18} strokeWidth={1.8} />}
         />
       </div>
 

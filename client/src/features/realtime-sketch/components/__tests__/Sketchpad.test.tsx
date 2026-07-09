@@ -37,6 +37,38 @@ describe("Sketchpad", () => {
     stubCanvas();
   });
 
+  it("drawing strokes never reach the plane, select drags always do (ADR-0017 pointer contract)", () => {
+    const paneListener = vi.fn();
+    const onSnapshot = vi.fn();
+    const { rerender } = render(
+      <div onPointerDown={paneListener} onPointerMove={paneListener}>
+        <Sketchpad
+          tool="brush"
+          ink="#1e2c47"
+          brushSize={18}
+          onSnapshot={onSnapshot}
+        />
+      </div>,
+    );
+
+    drawStroke(screen.getByLabelText("Sketchpad"));
+    expect(paneListener).not.toHaveBeenCalled();
+    expect(onSnapshot).toHaveBeenCalled();
+
+    rerender(
+      <div onPointerDown={paneListener} onPointerMove={paneListener}>
+        <Sketchpad
+          tool="select"
+          ink="#1e2c47"
+          brushSize={18}
+          onSnapshot={onSnapshot}
+        />
+      </div>,
+    );
+    drawStroke(screen.getByLabelText("Sketchpad"));
+    expect(paneListener).toHaveBeenCalled();
+  });
+
   it("does not draw or snapshot while the select tool is active", () => {
     const onSnapshot = vi.fn();
     render(

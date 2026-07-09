@@ -124,6 +124,10 @@ export const Sketchpad = forwardRef<SketchpadHandle, SketchpadProps>(
       if (tool === "select") {
         return;
       }
+      // ADR-0017 pointer contract: drawing strokes belong to the sketchpad —
+      // they must never reach the plane and pan it. Select drags fall
+      // through untouched so the viewport can pan even over the sketchpad.
+      event.stopPropagation();
       // jsdom lacks pointer capture; real browsers keep the stroke while the
       // pointer wanders off the element.
       if (typeof event.currentTarget.setPointerCapture === "function") {
@@ -145,6 +149,7 @@ export const Sketchpad = forwardRef<SketchpadHandle, SketchpadProps>(
       if (!active) {
         return;
       }
+      event.stopPropagation();
       active.points.push(toCanvasPoint(event));
       redraw();
       const now = Date.now();
