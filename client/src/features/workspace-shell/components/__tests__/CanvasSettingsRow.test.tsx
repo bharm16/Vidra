@@ -198,7 +198,7 @@ describe("CanvasSettingsRow", () => {
     expect(screen.getByTestId("video-references-popover")).toBeInTheDocument();
   });
 
-  it("renders the model chip with a muted 'Model ·' prefix before the model name", () => {
+  it("renders the model control icon-only, reachable as 'Video model' (composer handoff)", () => {
     renderRow({
       controls: {
         onStoryboard: vi.fn(),
@@ -209,14 +209,13 @@ describe("CanvasSettingsRow", () => {
       },
     });
 
+    // The docked row is a compact icon toolbar: the model trigger shows the
+    // sparkle glyph only — no visible label — and stays reachable by its
+    // accessible name.
     const trigger = screen.getByRole("button", { name: "Video model" });
-    // Prefix and model name are separate flex children (spaced via gap),
-    // so assert each visible piece rather than a single concatenated string.
-    expect(trigger).toHaveTextContent("Model ·");
-    expect(trigger).toHaveTextContent("Sora 2");
-
-    const prefix = screen.getByText("Model ·");
-    expect(prefix).toHaveClass("text-tool-text-subdued");
+    expect(trigger).not.toHaveTextContent("Model ·");
+    expect(trigger).not.toHaveTextContent("Sora 2");
+    expect(trigger.querySelector("svg")).not.toBeNull();
   });
 
   it("shows extend chip and clears extend mode from prompt row", () => {

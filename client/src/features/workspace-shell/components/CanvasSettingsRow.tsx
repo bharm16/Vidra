@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { CaretDown, Eye, Target, X } from "@promptstudio/system/components/ui";
+import {
+  ArrowRight,
+  CaretDown,
+  Clock,
+  Eye,
+  FrameCorners,
+  Sparkle,
+  X,
+} from "@promptstudio/system/components/ui";
 import { FEATURES } from "@/config/features.config";
 import type { SidebarUploadedImage } from "@features/generation-controls";
 import {
@@ -95,6 +103,13 @@ const PREVIEW_CLICK_COOLDOWN_MS = 2000;
 // DropdownMenu (opaque popover surface on the named z-index scale).
 const MENU_TRIGGER_CLASS =
   "inline-flex h-[28px] items-center gap-[5px] whitespace-nowrap rounded-md px-2 text-xs text-tool-text-muted transition-colors hover:text-foreground data-[state=open]:text-foreground";
+
+// Docked variant (the composer handoff): icon-only 42px control buttons —
+// aspect · duration · model · preview — styled as a compact canvas toolbar.
+// The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
+// setting is announced; the title names the control.
+const ICON_TRIGGER_CLASS =
+  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] text-tool-text-dim transition-colors hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.07] data-[state=open]:text-foreground";
 
 // Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
 // pills inside the glass sheet, matching the handoff's two inline chips.
@@ -316,7 +331,7 @@ export function CanvasSettingsRow({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-1 px-3 py-2",
+        "flex flex-wrap items-center gap-[6px] px-[10px] py-[9px]",
         isSheet && "gap-2 px-0 py-0",
       )}
       data-testid="canvas-settings-row"
@@ -389,13 +404,26 @@ export function CanvasSettingsRow({
           </>
         )}
 
-        {/* Aspect ratio menu */}
+        {/* Aspect ratio menu — icon-only in the docked row; the accessible
+            name is the current value so tests and readers see "16:9". */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className={isSheet ? SHEET_MENU_TRIGGER_CLASS : MENU_TRIGGER_CLASS}
+            className={isSheet ? SHEET_MENU_TRIGGER_CLASS : ICON_TRIGGER_CLASS}
+            aria-label={isSheet ? undefined : aspectRatio}
+            title={isSheet ? undefined : "Aspect ratio"}
           >
-            {aspectRatio}
-            <CaretDown size={10} aria-hidden="true" className="opacity-50" />
+            {isSheet ? (
+              <>
+                {aspectRatio}
+                <CaretDown
+                  size={10}
+                  aria-hidden="true"
+                  className="opacity-50"
+                />
+              </>
+            ) : (
+              <FrameCorners size={21} aria-hidden="true" />
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start">
             <DropdownMenuRadioGroup
@@ -415,10 +443,22 @@ export function CanvasSettingsRow({
             duration numeric) */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className={isSheet ? SHEET_MENU_TRIGGER_CLASS : MENU_TRIGGER_CLASS}
+            className={isSheet ? SHEET_MENU_TRIGGER_CLASS : ICON_TRIGGER_CLASS}
+            aria-label={isSheet ? undefined : formatDurationLabel(duration)}
+            title={isSheet ? undefined : "Duration"}
           >
-            {formatDurationLabel(duration)}
-            <CaretDown size={10} aria-hidden="true" className="opacity-50" />
+            {isSheet ? (
+              <>
+                {formatDurationLabel(duration)}
+                <CaretDown
+                  size={10}
+                  aria-hidden="true"
+                  className="opacity-50"
+                />
+              </>
+            ) : (
+              <Clock size={21} aria-hidden="true" />
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start">
             <DropdownMenuRadioGroup
@@ -446,9 +486,9 @@ export function CanvasSettingsRow({
             {...(recommendedModelId ? { recommendedModelId } : {})}
             {...(efficientModelId ? { efficientModelId } : {})}
             triggerAriaLabel="Video model"
-            triggerPrefixLabel="Model ·"
-            triggerPrefixIcon={<Target size={12} aria-hidden="true" />}
-            triggerClassName="inline-flex h-[28px] items-center gap-1.5 rounded-full border border-tool-rail-border bg-transparent px-2.5 text-xs font-normal text-tool-text-dim transition-colors hover:border-tool-text-label hover:text-foreground"
+            triggerPrefixIcon={<Sparkle size={21} aria-hidden="true" />}
+            triggerLabelHidden
+            triggerClassName={ICON_TRIGGER_CLASS}
           />
         )}
       </div>
@@ -461,7 +501,10 @@ export function CanvasSettingsRow({
           <button
             type="button"
             data-testid="canvas-preview-button"
-            className="text-tool-text-muted hover:text-foreground disabled:text-tool-text-label inline-flex h-[28px] w-[28px] items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed"
+            className={cn(
+              ICON_TRIGGER_CLASS,
+              "disabled:text-tool-text-label disabled:cursor-not-allowed",
+            )}
             onClick={() => {
               if (hasInsufficientPreviewCredits) {
                 onInsufficientCredits?.(STORYBOARD_COST, "Storyboard preview");
@@ -497,7 +540,7 @@ export function CanvasSettingsRow({
                     : "Preview"
             }
           >
-            <Eye size={14} />
+            <Eye size={21} />
           </button>
         ) : null}
 
@@ -544,9 +587,12 @@ export function CanvasSettingsRow({
                       : "text-tool-surface-deep border-white bg-white shadow-[0_6px_22px_-6px_rgba(255,255,255,0.3)]",
                 )
               : cn(
-                  "inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-medium transition-opacity",
-                  "bg-foreground text-tool-surface-deep",
-                  "hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60",
+                  // The handoff's calm primary: off-white solid, no accent
+                  // glow, a trailing arrow. Same button in box and pill.
+                  "inline-flex h-[42px] items-center gap-[7px] rounded-[12px] px-[18px] text-sm font-semibold",
+                  "bg-foreground text-tool-surface-deep shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
+                  "transition-[transform,background-color,opacity] hover:-translate-y-px hover:bg-white",
+                  "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
                 ),
           )}
         >
@@ -611,12 +657,7 @@ export function CanvasSettingsRow({
           ) : (
             <>
               Make it
-              <kbd
-                aria-hidden="true"
-                className="bg-tool-surface-deep/15 text-tool-surface-deep/70 ml-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold"
-              >
-                ⌘↵
-              </kbd>
+              <ArrowRight size={15} aria-hidden="true" />
             </>
           )}
         </button>

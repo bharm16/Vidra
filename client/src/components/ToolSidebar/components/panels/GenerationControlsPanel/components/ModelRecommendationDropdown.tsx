@@ -75,6 +75,9 @@ export interface ModelRecommendationDropdownProps {
    *  React node so the caller controls icon size and weight. */
   triggerPrefixIcon?: React.ReactNode;
   triggerAriaLabel?: string | undefined;
+  /** Icon-only trigger (the composer's collapsed-toolbar treatment): hides
+   *  the model label + caret; the aria-label carries the accessible name. */
+  triggerLabelHidden?: boolean | undefined;
 }
 
 /** closed = nothing visible, list = hover popover, cards = click overlay */
@@ -342,6 +345,7 @@ export function ModelRecommendationDropdown({
   triggerPrefixLabel,
   triggerPrefixIcon,
   triggerAriaLabel,
+  triggerLabelHidden = false,
 }: ModelRecommendationDropdownProps): React.ReactElement {
   const [mode, setMode] = useState<ViewMode>("closed");
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -553,13 +557,17 @@ export function ModelRecommendationDropdown({
               {triggerPrefixLabel}
             </span>
           )}
-          {current?.label ?? "Model"}
-          <CaretDown
-            className={cn(
-              "text-tool-text-dim h-2.5 w-2.5 transition-transform",
-              mode !== "closed" && "rotate-180",
-            )}
-          />
+          {triggerLabelHidden ? null : (
+            <>
+              {current?.label ?? "Model"}
+              <CaretDown
+                className={cn(
+                  "text-tool-text-dim h-2.5 w-2.5 transition-transform",
+                  mode !== "closed" && "rotate-180",
+                )}
+              />
+            </>
+          )}
         </button>
       </div>
 
