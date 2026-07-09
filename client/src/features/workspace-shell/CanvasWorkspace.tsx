@@ -59,6 +59,7 @@ import {
 import { WorkspaceTopBar } from "./components/WorkspaceTopBar";
 import { FrameStage } from "./components/FrameStage";
 import { CanvasPromptBar } from "./components/CanvasPromptBar";
+import { useComposerFocus } from "./hooks/useComposerFocus";
 import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
 import { YourWordsChip } from "./components/YourWordsChip";
 import { FailureNotice } from "./components/FailureNotice";
@@ -270,6 +271,12 @@ export function CanvasWorkspace({
 
   const heroGeneration = generationsRuntime.heroGeneration;
 
+  // ADR-0015: the composer is bound to the words node's focus. Words are
+  // focused by default while writing; a take steals focus the moment it
+  // exists; the demoted chip is the manual way back.
+  const { wordsFocused, focusedWordsId, focusWords, blurWords } =
+    useComposerFocus(heroGeneration?.id ?? null);
+
   const galleryEntries = useMemo(() => {
     // When runtimeGenerations is empty (e.g., after po:workspace-reset), skip
     // version-based entries to prevent stale gallery items from a prior session
@@ -433,8 +440,13 @@ export function CanvasWorkspace({
     (nodeId: string): void => {
       const words = resolveWordsForNode(nodeId, spaceNodes);
       if (words) onComposerFill?.(words);
+      // ADR-0015: a words node takes focus (box opens); a take returns focus
+      // to the media (box collapses). The fill happens either way.
+      const node = spaceNodes.find((n) => n.id === nodeId);
+      if (node?.kind === "words") focusWords(nodeId);
+      else blurWords();
     },
-    [spaceNodes, onComposerFill],
+    [spaceNodes, onComposerFill, focusWords, blurWords],
   );
 
   // Leaf-only removal (M5, ADR-0012). The server re-enforces the rule and
@@ -549,7 +561,13 @@ export function CanvasWorkspace({
   const chromeSlot = useMemo(
     () => (
       <div
-        className={cn(isPreWork ? "mt-1" : "border-tool-rail-border border-t")}
+        className={cn(
+          isPreWork
+            ? "mt-1"
+            : wordsFocused
+              ? "border-tool-rail-border border-t"
+              : undefined,
+        )}
       >
         <CanvasSettingsRow
           variant={isPreWork ? "sheet" : "docked"}
@@ -588,6 +606,7 @@ export function CanvasWorkspace({
       onUploadSidebarImage,
       hasGenerations,
       isPreWork,
+      wordsFocused,
     ],
   );
 
@@ -683,10 +702,14 @@ export function CanvasWorkspace({
             ) : FEATURES.SPACE_LINEAGE ? (
               // The space (M5, ADR-0012/0013): the session's takes as a lineage
               // network. Off by default; replaces the shots grid when enabled.
-              <SpaceViewport liveNodeId={heroGeneration?.id ?? null}>
+              <SpaceViewport
+                liveNodeId={heroGeneration?.id ?? null}
+                onBackgroundClick={blurWords}
+              >
                 <TheSpace
                   nodes={spaceNodes}
                   liveNodeId={heroGeneration?.id ?? null}
+                  focusedNodeId={focusedWordsId}
                   onSelectNode={handleSelectSpaceNode}
                   renderNodeMenu={renderSpaceNodeMenu}
                 />
@@ -718,6 +741,7 @@ export function CanvasWorkspace({
               onContinueScene={handleContinueScene}
               isPreWork={isPreWork}
               footerSlot={starterPillsSlot}
+              collapsed={!isPreWork && !wordsFocused}
             />
           </div>
         </div>

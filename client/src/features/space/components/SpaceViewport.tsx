@@ -21,10 +21,17 @@ const round1 = (n: number): number => Math.round(n * 10) / 10;
 export function SpaceViewport({
   children,
   liveNodeId,
+  onBackgroundClick,
 }: {
   children: React.ReactNode;
   /** The current take; when it changes the camera recenters on it. */
   liveNodeId?: string | null;
+  /**
+   * A clean click on empty canvas (not a node, not a pan-drag's trailing
+   * click). ADR-0015 uses this to return focus to the media — collapsing
+   * the composer.
+   */
+  onBackgroundClick?: () => void;
 }): React.ReactElement {
   const [camera, setCamera] = useState<SpaceCamera>({ x: 0, y: 0, scale: 1 });
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -74,6 +81,14 @@ export function SpaceViewport({
     travelledRef.current = 0;
     event.preventDefault();
     event.stopPropagation();
+  };
+
+  const onClick = (event: React.MouseEvent<HTMLDivElement>): void => {
+    // Only clean clicks reach here (the capture gate above kills drag
+    // clicks). Anything inside a button is a node/menu click, not canvas.
+    const target = event.target as HTMLElement;
+    if (target.closest("button")) return;
+    onBackgroundClick?.();
   };
 
   // Wheel: two-finger scroll pans the plane. Attached natively (non-passive)
@@ -146,6 +161,7 @@ export function SpaceViewport({
       onPointerUp={onPointerEnd}
       onPointerCancel={onPointerEnd}
       onClickCapture={onClickCapture}
+      onClick={onClick}
     >
       <div
         data-testid="space-viewport-content"

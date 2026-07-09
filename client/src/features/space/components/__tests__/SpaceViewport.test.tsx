@@ -138,6 +138,36 @@ describe("SpaceViewport", () => {
     expect(onSelect).toHaveBeenCalledTimes(2);
   });
 
+  it("reports empty-canvas clicks, but not node clicks or pan-drags", () => {
+    const onBackgroundClick = vi.fn();
+    render(
+      <SpaceViewport onBackgroundClick={onBackgroundClick}>
+        <button type="button">node</button>
+      </SpaceViewport>,
+    );
+    const canvas = screen.getByTestId("space-canvas");
+
+    // Clean click on empty canvas → background click (defocus).
+    fireEvent.click(canvas);
+    expect(onBackgroundClick).toHaveBeenCalledTimes(1);
+
+    // Click on a node (a button) → NOT a background click.
+    fireEvent.click(screen.getByRole("button", { name: "node" }));
+    expect(onBackgroundClick).toHaveBeenCalledTimes(1);
+
+    // A drag's trailing click → suppressed, NOT a background click.
+    fireEvent.pointerDown(canvas, {
+      clientX: 10,
+      clientY: 10,
+      button: 0,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(canvas, { clientX: 60, clientY: 60, pointerId: 1 });
+    fireEvent.pointerUp(canvas, { pointerId: 1 });
+    fireEvent.click(canvas);
+    expect(onBackgroundClick).toHaveBeenCalledTimes(1);
+  });
+
   it("recenters the camera on the live node when it changes", () => {
     const rect = (r: Partial<DOMRect>): DOMRect =>
       ({

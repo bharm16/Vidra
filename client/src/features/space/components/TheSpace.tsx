@@ -1,4 +1,5 @@
 import React from "react";
+import { FileText } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 
 import { cn } from "@/utils/cn";
@@ -15,6 +16,9 @@ const SIZE: Record<LineageNodeKind, { w: number; h: number }> = {
   picture: { w: 248, h: 155 },
   clip: { w: 248, h: 155 },
 };
+
+/** The demoted words chip (ADR-0015) — a quiet origin marker, not a card. */
+const CHIP_SIZE = { w: 104, h: 34 };
 
 /** Edge stroke by derived kind — the drawn relationship reads the verb. */
 const EDGE_STROKE: Record<EdgeKind, string> = {
@@ -38,6 +42,12 @@ export interface TheSpaceProps {
   /** Selecting a node restores its paired words (the take-restore contract). */
   onSelectNode?: (id: string) => void;
   /**
+   * ADR-0015: the words node rendering full-size (the composer's open box is
+   * bound to it). Every other words node demotes to the origin chip; null
+   * demotes them all.
+   */
+  focusedNodeId?: string | null;
+  /**
    * Per-node context menu (RULINGS §5), rendered at the node's corner as a
    * sibling of the select button — never nested — so its actions don't collide
    * with selection. Return null to give a node no menu.
@@ -56,6 +66,7 @@ export function TheSpace({
   liveNodeId,
   onSelectNode,
   renderNodeMenu,
+  focusedNodeId = null,
 }: TheSpaceProps): React.ReactElement {
   const positioned = computeLineageLayout(nodes);
   const byId = new Map(positioned.map((node) => [node.id, node]));
@@ -65,26 +76,32 @@ export function TheSpace({
   const width = columns * COL_W;
   const height = rows * ROW_H;
 
-  const nodeLeft = (n: { column: number; kind: LineageNodeKind }): number =>
-    n.column * COL_W + (COL_W - SIZE[n.kind].w) / 2;
-  const nodeTop = (n: { row: number; kind: LineageNodeKind }): number =>
-    n.row * ROW_H + (ROW_H - SIZE[n.kind].h) / 2;
+  type Placeable = {
+    id: string;
+    column: number;
+    row: number;
+    kind: LineageNodeKind;
+  };
 
-  const liveLeftAnchor = (n: {
-    column: number;
-    row: number;
+  /** Words nodes demote to the chip footprint unless focused (ADR-0015). */
+  const sizeOf = (n: {
+    id: string;
     kind: LineageNodeKind;
-  }): { x: number; y: number } => ({
+  }): { w: number; h: number } =>
+    n.kind === "words" && n.id !== focusedNodeId ? CHIP_SIZE : SIZE[n.kind];
+
+  const nodeLeft = (n: Placeable): number =>
+    n.column * COL_W + (COL_W - sizeOf(n).w) / 2;
+  const nodeTop = (n: Placeable): number =>
+    n.row * ROW_H + (ROW_H - sizeOf(n).h) / 2;
+
+  const liveLeftAnchor = (n: Placeable): { x: number; y: number } => ({
     x: nodeLeft(n),
-    y: nodeTop(n) + SIZE[n.kind].h / 2,
+    y: nodeTop(n) + sizeOf(n).h / 2,
   });
-  const rightAnchor = (n: {
-    column: number;
-    row: number;
-    kind: LineageNodeKind;
-  }): { x: number; y: number } => ({
-    x: nodeLeft(n) + SIZE[n.kind].w,
-    y: nodeTop(n) + SIZE[n.kind].h / 2,
+  const rightAnchor = (n: Placeable): { x: number; y: number } => ({
+    x: nodeLeft(n) + sizeOf(n).w,
+    y: nodeTop(n) + sizeOf(n).h / 2,
   });
 
   const liveNode = positioned.find((n) => n.id === liveNodeId) ?? null;
@@ -101,8 +118,8 @@ export function TheSpace({
           aria-hidden
           className="pointer-events-none absolute rounded-full blur-[12px]"
           style={{
-            left: nodeLeft(liveNode) + SIZE[liveNode.kind].w / 2 - 270,
-            top: nodeTop(liveNode) + SIZE[liveNode.kind].h / 2 - 215,
+            left: nodeLeft(liveNode) + sizeOf(liveNode).w / 2 - 270,
+            top: nodeTop(liveNode) + sizeOf(liveNode).h / 2 - 215,
             width: 540,
             height: 430,
             opacity: 0.7,
@@ -140,7 +157,9 @@ export function TheSpace({
       {positioned.map((node) => {
         const isLive = node.id === liveNodeId;
         const menu = renderNodeMenu?.(node);
-        const { w, h } = SIZE[node.kind];
+        const demoted = node.kind === "words" && node.id !== focusedNodeId;
+        const focusedWords = node.kind === "words" && node.id === focusedNodeId;
+        const { w, h } = sizeOf(node);
         return (
           <React.Fragment key={node.id}>
             <Button
@@ -149,41 +168,66 @@ export function TheSpace({
               data-testid={`space-node-${node.id}`}
               data-live={isLive ? "true" : "false"}
               onClick={() => onSelectNode?.(node.id)}
-              className="absolute flex !h-auto flex-col items-stretch !p-0 text-left hover:bg-transparent"
+              className="group absolute flex !h-auto flex-col items-stretch !p-0 text-left hover:bg-transparent"
               style={{ left: nodeLeft(node), top: nodeTop(node), width: w }}
             >
-              <div
-                className={cn(
-                  "relative overflow-hidden rounded-[14px] border transition-transform",
-                  node.status === "forming"
-                    ? "ps-node-forming border-[color:var(--accent)]"
-                    : isLive
-                      ? "ps-node-live border-[color:var(--accent)]"
-                      : "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
-                  isLive && node.status !== "forming" && "scale-[1.02]",
-                )}
-                style={{ height: h }}
-              >
-                <SpaceNodeBody node={node} />
-                {isLive ? (
-                  <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 text-[10px] font-medium text-white">
-                    <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />
-                    LIVE
+              {demoted ? (
+                /* The origin chip (ADR-0015): quiet at rest, unmistakably a
+                   door on hover — it is the only way back to editing. */
+                <span
+                  className={cn(
+                    "inline-flex items-center justify-center gap-[7px] rounded-[11px] border px-3 font-mono text-[12px]",
+                    "text-tool-text-muted border-white/[0.08] bg-white/[0.03]",
+                    "transition-all group-hover:-translate-y-px group-hover:scale-[1.04]",
+                    "group-hover:border-[color:color-mix(in_srgb,var(--accent)_52%,transparent)]",
+                    "group-hover:text-foreground group-hover:bg-white/[0.075]",
+                  )}
+                  style={{ height: h }}
+                >
+                  <FileText className="h-[13px] w-[13px]" aria-hidden="true" />
+                  Prompt
+                  <span className="text-tool-text-muted hidden text-[11px] group-hover:inline">
+                    Edit words
                   </span>
-                ) : null}
-              </div>
-              <span
-                className={cn(
-                  "ps-node-caption mt-2 text-center",
-                  isLive
-                    ? "text-[color:color-mix(in_srgb,var(--accent)_55%,#fff)]"
-                    : "text-tool-text-label",
-                )}
-              >
-                {CAPTION[node.kind]}
-              </span>
+                </span>
+              ) : (
+                <>
+                  <div
+                    className={cn(
+                      "relative overflow-hidden rounded-[14px] border transition-transform",
+                      node.status === "forming"
+                        ? "ps-node-forming border-[color:var(--accent)]"
+                        : isLive || focusedWords
+                          ? "ps-node-live border-[color:var(--accent)]"
+                          : "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
+                      (isLive || focusedWords) &&
+                        node.status !== "forming" &&
+                        "scale-[1.02]",
+                    )}
+                    style={{ height: h }}
+                  >
+                    <SpaceNodeBody node={node} />
+                    {isLive ? (
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 text-[10px] font-medium text-white">
+                        <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />
+                        LIVE
+                      </span>
+                    ) : null}
+                  </div>
+                  <span
+                    className={cn(
+                      "ps-node-caption mt-2 text-center",
+                      isLive
+                        ? "text-[color:color-mix(in_srgb,var(--accent)_55%,#fff)]"
+                        : "text-tool-text-label",
+                    )}
+                  >
+                    {CAPTION[node.kind]}
+                  </span>
+                </>
+              )}
             </Button>
-            {menu ? (
+            {menu && !demoted ? (
               <div
                 className="absolute z-20"
                 style={{

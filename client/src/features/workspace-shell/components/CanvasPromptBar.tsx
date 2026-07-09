@@ -22,6 +22,12 @@ export interface CanvasPromptBarProps {
   isPreWork?: boolean;
   /** Rendered below the sheet in pre-work — the fill-only starter pills. */
   footerSlot?: React.ReactNode;
+  /**
+   * ADR-0015: media has focus — the text area goes and the control row
+   * survives as a slim toolbar hugging its controls at the same dock anchor.
+   * Text is only ever edited in the open box, so the bar shows no prompt.
+   */
+  collapsed?: boolean;
 }
 
 /**
@@ -43,6 +49,7 @@ export function CanvasPromptBar({
   yourWordsSlot = null,
   isPreWork = false,
   footerSlot = null,
+  collapsed = false,
 }: CanvasPromptBarProps): React.ReactElement {
   useEffect(() => {
     if (!onContinueScene) return;
@@ -67,22 +74,38 @@ export function CanvasPromptBar({
     );
   }
 
+  // One composer, two states (ADR-0015). The collapsed toolbar and the open
+  // box share ONE root and ONE mounted editor: the managed contenteditable
+  // re-initializes on mount, so unmounting it while collapsed would clobber
+  // take-restore fills that arrive with the box closed. Collapsing hides the
+  // text surface; the control row survives as a hugging pill at the same dock.
   return (
     <div
+      data-testid={collapsed ? "composer-toolbar" : undefined}
       className={cn(
         "absolute left-1/2 z-10 -translate-x-1/2",
-        "w-[min(100%-48px,var(--workspace-composer-max-w))]",
-        "rounded-[14px] border border-white/[0.08]",
-        isExpanded
-          ? "bg-tool-surface-prompt-compact"
-          : "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
-        "shadow-[0_16px_48px_-8px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]",
+        "border border-white/[0.08]",
         "transition-[transform,box-shadow,bottom] duration-[240ms]",
+        collapsed
+          ? cn(
+              "inline-flex w-auto items-center rounded-[18px]",
+              "bg-tool-surface-prompt/[0.92] backdrop-blur-[18px] backdrop-saturate-150",
+              "shadow-[0_26px_60px_-26px_rgba(0,0,0,0.9),0_6px_20px_rgba(0,0,0,0.55)]",
+            )
+          : cn(
+              "w-[min(100%-48px,var(--workspace-composer-max-w))] rounded-[14px]",
+              isExpanded
+                ? "bg-tool-surface-prompt-compact"
+                : "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
+              "shadow-[0_16px_48px_-8px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.4)]",
+            ),
       )}
       style={{ bottom: "var(--workspace-composer-bottom)" }}
     >
-      {yourWordsSlot}
-      <PromptEditorSurface {...surfaceProps} variant="active" />
+      <div hidden={collapsed}>
+        {yourWordsSlot}
+        <PromptEditorSurface {...surfaceProps} variant="active" />
+      </div>
       {/* Idea Box progress/gate renders on the canvas stage (FrameStage),
           not in the composer — the frame owns the canvas. */}
       {chromeSlot}

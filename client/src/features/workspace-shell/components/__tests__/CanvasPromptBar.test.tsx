@@ -85,6 +85,46 @@ describe("CanvasPromptBar", () => {
     expect(screen.getByTestId("yw-slot")).toBeInTheDocument();
   });
 
+  it("collapsed (ADR-0015): the text surface goes, the control row survives as the slim toolbar", () => {
+    render(
+      withSelectedSpan(
+        <CanvasPromptBar
+          surfaceProps={makeSurfaceProps()}
+          collapsed
+          chromeSlot={<div data-testid="controls">controls</div>}
+          yourWordsSlot={<div data-testid="yw-slot">your words</div>}
+        />,
+      ),
+    );
+    expect(screen.getByTestId("composer-toolbar")).toBeInTheDocument();
+    expect(screen.getByTestId("controls")).toBeInTheDocument();
+    // One composer, two states: the text surface stays MOUNTED but hidden —
+    // take-restore fills must land while collapsed (the managed contenteditable
+    // re-initializes on mount, so unmounting would clobber them) — and the
+    // your-words chip hides with it.
+    const editor = document.querySelector("[data-placeholder]");
+    expect(editor).not.toBeNull();
+    expect(editor?.closest("[hidden]")).not.toBeNull();
+    expect(screen.getByTestId("yw-slot").closest("[hidden]")).not.toBeNull();
+  });
+
+  it("open (collapsed=false) still renders the full box with the editor", () => {
+    const { container } = render(
+      withSelectedSpan(
+        <CanvasPromptBar
+          surfaceProps={makeSurfaceProps()}
+          collapsed={false}
+          chromeSlot={<div data-testid="controls">controls</div>}
+        />,
+      ),
+    );
+    expect(screen.queryByTestId("composer-toolbar")).toBeNull();
+    expect(
+      container.querySelector('[data-placeholder*="Describe your shot"]'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("controls")).toBeInTheDocument();
+  });
+
   it("does NOT change wrapper class list across surface state changes (no reflow fork)", () => {
     // The composer must stay structurally identical even as the editor's
     // internal state evolves (prompt fills, suggestions arrive, autocomplete
