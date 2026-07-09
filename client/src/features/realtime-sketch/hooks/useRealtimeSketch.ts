@@ -13,6 +13,7 @@ import {
   DEFAULT_SEED,
   DEFAULT_STEPS,
   DEFAULT_STRENGTH,
+  IN_FLIGHT_WATCHDOG_MS,
   SNAPSHOT_SIZE,
 } from "../config/constants";
 import {
@@ -194,6 +195,27 @@ export function useRealtimeSketch(
     dispatch({ type: "reconnected", at: Date.now() });
     setConnectNonce((nonce) => nonce + 1);
   }, []);
+
+  // Watchdog: a frame stuck in flight means fal dropped its result (idle
+  // sockets close with a "normal" code that fires no error callback) —
+  // declare it lost, surface it, reconnect, and re-send the newest drawing.
+  useEffect(() => {
+    const frame = state.inFlight;
+    if (frame === null) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      dispatch({
+        type: "generationError",
+        message: `frame timed out after ${IN_FLIGHT_WATCHDOG_MS / 1000}s — reconnecting`,
+        at: Date.now(),
+      });
+      reconnect();
+    }, IN_FLIGHT_WATCHDOG_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [state.inFlight, reconnect]);
 
   return {
     state,

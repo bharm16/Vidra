@@ -140,4 +140,37 @@ describe("useRealtimeSketch", () => {
     });
     expect(wire.sent).toHaveLength(2);
   });
+
+  it("a frame stuck in flight past the watchdog reconnects and re-sends the newest drawing", () => {
+    vi.useFakeTimers();
+    try {
+      const { wire, connectFn } = fakeConnectFactory();
+      const { result } = renderHook(() =>
+        useRealtimeSketch({ connectFn, preflightFn: async () => null }),
+      );
+
+      act(() => {
+        result.current.captureSnapshot("data:image/jpeg;base64,frame1", 3);
+        result.current.captureSnapshot("data:image/jpeg;base64,frame2", 3);
+      });
+      expect(wire.sent).toHaveLength(1);
+
+      // fal silently dropped frame1's result (idle socket close fires no
+      // onError). The watchdog must free the loop on its own.
+      act(() => {
+        vi.advanceTimersByTime(10_000);
+      });
+
+      expect(result.current.state.stats.lastError?.message).toContain(
+        "timed out",
+      );
+      expect(wire.closed).toBe(1);
+      expect(wire.sent).toHaveLength(2);
+      expect(wire.sent[1]).toMatchObject({
+        image_url: "data:image/jpeg;base64,frame2",
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

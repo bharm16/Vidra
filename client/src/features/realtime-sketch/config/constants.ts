@@ -11,6 +11,13 @@ export const SKETCH_MODEL_ENDPOINT = "fal-ai/fast-lightning-sdxl";
 export const FAL_PROXY_URL = "/api/fal/proxy";
 
 export const SNAPSHOT_INTERVAL_MS = 150;
+/**
+ * fal's socket can close mid-flight with a "normal" code that fires no
+ * error callback, silently orphaning the in-flight frame and deadlocking
+ * the 1-in-flight loop. A frame older than this is declared lost: sticky
+ * error, reconnect, newest drawing re-sent. ~9× the median warm round-trip.
+ */
+export const IN_FLIGHT_WATCHDOG_MS = 8_000;
 export const SNAPSHOT_SIZE = 768;
 export const SNAPSHOT_JPEG_QUALITY = 0.85;
 
