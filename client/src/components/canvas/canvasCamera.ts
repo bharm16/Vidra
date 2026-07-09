@@ -7,7 +7,7 @@
  * screen as `screen = world · scale + (x, y)`. Panning and zooming are pure
  * transforms of this triple; nothing spatial is ever stored (ADR-0012).
  */
-export interface SpaceCamera {
+export interface CanvasCamera {
   x: number;
   y: number;
   scale: number;
@@ -21,10 +21,10 @@ export const clampScale = (scale: number): number =>
 
 /** Slide the camera by a screen-space delta; the scale is untouched. */
 export function panBy(
-  camera: SpaceCamera,
+  camera: CanvasCamera,
   dx: number,
   dy: number,
-): SpaceCamera {
+): CanvasCamera {
   return { x: camera.x + dx, y: camera.y + dy, scale: camera.scale };
 }
 
@@ -34,10 +34,10 @@ export function panBy(
  * unchanged screen/world pair gives the new offset directly.
  */
 export function zoomAtPoint(
-  camera: SpaceCamera,
+  camera: CanvasCamera,
   point: { x: number; y: number },
   targetScale: number,
-): SpaceCamera {
+): CanvasCamera {
   const scale = clampScale(targetScale);
   const worldX = (point.x - camera.x) / camera.scale;
   const worldY = (point.y - camera.y) / camera.scale;
@@ -61,10 +61,10 @@ interface ScreenRect {
  * the delta is pure screen-space and the scale is untouched.
  */
 export function cameraToCenter(
-  camera: SpaceCamera,
+  camera: CanvasCamera,
   viewport: ScreenRect,
   node: ScreenRect,
-): SpaceCamera {
+): CanvasCamera {
   const dx = viewport.left + viewport.width / 2 - (node.left + node.width / 2);
   const dy = viewport.top + viewport.height / 2 - (node.top + node.height / 2);
   return panBy(camera, dx, dy);

@@ -1,17 +1,17 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SpaceViewport } from "../SpaceViewport";
+import { CanvasViewport } from "../CanvasViewport";
 
 /**
  * The space's camera/zoom is ephemeral — nothing spatial is stored (ADR-0012).
  * The viewport scales the network in place; zoom resets on reload.
  */
-describe("SpaceViewport", () => {
+describe("CanvasViewport", () => {
   it("starts at 100% and scales the content", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <div data-testid="content">network</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     expect(screen.getByTestId("space-zoom-level")).toHaveTextContent("100%");
     expect(screen.getByTestId("space-viewport-content").style.transform).toBe(
@@ -21,9 +21,9 @@ describe("SpaceViewport", () => {
 
   it("pans with the wheel — the canvas is an open plane", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <div>network</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     fireEvent.wheel(screen.getByTestId("space-canvas"), {
       deltaX: 30,
@@ -36,9 +36,9 @@ describe("SpaceViewport", () => {
 
   it("zooms toward the cursor on ctrl/cmd+wheel (trackpad pinch)", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <div>network</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     const canvas = screen.getByTestId("space-canvas");
     fireEvent.wheel(canvas, {
@@ -81,9 +81,9 @@ describe("SpaceViewport", () => {
 
   it("pans by dragging anywhere on the canvas", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <div>network</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     const canvas = screen.getByTestId("space-canvas");
     fireEvent.pointerDown(canvas, {
@@ -108,11 +108,11 @@ describe("SpaceViewport", () => {
   it("suppresses the click after a drag but keeps clean clicks selecting", () => {
     const onSelect = vi.fn();
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <button type="button" onClick={onSelect}>
           node
         </button>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     const node = screen.getByRole("button", { name: "node" });
 
@@ -141,9 +141,9 @@ describe("SpaceViewport", () => {
   it("reports empty-canvas clicks, but not node clicks or pan-drags", () => {
     const onBackgroundClick = vi.fn();
     render(
-      <SpaceViewport onBackgroundClick={onBackgroundClick}>
+      <CanvasViewport onBackgroundClick={onBackgroundClick}>
         <button type="button">node</button>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     const canvas = screen.getByTestId("space-canvas");
 
@@ -180,9 +180,9 @@ describe("SpaceViewport", () => {
       }) as DOMRect;
 
     const { rerender } = render(
-      <SpaceViewport liveNodeId={null}>
+      <CanvasViewport liveNodeId={null}>
         <div data-live="true">live node</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     vi.spyOn(
       screen.getByTestId("space-canvas"),
@@ -194,9 +194,9 @@ describe("SpaceViewport", () => {
     ).mockReturnValue(rect({ left: 900, top: 700, width: 200, height: 120 }));
 
     rerender(
-      <SpaceViewport liveNodeId="a">
+      <CanvasViewport liveNodeId="a">
         <div data-live="true">live node</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
 
     // Node center (1000, 760) must land on the viewport center (400, 300):
@@ -208,9 +208,9 @@ describe("SpaceViewport", () => {
 
   it("zooms in and out within bounds", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <div>network</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     fireEvent.click(screen.getByRole("button", { name: /zoom in/i }));
     expect(screen.getByTestId("space-zoom-level")).toHaveTextContent("110%");
@@ -222,9 +222,9 @@ describe("SpaceViewport", () => {
 
   it("does not zoom out below the floor", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <div>network</div>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     for (let i = 0; i < 20; i += 1) {
       fireEvent.click(screen.getByRole("button", { name: /zoom out/i }));

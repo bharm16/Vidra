@@ -6,8 +6,8 @@ import {
   cameraToCenter,
   panBy,
   zoomAtPoint,
-  type SpaceCamera,
-} from "../spaceCamera";
+  type CanvasCamera,
+} from "../canvasCamera";
 
 /**
  * The infinite-canvas camera (Figma-style). Screen = world · scale + (x, y).
@@ -21,7 +21,7 @@ const cameraArb = fc.record({
 
 /** Where a camera says a screen point sits in world coordinates. */
 const worldUnder = (
-  camera: SpaceCamera,
+  camera: CanvasCamera,
   point: { x: number; y: number },
 ): { x: number; y: number } => ({
   x: (point.x - camera.x) / camera.scale,

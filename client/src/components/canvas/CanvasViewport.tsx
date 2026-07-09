@@ -5,20 +5,21 @@ import {
   clampScale,
   panBy,
   zoomAtPoint,
-  type SpaceCamera,
-} from "./spaceCamera";
+  type CanvasCamera,
+} from "./canvasCamera";
 
 const ZOOM_STEP = 0.1;
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
 /**
- * The space's infinite-canvas viewport (ADR-0012 / M5). The lineage network
- * floats on an open plane under a single camera — wheel pans, the −/%/+
- * control zooms — exactly like a design canvas. Both the camera and the zoom
- * are ephemeral: nothing spatial is stored, so they reset on reload.
+ * The shared infinite-canvas viewport (born as the space's, ADR-0012 / M5;
+ * promoted for the live editor, ADR-0017). Content floats on an open plane
+ * under a single camera — drag/wheel pans, pinch or the −/%/+ control zooms —
+ * exactly like a design canvas. Both the camera and the zoom are ephemeral:
+ * nothing spatial is stored, so they reset on reload.
  */
-export function SpaceViewport({
+export function CanvasViewport({
   children,
   liveNodeId,
   onBackgroundClick,
@@ -33,7 +34,7 @@ export function SpaceViewport({
    */
   onBackgroundClick?: () => void;
 }): React.ReactElement {
-  const [camera, setCamera] = useState<SpaceCamera>({ x: 0, y: 0, scale: 1 });
+  const [camera, setCamera] = useState<CanvasCamera>({ x: 0, y: 0, scale: 1 });
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Drag-to-pan bookkeeping. `travelled` outlives the gesture so the click

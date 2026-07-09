@@ -64,7 +64,7 @@ import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
 import { YourWordsChip } from "./components/YourWordsChip";
 import { FailureNotice } from "./components/FailureNotice";
 import { TheSpace } from "@/features/space/components/TheSpace";
-import { SpaceViewport } from "@/features/space/components/SpaceViewport";
+import { CanvasViewport } from "@/components/canvas/CanvasViewport";
 import { SpaceNodeMenu } from "@/features/space/components/SpaceNodeMenu";
 import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpaceNodes";
 import { resolveWordsForNode } from "@/features/space/lineage/resolveWordsForNode";
@@ -696,7 +696,7 @@ export function CanvasWorkspace({
             ) : FEATURES.SPACE_LINEAGE ? (
               // The space (M5, ADR-0012/0013): the session's takes as a lineage
               // network. Off by default; replaces the shots grid when enabled.
-              <SpaceViewport
+              <CanvasViewport
                 liveNodeId={heroGeneration?.id ?? null}
                 onBackgroundClick={blurWords}
               >
@@ -707,7 +707,7 @@ export function CanvasWorkspace({
                   onSelectNode={handleSelectSpaceNode}
                   renderNodeMenu={renderSpaceNodeMenu}
                 />
-              </SpaceViewport>
+              </CanvasViewport>
             ) : (
               <div className="mx-auto flex max-w-[1280px] flex-col gap-6">
                 {shots.map((shot, idx) => (

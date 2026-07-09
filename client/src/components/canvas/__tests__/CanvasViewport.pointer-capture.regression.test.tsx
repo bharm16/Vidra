@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { SpaceViewport } from "../SpaceViewport";
+import { CanvasViewport } from "../CanvasViewport";
 
 /**
  * Regression: capturing the pointer on pointerdown made the browser retarget
@@ -16,9 +16,9 @@ import { SpaceViewport } from "../SpaceViewport";
 describe("regression: clean clicks are never pointer-captured by the canvas", () => {
   it("does not capture for a click's worth of travel; captures once dragging", () => {
     render(
-      <SpaceViewport>
+      <CanvasViewport>
         <button type="button">node</button>
-      </SpaceViewport>,
+      </CanvasViewport>,
     );
     const canvas = screen.getByTestId("space-canvas") as HTMLElement & {
       setPointerCapture: (pointerId: number) => void;
