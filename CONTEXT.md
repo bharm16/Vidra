@@ -114,7 +114,11 @@ The continuously updating generated image produced from the sketchpad and the pr
 
 ### Realtime sketch
 
-The capability under test in the sketch spike: the creator draws on the sketchpad and the live output tracks the drawing at sub-second cadence — steering composition with strokes instead of words. A candidate expansion input for first frames. Lives on its own route outside the page's anatomy (the workspace remains exactly the space, the input, and the next-step button). Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: realtime editor, draw mode, sketch-to-image feature.
+The capability under test in the sketch spike: the creator draws on the sketchpad and the live output tracks the drawing at sub-second cadence — steering composition with strokes instead of words. A candidate expansion input for first frames. Lives on the Live editor page, outside the page's anatomy (the workspace remains exactly the space, the input, and the next-step button). Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: realtime editor, draw mode, sketch-to-image feature.
+
+### Live editor
+
+The realtime sketch's own page: an infinite pannable/zoomable plane (the shared canvas camera) holding the editor pair — sketchpad and live output — with the floating chrome fixed to the screen. A first-class rail destination directly under Library. Not the space: it has no lineage, no takes, one editor object, and an ephemeral camera. The select tool pans the plane; brush and eraser strokes never do. Resolved 2026-07-09 during live-editor-surface grilling. Avoid synonyms: sketch page, canvas page, board, node editor.
 
 <!-- New terms go here, following the format above. -->
 
