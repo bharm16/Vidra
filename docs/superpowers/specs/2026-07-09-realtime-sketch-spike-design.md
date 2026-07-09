@@ -207,3 +207,19 @@ data-URI shape, 512² snapshots, strength default 0.625 (5/8 — sparse sketches
 (orange base/head placement follows the drawing). `lcm-sd15-i2i` remains the
 one-constant swap if liquid-over-quality is ever preferred; depth-2 request
 pipelining is the next rate lever if wanted (HTTP correlation makes it safe).
+
+### Design v2 — floating chrome (2026-07-09, owner redesign)
+
+The spike's original two-row header UI was replaced wholesale per
+`~/Desktop/design_handoff_live_editor` (authoritative visual spec, ADR-0014
+convention): dark canvas-first stage, two edge-to-edge panels, all controls in a
+floating icon bar (select · brush-with-ink-circle + popover · eraser · undo · clear)
+plus a 540px composer (prompt row + mode/strength/steps/seed chips). Deleted per the
+handoff: header/SPIKE badge, standalone strength row, live pill, and the on-screen
+HUD — diagnostics now `console.debug` per frame; hudMath survives as their feeder.
+New interaction model: `tool` (select default — drawing requires picking brush or
+eraser), popovers stay open while picking and close on re-click/outside/Esc. The
+sketchpad is a square bitmap letterboxed invisibly in the light panel, keeping
+generation geometry identical to the measured baselines. Shipped `63e54ad6`
+(33 feature tests green); known minor deviation: the prompt stays a single-line
+ellipsis input (the handoff's multiline-on-focus expansion is not implemented).
