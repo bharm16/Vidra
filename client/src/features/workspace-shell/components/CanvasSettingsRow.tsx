@@ -91,7 +91,7 @@ const MENU_TRIGGER_CLASS =
 // The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
 // setting is announced; the title names the control.
 const ICON_TRIGGER_CLASS =
-  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] text-tool-text-dim transition-colors hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.13] data-[state=open]:text-foreground";
+  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] text-tool-text-dim transition-all duration-[160ms] hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.13] data-[state=open]:text-foreground";
 
 /* Control glyphs copied VERBATIM from the composer handoff
    (design_handoff_composer/Composer States.dc.html) — 21px, 1.7 stroke,
@@ -530,12 +530,10 @@ export function CanvasSettingsRow({
             triggerClassName={ICON_TRIGGER_CLASS}
           />
         )}
-      </div>
 
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-[6px]">
-        {/* Preview button — hidden in the empty moment per the screenshot's
-            clean chip-row layout. Surfaced once there's content to compare
-            against (parent passes showPreviewButton=true). */}
+        {/* Preview — the 4th icon of the control cluster per the composer
+            handoff (aspect · duration · model · preview). Hidden pre-content
+            (parent passes showPreviewButton). */}
         {showPreviewButton ? (
           <button
             type="button"
@@ -582,9 +580,10 @@ export function CanvasSettingsRow({
             <PreviewGlyph />
           </button>
         ) : null}
+      </div>
 
-        {/* Make it pill — primary submit. Replaces the small + icon button.
-            The ⌘↵ badge mirrors the screenshot's keyboard hint. */}
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-[6px]">
+        {/* Make it — the calm off-white primary (composer handoff). */}
         <button
           type="button"
           data-testid="canvas-generate-button"
