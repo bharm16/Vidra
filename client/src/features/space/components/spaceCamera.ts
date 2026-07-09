@@ -1,38 +1,71 @@
 /**
- * Space camera math (ADR-0012 / M5). Pure so the fiddly part — where to scroll
- * so a node lands dead-center — is testable without a DOM.
+ * Space camera math (ADR-0012 / M5). Pure so the fiddly parts — anchored
+ * zooming and centering — are testable without a DOM.
  *
- * Both rects come from `getBoundingClientRect()`, which is already
- * post-transform, so zoom is baked into the pixel coordinates: centering the
- * rendered box needs no separate scale factor. The returned scroll is absolute
- * (add the viewport-space delta to the container's current scroll).
+ * The infinite-canvas camera: the content plane renders under
+ * `translate(x, y) scale(scale)` with origin 0 0, so a world point maps to the
+ * screen as `screen = world · scale + (x, y)`. Panning and zooming are pure
+ * transforms of this triple; nothing spatial is ever stored (ADR-0012).
  */
-interface ContainerViewport {
-  scrollLeft: number;
-  scrollTop: number;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
+export interface SpaceCamera {
+  x: number;
+  y: number;
+  scale: number;
 }
 
-interface NodeRect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
+export const MIN_SCALE = 0.25;
+export const MAX_SCALE = 4;
+
+export const clampScale = (scale: number): number =>
+  Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+
+/** Slide the camera by a screen-space delta; the scale is untouched. */
+export function panBy(
+  camera: SpaceCamera,
+  dx: number,
+  dy: number,
+): SpaceCamera {
+  return { x: camera.x + dx, y: camera.y + dy, scale: camera.scale };
 }
 
-export function computeCenteredScroll(
-  container: ContainerViewport,
-  node: NodeRect,
-): { scrollLeft: number; scrollTop: number } {
-  const nodeCenterX = node.left + node.width / 2;
-  const nodeCenterY = node.top + node.height / 2;
-  const containerCenterX = container.left + container.width / 2;
-  const containerCenterY = container.top + container.height / 2;
+/**
+ * Zoom to `targetScale` keeping the world point under `point` fixed on screen
+ * (the Figma anchor invariant). Solving `screen = world · s' + offset'` for the
+ * unchanged screen/world pair gives the new offset directly.
+ */
+export function zoomAtPoint(
+  camera: SpaceCamera,
+  point: { x: number; y: number },
+  targetScale: number,
+): SpaceCamera {
+  const scale = clampScale(targetScale);
+  const worldX = (point.x - camera.x) / camera.scale;
+  const worldY = (point.y - camera.y) / camera.scale;
   return {
-    scrollLeft: container.scrollLeft + (nodeCenterX - containerCenterX),
-    scrollTop: container.scrollTop + (nodeCenterY - containerCenterY),
+    x: point.x - worldX * scale,
+    y: point.y - worldY * scale,
+    scale,
   };
+}
+
+interface ScreenRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Pan the camera so a node's rendered rect lands dead-center in the viewport.
+ * Both rects come from `getBoundingClientRect()` — already post-transform, so
+ * the delta is pure screen-space and the scale is untouched.
+ */
+export function cameraToCenter(
+  camera: SpaceCamera,
+  viewport: ScreenRect,
+  node: ScreenRect,
+): SpaceCamera {
+  const dx = viewport.left + viewport.width / 2 - (node.left + node.width / 2);
+  const dy = viewport.top + viewport.height / 2 - (node.top + node.height / 2);
+  return panBy(camera, dx, dy);
 }
