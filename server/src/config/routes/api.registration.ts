@@ -16,7 +16,7 @@ import { createRoleClassifyRoute } from "@routes/roleClassifyRoute";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createSuggestionsRoute } from "@routes/suggestions";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
-import { createFalTokenRouter } from "@routes/fal-token.routes";
+import { createFalI2iRouter } from "@routes/fal-i2i.routes";
 import {
   createShareRouter,
   createPublicClipRouter,
@@ -159,11 +159,12 @@ export function registerApiRoutes(
   // Authed mint of a public share for one owned clip (ADR-0010 site-scope D8).
   app.use("/api/share", apiAuthMiddleware, createShareRouter(shareService));
 
-  // Realtime-sketch spike (ADR-0016): mints the short-lived fal JWT scoped to
-  // the one approved model; the browser opens the fal WebSocket directly.
+  // Realtime-sketch spike (ADR-0016 as amended): relays sketch frames to the
+  // one approved fal i2i model over HTTP sync — fal retired realtime-WS i2i,
+  // so all frame traffic flows through the server again.
   app.use(
     "/api/fal",
     apiAuthMiddleware,
-    createFalTokenRouter({ falKey: resolveFalApiKey() ?? undefined }),
+    createFalI2iRouter({ falKey: resolveFalApiKey() ?? undefined }),
   );
 }

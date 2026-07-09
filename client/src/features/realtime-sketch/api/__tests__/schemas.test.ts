@@ -1,60 +1,47 @@
 import { describe, expect, it } from "vitest";
 
-import { FalRealtimeResultSchema } from "../schemas";
+import { FalI2iResultSchema } from "../schemas";
 
-// Wire shape pinned live by scripts/spikes/fal-lightning-realtime-smoke.ts:
-// over the realtime msgpack socket the image arrives as raw JPEG bytes in
-// images[0].content — there is no url field.
+// Wire shape pinned live by the HTTP probes (fal.run sync_mode): the image
+// arrives as a data-URI url in images[0].url.
 const validResult = {
-  images: [
-    {
-      content: new Uint8Array([255, 216, 255, 224]),
-      width: 768,
-      height: 768,
-      content_type: "image/jpeg",
-    },
-  ],
-  timings: { inference: 0.31 },
+  images: [{ url: "data:image/jpeg;base64,abc123", width: 512, height: 512 }],
+  timings: { inference: 0.19 },
   seed: 42,
-  request_id: "0-1",
 };
 
-describe("FalRealtimeResultSchema", () => {
-  it("accepts a realtime result and strips unknown fields", () => {
-    const parsed = FalRealtimeResultSchema.safeParse({
+describe("FalI2iResultSchema", () => {
+  it("accepts a sync result and strips unknown fields", () => {
+    const parsed = FalI2iResultSchema.safeParse({
       ...validResult,
       has_nsfw_concepts: [false],
+      prompt: "",
     });
 
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.images[0]?.content).toBeInstanceOf(Uint8Array);
-      expect(parsed.data.images[0]?.content_type).toBe("image/jpeg");
-      expect(parsed.data.timings?.inference).toBe(0.31);
-      expect(parsed.data.request_id).toBe("0-1");
+      expect(parsed.data.images[0]?.url).toBe("data:image/jpeg;base64,abc123");
+      expect(parsed.data.timings?.inference).toBe(0.19);
       expect("has_nsfw_concepts" in parsed.data).toBe(false);
     }
   });
 
   it("accepts a result without timings (model time shows as absent)", () => {
     const { timings: _timings, ...withoutTimings } = validResult;
-    expect(FalRealtimeResultSchema.safeParse(withoutTimings).success).toBe(
-      true,
-    );
+    expect(FalI2iResultSchema.safeParse(withoutTimings).success).toBe(true);
   });
 
-  it("rejects results with no usable image bytes", () => {
+  it("rejects results with no usable image url", () => {
     expect(
-      FalRealtimeResultSchema.safeParse({ ...validResult, images: [] }).success,
+      FalI2iResultSchema.safeParse({ ...validResult, images: [] }).success,
     ).toBe(false);
     expect(
-      FalRealtimeResultSchema.safeParse({ timings: { inference: 0.3 } })
-        .success,
+      FalI2iResultSchema.safeParse({ timings: { inference: 0.2 } }).success,
     ).toBe(false);
     expect(
-      FalRealtimeResultSchema.safeParse({
+      FalI2iResultSchema.safeParse({
         ...validResult,
-        images: [{ content: "not-bytes", width: 768, height: 768 }],
+        images: [{ url: "" }],
       }).success,
     ).toBe(false);
   });

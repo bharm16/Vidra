@@ -113,41 +113,6 @@ describe("generationReducer — send discipline", () => {
     expect(state).toEqual(inFlightState);
   });
 
-  it("reconnect abandons the in-flight frame but re-sends the newest pending drawing under the new epoch", () => {
-    let state = generationReducer(
-      createInitialGenerationState(),
-      snapshot(1_000),
-    );
-    state = generationReducer(state, snapshot(1_150));
-    state = generationReducer(state, { type: "reconnected", at: 2_000 });
-
-    expect(state.epoch).toBe(1);
-    expect(state.inFlight?.requestId).toBe("1-2");
-    expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1150");
-    expect(state.inFlight?.sentAt).toBe(2_000);
-    expect(state.pending).toBeNull();
-    expect(state.connection).toBe("live");
-  });
-
-  it("reconnect with nothing queued just resets the loop to idle under the new epoch", () => {
-    let state = generationReducer(
-      createInitialGenerationState(),
-      snapshot(1_000),
-    );
-    state = generationReducer(state, {
-      type: "result",
-      requestId: "0-1",
-      imageUrl: "data:image/jpeg;base64,rendered",
-      inferenceSeconds: null,
-      at: 1_400,
-    });
-    state = generationReducer(state, { type: "reconnected", at: 2_000 });
-
-    expect(state.epoch).toBe(1);
-    expect(state.inFlight).toBeNull();
-    expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
-  });
-
   it("an error is sticky until the next successful frame and never blanks the live output", () => {
     let state = generationReducer(
       createInitialGenerationState(),

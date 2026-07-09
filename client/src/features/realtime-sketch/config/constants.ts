@@ -1,30 +1,28 @@
 /**
  * Realtime-sketch spike constants
  * (spec: docs/superpowers/specs/2026-07-09-realtime-sketch-spike-design.md).
- * The model is deliberately a constant, not a setting: the server's token
- * allowlist (ADR-0016) is the real enforcement; this must match it.
+ * The model is pinned SERVER-SIDE in fal-i2i.routes.ts (ADR-0016 as
+ * amended); the client only knows the relay path. Speed matrix measured
+ * 2026-07-09: z-image turbo i2i ≈ 190ms inference / ~600ms total at 512².
  */
-// Realtime runners live on the ROOT app — i2i mode is selected by sending
-// image_url in the payload. The /image-to-image subpath is the HTTP queue
-// route only; its realtime forward fails (pinned by the smoke gate).
-export const SKETCH_MODEL_ENDPOINT = "fal-ai/fast-lightning-sdxl";
-export const FAL_PROXY_URL = "/api/fal/proxy";
+export const FAL_I2I_PATH = "/api/fal/i2i";
 
 export const SNAPSHOT_INTERVAL_MS = 150;
+/** 512² halves z-image latency vs 768² with negligible sketch-fidelity loss. */
+export const SNAPSHOT_SIZE = 512;
+export const SNAPSHOT_JPEG_QUALITY = 0.85;
 /**
- * fal's socket can close mid-flight with a "normal" code that fires no
- * error callback, silently orphaning the in-flight frame and deadlocking
- * the 1-in-flight loop. A frame older than this is declared lost: sticky
- * error, reconnect, newest drawing re-sent. ~9× the median warm round-trip.
+ * A frame stuck in flight this long is declared lost: abort the request
+ * (HTTP gives true cancel), surface a sticky error, promote the newest
+ * drawing. ~13× the median warm round-trip.
  */
 export const IN_FLIGHT_WATCHDOG_MS = 8_000;
-export const SNAPSHOT_SIZE = 768;
-export const SNAPSHOT_JPEG_QUALITY = 0.85;
 
 export const DEFAULT_PROMPT =
   "4k product photography of an ergonomic desk lamp glowing, studio lighting";
-export const DEFAULT_STRENGTH = 0.75;
-export const DEFAULT_STEPS = 4;
+/** 5/8 steps — sketch keeps real influence; 0.75+ let the prompt steamroll sparse strokes. */
+export const DEFAULT_STRENGTH = 0.625;
+export const DEFAULT_STEPS = 8;
 export const STEP_OPTIONS = [4, 8] as const;
 export const DEFAULT_SEED = 42;
 

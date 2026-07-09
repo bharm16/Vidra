@@ -4,7 +4,7 @@ import { LiveOutput } from "./components/LiveOutput";
 import { SketchControls } from "./components/SketchControls";
 import { Sketchpad } from "./components/Sketchpad";
 import { useRealtimeSketch } from "./hooks/useRealtimeSketch";
-import type { ConnectRealtimeSketch } from "./api/falRealtime";
+import type { SendSketchFrame } from "./api/falI2i";
 
 /**
  * The realtime sketch spike surface (/sketch — outside the page's anatomy,
@@ -14,13 +14,13 @@ import type { ConnectRealtimeSketch } from "./api/falRealtime";
  */
 
 interface RealtimeSketchProps {
-  connectFn?: ConnectRealtimeSketch;
+  sendFrameFn?: SendSketchFrame;
 }
 
 export function RealtimeSketch({
-  connectFn,
+  sendFrameFn,
 }: RealtimeSketchProps): React.ReactElement {
-  const sketch = useRealtimeSketch(connectFn ? { connectFn } : undefined);
+  const sketch = useRealtimeSketch(sendFrameFn ? { sendFrameFn } : undefined);
 
   return (
     <div className="bg-app text-foreground flex min-h-screen flex-col gap-4 p-6">
@@ -43,7 +43,6 @@ export function RealtimeSketch({
           liveOutput={sketch.state.liveOutput}
           stats={sketch.state.stats}
           connection={sketch.state.connection}
-          onReconnect={sketch.reconnect}
         />
       </main>
     </div>

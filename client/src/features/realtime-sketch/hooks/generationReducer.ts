@@ -62,7 +62,6 @@ export type GenerationAction =
       inferenceSeconds: number | null;
       at: number;
     }
-  | { type: "reconnected"; at: number }
   | {
       type: "generationError";
       message: string;
@@ -194,27 +193,6 @@ export function generationReducer(
           at: action.at,
         },
         stats: { ...stats, sent: stats.sent + 1 },
-      };
-    }
-    case "reconnected": {
-      const epoch = state.epoch + 1;
-      if (state.pending === null) {
-        return { ...state, epoch, connection: "live", inFlight: null };
-      }
-      const requestCounter = state.requestCounter + 1;
-      return {
-        ...state,
-        epoch,
-        connection: "live",
-        requestCounter,
-        inFlight: {
-          requestId: `${epoch}-${requestCounter}`,
-          dataUri: state.pending.dataUri,
-          sentAt: action.at,
-          encodeMs: state.pending.encodeMs,
-        },
-        pending: null,
-        stats: { ...state.stats, sent: state.stats.sent + 1 },
       };
     }
     case "generationError": {

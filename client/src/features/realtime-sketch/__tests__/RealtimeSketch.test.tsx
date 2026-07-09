@@ -2,10 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import RealtimeSketch from "../RealtimeSketch";
-import type {
-  RealtimeSketchConnection,
-  RealtimeSketchHandlers,
-} from "../api/falRealtime";
+import type { SendSketchFrame } from "../api/falI2i";
 
 function stubCanvas(): void {
   const context = {
@@ -29,18 +26,13 @@ function stubCanvas(): void {
   );
 }
 
-const fakeConnect = (
-  _handlers: RealtimeSketchHandlers,
-): RealtimeSketchConnection => ({
-  send: vi.fn(),
-  close: vi.fn(),
-});
+const fakeSendFrame: SendSketchFrame = () => new Promise(() => {});
 
 describe("RealtimeSketch", () => {
   beforeEach(stubCanvas);
 
   it("renders the sketchpad, controls, and live output with HUD placeholders", () => {
-    render(<RealtimeSketch connectFn={fakeConnect} />);
+    render(<RealtimeSketch sendFrameFn={fakeSendFrame} />);
 
     expect(screen.getByLabelText("Sketchpad")).toBeInTheDocument();
     expect(screen.getByLabelText("Prompt")).toBeInTheDocument();

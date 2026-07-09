@@ -1,7 +1,5 @@
 import React from "react";
 
-import { Button } from "@promptstudio/system/components/ui/button";
-
 import { LatencyHud } from "./LatencyHud";
 import type {
   ConnectionStatus,
@@ -11,22 +9,20 @@ import type {
 
 /**
  * The live output (CONTEXT.md): the continuously updating generated image.
- * Ephemeral by definition — errors and reconnects never blank it; it only
- * changes when a newer frame succeeds.
+ * Ephemeral by definition — errors never blank it; it only changes when a
+ * newer frame succeeds.
  */
 
 interface LiveOutputProps {
   liveOutput: LiveOutputState | null;
   stats: GenerationStats;
   connection: ConnectionStatus;
-  onReconnect: () => void;
 }
 
 export function LiveOutput({
   liveOutput,
   stats,
   connection,
-  onReconnect,
 }: LiveOutputProps): React.ReactElement {
   const pill =
     stats.lastError !== null
@@ -49,16 +45,6 @@ export function LiveOutput({
         >
           {pill}
         </span>
-        {stats.lastError !== null ? (
-          <Button
-            type="button"
-            variant="secondary"
-            className="!h-auto rounded px-2 py-1 text-xs"
-            onClick={onReconnect}
-          >
-            Reconnect
-          </Button>
-        ) : null}
       </div>
       <div className="flex aspect-square w-full max-w-[640px] items-center justify-center overflow-hidden rounded-lg bg-black/40">
         {liveOutput === null ? (
