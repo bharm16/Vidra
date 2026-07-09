@@ -25,7 +25,7 @@ Does Krea-style realtime sketching — the creator draws on the sketchpad and th
 ```
 Browser                                      Express (3001)                     fal
 ┌──────────────────────────────┐
-│ /sketch (RealtimeSketch)     │  POST /api/fal/realtime-token  ┌─────────────┐
+│ /sketch (RealtimeSketch)     │  POST /api/fal/proxy (mint)    ┌─────────────┐
 │  Sketchpad ──snapshot──┐     │ ──────────────────────────────▶│ mint JWT     │──▶ rest.alpha.fal.ai/tokens
 │                        ▼     │ ◀───────── JWT (text) ──────── │ (FAL_KEY)    │    {allowed_apps:[MODEL], expiry}
 │  useRealtimeSketch ─ send ───┼───────────── wss:// ────────────────────────────▶ fast-lightning-sdxl/image-to-image
@@ -51,7 +51,7 @@ realtime-sketch/
 ├── hooks/
 │   └── useRealtimeSketch.ts  # generation reducer + connection + send discipline
 ├── api/
-│   └── falRealtime.ts        # @fal-ai/client config (tokenProvider), connect wrapper, Zod schemas
+│   └── falRealtime.ts        # @fal-ai/client config (proxyUrl + X-API-Key middleware), connect wrapper, Zod schemas
 └── config/
     └── constants.ts          # MODEL_ID, defaults, MAX_IN_FLIGHT = 1, SNAPSHOT_INTERVAL_MS = 150, PINNED_SEED
 ```
@@ -99,19 +99,21 @@ Result schema (Zod, anti-corruption boundary in `api/falRealtime.ts`): `{ images
 
 Why strength snaps: image-to-image denoises only the tail of the step schedule — effective steps ≈ `round(steps × strength)`. At 4 steps the slider truly has four positions; a fake-continuous slider would misreport what the model does.
 
-## Server — token mint route
+## Server — token mint route (fal proxy dialect)
 
-`server/src/routes/fal-token.routes.ts`, registered like sibling routes (same middleware chain); stateless — no DI service, nothing in `services.config.ts`.
+`server/src/routes/fal-token.routes.ts`, mounted at `/api/fal` behind `apiAuthMiddleware`; stateless — no DI service, nothing in `services.config.ts`.
 
-| Aspect          | Contract                                                                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Endpoint        | `POST /api/fal/realtime-token` → `200` `text/plain` JWT                                                                                                       |
-| Mint call       | `POST https://rest.alpha.fal.ai/tokens/` with `Authorization: Key ${FAL_KEY}`, body `{ allowed_apps: ["fal-ai/fast-lightning-sdxl"], token_expiration: 120 }` |
-| `FAL_KEY` unset | `503` `{ error: "FAL_KEY not configured" }` — nothing else breaks                                                                                             |
-| fal mint fails  | `502` with a readable body                                                                                                                                    |
-| Env             | `FAL_KEY: optionalApiKey()` added to the provider schema in `env.ts`                                                                                          |
+**Why the shape changed at implementation:** the installed `@fal-ai/client@1.8.4` has no `tokenProvider` option (that's newer-client docs). In 1.8.4 the browser client is configured with `proxyUrl` and **auto-mints its own realtime token through that proxy** (refreshing at 0.9× expiry). So the route speaks fal's proxy dialect — raw body passthrough, not the house `{success,data}` envelope — because fal's own client is the consumer.
 
-The exact `allowed_apps` alias form (root alias vs full subpath) and mint field names are pinned by the smoke gate.
+| Aspect            | Contract                                                                                                                                                                            |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Endpoint          | `POST /api/fal/proxy` — accepts only requests whose `x-fal-target-url` header is exactly `https://rest.alpha.fal.ai/tokens/`; anything else → `403`                                 |
+| Allowlist         | The client-supplied body is **discarded**; the server always sends `{ allowed_apps: ["fal-ai/fast-lightning-sdxl"], token_expiration: 120 }` with `Authorization: Key ${FAL_KEY}`   |
+| Success / failure | fal's status and body are mirrored verbatim (the fal client machine handles them, including its `{detail}` unwrap)                                                                  |
+| `FAL_KEY` unset   | `503` `{ detail: "FAL_KEY not configured" }` — nothing else breaks                                                                                                                  |
+| Env               | Already declared: `FAL_KEY` / `FAL_API_KEY` in `env.ts`; resolved via the existing `@utils/falApiKey` helper, which survives the un-expanded `${FAL_API_KEY}` placeholder in `.env` |
+
+This is deliberately NOT a general fal proxy: one target URL, one forced body — the client-side request is only a trigger. Widening the allowlist is an ADR-0016 revisit. The client attaches `X-API-Key` via the fal client's `requestMiddleware`, so the route stays behind standard API auth. Bonus discovery pinned here: 1.8.4's realtime protocol threads a `request_id` through `send()`/`onResult` — the reducer uses it as a defensive second guard alongside the connection epoch.
 
 ## HUD metric definitions
 

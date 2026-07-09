@@ -9,10 +9,14 @@ persistent WebSocket, and fal's documented browser pattern for realtime endpoint
 `tokenProvider` — the backend mints a short-lived JWT and the browser opens the socket
 straight to fal.
 
-**The decision.** The server exposes `POST /api/fal/realtime-token`, which mints a JWT
-via fal's token REST API, allowlisted to exactly the one approved model
-(`fal-ai/fast-lightning-sdxl`) with a ~120-second expiry. The browser connects
-`wss://` directly to fal using that token. `FAL_KEY` never leaves the server.
+**The decision.** The server exposes `POST /api/fal/proxy` — a constrained proxy
+speaking the dialect the installed `@fal-ai/client@1.8.4` requires (it has no
+`tokenProvider` option; configured with `proxyUrl`, it auto-mints its realtime
+token through us). The route forwards exactly one request shape — the mint at
+`https://rest.alpha.fal.ai/tokens/` — and **discards the client-supplied body**,
+always minting with `allowed_apps: ["fal-ai/fast-lightning-sdxl"]` and a
+120-second expiry. The browser connects `wss://` directly to fal using that
+token. `FAL_KEY` never leaves the server.
 
 ## Considered options
 

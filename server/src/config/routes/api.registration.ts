@@ -16,10 +16,12 @@ import { createRoleClassifyRoute } from "@routes/roleClassifyRoute";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createSuggestionsRoute } from "@routes/suggestions";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
+import { createFalTokenRouter } from "@routes/fal-token.routes";
 import {
   createShareRouter,
   createPublicClipRouter,
 } from "@routes/share.routes";
+import { resolveFalApiKey } from "@utils/falApiKey";
 import type { ShareService } from "@services/share/ShareService";
 import type { StorageRoutesService } from "@routes/storage.routes";
 import type { LLMJudgeService } from "@services/quality-feedback/services/LLMJudgeService";
@@ -156,4 +158,12 @@ export function registerApiRoutes(
 
   // Authed mint of a public share for one owned clip (ADR-0010 site-scope D8).
   app.use("/api/share", apiAuthMiddleware, createShareRouter(shareService));
+
+  // Realtime-sketch spike (ADR-0016): mints the short-lived fal JWT scoped to
+  // the one approved model; the browser opens the fal WebSocket directly.
+  app.use(
+    "/api/fal",
+    apiAuthMiddleware,
+    createFalTokenRouter({ falKey: resolveFalApiKey() ?? undefined }),
+  );
 }
