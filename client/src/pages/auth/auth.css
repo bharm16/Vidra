@@ -1,0 +1,135 @@
+/*
+ * Auth surface — the design-handoff sign-in modal (design_handoff_vidra /
+ * Auth.dc.html, ADR-0014). Keyframes and the accent color-mix / showcase-
+ * gradient detail live here so the page components stay layout-only — the same
+ * split the atmosphere primitives and the AnchorSheet use. Imported by
+ * AuthModalCard; loads after the design-system utilities so these rules win
+ * over the Button variant's base colors.
+ */
+
+/* Modal entrance — rises and fades in from slightly low (handoff av-modal). */
+.ps-auth-modal {
+  animation: ps-auth-modal-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes ps-auth-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Brand badge — accent-gradient rounded square (matches WorkspaceTopBar). */
+.ps-auth-mark {
+  background: linear-gradient(
+    150deg,
+    var(--accent, #5b6cff),
+    var(--accent-2, #9aa6ff)
+  );
+  box-shadow: 0 4px 14px -4px var(--accent, #5b6cff);
+}
+
+/* Mode toggle link — the accent lightened toward white (handoff). */
+.ps-auth-accent-link {
+  color: color-mix(in srgb, var(--accent) 45%, white);
+  font-weight: 600;
+}
+.ps-auth-accent-link:hover {
+  color: #ffffff;
+}
+
+/* Primary CTA — the handoff's accent-tinted glass button: a translucent accent
+   wash over the app bg, accent-lifted text, deepening on hover. Colors only;
+   the Button component supplies layout, radius and the disabled state. */
+.ps-auth-primary {
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--ps-bg));
+  color: color-mix(in srgb, var(--accent) 62%, white);
+}
+.ps-auth-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 26%, var(--ps-bg));
+  color: #ffffff;
+}
+
+/* "Last used" badge — the accent pill above the provider button, lifted by an
+   accent-tinted glow (handoff). Position and color live on the span. */
+.ps-auth-lastused {
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 10px -3px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* Showcase — the sunset gradient panel beside the form (decorative). */
+.ps-auth-showcase {
+  background: linear-gradient(
+    180deg,
+    #ffd7a1 0%,
+    #ff9bb0 38%,
+    #c58bd8 66%,
+    #6a5bc0 100%
+  );
+}
+.ps-auth-showcase__wash {
+  background:
+    radial-gradient(
+      120% 80% at 28% 12%,
+      rgba(255, 196, 120, 0.85),
+      transparent 55%
+    ),
+    radial-gradient(
+      110% 80% at 82% 26%,
+      rgba(255, 122, 156, 0.8),
+      transparent 55%
+    ),
+    radial-gradient(
+      130% 90% at 60% 88%,
+      rgba(120, 96, 230, 0.7),
+      transparent 60%
+    );
+}
+.ps-auth-showcase__base {
+  background: linear-gradient(
+    180deg,
+    rgba(60, 40, 90, 0),
+    rgba(40, 28, 66, 0.55)
+  );
+}
+
+/* Layered purple silhouettes at the base of the sunset (handoff decorative). */
+.ps-auth-showcase__hill-a {
+  background: rgba(58, 40, 86, 0.5);
+  filter: blur(11px);
+}
+.ps-auth-showcase__hill-b {
+  background: rgba(40, 26, 60, 0.6);
+  filter: blur(11px);
+}
+.ps-auth-showcase__bloom {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.55),
+    transparent 62%
+  );
+  filter: blur(24px);
+  animation: ps-auth-float 8s ease-in-out infinite;
+}
+
+@keyframes ps-auth-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-6px, -12px) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-auth-modal,
+  .ps-auth-showcase__bloom {
+    animation: none;
+  }
+}

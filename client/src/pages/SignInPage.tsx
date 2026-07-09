@@ -1,12 +1,12 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Chrome, Eye, EyeOff, Mail } from "@promptstudio/system/components/ui";
+import { Eye, EyeOff, Lock, Mail } from "@promptstudio/system/components/ui";
 import { getAuthRepository } from "@repositories/index";
 import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { useAuthUser } from "@hooks/useAuthUser";
-import { AuthShell } from "./auth/AuthShell";
+import { AuthModalCard } from "./auth/AuthModalCard";
 
 function getSafeRedirect(search: string): string | null {
   const params = new URLSearchParams(search);
@@ -37,6 +37,31 @@ function Spinner(): React.ReactElement {
         className="opacity-75"
         fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+  );
+}
+
+/* The four-color Google mark from the handoff — rendered directly on the white
+   provider button. */
+function GoogleGlyph(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 48 48" className="h-[18px] w-[18px]" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
       />
     </svg>
   );
@@ -167,27 +192,22 @@ export function SignInPage(): React.ReactElement {
   }, [email, redirect]);
 
   return (
-    <AuthShell
-      title="Sign in"
-      footer={
+    <AuthModalCard
+      heading="Welcome back"
+      subhead={
         <>
           New here?{" "}
-          <Link to={signUpLink} className="text-foreground hover:underline">
+          <Link to={signUpLink} className="ps-auth-accent-link">
             Create an account
           </Link>
-          .
         </>
       }
     >
-      <div className="flex flex-col gap-4">
-        <p className="text-muted text-[13px] leading-relaxed">
-          Sign in to sync prompt history and keep your work across devices.
-        </p>
-
+      <div className="flex flex-col">
         {error ? (
           <div
             role="alert"
-            className="text-danger rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
+            className="text-danger mb-4 rounded-[10px] border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
           >
             {error}
           </div>
@@ -197,99 +217,110 @@ export function SignInPage(): React.ReactElement {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={isBusy}
-          variant="secondary"
-          className="w-full"
+          variant="ghost"
+          className="relative !h-auto w-full gap-[11px] rounded-[12px] bg-white py-[13px] text-[14px] font-semibold text-[color:var(--ps-bg)] shadow-sm hover:bg-white/90 hover:text-[color:var(--ps-bg)]"
         >
-          {isBusy ? (
-            <Spinner />
-          ) : (
-            <Chrome className="h-4 w-4" aria-hidden="true" />
-          )}
+          <span className="ps-auth-lastused absolute -top-[9px] right-3 rounded-[6px] bg-[color:var(--accent)] px-[7px] py-[2px] text-[9.5px] font-semibold text-white">
+            Last used
+          </span>
+          {isBusy ? <Spinner /> : <GoogleGlyph />}
           Continue with Google
         </Button>
 
-        <div className="flex items-center gap-3">
-          <div className="bg-border h-px flex-1" />
-          <span className="text-faint text-[11px] font-medium">or</span>
-          <div className="bg-border h-px flex-1" />
+        <div className="text-tool-text-muted my-[26px] flex items-center gap-3 font-mono text-[11px]">
+          <span className="h-px flex-1 bg-white/[0.09]" />
+          OR
+          <span className="h-px flex-1 bg-white/[0.09]" />
         </div>
 
-        <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3.5">
-          <div>
-            <label htmlFor={emailId} className="text-overline text-faint">
-              Email
-            </label>
-            <div className="relative mt-1">
-              <Mail
-                className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <Input
-                id={emailId}
-                className="pl-10"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                inputMode="email"
-                placeholder="you@company.com"
-              />
-            </div>
+        <form onSubmit={handleEmailSignIn} className="flex flex-col gap-[11px]">
+          <div className="relative">
+            <Mail
+              className="text-tool-text-muted pointer-events-none absolute left-4 top-1/2 z-10 h-[17px] w-[17px] -translate-y-1/2"
+              aria-hidden="true"
+            />
+            <Input
+              id={emailId}
+              className="h-[46px] rounded-[12px] border-white/[0.10] bg-white/[0.03] pl-11 text-[14px] shadow-none focus-visible:border-[color:var(--accent)]"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              aria-label="Email"
+              placeholder="Enter your email"
+            />
           </div>
 
-          <div>
-            <label htmlFor={passwordId} className="text-overline text-faint">
-              Password
-            </label>
-            <div className="relative mt-1">
-              <Input
-                id={passwordId}
-                className="pr-10"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                placeholder="••••••••"
-              />
-              <Button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                variant="ghost"
-                size="icon"
-                className="absolute right-1.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md p-0"
-                disabled={isBusy}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-                ) : (
-                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                )}
-              </Button>
-            </div>
+          <div className="relative">
+            <Lock
+              className="text-tool-text-muted pointer-events-none absolute left-4 top-1/2 z-10 h-[17px] w-[17px] -translate-y-1/2"
+              aria-hidden="true"
+            />
+            <Input
+              id={passwordId}
+              className="h-[46px] rounded-[12px] border-white/[0.10] bg-white/[0.03] pl-11 pr-11 text-[14px] shadow-none focus-visible:border-[color:var(--accent)]"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              aria-label="Password"
+              placeholder="Password"
+            />
+            <Button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-md p-0"
+              disabled={isBusy}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden="true" />
+              )}
+            </Button>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex justify-end">
             <Link
               to={forgotPasswordLink}
-              className="text-faint hover:text-foreground text-[12px] font-medium transition"
+              className="text-tool-text-muted hover:text-foreground text-[12px] font-medium transition"
             >
               Forgot password?
             </Link>
-            <Link
-              to="/privacy-policy"
-              className="text-ghost hover:text-foreground text-[12px] font-medium transition"
-            >
-              Privacy
-            </Link>
           </div>
 
-          <Button type="submit" disabled={isBusy} className="w-full">
+          <Button
+            type="submit"
+            disabled={isBusy}
+            variant="ghost"
+            className="ps-auth-primary mt-[3px] !h-auto w-full gap-2 rounded-[12px] py-[13px] text-[14px] font-semibold"
+          >
             {isBusy ? <Spinner /> : null}
-            Sign in
+            Sign in &amp; continue
           </Button>
         </form>
+
+        <p className="text-tool-text-muted mt-[18px] text-center text-[11px] leading-[1.5]">
+          By continuing you agree to our{" "}
+          <Link
+            to="/terms-of-service"
+            className="text-tool-text-dim hover:text-foreground underline underline-offset-2"
+          >
+            Terms
+          </Link>{" "}
+          &amp;{" "}
+          <Link
+            to="/privacy-policy"
+            className="text-tool-text-dim hover:text-foreground underline underline-offset-2"
+          >
+            Privacy Policy
+          </Link>
+        </p>
       </div>
-    </AuthShell>
+    </AuthModalCard>
   );
 }

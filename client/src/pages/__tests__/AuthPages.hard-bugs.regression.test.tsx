@@ -178,13 +178,13 @@ describe("regression: auth page hard-bug fixes", () => {
 
     renderSignIn("/signin");
 
-    fireEvent.change(screen.getByPlaceholderText("you@company.com"), {
+    fireEvent.change(screen.getByPlaceholderText("Enter your email"), {
       target: { value: "ada@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("••••••••"), {
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
       target: { value: "wrong-password" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in & continue" }));
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent(
@@ -204,19 +204,24 @@ describe("regression: auth page hard-bug fixes", () => {
 
     renderSignUp("/signup?redirect=%2Fsettings%2Fbilling");
 
-    fireEvent.change(screen.getByPlaceholderText("Your name"), {
+    fireEvent.change(screen.getByPlaceholderText("Your name (optional)"), {
       target: { value: "Ada" },
     });
-    fireEvent.change(screen.getByPlaceholderText("you@company.com"), {
+    fireEvent.change(screen.getByPlaceholderText("Enter your email"), {
       target: { value: "ada@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("At least 6 characters"), {
+    fireEvent.change(
+      screen.getByPlaceholderText("Password (at least 6 characters)"),
+      {
+        target: { value: "Passw0rd!" },
+      },
+    );
+    fireEvent.change(screen.getByPlaceholderText("Confirm password"), {
       target: { value: "Passw0rd!" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Repeat your password"), {
-      target: { value: "Passw0rd!" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create account & continue" }),
+    );
 
     await waitFor(() => {
       expect(readLocationProbe()).toMatchObject({
@@ -245,19 +250,24 @@ describe("regression: auth page hard-bug fixes", () => {
 
     renderSignUp("/signup?redirect=%2Fsettings%2Fbilling");
 
-    fireEvent.change(screen.getByPlaceholderText("Your name"), {
+    fireEvent.change(screen.getByPlaceholderText("Your name (optional)"), {
       target: { value: "Ada" },
     });
-    fireEvent.change(screen.getByPlaceholderText("you@company.com"), {
+    fireEvent.change(screen.getByPlaceholderText("Enter your email"), {
       target: { value: "ada@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("At least 6 characters"), {
+    fireEvent.change(
+      screen.getByPlaceholderText("Password (at least 6 characters)"),
+      {
+        target: { value: "Passw0rd!" },
+      },
+    );
+    fireEvent.change(screen.getByPlaceholderText("Confirm password"), {
       target: { value: "Passw0rd!" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Repeat your password"), {
-      target: { value: "Passw0rd!" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create account & continue" }),
+    );
 
     await waitFor(() => {
       expect(readLocationProbe()).toMatchObject({
