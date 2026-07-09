@@ -92,6 +92,9 @@ const HistoryPage = lazy(() =>
   })),
 );
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
+const RealtimeSketch = lazy(
+  () => import("./features/realtime-sketch/RealtimeSketch"),
+);
 const MainWorkspace = lazy(() =>
   import("./components/layout/MainWorkspace").then((module) => ({
     default: module.MainWorkspace,
@@ -259,6 +262,16 @@ function AppRoutes(): React.ReactElement {
 
       {/* App routes */}
       <Route path="/" element={<WorkspaceRoute />} />
+      {/* Realtime-sketch spike (ADR-0016) — outside the page's anatomy;
+          promotion or shelving is decided by the spec's verdict addendum. */}
+      <Route
+        path="/sketch"
+        element={
+          <FeatureErrorBoundary featureName="Realtime Sketch">
+            <RealtimeSketch />
+          </FeatureErrorBoundary>
+        }
+      />
       <Route path="/create" element={<Navigate to="/" replace />} />
       <Route path="/session/:sessionId" element={<WorkspaceRoute />} />
       <Route
