@@ -108,7 +108,6 @@ function renderRow(options: {
           renderModelId="sora-2"
           renderModelOptions={[{ id: "sora-2", label: "Sora 2" }]}
           onModelChange={vi.fn()}
-          onOpenMotion={vi.fn()}
         />
       </GenerationControlsProvider>
     </GenerationControlsStoreProvider>,
@@ -182,7 +181,7 @@ describe("CanvasSettingsRow", () => {
     expect(screen.getByTestId("canvas-generate-button")).toBeDisabled();
   });
 
-  it("shows end frame and references controls in prompt input row", () => {
+  it("renders the handoff's exact control set — no frame/reference popovers", () => {
     renderRow({
       controls: {
         onStoryboard: vi.fn(),
@@ -193,9 +192,14 @@ describe("CanvasSettingsRow", () => {
       },
     });
 
-    expect(screen.getByTestId("start-frame-popover")).toBeInTheDocument();
-    expect(screen.getByTestId("end-frame-popover")).toBeInTheDocument();
-    expect(screen.getByTestId("video-references-popover")).toBeInTheDocument();
+    // The composer handoff's docked row is exactly: aspect · duration ·
+    // model · preview, then Make it. The start/end-frame and reference
+    // popovers no longer live in the composer.
+    expect(screen.queryByTestId("start-frame-popover")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("end-frame-popover")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("video-references-popover"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the model control icon-only, reachable as 'Video model' (composer handoff)", () => {

@@ -1,15 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  ArrowRight,
-  CaretDown,
-  Clock,
-  Eye,
-  FrameCorners,
-  Sparkle,
-  X,
-} from "@promptstudio/system/components/ui";
+import { CaretDown, X } from "@promptstudio/system/components/ui";
 import { FEATURES } from "@/config/features.config";
-import type { SidebarUploadedImage } from "@features/generation-controls";
 import {
   VIDEO_DRAFT_MODELS,
   STORYBOARD_COST,
@@ -24,7 +15,6 @@ import {
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
 import { useCapabilitiesClamping } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping";
-import { useVideoInputCapabilities } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useVideoInputCapabilities";
 import { ModelRecommendationDropdown } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ModelRecommendationDropdown";
 import type { ModelRecommendation } from "@/features/model-intelligence/types";
 import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
@@ -38,9 +28,6 @@ import {
 import { cn } from "@/utils/cn";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { authGateController, runWhenAuthenticated } from "@features/auth-gate";
-import { StartFramePopover } from "./StartFramePopover";
-import { EndFramePopover } from "./EndFramePopover";
-import { VideoReferencesPopover } from "./VideoReferencesPopover";
 
 interface CanvasSettingsRowProps {
   prompt: string;
@@ -57,11 +44,6 @@ interface CanvasSettingsRowProps {
   recommendationMode?: "t2v" | "i2v" | undefined;
   recommendationAgeMs?: number | null | undefined;
   onModelChange: (modelId: string) => void;
-  onOpenMotion: () => void;
-  onStartFrameUpload?: ((file: File) => void | Promise<void>) | undefined;
-  onUploadSidebarImage?:
-    | ((file: File) => Promise<SidebarUploadedImage | null>)
-    | undefined;
   /** Whether to show the storyboard-preview eye button. Hidden in the empty
    *  moment so the chip row matches the screenshot's clean 5-chip layout. */
   showPreviewButton?: boolean;
@@ -109,7 +91,101 @@ const MENU_TRIGGER_CLASS =
 // The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
 // setting is announced; the title names the control.
 const ICON_TRIGGER_CLASS =
-  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] text-tool-text-dim transition-colors hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.07] data-[state=open]:text-foreground";
+  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] text-tool-text-dim transition-colors hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.13] data-[state=open]:text-foreground";
+
+/* Control glyphs copied VERBATIM from the composer handoff
+   (design_handoff_composer/Composer States.dc.html) — 21px, 1.7 stroke,
+   sparkle filled. Kept as literal SVGs so the bar matches the frames
+   exactly instead of approximating with library icons. */
+
+function AspectGlyph(): React.ReactElement {
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="7" width="18" height="10" rx="1.8" />
+    </svg>
+  );
+}
+
+function DurationGlyph(): React.ReactElement {
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 1.8" />
+    </svg>
+  );
+}
+
+function ModelGlyph(): React.ReactElement {
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z" />
+    </svg>
+  );
+}
+
+function PreviewGlyph(): React.ReactElement {
+  return (
+    <svg
+      width="21"
+      height="21"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function MakeItArrowGlyph(): React.ReactElement {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14" />
+      <path d="M13 6l6 6-6 6" />
+    </svg>
+  );
+}
 
 // Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
 // pills inside the glass sheet, matching the handoff's two inline chips.
@@ -127,9 +203,6 @@ export function CanvasSettingsRow({
   recommendationMode,
   recommendationAgeMs,
   onModelChange,
-  onOpenMotion,
-  onStartFrameUpload,
-  onUploadSidebarImage,
   showPreviewButton = true,
   variant = "docked",
 }: CanvasSettingsRowProps): React.ReactElement {
@@ -206,7 +279,6 @@ export function CanvasSettingsRow({
       onAspectRatioChange: handleAspectRatioChange,
       onDurationChange: handleDurationChange,
     });
-  const videoInputCapabilities = useVideoInputCapabilities(schema ?? null);
 
   const selectedDraftModel = useMemo(
     () =>
@@ -336,45 +408,12 @@ export function CanvasSettingsRow({
       )}
       data-testid="canvas-settings-row"
     >
-      <div className="flex flex-wrap items-center gap-1">
-        {/* The Anchor sheet shows only the two inline selectors (16:9 · 6s);
-            frame / reference / model chrome belongs to the working composer. */}
+      <div className="flex flex-wrap items-center gap-[6px]">
+        {/* The Anchor sheet shows only the two inline selectors (16:9 · 6s).
+            The docked row is the handoff's exact control set: aspect ·
+            duration · model · preview, then Make it — nothing else. */}
         {isSheet ? null : (
           <>
-            {/* Start frame (with popover) — leftmost chip, the "image upload"
-            affordance from the screenshot. */}
-            <StartFramePopover
-              startFrame={domain.startFrame}
-              cameraMotion={domain.cameraMotion}
-              onSetStartFrame={storeActions.setStartFrame}
-              onClearStartFrame={storeActions.clearStartFrame}
-              onOpenMotion={onOpenMotion}
-              onStartFrameUpload={onStartFrameUpload}
-              disabled={isGenerating}
-            />
-
-            {videoInputCapabilities.supportsEndFrame ? (
-              <EndFramePopover
-                endFrame={domain.endFrame}
-                onSetEndFrame={storeActions.setEndFrame}
-                onClearEndFrame={storeActions.clearEndFrame}
-                onUploadSidebarImage={onUploadSidebarImage}
-                disabled={isGenerating}
-              />
-            ) : null}
-
-            {videoInputCapabilities.supportsReferenceImages ? (
-              <VideoReferencesPopover
-                references={domain.videoReferenceImages}
-                maxSlots={videoInputCapabilities.maxReferenceImages}
-                onAddReference={storeActions.addVideoReference}
-                onRemoveReference={storeActions.removeVideoReference}
-                onUpdateReferenceType={storeActions.updateVideoReferenceType}
-                onUploadSidebarImage={onUploadSidebarImage}
-                disabled={isGenerating}
-              />
-            ) : null}
-
             {domain.extendVideo ? (
               <div className="border-surface-2 bg-tool-nav-hover text-foreground inline-flex h-[28px] items-center gap-1 rounded-full border pl-2.5 pr-1 text-xs font-semibold">
                 <svg
@@ -422,7 +461,7 @@ export function CanvasSettingsRow({
                 />
               </>
             ) : (
-              <FrameCorners size={21} aria-hidden="true" />
+              <AspectGlyph />
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start">
@@ -457,7 +496,7 @@ export function CanvasSettingsRow({
                 />
               </>
             ) : (
-              <Clock size={21} aria-hidden="true" />
+              <DurationGlyph />
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start">
@@ -486,14 +525,14 @@ export function CanvasSettingsRow({
             {...(recommendedModelId ? { recommendedModelId } : {})}
             {...(efficientModelId ? { efficientModelId } : {})}
             triggerAriaLabel="Video model"
-            triggerPrefixIcon={<Sparkle size={21} aria-hidden="true" />}
+            triggerPrefixIcon={<ModelGlyph />}
             triggerLabelHidden
             triggerClassName={ICON_TRIGGER_CLASS}
           />
         )}
       </div>
 
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-[6px]">
         {/* Preview button — hidden in the empty moment per the screenshot's
             clean chip-row layout. Surfaced once there's content to compare
             against (parent passes showPreviewButton=true). */}
@@ -540,7 +579,7 @@ export function CanvasSettingsRow({
                     : "Preview"
             }
           >
-            <Eye size={21} />
+            <PreviewGlyph />
           </button>
         ) : null}
 
@@ -657,7 +696,7 @@ export function CanvasSettingsRow({
           ) : (
             <>
               Make it
-              <ArrowRight size={15} aria-hidden="true" />
+              <MakeItArrowGlyph />
             </>
           )}
         </button>

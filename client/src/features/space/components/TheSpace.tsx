@@ -1,5 +1,4 @@
 import React from "react";
-import { FileText } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 
 import { cn } from "@/utils/cn";
@@ -184,7 +183,22 @@ export function TheSpace({
                   )}
                   style={{ height: h }}
                 >
-                  <FileText className="h-[13px] w-[13px]" aria-hidden="true" />
+                  {/* Text-lines glyph — verbatim from the composer handoff. */}
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 6h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 18h10" />
+                  </svg>
                   Prompt
                   <span className="text-tool-text-muted hidden text-[11px] group-hover:inline">
                     Edit words

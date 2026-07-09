@@ -583,9 +583,6 @@ export function CanvasWorkspace({
             ? { recommendationAgeMs }
             : {})}
           onModelChange={handleModelChange}
-          onOpenMotion={handleOpenMotion}
-          {...(onStartFrameUpload ? { onStartFrameUpload } : {})}
-          {...(onUploadSidebarImage ? { onUploadSidebarImage } : {})}
           showPreviewButton={hasGenerations}
         />
       </div>
@@ -601,9 +598,6 @@ export function CanvasWorkspace({
       recommendationMode,
       recommendationAgeMs,
       handleModelChange,
-      handleOpenMotion,
-      onStartFrameUpload,
-      onUploadSidebarImage,
       hasGenerations,
       isPreWork,
       wordsFocused,
