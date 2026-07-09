@@ -163,3 +163,21 @@ Flux/Kontext models, upscale/refine pass, a model picker UI, any workspace/space
 ## Verdict addendum
 
 _Appended after the owner's drawing session: HUD medians, $/100 frames, feel verdict, promote/shelve decision._
+
+### Instrumentation baseline (2026-07-09, agent-driven — not the owner verdict)
+
+Live loop verified in Chrome with the funded key (a fresh key had to be minted — the
+original `.env` key belonged to a different, balance-locked fal workspace). Two wire
+facts the smoke gate corrected against the docs: the realtime runner lives on the
+**root** app id (`fal-ai/fast-lightning-sdxl`; the `/image-to-image` subpath is
+HTTP-queue only and fails realtime forwarding), and results arrive as **raw JPEG bytes
+in `images[0].content`** over the msgpack socket — no `url`. Client maps bytes → object
+URL (revoking the displaced one per frame).
+
+Measured at 768² / 4 steps / strength 0.75, pinned seed, drawing session over ~8
+frames: **round-trip median ~920ms** (model ~655ms, transport ~167ms, encode 4ms),
+sustained **~0.7–1.0 updates/s**, send discipline discarding correctly (4 sent · 11
+skipped). Output quality: convincing product-photography lamps tracking sketch
+geometry. Honest framing for the feel verdict: this is a **responsive preview**
+(~1s cadence), not Krea's liquid 10/s — levers if faster matters: 512² (~2× rate),
+2-step, or accepting the cadence. Cold-start first frame after idle: ~1.3–3.9s.
