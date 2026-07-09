@@ -31,6 +31,8 @@ export interface GenerationStats {
   resultTimes: number[];
   /** Sticky: set on failure, cleared by the next successful frame. */
   lastError: { message: string; at: number } | null;
+  /** Encode cost of the most recent snapshot (canvas → JPEG → base64). */
+  lastEncodeMs: number | null;
 }
 
 export interface LiveOutput {
@@ -91,6 +93,7 @@ export function createInitialGenerationState(): GenerationState {
       modelMs: [],
       resultTimes: [],
       lastError: null,
+      lastEncodeMs: null,
     },
   };
 }
@@ -112,6 +115,7 @@ export function generationReducer(
           stats: {
             ...state.stats,
             skipped: state.stats.skipped + (state.pending !== null ? 1 : 0),
+            lastEncodeMs: action.encodeMs,
           },
         };
       }
@@ -125,7 +129,11 @@ export function generationReducer(
           sentAt: action.at,
           encodeMs: action.encodeMs,
         },
-        stats: { ...state.stats, sent: state.stats.sent + 1 },
+        stats: {
+          ...state.stats,
+          sent: state.stats.sent + 1,
+          lastEncodeMs: action.encodeMs,
+        },
       };
     }
     case "result": {

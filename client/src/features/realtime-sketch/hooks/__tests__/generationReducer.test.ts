@@ -26,6 +26,7 @@ describe("generationReducer — send discipline", () => {
     expect(state.inFlight?.requestId).toBe("0-1");
     expect(state.pending).toBeNull();
     expect(state.stats.sent).toBe(1);
+    expect(state.stats.lastEncodeMs).toBe(3);
   });
 
   it("queues a snapshot while a frame is in flight instead of sending it", () => {
