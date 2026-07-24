@@ -124,6 +124,18 @@ The realtime sketch's own page: an infinite pannable/zoomable plane (the shared 
 
 The sketchpad's drawing surface, which **is** the generation frame — same shape and same size, derived from it rather than chosen ([ADR-0018](docs/adr/0018-the-live-editor-page-is-the-generation-frame.md)). Sizing the page independently stretches the bitmap and shrinks every subject inside the frame, which reads as a model-quality regression rather than a layout bug. A bigger surface is the plane's zoom, never a bigger page. Resolved 2026-07-24 diagnosing the stretched-canvas regression. Avoid synonyms: sketch panel, canvas size, drawing area.
 
+### The studio
+
+The chat-driven image workspace on its own rail surface: a creator commissions finished images through conversation — a brief, at most a couple of clarifying questions, batches of variations, and follow-up moves. The images are the deliverable in their own right — the studio is not a first-frame factory and feeds nothing downstream. Governed by [ADR-0019](docs/adr/0019-the-studio-standalone-conversational-image-workspace.md). Resolved 2026-07-24 during studio grilling. Avoid synonyms: AI chat, image chat, design workspace, chat canvas.
+
+### Studio project
+
+The persisted unit of studio work: one conversation thread plus every image it produced, returnable across visits. A studio project is not a Session (the video loop's entity) and never lives inside `SessionPrompt` — it is its own first-class record. Resolved 2026-07-24 during studio grilling. Avoid synonyms: session, chat, thread, conversation.
+
+### Batch (studio)
+
+One studio turn's set of sibling variations, generated together and landing as one cluster on the studio plane. Cluster placement is derived from thread order — nothing spatial is stored, the same rule the space lives by. Resolved 2026-07-24 during studio grilling. Avoid synonyms: grid, set, generation group.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
