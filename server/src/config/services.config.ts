@@ -19,6 +19,7 @@ import { registerEnhancementServices } from "./services/enhancement.services.ts"
 import { registerOptimizationServices } from "./services/optimization.services.ts";
 import { registerVideoGenerationServices } from "./services/video-generation.services.ts";
 import { registerImageGenerationServices } from "./services/image-generation.services.ts";
+import { registerStudioServices } from "./services/studio.services.ts";
 import { registerContinuityServices } from "./services/continuity.services.ts";
 import { registerPaymentServices } from "./services/payment.services.ts";
 import { registerModelIntelligenceServices } from "./services/model-intelligence.services.ts";
@@ -60,6 +61,7 @@ export async function configureServices(): Promise<DIContainer> {
   // Image-generation: depends on imageAssetStore (storage) and geminiClient/openAIClient (llm),
   // both registered above.
   registerImageGenerationServices(container);
+  registerStudioServices(container);
 
   // Continuity (gated on ENABLE_CONVERGENCE).
   if (enableConvergence) {

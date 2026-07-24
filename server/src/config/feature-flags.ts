@@ -88,6 +88,15 @@ const MODE_FLAGS = {
       "Enables continuity/convergence services. When false, continuitySessionService resolves to null.",
     category: "mode",
   },
+  studio: {
+    kind: "bool",
+    envName: "ENABLE_STUDIO",
+    default: true,
+    description:
+      "Enables the Studio conversational image workspace (ADR-0019). When false, studioService resolves to null and /api/studio is not mounted.",
+    category: "mode",
+    requiresEnv: ["REPLICATE_API_TOKEN"],
+  },
 } as const satisfies Record<string, FlagDef>;
 
 const WORKER_FLAGS = {

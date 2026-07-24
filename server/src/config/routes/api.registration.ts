@@ -17,6 +17,8 @@ import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createSuggestionsRoute } from "@routes/suggestions";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
+import { createStudioRouter } from "@routes/studio.routes";
+import type { StudioService } from "@services/studio/StudioService";
 import {
   createShareRouter,
   createPublicClipRouter,
@@ -167,4 +169,20 @@ export function registerApiRoutes(
     apiAuthMiddleware,
     createFalI2iRouter({ falKey: resolveFalApiKey() ?? undefined }),
   );
+
+  // Studio conversational image workspace (ADR-0019). Null when the
+  // ENABLE_STUDIO flag is off or REPLICATE_API_TOKEN is missing — the
+  // surface simply isn't mounted then.
+  const studioService = resolveOptionalService<StudioService | null>(
+    container,
+    "studioService",
+    "studio",
+  );
+  if (studioService) {
+    app.use(
+      "/api/studio",
+      apiAuthMiddleware,
+      createStudioRouter(studioService),
+    );
+  }
 }
