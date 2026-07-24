@@ -16,10 +16,17 @@
 
 /* The editor pair is ONE fixed-size object on the infinite plane
    (ADR-0017); the camera centers it on mount and the creator pans/zooms
-   around it. Panels are SQUARE — the model's fast path is square frames
-   (measured 2026-07-09: 512²/640² ≈ 0.26s inference, every non-square
-   resolution 3–6× slower), so the page must be the generation frame:
-   every visible pixel drawable, every generated pixel visible. */
+   around it.
+
+   The page IS the generation frame — same shape AND same size. Square,
+   because the model's fast path is square (measured: 512² ≈ 0.18s inference
+   vs 640² 1.7s, 704² 3.5s, 768² 4.4s round-trip — larger frames kill the
+   realtime feel). Sized from --le-frame, which LiveEditor sets from
+   SNAPSHOT_SIZE, so the page and the bitmap can never drift apart: at 1:1 a
+   stroke's weight and position on screen ARE its weight and position in the
+   frame. Pinning the page to a larger fixed width stretched the bitmap and
+   quietly shrank every subject inside the frame. Want a bigger surface?
+   Zoom the plane — zoom scales strokes with it, so composition holds. */
 .le-editor-pair {
   display: flex;
   gap: 12px;
@@ -27,8 +34,8 @@
 }
 
 .le-panel-sketch {
-  width: 700px;
-  height: 700px;
+  width: var(--le-frame);
+  height: var(--le-frame);
   position: relative;
   border-radius: 16px;
   background: #e9e9e6;
@@ -36,8 +43,8 @@
 }
 
 .le-panel-output {
-  width: 700px;
-  height: 700px;
+  width: var(--le-frame);
+  height: var(--le-frame);
   position: relative;
   border-radius: 16px;
   background: #0f1013;

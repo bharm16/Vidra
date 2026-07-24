@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
 
 /**
  * Regression: the sketch page rendered as a 700×860 panel while the drawable
@@ -17,46 +17,63 @@ import { describe, expect, it } from 'vitest';
 // jsdom rewrites import.meta.url to a non-file URL; vitest always runs from
 // the repo root, so anchor on cwd instead.
 const css = readFileSync(
-  resolve(process.cwd(), 'client/src/features/realtime-sketch/live-editor.css'),
-  'utf8'
+  resolve(process.cwd(), "client/src/features/realtime-sketch/live-editor.css"),
+  "utf8",
 );
 
 function declarations(selector: string): Record<string, string> {
   const start = css.indexOf(`${selector} {`);
   expect(start, `selector ${selector} present`).toBeGreaterThanOrEqual(0);
-  const end = css.indexOf('}', start);
+  const end = css.indexOf("}", start);
   const body = css.slice(start + selector.length + 2, end);
   const map: Record<string, string> = {};
-  for (const entry of body.split(';')) {
-    const colon = entry.indexOf(':');
+  for (const entry of body.split(";")) {
+    const colon = entry.indexOf(":");
     if (colon === -1) continue;
     map[entry.slice(0, colon).trim()] = entry.slice(colon + 1).trim();
   }
   return map;
 }
 
-describe('regression: the entire visible page is drawable', () => {
-  it('the sketch page is square — its shape IS the square generation frame', () => {
-    const sketch = declarations('.le-panel-sketch');
+describe("regression: the entire visible page is drawable", () => {
+  it("the sketch page is square — its shape IS the square generation frame", () => {
+    const sketch = declarations(".le-panel-sketch");
     expect(sketch.width).toBeDefined();
     expect(sketch.width).toBe(sketch.height);
   });
 
-  it('the output pane mirrors the page, so no pixel of the render is cropped away', () => {
-    const sketch = declarations('.le-panel-sketch');
-    const output = declarations('.le-panel-output');
+  it("the output pane mirrors the page, so no pixel of the render is cropped away", () => {
+    const sketch = declarations(".le-panel-sketch");
+    const output = declarations(".le-panel-output");
     expect(output.width).toBe(sketch.width);
     expect(output.height).toBe(sketch.height);
   });
 
-  it('the canvas fills the page edge-to-edge — no letterbox rules', () => {
-    const canvas = declarations('.le-canvas');
-    expect(canvas.width).toBe('100%');
-    expect(canvas.height).toBe('100%');
+  /**
+   * Regression: the page was pinned to a hardcoded 700px while the bitmap
+   * stayed 512², so the canvas was STRETCHED 1.37×. Strokes drew 37% fatter
+   * than their weight in the frame and a drawing made at unchanged hand-scale
+   * covered 27% less of the generation frame — subjects came back small and
+   * washed out. The page must be sized BY the frame so the two can never
+   * drift apart again.
+   */
+  it("the page is sized by the generation frame, not a hardcoded pixel value", () => {
+    const sketch = declarations(".le-panel-sketch");
+    const output = declarations(".le-panel-output");
+    expect(sketch.width).toBe("var(--le-frame)");
+    expect(sketch.height).toBe("var(--le-frame)");
+    expect(output.width).toBe("var(--le-frame)");
+    expect(output.height).toBe("var(--le-frame)");
+  });
+
+  it("the canvas fills the page edge-to-edge — no letterbox rules", () => {
+    const canvas = declarations(".le-canvas");
+    expect(canvas.width).toBe("100%");
+    expect(canvas.height).toBe("100%");
     // The letterbox recipe that caused the dead zones must not return:
-    expect(canvas['aspect-ratio']).toBeUndefined();
-    expect(canvas['max-width']).toBeUndefined();
-    expect(canvas['max-height']).toBeUndefined();
+    expect(canvas["aspect-ratio"]).toBeUndefined();
+    expect(canvas["max-width"]).toBeUndefined();
+    expect(canvas["max-height"]).toBeUndefined();
     expect(canvas.margin).toBeUndefined();
   });
 });

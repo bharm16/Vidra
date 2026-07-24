@@ -7,7 +7,11 @@ import { NavRail } from "@components/navigation/NavRail";
 import { Composer } from "./components/Composer";
 import { Sketchpad, type SketchpadHandle } from "./components/Sketchpad";
 import { ToolBar, type SketchTool } from "./components/ToolBar";
-import { DEFAULT_BRUSH_SIZE, DEFAULT_INK } from "./config/constants";
+import {
+  DEFAULT_BRUSH_SIZE,
+  DEFAULT_INK,
+  SNAPSHOT_SIZE,
+} from "./config/constants";
 import { median, updatesPerSecond } from "./hooks/hudMath";
 import { useRealtimeSketch } from "./hooks/useRealtimeSketch";
 import type { SendSketchFrame } from "./api/falI2i";
@@ -95,6 +99,11 @@ export function LiveEditor({
             className="le-editor-pair"
             data-live="true"
             data-testid="live-editor-pair"
+            // The page is sized BY the generation frame — one source of
+            // truth, so the canvas is never stretched away from its bitmap.
+            style={
+              { "--le-frame": `${SNAPSHOT_SIZE}px` } as React.CSSProperties
+            }
           >
             <div className="le-panel-sketch">
               <Sketchpad
