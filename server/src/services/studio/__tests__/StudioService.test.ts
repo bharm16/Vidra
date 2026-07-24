@@ -107,6 +107,13 @@ function makeService(overrides?: {
     saveFromUrl: vi.fn().mockResolvedValue({
       storagePath: "users/user-1/previews/images/x.webp",
     }),
+    getViewUrl: vi.fn().mockImplementation((_userId: string, path: string) =>
+      Promise.resolve({
+        viewUrl: `https://signed.example.com/${path}`,
+        expiresAt: "2026-07-25T00:00:00Z",
+        storagePath: path,
+      }),
+    ),
   };
 
   const service = new StudioService({
@@ -280,6 +287,22 @@ describe("StudioService", () => {
       expect(turn.status).toBe("failed");
       expect(turn.refundedCents).toBe(16);
       expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(0);
+    });
+
+    it("decorates polled turns with fresh signed view URLs", async () => {
+      const { service } = makeService();
+      const project = await service.createProject("user-1");
+      const result = await service.runTurn("user-1", project.id, "a logo");
+      await result.completion;
+
+      const view = await service.getTurnWithFreshUrls(
+        "user-1",
+        project.id,
+        result.turnId,
+      );
+      expect(view.calls[0]?.image?.viewUrl).toContain(
+        "https://signed.example.com/",
+      );
     });
 
     it("titles an Untitled project from the first generation", async () => {

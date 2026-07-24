@@ -1,0 +1,111 @@
+/**
+ * Zod anti-corruption boundary for /api/studio responses (house rule:
+ * every feature api/ validates server DTOs at the wire).
+ */
+
+import { z } from "zod";
+
+export const StudioModelSlugSchema = z.enum([
+  "recraft-v4.1",
+  "recraft-v4.1-svg",
+  "recraft-v4.1-pro",
+  "recraft-v4.1-pro-svg",
+  "nano-banana-2",
+  "nano-banana-2-lite",
+  "nano-banana-pro",
+  "gpt-image-2",
+]);
+
+export type StudioModelSlug = z.infer<typeof StudioModelSlugSchema>;
+
+export const StudioProjectSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  selectedImageId: z.string().nullish(),
+  pinnedModel: StudioModelSlugSchema.nullish(),
+  createdAtMs: z.number(),
+  updatedAtMs: z.number(),
+});
+
+export type StudioProject = z.infer<typeof StudioProjectSchema>;
+
+export const StudioDecisionSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("clarify"),
+    questions: z.array(
+      z.object({ text: z.string(), quickPicks: z.array(z.string()) }),
+    ),
+  }),
+  z.object({
+    action: z.literal("generate"),
+    basePrompt: z.string(),
+    variants: z.array(z.string()),
+    capability: z.string(),
+    aspectRatio: z.string().optional(),
+    suggestions: z.array(z.string()),
+    title: z.string().optional(),
+  }),
+  z.object({
+    action: z.literal("edit"),
+    instruction: z.string(),
+    sourceImageIds: z.array(z.string()),
+    suggestions: z.array(z.string()),
+  }),
+  z.object({
+    action: z.literal("transform"),
+    operation: z.string(),
+    sourceImageId: z.string(),
+    suggestions: z.array(z.string()),
+  }),
+  z.object({
+    action: z.literal("diagnose"),
+    question: z.string(),
+    quickPicks: z.array(z.string()),
+  }),
+  z.object({
+    action: z.literal("negotiate"),
+    reason: z.string(),
+    options: z.array(z.object({ label: z.string(), message: z.string() })),
+  }),
+]);
+
+export type StudioDecision = z.infer<typeof StudioDecisionSchema>;
+
+export const StudioImageSchema = z.object({
+  id: z.string(),
+  storagePath: z.string(),
+  sourcePrompt: z.string(),
+  model: z.string(),
+  /** Minted per poll; may be briefly absent if signing failed server-side. */
+  viewUrl: z.string().optional(),
+});
+
+export type StudioImage = z.infer<typeof StudioImageSchema>;
+
+export const StudioCallSchema = z.object({
+  index: z.number(),
+  status: z.enum(["running", "succeeded", "failed"]),
+  image: StudioImageSchema.optional(),
+  error: z.string().optional(),
+});
+
+export const StudioTurnSchema = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  status: z.enum(["running", "complete", "partial", "failed"]),
+  userMessage: z.string(),
+  decision: StudioDecisionSchema,
+  resolvedModel: z.string(),
+  calls: z.array(StudioCallSchema),
+  createdAtMs: z.number(),
+  updatedAtMs: z.number(),
+});
+
+export type StudioTurn = z.infer<typeof StudioTurnSchema>;
+
+export const RunTurnResponseSchema = z.object({
+  turnId: z.string(),
+  decision: StudioDecisionSchema,
+});
+
+export type RunTurnResponse = z.infer<typeof RunTurnResponseSchema>;

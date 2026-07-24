@@ -166,7 +166,7 @@ export function createStudioRouter(studioService: StudioService): Router {
       const userId = requireUserId(req, res);
       if (!userId) return;
       try {
-        const turn = await studioService.getTurn(
+        const turn = await studioService.getTurnWithFreshUrls(
           userId,
           routeParam(req, "projectId"),
           routeParam(req, "turnId"),

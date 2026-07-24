@@ -48,6 +48,19 @@ export interface StudioImageStorage {
     type: "preview-image",
     metadata?: Record<string, unknown>,
   ): Promise<{ storagePath: string }>;
+  getViewUrl(
+    userId: string,
+    storagePath: string,
+  ): Promise<{ viewUrl: string; expiresAt: string; storagePath: string }>;
+}
+
+/** Wire shape for turn polling: images decorated with fresh signed URLs. */
+export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
+  calls: Array<
+    StudioCallRecord & {
+      image?: (StudioCallRecord["image"] & { viewUrl?: string }) | undefined;
+    }
+  >;
 }
 
 export interface StudioServiceDeps {
@@ -159,6 +172,39 @@ export class StudioService {
       throw new StudioNotFoundError("Studio turn");
     }
     return turn;
+  }
+
+  /**
+   * Turn for the polling route: stored images carry only storagePath, so a
+   * fresh signed viewUrl is minted per read. A minting failure degrades to
+   * an image without viewUrl (logged) rather than failing the poll.
+   */
+  async getTurnWithFreshUrls(
+    userId: string,
+    projectId: string,
+    turnId: string,
+  ): Promise<StudioTurnView> {
+    const turn = await this.getTurn(userId, projectId, turnId);
+    const calls = await Promise.all(
+      turn.calls.map(async (call) => {
+        if (!call.image) return call;
+        try {
+          const { viewUrl } = await this.storage.getViewUrl(
+            userId,
+            call.image.storagePath,
+          );
+          return { ...call, image: { ...call.image, viewUrl } };
+        } catch (error) {
+          this.log.warn("Failed to mint studio image view URL", {
+            storagePath: call.image.storagePath,
+            turnId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return call;
+        }
+      }),
+    );
+    return { ...turn, calls };
   }
 
   /**
