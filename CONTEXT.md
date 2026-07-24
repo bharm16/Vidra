@@ -120,6 +120,10 @@ The capability under test in the sketch spike: the creator draws on the sketchpa
 
 The realtime sketch's own page: an infinite pannable/zoomable plane (the shared canvas camera) holding the editor pair — sketchpad and live output — with the floating chrome fixed to the screen. A first-class rail destination directly under Library. Not the space: it has no lineage, no takes, one editor object, and an ephemeral camera. The select tool pans the plane; brush and eraser strokes never do. Resolved 2026-07-09 during live-editor-surface grilling. Avoid synonyms: sketch page, canvas page, board, node editor.
 
+### Page (live editor)
+
+The sketchpad's drawing surface, which **is** the generation frame — same shape and same size, derived from it rather than chosen ([ADR-0018](docs/adr/0018-the-live-editor-page-is-the-generation-frame.md)). Sizing the page independently stretches the bitmap and shrinks every subject inside the frame, which reads as a model-quality regression rather than a layout bug. A bigger surface is the plane's zoom, never a bigger page. Resolved 2026-07-24 diagnosing the stretched-canvas regression. Avoid synonyms: sketch panel, canvas size, drawing area.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs
