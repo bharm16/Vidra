@@ -10,7 +10,7 @@
   height: 100%;
   overflow: hidden;
   background: #0b0c0f;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: "Space Grotesk", system-ui, sans-serif;
   color: #f2f3f6;
 }
 
@@ -76,10 +76,51 @@
   align-items: center;
   justify-content: center;
   font:
-    400 14px 'Space Grotesk',
+    400 14px "Space Grotesk",
     system-ui,
     sans-serif;
   color: rgba(255, 255, 255, 0.28);
+}
+
+/* Failure surface. Deliberately the one place the chrome breaks monochrome:
+   a creator whose frames are dying must read it as a problem, not decor. */
+.le-error {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(28, 20, 18, 0.92);
+  border: 1px solid rgba(214, 129, 92, 0.32);
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.9);
+}
+
+.le-error-centered {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+
+.le-error-title {
+  font:
+    500 13px "Space Grotesk",
+    system-ui,
+    sans-serif;
+  color: #e4a184;
+}
+
+.le-error-detail {
+  font:
+    400 12.5px "Space Grotesk",
+    system-ui,
+    sans-serif;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.62);
+  overflow-wrap: anywhere;
 }
 
 .le-float {
@@ -254,7 +295,7 @@
 
 .le-strength-value {
   font:
-    500 13px 'Space Grotesk',
+    500 13px "Space Grotesk",
     system-ui,
     sans-serif;
   color: #f2f3f6;
@@ -290,7 +331,7 @@
   outline: none;
   background: transparent;
   font:
-    400 17px 'Space Grotesk',
+    400 17px "Space Grotesk",
     system-ui,
     sans-serif;
   color: #f4f5f7;
@@ -324,7 +365,7 @@
   background: rgba(255, 255, 255, 0.1);
   color: #f2f3f6;
   font:
-    500 13px 'Space Grotesk',
+    500 13px "Space Grotesk",
     system-ui,
     sans-serif;
   cursor: pointer;

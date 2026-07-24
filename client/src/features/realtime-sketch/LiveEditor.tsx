@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import { CanvasViewport } from "@/components/canvas/CanvasViewport";
+import { cn } from "@/utils/cn";
 import { NavRail } from "@components/navigation/NavRail";
 
 import { Composer } from "./components/Composer";
@@ -66,8 +67,10 @@ export function LiveEditor({
   }, [openPopover]);
 
   // The HUD left the product surface (per the handoff); the spike's
-  // diagnostics live in the console instead.
+  // diagnostics live in the console instead. The one exception is the last
+  // error — a creator whose frames are failing is told in the editor.
   const stats = sketch.state.stats;
+  const lastError = stats.lastError;
   useEffect(() => {
     if (stats.sent === 0 && stats.lastError === null) {
       return;
@@ -103,17 +106,34 @@ export function LiveEditor({
               />
             </div>
             <div className="le-panel-output">
-              {sketch.state.liveOutput === null ? (
-                <div className="le-output-empty">
-                  Draw on the sketchpad — the render tracks your strokes.
-                </div>
-              ) : (
+              {sketch.state.liveOutput === null ? null : (
                 <img
                   className="le-output-img"
                   src={sketch.state.liveOutput.imageUrl}
                   alt="Generated frame"
                 />
               )}
+              {/* A failing relay must never look like an untouched sketchpad:
+                  the idle invitation yields to the reason frames are dying.
+                  (The handoff dropped the STATS readout — not error state.) */}
+              {lastError !== null ? (
+                <div
+                  className={cn(
+                    "le-error",
+                    sketch.state.liveOutput === null && "le-error-centered",
+                  )}
+                  data-testid="live-editor-error"
+                >
+                  <span className="le-error-title">
+                    Frames aren&rsquo;t rendering
+                  </span>
+                  <span className="le-error-detail">{lastError.message}</span>
+                </div>
+              ) : sketch.state.liveOutput === null ? (
+                <div className="le-output-empty">
+                  Draw on the sketchpad — the render tracks your strokes.
+                </div>
+              ) : null}
             </div>
           </div>
         </CanvasViewport>
