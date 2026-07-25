@@ -206,11 +206,20 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
           .join("\n"),
     );
 
-    sections.push(
-      context.pinnedModel
-        ? `## ACTIVE MODEL\n\nThe user pinned **${context.pinnedModel.slug}** (capabilities: ${context.pinnedModel.capabilities.join(", ")}). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 7 (negotiate) — never silently reroute.`
-        : "## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.",
-    );
+    if (context.pinnedModel) {
+      const pin = context.pinnedModel;
+      const cannotEdit = !pin.capabilities.includes("edit");
+      sections.push(
+        `## ACTIVE MODEL\n\nThe user pinned **${pin.slug}** (capabilities: ${pin.capabilities.join(", ")}). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 7 (negotiate) — never silently reroute.` +
+          (cannotEdit
+            ? `\n\nIMPORTANT: ${pin.slug} takes no image input — it CANNOT edit or modify existing images. Any request to change, adjust, or add to an existing image MUST be answered with a \`negotiate\` decision (state that ${pin.slug} cannot edit; offer options — first option label ends with " (Recommended)"). Never respond with an edit action while this pin is active.`
+            : ""),
+      );
+    } else {
+      sections.push(
+        "## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.",
+      );
+    }
 
     const unavailable = ALL_ACTIONS.filter(
       (action) => !context.allowedActions.includes(action),

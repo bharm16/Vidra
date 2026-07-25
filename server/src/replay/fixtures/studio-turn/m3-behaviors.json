@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "surface": "studio-turn",
   "scenario": "m3-behaviors",
-  "recordedAt": "2026-07-25T02:50:16.495Z",
+  "recordedAt": "2026-07-25T03:24:36.800Z",
   "entries": [
     {
       "seam": "ai-model",
@@ -16,14 +16,14 @@
         "stream": false
       },
       "response": {
-        "text": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Business\",\"Personal\",\"Event\",\"Product\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalist\",\"Illustrative\"]}]}",
+        "text": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Text-based logo\",\"Icon-based logo\",\"Combination of text and icon\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalistic\"]}]}",
         "metadata": {
           "usage": {
             "prompt_tokens": 1655,
-            "completion_tokens": 58,
-            "total_tokens": 1713,
+            "completion_tokens": 61,
+            "total_tokens": 1716,
             "prompt_tokens_details": {
-              "cached_tokens": 0,
+              "cached_tokens": 1536,
               "audio_tokens": 0
             },
             "completion_tokens_details": {
@@ -34,16 +34,16 @@
             }
           },
           "raw": {
-            "id": "chatcmpl-E5Mkp3hCMg8X6Uca1FxOLtQKPag0t",
+            "id": "chatcmpl-E5NI38T32nuvF0oJpdp3GFLNErsOR",
             "object": "chat.completion",
-            "created": 1784947815,
+            "created": 1784949875,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Business\",\"Personal\",\"Event\",\"Product\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalist\",\"Illustrative\"]}]}",
+                  "content": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Text-based logo\",\"Icon-based logo\",\"Combination of text and icon\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalistic\"]}]}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -53,10 +53,10 @@
             ],
             "usage": {
               "prompt_tokens": 1655,
-              "completion_tokens": 58,
-              "total_tokens": 1713,
+              "completion_tokens": 61,
+              "total_tokens": 1716,
               "prompt_tokens_details": {
-                "cached_tokens": 0,
+                "cached_tokens": 1536,
                 "audio_tokens": 0
               },
               "completion_tokens_details": {
@@ -70,16 +70,16 @@
             "system_fingerprint": "fp_8516364442"
           },
           "_original": {
-            "id": "chatcmpl-E5Mkp3hCMg8X6Uca1FxOLtQKPag0t",
+            "id": "chatcmpl-E5NI38T32nuvF0oJpdp3GFLNErsOR",
             "object": "chat.completion",
-            "created": 1784947815,
+            "created": 1784949875,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Business\",\"Personal\",\"Event\",\"Product\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalist\",\"Illustrative\"]}]}",
+                  "content": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Text-based logo\",\"Icon-based logo\",\"Combination of text and icon\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalistic\"]}]}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -89,10 +89,10 @@
             ],
             "usage": {
               "prompt_tokens": 1655,
-              "completion_tokens": 58,
-              "total_tokens": 1713,
+              "completion_tokens": 61,
+              "total_tokens": 1716,
               "prompt_tokens_details": {
-                "cached_tokens": 0,
+                "cached_tokens": 1536,
                 "audio_tokens": 0
               },
               "completion_tokens_details": {
@@ -106,11 +106,13 @@
             "system_fingerprint": "fp_8516364442"
           },
           "provider": "openai",
-          "optimizations": ["bookending"],
+          "optimizations": [
+            "bookending"
+          ],
           "model": "gpt-4o-mini-2024-07-18",
           "finishReason": "stop",
           "systemFingerprint": "fp_8516364442",
-          "requestId": "chatcmpl-E5Mkp3hCMg8X6Uca1FxOLtQKPag0t",
+          "requestId": "chatcmpl-E5NI38T32nuvF0oJpdp3GFLNErsOR",
           "validation": {
             "isValid": true,
             "errors": [],
@@ -125,20 +127,23 @@
               "questions": [
                 {
                   "text": "What type of logo do you need?",
-                  "quickPicks": ["Business", "Personal", "Event", "Product"]
+                  "quickPicks": [
+                    "Text-based logo",
+                    "Icon-based logo",
+                    "Combination of text and icon"
+                  ]
                 },
                 {
                   "text": "What style do you prefer?",
                   "quickPicks": [
                     "Modern",
                     "Vintage",
-                    "Minimalist",
-                    "Illustrative"
+                    "Minimalistic"
                   ]
                 }
               ]
             },
-            "cleanedText": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Business\",\"Personal\",\"Event\",\"Product\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalist\",\"Illustrative\"]}]}"
+            "cleanedText": "{\"action\":\"clarify\",\"questions\":[{\"text\":\"What type of logo do you need?\",\"quickPicks\":[\"Text-based logo\",\"Icon-based logo\",\"Combination of text and icon\"]},{\"text\":\"What style do you prefer?\",\"quickPicks\":[\"Modern\",\"Vintage\",\"Minimalistic\"]}]}"
           }
         }
       }
@@ -155,12 +160,12 @@
         "stream": false
       },
       "response": {
-        "text": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized geometric fox head with angular shapes, using warm orange for the fox and a brown background, suitable for an app icon.\",\"A sleek geometric fox silhouette with a gradient of warm orange and brown, designed to be eye-catching and simple for a coffee brand.\",\"A modern flat design of a fox with clean lines, incorporating warm orange and brown tones, emphasizing legibility and minimalism.\",\"A playful geometric fox logo with a round shape, utilizing a warm orange and brown palette, crafted for visibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Add a coffee element to the logo\",\"Make the logo more abstract\"],\"title\":\"Ember & Oak Fox Logo\"}",
+        "text": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized fox silhouette with geometric shapes, using warm orange and brown colors for a coffee brand logo.\",\"An abstract representation of a fox's face, employing simple geometric forms and a flat design, suitable for app-icon size.\",\"A playful, minimalist fox logo with sharp angles, integrating warm orange and brown tones, ideal for a coffee brand identity.\",\"A sleek and modern geometric fox logo showcasing a balance of warm orange and brown hues, designed for legibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the fox more abstract\",\"Add text elements with the brand name\"],\"title\":\"Ember & Oak Fox Logo\"}",
         "metadata": {
           "usage": {
             "prompt_tokens": 1683,
-            "completion_tokens": 194,
-            "total_tokens": 1877,
+            "completion_tokens": 184,
+            "total_tokens": 1867,
             "prompt_tokens_details": {
               "cached_tokens": 1536,
               "audio_tokens": 0
@@ -173,16 +178,16 @@
             }
           },
           "raw": {
-            "id": "chatcmpl-E5MkqkahzmScNmop8DmTW8rZLQ7xR",
+            "id": "chatcmpl-E5NI5fLkz2Fz3vUe7m2LO4TqIWIC2",
             "object": "chat.completion",
-            "created": 1784947816,
+            "created": 1784949877,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized geometric fox head with angular shapes, using warm orange for the fox and a brown background, suitable for an app icon.\",\"A sleek geometric fox silhouette with a gradient of warm orange and brown, designed to be eye-catching and simple for a coffee brand.\",\"A modern flat design of a fox with clean lines, incorporating warm orange and brown tones, emphasizing legibility and minimalism.\",\"A playful geometric fox logo with a round shape, utilizing a warm orange and brown palette, crafted for visibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Add a coffee element to the logo\",\"Make the logo more abstract\"],\"title\":\"Ember & Oak Fox Logo\"}",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized fox silhouette with geometric shapes, using warm orange and brown colors for a coffee brand logo.\",\"An abstract representation of a fox's face, employing simple geometric forms and a flat design, suitable for app-icon size.\",\"A playful, minimalist fox logo with sharp angles, integrating warm orange and brown tones, ideal for a coffee brand identity.\",\"A sleek and modern geometric fox logo showcasing a balance of warm orange and brown hues, designed for legibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the fox more abstract\",\"Add text elements with the brand name\"],\"title\":\"Ember & Oak Fox Logo\"}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -192,8 +197,8 @@
             ],
             "usage": {
               "prompt_tokens": 1683,
-              "completion_tokens": 194,
-              "total_tokens": 1877,
+              "completion_tokens": 184,
+              "total_tokens": 1867,
               "prompt_tokens_details": {
                 "cached_tokens": 1536,
                 "audio_tokens": 0
@@ -209,16 +214,16 @@
             "system_fingerprint": "fp_8516364442"
           },
           "_original": {
-            "id": "chatcmpl-E5MkqkahzmScNmop8DmTW8rZLQ7xR",
+            "id": "chatcmpl-E5NI5fLkz2Fz3vUe7m2LO4TqIWIC2",
             "object": "chat.completion",
-            "created": 1784947816,
+            "created": 1784949877,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized geometric fox head with angular shapes, using warm orange for the fox and a brown background, suitable for an app icon.\",\"A sleek geometric fox silhouette with a gradient of warm orange and brown, designed to be eye-catching and simple for a coffee brand.\",\"A modern flat design of a fox with clean lines, incorporating warm orange and brown tones, emphasizing legibility and minimalism.\",\"A playful geometric fox logo with a round shape, utilizing a warm orange and brown palette, crafted for visibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Add a coffee element to the logo\",\"Make the logo more abstract\"],\"title\":\"Ember & Oak Fox Logo\"}",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized fox silhouette with geometric shapes, using warm orange and brown colors for a coffee brand logo.\",\"An abstract representation of a fox's face, employing simple geometric forms and a flat design, suitable for app-icon size.\",\"A playful, minimalist fox logo with sharp angles, integrating warm orange and brown tones, ideal for a coffee brand identity.\",\"A sleek and modern geometric fox logo showcasing a balance of warm orange and brown hues, designed for legibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the fox more abstract\",\"Add text elements with the brand name\"],\"title\":\"Ember & Oak Fox Logo\"}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -228,8 +233,8 @@
             ],
             "usage": {
               "prompt_tokens": 1683,
-              "completion_tokens": 194,
-              "total_tokens": 1877,
+              "completion_tokens": 184,
+              "total_tokens": 1867,
               "prompt_tokens_details": {
                 "cached_tokens": 1536,
                 "audio_tokens": 0
@@ -245,11 +250,292 @@
             "system_fingerprint": "fp_8516364442"
           },
           "provider": "openai",
-          "optimizations": ["bookending"],
+          "optimizations": [
+            "bookending"
+          ],
           "model": "gpt-4o-mini-2024-07-18",
           "finishReason": "stop",
           "systemFingerprint": "fp_8516364442",
-          "requestId": "chatcmpl-E5MkqkahzmScNmop8DmTW8rZLQ7xR",
+          "requestId": "chatcmpl-E5NI5fLkz2Fz3vUe7m2LO4TqIWIC2",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": {
+              "action": "generate",
+              "basePrompt": "A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown palette, ensuring it remains legible at app-icon size.",
+              "variants": [
+                "A stylized fox silhouette with geometric shapes, using warm orange and brown colors for a coffee brand logo.",
+                "An abstract representation of a fox's face, employing simple geometric forms and a flat design, suitable for app-icon size.",
+                "A playful, minimalist fox logo with sharp angles, integrating warm orange and brown tones, ideal for a coffee brand identity.",
+                "A sleek and modern geometric fox logo showcasing a balance of warm orange and brown hues, designed for legibility at small sizes."
+              ],
+              "capability": "svg",
+              "suggestions": [
+                "Try a different color palette",
+                "Make the fox more abstract",
+                "Add text elements with the brand name"
+              ],
+              "title": "Ember & Oak Fox Logo"
+            },
+            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized fox silhouette with geometric shapes, using warm orange and brown colors for a coffee brand logo.\",\"An abstract representation of a fox's face, employing simple geometric forms and a flat design, suitable for app-icon size.\",\"A playful, minimalist fox logo with sharp angles, integrating warm orange and brown tones, ideal for a coffee brand identity.\",\"A sleek and modern geometric fox logo showcasing a balance of warm orange and brown hues, designed for legibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the fox more abstract\",\"Add text elements with the brand name\"],\"title\":\"Ember & Oak Fox Logo\"}"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:ad0dd339bac361d7df04b3f91a52603826931ca0805b6173e5e3eeaec8e7eb8a",
+      "contract": "llm-text",
+      "request": {
+        "operation": "studio_turn",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: none.\n\n## NEW USER MESSAGE\n\nmake it more playful",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful design\",\"variants\":[\"Whimsical fox logo with exaggerated features, using playful shapes and bright colors, maintaining legibility at app-icon size.\",\"Cartoon-style fox logo with a friendly expression, incorporating playful curves and a vibrant orange-brown palette, flat vector design.\",\"Fun and lively geometric fox logo with a wagging tail, integrating playful elements while ensuring clarity at app-icon dimensions.\",\"Stylized fox jumping playfully, using a mix of warm orange and brown colors in a flat vector style, designed for high legibility as an app icon.\"],\"capability\":\"svg\",\"suggestions\":[\"Add a playful font for the wordmark\",\"Experiment with a brighter color palette\",\"Include a coffee cup element in the design\"]}",
+        "metadata": {
+          "usage": {
+            "prompt_tokens": 1919,
+            "completion_tokens": 177,
+            "total_tokens": 2096,
+            "prompt_tokens_details": {
+              "cached_tokens": 1792,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "raw": {
+            "id": "chatcmpl-E5NI8aiZ3nn71rOvkzueHVAakbVgp",
+            "object": "chat.completion",
+            "created": 1784949880,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful design\",\"variants\":[\"Whimsical fox logo with exaggerated features, using playful shapes and bright colors, maintaining legibility at app-icon size.\",\"Cartoon-style fox logo with a friendly expression, incorporating playful curves and a vibrant orange-brown palette, flat vector design.\",\"Fun and lively geometric fox logo with a wagging tail, integrating playful elements while ensuring clarity at app-icon dimensions.\",\"Stylized fox jumping playfully, using a mix of warm orange and brown colors in a flat vector style, designed for high legibility as an app icon.\"],\"capability\":\"svg\",\"suggestions\":[\"Add a playful font for the wordmark\",\"Experiment with a brighter color palette\",\"Include a coffee cup element in the design\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1919,
+              "completion_tokens": 177,
+              "total_tokens": 2096,
+              "prompt_tokens_details": {
+                "cached_tokens": 1792,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "_original": {
+            "id": "chatcmpl-E5NI8aiZ3nn71rOvkzueHVAakbVgp",
+            "object": "chat.completion",
+            "created": 1784949880,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful design\",\"variants\":[\"Whimsical fox logo with exaggerated features, using playful shapes and bright colors, maintaining legibility at app-icon size.\",\"Cartoon-style fox logo with a friendly expression, incorporating playful curves and a vibrant orange-brown palette, flat vector design.\",\"Fun and lively geometric fox logo with a wagging tail, integrating playful elements while ensuring clarity at app-icon dimensions.\",\"Stylized fox jumping playfully, using a mix of warm orange and brown colors in a flat vector style, designed for high legibility as an app icon.\"],\"capability\":\"svg\",\"suggestions\":[\"Add a playful font for the wordmark\",\"Experiment with a brighter color palette\",\"Include a coffee cup element in the design\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1919,
+              "completion_tokens": 177,
+              "total_tokens": 2096,
+              "prompt_tokens_details": {
+                "cached_tokens": 1792,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "provider": "openai",
+          "optimizations": [
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
+          "finishReason": "stop",
+          "systemFingerprint": "fp_8516364442",
+          "requestId": "chatcmpl-E5NI8aiZ3nn71rOvkzueHVAakbVgp",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": {
+              "action": "generate",
+              "basePrompt": "Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful design",
+              "variants": [
+                "Whimsical fox logo with exaggerated features, using playful shapes and bright colors, maintaining legibility at app-icon size.",
+                "Cartoon-style fox logo with a friendly expression, incorporating playful curves and a vibrant orange-brown palette, flat vector design.",
+                "Fun and lively geometric fox logo with a wagging tail, integrating playful elements while ensuring clarity at app-icon dimensions.",
+                "Stylized fox jumping playfully, using a mix of warm orange and brown colors in a flat vector style, designed for high legibility as an app icon."
+              ],
+              "capability": "svg",
+              "suggestions": [
+                "Add a playful font for the wordmark",
+                "Experiment with a brighter color palette",
+                "Include a coffee cup element in the design"
+              ]
+            },
+            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful design\",\"variants\":[\"Whimsical fox logo with exaggerated features, using playful shapes and bright colors, maintaining legibility at app-icon size.\",\"Cartoon-style fox logo with a friendly expression, incorporating playful curves and a vibrant orange-brown palette, flat vector design.\",\"Fun and lively geometric fox logo with a wagging tail, integrating playful elements while ensuring clarity at app-icon dimensions.\",\"Stylized fox jumping playfully, using a mix of warm orange and brown colors in a flat vector style, designed for high legibility as an app icon.\"],\"capability\":\"svg\",\"suggestions\":[\"Add a playful font for the wordmark\",\"Experiment with a brighter color palette\",\"Include a coffee cup element in the design\"]}"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:a6fd5b820a9f677060db81d5b439cd4a9e6e364b18ebf8bde9cfdcebc7b265bd",
+      "contract": "llm-text",
+      "request": {
+        "operation": "studio_turn",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nThe user pinned **recraft-v4.1-pro** (capabilities: design, general). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 7 (negotiate) — never silently reroute.\n\nIMPORTANT: recraft-v4.1-pro takes no image input — it CANNOT edit or modify existing images. Any request to change, adjust, or add to an existing image MUST be answered with a `negotiate` decision (state that recraft-v4.1-pro cannot edit; offer options — first option label ends with \" (Recommended)\"). Never respond with an edit action while this pin is active.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: clarify, generate, diagnose, negotiate. The following actions are NOT available this turn: edit, transform.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## PROJECT STATE\nProject title: Untitled — include `title` in your next generate decision.\nWorking basePrompt: (none yet — no generation has run)\nImages in this project: none yet.\nSelected image: none.\n\n## NEW USER MESSAGE\n\nA minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A sleek, abstract fox silhouette with angular shapes, incorporating warm orange and brown colors, suitable for an app icon.\",\"A stylized fox head formed by simple geometric shapes, using a combination of warm orange and brown, designed to be easily recognizable.\",\"A modern, flat vector fox logo with a focus on geometric patterns, featuring a warm palette of orange and brown, optimized for small sizes.\",\"An elegant geometric representation of a fox, utilizing a warm orange and brown color scheme, designed for clarity at app-icon dimensions.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the design more intricate\",\"Create a version with a coffee cup element\"],\"title\":\"Ember & Oak Fox Logo\"}",
+        "metadata": {
+          "usage": {
+            "prompt_tokens": 1800,
+            "completion_tokens": 194,
+            "total_tokens": 1994,
+            "prompt_tokens_details": {
+              "cached_tokens": 1536,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "raw": {
+            "id": "chatcmpl-E5NIBqf1DFPylfZNHTqNNMfZ7SZ3Q",
+            "object": "chat.completion",
+            "created": 1784949883,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A sleek, abstract fox silhouette with angular shapes, incorporating warm orange and brown colors, suitable for an app icon.\",\"A stylized fox head formed by simple geometric shapes, using a combination of warm orange and brown, designed to be easily recognizable.\",\"A modern, flat vector fox logo with a focus on geometric patterns, featuring a warm palette of orange and brown, optimized for small sizes.\",\"An elegant geometric representation of a fox, utilizing a warm orange and brown color scheme, designed for clarity at app-icon dimensions.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the design more intricate\",\"Create a version with a coffee cup element\"],\"title\":\"Ember & Oak Fox Logo\"}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1800,
+              "completion_tokens": 194,
+              "total_tokens": 1994,
+              "prompt_tokens_details": {
+                "cached_tokens": 1536,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "_original": {
+            "id": "chatcmpl-E5NIBqf1DFPylfZNHTqNNMfZ7SZ3Q",
+            "object": "chat.completion",
+            "created": 1784949883,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A sleek, abstract fox silhouette with angular shapes, incorporating warm orange and brown colors, suitable for an app icon.\",\"A stylized fox head formed by simple geometric shapes, using a combination of warm orange and brown, designed to be easily recognizable.\",\"A modern, flat vector fox logo with a focus on geometric patterns, featuring a warm palette of orange and brown, optimized for small sizes.\",\"An elegant geometric representation of a fox, utilizing a warm orange and brown color scheme, designed for clarity at app-icon dimensions.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the design more intricate\",\"Create a version with a coffee cup element\"],\"title\":\"Ember & Oak Fox Logo\"}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1800,
+              "completion_tokens": 194,
+              "total_tokens": 1994,
+              "prompt_tokens_details": {
+                "cached_tokens": 1536,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "provider": "openai",
+          "optimizations": [
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
+          "finishReason": "stop",
+          "systemFingerprint": "fp_8516364442",
+          "requestId": "chatcmpl-E5NIBqf1DFPylfZNHTqNNMfZ7SZ3Q",
           "validation": {
             "isValid": true,
             "errors": [],
@@ -263,44 +549,44 @@
               "action": "generate",
               "basePrompt": "A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.",
               "variants": [
-                "A stylized geometric fox head with angular shapes, using warm orange for the fox and a brown background, suitable for an app icon.",
-                "A sleek geometric fox silhouette with a gradient of warm orange and brown, designed to be eye-catching and simple for a coffee brand.",
-                "A modern flat design of a fox with clean lines, incorporating warm orange and brown tones, emphasizing legibility and minimalism.",
-                "A playful geometric fox logo with a round shape, utilizing a warm orange and brown palette, crafted for visibility at small sizes."
+                "A sleek, abstract fox silhouette with angular shapes, incorporating warm orange and brown colors, suitable for an app icon.",
+                "A stylized fox head formed by simple geometric shapes, using a combination of warm orange and brown, designed to be easily recognizable.",
+                "A modern, flat vector fox logo with a focus on geometric patterns, featuring a warm palette of orange and brown, optimized for small sizes.",
+                "An elegant geometric representation of a fox, utilizing a warm orange and brown color scheme, designed for clarity at app-icon dimensions."
               ],
               "capability": "svg",
               "suggestions": [
                 "Try a different color palette",
-                "Add a coffee element to the logo",
-                "Make the logo more abstract"
+                "Make the design more intricate",
+                "Create a version with a coffee cup element"
               ],
               "title": "Ember & Oak Fox Logo"
             },
-            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A stylized geometric fox head with angular shapes, using warm orange for the fox and a brown background, suitable for an app icon.\",\"A sleek geometric fox silhouette with a gradient of warm orange and brown, designed to be eye-catching and simple for a coffee brand.\",\"A modern flat design of a fox with clean lines, incorporating warm orange and brown tones, emphasizing legibility and minimalism.\",\"A playful geometric fox logo with a round shape, utilizing a warm orange and brown palette, crafted for visibility at small sizes.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Add a coffee element to the logo\",\"Make the logo more abstract\"],\"title\":\"Ember & Oak Fox Logo\"}"
+            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak, designed in a flat vector style. The logo features a warm orange and brown color palette, ensuring it remains legible at app-icon size.\",\"variants\":[\"A sleek, abstract fox silhouette with angular shapes, incorporating warm orange and brown colors, suitable for an app icon.\",\"A stylized fox head formed by simple geometric shapes, using a combination of warm orange and brown, designed to be easily recognizable.\",\"A modern, flat vector fox logo with a focus on geometric patterns, featuring a warm palette of orange and brown, optimized for small sizes.\",\"An elegant geometric representation of a fox, utilizing a warm orange and brown color scheme, designed for clarity at app-icon dimensions.\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color palette\",\"Make the design more intricate\",\"Create a version with a coffee cup element\"],\"title\":\"Ember & Oak Fox Logo\"}"
           }
         }
       }
     },
     {
       "seam": "ai-model",
-      "key": "ai-model:018bb184fd5226525e7bb3ab5fd16cdd343f21d3456282e4d3ecd6f7133cdbbe",
+      "key": "ai-model:e776f057b4c0623af03138c7d33f3425526807f9b6c21245cff198819e846f2e",
       "contract": "llm-text",
       "request": {
         "operation": "studio_turn",
-        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, diagnose, negotiate. The following actions are NOT available this turn: clarify, edit, transform. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
-        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: none.\n\n## NEW USER MESSAGE\n\nmake it more playful",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: img-fox-2 (source prompt: Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail)\n\n## NEW USER MESSAGE\n\nmake it bolder",
         "messages": null,
         "stream": false
       },
       "response": {
-        "text": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful style\",\"variants\":[\"Whimsical fox character with exaggerated features, flat vector, warm orange and brown tones, playful expression\",\"Cartoon-style fox with a coffee cup, vibrant colors, flat vector, friendly and inviting look\",\"Stylized fox jumping playfully, incorporating coffee elements, flat vector, warm autumn colors\",\"Fun fox logo with a smiling face and oversized ears, flat vector, lively and cheerful design\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color scheme\",\"Make the fox more cartoonish\",\"Add playful elements like coffee cups or hearts\"]}",
+        "text": "{\"action\":\"edit\",\"instruction\":\"Make the fox face in the logo bolder and more defined while maintaining the two-tone orange and brown color scheme.\",\"sourceImageIds\":[\"img-fox-2\"],\"suggestions\":[\"Adjust the colors for more contrast\",\"Add an outline to the fox face\",\"Enhance the overall shape for visibility\"]}",
         "metadata": {
           "usage": {
-            "prompt_tokens": 1919,
-            "completion_tokens": 148,
-            "total_tokens": 2067,
+            "prompt_tokens": 1950,
+            "completion_tokens": 68,
+            "total_tokens": 2018,
             "prompt_tokens_details": {
-              "cached_tokens": 1408,
+              "cached_tokens": 1920,
               "audio_tokens": 0
             },
             "completion_tokens_details": {
@@ -311,16 +597,16 @@
             }
           },
           "raw": {
-            "id": "chatcmpl-E5MkuTZe59uNfzC0FRX6IVTGD1nxy",
+            "id": "chatcmpl-E5NIEetkvB4BVq4boK8pmb81FTIsl",
             "object": "chat.completion",
-            "created": 1784947820,
+            "created": 1784949886,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful style\",\"variants\":[\"Whimsical fox character with exaggerated features, flat vector, warm orange and brown tones, playful expression\",\"Cartoon-style fox with a coffee cup, vibrant colors, flat vector, friendly and inviting look\",\"Stylized fox jumping playfully, incorporating coffee elements, flat vector, warm autumn colors\",\"Fun fox logo with a smiling face and oversized ears, flat vector, lively and cheerful design\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color scheme\",\"Make the fox more cartoonish\",\"Add playful elements like coffee cups or hearts\"]}",
+                  "content": "{\"action\":\"edit\",\"instruction\":\"Make the fox face in the logo bolder and more defined while maintaining the two-tone orange and brown color scheme.\",\"sourceImageIds\":[\"img-fox-2\"],\"suggestions\":[\"Adjust the colors for more contrast\",\"Add an outline to the fox face\",\"Enhance the overall shape for visibility\"]}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -329,11 +615,11 @@
               }
             ],
             "usage": {
-              "prompt_tokens": 1919,
-              "completion_tokens": 148,
-              "total_tokens": 2067,
+              "prompt_tokens": 1950,
+              "completion_tokens": 68,
+              "total_tokens": 2018,
               "prompt_tokens_details": {
-                "cached_tokens": 1408,
+                "cached_tokens": 1920,
                 "audio_tokens": 0
               },
               "completion_tokens_details": {
@@ -347,16 +633,16 @@
             "system_fingerprint": "fp_8516364442"
           },
           "_original": {
-            "id": "chatcmpl-E5MkuTZe59uNfzC0FRX6IVTGD1nxy",
+            "id": "chatcmpl-E5NIEetkvB4BVq4boK8pmb81FTIsl",
             "object": "chat.completion",
-            "created": 1784947820,
+            "created": 1784949886,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful style\",\"variants\":[\"Whimsical fox character with exaggerated features, flat vector, warm orange and brown tones, playful expression\",\"Cartoon-style fox with a coffee cup, vibrant colors, flat vector, friendly and inviting look\",\"Stylized fox jumping playfully, incorporating coffee elements, flat vector, warm autumn colors\",\"Fun fox logo with a smiling face and oversized ears, flat vector, lively and cheerful design\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color scheme\",\"Make the fox more cartoonish\",\"Add playful elements like coffee cups or hearts\"]}",
+                  "content": "{\"action\":\"edit\",\"instruction\":\"Make the fox face in the logo bolder and more defined while maintaining the two-tone orange and brown color scheme.\",\"sourceImageIds\":[\"img-fox-2\"],\"suggestions\":[\"Adjust the colors for more contrast\",\"Add an outline to the fox face\",\"Enhance the overall shape for visibility\"]}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -365,11 +651,11 @@
               }
             ],
             "usage": {
-              "prompt_tokens": 1919,
-              "completion_tokens": 148,
-              "total_tokens": 2067,
+              "prompt_tokens": 1950,
+              "completion_tokens": 68,
+              "total_tokens": 2018,
               "prompt_tokens_details": {
-                "cached_tokens": 1408,
+                "cached_tokens": 1920,
                 "audio_tokens": 0
               },
               "completion_tokens_details": {
@@ -383,11 +669,148 @@
             "system_fingerprint": "fp_8516364442"
           },
           "provider": "openai",
-          "optimizations": ["bookending"],
+          "optimizations": [
+            "bookending"
+          ],
           "model": "gpt-4o-mini-2024-07-18",
           "finishReason": "stop",
           "systemFingerprint": "fp_8516364442",
-          "requestId": "chatcmpl-E5MkuTZe59uNfzC0FRX6IVTGD1nxy",
+          "requestId": "chatcmpl-E5NIEetkvB4BVq4boK8pmb81FTIsl",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": {
+              "action": "edit",
+              "instruction": "Make the fox face in the logo bolder and more defined while maintaining the two-tone orange and brown color scheme.",
+              "sourceImageIds": [
+                "img-fox-2"
+              ],
+              "suggestions": [
+                "Adjust the colors for more contrast",
+                "Add an outline to the fox face",
+                "Enhance the overall shape for visibility"
+              ]
+            },
+            "cleanedText": "{\"action\":\"edit\",\"instruction\":\"Make the fox face in the logo bolder and more defined while maintaining the two-tone orange and brown color scheme.\",\"sourceImageIds\":[\"img-fox-2\"],\"suggestions\":[\"Adjust the colors for more contrast\",\"Add an outline to the fox face\",\"Enhance the overall shape for visibility\"]}"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:c21d32c2e043ff2138059fb49154c44a04385aa9a44cd1f3d30c136ca5686065",
+      "contract": "llm-text",
+      "request": {
+        "operation": "studio_turn",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: img-fox-2 (source prompt: Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail)\n\n## NEW USER MESSAGE\n\ngive me more options like this one",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"action\":\"generate\",\"basePrompt\":\"Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\",\"variants\":[\"Stylized fox face integrated into a coffee cup silhouette, flat vector, warm tones of orange and brown, simple and clean design\",\"Abstract geometric fox face within a circular coffee bean, flat vector, using different shades of orange and brown for depth\",\"Negative-space design featuring a fox head within a steaming coffee cup, flat vector, warm color palette, maintaining minimalism\",\"Modern fox face entwined with coffee bean shapes, flat vector, using a combination of orange and brown hues, focusing on legibility\"],\"capability\":\"svg\",\"suggestions\":[\"Make it more detailed\",\"Change the colors\",\"Try a different shape\"]}",
+        "metadata": {
+          "usage": {
+            "prompt_tokens": 1953,
+            "completion_tokens": 158,
+            "total_tokens": 2111,
+            "prompt_tokens_details": {
+              "cached_tokens": 1920,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "raw": {
+            "id": "chatcmpl-E5NIF4rWZy4k6pdTb0mkyxLw6kCkf",
+            "object": "chat.completion",
+            "created": 1784949887,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\",\"variants\":[\"Stylized fox face integrated into a coffee cup silhouette, flat vector, warm tones of orange and brown, simple and clean design\",\"Abstract geometric fox face within a circular coffee bean, flat vector, using different shades of orange and brown for depth\",\"Negative-space design featuring a fox head within a steaming coffee cup, flat vector, warm color palette, maintaining minimalism\",\"Modern fox face entwined with coffee bean shapes, flat vector, using a combination of orange and brown hues, focusing on legibility\"],\"capability\":\"svg\",\"suggestions\":[\"Make it more detailed\",\"Change the colors\",\"Try a different shape\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1953,
+              "completion_tokens": 158,
+              "total_tokens": 2111,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "_original": {
+            "id": "chatcmpl-E5NIF4rWZy4k6pdTb0mkyxLw6kCkf",
+            "object": "chat.completion",
+            "created": 1784949887,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\",\"variants\":[\"Stylized fox face integrated into a coffee cup silhouette, flat vector, warm tones of orange and brown, simple and clean design\",\"Abstract geometric fox face within a circular coffee bean, flat vector, using different shades of orange and brown for depth\",\"Negative-space design featuring a fox head within a steaming coffee cup, flat vector, warm color palette, maintaining minimalism\",\"Modern fox face entwined with coffee bean shapes, flat vector, using a combination of orange and brown hues, focusing on legibility\"],\"capability\":\"svg\",\"suggestions\":[\"Make it more detailed\",\"Change the colors\",\"Try a different shape\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1953,
+              "completion_tokens": 158,
+              "total_tokens": 2111,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "provider": "openai",
+          "optimizations": [
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
+          "finishReason": "stop",
+          "systemFingerprint": "fp_8516364442",
+          "requestId": "chatcmpl-E5NIF4rWZy4k6pdTb0mkyxLw6kCkf",
           "validation": {
             "isValid": true,
             "errors": [],
@@ -399,43 +822,315 @@
             "hasPostamble": false,
             "parsed": {
               "action": "generate",
-              "basePrompt": "Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful style",
+              "basePrompt": "Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail",
               "variants": [
-                "Whimsical fox character with exaggerated features, flat vector, warm orange and brown tones, playful expression",
-                "Cartoon-style fox with a coffee cup, vibrant colors, flat vector, friendly and inviting look",
-                "Stylized fox jumping playfully, incorporating coffee elements, flat vector, warm autumn colors",
-                "Fun fox logo with a smiling face and oversized ears, flat vector, lively and cheerful design"
+                "Stylized fox face integrated into a coffee cup silhouette, flat vector, warm tones of orange and brown, simple and clean design",
+                "Abstract geometric fox face within a circular coffee bean, flat vector, using different shades of orange and brown for depth",
+                "Negative-space design featuring a fox head within a steaming coffee cup, flat vector, warm color palette, maintaining minimalism",
+                "Modern fox face entwined with coffee bean shapes, flat vector, using a combination of orange and brown hues, focusing on legibility"
               ],
               "capability": "svg",
               "suggestions": [
-                "Try a different color scheme",
-                "Make the fox more cartoonish",
-                "Add playful elements like coffee cups or hearts"
+                "Make it more detailed",
+                "Change the colors",
+                "Try a different shape"
               ]
             },
-            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible, playful style\",\"variants\":[\"Whimsical fox character with exaggerated features, flat vector, warm orange and brown tones, playful expression\",\"Cartoon-style fox with a coffee cup, vibrant colors, flat vector, friendly and inviting look\",\"Stylized fox jumping playfully, incorporating coffee elements, flat vector, warm autumn colors\",\"Fun fox logo with a smiling face and oversized ears, flat vector, lively and cheerful design\"],\"capability\":\"svg\",\"suggestions\":[\"Try a different color scheme\",\"Make the fox more cartoonish\",\"Add playful elements like coffee cups or hearts\"]}"
+            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\",\"variants\":[\"Stylized fox face integrated into a coffee cup silhouette, flat vector, warm tones of orange and brown, simple and clean design\",\"Abstract geometric fox face within a circular coffee bean, flat vector, using different shades of orange and brown for depth\",\"Negative-space design featuring a fox head within a steaming coffee cup, flat vector, warm color palette, maintaining minimalism\",\"Modern fox face entwined with coffee bean shapes, flat vector, using a combination of orange and brown hues, focusing on legibility\"],\"capability\":\"svg\",\"suggestions\":[\"Make it more detailed\",\"Change the colors\",\"Try a different shape\"]}"
           }
         }
       }
     },
     {
       "seam": "ai-model",
-      "key": "ai-model:293ddb5afcc1950f84c07b6166c438a2374be6b057933670e71445c5ed1a0e6e",
+      "key": "ai-model:70452ffaf4f93f0b5f22ae19b58e9a0e9be43989ccd8ce95435b90c2931977f1",
       "contract": "llm-text",
       "request": {
         "operation": "studio_turn",
-        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nThe user pinned **recraft-v4.1-pro** (capabilities: design, general). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 7 (negotiate) — never silently reroute.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: clarify, generate, diagnose, negotiate. The following actions are NOT available this turn: edit, transform.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
-        "userMessage": "## PROJECT STATE\nProject title: Untitled — include `title` in your next generate decision.\nWorking basePrompt: (none yet — no generation has run)\nImages in this project: none yet.\nSelected image: none.\n\n## NEW USER MESSAGE\n\nA minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: img-fox-2 (source prompt: Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail)\n\n## NEW USER MESSAGE\n\ntry a completely different concept",
         "messages": null,
         "stream": false
       },
       "response": {
-        "text": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak in a flat vector style, utilizing a warm orange and brown palette, designed to remain legible at app-icon size.\",\"variants\":[\"A geometric fox logo with sharp angles, featuring an orange and brown color scheme, designed for clarity at small sizes.\",\"A stylized fox silhouette composed of geometric shapes, using a warm palette of orange and brown, suitable for an app icon.\",\"A minimalist fox design with smooth curves and a flat vector style, incorporating warm orange and brown tones, ensuring legibility at smaller dimensions.\",\"An abstract representation of a fox in a geometric style, focusing on a warm color palette of orange and brown, crafted for app-icon visibility.\"],\"capability\":\"svg\",\"suggestions\":[\"Create a color variation\",\"Add a circular background\",\"Try a different fox pose\"],\"title\":\"Ember & Oak Fox Logo\"}",
+        "text": "{\"action\":\"generate\",\"basePrompt\":\"Creative reinterpretation of a fox logo for coffee brand Ember & Oak, exploring unique shapes and concepts beyond minimalism, using vibrant colors and innovative design elements, maintaining legibility for app-icon size.\",\"variants\":[\"Stylized fox silhouette with coffee elements, lively color palette, bold and engaging design\",\"Abstract representation of a fox intertwined with coffee leaves, dynamic shapes and bright colors\",\"Playful fox character holding a coffee cup, cartoonish style, vibrant and appealing for branding\",\"Geometric fox pattern with coffee beans integrated, colorful and eye-catching, suitable for modern branding\"],\"capability\":\"design\",\"suggestions\":[\"Explore a more playful style\",\"Incorporate different colors\",\"Add a coffee theme element\"]}",
         "metadata": {
           "usage": {
-            "prompt_tokens": 1716,
-            "completion_tokens": 185,
-            "total_tokens": 1901,
+            "prompt_tokens": 1951,
+            "completion_tokens": 148,
+            "total_tokens": 2099,
+            "prompt_tokens_details": {
+              "cached_tokens": 1920,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "raw": {
+            "id": "chatcmpl-E5NIIPAY8CRDiFR8d9ePuJaYfQobb",
+            "object": "chat.completion",
+            "created": 1784949890,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Creative reinterpretation of a fox logo for coffee brand Ember & Oak, exploring unique shapes and concepts beyond minimalism, using vibrant colors and innovative design elements, maintaining legibility for app-icon size.\",\"variants\":[\"Stylized fox silhouette with coffee elements, lively color palette, bold and engaging design\",\"Abstract representation of a fox intertwined with coffee leaves, dynamic shapes and bright colors\",\"Playful fox character holding a coffee cup, cartoonish style, vibrant and appealing for branding\",\"Geometric fox pattern with coffee beans integrated, colorful and eye-catching, suitable for modern branding\"],\"capability\":\"design\",\"suggestions\":[\"Explore a more playful style\",\"Incorporate different colors\",\"Add a coffee theme element\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1951,
+              "completion_tokens": 148,
+              "total_tokens": 2099,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "_original": {
+            "id": "chatcmpl-E5NIIPAY8CRDiFR8d9ePuJaYfQobb",
+            "object": "chat.completion",
+            "created": 1784949890,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"generate\",\"basePrompt\":\"Creative reinterpretation of a fox logo for coffee brand Ember & Oak, exploring unique shapes and concepts beyond minimalism, using vibrant colors and innovative design elements, maintaining legibility for app-icon size.\",\"variants\":[\"Stylized fox silhouette with coffee elements, lively color palette, bold and engaging design\",\"Abstract representation of a fox intertwined with coffee leaves, dynamic shapes and bright colors\",\"Playful fox character holding a coffee cup, cartoonish style, vibrant and appealing for branding\",\"Geometric fox pattern with coffee beans integrated, colorful and eye-catching, suitable for modern branding\"],\"capability\":\"design\",\"suggestions\":[\"Explore a more playful style\",\"Incorporate different colors\",\"Add a coffee theme element\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1951,
+              "completion_tokens": 148,
+              "total_tokens": 2099,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "provider": "openai",
+          "optimizations": [
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
+          "finishReason": "stop",
+          "systemFingerprint": "fp_8516364442",
+          "requestId": "chatcmpl-E5NIIPAY8CRDiFR8d9ePuJaYfQobb",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": {
+              "action": "generate",
+              "basePrompt": "Creative reinterpretation of a fox logo for coffee brand Ember & Oak, exploring unique shapes and concepts beyond minimalism, using vibrant colors and innovative design elements, maintaining legibility for app-icon size.",
+              "variants": [
+                "Stylized fox silhouette with coffee elements, lively color palette, bold and engaging design",
+                "Abstract representation of a fox intertwined with coffee leaves, dynamic shapes and bright colors",
+                "Playful fox character holding a coffee cup, cartoonish style, vibrant and appealing for branding",
+                "Geometric fox pattern with coffee beans integrated, colorful and eye-catching, suitable for modern branding"
+              ],
+              "capability": "design",
+              "suggestions": [
+                "Explore a more playful style",
+                "Incorporate different colors",
+                "Add a coffee theme element"
+              ]
+            },
+            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"Creative reinterpretation of a fox logo for coffee brand Ember & Oak, exploring unique shapes and concepts beyond minimalism, using vibrant colors and innovative design elements, maintaining legibility for app-icon size.\",\"variants\":[\"Stylized fox silhouette with coffee elements, lively color palette, bold and engaging design\",\"Abstract representation of a fox intertwined with coffee leaves, dynamic shapes and bright colors\",\"Playful fox character holding a coffee cup, cartoonish style, vibrant and appealing for branding\",\"Geometric fox pattern with coffee beans integrated, colorful and eye-catching, suitable for modern branding\"],\"capability\":\"design\",\"suggestions\":[\"Explore a more playful style\",\"Incorporate different colors\",\"Add a coffee theme element\"]}"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:8a108c91d30c5c99a015d640dfff25830596ed07c8cffa383c279f085990ef73",
+      "contract": "llm-text",
+      "request": {
+        "operation": "studio_turn",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: none.\n\n## NEW USER MESSAGE\n\nI don't like any of these",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"action\":\"diagnose\",\"question\":\"What's wrong with the logos?\",\"quickPicks\":[\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]}",
+        "metadata": {
+          "usage": {
+            "prompt_tokens": 1921,
+            "completion_tokens": 29,
+            "total_tokens": 1950,
+            "prompt_tokens_details": {
+              "cached_tokens": 1792,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "raw": {
+            "id": "chatcmpl-E5NIKbp7go0fYEQxfFGsQlx0UuSEH",
+            "object": "chat.completion",
+            "created": 1784949892,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"diagnose\",\"question\":\"What's wrong with the logos?\",\"quickPicks\":[\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1921,
+              "completion_tokens": 29,
+              "total_tokens": 1950,
+              "prompt_tokens_details": {
+                "cached_tokens": 1792,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "_original": {
+            "id": "chatcmpl-E5NIKbp7go0fYEQxfFGsQlx0UuSEH",
+            "object": "chat.completion",
+            "created": 1784949892,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"diagnose\",\"question\":\"What's wrong with the logos?\",\"quickPicks\":[\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1921,
+              "completion_tokens": 29,
+              "total_tokens": 1950,
+              "prompt_tokens_details": {
+                "cached_tokens": 1792,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "provider": "openai",
+          "optimizations": [
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
+          "finishReason": "stop",
+          "systemFingerprint": "fp_8516364442",
+          "requestId": "chatcmpl-E5NIKbp7go0fYEQxfFGsQlx0UuSEH",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": {
+              "action": "diagnose",
+              "question": "What's wrong with the logos?",
+              "quickPicks": [
+                "Shape",
+                "Color",
+                "Layout",
+                "Overall feel"
+              ]
+            },
+            "cleanedText": "{\"action\":\"diagnose\",\"question\":\"What's wrong with the logos?\",\"quickPicks\":[\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]}"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:90836728a1c6620f71ec33e88ebbaad28441c204a991ae77bc29450a0f565129",
+      "contract": "llm-text",
+      "request": {
+        "operation": "studio_turn",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nThe user pinned **recraft-v4.1** (capabilities: design, general). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 7 (negotiate) — never silently reroute.\n\nIMPORTANT: recraft-v4.1 takes no image input — it CANNOT edit or modify existing images. Any request to change, adjust, or add to an existing image MUST be answered with a `negotiate` decision (state that recraft-v4.1 cannot edit; offer options — first option label ends with \" (Recommended)\"). Never respond with an edit action while this pin is active.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: img-fox-2 (source prompt: Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail)\n\n## NEW USER MESSAGE\n\nadd a steaming coffee cup next to the fox in the selected image",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"action\":\"negotiate\",\"reason\":\"recraft-v4.1 cannot edit existing images; it can only generate new ones.\",\"options\":[{\"label\":\"Generate a new version (Recommended)\",\"message\":\"Create a new logo featuring a negative-space fox face inside a rounded coffee-bean shape with a steaming coffee cup next to it.\"},{\"label\":\"Start from scratch\",\"message\":\"Create a new logo design for Ember & Oak.\"},{\"label\":\"Explore other options\",\"message\":\"Show me more variations of the current logo.\"}]}",
+        "metadata": {
+          "usage": {
+            "prompt_tokens": 2073,
+            "completion_tokens": 107,
+            "total_tokens": 2180,
             "prompt_tokens_details": {
               "cached_tokens": 1024,
               "audio_tokens": 0
@@ -448,16 +1143,16 @@
             }
           },
           "raw": {
-            "id": "chatcmpl-E5MkwqIFl849nWrb6nzyFtIxSE2aL",
+            "id": "chatcmpl-E5NIL36a1lqOLWZ3GC8OC39flsoxo",
             "object": "chat.completion",
-            "created": 1784947822,
+            "created": 1784949893,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak in a flat vector style, utilizing a warm orange and brown palette, designed to remain legible at app-icon size.\",\"variants\":[\"A geometric fox logo with sharp angles, featuring an orange and brown color scheme, designed for clarity at small sizes.\",\"A stylized fox silhouette composed of geometric shapes, using a warm palette of orange and brown, suitable for an app icon.\",\"A minimalist fox design with smooth curves and a flat vector style, incorporating warm orange and brown tones, ensuring legibility at smaller dimensions.\",\"An abstract representation of a fox in a geometric style, focusing on a warm color palette of orange and brown, crafted for app-icon visibility.\"],\"capability\":\"svg\",\"suggestions\":[\"Create a color variation\",\"Add a circular background\",\"Try a different fox pose\"],\"title\":\"Ember & Oak Fox Logo\"}",
+                  "content": "{\"action\":\"negotiate\",\"reason\":\"recraft-v4.1 cannot edit existing images; it can only generate new ones.\",\"options\":[{\"label\":\"Generate a new version (Recommended)\",\"message\":\"Create a new logo featuring a negative-space fox face inside a rounded coffee-bean shape with a steaming coffee cup next to it.\"},{\"label\":\"Start from scratch\",\"message\":\"Create a new logo design for Ember & Oak.\"},{\"label\":\"Explore other options\",\"message\":\"Show me more variations of the current logo.\"}]}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -466,9 +1161,9 @@
               }
             ],
             "usage": {
-              "prompt_tokens": 1716,
-              "completion_tokens": 185,
-              "total_tokens": 1901,
+              "prompt_tokens": 2073,
+              "completion_tokens": 107,
+              "total_tokens": 2180,
               "prompt_tokens_details": {
                 "cached_tokens": 1024,
                 "audio_tokens": 0
@@ -484,16 +1179,16 @@
             "system_fingerprint": "fp_8516364442"
           },
           "_original": {
-            "id": "chatcmpl-E5MkwqIFl849nWrb6nzyFtIxSE2aL",
+            "id": "chatcmpl-E5NIL36a1lqOLWZ3GC8OC39flsoxo",
             "object": "chat.completion",
-            "created": 1784947822,
+            "created": 1784949893,
             "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak in a flat vector style, utilizing a warm orange and brown palette, designed to remain legible at app-icon size.\",\"variants\":[\"A geometric fox logo with sharp angles, featuring an orange and brown color scheme, designed for clarity at small sizes.\",\"A stylized fox silhouette composed of geometric shapes, using a warm palette of orange and brown, suitable for an app icon.\",\"A minimalist fox design with smooth curves and a flat vector style, incorporating warm orange and brown tones, ensuring legibility at smaller dimensions.\",\"An abstract representation of a fox in a geometric style, focusing on a warm color palette of orange and brown, crafted for app-icon visibility.\"],\"capability\":\"svg\",\"suggestions\":[\"Create a color variation\",\"Add a circular background\",\"Try a different fox pose\"],\"title\":\"Ember & Oak Fox Logo\"}",
+                  "content": "{\"action\":\"negotiate\",\"reason\":\"recraft-v4.1 cannot edit existing images; it can only generate new ones.\",\"options\":[{\"label\":\"Generate a new version (Recommended)\",\"message\":\"Create a new logo featuring a negative-space fox face inside a rounded coffee-bean shape with a steaming coffee cup next to it.\"},{\"label\":\"Start from scratch\",\"message\":\"Create a new logo design for Ember & Oak.\"},{\"label\":\"Explore other options\",\"message\":\"Show me more variations of the current logo.\"}]}",
                   "refusal": null,
                   "annotations": []
                 },
@@ -502,9 +1197,9 @@
               }
             ],
             "usage": {
-              "prompt_tokens": 1716,
-              "completion_tokens": 185,
-              "total_tokens": 1901,
+              "prompt_tokens": 2073,
+              "completion_tokens": 107,
+              "total_tokens": 2180,
               "prompt_tokens_details": {
                 "cached_tokens": 1024,
                 "audio_tokens": 0
@@ -520,11 +1215,13 @@
             "system_fingerprint": "fp_8516364442"
           },
           "provider": "openai",
-          "optimizations": ["bookending"],
+          "optimizations": [
+            "bookending"
+          ],
           "model": "gpt-4o-mini-2024-07-18",
           "finishReason": "stop",
           "systemFingerprint": "fp_8516364442",
-          "requestId": "chatcmpl-E5MkwqIFl849nWrb6nzyFtIxSE2aL",
+          "requestId": "chatcmpl-E5NIL36a1lqOLWZ3GC8OC39flsoxo",
           "validation": {
             "isValid": true,
             "errors": [],
@@ -535,23 +1232,157 @@
             "hasPreamble": false,
             "hasPostamble": false,
             "parsed": {
-              "action": "generate",
-              "basePrompt": "A minimal geometric fox logo for a coffee brand called Ember & Oak in a flat vector style, utilizing a warm orange and brown palette, designed to remain legible at app-icon size.",
-              "variants": [
-                "A geometric fox logo with sharp angles, featuring an orange and brown color scheme, designed for clarity at small sizes.",
-                "A stylized fox silhouette composed of geometric shapes, using a warm palette of orange and brown, suitable for an app icon.",
-                "A minimalist fox design with smooth curves and a flat vector style, incorporating warm orange and brown tones, ensuring legibility at smaller dimensions.",
-                "An abstract representation of a fox in a geometric style, focusing on a warm color palette of orange and brown, crafted for app-icon visibility."
-              ],
-              "capability": "svg",
-              "suggestions": [
-                "Create a color variation",
-                "Add a circular background",
-                "Try a different fox pose"
-              ],
-              "title": "Ember & Oak Fox Logo"
+              "action": "negotiate",
+              "reason": "recraft-v4.1 cannot edit existing images; it can only generate new ones.",
+              "options": [
+                {
+                  "label": "Generate a new version (Recommended)",
+                  "message": "Create a new logo featuring a negative-space fox face inside a rounded coffee-bean shape with a steaming coffee cup next to it."
+                },
+                {
+                  "label": "Start from scratch",
+                  "message": "Create a new logo design for Ember & Oak."
+                },
+                {
+                  "label": "Explore other options",
+                  "message": "Show me more variations of the current logo."
+                }
+              ]
             },
-            "cleanedText": "{\"action\":\"generate\",\"basePrompt\":\"A minimal geometric fox logo for a coffee brand called Ember & Oak in a flat vector style, utilizing a warm orange and brown palette, designed to remain legible at app-icon size.\",\"variants\":[\"A geometric fox logo with sharp angles, featuring an orange and brown color scheme, designed for clarity at small sizes.\",\"A stylized fox silhouette composed of geometric shapes, using a warm palette of orange and brown, suitable for an app icon.\",\"A minimalist fox design with smooth curves and a flat vector style, incorporating warm orange and brown tones, ensuring legibility at smaller dimensions.\",\"An abstract representation of a fox in a geometric style, focusing on a warm color palette of orange and brown, crafted for app-icon visibility.\"],\"capability\":\"svg\",\"suggestions\":[\"Create a color variation\",\"Add a circular background\",\"Try a different fox pose\"],\"title\":\"Ember & Oak Fox Logo\"}"
+            "cleanedText": "{\"action\":\"negotiate\",\"reason\":\"recraft-v4.1 cannot edit existing images; it can only generate new ones.\",\"options\":[{\"label\":\"Generate a new version (Recommended)\",\"message\":\"Create a new logo featuring a negative-space fox face inside a rounded coffee-bean shape with a steaming coffee cup next to it.\"},{\"label\":\"Start from scratch\",\"message\":\"Create a new logo design for Ember & Oak.\"},{\"label\":\"Explore other options\",\"message\":\"Show me more variations of the current logo.\"}]}"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:dfcb5e264ea30c37b6a6e563955386bf52d4a4d8421a4493c97e8319ca3d2cf1",
+      "contract": "llm-text",
+      "request": {
+        "operation": "studio_turn",
+        "systemPrompt": "# Studio conversation policy\n\nYou are the conversation policy for Studio, a conversational image generation and editing workspace. Each turn you read the conversation so far, the project state, and the user's newest message, then respond with EXACTLY ONE JSON decision object. You never call image models yourself — the server executes your decision. You never mention money, credits, or prices.\n\n## Decision actions\n\nRespond with one JSON object matching one of these shapes:\n\n- Ask before generating (only when the request is missing key information):\n  `{\"action\":\"clarify\",\"questions\":[{\"text\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\"]}]}`\n  At most 2 questions. Each question carries 3-4 short preset answers in quickPicks.\n\n- Generate 4 image variations from text:\n  `{\"action\":\"generate\",\"basePrompt\":\"...\",\"variants\":[\"...\",\"...\",\"...\",\"...\"],\"capability\":\"design\"|\"svg\"|\"general\",\"aspectRatio\":\"16:9\",\"suggestions\":[\"...\",\"...\",\"...\"],\"title\":\"...\"}`\n  REQUIRED fields: `basePrompt`, `variants` (exactly 4), `capability`, and `suggestions` (exactly 3, in this same object). Only `aspectRatio` and `title` are optional.\n\n- Edit an existing image (image + instruction into an edit-capable model):\n  `{\"action\":\"edit\",\"instruction\":\"...\",\"sourceImageIds\":[\"...\"],\"suggestions\":[\"...\",\"...\",\"...\"]}`\n  sourceImageIds must be image ids listed in PROJECT STATE.\n\n- Prompt-less utility on one existing image:\n  `{\"action\":\"transform\",\"operation\":\"remove_background\"|\"vectorize\",\"sourceImageId\":\"...\",\"suggestions\":[\"...\",\"...\",\"...\"]}`\n\n- Diagnose a rejection (the user dislikes the results):\n  `{\"action\":\"diagnose\",\"question\":\"...\",\"quickPicks\":[\"...\",\"...\",\"...\",\"...\"]}`\n\n- Negotiate an incapable pinned model:\n  `{\"action\":\"negotiate\",\"reason\":\"...\",\"options\":[{\"label\":\"...\",\"message\":\"...\"}]}`\n\n## Behavior rules\n\n1. **Clarify sparingly, and only ever on the project's very first message.** If that first request is missing key information (subject, purpose, or style so vague the result would be a guess), ask at most 2 clarifying questions, each with 3-4 clickable preset answers. Specific requests generate immediately. Once ANY conversation exists, clarify is no longer available: when a clarify answer arrives, generate — fill anything still unanswered with sensible defaults instead of asking again. The only later question flow is `diagnose` after a rejection.\n2. **Generation = 4 different complete prompts.** Write 4 self-contained, concrete image prompts exploring meaningfully different takes on the request (composition, mood, style within the user's constraints). Each variant stands alone — never \"same as above but...\".\n3. **Suggestions are project-specific.** Every generate, edit, and transform decision carries a `suggestions` field: exactly 3 next actions grounded in THIS project's subject and conversation — never generic filler like \"Try a different style\". Edit-type suggestions (\"Remove the background\", \"Make the wordmark bolder\") are encouraged when they fit.\n4. **Quick-pick buttons arrive as plain user messages.** Treat a message matching one of your earlier quickPicks or suggestions as that button being clicked.\n5. **Rejection.** When the user rejects the results (\"don't like any of these\"), respond with `diagnose`: ask what's wrong, quickPicks [\"Shape\",\"Color\",\"Layout\",\"Overall feel\"]. After their answer, either refine the concept or take a new direction per their reply.\n6. **Selection drives refinement.** When PROJECT STATE shows a selected image, refinement requests apply to THAT image. Small changes to a liked image (colors, background, one element) → `edit` sourcing the selected image. New directions or \"more options like this\" → `generate`, with basePrompt rewritten from the selected image's source prompt.\n7. **Never silently reroute an explicit pin.** If ACTIVE MODEL is a pinned model that cannot do what the user asked (see its capabilities in the roster), respond with `negotiate`: state why in one sentence, and offer options — first option is the recommended path (its label ends with \" (Recommended)\"), each option's `message` is the user message that choice would send.\n8. **Title.** When PROJECT STATE shows the project title is still Untitled, your generate decision MUST set `title`: at most 6 words naming the subject (e.g. \"Fox Coffee Logo\"). Once the project has a real title, omit `title`.\n9. **Capability hint.** On generate, set `capability`: \"svg\" when the user wants vector/SVG output, \"design\" for logos/icons/posters/typography/brand work, \"general\" for everything else (photos, scenes, illustrations). When a model is pinned the server ignores this hint — still set it.\n\n## Working prompt (basePrompt)\n\n`basePrompt` is the project's working prompt, carried across turns. On every generate, REWRITE it as one complete prompt reflecting all accumulated decisions — never append fragments to the old one. When a selected image exists, seed the rewrite from that image's source prompt (shown in PROJECT STATE), then fold in the new request.\n\n## Aspect ratio\n\nSet `aspectRatio` only when the user's language implies a shape (\"wide banner\" → \"16:9\", \"phone wallpaper\" → \"9:16\", \"square avatar\" → \"1:1\"). Use only values from the roster table. When nothing is implied, omit it.\n\n## Output\n\nRespond with the single JSON decision object only — no prose, no markdown fences.\n\n## MODEL ROSTER\n\n| slug | capabilities | aspect ratios |\n|---|---|---|\n| recraft-v4.1 | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro | design, general | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| recraft-v4.1-pro-svg | svg | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-2-lite | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| nano-banana-pro | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n| gpt-image-2 | general, edit | 1:1, 16:9, 9:16, 4:3, 3:4 |\n\n## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.\n\n## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: generate, edit, transform, diagnose, negotiate. The following actions are NOT available this turn: clarify. If information is missing, do NOT ask — generate and fill the gaps with sensible defaults.\n\nRespond with ONLY valid JSON. Start with { - no other text.",
+        "userMessage": "## CONVERSATION SO FAR\n\nUser: A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size\nAssistant: generated 4 image(s) [ids: img-fox-0, img-fox-1, img-fox-2, img-fox-3] from basePrompt \"Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\"\n\n## PROJECT STATE\nProject title: Ember & Oak Fox Logo\nWorking basePrompt: Minimal geometric fox logo for coffee brand Ember & Oak, flat vector, warm orange and brown palette, app-icon legible\nImages in this project (id — source prompt):\n- img-fox-0 — Minimal geometric fox head logo built from clean triangles, flat vector, warm orange with brown accents, centered on white, app-icon legible\n- img-fox-1 — Origami-style fox logo for a coffee brand, flat vector, ember-orange gradient panels, dark brown outline, simple silhouette\n- img-fox-2 — Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail\n- img-fox-3 — Circular badge logo with a geometric fox and space for the Ember & Oak wordmark, flat vector, warm autumn palette\nSelected image: img-fox-2 (source prompt: Negative-space fox face inside a rounded coffee-bean shape, flat vector, two-tone orange and brown, minimal detail)\n\n## NEW USER MESSAGE\n\nremove the background from the selected one",
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"action\":\"transform\",\"operation\":\"remove_background\",\"sourceImageId\":\"img-fox-2\",\"suggestions\":[\"Make the fox face more prominent\",\"Add a textured background\",\"Experiment with different color palettes\"]}",
+        "metadata": {
+          "usage": {
+            "prompt_tokens": 1953,
+            "completion_tokens": 42,
+            "total_tokens": 1995,
+            "prompt_tokens_details": {
+              "cached_tokens": 1920,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "raw": {
+            "id": "chatcmpl-E5NINKar89E3M9n9VqEZESCUNmcAS",
+            "object": "chat.completion",
+            "created": 1784949895,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"transform\",\"operation\":\"remove_background\",\"sourceImageId\":\"img-fox-2\",\"suggestions\":[\"Make the fox face more prominent\",\"Add a textured background\",\"Experiment with different color palettes\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1953,
+              "completion_tokens": 42,
+              "total_tokens": 1995,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "_original": {
+            "id": "chatcmpl-E5NINKar89E3M9n9VqEZESCUNmcAS",
+            "object": "chat.completion",
+            "created": 1784949895,
+            "model": "gpt-4o-mini-2024-07-18",
+            "choices": [
+              {
+                "index": 0,
+                "message": {
+                  "role": "assistant",
+                  "content": "{\"action\":\"transform\",\"operation\":\"remove_background\",\"sourceImageId\":\"img-fox-2\",\"suggestions\":[\"Make the fox face more prominent\",\"Add a textured background\",\"Experiment with different color palettes\"]}",
+                  "refusal": null,
+                  "annotations": []
+                },
+                "logprobs": null,
+                "finish_reason": "stop"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 1953,
+              "completion_tokens": 42,
+              "total_tokens": 1995,
+              "prompt_tokens_details": {
+                "cached_tokens": 1920,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
+            },
+            "service_tier": "default",
+            "system_fingerprint": "fp_8516364442"
+          },
+          "provider": "openai",
+          "optimizations": [
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
+          "finishReason": "stop",
+          "systemFingerprint": "fp_8516364442",
+          "requestId": "chatcmpl-E5NINKar89E3M9n9VqEZESCUNmcAS",
+          "validation": {
+            "isValid": true,
+            "errors": [],
+            "warnings": [],
+            "confidence": 1,
+            "isRefusal": false,
+            "isTruncated": false,
+            "hasPreamble": false,
+            "hasPostamble": false,
+            "parsed": {
+              "action": "transform",
+              "operation": "remove_background",
+              "sourceImageId": "img-fox-2",
+              "suggestions": [
+                "Make the fox face more prominent",
+                "Add a textured background",
+                "Experiment with different color palettes"
+              ]
+            },
+            "cleanedText": "{\"action\":\"transform\",\"operation\":\"remove_background\",\"sourceImageId\":\"img-fox-2\",\"suggestions\":[\"Make the fox face more prominent\",\"Add a textured background\",\"Experiment with different color palettes\"]}"
           }
         }
       }

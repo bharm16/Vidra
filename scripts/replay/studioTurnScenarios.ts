@@ -36,9 +36,37 @@ const FIRST_TURN_ACTIONS = [
 
 const FOLLOW_UP_ACTIONS = [
   "generate",
+  "edit",
+  "transform",
   "diagnose",
   "negotiate",
 ] as const satisfies readonly StudioDecision["action"][];
+
+/**
+ * Shared content words (len > 4, punctuation stripped — no regex, house
+ * rule) between two texts. The M4 derivation assertion: a refinement's
+ * basePrompt must carry the selected image's concept forward.
+ */
+export function contentWordOverlap(a: string, b: string): number {
+  const words = (text: string): Set<string> =>
+    new Set(
+      text
+        .toLowerCase()
+        .split(" ")
+        .map((word) =>
+          [...word]
+            .filter((ch) => "abcdefghijklmnopqrstuvwxyz0123456789".includes(ch))
+            .join(""),
+        )
+        .filter((word) => word.length > 4),
+    );
+  const aWords = words(a);
+  let overlap = 0;
+  for (const word of words(b)) {
+    if (aWords.has(word)) overlap += 1;
+  }
+  return overlap;
+}
 
 const SPECIFIC_REQUEST =
   "A minimal geometric fox logo for a coffee brand called Ember & Oak — flat vector style, warm orange and brown palette, must stay legible at app-icon size";
@@ -110,6 +138,36 @@ function baseContext(overrides: Partial<StudioTurnContext>): StudioTurnContext {
     context.allowedActions = FOLLOW_UP_ACTIONS;
   }
   return context;
+}
+
+/** Variant 2's image — the one "selected" in the M4 routing scenarios. */
+export const SELECTED_IMAGE_ID = "img-fox-2";
+
+export const SELECTED_SOURCE_PROMPT = (() => {
+  const decision = PRIOR_FOX_TURN.decision;
+  if (decision.action !== "generate") throw new Error("fixture shape");
+  return decision.variants[2];
+})();
+
+function foxImageIds(): Set<string> {
+  return new Set(
+    PRIOR_FOX_TURN.calls.flatMap((call) => (call.image ? [call.image.id] : [])),
+  );
+}
+
+/** The titled fox project with variant 2 selected — M4's routing stage. */
+function foxProjectContext(
+  userMessage: string,
+  overrides?: Partial<StudioTurnContext>,
+): StudioTurnContext {
+  return baseContext({
+    userMessage,
+    projectTitle: "Ember & Oak Fox Logo",
+    history: [PRIOR_FOX_TURN],
+    selectedImageId: SELECTED_IMAGE_ID,
+    projectImageIds: foxImageIds(),
+    ...overrides,
+  });
 }
 
 export interface StudioTurnScenario {
@@ -218,6 +276,138 @@ export const STUDIO_TURN_SCENARIOS: StudioTurnScenario[] = [
       }
       if (!decision.capability) {
         violations.push("capability hint must be present even when pinned");
+      }
+      return violations;
+    },
+  },
+  {
+    name: "selected-small-change-edits",
+    behaviors: "behavior 6 (small change to a liked image → edit it)",
+    context: foxProjectContext("make it bolder"),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "edit") {
+        violations.push(
+          `a small change to the selected image must edit, got ${decision.action}`,
+        );
+        return violations;
+      }
+      if (!decision.sourceImageIds.includes(SELECTED_IMAGE_ID)) {
+        violations.push(
+          `edit must source the selected image ${SELECTED_IMAGE_ID}, got [${decision.sourceImageIds.join(", ")}]`,
+        );
+      }
+      return violations;
+    },
+  },
+  {
+    name: "selected-more-options-generates-from-source",
+    behaviors:
+      "behavior 6 (more variations → generate seeded from the selection's source prompt)",
+    context: foxProjectContext("give me more options like this one"),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "generate") {
+        violations.push(
+          `more variations must generate, got ${decision.action}`,
+        );
+        return violations;
+      }
+      if (contentWordOverlap(SELECTED_SOURCE_PROMPT, decision.basePrompt) < 2) {
+        violations.push(
+          `basePrompt must derive from the selected image's source prompt ("${SELECTED_SOURCE_PROMPT}"), got "${decision.basePrompt}"`,
+        );
+      }
+      return violations;
+    },
+  },
+  {
+    name: "selected-new-concept-generates",
+    behaviors: "behavior 6 (a new direction → generate, never an edit)",
+    context: foxProjectContext("try a completely different concept"),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "generate") {
+        violations.push(
+          `a new direction must generate, got ${decision.action}`,
+        );
+        return violations;
+      }
+      if (new Set(decision.variants).size !== 4) {
+        violations.push("expected 4 distinct variants");
+      }
+      return violations;
+    },
+  },
+  {
+    name: "rejection-diagnoses",
+    behaviors: "behavior 5 (rejection → diagnose what's wrong)",
+    context: baseContext({
+      userMessage: "I don't like any of these",
+      projectTitle: "Ember & Oak Fox Logo",
+      history: [PRIOR_FOX_TURN],
+      projectImageIds: foxImageIds(),
+    }),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "diagnose") {
+        violations.push(`rejection must diagnose, got ${decision.action}`);
+        return violations;
+      }
+      if (decision.quickPicks.length < 3) {
+        violations.push(
+          `diagnose needs preset answers, got ${decision.quickPicks.length}`,
+        );
+      }
+      return violations;
+    },
+  },
+  {
+    name: "incapable-pin-edit-negotiates",
+    behaviors: "behavior 7 (pinned text-only model asked to edit → negotiate)",
+    context: foxProjectContext(
+      "add a steaming coffee cup next to the fox in the selected image",
+      { pinnedModel: registry.getModel("recraft-v4.1") },
+    ),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "negotiate") {
+        violations.push(
+          `an edit request on a text-only pin must negotiate, got ${decision.action}`,
+        );
+        return violations;
+      }
+      if (decision.options.length < 2) {
+        violations.push("negotiate must offer at least 2 options");
+      }
+      if (!decision.options[0]?.label.includes("Recommended")) {
+        violations.push("first option must be marked (Recommended)");
+      }
+      return violations;
+    },
+  },
+  {
+    name: "remove-background-routes-transform",
+    behaviors:
+      "S-30 (remove background → the prompt-less utility, not an edit)",
+    context: foxProjectContext("remove the background from the selected one"),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "transform") {
+        violations.push(
+          `remove background must route to transform, got ${decision.action}`,
+        );
+        return violations;
+      }
+      if (decision.operation !== "remove_background") {
+        violations.push(
+          `expected remove_background, got ${decision.operation}`,
+        );
+      }
+      if (decision.sourceImageId !== SELECTED_IMAGE_ID) {
+        violations.push(
+          `transform must target the selected image, got ${decision.sourceImageId}`,
+        );
       }
       return violations;
     },
