@@ -1,0 +1,106 @@
+# Golden path — the product's top-level definition of "working".
+#
+# Runs tests/e2e/golden-path.spec.ts against the real client, real server
+# and REAL LLM providers (this spec mocks nothing). Its job is the failure
+# class unit suites cannot see: isolated-green, integrated-broken.
+#
+# Tiers (controlled via env consumed by the spec):
+#   Tier 1  always            anonymous load → expansion → session survives
+#                             refresh. Zero generation spend.
+#   Tier 2  GOLDEN_PATH_FULL  + first frame (real Replicate + GCS). Paid.
+#   Tier 3  GOLDEN_PATH_RENDER + draft-model render to a playable <video>.
+#                             Paid. The audit's literal definition of done.
+#
+# The nightly schedule runs all three tiers. Missing provider secrets make
+# the paid tiers fail loudly — by design: silence is how the golden path
+# rotted last time (docs/audits/2026-07-01-golden-path-audit.md).
+#
+# The offline counterpart (npm run test:replay) gates every commit; this
+# workflow is the live proof against real providers.
+
+name: Golden Path (live)
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # nightly, 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      paid_legs:
+        description: "Run the paid legs (first frame + render)"
+        type: boolean
+        default: false
+
+jobs:
+  golden-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container: mcr.microsoft.com/playwright:v1.56.0-noble
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the golden-path spec (chromium)
+        run: npx playwright test tests/e2e/golden-path.spec.ts --config config/test/playwright.config.js --project=chromium
+        env:
+          # Test-mode boot skips the infra startup probes (same mode the
+          # 2026-07-01 audit walkthrough used) but every service and
+          # provider call is real.
+          NODE_ENV: test
+          CI: true
+          PORT: 3001
+          REDIS_URL: redis://redis:6379
+          E2E_ALL_BROWSERS: "false"
+
+          # Real providers — the point of this workflow. Expansion falls
+          # back Gemini→OpenAI via modelConfig fallbackTo when Gemini is
+          # absent, so Tier 1 needs at least OPENAI_API_KEY or GROQ_API_KEY.
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+
+          # Storage for generated media (Tier 2+). JSON service account.
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
+
+          # Client boot env (mirrors e2e.yml).
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'test-key' }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'test-project' }}
+          VITE_FIREBASE_AUTH_DOMAIN: test.firebaseapp.com
+          VITE_FIREBASE_STORAGE_BUCKET: test.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          VITE_FIREBASE_APP_ID: test-app-id
+          VIDEO_GENERATE_IDEMPOTENCY_MODE: soft
+
+          # Paid legs: every night, or on demand via the dispatch input.
+          GOLDEN_PATH_FULL: ${{ (github.event_name == 'schedule' || inputs.paid_legs) && '1' || '' }}
+          GOLDEN_PATH_RENDER: ${{ (github.event_name == 'schedule' || inputs.paid_legs) && '1' || '' }}
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-path-report
+          path: playwright-report/
+          retention-days: 30

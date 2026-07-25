@@ -102,5 +102,57 @@ test.describe("golden path", () => {
     const response = await frameResponse;
     expect(response.status()).toBe(200);
     await expect(page.getByText("Couldn’t create a frame")).toHaveCount(0);
+
+    // The stage must actually show the frame, not just avoid the error copy.
+    await expect(page.getByTestId("frame-stage").locator("img")).toBeVisible({
+      timeout: 120_000,
+    });
+  });
+
+  test("the frame becomes a playable clip (motion + render leg)", async ({
+    page,
+  }) => {
+    test.skip(
+      !process.env.GOLDEN_PATH_RENDER,
+      "Set GOLDEN_PATH_RENDER=1 to run the paid render leg (draft-model video via the preview passthrough).",
+    );
+    test.setTimeout(720_000);
+
+    await page.goto("/");
+    const editor = page.getByLabel("Shot description");
+    await editor.fill(ONE_LINER);
+    await page.getByTestId("canvas-generate-button").click();
+
+    // Expansion + first frame must land before the render beat.
+    await expect(page.getByTestId("frame-stage").locator("img")).toBeVisible({
+      timeout: 240_000,
+    });
+
+    // The motion beat: the canvas holds the I2V description that will drive
+    // the render — materially richer than the one-liner, not an echo.
+    const motionDescription = await editorText(page);
+    expect(motionDescription.length).toBeGreaterThan(ONE_LINER.length * 2);
+
+    // ADR-0002: validation-phase generation is a hard-capped passthrough on
+    // our dime. The render CTA must therefore be ENABLED for an anonymous
+    // creator — if the frozen credit gate blocks it, that is a product
+    // failure this spec exists to catch (2026-07-01 audit, finding 10).
+    const renderButton = page.getByTestId("canvas-generate-button");
+    await expect(renderButton).toBeEnabled();
+
+    const renderRequest = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/preview") &&
+        response.request().method() === "POST",
+      { timeout: 120_000 },
+    );
+    await renderButton.click();
+    const renderResponse = await renderRequest;
+    expect(renderResponse.status()).toBeLessThan(300);
+
+    // Definition of done, verbatim from the audit: the creator gets a clip
+    // they can watch. A rendered <video> with a real source, end to end.
+    const clip = page.locator("video[src], video source[src]").first();
+    await expect(clip).toBeVisible({ timeout: 600_000 });
   });
 });
