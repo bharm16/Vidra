@@ -1,6 +1,6 @@
 # Studio — session handoff (2026-07-24, end of build session 3)
 
-**Branch:** `feat/studio`, 16 commits ahead of its base. Session 1 built M1 (economic core), session 2 built M2 (UI page), session 3 built **M3 (conversation LLM) and M4 (editing + refinement flows), both live-verified in headed Chrome against real OpenAI + Replicate calls**. All commits green on tsc/eslint/test:unit (7,795 tests; the occasional full-suite flake is the known `SuggestionsTelemetryService` duration flake or macOS port shadowing, both pre-existing).
+**Branch:** `feat/studio`, 17 commits ahead of its base. Session 1 built M1 (economic core), session 2 built M2 (UI page), session 3 built **M3 (conversation LLM) and M4 (editing + refinement flows), both live-verified in headed Chrome against real OpenAI + Replicate calls**. All commits green on tsc/eslint/test:unit (7,795 tests; the occasional full-suite flake is the known `SuggestionsTelemetryService` duration flake or macOS port shadowing, both pre-existing).
 
 **Read first:** [the plan](2026-07-24-the-studio-conversational-image-workspace.md) (authoritative spec) and [ADR-0019](../../adr/0019-the-studio-standalone-conversational-image-workspace.md) (as amended).
 
@@ -42,7 +42,7 @@
 
 ## Next: Milestone 5 — hardening (+ leftovers)
 
-- **StrictMode double-bootstrap** (dev): mount effect runs twice → two "Untitled" projects on an empty account. Recommended fix: don't create server-side at bootstrap — hold a local draft and create lazily on first send (kills the race and stops polluting accounts). Touches reducer bootstrapped case + `sendMessage` + composer null-project tolerance.
+- ~~StrictMode double-bootstrap~~ **DONE end of session 3** (`3f71043c`): bootstrap makes no writes; the project is created lazily on the first send (regression-tested incl. StrictMode-style double mount). An empty account now bootstraps projectless — the page's empty state + composer handle it.
 - **Spend-cap env into `env.ts` Zod config** (currently a defensively-parsed read in `studio.services.ts`).
 - **Stale-pin composer notice** (behavior 9's one-liner; server already reverts to Auto).
 - **Project delete** (route exists in plan, not built) + project rename is live, list reorders on updatedAtMs.
@@ -59,3 +59,5 @@
 - Browser verification: headed Chrome via the Chrome MCP (never preview\_\* — user rule). User is signed in at localhost:5173.
 - Money: a generate batch ≈ 16¢ (recraft), an edit ≈ 5¢ (nano-lite), a transform 1¢, a studio_turn LLM call ≈ 0.1¢. The $5/day cap is live. Session 3 spend ≈ 60¢ total.
 - The qwen Groq alias (`qwen/qwen3-32b`) 404s at server init — pre-existing env noise, unrelated to studio.
+- The long-running dev server's Firestore gRPC channel can wedge after idle (seen once end of session 3: `GET /projects` hung, surfaced as a visible "Request timeout" card, self-healed on the next reload; a fresh process queried instantly). If `/studio` sits at "…", suspect the channel before suspecting code.
+- Full-suite runs while recording fixtures / driving the browser can flake ~11 files from contention; a quiet re-run was fully green (7,798 passed). Judge suite health from quiet runs only.
