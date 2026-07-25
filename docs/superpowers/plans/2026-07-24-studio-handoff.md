@@ -57,7 +57,7 @@ All M5 items landed; the studio's five planned milestones are complete.
 
 - ~~Test-suite-bloat branch~~ **MERGED** (`944eeb63`, end of session 4): 7,829→6,817 tests (purge audited in that branch), commit protocol now has a 4th gate (`npm run test:replay`, offline ~4s), commit-msg hook enforces regression-test quality (mock-boundary check; `No-Seam:` escape), brand module (VidraMark) committed. Zero studio/streaming files touched by the merge (verified by diff against the pre-merge anchor). Worktree + branch deleted — single checkout again.
 - ~~CLAUDE.md reconcile~~ **DONE** (`7a44c03f`): phantom DI rows removed, ENABLE_STUDIO flag row, route-map corrections committed; the merge folded in the new commit-protocol section cleanly.
-- **stylelint**: `studio.css` hardcoded-px violations (live-editor.css too) — tokenize together as polish; commit protocol doesn't gate on stylelint.
+- ~~stylelint~~ **DONE** (`d9c81bc9`): all 73 px violations across studio.css + live-editor.css converted to rem (visually identical); `npm run lint:css` clean repo-wide. Working tree fully clean — branding batch committed (`5900e09d`, one VidraMark everywhere; HistoryPage 8/8 green), loose docs adopted (`e0553f51`).
 - Client dirty files still in `git status` (BrandLogo, auth.css, index.html, favicon deletion, ResultCard/StudioPlane tweaks…) are the parallel branding batch consuming the now-committed VidraMark — still not studio's; don't sweep them into studio commits.
 - Attach-your-own image (S-12) is the plan's designated first post-v1 feature.
 - Owner feel-pass over the whole loop (question quality, suggestion taste, edit fidelity) — the fixtures gate correctness, not taste.
