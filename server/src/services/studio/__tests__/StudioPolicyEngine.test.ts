@@ -243,6 +243,41 @@ describe("StudioPolicyEngine", () => {
     );
   });
 
+  it("pushes an edit under a text-only pin toward negotiate (behavior 7)", async () => {
+    const edit: StudioDecision = {
+      action: "edit",
+      instruction: "remove the background",
+      sourceImageIds: ["img-1"],
+      suggestions: ["a", "b", "c"],
+    };
+    const negotiate: StudioDecision = {
+      action: "negotiate",
+      reason: "Recraft V4.1 cannot edit images",
+      options: [
+        {
+          label: "Regenerate from scratch (Recommended)",
+          message: "Regenerate without the background",
+        },
+        { label: "Switch to Nano Banana 2", message: "Switch model and edit" },
+      ],
+    };
+    const execute = llmResponses(edit, negotiate);
+    const engine = new StudioPolicyEngine({ ai: { execute } });
+
+    const decision = await engine.decideTurn(
+      makeContext({
+        allowedActions: ["generate", "edit", "negotiate"],
+        pinnedModel: registry.getModel("recraft-v4.1"),
+        projectImageIds: new Set(["img-1"]),
+      }),
+    );
+
+    expect(decision).toEqual(negotiate);
+    const retryPrompt = String(execute.mock.calls[1]?.[1]?.systemPrompt);
+    expect(retryPrompt).toContain("recraft-v4.1 cannot edit images");
+    expect(retryPrompt).toContain("negotiate");
+  });
+
   it("throws StudioPolicyError after exhausting corrective attempts", async () => {
     const execute = llmResponses({ action: "unknown" }, { action: "unknown" });
     const engine = new StudioPolicyEngine({ ai: { execute } });

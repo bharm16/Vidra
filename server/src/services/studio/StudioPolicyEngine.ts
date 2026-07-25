@@ -154,6 +154,22 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
         continue;
       }
 
+      if (
+        decision.action === "edit" &&
+        context.pinnedModel &&
+        !context.pinnedModel.capabilities.includes("edit")
+      ) {
+        // Behavior 7: an explicit pin is never silently rerouted — the
+        // compliant answer to an edit request on a text-only pin is a
+        // negotiate decision, not an edit on some other model.
+        feedback = `The pinned model ${context.pinnedModel.slug} cannot edit images. Follow behavior rule 7: respond with a negotiate decision explaining this and offering options.`;
+        this.log.warn("Studio decision edited under an incapable pin", {
+          attempt,
+          pinnedModel: context.pinnedModel.slug,
+        });
+        continue;
+      }
+
       const referential = validateDecisionReferences(
         decision,
         context.projectImageIds,

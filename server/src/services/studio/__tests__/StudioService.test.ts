@@ -469,6 +469,167 @@ describe("StudioService", () => {
     });
   });
 
+  describe("runTurn — edit and transform execution (M4)", () => {
+    /** Generate on the first turn, then the given decision on follow-ups. */
+    function decideThen(followUp: (imageIds: string[]) => StudioDecision) {
+      return async (context: {
+        userMessage: string;
+        history: readonly StudioTurnRecord[];
+        projectImageIds: ReadonlySet<string>;
+      }): Promise<StudioDecision> => {
+        if (context.history.length === 0) {
+          return m1StyleGenerate(context.userMessage);
+        }
+        return followUp([...context.projectImageIds]);
+      };
+    }
+
+    async function withImages(overrides?: Parameters<typeof makeService>[0]) {
+      const harness = makeService(overrides);
+      const project = await harness.service.createProject("user-1");
+      const first = await harness.service.runTurn(
+        "user-1",
+        project.id,
+        "a fox logo",
+      );
+      await first.completion;
+      return { ...harness, project };
+    }
+
+    it("executes an edit on the cheapest edit-capable model in Auto mode", async () => {
+      const run = vi.fn().mockResolvedValue({
+        imageUrl: "https://replicate.delivery/edited.webp",
+        durationMs: 1,
+      });
+      const { service, store, project } = await withImages({
+        runner: { run } as never,
+        decide: decideThen((imageIds) => ({
+          action: "edit",
+          instruction: "remove the background and thicken the outline",
+          sourceImageIds: [imageIds[0] as string],
+          suggestions: ["s1", "s2", "s3"],
+        })),
+      });
+
+      const result = await service.runTurn("user-1", project.id, "clean it up");
+      await result.completion;
+
+      const turn = await service.getTurn("user-1", project.id, result.turnId);
+      expect(turn.status).toBe("complete");
+      expect(turn.resolvedModel).toBe("nano-banana-2-lite");
+      // 16¢ for the first batch + 5¢ for the edit.
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(21);
+      const editCall = run.mock.calls.at(-1)?.[0];
+      expect(editCall?.model).toBe("google/nano-banana-2-lite");
+      expect(editCall?.input?.prompt).toBe(
+        "remove the background and thicken the outline",
+      );
+      expect(editCall?.input?.image_input?.[0]).toContain(
+        "https://signed.example.com/",
+      );
+      expect(turn.calls).toHaveLength(1);
+      expect(turn.calls[0]?.image?.sourcePrompt).toBe(
+        "remove the background and thicken the outline",
+      );
+    });
+
+    it("honors an edit-capable pin for edits", async () => {
+      const { service, store, project } = await withImages({
+        decide: decideThen((imageIds) => ({
+          action: "edit",
+          instruction: "make it bolder",
+          sourceImageIds: [imageIds[0] as string],
+          suggestions: ["s1", "s2", "s3"],
+        })),
+      });
+      await store.updateProject(project.id, { pinnedModel: "nano-banana-pro" });
+
+      const result = await service.runTurn("user-1", project.id, "bolder");
+      await result.completion;
+
+      const turn = await service.getTurn("user-1", project.id, result.turnId);
+      expect(turn.resolvedModel).toBe("nano-banana-pro");
+      expect(turn.reservedCents).toBe(25);
+    });
+
+    it("refunds the whole reservation when the single edit call fails", async () => {
+      const run = vi
+        .fn()
+        .mockResolvedValueOnce({
+          imageUrl: "https://replicate.delivery/1.webp",
+          durationMs: 1,
+        })
+        .mockResolvedValueOnce({
+          imageUrl: "https://replicate.delivery/2.webp",
+          durationMs: 1,
+        })
+        .mockResolvedValueOnce({
+          imageUrl: "https://replicate.delivery/3.webp",
+          durationMs: 1,
+        })
+        .mockResolvedValueOnce({
+          imageUrl: "https://replicate.delivery/4.webp",
+          durationMs: 1,
+        })
+        .mockRejectedValueOnce(new Error("NSFW content detected"));
+      const { service, store, project } = await withImages({
+        runner: { run } as never,
+        decide: decideThen((imageIds) => ({
+          action: "edit",
+          instruction: "impossible edit",
+          sourceImageIds: [imageIds[0] as string],
+          suggestions: ["s1", "s2", "s3"],
+        })),
+      });
+
+      const result = await service.runTurn("user-1", project.id, "edit it");
+      await result.completion;
+
+      const turn = await service.getTurn("user-1", project.id, result.turnId);
+      expect(turn.status).toBe("failed");
+      expect(turn.calls[0]?.error).toContain("NSFW");
+      expect(turn.refundedCents).toBe(5);
+      // Only the first batch's 16¢ remain consumed.
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(16);
+    });
+
+    it("executes a remove_background transform via the utility model", async () => {
+      const run = vi.fn().mockResolvedValue({
+        imageUrl: "https://replicate.delivery/cutout.webp",
+        durationMs: 1,
+      });
+      const { service, store, project } = await withImages({
+        runner: { run } as never,
+        decide: decideThen((imageIds) => ({
+          action: "transform",
+          operation: "remove_background",
+          sourceImageId: imageIds[0] as string,
+          suggestions: ["s1", "s2", "s3"],
+        })),
+      });
+
+      const result = await service.runTurn(
+        "user-1",
+        project.id,
+        "remove the background",
+      );
+      await result.completion;
+
+      const turn = await service.getTurn("user-1", project.id, result.turnId);
+      expect(turn.status).toBe("complete");
+      expect(turn.resolvedModel).toBeUndefined();
+      expect(turn.calls[0]?.image?.model).toBe("remove_background");
+      // 16¢ batch + 1¢ utility.
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(17);
+      const utilityCall = run.mock.calls.at(-1)?.[0];
+      expect(utilityCall?.model).toBe("recraft-ai/recraft-remove-background");
+      expect(utilityCall?.input?.image).toContain(
+        "https://signed.example.com/",
+      );
+      expect(utilityCall?.input?.prompt).toBeUndefined();
+    });
+  });
+
   describe("runTurn — policy context threading (M3)", () => {
     it("hands the policy the history, image ids, pin state, and allowed actions", async () => {
       const { service, store, decideTurn } = makeService();
@@ -488,14 +649,20 @@ describe("StudioService", () => {
       expect(context?.projectImageIds.size).toBe(4);
       expect(context?.pinnedModel?.slug).toBe("recraft-v4.1-pro");
       expect(context?.selectedImageId).toBeNull();
-      // Follow-up turns lose clarify (behavior 1 — first-message-only).
+      // Follow-up turns lose clarify (behavior 1 — first-message-only)
+      // and gain edit/transform (M4 — stored images now exist).
       expect(context?.allowedActions).toEqual([
         "generate",
+        "edit",
+        "transform",
         "diagnose",
         "negotiate",
       ]);
       expect(decideTurn.mock.calls[0]?.[0]?.allowedActions).toContain(
         "clarify",
+      );
+      expect(decideTurn.mock.calls[0]?.[0]?.allowedActions).not.toContain(
+        "edit",
       );
     });
 

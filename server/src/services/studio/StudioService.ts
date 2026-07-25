@@ -28,6 +28,8 @@ import {
 import type {
   StudioCallRecord,
   StudioDecision,
+  StudioImageRecord,
+  StudioModelEntry,
   StudioModelSlug,
   StudioProjectRecord,
   StudioTurnRecord,
@@ -111,6 +113,9 @@ function imageIdsOf(turns: readonly StudioTurnRecord[]): Set<string> {
  * clarifying questions — regression caught live 2026-07-24): once any turn
  * exists, it is removed from the allowed set, so a proposed re-clarify is
  * structurally rejected rather than merely discouraged in the prompt.
+ *
+ * edit/transform need stored images, which can only exist after a prior
+ * turn — they are follow-up actions by construction.
  */
 const FIRST_TURN_ACTIONS = [
   "clarify",
@@ -119,9 +124,13 @@ const FIRST_TURN_ACTIONS = [
   "negotiate",
 ] as const satisfies readonly StudioDecision["action"][];
 
-const FOLLOW_UP_ACTIONS = FIRST_TURN_ACTIONS.filter(
-  (action) => action !== "clarify",
-);
+const FOLLOW_UP_ACTIONS = [
+  "generate",
+  "edit",
+  "transform",
+  "diagnose",
+  "negotiate",
+] as const satisfies readonly StudioDecision["action"][];
 
 export class StudioService {
   private readonly store: FirestoreStudioProjectStore;
@@ -350,50 +359,280 @@ export class StudioService {
         history.length === 0 ? FIRST_TURN_ACTIONS : FOLLOW_UP_ACTIONS,
     });
 
-    if (decision.action !== "generate") {
-      return this.saveConversationalTurn(project, message, decision);
+    switch (decision.action) {
+      case "generate":
+        return this.startGenerateTurn(project, message, decision, pinned);
+      case "edit":
+        return this.startEditTurn(project, history, message, decision, pinned);
+      case "transform":
+        return this.startTransformTurn(project, history, message, decision);
+      default:
+        return this.saveConversationalTurn(project, message, decision);
     }
+  }
 
+  private async startGenerateTurn(
+    project: StudioProjectRecord,
+    message: string,
+    decision: Extract<StudioDecision, { action: "generate" }>,
+    pinned: StudioModelEntry | null,
+  ): Promise<RunTurnResult> {
     const model = pinned ?? this.registry.cheapestCapable(decision.capability);
 
+    const turn = this.buildRunningTurn(project, message, decision, {
+      resolvedModel: model.slug,
+      callCount: GENERATE_BATCH_SIZE,
+      reservedCents: model.costCentsPerCall * GENERATE_BATCH_SIZE,
+    });
+
+    const day = await this.reserve(turn);
+    const completion = this.runInBackground(project, turn, () =>
+      this.executeGenerateTurn(project, turn, day),
+    );
+    return { turnId: turn.id, decision, completion };
+  }
+
+  /**
+   * Edit: the LLM's instruction + 1..14 stored source images into an
+   * edit-capable model (behavior 6). A pin only applies when it can edit —
+   * incapable pins never reach here (the policy engine negotiates instead).
+   */
+  private async startEditTurn(
+    project: StudioProjectRecord,
+    history: StudioTurnRecord[],
+    message: string,
+    decision: Extract<StudioDecision, { action: "edit" }>,
+    pinned: StudioModelEntry | null,
+  ): Promise<RunTurnResult> {
+    const model =
+      pinned && pinned.capabilities.includes("edit")
+        ? pinned
+        : this.registry.cheapestCapable("edit");
+
+    const sources = this.resolveSourceImages(history, decision.sourceImageIds);
+
+    const turn = this.buildRunningTurn(project, message, decision, {
+      resolvedModel: model.slug,
+      callCount: 1,
+      reservedCents: model.costCentsPerCall,
+    });
+
+    const day = await this.reserve(turn);
+    const completion = this.runInBackground(project, turn, async () => {
+      const timeoutMs = this.registry.timeoutMsFor(model.slug);
+      const sourceUrls = await Promise.all(
+        sources.map(async (image) => {
+          const { viewUrl } = await this.storage.getViewUrl(
+            turn.userId,
+            image.storagePath,
+          );
+          return viewUrl;
+        }),
+      );
+      await this.settleSingleCallTurn(project, turn, day, {
+        producedBy: model.slug,
+        sourcePrompt: decision.instruction,
+        run: () =>
+          this.runner.run({
+            model: model.replicateId,
+            input: this.registry.buildEditInput(
+              model.slug,
+              decision.instruction,
+              sourceUrls,
+            ),
+            userId: turn.userId,
+            timeoutMs,
+          }),
+      });
+    });
+    return { turnId: turn.id, decision, completion };
+  }
+
+  /** Transform: a prompt-less utility over one stored image (S-30). */
+  private async startTransformTurn(
+    project: StudioProjectRecord,
+    history: StudioTurnRecord[],
+    message: string,
+    decision: Extract<StudioDecision, { action: "transform" }>,
+  ): Promise<RunTurnResult> {
+    const utility = this.registry.getUtility(decision.operation);
+    const [source] = this.resolveSourceImages(history, [
+      decision.sourceImageId,
+    ]);
+    if (!source) {
+      throw new Error("Transform source image not found");
+    }
+
+    const turn = this.buildRunningTurn(project, message, decision, {
+      callCount: 1,
+      reservedCents: utility.costCentsPerCall,
+    });
+
+    const day = await this.reserve(turn);
+    const completion = this.runInBackground(project, turn, async () => {
+      const { viewUrl } = await this.storage.getViewUrl(
+        turn.userId,
+        source.storagePath,
+      );
+      await this.settleSingleCallTurn(project, turn, day, {
+        producedBy: decision.operation,
+        sourcePrompt: `${decision.operation} of ${source.id}`,
+        run: () =>
+          this.runner.run({
+            model: utility.replicateId,
+            input: this.registry.buildUtilityInput(decision.operation, viewUrl),
+            userId: turn.userId,
+            timeoutMs: this.registry.timeoutMsForUtility(decision.operation),
+          }),
+      });
+    });
+    return { turnId: turn.id, decision, completion };
+  }
+
+  /** Shared turn-record scaffold for spend-bearing turns. */
+  private buildRunningTurn(
+    project: StudioProjectRecord,
+    message: string,
+    decision: StudioDecision,
+    options: {
+      resolvedModel?: StudioModelSlug;
+      callCount: number;
+      reservedCents: number;
+    },
+  ): StudioTurnRecord {
     const nowMs = this.now().getTime();
-    const turn: StudioTurnRecord = {
+    return {
       id: this.idFactory(),
-      projectId,
-      userId,
+      projectId: project.id,
+      userId: project.userId,
       status: "running",
       userMessage: message,
       decision,
-      resolvedModel: model.slug,
-      calls: decision.variants.map((_, index) => ({
+      ...(options.resolvedModel
+        ? { resolvedModel: options.resolvedModel }
+        : {}),
+      calls: Array.from({ length: options.callCount }, (_, index) => ({
         index,
         status: "running" as const,
       })),
-      reservedCents: model.costCentsPerCall * GENERATE_BATCH_SIZE,
+      reservedCents: options.reservedCents,
       refundedCents: 0,
       createdAtMs: nowMs,
       updatedAtMs: nowMs,
     };
+  }
 
+  /** Atomic cap reservation; throws StudioCapExceededError before any call. */
+  private async reserve(turn: StudioTurnRecord): Promise<string> {
     const day = studioUsageDayKey(this.now());
-    // Throws StudioCapExceededError before any image call can start.
     await this.store.reserveTurn({
       turn,
       day,
       capCents: this.dailyCapCents,
     });
+    return day;
+  }
 
-    const completion = this.executeGenerateTurn(project, turn, day).catch(
-      (error: unknown) => {
-        this.log.error(
-          "Studio turn execution crashed",
-          error instanceof Error ? error : new Error(String(error)),
-          { projectId, turnId: turn.id, userId },
-        );
-      },
-    );
+  private runInBackground(
+    project: StudioProjectRecord,
+    turn: StudioTurnRecord,
+    work: () => Promise<void>,
+  ): Promise<void> {
+    return work().catch((error: unknown) => {
+      this.log.error(
+        "Studio turn execution crashed",
+        error instanceof Error ? error : new Error(String(error)),
+        { projectId: project.id, turnId: turn.id, userId: turn.userId },
+      );
+    });
+  }
 
-    return { turnId: turn.id, decision, completion };
+  /**
+   * Look up stored image records for validated source ids. The policy
+   * engine already verified existence; a miss here means turn data changed
+   * mid-flight and is a hard error.
+   */
+  private resolveSourceImages(
+    history: StudioTurnRecord[],
+    sourceImageIds: readonly string[],
+  ): StudioImageRecord[] {
+    const byId = new Map<string, StudioImageRecord>();
+    for (const turn of history) {
+      for (const call of turn.calls) {
+        if (call.status === "succeeded" && call.image) {
+          byId.set(call.image.id, call.image);
+        }
+      }
+    }
+    return sourceImageIds.map((id) => {
+      const image = byId.get(id);
+      if (!image) {
+        throw new Error(`Source image ${id} not found in this project`);
+      }
+      return image;
+    });
+  }
+
+  /**
+   * Run one image call, persist its result, and finalize the turn:
+   * success → "complete"; failure → "failed" with the reservation refunded
+   * (plan: "Partial and failed turns", single-call case).
+   */
+  private async settleSingleCallTurn(
+    project: StudioProjectRecord,
+    turn: StudioTurnRecord,
+    day: string,
+    options: {
+      producedBy: StudioImageRecord["model"];
+      sourcePrompt: string;
+      run: () => Promise<StudioImageCallResult>;
+    },
+  ): Promise<void> {
+    let call: StudioCallRecord;
+    try {
+      const result = await options.run();
+      const saved = await this.storage.saveFromUrl(
+        turn.userId,
+        result.imageUrl,
+        "preview-image",
+        {
+          studioProjectId: project.id,
+          studioTurnId: turn.id,
+          model: options.producedBy,
+        },
+      );
+      call = {
+        index: 0,
+        status: "succeeded",
+        image: {
+          id: this.idFactory(),
+          storagePath: saved.storagePath,
+          sourcePrompt: options.sourcePrompt,
+          model: options.producedBy,
+        },
+      };
+    } catch (error) {
+      call = {
+        index: 0,
+        status: "failed",
+        error: error instanceof Error ? error.message : "Image call failed",
+      };
+    }
+
+    const failed = call.status === "failed";
+    if (failed) {
+      await this.store.refundCents(turn.userId, day, turn.reservedCents);
+    }
+
+    await this.store.finalizeTurn(project.id, turn.id, {
+      status: failed ? "failed" : "complete",
+      calls: [call],
+      refundedCents: failed ? turn.reservedCents : 0,
+      updatedAtMs: this.now().getTime(),
+    });
+    await this.store.updateProject(project.id, {
+      updatedAtMs: this.now().getTime(),
+    });
   }
 
   /**

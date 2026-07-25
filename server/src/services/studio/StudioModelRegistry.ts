@@ -218,6 +218,25 @@ export class StudioModelRegistry {
     return entry;
   }
 
+  /** Per-call budget for a utility, same rule as models (latency × 3, clamped). */
+  timeoutMsForUtility(operation: StudioUtilityOperation): number {
+    const entry = this.getUtility(operation);
+    const raw = entry.latencyHintSeconds * TIMEOUT_MULTIPLIER * 1000;
+    return Math.min(MAX_TIMEOUT_MS, Math.max(MIN_TIMEOUT_MS, raw));
+  }
+
+  /**
+   * Replicate input for a prompt-less utility call. Both Recraft utilities
+   * take exactly one `image` URI (plan: "Utilities").
+   */
+  buildUtilityInput(
+    operation: StudioUtilityOperation,
+    imageUrl: string,
+  ): Record<string, unknown> {
+    this.getUtility(operation);
+    return { image: imageUrl };
+  }
+
   /**
    * Replicate input for a text-to-image call. Input shaping is per model
    * family; the runner stays generic.

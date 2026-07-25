@@ -77,7 +77,8 @@ export interface StudioImageRecord {
   storagePath: string;
   /** The exact prompt (generate) or instruction (edit) that produced it. */
   sourcePrompt: string;
-  model: StudioModelSlug;
+  /** Producing model, or the utility operation for transform results. */
+  model: StudioModelSlug | StudioUtilityOperation;
 }
 
 export type StudioTurnStatus = "running" | "complete" | "partial" | "failed";
