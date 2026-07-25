@@ -97,6 +97,13 @@ class FakeStore {
   async saveTurn(turn: StudioTurnRecord): Promise<void> {
     this.turns.set(turn.id, { ...turn });
   }
+
+  async deleteProject(projectId: string): Promise<void> {
+    this.projects.delete(projectId);
+    for (const [id, turn] of this.turns) {
+      if (turn.projectId === projectId) this.turns.delete(id);
+    }
+  }
 }
 
 /**
@@ -365,6 +372,29 @@ describe("StudioService", () => {
       expect(fetched.title).toBe(
         "a logo for Vidra, a video generation platform",
       );
+    });
+  });
+
+  describe("deleteProject (M5)", () => {
+    it("deletes an owned project", async () => {
+      const { service } = makeService();
+      const project = await service.createProject("user-1");
+
+      await service.deleteProject("user-1", project.id);
+
+      await expect(
+        service.getProject("user-1", project.id),
+      ).rejects.toBeInstanceOf(StudioNotFoundError);
+    });
+
+    it("hides another user's project as not-found and deletes nothing", async () => {
+      const { service, store } = makeService();
+      const project = await service.createProject("user-1");
+
+      await expect(
+        service.deleteProject("user-2", project.id),
+      ).rejects.toBeInstanceOf(StudioNotFoundError);
+      expect(store.projects.has(project.id)).toBe(true);
     });
   });
 

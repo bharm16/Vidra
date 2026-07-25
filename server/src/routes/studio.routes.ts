@@ -4,7 +4,8 @@
  * POST   /projects                    create a project
  * GET    /projects                    list the caller's projects
  * GET    /projects/:projectId         fetch one project
- * PATCH  /projects/:projectId         rename / pin model
+ * PATCH  /projects/:projectId         rename / pin model / set selection
+ * DELETE /projects/:projectId         delete a project and its turns
  * POST   /projects/:projectId/turns   run a turn — 202 + turnId (async: image
  *                                     calls settle in the background)
  * GET    /projects/:projectId/turns/:turnId   poll a turn
@@ -144,6 +145,20 @@ export function createStudioRouter(studioService: StudioService): Router {
           parsed.data,
         );
         res.json({ success: true, data: project });
+      } catch (error) {
+        sendError(res, error);
+      }
+    }),
+  );
+
+  router.delete(
+    "/projects/:projectId",
+    asyncHandler(async (req: AuthedRequest, res: Response) => {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+      try {
+        await studioService.deleteProject(userId, routeParam(req, "projectId"));
+        res.json({ success: true, data: { deleted: true } });
       } catch (error) {
         sendError(res, error);
       }

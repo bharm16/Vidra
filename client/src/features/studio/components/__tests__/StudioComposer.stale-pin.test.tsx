@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { StudioModelInfo } from "../../api/schemas";
+import type { StudioModelInfo } from "@features/studio/api/schemas";
 import { StudioComposer } from "../StudioComposer";
 
 /**

@@ -113,4 +113,52 @@ describe("studioReducer", () => {
       { turnId: "t1", imageId: "img-1", viewUrl: "https://signed/1" },
     ]);
   });
+
+  it("deleting the active project empties the workspace to the projectless state", () => {
+    const project = {
+      id: "p1",
+      title: "Fox Logo",
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+    let state = studioReducer(initialStudioState, {
+      type: "projectOpened",
+      project,
+      turns: [makeTurn({ status: "complete" })],
+    });
+    state = studioReducer(state, { type: "projectCreated", project });
+
+    state = studioReducer(state, { type: "projectDeleted", projectId: "p1" });
+
+    expect(state.project).toBeNull();
+    expect(state.turns).toEqual([]);
+    expect(state.selectedImageId).toBeNull();
+    expect(state.projects.some((p) => p.id === "p1")).toBe(false);
+  });
+
+  it("deleting a background project only trims the list", () => {
+    const active = {
+      id: "p1",
+      title: "Active",
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+    const other = { id: "p2", title: "Other", createdAtMs: 2, updatedAtMs: 2 };
+    let state = studioReducer(initialStudioState, {
+      type: "bootstrapped",
+      projects: [active, other],
+      models: [],
+    });
+    state = studioReducer(state, {
+      type: "projectOpened",
+      project: active,
+      turns: [makeTurn()],
+    });
+
+    state = studioReducer(state, { type: "projectDeleted", projectId: "p2" });
+
+    expect(state.project?.id).toBe("p1");
+    expect(state.turns).toHaveLength(1);
+    expect(state.projects.map((p) => p.id)).toEqual(["p1"]);
+  });
 });

@@ -17,6 +17,7 @@ type FakeDocRef = {
   path: string;
   get: () => Promise<{ exists: boolean; data: () => StoreRecord | undefined }>;
   set: (data: StoreRecord, options?: { merge?: boolean }) => Promise<void>;
+  delete: () => Promise<void>;
   collection: (name: string) => FakeCollectionRef;
 };
 
@@ -24,6 +25,7 @@ type FakeCollectionRef = {
   doc: (id: string) => FakeDocRef;
   where: (field: string, op: string, value: unknown) => FakeQuery;
   orderBy: (field: string, direction?: string) => FakeQuery;
+  limit: (n: number) => FakeQuery;
 };
 
 type FakeQuery = {
@@ -32,7 +34,8 @@ type FakeQuery = {
   limit: (n: number) => FakeQuery;
   get: () => Promise<{
     empty: boolean;
-    docs: Array<{ id: string; data: () => StoreRecord }>;
+    size: number;
+    docs: Array<{ id: string; data: () => StoreRecord; ref: FakeDocRef }>;
   }>;
 };
 
@@ -92,7 +95,12 @@ function makeQuery(
       if (limitCount !== undefined) rows = rows.slice(0, limitCount);
       return {
         empty: rows.length === 0,
-        docs: rows.map(({ id, value }) => ({ id, data: () => ({ ...value }) })),
+        size: rows.length,
+        docs: rows.map(({ id, value }) => ({
+          id,
+          data: () => ({ ...value }),
+          ref: makeDocRef(`${collectionPath}/${id}`),
+        })),
       };
     },
   };
@@ -109,6 +117,9 @@ function makeDocRef(path: string): FakeDocRef {
       };
     },
     set: async (data, options) => applySet(path, data, options),
+    delete: async () => {
+      mocks.records.delete(path);
+    },
     collection: (name) => makeCollectionRef(`${path}/${name}`),
   };
 }
@@ -121,12 +132,26 @@ function makeCollectionRef(path: string): FakeCollectionRef {
       mocks.orderByPaths.push(path);
       return makeQuery(path, [], { field, direction });
     },
+    limit: (n) => makeQuery(path, [], undefined, n),
   };
 }
 
 vi.mock("@infrastructure/firebaseAdmin", () => ({
   getFirestore: () => ({
     collection: (name: string) => makeCollectionRef(name),
+    batch: () => {
+      const ops: Array<() => void> = [];
+      return {
+        delete: (ref: FakeDocRef) => {
+          ops.push(() => {
+            mocks.records.delete(ref.path);
+          });
+        },
+        commit: async () => {
+          ops.forEach((op) => op());
+        },
+      };
+    },
     runTransaction: async (
       fn: (tx: {
         get: (ref: FakeDocRef) => ReturnType<FakeDocRef["get"]>;
@@ -314,6 +339,50 @@ describe("FirestoreStudioProjectStore", () => {
       expect(turn && "resolvedModel" in turn).toBe(false);
       // No usage doc was created — the cap counter is untouched.
       expect(await store.getReservedCents("user-1", DAY)).toBe(0);
+    });
+  });
+
+  describe("deleteProject", () => {
+    it("removes the project doc and every turn in its subcollection", async () => {
+      await store.createProject({
+        id: "project-1",
+        userId: "user-1",
+        title: "Fox Logo",
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+      await store.saveTurn(makeTurn({ id: "turn-1" }));
+      await store.saveTurn(makeTurn({ id: "turn-2" }));
+
+      await store.deleteProject("project-1");
+
+      expect(await store.getProject("project-1")).toBeNull();
+      expect(await store.getTurn("project-1", "turn-1")).toBeNull();
+      expect(await store.getTurn("project-1", "turn-2")).toBeNull();
+    });
+
+    it("leaves other projects and their turns untouched", async () => {
+      await store.createProject({
+        id: "project-1",
+        userId: "user-1",
+        title: "Doomed",
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+      await store.createProject({
+        id: "project-2",
+        userId: "user-1",
+        title: "Kept",
+        createdAtMs: 2,
+        updatedAtMs: 2,
+      });
+      await store.saveTurn(makeTurn({ id: "turn-1", projectId: "project-1" }));
+      await store.saveTurn(makeTurn({ id: "turn-2", projectId: "project-2" }));
+
+      await store.deleteProject("project-1");
+
+      expect((await store.getProject("project-2"))?.title).toBe("Kept");
+      expect(await store.getTurn("project-2", "turn-2")).not.toBeNull();
     });
   });
 

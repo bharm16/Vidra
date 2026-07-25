@@ -45,6 +45,9 @@ export function studioUsageDayKey(at: Date): string {
   return at.toISOString().slice(0, 10);
 }
 
+/** Under Firestore's 500-writes-per-batch limit with headroom. */
+const DELETE_BATCH_SIZE = 400;
+
 export class FirestoreStudioProjectStore {
   private readonly db = getFirestore();
   private readonly projects = this.db.collection("studio_projects");
@@ -209,6 +212,29 @@ export class FirestoreStudioProjectStore {
     await this.turnsOf(projectId)
       .doc(turnId)
       .set(this.stripUndefined(patch), { merge: true });
+  }
+
+  /**
+   * Delete a project and its turns subcollection (Firestore never cascades
+   * into subcollections). Turn docs go in paged batches under the 500-write
+   * limit; the project doc goes last so a partial failure leaves the
+   * project visible rather than orphaning invisible turns. Stored images
+   * in GCS are left for the (frozen) retention stack — deleting a project
+   * is a Firestore-only operation in v1.
+   */
+  async deleteProject(projectId: string): Promise<void> {
+    const turnsRef = this.turnsOf(projectId);
+    for (;;) {
+      const snapshot = await turnsRef.limit(DELETE_BATCH_SIZE).get();
+      if (snapshot.empty) break;
+      const batch = this.db.batch();
+      for (const doc of snapshot.docs) {
+        batch.delete(doc.ref);
+      }
+      await batch.commit();
+      if (snapshot.size < DELETE_BATCH_SIZE) break;
+    }
+    await this.projects.doc(projectId).delete();
   }
 
   /** Firestore rejects undefined field values; optional fields are omitted. */

@@ -85,6 +85,12 @@ export async function updateStudioProject(
   });
 }
 
+export async function deleteStudioProject(projectId: string): Promise<void> {
+  await request(`/projects/${projectId}`, z.object({ deleted: z.boolean() }), {
+    method: "DELETE",
+  });
+}
+
 /** 202: decision is final, image calls still running — poll getStudioTurn. */
 export async function runStudioTurn(
   projectId: string,

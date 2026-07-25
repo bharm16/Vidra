@@ -253,6 +253,12 @@ export class StudioService {
     return imageIdsOf(await this.store.listTurns(projectId));
   }
 
+  /** Delete a project and its turns. Ownership reads as absence (404). */
+  async deleteProject(userId: string, projectId: string): Promise<void> {
+    await this.getProject(userId, projectId);
+    await this.store.deleteProject(projectId);
+  }
+
   async getTurn(
     userId: string,
     projectId: string,

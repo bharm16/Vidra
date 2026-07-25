@@ -61,6 +61,11 @@ export type StudioAction =
   | { type: "errorDismissed" }
   | { type: "imageSelected"; imageId: string | null }
   | { type: "projectPatched"; project: StudioProject }
+  /**
+   * Deleting the active project empties the workspace back to the
+   * projectless state (the next send lazily creates a fresh project).
+   */
+  | { type: "projectDeleted"; projectId: string }
   | { type: "listToggled"; open?: boolean };
 
 /** A polled turn replaces its thread entry; unknown ids append (defensive). */
@@ -144,6 +149,23 @@ export function studioReducer(
           project.id === action.project.id ? action.project : project,
         ),
       };
+    case "projectDeleted": {
+      const projects = state.projects.filter(
+        (project) => project.id !== action.projectId,
+      );
+      if (state.project?.id !== action.projectId) {
+        return { ...state, projects };
+      }
+      return {
+        ...state,
+        projects,
+        project: null,
+        turns: [],
+        pendingTurnId: null,
+        optimisticMessage: null,
+        selectedImageId: null,
+      };
+    }
     case "listToggled":
       return { ...state, listOpen: action.open ?? !state.listOpen };
     default:

@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   createStudioProject,
+  deleteStudioProject,
   getStudioModels,
   getStudioProject,
   getStudioTurn,
@@ -38,6 +39,7 @@ export interface UseStudioProjectReturn {
   renameProject: (title: string) => Promise<void>;
   pinModel: (slug: StudioModelSlug | null) => Promise<void>;
   selectImage: (imageId: string | null) => void;
+  deleteProject: (projectId: string) => Promise<void>;
 }
 
 function describeError(error: unknown): string {
@@ -185,6 +187,15 @@ export function useStudioProject(): UseStudioProjectReturn {
     );
   }, []);
 
+  const deleteProject = useCallback(async (projectId: string) => {
+    try {
+      await deleteStudioProject(projectId);
+      dispatch({ type: "projectDeleted", projectId });
+    } catch (error) {
+      dispatch({ type: "requestFailed", error: describeError(error) });
+    }
+  }, []);
+
   return {
     state,
     dispatch,
@@ -194,5 +205,6 @@ export function useStudioProject(): UseStudioProjectReturn {
     renameProject,
     pinModel,
     selectImage,
+    deleteProject,
   };
 }

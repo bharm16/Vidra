@@ -509,17 +509,11 @@
 
 .st-projects-row {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
   width: 100%;
-  border: none;
-  background: transparent;
-  color: #f2f3f6;
   border-radius: 9px;
-  padding: 8px 9px;
-  cursor: pointer;
-  text-align: left;
+  padding: 2px;
 }
 
 .st-projects-row:hover {
@@ -528,6 +522,43 @@
 
 .st-projects-row-active {
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* The open button carries the title/date pair and fills the row. */
+.st-projects-open {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #f2f3f6;
+  border-radius: 8px;
+  padding: 6px 7px;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Two-step delete: quiet icon, labeled "Delete?" once armed. */
+.st-projects-delete {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: rgba(242, 243, 246, 0.4);
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.st-projects-delete:hover {
+  color: rgba(242, 243, 246, 0.8);
+}
+
+.st-projects-delete-armed {
+  color: rgba(255, 138, 138, 0.95);
 }
 
 .st-projects-title {
@@ -622,15 +653,22 @@
   background: rgba(255, 255, 255, 0.08) !important;
 }
 
-.st-projects-row {
+.st-projects-open {
   height: auto !important;
-  width: 100% !important;
-  padding: 8px 9px !important;
-  border-radius: 9px !important;
+  width: auto !important;
+  padding: 6px 7px !important;
+  border-radius: 8px !important;
   white-space: normal !important;
   justify-content: space-between !important;
   background: transparent !important;
   color: #f2f3f6 !important;
+}
+
+.st-projects-delete {
+  height: auto !important;
+  width: auto !important;
+  padding: 6px !important;
+  background: transparent !important;
 }
 
 .st-projects-row:hover {

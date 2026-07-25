@@ -34,7 +34,6 @@ export function StudioPage(): React.ReactElement {
         turn.calls.some((call) => call.status === "succeeded" && call.image),
       )?.id ?? "studio-empty";
 
-
   const busy = state.pendingTurnId !== null || state.optimisticMessage !== null;
 
   return (
@@ -66,7 +65,8 @@ export function StudioPage(): React.ReactElement {
         <div className="st-body">
           <div className="st-panel">
             <div className="st-panel-header">
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 type="button"
                 className="st-icon-btn"
                 title="Projects"
@@ -78,7 +78,8 @@ export function StudioPage(): React.ReactElement {
               <span className="st-panel-title">
                 {state.project?.title ?? "…"}
               </span>
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 type="button"
                 className="st-icon-btn"
                 title="New project"
@@ -94,6 +95,9 @@ export function StudioPage(): React.ReactElement {
               activeProjectId={state.project?.id ?? null}
               open={state.listOpen}
               onOpenProject={(project) => void studio.openProject(project)}
+              onDeleteProject={(projectId) =>
+                void studio.deleteProject(projectId)
+              }
               onClose={() =>
                 studio.dispatch({ type: "listToggled", open: false })
               }
