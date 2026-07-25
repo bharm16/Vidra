@@ -22,7 +22,13 @@ export const StudioProjectSchema = z.object({
   id: z.string(),
   title: z.string(),
   selectedImageId: z.string().nullish(),
-  pinnedModel: StudioModelSlugSchema.nullish(),
+  /**
+   * Plain string on the wire, NOT the slug enum: a persisted pin whose
+   * model left the roster must still parse (behavior 9 — stale pins
+   * revert to Auto with a notice, they never brick the project fetch).
+   * Writes stay narrow — updateStudioProject accepts only roster slugs.
+   */
+  pinnedModel: z.string().nullish(),
   createdAtMs: z.number(),
   updatedAtMs: z.number(),
 });

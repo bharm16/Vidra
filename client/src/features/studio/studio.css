@@ -285,6 +285,14 @@
   background: #101116;
 }
 
+/* Behavior 9: one-line stale-pin notice above the field. */
+.st-stale-pin-note {
+  margin: 0;
+  padding: 8px 12px 0;
+  font-size: 11px;
+  color: rgba(242, 243, 246, 0.55);
+}
+
 .st-composer-field {
   position: relative;
 }

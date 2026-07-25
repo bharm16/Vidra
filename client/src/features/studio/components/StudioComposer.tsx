@@ -13,7 +13,8 @@ import type { StudioModelInfo, StudioModelSlug } from "../api/schemas";
 
 interface StudioComposerProps {
   models: StudioModelInfo[];
-  pinnedModel: StudioModelSlug | null;
+  /** Plain string: a stale pin (slug no longer in the roster) reads as Auto. */
+  pinnedModel: string | null;
   busy: boolean;
   onPin: (slug: StudioModelSlug | null) => void;
   onSend: (message: string) => void;
@@ -61,9 +62,18 @@ export function StudioComposer({
   };
 
   const pinnedInfo = models.find((model) => model.slug === pinnedModel) ?? null;
+  // Behavior 9: a saved pin that no longer resolves reads as Auto with a
+  // one-line notice. Roster must be loaded before judging staleness.
+  const pinIsStale =
+    pinnedModel !== null && models.length > 0 && pinnedInfo === null;
 
   return (
     <div className="st-composer" data-testid="studio-composer">
+      {pinIsStale ? (
+        <p className="st-stale-pin-note" role="status">
+          Your pinned model is no longer available — using Auto.
+        </p>
+      ) : null}
       <div className="st-composer-field">
         <textarea
           className={cn("st-input", expanded && "st-input-expanded")}
@@ -78,7 +88,8 @@ export function StudioComposer({
             }
           }}
         />
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           type="button"
           className="st-icon-btn st-expand"
           title={expanded ? "Shrink field" : "Expand field"}
@@ -91,7 +102,8 @@ export function StudioComposer({
 
       <div className="st-composer-strip">
         <div ref={pickerRef} className="st-picker">
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             type="button"
             className="st-picker-btn"
             aria-haspopup="listbox"
@@ -103,7 +115,8 @@ export function StudioComposer({
           </Button>
           {pickerOpen ? (
             <div className="st-picker-pop" role="listbox" aria-label="Model">
-              <Button variant="ghost"
+              <Button
+                variant="ghost"
                 type="button"
                 role="option"
                 aria-selected={pinnedModel === null}
@@ -122,7 +135,8 @@ export function StudioComposer({
                 </span>
               </Button>
               {models.map((model) => (
-                <Button variant="ghost"
+                <Button
+                  variant="ghost"
                   key={model.slug}
                   type="button"
                   role="option"
@@ -148,7 +162,8 @@ export function StudioComposer({
 
         <div className="st-strip-gap" />
 
-        <Button variant="ghost"
+        <Button
+          variant="ghost"
           type="button"
           className="st-send"
           title="Send"

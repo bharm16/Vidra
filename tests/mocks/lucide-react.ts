@@ -7,6 +7,7 @@ const icon = (name: string) => (props: IconProps) =>
 
 export const ArrowLeft = icon("ArrowLeft");
 export const ArrowRight = icon("ArrowRight");
+export const ArrowUp = icon("ArrowUp");
 export const AlertCircle = icon("AlertCircle");
 export const BookOpen = icon("BookOpen");
 export const Calendar = icon("Calendar");
@@ -19,6 +20,7 @@ export const CreditCard = icon("CreditCard");
 export const Edit = icon("Edit");
 export const FileText = icon("FileText");
 export const Folder = icon("Folder");
+export const FolderOpen = icon("FolderOpen");
 export const GraduationCap = icon("GraduationCap");
 export const Highlighter = icon("Highlighter");
 export const Home = icon("Home");
@@ -32,6 +34,7 @@ export const Loader2 = icon("Loader2");
 export const LogIn = icon("LogIn");
 export const LogOut = icon("LogOut");
 export const MapPin = icon("MapPin");
+export const Maximize2 = icon("Maximize2");
 export const MessageCircle = icon("MessageCircle");
 export const MoreVertical = icon("MoreVertical");
 export const CircleHelp = icon("CircleHelp");
