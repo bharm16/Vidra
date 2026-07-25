@@ -34,7 +34,8 @@ export function ResultCard({
           const image = call.image;
           const selected = selectedImageId === image.id;
           return (
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               key={call.index}
               type="button"
               className={cn("st-cell", selected && "st-cell-selected")}

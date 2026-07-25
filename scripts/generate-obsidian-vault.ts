@@ -22,18 +22,18 @@
  *   npx tsx scripts/generate-obsidian-vault.ts
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '..'
+  "..",
 );
-const DOCS_DIR = path.join(REPO_ROOT, 'docs');
-const MAP_PATH = path.join(DOCS_DIR, 'architecture', 'architecture-map.json');
-const GRAPH_DIR = path.join(DOCS_DIR, 'graph');
-const OBSIDIAN_DIR = path.join(DOCS_DIR, '.obsidian');
+const DOCS_DIR = path.join(REPO_ROOT, "docs");
+const MAP_PATH = path.join(DOCS_DIR, "architecture", "architecture-map.json");
+const GRAPH_DIR = path.join(DOCS_DIR, "graph");
+const OBSIDIAN_DIR = path.join(DOCS_DIR, ".obsidian");
 
 interface RouteEntry {
   method: string;
@@ -67,7 +67,7 @@ function stripSuffix(value: string, suffix: string): string {
 }
 
 function domainOf(registrationFile: string): string {
-  return stripSuffix(path.basename(registrationFile), '.services.ts');
+  return stripSuffix(path.basename(registrationFile), ".services.ts");
 }
 
 // Obsidian resolves wikilinks by bare filename or full vault path — partial
@@ -83,7 +83,7 @@ function domainLink(domain: string, label?: string): string {
 function writeNote(relPath: string, body: string): void {
   const filePath = path.join(GRAPH_DIR, relPath);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, body, 'utf8');
+  fs.writeFileSync(filePath, body, "utf8");
 }
 
 function generateServiceNotes(map: ArchitectureMap): {
@@ -114,56 +114,56 @@ function generateServiceNotes(map: ArchitectureMap): {
     }
 
     const lines: string[] = [
-      '---',
-      `tags: [service${domain ? `, domain/${domain}` : ', leaf-dependency'}]`,
-      '---',
-      '',
+      "---",
+      `tags: [service${domain ? `, domain/${domain}` : ", leaf-dependency"}]`,
+      "---",
+      "",
       `# ${node}`,
-      '',
+      "",
       domain
         ? `Registered in \`${homeFile}\` — see ${domainLink(domain)}.`
-        : 'Provided dependency (client, config, or primitive) — not registered via a domain file of its own.',
-      '',
+        : "Provided dependency (client, config, or primitive) — not registered via a domain file of its own.",
+      "",
     ];
     if (outgoing.length > 0) {
-      lines.push('## Depends on', '');
+      lines.push("## Depends on", "");
       for (const edge of outgoing.slice().sort((a, b) => {
         return a.to.localeCompare(b.to);
       })) {
         lines.push(`- ${serviceLink(edge.to)}`);
       }
-      lines.push('');
+      lines.push("");
     }
     if (incoming.length > 0) {
-      lines.push('## Used by', '');
+      lines.push("## Used by", "");
       for (const edge of incoming.slice().sort((a, b) => {
         return a.from.localeCompare(b.from);
       })) {
         lines.push(`- ${serviceLink(edge.from)} (via \`${edge.file}\`)`);
       }
-      lines.push('');
+      lines.push("");
     }
-    writeNote(path.join('services', `${node}.md`), lines.join('\n'));
+    writeNote(path.join("services", `${node}.md`), lines.join("\n"));
   }
 
   for (const [domain, members] of domains) {
     const lines: string[] = [
-      '---',
-      'tags: [domain]',
-      '---',
-      '',
+      "---",
+      "tags: [domain]",
+      "---",
+      "",
       `# ${domain}.services.ts`,
-      '',
+      "",
       `DI registration domain — \`server/src/config/services/${domain}.services.ts\`.`,
-      '',
-      '## Services registered here',
-      '',
+      "",
+      "## Services registered here",
+      "",
       ...members.sort().map((m) => {
         return `- ${serviceLink(m)}`;
       }),
-      '',
+      "",
     ];
-    writeNote(path.join('domains', `${domain}.md`), lines.join('\n'));
+    writeNote(path.join("domains", `${domain}.md`), lines.join("\n"));
   }
 
   return { serviceCount: nodes.length, domains };
@@ -178,37 +178,37 @@ function generateRoutesNote(map: ArchitectureMap): void {
     ]);
   }
   const lines: string[] = [
-    '# Routes',
-    '',
+    "# Routes",
+    "",
     `${map.routes.length} HTTP routes grouped by source file. Generated from the architecture map — see [[architecture/ROUTE_MAP|ROUTE_MAP]] for the maintained view.`,
-    '',
+    "",
   ];
   for (const [file, routes] of [...byFile.entries()].sort(([a], [b]) => {
     return a.localeCompare(b);
   })) {
-    lines.push(`## \`${file}\``, '');
+    lines.push(`## \`${file}\``, "");
     for (const route of routes) {
       lines.push(`- \`${route.method} ${route.fullPath}\``);
     }
-    lines.push('');
+    lines.push("");
   }
-  writeNote('Routes.md', lines.join('\n'));
+  writeNote("Routes.md", lines.join("\n"));
 }
 
 function generateFlagsNote(map: ArchitectureMap): void {
   const lines: string[] = [
-    '# Feature Flags',
-    '',
-    'Server flag registry (`server/src/config/feature-flags.ts`). Generated from the architecture map.',
-    '',
-    '| Env Var | Default | Category | Description |',
-    '| --- | --- | --- | --- |',
+    "# Feature Flags",
+    "",
+    "Server flag registry (`server/src/config/feature-flags.ts`). Generated from the architecture map.",
+    "",
+    "| Env Var | Default | Category | Description |",
+    "| --- | --- | --- | --- |",
     ...map.featureFlags.map((flag) => {
       return `| \`${flag.envName}\` | \`${flag.defaultValue}\` | ${flag.category} | ${flag.description} |`;
     }),
-    '',
+    "",
   ];
-  writeNote('Feature Flags.md', lines.join('\n'));
+  writeNote("Feature Flags.md", lines.join("\n"));
 }
 
 function listVaultDocs(relDir: string): string[] {
@@ -217,73 +217,73 @@ function listVaultDocs(relDir: string): string[] {
   return fs
     .readdirSync(dir)
     .filter((f) => {
-      return f.endsWith('.md');
+      return f.endsWith(".md");
     })
     .sort();
 }
 
 function generateHomeNote(domains: Map<string, string[]>): void {
-  const adrs = listVaultDocs('adr');
-  const archDocs = listVaultDocs('architecture');
+  const adrs = listVaultDocs("adr");
+  const archDocs = listVaultDocs("architecture");
   const lines: string[] = [
-    '# Vidra Graph — Home',
-    '',
-    'Entry point for the docs/ vault. The `graph/` folder is generated —',
-    'regenerate after service changes with:',
-    '',
-    '```bash',
-    'npm run architecture:map:write && npm run obsidian:vault',
-    '```',
-    '',
-    '## Service domains (DI registration files)',
-    '',
+    "# Vidra Graph — Home",
+    "",
+    "Entry point for the docs/ vault. The `graph/` folder is generated —",
+    "regenerate after service changes with:",
+    "",
+    "```bash",
+    "npm run architecture:map:write && npm run obsidian:vault",
+    "```",
+    "",
+    "## Service domains (DI registration files)",
+    "",
     ...[...domains.keys()].sort().map((d) => {
       return `- ${domainLink(d, `${d}.services.ts`)}`;
     }),
-    '',
-    '## Indexes',
-    '',
-    '- [[graph/Routes|Routes]]',
-    '- [[graph/Feature Flags|Feature Flags]]',
-    '',
-    '## Architecture decision records',
-    '',
+    "",
+    "## Indexes",
+    "",
+    "- [[graph/Routes|Routes]]",
+    "- [[graph/Feature Flags|Feature Flags]]",
+    "",
+    "## Architecture decision records",
+    "",
     ...adrs.map((f) => {
-      return `- [[adr/${stripSuffix(f, '.md')}]]`;
+      return `- [[adr/${stripSuffix(f, ".md")}]]`;
     }),
-    '',
-    '## Architecture docs',
-    '',
+    "",
+    "## Architecture docs",
+    "",
     ...archDocs.map((f) => {
-      return `- [[architecture/${stripSuffix(f, '.md')}]]`;
+      return `- [[architecture/${stripSuffix(f, ".md")}]]`;
     }),
-    '',
+    "",
   ];
-  writeNote('Home.md', lines.join('\n'));
+  writeNote("Home.md", lines.join("\n"));
 }
 
 /** Seed graph view settings on first run only — never clobber user config. */
 function seedObsidianConfig(): boolean {
-  const graphJson = path.join(OBSIDIAN_DIR, 'graph.json');
+  const graphJson = path.join(OBSIDIAN_DIR, "graph.json");
   if (fs.existsSync(graphJson)) return false;
   fs.mkdirSync(OBSIDIAN_DIR, { recursive: true });
   const settings = {
-    'collapse-filter': true,
-    search: '',
+    "collapse-filter": true,
+    search: "",
     showTags: false,
     showAttachments: false,
     hideUnresolved: true,
     showOrphans: true,
-    'collapse-color-groups': false,
+    "collapse-color-groups": false,
     colorGroups: [
-      { query: 'path:adr', color: { a: 1, rgb: 0xc792ea } },
-      { query: 'path:graph/domains', color: { a: 1, rgb: 0x89ddff } },
-      { query: 'path:graph/services', color: { a: 1, rgb: 0x82aaff } },
-      { query: 'path:architecture', color: { a: 1, rgb: 0xc3e88d } },
-      { query: 'path:design', color: { a: 1, rgb: 0xf78c6c } },
-      { query: 'path:audits', color: { a: 1, rgb: 0xffcb6b } },
+      { query: "path:adr", color: { a: 1, rgb: 0xc792ea } },
+      { query: "path:graph/domains", color: { a: 1, rgb: 0x89ddff } },
+      { query: "path:graph/services", color: { a: 1, rgb: 0x82aaff } },
+      { query: "path:architecture", color: { a: 1, rgb: 0xc3e88d } },
+      { query: "path:design", color: { a: 1, rgb: 0xf78c6c } },
+      { query: "path:audits", color: { a: 1, rgb: 0xffcb6b } },
     ],
-    'collapse-display': true,
+    "collapse-display": true,
     nodeSizeMultiplier: 1.2,
     lineSizeMultiplier: 1,
     centerStrength: 0.4,
@@ -293,12 +293,12 @@ function seedObsidianConfig(): boolean {
     scale: 0.6,
     close: false,
   };
-  fs.writeFileSync(graphJson, JSON.stringify(settings, null, 2), 'utf8');
+  fs.writeFileSync(graphJson, JSON.stringify(settings, null, 2), "utf8");
   return true;
 }
 
 function main(): void {
-  const map = JSON.parse(fs.readFileSync(MAP_PATH, 'utf8')) as ArchitectureMap;
+  const map = JSON.parse(fs.readFileSync(MAP_PATH, "utf8")) as ArchitectureMap;
 
   fs.rmSync(GRAPH_DIR, { recursive: true, force: true });
   const { serviceCount, domains } = generateServiceNotes(map);
@@ -310,9 +310,9 @@ function main(): void {
   console.log(
     `docs/graph/ regenerated: ${serviceCount} services, ${domains.size} domains, ` +
       `${map.routes.length} routes, ${map.featureFlags.length} flags.` +
-      (seeded ? ' Seeded docs/.obsidian/graph.json.' : '')
+      (seeded ? " Seeded docs/.obsidian/graph.json." : ""),
   );
-  console.log('Open the docs/ folder as an Obsidian vault to view the graph.');
+  console.log("Open the docs/ folder as an Obsidian vault to view the graph.");
 }
 
 main();

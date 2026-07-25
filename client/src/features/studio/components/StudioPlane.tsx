@@ -50,7 +50,8 @@ export function StudioPlane({
         const viewUrl = viewUrlByImageId.get(item.imageId);
         const selected = selectedImageId === item.imageId;
         return (
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             key={item.imageId}
             type="button"
             className={cn("st-plane-cell", selected && "st-cell-selected")}
