@@ -265,15 +265,23 @@ Worktrees may not have valid Firebase credentials. The startup probe (`admin.aut
 
 ## Commit Protocol (MANDATORY)
 
-Before EVERY commit, run all three checks in order:
+Before EVERY commit, run all four checks in order:
 
 1. `npx tsc --noEmit` — must exit 0
 2. `npx eslint --config config/lint/eslint.config.js . --quiet` — must have 0 errors
 3. `npm run test:unit` — must pass all shards
+4. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
 
 If any check fails, DO NOT commit. Fix the failures first.
 
-A pre-commit hook enforces checks 1-2 automatically, plus: **fix commits must include a regression test** (the hook rejects `fix:` / `fix(` commits without new test blocks). Run `bash scripts/install-hooks.sh` after cloning.
+A pre-commit hook enforces checks 1-2 automatically. The commit-msg hook enforces the bugfix protocol: **fix commits must add a regression test in a `*.regression.test.*` file**, and any commit touching regression tests must pass the mock-boundary quality check (`scripts/check-regression-test-quality.sh`). When no correct test seam exists, declare `No-Seam: <reason>` in the commit body — the missing seam is an architecture finding, not a free pass. Run `bash scripts/install-hooks.sh` after cloning.
+
+### Test Policy
+
+- **The replay golden path is the merge gate.** `npm run test:replay` runs the full authoring loop offline against recorded fixtures (see `docs/architecture/replay-mode.md`). If it is red, the product is broken no matter how green the unit suite is.
+- **Frozen domains carry no tests.** Stacks frozen by ADR-0002 run zero tests in any gate; their suites were removed 2026-07-25. Git history is the archive — if a frozen stack revives, its tests revive with it.
+- **Tests die with their code.** Deleting, freezing, or replacing a module deletes its tests in the same commit.
+- **Server-side regression tests mock only process-external boundaries** (LLM SDKs, Firebase, Stripe, Redis, `node:*`, logging, time). If a test needs to mock an internal module, it sits at the wrong seam — move it up a layer or into the replay suite. Client-side (jsdom) tests may mock at their feature's `api/` module: that is the client's wire boundary.
 
 ### Integration Test Gate (Service Changes)
 
