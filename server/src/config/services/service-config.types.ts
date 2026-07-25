@@ -23,6 +23,10 @@ export interface ServiceConfig {
   replicate: {
     apiToken: string | undefined;
   };
+  studio: {
+    /** Daily per-user spend cap in estimated cents (ADR-0019). */
+    dailyCapCents: number;
+  };
   fal: {
     apiKey: string | undefined;
   };

@@ -285,6 +285,13 @@ const capabilitiesSchema = z.object({
   CAPABILITIES_PROBE_REFRESH_MS: coercePositiveInt(6 * 60 * 60 * 1000),
 });
 
+const studioSchema = z.object({
+  // Studio's only economic control (ADR-0019): estimated cents reserved
+  // per user per UTC day. A malformed value fails boot instead of
+  // silently falling back.
+  STUDIO_DAILY_SPEND_CAP_CENTS: coercePositiveInt(500),
+});
+
 const convergenceSchema = z.object({
   DEPTH_ESTIMATION_WARMUP_RETRY_TIMEOUT_MS: coercePositiveInt(20_000),
   DEPTH_WARMUP_ON_STARTUP: coerceBooleanString(true),
@@ -355,6 +362,7 @@ const envSchema = serverSchema
   .merge(observabilitySchema)
   .merge(startupSchema)
   .merge(capabilitiesSchema)
+  .merge(studioSchema)
   .merge(convergenceSchema)
   .merge(enhancementSchema)
   .merge(spanLabelingSchema)

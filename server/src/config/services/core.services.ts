@@ -53,6 +53,15 @@ export function registerCoreServices(container: DIContainer): void {
     replicate: {
       apiToken: process.env.REPLICATE_API_TOKEN,
     },
+    studio: {
+      // Boot-validated by env.ts (studioSchema) — a malformed value never
+      // reaches this fallback in a running process.
+      dailyCapCents: resolvePositiveNumber(
+        process.env.STUDIO_DAILY_SPEND_CAP_CENTS,
+        500,
+        1,
+      ),
+    },
     fal: {
       apiKey: resolveFalApiKey() || undefined,
     },

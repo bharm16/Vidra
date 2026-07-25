@@ -99,6 +99,21 @@ describe("parseEnv", () => {
     expect(result.GCS_BUCKET_NAME).toBe("bucket");
   });
 
+  it("defaults and validates the studio daily spend cap", () => {
+    expect(parseEnv(minimalEnv()).STUDIO_DAILY_SPEND_CAP_CENTS).toBe(500);
+    expect(
+      parseEnv(minimalEnv({ STUDIO_DAILY_SPEND_CAP_CENTS: "1200" }))
+        .STUDIO_DAILY_SPEND_CAP_CENTS,
+    ).toBe(1200);
+    // Malformed cap values fail boot instead of silently falling back.
+    expect(() =>
+      parseEnv(minimalEnv({ STUDIO_DAILY_SPEND_CAP_CENTS: "five dollars" })),
+    ).toThrow();
+    expect(() =>
+      parseEnv(minimalEnv({ STUDIO_DAILY_SPEND_CAP_CENTS: "-5" })),
+    ).toThrow();
+  });
+
   it("passes through unknown env vars without error", () => {
     const result = parseEnv(
       minimalEnv({
