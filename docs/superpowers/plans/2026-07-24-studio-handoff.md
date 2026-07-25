@@ -52,6 +52,8 @@ All M5 items landed; the studio's five planned milestones are complete.
 
 ## Remaining (post-M5 polish / next session)
 
+- ~~Per-turn Thinking section~~ **DONE post-M5** (`de1197a2`): result decisions carry LLM-written `thinking`, rendered collapsible above results (visible during generation) — reference parity; record gate enforces presence.
+
 - **stylelint**: `studio.css` hardcoded-px violations (live-editor.css too) — tokenize together as polish; commit protocol doesn't gate on stylelint.
 - CLAUDE.md remains uncommitted (pre-dirty; flag-table regen + parallel fix-task) — reconcile before committing; plan's Route→Service map row for studio still to add.
 - Client `components/` dirty files in `git status` predate the studio sessions (parallel branding work: BrandLogo, vidra-mark, auth.css…) — not studio's; don't sweep them into studio commits.
