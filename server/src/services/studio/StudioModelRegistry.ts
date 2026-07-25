@@ -253,7 +253,9 @@ export class StudioModelRegistry {
       return { prompt, aspect_ratio: resolvedRatio };
     }
     if (entry.replicateId.startsWith("google/")) {
-      return { prompt, aspect_ratio: resolvedRatio, output_format: "webp" };
+      // png, not webp: nano-banana-2-lite only accepts jpg/png (live 422,
+      // 2026-07-24) — png is the value the whole google family accepts.
+      return { prompt, aspect_ratio: resolvedRatio, output_format: "png" };
     }
     // openai/gpt-image-2 — exact param names (quality tiers) confirmed at M1.
     return { prompt, aspect_ratio: resolvedRatio };
@@ -273,7 +275,8 @@ export class StudioModelRegistry {
       return {
         prompt: instruction,
         image_input: imageUrls,
-        output_format: "webp",
+        // Family-wide value — the lite tier rejects webp (live 422).
+        output_format: "png",
       };
     }
     // openai/gpt-image-2 — input key confirmed at M1.

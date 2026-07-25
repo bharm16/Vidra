@@ -124,7 +124,8 @@ describe("StudioModelRegistry", () => {
       expect(input).toEqual({
         prompt: "make it bolder",
         image_input: ["https://example.com/a.webp"],
-        output_format: "webp",
+        // png, not webp — the lite tier rejects webp (regression test).
+        output_format: "png",
       });
     });
 
