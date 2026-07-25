@@ -527,6 +527,26 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
   },
 
   // ============================================================================
+  // Studio (ADR-0019 — conversational image workspace)
+  // ============================================================================
+
+  /**
+   * Studio conversation policy: one JSON decision per turn (clarify /
+   * generate / edit / transform / diagnose / negotiate). Mini carries the
+   * routing and prompt-writing judgment; upgrade this single operation if
+   * the M3/M4 fixtures show it fumbling (plan: "Model config").
+   * Temperature 0.7 — the decision includes creative prompt writing.
+   */
+  studio_turn: {
+    client: process.env.STUDIO_TURN_PROVIDER || "openai",
+    model: process.env.STUDIO_TURN_MODEL || "gpt-4o-mini-2024-07-18",
+    temperature: 0.7,
+    maxTokens: 2000,
+    timeout: 30000,
+    responseFormat: "json_object",
+  },
+
+  // ============================================================================
   // LLM-as-a-Judge Operations
   // ============================================================================
 

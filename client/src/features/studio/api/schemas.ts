@@ -95,7 +95,8 @@ export const StudioTurnSchema = z.object({
   status: z.enum(["running", "complete", "partial", "failed"]),
   userMessage: z.string(),
   decision: StudioDecisionSchema,
-  resolvedModel: z.string(),
+  /** Absent on conversational turns (clarify/diagnose/negotiate). */
+  resolvedModel: z.string().optional(),
   calls: z.array(StudioCallSchema),
   createdAtMs: z.number(),
   updatedAtMs: z.number(),

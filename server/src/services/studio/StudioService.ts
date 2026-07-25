@@ -1,5 +1,5 @@
 /**
- * Studio turn loop (Milestone 1).
+ * Studio turn loop.
  *
  * Owns the operational contract from the plan's "Cost control and
  * robustness" section: atomic spend reservation before any fan-out,
@@ -7,14 +7,16 @@
  * execution (POST /turns responds as soon as the turn record exists; image
  * calls settle in the background and the client polls).
  *
- * The turn policy is HARDCODED at M1 (always generate 4 variants). The
- * LLM policy engine replaces `decideTurn` at M3 — the decision union,
- * store, and execution path are already shaped for it.
+ * Since M3 the per-turn decision comes from StudioPolicyEngine (the
+ * conversation LLM). This service stays Layer-2: it executes decisions,
+ * never writes prompts. Conversational decisions (clarify / diagnose /
+ * negotiate) are terminal immediately — no reservation, no image calls.
  */
 
 import { randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
 import type { StudioModelRegistry } from "./StudioModelRegistry";
+import type { StudioTurnPolicy } from "./StudioPolicyEngine";
 import type {
   ReplicateStudioImageRunner,
   StudioImageCallResult,
@@ -68,6 +70,7 @@ export interface StudioServiceDeps {
   registry: StudioModelRegistry;
   runner: ReplicateStudioImageRunner;
   storage: StudioImageStorage;
+  policy: StudioTurnPolicy;
   dailyCapCents: number;
   now?: () => Date;
   idFactory?: () => string;
@@ -84,13 +87,25 @@ export interface RunTurnResult {
 }
 
 const GENERATE_BATCH_SIZE = 4;
-const TITLE_MAX_CHARS = 60;
+
+/**
+ * Actions this service can execute at M3. edit/transform join at M4 (their
+ * execution paths land there); until then the policy engine rejects them
+ * with a corrective retry, exactly like a schema violation.
+ */
+const EXECUTABLE_ACTIONS = [
+  "clarify",
+  "generate",
+  "diagnose",
+  "negotiate",
+] as const satisfies readonly StudioDecision["action"][];
 
 export class StudioService {
   private readonly store: FirestoreStudioProjectStore;
   private readonly registry: StudioModelRegistry;
   private readonly runner: ReplicateStudioImageRunner;
   private readonly storage: StudioImageStorage;
+  private readonly policy: StudioTurnPolicy;
   private readonly dailyCapCents: number;
   private readonly now: () => Date;
   private readonly idFactory: () => string;
@@ -101,6 +116,7 @@ export class StudioService {
     this.registry = deps.registry;
     this.runner = deps.runner;
     this.storage = deps.storage;
+    this.policy = deps.policy;
     this.dailyCapCents = deps.dailyCapCents;
     this.now = deps.now ?? (() => new Date());
     this.idFactory = deps.idFactory ?? (() => randomUUID());
@@ -247,9 +263,11 @@ export class StudioService {
   }
 
   /**
-   * Run one turn: decide (hardcoded M1 policy), atomically reserve spend,
-   * persist the running turn, and kick off the image calls. Resolves as
-   * soon as the turn is persisted — image work continues in the background.
+   * Run one turn: ask the policy engine for a decision, then execute it.
+   * Generate decisions atomically reserve spend, persist the running turn,
+   * and kick off image calls in the background. Conversational decisions
+   * (clarify / diagnose / negotiate) persist as already-terminal turns —
+   * they cost nothing and are never blocked by the spend cap.
    */
   async runTurn(
     userId: string,
@@ -266,15 +284,33 @@ export class StudioService {
       throw error;
     }
 
-    const decision = this.decideTurn(message);
-    if (decision.action !== "generate") {
-      throw new Error(
-        `M1 policy only produces generate decisions, got: ${decision.action}`,
-      );
+    const history = await this.store.listTurns(projectId);
+    const projectImageIds = new Set<string>();
+    for (const turn of history) {
+      for (const call of turn.calls) {
+        if (call.status === "succeeded" && call.image) {
+          projectImageIds.add(call.image.id);
+        }
+      }
     }
 
     // Pin wins when it resolves; stale pins revert to Auto (cheapest capable).
     const pinned = this.registry.resolvePin(project.pinnedModel);
+
+    const decision = await this.policy.decideTurn({
+      userMessage: message,
+      pinnedModel: pinned,
+      roster: this.registry.listModels(),
+      history,
+      selectedImageId: project.selectedImageId ?? null,
+      projectImageIds,
+      allowedActions: EXECUTABLE_ACTIONS,
+    });
+
+    if (decision.action !== "generate") {
+      return this.saveConversationalTurn(project, message, decision);
+    }
+
     const model = pinned ?? this.registry.cheapestCapable(decision.capability);
 
     const nowMs = this.now().getTime();
@@ -317,25 +353,33 @@ export class StudioService {
     return { turnId: turn.id, decision, completion };
   }
 
-  /** M1 hardcoded policy: always generate 4 design variants of the message. */
-  private decideTurn(message: string): StudioDecision {
-    return {
-      action: "generate",
-      basePrompt: message,
-      variants: [
-        message,
-        `${message} — alternative interpretation`,
-        `${message} — minimal composition`,
-        `${message} — bold composition`,
-      ],
-      capability: "design",
-      suggestions: [
-        "Give me more options",
-        "Try it with a different style",
-        "Make it simpler",
-      ],
-      title: message.slice(0, TITLE_MAX_CHARS),
+  /**
+   * Persist a clarify/diagnose/negotiate turn as already terminal: zero
+   * cost, no reservation (an over-cap user can still answer questions),
+   * no background work.
+   */
+  private async saveConversationalTurn(
+    project: StudioProjectRecord,
+    message: string,
+    decision: StudioDecision,
+  ): Promise<RunTurnResult> {
+    const nowMs = this.now().getTime();
+    const turn: StudioTurnRecord = {
+      id: this.idFactory(),
+      projectId: project.id,
+      userId: project.userId,
+      status: "complete",
+      userMessage: message,
+      decision,
+      calls: [],
+      reservedCents: 0,
+      refundedCents: 0,
+      createdAtMs: nowMs,
+      updatedAtMs: nowMs,
     };
+    await this.store.saveTurn(turn);
+    await this.store.updateProject(project.id, { updatedAtMs: nowMs });
+    return { turnId: turn.id, decision, completion: Promise.resolve() };
   }
 
   private async executeGenerateTurn(
@@ -343,7 +387,7 @@ export class StudioService {
     turn: StudioTurnRecord,
     day: string,
   ): Promise<void> {
-    if (turn.decision.action !== "generate") return;
+    if (turn.decision.action !== "generate" || !turn.resolvedModel) return;
     const decision = turn.decision;
     const model = this.registry.getModel(turn.resolvedModel);
     const timeoutMs = this.registry.timeoutMsFor(model.slug);
@@ -422,7 +466,7 @@ export class StudioService {
       updatedAtMs: this.now().getTime(),
     });
 
-    // First generation titles the project (M1 heuristic; LLM title at M3).
+    // First generation titles the project (behavior 8 — the LLM writes it).
     const patch: Partial<StudioProjectRecord> = {
       updatedAtMs: this.now().getTime(),
     };

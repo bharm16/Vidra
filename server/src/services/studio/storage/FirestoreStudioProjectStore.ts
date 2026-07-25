@@ -152,6 +152,18 @@ export class FirestoreStudioProjectStore {
   }
 
   /**
+   * Persist an already-terminal turn without touching the usage counter.
+   * For conversational turns (clarify/diagnose/negotiate): reserveTurn's
+   * cap check would wrongly block them on an over-cap day, and they spend
+   * nothing, so they bypass the reservation transaction entirely.
+   */
+  async saveTurn(turn: StudioTurnRecord): Promise<void> {
+    await this.turnsOf(turn.projectId)
+      .doc(turn.id)
+      .set(this.stripUndefined(turn));
+  }
+
+  /**
    * Return refunded cents to the day's counter (failed calls never consume
    * cap). Floors at zero so refunds can never go negative.
    */

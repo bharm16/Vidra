@@ -1,6 +1,10 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { StudioModelRegistry } from "@services/studio/StudioModelRegistry";
+import {
+  StudioPolicyEngine,
+  type StudioAIService,
+} from "@services/studio/StudioPolicyEngine";
 import { ReplicateStudioImageRunner } from "@services/studio/providers/ReplicateStudioImageRunner";
 import { FirestoreStudioProjectStore } from "@services/studio/storage/FirestoreStudioProjectStore";
 import {
@@ -28,7 +32,11 @@ function resolveDailyCapCents(): number {
 export function registerStudioServices(container: DIContainer): void {
   container.register(
     "studioService",
-    (config: ServiceConfig, storageService: StudioImageStorage | null) => {
+    (
+      config: ServiceConfig,
+      storageService: StudioImageStorage | null,
+      aiService: StudioAIService | null,
+    ) => {
       const { flags } = resolveAllFlags(process.env);
       if (!flags.studio) {
         logger.info("Studio disabled by ENABLE_STUDIO flag");
@@ -44,15 +52,20 @@ export function registerStudioServices(container: DIContainer): void {
         logger.warn("Storage service unavailable, studio disabled");
         return null;
       }
+      if (!aiService) {
+        logger.warn("aiService unavailable, studio disabled");
+        return null;
+      }
 
       return new StudioService({
         store: new FirestoreStudioProjectStore(),
         registry: new StudioModelRegistry(),
         runner: new ReplicateStudioImageRunner({ apiToken }),
         storage: storageService,
+        policy: new StudioPolicyEngine({ ai: aiService }),
         dailyCapCents: resolveDailyCapCents(),
       });
     },
-    ["config", "storageService"],
+    ["config", "storageService", "aiService"],
   );
 }

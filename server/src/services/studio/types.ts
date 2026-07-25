@@ -96,10 +96,13 @@ export interface StudioTurnRecord {
   userId: string;
   status: StudioTurnStatus;
   userMessage: string;
-  /** The validated decision that ran (M1: always a generate). */
+  /** The validated decision that ran. */
   decision: StudioDecision;
-  /** Model the operation resolved to (pin or cheapest-capable). */
-  resolvedModel: StudioModelSlug;
+  /**
+   * Model the operation resolved to (pin or cheapest-capable). Absent on
+   * conversational turns (clarify/diagnose/negotiate) — no image model runs.
+   */
+  resolvedModel?: StudioModelSlug | undefined;
   calls: StudioCallRecord[];
   reservedCents: number;
   refundedCents: number;
@@ -136,9 +139,11 @@ export type StudioDecision =
       basePrompt: string;
       variants: [string, string, string, string];
       capability: Extract<StudioCapability, "design" | "svg" | "general">;
-      aspectRatio?: string;
+      // `| undefined` (exactOptionalPropertyTypes): lets Zod-parsed decisions
+      // (whose optionals infer `string | undefined`) assign cleanly.
+      aspectRatio?: string | undefined;
       suggestions: [string, string, string];
-      title?: string;
+      title?: string | undefined;
     }
   | {
       action: "edit";

@@ -293,6 +293,30 @@ describe("FirestoreStudioProjectStore", () => {
     });
   });
 
+  describe("saveTurn", () => {
+    it("persists a terminal conversational turn without touching the usage counter", async () => {
+      await store.saveTurn(
+        makeTurn({
+          status: "complete",
+          decision: {
+            action: "clarify",
+            questions: [{ text: "What is it for?", quickPicks: ["A", "B"] }],
+          },
+          resolvedModel: undefined,
+          reservedCents: 0,
+        }),
+      );
+
+      const turn = await store.getTurn("project-1", "turn-1");
+      expect(turn?.status).toBe("complete");
+      expect(turn?.reservedCents).toBe(0);
+      // Firestore rejects undefined values; the optional field is omitted.
+      expect(turn && "resolvedModel" in turn).toBe(false);
+      // No usage doc was created — the cap counter is untouched.
+      expect(await store.getReservedCents("user-1", DAY)).toBe(0);
+    });
+  });
+
   describe("refundCents", () => {
     it("returns refunded cents to the counter", async () => {
       await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });

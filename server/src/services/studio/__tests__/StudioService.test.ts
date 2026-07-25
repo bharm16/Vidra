@@ -6,7 +6,12 @@ import {
   type FirestoreStudioProjectStore,
 } from "../storage/FirestoreStudioProjectStore";
 import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
-import type { StudioProjectRecord, StudioTurnRecord } from "../types";
+import type { StudioTurnContext } from "../StudioPolicyEngine";
+import type {
+  StudioDecision,
+  StudioProjectRecord,
+  StudioTurnRecord,
+} from "../types";
 
 /**
  * Hand-rolled in-memory store honoring the reservation contract (cap check
@@ -88,6 +93,31 @@ class FakeStore {
     const current = this.turns.get(turnId);
     if (current) this.turns.set(turnId, { ...current, ...patch });
   }
+
+  async saveTurn(turn: StudioTurnRecord): Promise<void> {
+    this.turns.set(turn.id, { ...turn });
+  }
+}
+
+/**
+ * Default fake policy: the M1-era generate shape, so cost/settlement tests
+ * exercise the execution path with a stable decision. Tests inject their
+ * own decisions to drive the conversational branches.
+ */
+function m1StyleGenerate(message: string): StudioDecision {
+  return {
+    action: "generate",
+    basePrompt: message,
+    variants: [
+      message,
+      `${message} — alternative interpretation`,
+      `${message} — minimal composition`,
+      `${message} — bold composition`,
+    ],
+    capability: "design",
+    suggestions: ["Refine the mark", "Try a darker palette", "Make it flat"],
+    title: message.slice(0, 60),
+  };
 }
 
 const DAY_MS = new Date("2026-07-24T12:00:00Z").getTime();
@@ -95,6 +125,7 @@ const DAY_MS = new Date("2026-07-24T12:00:00Z").getTime();
 function makeService(overrides?: {
   runner?: Partial<ReplicateStudioImageRunner>;
   capCents?: number;
+  decide?: (context: StudioTurnContext) => Promise<StudioDecision>;
 }) {
   const store = new FakeStore();
   const registry = new StudioModelRegistry();
@@ -122,17 +153,25 @@ function makeService(overrides?: {
     ),
   };
 
+  const decideTurn = vi
+    .fn<(context: StudioTurnContext) => Promise<StudioDecision>>()
+    .mockImplementation(
+      overrides?.decide ??
+        (async (context) => m1StyleGenerate(context.userMessage)),
+    );
+
   const service = new StudioService({
     store: store as unknown as FirestoreStudioProjectStore,
     registry,
     runner,
     storage,
+    policy: { decideTurn },
     dailyCapCents: overrides?.capCents ?? 500,
     now: () => new Date(DAY_MS),
     idFactory: () => `id-${++idCounter}`,
   });
 
-  return { service, store, runner, storage };
+  return { service, store, runner, storage, decideTurn };
 }
 
 describe("StudioService", () => {
@@ -326,6 +365,99 @@ describe("StudioService", () => {
       expect(fetched.title).toBe(
         "a logo for Vidra, a video generation platform",
       );
+    });
+  });
+
+  describe("runTurn — conversational decisions (M3)", () => {
+    const clarify: StudioDecision = {
+      action: "clarify",
+      questions: [
+        {
+          text: "What is the logo for?",
+          quickPicks: ["A coffee brand", "A tech startup", "A band"],
+        },
+      ],
+    };
+
+    it("persists a clarify turn as terminal with zero cost and no image calls", async () => {
+      const { service, store, runner } = makeService({
+        decide: async () => clarify,
+      });
+      const project = await service.createProject("user-1");
+
+      const result = await service.runTurn("user-1", project.id, "make a logo");
+      await result.completion;
+
+      expect(result.decision.action).toBe("clarify");
+      const turn = await service.getTurn("user-1", project.id, result.turnId);
+      expect(turn.status).toBe("complete");
+      expect(turn.calls).toEqual([]);
+      expect(turn.reservedCents).toBe(0);
+      expect(turn.resolvedModel).toBeUndefined();
+      expect(runner.run).not.toHaveBeenCalled();
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(0);
+    });
+
+    it("lets an over-cap user keep conversing (cap only gates image spend)", async () => {
+      const { service } = makeService({
+        capCents: 0,
+        decide: async () => clarify,
+      });
+      const project = await service.createProject("user-1");
+
+      const result = await service.runTurn("user-1", project.id, "make a logo");
+      expect(result.decision.action).toBe("clarify");
+    });
+
+    it("bumps the project's updatedAtMs so the list reorders", async () => {
+      const { service, store } = makeService({ decide: async () => clarify });
+      const project = await service.createProject("user-1");
+      await store.updateProject(project.id, { updatedAtMs: 1 });
+
+      await service.runTurn("user-1", project.id, "make a logo");
+
+      const fetched = await service.getProject("user-1", project.id);
+      expect(fetched.updatedAtMs).toBe(DAY_MS);
+    });
+  });
+
+  describe("runTurn — policy context threading (M3)", () => {
+    it("hands the policy the history, image ids, pin state, and allowed actions", async () => {
+      const { service, store, decideTurn } = makeService();
+      const project = await service.createProject("user-1");
+      await store.updateProject(project.id, {
+        pinnedModel: "recraft-v4.1-pro",
+      });
+
+      const first = await service.runTurn("user-1", project.id, "a fox logo");
+      await first.completion;
+      await service.runTurn("user-1", project.id, "make it more playful");
+
+      const context = decideTurn.mock.calls[1]?.[0];
+      expect(context?.history).toHaveLength(1);
+      expect(context?.history[0]?.userMessage).toBe("a fox logo");
+      // All 4 first-turn images are referenceable by the LLM.
+      expect(context?.projectImageIds.size).toBe(4);
+      expect(context?.pinnedModel?.slug).toBe("recraft-v4.1-pro");
+      expect(context?.selectedImageId).toBeNull();
+      expect(context?.allowedActions).toEqual([
+        "clarify",
+        "generate",
+        "diagnose",
+        "negotiate",
+      ]);
+    });
+
+    it("passes a null pin (Auto) when the stored pin no longer resolves", async () => {
+      const { service, store, decideTurn } = makeService();
+      const project = await service.createProject("user-1");
+      await store.updateProject(project.id, {
+        pinnedModel: "recraft-v3" as never,
+      });
+
+      await service.runTurn("user-1", project.id, "a logo");
+
+      expect(decideTurn.mock.calls[0]?.[0]?.pinnedModel).toBeNull();
     });
   });
 });
