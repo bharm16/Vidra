@@ -1,6 +1,6 @@
-# Studio — session handoff (2026-07-24, end of build session 3)
+# Studio — session handoff (2026-07-25, end of build session 4)
 
-**Branch:** `feat/studio`, 17 commits ahead of its base. Session 1 built M1 (economic core), session 2 built M2 (UI page), session 3 built **M3 (conversation LLM) and M4 (editing + refinement flows), both live-verified in headed Chrome against real OpenAI + Replicate calls**. All commits green on tsc/eslint/test:unit (7,795 tests; the occasional full-suite flake is the known `SuggestionsTelemetryService` duration flake or macOS port shadowing, both pre-existing).
+**Branch:** `feat/studio`, 23 commits ahead of its base. Session 1 built M1 (economic core), session 2 M2 (UI page), session 3 **M3 (conversation LLM) + M4 (editing/refinement)**, session 4 **M5 (hardening) — all five planned milestones are COMPLETE and live-verified in headed Chrome**. All commits green on tsc/eslint/test:unit (7,795 tests; the occasional full-suite flake is the known `SuggestionsTelemetryService` duration flake or macOS port shadowing, both pre-existing).
 
 **Read first:** [the plan](2026-07-24-the-studio-conversational-image-workspace.md) (authoritative spec) and [ADR-0019](../../adr/0019-the-studio-standalone-conversational-image-workspace.md) (as amended).
 
@@ -40,24 +40,29 @@
 3. State beats turn-position reasoning — "set title when PROJECT STATE shows Untitled" works; "on the FIRST generate" does not.
 4. Corrective retry feedback works when **directive** ("respond with a generate decision, filling unanswered details with sensible defaults"), not merely descriptive.
 
-## Next: Milestone 5 — hardening (+ leftovers)
+## Milestone 5 — DONE (session 4, 2026-07-25)
 
-- ~~StrictMode double-bootstrap~~ **DONE end of session 3** (`3f71043c`): bootstrap makes no writes; the project is created lazily on the first send (regression-tested incl. StrictMode-style double mount). An empty account now bootstraps projectless — the page's empty state + composer handle it.
-- **Spend-cap env into `env.ts` Zod config** (currently a defensively-parsed read in `studio.services.ts`).
-- **Stale-pin composer notice** (behavior 9's one-liner; server already reverts to Auto).
-- **Project delete** (route exists in plan, not built) + project rename is live, list reorders on updatedAtMs.
-- **Rejection fork live-check**: diagnose is fixture-gated; the post-diagnose fork (keep concept vs new direction) deserves one live conversation.
-- Model prices still unverified for Nano Banana tiers / GPT Image 2 / Pro Vector (`costVerified: false` overestimates). Confirm before defaulting Auto beyond Recraft/Nano-lite.
-- gpt-image-2 input keys still unconfirmed (`buildEditInput` guesses `image_input`) — confirm on Replicate before anyone pins it for edits.
-- **stylelint**: `studio.css` carries 42 hardcoded-px violations (live-editor.css 25) — tokenize together as polish; commit protocol doesn't gate on stylelint.
+All M5 items landed; the studio's five planned milestones are complete.
+
+- `2b46c167` stale pins never brick the page: wire schema reads pinnedModel as a plain string (the enum parse used to fail the WHOLE project fetch for a deprecated slug), composer shows behavior 9's one-line notice and falls back to Auto (guarded until the roster loads). Shared lucide mock gained the studio icons.
+- `a7c9a11a` spend cap into boot-validated env config: STUDIO_DAILY_SPEND_CAP_CENTS in env.ts's Zod schema (malformed value fails boot), flows through ServiceConfig.studio.
+- `4e953df1` project delete end to end: turns subcollection deleted in paged batches before the project doc; ProjectList rows split open/delete with a deliberate two-step confirm (arm → "Delete?", pointer-leave disarms); deleting the active project returns to the projectless lazy-create state.
+- `616872f3` rejection flow never repeats an answered question (live-caught: answering "Color" re-rendered the identical diagnose card): engine rejects a verbatim-repeat consecutive diagnose with directive feedback; rule 5 spells out the at-most-two-different-questions fork; new rejection-answer-forks fixture pins the clean path (live mini recorded the keep/new-direction fork). All 11 scenarios re-recorded.
+- `becc46ad` every roster price verified (signed-in model pages + API schemas) and by-property tiers PINNED via the registry's new pinnedInput field: nano-banana-2 7¢@1K, lite 4¢ flat, pro 15¢@2K (pinned to the default), gpt-image-2 13¢ with quality pinned high, pro-svg 25¢. gpt-image-2's quality param + image_input key confirmed against the live schema. Closes the M1 exit gate.
+
+## Remaining (post-M5 polish / next session)
+
+- **stylelint**: `studio.css` hardcoded-px violations (live-editor.css too) — tokenize together as polish; commit protocol doesn't gate on stylelint.
 - CLAUDE.md remains uncommitted (pre-dirty; flag-table regen + parallel fix-task) — reconcile before committing; plan's Route→Service map row for studio still to add.
-- Client `components/` dirty files in `git status` predate this session (parallel branding work: BrandLogo, vidra-mark, auth.css…) — not studio's; don't sweep them into studio commits.
+- Client `components/` dirty files in `git status` predate the studio sessions (parallel branding work: BrandLogo, vidra-mark, auth.css…) — not studio's; don't sweep them into studio commits.
+- Attach-your-own image (S-12) is the plan's designated first post-v1 feature.
+- Owner feel-pass over the whole loop (question quality, suggestion taste, edit fidelity) — the fixtures gate correctness, not taste.
 
 ## Environment notes
 
 - Dev stack: the user's own `npm start` runs on 3001/5173; tsx watch hot-reloads server changes — never start a second one. Probe `localhost:3001/health` + `/api/studio/models` (401 = mounted) first.
 - Browser verification: headed Chrome via the Chrome MCP (never preview\_\* — user rule). User is signed in at localhost:5173.
-- Money: a generate batch ≈ 16¢ (recraft), an edit ≈ 5¢ (nano-lite), a transform 1¢, a studio_turn LLM call ≈ 0.1¢. The $5/day cap is live. Session 3 spend ≈ 60¢ total.
+- Money: a generate batch ≈ 16¢ (recraft), an edit ≈ 4¢ (nano-lite, verified), a transform 1¢, a studio_turn LLM call ≈ 0.1¢. The $5/day cap is live. Session 3 spend ≈ 60¢ total.
 - The qwen Groq alias (`qwen/qwen3-32b`) 404s at server init — pre-existing env noise, unrelated to studio.
 - The long-running dev server's Firestore gRPC channel can wedge after idle (seen once end of session 3: `GET /projects` hung, surfaced as a visible "Request timeout" card, self-healed on the next reload; a fresh process queried instantly). If `/studio` sits at "…", suspect the channel before suspecting code.
 - Full-suite runs while recording fixtures / driving the browser can flake ~11 files from contention; a quiet re-run was fully green (7,798 passed). Judge suite health from quiet runs only.
