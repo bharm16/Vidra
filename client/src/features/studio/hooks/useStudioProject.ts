@@ -50,8 +50,10 @@ export function useStudioProject(): UseStudioProjectReturn {
   const projectIdRef = useRef<string | null>(null);
   projectIdRef.current = state.project?.id ?? null;
 
-  // Bootstrap: roster + project list; open the most recent project or
-  // start fresh with a new one so the page is always usable immediately.
+  // Bootstrap: roster + project list; open the most recent project. An
+  // empty account stays projectless — the project is created lazily on the
+  // first send (StrictMode's double-mounted effect used to create two
+  // "Untitled" projects here; bootstrap now makes no writes at all).
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -67,10 +69,6 @@ export function useStudioProject(): UseStudioProjectReturn {
           const turns = await listStudioTurns(mostRecent.id);
           if (cancelled) return;
           dispatch({ type: "projectOpened", project: mostRecent, turns });
-        } else {
-          const project = await createStudioProject();
-          if (cancelled) return;
-          dispatch({ type: "projectOpened", project, turns: [] });
         }
       } catch (error) {
         if (!cancelled) {
@@ -129,11 +127,18 @@ export function useStudioProject(): UseStudioProjectReturn {
   }, []);
 
   const sendMessage = useCallback(async (message: string) => {
-    const projectId = projectIdRef.current;
     const trimmed = message.trim();
-    if (!projectId || !trimmed) return;
+    if (!trimmed) return;
     dispatch({ type: "messageSent", message: trimmed });
     try {
+      // Lazy creation: a projectless page births its project on the first
+      // send — exactly once, user-initiated, so no mount-effect races.
+      let projectId = projectIdRef.current;
+      if (!projectId) {
+        const project = await createStudioProject();
+        dispatch({ type: "projectCreated", project });
+        projectId = project.id;
+      }
       const { turnId } = await runStudioTurn(projectId, trimmed);
       const turn = await getStudioTurn(projectId, turnId);
       dispatch({ type: "turnAccepted", turn });

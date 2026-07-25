@@ -48,6 +48,12 @@ export type StudioAction =
       models: StudioModelInfo[];
     }
   | { type: "projectOpened"; project: StudioProject; turns: StudioTurn[] }
+  /**
+   * Lazy first-send creation: unlike projectOpened, the in-flight
+   * optimistic message and (empty) thread are preserved — the turn that
+   * triggered the creation is about to land.
+   */
+  | { type: "projectCreated"; project: StudioProject }
   | { type: "messageSent"; message: string }
   | { type: "turnAccepted"; turn: StudioTurn }
   | { type: "turnPolled"; turn: StudioTurn }
@@ -90,6 +96,13 @@ export function studioReducer(
         selectedImageId: action.project.selectedImageId ?? null,
         error: null,
         loading: false,
+      };
+    case "projectCreated":
+      return {
+        ...state,
+        project: action.project,
+        projects: [action.project, ...state.projects],
+        selectedImageId: null,
       };
     case "messageSent":
       return { ...state, optimisticMessage: action.message, error: null };
