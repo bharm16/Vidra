@@ -225,10 +225,16 @@ export function useStudioProject(): UseStudioProjectReturn {
       const upload = (await storageApi.getUploadUrl(
         "preview-image",
         file.type,
-      )) as { uploadUrl: string; storagePath: string };
+      )) as { uploadUrl: string; storagePath: string; maxSizeBytes: number };
       const put = await fetch(upload.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type },
+        headers: {
+          "Content-Type": file.type,
+          // The signature covers these extension headers — the PUT must
+          // send them verbatim (create-only + size ceiling).
+          "x-goog-if-generation-match": "0",
+          "x-goog-content-length-range": `0,${upload.maxSizeBytes}`,
+        },
         body: file,
       });
       if (!put.ok) {

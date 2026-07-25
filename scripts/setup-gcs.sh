@@ -17,13 +17,14 @@ gcloud storage buckets create "gs://${BUCKET_NAME}" \
 gcloud storage buckets update "gs://${BUCKET_NAME}" \
   --enable-autoclass
 
-# 3. Set CORS — allows browser to load signed GCS URLs directly without ORB blocking
+# 3. Set CORS — browsers load signed GCS URLs directly (GET) and upload
+#    studio reference images via signed PUT (S-12 attach flow)
 cat > cors.json << EOF_CORS
 [
   {
     "origin": ["http://localhost:5173", "https://vidra.app"],
-    "method": ["GET", "HEAD"],
-    "responseHeader": ["Content-Type", "Content-Length", "Content-Range"],
+    "method": ["GET", "HEAD", "PUT"],
+    "responseHeader": ["Content-Type", "Content-Length", "Content-Range", "x-goog-if-generation-match", "x-goog-content-length-range"],
     "maxAgeSeconds": 3600
   }
 ]
