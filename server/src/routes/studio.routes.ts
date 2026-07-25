@@ -40,8 +40,15 @@ const PatchProjectSchema = z
     { message: "Nothing to update" },
   );
 
+const AddAttachmentSchema = z.object({
+  storagePath: z.string().min(1).max(500),
+  filename: z.string().min(1).max(200),
+});
+
 const RunTurnSchema = z.object({
   message: z.string().min(1).max(4000),
+  /** S-12: attachment ids sent with this message. */
+  attachmentIds: z.array(z.string().min(1)).max(14).optional(),
 });
 
 interface AuthedRequest extends Request {
@@ -167,6 +174,32 @@ export function createStudioRouter(studioService: StudioService): Router {
     }),
   );
 
+  // S-12: register a user-uploaded reference image. The bytes are already
+  // in GCS (client PUT via /api/storage/upload-url); this records it on the
+  // project so the LLM can use it as an edit/reference source.
+  router.post(
+    "/projects/:projectId/attachments",
+    asyncHandler(async (req: AuthedRequest, res: Response) => {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+      const parsed = AddAttachmentSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        res.status(400).json({ success: false, error: "Invalid body" });
+        return;
+      }
+      try {
+        const attachment = await studioService.addAttachment(
+          userId,
+          routeParam(req, "projectId"),
+          parsed.data,
+        );
+        res.status(201).json({ success: true, data: attachment });
+      } catch (error) {
+        sendError(res, error);
+      }
+    }),
+  );
+
   router.post(
     "/projects/:projectId/turns",
     asyncHandler(async (req: AuthedRequest, res: Response) => {
@@ -204,6 +237,7 @@ export function createStudioRouter(studioService: StudioService): Router {
             onThinkingStart: () => writeEvent({ type: "thinking-start" }),
             onThinkingDelta: (delta) => writeEvent({ type: "thinking", delta }),
           },
+          parsed.data.attachmentIds,
         );
         writeEvent({ type: "accepted", turnId, decision });
         res.end();

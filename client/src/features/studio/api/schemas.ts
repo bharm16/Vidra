@@ -18,10 +18,23 @@ export const StudioModelSlugSchema = z.enum([
 
 export type StudioModelSlug = z.infer<typeof StudioModelSlugSchema>;
 
+export const StudioAttachmentSchema = z.object({
+  id: z.string(),
+  storagePath: z.string(),
+  filename: z.string(),
+  createdAtMs: z.number(),
+  /** Present on the register response for the composer chip preview. */
+  viewUrl: z.string().optional(),
+});
+
+export type StudioAttachment = z.infer<typeof StudioAttachmentSchema>;
+
 export const StudioProjectSchema = z.object({
   id: z.string(),
   title: z.string(),
   selectedImageId: z.string().nullish(),
+  /** User-uploaded reference images (S-12). */
+  attachments: z.array(StudioAttachmentSchema).optional(),
   /**
    * Plain string on the wire, NOT the slug enum: a persisted pin whose
    * model left the roster must still parse (behavior 9 — stale pins

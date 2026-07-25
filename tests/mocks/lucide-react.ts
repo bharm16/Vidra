@@ -43,6 +43,7 @@ export const Library = icon("Library");
 export const Paintbrush = icon("Paintbrush");
 export const PanelLeft = icon("PanelLeft");
 export const Palette = icon("Palette");
+export const Paperclip = icon("Paperclip");
 export const Package = icon("Package");
 export const Plus = icon("Plus");
 export const RefreshCw = icon("RefreshCw");

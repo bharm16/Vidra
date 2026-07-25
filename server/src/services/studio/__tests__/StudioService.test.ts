@@ -375,6 +375,79 @@ describe("StudioService", () => {
     });
   });
 
+  describe("attachments (S-12)", () => {
+    it("registers an attachment and hands its id to the policy as project truth", async () => {
+      const { service, decideTurn } = makeService();
+      const project = await service.createProject("user-1");
+
+      const attachment = await service.addAttachment("user-1", project.id, {
+        storagePath: "users/user-1/previews/images/sketch.png",
+        filename: "sketch.png",
+      });
+      expect(attachment.id.startsWith("att-")).toBe(true);
+
+      await service.runTurn("user-1", project.id, "clean this up", undefined, [
+        attachment.id,
+      ]);
+
+      const context = decideTurn.mock.calls[0]?.[0];
+      expect(context?.projectImageIds.has(attachment.id)).toBe(true);
+      expect(context?.attachments.map((a) => a.id)).toEqual([attachment.id]);
+      expect(context?.messageAttachmentIds).toEqual([attachment.id]);
+    });
+
+    it("rejects a storagePath outside the caller's prefix", async () => {
+      const { service } = makeService();
+      const project = await service.createProject("user-1");
+
+      await expect(
+        service.addAttachment("user-1", project.id, {
+          storagePath: "users/someone-else/previews/images/x.png",
+          filename: "x.png",
+        }),
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it("edits can source a user-attached image", async () => {
+      const { service, store, runner } = makeService({
+        decide: async () => ({
+          action: "edit",
+          instruction: "clean up this sketch into a flat vector logo",
+          sourceImageIds: ["att-known"],
+          suggestions: ["s1", "s2", "s3"],
+        }),
+      });
+      const project = await service.createProject("user-1");
+      await store.updateProject(project.id, {
+        attachments: [
+          {
+            id: "att-known",
+            storagePath: "users/user-1/previews/images/sketch.png",
+            filename: "sketch.png",
+            createdAtMs: 1,
+          },
+        ],
+      });
+
+      const result = await service.runTurn(
+        "user-1",
+        project.id,
+        "clean this up",
+        undefined,
+        ["att-known"],
+      );
+      await result.completion;
+
+      const turn = await service.getTurn("user-1", project.id, result.turnId);
+      expect(turn.status).toBe("complete");
+      expect(turn.attachmentIds).toEqual(["att-known"]);
+      // The runner received the attachment's signed URL as image_input.
+      const input = (runner.run as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]
+        ?.input as { image_input?: string[] };
+      expect(input.image_input?.[0]).toContain("sketch.png");
+    });
+  });
+
   describe("deleteProject (M5)", () => {
     it("deletes an owned project", async () => {
       const { service } = makeService();

@@ -123,8 +123,13 @@ export function StudioPage(): React.ReactElement {
               models={state.models}
               pinnedModel={state.project?.pinnedModel ?? null}
               busy={busy}
+              pendingAttachments={state.pendingAttachments}
               onPin={(slug) => void studio.pinModel(slug)}
               onSend={(message) => void studio.sendMessage(message)}
+              onAttachFile={(file) => void studio.attachFile(file)}
+              onRemoveAttachment={(attachmentId) =>
+                studio.removeAttachment(attachmentId)
+              }
             />
           </div>
 

@@ -48,6 +48,8 @@ function makeContext(
     history: [],
     selectedImageId: null,
     projectImageIds: new Set<string>(),
+    attachments: [],
+    messageAttachmentIds: [],
     allowedActions: ["clarify", "generate", "diagnose", "negotiate"],
     ...overrides,
   };

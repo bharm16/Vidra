@@ -24,8 +24,11 @@ function renderComposer(pinnedModel: string | null, roster = models) {
       models={roster}
       pinnedModel={pinnedModel}
       busy={false}
+      pendingAttachments={[]}
       onPin={vi.fn()}
       onSend={vi.fn()}
+      onAttachFile={vi.fn()}
+      onRemoveAttachment={vi.fn()}
     />,
   );
 }

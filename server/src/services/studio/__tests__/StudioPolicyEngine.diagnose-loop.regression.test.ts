@@ -62,6 +62,8 @@ function makeContext(): StudioTurnContext {
     history: [priorDiagnose],
     selectedImageId: null,
     projectImageIds: new Set<string>(),
+    attachments: [],
+    messageAttachmentIds: [],
     allowedActions: ["generate", "edit", "transform", "diagnose", "negotiate"],
   };
 }

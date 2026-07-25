@@ -23,6 +23,7 @@ import { StudioDecisionSchema, asStudioDecision } from "./decisionSchema";
 import { ThinkingDeltaScanner } from "./thinkingDeltaScanner";
 import { validateDecisionReferences } from "./validateDecision";
 import type {
+  StudioAttachment,
   StudioDecision,
   StudioModelEntry,
   StudioTurnRecord,
@@ -67,6 +68,10 @@ export interface StudioTurnContext {
   selectedImageId: string | null;
   /** Every image id that exists in this project (server truth). */
   projectImageIds: ReadonlySet<string>;
+  /** User-uploaded reference images on the project (S-12). */
+  attachments: readonly StudioAttachment[];
+  /** Attachment ids the user sent WITH the new message. */
+  messageAttachmentIds: readonly string[];
   /**
    * Actions the caller can execute this milestone. A decision outside the
    * list is rejected exactly like a schema violation (feedback retry).
@@ -179,7 +184,7 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
         // Behavior 7: an explicit pin is never silently rerouted — the
         // compliant answer to an edit request on a text-only pin is a
         // negotiate decision, not an edit on some other model.
-        feedback = `The pinned model ${context.pinnedModel.slug} cannot edit images. Follow behavior rule 7: respond with a negotiate decision explaining this and offering options.`;
+        feedback = `The pinned model ${context.pinnedModel.slug} cannot edit images. Follow behavior rule 8: respond with a negotiate decision explaining this and offering options.`;
         this.log.warn("Studio decision edited under an incapable pin", {
           attempt,
           pinnedModel: context.pinnedModel.slug,
@@ -293,7 +298,7 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
       const pin = context.pinnedModel;
       const cannotEdit = !pin.capabilities.includes("edit");
       sections.push(
-        `## ACTIVE MODEL\n\nThe user pinned **${pin.slug}** (capabilities: ${pin.capabilities.join(", ")}). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 7 (negotiate) — never silently reroute.` +
+        `## ACTIVE MODEL\n\nThe user pinned **${pin.slug}** (capabilities: ${pin.capabilities.join(", ")}). Every generate/edit runs on this model. If it cannot do what the user asks, follow behavior rule 8 (negotiate) — never silently reroute.` +
           (cannotEdit
             ? `\n\nIMPORTANT: ${pin.slug} takes no image input — it CANNOT edit or modify existing images. Any request to change, adjust, or add to an existing image MUST be answered with a \`negotiate\` decision (state that ${pin.slug} cannot edit; offer options — first option label ends with " (Recommended)"). Never respond with an edit action while this pin is active.`
             : ""),
@@ -340,12 +345,22 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
     }
 
     sections.push(this.describeProjectState(context));
-    sections.push(`## NEW USER MESSAGE\n\n${context.userMessage}`);
+    const attachedNote =
+      context.messageAttachmentIds.length > 0
+        ? `\n\n(The user attached with this message: ${context.messageAttachmentIds.join(", ")} — when they say "this image", they mean these.)`
+        : "";
+    sections.push(
+      `## NEW USER MESSAGE\n\n${context.userMessage}${attachedNote}`,
+    );
     return sections.join("\n\n");
   }
 
   private describeTurn(turn: StudioTurnRecord): string {
-    const lines = [`User: ${turn.userMessage}`];
+    const attached =
+      turn.attachmentIds && turn.attachmentIds.length > 0
+        ? ` (attached: ${turn.attachmentIds.join(", ")})`
+        : "";
+    const lines = [`User: ${turn.userMessage}${attached}`];
     const decision = turn.decision;
     switch (decision.action) {
       case "clarify":
@@ -417,6 +432,15 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
       );
       for (const image of shown) {
         lines.push(`- ${image.id} — ${excerpt(image.sourcePrompt)}`);
+      }
+    }
+
+    if (context.attachments.length > 0) {
+      lines.push(
+        "User-attached images (id — filename), valid edit/reference sources:",
+      );
+      for (const attachment of context.attachments) {
+        lines.push(`- ${attachment.id} — ${attachment.filename}`);
       }
     }
 

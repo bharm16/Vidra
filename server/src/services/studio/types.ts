@@ -77,6 +77,18 @@ export interface StudioUtilityEntry {
   latencyHintSeconds: number;
 }
 
+/**
+ * A user-uploaded reference image (S-12), registered on the project after
+ * a signed-URL upload. Referenceable by id exactly like generated images:
+ * an edit/transform source, listed in the LLM's PROJECT STATE.
+ */
+export interface StudioAttachment {
+  id: string;
+  storagePath: string;
+  filename: string;
+  createdAtMs: number;
+}
+
 /** One image produced by a turn, persisted under the turn record. */
 export interface StudioImageRecord {
   id: string;
@@ -110,6 +122,8 @@ export interface StudioTurnRecord {
    * conversational turns (clarify/diagnose/negotiate) — no image model runs.
    */
   resolvedModel?: StudioModelSlug | undefined;
+  /** Attachment ids the user sent WITH this message (S-12). */
+  attachmentIds?: string[] | undefined;
   calls: StudioCallRecord[];
   reservedCents: number;
   refundedCents: number;
@@ -127,6 +141,8 @@ export interface StudioProjectRecord {
   selectedImageId?: string | null | undefined;
   /** Absent or null = Auto mode. */
   pinnedModel?: StudioModelSlug | null | undefined;
+  /** User-uploaded reference images (S-12), capped small. */
+  attachments?: StudioAttachment[] | undefined;
   createdAtMs: number;
   updatedAtMs: number;
 }

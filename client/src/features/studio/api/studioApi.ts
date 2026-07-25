@@ -7,10 +7,12 @@ import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import { z } from "zod";
 import {
   RunTurnResponseSchema,
+  StudioAttachmentSchema,
   StudioModelInfoSchema,
   StudioProjectSchema,
   StudioTurnSchema,
   type RunTurnResponse,
+  type StudioAttachment,
   type StudioModelInfo,
   type StudioModelSlug,
   type StudioProject,
@@ -114,6 +116,21 @@ const StreamEventSchema = z.discriminatedUnion("type", [
 ]);
 
 /**
+ * S-12: register an already-uploaded reference image on the project. The
+ * bytes go to GCS first via storageApi.getUploadUrl + a direct PUT; this
+ * records the storagePath so the conversation can reference it by id.
+ */
+export async function registerStudioAttachment(
+  projectId: string,
+  input: { storagePath: string; filename: string },
+): Promise<StudioAttachment> {
+  return request(`/projects/${projectId}/attachments`, StudioAttachmentSchema, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+/**
  * Run a turn. The route streams NDJSON: `thinking` deltas in realtime as
  * the LLM emits them, then one terminal `accepted` (decision final, image
  * calls still running — poll getStudioTurn) or `error` event. Errors
@@ -124,10 +141,16 @@ export async function runStudioTurn(
   projectId: string,
   message: string,
   hooks?: RunTurnStreamHooks,
+  attachmentIds?: readonly string[],
 ): Promise<RunTurnResponse> {
   const response = await fetch(`${BASE}/projects/${projectId}/turns`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({
+      message,
+      ...(attachmentIds && attachmentIds.length > 0
+        ? { attachmentIds: [...attachmentIds] }
+        : {}),
+    }),
     headers: {
       "Content-Type": "application/json",
       ...(await buildFirebaseAuthHeaders()),

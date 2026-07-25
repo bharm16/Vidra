@@ -29,6 +29,7 @@ import {
   studioUsageDayKey,
 } from "./storage/FirestoreStudioProjectStore";
 import type {
+  StudioAttachment,
   StudioCallRecord,
   StudioDecision,
   StudioImageRecord,
@@ -92,6 +93,9 @@ export interface RunTurnResult {
 }
 
 const GENERATE_BATCH_SIZE = 4;
+
+/** S-12: user-uploaded reference images per project. */
+const MAX_ATTACHMENTS = 12;
 const TITLE_MAX_CHARS = 60;
 
 /** Every stored image id across a project's turns (succeeded calls only). */
@@ -253,7 +257,64 @@ export class StudioService {
   private async collectProjectImageIds(
     projectId: string,
   ): Promise<Set<string>> {
-    return imageIdsOf(await this.store.listTurns(projectId));
+    const ids = imageIdsOf(await this.store.listTurns(projectId));
+    const project = await this.store.getProject(projectId);
+    for (const attachment of project?.attachments ?? []) {
+      ids.add(attachment.id);
+    }
+    return ids;
+  }
+
+  /**
+   * Register a user-uploaded reference image (S-12). The bytes are already
+   * in GCS via the storage route's signed-URL flow; this records the
+   * attachment on the project so the conversation LLM can reference it as
+   * an edit/transform source by id.
+   */
+  async addAttachment(
+    userId: string,
+    projectId: string,
+    input: { storagePath: string; filename: string },
+  ): Promise<StudioAttachment & { viewUrl?: string }> {
+    const project = await this.getProject(userId, projectId);
+    const attachments = project.attachments ?? [];
+    if (attachments.length >= MAX_ATTACHMENTS) {
+      const error = new Error(
+        `Attachment limit reached (${MAX_ATTACHMENTS} per project)`,
+      ) as Error & { statusCode: number };
+      error.statusCode = 400;
+      throw error;
+    }
+    // The signed-URL flow scopes uploads under the caller's own prefix;
+    // registering a path outside it would let ids alias other users' files.
+    if (!input.storagePath.includes(userId)) {
+      const error = new Error("storagePath is not yours") as Error & {
+        statusCode: number;
+      };
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const attachment: StudioAttachment = {
+      id: `att-${this.idFactory()}`,
+      storagePath: input.storagePath,
+      filename: input.filename.trim().slice(0, 120) || "image",
+      createdAtMs: this.now().getTime(),
+    };
+    await this.store.updateProject(projectId, {
+      attachments: [...attachments, attachment],
+      updatedAtMs: attachment.createdAtMs,
+    });
+
+    try {
+      const { viewUrl } = await this.storage.getViewUrl(
+        userId,
+        attachment.storagePath,
+      );
+      return { ...attachment, viewUrl };
+    } catch {
+      return attachment;
+    }
   }
 
   /** Delete a project and its turns. Ownership reads as absence (404). */
@@ -340,6 +401,7 @@ export class StudioService {
     projectId: string,
     userMessage: string,
     hooks?: StudioThinkingHooks,
+    attachmentIds?: readonly string[],
   ): Promise<RunTurnResult> {
     const project = await this.getProject(userId, projectId);
     const message = userMessage.trim();
@@ -353,6 +415,13 @@ export class StudioService {
 
     const history = await this.store.listTurns(projectId);
     const projectImageIds = imageIdsOf(history);
+    const attachments = project.attachments ?? [];
+    for (const attachment of attachments) {
+      projectImageIds.add(attachment.id);
+    }
+    const messageAttachmentIds = (attachmentIds ?? []).filter((id) =>
+      attachments.some((attachment) => attachment.id === id),
+    );
 
     // Pin wins when it resolves; stale pins revert to Auto (cheapest capable).
     const pinned = this.registry.resolvePin(project.pinnedModel);
@@ -366,6 +435,8 @@ export class StudioService {
         history,
         selectedImageId: project.selectedImageId ?? null,
         projectImageIds,
+        attachments,
+        messageAttachmentIds,
         allowedActions:
           history.length === 0 ? FIRST_TURN_ACTIONS : FOLLOW_UP_ACTIONS,
       },
@@ -374,13 +445,37 @@ export class StudioService {
 
     switch (decision.action) {
       case "generate":
-        return this.startGenerateTurn(project, message, decision, pinned);
+        return this.startGenerateTurn(
+          project,
+          message,
+          decision,
+          pinned,
+          messageAttachmentIds,
+        );
       case "edit":
-        return this.startEditTurn(project, history, message, decision, pinned);
+        return this.startEditTurn(
+          project,
+          history,
+          message,
+          decision,
+          pinned,
+          messageAttachmentIds,
+        );
       case "transform":
-        return this.startTransformTurn(project, history, message, decision);
+        return this.startTransformTurn(
+          project,
+          history,
+          message,
+          decision,
+          messageAttachmentIds,
+        );
       default:
-        return this.saveConversationalTurn(project, message, decision);
+        return this.saveConversationalTurn(
+          project,
+          message,
+          decision,
+          messageAttachmentIds,
+        );
     }
   }
 
@@ -389,6 +484,7 @@ export class StudioService {
     message: string,
     decision: Extract<StudioDecision, { action: "generate" }>,
     pinned: StudioModelEntry | null,
+    attachmentIds: readonly string[],
   ): Promise<RunTurnResult> {
     const model = pinned ?? this.registry.cheapestCapable(decision.capability);
 
@@ -396,6 +492,7 @@ export class StudioService {
       resolvedModel: model.slug,
       callCount: GENERATE_BATCH_SIZE,
       reservedCents: model.costCentsPerCall * GENERATE_BATCH_SIZE,
+      attachmentIds,
     });
 
     const day = await this.reserve(turn);
@@ -416,18 +513,24 @@ export class StudioService {
     message: string,
     decision: Extract<StudioDecision, { action: "edit" }>,
     pinned: StudioModelEntry | null,
+    attachmentIds: readonly string[],
   ): Promise<RunTurnResult> {
     const model =
       pinned && pinned.capabilities.includes("edit")
         ? pinned
         : this.registry.cheapestCapable("edit");
 
-    const sources = this.resolveSourceImages(history, decision.sourceImageIds);
+    const sources = this.resolveSourceImages(
+      history,
+      project.attachments ?? [],
+      decision.sourceImageIds,
+    );
 
     const turn = this.buildRunningTurn(project, message, decision, {
       resolvedModel: model.slug,
       callCount: 1,
       reservedCents: model.costCentsPerCall,
+      attachmentIds,
     });
 
     const day = await this.reserve(turn);
@@ -467,11 +570,14 @@ export class StudioService {
     history: StudioTurnRecord[],
     message: string,
     decision: Extract<StudioDecision, { action: "transform" }>,
+    attachmentIds: readonly string[],
   ): Promise<RunTurnResult> {
     const utility = this.registry.getUtility(decision.operation);
-    const [source] = this.resolveSourceImages(history, [
-      decision.sourceImageId,
-    ]);
+    const [source] = this.resolveSourceImages(
+      history,
+      project.attachments ?? [],
+      [decision.sourceImageId],
+    );
     if (!source) {
       throw new Error("Transform source image not found");
     }
@@ -479,6 +585,7 @@ export class StudioService {
     const turn = this.buildRunningTurn(project, message, decision, {
       callCount: 1,
       reservedCents: utility.costCentsPerCall,
+      attachmentIds,
     });
 
     const day = await this.reserve(turn);
@@ -511,6 +618,7 @@ export class StudioService {
       resolvedModel?: StudioModelSlug;
       callCount: number;
       reservedCents: number;
+      attachmentIds?: readonly string[];
     },
   ): StudioTurnRecord {
     const nowMs = this.now().getTime();
@@ -523,6 +631,9 @@ export class StudioService {
       decision,
       ...(options.resolvedModel
         ? { resolvedModel: options.resolvedModel }
+        : {}),
+      ...(options.attachmentIds && options.attachmentIds.length > 0
+        ? { attachmentIds: [...options.attachmentIds] }
         : {}),
       calls: Array.from({ length: options.callCount }, (_, index) => ({
         index,
@@ -567,15 +678,20 @@ export class StudioService {
    */
   private resolveSourceImages(
     history: StudioTurnRecord[],
+    attachments: readonly StudioAttachment[],
     sourceImageIds: readonly string[],
-  ): StudioImageRecord[] {
-    const byId = new Map<string, StudioImageRecord>();
+  ): Array<{ id: string; storagePath: string }> {
+    const byId = new Map<string, { id: string; storagePath: string }>();
     for (const turn of history) {
       for (const call of turn.calls) {
         if (call.status === "succeeded" && call.image) {
           byId.set(call.image.id, call.image);
         }
       }
+    }
+    // User-attached references (S-12) are first-class sources.
+    for (const attachment of attachments) {
+      byId.set(attachment.id, attachment);
     }
     return sourceImageIds.map((id) => {
       const image = byId.get(id);
@@ -657,6 +773,7 @@ export class StudioService {
     project: StudioProjectRecord,
     message: string,
     decision: StudioDecision,
+    attachmentIds: readonly string[],
   ): Promise<RunTurnResult> {
     const nowMs = this.now().getTime();
     const turn: StudioTurnRecord = {
@@ -666,6 +783,9 @@ export class StudioService {
       status: "complete",
       userMessage: message,
       decision,
+      ...(attachmentIds.length > 0
+        ? { attachmentIds: [...attachmentIds] }
+        : {}),
       calls: [],
       reservedCents: 0,
       refundedCents: 0,

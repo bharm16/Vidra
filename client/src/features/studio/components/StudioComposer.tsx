@@ -1,8 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { ArrowUp, ChevronDown, Maximize2 } from "lucide-react";
+import { ArrowUp, ChevronDown, Maximize2, Paperclip, X } from "lucide-react";
 import { cn } from "@/utils/cn";
-import type { StudioModelInfo, StudioModelSlug } from "../api/schemas";
+import type {
+  StudioAttachment,
+  StudioModelInfo,
+  StudioModelSlug,
+} from "../api/schemas";
 
 /**
  * Band 3: the composer. Row A = the text field with the expand toggle at
@@ -16,21 +20,29 @@ interface StudioComposerProps {
   /** Plain string: a stale pin (slug no longer in the roster) reads as Auto. */
   pinnedModel: string | null;
   busy: boolean;
+  /** S-12: uploaded-but-unsent reference images staged on the composer. */
+  pendingAttachments: StudioAttachment[];
   onPin: (slug: StudioModelSlug | null) => void;
   onSend: (message: string) => void;
+  onAttachFile: (file: File) => void;
+  onRemoveAttachment: (attachmentId: string) => void;
 }
 
 export function StudioComposer({
   models,
   pinnedModel,
   busy,
+  pendingAttachments,
   onPin,
   onSend,
+  onAttachFile,
+  onRemoveAttachment,
 }: StudioComposerProps): React.ReactElement {
   const [draft, setDraft] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -74,6 +86,26 @@ export function StudioComposer({
           Your pinned model is no longer available — using Auto.
         </p>
       ) : null}
+      {pendingAttachments.length > 0 ? (
+        <div className="st-attach-chips">
+          {pendingAttachments.map((attachment) => (
+            <span key={attachment.id} className="st-attach-chip">
+              <Paperclip size={11} strokeWidth={1.8} />
+              <span className="st-attach-name">{attachment.filename}</span>
+              <Button
+                variant="ghost"
+                type="button"
+                className="st-attach-remove"
+                aria-label={`Remove ${attachment.filename}`}
+                onClick={() => onRemoveAttachment(attachment.id)}
+              >
+                <X size={11} strokeWidth={1.8} />
+              </Button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       <div className="st-composer-field">
         <textarea
           className={cn("st-input", expanded && "st-input-expanded")}
@@ -161,6 +193,30 @@ export function StudioComposer({
         </div>
 
         <div className="st-strip-gap" />
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          hidden
+          aria-label="Attach image file"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) onAttachFile(file);
+            event.target.value = "";
+          }}
+        />
+        <Button
+          variant="ghost"
+          type="button"
+          className="st-icon-btn st-attach-btn"
+          title="Attach image"
+          aria-label="Attach image"
+          disabled={busy}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Paperclip size={14} strokeWidth={1.8} />
+        </Button>
 
         <Button
           variant="ghost"

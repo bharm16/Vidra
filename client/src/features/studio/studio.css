@@ -319,6 +319,33 @@
   background: #101116;
 }
 
+/* S-12: staged reference-image chips above the field. */
+.st-attach-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 8px 12px 0;
+}
+
+.st-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  font-size: 10.5px;
+  color: rgba(242, 243, 246, 0.75);
+}
+
+.st-attach-name {
+  max-width: 9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Behavior 9: one-line stale-pin notice above the field. */
 .st-stale-pin-note {
   margin: 0;
@@ -702,6 +729,13 @@
   height: auto !important;
   width: auto !important;
   padding: 0.375rem !important;
+  background: transparent !important;
+}
+
+.st-attach-remove {
+  height: auto !important;
+  width: auto !important;
+  padding: 1px !important;
   background: transparent !important;
 }
 

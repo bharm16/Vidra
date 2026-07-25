@@ -5,6 +5,7 @@
  */
 
 import type {
+  StudioAttachment,
   StudioModelInfo,
   StudioModelSlug,
   StudioProject,
@@ -29,6 +30,8 @@ export interface StudioState {
   streamingThinking: string | null;
   /** Local selection (ring + future edit source); persistence lands at M4. */
   selectedImageId: string | null;
+  /** S-12: uploaded-but-unsent reference images, staged in the composer. */
+  pendingAttachments: StudioAttachment[];
   listOpen: boolean;
   error: string | null;
   loading: boolean;
@@ -43,6 +46,7 @@ export const initialStudioState: StudioState = {
   optimisticMessage: null,
   streamingThinking: null,
   selectedImageId: null,
+  pendingAttachments: [],
   listOpen: false,
   error: null,
   loading: true,
@@ -62,6 +66,8 @@ export type StudioAction =
    */
   | { type: "projectCreated"; project: StudioProject }
   | { type: "messageSent"; message: string }
+  | { type: "attachmentStaged"; attachment: StudioAttachment }
+  | { type: "attachmentUnstaged"; attachmentId: string }
   /** A new LLM attempt began — reset the streamed thinking text. */
   | { type: "thinkingStreamStarted" }
   | { type: "thinkingDelta"; delta: string }
@@ -121,11 +127,25 @@ export function studioReducer(
         selectedImageId: null,
       };
     case "messageSent":
+      // Staged attachments ride this message; the composer clears.
       return {
         ...state,
         optimisticMessage: action.message,
         streamingThinking: null,
+        pendingAttachments: [],
         error: null,
+      };
+    case "attachmentStaged":
+      return {
+        ...state,
+        pendingAttachments: [...state.pendingAttachments, action.attachment],
+      };
+    case "attachmentUnstaged":
+      return {
+        ...state,
+        pendingAttachments: state.pendingAttachments.filter(
+          (attachment) => attachment.id !== action.attachmentId,
+        ),
       };
     case "thinkingStreamStarted":
       return { ...state, streamingThinking: "" };

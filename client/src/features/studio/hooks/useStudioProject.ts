@@ -13,9 +13,11 @@ import {
   getStudioTurn,
   listStudioProjects,
   listStudioTurns,
+  registerStudioAttachment,
   runStudioTurn,
   updateStudioProject,
 } from "../api/studioApi";
+import { storageApi } from "@/api/storageApi";
 import type {
   StudioModelSlug,
   StudioProject,
@@ -40,6 +42,9 @@ export interface UseStudioProjectReturn {
   pinModel: (slug: StudioModelSlug | null) => Promise<void>;
   selectImage: (imageId: string | null) => void;
   deleteProject: (projectId: string) => Promise<void>;
+  /** S-12: upload + stage a reference image on the composer. */
+  attachFile: (file: File) => Promise<void>;
+  removeAttachment: (attachmentId: string) => void;
 }
 
 function describeError(error: unknown): string {
@@ -51,6 +56,10 @@ export function useStudioProject(): UseStudioProjectReturn {
   // Read by the poll interval without re-arming it.
   const projectIdRef = useRef<string | null>(null);
   projectIdRef.current = state.project?.id ?? null;
+  const pendingAttachmentIdsRef = useRef<string[]>([]);
+  pendingAttachmentIdsRef.current = state.pendingAttachments.map(
+    (attachment) => attachment.id,
+  );
 
   // Bootstrap: roster + project list; open the most recent project. An
   // empty account stays projectless — the project is created lazily on the
@@ -131,6 +140,9 @@ export function useStudioProject(): UseStudioProjectReturn {
   const sendMessage = useCallback(async (message: string) => {
     const trimmed = message.trim();
     if (!trimmed) return;
+    // The staged attachments ride this message (S-12); messageSent clears
+    // the composer chips, so capture the ids first.
+    const attachmentIds = pendingAttachmentIdsRef.current;
     dispatch({ type: "messageSent", message: trimmed });
     try {
       // Lazy creation: a projectless page births its project on the first
@@ -141,11 +153,17 @@ export function useStudioProject(): UseStudioProjectReturn {
         dispatch({ type: "projectCreated", project });
         projectId = project.id;
       }
-      const { turnId } = await runStudioTurn(projectId, trimmed, {
-        // Realtime thinking: deltas render as the LLM emits them.
-        onThinkingStart: () => dispatch({ type: "thinkingStreamStarted" }),
-        onThinkingDelta: (delta) => dispatch({ type: "thinkingDelta", delta }),
-      });
+      const { turnId } = await runStudioTurn(
+        projectId,
+        trimmed,
+        {
+          // Realtime thinking: deltas render as the LLM emits them.
+          onThinkingStart: () => dispatch({ type: "thinkingStreamStarted" }),
+          onThinkingDelta: (delta) =>
+            dispatch({ type: "thinkingDelta", delta }),
+        },
+        attachmentIds,
+      );
       const turn = await getStudioTurn(projectId, turnId);
       dispatch({ type: "turnAccepted", turn });
     } catch (error) {
@@ -191,6 +209,45 @@ export function useStudioProject(): UseStudioProjectReturn {
     );
   }, []);
 
+  /**
+   * S-12: upload a reference image and stage it on the composer. Bytes go
+   * straight to GCS via a signed URL (house upload pattern), then the
+   * studio route registers the storagePath on the project.
+   */
+  const attachFile = useCallback(async (file: File) => {
+    try {
+      let projectId = projectIdRef.current;
+      if (!projectId) {
+        const project = await createStudioProject();
+        dispatch({ type: "projectCreated", project });
+        projectId = project.id;
+      }
+      const upload = (await storageApi.getUploadUrl(
+        "preview-image",
+        file.type,
+      )) as { uploadUrl: string; storagePath: string };
+      const put = await fetch(upload.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!put.ok) {
+        throw new Error(`Upload failed (${put.status})`);
+      }
+      const attachment = await registerStudioAttachment(projectId, {
+        storagePath: upload.storagePath,
+        filename: file.name,
+      });
+      dispatch({ type: "attachmentStaged", attachment });
+    } catch (error) {
+      dispatch({ type: "requestFailed", error: describeError(error) });
+    }
+  }, []);
+
+  const removeAttachment = useCallback((attachmentId: string) => {
+    dispatch({ type: "attachmentUnstaged", attachmentId });
+  }, []);
+
   const deleteProject = useCallback(async (projectId: string) => {
     try {
       await deleteStudioProject(projectId);
@@ -210,5 +267,7 @@ export function useStudioProject(): UseStudioProjectReturn {
     pinModel,
     selectImage,
     deleteProject,
+    attachFile,
+    removeAttachment,
   };
 }

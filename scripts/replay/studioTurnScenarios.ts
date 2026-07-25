@@ -130,6 +130,8 @@ function baseContext(overrides: Partial<StudioTurnContext>): StudioTurnContext {
     history: [],
     selectedImageId: null,
     projectImageIds: new Set<string>(),
+    attachments: [],
+    messageAttachmentIds: [],
     allowedActions: FIRST_TURN_ACTIONS,
     ...overrides,
   };
@@ -404,6 +406,42 @@ export const STUDIO_TURN_SCENARIOS: StudioTurnScenario[] = [
       if (!["generate", "edit", "diagnose"].includes(decision.action)) {
         violations.push(
           `expected a refinement or the keep/new-direction fork, got ${decision.action}`,
+        );
+      }
+      return violations;
+    },
+  },
+  {
+    name: "attached-image-edits",
+    behaviors:
+      "S-12 (a message carrying a user attachment routes to an edit sourcing it)",
+    context: foxProjectContext(
+      "clean this sketch up into a flat vector version of our logo",
+      {
+        selectedImageId: null,
+        attachments: [
+          {
+            id: "att-user-sketch",
+            storagePath: "users/replay-user/previews/images/sketch.png",
+            filename: "logo-sketch.png",
+            createdAtMs: 1_753_000_200_000,
+          },
+        ],
+        messageAttachmentIds: ["att-user-sketch"],
+        projectImageIds: new Set([...foxImageIds(), "att-user-sketch"]),
+      },
+    ),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (decision.action !== "edit") {
+        violations.push(
+          `expected an edit sourcing the attachment, got ${decision.action}`,
+        );
+        return violations;
+      }
+      if (!decision.sourceImageIds.includes("att-user-sketch")) {
+        violations.push(
+          `edit must source the attached image, got [${decision.sourceImageIds.join(", ")}]`,
         );
       }
       return violations;

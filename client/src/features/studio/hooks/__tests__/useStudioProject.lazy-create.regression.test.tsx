@@ -104,6 +104,7 @@ describe("regression: bootstrap never creates a project; first send creates exac
       "p-lazy",
       "make me a logo",
       expect.objectContaining({ onThinkingDelta: expect.any(Function) }),
+      [],
     );
     expect(result.current.state.project?.id).toBe("p-lazy");
     expect(result.current.state.projects.map((p) => p.id)).toContain("p-lazy");
