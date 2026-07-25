@@ -42,6 +42,7 @@ function makeContext(
 ): StudioTurnContext {
   return {
     userMessage: "a fox logo for my coffee brand",
+    projectTitle: "Untitled",
     pinnedModel: null,
     roster: registry.listModels(),
     history: [],
@@ -200,6 +201,46 @@ describe("StudioPolicyEngine", () => {
     expect(decision).toEqual(GENERATE);
     const retryPrompt = String(execute.mock.calls[1]?.[1]?.systemPrompt);
     expect(retryPrompt).toContain("img-does-not-exist");
+  });
+
+  it("nudges titling while Untitled and stops once the project is titled", async () => {
+    const execute = llmResponses(GENERATE, GENERATE);
+    const engine = new StudioPolicyEngine({ ai: { execute } });
+
+    await engine.decideTurn(makeContext());
+    await engine.decideTurn(makeContext({ projectTitle: "Fox Coffee Logo" }));
+
+    const untitled = String(execute.mock.calls[0]?.[1]?.userMessage);
+    expect(untitled).toContain(
+      "Project title: Untitled — include `title` in your next generate decision.",
+    );
+    const titled = String(execute.mock.calls[1]?.[1]?.userMessage);
+    expect(titled).toContain("Project title: Fox Coffee Logo");
+    expect(titled).not.toContain("include `title`");
+  });
+
+  it("names unavailable actions and redirects a blocked clarify toward generate-with-defaults", async () => {
+    const clarify: StudioDecision = {
+      action: "clarify",
+      questions: [{ text: "What mood?", quickPicks: ["Playful", "Serious"] }],
+    };
+    const execute = llmResponses(clarify, GENERATE);
+    const engine = new StudioPolicyEngine({ ai: { execute } });
+
+    const decision = await engine.decideTurn(
+      makeContext({ allowedActions: ["generate", "diagnose", "negotiate"] }),
+    );
+
+    expect(decision).toEqual(GENERATE);
+    const basePrompt = String(execute.mock.calls[0]?.[1]?.systemPrompt);
+    expect(basePrompt).toContain(
+      "NOT available this turn: clarify, edit, transform",
+    );
+    expect(basePrompt).toContain("fill the gaps with sensible defaults");
+    const retryPrompt = String(execute.mock.calls[1]?.[1]?.systemPrompt);
+    expect(retryPrompt).toContain(
+      "Do not ask more questions — respond with a generate decision",
+    );
   });
 
   it("throws StudioPolicyError after exhausting corrective attempts", async () => {

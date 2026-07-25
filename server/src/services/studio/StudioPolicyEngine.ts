@@ -36,6 +36,11 @@ export interface StudioAIService {
 
 export interface StudioTurnContext {
   userMessage: string;
+  /**
+   * Current project title. "Untitled" tells the LLM titling is still
+   * pending (behavior 8) — state, not turn position, drives the nudge.
+   */
+  projectTitle: string;
   /** Resolved pin, or null = Auto mode. */
   pinnedModel: StudioModelEntry | null;
   roster: readonly StudioModelEntry[];
@@ -76,6 +81,16 @@ const TEMPLATE_PATH = join(
 
 /** Total LLM asks per turn: first attempt + one corrective re-ask. */
 const MAX_ATTEMPTS = 2;
+
+/** The full decision-action space, for naming what is NOT available. */
+const ALL_ACTIONS: readonly StudioDecision["action"][] = [
+  "clarify",
+  "generate",
+  "edit",
+  "transform",
+  "diagnose",
+  "negotiate",
+];
 
 /** Prompt-size bounds for long threads (M3 heuristics, refined at M4). */
 const MAX_INVENTORY_IMAGES = 12;
@@ -124,7 +139,14 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
       const decision = asStudioDecision(parsed.data);
 
       if (!context.allowedActions.includes(decision.action)) {
-        feedback = `Action "${decision.action}" is not available this turn. Choose one of: ${context.allowedActions.join(", ")}.`;
+        // Directive feedback: a blocked clarify means "stop asking" — the
+        // compliant move is a generate with sensible defaults (behavior 1).
+        const redirect =
+          decision.action === "clarify" &&
+          context.allowedActions.includes("generate")
+            ? " Do not ask more questions — respond with a generate decision, filling any unanswered details with sensible defaults."
+            : "";
+        feedback = `Action "${decision.action}" is not available this turn. Choose one of: ${context.allowedActions.join(", ")}.${redirect}`;
         this.log.warn("Studio decision used a disallowed action", {
           attempt,
           action: decision.action,
@@ -174,8 +196,20 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
         : "## ACTIVE MODEL\n\nAuto mode — the server routes each operation to a capable model using your `capability` hint.",
     );
 
+    const unavailable = ALL_ACTIONS.filter(
+      (action) => !context.allowedActions.includes(action),
+    );
+    const clarifyBlockedNote =
+      unavailable.includes("clarify") &&
+      context.allowedActions.includes("generate")
+        ? " If information is missing, do NOT ask — generate and fill the gaps with sensible defaults."
+        : "";
     sections.push(
-      `## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: ${context.allowedActions.join(", ")}.`,
+      `## ALLOWED ACTIONS THIS TURN\n\nYou must respond with one of: ${context.allowedActions.join(", ")}.` +
+        (unavailable.length > 0
+          ? ` The following actions are NOT available this turn: ${unavailable.join(", ")}.`
+          : "") +
+        clarifyBlockedNote,
     );
 
     return sections.join("\n\n");
@@ -249,6 +283,12 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
 
   private describeProjectState(context: StudioTurnContext): string {
     const lines: string[] = ["## PROJECT STATE"];
+
+    lines.push(
+      context.projectTitle === "Untitled"
+        ? "Project title: Untitled — include `title` in your next generate decision."
+        : `Project title: ${context.projectTitle}`,
+    );
 
     const basePrompt = this.latestBasePrompt(context.history);
     lines.push(

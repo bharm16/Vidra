@@ -23,9 +23,18 @@ export const STUDIO_TURN_SCENARIO = "m3-behaviors" as const;
 
 const registry = new StudioModelRegistry();
 
-/** M3's executable set (StudioService.EXECUTABLE_ACTIONS at M3). */
-const ALLOWED_ACTIONS = [
+/**
+ * M3's executable sets, mirroring StudioService: clarify is
+ * first-message-only, so scenarios with history use the follow-up set.
+ */
+const FIRST_TURN_ACTIONS = [
   "clarify",
+  "generate",
+  "diagnose",
+  "negotiate",
+] as const satisfies readonly StudioDecision["action"][];
+
+const FOLLOW_UP_ACTIONS = [
   "generate",
   "diagnose",
   "negotiate",
@@ -85,16 +94,22 @@ for (const call of PRIOR_FOX_TURN.calls) {
 }
 
 function baseContext(overrides: Partial<StudioTurnContext>): StudioTurnContext {
-  return {
+  const context: StudioTurnContext = {
     userMessage: "",
+    projectTitle: "Untitled",
     pinnedModel: null,
     roster: registry.listModels(),
     history: [],
     selectedImageId: null,
     projectImageIds: new Set<string>(),
-    allowedActions: ALLOWED_ACTIONS,
+    allowedActions: FIRST_TURN_ACTIONS,
     ...overrides,
   };
+  // Mirror StudioService: clarify is first-message-only.
+  if (context.history.length > 0) {
+    context.allowedActions = FOLLOW_UP_ACTIONS;
+  }
+  return context;
 }
 
 export interface StudioTurnScenario {
@@ -163,6 +178,7 @@ export const STUDIO_TURN_SCENARIOS: StudioTurnScenario[] = [
     behaviors: "behaviors 1 + basePrompt maintenance (rewrite, don't append)",
     context: baseContext({
       userMessage: "make it more playful",
+      projectTitle: "Ember & Oak Fox Logo",
       history: [PRIOR_FOX_TURN],
       projectImageIds: new Set(
         PRIOR_FOX_TURN.calls.flatMap((call) =>

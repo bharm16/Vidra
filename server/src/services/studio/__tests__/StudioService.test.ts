@@ -440,12 +440,15 @@ describe("StudioService", () => {
       expect(context?.projectImageIds.size).toBe(4);
       expect(context?.pinnedModel?.slug).toBe("recraft-v4.1-pro");
       expect(context?.selectedImageId).toBeNull();
+      // Follow-up turns lose clarify (behavior 1 — first-message-only).
       expect(context?.allowedActions).toEqual([
-        "clarify",
         "generate",
         "diagnose",
         "negotiate",
       ]);
+      expect(decideTurn.mock.calls[0]?.[0]?.allowedActions).toContain(
+        "clarify",
+      );
     });
 
     it("passes a null pin (Auto) when the stored pin no longer resolves", async () => {

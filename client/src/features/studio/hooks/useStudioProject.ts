@@ -8,6 +8,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   createStudioProject,
   getStudioModels,
+  getStudioProject,
   getStudioTurn,
   listStudioProjects,
   listStudioTurns,
@@ -90,7 +91,18 @@ export function useStudioProject(): UseStudioProjectReturn {
       const projectId = projectIdRef.current;
       if (!projectId) return;
       void getStudioTurn(projectId, turnId)
-        .then((turn: StudioTurn) => dispatch({ type: "turnPolled", turn }))
+        .then(async (turn: StudioTurn) => {
+          dispatch({ type: "turnPolled", turn });
+          // A settled turn can change the project doc server-side
+          // (auto-title, behavior 8) — sync it so the header updates
+          // without a reload.
+          if (turn.status !== "running") {
+            const project = await getStudioProject(projectId);
+            if (projectIdRef.current === project.id) {
+              dispatch({ type: "projectPatched", project });
+            }
+          }
+        })
         .catch((error: unknown) =>
           dispatch({ type: "requestFailed", error: describeError(error) }),
         );

@@ -87,18 +87,28 @@ export interface RunTurnResult {
 }
 
 const GENERATE_BATCH_SIZE = 4;
+const TITLE_MAX_CHARS = 60;
 
 /**
  * Actions this service can execute at M3. edit/transform join at M4 (their
  * execution paths land there); until then the policy engine rejects them
  * with a corrective retry, exactly like a schema violation.
+ *
+ * clarify is FIRST-MESSAGE-ONLY (behavior 1: follow-ups never re-trigger
+ * clarifying questions — regression caught live 2026-07-24): once any turn
+ * exists, it is removed from the allowed set, so a proposed re-clarify is
+ * structurally rejected rather than merely discouraged in the prompt.
  */
-const EXECUTABLE_ACTIONS = [
+const FIRST_TURN_ACTIONS = [
   "clarify",
   "generate",
   "diagnose",
   "negotiate",
 ] as const satisfies readonly StudioDecision["action"][];
+
+const FOLLOW_UP_ACTIONS = FIRST_TURN_ACTIONS.filter(
+  (action) => action !== "clarify",
+);
 
 export class StudioService {
   private readonly store: FirestoreStudioProjectStore;
@@ -299,12 +309,14 @@ export class StudioService {
 
     const decision = await this.policy.decideTurn({
       userMessage: message,
+      projectTitle: project.title,
       pinnedModel: pinned,
       roster: this.registry.listModels(),
       history,
       selectedImageId: project.selectedImageId ?? null,
       projectImageIds,
-      allowedActions: EXECUTABLE_ACTIONS,
+      allowedActions:
+        history.length === 0 ? FIRST_TURN_ACTIONS : FOLLOW_UP_ACTIONS,
     });
 
     if (decision.action !== "generate") {
@@ -466,12 +478,16 @@ export class StudioService {
       updatedAtMs: this.now().getTime(),
     });
 
-    // First generation titles the project (behavior 8 — the LLM writes it).
+    // First generation titles the project (behavior 8). The LLM's title is
+    // preferred; a basePrompt-derived fallback guarantees the invariant
+    // even when the optional field is omitted (regression, live 2026-07-24).
     const patch: Partial<StudioProjectRecord> = {
       updatedAtMs: this.now().getTime(),
     };
-    if (project.title === "Untitled" && decision.title) {
-      patch.title = decision.title;
+    if (project.title === "Untitled") {
+      patch.title =
+        decision.title?.trim() ||
+        decision.basePrompt.slice(0, TITLE_MAX_CHARS).trim();
     }
     await this.store.updateProject(project.id, patch);
   }
