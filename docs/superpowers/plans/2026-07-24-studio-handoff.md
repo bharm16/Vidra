@@ -1,45 +1,61 @@
-# Studio — session handoff (2026-07-24, end of build session 2)
+# Studio — session handoff (2026-07-24, end of build session 3)
 
-**Branch:** `feat/studio`, 9 commits ahead of its base. Session 1 built M1 (economic core); session 2 built **M2 (the UI page) and verified it live in headed Chrome against real Replicate calls**. All commits green on tsc/eslint/test:unit; the one full-suite failure seen was `SuggestionsTelemetryService` duration flake (passes in isolation, unrelated).
+**Branch:** `feat/studio`, 16 commits ahead of its base. Session 1 built M1 (economic core), session 2 built M2 (UI page), session 3 built **M3 (conversation LLM) and M4 (editing + refinement flows), both live-verified in headed Chrome against real OpenAI + Replicate calls**. All commits green on tsc/eslint/test:unit (7,795 tests; the occasional full-suite flake is the known `SuggestionsTelemetryService` duration flake or macOS port shadowing, both pre-existing).
 
 **Read first:** [the plan](2026-07-24-the-studio-conversational-image-workspace.md) (authoritative spec) and [ADR-0019](../../adr/0019-the-studio-standalone-conversational-image-workspace.md) (as amended).
 
-## Verified live (headed Chrome, real money, 2026-07-24 evening)
+## Session 3 commits
 
-Two real turns ran end to end on `/studio` (~$0.30 total Replicate spend):
+- `36397832` M3 policy engine — `studio_turn` op (gpt-4o-mini, JSON mode, env-overridable), `StudioPolicyEngine` (template + roster/pin context → enforceJSON → Zod decision union → `validateDecisionReferences`, corrective-feedback retry), terminal conversational turns via `saveTurn` (zero-cost, never cap-blocked), `resolvedModel` optional on both wire sides.
+- `c1aa6f2b` studio-turn replay surface — shared scenario pack (`scripts/replay/studioTurnScenarios.ts`) drives both the record script and an offline replay unit test; behaviors 1/2/3/9 recorded.
+- `98bcbba5` live-found fixes: **clarify is first-message-only** (structural — `allowedActions` drops it once history exists) and **auto-title always lands** (LLM title preferred, basePrompt fallback, PROJECT STATE nudge, client refetches project when a poll settles). Both with regression tests.
+- `60d1560f` M4 selection persistence — PATCH `selectedImageId` (null clears; dangling id 400), client persists on click.
+- `2cf9d0ec` M4 edit + transform execution — instruction + signed source URLs into edit-capable model (pin if edit-capable, else cheapest edit-capable = nano-banana-2-lite 5¢); prompt-less utilities 1¢; single-call settle with full refund on failure; behavior-7 engine guard (edit under text-only pin → negotiate, never silent reroute).
+- `61326e75` M4 routing fixtures — 10 scenarios total, including the plan's exit-gate triple (selection + "bolder" → edit; "more options" → generate deriving from the selection's sourcePrompt; "different concept" → generate), rejection → diagnose, incapable pin → negotiate with "(Recommended)", remove-background → transform.
+- `6346d61d` live-found fix: google-family `output_format` must be `png` — the **lite** tier rejects webp (M1's edit proof ran on non-lite and masked it).
 
-- 4 parallel `recraft-v4.1` calls per turn; images landed in GCS and rendered in the thread's 2×2 grid **and** as groups on the plane via fresh signed URLs.
-- **Partial-turn semantics live**: one call hit the 60s timeout → its slot shows the error note, the other three rendered, turn finalized `partial` (refund path exercised server-side).
-- Polling to terminal without reload (second turn); suggestion pills enabled only on the latest turn; auto-title propagated to top bar + panel header + project list.
-- Error surfacing works: the first bootstrap failure (Firestore index, below) rendered as a visible dismissible card, not silence.
+## Verified live (headed Chrome, real money, session 3)
 
-## What exists now
+- **Behavior 1**: "make me a logo" → clarify card, 2 questions × 3 quick-picks, zero spend. Quick-pick answer → generate (4 distinct animal logos), never a re-clarify (after the fix; the pre-fix double-clarify was caught live).
+- **Behavior 8**: title "Minimalist Fox Logo" written by the LLM, persisted server-side, and synced to top bar + panel header without reload (after the client settle-refetch fix).
+- **Behavior 6 / edit**: selected the running-fox mark (ring rendered, PATCH 200) → "give this one a cream background instead of white" → **real nano-banana-2-lite edit**: same fox, cream background, single-image card in thread + size-1 group on plane, edit-aware suggestions.
+- **S-30 / transform**: "remove the background from the selected one" → 1¢ recraft utility → transparent-background fox rendered.
+- Error surfacing held throughout: the 422 and the policy-exhaustion error rendered as dismissible cards, never silence.
 
-Server (all M1 items, plus): `GET /api/studio/models` (picker roster — no Replicate IDs, no costs), `GET /projects/:id/turns` (full thread with fresh view URLs; store `listTurns`), `getTurnWithFreshUrls`/`listTurnsWithFreshUrls` sharing one decorator.
+## The fixture surface (how conversation quality is gated)
 
-Client (`client/src/features/studio/`): `StudioPage` (route `/studio`, NavRail entry with Sparkles icon under Live editor, top bar with centered editable title), `hooks/studioReducer` (+tests) and `useStudioProject` (bootstrap, open/create project, send, rename, pin, 1s polling), components (`StudioThread` with inline clarify/diagnose/negotiate/result cards + pill rows, `StudioComposer` with Auto-default `ModelPicker` showing latency hints only and right-anchored send, `ResultCard` 2×2-or-single, `StudioPlane` on `CanvasViewport`, `ProjectList`), `studio.css` (live-editor monochrome language + a design-system Button override block — ADR-0008 bans raw `<button>`).
+`server/src/replay/fixtures/studio-turn/m3-behaviors.json` — one cassette, 10 scenarios, recorded from live gpt-4o-mini and replayed **offline in the unit suite** (`StudioPolicyEngine.replay.test.ts`, null clients, zero network). The scenario pack is shared between the record script and the test, so prompts stay byte-identical and every request key must hit.
 
-## Bugs found live and fixed (with regression tests)
+- **Any prompt-assembly change rotates every cassette key** → the replay test fails loudly → re-record:
+  ```bash
+  REPLAY_MODE=record NODE_ENV=test npx tsx --tsconfig server/tsconfig.json scripts/replay/record-studio-scenarios.ts
+  ```
+  (~10 mini calls, pennies; the script refuses to flush if any scenario violates its behavior invariants.)
+- Recording is itself the quality gate: it caught mini dropping `suggestions`, refusing to pivot to negotiate, and re-clarifying — each fixed by prompt/context strengthening before fixtures were flushed.
 
-1. `listProjects` used `where(userId)==` + `orderBy(updatedAtMs)` → live Firestore demands a composite index (FAILED_PRECONDITION). Now equality-only + in-memory sort; test asserts no orderBy on `studio_projects`.
-2. `.st-plane-cell { height: auto !important }` beat the layout's **inline** height (CSS !important outranks inline styles) → every plane cell flattened to a line. Override removed; CSS regression test locks it (pattern: live editor's drawable-page test).
+## Prompt-quality lessons (mini-specific, encoded in template + engine)
 
-## Known rough edges (not blockers, do next)
+1. Mini drops optional-looking fields — the template now says "REQUIRED fields: … suggestions (exactly 3, in this same object)".
+2. Mini ignores rule-by-reference under conflict — negative constraints must be stated where the model looks ("NOT available this turn: …", the pinned-model "CANNOT edit" block), not just via numbered-rule pointers.
+3. State beats turn-position reasoning — "set title when PROJECT STATE shows Untitled" works; "on the FIRST generate" does not.
+4. Corrective retry feedback works when **directive** ("respond with a generate decision, filling unanswered details with sensible defaults"), not merely descriptive.
 
-- **StrictMode double-bootstrap** (dev): the mount effect runs twice → on an empty account it can create two "Untitled" projects. Make bootstrap idempotent (e.g. reuse an existing empty Untitled project instead of always creating).
-- **selectedImageId isn't persisted** — selection is client-local; PATCH doesn't accept it. Needed by M4 (edits source from selection). Add to PatchProjectSchema + service when M4 starts.
-- **Suggestions are placeholders** and the second live turn generated literal "give me more options" images — correct M1 behavior (hardcoded context-free policy); M3's LLM policy is the fix, not a UI bug.
-- **stylelint**: `studio.css` adds 42 hardcoded-px violations (live-editor.css already carries 25; commit protocol doesn't gate on stylelint). Tokenize both together as polish.
-- Layout groups of 3 (partial batch) render as a 3-across row on the plane (computeStudioLayout's 2-col rule applies to the thread grid; plane grouping differs) — cosmetic; align if it bothers.
-- Model prices still unverified for Nano Banana tiers / GPT Image 2 / Pro Vector (`costVerified: false` overestimates in the registry). Confirm before defaulting Auto beyond Recraft.
-- CLAUDE.md remains uncommitted (pre-dirty + flag-table regen + a parallel fix-task touching it) — reconcile before committing it; plan's Route→Service map row for studio still to add.
+## Next: Milestone 5 — hardening (+ leftovers)
 
-## Next: Milestone 3 — the conversation LLM
-
-Replace `StudioService.decideTurn` with the policy engine: `studio_turn` operation in `modelConfig.ts` (openai `gpt-4o-mini-2024-07-18`, JSON mode, env-overridable), system prompt covering behaviors 1–9 + roster capabilities + basePrompt maintenance + negotiation on incapable pins, `StructuredOutputEnforcer` against the decision schema, wire `validateDecisionReferences` (built + tested, currently uncalled), recorded fixtures (`REPLAY_MODE`). Then M4 (edit action end-to-end, selection persistence, rejection fork, routing fixtures) and M5 (hardening: cap env into env.ts Zod config, stale-pin notice, project delete).
+- **StrictMode double-bootstrap** (dev): mount effect runs twice → two "Untitled" projects on an empty account. Recommended fix: don't create server-side at bootstrap — hold a local draft and create lazily on first send (kills the race and stops polluting accounts). Touches reducer bootstrapped case + `sendMessage` + composer null-project tolerance.
+- **Spend-cap env into `env.ts` Zod config** (currently a defensively-parsed read in `studio.services.ts`).
+- **Stale-pin composer notice** (behavior 9's one-liner; server already reverts to Auto).
+- **Project delete** (route exists in plan, not built) + project rename is live, list reorders on updatedAtMs.
+- **Rejection fork live-check**: diagnose is fixture-gated; the post-diagnose fork (keep concept vs new direction) deserves one live conversation.
+- Model prices still unverified for Nano Banana tiers / GPT Image 2 / Pro Vector (`costVerified: false` overestimates). Confirm before defaulting Auto beyond Recraft/Nano-lite.
+- gpt-image-2 input keys still unconfirmed (`buildEditInput` guesses `image_input`) — confirm on Replicate before anyone pins it for edits.
+- **stylelint**: `studio.css` carries 42 hardcoded-px violations (live-editor.css 25) — tokenize together as polish; commit protocol doesn't gate on stylelint.
+- CLAUDE.md remains uncommitted (pre-dirty; flag-table regen + parallel fix-task) — reconcile before committing; plan's Route→Service map row for studio still to add.
+- Client `components/` dirty files in `git status` predate this session (parallel branding work: BrandLogo, vidra-mark, auth.css…) — not studio's; don't sweep them into studio commits.
 
 ## Environment notes
 
-- Dev stack: the user's own `npm start` was already running (ports 3001/5173); tsx watch hot-reloads server changes — don't start a second one, probe `localhost:3001/health` + `/api/studio/models` (401 = mounted) first.
+- Dev stack: the user's own `npm start` runs on 3001/5173; tsx watch hot-reloads server changes — never start a second one. Probe `localhost:3001/health` + `/api/studio/models` (401 = mounted) first.
 - Browser verification: headed Chrome via the Chrome MCP (never preview\_\* — user rule). User is signed in at localhost:5173.
-- A studio turn spends real Replicate money (~$0.16/batch). The cap (default $5/day) is live.
+- Money: a generate batch ≈ 16¢ (recraft), an edit ≈ 5¢ (nano-lite), a transform 1¢, a studio_turn LLM call ≈ 0.1¢. The $5/day cap is live. Session 3 spend ≈ 60¢ total.
+- The qwen Groq alias (`qwen/qwen3-32b`) 404s at server init — pre-existing env noise, unrelated to studio.
