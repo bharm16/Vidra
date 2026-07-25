@@ -69,7 +69,7 @@ Services are registered via domain-scoped files in `server/src/config/services/`
 | `llm.services.ts`                | aiModelService, concurrency                                                                                                                                                                                                                                         |
 | `enhancement.services.ts`        | enhancementService, videoPromptService, sceneDetectionService, promptCoherenceService                                                                                                                                                                               |
 | `optimization.services.ts`       | promptOptimizationService, templateService                                                                                                                                                                                                                          |
-| `image-generation.services.ts`   | videoPromptDetector, videoToImageTransformer, storyboardFramePlanner, replicateFluxSchnellProvider, replicateFluxKontextFastProvider, imageGenerationService, storyboardPreviewService                                                                              |
+| `image-generation.services.ts`   | storyboardFramePlanner, replicateFluxSchnellProvider, replicateFluxKontextFastProvider, imageGenerationService, storyboardPreviewService                                                                                                                            |
 | `video-generation.services.ts`   | videoGenerationService, keyframeGenerationService, faceSwapService, consistentVideoService, capabilitiesProbeService, providerCircuitManager, videoWorkerHeartbeatStore, videoJobHandler, videoJobWorker, videoJobSweeper, dlqReprocessorWorker, videoJobReconciler |
 | `continuity.services.ts`         | continuitySessionService (gated — see Feature Flags below)                                                                                                                                                                                                          |
 | `payment.services.ts`            | paymentService, billingProfileStore, webhook + repair workers                                                                                                                                                                                                       |
@@ -116,9 +116,10 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 
 #### Mode
 
-| Env Var              | Default | Legacy Aliases | Description                                                                                     |
-| -------------------- | ------- | -------------- | ----------------------------------------------------------------------------------------------- |
-| `ENABLE_CONVERGENCE` | `true`  | —              | Enables continuity/convergence services. When false, continuitySessionService resolves to null. |
+| Env Var              | Default | Legacy Aliases | Description                                                                                                                              |
+| -------------------- | ------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENABLE_CONVERGENCE` | `true`  | —              | Enables continuity/convergence services. When false, continuitySessionService resolves to null.                                          |
+| `ENABLE_STUDIO`      | `true`  | —              | Enables the Studio conversational image workspace (ADR-0019). When false, studioService resolves to null and /api/studio is not mounted. |
 
 #### Worker
 
@@ -167,22 +168,23 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 
 ## Route → Service → Client API Map
 
-| Route                                              | Server Route File                         | Client API/Service                                  |
-| -------------------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
-| `POST /api/optimize`                               | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
-| `POST /api/enhancement/*`, `POST /api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
-| `POST /api/llm/label-spans`                        | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
-| `/api/preview/*`                                   | `preview.routes.ts`                       | `features/preview/api/`                             |
-| `/api/payment/*`                                   | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
-| `/api/motion/*`                                    | `motion.routes.ts`                        | `api/motionApi.ts`                                  |
-| `/api/storage/*`                                   | `storage.routes.ts`                       | `api/storageApi.ts`                                 |
-| `/api/capabilities`                                | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
-| `/api/continuity/*`                                | `continuity.routes.ts`                    | `features/continuity/api/`                          |
-| `/api/model-intelligence/*`                        | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
-| `/api/sessions/*`                                  | `sessions.routes.ts`                      | (no dedicated client — uses ApiClient directly)     |
-| `/api/assets/*`                                    | `asset.routes.ts`                         | `features/assets/`                                  |
-| `/api/reference-images/*`                          | `reference-images.routes.ts`              | `features/reference-images/`                        |
-| `/health`                                          | `health.routes.ts`                        | (not called from client)                            |
+| Route                       | Server Route File              | Client API/Service                                                                    |
+| --------------------------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `POST /api/optimize`        | `optimize.routes.ts`           | `services/PromptOptimizationApi.ts`                                                   |
+| `POST /api/enhancement/*`   | `enhancement.routes.ts`        | `api/enhancementSuggestionsApi.ts`, `features/prompt-optimizer/api/`                  |
+| `POST /api/suggestions/*`   | `suggestions.ts`               | (no client caller — LLM-judge suggestion-quality evaluation: `/evaluate`, `/rubrics`) |
+| `POST /api/llm/label-spans` | `labelSpansRoute.ts`           | `features/span-highlighting/api/spanLabelingApi.ts`                                   |
+| `/api/preview/*`            | `preview.routes.ts`            | `features/preview/api/`                                                               |
+| `/api/payment/*`            | `payment.routes.ts`            | `api/billingApi.ts`                                                                   |
+| `/api/motion/*`             | `motion.routes.ts`             | `api/motionApi.ts`                                                                    |
+| `/api/storage/*`            | `storage.routes.ts`            | `api/storageApi.ts`                                                                   |
+| `/api/capabilities`         | `capabilities.routes.ts`       | `services/CapabilitiesApi.ts`                                                         |
+| `/api/continuity/*`         | `continuity.routes.ts`         | `features/continuity/api/`                                                            |
+| `/api/model-intelligence/*` | `model-intelligence.routes.ts` | `features/model-intelligence/api/`                                                    |
+| `/api/sessions/*`           | `sessions.routes.ts`           | (no dedicated client — uses ApiClient directly)                                       |
+| `/api/assets/*`             | `asset.routes.ts`              | `features/assets/`                                                                    |
+| `/api/reference-images/*`   | `reference-images.routes.ts`   | (server-only — no client caller)                                                      |
+| `/health`                   | `health.routes.ts`             | (not called from client)                                                              |
 
 **Rule:** API calls never go directly in React components. Use `client/src/api/` for thin fetch wrappers or `client/src/services/` for stateful clients. Feature-scoped APIs live in `client/src/features/<name>/api/`.
 
