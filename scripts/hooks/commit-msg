@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# commit-msg hook: enforces that fix commits include a regression test.
-#
-# The commit message file is passed as $1 by git.
+# commit-msg hook: delegates to the single-source bugfix check
+# (scripts/hooks/check-bugfix-test.sh) — fix commits need a regression test
+# in a *.regression.test.* file, and changed regression tests must pass the
+# mock-boundary quality check.
 
 if [ -d "/opt/homebrew/bin" ]; then
   export PATH="/opt/homebrew/bin:$PATH"
@@ -11,39 +12,4 @@ elif [ -d "/usr/local/bin" ]; then
   export PATH="/usr/local/bin:$PATH"
 fi
 
-COMMIT_MSG_FILE="$1"
-COMMIT_MSG="$(head -1 "$COMMIT_MSG_FILE")"
-
-# Only enforce on fix commits
-if ! echo "$COMMIT_MSG" | grep -qiE '^fix[:(]'; then
-  exit 0
-fi
-
-if [ "${SKIP_BUGFIX_TEST_CHECK:-0}" = "1" ]; then
-  echo ">> Bugfix test check skipped (SKIP_BUGFIX_TEST_CHECK=1)"
-  exit 0
-fi
-
-echo ">> Commit-msg: fix commit detected, checking for regression test..."
-
-# Check staged files for new test blocks
-DIFF_OUTPUT="$(git diff --cached --unified=0 -- '*.test.*' '*.spec.*' 2>/dev/null || true)"
-
-if echo "$DIFF_OUTPUT" | grep -qE '^\+.*(it\(|test\()'; then
-  echo ">> ✓ Regression test found in fix commit"
-  exit 0
-fi
-
-echo ""
-echo "   ✗ REJECTED: Fix commit must include a regression test."
-echo ""
-echo "   Your commit message starts with 'fix:' or 'fix(' but the staged"
-echo "   changes contain no new test blocks (it() or test()) in test files."
-echo ""
-echo "   The bugfix protocol requires every fix to include a regression test"
-echo "   that asserts the violated invariant. See: docs/architecture/BUGFIX_PROTOCOL.md"
-echo ""
-echo "   If this is a non-code fix (docs, config), skip with:"
-echo "     SKIP_BUGFIX_TEST_CHECK=1 git commit ..."
-echo ""
-exit 1
+exec bash "$(git rev-parse --show-toplevel)/scripts/hooks/check-bugfix-test.sh" "$1"

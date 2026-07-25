@@ -1,31 +1,22 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { buildVideoRequestPlan } from "./requestPlan";
 
-const { normalizeGenerationParamsMock } = vi.hoisted(() => ({
-  normalizeGenerationParamsMock: vi.fn(),
-}));
-
-vi.mock("@routes/optimize/normalizeGenerationParams", () => ({
-  normalizeGenerationParams: normalizeGenerationParamsMock,
-}));
-
+/**
+ * Regression: generation params must survive the real normalization pipeline
+ * into provider options — seed and 4k resolution were previously dropped, and
+ * 6-second durations rejected. Runs the real normalizeGenerationParams against
+ * the real capability registry (veo-4 and kling-26 both declare these values),
+ * so a capability-table regression fails here too.
+ */
 describe("requestPlan regression", () => {
-  beforeEach(() => {
-    normalizeGenerationParamsMock.mockReset();
-  });
-
   it("preserves seed and 4k resolution, and accepts 6-second duration", () => {
-    normalizeGenerationParamsMock.mockReturnValue({
-      normalizedGenerationParams: {
+    const result = buildVideoRequestPlan({
+      generationParams: {
         duration_s: 6,
         fps: 24,
         resolution: "4k",
         seed: 123,
       },
-    });
-
-    const result = buildVideoRequestPlan({
-      generationParams: {},
       model: "veo-4",
       operation: "generateVideoPreview",
       requestId: "req-1",
@@ -47,16 +38,12 @@ describe("requestPlan regression", () => {
   });
 
   it("parses numeric strings for duration/fps and supports 5 and 10 second values", () => {
-    normalizeGenerationParamsMock.mockReturnValue({
-      normalizedGenerationParams: {
+    const first = buildVideoRequestPlan({
+      generationParams: {
         duration_s: "5",
         fps: "30",
-        resolution: "1080p",
+        resolution: "720p",
       },
-    });
-
-    const first = buildVideoRequestPlan({
-      generationParams: {},
       model: "kling-26",
       operation: "generateVideoPreview",
       requestId: "req-2",
@@ -74,14 +61,10 @@ describe("requestPlan regression", () => {
     expect(first.value.options.seconds).toBe("5");
     expect(first.value.options.fps).toBe(30);
 
-    normalizeGenerationParamsMock.mockReturnValue({
-      normalizedGenerationParams: {
+    const second = buildVideoRequestPlan({
+      generationParams: {
         duration_s: "10",
       },
-    });
-
-    const second = buildVideoRequestPlan({
-      generationParams: {},
       model: "kling-26",
       operation: "generateVideoPreview",
       requestId: "req-3",

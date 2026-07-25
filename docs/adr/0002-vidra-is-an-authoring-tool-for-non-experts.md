@@ -5,6 +5,10 @@ study was cancelled by owner decision; expansion-first is adopted on builder
 conviction plus the dry-run/live-loop evidence (n=1, facilitator-judged), not
 on the pre-registered thresholds. The falsification signal moves from the
 study to live usage. The frozen-stack boundaries below still stand.
+· amended 2026-07-25 — frozen extends to tests: frozen ≠ deleted still holds
+for code, but frozen stacks carry **zero tests in any gate**. Their test
+suites (~1,000 tests) were removed from the repo; git history is the archive,
+and a revived stack revives its tests with it.
 
 Vidra had grown to 23 server service domains and 14 client features with **no
 canonical product definition** — the root `CONTEXT.md` and `docs/agents/domain.md`

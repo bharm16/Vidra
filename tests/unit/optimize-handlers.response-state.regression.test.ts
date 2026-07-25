@@ -2,26 +2,20 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
 import { EventEmitter } from "events";
 
-const { normalizeGenerationParamsMock, extractUserIdMock, loggerMock } =
-  vi.hoisted(() => ({
-    normalizeGenerationParamsMock: vi.fn(),
-    extractUserIdMock: vi.fn(),
-    loggerMock: {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-    },
-  }));
+const { loggerMock } = vi.hoisted(() => {
+  const base = {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    child: vi.fn(),
+  };
+  base.child.mockReturnValue(base);
+  return { loggerMock: base };
+});
 
-vi.mock("@routes/optimize/normalizeGenerationParams", () => ({
-  normalizeGenerationParams: normalizeGenerationParamsMock,
-}));
-
-vi.mock("@utils/requestHelpers", () => ({
-  extractUserId: extractUserIdMock,
-}));
-
+// Logger is the observable for "skipped write after close" — the real
+// normalizer and request helpers run for real (both are pure).
 vi.mock("@infrastructure/Logger", () => ({
   logger: loggerMock,
 }));
@@ -85,10 +79,6 @@ function createMockRequest(body: Record<string, unknown>, id: string): Request {
 describe("optimize handlers response-state regression", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    extractUserIdMock.mockReturnValue("user-123");
-    normalizeGenerationParamsMock.mockReturnValue({
-      normalizedGenerationParams: { steps: 20 },
-    });
   });
 
   it("optimize handler does not write after response already closed", async () => {

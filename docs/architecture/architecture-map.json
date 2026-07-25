@@ -343,6 +343,11 @@
     },
     {
       "method": "POST",
+      "fullPath": "/api/fal/i2i",
+      "sourceFile": "server/src/routes/fal-i2i.routes.ts"
+    },
+    {
+      "method": "POST",
       "fullPath": "/api/from-keyframe",
       "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
     },
@@ -848,6 +853,51 @@
     },
     {
       "method": "GET",
+      "fullPath": "/api/studio/models",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/studio/projects",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/studio/projects",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "DELETE",
+      "fullPath": "/api/studio/projects/:projectId",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/studio/projects/:projectId",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "PATCH",
+      "fullPath": "/api/studio/projects/:projectId",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/studio/projects/:projectId/turns",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/studio/projects/:projectId/turns",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "GET",
+      "fullPath": "/api/studio/projects/:projectId/turns/:turnId",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "GET",
       "fullPath": "/api/suggestions",
       "sourceFile": "server/src/routes/asset.routes.ts"
     },
@@ -925,6 +975,17 @@
       "defaultValue": "true",
       "description": "Enables continuity/convergence services. When false, continuitySessionService resolves to null.",
       "category": "mode"
+    },
+    {
+      "name": "studio",
+      "envName": "ENABLE_STUDIO",
+      "aliases": [],
+      "defaultValue": "true",
+      "description": "Enables the Studio conversational image workspace (ADR-0019). When false, studioService resolves to null and /api/studio is not mounted.",
+      "category": "mode",
+      "requiresEnv": [
+        "REPLICATE_API_TOKEN"
+      ]
     },
     {
       "name": "videoJobWorkerDisabled",
@@ -1757,6 +1818,21 @@
       "from": "stripeWebhookEventStore",
       "to": "firestoreCircuitExecutor",
       "file": "payment.services.ts"
+    },
+    {
+      "from": "studioService",
+      "to": "aiService",
+      "file": "studio.services.ts"
+    },
+    {
+      "from": "studioService",
+      "to": "config",
+      "file": "studio.services.ts"
+    },
+    {
+      "from": "studioService",
+      "to": "storageService",
+      "file": "studio.services.ts"
     },
     {
       "from": "styleAnalysisService",
