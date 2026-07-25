@@ -86,6 +86,18 @@ export class FirestoreStudioProjectStore {
       .set(this.stripUndefined(patch), { merge: true });
   }
 
+  async listTurns(
+    projectId: string,
+    limitCount = 200,
+  ): Promise<StudioTurnRecord[]> {
+    const snapshot = await this.turnsOf(projectId)
+      .orderBy("createdAtMs", "asc")
+      .limit(limitCount)
+      .get();
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => doc.data() as StudioTurnRecord);
+  }
+
   async getTurn(
     projectId: string,
     turnId: string,

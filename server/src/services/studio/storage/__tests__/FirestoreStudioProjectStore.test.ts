@@ -22,6 +22,7 @@ type FakeDocRef = {
 type FakeCollectionRef = {
   doc: (id: string) => FakeDocRef;
   where: (field: string, op: string, value: unknown) => FakeQuery;
+  orderBy: (field: string, direction?: string) => FakeQuery;
 };
 
 type FakeQuery = {
@@ -115,6 +116,8 @@ function makeCollectionRef(path: string): FakeCollectionRef {
   return {
     doc: (id) => makeDocRef(`${path}/${id}`),
     where: (field, _op, value) => makeQuery(path, [[field, value]]),
+    orderBy: (field, direction = "asc") =>
+      makeQuery(path, [], { field, direction }),
   };
 }
 
@@ -334,6 +337,28 @@ describe("FirestoreStudioProjectStore", () => {
       expect(turn?.refundedCents).toBe(4);
       // Untouched fields survive the merge.
       expect(turn?.userMessage).toBe("a logo for Vidra");
+    });
+  });
+
+  describe("listTurns", () => {
+    it("returns a project's turns oldest-first", async () => {
+      await store.reserveTurn({
+        turn: makeTurn({ id: "turn-2", createdAtMs: 2000 }),
+        day: DAY,
+        capCents: 500,
+      });
+      await store.reserveTurn({
+        turn: makeTurn({ id: "turn-1", createdAtMs: 1000 }),
+        day: DAY,
+        capCents: 500,
+      });
+
+      const turns = await store.listTurns("project-1");
+      expect(turns.map((t) => t.id)).toEqual(["turn-1", "turn-2"]);
+    });
+
+    it("returns an empty list for a project with no turns", async () => {
+      expect(await store.listTurns("empty-project")).toEqual([]);
     });
   });
 

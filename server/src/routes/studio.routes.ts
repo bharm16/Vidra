@@ -67,6 +67,15 @@ function sendError(res: Response, error: unknown): void {
 export function createStudioRouter(studioService: StudioService): Router {
   const router = express.Router();
 
+  router.get(
+    "/models",
+    asyncHandler(async (req: AuthedRequest, res: Response) => {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+      res.json({ success: true, data: studioService.getModelRoster() });
+    }),
+  );
+
   router.post(
     "/projects",
     asyncHandler(async (req: AuthedRequest, res: Response) => {
@@ -154,6 +163,23 @@ export function createStudioRouter(studioService: StudioService): Router {
         // 202: the decision is final but image calls are still running —
         // poll GET /turns/:turnId (plan: "Request flow (asynchronous turns)").
         res.status(202).json({ success: true, data: { turnId, decision } });
+      } catch (error) {
+        sendError(res, error);
+      }
+    }),
+  );
+
+  router.get(
+    "/projects/:projectId/turns",
+    asyncHandler(async (req: AuthedRequest, res: Response) => {
+      const userId = requireUserId(req, res);
+      if (!userId) return;
+      try {
+        const turns = await studioService.listTurnsWithFreshUrls(
+          userId,
+          routeParam(req, "projectId"),
+        );
+        res.json({ success: true, data: turns });
       } catch (error) {
         sendError(res, error);
       }

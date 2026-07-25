@@ -46,6 +46,12 @@ class FakeStore {
     return this.turns.get(turnId) ?? null;
   }
 
+  async listTurns(projectId: string): Promise<StudioTurnRecord[]> {
+    return [...this.turns.values()]
+      .filter((turn) => turn.projectId === projectId)
+      .sort((a, b) => a.createdAtMs - b.createdAtMs);
+  }
+
   async reserveTurn(params: {
     turn: StudioTurnRecord;
     day: string;

@@ -106,6 +106,25 @@ export class StudioService {
     this.idFactory = deps.idFactory ?? (() => randomUUID());
   }
 
+  /**
+   * Public picker roster: display data only — Replicate IDs and cost
+   * estimates never leave the server (plan: "Model roster"). Latency hints
+   * are the only per-model hint the picker shows (no cost, per S-37).
+   */
+  getModelRoster(): Array<{
+    slug: string;
+    displayName: string;
+    capabilities: readonly string[];
+    latencyHintSeconds: number;
+  }> {
+    return this.registry.listModels().map((entry) => ({
+      slug: entry.slug,
+      displayName: entry.displayName,
+      capabilities: entry.capabilities,
+      latencyHintSeconds: entry.latencyHintSeconds,
+    }));
+  }
+
   async createProject(
     userId: string,
     title?: string,
@@ -185,6 +204,26 @@ export class StudioService {
     turnId: string,
   ): Promise<StudioTurnView> {
     const turn = await this.getTurn(userId, projectId, turnId);
+    return this.decorateTurn(userId, turn);
+  }
+
+  /**
+   * Full thread for project reopen: every persisted turn, chronological,
+   * images decorated like the polling route.
+   */
+  async listTurnsWithFreshUrls(
+    userId: string,
+    projectId: string,
+  ): Promise<StudioTurnView[]> {
+    await this.getProject(userId, projectId);
+    const turns = await this.store.listTurns(projectId);
+    return Promise.all(turns.map((turn) => this.decorateTurn(userId, turn)));
+  }
+
+  private async decorateTurn(
+    userId: string,
+    turn: StudioTurnRecord,
+  ): Promise<StudioTurnView> {
     const calls = await Promise.all(
       turn.calls.map(async (call) => {
         if (!call.image) return call;
@@ -197,7 +236,7 @@ export class StudioService {
         } catch (error) {
           this.log.warn("Failed to mint studio image view URL", {
             storagePath: call.image.storagePath,
-            turnId,
+            turnId: turn.id,
             error: error instanceof Error ? error.message : String(error),
           });
           return call;
