@@ -109,3 +109,13 @@ export const RunTurnResponseSchema = z.object({
 });
 
 export type RunTurnResponse = z.infer<typeof RunTurnResponseSchema>;
+
+/** Picker roster entry — display data only; the server keeps Replicate IDs. */
+export const StudioModelInfoSchema = z.object({
+  slug: StudioModelSlugSchema,
+  displayName: z.string(),
+  capabilities: z.array(z.string()),
+  latencyHintSeconds: z.number(),
+});
+
+export type StudioModelInfo = z.infer<typeof StudioModelInfoSchema>;

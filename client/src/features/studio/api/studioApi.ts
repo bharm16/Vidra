@@ -7,9 +7,11 @@ import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import { z } from "zod";
 import {
   RunTurnResponseSchema,
+  StudioModelInfoSchema,
   StudioProjectSchema,
   StudioTurnSchema,
   type RunTurnResponse,
+  type StudioModelInfo,
   type StudioModelSlug,
   type StudioProject,
   type StudioTurn,
@@ -95,4 +97,15 @@ export async function getStudioTurn(
   turnId: string,
 ): Promise<StudioTurn> {
   return request(`/projects/${projectId}/turns/${turnId}`, StudioTurnSchema);
+}
+
+/** Full thread for project reopen, oldest first. */
+export async function listStudioTurns(
+  projectId: string,
+): Promise<StudioTurn[]> {
+  return request(`/projects/${projectId}/turns`, z.array(StudioTurnSchema));
+}
+
+export async function getStudioModels(): Promise<StudioModelInfo[]> {
+  return request("/models", z.array(StudioModelInfoSchema));
 }
