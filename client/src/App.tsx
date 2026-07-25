@@ -93,6 +93,7 @@ const HistoryPage = lazy(() =>
 );
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
 const LiveEditor = lazy(() => import("./features/realtime-sketch/LiveEditor"));
+const StudioPage = lazy(() => import("./features/studio/StudioPage"));
 const MainWorkspace = lazy(() =>
   import("./components/layout/MainWorkspace").then((module) => ({
     default: module.MainWorkspace,
@@ -265,6 +266,16 @@ function AppRoutes(): React.ReactElement {
         element={
           <FeatureErrorBoundary featureName="Live Editor">
             <LiveEditor />
+          </FeatureErrorBoundary>
+        }
+      />
+      {/* The studio (ADR-0019) — conversational image generation and editing
+          on its own rail surface and plane. */}
+      <Route
+        path="/studio"
+        element={
+          <FeatureErrorBoundary featureName="Studio">
+            <StudioPage />
           </FeatureErrorBoundary>
         }
       />

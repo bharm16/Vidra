@@ -1,0 +1,667 @@
+/*
+ * Studio chrome — same monochrome language as the live editor
+ * (dark stage, Space Grotesk, 16px radii, hairline white borders).
+ * Layout follows the plan's "Layout and control placement" section:
+ * top bar, fixed-width left chat panel (three bands), fluid right plane.
+ */
+
+.st-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  background: #0b0c0f;
+  color: #f2f3f6;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+/* ── Top bar: three zones (left label / centered title / reserved right) ── */
+
+.st-topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  flex: none;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.st-topbar-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(242, 243, 246, 0.85);
+}
+
+/* Centered in the full frame width, not the canvas width. */
+.st-topbar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 40%;
+  background: transparent;
+  border: none;
+  color: #f2f3f6;
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.st-topbar-title:hover,
+.st-topbar-title:focus {
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+/* Right zone stays right-anchored even while nearly empty (spec). */
+.st-topbar-right {
+  margin-left: auto;
+  min-width: 34px;
+}
+
+/* ── Body: fixed panel + fluid stage ── */
+
+.st-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.st-panel {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  flex: none;
+  min-height: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0d0e12;
+}
+
+/* Band 1 — header: menu far left, title, new-project far right. */
+.st-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 44px;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.st-panel-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: rgba(242, 243, 246, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Band 2 — the thread. */
+.st-thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.st-thread-empty {
+  margin: auto 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(242, 243, 246, 0.45);
+  text-align: center;
+}
+
+.st-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.st-msg-user {
+  align-self: flex-end;
+  max-width: 88%;
+  padding: 8px 11px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.st-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.st-card-error {
+  border-color: rgba(255, 120, 120, 0.35);
+}
+
+.st-card-text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(242, 243, 246, 0.9);
+}
+
+.st-question + .st-question {
+  margin-top: 6px;
+}
+
+.st-thinking {
+  font-size: 12px;
+  color: rgba(242, 243, 246, 0.5);
+  padding-left: 2px;
+}
+
+/* Suggestion / quick-pick pills — a horizontal wrap row directly beneath
+   the content they belong to (spec: never floating, never in composer). */
+.st-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.st-pill {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(242, 243, 246, 0.9);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  line-height: 1.2;
+  cursor: pointer;
+  text-align: left;
+}
+
+.st-pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.st-pill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Results: 2×2 grid for a 4-call generate, one cell for a 1-call edit. */
+.st-result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.st-result-single {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.st-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #101116;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-cell-selected {
+  border-color: #8b8cf6;
+}
+
+.st-cell-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.st-cell-failed {
+  cursor: default;
+  border-style: dashed;
+  border-color: rgba(255, 120, 120, 0.35);
+}
+
+.st-cell-running {
+  cursor: default;
+}
+
+.st-cell-note {
+  font-size: 10.5px;
+  color: rgba(242, 243, 246, 0.55);
+  padding: 8px;
+  text-align: center;
+}
+
+.st-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(242, 243, 246, 0.7);
+  animation: st-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes st-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Band 3 — composer: bordered box pinned to the panel bottom. */
+.st-composer {
+  flex: none;
+  margin: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: #101116;
+}
+
+.st-composer-field {
+  position: relative;
+}
+
+.st-input {
+  width: 100%;
+  min-height: 58px;
+  max-height: 120px;
+  resize: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f2f3f6;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 10px 30px 6px 11px;
+}
+
+.st-input-expanded {
+  min-height: 140px;
+  max-height: 240px;
+}
+
+.st-input::placeholder {
+  color: rgba(242, 243, 246, 0.35);
+}
+
+/* Expand toggle at the field's top-right corner (spec Row A). */
+.st-expand {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.st-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: rgba(242, 243, 246, 0.55);
+  cursor: pointer;
+}
+
+.st-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f2f3f6;
+}
+
+/* Row B: picker left, flex gap, send always right-most (spec grammar). */
+.st-composer-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 8px;
+}
+
+.st-strip-gap {
+  flex: 1;
+}
+
+.st-picker {
+  position: relative;
+}
+
+.st-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(242, 243, 246, 0.85);
+  border-radius: 9px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.st-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Opens upward, overlaying the lower thread (observed in the reference). */
+.st-picker-pop {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  width: 236px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #14151b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px;
+  z-index: 30;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.st-picker-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #f2f3f6;
+  border-radius: 9px;
+  padding: 7px 9px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.st-picker-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.st-picker-row-active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.st-picker-name {
+  font-size: 12px;
+}
+
+.st-picker-hint {
+  font-size: 10.5px;
+  color: rgba(242, 243, 246, 0.5);
+}
+
+.st-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  background: #f2f3f6;
+  color: #0b0c0f;
+  cursor: pointer;
+}
+
+.st-send:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ── Stage / plane ── */
+
+.st-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.st-plane {
+  position: relative;
+}
+
+.st-plane-cell {
+  position: absolute;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #101116;
+  padding: 0;
+  cursor: pointer;
+}
+
+.st-plane-cell[data-live="true"] {
+  /* Camera target only — no visual difference. */
+}
+
+.st-plane-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+  color: rgba(242, 243, 246, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+}
+
+/* ── Project list overlay (band-1 menu) ── */
+
+.st-projects {
+  position: absolute;
+  top: 46px;
+  left: 8px;
+  width: 268px;
+  max-height: 50vh;
+  overflow-y: auto;
+  background: #14151b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 4px;
+  z-index: 40;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.st-projects-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: rgba(242, 243, 246, 0.5);
+}
+
+.st-projects-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #f2f3f6;
+  border-radius: 9px;
+  padding: 8px 9px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.st-projects-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.st-projects-row-active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.st-projects-title {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-projects-date {
+  flex: none;
+  font-size: 10.5px;
+  color: rgba(242, 243, 246, 0.45);
+}
+
+/* ── Design-system Button overrides ──
+   ADR-0008 bans raw <button>, so the chrome above rides Button
+   (variant="ghost"), whose cva utilities (h-ps-6, px-ps-4,
+   hover:bg-surface-3, whitespace-nowrap) would otherwise beat these
+   feature classes. The !important set below pins the studio's box model
+   and colors — same escape hatch the rebuild used for h-9 vs h-auto. */
+
+.st-pill {
+  height: auto !important;
+  padding: 5px 11px !important;
+  border-radius: 999px !important;
+  font-size: 11.5px !important;
+  white-space: normal !important;
+  justify-content: flex-start !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(242, 243, 246, 0.9) !important;
+}
+
+.st-pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+.st-icon-btn {
+  height: 24px !important;
+  width: 24px !important;
+  padding: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: rgba(242, 243, 246, 0.55) !important;
+}
+
+.st-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #f2f3f6 !important;
+}
+
+.st-send {
+  height: 30px !important;
+  width: 30px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  background: #f2f3f6 !important;
+  color: #0b0c0f !important;
+}
+
+.st-picker-btn {
+  height: auto !important;
+  padding: 5px 9px !important;
+  border-radius: 9px !important;
+  font-size: 11.5px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(242, 243, 246, 0.85) !important;
+}
+
+.st-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.st-picker-row {
+  height: auto !important;
+  width: 100% !important;
+  padding: 7px 9px !important;
+  border-radius: 9px !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 1px !important;
+  white-space: normal !important;
+  background: transparent !important;
+  color: #f2f3f6 !important;
+}
+
+.st-picker-row:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.st-picker-row-active {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.st-projects-row {
+  height: auto !important;
+  width: 100% !important;
+  padding: 8px 9px !important;
+  border-radius: 9px !important;
+  white-space: normal !important;
+  justify-content: space-between !important;
+  background: transparent !important;
+  color: #f2f3f6 !important;
+}
+
+.st-projects-row:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.st-projects-row-active {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.st-cell {
+  height: auto !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  white-space: normal !important;
+  background: #101116 !important;
+  border: 2px solid transparent !important;
+}
+
+.st-cell:hover {
+  background: #101116 !important;
+}
+
+.st-cell-selected {
+  border-color: #8b8cf6 !important;
+}
+
+.st-plane-cell {
+  height: auto !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  background: #101116 !important;
+  border: 2px solid transparent !important;
+}
+
+.st-plane-cell:hover {
+  background: #101116 !important;
+}
+
+.st-plane-cell.st-cell-selected {
+  border-color: #8b8cf6 !important;
+}

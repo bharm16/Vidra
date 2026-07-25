@@ -6,12 +6,20 @@ import {
   Paintbrush,
   PanelLeft,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@promptstudio/system/components/ui/button";
+import { VidraMark } from "@/components/brand";
 import { cn } from "@/utils/cn";
 import { useAuthUser } from "@hooks/useAuthUser";
 
-type RailActive = "new" | "library" | "live-editor" | "account" | "none";
+type RailActive =
+  | "new"
+  | "library"
+  | "live-editor"
+  | "studio"
+  | "account"
+  | "none";
 
 interface NavRailProps {
   /** Which destination the current route represents, for the active highlight. */
@@ -90,24 +98,7 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           title="New session"
           className="flex items-center gap-[11px] rounded-[11px] p-1.5 transition-colors hover:bg-white/[0.04]"
         >
-          <span
-            className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px]"
-            style={{
-              background:
-                "linear-gradient(150deg, var(--accent, #5b6cff), var(--accent-2, #9aa6ff))",
-              boxShadow: "0 4px 14px -4px var(--accent, #5b6cff)",
-            }}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="#0a0b0e"
-              aria-hidden="true"
-            >
-              <path d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z" />
-            </svg>
-          </span>
+          <VidraMark className="h-[30px] w-[30px] rounded-[9px]" />
           {collapsed ? null : (
             <span className="text-foreground whitespace-nowrap text-[18px] font-semibold tracking-[-0.01em]">
               Vidra
@@ -150,6 +141,13 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           collapsed={collapsed}
           active={active === "live-editor"}
           icon={<Paintbrush size={18} strokeWidth={1.8} />}
+        />
+        <RailItem
+          to="/studio"
+          label="Studio"
+          collapsed={collapsed}
+          active={active === "studio"}
+          icon={<Sparkles size={18} strokeWidth={1.8} />}
         />
       </div>
 
