@@ -22,6 +22,7 @@ export const REPLAY_SURFACES = [
   "suggestions",
   "optimize",
   "first-frame-preview",
+  "studio-turn",
 ] as const;
 
 export const ReplaySurfaceSchema = z.enum(REPLAY_SURFACES);
