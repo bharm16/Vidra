@@ -20,14 +20,6 @@ vi.mock("@infrastructure/Logger", () => ({
   },
 }));
 
-vi.mock("@config/OptimizationConfig", () => ({
-  default: {
-    cache: {
-      promptOptimization: "promptOptimization",
-    },
-  },
-}));
-
 function createCacheServiceStub(): CacheService {
   const stub = {
     get: vi.fn(async () => null),

@@ -36,26 +36,10 @@ vi.mock("@infrastructure/Logger", () => ({
   },
 }));
 
-vi.mock("@clients/utils/abortController", () => ({
-  createAbortController: (timeout: number, signal?: AbortSignal) => {
-    const controller = new AbortController();
-    if (signal) {
-      signal.addEventListener("abort", () => controller.abort());
-    }
-    return {
-      controller,
-      timeoutId: setTimeout(() => undefined, timeout),
-      abortedByTimeout: { value: false },
-    };
-  },
-}));
-
+// Real abort-controller and hashing run for real; only time is stubbed so
+// retry backoff does not slow the suite (sleep is the time boundary).
 vi.mock("@utils/sleep", () => ({
   sleep: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock("@utils/hash", () => ({
-  hashString: vi.fn(() => 123456),
 }));
 
 import { OpenAICompatibleAdapter } from "../OpenAICompatibleAdapter";

@@ -1,19 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { CleanPromptBuilder } from "../CleanPromptBuilder";
-
-const { detectAndGetCapabilitiesMock } = vi.hoisted(() => ({
-  detectAndGetCapabilitiesMock: vi.fn(() => ({
-    provider: "groq",
-    capabilities: { strictJsonSchema: false },
-  })),
-}));
-
-vi.mock("@utils/provider/index", () => ({
-  getSecurityPrefix: vi.fn(() => ""),
-  getFormatInstruction: vi.fn(() => ""),
-  detectAndGetCapabilities: () => detectAndGetCapabilitiesMock(),
-  wrapUserData: vi.fn(() => "<user_data/>"),
-}));
 
 describe("CleanPromptBuilder regression", () => {
   const builder = new CleanPromptBuilder();

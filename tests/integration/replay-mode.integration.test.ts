@@ -126,8 +126,13 @@ describe("Replay mode (integration)", () => {
     const { path, body } = scenarioBySurface("label-spans");
     const { status, json } = await post(path, body);
     expect(status).toBe(200);
-    const spans = json.spans as Array<{ text: string; category?: string }>;
-    expect(Array.isArray(spans)).toBe(true);
+    // The route ships the {success, data} envelope (same as suggestions).
+    expect(json.success).toBe(true);
+    const data = json.data as {
+      spans?: Array<{ text: string; category?: string }>;
+    };
+    const spans = data.spans ?? [];
+    expect(Array.isArray(data.spans)).toBe(true);
     expect(spans.length).toBeGreaterThan(0);
     expect(spans.every((s) => typeof s.text === "string")).toBe(true);
   });
