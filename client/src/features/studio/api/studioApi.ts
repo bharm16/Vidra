@@ -73,7 +73,11 @@ export async function getStudioProject(
 
 export async function updateStudioProject(
   projectId: string,
-  patch: { title?: string; pinnedModel?: StudioModelSlug | null },
+  patch: {
+    title?: string;
+    pinnedModel?: StudioModelSlug | null;
+    selectedImageId?: string | null;
+  },
 ): Promise<StudioProject> {
   return request(`/projects/${projectId}`, StudioProjectSchema, {
     method: "PATCH",

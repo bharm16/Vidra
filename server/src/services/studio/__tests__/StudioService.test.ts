@@ -368,6 +368,54 @@ describe("StudioService", () => {
     });
   });
 
+  describe("updateProject — selection persistence (M4)", () => {
+    it("persists a selection that references a stored image", async () => {
+      const { service } = makeService();
+      const project = await service.createProject("user-1");
+      const turn = await service.runTurn("user-1", project.id, "a fox logo");
+      await turn.completion;
+      const stored = await service.getTurn("user-1", project.id, turn.turnId);
+      const imageId = stored.calls[0]?.image?.id as string;
+
+      const updated = await service.updateProject("user-1", project.id, {
+        selectedImageId: imageId,
+      });
+
+      expect(updated.selectedImageId).toBe(imageId);
+      const fetched = await service.getProject("user-1", project.id);
+      expect(fetched.selectedImageId).toBe(imageId);
+    });
+
+    it("rejects a selection that references no image in this project", async () => {
+      const { service } = makeService();
+      const project = await service.createProject("user-1");
+
+      await expect(
+        service.updateProject("user-1", project.id, {
+          selectedImageId: "img-from-another-project",
+        }),
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it("clears the selection with null", async () => {
+      const { service } = makeService();
+      const project = await service.createProject("user-1");
+      const turn = await service.runTurn("user-1", project.id, "a fox logo");
+      await turn.completion;
+      const stored = await service.getTurn("user-1", project.id, turn.turnId);
+      const imageId = stored.calls[0]?.image?.id as string;
+      await service.updateProject("user-1", project.id, {
+        selectedImageId: imageId,
+      });
+
+      const cleared = await service.updateProject("user-1", project.id, {
+        selectedImageId: null,
+      });
+
+      expect(cleared.selectedImageId).toBeNull();
+    });
+  });
+
   describe("runTurn — conversational decisions (M3)", () => {
     const clarify: StudioDecision = {
       action: "clarify",

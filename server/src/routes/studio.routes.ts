@@ -25,9 +25,15 @@ const PatchProjectSchema = z
     title: z.string().min(1).max(120).optional(),
     // null clears the pin (back to Auto); absent leaves it unchanged.
     pinnedModel: z.enum(STUDIO_MODEL_SLUGS).nullable().optional(),
+    // null clears the selection; the id must exist in this project (M4 —
+    // edits source from the persisted selection).
+    selectedImageId: z.string().min(1).nullable().optional(),
   })
   .refine(
-    (value) => value.title !== undefined || value.pinnedModel !== undefined,
+    (value) =>
+      value.title !== undefined ||
+      value.pinnedModel !== undefined ||
+      value.selectedImageId !== undefined,
     { message: "Nothing to update" },
   );
 

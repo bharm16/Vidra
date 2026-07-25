@@ -89,6 +89,19 @@ export interface RunTurnResult {
 const GENERATE_BATCH_SIZE = 4;
 const TITLE_MAX_CHARS = 60;
 
+/** Every stored image id across a project's turns (succeeded calls only). */
+function imageIdsOf(turns: readonly StudioTurnRecord[]): Set<string> {
+  const imageIds = new Set<string>();
+  for (const turn of turns) {
+    for (const call of turn.calls) {
+      if (call.status === "succeeded" && call.image) {
+        imageIds.add(call.image.id);
+      }
+    }
+  }
+  return imageIds;
+}
+
 /**
  * Actions this service can execute at M3. edit/transform join at M4 (their
  * execution paths land there); until then the policy engine rejects them
@@ -183,13 +196,19 @@ export class StudioService {
     return this.store.listProjects(userId);
   }
 
-  /** Rename and/or pin a model. `pinnedModel: null` clears the pin (Auto). */
+  /**
+   * Rename, pin a model, and/or set the selection. `pinnedModel: null`
+   * clears the pin (Auto); `selectedImageId: null` clears the selection.
+   * A non-null selection must reference an image stored in THIS project —
+   * edits source from it (behavior 6), so a dangling id is a 400.
+   */
   async updateProject(
     userId: string,
     projectId: string,
     patch: {
       title?: string | undefined;
       pinnedModel?: StudioModelSlug | null | undefined;
+      selectedImageId?: string | null | undefined;
     },
   ): Promise<StudioProjectRecord> {
     const project = await this.getProject(userId, projectId);
@@ -202,8 +221,27 @@ export class StudioService {
     if (patch.pinnedModel !== undefined) {
       update.pinnedModel = patch.pinnedModel;
     }
+    if (patch.selectedImageId !== undefined) {
+      if (patch.selectedImageId !== null) {
+        const imageIds = await this.collectProjectImageIds(projectId);
+        if (!imageIds.has(patch.selectedImageId)) {
+          const error = new Error(
+            "selectedImageId does not reference an image in this project",
+          ) as Error & { statusCode: number };
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+      update.selectedImageId = patch.selectedImageId;
+    }
     await this.store.updateProject(projectId, update);
     return { ...project, ...update };
+  }
+
+  private async collectProjectImageIds(
+    projectId: string,
+  ): Promise<Set<string>> {
+    return imageIdsOf(await this.store.listTurns(projectId));
   }
 
   async getTurn(
@@ -295,14 +333,7 @@ export class StudioService {
     }
 
     const history = await this.store.listTurns(projectId);
-    const projectImageIds = new Set<string>();
-    for (const turn of history) {
-      for (const call of turn.calls) {
-        if (call.status === "succeeded" && call.image) {
-          projectImageIds.add(call.image.id);
-        }
-      }
-    }
+    const projectImageIds = imageIdsOf(history);
 
     // Pin wins when it resolves; stale pins revert to Auto (cheapest capable).
     const pinned = this.registry.resolvePin(project.pinnedModel);

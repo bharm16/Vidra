@@ -169,7 +169,15 @@ export function useStudioProject(): UseStudioProjectReturn {
   }, []);
 
   const selectImage = useCallback((imageId: string | null) => {
+    // Local first for an instant ring; then persist — the LLM's edit
+    // routing reads the stored selection (behavior 6, M4).
     dispatch({ type: "imageSelected", imageId });
+    const projectId = projectIdRef.current;
+    if (!projectId) return;
+    void updateStudioProject(projectId, { selectedImageId: imageId }).catch(
+      (error: unknown) =>
+        dispatch({ type: "requestFailed", error: describeError(error) }),
+    );
   }, []);
 
   return {
