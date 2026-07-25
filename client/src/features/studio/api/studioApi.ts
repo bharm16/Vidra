@@ -91,15 +91,114 @@ export async function deleteStudioProject(projectId: string): Promise<void> {
   });
 }
 
-/** 202: decision is final, image calls still running — poll getStudioTurn. */
+export interface RunTurnStreamHooks {
+  /** A new LLM attempt began — clear any streamed thinking text. */
+  onThinkingStart?: () => void;
+  /** The next characters of the assistant's thinking, in order. */
+  onThinkingDelta?: (delta: string) => void;
+}
+
+const StreamEventSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("thinking-start") }),
+  z.object({ type: z.literal("thinking"), delta: z.string() }),
+  z.object({
+    type: z.literal("accepted"),
+    turnId: z.string(),
+    decision: z.unknown(),
+  }),
+  z.object({
+    type: z.literal("error"),
+    error: z.string(),
+    statusCode: z.number().optional(),
+  }),
+]);
+
+/**
+ * Run a turn. The route streams NDJSON: `thinking` deltas in realtime as
+ * the LLM emits them, then one terminal `accepted` (decision final, image
+ * calls still running — poll getStudioTurn) or `error` event. Errors
+ * before the stream starts arrive as plain JSON and throw like every
+ * other wrapper.
+ */
 export async function runStudioTurn(
   projectId: string,
   message: string,
+  hooks?: RunTurnStreamHooks,
 ): Promise<RunTurnResponse> {
-  return request(`/projects/${projectId}/turns`, RunTurnResponseSchema, {
+  const response = await fetch(`${BASE}/projects/${projectId}/turns`, {
     method: "POST",
     body: JSON.stringify({ message }),
+    headers: {
+      "Content-Type": "application/json",
+      ...(await buildFirebaseAuthHeaders()),
+    },
   });
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("ndjson")) {
+    // Pre-stream failure (auth, 404, bad body) — plain JSON error shape.
+    const body: unknown = await response.json().catch(() => null);
+    const detail =
+      body !== null &&
+      typeof body === "object" &&
+      typeof (body as Record<string, unknown>).error === "string"
+        ? ((body as Record<string, unknown>).error as string)
+        : `Studio request failed (${response.status})`;
+    const error = new Error(detail) as Error & { statusCode?: number };
+    error.statusCode = response.status;
+    throw error;
+  }
+  if (!response.body) {
+    throw new Error("Studio turn stream had no body");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffered = "";
+
+  const handleLine = (line: string): RunTurnResponse | null => {
+    const trimmed = line.trim();
+    if (!trimmed) return null;
+    const event = StreamEventSchema.parse(JSON.parse(trimmed));
+    switch (event.type) {
+      case "thinking-start":
+        hooks?.onThinkingStart?.();
+        return null;
+      case "thinking":
+        hooks?.onThinkingDelta?.(event.delta);
+        return null;
+      case "accepted":
+        return RunTurnResponseSchema.parse({
+          turnId: event.turnId,
+          decision: event.decision,
+        });
+      case "error": {
+        const error = new Error(event.error) as Error & {
+          statusCode?: number;
+        };
+        if (event.statusCode !== undefined) error.statusCode = event.statusCode;
+        throw error;
+      }
+    }
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    buffered += done ? "" : decoder.decode(value, { stream: true });
+    let newlineIndex = buffered.indexOf("\n");
+    while (newlineIndex >= 0) {
+      const line = buffered.slice(0, newlineIndex);
+      buffered = buffered.slice(newlineIndex + 1);
+      const accepted = handleLine(line);
+      if (accepted) return accepted;
+      newlineIndex = buffered.indexOf("\n");
+    }
+    if (done) {
+      const accepted = handleLine(buffered);
+      if (accepted) return accepted;
+      throw new Error("Studio turn stream ended without a decision");
+    }
+  }
 }
 
 export async function getStudioTurn(

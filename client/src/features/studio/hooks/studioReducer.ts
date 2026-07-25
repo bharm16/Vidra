@@ -21,6 +21,12 @@ export interface StudioState {
   pendingTurnId: string | null;
   /** User message shown optimistically until the 202 arrives. */
   optimisticMessage: string | null;
+  /**
+   * The assistant's thinking text as it STREAMS during the in-flight turn
+   * (NDJSON deltas). Null when idle; cleared when the accepted turn (which
+   * carries the final text in its decision) lands.
+   */
+  streamingThinking: string | null;
   /** Local selection (ring + future edit source); persistence lands at M4. */
   selectedImageId: string | null;
   listOpen: boolean;
@@ -35,6 +41,7 @@ export const initialStudioState: StudioState = {
   turns: [],
   pendingTurnId: null,
   optimisticMessage: null,
+  streamingThinking: null,
   selectedImageId: null,
   listOpen: false,
   error: null,
@@ -55,6 +62,9 @@ export type StudioAction =
    */
   | { type: "projectCreated"; project: StudioProject }
   | { type: "messageSent"; message: string }
+  /** A new LLM attempt began — reset the streamed thinking text. */
+  | { type: "thinkingStreamStarted" }
+  | { type: "thinkingDelta"; delta: string }
   | { type: "turnAccepted"; turn: StudioTurn }
   | { type: "turnPolled"; turn: StudioTurn }
   | { type: "requestFailed"; error: string }
@@ -98,6 +108,7 @@ export function studioReducer(
         turns: action.turns,
         pendingTurnId: null,
         optimisticMessage: null,
+        streamingThinking: null,
         selectedImageId: action.project.selectedImageId ?? null,
         error: null,
         loading: false,
@@ -110,13 +121,26 @@ export function studioReducer(
         selectedImageId: null,
       };
     case "messageSent":
-      return { ...state, optimisticMessage: action.message, error: null };
+      return {
+        ...state,
+        optimisticMessage: action.message,
+        streamingThinking: null,
+        error: null,
+      };
+    case "thinkingStreamStarted":
+      return { ...state, streamingThinking: "" };
+    case "thinkingDelta":
+      return {
+        ...state,
+        streamingThinking: (state.streamingThinking ?? "") + action.delta,
+      };
     case "turnAccepted":
       return {
         ...state,
         turns: mergeTurn(state.turns, action.turn),
         pendingTurnId: action.turn.id,
         optimisticMessage: null,
+        streamingThinking: null,
       };
     case "turnPolled": {
       const settled = TERMINAL_STATUSES.has(action.turn.status);
@@ -134,6 +158,7 @@ export function studioReducer(
         ...state,
         error: action.error,
         optimisticMessage: null,
+        streamingThinking: null,
         pendingTurnId: null,
         loading: false,
       };
@@ -163,6 +188,7 @@ export function studioReducer(
         turns: [],
         pendingTurnId: null,
         optimisticMessage: null,
+        streamingThinking: null,
         selectedImageId: null,
       };
     }

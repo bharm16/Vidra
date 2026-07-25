@@ -63,6 +63,9 @@ export default [
       '**/.vite/**',
       '**/.cache/**',
       '**/tmp/**',
+      // Parallel-agent worktrees checked out INSIDE the repo — foreign
+      // sessions' files; linting them breaks every pre-commit run here.
+      '.claude/worktrees/**',
       // Design-tool reference bundles (visual specs, not code)
       'docs/design/handoff/returns/**',
       'design_handoff_vidra/**',

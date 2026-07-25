@@ -6,7 +6,9 @@
  * GET    /projects/:projectId         fetch one project
  * PATCH  /projects/:projectId         rename / pin model / set selection
  * DELETE /projects/:projectId         delete a project and its turns
- * POST   /projects/:projectId/turns   run a turn — 202 + turnId (async: image
+ * POST   /projects/:projectId/turns   run a turn — NDJSON stream: thinking
+ *                                     deltas, then accepted{turnId,decision}
+ *                                     (async: image
  *                                     calls settle in the background)
  * GET    /projects/:projectId/turns/:turnId   poll a turn
  */
@@ -175,17 +177,51 @@ export function createStudioRouter(studioService: StudioService): Router {
         res.status(400).json({ success: false, error: "Invalid body" });
         return;
       }
+
+      // NDJSON response: `thinking` deltas stream as the LLM emits them,
+      // then one terminal `accepted` (turnId + final decision — image calls
+      // continue in the background, poll GET /turns/:turnId) or `error`
+      // event. Errors BEFORE the first event fall back to plain JSON so
+      // non-streaming failures keep today's status codes.
+      let streaming = false;
+      const writeEvent = (event: Record<string, unknown>): void => {
+        if (!streaming) {
+          streaming = true;
+          res.status(200);
+          res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+          res.setHeader("Cache-Control", "no-cache");
+          res.flushHeaders();
+        }
+        res.write(`${JSON.stringify(event)}\n`);
+      };
+
       try {
         const { turnId, decision } = await studioService.runTurn(
           userId,
           routeParam(req, "projectId"),
           parsed.data.message,
+          {
+            onThinkingStart: () => writeEvent({ type: "thinking-start" }),
+            onThinkingDelta: (delta) => writeEvent({ type: "thinking", delta }),
+          },
         );
-        // 202: the decision is final but image calls are still running —
-        // poll GET /turns/:turnId (plan: "Request flow (asynchronous turns)").
-        res.status(202).json({ success: true, data: { turnId, decision } });
+        writeEvent({ type: "accepted", turnId, decision });
+        res.end();
       } catch (error) {
-        sendError(res, error);
+        if (!streaming) {
+          sendError(res, error);
+          return;
+        }
+        const statusCode =
+          typeof (error as { statusCode?: number }).statusCode === "number"
+            ? (error as { statusCode: number }).statusCode
+            : 500;
+        writeEvent({
+          type: "error",
+          error: error instanceof Error ? error.message : "Studio turn failed",
+          statusCode,
+        });
+        res.end();
       }
     }),
   );

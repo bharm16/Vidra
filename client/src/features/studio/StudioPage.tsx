@@ -106,6 +106,7 @@ export function StudioPage(): React.ReactElement {
             <StudioThread
               turns={state.turns}
               optimisticMessage={state.optimisticMessage}
+              streamingThinking={state.streamingThinking}
               pendingTurnId={state.pendingTurnId}
               selectedImageId={state.selectedImageId}
               error={state.error}

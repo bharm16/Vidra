@@ -44,6 +44,8 @@ function ThinkingSection({ text }: { text: string }): React.ReactElement {
 interface StudioThreadProps {
   turns: StudioTurn[];
   optimisticMessage: string | null;
+  /** Assistant thinking streaming in for the in-flight turn (realtime). */
+  streamingThinking: string | null;
   pendingTurnId: string | null;
   selectedImageId: string | null;
   error: string | null;
@@ -56,6 +58,7 @@ interface StudioThreadProps {
 export function StudioThread({
   turns,
   optimisticMessage,
+  streamingThinking,
   pendingTurnId,
   selectedImageId,
   error,
@@ -66,7 +69,7 @@ export function StudioThread({
   const endRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [turns, optimisticMessage, error]);
+  }, [turns, optimisticMessage, streamingThinking, error]);
 
   const latestTurnId = turns.at(-1)?.id ?? null;
 
@@ -197,7 +200,12 @@ export function StudioThread({
       {optimisticMessage !== null ? (
         <div className="st-turn">
           <div className="st-msg-user">{optimisticMessage}</div>
-          <div className="st-thinking">Thinking…</div>
+          {streamingThinking ? (
+            // Realtime: the assistant's reasoning, character by character.
+            <ThinkingSection text={streamingThinking} />
+          ) : (
+            <div className="st-thinking">Thinking…</div>
+          )}
         </div>
       ) : null}
 

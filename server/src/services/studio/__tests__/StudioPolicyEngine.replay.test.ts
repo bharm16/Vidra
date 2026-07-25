@@ -36,8 +36,23 @@ describe("StudioPolicyEngine (recorded fixtures)", () => {
   it.each(STUDIO_TURN_SCENARIOS.map((scenario) => [scenario.name, scenario]))(
     "%s satisfies its behavior invariants offline",
     async (_name, scenario) => {
-      const decision = await engine.decideTurn(scenario.context);
+      // Hooks force the STREAMING path — the same one the record script
+      // used, so the stream:true request keys hit the cassette. Replay
+      // serves the recording as one chunk; the scanner still extracts the
+      // thinking deltas from it.
+      const deltas: string[] = [];
+      const decision = await engine.decideTurn(scenario.context, {
+        onThinkingDelta: (delta) => deltas.push(delta),
+      });
       expect(scenario.verify(decision)).toEqual([]);
+      if (
+        decision.action === "generate" ||
+        decision.action === "edit" ||
+        decision.action === "transform"
+      ) {
+        // The streamed characters reassemble the decision's thinking.
+        expect(deltas.join("")).toBe(decision.thinking);
+      }
     },
   );
 

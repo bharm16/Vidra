@@ -394,7 +394,7 @@ export class OpenAICompatibleAdapter {
         true,
       );
 
-      const response = await fetch(`${this.baseURL}/chat/completions`, {
+      let response = await fetch(`${this.baseURL}/chat/completions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -404,18 +404,52 @@ export class OpenAICompatibleAdapter {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         const errorBody = await response.text();
-        const isRetryable = response.status >= 500 || response.status === 429;
-        throw new APIError(
-          `${this.providerName} API error: ${response.status} - ${errorBody}`,
-          response.status,
-          isRetryable,
-        );
+
+        // Same behavior-driven rename retry as the non-streaming path:
+        // gpt-5-family models reject `max_tokens` and the error names
+        // `max_completion_tokens` as the replacement (hit live with
+        // gpt-5.6-luna on the studio_turn streaming path, 2026-07-25).
+        if (
+          response.status === 400 &&
+          errorBody.includes("max_completion_tokens") &&
+          payload.max_tokens !== undefined
+        ) {
+          const retryPayload: OpenAiPayload = { ...payload };
+          retryPayload.max_completion_tokens = payload.max_tokens;
+          delete retryPayload.max_tokens;
+
+          this.log.warn(
+            "OpenAI rejected max_tokens on stream; retrying with max_completion_tokens",
+            { operation: "streamComplete", model: payload.model },
+          );
+
+          response = await fetch(`${this.baseURL}/chat/completions`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(retryPayload),
+            signal: controller.signal,
+          });
+        }
+
+        if (!response.ok) {
+          const retryErrorBody =
+            response.bodyUsed === false ? await response.text() : errorBody;
+          clearTimeout(timeoutId);
+          const isRetryable = response.status >= 500 || response.status === 429;
+          throw new APIError(
+            `${this.providerName} API error: ${response.status} - ${retryErrorBody}`,
+            response.status,
+            isRetryable,
+          );
+        }
       }
 
+      clearTimeout(timeoutId);
       return await this.streamParser.readStream(response, options.onChunk);
     } catch (error) {
       clearTimeout(timeoutId);

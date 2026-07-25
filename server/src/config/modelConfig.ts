@@ -532,17 +532,22 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
 
   /**
    * Studio conversation policy: one JSON decision per turn (clarify /
-   * generate / edit / transform / diagnose / negotiate). Mini carries the
-   * routing and prompt-writing judgment; upgrade this single operation if
-   * the M3/M4 fixtures show it fumbling (plan: "Model config").
-   * Temperature 0.7 — the decision includes creative prompt writing.
+   * generate / edit / transform / diagnose / negotiate), with the
+   * `thinking` field streamed to the client as it generates.
+   * gpt-5.6-luna (owner-directed 2026-07-25, verified against the live
+   * models API) carries the routing and prompt-writing judgment; still
+   * env-swappable per operation. Temperature 0.7 — the decision includes
+   * creative prompt writing.
    */
   studio_turn: {
     client: process.env.STUDIO_TURN_PROVIDER || "openai",
-    model: process.env.STUDIO_TURN_MODEL || "gpt-4o-mini-2024-07-18",
-    temperature: 0.7,
-    maxTokens: 2000,
-    timeout: 30000,
+    model: process.env.STUDIO_TURN_MODEL || "gpt-5.6-luna",
+    // luna (gpt-5 reasoning family) accepts only the default temperature,
+    // and its internal reasoning tokens count against the completion
+    // budget — 8000 leaves the ~1k-token JSON decision plenty of headroom.
+    temperature: 1,
+    maxTokens: 8000,
+    timeout: 60000,
     responseFormat: "json_object",
   },
 

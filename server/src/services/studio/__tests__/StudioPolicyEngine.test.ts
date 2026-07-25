@@ -278,6 +278,115 @@ describe("StudioPolicyEngine", () => {
     expect(retryPrompt).toContain("negotiate");
   });
 
+  it("streams thinking deltas in realtime when the provider can stream", async () => {
+    // thinking sits early in the object (template rule 10 lists it first),
+    // so the chunk boundaries below land inside its value. Object.assign
+    // preserves the insertion order of already-present keys.
+    const payload: Record<string, unknown> = {
+      action: GENERATE.action,
+      thinking: "Plan the fox.",
+    };
+    Object.assign(payload, GENERATE);
+    const json = JSON.stringify(payload);
+    // Chunk the raw JSON mid-key and mid-value to prove incrementality.
+    const chunks = [
+      json.slice(0, 25),
+      json.slice(25, 40),
+      json.slice(40, 52),
+      json.slice(52),
+    ];
+    const stream = vi
+      .fn()
+      .mockImplementation(
+        async (
+          _operation: string,
+          options: { onChunk: (chunk: string) => void },
+        ) => {
+          for (const chunk of chunks) options.onChunk(chunk);
+          return json;
+        },
+      );
+    const engine = new StudioPolicyEngine({
+      ai: {
+        execute: vi.fn(),
+        stream,
+        supportsStreaming: () => true,
+      },
+    });
+
+    const deltas: string[] = [];
+    let starts = 0;
+    const decision = await engine.decideTurn(makeContext(), {
+      onThinkingStart: () => {
+        starts += 1;
+      },
+      onThinkingDelta: (delta) => deltas.push(delta),
+    });
+
+    expect(decision).toEqual({ ...GENERATE, thinking: "Plan the fox." });
+    expect(starts).toBe(1);
+    // More than one delta (incremental), reassembling the exact text.
+    expect(deltas.length).toBeGreaterThan(1);
+    expect(deltas.join("")).toBe("Plan the fox.");
+    expect(stream).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to execute() when the provider cannot stream", async () => {
+    const execute = llmResponses(GENERATE);
+    const engine = new StudioPolicyEngine({
+      ai: { execute, supportsStreaming: () => false },
+    });
+
+    const deltas: string[] = [];
+    const decision = await engine.decideTurn(makeContext(), {
+      onThinkingDelta: (delta) => deltas.push(delta),
+    });
+
+    expect(decision).toEqual(GENERATE);
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(deltas).toEqual([]);
+  });
+
+  it("restarts the thinking stream on a corrective retry", async () => {
+    const bad = JSON.stringify({
+      ...GENERATE,
+      thinking: "First try.",
+      variants: GENERATE.variants.slice(0, 3),
+    });
+    const good = JSON.stringify({ ...GENERATE, thinking: "Second try." });
+    const responses = [bad, good];
+    const stream = vi
+      .fn()
+      .mockImplementation(
+        async (
+          _operation: string,
+          options: { onChunk: (chunk: string) => void },
+        ) => {
+          const text = responses.shift() ?? good;
+          options.onChunk(text);
+          return text;
+        },
+      );
+    const engine = new StudioPolicyEngine({
+      ai: { execute: vi.fn(), stream, supportsStreaming: () => true },
+    });
+
+    let starts = 0;
+    const deltas: string[] = [];
+    const decision = await engine.decideTurn(makeContext(), {
+      onThinkingStart: () => {
+        starts += 1;
+      },
+      onThinkingDelta: (delta) => deltas.push(delta),
+    });
+
+    expect(decision).toEqual({ ...GENERATE, thinking: "Second try." });
+    // Each attempt announced a fresh stream; a client clearing on start
+    // ends with exactly the accepted attempt's text.
+    expect(starts).toBe(2);
+    expect(deltas.join("")).toBe("First try.Second try.");
+  });
+
   it("throws StudioPolicyError after exhausting corrective attempts", async () => {
     const execute = llmResponses({ action: "unknown" }, { action: "unknown" });
     const engine = new StudioPolicyEngine({ ai: { execute } });

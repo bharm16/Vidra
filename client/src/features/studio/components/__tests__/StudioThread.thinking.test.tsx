@@ -42,6 +42,7 @@ function renderThread(turn: StudioTurn) {
     <StudioThread
       turns={[turn]}
       optimisticMessage={null}
+      streamingThinking={null}
       pendingTurnId={null}
       selectedImageId={null}
       error={null}

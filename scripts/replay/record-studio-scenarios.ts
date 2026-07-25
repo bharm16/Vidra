@@ -70,7 +70,19 @@ for (const scenario of STUDIO_TURN_SCENARIOS) {
   console.log(`\n→ ${scenario.name} (${scenario.behaviors})`);
   const startedAt = Date.now();
   try {
-    const decision = await engine.decideTurn(scenario.context);
+    // Streaming hooks: records via the stream seam (the path production
+    // uses) and prints the realtime deltas for eyeball proof.
+    let streamedThinking = "";
+    const decision = await engine.decideTurn(scenario.context, {
+      onThinkingStart: () => {
+        streamedThinking = "";
+      },
+      onThinkingDelta: (delta) => {
+        streamedThinking += delta;
+        process.stdout.write(delta);
+      },
+    });
+    if (streamedThinking) process.stdout.write("\n");
     const violations = scenario.verify(decision);
     if (violations.length > 0) {
       failures += 1;

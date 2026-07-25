@@ -16,7 +16,10 @@
 import { randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
 import type { StudioModelRegistry } from "./StudioModelRegistry";
-import type { StudioTurnPolicy } from "./StudioPolicyEngine";
+import type {
+  StudioThinkingHooks,
+  StudioTurnPolicy,
+} from "./StudioPolicyEngine";
 import type {
   ReplicateStudioImageRunner,
   StudioImageCallResult,
@@ -336,6 +339,7 @@ export class StudioService {
     userId: string,
     projectId: string,
     userMessage: string,
+    hooks?: StudioThinkingHooks,
   ): Promise<RunTurnResult> {
     const project = await this.getProject(userId, projectId);
     const message = userMessage.trim();
@@ -353,17 +357,20 @@ export class StudioService {
     // Pin wins when it resolves; stale pins revert to Auto (cheapest capable).
     const pinned = this.registry.resolvePin(project.pinnedModel);
 
-    const decision = await this.policy.decideTurn({
-      userMessage: message,
-      projectTitle: project.title,
-      pinnedModel: pinned,
-      roster: this.registry.listModels(),
-      history,
-      selectedImageId: project.selectedImageId ?? null,
-      projectImageIds,
-      allowedActions:
-        history.length === 0 ? FIRST_TURN_ACTIONS : FOLLOW_UP_ACTIONS,
-    });
+    const decision = await this.policy.decideTurn(
+      {
+        userMessage: message,
+        projectTitle: project.title,
+        pinnedModel: pinned,
+        roster: this.registry.listModels(),
+        history,
+        selectedImageId: project.selectedImageId ?? null,
+        projectImageIds,
+        allowedActions:
+          history.length === 0 ? FIRST_TURN_ACTIONS : FOLLOW_UP_ACTIONS,
+      },
+      hooks,
+    );
 
     switch (decision.action) {
       case "generate":

@@ -141,7 +141,11 @@ export function useStudioProject(): UseStudioProjectReturn {
         dispatch({ type: "projectCreated", project });
         projectId = project.id;
       }
-      const { turnId } = await runStudioTurn(projectId, trimmed);
+      const { turnId } = await runStudioTurn(projectId, trimmed, {
+        // Realtime thinking: deltas render as the LLM emits them.
+        onThinkingStart: () => dispatch({ type: "thinkingStreamStarted" }),
+        onThinkingDelta: (delta) => dispatch({ type: "thinkingDelta", delta }),
+      });
       const turn = await getStudioTurn(projectId, turnId);
       dispatch({ type: "turnAccepted", turn });
     } catch (error) {

@@ -18,7 +18,9 @@ import { fileURLToPath } from "node:url";
 import { logger } from "@infrastructure/Logger";
 import type { AIResponse } from "@interfaces/IAIClient";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
+import { cleanJSONResponse } from "@utils/JsonExtractor";
 import { StudioDecisionSchema, asStudioDecision } from "./decisionSchema";
+import { ThinkingDeltaScanner } from "./thinkingDeltaScanner";
 import { validateDecisionReferences } from "./validateDecision";
 import type {
   StudioDecision,
@@ -32,6 +34,22 @@ export interface StudioAIService {
     operation: string,
     options: Record<string, unknown>,
   ): Promise<AIResponse>;
+  /** Streaming members are optional — the engine falls back to execute(). */
+  stream?(
+    operation: string,
+    options: Record<string, unknown> & { onChunk: (chunk: string) => void },
+  ): Promise<string>;
+  supportsStreaming?(operation: string): boolean;
+}
+
+/**
+ * Realtime hooks for the user-visible `thinking` field. onThinkingStart
+ * fires per LLM attempt (a corrective retry restarts the text); deltas are
+ * the thinking string's characters, in order, as the model emits them.
+ */
+export interface StudioThinkingHooks {
+  onThinkingStart?: () => void;
+  onThinkingDelta?: (delta: string) => void;
 }
 
 export interface StudioTurnContext {
@@ -61,7 +79,10 @@ export interface StudioTurnContext {
  * and future policies can substitute structurally.
  */
 export interface StudioTurnPolicy {
-  decideTurn(context: StudioTurnContext): Promise<StudioDecision>;
+  decideTurn(
+    context: StudioTurnContext,
+    hooks?: StudioThinkingHooks,
+  ): Promise<StudioDecision>;
 }
 
 export class StudioPolicyError extends Error {
@@ -105,7 +126,10 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
     this.ai = deps.ai;
   }
 
-  async decideTurn(context: StudioTurnContext): Promise<StudioDecision> {
+  async decideTurn(
+    context: StudioTurnContext,
+    hooks?: StudioThinkingHooks,
+  ): Promise<StudioDecision> {
     const baseSystemPrompt = this.buildSystemPrompt(context);
     const userMessage = this.buildUserMessage(context);
 
@@ -115,16 +139,9 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
         ? `${baseSystemPrompt}\n\n## PREVIOUS ATTEMPT REJECTED\n\n${feedback}\nRespond again with one JSON decision object following every rule above.`
         : baseSystemPrompt;
 
-      const raw = await StructuredOutputEnforcer.enforceJSON<unknown>(
-        this.ai,
-        systemPrompt,
-        {
-          operation: "studio_turn",
-          schema: null,
-          maxRetries: 1,
-          userMessage,
-        },
-      );
+      // A corrective retry restarts the visible thinking text.
+      hooks?.onThinkingStart?.();
+      const raw = await this.askOnce(systemPrompt, userMessage, hooks);
 
       const parsed = StudioDecisionSchema.safeParse(raw);
       if (!parsed.success) {
@@ -201,6 +218,60 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
     throw new StudioPolicyError(
       `Studio policy produced no valid decision after ${MAX_ATTEMPTS} attempts (last: ${feedback ?? "unknown"})`,
     );
+  }
+
+  /**
+   * One LLM ask. When the provider can stream and the caller wants deltas,
+   * the raw JSON streams through ThinkingDeltaScanner so the `thinking`
+   * field's characters reach the user as the model emits them; the full
+   * text is then parsed exactly like the non-streaming path. Otherwise
+   * falls back to the StructuredOutputEnforcer execute() path.
+   */
+  private async askOnce(
+    systemPrompt: string,
+    userMessage: string,
+    hooks: StudioThinkingHooks | undefined,
+  ): Promise<unknown> {
+    const canStream =
+      hooks?.onThinkingDelta !== undefined &&
+      typeof this.ai.stream === "function" &&
+      (this.ai.supportsStreaming?.("studio_turn") ?? false);
+
+    if (!canStream || !this.ai.stream) {
+      return StructuredOutputEnforcer.enforceJSON<unknown>(
+        this.ai,
+        systemPrompt,
+        {
+          operation: "studio_turn",
+          schema: null,
+          maxRetries: 1,
+          userMessage,
+        },
+      );
+    }
+
+    const scanner = new ThinkingDeltaScanner();
+    const text = await this.ai.stream("studio_turn", {
+      systemPrompt,
+      userMessage,
+      onChunk: (chunk: string) => {
+        const delta = scanner.push(chunk);
+        if (delta) hooks.onThinkingDelta?.(delta);
+      },
+    });
+
+    try {
+      return JSON.parse(cleanJSONResponse(text, false)) as unknown;
+    } catch (error) {
+      // Same shape the enforcer's parse failure takes: surface as a schema
+      // violation so the outer loop retries with feedback.
+      const message = error instanceof Error ? error.message : String(error);
+      this.log.warn("Streamed studio decision was not parseable JSON", {
+        error: message,
+        preview: text.slice(0, 200),
+      });
+      return { __unparseable: message };
+    }
   }
 
   /** Static template + the dynamic sections the template's rules reference. */

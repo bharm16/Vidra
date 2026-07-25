@@ -114,6 +114,40 @@ describe("studioReducer", () => {
     ]);
   });
 
+  it("accumulates streamed thinking deltas and resets on a new attempt", () => {
+    let state = studioReducer(initialStudioState, {
+      type: "messageSent",
+      message: "a fox logo",
+    });
+    state = studioReducer(state, { type: "thinkingStreamStarted" });
+    state = studioReducer(state, { type: "thinkingDelta", delta: "The u" });
+    state = studioReducer(state, { type: "thinkingDelta", delta: "ser wants" });
+    expect(state.streamingThinking).toBe("The user wants");
+
+    // A corrective retry starts a fresh stream — the old text clears.
+    state = studioReducer(state, { type: "thinkingStreamStarted" });
+    expect(state.streamingThinking).toBe("");
+    state = studioReducer(state, { type: "thinkingDelta", delta: "Take two" });
+    expect(state.streamingThinking).toBe("Take two");
+
+    // The accepted turn carries the final text; streaming state clears.
+    state = studioReducer(state, { type: "turnAccepted", turn: makeTurn() });
+    expect(state.streamingThinking).toBeNull();
+  });
+
+  it("clears streamed thinking when the request fails", () => {
+    let state = studioReducer(initialStudioState, {
+      type: "thinkingStreamStarted",
+    });
+    state = studioReducer(state, { type: "thinkingDelta", delta: "half a" });
+    state = studioReducer(state, {
+      type: "requestFailed",
+      error: "Daily limit reached",
+    });
+    expect(state.streamingThinking).toBeNull();
+    expect(state.error).toBe("Daily limit reached");
+  });
+
   it("deleting the active project empties the workspace to the projectless state", () => {
     const project = {
       id: "p1",
