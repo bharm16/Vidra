@@ -61,6 +61,12 @@ export interface StudioModelEntry {
    */
   aspectRatios: readonly string[];
   defaultAspectRatio: string;
+  /**
+   * Extra input fields pinned on every call for by-property-priced models
+   * (resolution / quality tiers), so costCentsPerCall is a known constant
+   * (plan: "Model roster"). Verified against live Replicate pricing.
+   */
+  pinnedInput?: Readonly<Record<string, unknown>> | undefined;
 }
 
 export interface StudioUtilityEntry {

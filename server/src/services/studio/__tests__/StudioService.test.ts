@@ -547,8 +547,8 @@ describe("StudioService", () => {
       const turn = await service.getTurn("user-1", project.id, result.turnId);
       expect(turn.status).toBe("complete");
       expect(turn.resolvedModel).toBe("nano-banana-2-lite");
-      // 16¢ for the first batch + 5¢ for the edit.
-      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(21);
+      // 16¢ for the first batch + 4¢ for the edit (verified $0.034/image).
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(20);
       const editCall = run.mock.calls.at(-1)?.[0];
       expect(editCall?.model).toBe("google/nano-banana-2-lite");
       expect(editCall?.input?.prompt).toBe(
@@ -579,7 +579,8 @@ describe("StudioService", () => {
 
       const turn = await service.getTurn("user-1", project.id, result.turnId);
       expect(turn.resolvedModel).toBe("nano-banana-pro");
-      expect(turn.reservedCents).toBe(25);
+      // Verified $0.15/image at the pinned 2K resolution.
+      expect(turn.reservedCents).toBe(15);
     });
 
     it("refunds the whole reservation when the single edit call fails", async () => {
@@ -618,7 +619,7 @@ describe("StudioService", () => {
       const turn = await service.getTurn("user-1", project.id, result.turnId);
       expect(turn.status).toBe("failed");
       expect(turn.calls[0]?.error).toContain("NSFW");
-      expect(turn.refundedCents).toBe(5);
+      expect(turn.refundedCents).toBe(4);
       // Only the first batch's 16¢ remain consumed.
       expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(16);
     });

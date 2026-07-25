@@ -67,8 +67,9 @@ const MODELS: readonly StudioModelEntry[] = [
     displayName: "Recraft V4.1 Pro Vector",
     replicateId: "recraft-ai/recraft-v4.1-pro-svg",
     capabilities: ["svg"],
-    costCentsPerCall: 30,
-    costVerified: false,
+    // $0.25/image, verified on the model page 2026-07-25.
+    costCentsPerCall: 25,
+    costVerified: true,
     latencyHintSeconds: 14,
     aspectRatios: COMMON_ASPECT_RATIOS,
     defaultAspectRatio: "1:1",
@@ -78,19 +79,24 @@ const MODELS: readonly StudioModelEntry[] = [
     displayName: "Nano Banana 2",
     replicateId: "google/nano-banana-2",
     capabilities: ["general", "edit"],
-    costCentsPerCall: 10,
-    costVerified: false,
+    // $0.067/image at the pinned 1K resolution (2K $0.101, 4K $0.151),
+    // verified 2026-07-25. ceil → 7¢ reserved.
+    costCentsPerCall: 7,
+    costVerified: true,
     latencyHintSeconds: 25,
     aspectRatios: COMMON_ASPECT_RATIOS,
     defaultAspectRatio: "1:1",
+    pinnedInput: { resolution: "1K" },
   },
   {
     slug: "nano-banana-2-lite",
     displayName: "Nano Banana 2 Lite",
     replicateId: "google/nano-banana-2-lite",
     capabilities: ["general", "edit"],
-    costCentsPerCall: 5,
-    costVerified: false,
+    // $0.034/image flat (no resolution knob — always 1K), verified
+    // 2026-07-25. ceil → 4¢ reserved.
+    costCentsPerCall: 4,
+    costVerified: true,
     latencyHintSeconds: 4,
     aspectRatios: COMMON_ASPECT_RATIOS,
     defaultAspectRatio: "1:1",
@@ -100,22 +106,29 @@ const MODELS: readonly StudioModelEntry[] = [
     displayName: "Nano Banana Pro",
     replicateId: "google/nano-banana-pro",
     capabilities: ["general", "edit"],
-    costCentsPerCall: 25,
-    costVerified: false,
+    // $0.15/image at 1K and 2K (4K $0.30), verified 2026-07-25. Pinned to
+    // 2K — the model's default and the best quality at the 15¢ price.
+    costCentsPerCall: 15,
+    costVerified: true,
     latencyHintSeconds: 30,
     aspectRatios: COMMON_ASPECT_RATIOS,
     defaultAspectRatio: "1:1",
+    pinnedInput: { resolution: "2K" },
   },
   {
     slug: "gpt-image-2",
     displayName: "GPT Image 2",
     replicateId: "openai/gpt-image-2",
     capabilities: ["general", "edit"],
-    costCentsPerCall: 25,
-    costVerified: false,
+    // Priced by the `quality` input: high/auto $0.128, medium $0.047,
+    // low $0.012 — verified 2026-07-25. Pinned to high (same price as
+    // auto, deterministic quality). ceil → 13¢ reserved.
+    costCentsPerCall: 13,
+    costVerified: true,
     latencyHintSeconds: 45,
     aspectRatios: COMMON_ASPECT_RATIOS,
     defaultAspectRatio: "1:1",
+    pinnedInput: { quality: "high" },
   },
 ] as const;
 
@@ -248,17 +261,25 @@ export class StudioModelRegistry {
   ): Record<string, unknown> {
     const entry = this.getModel(slug);
     const resolvedRatio = this.resolveAspectRatio(slug, aspectRatio);
+    // pinnedInput pins by-property pricing tiers (resolution/quality) so
+    // the reserved cost is exact — never omit it.
+    const pinned = entry.pinnedInput ?? {};
 
     if (entry.replicateId.startsWith("recraft-ai/")) {
-      return { prompt, aspect_ratio: resolvedRatio };
+      return { prompt, aspect_ratio: resolvedRatio, ...pinned };
     }
     if (entry.replicateId.startsWith("google/")) {
       // png, not webp: nano-banana-2-lite only accepts jpg/png (live 422,
       // 2026-07-24) — png is the value the whole google family accepts.
-      return { prompt, aspect_ratio: resolvedRatio, output_format: "png" };
+      return {
+        prompt,
+        aspect_ratio: resolvedRatio,
+        output_format: "png",
+        ...pinned,
+      };
     }
-    // openai/gpt-image-2 — exact param names (quality tiers) confirmed at M1.
-    return { prompt, aspect_ratio: resolvedRatio };
+    // openai/gpt-image-2 — quality tier pinned via pinnedInput.
+    return { prompt, aspect_ratio: resolvedRatio, ...pinned };
   }
 
   /** Replicate input for an image-edit call (image-capable models only). */
@@ -271,15 +292,17 @@ export class StudioModelRegistry {
     if (!entry.capabilities.includes("edit")) {
       throw new Error(`Model ${slug} cannot edit images`);
     }
+    const pinned = entry.pinnedInput ?? {};
     if (entry.replicateId.startsWith("google/")) {
       return {
         prompt: instruction,
         image_input: imageUrls,
         // Family-wide value — the lite tier rejects webp (live 422).
         output_format: "png",
+        ...pinned,
       };
     }
-    // openai/gpt-image-2 — input key confirmed at M1.
-    return { prompt: instruction, image_input: imageUrls };
+    // openai/gpt-image-2 — quality tier pinned via pinnedInput.
+    return { prompt: instruction, image_input: imageUrls, ...pinned };
   }
 }

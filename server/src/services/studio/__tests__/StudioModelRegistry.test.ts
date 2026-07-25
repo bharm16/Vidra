@@ -126,6 +126,8 @@ describe("StudioModelRegistry", () => {
         image_input: ["https://example.com/a.webp"],
         // png, not webp — the lite tier rejects webp (regression test).
         output_format: "png",
+        // Pinned pricing tier: nano-banana-2 bills by resolution.
+        resolution: "1K",
       });
     });
 
