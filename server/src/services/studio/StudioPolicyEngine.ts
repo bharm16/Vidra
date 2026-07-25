@@ -170,6 +170,18 @@ export class StudioPolicyEngine implements StudioTurnPolicy {
         continue;
       }
 
+      const repeated = repeatedDiagnoseQuestion(decision, context.history);
+      if (repeated) {
+        // Behavior 5's fork allows a second, DIFFERENT question (keep the
+        // concept vs new direction) — never the one the user just
+        // answered (question loop, caught live 2026-07-25).
+        feedback = `You already asked "${repeated}" and the user answered. Do not repeat it — either ask the keep-the-concept-vs-new-direction question or move forward with a generate/edit per their answer.`;
+        this.log.warn("Studio decision repeated a diagnose question", {
+          attempt,
+        });
+        continue;
+      }
+
       const referential = validateDecisionReferences(
         decision,
         context.projectImageIds,
@@ -392,6 +404,23 @@ function excerpt(text: string): string {
   return text.length <= SOURCE_PROMPT_EXCERPT_CHARS
     ? text
     : `${text.slice(0, SOURCE_PROMPT_EXCERPT_CHARS)}…`;
+}
+
+/**
+ * The previous assistant turn's diagnose question, when this decision asks
+ * it again verbatim (case/whitespace-insensitive). Null otherwise.
+ */
+function repeatedDiagnoseQuestion(
+  decision: StudioDecision,
+  history: readonly StudioTurnRecord[],
+): string | null {
+  if (decision.action !== "diagnose") return null;
+  const previous = history[history.length - 1]?.decision;
+  if (previous?.action !== "diagnose") return null;
+  const normalize = (text: string): string => text.trim().toLowerCase();
+  return normalize(previous.question) === normalize(decision.question)
+    ? previous.question
+    : null;
 }
 
 function summarizeZodError(error: {

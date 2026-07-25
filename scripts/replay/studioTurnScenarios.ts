@@ -363,6 +363,53 @@ export const STUDIO_TURN_SCENARIOS: StudioTurnScenario[] = [
     },
   },
   {
+    name: "rejection-answer-forks",
+    behaviors:
+      "behavior 5 (an answered what's-wrong never repeats; fork or refine)",
+    context: baseContext({
+      userMessage: "Color",
+      projectTitle: "Ember & Oak Fox Logo",
+      history: [
+        PRIOR_FOX_TURN,
+        {
+          id: "turn-diagnose-1",
+          projectId: "replay-project",
+          userId: "replay-user",
+          status: "complete",
+          userMessage: "I don't like any of these",
+          decision: {
+            action: "diagnose",
+            question: "What's wrong with the results?",
+            quickPicks: ["Shape", "Color", "Layout", "Overall feel"],
+          },
+          calls: [],
+          reservedCents: 0,
+          refundedCents: 0,
+          createdAtMs: 1_753_000_120_000,
+          updatedAtMs: 1_753_000_120_000,
+        },
+      ],
+      projectImageIds: foxImageIds(),
+    }),
+    verify: (decision) => {
+      const violations: string[] = [];
+      if (
+        decision.action === "diagnose" &&
+        decision.question.trim().toLowerCase() ===
+          "what's wrong with the results?"
+      ) {
+        violations.push("repeated the already-answered what's-wrong question");
+        return violations;
+      }
+      if (!["generate", "edit", "diagnose"].includes(decision.action)) {
+        violations.push(
+          `expected a refinement or the keep/new-direction fork, got ${decision.action}`,
+        );
+      }
+      return violations;
+    },
+  },
+  {
     name: "incapable-pin-edit-negotiates",
     behaviors: "behavior 7 (pinned text-only model asked to edit → negotiate)",
     context: foxProjectContext(
