@@ -7,13 +7,54 @@ import type {
   VideoService,
 } from "../../services/types";
 
-const mockEnforceJSON = vi.hoisted(() => vi.fn());
+/**
+ * The engine runs against the REAL StructuredOutputEnforcer — only the
+ * aiService port instance is scripted (that is the process boundary). Each
+ * scripted response is raw LLM text; the real enforcer parses it, validates
+ * it against the real enhancement schema, unwraps the suggestions array and
+ * captures scene_summary from the sibling keys.
+ */
 
-vi.mock("@utils/StructuredOutputEnforcer", () => ({
-  StructuredOutputEnforcer: {
-    enforceJSON: mockEnforceJSON,
-  },
-}));
+function llmJson(payload: unknown): string {
+  return JSON.stringify(payload);
+}
+
+function createEngine(responses: string[] = []) {
+  const execute = vi.fn(async () => {
+    const index = Math.min(execute.mock.calls.length - 1, responses.length - 1);
+    return {
+      text: responses[index] ?? "{}",
+      metadata: { model: "llama-3.3-70b", provider: "groq" },
+    };
+  });
+
+  const aiService = {
+    getOperationConfig: vi.fn(() => ({
+      temperature: 0.7,
+      client: "groq",
+    })),
+    execute,
+  } as unknown as AIService;
+
+  const videoPromptService = {
+    countWords: vi.fn(
+      (text: string) => text.trim().split(/\s+/).filter(Boolean).length,
+    ),
+  } as unknown as VideoService;
+
+  const diversityEnforcer = {
+    filterOriginalEchoes: vi.fn((suggestions) => suggestions),
+  } as unknown as DiversityEnforcer;
+
+  const engine = new EnhancementV2Engine({
+    aiService,
+    videoPromptService,
+    diversityEnforcer,
+    policyVersion: "2026-03-v2a",
+  });
+
+  return { engine, execute };
+}
 
 function createContext(
   overrides: Partial<EnhancementV2RequestContext> = {},
@@ -48,32 +89,14 @@ function createContext(
   };
 }
 
-function createEngine() {
-  const aiService = {
-    getOperationConfig: vi.fn(() => ({
-      temperature: 0.7,
-      client: "groq",
-    })),
-    execute: vi.fn(),
-  } as unknown as AIService;
-
-  const videoPromptService = {
-    countWords: vi.fn(
-      (text: string) => text.trim().split(/\s+/).filter(Boolean).length,
-    ),
-  } as unknown as VideoService;
-
-  const diversityEnforcer = {
-    filterOriginalEchoes: vi.fn((suggestions) => suggestions),
-  } as unknown as DiversityEnforcer;
-
-  return new EnhancementV2Engine({
-    aiService,
-    videoPromptService,
-    diversityEnforcer,
-    policyVersion: "2026-03-v2a",
-  });
-}
+const WEATHER_CONTEXT = {
+  highlightedText: "soft rain",
+  highlightedCategory: "environment.weather",
+  phraseRole: "environment.weather",
+  contextBefore: "A couple walks through ",
+  contextAfter: " beside the diner.",
+  fullPrompt: "A couple walks through soft rain beside the diner.",
+} as const;
 
 describe("EnhancementV2Engine", () => {
   beforeEach(() => {
@@ -81,7 +104,7 @@ describe("EnhancementV2Engine", () => {
   });
 
   it("uses enumerated generation for rigid categories without model calls", async () => {
-    const engine = createEngine();
+    const { engine, execute } = createEngine();
 
     const execution = await engine.execute(
       createContext({
@@ -91,7 +114,7 @@ describe("EnhancementV2Engine", () => {
       }),
     );
 
-    expect(mockEnforceJSON).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
     expect(execution.debug.mode).toBe("enumerated");
     expect(execution.debug.modelCallCount).toBe(0);
     expect(execution.finalSuggestions.length).toBeGreaterThan(0);
@@ -101,7 +124,7 @@ describe("EnhancementV2Engine", () => {
   });
 
   it("uses templated generation for camera movement and blocks invalid combinations", async () => {
-    const engine = createEngine();
+    const { engine, execute } = createEngine();
 
     const execution = await engine.execute(
       createContext({
@@ -115,7 +138,7 @@ describe("EnhancementV2Engine", () => {
       }),
     );
 
-    expect(mockEnforceJSON).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
     expect(execution.debug.mode).toBe("templated");
     expect(execution.debug.modelCallCount).toBe(0);
 
@@ -133,83 +156,60 @@ describe("EnhancementV2Engine", () => {
   });
 
   it("uses a single rescue call for guided LLM policies when too few candidates survive scoring", async () => {
-    const engine = createEngine();
-    // Engine now calls enforceJSON with captureSiblings:true on the
-    // enhancement path, so the mock returns { value, siblings } per
-    // the new contract (Sub-project B).
-    mockEnforceJSON
-      .mockResolvedValueOnce({
-        value: [
+    // Primary pass yields 2 candidates (below minAcceptableCount=3) so the
+    // engine issues one rescue pass. Both are raw LLM payloads parsed and
+    // validated by the real enforcer.
+    const { engine, execute } = createEngine([
+      llmJson({
+        suggestions: [
           { text: "poetic hush of rain", category: "environment.weather" },
           { text: "gentle morning drizzle", category: "environment.weather" },
         ],
-        siblings: {
-          scene_summary: "weather scene — keep precipitation theme",
-        },
-      })
-      .mockResolvedValueOnce({
-        value: [
+        scene_summary: "weather scene — keep precipitation theme",
+      }),
+      llmJson({
+        suggestions: [
           {
             text: "heavy snowfall under grey skies",
             category: "environment.weather",
           },
           { text: "wind-driven rain curtain", category: "environment.weather" },
         ],
-        siblings: {
-          scene_summary: "weather scene — keep precipitation theme",
-        },
-      });
-
-    const execution = await engine.execute(
-      createContext({
-        highlightedText: "soft rain",
-        highlightedCategory: "environment.weather",
-        phraseRole: "environment.weather",
-        contextBefore: "A couple walks through ",
-        contextAfter: " beside the diner.",
-        fullPrompt: "A couple walks through soft rain beside the diner.",
+        scene_summary: "weather scene — keep precipitation theme",
       }),
-    );
+    ]);
 
-    expect(mockEnforceJSON).toHaveBeenCalledTimes(2);
+    const execution = await engine.execute(createContext(WEATHER_CONTEXT));
+
     expect(execution.debug.mode).toBe("guided_llm");
     expect(execution.debug.modelCallCount).toBe(2);
+    expect(execute).toHaveBeenCalledTimes(2);
     expect(execution.finalSuggestions.length).toBeGreaterThanOrEqual(3);
-    // Rescue triggers from candidate-count shortfall (primary returned 2,
-    // minAcceptableCount=3), not from rejection-driven shortfall — the
-    // V2CandidateScorer no longer carries an "abstract" wordlist gate.
   });
 
   describe("scene_summary capture (Sub-project B)", () => {
     it("puts scene_summary onto execution.debug.sceneSummary when the LLM emits it", async () => {
-      const engine = createEngine();
-      mockEnforceJSON.mockResolvedValueOnce({
-        value: [
-          {
-            text: "heavy snowfall under grey skies",
-            category: "environment.weather",
-          },
-          { text: "wind-driven rain curtain", category: "environment.weather" },
-          {
-            text: "torrential downpour at dawn",
-            category: "environment.weather",
-          },
-        ],
-        siblings: {
+      const { engine } = createEngine([
+        llmJson({
+          suggestions: [
+            {
+              text: "heavy snowfall under grey skies",
+              category: "environment.weather",
+            },
+            {
+              text: "wind-driven rain curtain",
+              category: "environment.weather",
+            },
+            {
+              text: "torrential downpour at dawn",
+              category: "environment.weather",
+            },
+          ],
           scene_summary: "outdoor weather scene — keep precipitation theme",
-        },
-      });
-
-      const execution = await engine.execute(
-        createContext({
-          highlightedText: "soft rain",
-          highlightedCategory: "environment.weather",
-          phraseRole: "environment.weather",
-          contextBefore: "A couple walks through ",
-          contextAfter: " beside the diner.",
-          fullPrompt: "A couple walks through soft rain beside the diner.",
         }),
-      );
+      ]);
+
+      const execution = await engine.execute(createContext(WEATHER_CONTEXT));
 
       expect(execution.debug.sceneSummary).toBe(
         "outdoor weather scene — keep precipitation theme",
@@ -218,32 +218,26 @@ describe("EnhancementV2Engine", () => {
     });
 
     it("tolerates missing scene_summary in the LLM response (sceneSummary = null, no crash)", async () => {
-      const engine = createEngine();
-      mockEnforceJSON.mockResolvedValueOnce({
-        value: [
-          {
-            text: "heavy snowfall under grey skies",
-            category: "environment.weather",
-          },
-          { text: "wind-driven rain curtain", category: "environment.weather" },
-          {
-            text: "torrential downpour at dawn",
-            category: "environment.weather",
-          },
-        ],
-        siblings: {},
-      });
-
-      const execution = await engine.execute(
-        createContext({
-          highlightedText: "soft rain",
-          highlightedCategory: "environment.weather",
-          phraseRole: "environment.weather",
-          contextBefore: "A couple walks through ",
-          contextAfter: " beside the diner.",
-          fullPrompt: "A couple walks through soft rain beside the diner.",
+      const { engine } = createEngine([
+        llmJson({
+          suggestions: [
+            {
+              text: "heavy snowfall under grey skies",
+              category: "environment.weather",
+            },
+            {
+              text: "wind-driven rain curtain",
+              category: "environment.weather",
+            },
+            {
+              text: "torrential downpour at dawn",
+              category: "environment.weather",
+            },
+          ],
         }),
-      );
+      ]);
+
+      const execution = await engine.execute(createContext(WEATHER_CONTEXT));
 
       expect(execution.debug.sceneSummary).toBeNull();
       expect(execution.finalSuggestions.length).toBeGreaterThan(0);
@@ -252,29 +246,23 @@ describe("EnhancementV2Engine", () => {
 
   describe("scene_summary capture on custom-request path (Sub-project B2)", () => {
     it("captures scene_summary from siblings when present on custom requests", async () => {
-      const engine = createEngine();
-      mockEnforceJSON.mockResolvedValueOnce({
-        value: [
-          { text: "dreamlike haze of mist" },
-          { text: "soft veil of drizzle" },
-          { text: "silken curtain of rain" },
-          { text: "luminous downpour at dusk" },
-          { text: "gentle whisper of evening rain" },
-        ],
-        siblings: {
+      const { engine } = createEngine([
+        llmJson({
+          suggestions: [
+            { text: "dreamlike haze of mist" },
+            { text: "soft veil of drizzle" },
+            { text: "silken curtain of rain" },
+            { text: "luminous downpour at dusk" },
+            { text: "gentle whisper of evening rain" },
+          ],
           scene_summary:
             "diner exterior, dusk, atmospheric romance — keep weather literal",
-        },
-      });
+        }),
+      ]);
 
       const execution = await engine.execute(
         createContext({
-          highlightedText: "soft rain",
-          highlightedCategory: "environment.weather",
-          phraseRole: "environment.weather",
-          contextBefore: "A couple walks through ",
-          contextAfter: " beside the diner.",
-          fullPrompt: "A couple walks through soft rain beside the diner.",
+          ...WEATHER_CONTEXT,
           customRequest: "make it sound dreamier and more romantic",
         }),
       );
@@ -286,26 +274,21 @@ describe("EnhancementV2Engine", () => {
     });
 
     it("returns sceneSummary: null on custom-request path when siblings absent (back-compat)", async () => {
-      const engine = createEngine();
-      mockEnforceJSON.mockResolvedValueOnce({
-        value: [
-          { text: "dreamlike haze of mist" },
-          { text: "soft veil of drizzle" },
-          { text: "silken curtain of rain" },
-          { text: "luminous downpour at dusk" },
-          { text: "gentle whisper of evening rain" },
-        ],
-        siblings: {},
-      });
+      const { engine } = createEngine([
+        llmJson({
+          suggestions: [
+            { text: "dreamlike haze of mist" },
+            { text: "soft veil of drizzle" },
+            { text: "silken curtain of rain" },
+            { text: "luminous downpour at dusk" },
+            { text: "gentle whisper of evening rain" },
+          ],
+        }),
+      ]);
 
       const execution = await engine.execute(
         createContext({
-          highlightedText: "soft rain",
-          highlightedCategory: "environment.weather",
-          phraseRole: "environment.weather",
-          contextBefore: "A couple walks through ",
-          contextAfter: " beside the diner.",
-          fullPrompt: "A couple walks through soft rain beside the diner.",
+          ...WEATHER_CONTEXT,
           customRequest: "make it sound dreamier and more romantic",
         }),
       );

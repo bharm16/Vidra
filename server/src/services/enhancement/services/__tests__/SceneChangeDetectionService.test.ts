@@ -1,37 +1,52 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AIExecutionPort as AIService } from "@services/ai-model/ports/AIExecutionPort";
 import type { CacheService } from "@services/cache/CacheService";
-import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
 import {
   SceneChangeDetectionService,
   type SceneChangeResult,
 } from "../SceneChangeDetectionService";
 
-vi.mock("@infrastructure/Logger", () => ({
-  logger: {
-    child: vi.fn(() => ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    })),
-  },
-}));
+/**
+ * Runs the REAL StructuredOutputEnforcer and the real temperature policy;
+ * only the aiService port instance is scripted. Scripted responses are raw
+ * LLM text validated against the real scene-change schema — a schema drift
+ * fails here instead of being masked by a mocked enforcer.
+ */
 
-vi.mock("@utils/TemperatureOptimizer", () => ({
-  TemperatureOptimizer: {
-    getOptimalTemperature: vi.fn(() => 0.3),
-  },
-}));
+vi.mock("@infrastructure/Logger", () => {
+  const base = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn(),
+  };
+  base.child.mockReturnValue(base);
+  return { logger: base };
+});
 
-const createService = (): {
+const createService = (
+  responses: string[] = [],
+): {
   service: SceneChangeDetectionService;
-  aiService: AIService;
+  execute: ReturnType<typeof vi.fn>;
   cacheService: CacheService;
 } => {
+  const execute = vi.fn(async () => {
+    const index = Math.min(execute.mock.calls.length - 1, responses.length - 1);
+    return {
+      text: responses[index] ?? "{}",
+      metadata: { model: "llama-3.1-8b-instant", provider: "groq" },
+    };
+  });
+
   const aiService = {
-    execute: vi.fn(),
+    execute,
+    getOperationConfig: vi.fn(() => ({
+      temperature: 0.3,
+      client: "groq",
+    })),
   } as unknown as AIService;
 
   const cacheService = {
@@ -43,7 +58,7 @@ const createService = (): {
 
   return {
     service: new SceneChangeDetectionService(aiService, cacheService),
-    aiService,
+    execute,
     cacheService,
   };
 };
@@ -53,12 +68,8 @@ describe("SceneChangeDetectionService", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("returns cached result on cache hit", async () => {
-    const { service, cacheService } = createService();
+  it("returns cached result on cache hit without any model call", async () => {
+    const { service, execute, cacheService } = createService();
     const cachedResult: SceneChangeResult = {
       isSceneChange: true,
       confidence: "high",
@@ -66,8 +77,6 @@ describe("SceneChangeDetectionService", () => {
       suggestedUpdates: { lighting: "underwater caustics" },
     };
     vi.mocked(cacheService.get).mockResolvedValue(cachedResult);
-
-    const enforceSpy = vi.spyOn(StructuredOutputEnforcer, "enforceJSON");
 
     const result = await service.detectSceneChange({
       changedField: "location",
@@ -78,20 +87,19 @@ describe("SceneChangeDetectionService", () => {
     });
 
     expect(result).toEqual(cachedResult);
-    expect(enforceSpy).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("detects scene change via LLM and caches result", async () => {
-    const { service, cacheService } = createService();
     const llmResult: SceneChangeResult = {
       isSceneChange: true,
       confidence: "high",
       reasoning: "Indoor to outdoor transition",
       suggestedUpdates: { lighting: "natural sunlight", mood: "open and free" },
     };
-    vi.spyOn(StructuredOutputEnforcer, "enforceJSON").mockResolvedValue(
-      llmResult,
-    );
+    const { service, cacheService } = createService([
+      JSON.stringify(llmResult),
+    ]);
 
     const result = await service.detectSceneChange({
       changedField: "location",
@@ -109,16 +117,15 @@ describe("SceneChangeDetectionService", () => {
     );
   });
 
-  it("calls enforceJSON with correct operation and schema", async () => {
-    const { service } = createService();
-    const enforceSpy = vi
-      .spyOn(StructuredOutputEnforcer, "enforceJSON")
-      .mockResolvedValue({
+  it("sends the scene-change operation and the changed value to the model", async () => {
+    const { service, execute } = createService([
+      JSON.stringify({
         isSceneChange: false,
         confidence: "low",
         reasoning: "Minor refinement",
         suggestedUpdates: {},
-      });
+      }),
+    ]);
 
     await service.detectSceneChange({
       changedField: "location",
@@ -128,21 +135,9 @@ describe("SceneChangeDetectionService", () => {
       affectedFields: ["mood"],
     });
 
-    expect(enforceSpy).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.stringContaining("vintage coffee shop"),
-      expect.objectContaining({
-        operation: "video_scene_change_detection",
-        schema: expect.objectContaining({
-          type: "object",
-          required: [
-            "isSceneChange",
-            "confidence",
-            "reasoning",
-            "suggestedUpdates",
-          ],
-        }),
-      }),
-    );
+    expect(execute).toHaveBeenCalled();
+    const call = JSON.stringify(execute.mock.calls[0]);
+    expect(call).toContain("video_scene_change_detection");
+    expect(call).toContain("vintage coffee shop");
   });
 });

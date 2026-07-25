@@ -9,24 +9,32 @@ import type {
   Suggestion,
 } from "../services/types";
 
-const mockEnforceJSON = vi.hoisted(() => vi.fn());
-const mockCacheGet = vi.hoisted(() => vi.fn(async () => null));
-const mockCacheSet = vi.hoisted(() => vi.fn(async () => true));
+/**
+ * Runs the REAL StructuredOutputEnforcer — the scripted aiService port is
+ * the only boundary stub. LLM payloads are raw JSON text; prompt-content
+ * assertions read what was actually sent to the port.
+ */
 
-vi.mock("@utils/StructuredOutputEnforcer", () => ({
-  StructuredOutputEnforcer: {
-    enforceJSON: mockEnforceJSON,
-  },
-}));
+function llmJson(suggestions: Array<Record<string, unknown>>): string {
+  return JSON.stringify({ suggestions });
+}
 
-function createService() {
+function createService(responses: string[] = []) {
+  const execute = vi.fn(async () => {
+    const index = Math.min(execute.mock.calls.length - 1, responses.length - 1);
+    return {
+      text: responses[index] ?? "{}",
+      metadata: { model: "llama-3.1-8b-instant", provider: "groq" },
+    };
+  });
+
   const aiService = {
     getOperationConfig: vi.fn(() => ({
       temperature: 0.6,
       client: "groq",
       model: "llama-3.1-8b-instant",
     })),
-    execute: vi.fn(),
+    execute,
   } as unknown as AIService;
 
   const videoPromptService = {
@@ -63,8 +71,8 @@ function createService() {
 
   const cacheService = {
     getConfig: vi.fn(() => ({ ttl: 60, namespace: "enhancement" })),
-    get: mockCacheGet,
-    set: mockCacheSet,
+    get: vi.fn(async () => null),
+    set: vi.fn(async () => true),
     generateKey: generateKeySpy,
   } as unknown as CacheService;
 
@@ -79,30 +87,34 @@ function createService() {
 
   return {
     service,
+    execute,
     filterOriginalEchoesSpy,
     generateKeySpy,
   };
 }
 
+function sentPromptOfCall(
+  execute: ReturnType<typeof vi.fn>,
+  callIndex: number,
+): string {
+  return JSON.stringify(execute.mock.calls[callIndex] ?? []);
+}
+
 describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCacheGet.mockResolvedValue(null);
   });
 
   it("routes through V2 engine and applies its post-processing (no legacy buildCustomPrompt call)", async () => {
-    const { service, filterOriginalEchoesSpy } = createService();
-
-    mockEnforceJSON.mockResolvedValueOnce({
-      value: [
+    const { service, execute, filterOriginalEchoesSpy } = createService([
+      llmJson([
         { text: "long flowing scarlet gown", category: "subject.appearance" },
         { text: "long flowing scarlet gown", category: "subject.appearance" },
         { text: "tailored navy peacoat", category: "subject.appearance" },
         { text: "weathered leather duster", category: "subject.appearance" },
         { text: "minimalist linen tunic", category: "subject.appearance" },
-      ],
-      siblings: {},
-    });
+      ]),
+    ]);
 
     const result = await service.getCustomSuggestions({
       highlightedText: "the dress",
@@ -112,13 +124,13 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
       contextAfter: " at dusk.",
     });
 
-    // The V2 engine was invoked exactly once; the legacy CleanPromptBuilder
-    // path no longer exists (the dependency was removed from the service).
-    expect(mockEnforceJSON).toHaveBeenCalledTimes(1);
+    // The V2 engine issued exactly one model call; the legacy
+    // CleanPromptBuilder path no longer exists on this service.
+    expect(execute).toHaveBeenCalledTimes(1);
 
-    // The prompt sent to the LLM is the V2 custom-mode prompt (steered by
-    // the user's request), not the legacy one.
-    const [, sentPrompt] = mockEnforceJSON.mock.calls[0]!;
+    // The prompt that actually reached the port is the V2 custom-mode
+    // prompt, steered by the user's request.
+    const sentPrompt = sentPromptOfCall(execute, 0);
     expect(sentPrompt).toContain(
       "<custom_request>make this more cinematic</custom_request>",
     );
@@ -134,29 +146,22 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
   });
 
   it("invokes the V2 rescue pass when too few candidates survive scoring", async () => {
-    const { service } = createService();
-
     // Primary call returns 1 unique candidate after V2 dedupe; below
     // CustomPolicy.minAcceptableCount (4) → triggers the single rescue call.
-    mockEnforceJSON
-      .mockResolvedValueOnce({
-        value: [
-          { text: "tailored navy peacoat", category: "subject.appearance" },
-        ],
-        siblings: {},
-      })
-      .mockResolvedValueOnce({
-        value: [
-          { text: "weathered leather duster", category: "subject.appearance" },
-          { text: "minimalist linen tunic", category: "subject.appearance" },
-          {
-            text: "wool overcoat with brass buttons",
-            category: "subject.appearance",
-          },
-          { text: "vintage tweed blazer", category: "subject.appearance" },
-        ],
-        siblings: {},
-      });
+    const { service, execute } = createService([
+      llmJson([
+        { text: "tailored navy peacoat", category: "subject.appearance" },
+      ]),
+      llmJson([
+        { text: "weathered leather duster", category: "subject.appearance" },
+        { text: "minimalist linen tunic", category: "subject.appearance" },
+        {
+          text: "wool overcoat with brass buttons",
+          category: "subject.appearance",
+        },
+        { text: "vintage tweed blazer", category: "subject.appearance" },
+      ]),
+    ]);
 
     const result = await service.getCustomSuggestions({
       highlightedText: "the outfit",
@@ -166,23 +171,20 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
       contextAfter: " at dawn.",
     });
 
-    expect(mockEnforceJSON).toHaveBeenCalledTimes(2);
+    expect(execute).toHaveBeenCalledTimes(2);
     // Rescue prompt explicitly references the custom-request frame.
-    const [, rescuePrompt] = mockEnforceJSON.mock.calls[1]!;
+    const rescuePrompt = sentPromptOfCall(execute, 1);
     expect(rescuePrompt).toContain("RESCUE PASS:");
     expect(rescuePrompt).toContain("custom request");
     expect(result.suggestions.length).toBeGreaterThan(1);
   });
 
   it("partitions cache from the legacy custom-suggestions key shape (engineVersion + policyVersion encoded)", async () => {
-    const { service, generateKeySpy } = createService();
-
-    mockEnforceJSON.mockResolvedValue({
-      value: [
+    const { service, generateKeySpy } = createService([
+      llmJson([
         { text: "tailored navy peacoat", category: "subject.appearance" },
-      ],
-      siblings: {},
-    });
+      ]),
+    ]);
 
     await service.getCustomSuggestions({
       highlightedText: "the dress",
