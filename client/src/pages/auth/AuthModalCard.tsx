@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { X } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { AmbientLight, Grain, Vignette } from "@/components/atmosphere";
+import { VidraMark } from "@/components/brand";
 
 import "./auth.css";
 
@@ -20,23 +21,12 @@ interface AuthModalCardProps {
   dismissTo?: string;
 }
 
-/* Vidra wordmark — the design-handoff brand mark (accent-gradient rounded
-   square + wordtype), mirrored from WorkspaceTopBar so the auth stage carries
-   the same signature. */
-function VidraMark(): React.ReactElement {
+/* Vidra lockup — the shared brand mark + wordtype, mirrored from
+   WorkspaceTopBar so the auth stage carries the same signature. */
+function VidraLockup(): React.ReactElement {
   return (
     <span className="inline-flex items-center gap-2.5">
-      <span className="ps-auth-mark flex h-[26px] w-[26px] items-center justify-center rounded-lg">
-        <svg
-          width="11"
-          height="11"
-          viewBox="0 0 12 12"
-          fill="#0a0b0e"
-          aria-hidden="true"
-        >
-          <path d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z" />
-        </svg>
-      </span>
+      <VidraMark className="h-[26px] w-[26px] rounded-lg" />
       <span className="text-foreground text-[17px] font-semibold tracking-[-0.01em]">
         Vidra
       </span>
@@ -88,7 +78,7 @@ export function AuthModalCard({
         aria-label="Vidra home"
         className="absolute left-6 top-6 z-10 inline-flex transition-opacity hover:opacity-80"
       >
-        <VidraMark />
+        <VidraLockup />
       </Link>
 
       <div className="ps-auth-modal relative z-10 flex w-[min(100%-2rem,412px)] overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.045] shadow-[0_50px_110px_-30px_rgba(0,0,0,0.8)] backdrop-blur-[16px] backdrop-saturate-150 md:w-[744px]">

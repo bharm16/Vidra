@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { AmbientLight, Grain, Vignette } from "@components/atmosphere";
+import { VidraMark } from "@components/brand";
 import { VideoPlayer } from "@components/MediaViewer/components/VideoPlayer";
 import { useSharedClip } from "./hooks/useSharedClip";
 
@@ -19,35 +20,16 @@ import { useSharedClip } from "./hooks/useSharedClip";
  * is a presentation rebuild only.
  */
 
-/* Vidra brand mark — the design-handoff logo: an accent-gradient rounded square
-   holding a play glyph, beside the wordtype. Links home. Inline SVG so the mark
-   travels with the page without a separate asset request (mirrors the app's
-   WorkspaceTopBar mark). */
-function VidraMark(): React.ReactElement {
+/* Vidra lockup — the shared brand mark beside the wordtype, linking home
+   (mirrors the app's WorkspaceTopBar lockup). */
+function VidraLockup(): React.ReactElement {
   return (
     <Link
       to="/"
       aria-label="Vidra home"
       className="inline-flex items-center gap-[11px]"
     >
-      <span
-        className="flex h-7 w-7 items-center justify-center rounded-lg"
-        style={{
-          background:
-            "linear-gradient(150deg, var(--accent, #5b6cff), var(--accent-2, #9aa6ff))",
-          boxShadow: "0 4px 14px -4px var(--accent, #5b6cff)",
-        }}
-      >
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="#0a0b0e"
-          aria-hidden
-        >
-          <path d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z" />
-        </svg>
-      </span>
+      <VidraMark className="h-7 w-7 rounded-lg" />
       <span className="text-foreground text-[20px] font-semibold tracking-[-0.01em]">
         Vidra
       </span>
@@ -102,7 +84,7 @@ function ClipShell({
 
       {/* Public chrome */}
       <header className="relative flex h-[72px] shrink-0 items-center justify-between border-b border-white/[0.05] px-10">
-        <VidraMark />
+        <VidraLockup />
         <Button
           asChild
           variant="outline"

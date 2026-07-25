@@ -2,17 +2,18 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { BrandLogo } from "../shared/BrandLogo";
+import { VIDRA_MARK_SRC } from "@components/brand";
 
 const renderWithRouter = (ui: React.ReactElement) =>
   render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("BrandLogo", () => {
   describe("error handling", () => {
-    it("renders compact glyph for collapsed sidebar variant", () => {
+    it("renders the brand mark alone for collapsed sidebar variant", () => {
       renderWithRouter(<BrandLogo variant="sidebar-collapsed" />);
 
       const link = screen.getByRole("link", { name: "Vidra home" });
-      expect(link).toHaveTextContent("V");
+      expect(link.querySelector(`img[src="${VIDRA_MARK_SRC}"]`)).not.toBeNull();
       expect(link).not.toHaveTextContent("Vidra");
     });
   });

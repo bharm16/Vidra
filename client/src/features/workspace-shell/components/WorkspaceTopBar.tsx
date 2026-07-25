@@ -3,35 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import { CaretDown, CaretRight } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
+import { VidraMark } from "@/components/brand";
 import { FEATURES } from "@/config/features.config";
 import { useWorkspaceProject } from "../hooks/useWorkspaceProject";
 import { useWorkspaceCredits } from "../hooks/useWorkspaceCredits";
 import { AccountPopover } from "./AccountPopover";
 
-/* Vidra wordmark — the design-handoff brand mark: an accent-gradient rounded
-   square holding a play glyph, beside the wordtype. Inline SVG so the logo
-   travels with the component without a separate asset request. */
-function VidraMark(): React.ReactElement {
+/* Vidra lockup — the shared brand mark beside the wordtype. */
+function VidraLockup(): React.ReactElement {
   return (
     <span className="inline-flex items-center gap-2.5">
-      <span
-        className="flex h-[26px] w-[26px] items-center justify-center rounded-lg"
-        style={{
-          background:
-            "linear-gradient(150deg, var(--accent, #5b6cff), var(--accent-2, #9aa6ff))",
-          boxShadow: "0 4px 14px -4px var(--accent, #5b6cff)",
-        }}
-      >
-        <svg
-          width="11"
-          height="11"
-          viewBox="0 0 12 12"
-          fill="#0a0b0e"
-          aria-hidden="true"
-        >
-          <path d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z" />
-        </svg>
-      </span>
+      <VidraMark className="h-[26px] w-[26px] rounded-lg" />
       <span className="text-foreground text-[17px] font-semibold tracking-[-0.01em]">
         Vidra
       </span>
@@ -65,10 +47,10 @@ export function WorkspaceTopBar({
           className="ps-rise inline-flex"
           style={{ animationDelay: "0.1s" }}
         >
-          <VidraMark />
+          <VidraLockup />
         </span>
       ) : (
-        <VidraMark />
+        <VidraLockup />
       )}
       {/*
         Display-only session breadcrumb — the current session's derived title

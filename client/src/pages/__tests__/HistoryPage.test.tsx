@@ -1,10 +1,9 @@
 /**
- * Session library contract (/history).
+ * Library contract (/history).
  *
- * The page is the full-archive presentation of Sessions: same entity,
- * titles, and vocabulary as the rail Sessions panel. Prompt-level artifacts
- * from the old History page — raw UUIDs, Score badges, provider tags, and
- * the OUTPUT card — must never render.
+ * The page presents both Sessions and Kept clips from the shared history
+ * source. Prompt-level artifacts from the old History page — raw UUIDs,
+ * Score badges, provider tags, and the OUTPUT card — must never render.
  */
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -94,7 +93,7 @@ beforeEach(() => {
   mockUsePromptHistory.mockReturnValue(historyStub());
 });
 
-describe("session library (/history)", () => {
+describe("library (/history)", () => {
   it("carries the nav rail so every surface stays navigable", () => {
     renderPage();
 
@@ -104,13 +103,12 @@ describe("session library (/history)", () => {
     expect(screen.getByRole("link", { name: /New session/ })).toBeTruthy();
   });
 
-  it("lists sessions with panel vocabulary — stored and derived titles", () => {
+  it("lists sessions and kept clips with stored and derived titles", () => {
     renderPage();
 
-    expect(screen.getByRole("heading", { name: "Sessions" })).toBeTruthy();
-    expect(screen.getByText("2 sessions")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Library" })).toBeTruthy();
     expect(screen.getByText("Dog running")).toBeTruthy();
-    // Titleless session gets the same derived title the rail panel shows.
+    // Titleless entries use the same shared title derivation as the rail.
     expect(screen.getByText("Astronaut On Mars At Dawn")).toBeTruthy();
   });
 
@@ -126,40 +124,36 @@ describe("session library (/history)", () => {
     expect(screen.queryByText(/golden retriever/i)).toBeNull();
   });
 
-  it("links each session to its workspace session and keeps Back to app", () => {
+  it("links each entry to its workspace session", () => {
     renderPage();
 
     const openDog = screen.getByRole("link", {
-      name: "Open session: Dog running",
+      name: "Open clip: Dog running",
     });
     expect(openDog.getAttribute("href")).toBe("/session/sess-dog");
 
-    const back = screen.getByRole("link", { name: "Back to app" });
-    expect(back.getAttribute("href")).toBe("/");
+    const openAstronaut = screen.getByRole("link", {
+      name: "Open session: Astronaut On Mars At Dawn",
+    });
+    expect(openAstronaut.getAttribute("href")).toBe("/session/sess-astronaut");
   });
 
-  it("shows the Synced badge when signed in and the sign-in link when not", () => {
-    const { unmount } = renderPage();
-    expect(screen.getByText("Synced")).toBeTruthy();
-    unmount();
-
-    mockUseAuthUser.mockReturnValue(null);
+  it("loads history for the authenticated user", () => {
     renderPage();
-    expect(screen.queryByText("Synced")).toBeNull();
-    expect(screen.getByRole("link", { name: "Sign in to sync" })).toBeTruthy();
+
+    expect(mockUsePromptHistory).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: "user-1" }),
+    );
   });
 
-  it("filters with the panel's chips: Videos only and Last 7 days", () => {
+  it("filters the archive by sessions and kept clips", () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: "Videos only" }));
-    expect(screen.getByText("Dog running")).toBeTruthy();
-    expect(screen.queryByText("Astronaut On Mars At Dawn")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: "Videos only" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sessions" }));
+    expect(screen.queryByText("Dog running")).toBeNull();
     expect(screen.getByText("Astronaut On Mars At Dawn")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Last 7 days" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kept clips" }));
     expect(screen.getByText("Dog running")).toBeTruthy();
     expect(screen.queryByText("Astronaut On Mars At Dawn")).toBeNull();
   });
@@ -168,7 +162,7 @@ describe("session library (/history)", () => {
     renderPage();
 
     fireEvent.change(
-      screen.getByRole("searchbox", { name: "Search sessions" }),
+      screen.getByRole("searchbox", { name: "Search your library" }),
       {
         target: { value: "dog" },
       },
@@ -182,7 +176,7 @@ describe("session library (/history)", () => {
     );
     renderPage();
 
-    expect(screen.getByText("No sessions yet.")).toBeTruthy();
+    expect(screen.getByText("Your library is empty.")).toBeTruthy();
     const cta = screen.getByRole("link", { name: "Start creating" });
     expect(cta.getAttribute("href")).toBe("/");
   });

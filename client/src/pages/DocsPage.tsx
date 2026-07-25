@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { AmbientLight, Grain, Vignette } from "@/components/atmosphere";
+import { VidraMark } from "@/components/brand";
 
 /**
  * Docs — "How it works" (design_handoff_vidra / ADR-0014).
@@ -94,18 +95,8 @@ export function DocsPage(): React.ReactElement {
         className={`flex w-16 flex-none flex-col items-center gap-3.5 border-r py-4 ${HAIRLINE}`}
         style={{ background: "#0c0d11" }}
       >
-        <Link
-          to="/"
-          title="Vidra"
-          className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px]"
-          style={{
-            background: "linear-gradient(150deg, var(--accent), #9aa6ff)",
-            boxShadow: "0 4px 14px -4px var(--accent)",
-          }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="#0a0b0e">
-            <path d="M3.2 2.4a.6.6 0 0 1 .92-.5l5 3.6a.6.6 0 0 1 0 1l-5 3.6a.6.6 0 0 1-.92-.5z" />
-          </svg>
+        <Link to="/" title="Vidra" className="flex">
+          <VidraMark className="h-[30px] w-[30px] rounded-[9px]" />
         </Link>
 
         <Link

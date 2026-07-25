@@ -23,16 +23,6 @@
   }
 }
 
-/* Brand badge — accent-gradient rounded square (matches WorkspaceTopBar). */
-.ps-auth-mark {
-  background: linear-gradient(
-    150deg,
-    var(--accent, #5b6cff),
-    var(--accent-2, #9aa6ff)
-  );
-  box-shadow: 0 4px 14px -4px var(--accent, #5b6cff);
-}
-
 /* Mode toggle link — the accent lightened toward white (handoff). */
 .ps-auth-accent-link {
   color: color-mix(in srgb, var(--accent) 45%, white);

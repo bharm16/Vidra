@@ -4,6 +4,7 @@
 
 import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
+import { VidraMark } from "@components/brand";
 import { cn } from "@utils/cn";
 import type { BrandLogoProps } from "../types";
 
@@ -17,13 +18,12 @@ export function BrandLogo({
         to="/"
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-md",
-          "text-foreground bg-[rgb(44,48,55)]",
-          "transition-colors hover:bg-[rgb(36,42,56)]",
+          "transition-opacity hover:opacity-80",
           className,
         )}
         aria-label="Vidra home"
       >
-        <span className="text-body-sm font-semibold">V</span>
+        <VidraMark className="h-8 w-8 rounded-md" />
       </Link>
     );
   }
