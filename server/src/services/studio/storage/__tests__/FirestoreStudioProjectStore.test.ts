@@ -10,6 +10,7 @@ type StoreRecord = Record<string, unknown>;
  */
 const mocks = vi.hoisted(() => ({
   records: new Map<string, StoreRecord>(),
+  orderByPaths: [] as string[],
 }));
 
 type FakeDocRef = {
@@ -116,8 +117,10 @@ function makeCollectionRef(path: string): FakeCollectionRef {
   return {
     doc: (id) => makeDocRef(`${path}/${id}`),
     where: (field, _op, value) => makeQuery(path, [[field, value]]),
-    orderBy: (field, direction = "asc") =>
-      makeQuery(path, [], { field, direction }),
+    orderBy: (field, direction = "asc") => {
+      mocks.orderByPaths.push(path);
+      return makeQuery(path, [], { field, direction });
+    },
   };
 }
 
@@ -188,6 +191,7 @@ describe("FirestoreStudioProjectStore", () => {
 
   beforeEach(() => {
     mocks.records.clear();
+    mocks.orderByPaths.length = 0;
     store = new FirestoreStudioProjectStore();
   });
 
@@ -390,6 +394,18 @@ describe("FirestoreStudioProjectStore", () => {
       const raw = mocks.records.get("studio_projects/project-1");
       expect(raw).toBeDefined();
       expect(Object.keys(raw ?? {})).not.toContain("pinnedModel");
+    });
+
+    it("regression: listProjects never uses orderBy — the userId==+orderBy shape demands a composite Firestore index (FAILED_PRECONDITION, live 2026-07-24)", async () => {
+      await store.createProject({
+        id: "p1",
+        userId: "user-1",
+        title: "A",
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+      await store.listProjects("user-1");
+      expect(mocks.orderByPaths).not.toContain("studio_projects");
     });
 
     it("lists a user's projects newest-first", async () => {

@@ -68,13 +68,19 @@ export class FirestoreStudioProjectStore {
     userId: string,
     limitCount = 50,
   ): Promise<StudioProjectRecord[]> {
+    // Equality-only query on purpose: adding orderBy(updatedAtMs) would
+    // require a composite Firestore index (hit live 2026-07-24). A user's
+    // project count is small, so sort in memory instead of taking an
+    // infra dependency.
     const snapshot = await this.projects
       .where("userId", "==", userId)
-      .orderBy("updatedAtMs", "desc")
-      .limit(limitCount)
+      .limit(500)
       .get();
     if (snapshot.empty) return [];
-    return snapshot.docs.map((doc) => doc.data() as StudioProjectRecord);
+    return snapshot.docs
+      .map((doc) => doc.data() as StudioProjectRecord)
+      .sort((a, b) => b.updatedAtMs - a.updatedAtMs)
+      .slice(0, limitCount);
   }
 
   async updateProject(

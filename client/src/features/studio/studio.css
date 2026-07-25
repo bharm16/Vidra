@@ -651,7 +651,8 @@
 }
 
 .st-plane-cell {
-  height: auto !important;
+  /* height comes from the inline style (computed layout) — an !important
+     height here would beat the inline value and flatten the cells. */
   padding: 0 !important;
   border-radius: 14px !important;
   background: #101116 !important;
