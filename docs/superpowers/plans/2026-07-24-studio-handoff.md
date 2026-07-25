@@ -53,6 +53,7 @@ All M5 items landed; the studio's five planned milestones are complete.
 ## Remaining (post-M5 polish / next session)
 
 - ~~Per-turn Thinking section~~ **DONE post-M5** (`de1197a2`): result decisions carry LLM-written `thinking`, rendered collapsible above results (visible during generation) — reference parity; record gate enforces presence.
+- ~~Realtime thinking streaming + gpt-5.6-luna~~ **DONE post-M5**: studio_turn streams via the aiService seam; ThinkingDeltaScanner (property-tested) lifts thinking chars from the raw JSON; POST /turns is NDJSON (thinking deltas → accepted{turnId,decision}; pre-stream errors stay plain JSON). Model is gpt-5.6-luna (reasoning family): temperature MUST be 1, needs max_completion_tokens (streamComplete gained execute's rename retry), 8k completion budget. Replay suite asserts delta reassembly offline. eslint now ignores .claude/worktrees/** (foreign-worktree pre-commit trap fixed at the root).
 
 - **stylelint**: `studio.css` hardcoded-px violations (live-editor.css too) — tokenize together as polish; commit protocol doesn't gate on stylelint.
 - CLAUDE.md remains uncommitted (pre-dirty; flag-table regen + parallel fix-task) — reconcile before committing; plan's Route→Service map row for studio still to add.
