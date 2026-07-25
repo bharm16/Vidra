@@ -25,6 +25,7 @@ export const StudioDecisionSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("generate"),
+    thinking: z.string().optional(),
     basePrompt: NonEmpty,
     variants: z.tuple([NonEmpty, NonEmpty, NonEmpty, NonEmpty]),
     capability: z.enum(["design", "svg", "general"]),
@@ -34,12 +35,14 @@ export const StudioDecisionSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("edit"),
+    thinking: z.string().optional(),
     instruction: NonEmpty,
     sourceImageIds: z.array(z.string()),
     suggestions: SuggestionsSchema,
   }),
   z.object({
     action: z.literal("transform"),
+    thinking: z.string().optional(),
     operation: z.enum(STUDIO_UTILITY_OPERATIONS),
     sourceImageId: NonEmpty,
     suggestions: SuggestionsSchema,

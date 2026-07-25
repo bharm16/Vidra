@@ -14,6 +14,7 @@ export const Calendar = icon("Calendar");
 export const Check = icon("Check");
 export const CheckCircle = icon("CheckCircle");
 export const ChevronDown = icon("ChevronDown");
+export const ChevronUp = icon("ChevronUp");
 export const Clock = icon("Clock");
 export const Copy = icon("Copy");
 export const CreditCard = icon("CreditCard");

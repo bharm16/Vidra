@@ -460,3 +460,22 @@ export const STUDIO_TURN_SCENARIOS: StudioTurnScenario[] = [
     },
   },
 ];
+
+// Cross-cutting invariant (behavior rule 10): every result-producing
+// decision carries the user-visible `thinking` reasoning. Applied to every
+// scenario so recordings where the model omits it never become fixtures.
+for (const scenario of STUDIO_TURN_SCENARIOS) {
+  const base = scenario.verify;
+  scenario.verify = (decision) => {
+    const violations = base(decision);
+    if (
+      (decision.action === "generate" ||
+        decision.action === "edit" ||
+        decision.action === "transform") &&
+      !decision.thinking?.trim()
+    ) {
+      violations.push("result decision is missing thinking (rule 10)");
+    }
+    return violations;
+  };
+}

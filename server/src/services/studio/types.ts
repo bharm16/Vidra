@@ -143,6 +143,8 @@ export type StudioDecision =
     }
   | {
       action: "generate";
+      /** 1-3 first-person sentences shown above the results (behavior 8). */
+      thinking?: string | undefined;
       basePrompt: string;
       variants: [string, string, string, string];
       capability: Extract<StudioCapability, "design" | "svg" | "general">;
@@ -154,12 +156,14 @@ export type StudioDecision =
     }
   | {
       action: "edit";
+      thinking?: string | undefined;
       instruction: string;
       sourceImageIds: string[];
       suggestions: [string, string, string];
     }
   | {
       action: "transform";
+      thinking?: string | undefined;
       operation: StudioUtilityOperation;
       sourceImageId: string;
       suggestions: [string, string, string];

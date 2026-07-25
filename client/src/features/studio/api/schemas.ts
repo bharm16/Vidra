@@ -44,6 +44,8 @@ export const StudioDecisionSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("generate"),
+    /** LLM reasoning shown above the results (behavior 8). */
+    thinking: z.string().optional(),
     basePrompt: z.string(),
     variants: z.array(z.string()),
     capability: z.string(),
@@ -53,12 +55,14 @@ export const StudioDecisionSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("edit"),
+    thinking: z.string().optional(),
     instruction: z.string(),
     sourceImageIds: z.array(z.string()),
     suggestions: z.array(z.string()),
   }),
   z.object({
     action: z.literal("transform"),
+    thinking: z.string().optional(),
     operation: z.string(),
     sourceImageId: z.string(),
     suggestions: z.array(z.string()),

@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
+import { ChevronUp } from "lucide-react";
+import { cn } from "@/utils/cn";
 import type { StudioTurn } from "../api/schemas";
 import { ResultCard } from "./ResultCard";
 
@@ -8,6 +10,36 @@ import { ResultCard } from "./ResultCard";
  * questions, results, negotiation, and the suggestion pill row directly
  * beneath the batch it belongs to (plan: "Left chat panel — three bands").
  */
+
+/**
+ * The LLM's per-turn reasoning above its results (behavior 8, mirroring
+ * the reference product): expanded by default, collapsible per turn.
+ */
+function ThinkingSection({ text }: { text: string }): React.ReactElement {
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <div className="st-reasoning" data-testid="studio-thinking">
+      <Button
+        variant="ghost"
+        type="button"
+        className="st-reasoning-toggle"
+        aria-expanded={!collapsed}
+        onClick={() => setCollapsed((value) => !value)}
+      >
+        Thinking
+        <ChevronUp
+          size={13}
+          strokeWidth={1.8}
+          className={cn(
+            "st-reasoning-chevron",
+            collapsed && "st-reasoning-chevron-collapsed",
+          )}
+        />
+      </Button>
+      {collapsed ? null : <p className="st-reasoning-text">{text}</p>}
+    </div>
+  );
+}
 
 interface StudioThreadProps {
   turns: StudioTurn[];
@@ -62,7 +94,8 @@ export function StudioThread({
                     <div className="st-card-text">{question.text}</div>
                     <div className="st-pills">
                       {question.quickPicks.map((pick) => (
-                        <Button variant="ghost"
+                        <Button
+                          variant="ghost"
                           key={pick}
                           type="button"
                           className="st-pill"
@@ -83,7 +116,8 @@ export function StudioThread({
                 <div className="st-card-text">{decision.question}</div>
                 <div className="st-pills">
                   {decision.quickPicks.map((pick) => (
-                    <Button variant="ghost"
+                    <Button
+                      variant="ghost"
                       key={pick}
                       type="button"
                       className="st-pill"
@@ -102,7 +136,8 @@ export function StudioThread({
                 <div className="st-card-text">{decision.reason}</div>
                 <div className="st-pills">
                   {decision.options.map((option) => (
-                    <Button variant="ghost"
+                    <Button
+                      variant="ghost"
                       key={option.label}
                       type="button"
                       className="st-pill"
@@ -120,6 +155,9 @@ export function StudioThread({
             decision.action === "edit" ||
             decision.action === "transform" ? (
               <>
+                {decision.thinking ? (
+                  <ThinkingSection text={decision.thinking} />
+                ) : null}
                 {turn.status === "failed" ? (
                   <div className="st-card st-card-error">
                     <div className="st-card-text">
@@ -137,7 +175,8 @@ export function StudioThread({
                 {turn.status !== "running" && turn.status !== "failed" ? (
                   <div className="st-pills st-pills-suggestions">
                     {decision.suggestions.map((suggestion) => (
-                      <Button variant="ghost"
+                      <Button
+                        variant="ghost"
                         key={suggestion}
                         type="button"
                         className="st-pill"
@@ -173,7 +212,12 @@ export function StudioThread({
           role="alert"
         >
           <div className="st-card-text">{error}</div>
-          <Button variant="ghost" type="button" className="st-pill" onClick={onDismissError}>
+          <Button
+            variant="ghost"
+            type="button"
+            className="st-pill"
+            onClick={onDismissError}
+          >
             Dismiss
           </Button>
         </div>
