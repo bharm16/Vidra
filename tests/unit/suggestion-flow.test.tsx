@@ -21,13 +21,6 @@ vi.mock("@features/prompt-optimizer/api/enhancementSuggestionsApi", () => ({
   },
 }));
 
-// Mock useEditHistory
-vi.mock("@features/prompt-optimizer/hooks/useEditHistory", () => ({
-  useEditHistory: () => ({
-    getEditSummary: vi.fn().mockReturnValue([]),
-  }),
-}));
-
 const promptText = "The park is sunny today.";
 const spanContext = [
   {

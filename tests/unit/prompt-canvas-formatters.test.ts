@@ -1,9 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 
-import {
-  formatCategoryLabel,
-  formatTimestamp,
-} from "@features/prompt-optimizer/PromptCanvas/utils/promptCanvasFormatters";
+import { formatTimestamp } from "@features/prompt-optimizer/PromptCanvas/utils/promptCanvasFormatters";
 
 describe("promptCanvasFormatters", () => {
   beforeEach(() => {
@@ -13,12 +10,6 @@ describe("promptCanvasFormatters", () => {
 
   afterEach(() => {
     vi.useRealTimers();
-  });
-
-  it("formats category labels from camelCase and snake_case", () => {
-    expect(formatCategoryLabel("cameraMove")).toBe("Camera Move");
-    expect(formatCategoryLabel("lighting_time")).toBe("Lighting time");
-    expect(formatCategoryLabel(null)).toBe("");
   });
 
   it("formats timestamps relative to now", () => {

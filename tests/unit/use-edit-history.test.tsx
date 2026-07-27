@@ -1,65 +1,77 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { describe, expect, it, beforeEach } from "vitest";
 
-import { useEditHistory } from "@features/prompt-optimizer/hooks/useEditHistory";
+import {
+  clearSpanEditHistory,
+  getRecentSpanEdits,
+  recordSpanEdit,
+} from "@features/prompt-optimizer/hooks/useEditHistory";
 
-describe("useEditHistory", () => {
+describe("span edit history", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
-    vi.spyOn(Math, "random").mockReturnValue(0.123456);
+    clearSpanEditHistory();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-    vi.useRealTimers();
+  it("reads back a recorded edit", () => {
+    recordSpanEdit({
+      original: "wide shot",
+      replacement: "slow push-in",
+      category: "camera",
+    });
+
+    expect(getRecentSpanEdits()).toEqual([
+      expect.objectContaining({
+        original: "wide shot",
+        replacement: "slow push-in",
+        category: "camera",
+        timestamp: expect.any(Number),
+      }),
+    ]);
   });
 
-  it("adds edits and returns recent edits", () => {
-    const { result } = renderHook(() => useEditHistory());
+  it("defaults the category to null when none is supplied", () => {
+    recordSpanEdit({ original: "at dusk", replacement: "at golden hour" });
 
-    act(() => {
-      result.current.addEdit({
-        original: "Old",
-        replacement: "New",
-        category: "style",
-        position: 5,
+    expect(getRecentSpanEdits()[0]?.category).toBeNull();
+  });
+
+  it("ignores no-op edits", () => {
+    recordSpanEdit({ original: "same", replacement: "same" });
+    recordSpanEdit({ original: " same ", replacement: "same" });
+    recordSpanEdit({ original: "", replacement: "slow push-in" });
+    recordSpanEdit({ original: "wide shot", replacement: "" });
+
+    expect(getRecentSpanEdits()).toEqual([]);
+  });
+
+  it("returns the newest edits, oldest first, bounded by count", () => {
+    for (let i = 1; i <= 3; i += 1) {
+      recordSpanEdit({
+        original: `original-${i}`,
+        replacement: `replacement-${i}`,
       });
-    });
+    }
 
-    expect(result.current.editCount).toBe(1);
-    const recent = result.current.getRecentEdits(1);
-    expect(recent[0]?.original).toBe("Old");
-    expect(result.current.hasEdited("new")).toBe(true);
+    expect(getRecentSpanEdits(2).map((edit) => edit.original)).toEqual([
+      "original-2",
+      "original-3",
+    ]);
+    expect(getRecentSpanEdits().map((edit) => edit.original)).toEqual([
+      "original-1",
+      "original-2",
+      "original-3",
+    ]);
   });
 
-  it("skips edits when original and replacement are identical", () => {
-    const { result } = renderHook(() => useEditHistory());
+  it("drops the oldest edits once the session cap is reached", () => {
+    for (let i = 1; i <= 51; i += 1) {
+      recordSpanEdit({
+        original: `original-${i}`,
+        replacement: `replacement-${i}`,
+      });
+    }
 
-    act(() => {
-      result.current.addEdit({ original: "same", replacement: "same" });
-    });
-
-    expect(result.current.editCount).toBe(0);
-  });
-
-  it("supports undo and redo for saved prompt states", () => {
-    const { result } = renderHook(() => useEditHistory());
-
-    act(() => {
-      result.current.saveState("first");
-      result.current.saveState("second");
-    });
-
-    expect(result.current.canUndo).toBe(true);
-
-    act(() => {
-      const undone = result.current.undo();
-      expect(undone?.prompt).toBe("first");
-    });
-    act(() => {
-      const redone = result.current.redo();
-      expect(redone?.prompt).toBe("second");
-    });
+    const recorded = getRecentSpanEdits(100);
+    expect(recorded).toHaveLength(50);
+    expect(recorded[0]?.original).toBe("original-2");
   });
 });

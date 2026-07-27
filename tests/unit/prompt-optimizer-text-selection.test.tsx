@@ -4,7 +4,6 @@ import {
   getSelectionOffsets,
   restoreSelectionFromOffsets,
   selectRange,
-  TextSelectionManager,
 } from "@features/prompt-optimizer/utils/textSelection";
 
 vi.mock("@/services/LoggingService", () => ({
@@ -52,24 +51,6 @@ describe("textSelection utils", () => {
 
     selectRange(range);
 
-    const selection = window.getSelection();
-    expect(selection?.toString()).toBe("Hello");
-  });
-
-  it("TextSelectionManager delegates to helpers", () => {
-    const root = document.createElement("div");
-    root.textContent = "Hello world";
-    document.body.appendChild(root);
-
-    const manager = new TextSelectionManager(root);
-    const range = document.createRange();
-    const textNode = root.firstChild as Text;
-    range.setStart(textNode, 6);
-    range.setEnd(textNode, 11);
-
-    expect(manager.getSelectionOffsets(range)).toEqual({ start: 6, end: 11 });
-
-    manager.restoreSelection(0, 5);
     const selection = window.getSelection();
     expect(selection?.toString()).toBe("Hello");
   });

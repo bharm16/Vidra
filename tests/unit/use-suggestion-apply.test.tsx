@@ -11,7 +11,10 @@ import { renderHook, act } from "@testing-library/react";
 import { useSuggestionApply } from "@features/prompt-optimizer/PromptOptimizerContainer/hooks/useSuggestionApply";
 import { applySuggestionToPrompt } from "@features/prompt-optimizer/utils/applySuggestion";
 import { updateHighlightSnapshotForSuggestion } from "@features/prompt-optimizer/utils/updateHighlightSnapshot";
-import { useEditHistory } from "@features/prompt-optimizer/hooks/useEditHistory";
+import {
+  clearSpanEditHistory,
+  getRecentSpanEdits,
+} from "@features/prompt-optimizer/hooks/useEditHistory";
 import type {
   HighlightSnapshot,
   SuggestionItem,
@@ -35,10 +38,6 @@ vi.mock("@features/prompt-optimizer/utils/updateHighlightSnapshot", () => ({
   updateHighlightSnapshotForSuggestion: vi.fn(),
 }));
 
-vi.mock("@features/prompt-optimizer/hooks/useEditHistory", () => ({
-  useEditHistory: vi.fn(),
-}));
-
 vi.mock("@/services/LoggingService", () => ({
   logger: {
     child: () => logSpies,
@@ -49,39 +48,6 @@ const mockApplySuggestionToPrompt = vi.mocked(applySuggestionToPrompt);
 const mockUpdateHighlightSnapshot = vi.mocked(
   updateHighlightSnapshotForSuggestion,
 );
-const mockUseEditHistory = vi.mocked(useEditHistory);
-
-type EditHistoryReturn = ReturnType<typeof useEditHistory>;
-
-const createEditHistoryReturn = (
-  overrides: Partial<EditHistoryReturn> = {},
-): EditHistoryReturn => ({
-  edits: [],
-  editCount: 0,
-  hasEdits: false,
-  editsByCategory: {},
-  addEdit: vi.fn(),
-  getRecentEdits: vi.fn().mockReturnValue([]),
-  clearHistory: vi.fn(),
-  getEditsByCategory: vi.fn().mockReturnValue([]),
-  hasEdited: vi.fn().mockReturnValue(false),
-  getEditForText: vi.fn().mockReturnValue(null),
-  removeEdit: vi.fn(),
-  getRecentEditsByTime: vi.fn().mockReturnValue([]),
-  getEditSummary: vi.fn().mockReturnValue([]),
-  promptHistory: [],
-  historyIndex: -1,
-  canUndo: false,
-  canRedo: false,
-  saveState: vi.fn(),
-  undo: vi.fn().mockReturnValue(null),
-  redo: vi.fn().mockReturnValue(null),
-  getUndoPreview: vi.fn().mockReturnValue(null),
-  getRedoPreview: vi.fn().mockReturnValue(null),
-  getCurrentState: vi.fn().mockReturnValue(null),
-  clearHistoryStates: vi.fn(),
-  ...overrides,
-});
 
 const createToast = (): Toast => ({
   success: vi.fn(),
@@ -117,7 +83,7 @@ const createSuggestionsData = (): SuggestionsData => ({
 describe("useSuggestionApply", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseEditHistory.mockReturnValue(createEditHistoryReturn());
+    clearSpanEditHistory();
   });
 
   it("returns early when there is no suggestion data", async () => {
@@ -157,9 +123,6 @@ describe("useSuggestionApply", () => {
   });
 
   it("applies a suggestion, updates highlights, and persists output", async () => {
-    const addEdit: MockedFunction<EditHistoryReturn["addEdit"]> = vi.fn();
-    mockUseEditHistory.mockReturnValue(createEditHistoryReturn({ addEdit }));
-
     const setSuggestionsData: MockedFunction<
       (data: SuggestionsData | null) => void
     > = vi.fn();
@@ -242,22 +205,17 @@ describe("useSuggestionApply", () => {
       "doc-1",
       "Hello there",
     );
-    expect(addEdit).toHaveBeenCalledWith(
+    expect(getRecentSpanEdits()).toEqual([
       expect.objectContaining({
         original: "world",
         replacement: "there",
         category: "style",
-        position: 6,
-        confidence: 0.9,
       }),
-    );
+    ]);
     expect(setSuggestionsData).toHaveBeenCalledWith(null);
   });
 
   it("reports failures when suggestion application throws", async () => {
-    const addEdit: MockedFunction<EditHistoryReturn["addEdit"]> = vi.fn();
-    mockUseEditHistory.mockReturnValue(createEditHistoryReturn({ addEdit }));
-
     const setSuggestionsData: MockedFunction<
       (data: SuggestionsData | null) => void
     > = vi.fn();
@@ -294,14 +252,11 @@ describe("useSuggestionApply", () => {
 
     expect(toast.error).toHaveBeenCalledWith("Failed to apply suggestion");
     expect(setSuggestionsData).not.toHaveBeenCalled();
-    expect(addEdit).not.toHaveBeenCalled();
+    expect(getRecentSpanEdits()).toEqual([]);
     expect(logSpies.error).toHaveBeenCalled();
   });
 
   it("notifies when no replacement text is found", async () => {
-    const addEdit: MockedFunction<EditHistoryReturn["addEdit"]> = vi.fn();
-    mockUseEditHistory.mockReturnValue(createEditHistoryReturn({ addEdit }));
-
     const setSuggestionsData: MockedFunction<
       (data: SuggestionsData | null) => void
     > = vi.fn();
@@ -340,6 +295,6 @@ describe("useSuggestionApply", () => {
       "Could not locate text to replace",
     );
     expect(setSuggestionsData).toHaveBeenCalledWith(null);
-    expect(addEdit).not.toHaveBeenCalled();
+    expect(getRecentSpanEdits()).toEqual([]);
   });
 });

@@ -3,7 +3,10 @@ import { renderHook } from "@testing-library/react";
 
 import { useSuggestionApi } from "@features/prompt-optimizer/PromptOptimizerContainer/hooks/useSuggestionApi";
 import { fetchEnhancementSuggestions } from "@features/prompt-optimizer/api/enhancementSuggestionsApi";
-import { useEditHistory } from "@features/prompt-optimizer/hooks/useEditHistory";
+import {
+  clearSpanEditHistory,
+  recordSpanEdit,
+} from "@features/prompt-optimizer/hooks/useEditHistory";
 import { prepareSpanContext } from "@features/span-highlighting/utils/spanProcessing";
 import { CancellationError } from "@features/prompt-optimizer/utils/signalUtils";
 import { PromptContext } from "@utils/PromptContext/PromptContext";
@@ -12,16 +15,11 @@ vi.mock("@features/prompt-optimizer/api/enhancementSuggestionsApi", () => ({
   fetchEnhancementSuggestions: vi.fn(),
 }));
 
-vi.mock("@features/prompt-optimizer/hooks/useEditHistory", () => ({
-  useEditHistory: vi.fn(),
-}));
-
 vi.mock("@features/span-highlighting/utils/spanProcessing", () => ({
   prepareSpanContext: vi.fn(),
 }));
 
 const mockFetchEnhancementSuggestions = vi.mocked(fetchEnhancementSuggestions);
-const mockUseEditHistory = vi.mocked(useEditHistory);
 const mockPrepareSpanContext = vi.mocked(prepareSpanContext);
 
 const suggestionContext = {
@@ -36,9 +34,7 @@ const suggestionContext = {
 describe("useSuggestionApi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseEditHistory.mockReturnValue({
-      getEditSummary: vi.fn().mockReturnValue([{ id: "edit-1" }]),
-    } as unknown as ReturnType<typeof useEditHistory>);
+    clearSpanEditHistory();
     mockPrepareSpanContext.mockReturnValue({
       simplifiedSpans: [{ text: "span-a", role: "style", category: "style" }],
       nearbySpans: [
@@ -155,6 +151,14 @@ describe("useSuggestionApi", () => {
         isPlaceholder: false,
       });
 
+      // Seeded through the real store the apply path writes to, not a mock of
+      // it — the request must carry edits recorded outside this hook.
+      recordSpanEdit({
+        original: "wide shot",
+        replacement: "slow push-in",
+        category: "camera",
+      });
+
       const { result } = renderHook(() =>
         useSuggestionApi({
           promptOptimizer: { inputPrompt: "input" },
@@ -206,7 +210,13 @@ describe("useSuggestionApi", () => {
               category: "style",
             }),
           ],
-          editHistory: [{ id: "edit-1" }],
+          editHistory: [
+            expect.objectContaining({
+              original: "wide shot",
+              replacement: "slow push-in",
+              category: "camera",
+            }),
+          ],
           signal: expect.anything(),
         }),
       );

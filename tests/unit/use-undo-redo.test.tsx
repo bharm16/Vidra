@@ -188,26 +188,4 @@ describe("useUndoRedo", () => {
       { bumpVersion: true, markPersisted: false },
     );
   });
-
-  it("clears history stacks", () => {
-    const params = createDefaults();
-
-    params.undoStackRef.current = [
-      { text: "a", highlight: null, timestamp: 1, version: 0 },
-    ];
-    params.redoStackRef.current = [
-      { text: "b", highlight: null, timestamp: 2, version: 1 },
-    ];
-
-    const { result } = renderHook(() => useUndoRedo(params));
-
-    act(() => {
-      result.current.clearHistory();
-    });
-
-    expect(params.undoStackRef.current).toHaveLength(0);
-    expect(params.redoStackRef.current).toHaveLength(0);
-    expect(params.setCanUndo).toHaveBeenCalledWith(false);
-    expect(params.setCanRedo).toHaveBeenCalledWith(false);
-  });
 });
