@@ -87,17 +87,17 @@ describe("TechStripper", () => {
       expect(result.text).not.toMatch(/\bhdr\b/i);
     });
 
-    it("keeps placebo tokens for kling-26", () => {
+    it("keeps placebo tokens for kling-2.1", () => {
       const result = stripper.strip(
         "4k ultra hd masterpiece cinematic",
-        "kling-26",
+        "kling-2.1",
       );
       expect(result.text).toContain("4k");
       expect(result.text).toContain("masterpiece");
     });
 
-    it("keeps placebo tokens for veo-4", () => {
-      const result = stripper.strip("8k hdr best quality landscape", "veo-4");
+    it("keeps placebo tokens for veo-3", () => {
+      const result = stripper.strip("8k hdr best quality landscape", "veo-3");
       expect(result.text).toContain("8k");
       expect(result.text).toContain("hdr");
     });
@@ -125,7 +125,7 @@ describe("TechStripper", () => {
     it("strips camera specs but keeps placebo tokens for keep-models", () => {
       const result = stripper.strip(
         "f/2.8 ISO 800 4k masterpiece cinematic",
-        "kling-26",
+        "kling-2.1",
       );
       expect(result.text).not.toMatch(/f\/\d/);
       expect(result.text).not.toMatch(/ISO\s*\d/i);
@@ -149,12 +149,18 @@ describe("TechStripper", () => {
     it("returns true for strip-models", () => {
       expect(stripper.shouldStripTokens("runway-gen45")).toBe(true);
       expect(stripper.shouldStripTokens("luma-ray3")).toBe(true);
+      expect(stripper.shouldStripTokens("wan-2.2")).toBe(true);
     });
 
     it("returns false for keep-models", () => {
+      expect(stripper.shouldStripTokens("kling-2.1")).toBe(false);
+      expect(stripper.shouldStripTokens("veo-3")).toBe(false);
+      expect(stripper.shouldStripTokens("sora-2")).toBe(false);
+    });
+
+    it("resolves legacy aliases to the canonical policy", () => {
       expect(stripper.shouldStripTokens("kling-26")).toBe(false);
       expect(stripper.shouldStripTokens("veo-4")).toBe(false);
-      expect(stripper.shouldStripTokens("sora-2")).toBe(false);
     });
 
     it("defaults to strip for unknown models", () => {

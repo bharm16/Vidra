@@ -1,3 +1,4 @@
+import { resolveCanonicalPromptModelId } from "@shared/videoModels";
 import type { ModelPromptStrategy } from "./types";
 import { defaultPromptStrategy } from "./DefaultPromptStrategy";
 import { kling26PromptStrategy } from "./Kling26PromptStrategy";
@@ -19,17 +20,14 @@ const STRATEGIES: ModelPromptStrategy[] = [
 const STRATEGY_MAP = new Map(
   STRATEGIES.map((strategy) => [strategy.modelId, strategy]),
 );
-const LEGACY_MODEL_ALIASES: Record<string, string> = {
-  "kling-26": "kling-2.1",
-  "veo-4": "veo-3",
-};
-
 export const REGISTERED_MODEL_PROMPT_STRATEGY_IDS = STRATEGIES.map(
   (strategy) => strategy.modelId,
 );
 
+// Alias resolution (legacy ids, friendly names, generation-side ids) is owned
+// by `resolveCanonicalPromptModelId`; do not re-declare a local alias map here.
 export const resolveModelPromptStrategy = (
   modelId: string,
 ): ModelPromptStrategy =>
-  STRATEGY_MAP.get(LEGACY_MODEL_ALIASES[modelId] ?? modelId) ??
+  STRATEGY_MAP.get(resolveCanonicalPromptModelId(modelId) ?? modelId) ??
   defaultPromptStrategy;

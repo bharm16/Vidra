@@ -3,12 +3,16 @@
  *
  * Removes tokens that degrade model performance in two tiers:
  * 1. Universal: camera spec tokens (f-stop, ISO) stripped for ALL models
- * 2. Model-aware: placebo quality tokens stripped for Runway/Luma, kept for Kling/Veo
+ * 2. Model-aware: placebo quality tokens stripped for Runway/Luma/Wan, kept for Kling/Veo/Sora
  *
  * @module TechStripper
  */
 
 import { escapeRegex } from "@shared/utils/escapeRegex";
+import {
+  resolveCanonicalPromptModelId,
+  type CanonicalPromptModelId,
+} from "@shared/videoModels";
 
 /**
  * Placebo tokens that may degrade performance on certain models
@@ -49,17 +53,31 @@ const CAMERA_SPEC_PATTERNS: readonly {
   { label: "ISO", source: "\\bISO\\s*\\d+", flags: "gi" },
 ];
 
-/**
- * Models where placebo tokens should be REMOVED
- * These models perform better without resolution/quality boosters
- */
-const STRIP_MODELS = new Set(["runway-gen45", "luma-ray3"]);
+type PlaceboTokenPolicy = "strip" | "keep";
 
 /**
- * Models where placebo tokens should be KEPT as boosters
- * These models may benefit from quality descriptors
+ * Per-model placebo token policy.
+ *
+ * `strip` — the model performs better without resolution/quality boosters.
+ * `keep`  — the model may benefit from quality descriptors.
+ *
+ * Keyed by `CanonicalPromptModelId`, so a pre-migration id (`kling-26`,
+ * `veo-4`) is a compile error here rather than a silent miss that flips the
+ * policy to the default. Adding a canonical model without a policy is also a
+ * compile error.
  */
-const KEEP_MODELS = new Set(["kling-26", "veo-4", "sora-2"]);
+const PLACEBO_TOKEN_POLICY: Record<CanonicalPromptModelId, PlaceboTokenPolicy> =
+  {
+    "runway-gen45": "strip",
+    "luma-ray3": "strip",
+    "wan-2.2": "strip",
+    "kling-2.1": "keep",
+    "veo-3": "keep",
+    "sora-2": "keep",
+  };
+
+/** Safer default: models with no registered policy get their tokens stripped. */
+const DEFAULT_PLACEBO_TOKEN_POLICY: PlaceboTokenPolicy = "strip";
 
 /**
  * Result of TechStripper processing
@@ -78,14 +96,15 @@ export interface TechStripperResult {
  *
  * Two-tier stripping:
  * - Universal: camera specs (f-stop, ISO) are always stripped — no video model uses them
- * - Model-aware: placebo quality tokens (4k, masterpiece) stripped for Runway/Luma, kept for Kling/Veo
+ * - Model-aware: placebo quality tokens (4k, masterpiece) follow `PLACEBO_TOKEN_POLICY`
  */
 export class TechStripper {
   /**
    * Process text to strip technical and placebo tokens
    *
    * @param text - Input text to process
-   * @param modelId - Target model identifier (e.g., "runway-gen45", "kling-26")
+   * @param modelId - Target model identifier; canonical ids and their aliases
+   *   (see `PROMPT_MODEL_ALIASES`) both resolve
    * @returns Processed result with text and metadata
    */
   strip(text: string, modelId: string): TechStripperResult {
@@ -144,33 +163,21 @@ export class TechStripper {
   }
 
   /**
-   * Determine if tokens should be stripped for a given model
+   * Determine if tokens should be stripped for a given model.
+   *
+   * Alias resolution is delegated to `resolveCanonicalPromptModelId` — the
+   * single owner of that mapping — so callers may pass either a canonical id
+   * or any registered alias.
    *
    * @param modelId - Model identifier
    * @returns true if tokens should be stripped, false if kept
    */
   shouldStripTokens(modelId: string): boolean {
-    const normalizedId = modelId.toLowerCase();
-
-    if (STRIP_MODELS.has(normalizedId)) {
-      return true;
-    }
-
-    if (KEEP_MODELS.has(normalizedId)) {
-      return false;
-    }
-
-    // Default: strip tokens for unknown models (safer default)
-    return true;
-  }
-
-  /**
-   * Get list of all placebo tokens
-   *
-   * @returns Array of placebo token strings
-   */
-  getPlaceboTokens(): readonly string[] {
-    return PLACEBO_TOKENS;
+    const canonicalModelId = resolveCanonicalPromptModelId(modelId);
+    const policy = canonicalModelId
+      ? PLACEBO_TOKEN_POLICY[canonicalModelId]
+      : DEFAULT_PLACEBO_TOKEN_POLICY;
+    return policy === "strip";
   }
 
   /**

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { compileWanPrompt } from "../compilePrompt";
+import { compileWanPrompt, COMPILE_TIMEOUT_MS } from "../compilePrompt";
 import { promptOptimizationApiV2 } from "@/services";
 import type { CompileResult } from "@/services/prompt-optimization/types";
 
@@ -61,8 +61,8 @@ describe("compileWanPrompt", () => {
         abortController.signal,
       );
 
-      // Advance timer past the 4000ms timeout
-      await vi.advanceTimersByTimeAsync(4001);
+      // Advance timer past the compile deadline
+      await vi.advanceTimersByTimeAsync(COMPILE_TIMEOUT_MS + 1);
 
       const result = await resultPromise;
       expect(result).toBe("original prompt");
