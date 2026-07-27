@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type {
   ReplayAiModelRequest,
   ReplayImagePreviewRequest,
+  ReplayStudioImageRequest,
 } from "@shared/schemas/replay.schemas";
 
 /**
@@ -36,9 +37,27 @@ export function aiModelRequestKey(request: ReplayAiModelRequest): string {
   return `ai-model:${sha256(stableStringify(request))}`;
 }
 
-/** Cassette key for an image preview provider call. userId is excluded. */
+/**
+ * Cassette key for an image preview provider call. userId is excluded.
+ *
+ * Known gap: the key does not carry the provider id, so two providers given
+ * byte-identical requests would hash to the same key (CassetteStore logs a
+ * duplicate-key warning at load when that happens). Adding the discriminator
+ * changes every existing image-preview key, so it must land together with a
+ * re-record of the first-frame-preview pack.
+ */
 export function imagePreviewRequestKey(
   request: ReplayImagePreviewRequest,
 ): string {
   return `image-preview:${sha256(stableStringify(request))}`;
+}
+
+/**
+ * Cassette key for a studio image run. Keyed on the model plus the registry-
+ * shaped input; userId (identity) and timeoutMs (tuning) are excluded.
+ */
+export function studioImageRequestKey(
+  request: ReplayStudioImageRequest,
+): string {
+  return `studio-image:${sha256(stableStringify(request))}`;
 }

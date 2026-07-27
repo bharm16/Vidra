@@ -1,31 +1,34 @@
 import type {
   ImagePreviewProvider,
+  ImagePreviewProviderId,
   ImagePreviewRequest,
   ImagePreviewResult,
 } from "@services/image-generation/providers/types";
 import type { ReplayImagePreviewRequest } from "@shared/schemas/replay.schemas";
 import type { CassetteStore } from "./CassetteStore";
-import { validateEntryPayload } from "./contracts";
 import { ReplayError } from "./errors";
 import { imagePreviewRequestKey } from "./requestKey";
-import type { ReplayMode } from "./RecordReplayAiService";
+import { ReplaySeam, type ReplayMode } from "./ReplaySeam";
 
 /**
- * Record/replay seam at the image preview provider adapter (Replicate Flux
- * Schnell). Presents the schnell provider id so registry selection and
+ * Record/replay seam at the image preview provider adapter.
+ *
+ * Identity-transparent: `id`, `displayName` and `requiresInputImage` are taken
+ * from the wrapped provider, so the seam can stand in for ANY provider in the
+ * registry (schnell, kontext, or a future addition) and registry selection and
  * fallback-order logic behave exactly as in live mode.
  *
- * In `record` mode it wraps the real provider and captures each result; in
- * `replay` mode it serves recorded results with zero network (Replicate is
+ * In `record` mode it delegates to the real provider and captures each result;
+ * in `replay` mode it serves recorded results with zero network (Replicate is
  * never touched, no API token required).
  */
 export class RecordReplayImagePreviewProvider implements ImagePreviewProvider {
-  readonly id = "replicate-flux-schnell" as const;
-  readonly displayName = "Flux Schnell (record/replay seam)";
+  readonly id: ImagePreviewProviderId;
+  readonly displayName: string;
+  readonly requiresInputImage: boolean;
 
-  private readonly mode: ReplayMode;
-  private readonly store: CassetteStore;
-  private readonly inner: ImagePreviewProvider | null;
+  private readonly inner: ImagePreviewProvider;
+  private readonly seam: ReplaySeam<"image-preview">;
 
   constructor({
     mode,
@@ -34,21 +37,29 @@ export class RecordReplayImagePreviewProvider implements ImagePreviewProvider {
   }: {
     mode: ReplayMode;
     store: CassetteStore;
-    inner?: ImagePreviewProvider;
+    inner: ImagePreviewProvider;
   }) {
-    this.mode = mode;
-    this.store = store;
-    this.inner = inner ?? null;
-    if (mode === "record" && !this.inner) {
+    this.id = inner.id;
+    this.displayName = `${inner.displayName} (record/replay seam)`;
+    this.requiresInputImage = inner.requiresInputImage ?? false;
+    this.inner = inner;
+    this.seam = new ReplaySeam({
+      seam: "image-preview",
+      mode,
+      store,
+      keyOf: imagePreviewRequestKey,
+    });
+
+    if (mode === "record" && !inner.isAvailable()) {
       throw new ReplayError(
-        "RecordReplayImagePreviewProvider needs the real provider to record " +
-          "(REPLICATE_API_TOKEN missing?)",
+        `RecordReplayImagePreviewProvider needs an available ${inner.id} ` +
+          `provider to record (REPLICATE_API_TOKEN missing?)`,
       );
     }
   }
 
   isAvailable(): boolean {
-    return this.mode === "replay" ? true : (this.inner?.isAvailable() ?? false);
+    return this.seam.isReplaying ? true : this.inner.isAvailable();
   }
 
   async generatePreview(
@@ -62,36 +73,14 @@ export class RecordReplayImagePreviewProvider implements ImagePreviewProvider {
       seed: request.seed ?? null,
       speedMode: request.speedMode ?? null,
     };
-    const key = imagePreviewRequestKey(replayRequest);
 
-    if (this.mode === "replay") {
-      const entry = this.store.lookupOrThrow(
-        key,
-        `image preview for prompt "${request.prompt.slice(0, 80)}"`,
-      );
-      if (entry.seam !== "image-preview") {
-        throw new ReplayError(
-          `Replay entry for key ${key} is not an image-preview recording`,
-        );
-      }
-      validateEntryPayload(entry, {
-        surface: "replay-lookup",
-        scenario: "image-preview",
-      });
-      return structuredClone(entry.response) as ImagePreviewResult;
-    }
-
-    if (!this.inner) {
-      throw new ReplayError("Record mode requires the real image provider");
-    }
-    const result = await this.inner.generatePreview(request);
-    this.store.record({
-      seam: "image-preview",
-      key,
-      contract: "image-preview-result",
+    return this.seam.through({
       request: replayRequest,
-      response: { ...result },
+      summary: `image preview (${this.id}) for prompt "${request.prompt.slice(0, 80)}"`,
+      scenario: "image-preview",
+      contract: "image-preview-result",
+      live: () => this.inner.generatePreview(request),
+      toRecorded: (result) => ({ ...result }),
     });
-    return result;
   }
 }

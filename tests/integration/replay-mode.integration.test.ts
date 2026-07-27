@@ -157,6 +157,43 @@ describe("Replay mode (integration)", () => {
     );
   });
 
+  it("wraps EVERY registered image preview provider in the replay seam", async () => {
+    // The kontext provider used to be registered unwrapped, so the client's
+    // img2img path (first frame → motion) reached Replicate live even under
+    // REPLAY_MODE=replay. Iterating the registration list — not naming one
+    // provider — is what keeps a future provider from escaping by omission.
+    const { IMAGE_PREVIEW_PROVIDER_TOKENS } = await import(
+      "@config/services/image-generation.services"
+    );
+    const { RecordReplayImagePreviewProvider } = await import(
+      "@server/replay/RecordReplayImagePreviewProvider"
+    );
+
+    expect(IMAGE_PREVIEW_PROVIDER_TOKENS.length).toBeGreaterThan(1);
+    for (const token of IMAGE_PREVIEW_PROVIDER_TOKENS) {
+      const provider = container?.resolve(token);
+      expect(
+        provider,
+        `${token} must be replay-wrapped in REPLAY_MODE=replay`,
+      ).toBeInstanceOf(RecordReplayImagePreviewProvider);
+    }
+
+    // Identity transparency: the seam must present the wrapped provider's own
+    // id and img2img requirement, or registry selection silently changes.
+    const kontext = container?.resolve("replicateFluxKontextFastProvider") as {
+      id: string;
+      requiresInputImage?: boolean;
+    };
+    expect(kontext.id).toBe("replicate-flux-kontext-fast");
+    expect(kontext.requiresInputImage).toBe(true);
+    const schnell = container?.resolve("replicateFluxSchnellProvider") as {
+      id: string;
+      requiresInputImage?: boolean;
+    };
+    expect(schnell.id).toBe("replicate-flux-schnell");
+    expect(schnell.requiresInputImage).toBe(false);
+  });
+
   it("first-frame preview replays at the provider seam without Replicate", async () => {
     // The preview HTTP route additionally needs Firestore credits + GCS
     // persistence (documented in docs/architecture/replay-mode.md); the

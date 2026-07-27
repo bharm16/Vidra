@@ -231,6 +231,12 @@ export function registerLLMServices(container: DIContainer): void {
             mode: flags.replayMode,
             store: replayCassetteStore,
             ...(telemetry ? { llmCallTelemetry: telemetry } : {}),
+            // Failover must be identical to production while recording —
+            // otherwise cassettes capture a different execution path than
+            // the one they are meant to stand in for.
+            ...(llmProviderCircuitManager
+              ? { providerCircuit: llmProviderCircuitManager }
+              : {}),
           });
         }
       }

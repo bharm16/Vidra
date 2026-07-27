@@ -21,6 +21,7 @@ export const REPLAY_SURFACES = [
   "label-spans",
   "suggestions",
   "optimize",
+  "optimize-compile",
   "first-frame-preview",
   "studio-turn",
 ] as const;
@@ -39,6 +40,7 @@ export const REPLAY_CONTRACT_NAMES = [
   "suggestions-payload",
   "optimize-text",
   "image-preview-result",
+  "studio-image-result",
   "llm-text",
 ] as const;
 
@@ -93,6 +95,14 @@ export const ImagePreviewResultReplayPayloadSchema = z
   })
   .passthrough();
 
+/** Mirrors StudioImageCallResult from the studio image runner seam. */
+export const StudioImageResultReplayPayloadSchema = z
+  .object({
+    imageUrl: z.string().min(1),
+    durationMs: z.number().min(0),
+  })
+  .passthrough();
+
 /** Default contract for operations without a dedicated payload schema. */
 export const LlmTextReplayPayloadSchema = z.string().min(1);
 
@@ -126,6 +136,10 @@ export const REPLAY_CONTRACTS: Record<ReplayContractName, ReplayContract> = {
     encoding: "object",
     schema: ImagePreviewResultReplayPayloadSchema,
   },
+  "studio-image-result": {
+    encoding: "object",
+    schema: StudioImageResultReplayPayloadSchema,
+  },
   "llm-text": { encoding: "text", schema: LlmTextReplayPayloadSchema },
 };
 
@@ -151,6 +165,15 @@ export type ReplayImagePreviewRequest = z.infer<
   typeof ReplayImagePreviewRequestSchema
 >;
 
+/** Studio image run: the model and the per-model input the registry shaped. */
+const ReplayStudioImageRequestSchema = z.object({
+  model: z.string().min(1),
+  input: z.record(z.string(), z.unknown()),
+});
+export type ReplayStudioImageRequest = z.infer<
+  typeof ReplayStudioImageRequestSchema
+>;
+
 /** Recorded AIResponse (text + provider metadata, structure-preserving). */
 const RecordedAiResponseSchema = z
   .object({
@@ -173,6 +196,13 @@ export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
     contract: ReplayContractNameSchema,
     request: ReplayImagePreviewRequestSchema,
     response: ImagePreviewResultReplayPayloadSchema,
+  }),
+  z.object({
+    seam: z.literal("studio-image"),
+    key: z.string().min(1),
+    contract: ReplayContractNameSchema,
+    request: ReplayStudioImageRequestSchema,
+    response: StudioImageResultReplayPayloadSchema,
   }),
 ]);
 

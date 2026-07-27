@@ -17,6 +17,53 @@ import { RecordReplayImagePreviewProvider } from "@server/replay/RecordReplayIma
 import { resolveAllFlags } from "../feature-flags.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
 
+/**
+ * Every image preview provider registration that feeds ImageGenerationService.
+ * A provider missing from this list never reaches the service; a provider in
+ * it is replay-wrapped by `throughReplaySeam` below, so no provider can escape
+ * the seam by omission.
+ */
+export const IMAGE_PREVIEW_PROVIDER_TOKENS = [
+  "replicateFluxSchnellProvider",
+  "replicateFluxKontextFastProvider",
+] as const;
+
+/**
+ * Single gateway for every image preview provider registration: wraps the
+ * provider in the record/replay seam whenever REPLAY_MODE is active, and
+ * returns null (with the usual warning) when the live provider has no token.
+ */
+function throughReplaySeam(
+  provider: ImagePreviewProvider,
+  replayCassetteStore: CassetteStore | null,
+): ImagePreviewProvider | null {
+  if (replayCassetteStore) {
+    const { flags } = resolveAllFlags(process.env);
+    if (flags.replayMode === "replay") {
+      return new RecordReplayImagePreviewProvider({
+        mode: "replay",
+        store: replayCassetteStore,
+        inner: provider,
+      });
+    }
+    if (flags.replayMode === "record" && provider.isAvailable()) {
+      return new RecordReplayImagePreviewProvider({
+        mode: "record",
+        store: replayCassetteStore,
+        inner: provider,
+      });
+    }
+  }
+
+  if (!provider.isAvailable()) {
+    logger.warn("REPLICATE_API_TOKEN not provided, image provider disabled", {
+      provider: provider.id,
+    });
+    return null;
+  }
+  return provider;
+}
+
 export function registerImageGenerationServices(container: DIContainer): void {
   container.register(
     "storyboardFramePlanner",
@@ -42,63 +89,37 @@ export function registerImageGenerationServices(container: DIContainer): void {
 
   container.register(
     "replicateFluxSchnellProvider",
-    (config: ServiceConfig, replayCassetteStore: CassetteStore | null) => {
-      const apiToken = config.replicate.apiToken;
-      const liveProvider = apiToken
-        ? new ReplicateFluxSchnellProvider({
-            apiToken,
-          })
-        : null;
-
-      if (replayCassetteStore) {
-        const { flags } = resolveAllFlags(process.env);
-        if (flags.replayMode === "replay") {
-          return new RecordReplayImagePreviewProvider({
-            mode: "replay",
-            store: replayCassetteStore,
-          });
-        }
-        if (flags.replayMode === "record" && liveProvider) {
-          return new RecordReplayImagePreviewProvider({
-            mode: "record",
-            store: replayCassetteStore,
-            inner: liveProvider,
-          });
-        }
-      }
-
-      if (!liveProvider) {
-        logger.warn(
-          "REPLICATE_API_TOKEN not provided, Replicate image provider disabled",
-        );
-      }
-      return liveProvider;
-    },
+    (config: ServiceConfig, replayCassetteStore: CassetteStore | null) =>
+      throughReplaySeam(
+        new ReplicateFluxSchnellProvider({
+          ...(config.replicate.apiToken
+            ? { apiToken: config.replicate.apiToken }
+            : {}),
+        }),
+        replayCassetteStore,
+      ),
     ["config", "replayCassetteStore"],
   );
 
   container.register(
     "replicateFluxKontextFastProvider",
-    (config: ServiceConfig) => {
-      const apiToken = config.replicate.apiToken;
-      if (!apiToken) {
-        logger.warn(
-          "REPLICATE_API_TOKEN not provided, Replicate image provider disabled",
-        );
-        return null;
-      }
-      return new ReplicateFluxKontextFastProvider({
-        apiToken,
-      });
-    },
-    ["config"],
+    (config: ServiceConfig, replayCassetteStore: CassetteStore | null) =>
+      throughReplaySeam(
+        new ReplicateFluxKontextFastProvider({
+          ...(config.replicate.apiToken
+            ? { apiToken: config.replicate.apiToken }
+            : {}),
+        }),
+        replayCassetteStore,
+      ),
+    ["config", "replayCassetteStore"],
   );
 
   container.register(
     "imageGenerationService",
     (
       replicateProvider: ImagePreviewProvider | null,
-      kontextProvider: ReplicateFluxKontextFastProvider | null,
+      kontextProvider: ImagePreviewProvider | null,
       imageAssetStore: ImageAssetStore,
       config: ServiceConfig,
     ) => {
@@ -139,12 +160,7 @@ export function registerImageGenerationServices(container: DIContainer): void {
         fallbackOrder,
       });
     },
-    [
-      "replicateFluxSchnellProvider",
-      "replicateFluxKontextFastProvider",
-      "imageAssetStore",
-      "config",
-    ],
+    [...IMAGE_PREVIEW_PROVIDER_TOKENS, "imageAssetStore", "config"],
   );
 
   container.register(

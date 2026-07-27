@@ -5,42 +5,57 @@ import type {
   ExecuteParams,
   StreamParams,
 } from "@services/ai-model/types";
+import type { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
 import type { ReplayAiModelRequest } from "@shared/schemas/replay.schemas";
 import type { CassetteStore } from "./CassetteStore";
-import { contractForOperation, validateEntryPayload } from "./contracts";
+import { contractForOperation } from "./contracts";
 import { aiModelRequestKey } from "./requestKey";
+import { ReplaySeam, type ReplayMode } from "./ReplaySeam";
 
-export type ReplayMode = "record" | "replay";
+export type { ReplayMode } from "./ReplaySeam";
 
 /**
  * Record/replay seam at the aiService boundary.
  *
  * Subclasses the router so every DI consumer keeps its `AIModelService`
  * dependency untouched. In `record` mode calls pass through to the real
- * provider clients and the request/response pair is captured into the
- * cassette store (contract-validated on capture). In `replay` mode the
- * recorded response is served with zero network — a miss or a contract
- * violation throws loudly instead of degrading.
+ * provider clients — including the health-based failover circuit, so the
+ * captured execution path is the production one — and the request/response
+ * pair is captured into the cassette store (contract-validated on capture).
+ * In `replay` mode the recorded response is served with zero network; a miss
+ * or a contract violation throws loudly instead of degrading.
+ *
+ * Hazard: subclassing means a constructor parameter added to `AIModelService`
+ * is silently dropped here unless it is also accepted and forwarded below.
  */
 export class RecordReplayAiService extends AIModelService {
-  private readonly mode: ReplayMode;
-  private readonly store: CassetteStore;
+  private readonly seam: ReplaySeam<"ai-model">;
 
   constructor({
     clients,
     llmCallTelemetry,
+    providerCircuit,
     mode,
     store,
   }: {
     clients: ClientsMap;
     llmCallTelemetry?: LlmCallTelemetryService;
+    providerCircuit?: LlmProviderCircuitManager;
     mode: ReplayMode;
     store: CassetteStore;
   }) {
-    super({ clients, ...(llmCallTelemetry ? { llmCallTelemetry } : {}) });
-    this.mode = mode;
-    this.store = store;
+    super({
+      clients,
+      ...(llmCallTelemetry ? { llmCallTelemetry } : {}),
+      ...(providerCircuit ? { providerCircuit } : {}),
+    });
+    this.seam = new ReplaySeam({
+      seam: "ai-model",
+      mode,
+      store,
+      keyOf: aiModelRequestKey,
+    });
   }
 
   override async execute(
@@ -48,17 +63,18 @@ export class RecordReplayAiService extends AIModelService {
     params: ExecuteParams,
   ): Promise<AIResponse> {
     const request = this.toRequest(operation, params, false);
-
-    if (this.mode === "replay") {
-      return this.replayResponse(request);
-    }
-
-    const response = await super.execute(operation, params);
-    this.recordResponse(request, {
-      text: response.text,
-      metadata: (response.metadata ?? {}) as Record<string, unknown>,
+    const response = await this.seam.through({
+      request,
+      summary: `aiService operation "${operation}" (stream=false)`,
+      scenario: operation,
+      contract: contractForOperation(operation),
+      live: () => super.execute(operation, params),
+      toRecorded: (live) => ({
+        text: live.text,
+        metadata: (live.metadata ?? {}) as Record<string, unknown>,
+      }),
     });
-    return response;
+    return response as AIResponse;
   }
 
   override async stream(
@@ -76,25 +92,26 @@ export class RecordReplayAiService extends AIModelService {
       },
       true,
     );
-
-    if (this.mode === "replay") {
-      const response = await this.replayResponse(request);
-      // Deterministic single-chunk replay of the recorded stream.
-      params.onChunk(response.text);
-      return response.text;
-    }
-
-    const text = await super.stream(operation, params);
-    this.recordResponse(request, {
-      text,
-      metadata: { recordedFrom: "stream" },
+    const response = await this.seam.through({
+      request,
+      summary: `aiService operation "${operation}" (stream=true)`,
+      scenario: operation,
+      contract: contractForOperation(operation),
+      live: async () => super.stream(operation, params),
+      toRecorded: (text) => ({ text, metadata: { recordedFrom: "stream" } }),
     });
-    return text;
+
+    if (typeof response === "string") {
+      return response;
+    }
+    // Deterministic single-chunk replay of the recorded stream.
+    params.onChunk(response.text);
+    return response.text;
   }
 
   /** Streaming is always available in replay mode — no live client needed. */
   override supportsStreaming(operation: string): boolean {
-    if (this.mode === "replay") {
+    if (this.seam.isReplaying) {
       return true;
     }
     return super.supportsStreaming(operation);
@@ -116,39 +133,5 @@ export class RecordReplayAiService extends AIModelService {
       messages: params.messages ?? null,
       stream,
     };
-  }
-
-  private async replayResponse(
-    request: ReplayAiModelRequest,
-  ): Promise<AIResponse> {
-    const key = aiModelRequestKey(request);
-    const entry = this.store.lookupOrThrow(
-      key,
-      `aiService operation "${request.operation}" (stream=${String(request.stream)})`,
-    );
-    if (entry.seam !== "ai-model") {
-      throw new Error(
-        `Replay entry for key ${key} is not an ai-model recording`,
-      );
-    }
-    // Replay-time contract validation: drifted contracts fail loudly here.
-    validateEntryPayload(entry, {
-      surface: "replay-lookup",
-      scenario: request.operation,
-    });
-    return structuredClone(entry.response) as AIResponse;
-  }
-
-  private recordResponse(
-    request: ReplayAiModelRequest,
-    response: { text: string; metadata: Record<string, unknown> },
-  ): void {
-    this.store.record({
-      seam: "ai-model",
-      key: aiModelRequestKey(request),
-      contract: contractForOperation(request.operation),
-      request,
-      response,
-    });
   }
 }

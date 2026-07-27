@@ -11,8 +11,33 @@ import {
   StudioService,
   type StudioImageStorage,
 } from "@services/studio/StudioService";
+import type { CassetteStore } from "@server/replay/CassetteStore";
+import { RecordReplayStudioImageRunner } from "@server/replay/RecordReplayStudioImageRunner";
 import { resolveAllFlags } from "../feature-flags.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
+
+/**
+ * Studio's image run is a recorded surface too: the policy decision goes
+ * through the seamed aiService, so the run that spends the money must not
+ * bypass the seam.
+ */
+function throughReplaySeam(
+  runner: ReplicateStudioImageRunner,
+  replayCassetteStore: CassetteStore | null,
+): ReplicateStudioImageRunner {
+  if (!replayCassetteStore) {
+    return runner;
+  }
+  const { flags } = resolveAllFlags(process.env);
+  if (flags.replayMode === "off") {
+    return runner;
+  }
+  return new RecordReplayStudioImageRunner({
+    mode: flags.replayMode,
+    store: replayCassetteStore,
+    inner: runner,
+  });
+}
 
 export function registerStudioServices(container: DIContainer): void {
   container.register(
@@ -21,6 +46,7 @@ export function registerStudioServices(container: DIContainer): void {
       config: ServiceConfig,
       storageService: StudioImageStorage | null,
       aiService: StudioAIService | null,
+      replayCassetteStore: CassetteStore | null,
     ) => {
       const { flags } = resolveAllFlags(process.env);
       if (!flags.studio) {
@@ -45,7 +71,10 @@ export function registerStudioServices(container: DIContainer): void {
       return new StudioService({
         store: new FirestoreStudioProjectStore(),
         registry: new StudioModelRegistry(),
-        runner: new ReplicateStudioImageRunner({ apiToken }),
+        runner: throughReplaySeam(
+          new ReplicateStudioImageRunner({ apiToken }),
+          replayCassetteStore,
+        ),
         storage: storageService,
         policy: new StudioPolicyEngine({ ai: aiService }),
         // Boot-validated (env.ts studioSchema) and centrally parsed
@@ -53,6 +82,6 @@ export function registerStudioServices(container: DIContainer): void {
         dailyCapCents: config.studio.dailyCapCents,
       });
     },
-    ["config", "storageService", "aiService"],
+    ["config", "storageService", "aiService", "replayCassetteStore"],
   );
 }
