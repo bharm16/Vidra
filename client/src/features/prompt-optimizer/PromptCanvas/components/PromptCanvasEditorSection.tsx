@@ -21,11 +21,7 @@ import { LoadingDots } from "@components/LoadingDots";
 import { cn } from "@/utils/cn";
 import { TriggerAutocomplete } from "@features/assets/components/TriggerAutocomplete";
 import { PromptEditor } from "@features/prompt-optimizer/components/PromptEditor";
-import { useI2VContext } from "@features/prompt-optimizer/hooks/useI2VContext";
-import {
-  usePromptResultsActions,
-  usePromptResultsData,
-} from "@features/prompt-optimizer/context/PromptResultsActionsContext";
+import { usePromptResultsData } from "@features/prompt-optimizer/context/PromptResultsActionsContext";
 import type { PromptCanvasViewProps } from "./PromptCanvasView.types";
 import { PromptCanvasSuggestionsPanel } from "./PromptCanvasSuggestionsPanel";
 import { CanvasButton } from "./PromptCanvasView.shared";
@@ -132,7 +128,11 @@ export function PromptCanvasEditorSection({
   onLockButtonMouseLeave,
   isHoveredLocked,
 }: PromptCanvasEditorSectionProps): React.ReactElement {
-  const { isI2VMode } = useI2VContext();
+  // Read the published i2v context rather than calling useI2VContext again —
+  // that hook owns an observation request, so a second instance would POST the
+  // same start frame twice.
+  const { i2vContext } = usePromptResultsData();
+  const isI2VMode = Boolean(i2vContext?.isI2VMode);
 
   return (
     <div

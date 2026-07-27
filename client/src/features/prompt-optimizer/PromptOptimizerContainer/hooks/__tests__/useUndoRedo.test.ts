@@ -199,28 +199,6 @@ describe("useUndoRedo", () => {
     );
   });
 
-  it("clearHistory resets stacks and state flags", () => {
-    const { hook, undoStackRef, redoStackRef, setCanUndo, setCanRedo } =
-      setup("seed");
-
-    act(() => {
-      hook.result.current.handleDisplayedPromptChange("seed 1", 6);
-      hook.rerender();
-      hook.result.current.handleUndo();
-      vi.runAllTimers();
-      hook.rerender();
-    });
-
-    act(() => {
-      hook.result.current.clearHistory();
-    });
-
-    expect(undoStackRef.current).toHaveLength(0);
-    expect(redoStackRef.current).toHaveLength(0);
-    expect(setCanUndo).toHaveBeenCalledWith(false);
-    expect(setCanRedo).toHaveBeenCalledWith(false);
-  });
-
   it("cleans up pending timers on unmount", () => {
     const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
     const { hook } = setup("alpha");

@@ -4,7 +4,7 @@ import type { PromptOptimizer } from "@features/prompt-optimizer/context/types";
 import type { SuggestionsData } from "@features/prompt-optimizer/PromptCanvas/types";
 import type { SuggestionContextResult } from "@features/prompt-optimizer/utils/enhancementSuggestionContext";
 import { fetchEnhancementSuggestions } from "@features/prompt-optimizer/api/enhancementSuggestionsApi";
-import { useEditHistory } from "@features/prompt-optimizer/hooks/useEditHistory";
+import { getRecentSpanEdits } from "@features/prompt-optimizer/hooks/useEditHistory";
 import { SuggestionRequestManager } from "@features/prompt-optimizer/utils/SuggestionRequestManager";
 import { prepareSpanContext } from "@features/span-highlighting/utils/spanProcessing";
 import type { RawEnhancementSuggestionsResponse } from "./useSuggestionCache";
@@ -39,7 +39,6 @@ export function useSuggestionApi({
   cancelCurrentRequest: () => void;
   isRequestInFlight: (dedupKey: string) => boolean;
 } {
-  const { getEditSummary } = useEditHistory();
   const requestManagerRef = useRef<SuggestionRequestManager>(
     new SuggestionRequestManager(REQUEST_CONFIG),
   );
@@ -67,7 +66,7 @@ export function useSuggestionApi({
         const spanContext = prepareSpanContext(metadata, allLabeledSpans);
         const { simplifiedSpans, nearbySpans } = spanContext;
 
-        const editHistory = getEditSummary(10);
+        const editHistory = getRecentSpanEdits(10);
 
         return fetchEnhancementSuggestions({
           highlightedText: normalizedHighlight,
@@ -83,7 +82,7 @@ export function useSuggestionApi({
           signal,
         });
       }),
-    [getEditSummary, promptOptimizer.inputPrompt, stablePromptContext],
+    [promptOptimizer.inputPrompt, stablePromptContext],
   );
 
   const cancelCurrentRequest = useCallback(() => {

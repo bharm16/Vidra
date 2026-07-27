@@ -13,7 +13,7 @@ import { useCallback, type MutableRefObject } from "react";
 import { applySuggestionToPrompt } from "@features/prompt-optimizer/utils/applySuggestion";
 import { updateHighlightSnapshotForSuggestion } from "@features/prompt-optimizer/utils/updateHighlightSnapshot";
 import { updateSpanListForSuggestion } from "@features/prompt-optimizer/utils/updateSpanListForSuggestion";
-import { useEditHistory } from "@features/prompt-optimizer/hooks/useEditHistory";
+import { recordSpanEdit } from "@features/prompt-optimizer/hooks/useEditHistory";
 import type { Toast } from "@hooks/types";
 import type {
   HighlightSnapshot,
@@ -73,8 +73,6 @@ export function useSuggestionApply({
   handleSuggestionClick: (suggestion: SuggestionItem | string) => Promise<void>;
 } {
   const updateEntryOutput = promptHistory.updateEntryOutput;
-  // Initialize edit history tracking
-  const { addEdit } = useEditHistory();
 
   /**
    * Handle suggestion click - apply suggestion to prompt
@@ -217,13 +215,10 @@ export function useSuggestionApply({
           }
 
           // Track this edit in history
-          addEdit({
+          recordSpanEdit({
             original: selectedText,
             replacement: suggestionText,
             category: metadata?.category || metadata?.span?.category || null,
-            position: offsets?.start || null,
-            confidence:
-              metadata?.confidence || metadata?.span?.confidence || null,
           });
 
           // Persist the updated prompt to database/storage
@@ -270,7 +265,6 @@ export function useSuggestionApply({
       applyInitialHighlightSnapshot,
       latestHighlightRef,
       toast,
-      addEdit,
       currentPromptUuid,
       currentPromptDocId,
       updateEntryOutput,

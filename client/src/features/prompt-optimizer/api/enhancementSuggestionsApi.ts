@@ -91,12 +91,10 @@ export async function fetchEnhancementSuggestions({
 
     timeout.clear();
 
-    return {
-      suggestions: data.suggestions || [],
-      isPlaceholder: data.isPlaceholder || false,
-      ...(data.metadata ? { metadata: data.metadata } : {}),
-      ...(data._debug ? { _debug: data._debug } : {}),
-    };
+    // Forward the parsed response as-is. Rebuilding it field-by-field here
+    // silently dropped fields the wire schema already validates (it lost
+    // `spanFingerprint`, which made the server-fingerprint cache path dead).
+    return data;
   } catch (error: unknown) {
     timeout.clear();
     timeout.throwOnAbort(error);

@@ -57,6 +57,11 @@ interface UseVersionManagementOptions {
     snapshot: HighlightSnapshot | null,
     options: { bumpVersion: boolean; markPersisted: boolean },
   ) => void;
+  /**
+   * Accepted but never invoked: selecting a take is browsing, and browsing must
+   * not clear the creator's undo/redo history. Retained only so the existing
+   * caller keeps type-checking; safe to drop from both sides in one change.
+   */
   resetEditStacks: () => void;
   setDisplayedPromptSilently: (text: string) => void;
   latestHighlightRef: MutableRefObject<HighlightSnapshot | null>;
@@ -105,7 +110,6 @@ export function useVersionManagement({
   serializedKeyframes,
   promptOptimizer,
   applyInitialHighlightSnapshot,
-  resetEditStacks,
   setDisplayedPromptSilently,
   latestHighlightRef,
   versionEditCountRef,
@@ -274,14 +278,16 @@ export function useVersionManagement({
         bumpVersion: true,
         markPersisted: false,
       });
-      resetEditStacks();
+      // Deliberately does NOT reset the undo/redo stacks. Selecting a take is
+      // browsing, and browsing is read-only (CLAUDE.md UX rule 1) — moving
+      // between takes must not cost the creator their edit history. Only an
+      // explicit, labelled restore may clear the stacks.
       resetVersionEdits();
     },
     [
       applyInitialHighlightSnapshot,
       currentVersions,
       orderedVersions,
-      resetEditStacks,
       resetVersionEdits,
       setOptimizedPrompt,
       setActiveVersionId,
