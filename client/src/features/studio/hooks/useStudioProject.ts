@@ -13,18 +13,14 @@ import {
   getStudioTurn,
   listStudioProjects,
   listStudioTurns,
-  registerStudioAttachment,
   runStudioTurn,
   updateStudioProject,
+  uploadStudioAttachment,
 } from "../api/studioApi";
-import { storageApi } from "@/api/storageApi";
-import type {
-  StudioModelSlug,
-  StudioProject,
-  StudioTurn,
-} from "../api/schemas";
+import type { StudioProject, StudioTurn } from "../api/schemas";
 import {
   initialStudioState,
+  isTurnInFlight,
   studioReducer,
   type StudioAction,
   type StudioState,
@@ -39,7 +35,8 @@ export interface UseStudioProjectReturn {
   newProject: () => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
   renameProject: (title: string) => Promise<void>;
-  pinModel: (slug: StudioModelSlug | null) => Promise<void>;
+  /** A roster slug, or null for Auto. The server owns the roster. */
+  pinModel: (slug: string | null) => Promise<void>;
   selectImage: (imageId: string | null) => void;
   deleteProject: (projectId: string) => Promise<void>;
   /** S-12: upload + stage a reference image on the composer. */
@@ -53,34 +50,63 @@ function describeError(error: unknown): string {
 
 export function useStudioProject(): UseStudioProjectReturn {
   const [state, dispatch] = useReducer(studioReducer, initialStudioState);
-  // Read by the poll interval without re-arming it.
+  // Which project is open, readable synchronously: the poll interval reads
+  // it without re-arming, and the settle guards below read it to tell their
+  // own project from an abandoned one. A dispatch is invisible to already-
+  // running async code until React re-renders, so every transition that
+  // changes the open project also writes this ref at the same moment.
   const projectIdRef = useRef<string | null>(null);
   projectIdRef.current = state.project?.id ?? null;
   const pendingAttachmentIdsRef = useRef<string[]>([]);
   pendingAttachmentIdsRef.current = state.pendingAttachments.map(
     (attachment) => attachment.id,
   );
+  // One definition of "a turn is in flight" (studioReducer owns it), read
+  // by sendMessage's concurrency guard. Latched synchronously on send so
+  // two clicks in the same tick cannot both start a turn.
+  const turnInFlightRef = useRef(false);
+  turnInFlightRef.current = isTurnInFlight(state);
 
-  // Bootstrap: roster + project list; open the most recent project. An
-  // empty account stays projectless — the project is created lazily on the
-  // first send (StrictMode's double-mounted effect used to create two
-  // "Untitled" projects here; bootstrap now makes no writes at all).
+  /**
+   * Every async settle is addressed to the project it was issued for. A
+   * project switch mid-flight makes the result stale, and mergeTurn
+   * appends unknown ids by design — so an unguarded dispatch drops the old
+   * project's turn into the newly-opened thread.
+   */
+  const isCurrentProject = useCallback(
+    (projectId: string): boolean => projectIdRef.current === projectId,
+    [],
+  );
+
+  // Bootstrap: the roster and the project list settle INDEPENDENTLY. Fused
+  // (one Promise.all, one action) a failing /models cost the Creator their
+  // entire thread history; the composer already degrades to Auto on an
+  // empty roster. An empty account stays projectless — the project is
+  // created lazily on the first send (StrictMode's double-mounted effect
+  // used to create two "Untitled" projects here; bootstrap makes no
+  // writes at all).
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const [projects, models] = await Promise.all([
-          listStudioProjects(),
-          getStudioModels(),
-        ]);
-        if (cancelled) return;
-        dispatch({ type: "bootstrapped", projects, models });
-        const mostRecent = projects[0];
-        if (mostRecent) {
-          const turns = await listStudioTurns(mostRecent.id);
-          if (cancelled) return;
-          dispatch({ type: "projectOpened", project: mostRecent, turns });
+        const models = await getStudioModels();
+        if (!cancelled) dispatch({ type: "rosterLoaded", models });
+      } catch (error) {
+        if (!cancelled) {
+          dispatch({ type: "requestFailed", error: describeError(error) });
         }
+      }
+    })();
+    void (async () => {
+      try {
+        const projects = await listStudioProjects();
+        if (cancelled) return;
+        dispatch({ type: "projectsLoaded", projects });
+        const mostRecent = projects[0];
+        if (!mostRecent) return;
+        const turns = await listStudioTurns(mostRecent.id);
+        if (cancelled) return;
+        dispatch({ type: "projectOpened", project: mostRecent, turns });
       } catch (error) {
         if (!cancelled) {
           dispatch({ type: "requestFailed", error: describeError(error) });
@@ -101,13 +127,16 @@ export function useStudioProject(): UseStudioProjectReturn {
       if (!projectId) return;
       void getStudioTurn(projectId, turnId)
         .then(async (turn: StudioTurn) => {
+          // Clearing the interval does not cancel the request already in
+          // flight; a result for an abandoned project is dropped here.
+          if (!isCurrentProject(projectId)) return;
           dispatch({ type: "turnPolled", turn });
           // A settled turn can change the project doc server-side
           // (auto-title, behavior 8) — sync it so the header updates
           // without a reload.
           if (turn.status !== "running") {
             const project = await getStudioProject(projectId);
-            if (projectIdRef.current === project.id) {
+            if (isCurrentProject(project.id)) {
               dispatch({ type: "projectPatched", project });
             }
           }
@@ -117,11 +146,12 @@ export function useStudioProject(): UseStudioProjectReturn {
         );
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [state.pendingTurnId]);
+  }, [state.pendingTurnId, isCurrentProject]);
 
   const openProject = useCallback(async (project: StudioProject) => {
     try {
       const turns = await listStudioTurns(project.id);
+      projectIdRef.current = project.id;
       dispatch({ type: "projectOpened", project, turns });
     } catch (error) {
       dispatch({ type: "requestFailed", error: describeError(error) });
@@ -131,45 +161,54 @@ export function useStudioProject(): UseStudioProjectReturn {
   const newProject = useCallback(async () => {
     try {
       const project = await createStudioProject();
+      projectIdRef.current = project.id;
       dispatch({ type: "projectOpened", project, turns: [] });
     } catch (error) {
       dispatch({ type: "requestFailed", error: describeError(error) });
     }
   }, []);
 
-  const sendMessage = useCallback(async (message: string) => {
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    // The staged attachments ride this message (S-12); messageSent clears
-    // the composer chips, so capture the ids first.
-    const attachmentIds = pendingAttachmentIdsRef.current;
-    dispatch({ type: "messageSent", message: trimmed });
-    try {
-      // Lazy creation: a projectless page births its project on the first
-      // send — exactly once, user-initiated, so no mount-effect races.
-      let projectId = projectIdRef.current;
-      if (!projectId) {
-        const project = await createStudioProject();
-        dispatch({ type: "projectCreated", project });
-        projectId = project.id;
+  const sendMessage = useCallback(
+    async (message: string) => {
+      const trimmed = message.trim();
+      // One turn at a time: suggestion pills and quick-picks stay live while
+      // a turn streams, and a second turn would orphan the first one's poll.
+      if (!trimmed || turnInFlightRef.current) return;
+      turnInFlightRef.current = true;
+      // The staged attachments ride this message (S-12); messageSent clears
+      // the composer chips, so capture the ids first.
+      const attachmentIds = pendingAttachmentIdsRef.current;
+      dispatch({ type: "messageSent", message: trimmed });
+      try {
+        // Lazy creation: a projectless page births its project on the first
+        // send — exactly once, user-initiated, so no mount-effect races.
+        let projectId = projectIdRef.current;
+        if (!projectId) {
+          const project = await createStudioProject();
+          projectIdRef.current = project.id;
+          dispatch({ type: "projectCreated", project });
+          projectId = project.id;
+        }
+        const { turnId } = await runStudioTurn(
+          projectId,
+          trimmed,
+          {
+            // Realtime thinking: deltas render as the LLM emits them.
+            onThinkingStart: () => dispatch({ type: "thinkingStreamStarted" }),
+            onThinkingDelta: (delta) =>
+              dispatch({ type: "thinkingDelta", delta }),
+          },
+          attachmentIds,
+        );
+        const turn = await getStudioTurn(projectId, turnId);
+        if (!isCurrentProject(projectId)) return;
+        dispatch({ type: "turnAccepted", turn });
+      } catch (error) {
+        dispatch({ type: "requestFailed", error: describeError(error) });
       }
-      const { turnId } = await runStudioTurn(
-        projectId,
-        trimmed,
-        {
-          // Realtime thinking: deltas render as the LLM emits them.
-          onThinkingStart: () => dispatch({ type: "thinkingStreamStarted" }),
-          onThinkingDelta: (delta) =>
-            dispatch({ type: "thinkingDelta", delta }),
-        },
-        attachmentIds,
-      );
-      const turn = await getStudioTurn(projectId, turnId);
-      dispatch({ type: "turnAccepted", turn });
-    } catch (error) {
-      dispatch({ type: "requestFailed", error: describeError(error) });
-    }
-  }, []);
+    },
+    [isCurrentProject],
+  );
 
   const renameProject = useCallback(async (title: string) => {
     const projectId = projectIdRef.current;
@@ -184,7 +223,7 @@ export function useStudioProject(): UseStudioProjectReturn {
     }
   }, []);
 
-  const pinModel = useCallback(async (slug: StudioModelSlug | null) => {
+  const pinModel = useCallback(async (slug: string | null) => {
     const projectId = projectIdRef.current;
     if (!projectId) return;
     try {
@@ -209,46 +248,26 @@ export function useStudioProject(): UseStudioProjectReturn {
     );
   }, []);
 
-  /**
-   * S-12: upload a reference image and stage it on the composer. Bytes go
-   * straight to GCS via a signed URL (house upload pattern), then the
-   * studio route registers the storagePath on the project.
-   */
-  const attachFile = useCallback(async (file: File) => {
-    try {
-      let projectId = projectIdRef.current;
-      if (!projectId) {
-        const project = await createStudioProject();
-        dispatch({ type: "projectCreated", project });
-        projectId = project.id;
+  /** S-12: upload a reference image and stage it on the composer. */
+  const attachFile = useCallback(
+    async (file: File) => {
+      try {
+        let projectId = projectIdRef.current;
+        if (!projectId) {
+          const project = await createStudioProject();
+          projectIdRef.current = project.id;
+          dispatch({ type: "projectCreated", project });
+          projectId = project.id;
+        }
+        const attachment = await uploadStudioAttachment(projectId, file);
+        if (!isCurrentProject(projectId)) return;
+        dispatch({ type: "attachmentStaged", attachment });
+      } catch (error) {
+        dispatch({ type: "requestFailed", error: describeError(error) });
       }
-      const upload = (await storageApi.getUploadUrl(
-        "preview-image",
-        file.type,
-      )) as { uploadUrl: string; storagePath: string; maxSizeBytes: number };
-      const put = await fetch(upload.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-          // The signature covers these extension headers — the PUT must
-          // send them verbatim (create-only + size ceiling).
-          "x-goog-if-generation-match": "0",
-          "x-goog-content-length-range": `0,${upload.maxSizeBytes}`,
-        },
-        body: file,
-      });
-      if (!put.ok) {
-        throw new Error(`Upload failed (${put.status})`);
-      }
-      const attachment = await registerStudioAttachment(projectId, {
-        storagePath: upload.storagePath,
-        filename: file.name,
-      });
-      dispatch({ type: "attachmentStaged", attachment });
-    } catch (error) {
-      dispatch({ type: "requestFailed", error: describeError(error) });
-    }
-  }, []);
+    },
+    [isCurrentProject],
+  );
 
   const removeAttachment = useCallback((attachmentId: string) => {
     dispatch({ type: "attachmentUnstaged", attachmentId });
@@ -257,6 +276,7 @@ export function useStudioProject(): UseStudioProjectReturn {
   const deleteProject = useCallback(async (projectId: string) => {
     try {
       await deleteStudioProject(projectId);
+      if (projectIdRef.current === projectId) projectIdRef.current = null;
       dispatch({ type: "projectDeleted", projectId });
     } catch (error) {
       dispatch({ type: "requestFailed", error: describeError(error) });

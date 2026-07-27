@@ -37,32 +37,69 @@ export interface StudioState {
   loading: boolean;
 }
 
+/** The slice of state that belongs to whichever project is open. */
+type ProjectScopedState = Pick<
+  StudioState,
+  | "turns"
+  | "pendingTurnId"
+  | "optimisticMessage"
+  | "streamingThinking"
+  | "selectedImageId"
+  | "pendingAttachments"
+>;
+
+/**
+ * What "no project is open" looks like — stated ONCE. Every transition
+ * that changes which project the workspace is showing spreads this, so a
+ * field added to the project scope cannot be forgotten by one of them
+ * (pendingAttachments used to be: staged uploads are registered against a
+ * specific project, and survived a switch into the next project's send).
+ */
+function emptyProjectScope(): ProjectScopedState {
+  return {
+    turns: [],
+    pendingTurnId: null,
+    optimisticMessage: null,
+    streamingThinking: null,
+    selectedImageId: null,
+    pendingAttachments: [],
+  };
+}
+
 export const initialStudioState: StudioState = {
   project: null,
   projects: [],
   models: [],
-  turns: [],
-  pendingTurnId: null,
-  optimisticMessage: null,
-  streamingThinking: null,
-  selectedImageId: null,
-  pendingAttachments: [],
+  ...emptyProjectScope(),
   listOpen: false,
   error: null,
   loading: true,
 };
 
+/**
+ * The one definition of "a turn is in flight" — true from the moment the
+ * message is sent (optimistic) until the polled turn settles. The composer,
+ * the thread's pills, and the send guard all read this; deriving it twice
+ * left the pills clickable through the whole streaming window, which
+ * started a second turn against the same project.
+ */
+export function isTurnInFlight(state: StudioState): boolean {
+  return state.pendingTurnId !== null || state.optimisticMessage !== null;
+}
+
 export type StudioAction =
-  | {
-      type: "bootstrapped";
-      projects: StudioProject[];
-      models: StudioModelInfo[];
-    }
+  /**
+   * Bootstrap settles the roster and the project list SEPARATELY — fusing
+   * them meant a failing /models blanked the Creator's whole thread list.
+   */
+  | { type: "projectsLoaded"; projects: StudioProject[] }
+  | { type: "rosterLoaded"; models: StudioModelInfo[] }
   | { type: "projectOpened"; project: StudioProject; turns: StudioTurn[] }
   /**
-   * Lazy first-send creation: unlike projectOpened, the in-flight
-   * optimistic message and (empty) thread are preserved — the turn that
-   * triggered the creation is about to land.
+   * Lazy first-send creation: a continuation, not a switch, so this does
+   * NOT clear the project scope — the in-flight optimistic message and
+   * (empty) thread are preserved because the turn that triggered the
+   * creation is about to land.
    */
   | { type: "projectCreated"; project: StudioProject }
   | { type: "messageSent"; message: string }
@@ -100,21 +137,16 @@ export function studioReducer(
   action: StudioAction,
 ): StudioState {
   switch (action.type) {
-    case "bootstrapped":
-      return {
-        ...state,
-        projects: action.projects,
-        models: action.models,
-        loading: false,
-      };
+    case "projectsLoaded":
+      return { ...state, projects: action.projects, loading: false };
+    case "rosterLoaded":
+      return { ...state, models: action.models };
     case "projectOpened":
       return {
         ...state,
+        ...emptyProjectScope(),
         project: action.project,
         turns: action.turns,
-        pendingTurnId: null,
-        optimisticMessage: null,
-        streamingThinking: null,
         selectedImageId: action.project.selectedImageId ?? null,
         error: null,
         loading: false,
@@ -201,16 +233,7 @@ export function studioReducer(
       if (state.project?.id !== action.projectId) {
         return { ...state, projects };
       }
-      return {
-        ...state,
-        projects,
-        project: null,
-        turns: [],
-        pendingTurnId: null,
-        optimisticMessage: null,
-        streamingThinking: null,
-        selectedImageId: null,
-      };
+      return { ...state, ...emptyProjectScope(), projects, project: null };
     }
     case "listToggled":
       return { ...state, listOpen: action.open ?? !state.listOpen };

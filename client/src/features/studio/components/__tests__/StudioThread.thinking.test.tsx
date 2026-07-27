@@ -44,6 +44,7 @@ function renderThread(turn: StudioTurn) {
       optimisticMessage={null}
       streamingThinking={null}
       pendingTurnId={null}
+      busy={false}
       selectedImageId={null}
       error={null}
       onSelectImage={vi.fn()}

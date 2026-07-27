@@ -2,11 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { ArrowUp, ChevronDown, Maximize2, Paperclip, X } from "lucide-react";
 import { cn } from "@/utils/cn";
-import type {
-  StudioAttachment,
-  StudioModelInfo,
-  StudioModelSlug,
-} from "../api/schemas";
+import type { StudioAttachment, StudioModelInfo } from "../api/schemas";
 
 /**
  * Band 3: the composer. Row A = the text field with the expand toggle at
@@ -22,7 +18,8 @@ interface StudioComposerProps {
   busy: boolean;
   /** S-12: uploaded-but-unsent reference images staged on the composer. */
   pendingAttachments: StudioAttachment[];
-  onPin: (slug: StudioModelSlug | null) => void;
+  /** A roster slug, or null for Auto — the server owns the roster. */
+  onPin: (slug: string | null) => void;
   onSend: (message: string) => void;
   onAttachFile: (file: File) => void;
   onRemoveAttachment: (attachmentId: string) => void;

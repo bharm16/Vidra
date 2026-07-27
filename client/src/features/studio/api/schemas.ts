@@ -136,7 +136,13 @@ export type RunTurnResponse = z.infer<typeof RunTurnResponseSchema>;
 
 /** Picker roster entry — display data only; the server keeps Replicate IDs. */
 export const StudioModelInfoSchema = z.object({
-  slug: StudioModelSlugSchema,
+  /**
+   * Plain string, NOT the slug enum — same class as pinnedModel above. The
+   * server declares the roster slug as a string, so a model registered
+   * after this client shipped must still parse: the roster is fetched
+   * during bootstrap, and a throw there blanks the whole project list.
+   */
+  slug: z.string(),
   displayName: z.string(),
   capabilities: z.array(z.string()),
   latencyHintSeconds: z.number(),

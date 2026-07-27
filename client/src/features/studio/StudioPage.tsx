@@ -10,6 +10,7 @@ import { StudioComposer } from "./components/StudioComposer";
 import { StudioPlane } from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
 import { useStudioProject } from "./hooks/useStudioProject";
+import { isTurnInFlight } from "./hooks/studioReducer";
 import "./studio.css";
 
 /**
@@ -34,7 +35,10 @@ export function StudioPage(): React.ReactElement {
         turn.calls.some((call) => call.status === "succeeded" && call.image),
       )?.id ?? "studio-empty";
 
-  const busy = state.pendingTurnId !== null || state.optimisticMessage !== null;
+  // One source of "a turn is in flight" for both bands — the thread's pills
+  // and the composer must agree, or the pills stay clickable through the
+  // whole streaming window and start a second turn.
+  const busy = isTurnInFlight(state);
 
   return (
     <div className="flex h-screen min-h-0 overflow-hidden">
@@ -108,6 +112,7 @@ export function StudioPage(): React.ReactElement {
               optimisticMessage={state.optimisticMessage}
               streamingThinking={state.streamingThinking}
               pendingTurnId={state.pendingTurnId}
+              busy={busy}
               selectedImageId={state.selectedImageId}
               error={state.error}
               onSelectImage={(imageId) =>

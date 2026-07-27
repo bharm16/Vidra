@@ -47,6 +47,12 @@ interface StudioThreadProps {
   /** Assistant thinking streaming in for the in-flight turn (realtime). */
   streamingThinking: string | null;
   pendingTurnId: string | null;
+  /**
+   * A turn is in flight (isTurnInFlight). Passed in rather than re-derived:
+   * deriving it from pendingTurnId alone left every pill live through the
+   * streaming window, and a click there started a second concurrent turn.
+   */
+  busy: boolean;
   selectedImageId: string | null;
   error: string | null;
   onSelectImage: (imageId: string) => void;
@@ -60,6 +66,7 @@ export function StudioThread({
   optimisticMessage,
   streamingThinking,
   pendingTurnId,
+  busy,
   selectedImageId,
   error,
   onSelectImage,
@@ -84,7 +91,6 @@ export function StudioThread({
 
       {turns.map((turn) => {
         const isLatest = turn.id === latestTurnId;
-        const busy = pendingTurnId !== null;
         const decision = turn.decision;
         return (
           <div key={turn.id} className="st-turn">

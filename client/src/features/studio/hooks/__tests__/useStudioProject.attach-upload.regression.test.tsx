@@ -1,17 +1,18 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useStudioProject } from "../useStudioProject";
 
 /**
- * Regression (found live 2026-07-25, S-12 verification): the browser PUT
- * to the signed GCS upload URL failed 400 because the V4 signature covers
- * two extension headers (x-goog-if-generation-match, create-only, and
- * x-goog-content-length-range from the granted maxSizeBytes) that the
- * client never sent.
+ * Regression (found live 2026-07-25, S-12 verification): the signed GCS
+ * upload failed because the PUT omitted headers the V4 signature covers.
+ * That invariant now lives with the request, in
+ * api/__tests__/studioApi.attach-upload.regression.test.ts — the whole
+ * three-step move (grant → PUT → register) sits behind
+ * uploadStudioAttachment, so this hook test stops at the feature's api/
+ * seam instead of stubbing global fetch.
  *
- * Invariant: for any staged upload, the PUT carries every header the
- * signature covers, and the attachment registers with the granted
- * storagePath.
+ * Invariant here: a projectless page births its project before uploading,
+ * and the registered attachment is staged on the composer.
  */
 
 vi.mock("../../api/studioApi", () => ({
@@ -27,68 +28,43 @@ vi.mock("../../api/studioApi", () => ({
   getStudioTurn: vi.fn(),
   listStudioProjects: vi.fn(async () => []),
   listStudioTurns: vi.fn(async () => []),
-  registerStudioAttachment: vi.fn(async () => ({
+  runStudioTurn: vi.fn(),
+  updateStudioProject: vi.fn(),
+  uploadStudioAttachment: vi.fn(async () => ({
     id: "att-1",
     storagePath: "users/u1/previews/images/sketch.png",
     filename: "fox-sketch.png",
     createdAtMs: 2,
   })),
-  runStudioTurn: vi.fn(),
-  updateStudioProject: vi.fn(),
 }));
 
-vi.mock("@/api/storageApi", () => ({
-  storageApi: {
-    getUploadUrl: vi.fn(async () => ({
-      uploadUrl: "https://storage.googleapis.com/bucket/signed",
-      storagePath: "users/u1/previews/images/sketch.png",
-      expiresAt: "2026-07-26T00:00:00Z",
-      maxSizeBytes: 12_582_912,
-    })),
-  },
-}));
+import {
+  createStudioProject,
+  uploadStudioAttachment,
+} from "../../api/studioApi";
 
-import { registerStudioAttachment } from "../../api/studioApi";
-
-describe("regression: signed uploads send every header the signature covers", () => {
+describe("regression: attaching a file stages it on the composer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("PUTs with the signed extension headers and registers the attachment", async () => {
-    const put = vi.fn(async () => new Response(null, { status: 200 }));
-    vi.stubGlobal("fetch", put);
+  it("creates the project on demand, uploads once, and stages the result", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "fox-sketch.png", {
+      type: "image/png",
+    });
 
     const { result } = renderHook(() => useStudioProject());
+    await act(async () => {});
+    expect(result.current.state.project).toBeNull();
+
     await act(async () => {
-      await result.current.attachFile(
-        new File([new Uint8Array([1, 2, 3])], "fox-sketch.png", {
-          type: "image/png",
-        }),
-      );
+      await result.current.attachFile(file);
     });
 
-    const [url, init] = put.mock.calls[0] as unknown as [
-      string,
-      { method: string; headers: Record<string, string> },
-    ];
-    expect(url).toBe("https://storage.googleapis.com/bucket/signed");
-    expect(init.method).toBe("PUT");
-    expect(init.headers["Content-Type"]).toBe("image/png");
-    // The V4 signature covers these; omitting either is a GCS 400.
-    expect(init.headers["x-goog-if-generation-match"]).toBe("0");
-    expect(init.headers["x-goog-content-length-range"]).toBe("0,12582912");
-
-    expect(registerStudioAttachment).toHaveBeenCalledWith("p1", {
-      storagePath: "users/u1/previews/images/sketch.png",
-      filename: "fox-sketch.png",
-    });
-    await waitFor(() =>
-      expect(result.current.state.pendingAttachments.map((a) => a.id)).toEqual([
-        "att-1",
-      ]),
-    );
-
-    vi.unstubAllGlobals();
+    expect(createStudioProject).toHaveBeenCalledTimes(1);
+    expect(uploadStudioAttachment).toHaveBeenCalledWith("p1", file);
+    expect(result.current.state.pendingAttachments.map((a) => a.id)).toEqual([
+      "att-1",
+    ]);
   });
 });

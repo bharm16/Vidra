@@ -4,6 +4,7 @@
  */
 
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
+import { storageApi } from "@/api/storageApi";
 import { z } from "zod";
 import {
   RunTurnResponseSchema,
@@ -14,7 +15,6 @@ import {
   type RunTurnResponse,
   type StudioAttachment,
   type StudioModelInfo,
-  type StudioModelSlug,
   type StudioProject,
   type StudioTurn,
 } from "./schemas";
@@ -77,7 +77,13 @@ export async function updateStudioProject(
   projectId: string,
   patch: {
     title?: string;
-    pinnedModel?: StudioModelSlug | null;
+    /**
+     * A roster slug. Typed as a plain string because the server owns the
+     * roster: a model registered after this client shipped is offered in
+     * the picker and must therefore be pinnable, not just parseable.
+     * StudioModelSlugSchema still names the set this client ships knowing.
+     */
+    pinnedModel?: string | null;
     selectedImageId?: string | null;
   },
 ): Promise<StudioProject> {
@@ -127,6 +133,45 @@ export async function registerStudioAttachment(
   return request(`/projects/${projectId}/attachments`, StudioAttachmentSchema, {
     method: "POST",
     body: JSON.stringify(input),
+  });
+}
+
+/** storageApi returns the grant untyped — validate it like any other wire. */
+const UploadGrantSchema = z.object({
+  uploadUrl: z.string(),
+  storagePath: z.string(),
+  maxSizeBytes: z.number(),
+});
+
+/**
+ * S-12, the whole move behind one seam: grant a signed URL, PUT the bytes
+ * straight to GCS (house upload pattern), then register the storagePath on
+ * the project so the conversation can reference it by id.
+ */
+export async function uploadStudioAttachment(
+  projectId: string,
+  file: File,
+): Promise<StudioAttachment> {
+  const grant = UploadGrantSchema.parse(
+    await storageApi.getUploadUrl("preview-image", file.type),
+  );
+  const put = await fetch(grant.uploadUrl, {
+    method: "PUT",
+    headers: {
+      "Content-Type": file.type,
+      // The V4 signature covers these extension headers — the PUT must
+      // send them verbatim (create-only + size ceiling), or GCS 400s.
+      "x-goog-if-generation-match": "0",
+      "x-goog-content-length-range": `0,${grant.maxSizeBytes}`,
+    },
+    body: file,
+  });
+  if (!put.ok) {
+    throw new Error(`Upload failed (${put.status})`);
+  }
+  return registerStudioAttachment(projectId, {
+    storagePath: grant.storagePath,
+    filename: file.name,
   });
 }
 

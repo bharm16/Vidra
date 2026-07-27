@@ -179,9 +179,8 @@ describe("studioReducer", () => {
     };
     const other = { id: "p2", title: "Other", createdAtMs: 2, updatedAtMs: 2 };
     let state = studioReducer(initialStudioState, {
-      type: "bootstrapped",
+      type: "projectsLoaded",
       projects: [active, other],
-      models: [],
     });
     state = studioReducer(state, {
       type: "projectOpened",
