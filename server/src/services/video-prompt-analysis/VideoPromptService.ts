@@ -53,7 +53,6 @@ export class VideoPromptService {
 
   /** Pipeline version for metadata tracking */
   private static readonly PIPELINE_VERSION = "1.0.0";
-  private static readonly MAX_CONCURRENT_MODEL_OPTIMIZATIONS = 3;
 
   constructor(deps: VideoPromptServiceDeps = {}) {
     this.detector = deps.detector ?? new VideoPromptDetectionService();
@@ -386,137 +385,6 @@ export class VideoPromptService {
   }
 
   /**
-   * Translate a prompt to optimized versions for all supported video models
-   * Executes strategies in parallel with failure isolation
-   *
-   * @param prompt - The user's input prompt
-   * @param context - Optional context for optimization
-   * @returns Map of model IDs to optimization results (includes error indicators on failure)
-   *
-   * Requirements: 11.1, 11.2, 11.3, 11.4
-   */
-  async translateToAllModels(
-    prompt: string,
-    context?: PromptContext,
-  ): Promise<Map<string, PromptOptimizationResult>> {
-    const operation = "translateToAllModels";
-    const startTime = Date.now();
-    const results = new Map<string, PromptOptimizationResult>();
-
-    const allStrategies = this.strategyRegistry.getAll();
-    const modelIds = allStrategies.map((s) => s.modelId);
-
-    const maxConcurrent = Math.min(
-      VideoPromptService.MAX_CONCURRENT_MODEL_OPTIMIZATIONS,
-      Math.max(1, allStrategies.length),
-    );
-
-    this.log.info("Starting cross-model translation", {
-      operation,
-      promptLength: prompt.length,
-      modelCount: modelIds.length,
-      models: modelIds,
-      maxConcurrent,
-    });
-
-    const runStrategy = async (strategy: (typeof allStrategies)[number]) => {
-      const modelStartTime = Date.now();
-      try {
-        const result = await this.optimizeForModel(
-          prompt,
-          strategy.modelId,
-          context,
-        );
-
-        this.log.debug("Model optimization succeeded", {
-          operation,
-          modelId: strategy.modelId,
-          durationMs: Date.now() - modelStartTime,
-        });
-
-        return { modelId: strategy.modelId, result, success: true };
-      } catch (error) {
-        // Failure isolation: continue processing other models (Requirement 11.4)
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-
-        this.log.warn("Model optimization failed, continuing with others", {
-          operation,
-          modelId: strategy.modelId,
-          errorMessage,
-          durationMs: Date.now() - modelStartTime,
-        });
-
-        // Return result with error indicator
-        const errorResult: PromptOptimizationResult = {
-          prompt,
-          metadata: {
-            modelId: strategy.modelId,
-            pipelineVersion: VideoPromptService.PIPELINE_VERSION,
-            phases: [],
-            warnings: [`Optimization failed: ${errorMessage}`],
-            tokensStripped: [],
-            triggersInjected: [],
-          },
-        };
-
-        return {
-          modelId: strategy.modelId,
-          result: errorResult,
-          success: false,
-        };
-      }
-    };
-
-    const optimizationResults: Array<{
-      modelId: string;
-      result: PromptOptimizationResult;
-      success: boolean;
-    }> = [];
-
-    let nextIndex = 0;
-    const worker = async (): Promise<void> => {
-      while (true) {
-        const index = nextIndex++;
-        if (index >= allStrategies.length) break;
-        const strategy = allStrategies[index];
-        if (!strategy) {
-          continue;
-        }
-        optimizationResults[index] = await runStrategy(strategy);
-      }
-    };
-
-    const workers = Array.from({ length: maxConcurrent }, () => worker());
-    await Promise.all(workers);
-
-    // Build results map
-    let successCount = 0;
-    let failureCount = 0;
-
-    for (const { modelId, result, success } of optimizationResults) {
-      results.set(modelId, result);
-      if (success) {
-        successCount++;
-      } else {
-        failureCount++;
-      }
-    }
-
-    const totalDuration = Date.now() - startTime;
-
-    this.log.info("Cross-model translation complete", {
-      operation,
-      totalDurationMs: totalDuration,
-      totalModels: modelIds.length,
-      successCount,
-      failureCount,
-    });
-
-    return results;
-  }
-
-  /**
    * Get all supported model IDs
    * @returns Array of model IDs that have registered strategies
    */
@@ -526,15 +394,6 @@ export class VideoPromptService {
 
   getModelConstraints(modelId: string) {
     return this.strategyRegistry.getModelConstraints(modelId);
-  }
-
-  /**
-   * Check if a model is supported
-   * @param modelId - The model ID to check
-   * @returns true if a strategy exists for the model
-   */
-  isModelSupported(modelId: string): boolean {
-    return this.strategyRegistry.has(modelId);
   }
 
   /**

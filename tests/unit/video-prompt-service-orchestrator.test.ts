@@ -169,73 +169,16 @@ describe("VideoPromptService orchestrator", () => {
     });
   });
 
-  it("isolates failures per model in translateToAllModels", async () => {
-    const service = new VideoPromptService();
-
-    (
-      service as unknown as {
-        strategyRegistry: { getAll: () => Array<{ modelId: string }> };
-      }
-    ).strategyRegistry = {
-      getAll: vi.fn(() => [{ modelId: "runway-gen45" }, { modelId: "sora-2" }]),
-    };
-
-    vi.spyOn(service, "optimizeForModel").mockImplementation(
-      async (
-        prompt: string,
-        modelId?: string | null,
-      ): Promise<PromptOptimizationResult> => {
-        if (modelId === "runway-gen45") {
-          throw new Error("runway unavailable");
-        }
-        return {
-          prompt: `${prompt} :: optimized`,
-          metadata: {
-            modelId: modelId || "unknown",
-            pipelineVersion: "1.0.0",
-            phases: [],
-            warnings: [],
-            tokensStripped: [],
-            triggersInjected: [],
-          },
-        };
-      },
-    );
-
-    const results = await service.translateToAllModels("source prompt");
-
-    expect(results.size).toBe(2);
-    expect(results.get("sora-2")).toEqual(
-      expect.objectContaining({
-        prompt: "source prompt :: optimized",
-      }),
-    );
-    expect(results.get("runway-gen45")).toEqual(
-      expect.objectContaining({
-        prompt: "source prompt",
-        metadata: expect.objectContaining({
-          warnings: ["Optimization failed: runway unavailable"],
-        }),
-      }),
-    );
-  });
-
   it("delegates supported model queries to the strategy registry", () => {
     const service = new VideoPromptService();
     const getModelIds = vi.fn(() => ["runway-gen45", "sora-2"]);
-    const has = vi.fn((modelId: string) => modelId === "sora-2");
 
     (
       service as unknown as {
-        strategyRegistry: {
-          getModelIds: () => string[];
-          has: (modelId: string) => boolean;
-        };
+        strategyRegistry: { getModelIds: () => string[] };
       }
-    ).strategyRegistry = { getModelIds, has };
+    ).strategyRegistry = { getModelIds };
 
     expect(service.getSupportedModelIds()).toEqual(["runway-gen45", "sora-2"]);
-    expect(service.isModelSupported("sora-2")).toBe(true);
-    expect(service.isModelSupported("unknown-model")).toBe(false);
   });
 });

@@ -5,10 +5,10 @@
  * shared mutable state across concurrent requests. Every call to get()
  * returns a fresh strategy instance with clean state.
  *
- * Bug context: BaseStrategy.currentMetadata, KlingStrategy.entityRegistry,
- * and VeoStrategy.sessionState are mutable instance fields. When strategies
- * were singletons, concurrent requests would corrupt each other's metadata,
- * leak entity IDs across users, and accumulate unbounded session state.
+ * Bug context: BaseStrategy.currentMetadata and KlingStrategy.entityRegistry
+ * are mutable instance fields. When strategies were singletons, concurrent
+ * requests would corrupt each other's metadata and leak entity IDs across
+ * users.
  */
 
 import { resolvePromptModelId } from "@config/videoModelRegistry";
