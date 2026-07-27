@@ -1,11 +1,4 @@
-import { mergeAdjacentSpans } from "../processing/AdjacentSpanMerger.js";
-import { deduplicateSpans } from "../processing/SpanDeduplicator.js";
-import { resolveOverlaps } from "../processing/OverlapResolver.js";
-import { filterHeaders } from "../processing/HeaderFilter.js";
-import { filterNonVisualSpans } from "../processing/VisualOnlyFilter.js";
-import { filterByConfidence } from "../processing/ConfidenceFilter.js";
-import { truncateToMaxSpans } from "../processing/SpanTruncator.js";
-import { normalizeAndCorrectSpans } from "./normalizeAndCorrectSpans.js";
+import { SpanProcessor } from "../processing/SpanProcessor.js";
 import type {
   ProcessingOptions,
   ValidationPolicy,
@@ -22,18 +15,15 @@ import type { SubstringPositionCache } from "../cache/SubstringPositionCache.js"
  * 2. Auto-corrects indices using position cache
  * 3. Applies processing pipeline (dedupe, overlap, filter, truncate)
  * 4. Supports strict and lenient validation modes
+ *
+ * The processing itself lives in SpanProcessor — this function is the
+ * batch-scheduled caller of it (feed every span, then finalize). The streaming
+ * route feeds the same processor one span at a time. See SpanProcessor for the
+ * accept/finalize split.
  */
 
 /**
  * Validate and process spans with auto-correction and filtering
- *
- * Phase 1: Individual span validation & auto-correction
- * Phase 2: Sorting by position
- * Phase 2.5: Merge adjacent spans with compatible categories
- * Phase 3: Deduplication
- * Phase 4: Overlap resolution
- * Phase 5: Confidence filtering
- * Phase 6: Truncation to max spans
  *
  * @param {Object} params
  * @param {Array} params.spans - Raw spans from LLM
@@ -78,77 +68,28 @@ export function validateSpans({
 }: ValidateSpansParams): ValidationResult {
   const lenient = attempt > 1;
 
-  // Phase 1: Normalize and correct individual spans
-  const phase1Result = normalizeAndCorrectSpans(
-    spans,
+  const processor = new SpanProcessor({
     text,
     policy,
+    options,
     cache,
     lenient,
-  );
-  const sanitized = phase1Result.sanitized;
-  const errors = phase1Result.errors.map((error) => error.message);
+  });
+  for (const span of spans) {
+    processor.accept(span);
+  }
+  const processed = processor.finalize();
+
+  const errors = processed.errors.map((error) => error.message);
   const verdict =
-    phase1Result.errors.length === 0
+    processed.errors.length === 0
       ? "pass"
-      : phase1Result.errors.some((error) => error.kind === "retryable")
+      : processed.errors.some((error) => error.kind === "retryable")
         ? "retryable"
         : "terminal";
-  const phase1Notes = phase1Result.notes;
-
-  // Phase 2: Sort by position
-  sanitized.sort((a, b) => {
-    const aStart = a.start ?? 0;
-    const bStart = b.start ?? 0;
-    const aEnd = a.end ?? 0;
-    const bEnd = b.end ?? 0;
-    if (aStart === bStart) return aEnd - bEnd;
-    return aStart - bStart;
-  });
-
-  // Phase 2.5: Merge adjacent spans with compatible categories
-  // Fixes LLM fragmentation like "Action" + "Shot" → "Action Shot"
-  // Cast to SpanLike[] since we've validated start/end exist
-  const spansForMerge = sanitized.map((s) => ({
-    ...s,
-    start: s.start ?? 0,
-    end: s.end ?? 0,
-    confidence: s.confidence ?? 0,
-  }));
-  const { spans: merged, notes: mergeNotes } = mergeAdjacentSpans(
-    spansForMerge,
-    text,
-  );
-
-  // Phase 3: Deduplicate
-  const { spans: deduplicated, notes: dedupeNotes } = deduplicateSpans(merged);
-
-  // Phase 4: Resolve overlaps
-  const { spans: resolved, notes: overlapNotes } = resolveOverlaps(
-    deduplicated,
-    policy.allowOverlap === true,
-  );
-
-  // Phase 4.5: Filter out section headers and labels
-  const { spans: headersFiltered, notes: headerNotes } =
-    filterHeaders(resolved);
-
-  // Phase 4.75: Filter out non-visual spans and alternative sections
-  const { spans: nonVisualFiltered, notes: nonVisualNotes } =
-    filterNonVisualSpans(headersFiltered, text);
-
-  // Phase 5: Filter by confidence
-  const { spans: confidenceFiltered, notes: confidenceNotes } =
-    filterByConfidence(nonVisualFiltered, options.minConfidence ?? 0);
-
-  // Phase 6: Truncate to max spans
-  const { spans: finalSpansRaw, notes: truncationNotes } = truncateToMaxSpans(
-    confidenceFiltered,
-    options.maxSpans ?? 10,
-  );
 
   // Convert back to LLMSpan[]
-  const finalSpans: LLMSpan[] = finalSpansRaw.map((s) => ({
+  const finalSpans: LLMSpan[] = processed.spans.map((s) => ({
     text: s.text,
     role: typeof s.role === "string" ? s.role : "subject",
     start: s.start,
@@ -161,14 +102,7 @@ export function validateSpans({
     ...(Array.isArray(meta?.notes) ? meta.notes : []),
     ...(typeof meta?.notes === "string" && meta.notes ? [meta.notes] : []),
     ...(isAdversarial ? ["input flagged as adversarial"] : []),
-    ...phase1Notes,
-    ...mergeNotes,
-    ...dedupeNotes,
-    ...overlapNotes,
-    ...headerNotes,
-    ...nonVisualNotes,
-    ...confidenceNotes,
-    ...truncationNotes,
+    ...processed.notes,
   ].filter(Boolean);
 
   return {

@@ -2,6 +2,7 @@ import type { Response } from "express";
 import { logger } from "@infrastructure/Logger";
 import { createSseWriter } from "@middleware/sseBackpressure";
 import { labelSpansStream } from "@llm/span-labeling/SpanLabelingService";
+import type { SpanStreamFinalization } from "@llm/span-labeling/SpanLabelingService";
 import { getCurrentSpanProvider } from "@llm/span-labeling/services/LlmClientFactory";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
@@ -59,19 +60,32 @@ export async function handleLabelSpansStreamRequest({
 
   const writer = createSseWriter(res, { label: "labelSpans.stream" });
 
-  // Collect spans for cache backfill when stream completes successfully.
+  // Spans put on the wire. Used only for degraded-error reporting — the cache
+  // backfill uses the stream's finalized set instead (see below).
   const collectedSpans: SpanLike[] = [];
+  // The whole-set stages (merge, dedupe, overlap, truncation) cannot be
+  // expressed on an append-only NDJSON wire, so labelSpansStream runs them
+  // server-side and hands the result back as the generator's return value.
+  let finalization: SpanStreamFinalization | null = null;
   let streamCompleted = false;
 
+  const stream = labelSpansStream(payload, aiService);
+  let drained = false;
+
   try {
-    const stream = labelSpansStream(payload, aiService);
-    for await (const span of stream) {
+    while (true) {
+      const next = await stream.next();
+      if (next.done) {
+        finalization = next.value;
+        drained = true;
+        break;
+      }
       if (clientClosed || res.writableEnded || res.destroyed) {
         break;
       }
-      collectedSpans.push(span);
+      collectedSpans.push(next.value);
       const writeResult = await writer.write(
-        JSON.stringify(toPublicSpan(span)) + "\n",
+        JSON.stringify(toPublicSpan(next.value)) + "\n",
       );
       if (!writeResult.ok) {
         clientClosed = true;
@@ -115,33 +129,60 @@ export async function handleLabelSpansStreamRequest({
         res.end();
       }
     }
+  } finally {
+    // Abandoning the loop early (client hung up, write failed) leaves the
+    // generator suspended — close it so the provider stream is torn down.
+    if (!drained) {
+      await stream.return({
+        spans: [],
+        meta: { version: "", notes: "stream abandoned" },
+      });
+    }
   }
 
   // Cache backfill: write the completed result so subsequent identical
   // requests (streaming or blocking) get a cache hit.
+  //
+  // The blocking route serves this entry verbatim as X-Cache: HIT, so it must
+  // hold the finalized set and the real template version — the wire's
+  // per-span-staged spans have not been through merge/dedupe/overlap/truncate,
+  // and a placeholder version would make the entry indistinguishable from a
+  // genuine one.
+  const finalizedSpans = finalization?.spans ?? [];
   if (
     streamCompleted &&
     spanLabelingCache &&
-    collectedSpans.length > 0 &&
+    finalizedSpans.length > 0 &&
     text
   ) {
     try {
       const ttl = text.length > 2000 ? 300 : 3600;
       const provider = getCurrentSpanProvider();
+      const backfillNotes = [finalization?.meta.notes, "stream backfill"]
+        .filter(Boolean)
+        .join(" | ");
       await spanLabelingCache.set(
         text,
         policy ?? null,
         templateVersion ?? null,
         {
-          spans: collectedSpans,
-          meta: { version: "stream-backfill", notes: "" },
+          spans: finalizedSpans,
+          meta: {
+            version:
+              finalization?.meta.version ||
+              templateVersion ||
+              payload.templateVersion ||
+              "",
+            notes: backfillNotes,
+          },
         },
         { ttl, provider },
       );
       logger.debug("Stream cache backfill completed", {
         operation,
         requestId,
-        spanCount: collectedSpans.length,
+        spanCount: finalizedSpans.length,
+        streamedCount: collectedSpans.length,
         textLength: text.length,
         ttl,
       });

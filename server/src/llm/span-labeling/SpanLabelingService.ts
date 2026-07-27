@@ -8,11 +8,17 @@ import {
   getCurrentSpanProvider,
 } from "./services/LlmClientFactory";
 import { resolveOverlaps } from "./processing/OverlapResolver";
+import { SpanProcessor } from "./processing/SpanProcessor";
 import { validateSpans } from "./validation/SpanValidator";
 import { detectInjectionPatterns } from "@utils/SecurityPrompts";
 import { logger } from "@infrastructure/Logger";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
-import type { LabelSpansParams, LabelSpansResult, SpanLike } from "./types";
+import type {
+  LabelSpansParams,
+  LabelSpansResult,
+  LLMMeta,
+  SpanLike,
+} from "./types";
 
 /**
  * Span Labeling Service - Refactored Architecture
@@ -374,13 +380,35 @@ async function labelSpansChunked(
 }
 
 /**
+ * Terminal payload of {@link labelSpansStream}.
+ *
+ * The NDJSON wire is append-only — the client accumulates every line it
+ * receives and has no way to retract one — so the stream cannot emit a
+ * correction event for spans that the whole-set stages (merge, dedupe, overlap
+ * resolution, truncation) decide to drop. Those stages therefore run
+ * server-side at end of stream and their result is delivered here, as the
+ * generator's return value, rather than as a new wire event. Callers that
+ * persist the stream result (the cache backfill) must use this set: it is the
+ * same set the blocking path would have produced.
+ */
+export interface SpanStreamFinalization {
+  spans: SpanLike[];
+  meta: LLMMeta;
+}
+
+/**
  * Stream spans using an LLM.
  * Bypasses NLP fast-path for immediate feedback.
+ *
+ * Yielded spans are what the per-span stages of {@link SpanProcessor} admit —
+ * normalized, index-corrected, id-bearing, header/non-visual filtered, above
+ * `minConfidence`, and capped at `maxSpans`. The generator's return value
+ * carries the fully finalized set.
  */
 export async function* labelSpansStream(
   params: LabelSpansParams,
   aiService: AIExecutionPort,
-): AsyncGenerator<SpanLike, void, unknown> {
+): AsyncGenerator<SpanLike, SpanStreamFinalization, unknown> {
   if (!params || typeof params.text !== "string" || !params.text.trim()) {
     throw new Error("text is required");
   }
@@ -389,6 +417,10 @@ export async function* labelSpansStream(
     throw new Error("aiService is required");
   }
 
+  const templateVersion =
+    params.templateVersion ||
+    SpanLabelingConfig.DEFAULT_OPTIONS.templateVersion;
+
   // Pre-check for adversarial input
   const adversarialCheck = detectInjectionPatterns(params.text);
   if (adversarialCheck.hasPatterns) {
@@ -396,7 +428,10 @@ export async function* labelSpansStream(
       operation: "labelSpansStream",
       patterns: adversarialCheck.patterns,
     });
-    return;
+    return {
+      spans: [],
+      meta: { version: templateVersion, notes: "adversarial input flagged" },
+    };
   }
 
   // Resolve model from AI Service config to ensure correct provider detection
@@ -424,16 +459,21 @@ export async function* labelSpansStream(
       },
     );
     const result = await labelSpans(params, aiService);
-    for (const span of result.spans) {
-      if (typeof span.start === "number" && typeof span.end === "number") {
-        yield {
-          ...span,
-          start: span.start,
-          end: span.end,
-        };
-      }
+    const positioned: SpanLike[] = result.spans
+      .filter(
+        (span) =>
+          typeof span.start === "number" && typeof span.end === "number",
+      )
+      .map((span) => ({
+        ...span,
+        start: span.start as number,
+        end: span.end as number,
+      }));
+    for (const span of positioned) {
+      yield span;
     }
-    return;
+    // Already fully processed by labelSpans — no further staging to apply.
+    return { spans: positioned, meta: result.meta };
   }
 
   // Setup params
@@ -459,39 +499,34 @@ export async function* labelSpansStream(
     nlpSpansAttempted: 0,
   };
 
-  // Stream
+  // The stream is a staged run of the same pipeline the blocking path runs:
+  // per-span stages decide what goes on the wire now, whole-set stages run once
+  // the provider is done and produce the authoritative set.
+  //
+  // Lenient mode matches the blocking path's effective end state — the stream
+  // has no repair round-trip, so a span with an unrecognised role is coerced
+  // rather than dropped, exactly as validateSpans(attempt: 2) would do.
+  const processor = new SpanProcessor({
+    text: params.text,
+    policy,
+    options: sanitizedOptions,
+    cache,
+    lenient: true,
+  });
+
   for await (const rawSpan of llmClient.streamSpans(streamParams)) {
-    const textValue = String(rawSpan.text || "");
-    const roleValue = String(rawSpan.role || rawSpan.category || "");
-    const confidenceValue =
-      typeof rawSpan.confidence === "number" ? rawSpan.confidence : 0.5;
-    let start = typeof rawSpan.start === "number" ? rawSpan.start : undefined;
-    let end = typeof rawSpan.end === "number" ? rawSpan.end : undefined;
-    let resolvedText = textValue;
-
-    // Calculate indices if missing
-    if (typeof start !== "number" || typeof end !== "number") {
-      const match = cache.findBestMatch(params.text, textValue);
-      if (match) {
-        start = match.start;
-        end = match.end;
-        // Use exact text from source to ensure alignment
-        resolvedText = params.text.slice(match.start, match.end);
-      }
+    const span = processor.accept(rawSpan);
+    if (span) {
+      yield span;
     }
-
-    if (typeof start !== "number" || typeof end !== "number") {
-      continue;
-    }
-
-    const span: SpanLike = {
-      text: resolvedText,
-      role: roleValue,
-      confidence: confidenceValue,
-      start,
-      end,
-    };
-
-    yield span;
   }
+
+  const finalized = processor.finalize();
+  return {
+    spans: finalized.spans,
+    meta: {
+      version: sanitizedOptions.templateVersion ?? templateVersion,
+      notes: finalized.notes.filter(Boolean).join(" | "),
+    },
+  };
 }
