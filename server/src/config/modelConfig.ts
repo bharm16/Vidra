@@ -13,6 +13,13 @@
  * - OpenAI: Temperature 0.0 for structured outputs (grammar-constrained)
  * - Groq/Qwen: Temperature 0.1 for structured outputs (avoids repetition loops)
  * - Seed parameter for reproducibility where determinism matters
+ *
+ * Entry status: this file is the lookup agents and humans grep to answer
+ * "which provider/model does operation X actually run on", so every entry
+ * must resolve to something real. An operation belongs here only if it is
+ * either (a) wired — some `aiService.execute("<op>", …)` call site exists —
+ * or (b) explicitly marked RESERVED / FROZEN on the entry, with the reason.
+ * Unmarked operations with no call site are fiction; delete them.
  */
 
 interface ModelConfigEntry {
@@ -36,8 +43,6 @@ interface ModelConfigEntry {
   thinkingBudget?: number;
 }
 
-type OperationName = keyof typeof ModelConfig;
-
 const QWEN_FALLBACK = {
   model: process.env.QWEN_MODEL || "qwen/qwen3-32b",
   timeout: parseInt(process.env.QWEN_TIMEOUT_MS || "10000", 10),
@@ -56,7 +61,7 @@ const QWEN_FALLBACK = {
  * - useSeed: (Optional) Enable seed-based reproducibility
  * - useDeveloperMessage: (Optional) Use developer role for constraints
  */
-export const ModelConfig: Record<string, ModelConfigEntry> = {
+const MODEL_CONFIG_ENTRIES = {
   // ============================================================================
   // Prompt Optimization Operations
   // ============================================================================
@@ -75,30 +80,6 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     fallbackTo: "qwen",
     fallbackConfig: QWEN_FALLBACK,
     useDeveloperMessage: true, // GPT-4o: Use developer role for format constraints
-  },
-
-  /**
-   * Context inference for reasoning mode
-   */
-  optimize_context_inference: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 1024,
-    timeout: 30000,
-    useSeed: true, // Deterministic context detection
-  },
-
-  /**
-   * Mode detection (determine optimal optimization strategy)
-   */
-  optimize_mode_detection: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 512,
-    timeout: 20000,
-    useSeed: true, // Same prompt should detect same mode
   },
 
   /**
@@ -129,8 +110,10 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
   },
 
   /**
-   * Intent preservation check (evaluation-only)
-   * Deterministic JSON output for pass/fail gating.
+   * RESERVED — no caller yet. Intent preservation check (evaluation-only),
+   * deterministic JSON output for pass/fail gating. Kept because it is the
+   * sanctioned LLM replacement for the wordlist-based intent classifier;
+   * delete only if that plan is abandoned.
    */
   optimize_intent_check: {
     client: "openai",
@@ -207,173 +190,6 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     timeout: 25000,
     responseFormat: "json_object",
     useSeed: true, // Consistent coherence findings
-    useDeveloperMessage: true,
-  },
-
-  // ============================================================================
-  // Video Concept Operations
-  // ============================================================================
-
-  /**
-   * Video concept suggestion generation
-   */
-  video_concept_suggestions: {
-    client: process.env.VIDEO_PROVIDER || "openai",
-    model: process.env.VIDEO_MODEL || "gpt-4o-2024-08-06",
-    temperature: 0.8,
-    maxTokens: 2048,
-    timeout: 45000,
-    fallbackTo: "qwen",
-    fallbackConfig: QWEN_FALLBACK,
-    useDeveloperMessage: true,
-  },
-
-  /**
-   * Scene completion (fill empty elements)
-   */
-  video_scene_completion: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.7,
-    maxTokens: 1024,
-    timeout: 30000,
-  },
-
-  /**
-   * Scene variation generation
-   * Note: High temperature for creativity, no seed (want variation)
-   */
-  video_scene_variation: {
-    client: "openai",
-    model: "gpt-4o-2024-08-06",
-    temperature: 0.9,
-    maxTokens: 1536,
-    timeout: 40000,
-  },
-
-  /**
-   * Concept parsing (text to structured elements)
-   * Temperature 0.0 for deterministic parsing
-   */
-  video_concept_parsing: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.0,
-    maxTokens: 1024,
-    timeout: 25000,
-    responseFormat: "json_object",
-    useSeed: true, // Same concept should parse identically
-    useDeveloperMessage: true,
-  },
-
-  /**
-   * Element refinement for coherence
-   */
-  video_refinement: {
-    client: "openai",
-    model: "gpt-4o-2024-08-06",
-    temperature: 0.6,
-    maxTokens: 1536,
-    timeout: 35000,
-  },
-
-  /**
-   * Technical parameter generation (camera, lighting)
-   */
-  video_technical_params: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 1024,
-    timeout: 25000,
-    useSeed: true, // Consistent technical params
-  },
-
-  /**
-   * Prompt validation and smart defaults
-   */
-  video_validation: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 1024,
-    timeout: 25000,
-    useSeed: true, // Consistent validation
-  },
-
-  /**
-   * Compatibility checking (semantic + thematic)
-   */
-  video_compatibility: {
-    client: "openai",
-    model: "gpt-4o-mini",
-    temperature: 0.2,
-    maxTokens: 512,
-    timeout: 20000,
-    useSeed: true, // Consistent compatibility scores
-  },
-
-  /**
-   * Conflict detection between elements
-   */
-  video_conflict_detection: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 1024,
-    timeout: 25000,
-    useSeed: true, // Consistent conflict detection
-  },
-
-  /**
-   * Scene change detection
-   */
-  video_scene_detection: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 1024,
-    timeout: 25000,
-    useSeed: true, // Consistent scene detection
-  },
-
-  // ============================================================================
-  // Question Generation Operations
-  // ============================================================================
-
-  /**
-   * Generate clarifying questions for prompt improvement
-   * Temperature 0.0 for structured output
-   */
-  question_generation: {
-    client: process.env.QUESTION_PROVIDER || "openai",
-    model: process.env.QUESTION_MODEL || "gpt-4o-mini-2024-07-18",
-    temperature: 0.0, // Deterministic question generation
-    maxTokens: 2048,
-    timeout: 30000,
-    responseFormat: "json_object",
-    fallbackTo: "qwen",
-    fallbackConfig: QWEN_FALLBACK,
-    useSeed: true, // Same prompt should generate same questions
-    useDeveloperMessage: true,
-  },
-
-  // ============================================================================
-  // Text Categorization Operations
-  // ============================================================================
-
-  /**
-   * Categorize text into taxonomy
-   * Temperature 0.0 for deterministic categorization
-   */
-  text_categorization: {
-    client: process.env.CATEGORIZE_PROVIDER || "openai",
-    model: process.env.CATEGORIZE_MODEL || "gpt-4o-mini-2024-07-18",
-    temperature: 0.0,
-    maxTokens: 1024,
-    timeout: 25000,
-    responseFormat: "json_object",
-    useSeed: true, // Same text should categorize identically
     useDeveloperMessage: true,
   },
 
@@ -475,6 +291,7 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
   },
 
   /**
+   * FROZEN (ADR-0002) — no caller today; retained, not swept.
    * Frame verification: per-span presence verdicts against a generated frame.
    * Requires a vision-capable model. Temperature 0 for deterministic judging.
    */
@@ -581,7 +398,29 @@ export const ModelConfig: Record<string, ModelConfigEntry> = {
     fallbackTo: "openai",
     useSeed: true, // Consistent evaluation
   },
-};
+} as const satisfies Record<string, ModelConfigEntry>;
+
+/**
+ * Every configured operation, as a literal union.
+ *
+ * Use it to constrain call sites that pass an operation LITERAL — a
+ * misspelling is then a compile error instead of a silent fall-through to
+ * DEFAULT_CONFIG (gpt-4o-mini at temperature 0). Call sites holding a runtime
+ * string narrow with `isOperationName` rather than casting.
+ */
+export type OperationName = keyof typeof MODEL_CONFIG_ENTRIES;
+
+/**
+ * The routing layer indexes this with runtime strings, so it stays typed as a
+ * string-keyed record. `OperationName` above carries the literal union.
+ */
+export const ModelConfig: Record<string, ModelConfigEntry> =
+  MODEL_CONFIG_ENTRIES;
+
+/** Narrow a runtime string to a configured operation. */
+export function isOperationName(operation: string): operation is OperationName {
+  return Object.hasOwn(MODEL_CONFIG_ENTRIES, operation);
+}
 
 const WAN_2_2_T2V_FAST = "wan-video/wan-2.2-t2v-fast";
 const WAN_2_2_I2V_FAST = "wan-video/wan-2.2-i2v-fast";

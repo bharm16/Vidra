@@ -8,6 +8,13 @@
 
 import { z } from "zod";
 import { logger } from "@infrastructure/Logger";
+import {
+  FLAG_DEFINITIONS,
+  type BoolFlagDef,
+  type EnumFlagDef,
+  type FlagDef,
+  type FlagName,
+} from "./feature-flags.ts";
 
 // ─── Reusable coercion helpers ─────────────────────────────────
 
@@ -34,6 +41,12 @@ const strictBooleanString = (fallback: boolean) =>
     .default(String(fallback) as "true" | "false")
     .transform((v) => v === "true");
 
+/** Strict enum env var with a declared default. Unlisted values fail boot. */
+const strictEnumString = <T extends string>(
+  values: readonly T[],
+  fallback: T,
+) => z.enum(values).default(fallback);
+
 // ─── Domain schemas ────────────────────────────────────────────
 
 const serverSchema = z.object({
@@ -45,28 +58,49 @@ const serverSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
 });
 
-// Only flags with real boot-time validation live here:
-// - ENABLE_CONVERGENCE: safety-first default (anything-not-"false" → true).
-// - UNHANDLED_REJECTION_MODE: strict enum.
-// - *_ENABLED: strict "true"/"false" — typos fail boot.
-// All other flag resolution (including alias handling) is owned by feature-flags.ts.
-const featureFlagSchema = z.object({
-  ENABLE_CONVERGENCE: z
-    .string()
-    .default("true")
-    .transform((v) => v !== "false"),
-  UNHANDLED_REJECTION_MODE: z
-    .enum(["classified", "strict"])
-    .default("classified"),
-  WEBHOOK_RECONCILIATION_ENABLED: strictBooleanString(true),
-  BILLING_PROFILE_REPAIR_ENABLED: strictBooleanString(true),
-  CREDIT_REFUND_SWEEPER_ENABLED: strictBooleanString(true),
-  CREDIT_RECONCILIATION_ENABLED: strictBooleanString(true),
-  VIDEO_JOB_SWEEPER_ENABLED: strictBooleanString(true),
-  VIDEO_DLQ_REPROCESSOR_ENABLED: strictBooleanString(true),
-  VIDEO_ASSET_RETENTION_ENABLED: strictBooleanString(true),
-  VIDEO_ASSET_RECONCILER_ENABLED: strictBooleanString(false),
-  CONTINUITY_CLIP_ENABLED: strictBooleanString(true),
+// The flag registry in feature-flags.ts is the single source of truth for
+// WHICH toggles exist; this schema is derived from it so the two lists can
+// never drift. Adding a flag to the registry automatically makes a typo
+// (ENABLE_STUDIO=ture) fail boot instead of silently resolving to the
+// default. Booleans require exactly "true"/"false"; enums require a declared
+// value. Alias handling stays in feature-flags.ts — aliases are legacy names
+// the registry translates, not names the boot schema constrains.
+//
+// The dependency direction is deliberate: feature-flags.ts must stay free of
+// infrastructure imports (it is read from early-boot paths), so env.ts imports
+// the registry and never the reverse.
+
+type FlagSchema<D extends FlagDef> = D extends BoolFlagDef
+  ? ReturnType<typeof strictBooleanString>
+  : D extends EnumFlagDef<infer V>
+    ? ReturnType<typeof strictEnumString<V>>
+    : never;
+
+type FeatureFlagShape = {
+  [K in FlagName as (typeof FLAG_DEFINITIONS)[K]["envName"]]: FlagSchema<
+    (typeof FLAG_DEFINITIONS)[K]
+  >;
+};
+
+function buildFeatureFlagShape(): FeatureFlagShape {
+  const shape: Record<string, z.ZodType> = {};
+  for (const def of Object.values(FLAG_DEFINITIONS) as FlagDef[]) {
+    shape[def.envName] =
+      def.kind === "bool"
+        ? strictBooleanString(def.default)
+        : strictEnumString(def.values, def.default);
+  }
+  return shape as FeatureFlagShape;
+}
+
+const featureFlagSchema = z.object(buildFeatureFlagShape());
+
+// Tuning knobs for LLM_PROVIDER_FAILOVER_ENABLED. Read straight from
+// process.env by the DI layer; validated here so a malformed value fails boot
+// rather than silently falling back to the hardcoded default.
+const llmFailoverSchema = z.object({
+  LLM_FAILOVER_CONSECUTIVE_FAILURES: coercePositiveInt(5),
+  LLM_FAILOVER_COOLDOWN_MS: coercePositiveInt(30000),
 });
 
 const openaiSchema = z.object({
@@ -294,7 +328,8 @@ const studioSchema = z.object({
 
 const convergenceSchema = z.object({
   DEPTH_ESTIMATION_WARMUP_RETRY_TIMEOUT_MS: coercePositiveInt(20_000),
-  DEPTH_WARMUP_ON_STARTUP: coerceBooleanString(true),
+  // DEPTH_WARMUP_ON_STARTUP is a registered flag — validated by the derived
+  // featureFlagSchema above, not here.
   DEPTH_WARMUP_TIMEOUT_MS: coercePositiveInt(60_000),
   // FAL_DEPTH_WARMUP_ENABLED default is NODE_ENV-dependent (see core.services.ts);
   // declared here as optional for pass-through validation only.
@@ -345,6 +380,7 @@ const devSchema = z.object({
 
 const envSchema = serverSchema
   .merge(featureFlagSchema)
+  .merge(llmFailoverSchema)
   .merge(openaiSchema)
   .merge(groqSchema)
   .merge(geminiSchema)

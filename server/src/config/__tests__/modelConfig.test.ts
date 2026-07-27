@@ -34,10 +34,10 @@ describe("modelConfig", () => {
   });
 
   it("reports seed and developer message flags from operation config", () => {
-    expect(shouldUseSeed("optimize_mode_detection")).toBe(true);
-    expect(shouldUseSeed("video_scene_variation")).toBe(false);
+    expect(shouldUseSeed("optimize_shot_interpreter")).toBe(true);
+    expect(shouldUseSeed("enhance_suggestions")).toBe(false);
     expect(shouldUseDeveloperMessage("optimize_standard")).toBe(true);
-    expect(shouldUseDeveloperMessage("video_scene_variation")).toBe(false);
+    expect(shouldUseDeveloperMessage("span_labeling")).toBe(false);
   });
 
   it("exports expected video model identifiers", () => {
