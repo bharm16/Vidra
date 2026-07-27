@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "@infrastructure/Logger";
-import type { AIResponse } from "@interfaces/IAIClient";
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
 import { cleanJSONResponse } from "@utils/JsonExtractor";
 import { StudioDecisionSchema, asStudioDecision } from "./decisionSchema";
@@ -29,19 +29,12 @@ import type {
   StudioTurnRecord,
 } from "./types";
 
-/** Minimal structural aiService port (matches StructuredOutputEnforcer's). */
-export interface StudioAIService {
-  execute(
-    operation: string,
-    options: Record<string, unknown>,
-  ): Promise<AIResponse>;
-  /** Streaming members are optional — the engine falls back to execute(). */
-  stream?(
-    operation: string,
-    options: Record<string, unknown> & { onChunk: (chunk: string) => void },
-  ): Promise<string>;
-  supportsStreaming?(operation: string): boolean;
-}
+/**
+ * @deprecated Use `AIExecutionPort` — the aiService port this module already
+ * depended on, structurally. Kept as an alias only so call sites outside this
+ * module keep compiling while they migrate to the real port.
+ */
+export type StudioAIService = AIExecutionPort;
 
 /**
  * Realtime hooks for the user-visible `thinking` field. onThinkingStart
@@ -123,11 +116,11 @@ const MAX_INVENTORY_IMAGES = 12;
 const SOURCE_PROMPT_EXCERPT_CHARS = 140;
 
 export class StudioPolicyEngine implements StudioTurnPolicy {
-  private readonly ai: StudioAIService;
+  private readonly ai: AIExecutionPort;
   private readonly log = logger.child({ service: "StudioPolicyEngine" });
   private templateCache: string | null = null;
 
-  constructor(deps: { ai: StudioAIService }) {
+  constructor(deps: { ai: AIExecutionPort }) {
     this.ai = deps.ai;
   }
 

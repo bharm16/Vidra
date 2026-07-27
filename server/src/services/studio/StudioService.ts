@@ -15,6 +15,7 @@
 
 import { randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
+import { validatePathOwnership } from "@services/storage/utils/pathUtils";
 import type { StudioModelRegistry } from "./StudioModelRegistry";
 import type {
   StudioThinkingHooks,
@@ -24,10 +25,8 @@ import type {
   ReplicateStudioImageRunner,
   StudioImageCallResult,
 } from "./providers/ReplicateStudioImageRunner";
-import {
-  FirestoreStudioProjectStore,
-  studioUsageDayKey,
-} from "./storage/FirestoreStudioProjectStore";
+import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
+import type { FirestoreStudioProjectStore } from "./storage/FirestoreStudioProjectStore";
 import type {
   StudioAttachment,
   StudioCallRecord,
@@ -145,7 +144,7 @@ export class StudioService {
   private readonly runner: ReplicateStudioImageRunner;
   private readonly storage: StudioImageStorage;
   private readonly policy: StudioTurnPolicy;
-  private readonly dailyCapCents: number;
+  private readonly ledger: StudioSpendLedger;
   private readonly now: () => Date;
   private readonly idFactory: () => string;
   private readonly log = logger.child({ service: "StudioService" });
@@ -156,9 +155,13 @@ export class StudioService {
     this.runner = deps.runner;
     this.storage = deps.storage;
     this.policy = deps.policy;
-    this.dailyCapCents = deps.dailyCapCents;
     this.now = deps.now ?? (() => new Date());
     this.idFactory = deps.idFactory ?? (() => randomUUID());
+    this.ledger = new StudioSpendLedger({
+      store: deps.store,
+      dailyCapCents: deps.dailyCapCents,
+      now: this.now,
+    });
   }
 
   /**
@@ -275,7 +278,7 @@ export class StudioService {
     userId: string,
     projectId: string,
     input: { storagePath: string; filename: string },
-  ): Promise<StudioAttachment & { viewUrl?: string }> {
+  ): Promise<StudioAttachment & { viewUrl: string }> {
     const project = await this.getProject(userId, projectId);
     const attachments = project.attachments ?? [];
     if (attachments.length >= MAX_ATTACHMENTS) {
@@ -287,13 +290,24 @@ export class StudioService {
     }
     // The signed-URL flow scopes uploads under the caller's own prefix;
     // registering a path outside it would let ids alias other users' files.
-    if (!input.storagePath.includes(userId)) {
+    // Ownership is the storage module's rule — an anchored `users/<uid>/`
+    // prefix, not a substring: `users/xabcy/…` is NOT owned by `abc`.
+    if (!validatePathOwnership(input.storagePath, userId)) {
       const error = new Error("storagePath is not yours") as Error & {
         statusCode: number;
       };
       error.statusCode = 400;
       throw error;
     }
+
+    // Minting the URL BEFORE the write is the second gate: getViewUrl runs
+    // the same ownership check inside storage and throws 403 on a foreign
+    // path. Its failure must fail the request — swallowing it registered
+    // the attachment anyway, which is what made the check advisory.
+    const { viewUrl } = await this.storage.getViewUrl(
+      userId,
+      input.storagePath,
+    );
 
     const attachment: StudioAttachment = {
       id: `att-${this.idFactory()}`,
@@ -306,15 +320,7 @@ export class StudioService {
       updatedAtMs: attachment.createdAtMs,
     });
 
-    try {
-      const { viewUrl } = await this.storage.getViewUrl(
-        userId,
-        attachment.storagePath,
-      );
-      return { ...attachment, viewUrl };
-    } catch {
-      return attachment;
-    }
+    return { ...attachment, viewUrl };
   }
 
   /** Delete a project and its turns. Ownership reads as absence (404). */
@@ -495,9 +501,8 @@ export class StudioService {
       attachmentIds,
     });
 
-    const day = await this.reserve(turn);
-    const completion = this.runInBackground(project, turn, () =>
-      this.executeGenerateTurn(project, turn, day),
+    const { completion } = await this.ledger.reserve(turn, (reservation) =>
+      this.executeGenerateTurn(project, turn, reservation),
     );
     return { turnId: turn.id, decision, completion };
   }
@@ -533,34 +538,36 @@ export class StudioService {
       attachmentIds,
     });
 
-    const day = await this.reserve(turn);
-    const completion = this.runInBackground(project, turn, async () => {
-      const timeoutMs = this.registry.timeoutMsFor(model.slug);
-      const sourceUrls = await Promise.all(
-        sources.map(async (image) => {
-          const { viewUrl } = await this.storage.getViewUrl(
-            turn.userId,
-            image.storagePath,
-          );
-          return viewUrl;
-        }),
-      );
-      await this.settleSingleCallTurn(project, turn, day, {
-        producedBy: model.slug,
-        sourcePrompt: decision.instruction,
-        run: () =>
-          this.runner.run({
-            model: model.replicateId,
-            input: this.registry.buildEditInput(
-              model.slug,
-              decision.instruction,
-              sourceUrls,
-            ),
-            userId: turn.userId,
-            timeoutMs,
+    const { completion } = await this.ledger.reserve(
+      turn,
+      async (reservation) => {
+        const timeoutMs = this.registry.timeoutMsFor(model.slug);
+        const sourceUrls = await Promise.all(
+          sources.map(async (image) => {
+            const { viewUrl } = await this.storage.getViewUrl(
+              turn.userId,
+              image.storagePath,
+            );
+            return viewUrl;
           }),
-      });
-    });
+        );
+        await this.settleSingleCallTurn(project, turn, reservation, {
+          producedBy: model.slug,
+          sourcePrompt: decision.instruction,
+          run: () =>
+            this.runner.run({
+              model: model.replicateId,
+              input: this.registry.buildEditInput(
+                model.slug,
+                decision.instruction,
+                sourceUrls,
+              ),
+              userId: turn.userId,
+              timeoutMs,
+            }),
+        });
+      },
+    );
     return { turnId: turn.id, decision, completion };
   }
 
@@ -588,24 +595,29 @@ export class StudioService {
       attachmentIds,
     });
 
-    const day = await this.reserve(turn);
-    const completion = this.runInBackground(project, turn, async () => {
-      const { viewUrl } = await this.storage.getViewUrl(
-        turn.userId,
-        source.storagePath,
-      );
-      await this.settleSingleCallTurn(project, turn, day, {
-        producedBy: decision.operation,
-        sourcePrompt: `${decision.operation} of ${source.id}`,
-        run: () =>
-          this.runner.run({
-            model: utility.replicateId,
-            input: this.registry.buildUtilityInput(decision.operation, viewUrl),
-            userId: turn.userId,
-            timeoutMs: this.registry.timeoutMsForUtility(decision.operation),
-          }),
-      });
-    });
+    const { completion } = await this.ledger.reserve(
+      turn,
+      async (reservation) => {
+        const { viewUrl } = await this.storage.getViewUrl(
+          turn.userId,
+          source.storagePath,
+        );
+        await this.settleSingleCallTurn(project, turn, reservation, {
+          producedBy: decision.operation,
+          sourcePrompt: `${decision.operation} of ${source.id}`,
+          run: () =>
+            this.runner.run({
+              model: utility.replicateId,
+              input: this.registry.buildUtilityInput(
+                decision.operation,
+                viewUrl,
+              ),
+              userId: turn.userId,
+              timeoutMs: this.registry.timeoutMsForUtility(decision.operation),
+            }),
+        });
+      },
+    );
     return { turnId: turn.id, decision, completion };
   }
 
@@ -646,31 +658,6 @@ export class StudioService {
     };
   }
 
-  /** Atomic cap reservation; throws StudioCapExceededError before any call. */
-  private async reserve(turn: StudioTurnRecord): Promise<string> {
-    const day = studioUsageDayKey(this.now());
-    await this.store.reserveTurn({
-      turn,
-      day,
-      capCents: this.dailyCapCents,
-    });
-    return day;
-  }
-
-  private runInBackground(
-    project: StudioProjectRecord,
-    turn: StudioTurnRecord,
-    work: () => Promise<void>,
-  ): Promise<void> {
-    return work().catch((error: unknown) => {
-      this.log.error(
-        "Studio turn execution crashed",
-        error instanceof Error ? error : new Error(String(error)),
-        { projectId: project.id, turnId: turn.id, userId: turn.userId },
-      );
-    });
-  }
-
   /**
    * Look up stored image records for validated source ids. The policy
    * engine already verified existence; a miss here means turn data changed
@@ -703,14 +690,13 @@ export class StudioService {
   }
 
   /**
-   * Run one image call, persist its result, and finalize the turn:
-   * success → "complete"; failure → "failed" with the reservation refunded
-   * (plan: "Partial and failed turns", single-call case).
+   * Run one image call, report its outcome to the reservation (which
+   * refunds and finalizes), then bump the project's timestamp.
    */
   private async settleSingleCallTurn(
     project: StudioProjectRecord,
     turn: StudioTurnRecord,
-    day: string,
+    reservation: StudioReservation,
     options: {
       producedBy: StudioImageRecord["model"];
       sourcePrompt: string;
@@ -748,17 +734,7 @@ export class StudioService {
       };
     }
 
-    const failed = call.status === "failed";
-    if (failed) {
-      await this.store.refundCents(turn.userId, day, turn.reservedCents);
-    }
-
-    await this.store.finalizeTurn(project.id, turn.id, {
-      status: failed ? "failed" : "complete",
-      calls: [call],
-      refundedCents: failed ? turn.reservedCents : 0,
-      updatedAtMs: this.now().getTime(),
-    });
+    await reservation.settle([call]);
     await this.store.updateProject(project.id, {
       updatedAtMs: this.now().getTime(),
     });
@@ -800,13 +776,12 @@ export class StudioService {
   private async executeGenerateTurn(
     project: StudioProjectRecord,
     turn: StudioTurnRecord,
-    day: string,
+    reservation: StudioReservation,
   ): Promise<void> {
     if (turn.decision.action !== "generate" || !turn.resolvedModel) return;
     const decision = turn.decision;
     const model = this.registry.getModel(turn.resolvedModel);
     const timeoutMs = this.registry.timeoutMsFor(model.slug);
-    const perCallCents = model.costCentsPerCall;
 
     const settled = await Promise.allSettled(
       decision.variants.map((variant) =>
@@ -858,28 +833,7 @@ export class StudioService {
       };
     });
 
-    const failedCount = calls.filter((c) => c.status === "failed").length;
-    const succeededCount = calls.length - failedCount;
-    const refundedCents = failedCount * perCallCents;
-
-    // Failed calls never consume cap (plan: "Refunds").
-    if (refundedCents > 0) {
-      await this.store.refundCents(turn.userId, day, refundedCents);
-    }
-
-    const status =
-      succeededCount === 0
-        ? "failed"
-        : failedCount > 0
-          ? "partial"
-          : "complete";
-
-    await this.store.finalizeTurn(project.id, turn.id, {
-      status,
-      calls,
-      refundedCents,
-      updatedAtMs: this.now().getTime(),
-    });
+    await reservation.settle(calls);
 
     // First generation titles the project (behavior 8). The LLM's title is
     // preferred; a basePrompt-derived fallback guarantees the invariant
