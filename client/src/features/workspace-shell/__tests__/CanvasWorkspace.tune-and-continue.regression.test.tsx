@@ -214,12 +214,13 @@ describe("regression: continue scene seeds the start frame", () => {
     );
   });
 
-  // Falls back to mediaUrls[0] when thumbnailUrl is absent (image-tier or
-  // any generation whose thumbnail resolution returned null). Without this
-  // path the start frame would silently fail to seed.
-  it("falls back to mediaUrls[0] when thumbnailUrl is absent", () => {
+  // Falls back to mediaUrls[0] when thumbnailUrl is absent on a *picture* —
+  // there the media URL is the still. Without this path the start frame would
+  // silently fail to seed.
+  it("falls back to mediaUrls[0] for a picture with no thumbnail", () => {
     const source = completedVideoGeneration({
       id: "gen-source",
+      mediaType: "image",
       thumbnailUrl: null,
       mediaUrls: ["https://storage.example.com/users/u1/images/frame.webp"],
     });
@@ -237,6 +238,26 @@ describe("regression: continue scene seeds the start frame", () => {
         source: "generation",
       }),
     );
+  });
+
+  // Regression: a clip's own video URL is not a still, so it must never be
+  // seeded as a *first frame*. The unguarded `thumbnailUrl ?? mediaUrls[0]`
+  // here used to hand setStartFrame an .mp4.
+  it("does not seed a clip's video URL as the start frame", () => {
+    mockRuntimeGenerations = [
+      completedVideoGeneration({
+        id: "gen-source",
+        thumbnailUrl: null,
+        mediaUrls: ["https://storage.example.com/users/u1/videos/clip.mp4"],
+      }),
+    ];
+
+    const props = buildProps("a dancer");
+    render(withSelectedSpan(<CanvasWorkspace {...props} />));
+
+    dispatchContinueScene({ fromGenerationId: "gen-source" });
+
+    expect(setStartFrameMock).not.toHaveBeenCalled();
   });
 
   // Unknown generation id is a no-op — the handler must not call

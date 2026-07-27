@@ -16,62 +16,11 @@ const createGeneration = (overrides: Partial<Generation> = {}): Generation => ({
   ...overrides,
 });
 
+// The poster *rules* live with `resolveTakePosterUrl` (see takePosterUrl.test).
+// What is only testable here is the wiring: the builder hands the version's
+// preview image to the resolver as the last-resort still.
 describe("buildGalleryGenerationEntries", () => {
-  it("does not use raw video URLs as gallery thumbnail fallback", () => {
-    const entries = buildGalleryGenerationEntries({
-      versions: [],
-      runtimeGenerations: [
-        createGeneration({
-          mediaType: "video",
-          thumbnailUrl: null,
-          mediaUrls: [
-            "/api/preview/video/content/users/u1/generations/video.mp4",
-          ],
-        }),
-      ],
-    });
-
-    expect(entries[0]?.gallery.thumbnailUrl).toBeNull();
-  });
-
-  it("ignores video-like thumbnail URLs for video generations", () => {
-    const entries = buildGalleryGenerationEntries({
-      versions: [],
-      runtimeGenerations: [
-        createGeneration({
-          mediaType: "video",
-          thumbnailUrl:
-            "/api/preview/video/content/users/u1/generations/video.mp4",
-          mediaUrls: [
-            "https://storage.example.com/users/u1/generations/video.mp4",
-          ],
-        }),
-      ],
-    });
-
-    expect(entries[0]?.gallery.thumbnailUrl).toBeNull();
-  });
-
-  it("still falls back to media URL for non-video generations", () => {
-    const entries = buildGalleryGenerationEntries({
-      versions: [],
-      runtimeGenerations: [
-        createGeneration({
-          mediaType: "image",
-          thumbnailUrl: null,
-          mediaUrls: [
-            "https://storage.example.com/users/u1/previews/images/preview.webp",
-          ],
-        }),
-      ],
-    });
-
-    expect(entries[0]?.gallery.thumbnailUrl).toBe(
-      "https://storage.example.com/users/u1/previews/images/preview.webp",
-    );
-  });
-
-  it("uses version preview image when generation thumbnail is missing", () => {
+  it("offers the version preview image when a generation has no still of its own", () => {
     const entries = buildGalleryGenerationEntries({
       versions: [
         {

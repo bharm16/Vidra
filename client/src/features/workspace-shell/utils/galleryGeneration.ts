@@ -1,6 +1,7 @@
 import type { PromptVersionEntry } from "@features/prompt-optimizer";
 import { getModelConfig } from "@features/generations/config/generationConfig";
 import type { Generation } from "@features/generations/types";
+import { resolveTakePosterUrl } from "./takePosterUrl";
 import type {
   GalleryGeneration,
   GalleryPromptSpan,
@@ -38,14 +39,6 @@ const mapTier = (generation: Generation): GalleryTier => {
   if (generation.mediaType === "image-sequence") return "preview";
   if (generation.tier === "draft") return "draft";
   return "final";
-};
-
-const isLikelyVideoUrl = (url: string): boolean => {
-  const value = url.toLowerCase();
-  if (value.includes("/api/preview/video/content/")) {
-    return true;
-  }
-  return /\.(mp4|webm|mov|m3u8)(\?|#|$)/.test(value);
 };
 
 const normalizeNonEmpty = (value: string | null | undefined): string | null =>
@@ -108,44 +101,6 @@ const buildVersionMediaFallbackGeneration = (
   };
 };
 
-const resolveThumbnailUrl = (
-  generation: Generation,
-  versionPreviewImageUrl: string | null,
-): string | null => {
-  const isCompletedGeneration = generation.status === "completed";
-  const normalizedThumbnail = normalizeNonEmpty(generation.thumbnailUrl);
-  const normalizedVersionPreview = normalizeNonEmpty(versionPreviewImageUrl);
-
-  if (generation.mediaType === "video") {
-    if (normalizedThumbnail && !isLikelyVideoUrl(normalizedThumbnail)) {
-      return normalizedThumbnail;
-    }
-    if (
-      isCompletedGeneration &&
-      normalizedVersionPreview &&
-      !isLikelyVideoUrl(normalizedVersionPreview)
-    ) {
-      return normalizedVersionPreview;
-    }
-    return null;
-  }
-
-  if (normalizedThumbnail) {
-    return normalizedThumbnail;
-  }
-
-  const firstMediaUrl = normalizeNonEmpty(generation.mediaUrls[0]);
-  if (firstMediaUrl) {
-    return firstMediaUrl;
-  }
-
-  if (isCompletedGeneration && normalizedVersionPreview) {
-    return normalizedVersionPreview;
-  }
-
-  return null;
-};
-
 const hasBrowsableMedia = (
   generation: Generation,
   versionPreviewImageUrl: string | null,
@@ -154,7 +109,7 @@ const hasBrowsableMedia = (
     return false;
   }
 
-  const thumbnailUrl = resolveThumbnailUrl(generation, versionPreviewImageUrl);
+  const thumbnailUrl = resolveTakePosterUrl(generation, versionPreviewImageUrl);
   if (thumbnailUrl) {
     return true;
   }
@@ -253,7 +208,7 @@ const mapGalleryGeneration = (
 ): GalleryGeneration => ({
   id: generation.id,
   tier: mapTier(generation),
-  thumbnailUrl: resolveThumbnailUrl(generation, versionPreviewImageUrl),
+  thumbnailUrl: resolveTakePosterUrl(generation, versionPreviewImageUrl),
   mediaUrl: generation.mediaUrls[0] ?? null,
   mediaType: generation.mediaType,
   prompt: generation.prompt ?? "",

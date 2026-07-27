@@ -4,6 +4,7 @@ import { CaretDown, CaretRight } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { VidraMark } from "@/components/brand";
+import { cn } from "@/utils/cn";
 import { FEATURES } from "@/config/features.config";
 import { useWorkspaceProject } from "../hooks/useWorkspaceProject";
 import { useWorkspaceCredits } from "../hooks/useWorkspaceCredits";
@@ -96,7 +97,7 @@ export function WorkspaceTopBar({
         gone, so the account affordance lives here. Library + avatar are
         signed-in affordances; a signed-out visitor gets a sign-in link. */}
       <div
-        className={`flex items-center gap-1${minimal ? "ps-rise" : ""}`}
+        className={cn("flex items-center gap-1", minimal && "ps-rise")}
         style={minimal ? { animationDelay: "0.18s" } : undefined}
       >
         {user ? (

@@ -36,10 +36,10 @@ const SIGNED_IN_USER = {
   photoURL: null,
 };
 
-function renderTopBar(): void {
+function renderTopBar(minimal = false): void {
   render(
     <MemoryRouter>
-      <WorkspaceTopBar />
+      <WorkspaceTopBar minimal={minimal} />
     </MemoryRouter>,
   );
 }
@@ -95,6 +95,19 @@ describe("WorkspaceTopBar", () => {
     renderTopBar();
     const library = screen.getByRole("link", { name: /library/i });
     expect(library).toHaveAttribute("href", "/history");
+  });
+
+  it("keeps both the cluster gap and the entrance animation when minimal", () => {
+    authState.user = SIGNED_IN_USER;
+    renderTopBar(true);
+    const cluster = screen
+      .getByRole("link", { name: /library/i })
+      .closest("div");
+    // The conditional class was concatenated without a separating space, so
+    // the pair collapsed into the single junk class `gap-1ps-rise` and both
+    // the spacing and the rise animation were silently lost.
+    expect(cluster).toHaveClass("gap-1");
+    expect(cluster).toHaveClass("ps-rise");
   });
 
   it("shows the account avatar popover trigger when signed in", () => {

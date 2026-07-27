@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { CanvasSettingsRow } from "../CanvasSettingsRow";
 import {
   GenerationControlsProvider,
@@ -11,18 +11,6 @@ import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import type { GenerationControlsState } from "@features/generation-controls";
 import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls";
 import { VIDEO_DRAFT_MODEL } from "@/components/ToolSidebar/config/modelConfig";
-
-vi.mock("../StartFramePopover", () => ({
-  StartFramePopover: () => <div data-testid="start-frame-popover" />,
-}));
-
-vi.mock("../EndFramePopover", () => ({
-  EndFramePopover: () => <div data-testid="end-frame-popover" />,
-}));
-
-vi.mock("../VideoReferencesPopover", () => ({
-  VideoReferencesPopover: () => <div data-testid="video-references-popover" />,
-}));
 
 vi.mock(
   "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping",
@@ -193,13 +181,21 @@ describe("CanvasSettingsRow", () => {
     });
 
     // The composer handoff's docked row is exactly: aspect · duration ·
-    // model · preview, then Make it. The start/end-frame and reference
-    // popovers no longer live in the composer.
-    expect(screen.queryByTestId("start-frame-popover")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("end-frame-popover")).not.toBeInTheDocument();
+    // model · preview, then Make it. Asserted as the row's whole control
+    // population, so any control added back — a start/end-frame or reference
+    // popover under any name — fails this, which a queryByTestId on a mocked
+    // module could not.
+    const row = screen.getByTestId("canvas-settings-row");
+    const controls = within(row).getAllByRole("button");
+
+    expect(controls).toHaveLength(5);
+    expect(within(row).getByRole("button", { name: "16:9" })).toBeVisible();
+    expect(within(row).getByRole("button", { name: "5s" })).toBeVisible();
     expect(
-      screen.queryByTestId("video-references-popover"),
-    ).not.toBeInTheDocument();
+      within(row).getByRole("button", { name: "Video model" }),
+    ).toBeVisible();
+    expect(controls).toContain(screen.getByTestId("canvas-preview-button"));
+    expect(controls).toContain(screen.getByTestId("canvas-generate-button"));
   });
 
   it("renders the model control icon-only, reachable as 'Video model' (composer handoff)", () => {

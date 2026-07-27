@@ -31,7 +31,6 @@ import type {
 } from "@/features/prompt-optimizer/PromptCanvas/types";
 import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
 import { useModelSelectionRecommendation } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useModelSelectionRecommendation";
-import { useSidebarGenerationDomain } from "@/components/ToolSidebar/context";
 import { GenerationPopover } from "@/features/prompt-optimizer/components/GenerationPopover";
 import { cn } from "@/utils/cn";
 import {
@@ -45,6 +44,7 @@ import { buildGalleryGenerationEntries } from "./utils/galleryGeneration";
 import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
 import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
 import { groupShots } from "./utils/groupShots";
+import { resolveTakePosterUrl } from "./utils/takePosterUrl";
 import { useFeaturedTile } from "./hooks/useFeaturedTile";
 import { useWorkspaceKeyboardShortcuts } from "./hooks/useWorkspaceKeyboardShortcuts";
 import { useAnchorDraft } from "./hooks/useAnchorDraft";
@@ -171,10 +171,6 @@ export function CanvasWorkspace({
     return versionId ? { promptVersionId: versionId } : {};
   }, [onCreateVersionIfNeeded]);
   useRegisterPersistenceTarget(resolvePersistenceTarget);
-  // Generation domain provides the upload handlers wired through to
-  // CanvasSettingsRow's start-frame / video-reference popovers. Null when
-  // SidebarDataContextProvider isn't mounted (tests, isolated stories).
-  const generationDomain = useSidebarGenerationDomain();
   useWorkspaceKeyboardShortcuts();
   const [showCameraMotionModal, setShowCameraMotionModal] = useState(false);
   const [viewingId, setViewingId] = useState<string | null>(null);
@@ -553,8 +549,6 @@ export function CanvasWorkspace({
     onAutocompleteIndexChange,
   };
 
-  const onStartFrameUpload = generationDomain?.onStartFrameUpload;
-  const onUploadSidebarImage = generationDomain?.onUploadSidebarImage;
   const recommendationPromptId = modelRecommendation?.promptId;
   const hasGenerations = galleryEntries.length > 0;
 
@@ -625,7 +619,7 @@ export function CanvasWorkspace({
       const allTiles = shots.flatMap((shot) => shot.tiles);
       const target = allTiles.find((tile) => tile.id === fromGenerationId);
       if (!target) return;
-      const frameUrl = target.thumbnailUrl ?? target.mediaUrls[0];
+      const frameUrl = resolveTakePosterUrl(target);
       if (!frameUrl) return;
       storeActions.setStartFrame({
         id: `continue-scene-${target.id}`,

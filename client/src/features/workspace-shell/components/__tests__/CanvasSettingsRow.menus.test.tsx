@@ -26,18 +26,6 @@ window.ResizeObserver =
   window.ResizeObserver ?? (ResizeObserverStub as typeof ResizeObserver);
 Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? vi.fn();
 
-vi.mock("../StartFramePopover", () => ({
-  StartFramePopover: () => <div data-testid="start-frame-popover" />,
-}));
-
-vi.mock("../EndFramePopover", () => ({
-  EndFramePopover: () => <div data-testid="end-frame-popover" />,
-}));
-
-vi.mock("../VideoReferencesPopover", () => ({
-  VideoReferencesPopover: () => <div data-testid="video-references-popover" />,
-}));
-
 vi.mock(
   "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping",
   () => ({

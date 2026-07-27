@@ -1,66 +1,11 @@
+import { resolveTakePosterUrl } from "@/features/workspace-shell/utils/takePosterUrl";
 import { buildSpaceNodes, type LineageInput } from "./buildSpaceNodes";
 import type { SpaceNode } from "./types";
-
-/** A live generation, as the workspace knows it, before it becomes a node. */
-export interface SpaceSourceGeneration {
-  id: string;
-  mediaType: string;
-  status: string;
-  thumbnailUrl?: string;
-  mediaUrls?: string[];
-  /** The picture this clip was generated from, when known. */
-  sourcePictureId?: string;
-}
 
 function mapStatus(status: string): SpaceNode["status"] {
   if (status === "completed") return "ready";
   if (status === "failed") return "failed";
   return "forming"; // pending | generating | anything still in flight
-}
-
-function mediaOf(gen: SpaceSourceGeneration): string | undefined {
-  return gen.thumbnailUrl ?? gen.mediaUrls?.[0];
-}
-
-/**
- * Adapt the session's live generations into the space's lineage nodes.
- *
- * Ancestors are derived for the current session — every picture rolls off the
- * one words-version, and a clip links to its source picture (or, absent an
- * explicit source, the first picture). ADR-0013 persists these links later; the
- * adapter stays a pure transform so the mapping is fully testable.
- */
-export function deriveSpaceNodes(input: {
-  prompt: string;
-  promptVersionId: string;
-  generations: SpaceSourceGeneration[];
-}): SpaceNode[] {
-  const pictures = input.generations.filter((g) => g.mediaType === "image");
-  const clips = input.generations.filter((g) => g.mediaType === "video");
-  const rootWordsId = `words-${input.promptVersionId}`;
-  const fallbackPictureId = pictures[0]?.id ?? rootWordsId;
-
-  return buildSpaceNodes({
-    words: [{ versionId: input.promptVersionId, label: input.prompt }],
-    pictures: pictures.map((picture) => {
-      const media = mediaOf(picture);
-      return {
-        id: picture.id,
-        versionId: input.promptVersionId,
-        status: mapStatus(picture.status),
-        ...(media ? { mediaUrl: media } : {}),
-      };
-    }),
-    clips: clips.map((clip) => {
-      const media = mediaOf(clip);
-      return {
-        id: clip.id,
-        pictureId: clip.sourcePictureId ?? fallbackPictureId,
-        status: mapStatus(clip.status),
-        ...(media ? { mediaUrl: media } : {}),
-      };
-    }),
-  });
 }
 
 interface ReadGeneration {
@@ -93,16 +38,23 @@ function readGeneration(record: unknown): ReadGeneration | null {
   const bag = record as Record<string, unknown>;
   const id = typeof bag.id === "string" ? bag.id : null;
   if (!id) return null;
-  const thumbnailUrl =
-    typeof bag.thumbnailUrl === "string" ? bag.thumbnailUrl : undefined;
-  const mediaUrls = Array.isArray(bag.mediaUrls)
-    ? bag.mediaUrls.filter((u): u is string => typeof u === "string")
-    : [];
-  const media = thumbnailUrl ?? mediaUrls[0];
+  const mediaType = typeof bag.mediaType === "string" ? bag.mediaType : "";
+  const status = typeof bag.status === "string" ? bag.status : "";
+  // A clip's still is never its own video URL — the space renders mediaUrl into
+  // an <img>, so resolveTakePosterUrl is the single place that rule lives.
+  const media = resolveTakePosterUrl({
+    mediaType,
+    status,
+    thumbnailUrl:
+      typeof bag.thumbnailUrl === "string" ? bag.thumbnailUrl : undefined,
+    mediaUrls: Array.isArray(bag.mediaUrls)
+      ? bag.mediaUrls.filter((u): u is string => typeof u === "string")
+      : [],
+  });
   return {
     id,
-    mediaType: typeof bag.mediaType === "string" ? bag.mediaType : "",
-    status: mapStatus(typeof bag.status === "string" ? bag.status : ""),
+    mediaType,
+    status: mapStatus(status),
     ...(media ? { mediaUrl: media } : {}),
     ancestorGenerationId:
       typeof bag.ancestorGenerationId === "string"
@@ -114,10 +66,10 @@ function readGeneration(record: unknown): ReadGeneration | null {
 
 /**
  * Adapt the session's PERSISTED versions into the space's lineage nodes
- * (ADR-0013). Unlike `deriveSpaceNodes` (live, single version), this reads the
- * durable `versions` array, so the space survives reload and shows the full
- * reword chain. Reword edges follow version order — each version is reworded
- * from the previous; a picture roots at its version; a clip links to its
+ * (ADR-0013). It reads the durable `versions` array, so the space survives
+ * reload and shows the full reword chain. Reword edges follow version order —
+ * each version is reworded from the previous; a picture roots at its version;
+ * a clip links to its
  * persisted source picture (`ancestorGenerationId`), falling back to the first
  * picture in the same version, then the words node. Pure and total.
  */

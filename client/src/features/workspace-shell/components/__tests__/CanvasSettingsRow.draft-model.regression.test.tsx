@@ -11,18 +11,6 @@ import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import type { GenerationControlsState } from "@features/generation-controls";
 import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls";
 
-vi.mock("../StartFramePopover", () => ({
-  StartFramePopover: () => <div data-testid="start-frame-popover" />,
-}));
-
-vi.mock("../EndFramePopover", () => ({
-  EndFramePopover: () => <div data-testid="end-frame-popover" />,
-}));
-
-vi.mock("../VideoReferencesPopover", () => ({
-  VideoReferencesPopover: () => <div data-testid="video-references-popover" />,
-}));
-
 vi.mock(
   "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping",
   () => ({

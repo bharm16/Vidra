@@ -4,6 +4,7 @@ import { cn } from "@/utils/cn";
 import { useResolvedMediaUrl } from "@/hooks/useResolvedMediaUrl";
 import type { Generation } from "@features/generations/types";
 import { dispatchContinueScene } from "../events";
+import { resolveTakePosterUrl } from "../utils/takePosterUrl";
 
 export interface GenTileProps {
   generation: Generation;
@@ -108,7 +109,7 @@ function ReadyMedia({
 }): React.ReactElement {
   // Only the featured tile carries a <video> (hard cap: one per shot — see
   // GenTile.perf.regression.test). Non-featured tiles stay poster-only.
-  const poster = generation.thumbnailUrl ?? generation.mediaUrls[0] ?? "";
+  const poster = resolveTakePosterUrl(generation) ?? "";
   const videoUrl =
     generation.mediaType === "video" ? (generation.mediaUrls[0] ?? null) : null;
   if (isFeatured && videoUrl) {
