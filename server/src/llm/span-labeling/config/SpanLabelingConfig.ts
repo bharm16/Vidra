@@ -6,6 +6,11 @@
  * touching the core logic.
  */
 
+import {
+  SPAN_LABELING_DEFAULT_POLICY,
+  SPAN_LABELING_TEMPLATE_VERSIONS,
+} from "#shared/spanLabeling.ts";
+
 /**
  * Performance and capacity constants
  */
@@ -28,14 +33,11 @@ export const PERFORMANCE = {
 
 /**
  * Default validation policy
+ *
+ * Wire contract — shared with the client so evaluations validate under the
+ * same limits production enforces.
  */
-export const DEFAULT_POLICY = {
-  // Maximum word count for non-technical spans
-  nonTechnicalWordLimit: 15,
-
-  // Whether to allow overlapping spans
-  allowOverlap: false,
-} as const;
+export const DEFAULT_POLICY = SPAN_LABELING_DEFAULT_POLICY;
 
 /**
  * Default processing options
@@ -47,12 +49,9 @@ export const DEFAULT_OPTIONS = {
   // Minimum confidence threshold (0-1)
   minConfidence: 0.5,
 
-  // Template version identifier — v2.3: Adds explicit weather-as-separate-span
-  // rule, lighting/source disambiguation table, and removes the "foggy alley"
-  // compound-noun exception that contradicted the weather rule. Bumping this
-  // value is what actually busts the SpanLabelingCacheService cache (the
-  // value is hashed into the cache key by `generateCacheKey`).
-  templateVersion: "v2.3",
+  // Wire contract — the client sends this same value, and it is hashed into
+  // the SpanLabelingCacheService key by `generateCacheKey`.
+  templateVersion: SPAN_LABELING_TEMPLATE_VERSIONS.STANDARD,
 } as const;
 
 /**

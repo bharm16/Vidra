@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "surface": "first-frame-preview",
   "scenario": "golden-path",
-  "recordedAt": "2026-07-02T09:18:20.545Z",
+  "recordedAt": "2026-07-27T18:48:07.384Z",
   "entries": [
     {
       "seam": "image-preview",
@@ -16,9 +16,9 @@
         "speedMode": null
       },
       "response": {
-        "imageUrl": "https://replicate.delivery/yhqm/jTiaXLHTEgLgCNfjzMJomkz7FBixaGDsBgq1gEUWLj9t9e0WA/out-0.webp",
+        "imageUrl": "https://replicate.delivery/yhqm/vAdu5cIINe2ROy6vWxKUMZac8KYrDX5RIxVtRaBYWy6zzqeWA/out-0.webp",
         "model": "black-forest-labs/flux-schnell",
-        "durationMs": 2395,
+        "durationMs": 9655,
         "aspectRatio": "16:9"
       }
     }

@@ -1,0 +1,103 @@
+{
+  "formatVersion": 1,
+  "surface": "optimize-compile",
+  "scenario": "golden-path",
+  "recordedAt": "2026-07-27T18:47:57.011Z",
+  "entries": [
+    {
+      "seam": "ai-model",
+      "key": "ai-model:55d075b3fe8c6359d6a860a3d840c8214fbc81dd3421c454406f198e423c2cad",
+      "contract": "llm-text",
+      "request": {
+        "operation": "video_prompt_ir_extraction",
+        "systemPrompt": "Extract a structured video prompt IR from the input text.\n\nRules:\n- narrative: main visual description only (exclude section headers or bullet labels).\n- subjects: primary subjects as noun phrases.\n- actions: key verbs describing motion.\n- camera.movements: list of movements (e.g., \"dolly in\", \"pan left\").\n- camera.shotType: shot framing if stated (e.g., \"wide shot\").\n- camera.angle: angle if stated (e.g., \"low angle\").\n- environment.setting, lighting, weather: scene setting and lighting cues.\n- meta.style and meta.mood: style/mood keywords if present.\n- audio.dialogue/music/sfx: only if clearly specified.\n- technical: list of specs as key-value pairs (e.g., key=\"duration\", value=\"5s\").\n\nInput:\n\"\"\"\na lighthouse keeper reading by lamplight during a storm\n\"\"\"\n\nReturn ONLY the JSON object.",
+        "userMessage": null,
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "{\"narrative\":\"a lighthouse keeper reading by lamplight during a storm\",\"actions\":[\"reading\"],\"environment\":{\"lighting\":[\"lamplight\"],\"weather\":\"storm\"},\"subjects\":[\"a lighthouse keeper\"]}",
+        "metadata": {
+          "raw": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "{\"narrative\":\"a lighthouse keeper reading by lamplight during a storm\",\"actions\":[\"reading\"],\"environment\":{\"lighting\":[\"lamplight\"],\"weather\":\"storm\"},\"subjects\":[\"a lighthouse keeper\"]}"
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "STOP",
+                "index": 0
+              }
+            ],
+            "usageMetadata": {
+              "promptTokenCount": 217,
+              "candidatesTokenCount": 39,
+              "totalTokenCount": 393,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 217
+                }
+              ],
+              "thoughtsTokenCount": 137,
+              "serviceTier": "standard"
+            },
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "26dnavbTK7jXz7IPl9mgyQg"
+          }
+        }
+      }
+    },
+    {
+      "seam": "ai-model",
+      "key": "ai-model:741ad260ed574505b81865e59d913b3ccf4183e9a13f2ceb15b69011261677e3",
+      "contract": "llm-text",
+      "request": {
+        "operation": "video_prompt_rewrite",
+        "systemPrompt": "You are a professional video prompt engineer. Your goal is to rewrite the original user intent into an optimized prompt for the wan-2.2 video generation model.\n\nBelow is the structured Intermediate Representation (IR) of the user's request, which includes the narrative description, subjects, actions, camera movements, environment, audio, and technical specifications. Use this structured data to generate a high-fidelity prompt.\n\nOUTPUT FORMAT RULES (apply to every model strategy):\n- Integrate technical specs (duration, aspect ratio, frame rate, lens, aperture) NATURALLY into the prose narrative when they belong. Example: \"captured on 35mm at f/2.8\" inside a sentence is fine.\n- DO NOT append a parenthetical or comma-separated tech-spec tail at the end of the prompt (e.g. \"(5s, 16:9, 24fps, 50mm at f/2.8)\"). Such tails are prone to mid-phrase truncation when the response length runs out, producing fragments like \"...50mm at\" with no completion.\n- DO NOT prefix the prompt with a colon-list of tech specs (e.g. \"Static tripod, eye-level, 100mm at: ...\" or \"Wide shot, 24fps, 35mm at f/4: ...\"). Same truncation hazard, just at the beginning instead of the end. If you must mention specs early, fold them into the first sentence as a clause, NOT a list with a trailing colon.\n- End the prompt with a complete sentence terminated by punctuation. No trailing commas, no half-finished parenthetical lists, no orphaned prepositions like \"...at\" or \"...with\".\n\nVideo Prompt IR:\n```json\n{\n  \"subjects\": [\n    {\n      \"text\": \"a lighthouse keeper\",\n      \"attributes\": []\n    }\n  ],\n  \"actions\": [\n    \"reading\"\n  ],\n  \"camera\": {\n    \"movements\": []\n  },\n  \"environment\": {\n    \"setting\": \"\",\n    \"lighting\": [\n      \"lamplight\"\n    ],\n    \"weather\": \"storm\"\n  },\n  \"audio\": {},\n  \"meta\": {\n    \"mood\": [],\n    \"style\": []\n  },\n  \"technical\": {},\n  \"raw\": \"a lighthouse keeper reading by lamplight during a storm\"\n}\n```\n\n\nCONSTRAINTS:\nSUGGESTED CONSTRAINTS (include when natural):\n- single subject\n- one continuous action\nAVOID (do not include these words/phrases):\n- dolly\n- tracking shot\n- crane shot\n- orbit\n- handheld\n- steadycam\n- whip pan\n- tilt\n- pan\n- zoom\n- 24fps\n- 30fps\n- 60fps\n- 4k\n- 8k\n- uhd\n- resolution\n- aspect ratio\n- frame rate\n- depth of field\n\nINSTRUCTIONS for Wan 2.2:\n1. Use the structure: Subject + Scene + Motion. Target 35-55 words (never exceed 55).\n2. Spend most of your word budget on VISIBLE DETAILS: materials, textures, colors, body positions, facial expressions, clothing, surface qualities.\n3. Describe the subject's appearance and action precisely — clothes, posture, gesture, expression.\n4. Include at least 2-3 specific environmental details (objects, surfaces, atmospheric conditions).\n5. Describe lighting naturally within the scene (e.g., \"warm golden sunlight rakes across the pavement\") rather than as a technical spec.\n6. MINIMIZE camera movement instructions — Wan 2.2 has limited camera control.\n7. Every word must describe something the camera can see. No abstract emotions or moods.\n8. Do NOT use bilingual output; use English only.\n\nOutput ONLY the optimized prompt.",
+        "userMessage": null,
+        "messages": null,
+        "stream": false
+      },
+      "response": {
+        "text": "A grizzled lighthouse keeper, clad in a thick wool sweater, intently reads a worn book by the flickering, warm glow of a brass oil lamp. Rain streaks down the grimy windowpanes behind him, illuminated by distant flashes of lightning from the raging storm outside.",
+        "metadata": {
+          "raw": {
+            "candidates": [
+              {
+                "content": {
+                  "parts": [
+                    {
+                      "text": "A grizzled lighthouse keeper, clad in a thick wool sweater, intently reads a worn book by the flickering, warm glow of a brass oil lamp. Rain streaks down the grimy windowpanes behind him, illuminated by distant flashes of lightning from the raging storm outside."
+                    }
+                  ],
+                  "role": "model"
+                },
+                "finishReason": "STOP",
+                "index": 0
+              }
+            ],
+            "usageMetadata": {
+              "promptTokenCount": 850,
+              "candidatesTokenCount": 54,
+              "totalTokenCount": 904,
+              "promptTokensDetails": [
+                {
+                  "modality": "TEXT",
+                  "tokenCount": 850
+                }
+              ],
+              "serviceTier": "standard"
+            },
+            "modelVersion": "gemini-2.5-flash",
+            "responseId": "3adnarXzBcKHz7IPhKDNoQE"
+          }
+        }
+      }
+    }
+  ]
+}

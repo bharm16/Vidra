@@ -12,11 +12,11 @@
 
 import { useMemo, useRef, useCallback, useEffect } from "react";
 import type React from "react";
+import { PERFORMANCE_CONFIG } from "@config/performance.config";
 import {
-  PERFORMANCE_CONFIG,
-  DEFAULT_LABELING_POLICY,
-  TEMPLATE_VERSIONS,
-} from "@config/performance.config";
+  SPAN_LABELING_DEFAULT_POLICY,
+  SPAN_LABELING_TEMPLATE_VERSIONS,
+} from "@shared/spanLabeling";
 import { sanitizeText, useSpanLabeling } from "@/features/span-highlighting";
 import { useHighlightRendering } from "@/features/span-highlighting";
 import { useHighlightFingerprint } from "@/features/span-highlighting";
@@ -70,7 +70,7 @@ export function useSpanLabelingPipeline({
     [displayedPrompt],
   );
 
-  const labelingPolicy = useMemo(() => DEFAULT_LABELING_POLICY, []);
+  const labelingPolicy = useMemo(() => SPAN_LABELING_DEFAULT_POLICY, []);
 
   // Span data conversion
   const { memoizedInitialHighlights } = useSpanDataConversion({
@@ -143,8 +143,8 @@ export function useSpanLabelingPipeline({
     minConfidence: PERFORMANCE_CONFIG.MIN_CONFIDENCE_SCORE,
     policy: labelingPolicy,
     templateVersion: i2vContext?.isI2VMode
-      ? TEMPLATE_VERSIONS.SPAN_LABELING_I2V
-      : TEMPLATE_VERSIONS.SPAN_LABELING_V1,
+      ? SPAN_LABELING_TEMPLATE_VERSIONS.I2V
+      : SPAN_LABELING_TEMPLATE_VERSIONS.STANDARD,
     debounceMs: PERFORMANCE_CONFIG.DEBOUNCE_DELAY_MS,
     onResult: handleLabelingResult,
   });

@@ -37,10 +37,6 @@ export const PERFORMANCE_CONFIG = {
   // 0.5 provides a good balance for most use cases
   MIN_CONFIDENCE_SCORE: 0.5,
 
-  // Maximum word length for non-technical terms in labeling
-  // Prevents overly long phrases from being labeled as single units
-  NON_TECHNICAL_WORD_LIMIT: 6,
-
   /**
    * DEBOUNCE TIMING
    */
@@ -74,23 +70,6 @@ export const PERFORMANCE_CONFIG = {
  */
 export const STORAGE_KEYS = {
   SPAN_LABELING_CACHE: "promptBuilder.spanLabelingCache.v2", // Updated to v2 for new role taxonomy
-} as const;
-
-/**
- * Template versions for backward compatibility
- * v2: Updated role taxonomy (Movement, Camera, Specs, Style, Quality)
- */
-export const TEMPLATE_VERSIONS = {
-  SPAN_LABELING_V1: "v2.1", // Updated to v2.1 to invalidate cache and fix single-span issue
-  SPAN_LABELING_I2V: "i2v-v1",
-} as const;
-
-/**
- * Labeling policy defaults
- */
-export const DEFAULT_LABELING_POLICY = {
-  nonTechnicalWordLimit: PERFORMANCE_CONFIG.NON_TECHNICAL_WORD_LIMIT,
-  allowOverlap: false,
 } as const;
 
 export default PERFORMANCE_CONFIG;

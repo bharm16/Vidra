@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "surface": "suggestions",
   "scenario": "golden-path",
-  "recordedAt": "2026-07-02T09:18:08.110Z",
+  "recordedAt": "2026-07-27T18:47:48.735Z",
   "entries": [
     {
       "seam": "ai-model",
@@ -16,87 +16,104 @@
         "stream": false
       },
       "response": {
-        "text": "{\"scene_summary\": \"A lighthouse keeper is reading by lamplight during a storm — the scene is set in a confined, dimly lit interior space with a focus on the light source and its effect on the subject.\", \"suggestions\": [{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]}",
+        "text": "{\"scene_summary\":\"A lighthouse keeper reading by soft illumination during a storm, emphasizing a warm, intimate atmosphere amidst the harsh weather conditions. Suggestions must maintain the cozy, warm light quality without altering the scene's meaning.\",\"suggestions\":[{\"text\":\"candlelight\",\"category\":\"subject\",\"explanation\":\"maintains a warm, intimate glow suitable for reading\"},{\"text\":\"firelight\",\"category\":\"subject\",\"explanation\":\"provides a cozy, flickering illumination that fits the scene\"},{\"text\":\"oil lamp glow\",\"category\":\"subject\",\"explanation\":\"offers a traditional, warm light source appropriate for the setting\"},{\"text\":\"flickering lantern\",\"category\":\"subject\",\"explanation\":\"suggests a portable light source that enhances the stormy atmosphere\"},{\"text\":\"soft glow\",\"category\":\"subject\",\"explanation\":\"implies a gentle, warm light that complements the reading scene\"},{\"text\":\"dim light\",\"category\":\"subject\",\"explanation\":\"captures the subdued lighting necessary for a reading context\"},{\"text\":\"twinkling stars\",\"category\":\"subject\",\"explanation\":\"adds a natural, soft illumination that contrasts with the storm\"},{\"text\":\"glowing embers\",\"category\":\"subject\",\"explanation\":\"provides a warm, inviting light that fits the intimate reading scenario\"}]}",
         "metadata": {
           "usage": {
-            "queue_time": 0.068832685,
-            "prompt_tokens": 595,
-            "prompt_time": 0.027147098,
-            "completion_tokens": 321,
-            "completion_time": 0.629708569,
-            "total_tokens": 916,
-            "total_time": 0.656855667
+            "prompt_tokens": 662,
+            "completion_tokens": 250,
+            "total_tokens": 912,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
           },
           "raw": {
-            "id": "chatcmpl-4d30e89f-e4d9-4e9a-9645-84acebebd68c",
+            "id": "chatcmpl-E6KeXtsIEM9e7WQ5b1zIkjLvNYCaY",
             "object": "chat.completion",
-            "created": 1782983888,
-            "model": "qwen/qwen3-32b",
+            "created": 1785178065,
+            "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"scene_summary\": \"A lighthouse keeper is reading by lamplight during a storm — the scene is set in a confined, dimly lit interior space with a focus on the light source and its effect on the subject.\", \"suggestions\": [{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]}"
+                  "content": "{\"scene_summary\":\"A lighthouse keeper reading by soft illumination during a storm, emphasizing a warm, intimate atmosphere amidst the harsh weather conditions. Suggestions must maintain the cozy, warm light quality without altering the scene's meaning.\",\"suggestions\":[{\"text\":\"candlelight\",\"category\":\"subject\",\"explanation\":\"maintains a warm, intimate glow suitable for reading\"},{\"text\":\"firelight\",\"category\":\"subject\",\"explanation\":\"provides a cozy, flickering illumination that fits the scene\"},{\"text\":\"oil lamp glow\",\"category\":\"subject\",\"explanation\":\"offers a traditional, warm light source appropriate for the setting\"},{\"text\":\"flickering lantern\",\"category\":\"subject\",\"explanation\":\"suggests a portable light source that enhances the stormy atmosphere\"},{\"text\":\"soft glow\",\"category\":\"subject\",\"explanation\":\"implies a gentle, warm light that complements the reading scene\"},{\"text\":\"dim light\",\"category\":\"subject\",\"explanation\":\"captures the subdued lighting necessary for a reading context\"},{\"text\":\"twinkling stars\",\"category\":\"subject\",\"explanation\":\"adds a natural, soft illumination that contrasts with the storm\"},{\"text\":\"glowing embers\",\"category\":\"subject\",\"explanation\":\"provides a warm, inviting light that fits the intimate reading scenario\"}]}",
+                  "refusal": null,
+                  "annotations": []
                 },
                 "logprobs": null,
                 "finish_reason": "stop"
               }
             ],
             "usage": {
-              "queue_time": 0.068832685,
-              "prompt_tokens": 595,
-              "prompt_time": 0.027147098,
-              "completion_tokens": 321,
-              "completion_time": 0.629708569,
-              "total_tokens": 916,
-              "total_time": 0.656855667
+              "prompt_tokens": 662,
+              "completion_tokens": 250,
+              "total_tokens": 912,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
             },
-            "usage_breakdown": null,
-            "system_fingerprint": "fp_d58dbe76cd",
-            "x_groq": {
-              "id": "req_01kwh1y2gzfw7r5t2rdg030sz3",
-              "seed": 1127977911
-            },
-            "service_tier": "on_demand"
+            "service_tier": "default",
+            "system_fingerprint": "fp_b1b99e3b92"
           },
           "_original": {
-            "id": "chatcmpl-4d30e89f-e4d9-4e9a-9645-84acebebd68c",
+            "id": "chatcmpl-E6KeXtsIEM9e7WQ5b1zIkjLvNYCaY",
             "object": "chat.completion",
-            "created": 1782983888,
-            "model": "qwen/qwen3-32b",
+            "created": 1785178065,
+            "model": "gpt-4o-mini-2024-07-18",
             "choices": [
               {
                 "index": 0,
                 "message": {
                   "role": "assistant",
-                  "content": "{\"scene_summary\": \"A lighthouse keeper is reading by lamplight during a storm — the scene is set in a confined, dimly lit interior space with a focus on the light source and its effect on the subject.\", \"suggestions\": [{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]}"
+                  "content": "{\"scene_summary\":\"A lighthouse keeper reading by soft illumination during a storm, emphasizing a warm, intimate atmosphere amidst the harsh weather conditions. Suggestions must maintain the cozy, warm light quality without altering the scene's meaning.\",\"suggestions\":[{\"text\":\"candlelight\",\"category\":\"subject\",\"explanation\":\"maintains a warm, intimate glow suitable for reading\"},{\"text\":\"firelight\",\"category\":\"subject\",\"explanation\":\"provides a cozy, flickering illumination that fits the scene\"},{\"text\":\"oil lamp glow\",\"category\":\"subject\",\"explanation\":\"offers a traditional, warm light source appropriate for the setting\"},{\"text\":\"flickering lantern\",\"category\":\"subject\",\"explanation\":\"suggests a portable light source that enhances the stormy atmosphere\"},{\"text\":\"soft glow\",\"category\":\"subject\",\"explanation\":\"implies a gentle, warm light that complements the reading scene\"},{\"text\":\"dim light\",\"category\":\"subject\",\"explanation\":\"captures the subdued lighting necessary for a reading context\"},{\"text\":\"twinkling stars\",\"category\":\"subject\",\"explanation\":\"adds a natural, soft illumination that contrasts with the storm\"},{\"text\":\"glowing embers\",\"category\":\"subject\",\"explanation\":\"provides a warm, inviting light that fits the intimate reading scenario\"}]}",
+                  "refusal": null,
+                  "annotations": []
                 },
                 "logprobs": null,
                 "finish_reason": "stop"
               }
             ],
             "usage": {
-              "queue_time": 0.068832685,
-              "prompt_tokens": 595,
-              "prompt_time": 0.027147098,
-              "completion_tokens": 321,
-              "completion_time": 0.629708569,
-              "total_tokens": 916,
-              "total_time": 0.656855667
+              "prompt_tokens": 662,
+              "completion_tokens": 250,
+              "total_tokens": 912,
+              "prompt_tokens_details": {
+                "cached_tokens": 0,
+                "audio_tokens": 0
+              },
+              "completion_tokens_details": {
+                "reasoning_tokens": 0,
+                "audio_tokens": 0,
+                "accepted_prediction_tokens": 0,
+                "rejected_prediction_tokens": 0
+              }
             },
-            "usage_breakdown": null,
-            "system_fingerprint": "fp_d58dbe76cd",
-            "x_groq": {
-              "id": "req_01kwh1y2gzfw7r5t2rdg030sz3",
-              "seed": 1127977911
-            },
-            "service_tier": "on_demand"
+            "service_tier": "default",
+            "system_fingerprint": "fp_b1b99e3b92"
           },
-          "provider": "groq-qwen",
-          "optimizations": ["qwen3-reasoning-effort", "higher-temp-tolerance"],
+          "provider": "openai",
+          "optimizations": [
+            "developer-role",
+            "bookending"
+          ],
+          "model": "gpt-4o-mini-2024-07-18",
           "finishReason": "stop",
-          "systemFingerprint": "fp_d58dbe76cd",
+          "systemFingerprint": "fp_b1b99e3b92",
+          "requestId": "chatcmpl-E6KeXtsIEM9e7WQ5b1zIkjLvNYCaY",
           "validation": {
             "isValid": true,
             "errors": [],
@@ -110,45 +127,45 @@
               {
                 "text": "candlelight",
                 "category": "subject",
-                "explanation": "provides a similar dim, warm light source in a confined interior setting"
+                "explanation": "maintains a warm, intimate glow suitable for reading"
+              },
+              {
+                "text": "firelight",
+                "category": "subject",
+                "explanation": "provides a cozy, flickering illumination that fits the scene"
               },
               {
                 "text": "oil lamp glow",
                 "category": "subject",
-                "explanation": "offers a comparable soft, flickering light typical of lighthouse interiors"
+                "explanation": "offers a traditional, warm light source appropriate for the setting"
               },
               {
-                "text": "flickering bulb",
+                "text": "flickering lantern",
                 "category": "subject",
-                "explanation": "maintains the dim, artificial light source in a confined interior"
+                "explanation": "suggests a portable light source that enhances the stormy atmosphere"
               },
               {
-                "text": "desk lamp",
+                "text": "soft glow",
                 "category": "subject",
-                "explanation": "offers a focused, warm light source suitable for reading in a confined space"
+                "explanation": "implies a gentle, warm light that complements the reading scene"
               },
               {
-                "text": "glow of a lantern",
+                "text": "dim light",
                 "category": "subject",
-                "explanation": "provides a warm, contained light source fitting the lighthouse setting"
+                "explanation": "captures the subdued lighting necessary for a reading context"
               },
               {
-                "text": "dim overhead light",
+                "text": "twinkling stars",
                 "category": "subject",
-                "explanation": "offers a subdued, artificial light source appropriate for an interior scene"
+                "explanation": "adds a natural, soft illumination that contrasts with the storm"
               },
               {
-                "text": "reading lamp",
+                "text": "glowing embers",
                 "category": "subject",
-                "explanation": "provides a focused, warm light source suitable for reading in a confined interior"
-              },
-              {
-                "text": "faded bulb light",
-                "category": "subject",
-                "explanation": "offers a soft, dim light source fitting the stormy, interior scene"
+                "explanation": "provides a warm, inviting light that fits the intimate reading scenario"
               }
             ],
-            "cleanedText": "[{\"text\": \"candlelight\", \"category\": \"subject\", \"explanation\": \"provides a similar dim, warm light source in a confined interior setting\"}, {\"text\": \"oil lamp glow\", \"category\": \"subject\", \"explanation\": \"offers a comparable soft, flickering light typical of lighthouse interiors\"}, {\"text\": \"flickering bulb\", \"category\": \"subject\", \"explanation\": \"maintains the dim, artificial light source in a confined interior\"}, {\"text\": \"desk lamp\", \"category\": \"subject\", \"explanation\": \"offers a focused, warm light source suitable for reading in a confined space\"}, {\"text\": \"glow of a lantern\", \"category\": \"subject\", \"explanation\": \"provides a warm, contained light source fitting the lighthouse setting\"}, {\"text\": \"dim overhead light\", \"category\": \"subject\", \"explanation\": \"offers a subdued, artificial light source appropriate for an interior scene\"}, {\"text\": \"reading lamp\", \"category\": \"subject\", \"explanation\": \"provides a focused, warm light source suitable for reading in a confined interior\"}, {\"text\": \"faded bulb light\", \"category\": \"subject\", \"explanation\": \"offers a soft, dim light source fitting the stormy, interior scene\"}]"
+            "cleanedText": "[{\"text\":\"candlelight\",\"category\":\"subject\",\"explanation\":\"maintains a warm, intimate glow suitable for reading\"},{\"text\":\"firelight\",\"category\":\"subject\",\"explanation\":\"provides a cozy, flickering illumination that fits the scene\"},{\"text\":\"oil lamp glow\",\"category\":\"subject\",\"explanation\":\"offers a traditional, warm light source appropriate for the setting\"},{\"text\":\"flickering lantern\",\"category\":\"subject\",\"explanation\":\"suggests a portable light source that enhances the stormy atmosphere\"},{\"text\":\"soft glow\",\"category\":\"subject\",\"explanation\":\"implies a gentle, warm light that complements the reading scene\"},{\"text\":\"dim light\",\"category\":\"subject\",\"explanation\":\"captures the subdued lighting necessary for a reading context\"},{\"text\":\"twinkling stars\",\"category\":\"subject\",\"explanation\":\"adds a natural, soft illumination that contrasts with the storm\"},{\"text\":\"glowing embers\",\"category\":\"subject\",\"explanation\":\"provides a warm, inviting light that fits the intimate reading scenario\"}]"
           }
         }
       }

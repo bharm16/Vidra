@@ -3,17 +3,22 @@
  * Unified constants for span labeling and highlighting
  */
 
+import {
+  SPAN_LABELING_DEFAULT_POLICY,
+  SPAN_LABELING_TEMPLATE_VERSIONS,
+} from "@shared/spanLabeling";
+
 // ============================================================================
 // SPAN LABELING CONSTANTS
 // ============================================================================
 
 /**
  * Default policy configuration for span labeling
+ *
+ * Wire contract — the server spreads this over its own defaults, so this is
+ * the limit production actually enforces.
  */
-export const DEFAULT_POLICY = {
-  nonTechnicalWordLimit: 6,
-  allowOverlap: false,
-} as const;
+export const DEFAULT_POLICY = SPAN_LABELING_DEFAULT_POLICY;
 
 /**
  * Default options for the useSpanLabeling hook
@@ -21,11 +26,10 @@ export const DEFAULT_POLICY = {
 export const DEFAULT_OPTIONS = {
   maxSpans: 60,
   minConfidence: 0.5,
-  // Must match server `SpanLabelingConfig.DEFAULT_OPTIONS.templateVersion`.
-  // The server cache keys on this value; sending a stale identifier here
-  // would route requests to a cache namespace that disagrees with the
-  // active prompt rules.
-  templateVersion: "v2.3",
+  // Wire contract — the server hashes this into its cache key, so it must be
+  // the same string on both sides or requests key a namespace the server
+  // never writes to.
+  templateVersion: SPAN_LABELING_TEMPLATE_VERSIONS.STANDARD,
   debounceMs: 500, // Fallback if smart debounce is disabled
   useSmartDebounce: true, // Enable smart debouncing by default
 } as const;

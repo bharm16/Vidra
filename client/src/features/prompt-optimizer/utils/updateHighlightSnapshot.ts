@@ -1,5 +1,5 @@
 import { createHighlightSignature } from "@features/span-highlighting";
-import { TEMPLATE_VERSIONS } from "@config/performance.config";
+import { SPAN_LABELING_TEMPLATE_VERSIONS } from "@shared/spanLabeling";
 import type { HighlightSnapshot } from "@features/prompt-optimizer/PromptCanvas/types";
 
 const isFiniteNumber = (value: unknown): value is number =>
@@ -186,7 +186,7 @@ export function updateHighlightSnapshotForSuggestion({
     updatedAt: new Date().toISOString(),
     meta: {
       ...(snapshot.meta ?? {}),
-      version: TEMPLATE_VERSIONS.SPAN_LABELING_V1,
+      version: SPAN_LABELING_TEMPLATE_VERSIONS.STANDARD,
       localUpdate: true,
     },
   };
@@ -320,7 +320,7 @@ export function updateHighlightSnapshotForRemoval({
     updatedAt: new Date().toISOString(),
     meta: {
       ...(snapshot.meta ?? {}),
-      version: TEMPLATE_VERSIONS.SPAN_LABELING_V1,
+      version: SPAN_LABELING_TEMPLATE_VERSIONS.STANDARD,
       localUpdate: true,
     },
   };
