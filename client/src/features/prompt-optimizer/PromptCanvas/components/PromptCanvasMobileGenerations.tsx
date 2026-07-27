@@ -11,25 +11,19 @@ import { CanvasButton } from "./PromptCanvasView.shared";
 
 type PromptCanvasMobileGenerationsProps = Pick<
   PromptCanvasViewProps,
-  | "hasCanvasContent"
   | "generationsSheetOpen"
   | "onGenerationsSheetOpenChange"
   | "generationsPanelProps"
 >;
 
 export function PromptCanvasMobileGenerations({
-  hasCanvasContent,
   generationsSheetOpen,
   onGenerationsSheetOpenChange,
   generationsPanelProps,
-}: PromptCanvasMobileGenerationsProps): React.ReactElement | null {
-  if (!hasCanvasContent) {
-    return null;
-  }
-
+}: PromptCanvasMobileGenerationsProps): React.ReactElement {
   return (
     <>
-      <div className="border-border bg-surface-2 p-ps-3 fixed bottom-0 left-0 right-0 z-fixed border-t lg:hidden">
+      <div className="border-border bg-surface-2 p-ps-3 z-fixed fixed bottom-0 left-0 right-0 border-t lg:hidden">
         <div className="flex items-center gap-3">
           <CanvasButton
             type="button"

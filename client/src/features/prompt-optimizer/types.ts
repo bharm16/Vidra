@@ -1,26 +1,6 @@
-import type { IconProps } from "@promptstudio/system/components/ui";
 import type { User } from "@features/prompt-optimizer/types/domain/prompt-session";
 import type { FormData } from "@/PromptImprovementForm";
-import type { PromptContext } from "@utils/PromptContext/PromptContext";
 import type { CapabilityValues } from "@shared/capabilities";
-import type {
-  SuggestionItem,
-  SuggestionPayload,
-} from "./types/domain/suggestions";
-import type { CoherenceIssue } from "./components/coherence/useCoherenceAnnotations";
-import type { CoherenceRecommendation } from "./types/coherence";
-import type { I2VContext } from "./types/i2v";
-import type { SpanLabelingResult } from "@/features/span-highlighting/hooks/types";
-
-/**
- * Prompt optimization mode configuration
- */
-export interface PromptMode {
-  id: string;
-  name: string;
-  icon: IconProps["icon"];
-  description?: string;
-}
 
 /**
  * Props for CategoryLegend component
@@ -61,28 +41,6 @@ export interface LockedSpan {
 }
 
 /**
- * Props for FloatingToolbar component
- */
-export interface FloatingToolbarProps {
-  onCopy: () => void;
-  onExport: (format: ExportFormat) => void;
-  onCreateNew: () => void;
-  onShare: () => void;
-  copied: boolean;
-  shared: boolean;
-  showExportMenu: boolean;
-  onToggleExportMenu: (show: boolean) => void;
-  showLegend: boolean;
-  onToggleLegend: (show: boolean) => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  hoveredSpanId?: string | null;
-  primaryVisible?: boolean;
-}
-
-/**
  * Props for PromptEditor component
  */
 export interface PromptEditorProps {
@@ -114,46 +72,6 @@ export interface PromptModalsProps {
     metadata: Record<string, unknown>,
   ) => void;
   onSkipBrainstorm?: () => void;
-}
-
-/**
- * Props for PromptResultsSection component
- */
-export interface PromptResultsSectionProps {
-  user: User | null;
-  onDisplayedPromptChange: (text: string) => void;
-  onReoptimize: (
-    promptToOptimize?: string,
-    options?: OptimizationOptions,
-  ) => Promise<void>;
-  onFetchSuggestions: (payload?: SuggestionPayload) => void;
-  onSuggestionClick: (suggestion: SuggestionItem | string) => void;
-  onHighlightsPersist: (highlights: SpanLabelingResult) => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  stablePromptContext?: PromptContext | null | undefined;
-  coherenceAffectedSpanIds?: Set<string> | undefined;
-  coherenceSpanIssueMap?: Map<string, "conflict" | "harmonization"> | undefined;
-
-  // Coherence panel (inline, collapsible)
-  coherenceIssues?: CoherenceIssue[] | undefined;
-  isCoherenceChecking?: boolean | undefined;
-  isCoherencePanelExpanded?: boolean | undefined;
-  onToggleCoherencePanelExpanded?: (() => void) | undefined;
-  onDismissCoherenceIssue?: ((issueId: string) => void) | undefined;
-  onDismissAllCoherenceIssues?: (() => void) | undefined;
-  onApplyCoherenceFix?:
-    | ((issueId: string, recommendation: CoherenceRecommendation) => void)
-    | undefined;
-  onScrollToCoherenceSpan?: ((spanId: string) => void) | undefined;
-  i2vContext?: I2VContext | null | undefined;
-}
-
-/**
- * Props for PromptSidebar component
- */
-export interface PromptSidebarProps {
-  user: User | null;
 }
 
 // Re-export User type for convenience

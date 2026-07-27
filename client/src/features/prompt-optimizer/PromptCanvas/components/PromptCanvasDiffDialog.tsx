@@ -9,21 +9,16 @@ import { CanvasButton, iconSizes } from "./PromptCanvasView.shared";
 
 type PromptCanvasDiffDialogProps = Pick<
   PromptCanvasViewProps,
-  | "hasCanvasContent"
-  | "showDiff"
-  | "onShowDiffChange"
-  | "inputPrompt"
-  | "normalizedDisplayedPrompt"
+  "showDiff" | "onShowDiffChange" | "inputPrompt" | "normalizedDisplayedPrompt"
 >;
 
 export function PromptCanvasDiffDialog({
-  hasCanvasContent,
   showDiff,
   onShowDiffChange,
   inputPrompt,
   normalizedDisplayedPrompt,
 }: PromptCanvasDiffDialogProps): React.ReactElement | null {
-  if (!hasCanvasContent || !showDiff) {
+  if (!showDiff) {
     return null;
   }
 

@@ -26,7 +26,6 @@ export function PromptCanvasView({
   onCloseLegend,
   promptContext,
   isSuggestionsOpen,
-  hasCanvasContent,
   editorColumnRef,
   editorWrapperRef,
   outputLocklineRef,
@@ -181,128 +180,101 @@ export function PromptCanvasView({
           outlineOverlayActive && "pointer-events-none opacity-60",
         )}
       >
-        {!hasCanvasContent ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="max-w-md space-y-4">
-              <h2 className="text-heading-24 text-foreground font-semibold">
-                Describe your shot
-              </h2>
-              <p className="text-body text-muted">
-                Enter a rough prompt in the bar above and we'll optimize it for
-                cinematic video generation.
-              </p>
-              <div className="pt-4">
-                <p className="text-label-sm text-faint">
-                  Tip: Press{" "}
-                  <kbd className="bg-surface-3 text-muted rounded px-1.5 py-0.5 font-mono text-xs">
-                    ⌘
-                  </kbd>{" "}
-                  +{" "}
-                  <kbd className="bg-surface-3 text-muted rounded px-1.5 py-0.5 font-mono text-xs">
-                    Enter
-                  </kbd>{" "}
-                  to optimize
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="gap-ps-4 lg:gap-ps-5 flex min-h-0 flex-1 flex-col lg:flex-row">
-            <div className="gap-ps-3 flex min-h-0 min-w-0 flex-1 flex-col self-stretch lg:min-w-80 lg:flex-[9]">
-              <div
-                ref={editorColumnRef}
-                className={cn("flex min-h-0 min-w-0 flex-1 flex-col")}
-              >
-                <div className="flex min-h-[200px] flex-auto flex-col overflow-y-auto lg:min-h-[300px]">
-                  <div className="pb-ps-card flex h-full min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden px-0">
-                    <PromptCanvasEditorSection
-                      modelFormatValue={modelFormatValue}
-                      modelFormatLabel={modelFormatLabel}
-                      modelFormatOptions={modelFormatOptions}
-                      modelFormatDisabled={modelFormatDisabled}
-                      onModelFormatChange={onModelFormatChange}
-                      outlineOverlayActive={outlineOverlayActive}
-                      openOutlineOverlay={openOutlineOverlay}
-                      onCopy={onCopy}
-                      copied={copied}
-                      onUndo={onUndo}
-                      canUndo={canUndo}
-                      onRedo={onRedo}
-                      canRedo={canRedo}
-                      exportMenuRef={exportMenuRef}
-                      showExportMenu={showExportMenu}
-                      onToggleExportMenu={onToggleExportMenu}
-                      onShowDiffChange={onShowDiffChange}
-                      onExport={onExport}
-                      onShare={onShare}
-                      isOutputLoading={isOutputLoading}
-                      editorWrapperRef={editorWrapperRef}
-                      editorRef={editorRef}
-                      onTextSelection={onTextSelection}
-                      onHighlightClick={onHighlightClick}
-                      onHighlightMouseDown={onHighlightMouseDown}
-                      onHighlightMouseEnter={onHighlightMouseEnter}
-                      onHighlightMouseLeave={onHighlightMouseLeave}
-                      onCopyEvent={onCopyEvent}
-                      onInput={onInput}
-                      onEditorKeyDown={onEditorKeyDown}
-                      onEditorBlur={onEditorBlur}
-                      autocompleteOpen={autocompleteOpen}
-                      autocompleteSuggestions={autocompleteSuggestions}
-                      autocompleteSelectedIndex={autocompleteSelectedIndex}
-                      autocompletePosition={autocompletePosition}
-                      autocompleteLoading={autocompleteLoading}
-                      onAutocompleteSelect={onAutocompleteSelect}
-                      onAutocompleteClose={onAutocompleteClose}
-                      onAutocompleteIndexChange={onAutocompleteIndexChange}
-                      outputLocklineRef={outputLocklineRef}
-                      enableMLHighlighting={enableMLHighlighting}
-                      hoveredSpanId={hoveredSpanId}
-                      lockButtonPosition={lockButtonPosition}
-                      lockButtonRef={lockButtonRef}
-                      onToggleLock={onToggleLock}
-                      onCancelHideLockButton={onCancelHideLockButton}
-                      onLockButtonMouseLeave={onLockButtonMouseLeave}
-                      isHoveredLocked={isHoveredLocked}
-                    />
-                  </div>
+        <div className="gap-ps-4 lg:gap-ps-5 flex min-h-0 flex-1 flex-col lg:flex-row">
+          <div className="gap-ps-3 flex min-h-0 min-w-0 flex-1 flex-col self-stretch lg:min-w-80 lg:flex-[9]">
+            <div
+              ref={editorColumnRef}
+              className={cn("flex min-h-0 min-w-0 flex-1 flex-col")}
+            >
+              <div className="flex min-h-[200px] flex-auto flex-col overflow-y-auto lg:min-h-[300px]">
+                <div className="pb-ps-card flex h-full min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden px-0">
+                  <PromptCanvasEditorSection
+                    modelFormatValue={modelFormatValue}
+                    modelFormatLabel={modelFormatLabel}
+                    modelFormatOptions={modelFormatOptions}
+                    modelFormatDisabled={modelFormatDisabled}
+                    onModelFormatChange={onModelFormatChange}
+                    outlineOverlayActive={outlineOverlayActive}
+                    openOutlineOverlay={openOutlineOverlay}
+                    onCopy={onCopy}
+                    copied={copied}
+                    onUndo={onUndo}
+                    canUndo={canUndo}
+                    onRedo={onRedo}
+                    canRedo={canRedo}
+                    exportMenuRef={exportMenuRef}
+                    showExportMenu={showExportMenu}
+                    onToggleExportMenu={onToggleExportMenu}
+                    onShowDiffChange={onShowDiffChange}
+                    onExport={onExport}
+                    onShare={onShare}
+                    isOutputLoading={isOutputLoading}
+                    editorWrapperRef={editorWrapperRef}
+                    editorRef={editorRef}
+                    onTextSelection={onTextSelection}
+                    onHighlightClick={onHighlightClick}
+                    onHighlightMouseDown={onHighlightMouseDown}
+                    onHighlightMouseEnter={onHighlightMouseEnter}
+                    onHighlightMouseLeave={onHighlightMouseLeave}
+                    onCopyEvent={onCopyEvent}
+                    onInput={onInput}
+                    onEditorKeyDown={onEditorKeyDown}
+                    onEditorBlur={onEditorBlur}
+                    autocompleteOpen={autocompleteOpen}
+                    autocompleteSuggestions={autocompleteSuggestions}
+                    autocompleteSelectedIndex={autocompleteSelectedIndex}
+                    autocompletePosition={autocompletePosition}
+                    autocompleteLoading={autocompleteLoading}
+                    onAutocompleteSelect={onAutocompleteSelect}
+                    onAutocompleteClose={onAutocompleteClose}
+                    onAutocompleteIndexChange={onAutocompleteIndexChange}
+                    outputLocklineRef={outputLocklineRef}
+                    enableMLHighlighting={enableMLHighlighting}
+                    hoveredSpanId={hoveredSpanId}
+                    lockButtonPosition={lockButtonPosition}
+                    lockButtonRef={lockButtonRef}
+                    onToggleLock={onToggleLock}
+                    onCancelHideLockButton={onCancelHideLockButton}
+                    onLockButtonMouseLeave={onLockButtonMouseLeave}
+                    isHoveredLocked={isHoveredLocked}
+                  />
                 </div>
               </div>
             </div>
-
-            <CoherencePanel
-              issues={coherenceIssues ?? []}
-              isChecking={Boolean(isCoherenceChecking)}
-              isExpanded={Boolean(isCoherencePanelExpanded)}
-              onToggleExpanded={onToggleCoherencePanelExpanded ?? (() => {})}
-              onDismissIssue={onDismissCoherenceIssue ?? (() => {})}
-              onDismissAll={onDismissAllCoherenceIssues ?? (() => {})}
-              onApplyFix={onApplyCoherenceFix ?? (() => {})}
-              onScrollToSpan={onScrollToCoherenceSpan}
-            />
-
-            <CollapsibleDrawer
-              isOpen={versionsDrawer.isOpen}
-              onToggle={versionsDrawer.toggle}
-              height="132px"
-              collapsedHeight="36px"
-              position="bottom"
-              displayMode={versionsDrawer.displayMode}
-              showToggle={false}
-            >
-              <VersionsPanel
-                versions={versionsPanelProps.versions}
-                selectedVersionId={versionsPanelProps.selectedVersionId}
-                onSelectVersion={versionsPanelProps.onSelectVersion}
-                onCreateVersion={versionsPanelProps.onCreateVersion}
-                isCompact={!versionsDrawer.isOpen}
-                onExpandDrawer={versionsDrawer.open}
-                onCollapseDrawer={versionsDrawer.close}
-                layout="horizontal"
-              />
-            </CollapsibleDrawer>
           </div>
-        )}
+
+          <CoherencePanel
+            issues={coherenceIssues ?? []}
+            isChecking={Boolean(isCoherenceChecking)}
+            isExpanded={Boolean(isCoherencePanelExpanded)}
+            onToggleExpanded={onToggleCoherencePanelExpanded ?? (() => {})}
+            onDismissIssue={onDismissCoherenceIssue ?? (() => {})}
+            onDismissAll={onDismissAllCoherenceIssues ?? (() => {})}
+            onApplyFix={onApplyCoherenceFix ?? (() => {})}
+            onScrollToSpan={onScrollToCoherenceSpan}
+          />
+
+          <CollapsibleDrawer
+            isOpen={versionsDrawer.isOpen}
+            onToggle={versionsDrawer.toggle}
+            height="132px"
+            collapsedHeight="36px"
+            position="bottom"
+            displayMode={versionsDrawer.displayMode}
+            showToggle={false}
+          >
+            <VersionsPanel
+              versions={versionsPanelProps.versions}
+              selectedVersionId={versionsPanelProps.selectedVersionId}
+              onSelectVersion={versionsPanelProps.onSelectVersion}
+              onCreateVersion={versionsPanelProps.onCreateVersion}
+              isCompact={!versionsDrawer.isOpen}
+              onExpandDrawer={versionsDrawer.open}
+              onCollapseDrawer={versionsDrawer.close}
+              layout="horizontal"
+            />
+          </CollapsibleDrawer>
+        </div>
 
         <div
           className="bg-tool-rail-border hidden w-px self-stretch lg:block"
@@ -315,14 +287,12 @@ export function PromptCanvasView({
       </div>
 
       <PromptCanvasMobileGenerations
-        hasCanvasContent={hasCanvasContent}
         generationsSheetOpen={generationsSheetOpen}
         onGenerationsSheetOpenChange={onGenerationsSheetOpenChange}
         generationsPanelProps={generationsPanelProps}
       />
 
       <PromptCanvasDiffDialog
-        hasCanvasContent={hasCanvasContent}
         showDiff={showDiff}
         onShowDiffChange={onShowDiffChange}
         inputPrompt={inputPrompt}

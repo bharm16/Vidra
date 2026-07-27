@@ -38,7 +38,6 @@ export interface PromptCanvasViewProps {
   onCloseLegend: () => void;
   promptContext: PromptContext | null;
   isSuggestionsOpen: boolean;
-  hasCanvasContent: boolean;
   editorColumnRef: React.RefObject<HTMLDivElement>;
   editorWrapperRef: React.RefObject<HTMLDivElement>;
   outputLocklineRef: React.RefObject<HTMLDivElement>;

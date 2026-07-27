@@ -42,7 +42,6 @@ export interface UseUndoRedoReturn {
     newText: string,
     cursorPosition?: number | null,
   ) => void;
-  clearHistory: () => void;
 }
 
 /**
@@ -341,23 +340,9 @@ export function useUndoRedo({
     ],
   );
 
-  /**
-   * Clear history stacks
-   */
-  const clearHistory = useCallback((): void => {
-    undoStackRef.current = [];
-    redoStackRef.current = [];
-    lastEditTimeRef.current = 0;
-    lastCursorPositionRef.current = null;
-    pendingChangeRef.current = null;
-    setVersionCounter(0);
-    updateUIState();
-  }, [updateUIState, undoStackRef, redoStackRef]);
-
   return {
     handleUndo,
     handleRedo,
     handleDisplayedPromptChange,
-    clearHistory,
   };
 }

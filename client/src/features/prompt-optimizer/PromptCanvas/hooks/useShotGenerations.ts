@@ -24,8 +24,6 @@ interface UseShotGenerationsOptions {
 
 interface UseShotGenerationsResult {
   shotId: string | null;
-  sequenceGenerations: Generation[];
-  sequenceVersions: PromptVersionEntry[];
   shotPromptEntry: PromptHistoryEntry | null;
   updateShotVersions: (versions: PromptVersionEntry[]) => void;
 }
@@ -267,8 +265,6 @@ export function useShotGenerations({
 
   return {
     shotId,
-    sequenceGenerations,
-    sequenceVersions,
     shotPromptEntry,
     updateShotVersions,
   };

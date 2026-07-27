@@ -100,12 +100,3 @@ export const persistGenerationParams = (value: CapabilityValues): void => {
     // ignore
   }
 };
-
-export const persistVideoTier = (value: "draft" | "render"): void => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEYS.videoTier, value ?? "render");
-  } catch {
-    // ignore
-  }
-};

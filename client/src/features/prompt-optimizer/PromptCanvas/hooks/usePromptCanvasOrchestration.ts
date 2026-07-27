@@ -35,9 +35,7 @@ import { useInlineSuggestionState } from "./useInlineSuggestionState";
 import { useCanvasEditorState } from "./useCanvasEditorState";
 import { useCanvasGenerations } from "./useCanvasGenerations";
 import { useCanvasCoherence } from "./useCanvasCoherence";
-import { postEnhancementSuggestions } from "@/api/enhancementSuggestionsApi";
-import { buildSuggestionContext } from "@features/prompt-optimizer/utils/enhancementSuggestionContext";
-import { prepareSpanContext } from "@features/span-highlighting/utils/spanProcessing";
+import { buildBulkDebugPayload } from "../utils/bulkDebugPayload";
 import { useGenerationControlsStoreState } from "@features/generation-controls";
 import { useWorkspaceSession } from "@features/prompt-optimizer/context/WorkspaceSessionContext";
 import { usePromptInsertionBus } from "@features/prompt-optimizer/context/PromptInsertionBusContext";
@@ -254,14 +252,6 @@ export function usePromptCanvasOrchestration({
   } = useTriggerAutocomplete();
 
   const validateTriggers = useTriggerValidation(500);
-  const hasCanvasContent = true;
-
-  useEffect(() => {
-    if (!hasCanvasContent) {
-      setGenerationsSheetOpen(false);
-      setShowDiff(false);
-    }
-  }, [hasCanvasContent, setGenerationsSheetOpen, setShowDiff]);
 
   // Extract suggestions visibility state for contextual UI
   const isSuggestionsOpen = Boolean(
@@ -623,157 +613,19 @@ export function usePromptCanvasOrchestration({
       return;
     }
 
-    const spans = Array.isArray(parseResult.spans) ? parseResult.spans : [];
-    const spanTargets = spans
-      .map((span) => {
-        const spanText =
-          typeof span.displayQuote === "string" &&
-          span.displayQuote.trim().length > 0
-            ? span.displayQuote.trim()
-            : typeof span.quote === "string" && span.quote.trim().length > 0
-              ? span.quote.trim()
-              : typeof span.text === "string" && span.text.trim().length > 0
-                ? span.text.trim()
-                : "";
-        if (!spanText) {
-          return null;
-        }
-        return {
-          span,
-          spanText,
-          spanId:
-            typeof span.id === "string" && span.id.length > 0
-              ? span.id
-              : `span_${span.start}_${span.end}`,
-        };
-      })
-      .filter(
-        (
-          item,
-        ): item is {
-          span: (typeof spans)[number];
-          spanText: string;
-          spanId: string;
-        } => item !== null,
-      );
-
-    if (spanTargets.length === 0) {
-      toast.error("No labeled spans available for bulk debug export.");
-      return;
-    }
-
-    const serializedContext =
-      promptContext &&
-      typeof promptContext === "object" &&
-      "toJSON" in promptContext &&
-      typeof (promptContext as { toJSON?: () => unknown }).toJSON === "function"
-        ? (promptContext as { toJSON: () => unknown }).toJSON()
-        : promptContext;
-
-    const normalizedPrompt = promptText.normalize("NFC");
-
     setIsCopyAllDebugLoading(true);
     try {
-      const settled = await Promise.allSettled(
-        spanTargets.map(async ({ span, spanText, spanId }) => {
-          const preferIndex =
-            typeof span.start === "number" && Number.isFinite(span.start)
-              ? span.start
-              : null;
-          const context = buildSuggestionContext(
-            normalizedPrompt,
-            spanText.normalize("NFC"),
-            preferIndex,
-            1000,
-          );
-          const metadata = {
-            start: span.start,
-            end: span.end,
-            category: span.category,
-            confidence: span.confidence,
-            span,
-          };
-          const spanContext = prepareSpanContext(metadata, spans);
-
-          const response = await postEnhancementSuggestions({
-            highlightedText: spanText.normalize("NFC"),
-            contextBefore: context.contextBefore,
-            contextAfter: context.contextAfter,
-            fullPrompt: normalizedPrompt,
-            originalUserPrompt: inputPrompt,
-            brainstormContext: serializedContext ?? null,
-            highlightedCategory: span.category ?? null,
-            highlightedCategoryConfidence:
-              typeof span.confidence === "number" ? span.confidence : null,
-            highlightedPhrase: spanText,
-            allLabeledSpans: spanContext.simplifiedSpans,
-            nearbySpans: spanContext.nearbySpans,
-            editHistory: [],
-          });
-
-          return {
-            spanId,
-            text: spanText,
-            category: span.category ?? null,
-            confidence:
-              typeof span.confidence === "number" ? span.confidence : null,
-            start: span.start,
-            end: span.end,
-            suggestionCount: Array.isArray(response.suggestions)
-              ? response.suggestions.length
-              : 0,
-            debug: response._debug ?? null,
-          };
-        }),
-      );
-
-      const entries = settled.map((result, index) => {
-        const target = spanTargets[index];
-        if (!target) {
-          return {
-            spanId: `unknown_${index}`,
-            status: "error",
-            error: "Unknown span target",
-          };
-        }
-
-        if (result.status === "fulfilled") {
-          return {
-            status: "ok",
-            ...result.value,
-          };
-        }
-
-        return {
-          spanId: target.spanId,
-          text: target.spanText,
-          category: target.span.category ?? null,
-          confidence:
-            typeof target.span.confidence === "number"
-              ? target.span.confidence
-              : null,
-          start: target.span.start,
-          end: target.span.end,
-          status: "error",
-          error:
-            result.reason instanceof Error
-              ? result.reason.message
-              : "Failed to fetch debug data for span",
-        };
+      const payload = await buildBulkDebugPayload({
+        promptText,
+        spans: Array.isArray(parseResult.spans) ? parseResult.spans : [],
+        inputPrompt,
+        promptContext,
       });
 
-      const successCount = entries.filter((entry) => {
-        return (
-          entry.status === "ok" && "debug" in entry && entry.debug !== null
-        );
-      }).length;
-      const payload = {
-        generatedAt: new Date().toISOString(),
-        totalSpans: entries.length,
-        successfulSpans: successCount,
-        failedSpans: entries.length - successCount,
-        entries,
-      };
+      if (!payload) {
+        toast.error("No labeled spans available for bulk debug export.");
+        return;
+      }
 
       if (typeof navigator === "undefined" || !navigator.clipboard) {
         toast.error("Clipboard is not available in this browser.");
@@ -782,7 +634,7 @@ export function usePromptCanvasOrchestration({
 
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
       toast.success(
-        `Copied debug for ${successCount}/${entries.length} spans.`,
+        `Copied debug for ${payload.successfulSpans}/${payload.totalSpans} spans.`,
       );
     } catch (error) {
       const message =
@@ -845,7 +697,6 @@ export function usePromptCanvasOrchestration({
     onCloseLegend: () => setShowLegend(false),
     promptContext,
     isSuggestionsOpen,
-    hasCanvasContent,
     editorColumnRef,
     editorWrapperRef,
     outputLocklineRef,

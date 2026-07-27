@@ -19,7 +19,6 @@ import type {
   PromptNavigationState,
   PromptServicesState,
   PromptSessionState,
-  PromptStateContextValue,
   PromptStateProviderProps,
   PromptUIState,
   Mode,
@@ -43,35 +42,6 @@ const PromptActionsContext = createContext<PromptActionsState | null>(null);
 const PromptNavigationContext = createContext<PromptNavigationState | null>(
   null,
 );
-
-/**
- * @deprecated Use the specific narrow hooks instead:
- * - `usePromptConfig()` for mode/model/generation config
- * - `usePromptUIStateContext()` for UI visibility flags
- * - `usePromptSession()` for prompt UUIDs, suggestions, context
- * - `usePromptHighlights()` for highlight state and refs
- * - `usePromptServices()` for promptOptimizer and promptHistory
- * - `usePromptActions()` for action callbacks
- * - `usePromptNavigation()` for navigate and sessionId
- */
-export function usePromptState(): PromptStateContextValue {
-  const config = usePromptConfig();
-  const ui = usePromptUIStateContext();
-  const session = usePromptSession();
-  const highlights = usePromptHighlights();
-  const services = usePromptServices();
-  const actions = usePromptActions();
-  const navigation = usePromptNavigation();
-  return {
-    ...config,
-    ...ui,
-    ...session,
-    ...highlights,
-    ...services,
-    ...actions,
-    ...navigation,
-  };
-}
 
 export function usePromptConfig(): PromptConfigState {
   const context = useContext(PromptConfigContext);

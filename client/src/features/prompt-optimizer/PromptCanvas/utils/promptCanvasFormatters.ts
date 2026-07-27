@@ -1,12 +1,3 @@
-export function formatCategoryLabel(raw?: string | null): string {
-  if (!raw) return "";
-  return raw
-    .replace(/([A-Z])/g, " $1")
-    .replace(/_/g, " ")
-    .trim()
-    .replace(/^./, (c) => c.toUpperCase());
-}
-
 export function formatTimestamp(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;

@@ -203,9 +203,6 @@ export const usePromptHistoryActions = ({
     window.dispatchEvent(new Event("po:workspace-reset"));
 
     navigate(`/session/${draft.id}`, { replace: true });
-    window.setTimeout(() => {
-      window.dispatchEvent(new Event("po:focus-editor"));
-    }, 0);
     debug.logAction("createNewComplete");
   }, [
     createDraft,
