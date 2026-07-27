@@ -22,7 +22,6 @@ export interface CategoryConfig {
   label: string;
   description: string;
   group: "entity" | "setting" | "technical";
-  color: string;
   attributes?: Record<string, string>;
 }
 
@@ -62,7 +61,6 @@ export const TAXONOMY = {
     label: "Shot Type",
     description: "Framing and vantage of the camera",
     group: "technical",
-    color: "cyan",
     attributes: {
       /** Shot type / framing: "Wide shot", "Close-up", "Bird\'s eye", "Dutch angle" */
       TYPE: "shot.type",
@@ -82,7 +80,6 @@ export const TAXONOMY = {
     label: "Subject & Character",
     description: "The focal point of the shot",
     group: "entity",
-    color: "orange",
     attributes: {
       /** Core identity: "A cowboy", "An alien" */
       IDENTITY: "subject.identity",
@@ -113,7 +110,6 @@ export const TAXONOMY = {
     label: "Action & Motion",
     description: "What the subject is doing (one continuous action)",
     group: "entity",
-    color: "rose",
     attributes: {
       /** Movement / verb phrase: "running", "floating", "leaning" */
       MOVEMENT: "action.movement",
@@ -137,7 +133,6 @@ export const TAXONOMY = {
     label: "Environment",
     description: "Where the scene takes place",
     group: "setting",
-    color: "emerald",
     attributes: {
       /** Physical location: "Diner", "Mars", "Forest" */
       LOCATION: "environment.location",
@@ -159,7 +154,6 @@ export const TAXONOMY = {
     label: "Lighting",
     description: "Illumination and atmosphere",
     group: "setting",
-    color: "yellow",
     attributes: {
       /** Light source: "Neon sign", "Sun", "Candles" */
       SOURCE: "lighting.source",
@@ -188,7 +182,6 @@ export const TAXONOMY = {
     label: "Camera",
     description: "Cinematography and framing",
     group: "technical",
-    color: "sky",
     attributes: {
       /** Shot type: "Close-up", "Wide shot", "Medium" */
       FRAMING: "shot.type",
@@ -216,7 +209,6 @@ export const TAXONOMY = {
     label: "Style & Aesthetic",
     description: "Visual treatment and medium",
     group: "technical",
-    color: "violet",
     attributes: {
       /** Aesthetic style: "Cyberpunk", "Noir", "Vintage" */
       AESTHETIC: "style.aesthetic",
@@ -238,7 +230,6 @@ export const TAXONOMY = {
     label: "Technical Specs",
     description: "Video technical parameters",
     group: "technical",
-    color: "slate",
     attributes: {
       /** Aspect ratio: "16:9", "2.39:1", "9:16" */
       ASPECT_RATIO: "technical.aspectRatio",
@@ -263,7 +254,6 @@ export const TAXONOMY = {
     label: "Audio",
     description: "Sound and music elements",
     group: "technical",
-    color: "fuchsia",
     attributes: {
       /** Music/Score: "Orchestral score", "Ambient music" */
       SCORE: "audio.score",
@@ -441,24 +431,6 @@ export function isAttribute(categoryId: string | null | undefined): boolean {
 }
 
 /**
- * Get all attribute IDs across the entire taxonomy
- *
- * @example
- * getAllAttributes() // ['subject.identity', 'subject.appearance', ...]
- */
-export function getAllAttributes(): string[] {
-  const attributes: string[] = [];
-
-  for (const category of Object.values(TAXONOMY)) {
-    if (category.attributes) {
-      attributes.push(...Object.values(category.attributes));
-    }
-  }
-
-  return attributes;
-}
-
-/**
  * Get all parent category IDs
  *
  * @example
@@ -466,52 +438,6 @@ export function getAllAttributes(): string[] {
  */
 export function getAllParentCategories(): string[] {
   return Object.values(TAXONOMY).map((cat) => cat.id);
-}
-
-export interface CategoryByIdResult {
-  id: string;
-  parent?: string;
-  attribute?: string;
-  isAttribute?: boolean;
-}
-
-/**
- * Get category configuration by ID (parent or attribute)
- *
- * @example
- * getCategoryById('subject') // { id: 'subject', label: '...', ... }
- * getCategoryById('subject.wardrobe') // { id: 'subject.wardrobe', parent: 'subject', ... }
- */
-export function getCategoryById(
-  categoryId: string | null | undefined,
-): CategoryConfig | CategoryByIdResult | null {
-  if (!categoryId) return null;
-  const parsed = parseCategoryId(categoryId);
-
-  if (!parsed) return null;
-
-  // Check if it's a parent category
-  for (const category of Object.values(TAXONOMY)) {
-    if (category.id === parsed.parent) {
-      if (parsed.isParent) {
-        return category;
-      } else {
-        // It's an attribute
-        const attribute = parsed.attribute;
-        if (!attribute) {
-          return null;
-        }
-        return {
-          id: categoryId,
-          parent: parsed.parent,
-          attribute,
-          isAttribute: true,
-        };
-      }
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -532,52 +458,4 @@ export function getAttributesForParent(
   }
 
   return [];
-}
-
-/**
- * Get the group (entity, setting, technical) for a category
- *
- * @example
- * getGroupForCategory('subject.wardrobe') // 'entity'
- * getGroupForCategory('lighting') // 'setting'
- */
-export function getGroupForCategory(
-  categoryId: string | null | undefined,
-): string | null {
-  if (!categoryId) return null;
-
-  const parentId = getParentCategory(categoryId);
-  if (!parentId) return null;
-
-  for (const category of Object.values(TAXONOMY)) {
-    if (category.id === parentId) {
-      return category.group;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Get the color theme for a category
- *
- * @example
- * getColorForCategory('subject.wardrobe') // 'orange'
- * getColorForCategory('camera') // 'blue'
- */
-export function getColorForCategory(
-  categoryId: string | null | undefined,
-): string | null {
-  if (!categoryId) return null;
-
-  const parentId = getParentCategory(categoryId);
-  if (!parentId) return null;
-
-  for (const category of Object.values(TAXONOMY)) {
-    if (category.id === parentId) {
-      return category.color;
-    }
-  }
-
-  return null;
 }

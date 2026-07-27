@@ -7,7 +7,6 @@ import {
 } from "@llm/span-labeling/validation/SchemaValidator.js";
 import {
   VALID_TAXONOMY_IDS,
-  getProviderConfig,
   validateSpanResponse,
 } from "@llm/span-labeling/schemas/SpanLabelingSchema.js";
 
@@ -83,23 +82,6 @@ describe("span labeling schema contracts", () => {
     expect(() => validateSchemaOrThrow(invalid)).toThrow(
       /Schema validation failed:/,
     );
-  });
-
-  it("selects provider-specific schema strategy", () => {
-    const openai = getProviderConfig("openai");
-    const groq = getProviderConfig("groq");
-    const fallback = getProviderConfig("unknown-provider");
-
-    expect(openai.responseFormat.type).toBe("json_schema");
-    expect(openai.includeInterfaceInPrompt).toBe(false);
-    expect(openai.includeTaxonomyIdsInPrompt).toBe(false);
-
-    expect(groq.responseFormat.type).toBe("json_schema");
-    expect(groq.includeInterfaceInPrompt).toBe(true);
-    expect(groq.includeTaxonomyIdsInPrompt).toBe(false);
-
-    expect(fallback.responseFormat.type).toBe("json_object");
-    expect(fallback.includeTaxonomyIdsInPrompt).toBe(true);
   });
 
   it("validates span responses with taxonomy and confidence constraints", () => {

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { RelaxedF1Evaluator } from "@llm/span-labeling/evaluation/RelaxedF1Evaluator";
-import { SpanLabelingEvaluator } from "@llm/span-labeling/evaluation/SpanLabelingEvaluator";
 
 const evaluator = new RelaxedF1Evaluator();
 
@@ -92,14 +91,13 @@ describe("RelaxedF1Evaluator", () => {
   });
 });
 
-describe("SpanLabelingEvaluator", () => {
-  it("inherits relaxed F1 calculations with typed metrics", () => {
-    const typedEvaluator = new SpanLabelingEvaluator();
+describe("RelaxedF1Evaluator typed metrics", () => {
+  it("reports the same F1 whether or not spans carry extra fields", () => {
     const base = evaluator.evaluateSpans(
       [{ start: 0, end: 3, role: "style.aesthetic", text: "noir" }],
       [{ start: 0, end: 3, role: "style.aesthetic", text: "noir" }],
     );
-    const wrapped = typedEvaluator.evaluateSpans(
+    const withConfidence = evaluator.evaluateSpans(
       [
         {
           start: 0,
@@ -120,7 +118,7 @@ describe("SpanLabelingEvaluator", () => {
       ],
     );
 
-    expect(wrapped.f1).toBe(base.f1);
-    expect(wrapped.truePositives).toBe(base.truePositives);
+    expect(withConfidence.f1).toBe(base.f1);
+    expect(withConfidence.truePositives).toBe(base.truePositives);
   });
 });

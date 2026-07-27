@@ -7,7 +7,7 @@ import type { LabelSpansResult } from "../types";
 import type { LlmSpanParams } from "./ILlmClient";
 import { attemptJsonRepair } from "@clients/adapters/jsonRepair";
 import { logger } from "@infrastructure/Logger";
-import { GEMINI_STREAMING_SYSTEM_PROMPT } from "../schemas/GeminiSchema";
+import { buildSystemPrompt } from "../utils/promptBuilder";
 
 const log = logger.child({ service: "GeminiLlmClient" });
 
@@ -24,8 +24,17 @@ export class GeminiLlmClient extends RobustLlmClient {
   async *streamSpans(
     params: LlmSpanParams,
   ): AsyncGenerator<Record<string, unknown>, void, unknown> {
-    const { text, aiService } = params;
-    const systemPrompt = GEMINI_STREAMING_SYSTEM_PROMPT;
+    const { text, aiService, options } = params;
+    // One module decides the security preamble, the I2V-vs-standard template,
+    // the taxonomy list, the output format, and the version stamp.
+    const systemPrompt = buildSystemPrompt(
+      text,
+      true,
+      this._getProviderName(),
+      false,
+      options?.templateVersion,
+      true,
+    );
 
     let queue: string[] = [];
     let queueHead = 0;

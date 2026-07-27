@@ -1,5 +1,4 @@
-import { ROLE_SET } from "../config/roles.js";
-import { getParentCategory } from "#shared/taxonomy.ts";
+import { VALID_CATEGORIES, getParentCategory } from "#shared/taxonomy.ts";
 import { wordCount } from "../utils/textUtils.js";
 import { normalizeSpan } from "../processing/SpanNormalizer.js";
 import type { SubstringPositionCache } from "../cache/SubstringPositionCache.js";
@@ -21,24 +20,6 @@ function normalizeSpanTextForLookup(value: string): string {
     .replace(/\*\*/g, "")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-/**
- * Validates and corrects span roles.
- * Formerly contained brittle regex overrides; now relies on the upstream model
- * and strict taxonomy validation.
- */
-function remapSpanRole(
-  text: string,
-  role: string,
-): { role: string; note?: string } {
-  if (!text || !role) return { role };
-
-  // Logic removed: Brittle regex overrides (FOCUS_PATTERN, etc.) were deleting
-  // valid spans that didn't match the regex. Trust the model's output or
-  // valid taxonomy roles.
-
-  return { role };
 }
 
 /**
@@ -267,16 +248,11 @@ export function normalizeAndCorrectSpans(
       typeof spanObj.role === "string"
         ? spanObj.role
         : String(spanObj.role ?? "");
-    const remapped = remapSpanRole(spanText, spanRole);
-    if (remapped.note) {
-      autoFixNotes.push(`${label} ${remapped.note}`);
-    }
-
     const correctedSpan: SpanInput = {
       text: spanText,
       start: refined.start,
       end: refined.end,
-      role: remapped.role,
+      role: spanRole,
       ...(typeof spanObj.confidence === "number"
         ? { confidence: spanObj.confidence }
         : {}),
@@ -287,7 +263,7 @@ export function normalizeAndCorrectSpans(
     if (!normalized || !normalized.role) {
       if (!lenient) {
         errors.push({
-          message: `${label} role "${spanObj.role}" is not in the allowed set (${Array.from(ROLE_SET).join(", ")})`,
+          message: `${label} role "${spanObj.role}" is not in the allowed set (${Array.from(VALID_CATEGORIES).join(", ")})`,
           kind: "retryable",
         });
       }

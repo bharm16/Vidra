@@ -10,12 +10,8 @@ import {
   parseCategoryId,
   getParentCategory,
   isAttribute,
-  getAllAttributes,
   getAllParentCategories,
-  getCategoryById,
   getAttributesForParent,
-  getGroupForCategory,
-  getColorForCategory,
 } from "../taxonomy";
 
 describe("VALID_CATEGORIES population", () => {
@@ -249,24 +245,6 @@ describe("isAttribute", () => {
   });
 });
 
-describe("getAllAttributes", () => {
-  it("returns a non-empty array", () => {
-    expect(getAllAttributes().length).toBeGreaterThan(0);
-  });
-
-  it("every attribute contains a dot", () => {
-    for (const attr of getAllAttributes()) {
-      expect(attr).toContain(".");
-    }
-  });
-
-  it("all returned attributes are in VALID_CATEGORIES", () => {
-    for (const attr of getAllAttributes()) {
-      expect(VALID_CATEGORIES.has(attr)).toBe(true);
-    }
-  });
-});
-
 describe("getAllParentCategories", () => {
   it("returns all parent IDs from TAXONOMY", () => {
     const expected = Object.values(TAXONOMY).map((c) => c.id);
@@ -277,40 +255,6 @@ describe("getAllParentCategories", () => {
     for (const p of getAllParentCategories()) {
       expect(p).not.toContain(".");
     }
-  });
-});
-
-describe("getCategoryById", () => {
-  describe("error handling and edge cases", () => {
-    it("returns null for null", () => {
-      expect(getCategoryById(null)).toBeNull();
-    });
-
-    it("returns null for undefined", () => {
-      expect(getCategoryById(undefined)).toBeNull();
-    });
-
-    it("returns null for unknown parent", () => {
-      expect(getCategoryById("nonexistent")).toBeNull();
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns CategoryConfig for valid parent", () => {
-      const result = getCategoryById("subject");
-      expect(result).not.toBeNull();
-      expect(result).toHaveProperty("id", "subject");
-      expect(result).toHaveProperty("label");
-      expect(result).toHaveProperty("group", "entity");
-    });
-
-    it("returns attribute info for valid attribute", () => {
-      const result = getCategoryById("subject.wardrobe");
-      expect(result).not.toBeNull();
-      expect(result).toHaveProperty("id", "subject.wardrobe");
-      expect(result).toHaveProperty("parent", "subject");
-      expect(result).toHaveProperty("isAttribute", true);
-    });
   });
 });
 
@@ -337,55 +281,6 @@ describe("getAttributesForParent", () => {
       const attrs = getAttributesForParent("lighting");
       expect(attrs).toContain("lighting.source");
       expect(attrs).toContain("lighting.quality");
-    });
-  });
-});
-
-describe("getGroupForCategory", () => {
-  describe("error handling and edge cases", () => {
-    it("returns null for null", () => {
-      expect(getGroupForCategory(null)).toBeNull();
-    });
-
-    it("returns null for unknown category", () => {
-      expect(getGroupForCategory("nonexistent")).toBeNull();
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns correct group for parent", () => {
-      expect(getGroupForCategory("subject")).toBe("entity");
-      expect(getGroupForCategory("lighting")).toBe("setting");
-      expect(getGroupForCategory("camera")).toBe("technical");
-    });
-
-    it("returns correct group for attribute", () => {
-      expect(getGroupForCategory("subject.wardrobe")).toBe("entity");
-      expect(getGroupForCategory("lighting.source")).toBe("setting");
-    });
-  });
-});
-
-describe("getColorForCategory", () => {
-  describe("error handling and edge cases", () => {
-    it("returns null for null", () => {
-      expect(getColorForCategory(null)).toBeNull();
-    });
-
-    it("returns null for unknown category", () => {
-      expect(getColorForCategory("nonexistent")).toBeNull();
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns correct color for parent", () => {
-      expect(getColorForCategory("subject")).toBe("orange");
-      expect(getColorForCategory("lighting")).toBe("yellow");
-    });
-
-    it("returns parent color for attribute", () => {
-      expect(getColorForCategory("subject.wardrobe")).toBe("orange");
-      expect(getColorForCategory("lighting.source")).toBe("yellow");
     });
   });
 });

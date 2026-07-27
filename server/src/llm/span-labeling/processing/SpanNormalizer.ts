@@ -1,6 +1,5 @@
 import { sha256Hex } from "@utils/hash";
-import { ROLE_SET } from "../config/roles.js";
-import { TAXONOMY } from "#shared/taxonomy.ts";
+import { VALID_CATEGORIES, TAXONOMY } from "#shared/taxonomy.ts";
 import { clamp01 } from "../utils/textUtils.js";
 
 export interface SpanInput {
@@ -70,7 +69,7 @@ export function normalizeSpan(
 
   // Validate role against taxonomy
   const role =
-    typeof span.role === "string" && ROLE_SET.has(span.role)
+    typeof span.role === "string" && VALID_CATEGORIES.has(span.role)
       ? span.role
       : lenient
         ? TAXONOMY.SUBJECT.id

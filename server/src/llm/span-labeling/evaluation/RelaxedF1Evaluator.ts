@@ -11,7 +11,7 @@
  * Standard "Exact Match" metrics are too harsh for span extraction.
  */
 
-interface SpanLike {
+export interface SpanLike {
   start?: number;
   end?: number;
   role?: string;
@@ -19,8 +19,42 @@ interface SpanLike {
   [key: string]: unknown;
 }
 
-interface ConfusionMatrix {
+export interface ConfusionMatrix {
   [role: string]: Record<string, number>;
+}
+
+export interface F1Metrics {
+  precision: number;
+  recall: number;
+  f1: number;
+  truePositives: number;
+  falsePositives: number;
+  falseNegatives: number;
+  totalPredicted: number;
+  totalGroundTruth: number;
+}
+
+export interface TaxonomyMetrics {
+  accuracy: number;
+  correct: number;
+  total: number;
+}
+
+export interface FragmentationMetrics {
+  rate: number;
+  fragmentedCount: number;
+  totalGroundTruth: number;
+  examples: Array<{
+    groundTruth: SpanLike;
+    fragments: Array<Pick<SpanLike, "text" | "role" | "start" | "end">>;
+  }>;
+}
+
+export interface OverExtractionMetrics {
+  rate: number;
+  spuriousCount: number;
+  totalPredicted: number;
+  examples: SpanLike[];
 }
 
 interface EvaluationTestCase {
@@ -79,7 +113,7 @@ export class RelaxedF1Evaluator {
     groundTruth: SpanLike[] | null | undefined,
     iouThreshold = 0.1,
     useParentRole = true,
-  ) {
+  ): FragmentationMetrics {
     if (
       !Array.isArray(predicted) ||
       !Array.isArray(groundTruth) ||
@@ -151,12 +185,7 @@ export class RelaxedF1Evaluator {
     predicted: SpanLike[] | null | undefined,
     groundTruth: SpanLike[] | null | undefined,
     iouThreshold = 0.5,
-  ): {
-    rate: number;
-    spuriousCount: number;
-    totalPredicted: number;
-    examples: SpanLike[];
-  } {
+  ): OverExtractionMetrics {
     if (!Array.isArray(predicted) || predicted.length === 0) {
       return {
         rate: 0,
@@ -295,16 +324,7 @@ export class RelaxedF1Evaluator {
     predicted: SpanLike[],
     groundTruth: SpanLike[],
     iouThreshold = 0.5,
-  ): {
-    precision: number;
-    recall: number;
-    f1: number;
-    truePositives: number;
-    falsePositives: number;
-    falseNegatives: number;
-    totalPredicted: number;
-    totalGroundTruth: number;
-  } {
+  ): F1Metrics {
     let truePositives = 0;
     const matchedGT = new Set<number>();
     const matchedPred = new Set<number>();
@@ -367,7 +387,7 @@ export class RelaxedF1Evaluator {
     predicted: SpanLike[],
     groundTruth: SpanLike[],
     iouThreshold = 0.5,
-  ): { accuracy: number; correct: number; total: number } {
+  ): TaxonomyMetrics {
     let correctRoles = 0;
     let totalSpatialMatches = 0;
     const matchedGT = new Set<number>();

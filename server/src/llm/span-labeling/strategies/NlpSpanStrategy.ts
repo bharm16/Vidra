@@ -1,4 +1,5 @@
 import { logger } from "@infrastructure/Logger";
+import { getParentCategory } from "#shared/taxonomy.ts";
 import SpanLabelingConfig from "../config/SpanLabelingConfig.js";
 import {
   extractKnownSpans,
@@ -82,12 +83,6 @@ export class NlpSpanStrategy {
     return (coveredWords.size / words.length) * 100;
   }
 
-  private _getParentCategory(role: string | null | undefined): string {
-    if (!role || typeof role !== "string") return "";
-    const dotIndex = role.indexOf(".");
-    return dotIndex > 0 ? role.substring(0, dotIndex) : role;
-  }
-
   private _getCategoryCoverage(spans: Array<{ role?: string }>): {
     subject: boolean;
     action: boolean;
@@ -99,7 +94,7 @@ export class NlpSpanStrategy {
     let environment = false;
 
     spans.forEach((span) => {
-      const parent = this._getParentCategory(span.role);
+      const parent = getParentCategory(span.role);
       if (parent === "subject") subject = true;
       if (parent === "action") action = true;
       if (parent === "environment") environment = true;

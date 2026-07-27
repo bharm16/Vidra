@@ -29,21 +29,22 @@ import { PROMPT_VERSIONS } from "../promptVersions";
 
 // OpenAI-specific imports
 import {
-  OPENAI_ENRICHED_SCHEMA,
   OPENAI_MINIMAL_PROMPT,
   OPENAI_FEW_SHOT_EXAMPLES,
   VALID_TAXONOMY_IDS,
 } from "../schemas/OpenAISchema.js";
-import { GEMINI_SIMPLE_SYSTEM_PROMPT } from "../schemas/GeminiSchema.js";
+import {
+  GEMINI_SIMPLE_SYSTEM_PROMPT,
+  GEMINI_STREAMING_SYSTEM_PROMPT,
+  GEMINI_NDJSON_OUTPUT_FORMAT,
+} from "../schemas/GeminiSchema.js";
 
 // Groq/Llama 3-specific imports
 import {
-  GROQ_VALIDATION_SCHEMA,
   GROQ_FULL_SYSTEM_PROMPT,
   GROQ_FEW_SHOT_EXAMPLES,
   GROQ_SANDWICH_REMINDER,
   getGroqSystemPrompt,
-  getGroqSandwichReminder,
 } from "../schemas/GroqSchema.js";
 
 /**
@@ -107,6 +108,8 @@ function loadI2VPromptTemplate(): string {
  * @param useRouter - Whether to use router (currently unused)
  * @param provider - LLM provider ('openai' or 'groq')
  * @param useJsonSchema - Whether json_schema response format is active (Groq optimization)
+ * @param templateVersion - Wire template identifier; an `i2v*` value selects the motion-only template
+ * @param streaming - Whether the caller consumes an NDJSON stream rather than a single JSON body
  */
 export function buildSystemPrompt(
   text: string = "",
@@ -114,22 +117,25 @@ export function buildSystemPrompt(
   provider: string = "groq",
   useJsonSchema: boolean = false,
   templateVersion?: string,
+  streaming: boolean = false,
 ): string {
   const normalizedProvider = provider.toLowerCase();
-
-  if (templateVersion && templateVersion.toLowerCase().startsWith("i2v")) {
-    logger.debug("Building span labeling prompt", {
-      promptVersion: PROMPT_VERSIONS.I2V_SPAN_LABELING,
-      provider: normalizedProvider,
-      templateVersion,
-    });
-    return `${IMMUTABLE_SOVEREIGN_PREAMBLE}\n\n${loadI2VPromptTemplate()}`.trim();
-  }
 
   let basePrompt: string;
   let promptVersion: string;
 
-  if (normalizedProvider === "openai") {
+  if (templateVersion && templateVersion.toLowerCase().startsWith("i2v")) {
+    // I2V: motion-only categories, because the reference image already fixes
+    // every static visual attribute.
+    basePrompt = loadI2VPromptTemplate();
+    promptVersion = PROMPT_VERSIONS.I2V_SPAN_LABELING;
+    logger.debug("Building span labeling prompt", {
+      promptVersion,
+      provider: normalizedProvider,
+      templateVersion,
+      streaming,
+    });
+  } else if (normalizedProvider === "openai") {
     // OpenAI: Minimal prompt, rules in schema descriptions
     basePrompt = OPENAI_MINIMAL_PROMPT;
     promptVersion = PROMPT_VERSIONS.SPAN_LABELING;
@@ -138,14 +144,19 @@ export function buildSystemPrompt(
       provider: normalizedProvider,
     });
   } else if (normalizedProvider === "gemini") {
-    // Gemini: Use the lightweight test prompt for fast span extraction
-    basePrompt = GEMINI_SIMPLE_SYSTEM_PROMPT;
-    promptVersion = PROMPT_VERSIONS.GEMINI_SIMPLE;
+    // Gemini: streaming callers get the NDJSON-shaped template; buffered
+    // callers get the lightweight prompt for fast span extraction.
+    basePrompt = streaming
+      ? GEMINI_STREAMING_SYSTEM_PROMPT
+      : GEMINI_SIMPLE_SYSTEM_PROMPT;
+    promptVersion = streaming
+      ? PROMPT_VERSIONS.GEMINI_STREAMING
+      : PROMPT_VERSIONS.GEMINI_SIMPLE;
     logger.debug("Building span labeling prompt", {
       promptVersion,
       provider: normalizedProvider,
+      streaming,
     });
-    return basePrompt.trim();
   } else {
     // Groq/Llama 3: Full prompt, rules in system message
     // When json_schema is active, remove redundant format instructions
@@ -159,38 +170,15 @@ export function buildSystemPrompt(
     });
   }
 
-  // Add security preamble
-  return `${IMMUTABLE_SOVEREIGN_PREAMBLE}\n\n${basePrompt}`.trim();
-}
-
-/**
- * Get schema for specific provider
- */
-export function getSchema(provider: string): object {
-  const normalizedProvider = provider.toLowerCase();
-
-  if (normalizedProvider === "openai") {
-    // OpenAI: Rich descriptions, strict mode
-    return OPENAI_ENRICHED_SCHEMA;
+  // Streaming callers parse line-delimited JSON. Templates that do not already
+  // specify NDJSON (the I2V template asks for a single JSON body) get the
+  // format appended, so one module decides the output shape.
+  if (streaming && !basePrompt.includes(GEMINI_NDJSON_OUTPUT_FORMAT)) {
+    basePrompt = `${basePrompt.trim()}\n\n${GEMINI_NDJSON_OUTPUT_FORMAT}`;
   }
 
-  // Groq: Basic validation schema
-  return GROQ_VALIDATION_SCHEMA;
-}
-
-/**
- * Get response format for API call
- */
-export function getResponseFormat(provider: string): {
-  type: string;
-  json_schema?: object;
-} {
-  const schema = getSchema(provider);
-
-  return {
-    type: "json_schema",
-    json_schema: schema,
-  };
+  // Add security preamble
+  return `${IMMUTABLE_SOVEREIGN_PREAMBLE}\n\n${basePrompt}`.trim();
 }
 
 /**
@@ -210,147 +198,6 @@ export function getFewShotExamples(
   return GROQ_FEW_SHOT_EXAMPLES;
 }
 
-/**
- * Build complete message array for span labeling
- *
- * @param text - Input text to label
- * @param includeFewShot - Whether to include few-shot examples
- * @param provider - LLM provider ('openai' or 'groq')
- * @param useJsonSchema - Whether json_schema response format is active (Groq optimization)
- */
-export function buildSpanLabelingMessages(
-  text: string,
-  includeFewShot: boolean = true,
-  provider: string = "groq",
-  useJsonSchema: boolean = false,
-  templateVersion?: string,
-): Array<{ role: string; content: string }> {
-  const normalizedProvider = provider.toLowerCase();
-  const messages: Array<{ role: string; content: string }> = [];
-
-  // 1. System prompt (provider-specific)
-  messages.push({
-    role: "system",
-    content: buildSystemPrompt(
-      text,
-      false,
-      provider,
-      useJsonSchema,
-      templateVersion,
-    ),
-  });
-
-  // 2. Few-shot examples
-  if (includeFewShot) {
-    const examples = getFewShotExamples(provider);
-    messages.push(...examples);
-  }
-
-  // 3. User input wrapped in XML tags
-  messages.push({
-    role: "user",
-    content: `<user_input>
-${text}
-</user_input>
-
-Process the text above and return the span labels as JSON.`,
-  });
-
-  // 4. Sandwich reminder (Groq/Llama 3 only - Section 3.2)
-  // When json_schema is active, use minimal reminder since format is validated server-side
-  if (normalizedProvider === "groq") {
-    const sandwichReminder = getGroqSandwichReminder(useJsonSchema);
-    messages.push({
-      role: "user",
-      content: sandwichReminder,
-    });
-  }
-
-  return messages;
-}
-
-/**
- * Get provider-specific configuration summary
- */
-export function getProviderConfig(provider: string): {
-  provider: string;
-  strategy: string;
-  promptTokens: number;
-  schemaTokens: number;
-  totalTokens: number;
-  features: string[];
-} {
-  const normalizedProvider = provider.toLowerCase();
-
-  if (normalizedProvider === "openai") {
-    return {
-      provider: "openai",
-      strategy: "description-enriched",
-      promptTokens: 400,
-      schemaTokens: 600,
-      totalTokens: 1000,
-      features: [
-        "grammar-constrained-decoding",
-        "schema-descriptions-processed",
-        "strict-mode",
-        "minimal-prompt",
-      ],
-    };
-  }
-
-  return {
-    provider: "groq",
-    strategy: "prompt-centric",
-    promptTokens: 1000,
-    schemaTokens: 200,
-    totalTokens: 1200,
-    features: [
-      "validation-only-schema",
-      "gatt-attention-mechanism",
-      "sandwich-prompting",
-      "prefill-assistant",
-      "xml-wrapping",
-      "full-rules-in-prompt",
-      "stop-sequences",
-      "min-p-sampling",
-      "conditional-format-instructions",
-    ],
-  };
-}
-
-/**
- * Get adapter options for span labeling request
- */
-export function getAdapterOptions(provider: string): Record<string, unknown> {
-  const normalizedProvider = provider.toLowerCase();
-
-  if (normalizedProvider === "openai") {
-    return {
-      schema: OPENAI_ENRICHED_SCHEMA,
-      jsonMode: true,
-      logprobs: true,
-      topLogprobs: 3,
-      seed: undefined, // Will be auto-generated from prompt hash
-      retryOnValidationFailure: true,
-      maxRetries: 2,
-    };
-  }
-
-  // Groq/Llama 3
-  return {
-    schema: GROQ_VALIDATION_SCHEMA,
-    jsonMode: true,
-    enableSandwich: true, // Llama 3 PDF Section 3.2
-    enablePrefill: true, // Llama 3 PDF Section 3.3
-    logprobs: true,
-    topLogprobs: 3,
-    seed: undefined, // Will be auto-generated
-    retryOnValidationFailure: true,
-    maxRetries: 2,
-  };
-}
-
 // Re-exports for backward compatibility
 export const BASE_SYSTEM_PROMPT = buildSystemPrompt("", false, "groq");
-export { buildSystemPrompt as buildContextAwareSystemPrompt };
 export { VALID_TAXONOMY_IDS };

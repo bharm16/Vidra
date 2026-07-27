@@ -4,6 +4,7 @@
  * Merges adjacent spans that belong to the same parent category.
  * Fixes LLM fragmentation issues like "Action" + "Shot" → "Action Shot"
  */
+import { getParentCategory } from "#shared/taxonomy.ts";
 import type { SpanLike } from "../types.js";
 
 interface MergeOptions {
@@ -16,19 +17,6 @@ interface MergeResult {
 }
 
 /**
- * Get the parent category from a role string
- * e.g., "environment.location" → "environment"
- * e.g., "shot.type" → "shot"
- * @param {string} role - The taxonomy role
- * @returns {string} Parent category
- */
-function getParentCategory(role: unknown): string {
-  if (!role || typeof role !== "string") return "";
-  const dotIndex = role.indexOf(".");
-  return dotIndex > 0 ? role.substring(0, dotIndex) : role;
-}
-
-/**
  * Check if two roles are compatible for merging
  * Compatible means they share the same parent category
  * @param {string} role1 - First role
@@ -38,7 +26,7 @@ function getParentCategory(role: unknown): string {
 function areRolesCompatible(role1: string, role2: string): boolean {
   const parent1 = getParentCategory(role1);
   const parent2 = getParentCategory(role2);
-  return parent1 === parent2 && parent1 !== "";
+  return parent1 !== null && parent1 === parent2;
 }
 
 /**
@@ -167,7 +155,7 @@ export function mergeAdjacentSpans(
 
     if (mergeCount > 0) {
       notes.push(
-        `Merged ${mergeCount + 1} adjacent ${getParentCategory(current.role)} spans: "${current.text}"`,
+        `Merged ${mergeCount + 1} adjacent ${getParentCategory(current.role) ?? ""} spans: "${current.text}"`,
       );
     }
 

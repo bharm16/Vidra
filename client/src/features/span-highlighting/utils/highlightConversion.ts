@@ -4,6 +4,7 @@
  * Now uses unified taxonomy system with namespaced IDs
  */
 
+import { getParentCategory } from "@shared/taxonomy";
 import { logger } from "@/services/LoggingService";
 
 const log = logger.child("highlightConversion");
@@ -48,17 +49,6 @@ export interface CanonicalText {
 }
 
 /**
- * Get the parent category from a role/category string
- * e.g., "environment.location" → "environment"
- * e.g., "shot.type" → "shot"
- */
-function getParentCategory(category: string | null | undefined): string {
-  if (!category || typeof category !== "string") return "";
-  const dotIndex = category.indexOf(".");
-  return dotIndex > 0 ? category.substring(0, dotIndex) : category;
-}
-
-/**
  * Check if two categories are compatible for merging
  * Compatible means they share the same parent category
  */
@@ -68,7 +58,7 @@ function areCategoriesCompatible(
 ): boolean {
   const parent1 = getParentCategory(category1);
   const parent2 = getParentCategory(category2);
-  return parent1 === parent2 && parent1 !== "";
+  return parent1 !== null && parent1 === parent2;
 }
 
 /**

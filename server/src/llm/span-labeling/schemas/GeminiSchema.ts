@@ -195,6 +195,20 @@ Example JSON Output:
 export const GEMINI_SIMPLE_SYSTEM_PROMPT = buildGeminiSystemPrompt();
 
 /**
+ * NDJSON output-format instruction — the single definition of the streaming
+ * wire format. `buildSystemPrompt` appends this to any template rendered for a
+ * streaming request (including the I2V template), so the format is a variant of
+ * one prompt rather than a second prompt the caller reaches for directly.
+ */
+export const GEMINI_NDJSON_OUTPUT_FORMAT = `## Output Format
+
+Return a stream of JSON objects, ONE PER LINE (NDJSON).
+Do NOT wrap in a list or array.
+Do NOT use markdown code blocks.
+Each line must be a valid JSON object:
+{"text": "...", "role": "...", "confidence": ...}`;
+
+/**
  * Build streaming-optimized system prompt for Gemini
  * Requests NDJSON output for faster parsing and lower TTFT
  */
@@ -271,13 +285,7 @@ ${validRoles.join(", ")}
    - Items in the "TECHNICAL SPECS" section must be categorized by their *meaning*, not just their location.
    - Example: "50mm lens" listed under "Camera:" is \`camera.lens\`, NOT \`technical\`.
 
-## Output Format
-
-Return a stream of JSON objects, ONE PER LINE (NDJSON).
-Do NOT wrap in a list or array.
-Do NOT use markdown code blocks.
-Each line must be a valid JSON object:
-{"text": "...", "role": "...", "confidence": ...}
+${GEMINI_NDJSON_OUTPUT_FORMAT}
 
 Extract ALL visual control points. Do not skip technical specs, alternative approaches content, or audio descriptions.
 `;
