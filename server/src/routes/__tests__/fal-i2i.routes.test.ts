@@ -73,7 +73,11 @@ describe("POST /api/fal/i2i (sketch frame relay)", () => {
       Authorization: "Key key-123",
     });
     const sent = JSON.parse(String(calls[0]?.init?.body));
-    expect(sent).toMatchObject({ ...validFrame, sync_mode: true });
+    expect(sent).toMatchObject({
+      ...validFrame,
+      sync_mode: true,
+      output_format: "webp",
+    });
   });
 
   it("rejects invalid frames without calling fal", async () => {
