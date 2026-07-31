@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import express, { type Request, type Response, type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { sendApiError } from "@middleware/apiErrorResponse";
+import { requireCreatorId } from "@middleware/intake";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
@@ -10,20 +11,6 @@ import type { UserCreditService } from "@services/credits/UserCreditService";
 const KEYFRAME_COST = 2;
 const CONSISTENT_VIDEO_COST = 40;
 const FROM_KEYFRAME_COST = 35;
-
-type RequestWithUser = Request & { user?: { uid?: string } };
-
-function requireUserId(req: RequestWithUser, res: Response): string | null {
-  const userId = req.user?.uid;
-  if (!userId) {
-    sendApiError(res, req, 401, {
-      error: "Authentication required",
-      code: GENERATION_ERROR_CODES.AUTH_REQUIRED,
-    });
-    return null;
-  }
-  return userId;
-}
 
 function getStatusCode(error: unknown): number {
   if (!error || typeof error !== "object") {
@@ -49,7 +36,7 @@ export function createConsistentGenerationRoutes(
   router.post(
     "/keyframe",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       if (!userCreditService) {
@@ -142,7 +129,7 @@ export function createConsistentGenerationRoutes(
   router.post(
     "/video",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       if (!userCreditService) {
@@ -229,7 +216,7 @@ export function createConsistentGenerationRoutes(
   router.post(
     "/from-keyframe",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       if (!userCreditService) {

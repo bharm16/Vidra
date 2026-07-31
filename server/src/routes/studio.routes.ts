@@ -16,7 +16,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
-import { respond } from "@middleware/respond";
+import { requireCreatorId, requireBody } from "@middleware/intake";
 import type { StudioService } from "@services/studio/StudioService";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
@@ -52,22 +52,6 @@ const RunTurnSchema = z.object({
   attachmentIds: z.array(z.string().min(1)).max(14).optional(),
 });
 
-interface AuthedRequest extends Request {
-  user?: { uid: string };
-}
-
-function requireUserId(req: AuthedRequest, res: Response): string | null {
-  const uid = req.user?.uid;
-  if (!uid) {
-    respond.fail(res, req, 401, {
-      error: "Authentication required",
-      code: "AUTH_REQUIRED",
-    });
-    return null;
-  }
-  return uid;
-}
-
 /** Matched route segments are always non-empty strings; "" never occurs. */
 function routeParam(req: Request, name: string): string {
   const value = (req.params as Record<string, unknown>)[name];
@@ -79,8 +63,8 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.get(
     "/models",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       res.json({ success: true, data: studioService.getModelRoster() });
     }),
@@ -88,20 +72,14 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.post(
     "/projects",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
-      const parsed = CreateProjectSchema.safeParse(req.body ?? {});
-      if (!parsed.success) {
-        respond.fail(res, req, 400, {
-          error: "Invalid body",
-          code: "INVALID_REQUEST",
-        });
-        return;
-      }
+      const parsed = requireBody(CreateProjectSchema, req, res);
+      if (!parsed.ok) return;
       const project = await studioService.createProject(
         userId,
-        parsed.data.title,
+        parsed.value.title,
       );
       res.status(201).json({ success: true, data: project });
     }),
@@ -109,8 +87,8 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.get(
     "/projects",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const projects = await studioService.listProjects(userId);
       res.json({ success: true, data: projects });
@@ -119,8 +97,8 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.get(
     "/projects/:projectId",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const project = await studioService.getProject(
         userId,
@@ -132,21 +110,15 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.patch(
     "/projects/:projectId",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
-      const parsed = PatchProjectSchema.safeParse(req.body ?? {});
-      if (!parsed.success) {
-        respond.fail(res, req, 400, {
-          error: "Invalid body",
-          code: "INVALID_REQUEST",
-        });
-        return;
-      }
+      const parsed = requireBody(PatchProjectSchema, req, res);
+      if (!parsed.ok) return;
       const project = await studioService.updateProject(
         userId,
         routeParam(req, "projectId"),
-        parsed.data,
+        parsed.value,
       );
       res.json({ success: true, data: project });
     }),
@@ -154,8 +126,8 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.delete(
     "/projects/:projectId",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       await studioService.deleteProject(userId, routeParam(req, "projectId"));
       res.json({ success: true, data: { deleted: true } });
@@ -167,21 +139,15 @@ export function createStudioRouter(studioService: StudioService): Router {
   // project so the LLM can use it as an edit/reference source.
   router.post(
     "/projects/:projectId/attachments",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
-      const parsed = AddAttachmentSchema.safeParse(req.body ?? {});
-      if (!parsed.success) {
-        respond.fail(res, req, 400, {
-          error: "Invalid body",
-          code: "INVALID_REQUEST",
-        });
-        return;
-      }
+      const parsed = requireBody(AddAttachmentSchema, req, res);
+      if (!parsed.ok) return;
       const attachment = await studioService.addAttachment(
         userId,
         routeParam(req, "projectId"),
-        parsed.data,
+        parsed.value,
       );
       res.status(201).json({ success: true, data: attachment });
     }),
@@ -189,17 +155,11 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.post(
     "/projects/:projectId/turns",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
-      const parsed = RunTurnSchema.safeParse(req.body ?? {});
-      if (!parsed.success) {
-        respond.fail(res, req, 400, {
-          error: "Invalid body",
-          code: "INVALID_REQUEST",
-        });
-        return;
-      }
+      const parsed = requireBody(RunTurnSchema, req, res);
+      if (!parsed.ok) return;
 
       // NDJSON response: `thinking` deltas stream as the LLM emits them,
       // then one terminal `accepted` (turnId + final decision — image calls
@@ -222,12 +182,12 @@ export function createStudioRouter(studioService: StudioService): Router {
         const { turnId, decision } = await studioService.runTurn(
           userId,
           routeParam(req, "projectId"),
-          parsed.data.message,
+          parsed.value.message,
           {
             onThinkingStart: () => writeEvent({ type: "thinking-start" }),
             onThinkingDelta: (delta) => writeEvent({ type: "thinking", delta }),
           },
-          parsed.data.attachmentIds,
+          parsed.value.attachmentIds,
         );
         writeEvent({ type: "accepted", turnId, decision });
         res.end();
@@ -254,8 +214,8 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.get(
     "/projects/:projectId/turns",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const turns = await studioService.listTurnsWithFreshUrls(
         userId,
@@ -267,8 +227,8 @@ export function createStudioRouter(studioService: StudioService): Router {
 
   router.get(
     "/projects/:projectId/turns/:turnId",
-    asyncHandler(async (req: AuthedRequest, res: Response) => {
-      const userId = requireUserId(req, res);
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const turn = await studioService.getTurnWithFreshUrls(
         userId,

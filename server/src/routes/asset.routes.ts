@@ -5,9 +5,12 @@ import {
   readUploadBuffer,
 } from "@utils/upload";
 import { validateImageBuffer } from "@utils/validateFileType";
+import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody } from "@middleware/intake";
 import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
 import { requireRouteParam } from "@middleware/requireRouteParam";
+import { AssetTypeSchema } from "@shared/schemas/asset.schemas";
 import type { AssetType } from "@shared/types/asset";
 import type { AssetService } from "@services/asset/AssetService";
 import type { ApiResponse } from "@shared/types/api";
@@ -31,6 +34,44 @@ function normalizeAssetType(raw?: string | null): AssetType | null {
   }
   return null;
 }
+
+/**
+ * Body schemas for the two routes that previously destructured `req.body || {}`
+ * straight into the service.
+ *
+ * They encode SHAPE ONLY — requiredness and field types — deliberately not the
+ * business limits (name ≤ 50 chars, textDefinition ≤ 1000, trigger uniqueness,
+ * "text definition required for non-character assets"). Those stay in
+ * AssetCrudService, which is their single owner; duplicating them here would
+ * create two places to change one rule.
+ *
+ * Inferred from `AssetCrudService.createAsset` and `.updateAsset`
+ * (server/src/services/asset/services/AssetCrudService.ts). `createAsset`
+ * reads `trigger.length` and `name.length` in its opening log line, BEFORE any
+ * validation, so a body missing either field did not return 400 — it threw a
+ * TypeError and surfaced as a 500. `updateAsset` guards every field with
+ * `!== undefined`, so an empty PATCH body is legitimately a no-op, but it calls
+ * `.trim()` on whatever it is handed, so a non-string field threw the same way.
+ * Nothing either service accepts today is rejected by these schemas.
+ */
+const CreateAssetBodySchema = z.object({
+  type: AssetTypeSchema,
+  trigger: z.string(),
+  name: z.string(),
+  textDefinition: z.string().optional(),
+  negativePrompt: z.string().optional(),
+});
+
+const UpdateAssetBodySchema = z.object({
+  trigger: z.string().optional(),
+  name: z.string().optional(),
+  textDefinition: z.string().optional(),
+  negativePrompt: z.string().optional(),
+});
+
+const PromptBodySchema = z.object({
+  prompt: z.string().min(1),
+});
 
 export function createAssetRoutes(assetService: AssetService): Router {
   const router = express.Router();
@@ -79,14 +120,17 @@ export function createAssetRoutes(assetService: AssetService): Router {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
 
+      const parsed = requireBody(CreateAssetBodySchema, req, res);
+      if (!parsed.ok) return;
+
       const { type, trigger, name, textDefinition, negativePrompt } =
-        req.body || {};
+        parsed.value;
       const asset = await assetService.createAsset(userId, {
         type,
         trigger,
         name,
-        textDefinition,
-        negativePrompt,
+        ...(textDefinition !== undefined ? { textDefinition } : {}),
+        ...(negativePrompt !== undefined ? { negativePrompt } : {}),
       });
 
       res.status(201).json({
@@ -125,16 +169,13 @@ export function createAssetRoutes(assetService: AssetService): Router {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
 
-      const { prompt } = req.body || {};
-      if (!prompt || typeof prompt !== "string") {
-        res.status(400).json({
-          success: false,
-          error: "prompt is required",
-        } satisfies ApiResponse<never>);
-        return;
-      }
+      const parsed = requireBody(PromptBodySchema, req, res);
+      if (!parsed.ok) return;
 
-      const resolved = await assetService.resolvePrompt(userId, prompt);
+      const resolved = await assetService.resolvePrompt(
+        userId,
+        parsed.value.prompt,
+      );
       res.json({
         success: true,
         data: resolved,
@@ -148,16 +189,13 @@ export function createAssetRoutes(assetService: AssetService): Router {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
 
-      const { prompt } = req.body || {};
-      if (!prompt || typeof prompt !== "string") {
-        res.status(400).json({
-          success: false,
-          error: "prompt is required",
-        } satisfies ApiResponse<never>);
-        return;
-      }
+      const parsed = requireBody(PromptBodySchema, req, res);
+      if (!parsed.ok) return;
 
-      const validation = await assetService.validateTriggers(userId, prompt);
+      const validation = await assetService.validateTriggers(
+        userId,
+        parsed.value.prompt,
+      );
       res.json({
         success: true,
         data: validation,
@@ -189,12 +227,15 @@ export function createAssetRoutes(assetService: AssetService): Router {
 
       const assetId = requireRouteParam(req, res, "id");
       if (!assetId) return;
-      const { trigger, name, textDefinition, negativePrompt } = req.body || {};
+      const parsed = requireBody(UpdateAssetBodySchema, req, res);
+      if (!parsed.ok) return;
+
+      const { trigger, name, textDefinition, negativePrompt } = parsed.value;
       const asset = await assetService.updateAsset(userId, assetId, {
-        trigger,
-        name,
-        textDefinition,
-        negativePrompt,
+        ...(trigger !== undefined ? { trigger } : {}),
+        ...(name !== undefined ? { name } : {}),
+        ...(textDefinition !== undefined ? { textDefinition } : {}),
+        ...(negativePrompt !== undefined ? { negativePrompt } : {}),
       });
       res.json({
         success: true,

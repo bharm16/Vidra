@@ -1,5 +1,6 @@
 import express, { type Request, type Response, type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody } from "@middleware/intake";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { UserCreditService } from "@services/credits/UserCreditService";
 import {
@@ -37,15 +38,8 @@ export function createContinuityRoutes(
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
 
-      const parsed = ContinuitySessionInputSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
-        return;
-      }
+      const parsed = requireBody(ContinuitySessionInputSchema, req, res);
+      if (!parsed.ok) return;
 
       const {
         name,
@@ -54,7 +48,7 @@ export function createContinuityRoutes(
         sourceImageUrl,
         initialPrompt,
         settings,
-      } = parsed.data;
+      } = parsed.value;
 
       const session = await service.createSession(userId, {
         name,

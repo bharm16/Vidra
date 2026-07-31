@@ -1,51 +1,26 @@
 import type { Request, Response, NextFunction } from "express";
-import { logger } from "@infrastructure/Logger";
-import { respond } from "./respond.js";
+import { requireBody } from "./intake.js";
 import type { ValidationSchema } from "./types.js";
 
 /**
- * Middleware factory for request validation using Zod schemas
+ * Middleware form of `intake.requireBody`, for routes that validate in the
+ * chain rather than in the handler.
+ *
+ * It used to own a second, divergent 400: it reported only
+ * `result.error.issues[0]`, so a body with four bad fields told the Creator
+ * about one of them. It also carried a runtime "does this have `safeParse`?"
+ * check that answered a malformed schema with a 500 — defending at runtime
+ * against something `ValidationSchema` already prevents at compile time, and
+ * turning a developer's typo into a production-shaped incident. Both are gone;
+ * the emitter is `requireBody`, so this shares one 400 with every other route.
  */
 export function validateRequest(schema: ValidationSchema) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    if (
-      !schema ||
-      typeof (schema as { safeParse?: unknown }).safeParse !== "function"
-    ) {
-      logger.error("Invalid validation schema provided", undefined, {
-        requestId: (req as Request & { id?: string }).id,
-        path: req.path,
-        schemaType: typeof schema,
-      });
-
-      respond.fail(res, req, 500, {
-        error: "Internal server error",
-        code: "SERVICE_UNAVAILABLE",
-        details: "Invalid validation schema",
-      });
-      return;
-    }
-
-    const result = schema.safeParse(req.body);
-
-    if (!result.success) {
-      const firstError = result.error?.issues?.[0];
-      logger.warn("Request validation failed", {
-        requestId: (req as Request & { id?: string }).id,
-        error: firstError?.message || "Validation failed",
-        path: req.path,
-      });
-
-      respond.fail(res, req, 400, {
-        error: "Validation failed",
-        code: "INVALID_REQUEST",
-        details: firstError?.message || "Invalid request data",
-      });
-      return;
-    }
+    const parsed = requireBody(schema, req, res);
+    if (!parsed.ok) return;
 
     // Replace request body with validated/sanitized value
-    req.body = result.data;
+    req.body = parsed.value;
     next();
   };
 }

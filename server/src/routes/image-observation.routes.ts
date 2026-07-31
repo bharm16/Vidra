@@ -1,6 +1,7 @@
 import express, { type Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody } from "@middleware/intake";
 import type { ImageObservationService } from "@services/image-observation";
 
 const ImageObservationRequestSchema = z
@@ -19,16 +20,10 @@ export function createImageObservationRoutes(
   router.post(
     "/enhancement/observe-image",
     asyncHandler(async (req: Request, res: Response) => {
-      const parsed = ImageObservationRequestSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        });
-      }
+      const parsed = requireBody(ImageObservationRequestSchema, req, res);
+      if (!parsed.ok) return;
 
-      const { image, skipCache, sourcePrompt } = parsed.data;
+      const { image, skipCache, sourcePrompt } = parsed.value;
       const result = await imageObservationService.observe({
         image,
         ...(skipCache ? { skipCache } : {}),

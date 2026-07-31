@@ -1,13 +1,12 @@
-import express, { type Request, type Router } from "express";
-import { isIP } from "node:net";
+import express, { type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { z } from "zod";
+import { handle, requireCreatorId } from "@middleware/intake";
 import { respond } from "@middleware/respond";
 import {
   STORAGE_TYPES,
   type StorageType,
 } from "@services/storage/config/storageConfig";
-
-type RequestWithUser = Request & { user?: { uid?: string } };
 
 const STORAGE_TYPE_SET = new Set<StorageType>(Object.values(STORAGE_TYPES));
 
@@ -40,17 +39,6 @@ export interface StorageRoutesService {
   deleteFiles: (userId: string, paths: unknown[]) => Promise<unknown>;
 }
 
-function resolveUserId(req: RequestWithUser): string | null {
-  return req.user?.uid ?? null;
-}
-
-function rejectAnonymous(userId: string | null): string | null {
-  if (!userId || userId === "anonymous" || isIP(userId) !== 0) {
-    return null;
-  }
-  return userId;
-}
-
 function normalizeStorageType(value: unknown): StorageType | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim();
@@ -66,6 +54,20 @@ function normalizeMetadata(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+/**
+ * Body schemas for the three routes that adopted `intake.handle`. Each encodes
+ * exactly what the hand-rolled guard it replaced checked: a non-blank
+ * `storagePath`, and `paths` being an array. `deleteFiles` takes `unknown[]`
+ * and screens the entries itself, so the element type stays unknown here.
+ */
+const ConfirmUploadSchema = z.object({
+  storagePath: z.string().trim().min(1),
+});
+
+const DeleteBatchSchema = z.object({
+  paths: z.array(z.unknown()),
+});
+
 export function createStorageRoutes(
   storageService: StorageRoutesService,
 ): Router {
@@ -75,15 +77,10 @@ export function createStorageRoutes(
     "/upload-url",
     asyncHandler(async (req, res) => {
       const { type, contentType, metadata } = req.body || {};
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
+      const userId = requireCreatorId(req, res);
       const normalizedType = normalizeStorageType(type);
 
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
+      if (!userId) return;
 
       if (
         !normalizedType ||
@@ -111,15 +108,10 @@ export function createStorageRoutes(
     "/save-from-url",
     asyncHandler(async (req, res) => {
       const { sourceUrl, type, metadata } = req.body || {};
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
+      const userId = requireCreatorId(req, res);
       const normalizedType = normalizeStorageType(type);
 
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
+      if (!userId) return;
 
       if (
         typeof sourceUrl !== "string" ||
@@ -145,30 +137,9 @@ export function createStorageRoutes(
 
   router.post(
     "/confirm-upload",
-    asyncHandler(async (req, res) => {
-      const { storagePath } = req.body || {};
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
-
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
-
-      if (typeof storagePath !== "string" || storagePath.trim().length === 0) {
-        return respond.fail(res, req, 400, {
-          error: "Missing required field: storagePath",
-          code: "INVALID_REQUEST",
-        });
-      }
-      const result = await storageService.confirmUpload(
-        userId,
-        storagePath.trim(),
-      );
-
-      return respond.ok(res, req, result);
-    }),
+    handle({ body: ConfirmUploadSchema }, ({ creatorId, body }) =>
+      storageService.confirmUpload(creatorId, body.storagePath),
+    ),
   );
 
   router.get(
@@ -176,14 +147,9 @@ export function createStorageRoutes(
     asyncHandler(async (req, res) => {
       const path =
         typeof req.query.path === "string" ? req.query.path.trim() : null;
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
+      const userId = requireCreatorId(req, res);
 
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
+      if (!userId) return;
 
       if (!path) {
         return respond.fail(res, req, 400, {
@@ -206,14 +172,9 @@ export function createStorageRoutes(
         typeof req.query.filename === "string"
           ? req.query.filename.trim()
           : null;
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
+      const userId = requireCreatorId(req, res);
 
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
+      if (!userId) return;
 
       if (!path) {
         return respond.fail(res, req, 400, {
@@ -241,14 +202,9 @@ export function createStorageRoutes(
           : NaN;
       const cursor =
         typeof req.query.cursor === "string" ? req.query.cursor : undefined;
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
+      const userId = requireCreatorId(req, res);
 
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
+      if (!userId) return;
 
       if (req.query.type !== undefined && !type) {
         return respond.fail(res, req, 400, {
@@ -269,33 +225,16 @@ export function createStorageRoutes(
 
   router.get(
     "/usage",
-    asyncHandler(async (req, res) => {
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
-
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
-      const result = await storageService.getStorageUsage(userId);
-
-      return respond.ok(res, req, result);
-    }),
+    handle({}, ({ creatorId }) => storageService.getStorageUsage(creatorId)),
   );
 
   router.delete(
     "/:path(*)",
     asyncHandler(async (req, res) => {
       const { path } = req.params as { path?: string };
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
+      const userId = requireCreatorId(req, res);
 
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
+      if (!userId) return;
 
       if (!path) {
         return respond.fail(res, req, 400, {
@@ -311,27 +250,9 @@ export function createStorageRoutes(
 
   router.post(
     "/delete-batch",
-    asyncHandler(async (req, res) => {
-      const { paths } = req.body || {};
-      const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
-
-      if (!userId) {
-        return respond.fail(res, req, 401, {
-          error: "Authentication required",
-          code: "AUTH_REQUIRED",
-        });
-      }
-
-      if (!paths || !Array.isArray(paths)) {
-        return respond.fail(res, req, 400, {
-          error: "Missing required field: paths (array)",
-          code: "INVALID_REQUEST",
-        });
-      }
-      const result = await storageService.deleteFiles(userId, paths);
-
-      return respond.ok(res, req, result);
-    }),
+    handle({ body: DeleteBatchSchema }, ({ creatorId, body }) =>
+      storageService.deleteFiles(creatorId, body.paths),
+    ),
   );
 
   return router;

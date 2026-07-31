@@ -1,6 +1,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { logger } from "@infrastructure/Logger";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody } from "@middleware/intake";
 import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
 import type { PromptSpan } from "@services/model-intelligence/types";
 import {
@@ -8,7 +9,6 @@ import {
   ModelRecommendationEventSchema,
 } from "@services/model-intelligence/schemas/requests";
 import type { ApiResponse } from "@shared/types/api";
-import { formatValidationDetails } from "@utils/apiResponseHelpers";
 /** Narrow metrics interface — avoids importing the concrete MetricsService class. */
 export interface ModelIntelligenceRouteMetrics {
   recordModelRecommendationEvent(
@@ -58,7 +58,7 @@ export function createModelIntelligenceRoutes(
   router.post(
     "/model-intelligence/recommend",
     asyncHandler(
-      async (req: RequestWithUser, res: Response): Promise<Response> => {
+      async (req: RequestWithUser, res: Response): Promise<Response | void> => {
         if (!modelIntelligenceService) {
           return res.status(503).json({
             success: false,
@@ -66,24 +66,10 @@ export function createModelIntelligenceRoutes(
           } satisfies ApiResponse<never>);
         }
 
-        const parsed = ModelRecommendationRequestSchema.safeParse(req.body);
-        if (!parsed.success) {
-          log.warn("Model recommendation request validation failed", {
-            issues: parsed.error.issues.map((issue) => ({
-              code: issue.code,
-              path: issue.path.join("."),
-              message: issue.message,
-            })),
-          });
+        const parsed = requireBody(ModelRecommendationRequestSchema, req, res);
+        if (!parsed.ok) return;
 
-          return res.status(400).json({
-            success: false,
-            error: "Invalid request",
-            details: formatValidationDetails(parsed.error.issues),
-          } satisfies ApiResponse<never>);
-        }
-
-        const { prompt, mode, spans, durationSeconds } = parsed.data;
+        const { prompt, mode, spans, durationSeconds } = parsed.value;
         const userId = req.user?.uid ?? null;
         const normalizedSpans = normalizeRecommendationSpans(spans);
 
@@ -130,15 +116,9 @@ export function createModelIntelligenceRoutes(
   router.post(
     "/model-intelligence/track",
     asyncHandler(
-      async (req: RequestWithUser, res: Response): Promise<Response> => {
-        const parsed = ModelRecommendationEventSchema.safeParse(req.body);
-        if (!parsed.success) {
-          return res.status(400).json({
-            success: false,
-            error: "Invalid request",
-            details: formatValidationDetails(parsed.error.issues),
-          } satisfies ApiResponse<never>);
-        }
+      async (req: RequestWithUser, res: Response): Promise<Response | void> => {
+        const parsed = requireBody(ModelRecommendationEventSchema, req, res);
+        if (!parsed.ok) return;
 
         const {
           event,
@@ -149,7 +129,7 @@ export function createModelIntelligenceRoutes(
           mode = "t2v",
           durationSeconds,
           timeSinceRecommendationMs,
-        } = parsed.data;
+        } = parsed.value;
 
         const followed =
           Boolean(recommendedModelId) &&

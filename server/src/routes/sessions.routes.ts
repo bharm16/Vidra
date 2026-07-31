@@ -1,6 +1,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import {
   GenerationNotFoundError,
@@ -23,7 +24,6 @@ import type { CreateSessionRequest as ContinuityCreateSessionRequest } from "@se
 import type { UserCreditService } from "@services/credits/UserCreditService";
 import type { SessionDto } from "@shared/types/session";
 import type { ApiResponse } from "@shared/types/api";
-import { formatValidationDetails } from "@utils/apiResponseHelpers";
 import { logger } from "@infrastructure/Logger";
 import {
   ContinuitySessionInputSchema,
@@ -131,17 +131,6 @@ function handleSessionMutationError(error: unknown, res: Response): boolean {
  * string the shared ApiResponse contract requires; the structured Zod issues
  * are logged server-side instead of leaking onto the wire.
  */
-function respondInvalidRequest(res: Response, error: z.ZodError): void {
-  logger.debug("Session request validation failed", {
-    issues: error.issues,
-  });
-  res.status(400).json({
-    success: false,
-    error: "Invalid request",
-    details: formatValidationDetails(error.issues),
-  } satisfies ApiResponse<never>);
-}
-
 function toContinuityCreateSessionRequest(
   data: z.infer<typeof CreateContinuitySessionSchema>,
 ): ContinuityCreateSessionRequest {
@@ -273,18 +262,11 @@ export function createSessionRoutes(
       asyncHandler(async (req: Request, res: Response) => {
         const userId = requireUserId(req as RequestWithUser, res);
         if (!userId) return;
-        const parsed = CreateContinuitySessionSchema.safeParse(req.body);
-        if (!parsed.success) {
-          res.status(400).json({
-            success: false,
-            error: "Invalid request",
-            details: parsed.error.issues,
-          });
-          return;
-        }
-        if (parsed.data.sessionId) {
+        const parsed = requireBody(CreateContinuitySessionSchema, req, res);
+        if (!parsed.ok) return;
+        if (parsed.value.sessionId) {
           const existing = await sessionService.getSession(
-            parsed.data.sessionId,
+            parsed.value.sessionId,
           );
           if (!existing) {
             res
@@ -297,7 +279,9 @@ export function createSessionRoutes(
             return;
           }
         }
-        const continuityRequest = toContinuityCreateSessionRequest(parsed.data);
+        const continuityRequest = toContinuityCreateSessionRequest(
+          parsed.value,
+        );
         const continuitySession = await continuityService.createSession(
           userId,
           continuityRequest,
@@ -400,14 +384,11 @@ export function createSessionRoutes(
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = CreateSessionSchema.safeParse(req.body);
-      if (!parsed.success) {
-        respondInvalidRequest(res, parsed.error);
-        return;
-      }
+      const parsed = requireBody(CreateSessionSchema, req, res);
+      if (!parsed.ok) return;
       const session = await sessionService.createPromptSession(
         userId,
-        toSessionCreateRequest(parsed.data),
+        toSessionCreateRequest(parsed.value),
       );
       res.json({
         success: true,
@@ -421,18 +402,15 @@ export function createSessionRoutes(
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = UpdateSessionSchema.safeParse(req.body);
-      if (!parsed.success) {
-        respondInvalidRequest(res, parsed.error);
-        return;
-      }
+      const parsed = requireBody(UpdateSessionSchema, req, res);
+      if (!parsed.ok) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
       try {
         const session = await sessionService.updateSessionForUser(
           userId,
           sessionId,
-          toSessionUpdateRequest(parsed.data),
+          toSessionUpdateRequest(parsed.value),
         );
         res.json({
           success: true,
@@ -498,18 +476,15 @@ export function createSessionRoutes(
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = UpdatePromptSchema.safeParse(req.body);
-      if (!parsed.success) {
-        respondInvalidRequest(res, parsed.error);
-        return;
-      }
+      const parsed = requireBody(UpdatePromptSchema, req, res);
+      if (!parsed.ok) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
       try {
         const session = await sessionService.updatePromptForUser(
           userId,
           sessionId,
-          toSessionPromptUpdate(parsed.data),
+          toSessionPromptUpdate(parsed.value),
         );
         res.json({
           success: true,
@@ -527,18 +502,15 @@ export function createSessionRoutes(
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = UpdateHighlightsSchema.safeParse(req.body);
-      if (!parsed.success) {
-        respondInvalidRequest(res, parsed.error);
-        return;
-      }
+      const parsed = requireBody(UpdateHighlightsSchema, req, res);
+      if (!parsed.ok) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
       try {
         const session = await sessionService.updateHighlightsForUser(
           userId,
           sessionId,
-          toSessionHighlightUpdate(parsed.data),
+          toSessionHighlightUpdate(parsed.value),
         );
         res.json({
           success: true,
@@ -556,18 +528,15 @@ export function createSessionRoutes(
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = UpdateOutputSchema.safeParse(req.body);
-      if (!parsed.success) {
-        respondInvalidRequest(res, parsed.error);
-        return;
-      }
+      const parsed = requireBody(UpdateOutputSchema, req, res);
+      if (!parsed.ok) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
       try {
         const session = await sessionService.updateOutputForUser(
           userId,
           sessionId,
-          toSessionOutputUpdate(parsed.data),
+          toSessionOutputUpdate(parsed.value),
         );
         res.json({
           success: true,
@@ -585,18 +554,15 @@ export function createSessionRoutes(
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = UpdateVersionsSchema.safeParse(req.body);
-      if (!parsed.success) {
-        respondInvalidRequest(res, parsed.error);
-        return;
-      }
+      const parsed = requireBody(UpdateVersionsSchema, req, res);
+      if (!parsed.ok) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
       try {
         const session = await sessionService.updateVersionsForUser(
           userId,
           sessionId,
-          toSessionVersionsUpdate(parsed.data),
+          toSessionVersionsUpdate(parsed.value),
         );
         res.json({
           success: true,

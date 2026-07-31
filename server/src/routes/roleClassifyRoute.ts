@@ -2,6 +2,7 @@
 import { logger } from "@infrastructure/Logger";
 import type { Router, Request, Response } from "express";
 import { Router as ExpressRouter } from "express";
+import { requireBody } from "@middleware/intake";
 import { roleClassify } from "@llm/roleClassifier";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { LabeledSpan } from "@llm/types";
@@ -25,18 +26,13 @@ export function createRoleClassifyRoute(aiService: AIModelService): Router {
     });
 
     try {
-      const parseResult = RoleClassifyRequestSchema.safeParse(req.body);
+      const parseResult = requireBody(RoleClassifyRequestSchema, req, res);
 
-      if (!parseResult.success) {
-        log.warn("Invalid request", {
-          operation,
-          requestId,
-          error: parseResult.error,
-        });
-        return res.status(400).json({ error: "Invalid request format" });
+      if (!parseResult.ok) {
+        return;
       }
 
-      const { spans: cleanSpans, templateVersion } = parseResult.data;
+      const { spans: cleanSpans, templateVersion } = parseResult.value;
 
       log.debug("Spans cleaned and validated", {
         operation,

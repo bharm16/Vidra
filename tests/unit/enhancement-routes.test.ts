@@ -111,7 +111,7 @@ describe("enhancement routes", () => {
         .send({ fullPrompt: "A runner in rain" });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe("Validation failed");
+      expect(response.body.error).toBe("Invalid request");
       expect(
         enhancementService.getEnhancementSuggestions,
       ).not.toHaveBeenCalled();
@@ -191,7 +191,7 @@ describe("enhancement routes", () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Validation failed");
+    expect(response.body.error).toBe("Invalid request");
   });
 
   it("returns 400 for invalid coherence check requests", async () => {
@@ -204,7 +204,7 @@ describe("enhancement routes", () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Validation failed");
+    expect(response.body.error).toBe("Invalid request");
   });
 
   it("returns 400 for invalid scene change requests", async () => {
@@ -216,7 +216,7 @@ describe("enhancement routes", () => {
     });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Validation failed");
+    expect(response.body.error).toBe("Invalid request");
   });
 
   it("returns 400 when /test-nlp is missing prompt query", async () => {

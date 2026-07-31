@@ -10,6 +10,7 @@ import { z } from "zod";
 import { logger } from "@infrastructure/Logger";
 import { generateId } from "@utils/uid";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody, requireCreatorId } from "@middleware/intake";
 import { CAMERA_PATHS } from "@services/convergence/constants";
 import {
   createDepthEstimationServiceForUser,
@@ -132,39 +133,20 @@ export function createMotionRoutes(
       const depthRequestId = generateId("depth");
       const startedAt = Date.now();
 
-      const parsed = DepthEstimationRequestSchema.safeParse(req.body);
-      if (!parsed.success) {
-        log.warn("Depth estimation request validation failed", {
-          operation: OPERATION,
-          requestId,
-          depthRequestId,
-          issues: parsed.error.issues.map((issue) => ({
-            code: issue.code,
-            path: issue.path.join("."),
-            message: issue.message,
-          })),
-        });
-        return res.status(400).json({
-          success: false,
-          error: "Invalid request",
-          details: parsed.error.issues,
-        } satisfies ApiResponse<never>);
-      }
+      const parsed = requireBody(DepthEstimationRequestSchema, req, res);
+      if (!parsed.ok) return;
 
-      const userId = req.user?.uid?.trim();
+      const userId = requireCreatorId(req, res);
       if (!userId) {
         log.warn("Depth estimation requested without authenticated user", {
           operation: OPERATION,
           requestId,
           depthRequestId,
         });
-        return res.status(401).json({
-          success: false,
-          error: "Authentication required",
-        } satisfies ApiResponse<never>);
+        return;
       }
 
-      const { imageUrl } = parsed.data;
+      const { imageUrl } = parsed.value;
       const imageUrlHost = safeUrlHost(imageUrl);
 
       log.info("Depth estimation requested", {

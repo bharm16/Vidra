@@ -1,5 +1,6 @@
 import express, { type Request, type Response, type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { requireBody } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
 import { CreateShareRequestSchema } from "@shared/schemas/share.schemas";
@@ -22,14 +23,9 @@ export function createShareRouter(shareService: ShareService): Router {
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireUserId(req as RequestWithUser, res);
       if (!userId) return;
-      const parsed = CreateShareRequestSchema.safeParse(req.body);
-      if (!parsed.success) {
-        res
-          .status(400)
-          .json({ success: false, error: "Invalid share request" });
-        return;
-      }
-      const data = await shareService.mint(userId, parsed.data);
+      const parsed = requireBody(CreateShareRequestSchema, req, res);
+      if (!parsed.ok) return;
+      const data = await shareService.mint(userId, parsed.value);
       res.json({
         success: true,
         data,
