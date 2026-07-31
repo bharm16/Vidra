@@ -2,6 +2,7 @@ import React from "react";
 import { Image } from "@promptstudio/system/components/ui";
 import type { HistoryThumbnailRef } from "@features/history/utils/historyMedia";
 import { useResolvedMediaUrl } from "@/hooks/useResolvedMediaUrl";
+import { rewriteGcsUrlToProxy } from "@/services/media/MediaUrlResolver";
 
 interface LibraryThumbnailProps {
   thumbnail: HistoryThumbnailRef;
@@ -36,7 +37,10 @@ export function LibraryThumbnail({
     refreshAttemptedRef.current = false;
   }, [thumbnail.url]);
 
-  const src = resolvedUrl?.trim?.() ?? "";
+  // Signed GCS urls expire after an hour; the media proxy is the only path
+  // that can rescue an expired one, so it is the only form the cover ever
+  // hands to <img> — including the first paint, before resolution settles.
+  const src = rewriteGcsUrlToProxy(resolvedUrl?.trim?.() ?? "") ?? "";
   const showFallback = src.length === 0 || src === erroredSrc;
 
   if (showFallback) {

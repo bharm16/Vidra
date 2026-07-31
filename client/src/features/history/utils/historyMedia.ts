@@ -24,8 +24,18 @@ export function resolveHistoryThumbnail(
     ) {
       continue;
     }
-    const storagePath = preview?.storagePath ?? null;
-    const assetId = preview?.assetId ?? null;
+    // A video storagePath can never re-sign into a still: legacy records
+    // wrote the clip's own mp4 (and its asset id) where the preview's
+    // identifiers belong, and MediaUrlResolver prefers storagePath — so it
+    // minted a fresh signed VIDEO url for the card's <img>. Only the image
+    // url (rescuable via the media proxy) survives such records.
+    const recordPointsAtVideo =
+      typeof preview?.storagePath === "string" &&
+      isLikelyVideoUrl(preview.storagePath);
+    const storagePath = recordPointsAtVideo
+      ? null
+      : (preview?.storagePath ?? null);
+    const assetId = recordPointsAtVideo ? null : (preview?.assetId ?? null);
     if (typeof candidate === "string" && candidate.trim()) {
       return { url: candidate, storagePath, assetId };
     }
