@@ -148,16 +148,10 @@ const extractThumbnailFromGenerations = (
     }
   }
 
-  // Finally, fall back to any first media URL (e.g., video poster frame if available)
-  for (const gen of completed) {
-    if (gen.mediaUrls.length) {
-      const url = gen.mediaUrls[0];
-      if (url && typeof url === "string" && url.trim()) {
-        return url.trim();
-      }
-    }
-  }
-
+  // No blind mediaUrls fallback: for a video-only version that URL is the
+  // mp4 itself, and it used to get written into version.preview.imageUrl —
+  // an <img> src — leaving broken posters on the space tile and Library
+  // card. A version with no still simply has no preview.
   return null;
 };
 

@@ -471,6 +471,11 @@ export function useGenerationActions(
               : jobResult.storagePath
                 ? { mediaAssetIds: [extractAssetId(jobResult.storagePath)] }
                 : {}),
+            // The i2v start frame is the clip's poster — without it the
+            // space tile and Library card have no still to show.
+            ...(jobResult.startImageUrl && !generation.thumbnailUrl
+              ? { thumbnailUrl: jobResult.startImageUrl }
+              : {}),
             jobId: null,
             serverProgress: 100,
             serverJobStatus: "completed",
@@ -814,6 +819,7 @@ export function useGenerationActions(
         syncCreditBalanceFromResponse(response.remainingCredits);
         let videoUrl: string | null = null;
         let videoStoragePath: string | null = response.storagePath ?? null;
+        let videoPosterUrl: string | null = response.startImageUrl ?? null;
         let videoAssetId: string | null = response.assetId ?? null;
         if (response.success && response.videoUrl) {
           generationAccepted = true;
@@ -861,6 +867,7 @@ export function useGenerationActions(
           videoUrl = jobResult?.videoUrl ?? null;
           videoStoragePath = jobResult?.storagePath ?? videoStoragePath;
           videoAssetId = jobResult?.assetId ?? videoAssetId;
+          videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
           log.debug("Video draft job completed", {
             generationId: generation.id,
             jobId: response.jobId,
@@ -896,6 +903,9 @@ export function useGenerationActions(
           ...motionMeta,
         });
         if (response.jobId) {
+          // The i2v start frame doubles as the clip's poster — the space
+          // tile and Library card render stills, never the video itself.
+          const posterUrl = videoPosterUrl ?? resolved.startImage?.url ?? null;
           finalizeGeneration(generation.id, {
             status: "completed",
             completedAt: Date.now(),
@@ -903,6 +913,7 @@ export function useGenerationActions(
             jobId: null,
             serverProgress: 100,
             serverJobStatus: "completed",
+            ...(posterUrl ? { thumbnailUrl: posterUrl } : {}),
             ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
           });
         }
@@ -1347,6 +1358,7 @@ export function useGenerationActions(
         syncCreditBalanceFromResponse(response.remainingCredits);
         let videoUrl: string | null = null;
         let videoStoragePath: string | null = response.storagePath ?? null;
+        let videoPosterUrl: string | null = response.startImageUrl ?? null;
         let videoAssetId: string | null = response.assetId ?? null;
         if (response.success && response.videoUrl) {
           generationAccepted = true;
@@ -1394,6 +1406,7 @@ export function useGenerationActions(
           videoUrl = jobResult?.videoUrl ?? null;
           videoStoragePath = jobResult?.storagePath ?? videoStoragePath;
           videoAssetId = jobResult?.assetId ?? videoAssetId;
+          videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
           log.debug("Render job completed", {
             generationId: generation.id,
             jobId: response.jobId,
@@ -1429,6 +1442,9 @@ export function useGenerationActions(
           ...motionMeta,
         });
         if (response.jobId) {
+          // The i2v start frame doubles as the clip's poster — the space
+          // tile and Library card render stills, never the video itself.
+          const posterUrl = videoPosterUrl ?? resolved.startImage?.url ?? null;
           finalizeGeneration(generation.id, {
             status: "completed",
             completedAt: Date.now(),
@@ -1436,6 +1452,7 @@ export function useGenerationActions(
             jobId: null,
             serverProgress: 100,
             serverJobStatus: "completed",
+            ...(posterUrl ? { thumbnailUrl: posterUrl } : {}),
             ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
           });
         }

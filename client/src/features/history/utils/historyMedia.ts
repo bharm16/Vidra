@@ -1,4 +1,5 @@
 import type { PromptHistoryEntry } from "@features/prompt-optimizer";
+import { isLikelyVideoUrl } from "@features/workspace-shell/utils/takePosterUrl";
 
 export interface HistoryThumbnailRef {
   url: string | null;
@@ -13,6 +14,16 @@ export function resolveHistoryThumbnail(
   for (let i = versions.length - 1; i >= 0; i -= 1) {
     const preview = versions[i]?.preview;
     const candidate = preview?.imageUrl;
+    // Legacy records wrote the clip's own mp4 where a still belongs; a video
+    // URL in an <img src> renders a broken cover, so those previews are
+    // treated as absent (the whole record — its storagePath is the same mp4).
+    if (
+      typeof candidate === "string" &&
+      candidate.trim() &&
+      isLikelyVideoUrl(candidate)
+    ) {
+      continue;
+    }
     const storagePath = preview?.storagePath ?? null;
     const assetId = preview?.assetId ?? null;
     if (typeof candidate === "string" && candidate.trim()) {

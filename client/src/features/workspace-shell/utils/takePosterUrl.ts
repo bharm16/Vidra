@@ -23,12 +23,26 @@ export interface TakePosterSource {
   mediaUrls?: ReadonlyArray<string | null | undefined> | null | undefined;
 }
 
-const isLikelyVideoUrl = (url: string): boolean => {
-  const value = url.toLowerCase();
+/**
+ * True when a URL (or storage path) points at video media. Exported so
+ * poster consumers that read persisted preview fields directly (e.g. the
+ * Library) can reject legacy records where a video URL was written where a
+ * still belongs.
+ */
+export const isLikelyVideoUrl = (url: string): boolean => {
+  let value = url.toLowerCase();
+  // Storage-proxy URLs carry the real object URL percent-encoded in a query
+  // param, hiding the media extension from a plain scan — decode so a
+  // proxied .mp4 is still recognized as video.
+  try {
+    value = decodeURIComponent(value);
+  } catch {
+    // Malformed escapes: scan the raw string.
+  }
   if (value.includes("/api/preview/video/content/")) {
     return true;
   }
-  return /\.(mp4|webm|mov|m3u8)(\?|#|$)/.test(value);
+  return /\.(mp4|webm|mov|m3u8)(\?|#|$|&)/.test(value);
 };
 
 const normalizeNonEmpty = (value: string | null | undefined): string | null =>

@@ -21,6 +21,8 @@ export interface PollJobResult {
   viewUrl?: string | undefined;
   viewUrlExpiresAt?: string | undefined;
   assetId?: string | undefined;
+  /** The i2v start frame — the clip's natural poster image. */
+  startImageUrl?: string | undefined;
 }
 
 /**
@@ -76,6 +78,9 @@ export async function pollJobStatus(
           ? { viewUrlExpiresAt: status.viewUrlExpiresAt }
           : {}),
         ...(status.assetId !== undefined ? { assetId: status.assetId } : {}),
+        ...(status.startImageUrl !== undefined
+          ? { startImageUrl: status.startImageUrl }
+          : {}),
       };
     }
 
