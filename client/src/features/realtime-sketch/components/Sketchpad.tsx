@@ -150,8 +150,23 @@ export const Sketchpad = forwardRef<SketchpadHandle, SketchpadProps>(
         return;
       }
       event.stopPropagation();
-      active.points.push(toCanvasPoint(event));
-      redraw();
+      // Stroke only the new segment: replaying every stroke here made input
+      // latency scale with total sketch complexity. Round caps make the
+      // segment union raster-identical to the full path (inks are opaque).
+      const previous = active.points[active.points.length - 1];
+      const point = toCanvasPoint(event);
+      active.points.push(point);
+      const context = canvasRef.current?.getContext("2d");
+      if (context && previous) {
+        context.strokeStyle = active.color;
+        context.lineWidth = active.size;
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        context.beginPath();
+        context.moveTo(previous.x, previous.y);
+        context.lineTo(point.x, point.y);
+        context.stroke();
+      }
       const now = Date.now();
       if (now - lastSnapshotAtRef.current >= SNAPSHOT_INTERVAL_MS) {
         lastSnapshotAtRef.current = now;
