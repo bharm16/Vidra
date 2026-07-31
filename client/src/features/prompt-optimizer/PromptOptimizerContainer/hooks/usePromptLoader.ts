@@ -254,6 +254,11 @@ export function usePromptLoader({
         setGenericOptimizedPromptRef.current?.(null);
         setPreviewPromptRef.current?.(null);
         setShowResultsRef.current(false);
+        // The working IDENTITY clears too — every identity-driven surface
+        // (versions, gallery, lineage) would otherwise keep resolving the
+        // last session on the fresh canvas.
+        setCurrentPromptUuidRef.current(null);
+        setCurrentPromptDocIdRef.current(null);
         window.dispatchEvent(new Event("po:workspace-reset"));
         setIsLoading(false);
         return;

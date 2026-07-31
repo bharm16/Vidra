@@ -274,15 +274,15 @@ export function CanvasWorkspace({
     useComposerFocus(heroGeneration?.id ?? null);
 
   const galleryEntries = useMemo(() => {
-    // When runtimeGenerations is empty (e.g., after po:workspace-reset), skip
-    // version-based entries to prevent stale gallery items from a prior session
-    // remaining visible during the transition to a new draft.
-    const versions =
-      generationsRuntime.generations.length === 0
-        ? []
-        : generationsPanelProps.versions;
+    // Versions flow in unconditionally: they are identity-gated at the
+    // source (no working identity resolves to no entry, and "/" clears the
+    // identity), so a fresh draft has no version entries by construction.
+    // The old proxy guard — skip versions while runtimeGenerations is empty —
+    // also killed the gallery for every HYDRATED session, where runtime is
+    // legitimately empty and the persisted versions are the whole point:
+    // completed clips became invisible and unplayable after reload.
     return buildGalleryGenerationEntries({
-      versions,
+      versions: generationsPanelProps.versions,
       runtimeGenerations: generationsRuntime.generations,
     });
   }, [generationsPanelProps.versions, generationsRuntime.generations]);
