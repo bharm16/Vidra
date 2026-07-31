@@ -1,10 +1,43 @@
 import type { PromptHistoryEntry } from "@features/prompt-optimizer";
-import { isLikelyVideoUrl } from "@features/workspace-shell/utils/takePosterUrl";
+import type { PromptVersionEntry } from "@features/prompt-optimizer/types/domain/prompt-session";
+import {
+  isLikelyVideoUrl,
+  resolveTakePosterUrl,
+} from "@features/workspace-shell/utils/takePosterUrl";
 
 export interface HistoryThumbnailRef {
   url: string | null;
   storagePath?: string | null;
   assetId?: string | null;
+}
+
+/**
+ * The still for a version's newest completed take, or null. Current-loop
+ * sessions persist their pictures as generation records on the version
+ * (ADR-0011 D4) and write no legacy `preview` — the cover must read the
+ * records. A picture's own asset id re-signs to a still; a clip's only
+ * asset is the clip itself, so its poster URL stands alone.
+ */
+function resolveGenerationCover(
+  version: PromptVersionEntry | undefined,
+): HistoryThumbnailRef | null {
+  const generations = Array.isArray(version?.generations)
+    ? version.generations
+    : [];
+  for (let i = generations.length - 1; i >= 0; i -= 1) {
+    const generation = generations[i];
+    if (!generation || generation.status !== "completed") continue;
+    const poster = resolveTakePosterUrl(generation);
+    // A corrupt record can carry an mp4 where a still belongs even on a
+    // picture take — a video URL never reaches an <img src>.
+    if (!poster || isLikelyVideoUrl(poster)) continue;
+    const assetId =
+      generation.mediaType === "image"
+        ? (generation.mediaAssetIds?.[0] ?? null)
+        : null;
+    return { url: poster, storagePath: null, assetId };
+  }
+  return null;
 }
 
 export function resolveHistoryThumbnail(
@@ -22,6 +55,12 @@ export function resolveHistoryThumbnail(
       candidate.trim() &&
       isLikelyVideoUrl(candidate)
     ) {
+      // The corrupt preview is absent, but the version's persisted takes may
+      // still hold a real still.
+      const rescuedCover = resolveGenerationCover(versions[i]);
+      if (rescuedCover) {
+        return rescuedCover;
+      }
       continue;
     }
     // A video storagePath can never re-sign into a still: legacy records
@@ -41,6 +80,11 @@ export function resolveHistoryThumbnail(
     }
     if (storagePath || assetId) {
       return { url: null, storagePath, assetId };
+    }
+    // No usable legacy preview on this version — read its persisted takes.
+    const generationCover = resolveGenerationCover(versions[i]);
+    if (generationCover) {
+      return generationCover;
     }
   }
   return { url: null };
