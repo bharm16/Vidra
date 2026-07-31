@@ -122,18 +122,12 @@ export async function runOptimization({
   }
   actions.bumpOptimizationResultVersion();
 
-  // Self-scoring quality toasts are dogfood-only: the frozen quality-feedback
-  // stack never speaks in the creator loop (ADR-0008, decision 3). Gated by
-  // the same dev-only mechanism as the debug chrome (the Copy Debug buttons).
-  if (import.meta.env.DEV) {
-    if (score >= 80) {
-      toast.success(`Excellent prompt! Quality score: ${score}%`);
-    } else if (score >= 60) {
-      toast.info(`Good prompt! Quality score: ${score}%`);
-    } else {
-      toast.warning(`Prompt could be improved. Score: ${score}%`);
-    }
-  }
+  // The frozen quality-feedback stack never speaks in the creator loop
+  // (ADR-0008, decision 3) — not even in dev. calculateQualityScore is a
+  // text-optimizer heuristic (section headers, "Goal", "Return Format")
+  // that video prompts can never satisfy, so the old dev-only toast fired
+  // "Score: 0%" on every optimization. The score is still computed and
+  // persisted with the entry; it just doesn't toast.
 
   const duration = logger.endTimer("optimize");
   log.info("Optimization completed", {

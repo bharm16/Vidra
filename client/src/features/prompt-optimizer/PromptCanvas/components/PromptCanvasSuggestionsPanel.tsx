@@ -77,7 +77,7 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
           <span className="bg-surface-3 text-label-sm text-muted inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5">
             {suggestionCount}
           </span>
-          {debugPayload && (
+          {import.meta.env.DEV && debugPayload && (
             <button
               type="button"
               className="text-label-sm text-muted hover:text-foreground transition-colors"
