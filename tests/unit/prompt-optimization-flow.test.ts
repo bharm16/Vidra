@@ -111,8 +111,11 @@ describe("runOptimization", () => {
     expect(result).toEqual({ optimized: "optimized prompt", score: 88 });
   });
 
-  it("shows a low-score warning when needed", async () => {
+  it("records a low score without speaking in the creator loop", async () => {
+    // ADR-0008 decision 3: the frozen quality stack never toasts here —
+    // the score is computed and persisted, silently.
     const toast = createMockToast();
+    const actions = createMockActions();
 
     await runOptimization({
       promptToOptimize: "source prompt",
@@ -120,7 +123,7 @@ describe("runOptimization", () => {
       context: null,
       brainstormContext: null,
       abortController: new AbortController(),
-      actions: createMockActions(),
+      actions,
       toast,
       log: createMockLog() as never,
       analyzeAndOptimize: vi.fn().mockResolvedValue({
@@ -129,8 +132,8 @@ describe("runOptimization", () => {
       calculateQualityScore: vi.fn().mockReturnValue(45),
     });
 
-    expect(toast.warning).toHaveBeenCalledWith(
-      expect.stringContaining("Prompt could be improved. Score: 45%"),
-    );
+    expect(toast.warning).not.toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(actions.setQualityScore).toHaveBeenCalledWith(45);
   });
 });

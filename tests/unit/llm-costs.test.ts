@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { calculateLLMCost } from "@config/llmCosts";
+import { DEFAULT_QWEN_MODEL } from "@config/modelConfig";
 
 describe("calculateLLMCost", () => {
   it("calculates cost for exact model match", () => {
@@ -38,9 +39,11 @@ describe("calculateLLMCost", () => {
   });
 
   it("handles Qwen model cost", () => {
-    const cost = calculateLLMCost("qwen/qwen3-32b", 5000, 1000);
-    // input: 5 * 0.00018 = 0.0009, output: 1 * 0.00018 = 0.00018
-    expect(cost).toBeCloseTo(0.0009 + 0.00018, 8);
+    // Keyed by DEFAULT_QWEN_MODEL so the next Groq model retirement moves
+    // this test with the constant instead of stranding it on a dead id.
+    const cost = calculateLLMCost(DEFAULT_QWEN_MODEL, 5000, 1000);
+    // input: 5 * 0.0006 = 0.003, output: 1 * 0.003 = 0.003
+    expect(cost).toBeCloseTo(0.003 + 0.003, 8);
   });
 
   it("handles Claude model cost", () => {

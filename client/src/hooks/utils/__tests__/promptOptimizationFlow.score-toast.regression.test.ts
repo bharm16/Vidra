@@ -9,9 +9,10 @@ import * as fc from "fast-check";
  *    flow seam.
  * 2. Mock boundary: analyzeAndOptimize (the LLM API round-trip) and the
  *    toast sink. runOptimization itself runs for real.
- * 3. Invariant: for any optimization outcome in a production build
- *    (DEV=false), no quality-score toast fires — the signal is dev-only,
- *    behind the same gate as the debug chrome.
+ * 3. Invariant: for any optimization outcome in ANY build, no quality-score
+ *    toast fires — calculateQualityScore is a text-optimizer heuristic that
+ *    video prompts can never satisfy, so the toast is gone entirely; the
+ *    score is still computed and persisted for measurement.
  */
 
 vi.mock("@/services/LoggingService", () => ({
@@ -62,6 +63,7 @@ function createMockLog(): Record<string, ReturnType<typeof vi.fn>> {
 async function runWithScore(
   score: number,
   toast: ReturnType<typeof createMockToast>,
+  actions: PromptOptimizerActions = createMockActions(),
 ): Promise<void> {
   await runOptimization({
     promptToOptimize: "source prompt",
@@ -69,7 +71,7 @@ async function runWithScore(
     context: null,
     brainstormContext: null,
     abortController: new AbortController(),
-    actions: createMockActions(),
+    actions,
     toast,
     log: createMockLog() as never,
     analyzeAndOptimize: vi.fn().mockResolvedValue({
@@ -99,14 +101,16 @@ describe("regression: quality-score toast never fires in the creator loop (produ
     );
   });
 
-  it("dev builds keep the score signal for dogfooding (same gate as debug chrome)", async () => {
+  it("dev builds are silent too, and the score is still persisted", async () => {
     vi.stubEnv("DEV", true);
 
     const toast = createMockToast();
-    await runWithScore(45, toast);
+    const actions = createMockActions();
+    await runWithScore(45, toast, actions);
 
-    expect(toast.warning).toHaveBeenCalledWith(
-      expect.stringContaining("Prompt could be improved. Score: 45%"),
-    );
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.info).not.toHaveBeenCalled();
+    expect(toast.warning).not.toHaveBeenCalled();
+    expect(actions.setQualityScore).toHaveBeenCalledWith(45);
   });
 });

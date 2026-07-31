@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_QWEN_MODEL, ModelConfig } from "../modelConfig.ts";
 import { calculateLLMCost } from "../llmCosts.ts";
-import { GroqQwenAdapter } from "../../clients/adapters/GroqQwenAdapter.ts";
+import { GroqQwenAdapter } from "@clients/adapters/GroqQwenAdapter.ts";
 
 describe("Qwen model id consistency (regression)", () => {
   it("every qwen-routed operation resolves to DEFAULT_QWEN_MODEL", () => {
