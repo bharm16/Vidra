@@ -12,6 +12,56 @@ import { buildSystemPrompt } from "../utils/promptBuilder";
 const log = logger.child({ service: "GeminiLlmClient" });
 
 /**
+ * Parse one NDJSON line from the model into a raw span object, tolerating the
+ * envelope noise Gemini adds despite the NDJSON instruction (code fences,
+ * array wrapping, trailing commas). Returns null for noise and parse failures.
+ */
+function parseNdjsonSpanLine(line: string): Record<string, unknown> | null {
+  try {
+    // Handle potential code block fences if model ignores instruction
+    let cleanLine = line.replace(/^```json/, "").replace(/^```/, "");
+
+    // Handle JSON array wrapping (Gemini often wraps in [ ... ] despite NDJSON request)
+    // 1. Skip opening bracket lines
+    if (cleanLine === "[") return null;
+    // 2. Skip closing bracket lines
+    if (cleanLine === "]") return null;
+
+    // 3. Remove leading '[' if it starts a line (e.g. "[{...}")
+    if (cleanLine.startsWith("[")) {
+      cleanLine = cleanLine.substring(1).trim();
+    }
+
+    // 4. Remove trailing comma (e.g., "{...},")
+    if (cleanLine.endsWith(",")) {
+      cleanLine = cleanLine.slice(0, -1).trim();
+    }
+
+    // 5. Remove trailing ']' or '],' (e.g. "...}]")
+    if (cleanLine.endsWith("]")) {
+      cleanLine = cleanLine.slice(0, -1).trim();
+    }
+    // Check comma again after bracket removal
+    if (cleanLine.endsWith(",")) {
+      cleanLine = cleanLine.slice(0, -1).trim();
+    }
+
+    if (!cleanLine) return null;
+
+    const span = JSON.parse(cleanLine);
+    if (span && typeof span === "object") {
+      // Normalize
+      if (span.role && !span.category) span.category = span.role;
+      return span;
+    }
+    return null;
+  } catch {
+    // Ignore parse errors for partial lines or noise
+    return null;
+  }
+}
+
+/**
  * Gemini LLM Client for Span Labeling
  *
  * Specialized client for Google's Gemini models.
@@ -97,46 +147,9 @@ export class GeminiLlmClient extends RobustLlmClient {
           buffer = buffer.slice(newlineIndex + 1);
 
           if (line) {
-            try {
-              // Handle potential code block fences if model ignores instruction
-              let cleanLine = line.replace(/^```json/, "").replace(/^```/, "");
-
-              // Handle JSON array wrapping (Gemini often wraps in [ ... ] despite NDJSON request)
-              // 1. Skip opening bracket lines
-              if (cleanLine === "[") continue;
-              // 2. Skip closing bracket lines
-              if (cleanLine === "]") continue;
-
-              // 3. Remove leading '[' if it starts a line (e.g. "[{...}")
-              if (cleanLine.startsWith("[")) {
-                cleanLine = cleanLine.substring(1).trim();
-              }
-
-              // 4. Remove trailing comma (e.g., "{...},")
-              if (cleanLine.endsWith(",")) {
-                cleanLine = cleanLine.slice(0, -1).trim();
-              }
-
-              // 5. Remove trailing ']' or '],' (e.g. "...}]")
-              if (cleanLine.endsWith("]")) {
-                cleanLine = cleanLine.slice(0, -1).trim();
-              }
-              // Check comma again after bracket removal
-              if (cleanLine.endsWith(",")) {
-                cleanLine = cleanLine.slice(0, -1).trim();
-              }
-
-              if (!cleanLine) continue;
-
-              const span = JSON.parse(cleanLine);
-              if (span && typeof span === "object") {
-                // Normalize
-                if (span.role && !span.category) span.category = span.role;
-                yield span;
-              }
-            } catch (e) {
-              // Ignore parse errors for partial lines or noise
-              // log.debug('Failed to parse line', { line, error: (e as Error).message });
+            const span = parseNdjsonSpanLine(line);
+            if (span) {
+              yield span;
             }
           }
         }
@@ -155,6 +168,19 @@ export class GeminiLlmClient extends RobustLlmClient {
       await new Promise<void>((resolve) => {
         resolveNext = resolve;
       });
+    }
+
+    // NDJSON is newline-SEPARATED, not newline-terminated: the provider ends
+    // the stream at the closing brace of the final span, so that line never
+    // meets a "\n" and would sit in the buffer forever. A single-span
+    // response (the I2V motion-only template's normal case) is all tail —
+    // without this flush the entire response is swallowed.
+    const tail = buffer.trim();
+    if (tail) {
+      const span = parseNdjsonSpanLine(tail);
+      if (span) {
+        yield span;
+      }
     }
   }
 
