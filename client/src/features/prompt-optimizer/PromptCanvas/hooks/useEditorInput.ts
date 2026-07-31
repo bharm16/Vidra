@@ -11,6 +11,13 @@ interface UseEditorInputParams {
   editorDisplayText: string;
   showResults: boolean;
   onInputPromptChange: (text: string) => void;
+  /**
+   * Results-mode edits flow HERE: the edited text becomes the displayed
+   * prompt, so the labeling pipeline relabels it and highlights survive
+   * typing. Without this handler the hook falls back to resetting the
+   * results view (the legacy edit-invalidates-results model).
+   */
+  onDisplayedPromptChange?: ((text: string) => void) | undefined;
   onResetResultsForEditing?: (() => void) | undefined;
   handleAutocomplete: (
     text: string,
@@ -38,6 +45,7 @@ export function useEditorInput({
   editorDisplayText,
   showResults,
   onInputPromptChange,
+  onDisplayedPromptChange,
   onResetResultsForEditing,
   handleAutocomplete,
   handleAutocompleteKeyDown,
@@ -94,7 +102,15 @@ export function useEditorInput({
 
     onInputPromptChange(normalizedText);
     if (showResults) {
-      onResetResultsForEditing?.();
+      if (onDisplayedPromptChange) {
+        // Editing the result IS the workflow: keep the results view alive
+        // and let the labeling pipeline relabel the edited text. Highlights
+        // clear for the stale text (signature gate) and return after the
+        // debounce — they no longer die until the next generation.
+        onDisplayedPromptChange(normalizedText);
+      } else {
+        onResetResultsForEditing?.();
+      }
     }
 
     const { cursorPosition, caretRect } = resolveCaretContext(normalizedText);
@@ -106,6 +122,7 @@ export function useEditorInput({
     editorRef,
     handleAutocomplete,
     onInputPromptChange,
+    onDisplayedPromptChange,
     onResetResultsForEditing,
     resolveCaretContext,
     showResults,
