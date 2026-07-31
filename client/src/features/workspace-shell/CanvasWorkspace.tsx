@@ -429,10 +429,10 @@ export function CanvasWorkspace({
 
   const spaceNonLeafIds = useMemo(() => nonLeafIds(spaceNodes), [spaceNodes]);
 
-  // Take-restore-on-select (M5, ADR-0012): selecting a node refills the
-  // composer with its paired words. Fill-only via onComposerFill — never
-  // submits — so browsing the space stays read-only until the creator acts.
-  const handleSelectSpaceNode = useCallback(
+  // Take-restore (M5, ADR-0012): refill the composer with a node's paired
+  // words. Fill-only via onComposerFill — never submits — so browsing the
+  // space stays read-only until the creator acts.
+  const restoreTakeWords = useCallback(
     (nodeId: string): void => {
       const words = resolveWordsForNode(nodeId, spaceNodes);
       if (words) onComposerFill?.(words);
@@ -443,6 +443,29 @@ export function CanvasWorkspace({
       else blurWords();
     },
     [spaceNodes, onComposerFill, focusWords, blurWords],
+  );
+
+  // Open a media take in the viewer — a clip PLAYS, a picture shows
+  // full-size. Read-only browsing (UX rule 1): the popover never touches
+  // the working prompt.
+  const viewSpaceNode = useCallback(
+    (nodeId: string): void => {
+      if (generationLookup.has(nodeId)) {
+        setViewingId(nodeId);
+      }
+    },
+    [generationLookup],
+  );
+
+  // Selecting a node on the canvas restores its words; a media take also
+  // opens in the viewer (the composer fill is invisible prep, the viewer is
+  // the visible response — without it a completed clip had no way to play).
+  const handleSelectSpaceNode = useCallback(
+    (nodeId: string): void => {
+      restoreTakeWords(nodeId);
+      viewSpaceNode(nodeId);
+    },
+    [restoreTakeWords, viewSpaceNode],
   );
 
   // Leaf-only removal (M5, ADR-0012). The server re-enforces the rule and
@@ -510,16 +533,18 @@ export function CanvasWorkspace({
       <SpaceNodeMenu
         node={node}
         removable={isRemovableLeaf(node, spaceNonLeafIds)}
-        onReword={(target) => handleSelectSpaceNode(target.id)}
+        onReword={(target) => restoreTakeWords(target.id)}
         onRemove={handleRemoveSpaceNode}
         onAnimate={handleAnimateSpaceNode}
         onDownload={handleDownloadSpaceNode}
         onShare={handleShareSpaceNode}
+        onView={(target) => viewSpaceNode(target.id)}
       />
     ),
     [
       spaceNonLeafIds,
-      handleSelectSpaceNode,
+      restoreTakeWords,
+      viewSpaceNode,
       handleRemoveSpaceNode,
       handleAnimateSpaceNode,
       handleDownloadSpaceNode,

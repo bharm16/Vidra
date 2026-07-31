@@ -21,6 +21,11 @@ export interface SpaceNodeMenuProps {
   onDownload?: (node: SpaceNode) => void;
   /** Share a clip publicly — mints a /share link (ADR-0010 D8). */
   onShare?: (node: SpaceNode) => void;
+  /**
+   * Open the take in the viewer — a clip PLAYS, a picture shows full-size.
+   * Browsing-only (UX rule 1): the viewer never mutates the working prompt.
+   */
+  onView?: (node: SpaceNode) => void;
 }
 
 /**
@@ -38,10 +43,12 @@ export function SpaceNodeMenu({
   onAnimate,
   onDownload,
   onShare,
+  onView,
 }: SpaceNodeMenuProps): React.ReactElement {
   const showAnimate = node.kind === "picture" && Boolean(onAnimate);
   const showDownload = node.kind === "clip" && Boolean(onDownload);
   const showShare = node.kind === "clip" && Boolean(onShare);
+  const showView = node.kind !== "words" && Boolean(onView);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -57,6 +64,14 @@ export function SpaceNodeMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {showView ? (
+          <DropdownMenuItem
+            onSelect={() => onView?.(node)}
+            data-testid={`space-node-view-${node.id}`}
+          >
+            {node.kind === "clip" ? "Play" : "View"}
+          </DropdownMenuItem>
+        ) : null}
         {showAnimate ? (
           <DropdownMenuItem
             onSelect={() => onAnimate?.(node)}
