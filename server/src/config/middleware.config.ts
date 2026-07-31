@@ -63,6 +63,10 @@ interface RateLimitConfig {
     burst: { windowMs: number; max: number };
     minute: { windowMs: number; max: number };
   };
+  falI2i: {
+    burst: { windowMs: number; max: number };
+    minute: { windowMs: number; max: number };
+  };
 }
 
 /**
@@ -101,6 +105,14 @@ const RATE_LIMIT_CONFIG: RateLimitConfig = {
   videoSuggestions: {
     burst: { windowMs: 3 * 1000, max: 2 },
     minute: { windowMs: 60 * 1000, max: 20 },
+  },
+  // Realtime sketch frames (live editor): the loop is completion-gated at
+  // ~1.2–1.6 frames/s per tab (~70–100/min sustained), which starves under
+  // the general API budget. Burst clears the loop's physical max (~3 per 2s
+  // with a retry); the minute cap bounds fal spend at ~4 frames/s per IP.
+  falI2i: {
+    burst: { windowMs: 2 * 1000, max: 6 },
+    minute: { windowMs: 60 * 1000, max: 240 },
   },
 };
 
@@ -464,6 +476,11 @@ export function applyRateLimitingMiddleware(
     );
   };
 
+  // Realtime sketch frames run at drawing cadence — they live under their
+  // own burst lane below, not the general API budget.
+  const isSketchFrameRoute = (req: express.Request): boolean =>
+    req.path === "/fal/i2i";
+
   app.use(
     "/api/",
     rateLimit({
@@ -474,7 +491,9 @@ export function applyRateLimitingMiddleware(
       legacyHeaders: false,
       handler: mountedLimiterJSONHandler,
       skip: (req: express.Request) =>
-        isAssetViewRoute(req) || isSessionHydrationRoute(req),
+        isAssetViewRoute(req) ||
+        isSessionHydrationRoute(req) ||
+        isSketchFrameRoute(req),
       ...(storeFactory ? { store: storeFactory("api") } : {}),
     }),
   );
@@ -563,6 +582,21 @@ export function applyRateLimitingMiddleware(
       RATE_LIMIT_CONFIG.videoSuggestions.minute.windowMs,
       RATE_LIMIT_CONFIG.videoSuggestions.minute.max,
       "Too many suggestion requests per minute",
+    ),
+  );
+
+  // Realtime sketch frame burst limits (live editor)
+  app.use(
+    "/api/fal/i2i",
+    makeBurstLimiter(
+      RATE_LIMIT_CONFIG.falI2i.burst.windowMs,
+      RATE_LIMIT_CONFIG.falI2i.burst.max,
+      "Too many sketch frames in a short time",
+    ),
+    makeBurstLimiter(
+      RATE_LIMIT_CONFIG.falI2i.minute.windowMs,
+      RATE_LIMIT_CONFIG.falI2i.minute.max,
+      "Too many sketch frames per minute",
     ),
   );
 

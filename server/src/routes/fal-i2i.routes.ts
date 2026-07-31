@@ -27,10 +27,12 @@ const SketchFrameSchema = z.object({
 interface FalI2iRouterDeps {
   falKey: string | undefined;
   fetchFn?: (url: string, init?: RequestInit) => Promise<globalThis.Response>;
+  /** Backstop for hung upstream calls; the client's 8s watchdog normally wins. */
+  upstreamTimeoutMs?: number;
 }
 
 export function createFalI2iRouter(deps: FalI2iRouterDeps): Router {
-  const { falKey, fetchFn = fetch } = deps;
+  const { falKey, fetchFn = fetch, upstreamTimeoutMs = 10_000 } = deps;
   const router = express.Router();
 
   router.post(
@@ -45,16 +47,53 @@ export function createFalI2iRouter(deps: FalI2iRouterDeps): Router {
         res.status(503).json({ detail: "FAL_KEY not configured" });
         return;
       }
-      const upstream = await fetchFn(FAL_RUN_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Key ${falKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...parsed.data, sync_mode: true }),
-      });
-      const bodyText = await upstream.text();
-      res.status(upstream.status).type("application/json").send(bodyText);
+      // A frame nobody is waiting for must stop billing: abort the upstream
+      // call when the browser disconnects (watchdog abort, tab close) or when
+      // fal hangs past the backstop deadline.
+      const controller = new AbortController();
+      let abortCause: "client-gone" | "timeout" | null = null;
+      const timeoutHandle = setTimeout(() => {
+        abortCause ??= "timeout";
+        controller.abort();
+      }, upstreamTimeoutMs);
+      const onResClose = (): void => {
+        if (!res.writableEnded) {
+          abortCause ??= "client-gone";
+          controller.abort();
+        }
+      };
+      res.on("close", onResClose);
+      try {
+        const upstream = await fetchFn(FAL_RUN_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Key ${falKey}`,
+            "Content-Type": "application/json",
+          },
+          // output_format pinned here with the model (ADR-0016): fal's default
+          // is png — 192KB/frame vs 25KB as webp, measured 2026-07-27.
+          body: JSON.stringify({
+            ...parsed.data,
+            sync_mode: true,
+            output_format: "webp",
+          }),
+          signal: controller.signal,
+        });
+        const bodyText = await upstream.text();
+        res.status(upstream.status).type("application/json").send(bodyText);
+      } catch (error) {
+        if (abortCause === "client-gone") {
+          return;
+        }
+        if (abortCause === "timeout") {
+          res.status(504).json({ detail: "fal upstream timed out" });
+          return;
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutHandle);
+        res.off("close", onResClose);
+      }
     }),
   );
 
