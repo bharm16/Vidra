@@ -88,13 +88,24 @@ describe("useRealtimeSketch", () => {
     );
     expect(result.current.state.liveOutput).toBeNull();
 
+    // The trailing drawing retries once with the same bytes...
+    expect(frames).toHaveLength(2);
+    expect(frames[1]?.payload.image_url).toBe("data:image/jpeg;base64,frame1");
+
+    // ...and a newer drawing captured meanwhile wins the slot when it fails.
     act(() => {
       result.current.captureSnapshot("data:image/jpeg;base64,frame3", 3);
     });
-    expect(frames).toHaveLength(2);
+    await act(async () => {
+      frames[1]?.reject(
+        new Error("frame failed (503): FAL_KEY not configured"),
+      );
+    });
+    expect(frames).toHaveLength(3);
+    expect(frames[2]?.payload.image_url).toBe("data:image/jpeg;base64,frame3");
   });
 
-  it("a malformed result becomes a sticky error and frees the loop", async () => {
+  it("a malformed result becomes a sticky error; the retry failing too frees the loop", async () => {
     const { frames, sendFrameFn } = fakeSendFrameFactory();
     const { result } = renderHook(() => useRealtimeSketch({ sendFrameFn }));
 
@@ -108,7 +119,13 @@ describe("useRealtimeSketch", () => {
     expect(result.current.state.stats.lastError?.message).toContain(
       "unexpected result shape",
     );
+
+    await act(async () => {
+      frames[1]?.resolve({ nonsense: true });
+    });
+
     expect(result.current.state.inFlight).toBeNull();
+    expect(frames).toHaveLength(2);
   });
 
   it("a frame stuck past the watchdog is aborted and the newest drawing takes over", async () => {

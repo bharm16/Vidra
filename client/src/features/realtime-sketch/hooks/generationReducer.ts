@@ -12,6 +12,8 @@ export interface InFlightFrame {
   dataUri: string;
   sentAt: number;
   encodeMs: number;
+  /** Set when this frame is the bounded second attempt of a failed frame. */
+  retried?: boolean;
 }
 
 export interface PendingFrame {
@@ -200,14 +202,31 @@ export function generationReducer(
         ...state.stats,
         lastError: { message: action.message, at: action.at },
       };
-      const failedInFlight =
-        state.inFlight !== null &&
-        action.requestId === state.inFlight.requestId;
-      if (!failedInFlight) {
+      const failed = state.inFlight;
+      if (failed === null || action.requestId !== failed.requestId) {
         return { ...state, stats };
       }
       if (state.pending === null) {
-        return { ...state, inFlight: null, stats };
+        // Send-discipline invariant #3: the trailing drawing state must
+        // eventually render. One bounded retry heals a transient blip; a
+        // frame that already retried frees the loop so a dead relay is
+        // never hammered — the sticky error stands until the next success.
+        if (failed.retried === true) {
+          return { ...state, inFlight: null, stats };
+        }
+        const requestCounter = state.requestCounter + 1;
+        return {
+          ...state,
+          requestCounter,
+          inFlight: {
+            requestId: `${state.epoch}-${requestCounter}`,
+            dataUri: failed.dataUri,
+            sentAt: action.at,
+            encodeMs: failed.encodeMs,
+            retried: true,
+          },
+          stats: { ...stats, sent: stats.sent + 1 },
+        };
       }
       const requestCounter = state.requestCounter + 1;
       return {
