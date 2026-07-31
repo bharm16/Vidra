@@ -36,14 +36,11 @@ export interface OptimizeOptions {
 
 /**
  * Wire-format response from POST /api/optimize.
+ *
+ * Derived from the schema that parses it, so the two cannot drift.
  */
-export interface OptimizeResult {
-  prompt: string;
-  optimizedPrompt?: string;
-  artifactKey?: string;
-  compilation?: import("@shared/schemas/optimization.schemas").CompilationState;
-  metadata?: Record<string, unknown>;
-}
+export type OptimizeResult =
+  import("@shared/schemas/optimization.schemas").OptimizeData;
 
 export interface CompileOptions {
   prompt?: string;
@@ -53,10 +50,10 @@ export interface CompileOptions {
   signal?: AbortSignal;
 }
 
-export interface CompileResult {
-  compiledPrompt: string;
-  artifactKey?: string;
-  compilation?: import("@shared/schemas/optimization.schemas").CompilationState;
-  metadata?: Record<string, unknown>;
-  targetModel?: string;
-}
+/**
+ * Wire-format response from POST /api/optimize-compile.
+ *
+ * Derived from the schema that parses it, so the two cannot drift.
+ */
+export type CompileResult =
+  import("@shared/schemas/optimization.schemas").CompileData;

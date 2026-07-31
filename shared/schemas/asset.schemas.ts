@@ -1,10 +1,14 @@
 /**
- * Zod schemas for asset contract (mirrors shared/types/asset.ts).
+ * Zod schemas for the asset contract — the single declaration. The types in
+ * `shared/types/asset.ts` are `z.infer`'d from these, so there is no mirror to
+ * keep in sync.
  *
- * Used by the client for runtime validation of `/api/assets/*` responses,
- * and available to the server or contract tests when Zod-based validation is
- * needed. `.passthrough()` allows forward-compatible field additions without
- * breaking the contract.
+ * Used by the client for runtime validation of `/api/assets/*` responses, and
+ * available to the server or contract tests when Zod-based validation is
+ * needed. The response DTOs are closed objects: unknown server-side additions
+ * still parse (they are dropped rather than rejected), so the contract stays
+ * forward-compatible, but the inferred types name exactly the fields the
+ * client may read.
  */
 import { z } from "zod";
 
@@ -15,75 +19,67 @@ export const AssetTypeSchema = z.enum([
   "object",
 ]);
 
-export const AssetReferenceImageSchema = z
-  .object({
-    id: z.string(),
-    url: z.string(),
-    thumbnailUrl: z.string(),
-    isPrimary: z.boolean(),
-    storagePath: z.string().optional(),
-    thumbnailPath: z.string().optional(),
-    metadata: z
-      .object({
-        angle: z
-          .enum(["front", "profile", "three-quarter", "back"])
-          .nullable()
-          .optional(),
-        expression: z
-          .enum(["neutral", "smiling", "serious", "expressive"])
-          .nullable()
-          .optional(),
-        styleType: z
-          .enum(["color-palette", "mood-board", "reference-frame"])
-          .nullable()
-          .optional(),
-        timeOfDay: z
-          .enum(["day", "night", "golden-hour", "blue-hour"])
-          .nullable()
-          .optional(),
-        lighting: z
-          .enum(["natural", "studio", "dramatic", "backlit"])
-          .nullable()
-          .optional(),
-        uploadedAt: z.string(),
-        width: z.number(),
-        height: z.number(),
-        sizeBytes: z.number(),
-      })
-      .passthrough(),
-  })
-  .passthrough();
+export const AssetReferenceImageSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  thumbnailUrl: z.string(),
+  isPrimary: z.boolean(),
+  storagePath: z.string().optional(),
+  thumbnailPath: z.string().optional(),
+  metadata: z.object({
+    angle: z
+      .enum(["front", "profile", "three-quarter", "back"])
+      .nullable()
+      .optional(),
+    expression: z
+      .enum(["neutral", "smiling", "serious", "expressive"])
+      .nullable()
+      .optional(),
+    styleType: z
+      .enum(["color-palette", "mood-board", "reference-frame"])
+      .nullable()
+      .optional(),
+    timeOfDay: z
+      .enum(["day", "night", "golden-hour", "blue-hour"])
+      .nullable()
+      .optional(),
+    lighting: z
+      .enum(["natural", "studio", "dramatic", "backlit"])
+      .nullable()
+      .optional(),
+    uploadedAt: z.string(),
+    width: z.number(),
+    height: z.number(),
+    sizeBytes: z.number(),
+  }),
+});
 
-export const AssetSchema = z
-  .object({
-    id: z.string(),
-    userId: z.string(),
-    type: AssetTypeSchema,
-    trigger: z.string(),
-    name: z.string(),
-    textDefinition: z.string(),
-    negativePrompt: z.string().optional(),
-    referenceImages: z.array(AssetReferenceImageSchema),
-    faceEmbedding: z.string().nullable().optional(),
-    usageCount: z.number(),
-    lastUsedAt: z.string().nullable(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  })
-  .passthrough();
+export const AssetSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  type: AssetTypeSchema,
+  trigger: z.string(),
+  name: z.string(),
+  textDefinition: z.string(),
+  negativePrompt: z.string().optional(),
+  referenceImages: z.array(AssetReferenceImageSchema),
+  faceEmbedding: z.string().nullable().optional(),
+  usageCount: z.number(),
+  lastUsedAt: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
-export const AssetListResponseSchema = z
-  .object({
-    assets: z.array(AssetSchema),
-    total: z.number(),
-    byType: z.object({
-      character: z.number(),
-      style: z.number(),
-      location: z.number(),
-      object: z.number(),
-    }),
-  })
-  .passthrough();
+export const AssetListResponseSchema = z.object({
+  assets: z.array(AssetSchema),
+  total: z.number(),
+  byType: z.object({
+    character: z.number(),
+    style: z.number(),
+    location: z.number(),
+    object: z.number(),
+  }),
+});
 
 export const ResolvedPromptReferenceImageSchema = z.object({
   assetId: z.string(),
@@ -92,20 +88,18 @@ export const ResolvedPromptReferenceImageSchema = z.object({
   imageUrl: z.string(),
 });
 
-export const ResolvedPromptSchema = z
-  .object({
-    originalText: z.string(),
-    expandedText: z.string(),
-    assets: z.array(AssetSchema),
-    characters: z.array(AssetSchema),
-    styles: z.array(AssetSchema),
-    locations: z.array(AssetSchema),
-    objects: z.array(AssetSchema),
-    requiresKeyframe: z.boolean(),
-    negativePrompts: z.array(z.string()),
-    referenceImages: z.array(ResolvedPromptReferenceImageSchema),
-  })
-  .passthrough();
+export const ResolvedPromptSchema = z.object({
+  originalText: z.string(),
+  expandedText: z.string(),
+  assets: z.array(AssetSchema),
+  characters: z.array(AssetSchema),
+  styles: z.array(AssetSchema),
+  locations: z.array(AssetSchema),
+  objects: z.array(AssetSchema),
+  requiresKeyframe: z.boolean(),
+  negativePrompts: z.array(z.string()),
+  referenceImages: z.array(ResolvedPromptReferenceImageSchema),
+});
 
 export const AssetSuggestionSchema = z
   .object({

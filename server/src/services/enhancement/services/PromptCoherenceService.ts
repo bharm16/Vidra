@@ -6,64 +6,17 @@ import {
 import { TemperatureOptimizer } from "@utils/TemperatureOptimizer";
 import type { AIExecutionPort as AIService } from "@services/ai-model/ports/AIExecutionPort";
 import { normalizeText } from "@services/enhancement/utils/text";
-
-export interface CoherenceSpan {
-  id?: string;
-  category?: string;
-  text?: string;
-  quote?: string;
-  start?: number;
-  end?: number;
-  confidence?: number;
-  source?: "labeled" | "context";
-}
-
-export interface AppliedChange {
-  spanId?: string;
-  category?: string;
-  oldText?: string;
-  newText?: string;
-}
-
-export type CoherenceEdit =
-  | {
-      type: "replaceSpanText";
-      spanId?: string;
-      replacementText?: string;
-      anchorQuote?: string;
-    }
-  | {
-      type: "removeSpan";
-      spanId?: string;
-      anchorQuote?: string;
-    };
-
-export interface CoherenceRecommendation {
-  title: string;
-  rationale: string;
-  edits: CoherenceEdit[];
-  confidence?: number;
-}
-
-export interface CoherenceFinding {
-  severity?: "low" | "medium" | "high" | "suggestion";
-  message: string;
-  reasoning: string;
-  involvedSpanIds?: string[];
-  recommendations: CoherenceRecommendation[];
-}
-
-export interface CoherenceResult {
-  conflicts: CoherenceFinding[];
-  harmonizations: CoherenceFinding[];
-}
-
-export interface CoherenceCheckParams {
-  beforePrompt: string;
-  afterPrompt: string;
-  appliedChange?: AppliedChange;
-  spans?: CoherenceSpan[];
-}
+// The coherence contract is declared once, as Zod, in
+// shared/schemas/coherence.schemas.ts. This service used to keep its own copy
+// of these shapes, which is how `id` (client-side) and `source` (server-side)
+// ended up on opposite sides of the wire.
+import type {
+  CoherenceCheckRequest,
+  CoherenceCheckResult,
+  CoherenceEdit,
+  CoherenceFinding,
+  CoherenceSpan,
+} from "@shared/types/coherence";
 
 const log = logger.child({ service: "PromptCoherenceService" });
 
@@ -249,7 +202,7 @@ export class PromptCoherenceService {
     afterPrompt,
     appliedChange,
     spans,
-  }: CoherenceCheckParams): Promise<CoherenceResult> {
+  }: CoherenceCheckRequest): Promise<CoherenceCheckResult> {
     const operation = "prompt-coherence-check";
     const cleanSpans = sanitizeSpans(spans);
     const contextSpans = buildContextSpans(afterPrompt, cleanSpans);
@@ -274,8 +227,8 @@ export class PromptCoherenceService {
   }
 
   private async runLlmCheck(
-    params: CoherenceCheckParams & { spans: CoherenceSpan[] },
-  ): Promise<CoherenceResult> {
+    params: CoherenceCheckRequest & { spans: CoherenceSpan[] },
+  ): Promise<CoherenceCheckResult> {
     const prompt = this.buildSystemPrompt(params);
     const temperature = TemperatureOptimizer.getOptimalTemperature("analysis", {
       diversity: "low",
@@ -297,7 +250,7 @@ export class PromptCoherenceService {
         maxRetries: 2,
         temperature,
       },
-    )) as CoherenceResult;
+    )) as CoherenceCheckResult;
 
     return this.sanitizeResult(result, params.spans);
   }
@@ -307,7 +260,7 @@ export class PromptCoherenceService {
     afterPrompt,
     appliedChange,
     spans,
-  }: CoherenceCheckParams & { spans: CoherenceSpan[] }): string {
+  }: CoherenceCheckRequest & { spans: CoherenceSpan[] }): string {
     const trimmedSpans = spans.slice(0, 60).map((span) => {
       const entry: Record<string, string> = {
         text: summarizeSpan(span).slice(0, 200),
@@ -387,9 +340,9 @@ Span hints (incomplete): ${JSON.stringify(trimmedSpans, null, 2)}`;
   }
 
   private sanitizeResult(
-    result: CoherenceResult,
+    result: CoherenceCheckResult,
     spans: CoherenceSpan[],
-  ): CoherenceResult {
+  ): CoherenceCheckResult {
     const spanIds = new Set(
       spans.map((span) => span.id).filter(Boolean) as string[],
     );

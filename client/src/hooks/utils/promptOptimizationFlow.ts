@@ -2,6 +2,7 @@ import { logger } from "../../services/LoggingService";
 import type { Toast } from "../types";
 import type { LockedSpan } from "@/features/prompt-optimizer/types";
 import type { CapabilityValues } from "@shared/capabilities";
+import type { OptimizeData } from "@shared/schemas/optimization.schemas";
 
 export interface PromptOptimizerActions {
   setOptimizedPrompt: (prompt: string) => void;
@@ -30,12 +31,7 @@ type AnalyzeAndOptimize = (options: {
   startImage?: string;
   sourcePrompt?: string;
   signal?: AbortSignal;
-}) => Promise<{
-  prompt: string;
-  optimizedPrompt?: string;
-  artifactKey?: string;
-  metadata?: Record<string, unknown>;
-}>;
+}) => Promise<OptimizeData>;
 
 export interface RunOptimizationOptions {
   promptToOptimize: string;

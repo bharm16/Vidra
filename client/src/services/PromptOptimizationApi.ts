@@ -57,7 +57,7 @@ export class PromptOptimizationApi {
       );
       // Canonical envelope: non-2xx responses surface as thrown ApiErrors,
       // so the parsed body is always the success shape — unwrap `data`.
-      return OptimizeResponseSchema.parse(raw).data as OptimizeResult;
+      return OptimizeResponseSchema.parse(raw).data;
     } catch (error) {
       if (shouldUseOfflineFallback(error)) {
         return buildOfflineResult(
@@ -88,7 +88,7 @@ export class PromptOptimizationApi {
       },
       requestOptions,
     );
-    return CompileResponseSchema.parse(raw).data as CompileResult;
+    return CompileResponseSchema.parse(raw).data;
   }
 
   calculateQualityScore(inputPrompt: string, outputPrompt: string): number {

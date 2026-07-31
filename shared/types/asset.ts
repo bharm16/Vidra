@@ -1,45 +1,29 @@
-export type AssetType = "character" | "style" | "location" | "object";
+/**
+ * Asset contract types.
+ *
+ * The response shapes are inferred from the Zod schemas in
+ * `shared/schemas/asset.schemas.ts` — that module is the single declaration,
+ * so a schema and its type cannot disagree. Request shapes below are the
+ * client's input, never parsed off the wire, so they stay hand-written.
+ */
+import type { z } from "zod";
+import type {
+  AssetListResponseSchema,
+  AssetReferenceImageSchema,
+  AssetSchema,
+  AssetTypeSchema,
+  ResolvedPromptSchema,
+} from "../schemas/asset.schemas.js";
 
-export interface AssetReferenceImage {
-  id: string;
-  url: string;
-  thumbnailUrl: string;
-  isPrimary: boolean;
-  storagePath?: string;
-  thumbnailPath?: string;
-  metadata: {
-    angle?: "front" | "profile" | "three-quarter" | "back" | null;
-    expression?: "neutral" | "smiling" | "serious" | "expressive" | null;
-    styleType?: "color-palette" | "mood-board" | "reference-frame" | null;
-    timeOfDay?: "day" | "night" | "golden-hour" | "blue-hour" | null;
-    lighting?: "natural" | "studio" | "dramatic" | "backlit" | null;
-    uploadedAt: string;
-    width: number;
-    height: number;
-    sizeBytes: number;
-  };
-}
+export type AssetType = z.infer<typeof AssetTypeSchema>;
 
-export interface Asset {
-  id: string;
-  userId: string;
-  type: AssetType;
+export type AssetReferenceImage = z.infer<typeof AssetReferenceImageSchema>;
 
-  trigger: string;
-  name: string;
+export type Asset = z.infer<typeof AssetSchema>;
 
-  textDefinition: string;
-  negativePrompt?: string;
+export type AssetListResponse = z.infer<typeof AssetListResponseSchema>;
 
-  referenceImages: AssetReferenceImage[];
-
-  faceEmbedding?: string | null;
-
-  usageCount: number;
-  lastUsedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+export type ResolvedPrompt = z.infer<typeof ResolvedPromptSchema>;
 
 export interface CreateAssetRequest {
   type: AssetType;
@@ -54,35 +38,6 @@ export interface UpdateAssetRequest {
   name?: string;
   textDefinition?: string;
   negativePrompt?: string;
-}
-
-export interface AssetListResponse {
-  assets: Asset[];
-  total: number;
-  byType: {
-    character: number;
-    style: number;
-    location: number;
-    object: number;
-  };
-}
-
-export interface ResolvedPrompt {
-  originalText: string;
-  expandedText: string;
-  assets: Asset[];
-  characters: Asset[];
-  styles: Asset[];
-  locations: Asset[];
-  objects: Asset[];
-  requiresKeyframe: boolean;
-  negativePrompts: string[];
-  referenceImages: Array<{
-    assetId: string;
-    assetType: AssetType;
-    assetName?: string;
-    imageUrl: string;
-  }>;
 }
 
 export function isCharacterAsset(asset: Asset): boolean {

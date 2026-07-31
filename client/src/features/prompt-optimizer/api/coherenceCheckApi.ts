@@ -1,51 +1,17 @@
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
-import { z } from "zod";
 import type {
   CoherenceCheckRequest,
   CoherenceCheckResult,
 } from "../types/coherence";
+// The result schema is the shared contract itself, not a local restatement of
+// it — the server derives its types from the same module.
+import { CoherenceCheckResultSchema } from "@shared/schemas/coherence.schemas";
 import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
 
 export interface CoherenceCheckFetchOptions {
   signal?: AbortSignal;
   fetchImpl?: typeof fetch;
 }
-
-const CoherenceEditSchema = z.union([
-  z.object({
-    type: z.literal("replaceSpanText"),
-    spanId: z.string().optional(),
-    replacementText: z.string().optional(),
-    anchorQuote: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal("removeSpan"),
-    spanId: z.string().optional(),
-    anchorQuote: z.string().optional(),
-  }),
-]);
-
-const CoherenceRecommendationSchema = z.object({
-  id: z.string().optional(),
-  title: z.string(),
-  rationale: z.string(),
-  edits: z.array(CoherenceEditSchema),
-  confidence: z.number().optional(),
-});
-
-const CoherenceFindingSchema = z.object({
-  id: z.string().optional(),
-  severity: z.enum(["low", "medium", "high", "suggestion"]).optional(),
-  message: z.string(),
-  reasoning: z.string(),
-  involvedSpanIds: z.array(z.string()).optional(),
-  recommendations: z.array(CoherenceRecommendationSchema),
-});
-
-const CoherenceCheckResultSchema = z.object({
-  conflicts: z.array(CoherenceFindingSchema),
-  harmonizations: z.array(CoherenceFindingSchema),
-});
 
 export async function checkPromptCoherence(
   payload: CoherenceCheckRequest,
