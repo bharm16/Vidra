@@ -178,7 +178,11 @@ export function useVersionManagement({
         ) || null
       );
     }
-    return versionHistory.history[0] ?? null;
+    // No working identity resolves to NO entry. Falling back to history[0]
+    // leaked the newest session's versions and generations into a fresh "/"
+    // workspace: the space rendered the previous session's lineage and the
+    // Anchor (with the composer) never mounted.
+    return null;
   }, [versionHistory.history, versioningPromptUuid, versioningPromptDocId]);
 
   const currentVersions = useMemo(
