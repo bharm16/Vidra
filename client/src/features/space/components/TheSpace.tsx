@@ -3,6 +3,7 @@ import { Button } from "@promptstudio/system/components/ui/button";
 
 import { cn } from "@/utils/cn";
 import { computeLineageLayout } from "../lineage/computeLineageLayout";
+import { rewriteGcsUrlToProxy } from "@/services/media/MediaUrlResolver";
 import { deriveEdgeKind } from "../lineage/deriveEdgeKind";
 import { edgePath } from "../lineage/edgePath";
 import type { EdgeKind, LineageNodeKind, SpaceNode } from "../lineage/types";
@@ -281,8 +282,11 @@ function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
   return (
     <>
       {node.mediaUrl ? (
+        // Signed GCS URLs expire after an hour; the media proxy is the only
+        // path that can rescue an expired one, so it is the only form the
+        // space ever hands to an <img>.
         <img
-          src={node.mediaUrl}
+          src={rewriteGcsUrlToProxy(node.mediaUrl) ?? node.mediaUrl}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
