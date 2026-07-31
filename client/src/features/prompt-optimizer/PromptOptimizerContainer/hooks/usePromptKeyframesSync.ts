@@ -6,10 +6,19 @@ import {
   areKeyframesEqual,
   hydrateKeyframes,
   serializeKeyframes,
+  withStartFrameFirst,
 } from "../../utils/keyframeTransforms";
 
 type UsePromptKeyframesSyncParams = {
   keyframes: KeyframeTile[];
+  /**
+   * The armed start frame. Persisted as keyframes[0] (ADR-0011 D4): the
+   * working frame must survive restore, and hydration re-arms it from the
+   * head of the persisted array. Without this, an idea-box or uploaded
+   * start frame was memory-only and "Make it" silently degraded to
+   * text-to-video after a reload.
+   */
+  startFrame: KeyframeTile | null;
   setKeyframes: (tiles: KeyframeTile[] | null | undefined) => void;
   setStartFrame: (tile: KeyframeTile | null) => void;
   clearEndFrame: () => void;
@@ -28,6 +37,7 @@ export type UsePromptKeyframesSyncResult = {
 
 export function usePromptKeyframesSync({
   keyframes,
+  startFrame,
   setKeyframes,
   setStartFrame,
   clearEndFrame,
@@ -39,7 +49,14 @@ export function usePromptKeyframesSync({
   promptHistory,
 }: UsePromptKeyframesSyncParams): UsePromptKeyframesSyncResult {
   const { history, updateEntryPersisted } = promptHistory;
-  const keyframesRef = useRef<KeyframeTile[]>(keyframes);
+  // Both sync directions compare against the PERSISTED view — armed start
+  // frame first — so a frame armed outside the keyframes array still writes,
+  // and the entry mirroring back after that write is a no-op.
+  const effectiveKeyframes = useMemo(
+    () => withStartFrameFirst(startFrame, keyframes),
+    [startFrame, keyframes],
+  );
+  const keyframesRef = useRef<KeyframeTile[]>(effectiveKeyframes);
   const keyframeSessionRef = useRef<{
     uuid: string | null;
     docId: string | null;
@@ -55,8 +72,8 @@ export function usePromptKeyframesSync({
   }, [currentPromptDocId]);
 
   useEffect(() => {
-    keyframesRef.current = keyframes;
-  }, [keyframes]);
+    keyframesRef.current = effectiveKeyframes;
+  }, [effectiveKeyframes]);
 
   useEffect(() => {
     if (localWritePendingRef.current) {
@@ -127,7 +144,7 @@ export function usePromptKeyframesSync({
       uuid: currentPromptUuid,
       docId: currentPromptDocId ?? null,
     };
-  }, [keyframes, currentPromptUuid, currentPromptDocId]);
+  }, [effectiveKeyframes, currentPromptUuid, currentPromptDocId]);
 
   useEffect(() => {
     const { uuid, docId } = keyframeSessionRef.current;
@@ -155,15 +172,15 @@ export function usePromptKeyframesSync({
       historySyncPendingRef.current = false;
       return;
     }
-    const serialized = serializeKeyframes(keyframes);
+    const serialized = serializeKeyframes(effectiveKeyframes);
     if (areKeyframesEqual(serialized, entry.keyframes ?? [])) return;
     localWritePendingRef.current = true;
     updateEntryPersisted(uuid, docId, { keyframes: serialized });
-  }, [keyframes, history, isLoadingHistory, updateEntryPersisted]);
+  }, [effectiveKeyframes, history, isLoadingHistory, updateEntryPersisted]);
 
   const serializedKeyframes = useMemo(
-    () => serializeKeyframes(keyframes),
-    [keyframes],
+    () => serializeKeyframes(effectiveKeyframes),
+    [effectiveKeyframes],
   );
 
   const onLoadKeyframes = useCallback(

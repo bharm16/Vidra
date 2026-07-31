@@ -268,10 +268,16 @@ export function CanvasWorkspace({
   const heroGeneration = generationsRuntime.heroGeneration;
 
   // ADR-0015: the composer is bound to the words node's focus. Words are
-  // focused by default while writing; a take steals focus the moment it
-  // exists; the demoted chip is the manual way back.
+  // focused by default while writing; a CLIP steals focus the moment it
+  // exists; the demoted chip is the manual way back. A picture hero never
+  // steals — hydrated sessions reload the accepted frame as an image
+  // generation, and the restored working words must stay visible.
   const { wordsFocused, focusedWordsId, focusWords, blurWords } =
-    useComposerFocus(heroGeneration?.id ?? null);
+    useComposerFocus(
+      heroGeneration
+        ? { id: heroGeneration.id, mediaType: heroGeneration.mediaType }
+        : null,
+    );
 
   const galleryEntries = useMemo(() => {
     // Versions flow in unconditionally: they are identity-gated at the

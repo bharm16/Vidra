@@ -89,3 +89,21 @@ export const areKeyframesEqual = (
   }
   return true;
 };
+
+/**
+ * The persisted view of a session's keyframes: the armed start frame leads,
+ * remaining keyframes follow (deduped by media identity). Persisting through
+ * this view is what makes the armed frame a session fact rather than a
+ * memory-only one (ADR-0011 D4) — hydration's keyframes[0]→startFrame
+ * contract depends on the armed frame heading the array.
+ */
+export const withStartFrameFirst = (
+  startFrame: KeyframeTile | null,
+  keyframes: KeyframeTile[],
+): KeyframeTile[] => {
+  if (!startFrame) return keyframes;
+  const rest = keyframes.filter(
+    (frame) => !areKeyframesEqual([frame], [startFrame]),
+  );
+  return [startFrame, ...rest];
+};

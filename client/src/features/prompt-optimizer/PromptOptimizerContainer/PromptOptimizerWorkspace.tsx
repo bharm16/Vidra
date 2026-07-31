@@ -262,6 +262,7 @@ function PromptOptimizerContent({
   const { serializedKeyframes: serializedKeyframesSync, onLoadKeyframes } =
     usePromptKeyframesSync({
       keyframes,
+      startFrame,
       setKeyframes,
       setStartFrame,
       clearEndFrame,

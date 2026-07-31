@@ -25,6 +25,7 @@ describe("regression: session keyframes survive history hydration", () => {
 
     const hookParams: HookParams = {
       keyframes: loadedKeyframes,
+      startFrame: null,
       setKeyframes,
       setStartFrame,
       clearEndFrame,
