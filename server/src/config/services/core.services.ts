@@ -1,5 +1,6 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
+import { DEFAULT_QWEN_MODEL } from "@config/modelConfig";
 import {
   FirestoreCircuitExecutor,
   setFirestoreCircuitExecutor,
@@ -40,7 +41,7 @@ export function registerCoreServices(container: DIContainer): void {
     qwen: {
       apiKey: process.env.GROQ_API_KEY,
       timeout: parseInt(process.env.QWEN_TIMEOUT_MS || "10000", 10),
-      model: process.env.QWEN_MODEL || "qwen/qwen3-32b",
+      model: process.env.QWEN_MODEL || DEFAULT_QWEN_MODEL,
     },
     gemini: {
       apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,

@@ -43,8 +43,17 @@ interface ModelConfigEntry {
   thinkingBudget?: number;
 }
 
+/**
+ * The Groq-hosted Qwen model every Qwen-routed operation defaults to.
+ * Groq retires model ids out from under us (qwen/qwen3-32b started
+ * 404ing 2026-07-31, which silently disabled the whole adapter at boot);
+ * this constant is the single source the config sites share, and the
+ * qwen-model regression test pins llmCosts and the adapter default to it.
+ */
+export const DEFAULT_QWEN_MODEL = "qwen/qwen3.6-27b";
+
 const QWEN_FALLBACK = {
-  model: process.env.QWEN_MODEL || "qwen/qwen3-32b",
+  model: process.env.QWEN_MODEL || DEFAULT_QWEN_MODEL,
   timeout: parseInt(process.env.QWEN_TIMEOUT_MS || "10000", 10),
 };
 
@@ -143,7 +152,7 @@ const MODEL_CONFIG_ENTRIES = {
    */
   enhance_suggestions: {
     client: process.env.ENHANCE_PROVIDER || "qwen",
-    model: process.env.ENHANCE_MODEL || "qwen/qwen3-32b",
+    model: process.env.ENHANCE_MODEL || DEFAULT_QWEN_MODEL,
     temperature: 0.1, // Keep low temp for reliable JSON; diversity enforced by prompting/post-processing
     maxTokens: 1024,
     timeout: 8000,
@@ -158,7 +167,7 @@ const MODEL_CONFIG_ENTRIES = {
    */
   custom_suggestions: {
     client: process.env.ENHANCE_PROVIDER || "qwen",
-    model: process.env.ENHANCE_MODEL || "qwen/qwen3-32b",
+    model: process.env.ENHANCE_MODEL || DEFAULT_QWEN_MODEL,
     temperature: 0.1,
     maxTokens: 1024,
     timeout: 8000,
@@ -232,7 +241,7 @@ const MODEL_CONFIG_ENTRIES = {
     responseFormat: "json_object",
     fallbackTo: "qwen",
     fallbackConfig: {
-      model: "qwen/qwen3-32b",
+      model: DEFAULT_QWEN_MODEL,
       timeout: 45000,
     },
     useSeed: true, // Same text should label identically

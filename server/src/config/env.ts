@@ -15,6 +15,7 @@ import {
   type FlagDef,
   type FlagName,
 } from "./feature-flags.ts";
+import { DEFAULT_QWEN_MODEL } from "./modelConfig.ts";
 
 // ─── Reusable coercion helpers ─────────────────────────────────
 
@@ -132,7 +133,7 @@ const geminiSchema = z.object({
 });
 
 const qwenSchema = z.object({
-  QWEN_MODEL: z.string().default("qwen/qwen3-32b"),
+  QWEN_MODEL: z.string().default(DEFAULT_QWEN_MODEL),
   QWEN_TIMEOUT_MS: coercePositiveInt(10000),
 });
 

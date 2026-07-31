@@ -29,8 +29,8 @@ const MODEL_COST_RATES: Record<string, TokenCostRate> = {
   "gemini-2.5-flash": { input: 0.00015, output: 0.0006 },
   "gemini-2.0-flash": { input: 0.0001, output: 0.0004 },
 
-  // Groq-hosted Qwen
-  "qwen/qwen3-32b": { input: 0.00018, output: 0.00018 },
+  // Groq-hosted Qwen (groq.com pricing as of 2026-07: $0.60/M in, $3.00/M out)
+  "qwen/qwen3.6-27b": { input: 0.0006, output: 0.003 },
 
   // Groq-hosted Llama
   "llama-3.1-8b-instant": { input: 0.00005, output: 0.00008 },

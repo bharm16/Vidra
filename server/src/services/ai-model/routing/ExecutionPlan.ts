@@ -2,6 +2,7 @@ import { logger } from "@infrastructure/Logger";
 import {
   ModelConfig,
   DEFAULT_CONFIG,
+  DEFAULT_QWEN_MODEL,
   type OperationName,
 } from "@config/modelConfig";
 import { AIClientError } from "@interfaces/IAIClient";
@@ -13,7 +14,7 @@ const DEFAULT_FALLBACK_ORDER = ["openai", "groq", "gemini", "qwen"] as const;
 let providerSettings: Record<string, { model: string; timeout: number }> = {
   openai: { model: DEFAULT_CONFIG.model, timeout: DEFAULT_CONFIG.timeout },
   groq: { model: "llama-3.1-8b-instant", timeout: 5000 },
-  qwen: { model: "qwen/qwen3-32b", timeout: 10000 },
+  qwen: { model: DEFAULT_QWEN_MODEL, timeout: 10000 },
   gemini: { model: "gemini-2.5-flash", timeout: 30000 },
 };
 

@@ -11,7 +11,7 @@
  * - Supports 128k context window
  *
  * When to use this vs GroqLlamaAdapter:
- * - Use GroqQwenAdapter for: qwen/qwen3-32b, qwen/qwen3-* models
+ * - Use GroqQwenAdapter for: qwen/qwen3.6-27b, qwen/qwen3* models
  * - Use GroqLlamaAdapter for: llama-3.1-8b-instant, llama-* models
  */
 
@@ -83,7 +83,7 @@ export class GroqQwenAdapter {
   constructor({
     apiKey,
     baseURL = "https://api.groq.com/openai/v1",
-    defaultModel = "qwen/qwen3-32b",
+    defaultModel = "qwen/qwen3.6-27b",
     defaultTimeout = 30000,
   }: QwenAdapterConfig) {
     if (!apiKey) {
