@@ -21,6 +21,7 @@ import type { StudioProject, StudioTurn } from "../api/schemas";
 import {
   initialStudioState,
   isTurnInFlight,
+  refinementProducedImageId,
   studioReducer,
   type StudioAction,
   type StudioState,
@@ -135,6 +136,22 @@ export function useStudioProject(): UseStudioProjectReturn {
           // (auto-title, behavior 8) — sync it so the header updates
           // without a reload.
           if (turn.status !== "running") {
+            // A refinement's result becomes the working selection, locally
+            // and persisted — the next turn's policy context reads the
+            // stored selection, so without this hand-off consecutive edits
+            // all re-edit the image selected before the chain started.
+            const produced = refinementProducedImageId(turn);
+            if (produced) {
+              dispatch({ type: "imageSelected", imageId: produced });
+              void updateStudioProject(projectId, {
+                selectedImageId: produced,
+              }).catch((error: unknown) =>
+                dispatch({
+                  type: "requestFailed",
+                  error: describeError(error),
+                }),
+              );
+            }
             const project = await getStudioProject(projectId);
             if (isCurrentProject(project.id)) {
               dispatch({ type: "projectPatched", project });

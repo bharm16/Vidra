@@ -87,6 +87,27 @@ export function isTurnInFlight(state: StudioState): boolean {
   return state.pendingTurnId !== null || state.optimisticMessage !== null;
 }
 
+/**
+ * The image a settled refinement turn produced, or null.
+ *
+ * Edit and transform refine ONE lineage, so the working selection follows
+ * their output — the policy engine edits the stored selection (template rule
+ * 7), and without this hand-off every follow-up edit re-edited the image the
+ * user selected before the chain started. A generate fans out options; picking
+ * one of those stays the user's move.
+ */
+export function refinementProducedImageId(turn: StudioTurn): string | null {
+  if (turn.decision.action !== "edit" && turn.decision.action !== "transform") {
+    return null;
+  }
+  if (!TERMINAL_STATUSES.has(turn.status)) return null;
+  for (let i = turn.calls.length - 1; i >= 0; i -= 1) {
+    const call = turn.calls[i];
+    if (call?.status === "succeeded" && call.image) return call.image.id;
+  }
+  return null;
+}
+
 export type StudioAction =
   /**
    * Bootstrap settles the roster and the project list SEPARATELY — fusing
