@@ -20,6 +20,7 @@ interface CanvasGenerationsParams
       | "promptHistory"
       | "currentPromptUuid"
       | "currentPromptDocId"
+      | "promptIdentityRef"
       | "setCurrentPromptUuid"
       | "setCurrentPromptDocId"
       | "activeVersionId"
@@ -82,6 +83,7 @@ export function useCanvasGenerations(params: CanvasGenerationsParams) {
     promptHistory: params.promptHistory,
     currentPromptUuid: params.currentPromptUuid,
     currentPromptDocId: params.currentPromptDocId,
+    promptIdentityRef: params.promptIdentityRef,
     setCurrentPromptUuid: params.setCurrentPromptUuid,
     setCurrentPromptDocId: params.setCurrentPromptDocId,
     activeVersionId: params.activeVersionId,

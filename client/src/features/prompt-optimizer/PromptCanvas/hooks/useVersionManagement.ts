@@ -42,6 +42,20 @@ interface UseVersionManagementOptions {
   promptHistory: PromptHistoryStore;
   currentPromptUuid: string | null;
   currentPromptDocId: string | null;
+  /**
+   * Synchronous mirror of the identity props above, written by the session
+   * setters in the same turn. ensureDraftEntry prefers it because callers
+   * like the Idea Box frame chain invoke a resolver captured on the previous
+   * render, right after an optimization save promotes the identity — the
+   * render-time props are one turn stale there, and falling into the
+   * mint-a-draft branch would overwrite the promoted session identity.
+   */
+  promptIdentityRef?:
+    | MutableRefObject<{
+        uuid: string | null;
+        docId: string | null;
+      }>
+    | undefined;
   setCurrentPromptUuid: (uuid: string) => void;
   setCurrentPromptDocId: (docId: string | null) => void;
   activeVersionId: string | null;
@@ -98,6 +112,7 @@ export function useVersionManagement({
   promptHistory,
   currentPromptUuid,
   currentPromptDocId,
+  promptIdentityRef,
   setCurrentPromptUuid,
   setCurrentPromptDocId,
   activeVersionId,
@@ -299,8 +314,12 @@ export function useVersionManagement({
     if (hasShotContext && shotId) {
       return { uuid: shotId, docId: "" };
     }
-    if (currentPromptUuid) {
-      return { uuid: currentPromptUuid, docId: currentPromptDocId ?? "" };
+    // The ref (when wired) is at least as fresh as the render-time props —
+    // it sees a promotion made earlier in this very turn.
+    const liveUuid = promptIdentityRef?.current.uuid ?? currentPromptUuid;
+    const liveDocId = promptIdentityRef?.current.docId ?? currentPromptDocId;
+    if (liveUuid) {
+      return { uuid: liveUuid, docId: liveDocId ?? "" };
     }
     const draft = createDraft({
       mode: selectedMode,
@@ -317,6 +336,7 @@ export function useVersionManagement({
     shotId,
     currentPromptDocId,
     currentPromptUuid,
+    promptIdentityRef,
     createDraft,
     generationParams,
     selectedMode,

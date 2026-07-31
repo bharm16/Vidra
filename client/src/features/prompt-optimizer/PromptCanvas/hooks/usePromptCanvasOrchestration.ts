@@ -134,6 +134,7 @@ export function usePromptCanvasOrchestration({
   const {
     currentPromptUuid,
     currentPromptDocId,
+    promptIdentityRef,
     setCurrentPromptUuid,
     setCurrentPromptDocId,
     activeVersionId,
@@ -279,6 +280,7 @@ export function usePromptCanvasOrchestration({
     promptHistory,
     currentPromptUuid,
     currentPromptDocId,
+    promptIdentityRef,
     setCurrentPromptUuid,
     setCurrentPromptDocId,
     activeVersionId,

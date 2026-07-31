@@ -196,6 +196,7 @@ function PromptOptimizerContent({
     setPromptContext,
     currentPromptUuid,
     currentPromptDocId,
+    promptIdentityRef,
     setCurrentPromptUuid,
     setCurrentPromptDocId,
   } = usePromptSession();
@@ -650,13 +651,21 @@ function PromptOptimizerContent({
   // pieces are stable; the version half is blank until the canvas registers.
   const { resolve: resolveVersionTarget, registrarValue } =
     usePersistenceTargetRegistrar();
-  const resolvePersistenceTarget = useCallback<() => PersistenceTarget>(
-    () => ({
-      ...(isRemoteSessionId(sessionId) ? { sessionId } : {}),
+  const resolvePersistenceTarget = useCallback<() => PersistenceTarget>(() => {
+    // The route param lags a same-turn promotion (applyOptimizationResult
+    // navigates, but this resolver runs before the re-render); the identity
+    // ref is written synchronously with that promotion, so prefer it.
+    const liveDocId = promptIdentityRef.current.docId;
+    const effectiveSessionId = isRemoteSessionId(liveDocId)
+      ? liveDocId
+      : sessionId;
+    return {
+      ...(isRemoteSessionId(effectiveSessionId)
+        ? { sessionId: effectiveSessionId }
+        : {}),
       ...resolveVersionTarget(),
-    }),
-    [resolveVersionTarget, sessionId],
-  );
+    };
+  }, [promptIdentityRef, resolveVersionTarget, sessionId]);
 
   // Idea Box: on empty canvas (no start frame), optimization continues into
   // first-frame generation; setting the frame flips the workspace to I2V.

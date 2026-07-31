@@ -175,6 +175,19 @@ export interface PromptUIState {
   setOutputLastSavedAt: (timestampMs: number | null) => void;
 }
 
+/**
+ * The working prompt's identity as last written through the session-state
+ * setters. Mirrors `currentPromptUuid`/`currentPromptDocId` exactly, but is
+ * updated synchronously — same-turn continuations (e.g. the Idea Box frame
+ * chain running right after an optimization save promotes a draft to a
+ * session) must read it instead of render-time state, which is one turn
+ * stale at that point.
+ */
+export interface PromptIdentity {
+  uuid: string | null;
+  docId: string | null;
+}
+
 export interface PromptSessionState {
   // Prompt State
   suggestionsData: SuggestionsData | null;
@@ -187,6 +200,8 @@ export interface PromptSessionState {
   setCurrentPromptUuid: (uuid: string | null) => void;
   currentPromptDocId: string | null;
   setCurrentPromptDocId: (docId: string | null) => void;
+  /** Synchronous mirror of the two fields above — see PromptIdentity. */
+  promptIdentityRef: React.MutableRefObject<PromptIdentity>;
   activeVersionId: string | null;
   setActiveVersionId: (id: string | null) => void;
 }

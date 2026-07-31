@@ -180,6 +180,7 @@ export function PromptStateProvider({
     setCurrentPromptUuid,
     currentPromptDocId,
     setCurrentPromptDocId,
+    promptIdentityRef,
     activeVersionId,
     setActiveVersionId,
   } = usePromptSessionState();
@@ -332,6 +333,7 @@ export function PromptStateProvider({
       setCurrentPromptUuid,
       currentPromptDocId,
       setCurrentPromptDocId,
+      promptIdentityRef,
       activeVersionId,
       setActiveVersionId,
     }),
@@ -346,6 +348,7 @@ export function PromptStateProvider({
       setCurrentPromptUuid,
       currentPromptDocId,
       setCurrentPromptDocId,
+      promptIdentityRef,
       activeVersionId,
       setActiveVersionId,
     ],
