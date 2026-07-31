@@ -1,5 +1,9 @@
 import { logger } from "@infrastructure/Logger";
-import { ModelConfig, DEFAULT_CONFIG } from "@config/modelConfig";
+import {
+  ModelConfig,
+  DEFAULT_CONFIG,
+  type OperationName,
+} from "@config/modelConfig";
 import { AIClientError } from "@interfaces/IAIClient";
 import type { ExecutionPlan, ModelConfigEntry } from "../types";
 import type { ClientResolver } from "./ClientResolver";
@@ -24,21 +28,11 @@ export class ExecutionPlanResolver {
 
   constructor(private readonly clientResolver: ClientResolver) {}
 
-  getConfig(operation: string): ModelConfigEntry {
-    const config = ModelConfig[operation] as ModelConfigEntry | undefined;
-
-    if (!config) {
-      logger.warn("Operation not found in config, using default", {
-        operation,
-        availableOperations: Object.keys(ModelConfig).slice(0, 5),
-      } as Record<string, unknown>);
-      return DEFAULT_CONFIG as ModelConfigEntry;
-    }
-
-    return config;
+  getConfig(operation: OperationName): ModelConfigEntry {
+    return ModelConfig[operation];
   }
 
-  resolve(operation: string): ExecutionPlan {
+  resolve(operation: OperationName): ExecutionPlan {
     const baseConfig = this.getConfig(operation);
     const primaryAvailable = this.clientResolver.hasClient(baseConfig.client);
 

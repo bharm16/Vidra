@@ -134,7 +134,7 @@ describe("StructuredOutputEnforcer", () => {
       { execute },
       "parse this",
       {
-        operation: "optimize_mode_detection",
+        operation: "optimize_standard",
         maxRetries: 1,
         schema: {
           type: "object",

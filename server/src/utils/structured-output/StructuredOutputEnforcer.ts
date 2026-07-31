@@ -6,6 +6,7 @@ import {
   type ProviderType,
 } from "../provider/ProviderDetector";
 import type { AIResponse } from "@interfaces/IAIClient";
+import type { OperationName } from "@config/modelConfig";
 import type { ExecuteParams } from "@services/ai-model/AIModelService";
 import {
   enhancePromptForJSON,
@@ -23,7 +24,7 @@ interface EnforceJSONOptions {
   schema?: StructuredOutputSchema | null;
   isArray?: boolean;
   maxRetries?: number;
-  operation: string;
+  operation: OperationName;
   /** Explicit provider override (auto-detected if not provided) */
   provider?: ProviderType;
   /** Model being used (helps with provider detection) */
@@ -39,7 +40,10 @@ interface EnforceJSONOptions {
 }
 
 interface AIService {
-  execute(operation: string, options: ExecuteParams): Promise<AIResponse>;
+  execute(
+    operation: OperationName,
+    options: ExecuteParams,
+  ): Promise<AIResponse>;
 }
 
 /**
@@ -226,7 +230,7 @@ export class StructuredOutputEnforcer {
    */
   private static async _callAIService(
     aiService: AIService,
-    operation: string,
+    operation: OperationName,
     systemPrompt: string,
     options: Record<string, unknown> & { schema?: Record<string, unknown> },
   ): Promise<AIResponse> {

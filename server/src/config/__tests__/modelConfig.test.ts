@@ -4,6 +4,7 @@ import {
   ModelConfig,
   VIDEO_MODELS,
   getModelConfig,
+  isOperationName,
   listOperations,
   shouldUseDeveloperMessage,
   shouldUseSeed,
@@ -17,10 +18,14 @@ describe("modelConfig", () => {
     expect(config.model).toBeDefined();
   });
 
-  it("returns DEFAULT_CONFIG when operation is missing", () => {
-    const config = getModelConfig("missing_operation");
+  it("resolves every configured operation to its own entry, never DEFAULT_CONFIG", () => {
+    for (const operation of listOperations()) {
+      expect(isOperationName(operation)).toBe(true);
+      if (!isOperationName(operation)) continue;
 
-    expect(config).toBe(DEFAULT_CONFIG);
+      expect(getModelConfig(operation)).toBe(ModelConfig[operation]);
+      expect(getModelConfig(operation)).not.toBe(DEFAULT_CONFIG);
+    }
   });
 
   it("lists configured operations", () => {

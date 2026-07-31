@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   loggerMock,
-  shouldUseSeedMock,
   hashStringMock,
   detectAndGetCapabilitiesMock,
   buildRequestOptionsMock,
@@ -16,7 +15,6 @@ const {
     error: vi.fn(),
     debug: vi.fn(),
   },
-  shouldUseSeedMock: vi.fn(),
   hashStringMock: vi.fn(),
   detectAndGetCapabilitiesMock: vi.fn(),
   buildRequestOptionsMock: vi.fn(),
@@ -27,14 +25,6 @@ const {
 
 vi.mock("@infrastructure/Logger", () => ({
   logger: loggerMock,
-}));
-
-vi.mock("@config/modelConfig", () => ({
-  ModelConfig: {
-    test_operation: {},
-    stream_operation: {},
-  },
-  shouldUseSeed: shouldUseSeedMock,
 }));
 
 vi.mock("@utils/hash", () => ({
@@ -90,7 +80,6 @@ function baseConfig(client = "openai") {
 describe("AIModelService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    shouldUseSeedMock.mockReturnValue(false);
     hashStringMock.mockReturnValue(12345);
     detectAndGetCapabilitiesMock.mockReturnValue({
       provider: "openai",
@@ -127,7 +116,7 @@ describe("AIModelService", () => {
     });
 
     await expect(
-      service.execute("test_operation", {} as never),
+      service.execute("optimize_standard", {} as never),
     ).rejects.toThrow("systemPrompt is required");
   });
 
@@ -137,7 +126,7 @@ describe("AIModelService", () => {
     });
 
     await expect(
-      service.execute("test_operation", { systemPrompt: "prompt" }),
+      service.execute("optimize_standard", { systemPrompt: "prompt" }),
     ).rejects.toThrow("No AI providers configured");
   });
 
@@ -147,7 +136,7 @@ describe("AIModelService", () => {
       clients: { openai: { complete } as never },
     });
 
-    const response = await service.execute("test_operation", {
+    const response = await service.execute("optimize_standard", {
       systemPrompt: "prompt",
     });
 
@@ -169,7 +158,7 @@ describe("AIModelService", () => {
       clients: { openai: { complete } as never, groq: null },
     });
 
-    const response = await service.execute("test_operation", {
+    const response = await service.execute("optimize_standard", {
       systemPrompt: "prompt",
     });
 
@@ -198,14 +187,15 @@ describe("AIModelService", () => {
     });
 
     await expect(
-      service.execute("test_operation", { systemPrompt: "prompt" }),
+      service.execute("optimize_standard", { systemPrompt: "prompt" }),
     ).rejects.toBeDefined();
 
     expect(complete).toHaveBeenCalledTimes(1);
   });
 
+  // span_labeling declares useSeed in the real config, which is what makes the
+  // stream path derive a seed here.
   it("streams with onChunk callback and seed when configured", async () => {
-    shouldUseSeedMock.mockReturnValue(true);
     resolvePlanMock.mockReturnValue({
       primaryConfig: baseConfig("openai"),
       fallback: null,
@@ -216,7 +206,7 @@ describe("AIModelService", () => {
     });
 
     const onChunk = vi.fn();
-    const text = await service.stream("stream_operation", {
+    const text = await service.stream("span_labeling", {
       systemPrompt: "prompt",
       onChunk,
     });
@@ -234,12 +224,12 @@ describe("AIModelService", () => {
     });
 
     expect(service.listOperations()).toEqual(
-      expect.arrayContaining(["test_operation"]),
+      expect.arrayContaining(["optimize_standard"]),
     );
-    expect(service.getOperationConfig("test_operation")).toEqual(
+    expect(service.getOperationConfig("optimize_standard")).toEqual(
       baseConfig("openai"),
     );
-    expect(service.hasOperation("test_operation")).toBe(true);
+    expect(service.hasOperation("optimize_standard")).toBe(true);
     expect(service.getAvailableClients()).toEqual(["openai"]);
   });
 
@@ -263,12 +253,12 @@ describe("AIModelService", () => {
       llmCallTelemetry: { record } as never,
     });
 
-    await service.execute("test_operation", { systemPrompt: "prompt" });
+    await service.execute("optimize_standard", { systemPrompt: "prompt" });
 
     expect(record).toHaveBeenCalledTimes(1);
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
-        executionType: "test_operation",
+        executionType: "optimize_standard",
         provider: "openai",
         model: "gpt-4o-mini",
         promptTokens: 50,
@@ -290,13 +280,13 @@ describe("AIModelService", () => {
     });
 
     await expect(
-      service.execute("test_operation", { systemPrompt: "prompt" }),
+      service.execute("optimize_standard", { systemPrompt: "prompt" }),
     ).rejects.toThrow("boom");
 
     expect(record).toHaveBeenCalledTimes(1);
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
-        executionType: "test_operation",
+        executionType: "optimize_standard",
         outcome: "error",
         errorMessage: "boom",
       }),
@@ -314,7 +304,7 @@ describe("AIModelService", () => {
     });
 
     await expect(
-      service.execute("test_operation", { systemPrompt: "prompt" }),
+      service.execute("optimize_standard", { systemPrompt: "prompt" }),
     ).resolves.toMatchObject({ text: "ok" });
   });
 
@@ -325,7 +315,7 @@ describe("AIModelService", () => {
     });
 
     await expect(
-      service.execute("test_operation", { systemPrompt: "prompt" }),
+      service.execute("optimize_standard", { systemPrompt: "prompt" }),
     ).resolves.toMatchObject({ text: "ok" });
   });
 });

@@ -1,14 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-const { shouldUseSeedMock, hashStringMock, resolveDeveloperMessageMock } =
-  vi.hoisted(() => ({
-    shouldUseSeedMock: vi.fn(),
-    hashStringMock: vi.fn(),
-    resolveDeveloperMessageMock: vi.fn(),
-  }));
-
-vi.mock("@config/modelConfig", () => ({
-  shouldUseSeed: shouldUseSeedMock,
+const { hashStringMock, resolveDeveloperMessageMock } = vi.hoisted(() => ({
+  hashStringMock: vi.fn(),
+  resolveDeveloperMessageMock: vi.fn(),
 }));
 
 vi.mock("@utils/hash", () => ({
@@ -21,6 +15,9 @@ vi.mock("../../policy/DeveloperMessagePolicy", () => ({
 
 import { buildRequestOptions } from "../RequestOptionsBuilder";
 
+// Real config, no module mock: `enhance_suggestions` does not declare useSeed,
+// `span_labeling` does.
+
 const baseConfig = {
   client: "openai",
   model: "gpt-4o",
@@ -31,11 +28,10 @@ const baseConfig = {
 
 describe("buildRequestOptions", () => {
   it("builds request options from config defaults and param overrides", () => {
-    shouldUseSeedMock.mockReturnValue(false);
     resolveDeveloperMessageMock.mockReturnValue(undefined);
 
     const options = buildRequestOptions({
-      operation: "op",
+      operation: "enhance_suggestions",
       params: {
         systemPrompt: "prompt",
         temperature: 0.7,
@@ -54,11 +50,10 @@ describe("buildRequestOptions", () => {
   });
 
   it("adds developerMessage when provider supports developer role", () => {
-    shouldUseSeedMock.mockReturnValue(false);
     resolveDeveloperMessageMock.mockReturnValue("dev-rules");
 
     const options = buildRequestOptions({
-      operation: "op",
+      operation: "enhance_suggestions",
       params: { systemPrompt: "prompt" },
       config: baseConfig,
       capabilities: {
@@ -75,11 +70,10 @@ describe("buildRequestOptions", () => {
 
   it("prefers explicit seed and falls back to hash seed when configured", () => {
     resolveDeveloperMessageMock.mockReturnValue(undefined);
-    shouldUseSeedMock.mockReturnValue(true);
     hashStringMock.mockReturnValue(42);
 
     const hashed = buildRequestOptions({
-      operation: "seed-op",
+      operation: "span_labeling",
       params: { systemPrompt: "prompt" },
       config: baseConfig,
       capabilities: { bookending: true, developerRole: false } as never,
@@ -88,7 +82,7 @@ describe("buildRequestOptions", () => {
     expect(hashed.seed).toBe(42);
 
     const explicit = buildRequestOptions({
-      operation: "seed-op",
+      operation: "span_labeling",
       params: { systemPrompt: "prompt", seed: 999 },
       config: baseConfig,
       capabilities: { bookending: true, developerRole: false } as never,
@@ -98,11 +92,10 @@ describe("buildRequestOptions", () => {
   });
 
   it("passes through logprobs and topLogprobs options", () => {
-    shouldUseSeedMock.mockReturnValue(false);
     resolveDeveloperMessageMock.mockReturnValue(undefined);
 
     const options = buildRequestOptions({
-      operation: "logprobs-op",
+      operation: "enhance_suggestions",
       params: {
         systemPrompt: "prompt",
         logprobs: true,

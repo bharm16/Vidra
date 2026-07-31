@@ -43,7 +43,7 @@ describe("StructuredOutputEnforcer (interface)", () => {
     // (passes), THEN unwrap to the array. If the order flipped, validate would
     // see an array and throw "Expected object but got array".
     const result = await StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
-      operation: "test_operation",
+      operation: "enhance_suggestions",
       isArray: true,
       schema: { type: "object", required: ["suggestions"] },
     });
@@ -56,7 +56,7 @@ describe("StructuredOutputEnforcer (interface)", () => {
     const adapter = inMemoryAdapter("not json at all", '[{"text":"ok"}]');
 
     const result = await StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
-      operation: "test_operation",
+      operation: "enhance_suggestions",
       isArray: true,
       maxRetries: 1,
       schema: { type: "array", items: { required: ["text"] } },
@@ -75,7 +75,7 @@ describe("StructuredOutputEnforcer (interface)", () => {
       value: unknown;
       siblings: Record<string, unknown>;
     }>(adapter, "sys", {
-      operation: "test_operation",
+      operation: "enhance_suggestions",
       isArray: true,
       captureSiblings: true,
       schema: { type: "object", required: ["suggestions"] },
@@ -92,7 +92,7 @@ describe("StructuredOutputEnforcer (interface)", () => {
 
     await expect(
       StructuredOutputEnforcer.enforceJSON(adapter, "sys", {
-        operation: "test_operation",
+        operation: "enhance_suggestions",
         maxRetries: 0,
         schema: { type: "object", required: ["needed"] },
       }),

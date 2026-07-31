@@ -1,24 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
-
-const { shouldUseDeveloperMessageMock } = vi.hoisted(() => ({
-  shouldUseDeveloperMessageMock: vi.fn(),
-}));
-
-vi.mock("@config/modelConfig", () => ({
-  shouldUseDeveloperMessage: shouldUseDeveloperMessageMock,
-}));
+import { describe, expect, it } from "vitest";
 
 import {
   buildDefaultDeveloperMessage,
   resolveDeveloperMessage,
 } from "../DeveloperMessagePolicy";
 
+// Real config, no module mock: `optimize_standard` declares
+// useDeveloperMessage, `span_labeling` does not.
 describe("DeveloperMessagePolicy", () => {
   it("returns explicit developerMessage when provided", () => {
-    shouldUseDeveloperMessageMock.mockReturnValue(false);
-
     const result = resolveDeveloperMessage({
-      operation: "op",
+      operation: "span_labeling",
       params: {
         systemPrompt: "prompt",
         developerMessage: "explicit-dev-message",
@@ -31,10 +23,8 @@ describe("DeveloperMessagePolicy", () => {
   });
 
   it("builds default developer message when operation requires it", () => {
-    shouldUseDeveloperMessageMock.mockReturnValue(true);
-
     const result = resolveDeveloperMessage({
-      operation: "op",
+      operation: "optimize_standard",
       params: {
         systemPrompt: "prompt",
       },
@@ -55,10 +45,8 @@ describe("DeveloperMessagePolicy", () => {
   });
 
   it("returns undefined when operation does not require developer message", () => {
-    shouldUseDeveloperMessageMock.mockReturnValue(false);
-
     const result = resolveDeveloperMessage({
-      operation: "op",
+      operation: "span_labeling",
       params: {
         systemPrompt: "prompt",
       },

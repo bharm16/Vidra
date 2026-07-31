@@ -21,37 +21,12 @@ vi.mock("@interfaces/IAIClient", () => ({
   },
 }));
 
-vi.mock("@config/modelConfig", () => ({
-  ModelConfig: {
-    op_primary: {
-      client: "openai",
-      model: "gpt-4o",
-      temperature: 0.2,
-      maxTokens: 1000,
-      timeout: 20000,
-      fallbackTo: "groq",
-      fallbackConfig: { model: "llama", timeout: 5000 },
-    },
-    op_missing_primary: {
-      client: "openai",
-      model: "gpt-4o",
-      temperature: 0.2,
-      maxTokens: 1000,
-      timeout: 20000,
-      fallbackTo: "gemini",
-      fallbackConfig: { model: "gemini-2.5-flash", timeout: 30000 },
-    },
-  },
-  DEFAULT_CONFIG: {
-    client: "openai",
-    model: "gpt-4o-mini",
-    temperature: 0,
-    maxTokens: 512,
-    timeout: 10000,
-  },
-}));
-
+import { DEFAULT_CONFIG, ModelConfig } from "@config/modelConfig";
 import { ExecutionPlanResolver } from "../ExecutionPlan";
+
+// Real config, no module mock. `span_labeling` declares a qwen fallback with
+// an explicit fallbackConfig; `video_prompt_ir_extraction` declares an openai
+// fallback with none, so it exercises the provider-default path.
 
 function createResolver(
   overrides: Partial<{
@@ -61,9 +36,9 @@ function createResolver(
   }> = {},
 ) {
   const clientResolver = {
-    hasClient: (name: string) => name === "openai" || name === "groq",
+    hasClient: (name: string) => name === "gemini" || name === "qwen",
     hasAnyClient: () => true,
-    getAvailableClients: () => ["openai", "groq"],
+    getAvailableClients: () => ["gemini", "qwen"],
     ...overrides,
   };
   return new ExecutionPlanResolver(clientResolver as never);
@@ -73,44 +48,35 @@ describe("ExecutionPlanResolver", () => {
   it("returns configured operation config", () => {
     const resolver = createResolver();
 
-    const config = resolver.getConfig("op_primary");
+    const config = resolver.getConfig("span_labeling");
 
-    expect(config.client).toBe("openai");
-    expect(config.model).toBe("gpt-4o");
-  });
-
-  it("falls back to DEFAULT_CONFIG when operation is missing", () => {
-    const resolver = createResolver();
-
-    const config = resolver.getConfig("unknown-operation");
-
-    expect(config.model).toBe("gpt-4o-mini");
-    expect(loggerMock.warn).toHaveBeenCalledTimes(1);
+    expect(config).toBe(ModelConfig.span_labeling);
   });
 
   it("uses primary config and fallback when primary client is available", () => {
     const resolver = createResolver();
 
-    const plan = resolver.resolve("op_primary");
+    const plan = resolver.resolve("span_labeling");
 
-    expect(plan.primaryConfig.client).toBe("openai");
+    expect(plan.primaryConfig.client).toBe(ModelConfig.span_labeling.client);
     expect(plan.fallback).toEqual({
-      client: "groq",
-      model: "llama",
-      timeout: 5000,
+      client: "qwen",
+      model: ModelConfig.span_labeling.fallbackConfig?.model,
+      timeout: ModelConfig.span_labeling.fallbackConfig?.timeout,
     });
   });
 
   it("remaps operation to available fallback client when primary is missing", () => {
     const resolver = createResolver({
-      hasClient: (name: string) => name === "gemini",
-      getAvailableClients: () => ["gemini"],
+      hasClient: (name: string) => name === "openai",
+      getAvailableClients: () => ["openai"],
     });
 
-    const plan = resolver.resolve("op_missing_primary");
+    const plan = resolver.resolve("video_prompt_ir_extraction");
 
-    expect(plan.primaryConfig.client).toBe("gemini");
-    expect(plan.primaryConfig.model).toBe("gemini-2.5-flash");
+    expect(plan.primaryConfig.client).toBe("openai");
+    expect(plan.primaryConfig.model).toBe(DEFAULT_CONFIG.model);
+    expect(loggerMock.warn).toHaveBeenCalled();
   });
 
   it("throws when no AI providers are configured", () => {
@@ -120,7 +86,7 @@ describe("ExecutionPlanResolver", () => {
       getAvailableClients: () => [],
     });
 
-    expect(() => resolver.resolve("op_primary")).toThrow(
+    expect(() => resolver.resolve("span_labeling")).toThrow(
       "No AI providers configured",
     );
   });

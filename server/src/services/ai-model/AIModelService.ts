@@ -1,5 +1,10 @@
 import { logger } from "@infrastructure/Logger";
-import { ModelConfig, shouldUseSeed } from "@config/modelConfig";
+import {
+  ModelConfig,
+  shouldUseSeed,
+  isOperationName,
+  type OperationName,
+} from "@config/modelConfig";
 import { hashString } from "@utils/hash";
 import { detectAndGetCapabilities } from "@utils/provider/ProviderDetector";
 import {
@@ -159,7 +164,10 @@ export class AIModelService {
    * @param operation - Operation name from ModelConfig
    * @param params - Request parameters
    */
-  async execute(operation: string, params: ExecuteParams): Promise<AIResponse> {
+  async execute(
+    operation: OperationName,
+    params: ExecuteParams,
+  ): Promise<AIResponse> {
     const telemetry = this.llmCallTelemetry;
     if (!telemetry) {
       return this._executeImpl(operation, params);
@@ -190,7 +198,7 @@ export class AIModelService {
   }
 
   private async _executeImpl(
-    operation: string,
+    operation: OperationName,
     params: ExecuteParams,
   ): Promise<AIResponse> {
     if (!params.systemPrompt) {
@@ -382,7 +390,10 @@ export class AIModelService {
   /**
    * Execute an AI operation with streaming
    */
-  async stream(operation: string, params: StreamParams): Promise<string> {
+  async stream(
+    operation: OperationName,
+    params: StreamParams,
+  ): Promise<string> {
     if (!this.hasAnyClient) {
       throw new LLMUnavailableError(
         "No AI providers configured; enable at least one LLM provider",
@@ -476,7 +487,7 @@ export class AIModelService {
    */
   private async _executeFallback(
     fallbackClient: string,
-    operation: string,
+    operation: OperationName,
     systemPrompt: string,
     params: ExecuteParams,
     primaryConfig: ModelConfigEntry,
@@ -576,7 +587,7 @@ export class AIModelService {
     fallbackClient,
     fallbackConfig,
   }: {
-    operation: string;
+    operation: OperationName;
     params: ExecuteParams;
     primaryConfig: ModelConfigEntry;
     fallbackClient: string;
@@ -680,19 +691,20 @@ export class AIModelService {
     return Object.keys(ModelConfig);
   }
 
-  getOperationConfig(operation: string): ModelConfigEntry {
+  getOperationConfig(operation: OperationName): ModelConfigEntry {
     return this.planResolver.getConfig(operation);
   }
 
-  hasOperation(operation: string): boolean {
-    return operation in ModelConfig;
+  /** Narrows a runtime string to a configured operation for `execute`. */
+  hasOperation(operation: string): operation is OperationName {
+    return isOperationName(operation);
   }
 
   getAvailableClients(): string[] {
     return this.clientResolver.getAvailableClients();
   }
 
-  supportsStreaming(operation: string): boolean {
+  supportsStreaming(operation: OperationName): boolean {
     if (!this.hasAnyClient) {
       return false;
     }

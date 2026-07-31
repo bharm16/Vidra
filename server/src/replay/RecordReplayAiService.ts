@@ -5,6 +5,7 @@ import type {
   ExecuteParams,
   StreamParams,
 } from "@services/ai-model/types";
+import type { OperationName } from "@config/modelConfig";
 import type { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
 import type { ReplayAiModelRequest } from "@shared/schemas/replay.schemas";
@@ -59,7 +60,7 @@ export class RecordReplayAiService extends AIModelService {
   }
 
   override async execute(
-    operation: string,
+    operation: OperationName,
     params: ExecuteParams,
   ): Promise<AIResponse> {
     const request = this.toRequest(operation, params, false);
@@ -78,7 +79,7 @@ export class RecordReplayAiService extends AIModelService {
   }
 
   override async stream(
-    operation: string,
+    operation: OperationName,
     params: StreamParams,
   ): Promise<string> {
     // StreamParams' Omit collapses to an index signature, so the prompt
@@ -110,7 +111,7 @@ export class RecordReplayAiService extends AIModelService {
   }
 
   /** Streaming is always available in replay mode — no live client needed. */
-  override supportsStreaming(operation: string): boolean {
+  override supportsStreaming(operation: OperationName): boolean {
     if (this.seam.isReplaying) {
       return true;
     }
@@ -118,7 +119,7 @@ export class RecordReplayAiService extends AIModelService {
   }
 
   private toRequest(
-    operation: string,
+    operation: OperationName,
     params: {
       systemPrompt: string;
       userMessage?: string | undefined;

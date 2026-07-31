@@ -8,7 +8,7 @@
  * business logic with provider detection code.
  */
 
-import { ModelConfig } from "@config/modelConfig";
+import { ModelConfig, isOperationName } from "@config/modelConfig";
 
 export type ProviderType =
   | "openai"
@@ -199,8 +199,11 @@ export function detectProvider(options: {
       return detectProvider({ client: providerEnv });
     }
 
-    const config = ModelConfig[operation];
-    if (config) {
+    // Deliberately still a runtime string: detectProvider is a best-effort
+    // detector for callers that may not hold a configured operation, and
+    // "unknown" is its documented answer for one it cannot place.
+    if (isOperationName(operation)) {
+      const config = ModelConfig[operation];
       return detectProvider({ client: config.client, model: config.model });
     }
   }

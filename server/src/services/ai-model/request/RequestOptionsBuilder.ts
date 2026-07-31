@@ -1,11 +1,11 @@
-import { shouldUseSeed } from "@config/modelConfig";
+import { shouldUseSeed, type OperationName } from "@config/modelConfig";
 import { hashString } from "@utils/hash";
 import type { ProviderCapabilities } from "@utils/provider/ProviderDetector";
 import { resolveDeveloperMessage } from "../policy/DeveloperMessagePolicy";
 import type { ExecuteParams, ModelConfigEntry, RequestOptions } from "../types";
 
 interface BuildRequestOptionsInput {
-  operation: string;
+  operation: OperationName;
   params: ExecuteParams;
   config: ModelConfigEntry;
   capabilities: ProviderCapabilities;

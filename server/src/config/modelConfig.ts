@@ -180,6 +180,24 @@ const MODEL_CONFIG_ENTRIES = {
   },
 
   /**
+   * Scene-change detection between two prompt revisions.
+   *
+   * Reached through StructuredOutputEnforcer from the
+   * /api/enhancement/scene-change route. It had no entry here and silently
+   * resolved to DEFAULT_CONFIG; these values are that fallback made explicit,
+   * so the operation now declares the provider it has always run on.
+   */
+  video_scene_change_detection: {
+    client: "openai",
+    model: "gpt-4o-mini-2024-07-18",
+    temperature: 0.0,
+    maxTokens: 2048,
+    timeout: 30000,
+    useSeed: false,
+    useDeveloperMessage: false,
+  },
+
+  /**
    * Prompt-wide coherence checks after span edits
    */
   prompt_coherence_check: {
@@ -308,6 +326,22 @@ const MODEL_CONFIG_ENTRIES = {
   },
 
   /**
+   * FROZEN (ADR-0002) — continuity's display-only style read of a reference
+   * image. Wired (StyleAnalysisService) but inside a frozen stack.
+   * Requires a vision-capable model. It had no entry here and silently
+   * resolved to DEFAULT_CONFIG; these values are that fallback made explicit.
+   */
+  style_analysis: {
+    client: "openai",
+    model: "gpt-4o-mini-2024-07-18",
+    temperature: 0.0,
+    maxTokens: 2048,
+    timeout: 30000,
+    useSeed: false,
+    useDeveloperMessage: false,
+  },
+
+  /**
    * Role classification for spans
    * Temperature 0.0 for deterministic classification
    */
@@ -411,10 +445,12 @@ const MODEL_CONFIG_ENTRIES = {
 export type OperationName = keyof typeof MODEL_CONFIG_ENTRIES;
 
 /**
- * The routing layer indexes this with runtime strings, so it stays typed as a
- * string-keyed record. `OperationName` above carries the literal union.
+ * Keyed by the literal union, so indexing it with an unconfigured operation is
+ * a compile error rather than an `undefined` that falls through to
+ * DEFAULT_CONFIG. Code holding a runtime string narrows with `isOperationName`
+ * first.
  */
-export const ModelConfig: Record<string, ModelConfigEntry> =
+export const ModelConfig: Record<OperationName, ModelConfigEntry> =
   MODEL_CONFIG_ENTRIES;
 
 /** Narrow a runtime string to a configured operation. */
@@ -472,8 +508,10 @@ export const VIDEO_MODELS = {
 };
 
 /**
- * Default configuration for operations not explicitly defined
- * Temperature 0.0 for structured outputs by default
+ * Baseline settings for a provider that has no per-operation entry — used when
+ * routing remaps an operation onto a fallback client. It is no longer reachable
+ * as an operation lookup result: an unconfigured operation is a compile error.
+ * Temperature 0.0 for structured outputs by default.
  */
 export const DEFAULT_CONFIG: ModelConfigEntry = {
   client: "openai",
@@ -488,8 +526,8 @@ export const DEFAULT_CONFIG: ModelConfigEntry = {
 /**
  * Helper function to get configuration for an operation
  */
-export function getModelConfig(operation: string): ModelConfigEntry {
-  return ModelConfig[operation] || DEFAULT_CONFIG;
+export function getModelConfig(operation: OperationName): ModelConfigEntry {
+  return ModelConfig[operation];
 }
 
 /**
@@ -502,15 +540,13 @@ export function listOperations(): string[] {
 /**
  * Check if an operation should use seed for reproducibility
  */
-export function shouldUseSeed(operation: string): boolean {
-  const config = ModelConfig[operation];
-  return config?.useSeed ?? false;
+export function shouldUseSeed(operation: OperationName): boolean {
+  return ModelConfig[operation].useSeed ?? false;
 }
 
 /**
  * Check if an operation should use developer message (OpenAI)
  */
-export function shouldUseDeveloperMessage(operation: string): boolean {
-  const config = ModelConfig[operation];
-  return config?.useDeveloperMessage ?? false;
+export function shouldUseDeveloperMessage(operation: OperationName): boolean {
+  return ModelConfig[operation].useDeveloperMessage ?? false;
 }

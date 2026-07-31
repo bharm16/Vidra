@@ -6,20 +6,7 @@ import {
   shouldUseStrictSchema,
   shouldUseDeveloperMessage,
 } from "../ProviderDetector";
-
-// Mock ModelConfig
-vi.mock("@config/modelConfig", () => ({
-  ModelConfig: {
-    "test-operation": {
-      client: "openai",
-      model: "gpt-4o",
-    },
-    "groq-operation": {
-      client: "groq",
-      model: "llama-3.1-70b",
-    },
-  },
-}));
+import { ModelConfig } from "@config/modelConfig";
 
 describe("detectProvider", () => {
   const originalEnv = process.env;
@@ -142,13 +129,17 @@ describe("detectProvider", () => {
     });
   });
 
+  // Real config, no module mock: the operation branch is a lookup, so the
+  // operations under test are the configured ones.
   describe("operation-based detection", () => {
     it("detects from ModelConfig for known operation", () => {
-      expect(detectProvider({ operation: "test-operation" })).toBe("openai");
+      expect(ModelConfig.optimize_standard.client).toBe("openai");
+      expect(detectProvider({ operation: "optimize_standard" })).toBe("openai");
     });
 
-    it("detects groq from groq-operation config", () => {
-      expect(detectProvider({ operation: "groq-operation" })).toBe("groq");
+    it("detects qwen from the enhance_suggestions config", () => {
+      expect(ModelConfig.enhance_suggestions.client).toBe("qwen");
+      expect(detectProvider({ operation: "enhance_suggestions" })).toBe("qwen");
     });
 
     it("returns unknown for unknown operation without env var", () => {

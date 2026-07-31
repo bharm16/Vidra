@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import {
-  DEFAULT_CONFIG,
   ModelConfig,
   getModelConfig,
   isOperationName,
+  shouldUseDeveloperMessage,
+  shouldUseSeed,
   type OperationName,
 } from "../modelConfig";
 
@@ -43,9 +45,39 @@ describe("OperationName is a real literal union", () => {
     expect(isOperationName("toString")).toBe(false);
   });
 
-  it("still falls back to DEFAULT_CONFIG for an unconfigured operation", () => {
-    // The fallback is what the literal union exists to make visible — it is
-    // deliberate behavior for genuinely dynamic operations, not a typo net.
-    expect(getModelConfig("not_an_operation")).toBe(DEFAULT_CONFIG);
+  it("rejects an unconfigured operation at every lookup helper", () => {
+    // The three directives are the assertion: an unconfigured operation used
+    // to resolve to DEFAULT_CONFIG (gpt-4o-mini at temperature 0) instead of
+    // failing. If any lookup widens back to `string`, its directive becomes
+    // unused and `tsc` fails.
+    // @ts-expect-error -- "not_an_operation" is not a configured operation
+    const forGetModelConfig: Parameters<typeof getModelConfig>[0] =
+      "not_an_operation";
+    // @ts-expect-error -- "not_an_operation" is not a configured operation
+    const forShouldUseSeed: Parameters<typeof shouldUseSeed>[0] =
+      "not_an_operation";
+    // @ts-expect-error -- "not_an_operation" is not a configured operation
+    const forDeveloperMessage: Parameters<typeof shouldUseDeveloperMessage>[0] =
+      "not_an_operation";
+
+    for (const rejected of [
+      forGetModelConfig,
+      forShouldUseSeed,
+      forDeveloperMessage,
+    ]) {
+      expect(isOperationName(rejected)).toBe(false);
+    }
+  });
+
+  it("rejects an unconfigured operation at the aiService seam", () => {
+    // Same lock one layer out: the port every service calls through.
+    type ExecuteOperation = Parameters<AIExecutionPort["execute"]>[0];
+
+    const configured: ExecuteOperation = "span_labeling";
+    expect(isOperationName(configured)).toBe(true);
+
+    // @ts-expect-error -- the seam accepts only configured operations
+    const rejected: ExecuteOperation = "not_an_operation";
+    expect(isOperationName(rejected)).toBe(false);
   });
 });

@@ -4,6 +4,7 @@
 
 import type { ExecuteParams } from "@services/ai-model/AIModelService";
 import type { AIResponse } from "@interfaces/IAIClient";
+import type { OperationName } from "@config/modelConfig";
 
 /**
  * Input span for role classification
@@ -29,5 +30,8 @@ export interface LabeledSpan {
  * AI Service interface
  */
 export interface AIService {
-  execute: (operation: string, params: ExecuteParams) => Promise<AIResponse>;
+  execute: (
+    operation: OperationName,
+    params: ExecuteParams,
+  ) => Promise<AIResponse>;
 }

@@ -1,8 +1,11 @@
-import { shouldUseDeveloperMessage } from "@config/modelConfig";
+import {
+  shouldUseDeveloperMessage,
+  type OperationName,
+} from "@config/modelConfig";
 import type { ExecuteParams } from "../types";
 
 export function resolveDeveloperMessage(options: {
-  operation: string;
+  operation: OperationName;
   params: ExecuteParams;
   hasStructuredOutput: boolean;
   hasStrictSchema: boolean;

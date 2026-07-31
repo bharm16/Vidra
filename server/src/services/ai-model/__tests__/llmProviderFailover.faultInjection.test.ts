@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, type Mock } from "vitest";
-import { ModelConfig } from "@config/modelConfig";
+import { ModelConfig, isOperationName } from "@config/modelConfig";
 import { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import {
   AIClientError,
@@ -29,14 +29,16 @@ function isRegistered(provider: string | undefined): provider is string {
   );
 }
 
-const VIABLE_FALLBACK_OPERATIONS = Object.entries(ModelConfig)
+const VIABLE_FALLBACK_OPERATIONS = Object.keys(ModelConfig)
+  .filter(isOperationName)
+  .map((operation) => ({ operation, cfg: ModelConfig[operation] }))
   .filter(
-    ([, cfg]) =>
+    ({ cfg }) =>
       isRegistered(cfg.client) &&
       isRegistered(cfg.fallbackTo) &&
       cfg.fallbackTo !== cfg.client,
   )
-  .map(([operation, cfg]) => ({
+  .map(({ operation, cfg }) => ({
     operation,
     primary: cfg.client,
     fallback: cfg.fallbackTo as string,
