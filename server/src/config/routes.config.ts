@@ -18,16 +18,13 @@
 import type { Application, Request, Response } from "express";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { errorHandler } from "@middleware/errorHandler";
+import { respond } from "@middleware/respond";
 import { createFirestoreWriteGateMiddleware } from "@middleware/firestoreWriteGate";
 import { registerHealthRoutes } from "./routes/health.registration.ts";
 import { registerApiRoutes } from "./routes/api.registration.ts";
 import { registerMotionRoutes } from "./routes/motion.registration.ts";
 import { registerPreviewRoutes } from "./routes/preview.registration.ts";
 import { registerPaymentRoutes } from "./routes/payment.registration.ts";
-
-type RequestWithId = Request & {
-  id?: string;
-};
 
 function registerRoutes(app: Application, container: DIContainer): void {
   const firestoreCircuitExecutor = container.resolve(
@@ -52,12 +49,14 @@ function registerRoutes(app: Application, container: DIContainer): void {
   // 6. Payment
   registerPaymentRoutes(app, container);
 
-  // 7. 404 Handler (must be registered AFTER all routes)
-  app.use((req: RequestWithId, res: Response): void => {
-    res.status(404).json({
+  // 7. 404 Handler (must be registered AFTER all routes).
+  // The unmatched path travels in `details` — the canonical envelope has no
+  // `path` field, and no client reads one.
+  app.use((req: Request, res: Response): void => {
+    respond.fail(res, req, 404, {
       error: "Not found",
-      path: req.path,
-      requestId: req.id,
+      code: "INVALID_REQUEST",
+      details: req.path,
     });
   });
 }

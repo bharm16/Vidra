@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import type { StudioAttachment, StudioProject } from "@features/studio/api/schemas";
+import type {
+  StudioAttachment,
+  StudioProject,
+} from "@features/studio/api/schemas";
 import { initialStudioState, studioReducer } from "../studioReducer";
 
 /**

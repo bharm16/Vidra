@@ -19,7 +19,10 @@ describe("sendApiError", () => {
     sendApiError(res, req, 400, { error: "Bad request" });
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: "Bad request" });
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      error: "Bad request",
+    });
   });
 
   it("includes code details and requestId when present", () => {
@@ -34,6 +37,7 @@ describe("sendApiError", () => {
 
     expect(res.status).toHaveBeenCalledWith(422);
     expect(res.json).toHaveBeenCalledWith({
+      success: false,
       error: "Validation failed",
       code: "INVALID_REQUEST",
       details: "invalid payload",

@@ -118,9 +118,7 @@ export function createContinuityRoutes(
   router.post(
     "/sessions/:sessionId/shots/:shotId/generate",
     asyncHandler(async (req: Request, res: Response) => {
-      const session = await requireSessionForUser(service, req, res, {
-        canonicalErrors: true,
-      });
+      const session = await requireSessionForUser(service, req, res);
       if (!session) return;
       await handleGenerateShot(service, session, req, res, userCreditService);
     }),

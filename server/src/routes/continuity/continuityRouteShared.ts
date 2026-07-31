@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { sendApiError } from "@middleware/apiErrorResponse";
+import { respond } from "@middleware/respond";
+import { formatValidationDetails } from "@utils/apiResponseHelpers";
 import type { UserCreditService } from "@services/credits/UserCreditService";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type {
@@ -43,67 +44,65 @@ export const ContinuitySessionInputSchema = z
   })
   .strip();
 
+/**
+ * Resolve the caller's continuity session, or write the canonical error and
+ * return null.
+ *
+ * This used to take a `canonicalErrors?: boolean` that selected between two
+ * envelopes, with every branch written twice. Both branches now collapse onto
+ * `respond.fail`: the only difference was that the legacy arm omitted `code`
+ * and `requestId`, and both are additive on the wire.
+ */
 export async function requireSessionForUser(
   service: ContinuitySessionService,
   req: Request,
   res: Response,
-  options?: { canonicalErrors?: boolean },
 ): Promise<ContinuitySession | null> {
-  const userId = options?.canonicalErrors
-    ? ((req as RequestWithUser).user?.uid ?? null)
-    : requireUserId(req as RequestWithUser, res);
-  if (!userId && options?.canonicalErrors) {
-    sendApiError(res, req, 401, {
+  const userId = (req as RequestWithUser).user?.uid ?? null;
+  if (!userId) {
+    respond.fail(res, req, 401, {
       error: "Authentication required",
       code: GENERATION_ERROR_CODES.AUTH_REQUIRED,
     });
+    return null;
   }
-  if (!userId) return null;
 
   const sessionId = req.params.sessionId;
   if (!sessionId || Array.isArray(sessionId)) {
-    if (options?.canonicalErrors) {
-      sendApiError(res, req, 400, {
-        error: "Invalid sessionId",
-        code: GENERATION_ERROR_CODES.INVALID_REQUEST,
-      });
-    } else {
-      res.status(400).json({ success: false, error: "Invalid sessionId" });
-    }
+    respond.fail(res, req, 400, {
+      error: "Invalid sessionId",
+      code: GENERATION_ERROR_CODES.INVALID_REQUEST,
+    });
     return null;
   }
 
   const session = await service.getSession(sessionId);
   if (!session) {
-    if (options?.canonicalErrors) {
-      sendApiError(res, req, 404, {
-        error: "Session not found",
-        code: GENERATION_ERROR_CODES.INVALID_REQUEST,
-      });
-    } else {
-      res.status(404).json({ success: false, error: "Session not found" });
-    }
+    respond.fail(res, req, 404, {
+      error: "Session not found",
+      code: GENERATION_ERROR_CODES.INVALID_REQUEST,
+    });
     return null;
   }
   if (session.userId !== userId) {
-    if (options?.canonicalErrors) {
-      sendApiError(res, req, 403, {
-        error: "Access denied",
-        code: GENERATION_ERROR_CODES.AUTH_REQUIRED,
-      });
-    } else {
-      res.status(403).json({ success: false, error: "Access denied" });
-    }
+    respond.fail(res, req, 403, {
+      error: "Access denied",
+      code: GENERATION_ERROR_CODES.AUTH_REQUIRED,
+    });
     return null;
   }
   return session;
 }
 
-const sendValidationError = (res: Response, error: z.ZodError) => {
-  res.status(400).json({
-    success: false,
+const sendValidationError = (
+  res: Response,
+  req: Request,
+  error: z.ZodError,
+) => {
+  respond.fail(res, req, 400, {
     error: "Invalid request",
-    details: error.issues,
+    code: GENERATION_ERROR_CODES.INVALID_REQUEST,
+    details: formatValidationDetails(error.issues),
   });
 };
 
@@ -177,7 +176,7 @@ export async function reserveShotGenerationCredits(
   userCreditService?: UserCreditService | null,
 ): Promise<ShotGenerationReservation | null> {
   if (!userCreditService) {
-    sendApiError(res, req, 503, {
+    respond.fail(res, req, 503, {
       error: "Credit service unavailable",
       code: GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
     });
@@ -186,7 +185,7 @@ export async function reserveShotGenerationCredits(
 
   const shotId = req.params.shotId;
   if (!shotId || Array.isArray(shotId)) {
-    sendApiError(res, req, 400, {
+    respond.fail(res, req, 400, {
       error: "Invalid shotId",
       code: GENERATION_ERROR_CODES.INVALID_REQUEST,
     });
@@ -195,7 +194,7 @@ export async function reserveShotGenerationCredits(
 
   const shot = session.shots.find((s) => s.id === shotId);
   if (!shot) {
-    sendApiError(res, req, 404, {
+    respond.fail(res, req, 404, {
       error: "Shot not found",
       code: GENERATION_ERROR_CODES.INVALID_REQUEST,
     });
@@ -235,7 +234,7 @@ export async function reserveShotGenerationCredits(
     cost.totalCost,
   );
   if (!reserved) {
-    sendApiError(res, req, 402, {
+    respond.fail(res, req, 402, {
       error: "Insufficient credits",
       code: GENERATION_ERROR_CODES.INSUFFICIENT_CREDITS,
       details: `This generation requires up to ${cost.totalCost} credits (including possible retries).`,
@@ -320,7 +319,7 @@ export async function handleCreateShot(
 ): Promise<void> {
   const parsed = CreateShotSchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 
@@ -340,7 +339,7 @@ export async function handleUpdateShot(
 ): Promise<void> {
   const parsed = UpdateShotSchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 
@@ -419,7 +418,7 @@ export async function handleGenerateShot(
         ? ((error as { statusCode?: number }).statusCode as number)
         : 500;
 
-    sendApiError(res, req, statusCode, {
+    respond.fail(res, req, statusCode, {
       error: "Shot generation failed",
       code:
         statusCode === 503
@@ -438,7 +437,7 @@ export async function handleUpdateStyleReference(
 ): Promise<void> {
   const parsed = UpdateStyleReferenceSchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 
@@ -464,7 +463,7 @@ export async function handleUpdateSessionSettings(
 ): Promise<void> {
   const parsed = UpdateSessionSettingsSchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 
@@ -483,7 +482,7 @@ export async function handleUpdatePrimaryStyleReference(
 ): Promise<void> {
   const parsed = UpdatePrimaryStyleReferenceSchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 
@@ -503,7 +502,7 @@ export async function handleCreateSceneProxy(
 ): Promise<void> {
   const parsed = CreateSceneProxySchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 
@@ -525,7 +524,7 @@ export async function handlePreviewSceneProxy(
 ): Promise<void> {
   const parsed = PreviewSceneProxySchema.safeParse(req.body);
   if (!parsed.success) {
-    sendValidationError(res, parsed.error);
+    sendValidationError(res, req, parsed.error);
     return;
   }
 

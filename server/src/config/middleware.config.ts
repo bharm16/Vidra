@@ -26,6 +26,7 @@ import type Redis from "ioredis";
 import compression from "compression";
 
 import { requestIdMiddleware } from "@middleware/requestId";
+import { respond } from "@middleware/respond";
 import { telemetrySourceMiddleware } from "@middleware/telemetrySource";
 import {
   createFailClosedLlmRateLimit,
@@ -391,11 +392,10 @@ export function applyRateLimitingMiddleware(
     options: { statusCode: number; message: string },
   ): void => {
     const retryAfter = res.getHeader("Retry-After");
-    res.status(options.statusCode).json({
+    respond.fail(res, req, options.statusCode, {
       error: options.message,
       code: "RATE_LIMITED",
-      details: retryAfter ? `Retry after ${String(retryAfter)}s` : undefined,
-      requestId: (req as express.Request & { id?: string }).id,
+      ...(retryAfter ? { details: `Retry after ${String(retryAfter)}s` } : {}),
     });
   };
 

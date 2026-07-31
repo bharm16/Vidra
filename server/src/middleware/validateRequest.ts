@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { logger } from "@infrastructure/Logger";
+import { respond } from "./respond.js";
 import type { ValidationSchema } from "./types.js";
 
 /**
@@ -17,10 +18,10 @@ export function validateRequest(schema: ValidationSchema) {
         schemaType: typeof schema,
       });
 
-      res.status(500).json({
+      respond.fail(res, req, 500, {
         error: "Internal server error",
-        message: "Invalid validation schema",
-        requestId: (req as Request & { id?: string }).id,
+        code: "SERVICE_UNAVAILABLE",
+        details: "Invalid validation schema",
       });
       return;
     }
@@ -35,10 +36,10 @@ export function validateRequest(schema: ValidationSchema) {
         path: req.path,
       });
 
-      res.status(400).json({
+      respond.fail(res, req, 400, {
         error: "Validation failed",
+        code: "INVALID_REQUEST",
         details: firstError?.message || "Invalid request data",
-        requestId: (req as Request & { id?: string }).id,
       });
       return;
     }

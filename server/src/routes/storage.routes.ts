@@ -1,6 +1,7 @@
 import express, { type Request, type Router } from "express";
 import { isIP } from "node:net";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { respond } from "@middleware/respond";
 import {
   STORAGE_TYPES,
   type StorageType,
@@ -78,10 +79,9 @@ export function createStorageRoutes(
       const normalizedType = normalizeStorageType(type);
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to upload media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
@@ -90,9 +90,9 @@ export function createStorageRoutes(
         typeof contentType !== "string" ||
         contentType.trim().length === 0
       ) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required fields: type, contentType",
+          code: "INVALID_REQUEST",
         });
       }
       const normalizedContentType = contentType.trim();
@@ -103,7 +103,7 @@ export function createStorageRoutes(
         normalizeMetadata(metadata),
       );
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -115,10 +115,9 @@ export function createStorageRoutes(
       const normalizedType = normalizeStorageType(type);
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to save media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
@@ -127,9 +126,9 @@ export function createStorageRoutes(
         sourceUrl.trim().length === 0 ||
         !normalizedType
       ) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required fields: sourceUrl, type",
+          code: "INVALID_REQUEST",
         });
       }
       const normalizedSourceUrl = sourceUrl.trim();
@@ -140,7 +139,7 @@ export function createStorageRoutes(
         normalizeMetadata(metadata),
       );
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -151,17 +150,16 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to confirm uploads.",
+          code: "AUTH_REQUIRED",
         });
       }
 
       if (typeof storagePath !== "string" || storagePath.trim().length === 0) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required field: storagePath",
+          code: "INVALID_REQUEST",
         });
       }
       const result = await storageService.confirmUpload(
@@ -169,7 +167,7 @@ export function createStorageRoutes(
         storagePath.trim(),
       );
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -181,22 +179,21 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to view media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
       if (!path) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required query parameter: path",
+          code: "INVALID_REQUEST",
         });
       }
       const result = await storageService.getViewUrl(userId, path);
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -212,17 +209,16 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to download media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
       if (!path) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required query parameter: path",
+          code: "INVALID_REQUEST",
         });
       }
       const result = await storageService.getDownloadUrl(
@@ -231,7 +227,7 @@ export function createStorageRoutes(
         filename || undefined,
       );
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -248,17 +244,16 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to list media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
       if (req.query.type !== undefined && !type) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: `Invalid type. Expected one of: ${Object.values(STORAGE_TYPES).join(", ")}`,
+          code: "INVALID_REQUEST",
         });
       }
       const listOptions = {
@@ -268,7 +263,7 @@ export function createStorageRoutes(
       };
       const result = await storageService.listFiles(userId, listOptions);
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -278,15 +273,14 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to view storage usage.",
+          code: "AUTH_REQUIRED",
         });
       }
       const result = await storageService.getStorageUsage(userId);
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -297,22 +291,21 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to delete media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
       if (!path) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required parameter: path",
+          code: "INVALID_REQUEST",
         });
       }
       const result = await storageService.deleteFile(userId, path.trim());
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 
@@ -323,22 +316,21 @@ export function createStorageRoutes(
       const userId = rejectAnonymous(resolveUserId(req as RequestWithUser));
 
       if (!userId) {
-        return res.status(401).json({
-          success: false,
+        return respond.fail(res, req, 401, {
           error: "Authentication required",
-          message: "You must be logged in to delete media.",
+          code: "AUTH_REQUIRED",
         });
       }
 
       if (!paths || !Array.isArray(paths)) {
-        return res.status(400).json({
-          success: false,
+        return respond.fail(res, req, 400, {
           error: "Missing required field: paths (array)",
+          code: "INVALID_REQUEST",
         });
       }
       const result = await storageService.deleteFiles(userId, paths);
 
-      return res.json({ success: true, data: result });
+      return respond.ok(res, req, result);
     }),
   );
 

@@ -291,10 +291,8 @@ describe("errorHandler", () => {
       expect(res.headers["Retry-After"]).toBe("7");
       expect(res.responseBody).toMatchObject({
         success: false,
-        error: {
-          code: "QUEUE_FULL",
-          retryAfter: 7,
-        },
+        error: "Queue full",
+        code: "QUEUE_FULL",
         requestId: "qf-1",
       });
     });
@@ -310,7 +308,8 @@ describe("errorHandler", () => {
       expect(res.headers["Retry-After"]).toBe("5");
       expect(res.responseBody).toMatchObject({
         success: false,
-        error: { code: "QUEUE_FULL", retryAfter: 5 },
+        error: "busy",
+        code: "QUEUE_FULL",
       });
     });
 
@@ -327,10 +326,8 @@ describe("errorHandler", () => {
       expect(res.headers["Retry-After"]).toBe("5");
       expect(res.responseBody).toMatchObject({
         success: false,
-        error: {
-          code: "QUEUE_TIMEOUT",
-          retryAfter: 5,
-        },
+        error: "Queued request timed out",
+        code: "QUEUE_TIMEOUT",
         requestId: "qt-1",
       });
     });
@@ -357,7 +354,8 @@ describe("errorHandler", () => {
         expect(res.headers["Retry-After"]).toBe("5");
         expect(res.responseBody).toMatchObject({
           success: false,
-          error: { code: "QUEUE_FULL", retryAfter: 5 },
+          error: "busy",
+          code: "QUEUE_FULL",
         });
       },
     );
@@ -391,11 +389,8 @@ describe("errorHandler", () => {
       expect(res.headers["Retry-After"]).toBe("5");
       expect(res.responseBody).toMatchObject({
         success: false,
-        error: {
-          code: "RATE_LIMIT_UNAVAILABLE",
-          message: "limiter down",
-          retryAfter: 5,
-        },
+        error: "limiter down",
+        code: "RATE_LIMIT_UNAVAILABLE",
         requestId: "rlu-1",
       });
     });
@@ -413,11 +408,8 @@ describe("errorHandler", () => {
       expect(res.headers["Retry-After"]).toBe("5");
       expect(res.responseBody).toMatchObject({
         success: false,
-        error: {
-          code: "RATE_LIMIT_UNAVAILABLE",
-          message: "Rate limiter temporarily unavailable, please retry.",
-          retryAfter: 5,
-        },
+        error: "Rate limiter temporarily unavailable, please retry.",
+        code: "RATE_LIMIT_UNAVAILABLE",
       });
     });
 
@@ -443,7 +435,8 @@ describe("errorHandler", () => {
         expect(res.headers["Retry-After"]).toBe("5");
         expect(res.responseBody).toMatchObject({
           success: false,
-          error: { code: "RATE_LIMIT_UNAVAILABLE", retryAfter: 5 },
+          error: "down",
+          code: "RATE_LIMIT_UNAVAILABLE",
         });
       },
     );

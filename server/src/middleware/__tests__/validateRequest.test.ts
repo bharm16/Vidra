@@ -64,8 +64,10 @@ describe("validateRequest", () => {
 
       expect(res.statusCode).toBe(500);
       expect(res.body).toMatchObject({
+        success: false,
         error: "Internal server error",
-        message: "Invalid validation schema",
+        code: "SERVICE_UNAVAILABLE",
+        details: "Invalid validation schema",
       });
       expect(next).not.toHaveBeenCalled();
     });
@@ -199,9 +201,9 @@ describe("validateRequest", () => {
 
       middleware(req, res, next);
 
-      expect(res.body).toMatchObject({
-        requestId: undefined,
-      });
+      // The canonical envelope omits requestId entirely when the request
+      // carries no id, rather than emitting an explicit undefined.
+      expect(res.body).not.toHaveProperty("requestId");
     });
   });
 });

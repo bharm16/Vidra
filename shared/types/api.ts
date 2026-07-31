@@ -28,7 +28,18 @@ export type ApiErrorCode =
   | "IDEMPOTENCY_KEY_REQUIRED"
   | "IDEMPOTENCY_CONFLICT"
   | "REQUEST_IN_PROGRESS"
-  | "SESSION_VERSION_CONFLICT";
+  | "SESSION_VERSION_CONFLICT"
+  // Operational codes. These were already emitted on the wire before they were
+  // declared here, which made `ApiErrorCodeSchema` (a z.enum over
+  // API_ERROR_CODES) reject responses the server genuinely sends — see
+  // PreviewErrorArmSchema in shared/schemas/preview.schemas.ts, which the
+  // client hard-`.parse()`s. Declaring them is the fix, not a new capability.
+  | "ROUTE_TIMEOUT"
+  | "RATE_LIMIT_UNAVAILABLE"
+  | "QUEUE_FULL"
+  | "QUEUE_TIMEOUT"
+  | "SESSION_EXPIRED"
+  | "VIDEO_PROVIDER_TIMEOUT";
 
 /** All valid error code values, usable at runtime for validation. */
 export const API_ERROR_CODES = [
@@ -43,14 +54,31 @@ export const API_ERROR_CODES = [
   "IDEMPOTENCY_CONFLICT",
   "REQUEST_IN_PROGRESS",
   "SESSION_VERSION_CONFLICT",
+  "ROUTE_TIMEOUT",
+  "RATE_LIMIT_UNAVAILABLE",
+  "QUEUE_FULL",
+  "QUEUE_TIMEOUT",
+  "SESSION_EXPIRED",
+  "VIDEO_PROVIDER_TIMEOUT",
 ] as const satisfies readonly ApiErrorCode[];
 
 // ---------------------------------------------------------------------------
 // Error response shape
 // ---------------------------------------------------------------------------
 
-/** Wire format for all error responses from the global error handler. */
+/**
+ * Wire format for all error responses.
+ *
+ * `success: false` is the discriminant `ApiResponseSchema` and
+ * `PreviewErrorArmSchema` switch on, so it is REQUIRED — an error body without
+ * it fails the client's discriminated-union parse. This interface is the error
+ * arm of `ApiResponse<T>` below; the two must stay identical.
+ *
+ * Build it with `respond.fail` (server/src/middleware/respond.ts) rather than
+ * by hand — that is the one place `requestId` is attached.
+ */
 export interface ApiErrorResponse {
+  success: false;
   error: string;
   code?: ApiErrorCode;
   details?: string;
@@ -77,12 +105,4 @@ export interface ApiSuccessResponse<T> {
  * Union type representing any API response — success or error.
  * Useful for client-side discriminated unions.
  */
-export type ApiResponse<T> =
-  | ApiSuccessResponse<T>
-  | {
-      success: false;
-      error: string;
-      code?: ApiErrorCode;
-      details?: string;
-      requestId?: string;
-    };
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;

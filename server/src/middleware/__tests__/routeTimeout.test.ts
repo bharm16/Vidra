@@ -70,6 +70,7 @@ describe("createRouteTimeout middleware", () => {
 
     expect(res.statusCode).toBe(504);
     expect(res.payload).toEqual({
+      success: false,
       error: "Request timeout",
       code: "ROUTE_TIMEOUT",
       requestId: "req-123",

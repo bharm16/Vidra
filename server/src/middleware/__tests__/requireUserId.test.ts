@@ -31,6 +31,7 @@ describe("requireUserId", () => {
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       error: "Authentication required",
+      code: "AUTH_REQUIRED",
     });
   });
 });

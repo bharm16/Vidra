@@ -16,6 +16,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
+import { respond } from "@middleware/respond";
 import type { StudioService } from "@services/studio/StudioService";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
@@ -58,7 +59,10 @@ interface AuthedRequest extends Request {
 function requireUserId(req: AuthedRequest, res: Response): string | null {
   const uid = req.user?.uid;
   if (!uid) {
-    res.status(401).json({ success: false, error: "Authentication required" });
+    respond.fail(res, req, 401, {
+      error: "Authentication required",
+      code: "AUTH_REQUIRED",
+    });
     return null;
   }
   return uid;
@@ -68,16 +72,6 @@ function requireUserId(req: AuthedRequest, res: Response): string | null {
 function routeParam(req: Request, name: string): string {
   const value = (req.params as Record<string, unknown>)[name];
   return typeof value === "string" ? value : "";
-}
-
-function sendError(res: Response, error: unknown): void {
-  const statusCode =
-    typeof (error as { statusCode?: number }).statusCode === "number"
-      ? ((error as { statusCode: number }).statusCode ?? 500)
-      : 500;
-  const message =
-    error instanceof Error ? error.message : "Unexpected studio error";
-  res.status(statusCode).json({ success: false, error: message });
 }
 
 export function createStudioRouter(studioService: StudioService): Router {
@@ -99,7 +93,10 @@ export function createStudioRouter(studioService: StudioService): Router {
       if (!userId) return;
       const parsed = CreateProjectSchema.safeParse(req.body ?? {});
       if (!parsed.success) {
-        res.status(400).json({ success: false, error: "Invalid body" });
+        respond.fail(res, req, 400, {
+          error: "Invalid body",
+          code: "INVALID_REQUEST",
+        });
         return;
       }
       const project = await studioService.createProject(
@@ -125,15 +122,11 @@ export function createStudioRouter(studioService: StudioService): Router {
     asyncHandler(async (req: AuthedRequest, res: Response) => {
       const userId = requireUserId(req, res);
       if (!userId) return;
-      try {
-        const project = await studioService.getProject(
-          userId,
-          routeParam(req, "projectId"),
-        );
-        res.json({ success: true, data: project });
-      } catch (error) {
-        sendError(res, error);
-      }
+      const project = await studioService.getProject(
+        userId,
+        routeParam(req, "projectId"),
+      );
+      res.json({ success: true, data: project });
     }),
   );
 
@@ -144,19 +137,18 @@ export function createStudioRouter(studioService: StudioService): Router {
       if (!userId) return;
       const parsed = PatchProjectSchema.safeParse(req.body ?? {});
       if (!parsed.success) {
-        res.status(400).json({ success: false, error: "Invalid body" });
+        respond.fail(res, req, 400, {
+          error: "Invalid body",
+          code: "INVALID_REQUEST",
+        });
         return;
       }
-      try {
-        const project = await studioService.updateProject(
-          userId,
-          routeParam(req, "projectId"),
-          parsed.data,
-        );
-        res.json({ success: true, data: project });
-      } catch (error) {
-        sendError(res, error);
-      }
+      const project = await studioService.updateProject(
+        userId,
+        routeParam(req, "projectId"),
+        parsed.data,
+      );
+      res.json({ success: true, data: project });
     }),
   );
 
@@ -165,12 +157,8 @@ export function createStudioRouter(studioService: StudioService): Router {
     asyncHandler(async (req: AuthedRequest, res: Response) => {
       const userId = requireUserId(req, res);
       if (!userId) return;
-      try {
-        await studioService.deleteProject(userId, routeParam(req, "projectId"));
-        res.json({ success: true, data: { deleted: true } });
-      } catch (error) {
-        sendError(res, error);
-      }
+      await studioService.deleteProject(userId, routeParam(req, "projectId"));
+      res.json({ success: true, data: { deleted: true } });
     }),
   );
 
@@ -184,19 +172,18 @@ export function createStudioRouter(studioService: StudioService): Router {
       if (!userId) return;
       const parsed = AddAttachmentSchema.safeParse(req.body ?? {});
       if (!parsed.success) {
-        res.status(400).json({ success: false, error: "Invalid body" });
+        respond.fail(res, req, 400, {
+          error: "Invalid body",
+          code: "INVALID_REQUEST",
+        });
         return;
       }
-      try {
-        const attachment = await studioService.addAttachment(
-          userId,
-          routeParam(req, "projectId"),
-          parsed.data,
-        );
-        res.status(201).json({ success: true, data: attachment });
-      } catch (error) {
-        sendError(res, error);
-      }
+      const attachment = await studioService.addAttachment(
+        userId,
+        routeParam(req, "projectId"),
+        parsed.data,
+      );
+      res.status(201).json({ success: true, data: attachment });
     }),
   );
 
@@ -207,7 +194,10 @@ export function createStudioRouter(studioService: StudioService): Router {
       if (!userId) return;
       const parsed = RunTurnSchema.safeParse(req.body ?? {});
       if (!parsed.success) {
-        res.status(400).json({ success: false, error: "Invalid body" });
+        respond.fail(res, req, 400, {
+          error: "Invalid body",
+          code: "INVALID_REQUEST",
+        });
         return;
       }
 
@@ -242,9 +232,11 @@ export function createStudioRouter(studioService: StudioService): Router {
         writeEvent({ type: "accepted", turnId, decision });
         res.end();
       } catch (error) {
+        // Nothing has been written yet — hand the throw back to asyncHandler
+        // so errorHandler applies PII redaction, structured logging and the
+        // canonical envelope. It already honours `statusCode` on the error.
         if (!streaming) {
-          sendError(res, error);
-          return;
+          throw error;
         }
         const statusCode =
           typeof (error as { statusCode?: number }).statusCode === "number"
@@ -265,15 +257,11 @@ export function createStudioRouter(studioService: StudioService): Router {
     asyncHandler(async (req: AuthedRequest, res: Response) => {
       const userId = requireUserId(req, res);
       if (!userId) return;
-      try {
-        const turns = await studioService.listTurnsWithFreshUrls(
-          userId,
-          routeParam(req, "projectId"),
-        );
-        res.json({ success: true, data: turns });
-      } catch (error) {
-        sendError(res, error);
-      }
+      const turns = await studioService.listTurnsWithFreshUrls(
+        userId,
+        routeParam(req, "projectId"),
+      );
+      res.json({ success: true, data: turns });
     }),
   );
 
@@ -282,16 +270,12 @@ export function createStudioRouter(studioService: StudioService): Router {
     asyncHandler(async (req: AuthedRequest, res: Response) => {
       const userId = requireUserId(req, res);
       if (!userId) return;
-      try {
-        const turn = await studioService.getTurnWithFreshUrls(
-          userId,
-          routeParam(req, "projectId"),
-          routeParam(req, "turnId"),
-        );
-        res.json({ success: true, data: turn });
-      } catch (error) {
-        sendError(res, error);
-      }
+      const turn = await studioService.getTurnWithFreshUrls(
+        userId,
+        routeParam(req, "projectId"),
+        routeParam(req, "turnId"),
+      );
+      res.json({ success: true, data: turn });
     }),
   );
 

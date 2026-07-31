@@ -1,6 +1,6 @@
 import type { RequestHandler, Request, Response, NextFunction } from "express";
+import { respond } from "./respond.js";
 
-type RequestWithId = Request & { id?: string };
 type RouteTimeoutFilter = (req: Request) => boolean;
 
 interface RouteTimeoutOptions {
@@ -26,10 +26,9 @@ export function createRouteTimeout(
 
     const timer = setTimeout(() => {
       if (!res.headersSent) {
-        res.status(504).json({
+        respond.fail(res, _req, 504, {
           error: "Request timeout",
           code: "ROUTE_TIMEOUT",
-          requestId: (_req as RequestWithId).id,
         });
       }
     }, timeoutMs);
