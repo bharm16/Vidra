@@ -132,6 +132,12 @@ const MODELS: readonly StudioModelEntry[] = [
   },
 ] as const;
 
+/**
+ * The standard editor Auto-mode edit turns run on. Deliberately NOT the
+ * cheapest edit-capable entry — see editDefault for the ruling.
+ */
+const DEFAULT_EDIT_SLUG: StudioModelSlug = "nano-banana-2";
+
 const UTILITIES: readonly StudioUtilityEntry[] = [
   {
     operation: "remove_background",
@@ -189,7 +195,7 @@ export class StudioModelRegistry {
    * Auto mode: the cheapest model whose capabilities cover the operation.
    * Escalation to pricier tiers happens only via explicit user pin — this
    * function never trades cost for quality (plan: "Auto routing = cheapest
-   * capable").
+   * capable"). Edit is the one carve-out: see editDefault.
    */
   cheapestCapable(capability: StudioCapability): StudioModelEntry {
     const candidates = MODELS.filter((entry) =>
@@ -201,6 +207,19 @@ export class StudioModelRegistry {
     return candidates.reduce((cheapest, entry) =>
       entry.costCentsPerCall < cheapest.costCentsPerCall ? entry : cheapest,
     );
+  }
+
+  /**
+   * Auto mode for EDIT actions. An edit is a precision operation — the
+   * instruction typically demands "change X, keep everything else
+   * identical" — and the cheapest editor (the speed-tier lite model)
+   * repaints instead of preserving: a recolor request came back with a
+   * different pose. Auto edits therefore route to the standard editor;
+   * the lite tier stays reachable by pinning it. This is a deliberate,
+   * narrow amendment to the "Auto routing = cheapest capable" ruling.
+   */
+  editDefault(): StudioModelEntry {
+    return this.getModel(DEFAULT_EDIT_SLUG);
   }
 
   /**

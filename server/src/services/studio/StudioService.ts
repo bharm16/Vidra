@@ -523,7 +523,7 @@ export class StudioService {
     const model =
       pinned && pinned.capabilities.includes("edit")
         ? pinned
-        : this.registry.cheapestCapable("edit");
+        : this.registry.editDefault();
 
     const sources = this.resolveSourceImages(
       history,

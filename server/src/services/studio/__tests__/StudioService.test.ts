@@ -599,7 +599,7 @@ describe("StudioService", () => {
       return { ...harness, project };
     }
 
-    it("executes an edit on the cheapest edit-capable model in Auto mode", async () => {
+    it("executes an edit on the standard editor in Auto mode", async () => {
       const run = vi.fn().mockResolvedValue({
         imageUrl: "https://replicate.delivery/edited.webp",
         durationMs: 1,
@@ -619,11 +619,14 @@ describe("StudioService", () => {
 
       const turn = await service.getTurn("user-1", project.id, result.turnId);
       expect(turn.status).toBe("complete");
-      expect(turn.resolvedModel).toBe("nano-banana-2-lite");
-      // 16¢ for the first batch + 4¢ for the edit (verified $0.034/image).
-      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(20);
+      // Auto edits run on the standard editor, not the cheapest (the lite
+      // tier repaints instead of preserving — see the registry's editDefault
+      // ruling). Lite stays reachable by pinning.
+      expect(turn.resolvedModel).toBe("nano-banana-2");
+      // 16¢ for the first batch + 7¢ for the edit (verified $0.067/image).
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(23);
       const editCall = run.mock.calls.at(-1)?.[0];
-      expect(editCall?.model).toBe("google/nano-banana-2-lite");
+      expect(editCall?.model).toBe("google/nano-banana-2");
       expect(editCall?.input?.prompt).toBe(
         "remove the background and thicken the outline",
       );
@@ -692,7 +695,7 @@ describe("StudioService", () => {
       const turn = await service.getTurn("user-1", project.id, result.turnId);
       expect(turn.status).toBe("failed");
       expect(turn.calls[0]?.error).toContain("NSFW");
-      expect(turn.refundedCents).toBe(4);
+      expect(turn.refundedCents).toBe(7);
       // Only the first batch's 16¢ remain consumed.
       expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(16);
     });
