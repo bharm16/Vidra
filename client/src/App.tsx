@@ -10,6 +10,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AppShell } from "@components/navigation/AppShell";
+import { RequireAuth } from "@components/navigation/RequireAuth";
 import {
   ErrorBoundary,
   FeatureErrorBoundary,
@@ -264,9 +265,11 @@ function AppRoutes(): React.ReactElement {
       <Route
         path="/live-editor"
         element={
-          <FeatureErrorBoundary featureName="Live Editor">
-            <LiveEditor />
-          </FeatureErrorBoundary>
+          <RequireAuth>
+            <FeatureErrorBoundary featureName="Live Editor">
+              <LiveEditor />
+            </FeatureErrorBoundary>
+          </RequireAuth>
         }
       />
       {/* The studio (ADR-0019) — conversational image generation and editing
@@ -274,15 +277,31 @@ function AppRoutes(): React.ReactElement {
       <Route
         path="/studio"
         element={
-          <FeatureErrorBoundary featureName="Studio">
-            <StudioPage />
-          </FeatureErrorBoundary>
+          <RequireAuth>
+            <FeatureErrorBoundary featureName="Studio">
+              <StudioPage />
+            </FeatureErrorBoundary>
+          </RequireAuth>
         }
       />
       {/* Rail surfaces — every app page carries the left rail itself, so
           these live outside MarketingShell's topnav chrome. */}
-      <Route path="/history" element={<HistoryPage />} />
-      <Route path="/account" element={<AccountPage />} />
+      <Route
+        path="/history"
+        element={
+          <RequireAuth>
+            <HistoryPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/account"
+        element={
+          <RequireAuth>
+            <AccountPage />
+          </RequireAuth>
+        }
+      />
       <Route path="/create" element={<Navigate to="/" replace />} />
       <Route path="/session/:sessionId" element={<WorkspaceRoute />} />
       <Route
