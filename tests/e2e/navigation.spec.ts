@@ -16,9 +16,13 @@ test.describe("route redirects and 404", () => {
     await expect(page).toHaveURL(/\/contact/);
   });
 
-  test("/billing redirects to /settings/billing", async ({ page }) => {
+  test("/billing parks on the workspace while billing is frozen", async ({
+    page,
+  }) => {
+    // BILLING_UI defaults off (ADR-0002 frozen stack): /billing and
+    // /settings/billing both redirect to "/" until the subscription rewrite.
     await page.goto("/billing");
-    await expect(page).toHaveURL(/\/settings\/billing/);
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test("unknown route shows 404 page", async ({ page }) => {

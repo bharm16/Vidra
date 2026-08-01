@@ -79,16 +79,20 @@ test("regression: detected assets prompt churn does not hit max update depth", a
     );
 
     if (method === "GET" && pathname.endsWith("/api/assets")) {
+      // assetApi validates a {success, data} envelope at the wire.
       await route.fulfill(
         jsonResponse({
-          assets,
-          total: assets.length,
-          byType: {
-            character: assets.filter((asset) => asset.type === "character")
-              .length,
-            style: 0,
-            location: 0,
-            object: 0,
+          success: true,
+          data: {
+            assets,
+            total: assets.length,
+            byType: {
+              character: assets.filter((asset) => asset.type === "character")
+                .length,
+              style: 0,
+              location: 0,
+              object: 0,
+            },
           },
         }),
       );
@@ -113,7 +117,7 @@ test("regression: detected assets prompt churn does not hit max update depth", a
         updatedAt: new Date().toISOString(),
       };
       assets.splice(0, assets.length, createdAsset);
-      await route.fulfill(jsonResponse(createdAsset));
+      await route.fulfill(jsonResponse({ success: true, data: createdAsset }));
       return;
     }
 
@@ -138,7 +142,9 @@ test("regression: detected assets prompt churn does not hit max update depth", a
         },
       };
       asset.referenceImages = [uploadedImage];
-      await route.fulfill(jsonResponse({ image: uploadedImage }));
+      await route.fulfill(
+        jsonResponse({ success: true, data: { image: uploadedImage } }),
+      );
       return;
     }
 
@@ -154,7 +160,7 @@ test("regression: detected assets prompt churn does not hit max update depth", a
         ...image,
         isPrimary: image.id === imageId,
       }));
-      await route.fulfill(jsonResponse(asset));
+      await route.fulfill(jsonResponse({ success: true, data: asset }));
       return;
     }
 
@@ -165,7 +171,7 @@ test("regression: detected assets prompt churn does not hit max update depth", a
         await route.fulfill(jsonResponse({ error: "Asset not found" }, 404));
         return;
       }
-      await route.fulfill(jsonResponse(asset));
+      await route.fulfill(jsonResponse({ success: true, data: asset }));
       return;
     }
 

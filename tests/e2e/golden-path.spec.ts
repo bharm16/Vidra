@@ -1,17 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
+import { injectAuthUser } from "./helpers/auth";
 
 /**
  * Golden path — the walkthrough that defines a working product (CONTEXT.md):
  * empty canvas → creator submits a one-liner → expansion → first frame
  * (explicit gate) → motion → render → a clip the creator can watch and keep.
  *
- * Unlike the other e2e specs, this one mocks NOTHING. It runs the real
- * client against the real server and real LLM providers, because its job is
- * to catch exactly the class of failure unit tests cannot: isolated-green,
- * integrated-broken.
+ * Unlike the other e2e specs, this one mocks NOTHING on the network. It runs
+ * the real client against the real server and real LLM providers, because its
+ * job is to catch exactly the class of failure unit tests cannot:
+ * isolated-green, integrated-broken. The only seam is injectAuthUser, which
+ * swaps the client-side auth repository — generation is sign-in-gated for
+ * guests, and the wire still authenticates via the dev API key fallback.
  *
- * Tier 1 (always on) covers the authoring loop with zero generation spend:
- * anonymous fresh load → expansion → session URL → refresh-safe persistence.
+ * Tier 1 (always on) covers the guest gate plus the authed authoring loop
+ * with zero generation spend: expansion → session URL → refresh-safe
+ * persistence.
  *
  * Tier 2 (GOLDEN_PATH_FULL=1) adds the first-frame leg (real Replicate +
  * GCS storage). Off by default: it spends real money per run and requires
@@ -26,19 +30,37 @@ const editorText = async (page: Page): Promise<string> => {
 };
 
 test.describe("golden path", () => {
+  test("a guest submit is sign-in-gated and preserves the prompt", async ({
+    page,
+  }) => {
+    // Fresh anonymous load shows the empty canvas anchored on the shot input.
+    // (The "What are you making?" hero was removed in the ADR-0010 rebuild —
+    // the anchor input IS the empty state.)
+    await page.goto("/");
+    const editor = page.getByLabel("Shot description");
+    await expect(editor).toBeVisible();
+    await editor.fill(ONE_LINER);
+    await page.getByTestId("canvas-generate-button").click();
+
+    // Guests don't generate: the submit opens the sign-in gate instead
+    // (RequireAuth sweep, 6ace8f7b era) — and closing it must not lose the
+    // creator's words (UX rule #1).
+    const gate = page.getByRole("dialog", { name: "Sign in to make it" });
+    await expect(gate).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(gate).toHaveCount(0);
+    await expect.poll(async () => await editorText(page)).toContain(ONE_LINER);
+  });
+
   test("a one-line idea expands into a session that survives refresh", async ({
     page,
   }) => {
     test.setTimeout(120_000);
 
-    // Fresh anonymous load shows the empty-canvas hero.
+    await injectAuthUser(page);
     await page.goto("/");
-    await expect(
-      page.getByRole("heading", { name: "What are you making?" }),
-    ).toBeVisible();
-
-    // Creator types a one-liner and submits.
     const editor = page.getByLabel("Shot description");
+    await expect(editor).toBeVisible();
     await editor.fill(ONE_LINER);
     await page.getByTestId("canvas-generate-button").click();
 
@@ -71,11 +93,13 @@ test.describe("golden path", () => {
       .toBe(expanded);
     expect(page.url()).toBe(sessionUrl);
 
-    // The session is restorable from the Sessions panel.
-    await page.getByRole("button", { name: "Sessions" }).click();
+    // The session is restorable from the Library — the archive surface that
+    // replaced the Sessions panel in the ADR-0010 rebuild.
+    await page.getByRole("link", { name: "Library" }).first().click();
+    await expect(page).toHaveURL(/\/history/);
     await expect(
-      page.getByRole("button", { name: /^Load prompt:/ }).first(),
-    ).toBeVisible();
+      page.getByLabel(/^Open session: .*lighthouse/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("expansion produces a first frame", async ({ page }) => {
@@ -85,6 +109,7 @@ test.describe("golden path", () => {
     );
     test.setTimeout(240_000);
 
+    await injectAuthUser(page);
     await page.goto("/");
     const editor = page.getByLabel("Shot description");
     await editor.fill(ONE_LINER);
@@ -118,6 +143,7 @@ test.describe("golden path", () => {
     );
     test.setTimeout(720_000);
 
+    await injectAuthUser(page);
     await page.goto("/");
     const editor = page.getByLabel("Shot description");
     await editor.fill(ONE_LINER);
@@ -134,9 +160,10 @@ test.describe("golden path", () => {
     expect(motionDescription.length).toBeGreaterThan(ONE_LINER.length * 2);
 
     // ADR-0002: validation-phase generation is a hard-capped passthrough on
-    // our dime. The render CTA must therefore be ENABLED for an anonymous
-    // creator — if the frozen credit gate blocks it, that is a product
-    // failure this spec exists to catch (2026-07-01 audit, finding 10).
+    // our dime. Generation is sign-in-gated (guest gate above), but for a
+    // signed-in creator the render CTA must be ENABLED — if the frozen credit
+    // gate blocks it, that is a product failure this spec exists to catch
+    // (2026-07-01 audit, finding 10).
     const renderButton = page.getByTestId("canvas-generate-button");
     await expect(renderButton).toBeEnabled();
 

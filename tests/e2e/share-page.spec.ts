@@ -1,62 +1,69 @@
 import { expect, test } from "@playwright/test";
 import { jsonResponse } from "./helpers/responses";
 
+/**
+ * Public clip page (ADR-0010 site-scope D8). The share surface is a logged-out
+ * growth loop: a shared clip renders as the cinematic hero with its paired
+ * description and a "start your own" CTA. It fetches the public endpoint
+ * /api/public/share/:shareId and validates a {success, data} envelope at the
+ * wire (client/src/features/share/api/publicClipApi.ts).
+ */
 test.describe("share page", () => {
-  test("displays shared prompt content when API returns data", async ({
+  test("displays the shared clip with description and CTA", async ({
     page,
   }) => {
-    const testUuid = "e2e-share-uuid-123";
+    const shareId = "e2e-share-clip-123";
 
-    await page.route(`**/api/sessions/by-prompt/${testUuid}`, async (route) => {
+    await page.route(`**/api/public/share/${shareId}`, async (route) => {
       await route.fulfill(
         jsonResponse({
           success: true,
           data: {
-            id: "session_shared",
-            prompt: {
-              uuid: testUuid,
-              input: "Original user prompt about a sunset.",
-              output:
-                "A breathtaking golden sunset over a calm ocean, cinematic wide shot.",
-              mode: "enhanced",
-              timestamp: "2026-02-01T12:00:00.000Z",
-              score: 85,
-            },
+            videoUrl: "https://example.com/clips/sunset.mp4",
+            description:
+              "A breathtaking golden sunset over a calm ocean, cinematic wide shot.",
+            model: "sora-2",
+            createdAt: "2026-02-01T12:00:00.000Z",
           },
         }),
       );
     });
 
-    await page.goto(`/share/${testUuid}`);
+    await page.goto(`/share/${shareId}`);
 
+    // The clip is the hero: a video player with the shared source.
+    await expect(page.locator("video")).toBeVisible({ timeout: 10000 });
+
+    // The paired description renders as the caption.
     await expect(
-      page.getByRole("heading", { name: /shared prompt/i }),
-    ).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.getByRole("heading", { name: /original input/i }),
+      page.getByText(/a breathtaking golden sunset over a calm ocean/i),
     ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /optimized output/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Original user prompt about a sunset."),
-    ).toBeVisible();
+
+    // The growth-loop CTA links back to the workspace front door.
+    const cta = page.getByRole("link", { name: /start your own clip/i });
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", "/");
   });
 
-  test("displays error state when shared prompt is not found", async ({
+  test("displays the not-found state for an unknown share id", async ({
     page,
   }) => {
-    const badUuid = "nonexistent-uuid";
+    const badId = "nonexistent-share-id";
 
-    await page.route(`**/api/sessions/by-prompt/${badUuid}`, async (route) => {
-      await route.fulfill(jsonResponse({ success: true, data: null }));
+    await page.route(`**/api/public/share/${badId}`, async (route) => {
+      await route.fulfill(
+        jsonResponse({ success: false, error: "Share not found" }, 404),
+      );
     });
 
-    await page.goto(`/share/${badUuid}`);
+    await page.goto(`/share/${badId}`);
 
-    // SharedPrompt component shows "Prompt Not Found" or error message
     await expect(
-      page.getByText(/prompt not found|failed to load/i),
+      page.getByRole("heading", { name: /clip not found/i }),
     ).toBeVisible({ timeout: 10000 });
+    // The not-found state keeps the growth loop alive with the same CTA.
+    await expect(
+      page.getByRole("link", { name: /start your own clip/i }),
+    ).toBeVisible();
   });
 });
