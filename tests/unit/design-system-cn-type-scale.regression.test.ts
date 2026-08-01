@@ -26,6 +26,7 @@ describe("cn() keeps type-scale tokens and colors distinct", () => {
     "text-body-lg",
     "text-body",
     "text-ui",
+    "text-ui-mono",
     "text-meta",
     "text-h4",
     "text-h5",
@@ -70,6 +71,17 @@ describe("cn() keeps type-scale tokens and colors distinct", () => {
   it("still collapses two competing sizes to the last one", () => {
     expect(cn("text-meta", "text-ui")).toBe("text-ui");
     expect(cn("text-ui", "text-meta")).toBe("text-meta");
+  });
+
+  it("keeps a custom border width alongside a border color", () => {
+    // Same failure shape one scale over: border-hairline is a custom
+    // borderWidth key, so stock tailwind-merge read it as a border *color* and
+    // dropped it when a real color followed — a panel with the right border
+    // colour and no border.
+    const result = cn("border-hairline", "border-border");
+
+    expect(result).toContain("border-hairline");
+    expect(result).toContain("border-border");
   });
 
   it("still collapses two competing text colors to the last one", () => {

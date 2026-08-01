@@ -20,6 +20,7 @@ const FONT_SIZE_KEYS = [
   "body-lg",
   "body",
   "ui",
+  "ui-mono",
   "meta",
   "h4",
   "h5",
@@ -41,10 +42,21 @@ const FONT_SIZE_KEYS = [
   "overline",
 ] as const;
 
+/**
+ * Custom border widths (tailwind.preset.js → theme.extend.borderWidth).
+ *
+ * Same hazard as the font sizes: tailwind-merge only knows Tailwind's numeric
+ * widths, so it reads `border-hairline` as a border *color* and drops it when
+ * a real color class follows. The symptom is a panel that has the right
+ * border color and no border at all.
+ */
+const BORDER_WIDTH_KEYS = ["hairline"] as const;
+
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
       "font-size": [{ text: [...FONT_SIZE_KEYS] }],
+      "border-w": [{ border: [...BORDER_WIDTH_KEYS] }],
     },
   },
 });

@@ -158,6 +158,7 @@ export default {
         md: "var(--shadow-md)",
         lg: "var(--shadow-md)" /* bridge → md; hairlines do the rest */,
         elevated: "var(--shadow-md)" /* bridge → md */,
+        popover: "var(--shadow-popover)",
         floating: "var(--shadow-md)" /* bridge → md */,
         inset: "inset 0 1px 0 oklch(100% 0 0 / 0.06)" /* bridge → edge-lit */,
       },
@@ -249,6 +250,14 @@ export default {
             lineHeight: "var(--text-body-lh)",
             letterSpacing: "var(--text-body-ls)",
             fontWeight: "var(--weight-body)",
+          },
+        ],
+        "ui-mono": [
+          "var(--text-ui-mono)",
+          {
+            lineHeight: "var(--text-ui-lh)",
+            letterSpacing: "var(--text-ui-ls)",
+            fontWeight: "var(--weight-ui)",
           },
         ],
         ui: [

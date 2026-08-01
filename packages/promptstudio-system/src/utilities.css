@@ -157,3 +157,130 @@
     box-shadow: var(--glow-accent);
   }
 }
+
+/* ============================================================
+   CONTROLS — deliberately OUTSIDE @layer ps.utilities.
+
+   Tailwind's preflight is unlayered, and unlayered CSS beats
+   every layer regardless of specificity. Its `button { font:
+   inherit; padding: 0 }` reset therefore won against these
+   rules while they sat in a layer: <button> controls rendered
+   at the inherited 16px with no horizontal padding, while <a>
+   controls — which preflight does not reset the same way —
+   were correct. Same class, two results, depending on tag.
+
+   Keep this block unlayered.
+   ============================================================ */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  font-weight: var(--weight-ui);
+  line-height: 1;
+  border: none;
+  background: var(--fill);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: var(--transition-colors);
+}
+
+.ps-btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--foreground);
+}
+
+.ps-btn[aria-current],
+.ps-btn[aria-selected="true"],
+.ps-btn[data-state="open"],
+.ps-btn[data-active] {
+  background: var(--active);
+  color: var(--foreground);
+  font-weight: var(--weight-ui-active);
+}
+
+.ps-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* One icon size inside controls. */
+.ps-btn svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  flex: 0 0 auto;
+}
+
+/* ---- Sizes: these three and nothing else ---- */
+.ps-btn--sm {
+  height: var(--control-md); /* 32 — dense/inline only */
+  padding-inline: var(--space-2-5);
+}
+.ps-btn--md {
+  height: var(--control-lg); /* 36 — the default */
+  padding-inline: var(--space-3);
+}
+.ps-btn--icon {
+  height: var(--control-lg);
+  width: var(--control-lg);
+  padding: 0;
+}
+/* Square 32 — floating canvas panels, where the denser size reads better
+   against the board and matches the surrounding canvas chrome. */
+.ps-btn--icon-sm {
+  height: var(--control-md);
+  width: var(--control-md);
+  padding: 0;
+}
+
+/* ---- Shapes ---- */
+.ps-btn--rect {
+  border-radius: var(--radius-md);
+}
+.ps-btn--pill {
+  border-radius: var(--radius-full);
+}
+
+/* ---- Variants ---- */
+.ps-btn--primary {
+  background: var(--foreground);
+  color: var(--background);
+  font-weight: var(--weight-ui-active);
+}
+.ps-btn--primary:hover:not(:disabled) {
+  background: oklch(92% 0 0);
+  color: var(--background);
+}
+.ps-btn--primary:disabled {
+  background: var(--fill);
+  color: var(--ghost-foreground);
+  opacity: 1;
+}
+
+/* Quiet: no resting fill until hovered. For rows that sit in a list
+   where every item having a fill would read as every item selected. */
+.ps-btn--quiet {
+  background: transparent;
+}
+
+/* A full-width left-aligned row — nav entries and list items. Declared
+   here rather than composed from utilities so it cannot lose a cascade
+   argument with Tailwind's own layer. */
+.ps-btn--row {
+  width: 100%;
+  justify-content: flex-start;
+  padding-inline: var(--space-2);
+}
+
+/* A menu item is a row whose label starts past the indicator slot:
+   12 padding + 16 icon + 4 gap. */
+.ps-btn--menu {
+  width: 100%;
+  justify-content: flex-start;
+  padding-left: var(--space-8);
+  padding-right: var(--space-3);
+}
