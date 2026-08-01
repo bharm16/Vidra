@@ -9,14 +9,14 @@ export interface AmbientLightProps {
 }
 
 /**
- * Drifting ambient light blobs — the cinematic glow behind the stage. Three
- * large blurred radial gradients (a themeable accent bloom, a warm counter-
- * light, and a cool core) drift slowly on independent loops. Overall intensity
- * is gated by the global `--glow` knob; the accent stops derive from
- * `--accent` via color-mix so a theme swap recolors the bloom.
+ * Ambient light — a single static radial bloom behind the stage. Intensity is
+ * gated by the global `--glow` knob; the stops derive from `--accent` via
+ * color-mix so a theme swap recolors it.
  *
- * Sits behind content (z-index 0, pointer-events: none). The app-wide
- * prefers-reduced-motion rule freezes the drift.
+ * One blob, one hue, no motion: this is a tool surface, and the generated
+ * video that fills it is the only thing that should carry color or movement.
+ *
+ * Sits behind content (z-index -2, pointer-events: none).
  */
 export function AmbientLight({
   className,
@@ -24,8 +24,6 @@ export function AmbientLight({
   return (
     <div aria-hidden className={cn("ps-ambient", className)}>
       <div className="ps-ambient__blob ps-ambient__blob--accent" />
-      <div className="ps-ambient__blob ps-ambient__blob--warm" />
-      <div className="ps-ambient__blob ps-ambient__blob--core" />
     </div>
   );
 }

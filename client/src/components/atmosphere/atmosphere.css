@@ -36,8 +36,11 @@
     inset 0 0 80px rgba(0, 0, 0, 0.4);
 }
 
-/* Ambient light: drifting blurred radial gradients behind the stage.
-   Intensity scales with --glow; the accent bloom recolors with --accent. */
+/* Ambient light: one static radial behind the stage, on the accent hue.
+   This is a tool surface — the generated video is what carries color and
+   motion, so the backdrop stays still and nearly invisible. The warm
+   counter-light and cool core were separate hues on a page that gets one;
+   their drift loops competed with the previews that land here. */
 .ps-ambient {
   position: absolute;
   inset: 0;
@@ -59,76 +62,11 @@
   transform: translateX(-50%);
   background: radial-gradient(
     ellipse at 50% 45%,
-    color-mix(in srgb, var(--accent) 40%, transparent),
-    color-mix(in srgb, var(--accent) 14%, transparent) 42%,
-    transparent 72%
+    color-mix(in srgb, var(--accent) 8%, transparent),
+    transparent 68%
   );
-  opacity: calc(var(--glow, 1) * 0.5);
+  opacity: calc(var(--glow, 1) * 0.75);
   filter: blur(14px);
-  animation: es-drift-1 18s ease-in-out infinite;
-}
-
-.ps-ambient__blob--warm {
-  right: -160px;
-  bottom: -220px;
-  width: 820px;
-  height: 720px;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    rgba(255, 142, 86, 0.24),
-    rgba(220, 90, 60, 0.08) 46%,
-    rgba(60, 20, 10, 0) 72%
-  );
-  opacity: calc(var(--glow, 1) * 0.34);
-  filter: blur(18px);
-  animation: es-drift-2 22s ease-in-out infinite;
-}
-
-.ps-ambient__blob--core {
-  bottom: 120px;
-  left: 50%;
-  width: 900px;
-  height: 560px;
-  transform: translateX(-50%);
-  background: radial-gradient(
-    ellipse at 50% 60%,
-    rgba(150, 160, 210, 0.14),
-    rgba(80, 90, 140, 0) 68%
-  );
-  opacity: calc(var(--glow, 1) * 0.5);
-  animation: es-core 12s ease-in-out infinite;
-}
-
-@keyframes es-drift-1 {
-  0%,
-  100% {
-    transform: translate(-50%, 0) scale(1);
-  }
-  50% {
-    transform: translate(-46%, 26px) scale(1.1);
-  }
-}
-
-@keyframes es-drift-2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(-32px, -24px) scale(1.12);
-  }
-}
-
-@keyframes es-core {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.72;
-    transform: translateX(-50%) scale(1.06);
-  }
 }
 
 /* Dotted grid: the workspace's faint 24px dot lattice. Transparent overlay
