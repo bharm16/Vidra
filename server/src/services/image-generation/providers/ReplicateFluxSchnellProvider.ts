@@ -179,7 +179,24 @@ export class ReplicateFluxSchnellProvider implements ImagePreviewProvider {
         }
 
         await this.sleep(pollInterval);
-        currentPrediction = await this.replicate.predictions.get(prediction.id);
+        try {
+          currentPrediction = await this.replicate.predictions.get(
+            prediction.id,
+          );
+        } catch (pollError) {
+          // A transient poll failure must not kill a healthy in-flight
+          // prediction — keep the last known state and poll again; the
+          // deadline bounds total exposure.
+          this.log.warn("Prediction poll failed; retrying until deadline", {
+            predictionId: prediction.id,
+            pollError:
+              pollError instanceof Error
+                ? pollError.message
+                : String(pollError),
+            userId,
+          });
+          continue;
+        }
 
         this.log.debug("Polling prediction", {
           predictionId: currentPrediction.id,
