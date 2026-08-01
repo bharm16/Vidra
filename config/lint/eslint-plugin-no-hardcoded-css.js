@@ -136,6 +136,100 @@ export default {
         };
       },
     },
+    /**
+     * no-arbitrary-scale-value: Flags Tailwind arbitrary pixel values for the
+     * two properties that have a complete token scale — font size and border
+     * radius (e.g. text-[13.5px], rounded-[11px]).
+     *
+     * These accumulated to 16 distinct radii and 12 distinct font sizes on one
+     * codebase because `no-arbitrary-color` only ever matched hex and
+     * `no-hardcoded-css` only inspects style={{ }} objects — nothing looked at
+     * className strings for sizes. Both are now at zero, so this rule holds the
+     * line rather than reporting a backlog.
+     *
+     * Scope is deliberately narrow: h-/w-/px-/py- arbitrary values are often
+     * legitimate artwork or layout dimensions with no token equivalent, so they
+     * are not flagged.
+     *
+     * Matching is literal string inspection (startsWith/endsWith over
+     * whitespace-split class tokens), not pattern matching.
+     */
+    'no-arbitrary-scale-value': {
+      meta: {
+        type: 'suggestion',
+        docs: {
+          description:
+            'Disallow arbitrary px font-size/border-radius in Tailwind className strings',
+          category: 'Best Practices',
+          recommended: true,
+        },
+        messages: {
+          noArbitraryType:
+            'Arbitrary font size "{{value}}" found. Use the type scale: text-meta (12), text-ui (14), text-body (16), text-body-lg (18), text-subhead (20), text-heading (24).',
+          noArbitraryRadius:
+            'Arbitrary radius "{{value}}" found. Use the radius scale: rounded-xs (4), rounded-sm (6), rounded-md (10), rounded-lg (16), rounded-xl (24), rounded-full.',
+        },
+        schema: [],
+      },
+      create(context) {
+        /** Split on whitespace without a pattern: normalize, then split. */
+        function classTokens(value) {
+          let normalized = value;
+          for (const ws of ['\n', '\r', '\t']) {
+            normalized = normalized.split(ws).join(' ');
+          }
+          return normalized.split(' ').filter(Boolean);
+        }
+
+        /** Strip variant prefixes (hover:, md:, dark:) and the ! modifier. */
+        function bareClass(token) {
+          const afterVariants = token.slice(token.lastIndexOf(':') + 1);
+          return afterVariants.startsWith('!')
+            ? afterVariants.slice(1)
+            : afterVariants;
+        }
+
+        function checkString(node, value) {
+          if (typeof value !== 'string') return;
+
+          for (const token of classTokens(value)) {
+            const cls = bareClass(token);
+            // Only arbitrary values carrying a px unit; text-[color:...] and
+            // similar non-px arbitrary values are left alone.
+            if (!cls.endsWith('px]')) continue;
+
+            if (cls.startsWith('text-[')) {
+              context.report({
+                node,
+                messageId: 'noArbitraryType',
+                data: { value: cls },
+              });
+            } else if (cls.startsWith('rounded') && cls.includes('-[')) {
+              context.report({
+                node,
+                messageId: 'noArbitraryRadius',
+                data: { value: cls },
+              });
+            }
+          }
+        }
+
+        return {
+          Literal(node) {
+            if (typeof node.value === 'string') {
+              checkString(node, node.value);
+            }
+          },
+          TemplateLiteral(node) {
+            node.quasis.forEach((quasi) => {
+              if (quasi.value?.raw) {
+                checkString(quasi, quasi.value.raw);
+              }
+            });
+          },
+        };
+      },
+    },
     'no-hardcoded-css': {
       meta: {
         type: 'problem',

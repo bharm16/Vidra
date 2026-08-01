@@ -163,6 +163,9 @@ export default [
       'security/detect-unsafe-regex': 'off',
       // Hardcoded hex colors in Tailwind className strings
       'no-hardcoded-css/no-arbitrary-color': 'error',
+      // Arbitrary px font-size/radius in className — both scales are at zero
+      // violations, so this holds the line rather than reporting a backlog.
+      'no-hardcoded-css/no-arbitrary-scale-value': 'error',
       // Hardcoded spacing/formatting values detection in inline styles
       'no-hardcoded-css/no-hardcoded-css': [
         'warn',
