@@ -25,7 +25,7 @@ export function WorkspaceTopBar({
 
   return (
     <header
-      className="border-tool-rail-border bg-tool-surface-deep flex h-[var(--workspace-topbar-h)] items-center gap-3 border-b px-4"
+      className="bg-chrome flex h-[var(--workspace-topbar-h)] items-center gap-3 px-4"
       role="banner"
     >
       {/* No wordmark here: the nav rail is chrome for every workspace moment

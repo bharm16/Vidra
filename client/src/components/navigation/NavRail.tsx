@@ -58,12 +58,7 @@ function RailItem({
         !collapsed && "ps-btn--row",
       )}
     >
-      <span
-        className={cn(
-          "flex flex-none items-center justify-center",
-          accent && "text-[color:color-mix(in_srgb,var(--accent)_62%,#fff)]",
-        )}
-      >
+      <span className={cn("flex flex-none items-center justify-center")}>
         {icon}
       </span>
       {collapsed ? null : <span className="whitespace-nowrap">{label}</span>}
@@ -84,24 +79,24 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
 
   return (
     <aside
-      className="bg-tool-surface-deep border-tool-rail-border flex h-full flex-none flex-col overflow-hidden border-r px-2 py-4 transition-[width] duration-[260ms] ease-out"
+      className="bg-chrome flex h-full flex-none flex-col overflow-hidden px-2 py-2 transition-[width] duration-[260ms] ease-out"
       style={{ width: collapsed ? 64 : 256 }}
     >
       {/* Header — logo (→ new session) + collapse toggle. */}
       <div
         className={cn(
-          "mb-5 flex items-center gap-2",
+          "mb-2 flex h-11 items-center gap-2",
           collapsed ? "flex-col" : "justify-between",
         )}
       >
         <Link
           to="/"
           title="New session"
-          className="hover:bg-hover flex h-10 items-center gap-2 rounded-md p-2 transition-colors"
+          className="hover:bg-hover flex h-9 items-center gap-2 rounded-md p-2 transition-colors"
         >
           <VidraMark className="h-6 w-6 flex-none rounded-sm" />
           {collapsed ? null : (
-            <span className="text-foreground text-ui whitespace-nowrap font-medium tracking-[-0.01em]">
+            <span className="text-foreground text-ui whitespace-nowrap font-medium">
               Vidra
             </span>
           )}
@@ -115,7 +110,7 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           onClick={() => setCollapsed((c) => !c)}
           className="ps-btn ps-btn--icon ps-btn--rect ps-btn--quiet"
         >
-          <PanelLeft strokeWidth={1.8} />
+          <PanelLeft strokeWidth={1.75} />
         </Button>
       </div>
 
@@ -127,28 +122,28 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           collapsed={collapsed}
           accent
           active={active === "new"}
-          icon={<Plus strokeWidth={1.9} />}
+          icon={<Plus strokeWidth={1.75} />}
         />
         <RailItem
           to="/history"
           label="Library"
           collapsed={collapsed}
           active={active === "library"}
-          icon={<LibraryIcon strokeWidth={1.8} />}
+          icon={<LibraryIcon strokeWidth={1.75} />}
         />
         <RailItem
           to="/live-editor"
           label="Live editor"
           collapsed={collapsed}
           active={active === "live-editor"}
-          icon={<Paintbrush strokeWidth={1.8} />}
+          icon={<Paintbrush strokeWidth={1.75} />}
         />
         <RailItem
           to="/studio"
           label="Studio"
           collapsed={collapsed}
           active={active === "studio"}
-          icon={<Sparkles strokeWidth={1.8} />}
+          icon={<Sparkles strokeWidth={1.75} />}
         />
       </div>
 
@@ -159,13 +154,13 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         to="/docs"
         label="Docs & help"
         collapsed={collapsed}
-        icon={<CircleHelp strokeWidth={1.8} />}
+        icon={<CircleHelp strokeWidth={1.75} />}
       />
       <Link
         to={user ? "/account" : "/signin"}
         title="Account"
         className={cn(
-          "hover:bg-hover mt-1.5 flex h-10 items-center gap-2 rounded-md p-2 transition-colors",
+          "ps-btn ps-btn--md ps-btn--rect ps-btn--quiet ps-btn--row mt-1.5",
           active === "account" && "bg-active",
         )}
       >

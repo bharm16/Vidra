@@ -23,8 +23,15 @@ export function CanvasViewport({
   children,
   liveNodeId,
   onBackgroundClick,
+  actionsRef,
 }: {
   children: React.ReactNode;
+  /**
+   * Filled with the camera actions a surrounding tool rail can drive. The
+   * camera is ephemeral state owned here, so this is how a sibling asks for
+   * "fit to view" without lifting it.
+   */
+  actionsRef?: React.MutableRefObject<{ recenter: () => void } | null>;
   /** The current take; when it changes the camera recenters on it. */
   liveNodeId?: string | null;
   /**
@@ -171,6 +178,14 @@ export function CanvasViewport({
     if (!liveNodeId) return;
     centerOnLiveNode();
   }, [liveNodeId, centerOnLiveNode]);
+
+  useEffect(() => {
+    if (!actionsRef) return;
+    actionsRef.current = { recenter: centerOnLiveNode };
+    return () => {
+      actionsRef.current = null;
+    };
+  }, [actionsRef, centerOnLiveNode]);
 
   // A stage that resizes after mount (collapsing the rail, resizing the
   // window, opening devtools) would otherwise strand the node off-center —

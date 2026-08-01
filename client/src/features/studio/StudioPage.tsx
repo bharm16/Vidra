@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { FolderOpen, Plus } from "lucide-react";
 
+import { Crosshair, Paperclip } from "lucide-react";
 import { CanvasViewport } from "@/components/canvas/CanvasViewport";
 import { NavRail } from "@components/navigation/NavRail";
 
@@ -25,6 +26,8 @@ import "./studio.css";
 export function StudioPage(): React.ReactElement {
   const studio = useStudioProject();
   const { state } = studio;
+  const cameraActionsRef = useRef<{ recenter: () => void } | null>(null);
+  const railFileInputRef = useRef<HTMLInputElement | null>(null);
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
 
   // The newest group is the camera target; recenter as new groups land.
@@ -139,7 +142,53 @@ export function StudioPage(): React.ReactElement {
           </div>
 
           <div className="st-stage">
-            <CanvasViewport liveNodeId={liveTurnId}>
+            {/* Canvas tool rail — floating chrome against the panel edge.
+                Carries the affordances that exist: attach an image, and put
+                the live group back in view. Select / pan / frame are not here
+                because the plane is deliberately non-interactive (ADR-0019
+                §4) and there is nothing for them to drive; undo/redo have no
+                Studio history to walk. Adding them as dead buttons would be
+                worse than the gap. */}
+            <div className="st-float st-tool-rail">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
+                title="Attach an image"
+                aria-label="Attach an image"
+                onClick={() => railFileInputRef.current?.click()}
+              >
+                <Paperclip />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
+                title="Fit to view"
+                aria-label="Fit to view"
+                onClick={() => cameraActionsRef.current?.recenter()}
+              >
+                <Crosshair />
+              </Button>
+              <input
+                ref={railFileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+                aria-label="Attach image file from the canvas"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void studio.attachFile(file);
+                  event.target.value = "";
+                }}
+              />
+            </div>
+            <CanvasViewport
+              liveNodeId={liveTurnId}
+              actionsRef={cameraActionsRef}
+            >
               <StudioPlane
                 turns={state.turns}
                 selectedImageId={state.selectedImageId}

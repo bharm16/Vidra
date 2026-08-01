@@ -317,11 +317,10 @@
 
 .le-composer {
   width: 540px;
-  border-radius: 1.25rem;
-  background: #1d1e20;
-  box-shadow:
-    0 24px 60px -24px rgba(0, 0, 0, 0.9),
-    0 4px 16px rgba(0, 0, 0, 0.5);
+  /* Same treatment as the Studio composer so the two screens agree: flush
+     chrome material, shaped by its radius, no shadow stack. */
+  border-radius: var(--radius-panel);
+  background: var(--chrome);
   padding: 16px 18px 13px;
 }
 
