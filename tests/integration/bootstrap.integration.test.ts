@@ -64,12 +64,17 @@ describe("Server Bootstrap (integration)", () => {
     expect(body.status).toBe("alive");
   });
 
-  it("returns configured 404 payload for unknown paths", async () => {
+  it("returns the canonical 404 envelope for unknown paths", async () => {
     const response = await fetch(`${baseUrl}/route-that-does-not-exist`);
     const body = await response.json();
 
     expect(response.status).toBe(404);
+    // The canonical envelope (6640ab845: one response envelope, emitted by
+    // one module) has no `path` field — the unmatched path travels in
+    // `details` (routes.config.ts 404 handler).
+    expect(body.success).toBe(false);
     expect(body.error).toBe("Not found");
-    expect(body.path).toBe("/route-that-does-not-exist");
+    expect(body.code).toBe("INVALID_REQUEST");
+    expect(body.details).toBe("/route-that-does-not-exist");
   });
 });
