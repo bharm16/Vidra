@@ -8,7 +8,7 @@ const avatarVariants = cva(
   {
     variants: {
       size: {
-        xs: "h-6 w-6 text-[10px]",
+        xs: "h-6 w-6 text-meta",
         sm: "h-8 w-8 text-label-sm",
         default: "h-10 w-10 text-body-sm",
         lg: "h-12 w-12 text-body",
@@ -50,7 +50,7 @@ const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
           />
         ) : (
           <span
-            className="font-semibold text-foreground"
+            className="text-foreground font-semibold"
             aria-hidden={Boolean(alt)}
           >
             {fallback || alt?.charAt(0).toUpperCase() || "?"}

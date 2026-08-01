@@ -12,10 +12,10 @@ import { cn } from "@promptstudio/system/lib/utils";
  * micro-labels belong to the overline type token (`text-overline` /
  * `.ps-overline`), never to badges.
  *
- * Sizes use arbitrary font sizes and colors use `color:`-hinted values on
- * purpose: the default tailwind-merge config inside `cn` cannot tell the
- * preset's custom `text-label-*` font sizes apart from text colors and
- * silently drops one of the pair.
+ * Sizes are type-scale tokens and colors are `color:`-hinted values. These
+ * coexist because `cn`'s tailwind-merge is extended with the preset's
+ * font-size keys (see lib/utils.ts) — without that, the size token reads as a
+ * text color and one of the pair is silently dropped.
  */
 const badgeVariants = cva(
   "inline-flex items-center rounded-full border border-border font-semibold",
@@ -34,11 +34,11 @@ const badgeVariants = cva(
           "border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] text-[color:var(--badge-danger-text)]",
       },
       size: {
-        xs: "gap-ps-1 px-ps-1 py-0.5 text-[10px]",
-        sm: "gap-ps-1 px-ps-2 py-ps-1 text-[11px]",
-        default: "gap-ps-2 px-ps-2 py-ps-1 text-[12px]",
-        md: "gap-ps-2 px-ps-3 py-ps-1 text-[12px]",
-        lg: "gap-ps-2 px-ps-3 py-ps-2 text-[14px]",
+        xs: "gap-ps-1 px-ps-1 py-0.5 text-meta",
+        sm: "gap-ps-1 px-ps-2 py-ps-1 text-meta",
+        default: "gap-ps-2 px-ps-2 py-ps-1 text-meta",
+        md: "gap-ps-2 px-ps-3 py-ps-1 text-meta",
+        lg: "gap-ps-2 px-ps-3 py-ps-2 text-ui",
       },
     },
     defaultVariants: {
