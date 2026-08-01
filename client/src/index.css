@@ -14,52 +14,43 @@
     --workspace-topbar-h: 44px;
     --workspace-composer-bottom: 24px;
 
-    /* --tool-* BRIDGE — these were a parallel vocabulary of hardcoded hex
-       (three surface darks, four purple-tinted greys, five white alphas)
-       that drifted from the design system. Each now resolves to a semantic
-       token, so the ~428 existing `*-tool-*` call sites keep compiling while
-       the page collapses onto one neutral ramp. Two side effects worth
-       knowing: the greys lose their purple cast, and these become
-       theme-aware — the old hex was dark-only.
+    /* --tool-* ALIASES.
+       One namespace lives in the design system (--canvas / --chrome / --raise
+       / --hairline / --fg*). These names remain only so existing call sites
+       keep compiling; every one resolves to a canonical token. Migrate a call
+       site to the canonical class, then delete its alias.
 
-       Migrate call sites to the canonical class, then delete the bridge
-       (same contract as the preset's `bridge` entries — see
-       packages/promptstudio-system/README.md). */
+       Namespace B used to carry four names for the same muted grey and three
+       for the same border, which is how one screen ended up reading surfaces
+       from three different vocabularies at once. */
 
-    /* Surfaces — three darks (#111114 / #0e0e12 / #0c0c10) collapse to the
-       background, three card-weights to --card. */
-    --tool-panel-inner-bg: var(--background);
-    --tool-surface-inset: var(--background);
-    --tool-surface-deep: var(--background);
-    --tool-surface-card: var(--card);
-    --tool-surface-prompt: var(--card);
-    --tool-surface-prompt-compact: var(--card);
+    /* Surfaces */
+    --tool-surface-deep: var(--canvas);
+    --tool-surface-inset: var(--raise);
+    --tool-panel-inner-bg: var(--chrome);
+    --tool-surface-card: var(--chrome);
+    --tool-surface-prompt: var(--chrome);
+    --tool-surface-prompt-compact: var(--chrome);
 
-    /* Edges — every hairline is --border; nav-active reads one step stronger
-       so the hover -> active progression survives the collapse. */
-    --tool-rail-border: var(--border);
-    --tool-border-primary: var(--border);
-    --tool-border-dark: var(--border);
-    --tool-nav-hover-bg: var(--border);
-    --tool-nav-active-bg: var(--border-strong);
+    /* Edges — one value */
+    --tool-rail-border: var(--hairline);
+    --tool-border-primary: var(--hairline);
+    --tool-border-dark: var(--hairline);
+    --tool-nav-hover-bg: var(--raise);
+    --tool-nav-active-bg: var(--active);
 
-    /* Text — the four purple greys (#b0b0be/#a0a0b3/#9999ab/#8b8b9e) sat
-       within 13% lightness of each other doing one job. They land on the
-       foreground ladder by measured lightness.
-       --tool-text-disabled is only ever used as a hover border, never as
-       text, so it maps to an edge token rather than a foreground one. */
-    --tool-text-secondary: var(--muted-foreground);
-    --tool-text-dim: var(--muted-foreground);
-    --tool-text-subdued: var(--muted-foreground);
-    --tool-text-muted: var(--muted-foreground);
-    --tool-text-placeholder: var(--ghost-foreground);
-    --tool-text-label: var(--ghost-foreground);
-    --tool-text-disabled: var(--border-strong);
+    /* Text — one ramp. --fg-dim is placeholder only. */
+    --tool-text-secondary: var(--fg-muted);
+    --tool-text-dim: var(--fg-muted);
+    --tool-text-subdued: var(--fg-muted);
+    --tool-text-muted: var(--fg-muted);
+    --tool-text-placeholder: var(--fg-dim);
+    --tool-text-label: var(--fg-dim);
+    --tool-text-disabled: var(--hairline);
 
-    /* Emphasis — accent-soft and accent-neutral held the identical value
-       (#c8c8d0) under two names; selected state is the foreground. */
-    --tool-accent-neutral: var(--foreground);
-    --tool-accent-soft: var(--border-strong);
+    /* Emphasis */
+    --tool-accent-neutral: var(--fg);
+    --tool-accent-soft: var(--hairline);
   }
 
   html,

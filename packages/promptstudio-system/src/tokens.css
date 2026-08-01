@@ -91,6 +91,7 @@
     --radius-xs: 0.25rem; /* 4  inputs, tags        */
     --radius-sm: 0.375rem; /* 6  nested controls     */
     --radius-md: 0.625rem; /* 10 buttons, cards ← Krea's --radius */
+    --radius-panel: 0.75rem; /* 12 composers, cards    */
     --radius-lg: 1rem; /* 16 panels              */
     --radius-xl: 1.5rem; /* 24 modals, hero media  */
     --radius-full: 9999px; /*    pills, avatars      */
@@ -186,7 +187,7 @@
     --accent: oklch(55% 0.19 255); /* the ONE hue, used sparingly */
     --accent-foreground: oklch(99% 0 0);
     --destructive: oklch(58% 0.21 27);
-    --border: oklch(24% 0.004 250 / 0.1);
+    --border: var(--hairline);
     --input: oklch(24% 0.004 250 / 0.14);
     --ring: var(--focus-ring-color);
 
@@ -194,20 +195,38 @@
      App tokens the synthesis does not cover, expressed strictly in
      its primitives. Everything here must stay derivable from the
      system above — no new hand-painted hex. Light values. */
-    --surface-1: var(--card); /* card/panel        */
-    --surface-2: var(--secondary); /* elevated          */
-    --surface-3: oklch(93.5% 0.002 90); /* tertiary          */
+    --surface-1: var(--chrome);
+    --surface-2: var(--chrome);
+    --surface-3: var(--raise);
     --faint-foreground: oklch(65% 0.004 250); /* below muted       */
     --ghost-foreground: oklch(72% 0.004 250); /* placeholder       */
     --border-strong: oklch(24% 0.004 250 / 0.18);
+
+    /* ===== THE CANONICAL SURFACE NAMES =====
+     One namespace. Everything below aliases to these; nothing else may
+     define a surface, a hairline or a foreground.
+
+     This exists because there were three parallel namespaces — the base
+     scale, --tool-*, and --studio-* — and different parts of one screen read
+     from different ones. --tool-* alone carried four aliases for the same
+     muted grey and three for the same border. Fixing the page you were
+     looking at reopened drift on the page you were not. */
+    --canvas: var(--background); /* the floor */
+    --chrome: var(--card); /* rail, panel, toolbars, popovers */
+    --raise: oklch(24% 0.004 250 / 0.07); /* raised over chrome */
+    --hairline: oklch(24% 0.004 250 / 0.12); /* the ONLY border value */
+    --fg: var(--foreground);
+    --fg-muted: oklch(45% 0.004 250); /* labels, empty states */
+    --fg-dim: oklch(62% 0.004 250); /* placeholder text ONLY */
+    --on-primary: var(--background); /* foreground on a --fg fill */
 
     /* Interaction overlays — one resting fill, one hover step, one active
      step. Every control tints with these; nothing invents its own alpha.
      --fill is what replaces a control's border: a chip reads as a chip
      because it is filled, not because it is outlined. */
     --fill: oklch(24% 0.004 250 / 0.05);
-    --hover: oklch(24% 0.004 250 / 0.06);
-    --active: oklch(24% 0.004 250 / 0.08);
+    --hover: var(--raise);
+    --active: oklch(24% 0.004 250 / 0.1);
     --success: oklch(56% 0.14 160); /* render-state green */
     --warning: oklch(66% 0.13 80); /* render-state amber */
 
@@ -273,20 +292,32 @@
     --accent: oklch(65% 0.17 255);
     --accent-foreground: oklch(14.5% 0 0);
     --destructive: oklch(65% 0.19 27);
-    --border: oklch(100% 0 0 / 0.1);
+    --border: var(--hairline);
     --input: oklch(100% 0 0 / 0.15);
     --ring: oklch(100% 0 0 / 0.3);
 
     /* Vidra extensions — dark values. */
-    --surface-1: var(--card);
-    --surface-2: var(--secondary);
-    --surface-3: oklch(32% 0 0);
+    --surface-1: var(--chrome);
+    --surface-2: var(--chrome);
+    --surface-3: var(--raise);
     --faint-foreground: oklch(60% 0 0);
     --ghost-foreground: oklch(48% 0 0);
     --border-strong: oklch(100% 0 0 / 0.16);
+    /* The canvas-app ladder, measured against Recraft: #1b1b1b board,
+       #292929 chrome. The previous 18.5/25.5 rendered #131313/#232323 —
+       the right shape, about eight levels too dark. */
+    --canvas: oklch(22% 0 0);
+    --chrome: oklch(27.9% 0 0);
+    --raise: oklch(100% 0 0 / 0.07);
+    --hairline: oklch(100% 0 0 / 0.12);
+    --fg: oklch(98.5% 0 0);
+    --fg-muted: oklch(100% 0 0 / 0.6);
+    --fg-dim: oklch(100% 0 0 / 0.4);
+    --on-primary: oklch(22% 0 0);
+
     --fill: oklch(100% 0 0 / 0.05);
-    --hover: oklch(100% 0 0 / 0.06);
-    --active: oklch(100% 0 0 / 0.08);
+    --hover: var(--raise);
+    --active: oklch(100% 0 0 / 0.1);
     --success: oklch(76% 0.13 165);
     --warning: oklch(82% 0.12 85);
   }

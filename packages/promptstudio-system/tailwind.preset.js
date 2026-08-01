@@ -51,6 +51,15 @@ export default {
         ring: "var(--ring)",
         /* The one hover step and the one active step. Controls tint with
            bg-hover / bg-active; nothing invents its own white alpha. */
+        /* The canonical surface names. Prefer these at new call sites. */
+        canvas: "var(--canvas)",
+        chrome: "var(--chrome)",
+        raise: "var(--raise)",
+        hairline: "var(--hairline)",
+        fg: "var(--fg)",
+        "fg-muted": "var(--fg-muted)",
+        "fg-dim": "var(--fg-dim)",
+        "on-primary": "var(--on-primary)",
         fill: "var(--fill)",
         hover: "var(--hover)",
         active: "var(--active)",

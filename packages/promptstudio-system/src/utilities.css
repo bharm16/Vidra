@@ -181,7 +181,9 @@
   font-family: var(--font-sans);
   font-size: var(--text-ui);
   font-weight: var(--weight-ui);
-  line-height: 1;
+  /* 1 clipped descenders in "Library" and "Live editor" — a 14px box for
+     14px text. ~18px is the control leading. */
+  line-height: 1.3;
   border: none;
   background: var(--fill);
   color: var(--muted-foreground);
@@ -283,4 +285,13 @@
   justify-content: flex-start;
   padding-left: var(--space-8);
   padding-right: var(--space-3);
+}
+
+/* The focus ring, unlayered so preflight's `outline: none` on buttons cannot
+   win. Studio and the canvas surfaces had regressed to outline-style: none on
+   every control. */
+:where(button, a, [role="button"], textarea, input):focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+  border-radius: inherit;
 }
