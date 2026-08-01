@@ -102,6 +102,60 @@ test.describe("golden path", () => {
     ).toBeVisible({ timeout: 15_000 });
   });
 
+  test("the expanded words grow labeled spans, and click-to-enhance applies a real suggestion", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+
+    // The enhancement leg is the historically fragile half of the loop —
+    // the 2026-07-31 launch-blocker (c3f17e15) was streaming span labeling
+    // silently returning empty while every mocked suite stayed green. This
+    // test runs the real labeler and the real suggestions pipeline, on its
+    // own one-liner so server-side optimize/label caches keyed by input
+    // never mask the cold path.
+    const ENHANCE_LINER = "a clockmaker winding a brass clock by candlelight";
+    await injectAuthUser(page);
+    await page.goto("/");
+    const editor = page.getByLabel("Shot description");
+    await expect(editor).toBeVisible();
+    await editor.fill(ENHANCE_LINER);
+    await page.getByTestId("canvas-generate-button").click();
+
+    // Expansion lands on a session and the working words grow labeled spans
+    // from the real streaming labeler.
+    await page.waitForURL((url) => url.pathname.startsWith("/session/"), {
+      timeout: 60_000,
+    });
+    // 90s: a fully cold local suite run (three concurrent expansions +
+    // Replicate frames on unbounded workers) pushed cold labeling past 60s;
+    // the signal here is "labels arrive at all", not their latency.
+    const firstSpan = page.locator("[data-category]").first();
+    await expect(firstSpan).toBeVisible({ timeout: 90_000 });
+
+    // Click-to-enhance: selecting a span opens the suggestion tray...
+    await firstSpan.click();
+    const tray = page.getByTestId("canvas-suggestion-tray");
+    await expect(tray).toBeVisible({ timeout: 10_000 });
+
+    // ...which fills with real alternatives (live LLM latency)...
+    const firstSuggestion = tray.locator("button[data-index]").first();
+    await expect(firstSuggestion).toBeVisible({ timeout: 45_000 });
+    // The suggestion text is the button's first text node (the "Best" badge
+    // is a trailing span).
+    const suggestionText = (
+      await firstSuggestion.evaluate(
+        (el) => el.childNodes[0]?.textContent ?? "",
+      )
+    ).trim();
+    expect(suggestionText.length).toBeGreaterThan(0);
+
+    // ...and applying one lands it in the working words.
+    await firstSuggestion.click();
+    await expect
+      .poll(async () => await editorText(page), { timeout: 15_000 })
+      .toContain(suggestionText);
+  });
+
   test("expansion produces a first frame", async ({ page }) => {
     test.skip(
       !process.env.GOLDEN_PATH_FULL,
