@@ -1,5 +1,9 @@
 @layer ps.base {
+  /* font-family belongs on html, not only body: portalled content, the
+     scrollbar, and UA form defaults resolve against the root element and
+     otherwise fall back to the serif default. */
   html {
+    font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
     font-feature-settings:
       "kern" 1,
