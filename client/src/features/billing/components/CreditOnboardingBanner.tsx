@@ -94,7 +94,7 @@ export function CreditOnboardingBanner({
         <button
           type="button"
           onClick={handleDismiss}
-          className="rounded-md p-1 text-tool-text-dim transition-[color,background-color,transform] duration-[140ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px hover:bg-tool-rail-border hover:text-white"
+          className="rounded-md p-1 text-tool-text-dim transition-[color,background-color,transform] duration-[140ms] [transition-timing-function:var(--motion-ease-standard)] hover:bg-tool-rail-border hover:text-white"
           aria-label="Dismiss credit onboarding"
         >
           <X className="h-3.5 w-3.5" />

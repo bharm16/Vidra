@@ -626,7 +626,7 @@ export function CanvasWorkspace({
   // composer (never submits), so editing stays explicit.
   const starterPillsSlot = isPreWork ? (
     <div
-      className="mt-[26px] flex flex-wrap justify-center gap-[11px]"
+      className="mt-6 flex flex-wrap justify-start gap-2"
       aria-label="Example prompts"
     >
       {STARTER_CHIPS.map((chip) => (
@@ -634,7 +634,7 @@ export function CanvasWorkspace({
           key={chip}
           type="button"
           onClick={() => onComposerFill?.(chip)}
-          className="text-tool-text-dim hover:text-foreground rounded-full border border-white/[0.10] bg-white/[0.03] px-[15px] py-[9px] text-sm backdrop-blur-[6px] transition-all hover:-translate-y-px hover:border-[color:var(--accent)] hover:bg-white/[0.06]"
+          className="text-tool-text-dim hover:text-foreground bg-fill hover:bg-active h-control-md text-ui rounded-full px-3 transition-colors"
         >
           {chip}
         </button>
@@ -676,9 +676,21 @@ export function CanvasWorkspace({
         style={
           // Pre-work: the composer rises to mid-screen so the hero question and
           // its answer box read as one unit; it glides down once work starts.
+          //
+          // The offset centers the block (composer + starter chips, ~248 tall)
+          // in the viewport and then lifts it a deliberate 32px — optical
+          // centering reads better than true centering for a single focal
+          // element. The previous 40vh produced a 38px lift at exactly one
+          // viewport height and drifted everywhere else.
+          //
+          // The half-topbar term is not a fudge: this element's containing
+          // block starts below the top bar, so its 50% sits half a topbar
+          // lower than the viewport's. Adding it back centers against what
+          // the eye actually reads as the canvas.
           isPreWork
             ? ({
-                "--workspace-composer-bottom": "40vh",
+                "--workspace-composer-bottom":
+                  "calc(50% - 124px + 32px + (var(--workspace-topbar-h) / 2))",
               } as React.CSSProperties)
             : undefined
         }

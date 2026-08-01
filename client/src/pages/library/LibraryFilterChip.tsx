@@ -28,7 +28,7 @@ export function LibraryFilterChip({
         "h-auto rounded-full border px-4 py-[7px] font-sans text-meta font-medium transition-all",
         active
           ? "border-foreground bg-foreground text-app hover:bg-foreground hover:text-app"
-          : "text-tool-text-dim hover:text-foreground border-white/[0.14] bg-transparent hover:border-white/30 hover:bg-white/[0.04]",
+          : "text-tool-text-dim hover:text-foreground border-white/[0.14] bg-transparent hover:border-white/30 hover:bg-hover",
       )}
     >
       {children}

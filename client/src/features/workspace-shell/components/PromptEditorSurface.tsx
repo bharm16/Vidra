@@ -160,12 +160,15 @@ export function PromptEditorSurface({
       className={cn("px-4 pb-2.5 pt-3", isEmptyLayout && "p-0")}
       style={
         isEmptyLayout
-          ? // Feed the global [contenteditable] !important sizing the Anchor's
-            // values (26px / 1.45 / no inner padding) rather than out-specifying
-            // it — the rule reads these vars.
+          ? // Feed the global [contenteditable] !important sizing the display
+            // triple rather than out-specifying it — the rule reads these vars.
+            // Display type tightens: the base default is +0.01em, which at this
+            // size read as a visible +0.26px of loosening on the largest text
+            // on the page.
             ({
-              "--editor-font-size": "26px",
-              "--editor-line-height": "1.45",
+              "--editor-font-size": "var(--text-heading)",
+              "--editor-line-height": "var(--text-heading-lh)",
+              "--editor-letter-spacing": "var(--text-heading-ls)",
               "--editor-padding-y": "0px",
               "--editor-padding-x": "0px",
             } as React.CSSProperties)
@@ -181,8 +184,8 @@ export function PromptEditorSurface({
             // that there is more prompt below the fold.
             "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none",
             isEmptyLayout
-              ? "text-foreground caret-foreground min-h-[104px] font-light [&:empty]:min-h-[104px]"
-              : "text-tool-text-dim min-h-[56px] text-ui leading-[1.75] [&:empty]:min-h-[56px]",
+              ? "text-foreground caret-foreground min-h-[104px] [&:empty]:min-h-[104px]"
+              : "text-tool-text-dim text-ui min-h-[56px] leading-[1.75] [&:empty]:min-h-[56px]",
           )}
           placeholder={placeholderText}
           onTextSelection={onTextSelection}
@@ -222,14 +225,14 @@ export function PromptEditorSurface({
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="text-tool-text-dim truncate text-meta font-semibold tracking-[0.05em]">
+              <span className="text-tool-text-dim text-meta truncate font-semibold tracking-[0.05em]">
                 {selectionLabel
                   ? `Replace "${selectionLabel}"`
                   : "Replace selection"}
               </span>
               <span
                 key={suggestionCount}
-                className="motion-count-bump bg-tool-rail-border text-tool-text-subdued rounded-full px-2 py-0.5 text-meta font-semibold"
+                className="motion-count-bump bg-tool-rail-border text-tool-text-subdued text-meta rounded-full px-2 py-0.5 font-semibold"
                 title={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
                 aria-label={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
               >
@@ -289,7 +292,7 @@ export function PromptEditorSurface({
                 }}
                 aria-label="Close suggestions"
               >
-                <X size={10} weight="bold" aria-hidden="true" />
+                <X size={12} weight="bold" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -297,7 +300,7 @@ export function PromptEditorSurface({
           {isMotionSelection ? (
             <div
               data-testid="motion-not-in-picture-note"
-              className="mb-2 flex items-center gap-1.5 text-meta font-medium"
+              className="text-meta mb-2 flex items-center gap-1.5 font-medium"
               style={{ color: MOTION_GOLD_HEX }}
             >
               <span
@@ -387,7 +390,7 @@ export function PromptEditorSurface({
                         "flex-shrink-0 rounded-lg text-xs font-normal transition-[transform,border-color,color,background-color] duration-[160ms] [transition-timing-function:var(--motion-ease-standard)]",
                         activeSuggestionIndex === index
                           ? "border-tool-accent-neutral/50 bg-tool-accent-neutral/10 text-foreground -translate-y-px"
-                          : "border-tool-nav-active bg-tool-surface-prompt-compact text-tool-text-dim hover:border-tool-text-label hover:text-foreground hover:-translate-y-px",
+                          : "border-tool-nav-active bg-tool-surface-prompt-compact text-tool-text-dim hover:border-tool-text-label hover:text-foreground",
                       )}
                       onMouseDown={(event) => event.preventDefault()}
                       onMouseEnter={() => {
@@ -401,11 +404,11 @@ export function PromptEditorSurface({
                     >
                       {suggestion.text}
                       {index === 0 ? (
-                        <span className="text-tool-accent-neutral ml-1.5 text-meta font-semibold">
+                        <span className="text-tool-accent-neutral text-meta ml-1.5 font-semibold">
                           Best
                         </span>
                       ) : suggestion.meta ? (
-                        <span className="text-tool-text-subdued ml-1.5 text-meta">
+                        <span className="text-tool-text-subdued text-meta ml-1.5">
                           {suggestion.meta}
                         </span>
                       ) : null}

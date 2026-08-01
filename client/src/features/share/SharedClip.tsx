@@ -48,7 +48,7 @@ function StartYourOwnCta({
     <Button
       asChild
       size="lg"
-      className={`text-app h-auto gap-2 rounded-md bg-white px-6 py-3.5 text-ui font-semibold shadow-[0_12px_32px_-10px_rgba(255,255,255,0.34)] transition-transform hover:-translate-y-px hover:bg-white hover:shadow-[0_16px_40px_-10px_rgba(255,255,255,0.46)] ${className ?? ""}`}
+      className={`text-app h-auto gap-2 rounded-md bg-white px-6 py-3.5 text-ui font-semibold shadow-[0_12px_32px_-10px_rgba(255,255,255,0.34)] transition-transform hover:bg-white hover:shadow-[0_16px_40px_-10px_rgba(255,255,255,0.46)] ${className ?? ""}`}
     >
       <Link to="/">
         Start your own clip
@@ -88,7 +88,7 @@ function ClipShell({
         <Button
           asChild
           variant="outline"
-          className="text-tool-text-secondary hover:text-foreground h-auto rounded-md border-white/[0.16] bg-white/[0.04] px-[18px] py-[9px] text-ui font-medium hover:border-white/[0.16] hover:bg-white/[0.09]"
+          className="text-tool-text-secondary hover:text-foreground h-auto rounded-md border-white/[0.16] bg-white/[0.04] px-[18px] py-[9px] text-ui font-medium hover:border-white/[0.16] hover:bg-hover"
         >
           <Link to="/signin">Sign in</Link>
         </Button>

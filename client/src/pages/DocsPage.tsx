@@ -101,7 +101,7 @@ export function DocsPage(): React.ReactElement {
         <Link
           to="/"
           title="Back to app"
-          className="text-tool-text-muted hover:text-foreground flex h-[38px] w-[38px] items-center justify-center rounded-md transition-colors hover:bg-white/[0.06]"
+          className="text-tool-text-muted hover:text-foreground flex h-[38px] w-[38px] items-center justify-center rounded-md transition-colors hover:bg-hover"
         >
           <svg
             width="18"

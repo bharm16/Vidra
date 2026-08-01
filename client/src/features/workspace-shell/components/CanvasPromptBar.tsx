@@ -85,21 +85,21 @@ export function CanvasPromptBar({
       data-testid={collapsed ? "composer-toolbar" : undefined}
       className={cn(
         "absolute left-1/2 z-10 -translate-x-1/2",
-        "border border-white/[0.08]",
-        "transition-[transform,box-shadow,bottom] duration-[240ms]",
+        // One edge treatment — a hairline, same as the Anchor sheet.
+        "border-hairline border-border",
+        "transition-[transform,bottom] duration-[240ms]",
         collapsed
           ? cn(
-              "inline-flex w-auto items-center rounded-lg",
-              "bg-tool-surface-prompt/[0.92] backdrop-blur-[18px] backdrop-saturate-150",
-              "shadow-[0_26px_60px_-26px_rgba(0,0,0,0.9),0_6px_20px_rgba(0,0,0,0.55)]",
+              "inline-flex w-auto items-center rounded-xl",
+              // Translucent so the glass has something to work on — an opaque
+              // surface behind a backdrop filter renders no glass at all.
+              "bg-card/[0.92] [backdrop-filter:var(--blur-glass)]",
             )
           : cn(
-              // Frame A: 664px, radius 18, border .12, the deep double shadow.
-              "w-[min(100%-48px,664px)] rounded-lg !border-white/[0.12]",
+              "w-[min(100%-48px,664px)] rounded-xl",
               isExpanded
-                ? "bg-tool-surface-prompt-compact"
-                : "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",
-              "shadow-[0_30px_70px_-26px_rgba(0,0,0,0.85),0_6px_20px_rgba(0,0,0,0.5)]",
+                ? "bg-card"
+                : "bg-card/[0.72] [backdrop-filter:var(--blur-glass)]",
             ),
       )}
       style={{ bottom: "var(--workspace-composer-bottom)" }}
@@ -114,8 +114,9 @@ export function CanvasPromptBar({
         )}
         style={
           {
-            "--editor-font-size": "18px",
-            "--editor-line-height": "1.55",
+            "--editor-font-size": "var(--text-body-lg)",
+            "--editor-line-height": "var(--text-body-lg-lh)",
+            "--editor-letter-spacing": "var(--text-body-lg-ls)",
           } as React.CSSProperties
         }
       >

@@ -61,8 +61,8 @@ export function AccountSettingsNav({
             className={cn(
               "mb-[3px] !h-auto w-full justify-start gap-[11px] rounded-md px-[11px] py-[10px] text-ui font-medium",
               isActive
-                ? "text-foreground bg-white/[0.07] font-semibold hover:bg-white/[0.07]"
-                : "text-tool-text-muted hover:text-foreground hover:bg-white/[0.04]",
+                ? "text-foreground bg-white/[0.07] font-semibold hover:bg-hover"
+                : "text-tool-text-muted hover:text-foreground hover:bg-hover",
             )}
           >
             <Icon className="h-4 w-4" />

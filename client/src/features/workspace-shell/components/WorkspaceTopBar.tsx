@@ -1,30 +1,17 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { CaretDown, CaretRight } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
-import { VidraMark } from "@/components/brand";
 import { cn } from "@/utils/cn";
 import { FEATURES } from "@/config/features.config";
 import { useWorkspaceProject } from "../hooks/useWorkspaceProject";
 import { useWorkspaceCredits } from "../hooks/useWorkspaceCredits";
 import { AccountPopover } from "./AccountPopover";
 
-/* Vidra lockup — the shared brand mark beside the wordtype. */
-function VidraLockup(): React.ReactElement {
-  return (
-    <span className="inline-flex items-center gap-2.5">
-      <VidraMark className="h-[26px] w-[26px] rounded-lg" />
-      <span className="text-foreground text-body-lg font-semibold tracking-[-0.01em]">
-        Vidra
-      </span>
-    </span>
-  );
-}
-
 interface WorkspaceTopBarProps {
   /** Pre-work (empty state): drop the session breadcrumb + credits so only the
-   *  wordmark and Library/avatar remain — the handoff's minimal top bar
+   *  Library/avatar cluster remains — the handoff's minimal top bar
    *  (REBUILD.md: "empty state carries a minimal top bar"). */
   minimal?: boolean;
 }
@@ -35,24 +22,15 @@ export function WorkspaceTopBar({
   const project = useWorkspaceProject();
   const credits = useWorkspaceCredits();
   const user = useAuthUser();
-  const location = useLocation();
-  const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
 
   return (
     <header
       className="border-tool-rail-border bg-tool-surface-deep flex h-[var(--workspace-topbar-h)] items-center gap-3 border-b px-4"
       role="banner"
     >
-      {minimal ? (
-        <span
-          className="ps-rise inline-flex"
-          style={{ animationDelay: "0.1s" }}
-        >
-          <VidraLockup />
-        </span>
-      ) : (
-        <VidraLockup />
-      )}
+      {/* No wordmark here: the nav rail is chrome for every workspace moment
+        and carries the lockup, so a second one rendered beside it at a
+        different size. The rail's is the one that keeps nav company. */}
       {/*
         Display-only session breadcrumb — the current session's derived title
         (or "Untitled"), read via useWorkspaceProject. Hidden in the pre-work
@@ -84,7 +62,7 @@ export function WorkspaceTopBar({
 
       {!minimal && FEATURES.BILLING_UI ? (
         <span
-          className="text-tool-text-dim font-mono text-meta"
+          className="text-tool-text-dim text-meta font-mono"
           aria-label="Credits remaining"
           title={`${credits.credits.toLocaleString()} credits`}
         >
@@ -107,11 +85,7 @@ export function WorkspaceTopBar({
             </Button>
             <AccountPopover user={user} />
           </>
-        ) : (
-          <Button asChild variant="ghost" size="sm">
-            <Link to={`/signin?redirect=${returnTo}`}>Sign in</Link>
-          </Button>
-        )}
+        ) : null}
       </div>
     </header>
   );

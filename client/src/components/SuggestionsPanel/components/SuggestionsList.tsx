@@ -141,7 +141,7 @@ export function SuggestionsList({
             <div
               key={key}
               role="listitem"
-              className="flex items-start justify-between gap-3 rounded-md border border-transparent bg-transparent px-2.5 py-2 transition-all duration-150 hover:-translate-y-px hover:border-white/10 hover:bg-white/5"
+              className="flex items-start justify-between gap-3 rounded-md border border-transparent bg-transparent px-2.5 py-2 transition-all duration-150 hover:border-white/10 hover:bg-white/5"
             >
               <Button
                 type="button"
@@ -157,7 +157,7 @@ export function SuggestionsList({
                 type="button"
                 onClick={() => handleSuggestionSelect(suggestionObj)}
                 variant="ghost"
-                className="text-label-12 text-muted hover:text-foreground border-border bg-surface-2 hover:border-border-strong hover:bg-surface-3 mt-0.5 h-6 flex-shrink-0 rounded-full border px-2.5 font-medium transition-all duration-150 hover:-translate-y-px"
+                className="text-label-12 text-muted hover:text-foreground border-border bg-surface-2 hover:border-border-strong hover:bg-surface-3 mt-0.5 h-6 flex-shrink-0 rounded-full border px-2.5 font-medium transition-all duration-150"
                 aria-label={`Apply ${suggestionText}`}
               >
                 Apply

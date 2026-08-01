@@ -65,7 +65,13 @@ function makeSurfaceProps(): PromptEditorSurfaceProps {
   };
 }
 
-const OPAQUE_CLASS = "bg-tool-surface-prompt-compact";
+/**
+ * The glass is a backdrop filter, and it only reads as glass when the surface
+ * beneath it is translucent — an opaque background behind a backdrop filter
+ * renders nothing. So the invariant has two halves that must move together.
+ */
+const GLASS = "[backdrop-filter:var(--blur-glass)]";
+const TRANSLUCENT_SURFACE = "bg-card/[";
 
 describe("regression: expanded composer surface is opaque", () => {
   it("keeps the floating-glass treatment while collapsed", () => {
@@ -73,8 +79,8 @@ describe("regression: expanded composer surface is opaque", () => {
       withSelectedSpan(<CanvasPromptBar surfaceProps={makeSurfaceProps()} />),
     );
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.className).toMatch(/backdrop-blur/);
-    expect(wrapper.className).not.toContain(OPAQUE_CLASS);
+    expect(wrapper.className).toContain(GLASS);
+    expect(wrapper.className).toContain(TRANSLUCENT_SURFACE);
   });
 
   it("goes opaque with no backdrop blur while the suggestion tray is open", () => {
@@ -84,7 +90,8 @@ describe("regression: expanded composer surface is opaque", () => {
       }),
     );
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.className).toContain(OPAQUE_CLASS);
-    expect(wrapper.className).not.toMatch(/backdrop-blur/);
+    expect(wrapper.className).toContain("bg-card");
+    expect(wrapper.className).not.toContain(TRANSLUCENT_SURFACE);
+    expect(wrapper.className).not.toContain(GLASS);
   });
 });

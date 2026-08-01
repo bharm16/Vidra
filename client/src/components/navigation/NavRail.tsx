@@ -48,23 +48,29 @@ function RailItem({
     <Link
       to={to}
       title={collapsed ? label : undefined}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex w-full items-center gap-3 rounded-md transition-colors",
+        // One control recipe: 36 tall, 8 padding, 8 gap, 14px label. The size
+        // sits on the row, not only the label span, so nothing in the rail
+        // computes to the inherited 16px — including elements that paint no
+        // text of their own.
+        "h-control-lg text-ui flex w-full items-center gap-2 rounded-md p-2 transition-colors",
+        collapsed && "justify-center",
         active
-          ? "text-foreground bg-white/[0.07]"
-          : "text-tool-text-muted hover:text-foreground hover:bg-white/[0.05]",
+          ? "text-foreground bg-active"
+          : "text-tool-text-muted hover:text-foreground hover:bg-hover",
       )}
     >
       <span
         className={cn(
-          "flex h-[42px] w-[42px] flex-none items-center justify-center",
+          "flex flex-none items-center justify-center",
           accent && "text-[color:color-mix(in_srgb,var(--accent)_62%,#fff)]",
         )}
       >
         {icon}
       </span>
       {collapsed ? null : (
-        <span className="whitespace-nowrap text-ui font-medium">{label}</span>
+        <span className="text-ui whitespace-nowrap font-medium">{label}</span>
       )}
     </Link>
   );
@@ -73,7 +79,7 @@ function RailItem({
 /**
  * The persistent navigation rail (design_handoff_vidra / Rail.dc.html) — the
  * workspace's chrome once the space exists (the empty state keeps a minimal top
- * bar instead). Collapses 240⇄64px; logo doubles as "new session".
+ * bar instead). Collapses 256⇄64px; logo doubles as "new session".
  */
 export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
   const [collapsed, setCollapsed] = useState(false);
@@ -83,8 +89,8 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
 
   return (
     <aside
-      className="bg-tool-surface-deep border-tool-rail-border flex h-full flex-none flex-col overflow-hidden border-r px-[11px] py-4 transition-[width] duration-[260ms] ease-out"
-      style={{ width: collapsed ? 64 : 240 }}
+      className="bg-tool-surface-deep border-tool-rail-border flex h-full flex-none flex-col overflow-hidden border-r px-2 py-4 transition-[width] duration-[260ms] ease-out"
+      style={{ width: collapsed ? 64 : 256 }}
     >
       {/* Header — logo (→ new session) + collapse toggle. */}
       <div
@@ -96,11 +102,11 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         <Link
           to="/"
           title="New session"
-          className="flex items-center gap-[11px] rounded-md p-1.5 transition-colors hover:bg-white/[0.04]"
+          className="hover:bg-hover flex items-center gap-2 rounded-md p-2 transition-colors"
         >
           <VidraMark className="h-[30px] w-[30px] rounded-md" />
           {collapsed ? null : (
-            <span className="text-foreground whitespace-nowrap text-body-lg font-semibold tracking-[-0.01em]">
+            <span className="text-foreground text-body-lg whitespace-nowrap font-semibold tracking-[-0.01em]">
               Vidra
             </span>
           )}
@@ -112,9 +118,9 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed((c) => !c)}
-          className="text-tool-text-muted hover:text-foreground h-[34px] w-[34px] rounded-md hover:bg-white/[0.06]"
+          className="text-tool-text-muted hover:text-foreground hover:bg-hover h-control-lg w-control-lg rounded-md"
         >
-          <PanelLeft size={18} strokeWidth={1.8} />
+          <PanelLeft size={16} strokeWidth={1.8} />
         </Button>
       </div>
 
@@ -126,28 +132,28 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           collapsed={collapsed}
           accent
           active={active === "new"}
-          icon={<Plus size={19} strokeWidth={1.9} />}
+          icon={<Plus size={16} strokeWidth={1.9} />}
         />
         <RailItem
           to="/history"
           label="Library"
           collapsed={collapsed}
           active={active === "library"}
-          icon={<LibraryIcon size={18} strokeWidth={1.8} />}
+          icon={<LibraryIcon size={16} strokeWidth={1.8} />}
         />
         <RailItem
           to="/live-editor"
           label="Live editor"
           collapsed={collapsed}
           active={active === "live-editor"}
-          icon={<Paintbrush size={18} strokeWidth={1.8} />}
+          icon={<Paintbrush size={16} strokeWidth={1.8} />}
         />
         <RailItem
           to="/studio"
           label="Studio"
           collapsed={collapsed}
           active={active === "studio"}
-          icon={<Sparkles size={18} strokeWidth={1.8} />}
+          icon={<Sparkles size={16} strokeWidth={1.8} />}
         />
       </div>
 
@@ -158,27 +164,34 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         to="/docs"
         label="Docs & help"
         collapsed={collapsed}
-        icon={<CircleHelp size={18} strokeWidth={1.8} />}
+        icon={<CircleHelp size={16} strokeWidth={1.8} />}
       />
       <Link
         to={user ? "/account" : "/signin"}
         title="Account"
         className={cn(
-          "mt-1.5 flex items-center gap-[11px] rounded-md p-1.5 transition-colors hover:bg-white/[0.05]",
-          active === "account" && "bg-white/[0.06]",
+          "hover:bg-hover mt-1.5 flex items-center gap-2 rounded-md p-2 transition-colors",
+          active === "account" && "bg-active",
         )}
       >
-        <span className="border-border bg-muted text-muted-foreground flex h-8 w-8 flex-none items-center justify-center rounded-full border text-ui font-semibold uppercase">
+        <span className="border-border bg-muted text-muted-foreground text-ui flex h-8 w-8 flex-none items-center justify-center rounded-full border font-semibold uppercase">
           {accountName.charAt(0)}
         </span>
-        {collapsed ? null : (
+        {collapsed ? null : user ? (
           <span className="flex min-w-0 flex-col items-start whitespace-nowrap">
             <span className="text-foreground text-ui font-semibold">
               {accountName}
             </span>
-            <span className="text-tool-text-muted mt-px font-mono text-meta">
-              {user?.email ?? "Sign in"}
+            {/* Mono is the metadata face — right for an address. */}
+            <span className="text-tool-text-muted text-meta mt-px font-mono">
+              {user.email}
             </span>
+          </span>
+        ) : (
+          // Signed out there is no account to name: "Guest" over "Sign in" said
+          // the same thing twice, in two faces, in one row.
+          <span className="text-foreground text-ui whitespace-nowrap font-semibold">
+            Sign in
           </span>
         )}
       </Link>

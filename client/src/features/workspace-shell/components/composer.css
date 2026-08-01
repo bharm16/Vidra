@@ -12,5 +12,5 @@
 }
 
 .ps-composer-reveal {
-  animation: composer-reveal 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: composer-reveal var(--duration-medium) var(--ease-standard);
 }

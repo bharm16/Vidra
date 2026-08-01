@@ -76,12 +76,14 @@ describe("WorkspaceTopBar", () => {
     expect(screen.getByText(/1,234/)).toBeInTheDocument();
   });
 
-  it("shows a Sign in link — not the account popover or Library — when signed out", () => {
+  it("carries no auth affordance when signed out — the rail owns it", () => {
     authState.user = null;
     renderTopBar();
     const banner = screen.getByRole("banner");
-    const signIn = within(banner).getByRole("link", { name: /sign in/i });
-    expect(signIn.getAttribute("href")).toMatch(/^\/signin/);
+    // The top bar used to carry its own Sign in, which meant a guest saw the
+    // same action twice at two sizes and two weights: 46x20/600 in the rail
+    // and 63x36/500 here. The rail is where nav lives, so the rail keeps it.
+    expect(within(banner).queryByRole("link", { name: /sign in/i })).toBeNull();
     // Library and the account popover are signed-in affordances; a guest gets
     // neither (history is auth-gated, and there is no account yet).
     expect(

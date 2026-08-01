@@ -84,14 +84,14 @@ const PREVIEW_CLICK_COOLDOWN_MS = 2000;
 // retired MiniDropdown's quiet trigger, while the menu itself is the system
 // DropdownMenu (opaque popover surface on the named z-index scale).
 const MENU_TRIGGER_CLASS =
-  "inline-flex h-[28px] items-center gap-[5px] whitespace-nowrap rounded-md px-2 text-xs text-tool-text-muted transition-colors hover:text-foreground data-[state=open]:text-foreground";
+  "inline-flex h-control-lg items-center gap-2 whitespace-nowrap rounded-md px-3 text-ui text-tool-text-muted transition-colors hover:text-foreground data-[state=open]:text-foreground";
 
 // Docked variant (the composer handoff): icon-only 42px control buttons —
 // aspect · duration · model · preview — styled as a compact canvas toolbar.
 // The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
 // setting is announced; the title names the control.
 const ICON_TRIGGER_CLASS =
-  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-md text-tool-text-dim transition-all duration-[160ms] hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.13] data-[state=open]:text-foreground";
+  "inline-flex h-control-lg w-control-lg items-center justify-center rounded-md text-tool-text-dim transition-colors hover:bg-hover hover:text-foreground data-[state=open]:bg-active data-[state=open]:text-foreground";
 
 /* Control glyphs copied VERBATIM from the composer handoff
    (design_handoff_composer/Composer States.dc.html) — 21px, 1.7 stroke,
@@ -101,8 +101,8 @@ const ICON_TRIGGER_CLASS =
 function AspectGlyph(): React.ReactElement {
   return (
     <svg
-      width="21"
-      height="21"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -119,8 +119,8 @@ function AspectGlyph(): React.ReactElement {
 function DurationGlyph(): React.ReactElement {
   return (
     <svg
-      width="21"
-      height="21"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -138,8 +138,8 @@ function DurationGlyph(): React.ReactElement {
 function ModelGlyph(): React.ReactElement {
   return (
     <svg
-      width="21"
-      height="21"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
@@ -152,8 +152,8 @@ function ModelGlyph(): React.ReactElement {
 function PreviewGlyph(): React.ReactElement {
   return (
     <svg
-      width="21"
-      height="21"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -190,7 +190,7 @@ function MakeItArrowGlyph(): React.ReactElement {
 // Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
 // pills inside the glass sheet, matching the handoff's two inline chips.
 const SHEET_MENU_TRIGGER_CLASS =
-  "inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-md border border-white/[0.12] bg-white/[0.04] px-3 font-mono text-ui text-tool-text-dim transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-foreground data-[state=open]:text-foreground";
+  "inline-flex h-control-lg items-center gap-2 whitespace-nowrap rounded-full bg-fill px-3 py-2 font-mono text-ui text-tool-text-dim transition-colors hover:bg-active hover:text-foreground data-[state=open]:text-foreground";
 
 export function CanvasSettingsRow({
   prompt,
@@ -436,7 +436,7 @@ export function CanvasSettingsRow({
                   onClick={() => storeActions.clearExtendVideo()}
                   aria-label="Clear extend mode"
                 >
-                  <X size={10} />
+                  <X size={12} />
                 </button>
               </div>
             ) : null}
@@ -455,7 +455,7 @@ export function CanvasSettingsRow({
               <>
                 {aspectRatio}
                 <CaretDown
-                  size={10}
+                  size={12}
                   aria-hidden="true"
                   className="opacity-50"
                 />
@@ -490,7 +490,7 @@ export function CanvasSettingsRow({
               <>
                 {formatDurationLabel(duration)}
                 <CaretDown
-                  size={10}
+                  size={12}
                   aria-hidden="true"
                   className="opacity-50"
                 />
@@ -617,7 +617,7 @@ export function CanvasSettingsRow({
               ? cn(
                   // 46px circular submit — the handoff's ghost → white → accent
                   // states, scaling in as it fires.
-                  "flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full border transition-[transform,background-color,border-color,color,box-shadow] duration-300 disabled:cursor-not-allowed",
+                  "flex h-control-lg w-control-lg flex-none items-center justify-center rounded-full border-hairline transition-[background-color,border-color,color] duration-300 disabled:cursor-not-allowed",
                   isGenerationBusy
                     ? "scale-90 border-[color:var(--accent)] bg-[color:var(--accent)] text-white shadow-[0_0_24px_rgba(91,108,255,0.45)]"
                     : generateDisabled
@@ -627,10 +627,10 @@ export function CanvasSettingsRow({
               : cn(
                   // The handoff's calm primary: off-white solid, no accent
                   // glow, a trailing arrow. Same button in box and pill.
-                  "inline-flex h-[42px] items-center gap-[7px] rounded-md px-[18px] text-sm font-semibold",
+                  "inline-flex h-control-lg items-center gap-2 rounded-md px-3 text-ui font-semibold",
                   "bg-foreground text-tool-surface-deep shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
-                  "transition-[transform,background-color,opacity] hover:-translate-y-px hover:bg-white",
-                  "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
+                  "transition-[transform,background-color,opacity] hover:bg-white",
+                  "disabled:cursor-not-allowed disabled:opacity-60",
                 ),
           )}
         >

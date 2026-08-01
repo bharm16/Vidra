@@ -76,7 +76,7 @@ export default function KeyboardShortcuts({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-md border border-border bg-surface-3 text-muted transition-all duration-150 hover:-translate-y-px hover:border-border-strong"
+            className="h-8 w-8 rounded-md border border-border bg-surface-3 text-muted transition-all duration-150 hover:border-border-strong"
             onClick={onClose}
             aria-label="Close command palette"
           >

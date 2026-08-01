@@ -539,7 +539,7 @@ export function ModelRecommendationDropdown({
           onMouseLeave={onLeaveTrigger}
           className={cn(
             "border-tool-nav-active bg-tool-surface-card text-foreground flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-[border-color,transform,background-color]",
-            "hover:border-tool-text-disabled duration-[160ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px",
+            "hover:border-tool-text-disabled duration-[160ms] [transition-timing-function:var(--motion-ease-standard)]",
             mode !== "closed" && "border-tool-accent-neutral",
             triggerClassName,
           )}

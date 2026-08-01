@@ -178,9 +178,9 @@ export function TheSpace({
                   className={cn(
                     "inline-flex items-center justify-center gap-[7px] rounded-md border px-3 font-mono text-meta",
                     "text-tool-text-muted border-white/[0.08] bg-white/[0.03]",
-                    "transition-all group-hover:-translate-y-px group-hover:scale-[1.04]",
+                    "transition-all group-hover:scale-[1.04]",
                     "group-hover:border-[color:color-mix(in_srgb,var(--accent)_52%,transparent)]",
-                    "group-hover:text-foreground group-hover:bg-white/[0.075]",
+                    "group-hover:text-foreground group-hover:bg-hover",
                   )}
                   style={{ height: h }}
                 >

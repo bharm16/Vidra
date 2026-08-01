@@ -51,7 +51,7 @@
     --tool-text-secondary: var(--muted-foreground);
     --tool-text-dim: var(--muted-foreground);
     --tool-text-subdued: var(--muted-foreground);
-    --tool-text-muted: var(--faint-foreground);
+    --tool-text-muted: var(--muted-foreground);
     --tool-text-placeholder: var(--ghost-foreground);
     --tool-text-label: var(--ghost-foreground);
     --tool-text-disabled: var(--border-strong);
@@ -113,42 +113,6 @@
      :focus-within (the browser's own focus state — no JS events needed, which a
      managed contenteditable doesn't reliably emit). Tints derive from --accent
      so a theme swap recolors them. */
-  .ps-focus-bloom {
-    pointer-events: none;
-    border-radius: 9999px;
-    filter: blur(8px);
-    background: radial-gradient(
-      ellipse at 50% 55%,
-      color-mix(in srgb, var(--accent) 42%, transparent),
-      color-mix(in srgb, var(--accent) 12%, transparent) 44%,
-      transparent 72%
-    );
-    opacity: 0;
-    transform: translateX(-50%) scale(0.9);
-    transition:
-      opacity var(--duration-medium) var(--ease-standard),
-      transform var(--duration-medium) var(--ease-standard);
-  }
-
-  .ps-anchor-sheet:focus-within .ps-focus-bloom {
-    opacity: 0.85;
-    transform: translateX(-50%) scale(1.06);
-  }
-
-  .ps-focus-ring {
-    pointer-events: none;
-    border: 1.5px solid var(--accent);
-    box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent),
-      0 0 26px color-mix(in srgb, var(--accent) 28%, transparent);
-    opacity: 0;
-    transition: opacity 0.32s ease;
-  }
-
-  .ps-anchor-sheet:focus-within .ps-focus-ring {
-    opacity: 1;
-  }
-
   /* Contenteditable placeholder */
   [contenteditable][data-placeholder]:empty:before {
     content: attr(data-placeholder);

@@ -187,7 +187,7 @@ export function AssetLibrary({
         <button
           type="button"
           onClick={() => actions.openEditor("create")}
-          className="bg-primary text-primary-foreground flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-[background-color,transform,box-shadow,filter] duration-[140ms] [transition-timing-function:var(--motion-ease-standard)] hover:-translate-y-px hover:shadow-md hover:brightness-110"
+          className="bg-primary text-primary-foreground flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-[background-color,transform,box-shadow,filter] duration-[140ms] [transition-timing-function:var(--motion-ease-standard)] hover:shadow-md hover:brightness-110"
         >
           <Plus className="h-4 w-4" />
           New Asset

@@ -18,7 +18,7 @@ export const SpanItem = memo<SpanItemProps>(
       <Button
         type="button"
         className={cn(
-          "inline-flex rounded-full border px-3 py-1 text-label-sm font-medium text-foreground shadow-inset transition-all duration-150 hover:-translate-y-px hover:brightness-95",
+          "inline-flex rounded-full border px-3 py-1 text-label-sm font-medium text-foreground shadow-inset transition-all duration-150 hover:brightness-95",
           "border-[var(--span-border)] bg-[var(--span-bg)]",
         )}
         style={
