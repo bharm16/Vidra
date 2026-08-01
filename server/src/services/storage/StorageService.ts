@@ -10,7 +10,11 @@ import {
   resolveStorageTypeKey,
   type StorageType,
 } from "./config/storageConfig";
-import { generateStoragePath, validatePathOwnership } from "./utils/pathUtils";
+import {
+  generateStoragePath,
+  storagePathForBasename,
+  validatePathOwnership,
+} from "./utils/pathUtils";
 import { createForbiddenError } from "./utils/httpError";
 
 function normalizeContentType(value: string): string {
@@ -413,6 +417,34 @@ export class StorageService {
           ...result,
           storagePath,
         };
+      },
+      "debug",
+    );
+  }
+
+  /**
+   * Resolve a view URL for a preview image this user persisted, addressed by
+   * the asset basename ({timestamp}-{hash}.webp) that session records carry.
+   * The path is rebuilt from the requester's own uid, so cross-user reads are
+   * impossible by construction. Returns null when the object doesn't exist —
+   * callers keep an honest 404.
+   */
+  async getPreviewImageViewUrl(
+    userId: string,
+    assetBasename: string,
+  ): Promise<string | null> {
+    const storagePath = storagePathForBasename(
+      userId,
+      "preview-image",
+      assetBasename,
+    );
+    return this.withTiming(
+      "getPreviewImageViewUrl",
+      { userId, storagePath },
+      async () => {
+        const result =
+          await this.signedUrlService.getViewUrlIfPresent(storagePath);
+        return result?.viewUrl ?? null;
       },
       "debug",
     );

@@ -36,6 +36,10 @@ export interface PreviewStorageService {
     expiresAt: string;
     storagePath: string;
   }>;
+  getPreviewImageViewUrl: (
+    userId: string,
+    assetBasename: string,
+  ) => Promise<string | null>;
   uploadBuffer: (
     userId: string,
     type: "preview-image",

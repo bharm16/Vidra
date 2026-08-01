@@ -113,6 +113,25 @@ export class SignedUrlService {
     });
   }
 
+  /**
+   * Sign a view URL only when the object actually exists. Plain getViewUrl
+   * signs blindly (GCS mints URLs for absent objects), which would turn a
+   * caller's honest 404 into a URL that dies at the bucket.
+   */
+  async getViewUrlIfPresent(
+    path: string,
+    disposition = "inline",
+  ): Promise<{ viewUrl: string; expiresAt: string } | null> {
+    const exists = await this.withTiming("existsCheck", { path }, async () => {
+      const [fileExists] = await this.bucket.file(path).exists();
+      return fileExists;
+    });
+    if (!exists) {
+      return null;
+    }
+    return this.getViewUrl(path, disposition);
+  }
+
   async getDownloadUrl(
     path: string,
     filename?: string | null,

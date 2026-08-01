@@ -6,12 +6,12 @@ import { logger } from "@infrastructure/Logger";
 
 type ImageAssetViewServices = Pick<
   PreviewRoutesServices,
-  "imageGenerationService"
+  "imageGenerationService" | "storageService"
 >;
 const log = logger.child({ handler: "imageAssetView" });
 
 export const createImageAssetViewHandler =
-  ({ imageGenerationService }: ImageAssetViewServices) =>
+  ({ imageGenerationService, storageService }: ImageAssetViewServices) =>
   async (
     req: Request,
     res: Response<
@@ -50,7 +50,18 @@ export const createImageAssetViewHandler =
       });
     }
 
-    const viewUrl = await imageGenerationService.getImageUrl(assetId, userId);
+    const assetStoreUrl = await imageGenerationService.getImageUrl(
+      assetId,
+      userId,
+    );
+    // Current-loop frames persist via the storage service at
+    // users/{uid}/previews/images/{assetId} — resolve there before declaring
+    // the asset missing.
+    const storageUrl =
+      !assetStoreUrl && storageService
+        ? await storageService.getPreviewImageViewUrl(userId, assetId)
+        : null;
+    const viewUrl = assetStoreUrl ?? storageUrl;
     if (!viewUrl) {
       log.warn("Image asset not found in GCS", { assetId, userId });
       return res.status(404).json({
@@ -64,7 +75,7 @@ export const createImageAssetViewHandler =
       data: {
         viewUrl,
         assetId,
-        source: "preview",
+        source: assetStoreUrl ? "preview" : "storage",
       },
     });
   };

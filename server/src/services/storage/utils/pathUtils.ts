@@ -28,6 +28,18 @@ export function generateStoragePath(
   return `users/${userId}/${TYPE_SEGMENTS[type]}/${timestamp}-${hash}.${resolvedExtension}`;
 }
 
+/**
+ * Rebuild the canonical storage path for an already-persisted asset from its
+ * basename ({timestamp}-{hash}.{ext}) — the id shape session records carry.
+ */
+export function storagePathForBasename(
+  userId: string,
+  type: StorageType,
+  basename: string,
+): string {
+  return `users/${userId}/${TYPE_SEGMENTS[type]}/${basename}`;
+}
+
 export function extractUserIdFromPath(path: string): string | null {
   const match = path.match(/^users\/([^/]+)\//);
   return match?.[1] ?? null;
