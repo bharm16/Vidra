@@ -78,7 +78,7 @@ export default {
      * no-raw-palette: Flags classic Tailwind palette classes (bg-red-500,
      * text-violet-600, border-amber-400/20, …) in className strings. The
      * design language is monochrome with semantic tokens (ADR-0008) — status
-     * colors go through danger/success/warning tokens or the --ps-badge-*
+     * colors go through danger/success/warning tokens or the --badge-*
      * variables, chrome through surface/border/foreground tokens.
      *
      * Families the @promptstudio/system preset redefines as token-backed
@@ -96,7 +96,7 @@ export default {
         },
         messages: {
           noRawPalette:
-            'Raw Tailwind palette class "{{value}}" found. Use semantic tokens instead (ADR-0008): danger/success/warning or --ps-badge-* for status, surface/border/foreground tokens for chrome.',
+            'Raw Tailwind palette class "{{value}}" found. Use semantic tokens instead (ADR-0008): danger/success/warning or --badge-* for status, surface/border/foreground tokens for chrome.',
         },
         schema: [],
       },

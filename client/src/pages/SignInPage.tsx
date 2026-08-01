@@ -207,7 +207,7 @@ export function SignInPage(): React.ReactElement {
         {error ? (
           <div
             role="alert"
-            className="text-danger mb-4 rounded-[10px] border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
+            className="text-danger mb-4 rounded-[10px] border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
           >
             {error}
           </div>
@@ -218,7 +218,7 @@ export function SignInPage(): React.ReactElement {
           onClick={handleGoogleSignIn}
           disabled={isBusy}
           variant="ghost"
-          className="relative !h-auto w-full gap-[11px] rounded-[12px] bg-white py-[13px] text-[14px] font-semibold text-[color:var(--ps-bg)] shadow-sm hover:bg-white/90 hover:text-[color:var(--ps-bg)]"
+          className="relative !h-auto w-full gap-[11px] rounded-[12px] bg-white py-[13px] text-[14px] font-semibold text-[color:var(--background)] shadow-sm hover:bg-white/90 hover:text-[color:var(--background)]"
         >
           <span className="ps-auth-lastused absolute -top-[9px] right-3 rounded-[6px] bg-[color:var(--accent)] px-[7px] py-[2px] text-[9.5px] font-semibold text-white">
             Last used

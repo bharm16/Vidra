@@ -53,7 +53,7 @@ export function HistoryPage(): React.ReactElement {
   return (
     <div className="flex h-screen overflow-hidden">
       <NavRail active="library" />
-      <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden [background:var(--ps-bg)]">
+      <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden [background:var(--background)]">
         {/* Design-handoff atmosphere — ambient bloom + filmic grain sit behind the
           content (negative z, inside this isolated root). */}
         <AmbientLight />

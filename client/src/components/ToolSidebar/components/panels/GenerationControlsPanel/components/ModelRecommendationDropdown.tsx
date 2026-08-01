@@ -581,7 +581,7 @@ export function ModelRecommendationDropdown({
             role="listbox"
             aria-label="Model selection"
             style={listStyle}
-            className="motion-presence-panel z-dropdown border-border bg-tool-surface-card shadow-floating ps-animate-scale-in overflow-y-auto overflow-x-hidden rounded-xl border py-1"
+            className="motion-presence-panel z-overlay border-border bg-tool-surface-card shadow-floating ps-animate-scale-in overflow-y-auto overflow-x-hidden rounded-xl border py-1"
             data-motion-state="entered"
             onMouseEnter={onEnterList}
             onMouseLeave={onLeaveList}

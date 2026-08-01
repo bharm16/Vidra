@@ -27,7 +27,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex min-h-ps-10 cursor-pointer select-none items-center gap-ps-2 rounded-md px-ps-3 py-ps-2 text-body outline-none transition-colors duration-base data-[highlighted]:bg-surface-2 data-[highlighted]:text-foreground data-[state=open]:bg-surface-2 data-[state=open]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-icon-sm [&_svg]:shrink-0",
+      "flex min-h-ps-10 cursor-pointer select-none items-center gap-ps-2 rounded-md px-ps-3 py-ps-2 text-body outline-none transition-colors duration-base data-[highlighted]:bg-surface-2 data-[highlighted]:text-foreground data-[state=open]:bg-surface-2 data-[state=open]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-icon-md [&_svg]:shrink-0",
       inset && "pl-ps-9",
       className,
     )}
@@ -47,7 +47,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-dropdown min-w-[8rem] overflow-hidden rounded-lg border-0 bg-popover p-ps-1 text-popover-foreground shadow-elevated data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]",
+      "z-overlay min-w-[8rem] overflow-hidden rounded-lg border-0 bg-popover p-ps-1 text-popover-foreground shadow-elevated data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]",
       className,
     )}
     {...props}
@@ -65,7 +65,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-dropdown max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-lg border-0 bg-popover p-ps-1 text-popover-foreground shadow-elevated data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]",
+        "z-overlay max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-lg border-0 bg-popover p-ps-1 text-popover-foreground shadow-elevated data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]",
         className,
       )}
       {...props}
@@ -83,7 +83,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex min-h-ps-10 cursor-pointer select-none items-center gap-ps-2 rounded-md px-ps-3 py-ps-2 text-body outline-none transition-colors duration-base data-[highlighted]:bg-surface-2 data-[highlighted]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-icon-sm [&_svg]:shrink-0",
+      "relative flex min-h-ps-10 cursor-pointer select-none items-center gap-ps-2 rounded-md px-ps-3 py-ps-2 text-body outline-none transition-colors duration-base data-[highlighted]:bg-surface-2 data-[highlighted]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-icon-md [&_svg]:shrink-0",
       inset && "pl-ps-9",
       className,
     )}
@@ -108,7 +108,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       {...checkedProps}
       {...props}
     >
-      <span className="absolute left-ps-3 flex size-icon-sm items-center justify-center">
+      <span className="absolute left-ps-3 flex size-icon-md items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
           <Check size={16} />
         </DropdownMenuPrimitive.ItemIndicator>
@@ -132,7 +132,7 @@ const DropdownMenuRadioItem = React.forwardRef<
     )}
     {...props}
   >
-    <span className="absolute left-ps-3 flex size-icon-sm items-center justify-center">
+    <span className="absolute left-ps-3 flex size-icon-md items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
         <Circle size={8} weight="fill" />
       </DropdownMenuPrimitive.ItemIndicator>

@@ -24,11 +24,11 @@ export interface ContainerProps extends BoxProps {
  * Container sizes
  */
 const containerSizes = {
-  sm: "var(--ps-container-sm)", // Small content
-  md: "var(--ps-container-md)", // Medium content
-  lg: "var(--ps-container-lg)", // Large content (common)
-  xl: "var(--ps-container-xl)", // Extra large
-  "2xl": "var(--ps-container-2xl)", // Maximum width
+  sm: "var(--container-narrow)", // Small content
+  md: "var(--container-prose)", // Medium content
+  lg: "var(--container-wide)", // Large content (common)
+  xl: "var(--container-max)", // Extra large
+  "2xl": "var(--container-max)", // Maximum width
   full: "100%", // Full width
 };
 

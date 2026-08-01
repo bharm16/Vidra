@@ -11,7 +11,7 @@ describe("Box", () => {
 
       const box = getBox(container);
       expect(box).not.toBeNull();
-      expect(box).toHaveStyle({ padding: "var(--ps-space-3)" });
+      expect(box).toHaveStyle({ padding: "var(--space-3)" });
       expect(box).not.toHaveClass("p-ps-3");
     });
 
@@ -43,7 +43,7 @@ describe("Box", () => {
       const box = getBox(container);
       expect(box).not.toBeNull();
       expect(box).toHaveStyle({
-        padding: "var(--ps-space-2)",
+        padding: "var(--space-2)",
         backgroundColor: "rgb(10, 20, 30)",
       });
     });

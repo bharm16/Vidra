@@ -41,9 +41,9 @@ export const AUTH_COLORS = {
   textLabel: "#555B6E",
   /** Soft neutral accent — matches tool-accent-soft */
   accent: "#C8C8D0",
-  /** Success — matches --ps-success */
+  /** Success — matches --success */
   success: "#4ec7a2",
-  /** Danger — matches --ps-danger */
+  /** Danger — matches --destructive */
   danger: "#fa6e7c",
   /** Hover surface */
   hoverBg: "#1C1E26",

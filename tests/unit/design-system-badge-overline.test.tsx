@@ -8,7 +8,7 @@ import preset from "@promptstudio/system/tailwind.preset";
 
 /**
  * Badge + overline type token contract (issue #50), plus two emission-level
- * regressions: Alert status tints must use the --ps-badge-* arbitrary-value
+ * regressions: Alert status tints must use the --badge-* arbitrary-value
  * pattern (alpha modifiers like bg-danger/5 silently emit no CSS because the
  * preset colors carry no <alpha-value>), and text-overline must actually
  * emit text-transform: uppercase (the fontSize tuple's textTransform is
@@ -48,14 +48,12 @@ describe("Badge", () => {
   ] as const)("tints the %s variant from its badge tokens", (variant, text) => {
     render(<Badge variant={variant}>{text}</Badge>);
     const badge = screen.getByText(text);
+    expect(badge.className).toContain(`bg-[color:var(--badge-${variant}-bg)]`);
     expect(badge.className).toContain(
-      `bg-[color:var(--ps-badge-${variant}-bg)]`,
+      `border-[color:var(--badge-${variant}-border)]`,
     );
     expect(badge.className).toContain(
-      `border-[color:var(--ps-badge-${variant}-border)]`,
-    );
-    expect(badge.className).toContain(
-      `text-[color:var(--ps-badge-${variant}-text)]`,
+      `text-[color:var(--badge-${variant}-text)]`,
     );
   });
 
@@ -73,15 +71,13 @@ describe("Alert status tints", () => {
     ["warning", "warning"],
     ["error", "danger"],
   ] as const)(
-    "tints the %s variant from the --ps-badge-%s tokens",
+    "tints the %s variant from the --badge-%s tokens",
     (variant, token) => {
       render(<Alert variant={variant}>Heads up</Alert>);
       const alert = screen.getByRole("alert");
+      expect(alert.className).toContain(`bg-[color:var(--badge-${token}-bg)]`);
       expect(alert.className).toContain(
-        `bg-[color:var(--ps-badge-${token}-bg)]`,
-      );
-      expect(alert.className).toContain(
-        `border-[color:var(--ps-badge-${token}-border)]`,
+        `border-[color:var(--badge-${token}-border)]`,
       );
     },
   );
@@ -91,7 +87,7 @@ describe("Alert status tints", () => {
       const { unmount } = render(<Alert variant={variant}>Heads up</Alert>);
       const alert = screen.getByRole("alert");
       // bg-danger/5, border-success/30, … silently produce nothing because
-      // the preset colors are plain var(--ps-*) values without <alpha-value>.
+      // the preset colors are plain var(--*) values without <alpha-value>.
       expect(alert.className).not.toMatch(
         /(?:bg|border)-(?:danger|success|warning|info)\/\d+/,
       );
@@ -106,10 +102,10 @@ describe("Alert status tints", () => {
 
   it("emits real CSS for the badge-token classes Alert uses", async () => {
     const css = await compileUtilities(
-      '<div class="border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)]"></div>',
+      '<div class="border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)]"></div>',
     );
-    expect(css).toContain("border-color: var(--ps-badge-danger-border)");
-    expect(css).toContain("background-color: var(--ps-badge-danger-bg)");
+    expect(css).toContain("border-color: var(--badge-danger-border)");
+    expect(css).toContain("background-color: var(--badge-danger-bg)");
   });
 });
 
@@ -138,9 +134,9 @@ describe("overline type token", () => {
     const overline = fontSize["overline"];
     expect(overline, "preset fontSize.overline").toBeDefined();
     const [size, options] = overline as [string, Record<string, string>];
-    expect(size).toBe("var(--ps-fs-10)");
+    expect(size).toBe("var(--text-meta)");
     expect(options["textTransform"]).toBe("uppercase");
-    expect(options["letterSpacing"]).toBe("var(--ps-ls-overline)");
-    expect(options["fontWeight"]).toBe("var(--ps-fw-semibold)");
+    expect(options["letterSpacing"]).toBe("0.08em");
+    expect(options["fontWeight"]).toBe("var(--weight-strong)");
   });
 });

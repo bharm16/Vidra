@@ -13,8 +13,8 @@ describe("Section", () => {
 
       const section = getSection(container);
       expect(section).not.toBeNull();
-      expect(section).toHaveStyle({ marginBottom: "var(--ps-space-6)" });
-      expect(section).not.toHaveStyle({ marginBottom: "var(--ps-space-1)" });
+      expect(section).toHaveStyle({ marginBottom: "var(--space-4)" });
+      expect(section).not.toHaveStyle({ marginBottom: "var(--space-1)" });
     });
   });
 
@@ -24,7 +24,7 @@ describe("Section", () => {
 
       const section = getSection(container);
       expect(section).not.toBeNull();
-      expect(section).toHaveStyle({ marginBottom: "var(--ps-space-2)" });
+      expect(section).toHaveStyle({ marginBottom: "var(--space-2)" });
     });
 
     it("falls back to size-based spacing when no overrides provided", () => {
@@ -32,7 +32,7 @@ describe("Section", () => {
 
       const section = getSection(container);
       expect(section).not.toBeNull();
-      expect(section).toHaveStyle({ marginBottom: "var(--ps-space-6)" });
+      expect(section).toHaveStyle({ marginBottom: "var(--space-4)" });
     });
   });
 

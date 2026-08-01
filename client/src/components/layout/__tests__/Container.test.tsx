@@ -21,7 +21,7 @@ describe("Container", () => {
 
       const box = getContainer(container);
       expect(box).not.toBeNull();
-      expect(box).toHaveStyle({ maxWidth: "var(--ps-container-xl)" });
+      expect(box).toHaveStyle({ maxWidth: "var(--container-max)" });
     });
 
     it("merges custom className with base container classes", () => {

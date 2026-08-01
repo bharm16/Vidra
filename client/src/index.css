@@ -2,59 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design system provides: tokens, typography, animations, utilities, layout */
+/* Design system provides: tokens, typography, animations, utilities */
 /* Components come from @promptstudio/system shadcn components */
 
 @layer base {
   /* App-specific layout variables only */
   :root {
-    --layout-sidebar-width-expanded: 280px;
-    --layout-sidebar-width-collapsed: 60px;
-    --sidebar-width: var(--layout-sidebar-width-collapsed);
     --global-top-nav-height: 64px;
-
-    /* ToolSidebar Sizing */
-    --tool-rail-width: 56px; /* was 52px — Phase 1 hit-area bump */
-    --tool-panel-width: 400px;
-    --tool-panel-min-width: 400px;
-    --tool-rail-padding: 10px;
-    --tool-panel-padding: 16px;
-    --tool-header-height: 48px;
-    --tool-footer-height: 72px;
 
     /* Workspace shell layout (Phase 1 unified workspace) */
     --workspace-topbar-h: 44px;
-    --workspace-composer-max-w: 720px;
     --workspace-composer-bottom: 24px;
 
-    /* Workspace status hues + canvas backdrop (Phase 3) */
-    --tool-status-rendering: #d4b486;
-    --tool-status-ready: #9ec4a8;
-    --tool-canvas-bg: radial-gradient(
-      1600px 900px at 50% -10%,
-      #15151d,
-      #0a0a0e 50%,
-      #050507
-    );
-
     /* ToolSidebar Colors — warm charcoal, neutral accents */
-    --tool-rail-bg: #111114;
-    --tool-panel-bg: #131316;
     --tool-panel-inner-bg: #111114;
     --tool-rail-border: rgba(255, 255, 255, 0.06);
     --tool-nav-active-bg: rgba(255, 255, 255, 0.05);
-    --tool-tab-active-bg: #222228;
     --tool-border-primary: rgba(255, 255, 255, 0.08);
     --tool-border-dark: rgba(255, 255, 255, 0.05);
-    --tool-border-dashed: rgba(255, 255, 255, 0.1);
-    --tool-text-primary: #f0f0f3;
     --tool-text-secondary: #b0b0be;
     --tool-text-muted: #8b8b9e;
     --tool-text-placeholder: #6b6b7e;
     --tool-accent-soft: #c8c8d0;
-
-    /* Nav active indicator (neutral accent) */
-    --tool-nav-indicator: #c8c8d0;
     --tool-nav-hover-bg: rgba(255, 255, 255, 0.04);
     /* --tool-text-subdued moved into the Phase-0 tokens block below
        so its WCAG AA contrast bump is colocated with --tool-text-dim. */
@@ -73,9 +42,6 @@
     --tool-surface-prompt: rgba(22, 22, 28, 0.72);
     --tool-surface-prompt-compact: #131318;
     --tool-accent-neutral: #c8c8d0;
-    /* Generate button — off-white with dark text */
-    --tool-btn-generate-bg: #e0e0e4;
-    --tool-btn-generate-text: #111116;
   }
 
   html,
@@ -84,42 +50,26 @@
     height: 100%;
   }
 
-  body {
-    background-color: var(--ps-bg);
-    font-family: var(--ps-font-sans);
-  }
-
+  /* App motion vocabulary — derived from the system motion tokens. */
   :root {
-    --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
-    --motion-ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
-    --motion-dur-press: 150ms;
-    --motion-dur-focus: 200ms;
-    --motion-dur-panel: 250ms;
-    --motion-dur-media: 300ms;
-    --motion-dur-emphasis: 400ms;
+    --motion-ease-standard: var(--ease-standard);
+    --motion-ease-emphasized: var(--ease-emphasized);
+    --motion-dur-focus: var(--duration-medium);
+    --motion-dur-panel: var(--duration-slow);
+    --motion-dur-emphasis: var(--duration-slower);
   }
 
   #root {
-    background-color: var(--ps-bg);
+    background-color: var(--background);
   }
 }
 
 @layer utilities {
-  /* App-specific utilities only - things that don't belong in the design system */
-
-  .glow-soft {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .glow-soft:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  }
-
   .glass {
-    background: rgba(26, 26, 31, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: color-mix(in oklch, var(--card) 72%, transparent);
+    backdrop-filter: var(--blur-glass);
+    -webkit-backdrop-filter: var(--blur-glass);
+    border: var(--border-hairline) solid var(--border);
   }
 
   /* Anchor entrance — a staggered rise-in (design_handoff_vidra). Elements set
@@ -181,69 +131,23 @@
     opacity: 1;
   }
 
-  /* Borderless rendering-state outline — breathing 16:9 frame */
-  .render-outline {
-    --render-outline-radius: 14px;
-    position: relative;
-    margin-left: auto;
-    margin-right: auto;
-    display: flex;
-    width: 100%;
-    max-width: 780px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: var(--render-outline-radius);
-    animation: outline-breathe 3s ease-in-out infinite;
-  }
-
-  .render-outline-fill {
-    pointer-events: none;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(
-      to top,
-      rgba(255, 255, 255, 0.02) 0%,
-      rgba(255, 255, 255, 0.005) 100%
-    );
-    border-radius: 0 0 13px 13px;
-    transition: height 2000ms ease-out;
-  }
-
   /* Contenteditable placeholder */
   [contenteditable][data-placeholder]:empty:before {
     content: attr(data-placeholder);
-    color: var(--ps-text-faint);
+    color: var(--faint-foreground);
     pointer-events: none;
     position: absolute;
   }
 
   /* The Anchor sheet's 26px placeholder sits dimmer than the docked composer's,
-     matching the handoff (#676d7c ≈ --ps-text-ghost). */
+     matching the handoff (#676d7c ≈ --ghost-foreground). */
   .ps-anchor-sheet [contenteditable][data-placeholder]:empty:before {
-    color: var(--ps-text-ghost);
+    color: var(--ghost-foreground);
   }
 
   [contenteditable]:focus,
   [contenteditable]:focus-visible {
     outline: none !important;
-  }
-
-  .convergence-flow h1,
-  .convergence-flow h2,
-  .convergence-flow h3,
-  .convergence-flow h4,
-  .convergence-flow h5,
-  .convergence-flow h6 {
-    letter-spacing: -0.32px;
-  }
-
-  .motion-safe-transition {
-    transition-duration: var(--motion-dur-panel);
-    transition-timing-function: var(--motion-ease-emphasized);
   }
 
   .motion-presence-panel {
@@ -271,24 +175,6 @@
     filter: saturate(0.96);
   }
 
-  .motion-presence-overlay {
-    transition-property: opacity;
-    transition-duration: var(--motion-dur-panel);
-    transition-timing-function: var(--motion-ease-emphasized);
-  }
-
-  .motion-presence-overlay[data-motion-state="enter"] {
-    opacity: 0;
-  }
-
-  .motion-presence-overlay[data-motion-state="entered"] {
-    opacity: 1;
-  }
-
-  .motion-presence-overlay[data-motion-state="exit"] {
-    opacity: 0;
-  }
-
   .motion-count-bump {
     animation: motion-count-bump var(--motion-dur-focus)
       var(--motion-ease-standard);
@@ -301,12 +187,6 @@
 
   .motion-shake-x {
     animation: motion-shake-x 220ms var(--motion-ease-standard);
-  }
-
-  .motion-active-pill {
-    transition-property: transform, width, opacity;
-    transition-duration: var(--motion-dur-focus);
-    transition-timing-function: var(--motion-ease-emphasized);
   }
 }
 
@@ -358,30 +238,8 @@
   }
 }
 
-@keyframes aurora-rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes outline-breathe {
-  0%,
-  100% {
-    border-color: rgba(255, 255, 255, 0.03);
-  }
-  50% {
-    border-color: rgba(255, 255, 255, 0.06);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .motion-safe-transition,
-  .motion-presence-panel,
-  .motion-presence-overlay,
-  .motion-active-pill {
+  .motion-presence-panel {
     transition-duration: 1ms !important;
   }
 
@@ -393,27 +251,9 @@
     filter: none;
   }
 
-  .motion-presence-overlay[data-motion-state="enter"],
-  .motion-presence-overlay[data-motion-state="exit"],
-  .motion-presence-overlay[data-motion-state="entered"] {
-    opacity: 1;
-  }
-
   .motion-count-bump,
   .motion-pulse-once,
   .motion-shake-x {
     animation: none !important;
-  }
-
-  .motion-aurora {
-    animation: none !important;
-  }
-
-  .render-outline {
-    animation: none !important;
-  }
-
-  .render-outline-fill {
-    transition: none !important;
   }
 }

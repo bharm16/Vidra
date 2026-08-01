@@ -1,9 +1,6 @@
-@layer ps.tokens, ps.base, ps.type, ps.layout, ps.animations, ps.utilities;
+@layer ps.tokens, ps.base, ps.animations, ps.utilities;
 
 @import "./tokens.css";
-@import "./shadcn-compat.css";
-@import "./type.css";
 @import "./base.css";
-@import "./layout.css";
 @import "./animations.css";
 @import "./utilities.css";

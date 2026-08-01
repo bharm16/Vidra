@@ -4,9 +4,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@promptstudio/system/lib/utils";
 
 /**
- * Status variants tint from the --ps-badge-* tokens (same family Badge
+ * Status variants tint from the --badge-* tokens (same family Badge
  * uses). Alpha-modifier classes like border-danger/30 or bg-danger/5 are
- * deliberately avoided: the preset's colors are plain var(--ps-*) strings
+ * deliberately avoided: the preset's colors are plain var(--*) strings
  * without <alpha-value>, so Tailwind silently emits nothing for them.
  */
 const alertVariants = cva(
@@ -15,13 +15,13 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "border-border bg-surface-1 text-foreground",
-        info: "border-[color:var(--ps-badge-info-border)] bg-[color:var(--ps-badge-info-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-info-text)]",
+        info: "border-[color:var(--badge-info-border)] bg-[color:var(--badge-info-bg)] text-foreground [&>svg]:text-[color:var(--badge-info-text)]",
         success:
-          "border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-success-text)]",
+          "border-[color:var(--badge-success-border)] bg-[color:var(--badge-success-bg)] text-foreground [&>svg]:text-[color:var(--badge-success-text)]",
         warning:
-          "border-[color:var(--ps-badge-warning-border)] bg-[color:var(--ps-badge-warning-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-warning-text)]",
+          "border-[color:var(--badge-warning-border)] bg-[color:var(--badge-warning-bg)] text-foreground [&>svg]:text-[color:var(--badge-warning-text)]",
         error:
-          "border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] text-foreground [&>svg]:text-[color:var(--ps-badge-danger-text)]",
+          "border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] text-foreground [&>svg]:text-[color:var(--badge-danger-text)]",
       },
     },
     defaultVariants: {

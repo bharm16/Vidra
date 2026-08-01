@@ -75,7 +75,7 @@ export function AssetPopover({
       </div>
 
       {asset.type === "character" && asset.faceEmbedding && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-[color:var(--ps-badge-success-text)]">
+        <div className="mt-2 flex items-center gap-1 text-xs text-[color:var(--badge-success-text)]">
           <Check className="h-3 w-3" />
           Face embedding ready
         </div>

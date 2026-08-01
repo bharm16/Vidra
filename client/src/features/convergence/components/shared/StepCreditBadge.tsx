@@ -77,7 +77,7 @@ export const StepCreditBadge: React.FC<StepCreditBadgeProps> = ({
     <div
       className={cn(
         "inline-flex items-center rounded-full",
-        "border border-[var(--ps-badge-warning-border)] bg-[var(--ps-badge-warning-bg)] text-[var(--ps-badge-warning-text)]",
+        "border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] text-[var(--badge-warning-text)]",
         "font-medium",
         sizeClasses[size],
         className,

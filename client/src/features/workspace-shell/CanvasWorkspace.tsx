@@ -671,7 +671,7 @@ export function CanvasWorkspace({
       <div
         className={cn(
           "relative isolate grid h-full min-w-0 flex-1 grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden",
-          "[background:var(--ps-bg)]",
+          "[background:var(--background)]",
         )}
         style={
           // Pre-work: the composer rises to mid-screen so the hero question and

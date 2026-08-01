@@ -83,7 +83,7 @@ function TocItem({ href, label, active }: TocItemProps): React.ReactElement {
 
 export function DocsPage(): React.ReactElement {
   return (
-    <div className="text-foreground relative isolate flex min-h-[calc(100vh-var(--global-top-nav-height))] w-full overflow-hidden font-sans [background:var(--ps-bg)]">
+    <div className="text-foreground relative isolate flex min-h-[calc(100vh-var(--global-top-nav-height))] w-full overflow-hidden font-sans [background:var(--background)]">
       {/* Cinematic backdrop (ADR-0014): ambient light + grain behind the
           content (negative z, inside this isolated root); the vignette frames
           over it. */}

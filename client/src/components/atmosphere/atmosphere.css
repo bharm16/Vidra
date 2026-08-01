@@ -2,8 +2,8 @@
  * Atmosphere primitives — the cinematic backdrop layers from the design
  * handoff (design_handoff_vidra / ADR-0014). Kept as plain CSS classes so the
  * heavy visual detail (noise tile, drift keyframes) lives outside the React
- * tree; the components are thin wrappers that read the global --ps-glow /
- * --ps-grain knobs. The app-wide prefers-reduced-motion rule (design-system
+ * tree; the components are thin wrappers that read the global --glow /
+ * --grain knobs. The app-wide prefers-reduced-motion rule (design-system
  * base.css) freezes the drift animations automatically.
  */
 
@@ -14,7 +14,7 @@
   z-index: -1;
   pointer-events: none;
   mix-blend-mode: overlay;
-  opacity: var(--ps-grain, 0.45);
+  opacity: var(--grain, 0.45);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 170px 170px;
 }
@@ -37,7 +37,7 @@
 }
 
 /* Ambient light: drifting blurred radial gradients behind the stage.
-   Intensity scales with --ps-glow; the accent bloom recolors with --accent. */
+   Intensity scales with --glow; the accent bloom recolors with --accent. */
 .ps-ambient {
   position: absolute;
   inset: 0;
@@ -59,11 +59,11 @@
   transform: translateX(-50%);
   background: radial-gradient(
     ellipse at 50% 45%,
-    color-mix(in srgb, var(--accent, #5b6cff) 40%, transparent),
-    color-mix(in srgb, var(--accent, #5b6cff) 14%, transparent) 42%,
+    color-mix(in srgb, var(--accent) 40%, transparent),
+    color-mix(in srgb, var(--accent) 14%, transparent) 42%,
     transparent 72%
   );
-  opacity: calc(var(--ps-glow, 1) * 0.5);
+  opacity: calc(var(--glow, 1) * 0.5);
   filter: blur(14px);
   animation: es-drift-1 18s ease-in-out infinite;
 }
@@ -79,7 +79,7 @@
     rgba(220, 90, 60, 0.08) 46%,
     rgba(60, 20, 10, 0) 72%
   );
-  opacity: calc(var(--ps-glow, 1) * 0.34);
+  opacity: calc(var(--glow, 1) * 0.34);
   filter: blur(18px);
   animation: es-drift-2 22s ease-in-out infinite;
 }
@@ -95,7 +95,7 @@
     rgba(150, 160, 210, 0.14),
     rgba(80, 90, 140, 0) 68%
   );
-  opacity: calc(var(--ps-glow, 1) * 0.5);
+  opacity: calc(var(--glow, 1) * 0.5);
   animation: es-core 12s ease-in-out infinite;
 }
 

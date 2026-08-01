@@ -9,59 +9,6 @@
     }
   }
 
-  @keyframes ps-fade-out {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-
-  @keyframes ps-slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes ps-slide-down {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes ps-slide-left {
-    from {
-      opacity: 0;
-      transform: translateX(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes ps-slide-right {
-    from {
-      opacity: 0;
-      transform: translateX(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
   @keyframes ps-scale-in {
     from {
       opacity: 0;
@@ -73,30 +20,9 @@
     }
   }
 
-  @keyframes ps-scale-out {
-    from {
-      opacity: 1;
-      transform: scale(1);
-    }
-    to {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-
   @keyframes ps-spin {
     to {
       transform: rotate(360deg);
-    }
-  }
-
-  @keyframes ps-pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
     }
   }
 
@@ -107,15 +33,6 @@
     }
     50% {
       transform: translateY(-4px);
-    }
-  }
-
-  @keyframes ps-shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
     }
   }
 
@@ -159,99 +76,34 @@
     }
   }
 
-  /* ===== ANIMATION UTILITIES ===== */
+  /* ===== ANIMATION UTILITIES =====
+     Feedback is fast (fast/medium); reveals are slow (slower). */
   .ps-animate-fade-in {
-    animation: ps-fade-in var(--ps-dur-2) var(--ps-ease-out);
-  }
-  .ps-animate-fade-out {
-    animation: ps-fade-out var(--ps-dur-2) var(--ps-ease-out);
-  }
-  .ps-animate-slide-up {
-    animation: ps-slide-up var(--ps-dur-3) var(--ps-ease-out);
-  }
-  .ps-animate-slide-down {
-    animation: ps-slide-down var(--ps-dur-3) var(--ps-ease-out);
+    animation: ps-fade-in var(--duration-medium) var(--ease-decelerate);
   }
   .ps-animate-scale-in {
-    animation: ps-scale-in var(--ps-dur-2) var(--ps-ease-out);
-  }
-  .ps-animate-spin {
-    animation: ps-spin 1s linear infinite;
-  }
-  .ps-animate-pulse {
-    animation: ps-pulse 2s var(--ps-ease-inout) infinite;
+    animation: ps-scale-in var(--duration-medium) var(--ease-decelerate);
   }
   .ps-animate-bounce {
-    animation: ps-bounce 1s var(--ps-ease-out) infinite;
+    animation: ps-bounce 1s var(--ease-decelerate) infinite;
   }
   .ps-animate-panel-pulse {
-    animation: ps-panel-pulse var(--ps-dur-4) var(--ps-ease-out);
+    animation: ps-panel-pulse var(--duration-slower) var(--ease-decelerate);
   }
   .ps-animate-active-dot-pulse {
-    animation: ps-active-dot-pulse 1.4s var(--ps-ease-inout) infinite;
+    animation: ps-active-dot-pulse 1.4s var(--ease-standard) infinite;
   }
   .ps-animate-span-pulse {
-    animation: ps-span-pulse var(--ps-dur-4) var(--ps-ease-inout) 0s 2 alternate;
+    animation: ps-span-pulse var(--duration-slower) var(--ease-standard) 0s 2
+      alternate;
   }
   .ps-animate-span-swap {
-    animation: ps-span-swap var(--ps-dur-2) var(--ps-ease-out);
-  }
-
-  .ps-shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.2) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: ps-shimmer 2s infinite;
-  }
-
-  /* ===== ANIMATION DELAYS ===== */
-  .ps-delay-100 {
-    animation-delay: 100ms;
+    animation: ps-span-swap var(--duration-medium) var(--ease-decelerate);
   }
   .ps-delay-200 {
     animation-delay: 200ms;
   }
-  .ps-delay-300 {
-    animation-delay: 300ms;
-  }
   .ps-delay-400 {
     animation-delay: 400ms;
-  }
-  .ps-delay-500 {
-    animation-delay: 500ms;
-  }
-
-  /* ===== TRANSITION UTILITIES ===== */
-  .ps-transition {
-    transition: all var(--ps-dur-2) var(--ps-ease-out);
-  }
-  .ps-transition-colors {
-    transition:
-      color,
-      background-color,
-      border-color var(--ps-dur-2) var(--ps-ease-out);
-  }
-  .ps-transition-transform {
-    transition: transform var(--ps-dur-2) var(--ps-ease-out);
-  }
-  .ps-transition-opacity {
-    transition: opacity var(--ps-dur-2) var(--ps-ease-out);
-  }
-
-  /* Progress bar indeterminate animation */
-  @keyframes progress-indeterminate {
-    0% {
-      transform: translateX(-100%);
-    }
-    50% {
-      transform: translateX(200%);
-    }
-    100% {
-      transform: translateX(-100%);
-    }
   }
 }

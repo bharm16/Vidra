@@ -245,7 +245,7 @@ export function VersionRow({
           {/* Dirty indicator on thumb */}
           {isDirty ? (
             <span
-              className="absolute left-1 top-1 h-[5px] w-[5px] rounded-full bg-warning shadow-[0_0_0_1.5px_var(--ps-surface-2)]"
+              className="absolute left-1 top-1 h-[5px] w-[5px] rounded-full bg-warning shadow-[0_0_0_1.5px_var(--surface-2)]"
               aria-hidden="true"
             />
           ) : null}

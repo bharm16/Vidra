@@ -73,17 +73,27 @@ function getGridClasses(
 }
 
 const SPACING_TOKEN_MAP = {
-  "ps-page": "var(--ps-space-page)",
-  "ps-card": "var(--ps-space-card)",
+  "ps-0": "0px",
+  "ps-1": "var(--space-1)",
+  "ps-2": "var(--space-2)",
+  "ps-3": "var(--space-3)",
+  "ps-4": "var(--space-3)",
+  "ps-5": "var(--space-4)",
+  "ps-6": "var(--space-4)",
+  "ps-7": "var(--space-5)",
+  "ps-8": "var(--space-6)",
+  "ps-9": "var(--space-12)",
+  "ps-10": "var(--space-8)",
+  "ps-11": "var(--space-16)",
+  "ps-page": "var(--space-6)",
+  "ps-card": "var(--space-4)",
 } as const;
 
 function psTokenToCssVar(token: string): string | undefined {
   if (Object.prototype.hasOwnProperty.call(SPACING_TOKEN_MAP, token)) {
     return SPACING_TOKEN_MAP[token as keyof typeof SPACING_TOKEN_MAP];
   }
-  const m = /^ps-(\d+)$/.exec(token);
-  if (!m) return undefined;
-  return `var(--ps-space-${m[1]})`;
+  return undefined;
 }
 
 export const Grid = React.forwardRef<HTMLDivElement, GridProps>(

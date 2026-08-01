@@ -7,7 +7,7 @@
  * - Control layout behaviour within flex and grid containers
  * - Hide content based on screen size using responsive display prop
  *
- * System spacing tokens: ps-0..ps-11 (mapped to CSS vars: --ps-space-0..--ps-space-11)
+ * System spacing tokens: ps-0..ps-11 (mapped onto the --space-* scale)
  */
 
 import React from "react";
@@ -104,20 +104,20 @@ export interface BoxProps extends HTMLAttributes<HTMLDivElement> {
  * Converts system tokens to CSS values (CSS vars)
  */
 const psSpacingMap: Record<string, string> = {
-  "ps-0": "var(--ps-space-0)",
-  "ps-1": "var(--ps-space-1)",
-  "ps-2": "var(--ps-space-2)",
-  "ps-3": "var(--ps-space-3)",
-  "ps-4": "var(--ps-space-4)",
-  "ps-5": "var(--ps-space-5)",
-  "ps-6": "var(--ps-space-6)",
-  "ps-7": "var(--ps-space-7)",
-  "ps-8": "var(--ps-space-8)",
-  "ps-9": "var(--ps-space-9)",
-  "ps-10": "var(--ps-space-10)",
-  "ps-11": "var(--ps-space-11)",
-  "ps-page": "var(--ps-space-page)",
-  "ps-card": "var(--ps-space-card)",
+  "ps-0": "0px",
+  "ps-1": "var(--space-1)",
+  "ps-2": "var(--space-2)",
+  "ps-3": "var(--space-3)",
+  "ps-4": "var(--space-3)",
+  "ps-5": "var(--space-4)",
+  "ps-6": "var(--space-4)",
+  "ps-7": "var(--space-5)",
+  "ps-8": "var(--space-6)",
+  "ps-9": "var(--space-12)",
+  "ps-10": "var(--space-8)",
+  "ps-11": "var(--space-16)",
+  "ps-page": "var(--space-6)",
+  "ps-card": "var(--space-4)",
 };
 
 function getResponsiveClasses(

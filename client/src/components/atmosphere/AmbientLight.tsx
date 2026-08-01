@@ -12,7 +12,7 @@ export interface AmbientLightProps {
  * Drifting ambient light blobs — the cinematic glow behind the stage. Three
  * large blurred radial gradients (a themeable accent bloom, a warm counter-
  * light, and a cool core) drift slowly on independent loops. Overall intensity
- * is gated by the global `--ps-glow` knob; the accent stops derive from
+ * is gated by the global `--glow` knob; the accent stops derive from
  * `--accent` via color-mix so a theme swap recolors the bloom.
  *
  * Sits behind content (z-index 0, pointer-events: none). The app-wide

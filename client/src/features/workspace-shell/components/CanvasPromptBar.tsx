@@ -107,15 +107,15 @@ export function CanvasPromptBar({
       <div
         hidden={collapsed}
         className={cn(
-          // Frame A prompt text: 18px Space Grotesk at 1.55 with the accent
+          // Frame A prompt text: 18px sans at 1.55 with the accent
           // caret; the vars feed the editor's [contenteditable] rules.
           "[caret-color:var(--accent)]",
           !collapsed && "ps-composer-reveal",
         )}
         style={
           {
-            "--ps-editor-font-size": "18px",
-            "--ps-editor-line-height": "1.55",
+            "--editor-font-size": "18px",
+            "--editor-line-height": "1.55",
           } as React.CSSProperties
         }
       >

@@ -277,19 +277,19 @@ export function EmailVerificationPage(): React.ReactElement {
         ) : null}
 
         {showVerifiedPanel ? (
-          <div className="rounded-lg border border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)] px-3.5 py-2.5">
+          <div className="rounded-lg border border-[color:var(--badge-success-border)] bg-[color:var(--badge-success-bg)] px-3.5 py-2.5">
             <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)]">
+              <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--badge-success-border)] bg-[color:var(--badge-success-bg)]">
                 <CheckCircle2
-                  className="animate-scale-in h-4 w-4 text-[color:var(--ps-badge-success-text)]"
+                  className="animate-scale-in h-4 w-4 text-[color:var(--badge-success-text)]"
                   aria-hidden="true"
                 />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-[color:var(--ps-badge-success-text)]">
+                <p className="text-[13px] font-semibold text-[color:var(--badge-success-text)]">
                   Email verified
                 </p>
-                <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--ps-badge-success-text)] opacity-70">
+                <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--badge-success-text)] opacity-70">
                   You're confirmed. Jump back into the app.
                 </p>
               </div>
@@ -300,7 +300,7 @@ export function EmailVerificationPage(): React.ReactElement {
         {showInlineError ? (
           <div
             role="alert"
-            className="rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5"
+            className="rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5"
           >
             <div className="flex items-start gap-2.5">
               <ShieldAlert

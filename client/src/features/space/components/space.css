@@ -10,30 +10,14 @@
   0%,
   100% {
     box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--accent, #5b6cff) 16%, transparent),
-      0 0 34px color-mix(in srgb, var(--accent, #5b6cff) 26%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent),
+      0 0 34px color-mix(in srgb, var(--accent) 26%, transparent),
       0 22px 50px -18px rgba(0, 0, 0, 0.8);
   }
   50% {
     box-shadow:
-      0 0 0 5px color-mix(in srgb, var(--accent, #5b6cff) 22%, transparent),
-      0 0 46px color-mix(in srgb, var(--accent, #5b6cff) 36%, transparent),
-      0 22px 50px -18px rgba(0, 0, 0, 0.8);
-  }
-}
-
-@keyframes es-live-green {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 4px rgba(63, 191, 111, 0.16),
-      0 0 34px rgba(63, 191, 111, 0.26),
-      0 22px 50px -18px rgba(0, 0, 0, 0.8);
-  }
-  50% {
-    box-shadow:
-      0 0 0 5px rgba(63, 191, 111, 0.22),
-      0 0 46px rgba(63, 191, 111, 0.36),
+      0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent),
+      0 0 46px color-mix(in srgb, var(--accent) 36%, transparent),
       0 22px 50px -18px rgba(0, 0, 0, 0.8);
   }
 }
@@ -109,7 +93,7 @@
 
 /* The mono caption under each take (PROMPT · IMAGE 1 · CLIP 1). */
 .ps-node-caption {
-  font-family: var(--ps-font-mono);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.08em;

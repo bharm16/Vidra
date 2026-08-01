@@ -25,21 +25,15 @@ export default {
       // ============================================
       colors: {
         tool: {
-          "rail-bg": "var(--tool-rail-bg)",
-          "panel-bg": "var(--tool-panel-bg)",
           "panel-inner": "var(--tool-panel-inner-bg)",
           "rail-border": "var(--tool-rail-border)",
           "nav-active": "var(--tool-nav-active-bg)",
-          "tab-active": "var(--tool-tab-active-bg)",
           "border-primary": "var(--tool-border-primary)",
           "border-dark": "var(--tool-border-dark)",
-          "border-dashed": "var(--tool-border-dashed)",
-          "text-primary": "var(--tool-text-primary)",
           "text-secondary": "var(--tool-text-secondary)",
           "text-muted": "var(--tool-text-muted)",
           "text-placeholder": "var(--tool-text-placeholder)",
           "accent-soft": "var(--tool-accent-soft)",
-          "nav-indicator": "var(--tool-nav-indicator)",
           "nav-hover": "var(--tool-nav-hover-bg)",
           "text-subdued": "var(--tool-text-subdued)",
           "surface-inset": "var(--tool-surface-inset)",
@@ -51,10 +45,8 @@ export default {
           "surface-prompt": "var(--tool-surface-prompt)",
           "surface-prompt-compact": "var(--tool-surface-prompt-compact)",
           "accent-neutral": "var(--tool-accent-neutral)",
-          "btn-generate-bg": "var(--tool-btn-generate-bg)",
-          "btn-generate-text": "var(--tool-btn-generate-text)",
         },
-        "accent-runway": "var(--ps-accent-runway)",
+        "accent-runway": "var(--foreground)" /* bridge → foreground */,
       },
 
       // ============================================
@@ -63,53 +55,20 @@ export default {
       // ============================================
       transitionDuration: {
         75: "75ms",
-        100: "100ms",
         150: "150ms",
         200: "200ms",
-        250: "250ms",
         300: "300ms",
-        400: "400ms",
-        500: "500ms",
-        700: "700ms",
-        1000: "1000ms",
-      },
-      transitionTimingFunction: {
-        "ease-smooth": "cubic-bezier(0.4, 0, 0.2, 1)",
-        "ease-spring": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-        "ease-bounce": "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
       animation: {
         "fade-in": "fadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1)",
-        "slide-up": "slideUp 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-        "slide-down": "slideDown 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         "scale-in": "scaleIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
         shimmer: "shimmer 2s infinite",
-        "border-pulse": "borderPulse 2s ease-in-out infinite",
-        "spin-slow": "spin 3s linear infinite",
-        // Enhanced mockup animations
-        "pulse-subtle": "pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "fade-slide-in": "fadeSlideIn 400ms cubic-bezier(0.4, 0, 0.2, 1)",
-        "scale-in-bounce":
-          "scaleInBounce 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-        "slide-from-right": "slideFromRight 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-        "slide-from-bottom":
-          "slideFromBottom 350ms cubic-bezier(0.4, 0, 0.2, 1)",
-        // Mesh gradient blob animation
-        blob: "blob 20s infinite",
       },
       keyframes: {
         fadeIn: {
           "0%": { opacity: "0", filter: "blur(4px)" },
           "100%": { opacity: "1", filter: "blur(0)" },
-        },
-        slideUp: {
-          "0%": { opacity: "0", transform: "translateY(20px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        slideDown: {
-          "0%": { opacity: "0", transform: "translateY(-20px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         scaleIn: {
           "0%": { opacity: "0", transform: "scale(0.95)" },
@@ -122,49 +81,6 @@ export default {
         shimmer: {
           "0%": { backgroundPosition: "-1000px 0" },
           "100%": { backgroundPosition: "1000px 0" },
-        },
-        borderPulse: {
-          "0%, 100%": {
-            borderColor:
-              "color-mix(in srgb, var(--ps-accent) 50%, transparent)",
-            boxShadow:
-              "0 0 0 0 color-mix(in srgb, var(--ps-accent) 0%, transparent)",
-          },
-          "50%": {
-            borderColor:
-              "color-mix(in srgb, var(--ps-accent) 80%, transparent)",
-            boxShadow:
-              "0 0 8px 0 color-mix(in srgb, var(--ps-accent) 15%, transparent)",
-          },
-        },
-        // Enhanced mockup keyframes
-        pulseSubtle: {
-          "0%, 100%": { opacity: "1", transform: "scale(1)" },
-          "50%": { opacity: "0.95", transform: "scale(1.03)" },
-        },
-        fadeSlideIn: {
-          "0%": { opacity: "0", transform: "translateY(20px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        scaleInBounce: {
-          "0%": { opacity: "0", transform: "scale(0.5)" },
-          "50%": { transform: "scale(1.1)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
-        },
-        slideFromRight: {
-          "0%": { opacity: "0", transform: "translateX(10px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
-        },
-        slideFromBottom: {
-          "0%": { opacity: "0", transform: "translateY(15px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        // Blob animation for mesh gradient background
-        blob: {
-          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
-          "25%": { transform: "translate(20px, -50px) scale(1.1)" },
-          "50%": { transform: "translate(-20px, 20px) scale(0.9)" },
-          "75%": { transform: "translate(50px, 50px) scale(1.05)" },
         },
       },
 
