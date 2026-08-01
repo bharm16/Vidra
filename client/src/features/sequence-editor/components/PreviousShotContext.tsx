@@ -129,10 +129,10 @@ export function PreviousShotContext({
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-surface-2">
       <header className="flex items-center justify-between border-b border-border bg-black/20 px-3 py-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+        <span className="text-meta font-semibold uppercase tracking-wide text-muted">
           Previous shot
         </span>
-        <span className="text-[11px] text-muted">
+        <span className="text-meta text-muted">
           Shot {previousShot.sequenceIndex + 1}
         </span>
       </header>
@@ -168,7 +168,7 @@ export function PreviousShotContext({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <span
           className={cn(
-            "absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-semibold backdrop-blur-sm",
+            "absolute bottom-2 left-2 inline-flex items-center gap-1 rounded px-2 py-1 text-meta font-semibold backdrop-blur-sm",
             badge.className,
           )}
         >

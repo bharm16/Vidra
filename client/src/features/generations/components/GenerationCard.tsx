@@ -241,7 +241,7 @@ export const GenerationCard = memo(function GenerationCard({
           <Button
             type="button"
             variant="ghost"
-            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-[5px] border bg-transparent px-2 text-[11px] font-medium transition-colors"
+            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-sm border bg-transparent px-2 text-meta font-medium transition-colors"
             onClick={(event) => {
               event.stopPropagation();
               onRetry(generation);
@@ -255,7 +255,7 @@ export const GenerationCard = memo(function GenerationCard({
           <Button
             type="button"
             variant="ghost"
-            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-[5px] border bg-transparent px-2 text-[11px] font-medium transition-colors"
+            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-sm border bg-transparent px-2 text-meta font-medium transition-colors"
             onClick={(event) => {
               event.stopPropagation();
               onDownload(generation);
@@ -269,7 +269,7 @@ export const GenerationCard = memo(function GenerationCard({
           <Button
             type="button"
             variant="ghost"
-            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-[5px] border bg-transparent px-2 text-[11px] font-medium transition-colors"
+            className="border-tool-nav-active text-tool-text-subdued hover:border-tool-text-disabled hover:text-tool-text-dim h-6 gap-1 rounded-sm border bg-transparent px-2 text-meta font-medium transition-colors"
             onClick={(event) => {
               event.stopPropagation();
               onExtend(generation);
@@ -286,7 +286,7 @@ export const GenerationCard = memo(function GenerationCard({
             label="Continue as Sequence"
             className={cn(
               showRetry || showDownload ? "" : "ml-auto",
-              "[&>button]:border-tool-nav-active [&>button]:text-tool-text-subdued [&>button]:hover:border-tool-text-disabled [&>button]:hover:text-tool-text-dim [&>button]:disabled:border-tool-nav-active [&>button]:disabled:text-tool-text-label [&>button]:h-6 [&>button]:rounded-[5px] [&>button]:border [&>button]:bg-transparent [&>button]:px-2 [&>button]:text-[11px] [&>button]:font-medium [&>button]:transition-colors",
+              "[&>button]:border-tool-nav-active [&>button]:text-tool-text-subdued [&>button]:hover:border-tool-text-disabled [&>button]:hover:text-tool-text-dim [&>button]:disabled:border-tool-nav-active [&>button]:disabled:text-tool-text-label [&>button]:h-6 [&>button]:rounded-sm [&>button]:border [&>button]:bg-transparent [&>button]:px-2 [&>button]:text-meta [&>button]:font-medium [&>button]:transition-colors",
             )}
           />
         )}

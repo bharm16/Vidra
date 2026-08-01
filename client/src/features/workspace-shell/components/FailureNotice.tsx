@@ -30,11 +30,11 @@ export function FailureNotice({
       )}
     >
       <div className="flex flex-col gap-1">
-        <p className="text-foreground m-0 text-[14px] font-medium">
+        <p className="text-foreground m-0 text-ui font-medium">
           {copy.message}
         </p>
         {copy.notCharged ? (
-          <p className="text-tool-text-subdued m-0 text-[12.5px]">
+          <p className="text-tool-text-subdued m-0 text-meta">
             Nothing was charged.
           </p>
         ) : null}

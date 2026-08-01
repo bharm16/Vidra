@@ -107,7 +107,7 @@ export function ContinuityIntentPicker({
 
   return (
     <section className="rounded-lg border border-border bg-surface-2 p-3">
-      <header className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+      <header className="mb-2 text-meta font-semibold uppercase tracking-wide text-muted">
         Continuity intent
       </header>
 
@@ -132,7 +132,7 @@ export function ContinuityIntentPicker({
                 </span>
                 <span>{option.label}</span>
               </div>
-              <p className="text-[11px] leading-4 text-muted">
+              <p className="text-meta leading-4 text-muted">
                 {option.description}
               </p>
             </button>

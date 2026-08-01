@@ -353,7 +353,7 @@ export function PopoverPreview({
       </div>
 
       <div className="flex h-16 flex-shrink-0 items-center justify-center">
-        <div className="flex items-center gap-8 text-[12px] font-medium text-[rgba(255,255,255,0.4)]">
+        <div className="flex items-center gap-8 text-meta font-medium text-[rgba(255,255,255,0.4)]">
           <button
             type="button"
             className="inline-flex items-center gap-1.5 hover:text-[rgba(255,255,255,0.85)]"

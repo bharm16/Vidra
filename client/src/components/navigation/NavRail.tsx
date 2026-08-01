@@ -49,7 +49,7 @@ function RailItem({
       to={to}
       title={collapsed ? label : undefined}
       className={cn(
-        "flex w-full items-center gap-3 rounded-[11px] transition-colors",
+        "flex w-full items-center gap-3 rounded-md transition-colors",
         active
           ? "text-foreground bg-white/[0.07]"
           : "text-tool-text-muted hover:text-foreground hover:bg-white/[0.05]",
@@ -64,9 +64,7 @@ function RailItem({
         {icon}
       </span>
       {collapsed ? null : (
-        <span className="whitespace-nowrap text-[13.5px] font-medium">
-          {label}
-        </span>
+        <span className="whitespace-nowrap text-ui font-medium">{label}</span>
       )}
     </Link>
   );
@@ -80,6 +78,8 @@ function RailItem({
 export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
   const [collapsed, setCollapsed] = useState(false);
   const user = useAuthUser();
+  const accountName =
+    user?.displayName ?? user?.email?.split("@")[0] ?? "Guest";
 
   return (
     <aside
@@ -96,11 +96,11 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         <Link
           to="/"
           title="New session"
-          className="flex items-center gap-[11px] rounded-[11px] p-1.5 transition-colors hover:bg-white/[0.04]"
+          className="flex items-center gap-[11px] rounded-md p-1.5 transition-colors hover:bg-white/[0.04]"
         >
-          <VidraMark className="h-[30px] w-[30px] rounded-[9px]" />
+          <VidraMark className="h-[30px] w-[30px] rounded-md" />
           {collapsed ? null : (
-            <span className="text-foreground whitespace-nowrap text-[18px] font-semibold tracking-[-0.01em]">
+            <span className="text-foreground whitespace-nowrap text-body-lg font-semibold tracking-[-0.01em]">
               Vidra
             </span>
           )}
@@ -112,7 +112,7 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed((c) => !c)}
-          className="text-tool-text-muted hover:text-foreground h-[34px] w-[34px] rounded-[9px] hover:bg-white/[0.06]"
+          className="text-tool-text-muted hover:text-foreground h-[34px] w-[34px] rounded-md hover:bg-white/[0.06]"
         >
           <PanelLeft size={18} strokeWidth={1.8} />
         </Button>
@@ -164,23 +164,19 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         to={user ? "/account" : "/signin"}
         title="Account"
         className={cn(
-          "mt-1.5 flex items-center gap-[11px] rounded-[12px] p-1.5 transition-colors hover:bg-white/[0.05]",
+          "mt-1.5 flex items-center gap-[11px] rounded-md p-1.5 transition-colors hover:bg-white/[0.05]",
           active === "account" && "bg-white/[0.06]",
         )}
       >
-        <span
-          className="h-[34px] w-[34px] flex-none rounded-full border border-white/[0.16]"
-          style={{
-            background: "linear-gradient(150deg, #f4d3a2, #e6b487)",
-            boxShadow: "inset 0 1px 1px rgba(255,255,255,0.3)",
-          }}
-        />
+        <span className="border-border bg-muted text-muted-foreground flex h-8 w-8 flex-none items-center justify-center rounded-full border text-ui font-semibold uppercase">
+          {accountName.charAt(0)}
+        </span>
         {collapsed ? null : (
           <span className="flex min-w-0 flex-col items-start whitespace-nowrap">
-            <span className="text-foreground text-[13px] font-semibold">
-              {user?.displayName ?? user?.email?.split("@")[0] ?? "Guest"}
+            <span className="text-foreground text-ui font-semibold">
+              {accountName}
             </span>
-            <span className="text-tool-text-muted mt-px font-mono text-[11px]">
+            <span className="text-tool-text-muted mt-px font-mono text-meta">
               {user?.email ?? "Sign in"}
             </span>
           </span>

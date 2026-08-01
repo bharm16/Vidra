@@ -241,7 +241,7 @@ export function SignUpPage(): React.ReactElement {
         {error ? (
           <div
             role="alert"
-            className="text-danger mb-4 rounded-[10px] border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
+            className="text-danger mb-4 rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
           >
             {error}
           </div>
@@ -252,13 +252,13 @@ export function SignUpPage(): React.ReactElement {
           onClick={handleGoogleSignUp}
           disabled={isBusy}
           variant="ghost"
-          className="relative !h-auto w-full gap-[11px] rounded-[12px] bg-white py-[13px] text-[14px] font-semibold text-[color:var(--background)] shadow-sm hover:bg-white/90 hover:text-[color:var(--background)]"
+          className="relative !h-auto w-full gap-[11px] rounded-md bg-white py-[13px] text-ui font-semibold text-[color:var(--background)] shadow-sm hover:bg-white/90 hover:text-[color:var(--background)]"
         >
           {isBusy ? <Spinner /> : <GoogleGlyph />}
           Sign up with Google
         </Button>
 
-        <div className="text-tool-text-muted my-[26px] flex items-center gap-3 font-mono text-[11px]">
+        <div className="text-tool-text-muted my-[26px] flex items-center gap-3 font-mono text-meta">
           <span className="h-px flex-1 bg-white/[0.09]" />
           OR
           <span className="h-px flex-1 bg-white/[0.09]" />
@@ -272,7 +272,7 @@ export function SignUpPage(): React.ReactElement {
             />
             <Input
               id={nameId}
-              className="h-[46px] rounded-[12px] border-white/[0.10] bg-white/[0.03] pl-11 text-[14px] shadow-none focus-visible:border-[color:var(--accent)]"
+              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -289,7 +289,7 @@ export function SignUpPage(): React.ReactElement {
             />
             <Input
               id={emailId}
-              className="h-[46px] rounded-[12px] border-white/[0.10] bg-white/[0.03] pl-11 text-[14px] shadow-none focus-visible:border-[color:var(--accent)]"
+              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -307,7 +307,7 @@ export function SignUpPage(): React.ReactElement {
             />
             <Input
               id={passwordId}
-              className="h-[46px] rounded-[12px] border-white/[0.10] bg-white/[0.03] pl-11 pr-11 text-[14px] shadow-none focus-visible:border-[color:var(--accent)]"
+              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 pr-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -339,7 +339,7 @@ export function SignUpPage(): React.ReactElement {
             />
             <Input
               id={confirmId}
-              className="h-[46px] rounded-[12px] border-white/[0.10] bg-white/[0.03] pl-11 text-[14px] shadow-none focus-visible:border-[color:var(--accent)]"
+              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -353,14 +353,14 @@ export function SignUpPage(): React.ReactElement {
             type="submit"
             disabled={isBusy}
             variant="ghost"
-            className="ps-auth-primary mt-[3px] !h-auto w-full gap-2 rounded-[12px] py-[13px] text-[14px] font-semibold"
+            className="ps-auth-primary mt-[3px] !h-auto w-full gap-2 rounded-md py-[13px] text-ui font-semibold"
           >
             {isBusy ? <Spinner /> : null}
             Create account &amp; continue
           </Button>
         </form>
 
-        <p className="text-tool-text-muted mt-[18px] text-center text-[11px] leading-[1.5]">
+        <p className="text-tool-text-muted mt-[18px] text-center text-meta leading-[1.5]">
           By continuing you agree to our{" "}
           <Link
             to="/terms-of-service"

@@ -18,7 +18,7 @@ export function VersionDivider({
       role="separator"
       aria-label={`Version ${versionLabel}${promptChanged ? ", prompt edited" : ""}`}
     >
-      <span className="text-[10px] font-medium text-tool-text-label">
+      <span className="text-meta font-medium text-tool-text-label">
         {versionLabel}
       </span>
       {promptChanged && (

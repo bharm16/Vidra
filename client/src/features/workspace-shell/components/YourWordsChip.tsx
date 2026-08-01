@@ -30,7 +30,7 @@ export function YourWordsChip({
       onClick={onRestore}
       title={`Restore your words: "${words}"`}
       className={cn(
-        "flex h-auto max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-normal",
+        "flex h-auto max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-meta font-normal",
         "border-tool-rail-border bg-tool-surface-card text-tool-text-subdued",
         "hover:border-tool-text-label hover:text-foreground",
       )}

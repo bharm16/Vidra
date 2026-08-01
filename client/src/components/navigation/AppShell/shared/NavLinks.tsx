@@ -63,7 +63,7 @@ export function NavLinks({
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2",
-                "text-muted text-[13px] font-medium transition-colors",
+                "text-muted text-ui font-medium transition-colors",
                 "hover:text-foreground hover:bg-[rgba(255,255,255,0.05)]",
                 isActive && "text-foreground bg-[rgba(255,255,255,0.08)]",
               )

@@ -99,18 +99,18 @@ export function ContactSupportPage(): React.ReactElement {
         <div className="flex items-center justify-between gap-4 mb-6">
           <div>
             <p
-              className="text-[11px] font-semibold tracking-[0.2em]"
+              className="text-meta font-semibold tracking-[0.2em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               SUPPORT
             </p>
-            <h1 className="mt-1 text-[18px] font-semibold text-white tracking-tight">
+            <h1 className="mt-1 text-body-lg font-semibold text-white tracking-tight">
               Get help
             </h1>
           </div>
           <Link
             to="/"
-            className="text-[12px] font-medium hover:text-white transition-colors"
+            className="text-meta font-medium hover:text-white transition-colors"
             style={{ color: AUTH_COLORS.textDim }}
           >
             Back to app
@@ -125,9 +125,9 @@ export function ContactSupportPage(): React.ReactElement {
               style={{ color: AUTH_COLORS.textDim }}
               aria-hidden="true"
             />
-            <p className="text-[13px] font-semibold text-white">Support</p>
+            <p className="text-ui font-semibold text-white">Support</p>
             <p
-              className="mt-1 text-[12px] leading-snug"
+              className="mt-1 text-meta leading-snug"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               Bugs, billing, account help.
@@ -140,9 +140,9 @@ export function ContactSupportPage(): React.ReactElement {
               style={{ color: AUTH_COLORS.textDim }}
               aria-hidden="true"
             />
-            <p className="text-[13px] font-semibold text-white">Email</p>
+            <p className="text-ui font-semibold text-white">Email</p>
             <p
-              className="mt-1 text-[12px] font-mono leading-snug"
+              className="mt-1 text-meta font-mono leading-snug"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               {supportEmail}
@@ -151,7 +151,7 @@ export function ContactSupportPage(): React.ReactElement {
               type="button"
               onClick={handleCopy}
               variant="ghost"
-              className="mt-2 h-7 gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold text-white transition"
+              className="mt-2 h-7 gap-1.5 rounded-lg px-2.5 text-meta font-semibold text-white transition"
               style={{
                 background: AUTH_COLORS.inputBg,
                 border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -172,16 +172,16 @@ export function ContactSupportPage(): React.ReactElement {
               style={{ color: AUTH_COLORS.textDim }}
               aria-hidden="true"
             />
-            <p className="text-[13px] font-semibold text-white">Security</p>
+            <p className="text-ui font-semibold text-white">Security</p>
             <p
-              className="mt-1 text-[12px] leading-snug"
+              className="mt-1 text-meta leading-snug"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               Vulnerability? Choose "Security report".
             </p>
             <Link
               to="/privacy-policy"
-              className="mt-2 inline-block text-[11px] font-semibold hover:text-white transition-colors"
+              className="mt-2 inline-block text-meta font-semibold hover:text-white transition-colors"
               style={{ color: AUTH_COLORS.accent }}
             >
               Privacy policy
@@ -199,11 +199,11 @@ export function ContactSupportPage(): React.ReactElement {
               }}
             >
               <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="text-[14px] font-semibold text-white">
+                <h2 className="text-ui font-semibold text-white">
                   Send a message
                 </h2>
                 <span
-                  className="text-[10px] font-semibold tracking-[0.2em]"
+                  className="text-meta font-semibold tracking-[0.2em]"
                   style={{ color: AUTH_COLORS.textLabel }}
                 >
                   FAST ROUTING
@@ -213,7 +213,7 @@ export function ContactSupportPage(): React.ReactElement {
               <div className="flex flex-col gap-3.5">
                 <div>
                   <label
-                    className="text-[10px] font-semibold tracking-[0.18em]"
+                    className="text-meta font-semibold tracking-[0.18em]"
                     style={{ color: AUTH_COLORS.textLabel }}
                   >
                     TOPIC
@@ -233,7 +233,7 @@ export function ContactSupportPage(): React.ReactElement {
                           type="button"
                           onClick={() => setTopic(option.value)}
                           variant="ghost"
-                          className="h-8 rounded-lg px-3 text-[12px] font-medium transition"
+                          className="h-8 rounded-lg px-3 text-meta font-medium transition"
                           style={
                             isActive
                               ? {
@@ -256,7 +256,7 @@ export function ContactSupportPage(): React.ReactElement {
 
                 <div>
                   <label
-                    className="text-[10px] font-semibold tracking-[0.18em]"
+                    className="text-meta font-semibold tracking-[0.18em]"
                     style={{ color: AUTH_COLORS.textLabel }}
                   >
                     YOUR EMAIL{" "}
@@ -265,7 +265,7 @@ export function ContactSupportPage(): React.ReactElement {
                     </span>
                   </label>
                   <Input
-                    className="mt-1.5 w-full rounded-lg px-3.5 py-2 text-[13px] text-white outline-none transition"
+                    className="mt-1.5 w-full rounded-lg px-3.5 py-2 text-ui text-white outline-none transition"
                     style={{
                       background: AUTH_COLORS.inputBg,
                       border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -281,13 +281,13 @@ export function ContactSupportPage(): React.ReactElement {
 
                 <div>
                   <label
-                    className="text-[10px] font-semibold tracking-[0.18em]"
+                    className="text-meta font-semibold tracking-[0.18em]"
                     style={{ color: AUTH_COLORS.textLabel }}
                   >
                     MESSAGE
                   </label>
                   <Textarea
-                    className="mt-1.5 w-full min-h-[120px] rounded-lg px-3.5 py-2.5 text-[13px] text-white outline-none transition resize-y"
+                    className="mt-1.5 w-full min-h-[120px] rounded-lg px-3.5 py-2.5 text-ui text-white outline-none transition resize-y"
                     style={{
                       background: AUTH_COLORS.inputBg,
                       border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -301,7 +301,7 @@ export function ContactSupportPage(): React.ReactElement {
 
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p
-                    className="text-[12px]"
+                    className="text-meta"
                     style={{ color: AUTH_COLORS.textDim }}
                   >
                     Prefer self-serve? Start with{" "}
@@ -317,7 +317,7 @@ export function ContactSupportPage(): React.ReactElement {
                   <Button
                     type="submit"
                     variant="ghost"
-                    className="h-9 rounded-lg px-4 text-[13px] font-semibold transition"
+                    className="h-9 rounded-lg px-4 text-ui font-semibold transition"
                     style={{
                       background: AUTH_COLORS.accent,
                       color: AUTH_COLORS.bg,
@@ -332,11 +332,11 @@ export function ContactSupportPage(): React.ReactElement {
 
           <div className="flex flex-col gap-3">
             <div className="p-3.5" style={CARD}>
-              <p className="text-[13px] font-semibold text-white">
+              <p className="text-ui font-semibold text-white">
                 What to include
               </p>
               <div
-                className="mt-2 flex flex-col gap-1.5 text-[12px]"
+                className="mt-2 flex flex-col gap-1.5 text-meta"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 <p>Your goal and expected output</p>
@@ -349,13 +349,13 @@ export function ContactSupportPage(): React.ReactElement {
 
             <div className="p-3.5" style={INSET}>
               <p
-                className="text-[10px] font-semibold tracking-[0.18em]"
+                className="text-meta font-semibold tracking-[0.18em]"
                 style={{ color: AUTH_COLORS.textLabel }}
               >
                 RESPONSE TIME
               </p>
               <p
-                className="mt-1.5 text-[12px] leading-snug"
+                className="mt-1.5 text-meta leading-snug"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 We aim to respond within 24 hours on business days.
@@ -366,7 +366,7 @@ export function ContactSupportPage(): React.ReactElement {
 
         {/* Footer */}
         <footer
-          className="mt-10 pt-6 text-[12px]"
+          className="mt-10 pt-6 text-meta"
           style={{
             borderTop: `1px solid ${AUTH_COLORS.cardBorder}`,
             color: AUTH_COLORS.textDim,

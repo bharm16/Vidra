@@ -30,7 +30,7 @@ function VidraLockup(): React.ReactElement {
       className="inline-flex items-center gap-[11px]"
     >
       <VidraMark className="h-7 w-7 rounded-lg" />
-      <span className="text-foreground text-[20px] font-semibold tracking-[-0.01em]">
+      <span className="text-foreground text-subhead font-semibold tracking-[-0.01em]">
         Vidra
       </span>
     </Link>
@@ -48,7 +48,7 @@ function StartYourOwnCta({
     <Button
       asChild
       size="lg"
-      className={`text-app h-auto gap-2 rounded-[13px] bg-white px-6 py-3.5 text-[15px] font-semibold shadow-[0_12px_32px_-10px_rgba(255,255,255,0.34)] transition-transform hover:-translate-y-px hover:bg-white hover:shadow-[0_16px_40px_-10px_rgba(255,255,255,0.46)] ${className ?? ""}`}
+      className={`text-app h-auto gap-2 rounded-md bg-white px-6 py-3.5 text-ui font-semibold shadow-[0_12px_32px_-10px_rgba(255,255,255,0.34)] transition-transform hover:-translate-y-px hover:bg-white hover:shadow-[0_16px_40px_-10px_rgba(255,255,255,0.46)] ${className ?? ""}`}
     >
       <Link to="/">
         Start your own clip
@@ -88,7 +88,7 @@ function ClipShell({
         <Button
           asChild
           variant="outline"
-          className="text-tool-text-secondary hover:text-foreground h-auto rounded-[11px] border-white/[0.16] bg-white/[0.04] px-[18px] py-[9px] text-[13.5px] font-medium hover:border-white/[0.16] hover:bg-white/[0.09]"
+          className="text-tool-text-secondary hover:text-foreground h-auto rounded-md border-white/[0.16] bg-white/[0.04] px-[18px] py-[9px] text-ui font-medium hover:border-white/[0.16] hover:bg-white/[0.09]"
         >
           <Link to="/signin">Sign in</Link>
         </Button>
@@ -125,10 +125,10 @@ export default function SharedClip(): React.ReactElement {
     return (
       <ClipShell>
         <div className="ps-rise max-w-md text-center">
-          <h1 className="text-[26px] font-semibold tracking-[-0.01em]">
+          <h1 className="text-heading font-semibold tracking-[-0.01em]">
             Clip not found
           </h1>
-          <p className="text-tool-text-dim mt-3 text-[15px] leading-relaxed">
+          <p className="text-tool-text-dim mt-3 text-ui leading-relaxed">
             This clip doesn&rsquo;t exist or is no longer shared.
           </p>
           <StartYourOwnCta className="mt-7" />
@@ -142,7 +142,7 @@ export default function SharedClip(): React.ReactElement {
       {/* Player — the cinematic hero: a 16:9 frame with an accent-tinted ring
           glow and a deep drop shadow, rising in on entrance. */}
       <div
-        className="ps-rise relative aspect-video w-full max-w-[784px] overflow-hidden rounded-[20px] border border-white/[0.14] bg-black"
+        className="ps-rise relative aspect-video w-full max-w-[784px] overflow-hidden rounded-xl border border-white/[0.14] bg-black"
         style={{
           boxShadow:
             "0 44px 96px -34px rgba(0,0,0,0.82), 0 0 0 6px color-mix(in srgb, var(--accent) 6%, transparent)",
@@ -163,7 +163,7 @@ export default function SharedClip(): React.ReactElement {
           node so the caption reads cleanly to assistive tech. */}
       {clip.description ? (
         <p
-          className="ps-rise text-tool-text-dim mt-6 max-w-[600px] whitespace-pre-wrap text-center text-[17px] italic leading-[1.55]"
+          className="ps-rise text-tool-text-dim mt-6 max-w-[600px] whitespace-pre-wrap text-center text-body-lg italic leading-[1.55]"
           style={{ animationDelay: "0.1s" }}
         >
           <span aria-hidden>&ldquo;</span>

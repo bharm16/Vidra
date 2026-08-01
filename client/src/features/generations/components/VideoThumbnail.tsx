@@ -158,17 +158,17 @@ export function VideoThumbnail({
 
   if (isGenerating) {
     return (
-      <div className="group/video relative aspect-video w-full overflow-hidden rounded-[10px] border border-success-400/20 bg-tool-surface-deep">
+      <div className="group/video relative aspect-video w-full overflow-hidden rounded-md border border-success-400/20 bg-tool-surface-deep">
         <div className="h-full w-full animate-shimmer bg-gradient-to-r from-tool-surface-deep via-tool-nav-active to-tool-surface-deep bg-[length:200%_100%]" />
 
         {modelLabel && (
-          <div className="absolute left-2 top-2 rounded bg-black/30 px-1.5 py-0.5 text-[10px] font-semibold text-white/40 backdrop-blur-md">
+          <div className="absolute left-2 top-2 rounded bg-black/30 px-1.5 py-0.5 text-meta font-semibold text-white/40 backdrop-blur-md">
             {modelLabel}
           </div>
         )}
 
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[11px] font-medium text-white/30">
+          <span className="text-meta font-medium text-white/30">
             {typeof progressPercent === "number"
               ? `${progressPercent}%`
               : "Starting..."}
@@ -178,7 +178,7 @@ export function VideoThumbnail({
         {onCancel && (
           <button
             type="button"
-            className="absolute right-2 top-2 rounded bg-black/30 px-1.5 py-0.5 text-[10px] font-medium text-white/40 backdrop-blur-md transition-colors hover:text-white/70"
+            className="absolute right-2 top-2 rounded bg-black/30 px-1.5 py-0.5 text-meta font-medium text-white/40 backdrop-blur-md transition-colors hover:text-white/70"
             onClick={(e) => {
               e.stopPropagation();
               onCancel();
@@ -202,21 +202,21 @@ export function VideoThumbnail({
 
   if (isFailed) {
     return (
-      <div className="relative aspect-video w-full overflow-hidden rounded-[10px] border border-tool-nav-active bg-tool-surface-deep">
+      <div className="relative aspect-video w-full overflow-hidden rounded-md border border-tool-nav-active bg-tool-surface-deep">
         <div className="flex h-full w-full flex-col items-center justify-center gap-1.5">
           <WarningCircle
             size={14}
             className="text-red-500/40"
             aria-hidden="true"
           />
-          <span className="text-[11px] text-red-500/40">Failed</span>
+          <span className="text-meta text-red-500/40">Failed</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="group/video relative aspect-video w-full overflow-hidden rounded-[10px] border border-tool-nav-active bg-tool-surface-deep transition-[border-color] duration-200 hover:border-tool-text-disabled">
+    <div className="group/video relative aspect-video w-full overflow-hidden rounded-md border border-tool-nav-active bg-tool-surface-deep transition-[border-color] duration-200 hover:border-tool-text-disabled">
       {resolvedVideoUrl ? (
         <video
           ref={videoRef}
@@ -277,7 +277,7 @@ export function VideoThumbnail({
           }}
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-[11px] text-tool-text-label">
+        <div className="flex h-full w-full items-center justify-center text-meta text-tool-text-label">
           No preview
         </div>
       )}
@@ -299,7 +299,7 @@ export function VideoThumbnail({
         </div>
       )}
 
-      <div className="absolute bottom-2 right-2 rounded bg-black/45 px-[5px] py-[2px] text-[10px] font-medium tabular-nums text-white/70 backdrop-blur-md">
+      <div className="absolute bottom-2 right-2 rounded bg-black/45 px-[5px] py-[2px] text-meta font-medium tabular-nums text-white/70 backdrop-blur-md">
         {formatDuration(videoDuration)}
       </div>
 
@@ -307,7 +307,7 @@ export function VideoThumbnail({
         {tier && (
           <span
             className={cn(
-              "rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-semibold backdrop-blur-md",
+              "rounded bg-black/40 px-1.5 py-0.5 text-meta font-semibold backdrop-blur-md",
               tier === "draft"
                 ? "text-success-400/80"
                 : "text-tool-accent-neutral/80",
@@ -317,7 +317,7 @@ export function VideoThumbnail({
           </span>
         )}
         {modelLabel && (
-          <span className="rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white/55 backdrop-blur-md">
+          <span className="rounded bg-black/40 px-1.5 py-0.5 text-meta font-medium text-white/55 backdrop-blur-md">
             {modelLabel}
           </span>
         )}
@@ -325,7 +325,7 @@ export function VideoThumbnail({
         {onDelete && (
           <button
             type="button"
-            className="flex h-6 w-6 items-center justify-center rounded-[5px] border-none bg-black/40 text-white/55 backdrop-blur-md transition-colors hover:text-white/80"
+            className="flex h-6 w-6 items-center justify-center rounded-sm border-none bg-black/40 text-white/55 backdrop-blur-md transition-colors hover:text-white/80"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();

@@ -47,24 +47,24 @@ export function ShotCard({
           {shot.userPrompt}
         </div>
         {shot.continuityMechanismUsed && (
-          <div className="mt-2 text-[11px] text-muted">
+          <div className="mt-2 text-meta text-muted">
             Continuity: {shot.continuityMechanismUsed}
           </div>
         )}
         {shot.styleTransferApplied && (
-          <div className="mt-1 text-[11px] text-muted">
+          <div className="mt-1 text-meta text-muted">
             Style transfer applied
           </div>
         )}
         {shot.styleDegraded && (
-          <div className="mt-1 text-[11px] text-warning">
+          <div className="mt-1 text-meta text-warning">
             Style degraded
             {shot.styleDegradedReason ? ` (${shot.styleDegradedReason})` : ""}
           </div>
         )}
         {(shot.styleScore !== undefined ||
           shot.identityScore !== undefined) && (
-          <div className="mt-1 text-[11px] text-muted">
+          <div className="mt-1 text-meta text-muted">
             {shot.styleScore !== undefined && (
               <span className="mr-2">Style {shot.styleScore.toFixed(2)}</span>
             )}

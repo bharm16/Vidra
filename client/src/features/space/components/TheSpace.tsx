@@ -176,7 +176,7 @@ export function TheSpace({
                    door on hover — it is the only way back to editing. */
                 <span
                   className={cn(
-                    "inline-flex items-center justify-center gap-[7px] rounded-[11px] border px-3 font-mono text-[12px]",
+                    "inline-flex items-center justify-center gap-[7px] rounded-md border px-3 font-mono text-meta",
                     "text-tool-text-muted border-white/[0.08] bg-white/[0.03]",
                     "transition-all group-hover:-translate-y-px group-hover:scale-[1.04]",
                     "group-hover:border-[color:color-mix(in_srgb,var(--accent)_52%,transparent)]",
@@ -201,7 +201,7 @@ export function TheSpace({
                     <path d="M4 18h10" />
                   </svg>
                   Prompt
-                  <span className="text-tool-text-muted hidden text-[11px] group-hover:inline">
+                  <span className="text-tool-text-muted hidden text-meta group-hover:inline">
                     Edit words
                   </span>
                 </span>
@@ -209,7 +209,7 @@ export function TheSpace({
                 <>
                   <div
                     className={cn(
-                      "relative overflow-hidden rounded-[14px] border transition-transform",
+                      "relative overflow-hidden rounded-md border transition-transform",
                       node.status === "forming"
                         ? "ps-node-forming border-[color:var(--accent)]"
                         : isLive || focusedWords
@@ -223,7 +223,7 @@ export function TheSpace({
                   >
                     <SpaceNodeBody node={node} />
                     {isLive ? (
-                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 text-[10px] font-medium text-white">
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 text-meta font-medium text-white">
                         <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />
                         LIVE
                       </span>
@@ -273,7 +273,7 @@ function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
   if (node.kind === "words") {
     return (
       <div className="flex h-full w-full items-center px-4 py-3">
-        <span className="text-foreground line-clamp-4 text-[13px] leading-snug">
+        <span className="text-foreground line-clamp-4 text-ui leading-snug">
           {node.label ?? "—"}
         </span>
       </div>
@@ -294,7 +294,7 @@ function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
         <div className="bg-tool-surface-deep absolute inset-0" />
       )}
       {node.status === "kept" ? (
-        <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] text-white">
+        <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-meta text-white">
           kept
         </span>
       ) : null}

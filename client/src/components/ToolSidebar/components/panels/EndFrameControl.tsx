@@ -66,7 +66,7 @@ export function EndFrameControl({
           <button
             type="button"
             onClick={onClear}
-            className="h-5 rounded-md border border-tool-nav-active bg-tool-surface-deep/90 px-1.5 text-[10px] text-tool-text-dim transition-colors hover:text-white"
+            className="h-5 rounded-md border border-tool-nav-active bg-tool-surface-deep/90 px-1.5 text-meta text-tool-text-dim transition-colors hover:text-white"
           >
             Clear
           </button>
@@ -109,7 +109,7 @@ export function EndFrameControl({
           </>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-white">
-            <span className="text-[11px] font-medium">End frame</span>
+            <span className="text-meta font-medium">End frame</span>
           </div>
         )}
       </button>

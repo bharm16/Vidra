@@ -152,17 +152,15 @@ export function UserMenu({
               className="h-9 w-9 flex-shrink-0 rounded-full"
             />
           ) : (
-            <div className="bg-surface-3 text-foreground flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold">
+            <div className="bg-surface-3 text-foreground flex h-9 w-9 items-center justify-center rounded-full text-ui font-semibold">
               {initial}
             </div>
           )}
           <div className="min-w-0 flex-1 text-left">
-            <p className="text-foreground truncate text-[13px] font-semibold">
+            <p className="text-foreground truncate text-ui font-semibold">
               {displayName || firstName}
             </p>
-            <p className="text-muted truncate text-[12px] font-normal">
-              {email}
-            </p>
+            <p className="text-muted truncate text-meta font-normal">{email}</p>
           </div>
         </Button>
 

@@ -334,7 +334,7 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
             <span>{label}</span>
             <span
               className={cn(
-                "ml-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px]",
+                "ml-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-meta",
                 selectedCategory === key
                   ? "bg-primary-foreground/15 text-primary-foreground"
                   : "bg-surface-3 text-muted",

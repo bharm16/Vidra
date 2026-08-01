@@ -62,7 +62,7 @@ export function HistoryPage(): React.ReactElement {
         {/* Header — title, search pill, filter chips. */}
         <header className="flex-none px-9 pb-[18px] pt-[30px]">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-foreground font-sans text-[27px] font-semibold tracking-[-0.015em]">
+            <h1 className="text-foreground font-sans text-heading font-semibold tracking-[-0.015em]">
               Library
             </h1>
             <div className="flex w-[264px] items-center gap-[9px] rounded-full border border-white/[0.12] bg-white/[0.04] px-[15px] py-[9px]">
@@ -78,7 +78,7 @@ export function HistoryPage(): React.ReactElement {
                 }
                 placeholder="Search your work"
                 aria-label="Search your library"
-                className="placeholder:text-tool-text-muted text-foreground w-full bg-transparent font-sans text-[13px] leading-none outline-none"
+                className="placeholder:text-tool-text-muted text-foreground w-full bg-transparent font-sans text-ui leading-none outline-none"
               />
             </div>
           </div>
@@ -111,7 +111,7 @@ export function HistoryPage(): React.ReactElement {
             <div className={GRID_CLASS} aria-hidden="true">
               {Array.from({ length: 8 }).map((_, index) => (
                 <div key={index} className="flex flex-col">
-                  <div className="h-[172px] animate-pulse rounded-[13px] border border-white/10 bg-white/[0.04]" />
+                  <div className="h-[172px] animate-pulse rounded-md border border-white/10 bg-white/[0.04]" />
                   <div className="mt-2.5 h-3 w-3/4 animate-pulse rounded bg-white/[0.06]" />
                   <div className="mt-2 h-2.5 w-1/3 animate-pulse rounded bg-white/[0.04]" />
                 </div>
@@ -125,7 +125,7 @@ export function HistoryPage(): React.ReactElement {
                   aria-hidden="true"
                 />
               </div>
-              <p className="text-tool-text-muted font-sans text-[13px]">
+              <p className="text-tool-text-muted font-sans text-ui">
                 {emptyMessage}
               </p>
               {showStartCta ? (

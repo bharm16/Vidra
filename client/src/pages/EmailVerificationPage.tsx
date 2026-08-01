@@ -253,7 +253,7 @@ export function EmailVerificationPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p className="text-muted text-[13px] leading-relaxed">
+        <p className="text-muted text-ui leading-relaxed">
           We use verification to keep accounts secure and deliver resets
           reliably.
         </p>
@@ -265,10 +265,10 @@ export function EmailVerificationPage(): React.ReactElement {
                 <Spinner />
               </span>
               <div className="min-w-0">
-                <p className="text-foreground text-[13px] font-semibold">
+                <p className="text-foreground text-ui font-semibold">
                   Verifying…
                 </p>
-                <p className="text-muted mt-1 text-[13px] leading-snug">
+                <p className="text-muted mt-1 text-ui leading-snug">
                   Applying your confirmation code. This should take a moment.
                 </p>
               </div>
@@ -286,10 +286,10 @@ export function EmailVerificationPage(): React.ReactElement {
                 />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-[color:var(--badge-success-text)]">
+                <p className="text-ui font-semibold text-[color:var(--badge-success-text)]">
                   Email verified
                 </p>
-                <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--badge-success-text)] opacity-70">
+                <p className="mt-0.5 text-ui leading-snug text-[color:var(--badge-success-text)] opacity-70">
                   You're confirmed. Jump back into the app.
                 </p>
               </div>
@@ -308,10 +308,10 @@ export function EmailVerificationPage(): React.ReactElement {
                 aria-hidden="true"
               />
               <div className="min-w-0">
-                <p className="text-danger text-[13px] font-semibold">
+                <p className="text-danger text-ui font-semibold">
                   {inlineErrorTitle}
                 </p>
-                <p className="text-danger mt-0.5 text-[13px] leading-snug opacity-80">
+                <p className="text-danger mt-0.5 text-ui leading-snug opacity-80">
                   {error}
                 </p>
               </div>
@@ -329,10 +329,10 @@ export function EmailVerificationPage(): React.ReactElement {
                 />
               </span>
               <div className="min-w-0">
-                <p className="text-foreground text-[13px] font-semibold">
+                <p className="text-foreground text-ui font-semibold">
                   Verification email not sent
                 </p>
-                <p className="text-muted mt-1 text-[13px] leading-snug">
+                <p className="text-muted mt-1 text-ui leading-snug">
                   {displayEmail ? (
                     <>
                       Your account was created for{" "}
@@ -377,7 +377,7 @@ export function EmailVerificationPage(): React.ReactElement {
                 </div>
 
                 {!user ? (
-                  <p className="text-faint mt-3 text-[12px] leading-relaxed">
+                  <p className="text-faint mt-3 text-meta leading-relaxed">
                     Sign in first to resend a verification email. If you&apos;re
                     on a different device, just click the link in your inbox.
                   </p>
@@ -394,10 +394,10 @@ export function EmailVerificationPage(): React.ReactElement {
                 <Mail className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-foreground text-[13px] font-semibold">
+                <p className="text-foreground text-ui font-semibold">
                   Check your inbox
                 </p>
-                <p className="text-muted mt-1 text-[13px] leading-snug">
+                <p className="text-muted mt-1 text-ui leading-snug">
                   {displayEmail ? (
                     <>
                       We sent a verification link to{" "}
@@ -440,7 +440,7 @@ export function EmailVerificationPage(): React.ReactElement {
                 </div>
 
                 {!user ? (
-                  <p className="text-faint mt-3 text-[12px] leading-relaxed">
+                  <p className="text-faint mt-3 text-meta leading-relaxed">
                     Sign in first to resend a verification email. If you're on a
                     different device, just click the link in your inbox.
                   </p>

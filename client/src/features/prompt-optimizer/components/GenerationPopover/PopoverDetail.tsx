@@ -127,10 +127,10 @@ export function PopoverDetail({
   return (
     <aside className="flex h-full w-[320px] flex-shrink-0 flex-col overflow-hidden border-l border-tool-rail-border bg-tool-panel-inner">
       <div className="px-5 pb-0 pt-6">
-        <h2 className="line-clamp-3 text-[15px] font-semibold leading-[1.5] text-foreground">
+        <h2 className="line-clamp-3 text-ui font-semibold leading-[1.5] text-foreground">
           {generation.prompt}
         </h2>
-        <div className="mt-2.5 flex flex-wrap items-center gap-1 text-[12px] text-tool-text-subdued">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1 text-meta text-tool-text-subdued">
           <span>{generation.model}</span>
           <span>·</span>
           <span style={{ color: resolveTierColor(generation) }}>
@@ -151,7 +151,7 @@ export function PopoverDetail({
 
       <div className="px-5 pb-0 pt-[14px]">
         <div className="flex items-center">
-          <span className="text-[12px] font-semibold text-tool-text-dim">
+          <span className="text-meta font-semibold text-tool-text-dim">
             Prompt
           </span>
           <div className="flex-1" />
@@ -168,7 +168,7 @@ export function PopoverDetail({
           </button>
         </div>
 
-        <div className="mt-2 max-h-[100px] overflow-auto text-[13px] leading-[1.65] text-tool-text-dim">
+        <div className="mt-2 max-h-[100px] overflow-auto text-ui leading-[1.65] text-tool-text-dim">
           {promptSegments.map((segment, index) => (
             <span
               key={`${generation.id}-segment-${index}`}
@@ -186,7 +186,7 @@ export function PopoverDetail({
         <button
           type="button"
           onClick={onReuse}
-          className="inline-flex h-[42px] w-full items-center justify-center rounded-[10px] bg-foreground text-[13px] font-bold text-tool-surface-deep transition-opacity hover:opacity-90"
+          className="inline-flex h-[42px] w-full items-center justify-center rounded-md bg-foreground text-ui font-bold text-tool-surface-deep transition-opacity hover:opacity-90"
         >
           Reuse prompt and settings
         </button>

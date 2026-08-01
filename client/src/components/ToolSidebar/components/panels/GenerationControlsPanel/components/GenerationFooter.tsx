@@ -79,7 +79,7 @@ export function GenerationFooter({
       />
 
       {/* ── Credit cost ── */}
-      <span className="whitespace-nowrap text-[11px] tabular-nums text-tool-text-subdued">
+      <span className="whitespace-nowrap text-meta tabular-nums text-tool-text-subdued">
         {creditCost !== null ? `· ${creditCost} cr` : ""}
         {creditBalance !== null && creditBalance !== undefined ? (
           <span
@@ -100,7 +100,7 @@ export function GenerationFooter({
       {/* ── Generate button ── */}
       <button
         type="button"
-        className="flex h-[38px] items-center gap-[7px] rounded-[10px] bg-[linear-gradient(135deg,#6C5CE7_0%,#8B5CF6_100%)] px-5 text-[13px] font-bold tracking-[0.02em] text-white shadow-[0_2px_12px_rgba(108,92,231,0.33),0_0_0_1px_rgba(108,92,231,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(108,92,231,0.47),0_0_0_1px_rgba(108,92,231,0.33)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-[0_2px_12px_rgba(108,92,231,0.33),0_0_0_1px_rgba(108,92,231,0.2)]"
+        className="flex h-[38px] items-center gap-[7px] rounded-md bg-[linear-gradient(135deg,#6C5CE7_0%,#8B5CF6_100%)] px-5 text-ui font-bold tracking-[0.02em] text-white shadow-[0_2px_12px_rgba(108,92,231,0.33),0_0_0_1px_rgba(108,92,231,0.2)] transition-all hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(108,92,231,0.47),0_0_0_1px_rgba(108,92,231,0.33)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-[0_2px_12px_rgba(108,92,231,0.33),0_0_0_1px_rgba(108,92,231,0.2)]"
         onClick={onGenerate}
         disabled={isDisabled}
         title={

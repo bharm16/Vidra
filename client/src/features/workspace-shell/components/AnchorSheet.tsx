@@ -47,7 +47,7 @@ export function AnchorSheet({
       />
       {/* The glass card. */}
       <div
-        className="ps-rise relative w-full rounded-[20px] border border-white/[0.10] bg-white/[0.045] px-7 pb-4 pt-6 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.8),0_8px_26px_rgba(0,0,0,0.5)] backdrop-blur-[16px] backdrop-saturate-150"
+        className="ps-rise relative w-full rounded-xl border border-white/[0.10] bg-white/[0.045] px-7 pb-4 pt-6 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.8),0_8px_26px_rgba(0,0,0,0.5)] backdrop-blur-[16px] backdrop-saturate-150"
         style={{ animationDelay: "0.44s" }}
       >
         {yourWordsSlot}
@@ -55,7 +55,7 @@ export function AnchorSheet({
         {chromeSlot}
         <div
           aria-hidden
-          className="ps-focus-ring absolute inset-[-1px] rounded-[21px]"
+          className="ps-focus-ring absolute inset-[-1px] rounded-xl"
         />
       </div>
       {footerSlot ? (

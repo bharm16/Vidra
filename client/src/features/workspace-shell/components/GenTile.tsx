@@ -51,7 +51,7 @@ export function GenTile({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
           <button
             type="button"
-            className="bg-tool-surface-deep/80 text-foreground pointer-events-auto rounded-md px-2 py-1 text-[10px] font-medium"
+            className="bg-tool-surface-deep/80 text-foreground pointer-events-auto rounded-md px-2 py-1 text-meta font-medium"
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
@@ -62,7 +62,7 @@ export function GenTile({
           {isFeatured && (
             <button
               type="button"
-              className="bg-tool-accent-neutral text-tool-surface-deep pointer-events-auto rounded-md px-2 py-1 text-[10px] font-semibold"
+              className="bg-tool-accent-neutral text-tool-surface-deep pointer-events-auto rounded-md px-2 py-1 text-meta font-semibold"
               onClick={(e) => {
                 e.stopPropagation();
                 dispatchContinueScene({ fromGenerationId: generation.id });
@@ -166,7 +166,7 @@ function FailedState({ onRetry }: { onRetry: () => void }): React.ReactElement {
       <p className="text-tool-text-subdued text-xs">Render failed.</p>
       <button
         type="button"
-        className="border-tool-rail-border text-tool-text-dim hover:text-foreground rounded-md border px-2 py-1 text-[10px] font-semibold"
+        className="border-tool-rail-border text-tool-text-dim hover:text-foreground rounded-md border px-2 py-1 text-meta font-semibold"
         onClick={(e) => {
           e.stopPropagation();
           onRetry();

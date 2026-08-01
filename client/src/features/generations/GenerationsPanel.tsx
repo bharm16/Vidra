@@ -77,10 +77,10 @@ function GenerationsPanelView({
       )}
     >
       <div className="flex items-center justify-between border-b border-tool-rail-border px-4 py-3.5">
-        <span className="text-[13px] font-semibold text-foreground">
+        <span className="text-ui font-semibold text-foreground">
           Generations
         </span>
-        <span className="text-[10px] text-tool-text-label">
+        <span className="text-meta text-tool-text-label">
           {runtime.totalVisibleGenerations > 0
             ? `${runtime.totalVisibleGenerations} output${runtime.totalVisibleGenerations !== 1 ? "s" : ""}`
             : ""}

@@ -120,11 +120,11 @@ export function GalleryThumbnail({
         )}
       </div>
 
-      <div className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 z-20 w-[220px] -translate-y-1/2 translate-x-1 rounded-[10px] border border-surface-2 bg-tool-surface-deep/95 px-3 py-2 opacity-0 shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out group-hover:translate-x-0 group-hover:opacity-100">
-        <p className="truncate text-[11px] font-medium text-foreground">
+      <div className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 z-20 w-[220px] -translate-y-1/2 translate-x-1 rounded-md border border-surface-2 bg-tool-surface-deep/95 px-3 py-2 opacity-0 shadow-[0_8px_30px_rgba(0,0,0,0.35)] transition-all duration-200 ease-out group-hover:translate-x-0 group-hover:opacity-100">
+        <p className="truncate text-meta font-medium text-foreground">
           {flyoutTitle}
         </p>
-        <p className="mt-0.5 text-[10px] text-tool-text-dim">{flyoutMeta}</p>
+        <p className="mt-0.5 text-meta text-tool-text-dim">{flyoutMeta}</p>
       </div>
     </button>
   );

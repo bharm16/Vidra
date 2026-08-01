@@ -145,7 +145,7 @@ export function VideoReferenceSlots({
                       event.target.value as "asset" | "style",
                     )
                   }
-                  className="h-5 rounded border border-tool-border-primary bg-tool-surface-deep px-1 text-[10px] text-ghost"
+                  className="h-5 rounded border border-tool-border-primary bg-tool-surface-deep px-1 text-meta text-ghost"
                   aria-label={`Reference type ${index + 1}`}
                 >
                   <option value="asset">Asset</option>
@@ -153,7 +153,7 @@ export function VideoReferenceSlots({
                 </select>
                 <button
                   type="button"
-                  className="h-5 rounded border border-tool-border-primary bg-transparent text-[10px] text-tool-text-dim hover:text-white"
+                  className="h-5 rounded border border-tool-border-primary bg-transparent text-meta text-tool-text-dim hover:text-white"
                   onClick={() => onRemove(reference.id)}
                 >
                   Clear

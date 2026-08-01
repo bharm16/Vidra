@@ -182,7 +182,7 @@ export function KontextFrameStrip({
                     className="text-red-500/40"
                     aria-hidden="true"
                   />
-                  <span className="text-[10px] font-medium">Failed</span>
+                  <span className="text-meta font-medium">Failed</span>
                 </div>
               ) : (
                 <div className="h-full w-full bg-tool-surface-deep" />

@@ -33,10 +33,10 @@ export function SceneProxyPreviewPanel({
       data-testid="scene-proxy-preview-panel"
     >
       <header className="flex items-center justify-between border-b border-border bg-black/20 px-3 py-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+        <span className="text-meta font-semibold uppercase tracking-wide text-muted">
           Scene proxy preview
         </span>
-        <span className="text-[11px] text-muted">
+        <span className="text-meta text-muted">
           {isSceneProxyReady ? "Ready" : "Build proxy first"}
         </span>
       </header>
@@ -59,14 +59,14 @@ export function SceneProxyPreviewPanel({
           type="button"
           onClick={onPreviewSceneProxy}
           disabled={!isSceneProxyReady || isPreviewingSceneProxy}
-          className="absolute bottom-2 right-2 rounded border border-border bg-black/55 px-2 py-1 text-[10px] font-medium text-foreground backdrop-blur-sm disabled:opacity-50"
+          className="absolute bottom-2 right-2 rounded border border-border bg-black/55 px-2 py-1 text-meta font-medium text-foreground backdrop-blur-sm disabled:opacity-50"
           data-testid="preview-scene-proxy-button"
         >
           {isPreviewingSceneProxy ? "Rendering..." : "Preview angle"}
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 border-t border-border px-3 py-2 text-[11px] text-muted">
+      <div className="grid grid-cols-4 gap-2 border-t border-border px-3 py-2 text-meta text-muted">
         <span>Yaw: {formatCameraValue(previewCamera?.yaw)}</span>
         <span>Pitch: {formatCameraValue(previewCamera?.pitch)}</span>
         <span>Roll: {formatCameraValue(previewCamera?.roll)}</span>

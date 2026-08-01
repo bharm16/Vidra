@@ -10,23 +10,23 @@ export function NotFoundPage(): React.ReactElement {
     >
       <div className="mx-auto max-w-md px-4 sm:px-6 pt-24 pb-16 text-center">
         <p
-          className="text-[10px] font-semibold tracking-[0.2em]"
+          className="text-meta font-semibold tracking-[0.2em]"
           style={{ color: AUTH_COLORS.textLabel }}
         >
           404
         </p>
-        <h1 className="mt-2 text-[15px] font-semibold text-white tracking-tight">
+        <h1 className="mt-2 text-ui font-semibold text-white tracking-tight">
           Page not found
         </h1>
         <p
-          className="mt-2 text-[13px]"
+          className="mt-2 text-ui"
           style={{ color: AUTH_COLORS.textSecondary }}
         >
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <Link
           to="/"
-          className="mt-5 inline-flex h-9 items-center rounded-lg px-4 text-[13px] font-semibold transition"
+          className="mt-5 inline-flex h-9 items-center rounded-lg px-4 text-ui font-semibold transition"
           style={{ background: AUTH_COLORS.accent, color: AUTH_COLORS.bg }}
         >
           Back to workspace

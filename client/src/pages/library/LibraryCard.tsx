@@ -29,7 +29,7 @@ export function LibraryCard({ entry }: LibraryCardProps): React.ReactElement {
     typeof entry.id === "string" && entry.id.trim() ? entry.id.trim() : null;
 
   const cover = (
-    <div className="relative h-[172px] overflow-hidden rounded-[13px] border border-white/10 shadow-[0_16px_36px_-20px_rgba(0,0,0,0.7)] transition-all duration-200 group-hover:-translate-y-[3px] group-hover:border-white/30 group-hover:shadow-[0_22px_46px_-20px_rgba(0,0,0,0.8)]">
+    <div className="relative h-[172px] overflow-hidden rounded-md border border-white/10 shadow-[0_16px_36px_-20px_rgba(0,0,0,0.7)] transition-all duration-200 group-hover:-translate-y-[3px] group-hover:border-white/30 group-hover:shadow-[0_22px_46px_-20px_rgba(0,0,0,0.8)]">
       <LibraryThumbnail thumbnail={thumbnail} label={title} />
 
       {/* Top scrim so the badge reads over bright frames. */}
@@ -37,7 +37,7 @@ export function LibraryCard({ entry }: LibraryCardProps): React.ReactElement {
 
       <div
         className={cn(
-          "text-foreground absolute left-[10px] top-[9px] flex items-center rounded-md px-2 py-[3px] font-mono text-[10px] backdrop-blur-[4px]",
+          "text-foreground absolute left-[10px] top-[9px] flex items-center rounded-md px-2 py-[3px] font-mono text-meta backdrop-blur-[4px]",
           isClip ? "bg-black/60" : "bg-white/[0.14]",
         )}
       >
@@ -61,10 +61,10 @@ export function LibraryCard({ entry }: LibraryCardProps): React.ReactElement {
 
   const meta = (
     <>
-      <div className="text-foreground mt-2.5 truncate font-sans text-[14px] font-medium">
+      <div className="text-foreground mt-2.5 truncate font-sans text-ui font-medium">
         {title}
       </div>
-      <div className="text-tool-text-muted mt-0.5 font-mono text-[11.5px]">
+      <div className="text-tool-text-muted mt-0.5 font-mono text-meta">
         {when}
       </div>
     </>

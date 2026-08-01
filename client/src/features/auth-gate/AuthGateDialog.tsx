@@ -192,7 +192,7 @@ export function AuthGateDialog(): React.ReactElement {
         )}
       >
         <div className="border-tool-rail-border border-b px-5 py-4">
-          <DialogTitle className="text-[15px] font-semibold text-white">
+          <DialogTitle className="text-ui font-semibold text-white">
             {copy.title}
           </DialogTitle>
           <DialogDescription className="text-body-sm text-ghost mt-1">
@@ -204,7 +204,7 @@ export function AuthGateDialog(): React.ReactElement {
           {error ? (
             <div
               role="alert"
-              className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
+              className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
             >
               {error}
             </div>
@@ -227,7 +227,7 @@ export function AuthGateDialog(): React.ReactElement {
 
           <div className="flex items-center gap-3">
             <div className="bg-border h-px flex-1" />
-            <span className="text-faint text-[11px] font-medium">or</span>
+            <span className="text-faint text-meta font-medium">or</span>
             <div className="bg-border h-px flex-1" />
           </div>
 

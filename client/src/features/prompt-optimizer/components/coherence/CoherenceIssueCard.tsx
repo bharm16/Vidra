@@ -40,7 +40,7 @@ export function CoherenceIssueCard({
         <p className="text-sm font-medium text-[rgb(235,236,239)]">
           {issue.message}
         </p>
-        <p className="mt-1 text-[13px] leading-5 text-[rgb(170,174,187)]">
+        <p className="mt-1 text-ui leading-5 text-[rgb(170,174,187)]">
           {issue.reasoning}
         </p>
       </div>

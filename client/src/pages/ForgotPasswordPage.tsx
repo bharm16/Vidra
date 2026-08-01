@@ -134,7 +134,7 @@ export function ForgotPasswordPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p className="text-muted text-[13px] leading-relaxed">
+        <p className="text-muted text-ui leading-relaxed">
           Enter the email for your account. If it exists, we'll send a reset
           link.
         </p>
@@ -142,7 +142,7 @@ export function ForgotPasswordPage(): React.ReactElement {
         {error ? (
           <div
             role="alert"
-            className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
+            className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
           >
             {error}
           </div>
@@ -150,10 +150,10 @@ export function ForgotPasswordPage(): React.ReactElement {
 
         {sentTo ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
-            <p className="text-foreground text-[13px] font-semibold">
+            <p className="text-foreground text-ui font-semibold">
               Check your inbox
             </p>
-            <p className="text-muted mt-1 text-[13px] leading-snug">
+            <p className="text-muted mt-1 text-ui leading-snug">
               We sent a reset link to{" "}
               <span className="text-foreground font-medium">{sentTo}</span>. If
               you don't see it, check spam.
@@ -190,13 +190,13 @@ export function ForgotPasswordPage(): React.ReactElement {
           <div className="flex items-center justify-between gap-3">
             <Link
               to={signInLink}
-              className="text-faint hover:text-foreground text-[12px] font-medium transition"
+              className="text-faint hover:text-foreground text-meta font-medium transition"
             >
               Back to sign in
             </Link>
             <Link
               to="/privacy-policy"
-              className="text-ghost hover:text-foreground text-[12px] font-medium transition"
+              className="text-ghost hover:text-foreground text-meta font-medium transition"
             >
               Privacy
             </Link>

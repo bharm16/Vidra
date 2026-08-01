@@ -187,7 +187,7 @@ export function InactiveState({
           Array.isArray(example.to) &&
           example.to.length > 0 && (
             <div className="mt-4">
-              <div className="text-muted mb-2 text-[11px] font-medium uppercase tracking-wide">
+              <div className="text-muted mb-2 text-meta font-medium uppercase tracking-wide">
                 Example
               </div>
               <div className="bg-surface-1 border-border text-label-12 text-foreground rounded-md border px-3 py-2 font-mono">

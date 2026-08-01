@@ -635,11 +635,11 @@ export const CameraMotionOption: React.FC<CameraMotionOptionProps> = ({
             )}
 
             {showPreviewHint && (
-              <div className="absolute left-2 top-2 flex flex-col items-start gap-1 text-[11px] text-white/90">
+              <div className="absolute left-2 top-2 flex flex-col items-start gap-1 text-meta text-white/90">
                 <span className="px-2 py-0.5 rounded-full bg-black/50">
                   Preview available
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-black/40 text-[10px]">
+                <span className="px-2 py-0.5 rounded-full bg-black/40 text-meta">
                   {previewHintText}
                 </span>
               </div>

@@ -94,7 +94,7 @@ export function KeyframeWorkflow({
 
           <div className="ml-auto flex items-center gap-2">
             {usingFallback && targetModel && (
-              <span className="text-[11px] text-muted">
+              <span className="text-meta text-muted">
                 {targetModel} does not support i2v. Using Sora 2.
               </span>
             )}

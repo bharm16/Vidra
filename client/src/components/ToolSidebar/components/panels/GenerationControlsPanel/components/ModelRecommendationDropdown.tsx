@@ -229,7 +229,7 @@ function ListRow({
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              "text-[14px] leading-tight",
+              "text-ui leading-tight",
               selected
                 ? "text-foreground font-semibold"
                 : "text-muted font-medium",
@@ -243,7 +243,7 @@ function ListRow({
             </Badge>
           )}
         </div>
-        <span className="text-tool-text-dim text-[12px] leading-relaxed">
+        <span className="text-tool-text-dim text-meta leading-relaxed">
           {meta.strength}
         </span>
       </div>
@@ -308,14 +308,14 @@ function ModelCard({
 
       {/* Info — the strength copy leads; the radio row carries selection. */}
       <div className="bg-tool-surface-card flex flex-col gap-2 px-4 pb-4 pt-3.5">
-        <span className="text-foreground text-[13px] leading-relaxed">
+        <span className="text-foreground text-ui leading-relaxed">
           {meta.strength}
         </span>
         <div className="flex items-center gap-2">
           <Radio on={selected} />
           <span
             className={cn(
-              "text-[12px] leading-tight",
+              "text-meta leading-tight",
               selected
                 ? "text-foreground font-semibold"
                 : "text-muted font-medium",
@@ -553,7 +553,7 @@ export function ModelRecommendationDropdown({
             </span>
           ) : null}
           {triggerPrefixLabel && (
-            <span className="text-tool-text-subdued text-[11px] font-medium">
+            <span className="text-tool-text-subdued text-meta font-medium">
               {triggerPrefixLabel}
             </span>
           )}
@@ -590,7 +590,7 @@ export function ModelRecommendationDropdown({
             <button
               type="button"
               onClick={() => setMode("cards")}
-              className="text-tool-text-dim hover:text-foreground flex w-full items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors"
+              className="text-tool-text-dim hover:text-foreground flex w-full items-center gap-1.5 px-4 py-2.5 text-ui font-medium transition-colors"
             >
               Click to view all models
               <CaretDown className="h-3 w-3" />
@@ -617,11 +617,11 @@ export function ModelRecommendationDropdown({
                     className="flex items-center gap-2 px-4 py-2 opacity-40"
                   >
                     <WarningCircle className="text-faint h-4 w-4 flex-none" />
-                    <span className="text-tool-text-dim text-[13px]">
+                    <span className="text-tool-text-dim text-ui">
                       {e.label}
                     </span>
                     <div className="flex-1" />
-                    <span className="text-tool-text-label text-[10px] italic">
+                    <span className="text-tool-text-label text-meta italic">
                       {formatReasonLabel(e.reason)}
                     </span>
                   </div>
@@ -667,7 +667,7 @@ export function ModelRecommendationDropdown({
                 <h3 className="text-overline text-tool-text-subdued">
                   Render models
                 </h3>
-                <p className="text-tool-text-dim mb-5 mt-1 text-[13px]">
+                <p className="text-tool-text-dim mb-5 mt-1 text-ui">
                   High-quality models for final production output.
                 </p>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -690,7 +690,7 @@ export function ModelRecommendationDropdown({
                 <h3 className="text-overline text-tool-text-subdued">
                   Draft models
                 </h3>
-                <p className="text-tool-text-dim mb-5 mt-1 text-[13px]">
+                <p className="text-tool-text-dim mb-5 mt-1 text-ui">
                   Fast models for previewing and iterating.
                 </p>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -721,10 +721,10 @@ export function ModelRecommendationDropdown({
                     >
                       <WarningCircle className="text-faint h-5 w-5 flex-none" />
                       <div>
-                        <div className="text-tool-text-dim text-[14px] font-medium">
+                        <div className="text-tool-text-dim text-ui font-medium">
                           {e.label}
                         </div>
-                        <div className="text-tool-text-label text-[11px] italic">
+                        <div className="text-tool-text-label text-meta italic">
                           {formatReasonLabel(e.reason)}
                         </div>
                       </div>

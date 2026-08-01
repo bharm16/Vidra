@@ -43,7 +43,7 @@ function WorkflowArrow(): React.ReactElement {
   );
 }
 
-const PILL_BASE = "rounded-[10px] px-4 py-[9px] text-[13px]";
+const PILL_BASE = "rounded-md px-4 py-[9px] text-ui";
 
 /** Neutral workflow beat (Type / Picture / Motion). */
 function WorkflowPill({ label }: { label: string }): React.ReactElement {
@@ -67,14 +67,14 @@ function TocItem({ href, label, active }: TocItemProps): React.ReactElement {
   return active ? (
     <a
       href={href}
-      className="text-foreground border-l-2 border-[color:var(--accent)] py-1.5 pl-3 text-[13px] font-semibold"
+      className="text-foreground text-ui border-l-2 border-[color:var(--accent)] py-1.5 pl-3 font-semibold"
     >
       {label}
     </a>
   ) : (
     <a
       href={href}
-      className="text-tool-text-muted hover:text-tool-text-secondary py-1.5 pl-3.5 text-[13px] transition-colors"
+      className="text-tool-text-muted hover:text-tool-text-secondary text-ui py-1.5 pl-3.5 transition-colors"
     >
       {label}
     </a>
@@ -92,17 +92,16 @@ export function DocsPage(): React.ReactElement {
 
       {/* Icon rail */}
       <nav
-        className={`flex w-16 flex-none flex-col items-center gap-3.5 border-r py-4 ${HAIRLINE}`}
-        style={{ background: "#0c0d11" }}
+        className={`bg-background flex w-16 flex-none flex-col items-center gap-3.5 border-r py-4 ${HAIRLINE}`}
       >
         <Link to="/" title="Vidra" className="flex">
-          <VidraMark className="h-[30px] w-[30px] rounded-[9px]" />
+          <VidraMark className="h-[30px] w-[30px] rounded-md" />
         </Link>
 
         <Link
           to="/"
           title="Back to app"
-          className="text-tool-text-muted hover:text-foreground flex h-[38px] w-[38px] items-center justify-center rounded-[10px] transition-colors hover:bg-white/[0.06]"
+          className="text-tool-text-muted hover:text-foreground flex h-[38px] w-[38px] items-center justify-center rounded-md transition-colors hover:bg-white/[0.06]"
         >
           <svg
             width="18"
@@ -119,7 +118,7 @@ export function DocsPage(): React.ReactElement {
         </Link>
 
         <div
-          className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px]"
+          className="flex h-[38px] w-[38px] items-center justify-center rounded-md"
           style={{ background: accentTint(16), color: accentTint(70, "#fff") }}
         >
           <svg
@@ -139,17 +138,14 @@ export function DocsPage(): React.ReactElement {
 
         <div className="flex-1" />
 
-        <span
-          className="h-8 w-8 rounded-full border border-white/[0.16]"
-          style={{ background: "linear-gradient(150deg, #f4d3a2, #e6b487)" }}
-        />
+        <span className="border-border bg-muted h-8 w-8 rounded-full border" />
       </nav>
 
       {/* Table of contents */}
       <aside
         className={`w-[222px] flex-none border-r px-[22px] py-[30px] ${HAIRLINE}`}
       >
-        <div className="text-tool-text-placeholder mb-[15px] font-mono text-[10px] font-semibold uppercase tracking-[0.16em]">
+        <div className="text-tool-text-placeholder text-meta mb-[15px] font-mono font-semibold uppercase tracking-[0.16em]">
           On this page
         </div>
         <div className="flex flex-col gap-0.5">
@@ -161,17 +157,17 @@ export function DocsPage(): React.ReactElement {
 
       {/* Prose */}
       <main className="min-w-0 flex-1 px-[56px] py-[46px]">
-        <h1 className="text-foreground text-[30px] font-semibold tracking-[-0.02em]">
+        <h1 className="text-foreground text-display-sm font-semibold tracking-[-0.02em]">
           How it works
         </h1>
-        <p className="text-tool-text-muted mt-2 max-w-[560px] text-[14.5px] leading-[1.55]">
+        <p className="text-tool-text-muted text-ui mt-2 max-w-[560px] leading-[1.55]">
           Type an idea, shape it into a picture, set it moving, keep what you
           love.
         </p>
 
         {/* The workflow */}
         <section id="the-workflow" className="scroll-mt-24">
-          <h2 className="text-foreground mt-[34px] text-[17px] font-semibold">
+          <h2 className="text-foreground text-body-lg mt-[34px] font-semibold">
             The workflow
           </h2>
           <div className="mt-[15px] flex items-center gap-2.5">
@@ -192,7 +188,7 @@ export function DocsPage(): React.ReactElement {
               Keep
             </span>
           </div>
-          <p className="text-tool-text-subdued mt-[14px] max-w-[560px] text-[13.5px] leading-[1.65]">
+          <p className="text-tool-text-subdued text-ui mt-[14px] max-w-[560px] leading-[1.65]">
             Start by typing an idea. It becomes a still picture, which you can
             then set in motion as a short clip, and finally keep. Each step
             waits for you &mdash; nothing advances on its own, and you can
@@ -202,10 +198,10 @@ export function DocsPage(): React.ReactElement {
 
         {/* Editing phrases */}
         <section id="editing-phrases" className="scroll-mt-24">
-          <h2 className="text-foreground mt-[30px] text-[17px] font-semibold">
+          <h2 className="text-foreground text-body-lg mt-[30px] font-semibold">
             Editing phrases
           </h2>
-          <div className="text-foreground/90 mt-[13px] max-w-[560px] rounded-[12px] border border-white/[0.10] bg-white/[0.03] px-4 py-[14px] text-[15px] leading-[1.6]">
+          <div className="text-foreground/90 text-ui mt-[13px] max-w-[560px] rounded-md border border-white/[0.10] bg-white/[0.03] px-4 py-[14px] leading-[1.6]">
             A{" "}
             <span
               style={{
@@ -239,7 +235,7 @@ export function DocsPage(): React.ReactElement {
               dawn
             </span>
           </div>
-          <p className="text-tool-text-subdued mt-[13px] max-w-[560px] text-[13.5px] leading-[1.65]">
+          <p className="text-tool-text-subdued text-ui mt-[13px] max-w-[560px] leading-[1.65]">
             Your description stays editable throughout.{" "}
             <span className="text-foreground/80">Highlighted phrases</span> open
             a few alternatives &mdash; or type your own.{" "}
@@ -252,7 +248,7 @@ export function DocsPage(): React.ReactElement {
 
         {/* What the space shows */}
         <section id="what-the-space-shows" className="scroll-mt-24">
-          <h2 className="text-foreground mt-[30px] text-[17px] font-semibold">
+          <h2 className="text-foreground text-body-lg mt-[30px] font-semibold">
             What the space shows
           </h2>
           <div className="mt-[14px] flex items-center gap-[22px]">
@@ -329,7 +325,7 @@ export function DocsPage(): React.ReactElement {
                 strokeWidth="1.6"
               />
             </svg>
-            <div className="text-tool-text-subdued flex flex-col gap-[7px] font-mono text-[11.5px]">
+            <div className="text-tool-text-subdued text-meta flex flex-col gap-[7px] font-mono">
               <span className="flex items-center gap-2">
                 <svg width="20" height="4">
                   <line
@@ -372,7 +368,7 @@ export function DocsPage(): React.ReactElement {
               </span>
             </div>
           </div>
-          <p className="text-tool-text-subdued mt-[15px] max-w-[560px] text-[13.5px] leading-[1.65]">
+          <p className="text-tool-text-subdued text-ui mt-[15px] max-w-[560px] leading-[1.65]">
             Everything you make lives in one space, in three columns &mdash;
             words, pictures, clips &mdash; connected by what you did. The node
             you&rsquo;re viewing is the live one; selecting any node brings its
@@ -382,7 +378,7 @@ export function DocsPage(): React.ReactElement {
 
         {/* Preserved links (app, support, legal). */}
         <footer
-          className={`mt-[42px] flex max-w-[560px] flex-wrap items-center gap-x-5 gap-y-2 border-t pt-6 text-[12.5px] ${HAIRLINE}`}
+          className={`text-meta mt-[42px] flex max-w-[560px] flex-wrap items-center gap-x-5 gap-y-2 border-t pt-6 ${HAIRLINE}`}
         >
           <Link
             to="/contact"

@@ -93,7 +93,7 @@ export function ImageReferenceSlotsRow({
                   event.stopPropagation();
                   onRemoveKeyframe(tile.id);
                 }}
-                className="absolute right-1 top-1 rounded-md bg-surface-1 px-2 py-1 text-[11px] text-ghost shadow-[inset_0_0_0_1px_#2C3037]"
+                className="absolute right-1 top-1 rounded-md bg-surface-1 px-2 py-1 text-meta text-ghost shadow-[inset_0_0_0_1px_#2C3037]"
               >
                 Clear
               </button>

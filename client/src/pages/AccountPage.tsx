@@ -83,18 +83,18 @@ function PersonalProfileSection({
         <Avatar
           size="xl"
           fallback={avatarInitial}
-          className="h-[74px] w-[74px] border border-white/[0.16] text-[26px]"
+          className="h-[74px] w-[74px] border border-white/[0.16] text-heading"
         />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-foreground text-[25px] font-semibold tracking-[-0.015em]">
+            <h1 className="text-foreground text-heading font-semibold tracking-[-0.015em]">
               {title}
             </h1>
             <Badge variant={isVerified ? "success" : "warning"} size="sm">
               {isVerified ? "Verified" : "Not verified"}
             </Badge>
           </div>
-          <div className="text-tool-text-muted mt-[7px] text-[13.5px]">
+          <div className="text-tool-text-muted mt-[7px] text-ui">
             {emailLabel}
           </div>
           <div className="mt-3.5 flex flex-wrap items-center gap-3">
@@ -104,14 +104,14 @@ function PersonalProfileSection({
                 variant="outline"
                 onClick={onResend}
                 disabled={isBusy}
-                className="!h-auto rounded-full px-3.5 py-1.5 text-[12px] font-semibold"
+                className="!h-auto rounded-full px-3.5 py-1.5 text-meta font-semibold"
               >
                 Resend verification
               </Button>
             ) : null}
             <Link
               to={resetPasswordLink}
-              className="text-tool-text-muted hover:text-foreground text-[12px] font-semibold transition-colors hover:underline"
+              className="text-tool-text-muted hover:text-foreground text-meta font-semibold transition-colors hover:underline"
             >
               Reset password
             </Link>
@@ -125,17 +125,17 @@ function PersonalProfileSection({
           <div className="flex-1" />
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-foreground text-[24px] font-semibold">
+              <div className="text-foreground text-heading font-semibold">
                 10 left
               </div>
-              <div className="text-tool-text-subdued mt-[3px] text-[11.5px]">
+              <div className="text-tool-text-subdued mt-[3px] text-meta">
                 of your monthly pool
               </div>
             </div>
             <Button
               type="button"
               variant="secondary"
-              className="!h-auto rounded-[10px] px-[15px] py-[9px] text-[12.5px] font-medium"
+              className="!h-auto rounded-md px-[15px] py-[9px] text-meta font-medium"
             >
               Top up
             </Button>
@@ -146,7 +146,7 @@ function PersonalProfileSection({
           <div className="flex items-center justify-between">
             <Eyebrow>Usage history</Eyebrow>
             <span
-              className="text-[11.5px] font-medium"
+              className="text-meta font-medium"
               style={{ color: "color-mix(in srgb, var(--accent) 55%, white)" }}
             >
               See all
@@ -161,9 +161,7 @@ function PersonalProfileSection({
         </AccountCard>
       </div>
 
-      <div className="text-foreground mt-7 text-[14px] font-semibold">
-        Activity
-      </div>
+      <div className="text-foreground mt-7 text-ui font-semibold">Activity</div>
       <div className="mt-3 flex gap-4">
         <StatCard value="12" label="Clips made" />
         <StatCard value="12" label="This month" />
@@ -180,23 +178,23 @@ function PersonalProfileSection({
 function SubscriptionSection(): React.ReactElement {
   return (
     <section className="flex flex-col">
-      <h1 className="text-foreground text-[23px] font-semibold tracking-[-0.015em]">
+      <h1 className="text-foreground text-heading font-semibold tracking-[-0.015em]">
         Subscription
       </h1>
-      <p className="text-tool-text-muted mt-1.5 text-[13.5px]">
+      <p className="text-tool-text-muted mt-1.5 text-ui">
         Manage your plan and credits.
       </p>
 
       <AccountCard className="mt-[22px] flex items-center justify-between px-[22px] py-5">
         <div>
-          <div className="text-foreground text-[18px] font-semibold">
+          <div className="text-foreground text-body-lg font-semibold">
             Free plan
           </div>
-          <div className="text-tool-text-muted mt-1 text-[13px]">
+          <div className="text-tool-text-muted mt-1 text-ui">
             Unlock longer clips and keep more of what you make.
           </div>
         </div>
-        <Button className="!h-auto rounded-[11px] px-5 py-3 text-[13.5px] font-semibold">
+        <Button className="!h-auto rounded-md px-5 py-3 text-ui font-semibold">
           Upgrade plan
         </Button>
       </AccountCard>
@@ -205,36 +203,34 @@ function SubscriptionSection(): React.ReactElement {
         <Eyebrow>Credits</Eyebrow>
         <div className="mt-2.5 flex items-end justify-between">
           <div>
-            <div className="text-tool-text-subdued text-[11.5px]">
+            <div className="text-tool-text-subdued text-meta">
               Monthly credits left
             </div>
-            <div className="text-foreground mt-[3px] text-[23px] font-semibold">
+            <div className="text-foreground mt-[3px] text-heading font-semibold">
               10 / 10
             </div>
           </div>
           <Button
             variant="secondary"
-            className="!h-auto rounded-[10px] px-[15px] py-[9px] text-[12.5px] font-medium"
+            className="!h-auto rounded-md px-[15px] py-[9px] text-meta font-medium"
           >
             + Buy credits
           </Button>
         </div>
-        <div className="mt-[15px] h-[7px] overflow-hidden rounded-[4px] bg-white/[0.08]">
+        <div className="mt-[15px] h-[7px] overflow-hidden rounded-xs bg-white/[0.08]">
           <div
-            className="h-full w-full rounded-[4px]"
+            className="h-full w-full rounded-xs"
             style={{ background: "var(--accent)" }}
           />
         </div>
       </AccountCard>
 
-      <div className="text-foreground mt-[26px] text-[14px] font-semibold">
+      <div className="text-foreground mt-[26px] text-ui font-semibold">
         Billing history
       </div>
-      <div className="mt-3 rounded-[13px] border border-dashed border-white/[0.14] px-8 py-[34px] text-center">
-        <div className="text-tool-text-muted text-[13.5px]">
-          No invoices yet
-        </div>
-        <div className="text-tool-text-subdued mt-1 text-[11.5px]">
+      <div className="mt-3 rounded-md border border-dashed border-white/[0.14] px-8 py-[34px] text-center">
+        <div className="text-tool-text-muted text-ui">No invoices yet</div>
+        <div className="text-tool-text-subdued mt-1 text-meta">
           Receipts appear here after your first payment.
         </div>
       </div>
@@ -250,10 +246,10 @@ function SubscriptionSection(): React.ReactElement {
 function UsageSection(): React.ReactElement {
   return (
     <section className="flex flex-col">
-      <h1 className="text-foreground text-[23px] font-semibold tracking-[-0.015em]">
+      <h1 className="text-foreground text-heading font-semibold tracking-[-0.015em]">
         Usage
       </h1>
-      <p className="text-tool-text-muted mt-1.5 text-[13.5px]">
+      <p className="text-tool-text-muted mt-1.5 text-ui">
         Credits spent over the last 30 days.
       </p>
 
@@ -315,10 +311,10 @@ export function AccountPage(): React.ReactElement {
         <AmbientLight />
         <Grain />
         <main className="relative mx-auto flex w-full max-w-sm flex-col gap-4 px-6">
-          <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.015em]">
+          <h1 className="text-foreground text-subhead font-semibold tracking-[-0.015em]">
             You&apos;re not signed in
           </h1>
-          <p className="text-tool-text-muted text-[13.5px] leading-relaxed">
+          <p className="text-tool-text-muted text-ui leading-relaxed">
             Sign in to sync your sessions and pick up where you left off across
             devices.
           </p>

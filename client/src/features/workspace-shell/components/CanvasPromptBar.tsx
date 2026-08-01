@@ -89,13 +89,13 @@ export function CanvasPromptBar({
         "transition-[transform,box-shadow,bottom] duration-[240ms]",
         collapsed
           ? cn(
-              "inline-flex w-auto items-center rounded-[18px]",
+              "inline-flex w-auto items-center rounded-lg",
               "bg-tool-surface-prompt/[0.92] backdrop-blur-[18px] backdrop-saturate-150",
               "shadow-[0_26px_60px_-26px_rgba(0,0,0,0.9),0_6px_20px_rgba(0,0,0,0.55)]",
             )
           : cn(
               // Frame A: 664px, radius 18, border .12, the deep double shadow.
-              "w-[min(100%-48px,664px)] rounded-[18px] !border-white/[0.12]",
+              "w-[min(100%-48px,664px)] rounded-lg !border-white/[0.12]",
               isExpanded
                 ? "bg-tool-surface-prompt-compact"
                 : "bg-tool-surface-prompt/[0.72] backdrop-blur-[18px] backdrop-saturate-150",

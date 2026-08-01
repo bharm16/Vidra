@@ -15,7 +15,7 @@ export function ReferencesOnboardingCard({
   isUploadDisabled,
 }: ReferencesOnboardingCardProps): React.ReactElement {
   return (
-    <div className="rounded-[10px] border border-tool-nav-active bg-tool-surface-card p-5 text-center">
+    <div className="rounded-md border border-tool-nav-active bg-tool-surface-card p-5 text-center">
       {/* Stacked preview thumbnails */}
       <div className="flex justify-center mb-3">
         {[
@@ -55,7 +55,7 @@ export function ReferencesOnboardingCard({
       <div className="text-xs font-semibold text-foreground mb-1">
         Create consistent scenes
       </div>
-      <div className="text-[11px] text-tool-text-subdued leading-snug max-w-[260px] mx-auto mb-3.5">
+      <div className="text-meta text-tool-text-subdued leading-snug max-w-[260px] mx-auto mb-3.5">
         Use 1–3 character or location images to build your scene.
       </div>
 

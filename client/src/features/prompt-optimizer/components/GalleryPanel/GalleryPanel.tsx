@@ -14,7 +14,7 @@ export function GalleryPanel({
       aria-label="Generations gallery"
       data-testid="gallery-panel"
     >
-      <div className="my-auto mr-[3px] flex w-[120px] min-h-96 max-h-[648px] flex-col rounded-[10px] bg-black p-2.5 ps-animate-fade-in">
+      <div className="my-auto mr-[3px] flex w-[120px] min-h-96 max-h-[648px] flex-col rounded-md bg-black p-2.5 ps-animate-fade-in">
         <div className="mb-3 h-[100px] w-[100px]" aria-hidden="true" />
 
         <div className="flex h-5 w-full items-center justify-center pr-2">

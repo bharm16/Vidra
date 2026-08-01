@@ -91,7 +91,7 @@ const MENU_TRIGGER_CLASS =
 // The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
 // setting is announced; the title names the control.
 const ICON_TRIGGER_CLASS =
-  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-[12px] text-tool-text-dim transition-all duration-[160ms] hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.13] data-[state=open]:text-foreground";
+  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-md text-tool-text-dim transition-all duration-[160ms] hover:bg-white/[0.07] hover:text-foreground data-[state=open]:bg-white/[0.13] data-[state=open]:text-foreground";
 
 /* Control glyphs copied VERBATIM from the composer handoff
    (design_handoff_composer/Composer States.dc.html) — 21px, 1.7 stroke,
@@ -190,7 +190,7 @@ function MakeItArrowGlyph(): React.ReactElement {
 // Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
 // pills inside the glass sheet, matching the handoff's two inline chips.
 const SHEET_MENU_TRIGGER_CLASS =
-  "inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-[10px] border border-white/[0.12] bg-white/[0.04] px-3 font-mono text-[13px] text-tool-text-dim transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-foreground data-[state=open]:text-foreground";
+  "inline-flex h-[34px] items-center gap-2 whitespace-nowrap rounded-md border border-white/[0.12] bg-white/[0.04] px-3 font-mono text-ui text-tool-text-dim transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-foreground data-[state=open]:text-foreground";
 
 export function CanvasSettingsRow({
   prompt,
@@ -627,7 +627,7 @@ export function CanvasSettingsRow({
               : cn(
                   // The handoff's calm primary: off-white solid, no accent
                   // glow, a trailing arrow. Same button in box and pill.
-                  "inline-flex h-[42px] items-center gap-[7px] rounded-[12px] px-[18px] text-sm font-semibold",
+                  "inline-flex h-[42px] items-center gap-[7px] rounded-md px-[18px] text-sm font-semibold",
                   "bg-foreground text-tool-surface-deep shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
                   "transition-[transform,background-color,opacity] hover:-translate-y-px hover:bg-white",
                   "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",

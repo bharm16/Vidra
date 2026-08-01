@@ -36,7 +36,7 @@ export function AuthShell({
       <header className="border-border flex items-center justify-between border-b px-5 py-4">
         <Link
           to="/home"
-          className="text-foreground text-[14px] font-semibold tracking-tight transition hover:opacity-80"
+          className="text-foreground text-ui font-semibold tracking-tight transition hover:opacity-80"
           aria-label="Go to Vidra home"
         >
           Vidra
@@ -53,7 +53,7 @@ export function AuthShell({
         <div className={cn("w-full", isAuth ? "max-w-[400px]" : "max-w-3xl")}>
           <h1
             className={cn(
-              "text-foreground mb-5 text-[15px] font-semibold tracking-tight",
+              "text-foreground mb-5 text-ui font-semibold tracking-tight",
               isAuth && "text-center",
             )}
           >
@@ -70,10 +70,7 @@ export function AuthShell({
 
           {footer ? (
             <div
-              className={cn(
-                "text-faint mt-4 text-[13px]",
-                isAuth && "text-center",
-              )}
+              className={cn("text-faint mt-4 text-ui", isAuth && "text-center")}
             >
               {footer}
             </div>

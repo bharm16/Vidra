@@ -57,13 +57,13 @@ export function MarketingPage({
           <div className="min-w-0">
             {eyebrow ? (
               <p
-                className="text-[10px] font-semibold tracking-[0.2em]"
+                className="text-meta font-semibold tracking-[0.2em]"
                 style={{ color: AUTH_COLORS.textLabel }}
               >
                 {eyebrow}
               </p>
             ) : null}
-            <h1 className="text-[15px] font-semibold text-white tracking-tight truncate">
+            <h1 className="text-ui font-semibold text-white tracking-tight truncate">
               {title}
             </h1>
           </div>
@@ -72,7 +72,7 @@ export function MarketingPage({
             {actions}
             <Link
               to="/"
-              className="text-[12px] font-medium hover:text-white transition-colors"
+              className="text-meta font-medium hover:text-white transition-colors"
               style={{ color: AUTH_COLORS.textDim }}
             >
               Back to app
@@ -88,7 +88,7 @@ export function MarketingPage({
       >
         {subtitle ? (
           <p
-            className="pt-5 pb-1 text-[13px] leading-relaxed"
+            className="pt-5 pb-1 text-ui leading-relaxed"
             style={{ color: AUTH_COLORS.textSecondary }}
           >
             {subtitle}
@@ -99,7 +99,7 @@ export function MarketingPage({
 
         {!hideFooter ? (
           <footer
-            className="py-6 text-[12px]"
+            className="py-6 text-meta"
             style={{
               borderTop: `1px solid ${AUTH_COLORS.cardBorder}`,
               color: AUTH_COLORS.textDim,

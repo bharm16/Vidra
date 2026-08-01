@@ -163,7 +163,7 @@ export const HistoryItem = memo<HistoryItemProps>(
                     isSelected
                       ? [
                           "bg-[rgb(44,48,55)]",
-                          "before:content-[''] before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:bg-[rgb(59,130,246)] before:rounded-r-[2px]",
+                          "before:content-[''] before:absolute before:left-0 before:top-1/2 before:h-6 before:w-[3px] before:-translate-y-1/2 before:bg-[rgb(59,130,246)] before:rounded-r-xs",
                         ].join(" ")
                       : isHovering
                         ? "bg-[rgb(39,42,55)]"
@@ -193,7 +193,7 @@ export const HistoryItem = memo<HistoryItemProps>(
                           size="md"
                           variant="muted"
                           isActive={false}
-                          className="h-9 w-9 rounded-[6px] border border-[rgb(44,48,55)] bg-[rgb(44,48,55)]"
+                          className="h-9 w-9 rounded-sm border border-[rgb(44,48,55)] bg-[rgb(44,48,55)]"
                         />
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -203,7 +203,7 @@ export const HistoryItem = memo<HistoryItemProps>(
                           </span>
                         ) : null}
                         <div className="flex items-start justify-between gap-ps-3">
-                          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+                          <span className="min-w-0 flex-1 truncate text-ui font-medium text-foreground">
                             {title}
                           </span>
                           {statusLabel && statusTone ? (
@@ -222,7 +222,7 @@ export const HistoryItem = memo<HistoryItemProps>(
                             </span>
                           ) : null}
                         </div>
-                        <div className="truncate text-[11px] text-[rgb(107,114,128)]">
+                        <div className="truncate text-meta text-[rgb(107,114,128)]">
                           {meta}
                         </div>
                       </div>

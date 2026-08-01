@@ -118,8 +118,8 @@ export const VersionsPanel = memo(function VersionsPanel({
           aria-label={`Expand ${compactLabel}`}
           title={`Expand ${compactLabel}`}
         >
-          <span className="text-[11px] font-semibold text-muted">Versions</span>
-          <span className="text-[10px] font-medium text-faint">
+          <span className="text-meta font-semibold text-muted">Versions</span>
+          <span className="text-meta font-medium text-faint">
             {versionCount}
           </span>
 
@@ -134,7 +134,7 @@ export const VersionsPanel = memo(function VersionsPanel({
                 <div
                   key={entryId ?? entry.label}
                   className={cn(
-                    "h-4 w-7 overflow-hidden rounded-[3px] bg-surface-2 transition-all duration-150",
+                    "h-4 w-7 overflow-hidden rounded-xs bg-surface-2 transition-all duration-150",
                     isEntrySelected
                       ? "ring-1 ring-accent/50"
                       : "border border-border",
@@ -143,7 +143,7 @@ export const VersionsPanel = memo(function VersionsPanel({
               );
             })}
             {orderedVersions.length > 4 ? (
-              <span className="ml-0.5 text-[9px] text-faint">
+              <span className="ml-0.5 text-meta text-faint">
                 +{orderedVersions.length - 4}
               </span>
             ) : null}
@@ -166,8 +166,8 @@ export const VersionsPanel = memo(function VersionsPanel({
       <div className="flex h-full w-full flex-col overflow-hidden">
         {/* 36px header — no hamburger, no badge pill */}
         <div className="flex h-9 flex-shrink-0 items-center px-3">
-          <span className="text-[11px] font-semibold text-muted">Versions</span>
-          <span className="ml-1.5 text-[10px] font-medium text-faint">
+          <span className="text-meta font-semibold text-muted">Versions</span>
+          <span className="ml-1.5 text-meta font-medium text-faint">
             {versionCount}
           </span>
 
@@ -235,7 +235,7 @@ export const VersionsPanel = memo(function VersionsPanel({
 
         {/* Filmstrip */}
         {orderedVersions.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-[11px] text-muted">
+          <div className="flex flex-1 items-center justify-center text-meta text-muted">
             No versions yet
           </div>
         ) : (
@@ -330,7 +330,7 @@ export const VersionsPanel = memo(function VersionsPanel({
             aria-hidden="true"
             className="text-muted"
           />
-          <span className="bg-accent text-app absolute -right-ps-3 -top-ps-2 flex h-ps-4 min-w-ps-4 items-center justify-center rounded-full px-ps-1 text-[10px] font-semibold">
+          <span className="bg-accent text-app absolute -right-ps-3 -top-ps-2 flex h-ps-4 min-w-ps-4 items-center justify-center rounded-full px-ps-1 text-meta font-semibold">
             {versionCount}
           </span>
         </div>

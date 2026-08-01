@@ -31,10 +31,7 @@ function SectionHeading({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <h2
-      id={id}
-      className="scroll-mt-16 mb-3 text-[14px] font-semibold text-white"
-    >
+    <h2 id={id} className="scroll-mt-16 mb-3 text-ui font-semibold text-white">
       {children}
     </h2>
   );
@@ -65,25 +62,22 @@ export function PrivacyPolicyPage(): React.ReactElement {
         <div className="mx-auto max-w-4xl flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p
-              className="text-[10px] font-semibold tracking-[0.2em]"
+              className="text-meta font-semibold tracking-[0.2em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               LEGAL
             </p>
-            <h1 className="text-[15px] font-semibold text-white tracking-tight">
+            <h1 className="text-ui font-semibold text-white tracking-tight">
               Privacy Policy
             </h1>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <span
-              className="text-[11px]"
-              style={{ color: AUTH_COLORS.textDim }}
-            >
+            <span className="text-meta" style={{ color: AUTH_COLORS.textDim }}>
               Updated {updatedAt}
             </span>
             <Link
               to="/"
-              className="text-[12px] font-medium hover:text-white transition-colors"
+              className="text-meta font-medium hover:text-white transition-colors"
               style={{ color: AUTH_COLORS.textDim }}
             >
               Back to app
@@ -97,9 +91,9 @@ export function PrivacyPolicyPage(): React.ReactElement {
         <div className="mt-5 grid gap-5 lg:grid-cols-[200px_1fr]">
           {/* TOC sidebar */}
           <aside className="lg:sticky lg:top-14 lg:self-start">
-            <nav aria-label="On this page" className="text-[12px]">
+            <nav aria-label="On this page" className="text-meta">
               <p
-                className="text-[10px] font-semibold tracking-[0.18em] mb-2"
+                className="text-meta font-semibold tracking-[0.18em] mb-2"
                 style={{ color: AUTH_COLORS.textLabel }}
               >
                 ON THIS PAGE
@@ -123,7 +117,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
           {/* Main content */}
           <div className="p-4" style={CARD}>
             <div
-              className="space-y-8 text-[12px] leading-relaxed"
+              className="space-y-8 text-meta leading-relaxed"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               <section>
@@ -289,7 +283,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
 
         {/* Footer */}
         <footer
-          className="mt-8 py-6 text-[12px]"
+          className="mt-8 py-6 text-meta"
           style={{
             borderTop: `1px solid ${AUTH_COLORS.cardBorder}`,
             color: AUTH_COLORS.textDim,

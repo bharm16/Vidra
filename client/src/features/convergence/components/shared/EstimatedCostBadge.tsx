@@ -24,9 +24,9 @@ const ESTIMATED_TOTAL_COST = 24;
 type BadgeSize = NonNullable<EstimatedCostBadgeProps["size"]>;
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {
-  sm: "text-[12px] gap-1.5",
-  md: "text-[13px] gap-1.5",
-  lg: "text-[14px] gap-2",
+  sm: "text-meta gap-1.5",
+  md: "text-ui gap-1.5",
+  lg: "text-ui gap-2",
 };
 
 const ICON_SIZES: Record<BadgeSize, string> = {
@@ -76,7 +76,7 @@ export const EstimatedCostBadge: React.FC<EstimatedCostBadgeProps> = ({
                 "invisible group-hover:visible opacity-0 group-hover:opacity-100",
                 "transition-all duration-200",
                 "w-48 p-2.5 rounded-lg",
-                "bg-zinc-900 border border-white/[0.06] text-[12px]",
+                "bg-zinc-900 border border-white/[0.06] text-meta",
                 "z-tooltip",
               )}
               role="tooltip"

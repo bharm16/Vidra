@@ -15,7 +15,7 @@ function VidraLockup(): React.ReactElement {
   return (
     <span className="inline-flex items-center gap-2.5">
       <VidraMark className="h-[26px] w-[26px] rounded-lg" />
-      <span className="text-foreground text-[17px] font-semibold tracking-[-0.01em]">
+      <span className="text-foreground text-body-lg font-semibold tracking-[-0.01em]">
         Vidra
       </span>
     </span>
@@ -84,7 +84,7 @@ export function WorkspaceTopBar({
 
       {!minimal && FEATURES.BILLING_UI ? (
         <span
-          className="text-tool-text-dim font-mono text-[11px]"
+          className="text-tool-text-dim font-mono text-meta"
           aria-label="Credits remaining"
           title={`${credits.credits.toLocaleString()} credits`}
         >

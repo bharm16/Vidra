@@ -182,7 +182,7 @@ export function PromptEditorSurface({
             "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none",
             isEmptyLayout
               ? "text-foreground caret-foreground min-h-[104px] font-light [&:empty]:min-h-[104px]"
-              : "text-tool-text-dim min-h-[56px] text-[15px] leading-[1.75] [&:empty]:min-h-[56px]",
+              : "text-tool-text-dim min-h-[56px] text-ui leading-[1.75] [&:empty]:min-h-[56px]",
           )}
           placeholder={placeholderText}
           onTextSelection={onTextSelection}
@@ -222,14 +222,14 @@ export function PromptEditorSurface({
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="text-tool-text-dim truncate text-[10px] font-semibold tracking-[0.05em]">
+              <span className="text-tool-text-dim truncate text-meta font-semibold tracking-[0.05em]">
                 {selectionLabel
                   ? `Replace "${selectionLabel}"`
                   : "Replace selection"}
               </span>
               <span
                 key={suggestionCount}
-                className="motion-count-bump bg-tool-rail-border text-tool-text-subdued rounded-full px-2 py-0.5 text-[9px] font-semibold"
+                className="motion-count-bump bg-tool-rail-border text-tool-text-subdued rounded-full px-2 py-0.5 text-meta font-semibold"
                 title={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
                 aria-label={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
               >
@@ -297,7 +297,7 @@ export function PromptEditorSurface({
           {isMotionSelection ? (
             <div
               data-testid="motion-not-in-picture-note"
-              className="mb-2 flex items-center gap-1.5 text-[10px] font-medium"
+              className="mb-2 flex items-center gap-1.5 text-meta font-medium"
               style={{ color: MOTION_GOLD_HEX }}
             >
               <span
@@ -401,11 +401,11 @@ export function PromptEditorSurface({
                     >
                       {suggestion.text}
                       {index === 0 ? (
-                        <span className="text-tool-accent-neutral ml-1.5 text-[9px] font-semibold">
+                        <span className="text-tool-accent-neutral ml-1.5 text-meta font-semibold">
                           Best
                         </span>
                       ) : suggestion.meta ? (
-                        <span className="text-tool-text-subdued ml-1.5 text-[9px]">
+                        <span className="text-tool-text-subdued ml-1.5 text-meta">
                           {suggestion.meta}
                         </span>
                       ) : null}

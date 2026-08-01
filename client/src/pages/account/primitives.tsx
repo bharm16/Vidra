@@ -21,7 +21,7 @@ export function AccountCard({
   return (
     <div
       className={cn(
-        "rounded-[16px] border border-white/[0.10] bg-white/[0.045] backdrop-blur-[16px]",
+        "rounded-lg border border-white/[0.10] bg-white/[0.045] backdrop-blur-[16px]",
         className,
       )}
     >
@@ -41,7 +41,7 @@ export function Eyebrow({
   return (
     <div
       className={cn(
-        "text-tool-text-muted font-mono text-[12px] uppercase tracking-[0.08em]",
+        "text-tool-text-muted font-mono text-meta uppercase tracking-[0.08em]",
         className,
       )}
     >
@@ -59,9 +59,9 @@ export function StatCard({
   label: string;
 }): React.ReactElement {
   return (
-    <AccountCard className="flex-1 rounded-[13px] px-[18px] py-4">
-      <div className="text-foreground text-[22px] font-semibold">{value}</div>
-      <div className="text-tool-text-muted mt-1 text-[12px]">{label}</div>
+    <AccountCard className="flex-1 rounded-md px-[18px] py-4">
+      <div className="text-foreground text-subhead font-semibold">{value}</div>
+      <div className="text-tool-text-muted mt-1 text-meta">{label}</div>
     </AccountCard>
   );
 }
@@ -84,7 +84,7 @@ export function UsageBars({
       {heights.map((height, index) => (
         <div
           key={index}
-          className="flex-1 rounded-t-[3px]"
+          className="flex-1 rounded-t-xs"
           style={{
             height: `${height}%`,
             background: usageBarBackground(height, index === peakIndex),
@@ -104,7 +104,7 @@ export function ChartAxis({
   return (
     <div
       className={cn(
-        "text-tool-text-subdued flex justify-between font-mono text-[10px]",
+        "text-tool-text-subdued flex justify-between font-mono text-meta",
         className,
       )}
     >

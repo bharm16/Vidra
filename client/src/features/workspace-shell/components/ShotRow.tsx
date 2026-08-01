@@ -58,7 +58,7 @@ export function ShotRow({
         >
           {shot.status}
         </Badge>
-        <time className="text-tool-text-subdued font-mono text-[10px]">
+        <time className="text-tool-text-subdued font-mono text-meta">
           {formatRelative(shot.createdAt, now)}
         </time>
       </header>

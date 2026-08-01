@@ -33,7 +33,7 @@ export function BrandLogo({
       to="/"
       className={cn(
         "text-foreground hover:text-foreground/80 tracking-tight transition-colors",
-        variant === "topnav" ? "text-heading-20" : "text-[16px] font-semibold",
+        variant === "topnav" ? "text-heading-20" : "text-body font-semibold",
         className,
       )}
       aria-label="Vidra home"

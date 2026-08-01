@@ -199,7 +199,7 @@ export function PasswordResetPage(): React.ReactElement {
       }
     >
       <div className="flex flex-col gap-4">
-        <p className="text-muted text-[13px] leading-relaxed">
+        <p className="text-muted text-ui leading-relaxed">
           Choose a strong password you'll remember.
         </p>
 
@@ -214,10 +214,10 @@ export function PasswordResetPage(): React.ReactElement {
                 aria-hidden="true"
               />
               <div className="min-w-0">
-                <p className="text-danger text-[13px] font-semibold">
+                <p className="text-danger text-ui font-semibold">
                   Action required
                 </p>
-                <p className="text-danger mt-0.5 text-[13px] leading-snug opacity-80">
+                <p className="text-danger mt-0.5 text-ui leading-snug opacity-80">
                   {error}
                 </p>
               </div>
@@ -232,10 +232,10 @@ export function PasswordResetPage(): React.ReactElement {
                 <KeyRound className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-foreground text-[13px] font-semibold">
+                <p className="text-foreground text-ui font-semibold">
                   Open your reset link
                 </p>
-                <p className="text-muted mt-1 text-[13px] leading-snug">
+                <p className="text-muted mt-1 text-ui leading-snug">
                   This page needs a secure code from your email. Use the link we
                   sent you.
                 </p>
@@ -258,10 +258,10 @@ export function PasswordResetPage(): React.ReactElement {
                 <Spinner />
               </span>
               <div className="min-w-0">
-                <p className="text-foreground text-[13px] font-semibold">
+                <p className="text-foreground text-ui font-semibold">
                   Validating link…
                 </p>
-                <p className="text-muted mt-1 text-[13px] leading-snug">
+                <p className="text-muted mt-1 text-ui leading-snug">
                   Checking that your reset link is still active.
                 </p>
               </div>
@@ -276,10 +276,10 @@ export function PasswordResetPage(): React.ReactElement {
                 <KeyRound className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-foreground text-[13px] font-semibold">
+                <p className="text-foreground text-ui font-semibold">
                   Get a fresh link
                 </p>
-                <p className="text-muted mt-1 text-[13px] leading-snug">
+                <p className="text-muted mt-1 text-ui leading-snug">
                   If this link expired or was already used, request a new reset
                   email.
                 </p>
@@ -306,10 +306,10 @@ export function PasswordResetPage(): React.ReactElement {
                 />
               </span>
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-[color:var(--badge-success-text)]">
+                <p className="text-ui font-semibold text-[color:var(--badge-success-text)]">
                   Password updated
                 </p>
-                <p className="mt-0.5 text-[13px] leading-snug text-[color:var(--badge-success-text)] opacity-70">
+                <p className="mt-0.5 text-ui leading-snug text-[color:var(--badge-success-text)] opacity-70">
                   You're good. Sign in with your new password.
                 </p>
               </div>
@@ -321,7 +321,7 @@ export function PasswordResetPage(): React.ReactElement {
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
             <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-2.5">
               <p className="text-overline text-faint">Resetting for</p>
-              <p className="text-foreground mt-1 text-[13px] font-medium">
+              <p className="text-foreground mt-1 text-ui font-medium">
                 {email}
               </p>
             </div>
@@ -380,13 +380,13 @@ export function PasswordResetPage(): React.ReactElement {
             <div className="flex items-center justify-between gap-3">
               <Link
                 to={signInLink}
-                className="text-faint hover:text-foreground text-[12px] font-medium transition"
+                className="text-faint hover:text-foreground text-meta font-medium transition"
               >
                 Back to sign in
               </Link>
               <Link
                 to={forgotPasswordLink}
-                className="text-ghost hover:text-foreground text-[12px] font-medium transition"
+                className="text-ghost hover:text-foreground text-meta font-medium transition"
               >
                 New link
               </Link>

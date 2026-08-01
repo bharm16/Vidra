@@ -25,9 +25,9 @@ function StageCopy({
 }): React.ReactElement {
   return (
     <div className="flex flex-col items-center gap-1 text-center">
-      <p className="text-foreground m-0 text-[14px] font-medium">{headline}</p>
+      <p className="text-foreground m-0 text-ui font-medium">{headline}</p>
       {detail ? (
-        <p className="text-tool-text-subdued m-0 max-w-[520px] truncate text-[12.5px]">
+        <p className="text-tool-text-subdued m-0 max-w-[520px] truncate text-meta">
           {detail}
         </p>
       ) : null}
@@ -64,7 +64,7 @@ function StageNoticeTile({
         <button
           type="button"
           className={cn(
-            "border-tool-rail-border rounded-md border px-3 py-1.5 text-[12.5px]",
+            "border-tool-rail-border rounded-md border px-3 py-1.5 text-meta",
             "text-foreground transition-colors hover:bg-white/10",
           )}
           onClick={onAction}
@@ -107,7 +107,7 @@ export function FrameStage({
   const quotedIdea = prompt.trim() ? `“${prompt.trim()}”` : undefined;
 
   const gateButtonClass = cn(
-    "rounded-md border border-tool-rail-border px-3 py-1.5 text-[12.5px]",
+    "rounded-md border border-tool-rail-border px-3 py-1.5 text-meta",
     "text-foreground transition-colors hover:bg-white/10",
   );
 

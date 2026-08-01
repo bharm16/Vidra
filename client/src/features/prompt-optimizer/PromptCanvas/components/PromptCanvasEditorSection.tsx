@@ -150,7 +150,7 @@ export function PromptCanvasEditorSection({
           <SelectTrigger
             size="xs"
             variant="ghost"
-            className="text-muted hover:bg-surface-2 hover:text-foreground h-7 min-w-24 max-w-40 justify-start rounded-md px-2 text-[11px] font-medium transition-colors [&>span]:!flex [&>span]:overflow-visible"
+            className="text-muted hover:bg-surface-2 hover:text-foreground h-7 min-w-24 max-w-40 justify-start rounded-md px-2 text-meta font-medium transition-colors [&>span]:!flex [&>span]:overflow-visible"
             aria-label={`Model format: ${modelFormatLabel}`}
             title={`Model format: ${modelFormatLabel}`}
           >
@@ -161,7 +161,7 @@ export function PromptCanvasEditorSection({
                 weight="bold"
                 aria-hidden="true"
               />
-              <span className="truncate text-[11px]">{modelFormatLabel}</span>
+              <span className="truncate text-meta">{modelFormatLabel}</span>
             </span>
           </SelectTrigger>
           <SelectContent align="start" className="max-h-72">

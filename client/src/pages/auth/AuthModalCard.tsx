@@ -27,7 +27,7 @@ function VidraLockup(): React.ReactElement {
   return (
     <span className="inline-flex items-center gap-2.5">
       <VidraMark className="h-[26px] w-[26px] rounded-lg" />
-      <span className="text-foreground text-[17px] font-semibold tracking-[-0.01em]">
+      <span className="text-foreground text-body-lg font-semibold tracking-[-0.01em]">
         Vidra
       </span>
     </span>
@@ -81,14 +81,14 @@ export function AuthModalCard({
         <VidraLockup />
       </Link>
 
-      <div className="ps-auth-modal relative z-10 flex w-[min(100%-2rem,412px)] overflow-hidden rounded-[24px] border border-white/[0.08] bg-white/[0.045] shadow-[0_50px_110px_-30px_rgba(0,0,0,0.8)] backdrop-blur-[16px] backdrop-saturate-150 md:w-[744px]">
+      <div className="ps-auth-modal relative z-10 flex w-[min(100%-2rem,412px)] overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.045] shadow-[0_50px_110px_-30px_rgba(0,0,0,0.8)] backdrop-blur-[16px] backdrop-saturate-150 md:w-[744px]">
         {/* Form column */}
         <div className="flex w-full flex-col px-8 pb-8 pt-10 sm:px-9 md:w-[412px] md:shrink-0">
-          <h1 className="text-foreground text-center text-[28px] font-semibold leading-[1.05] tracking-[-0.015em]">
+          <h1 className="text-foreground text-center text-heading font-semibold leading-[1.05] tracking-[-0.015em]">
             {heading}
           </h1>
           {subhead ? (
-            <p className="text-tool-text-muted mt-[9px] text-center text-[13px]">
+            <p className="text-tool-text-muted mt-[9px] text-center text-ui">
               {subhead}
             </p>
           ) : null}

@@ -207,7 +207,7 @@ function ShotVisualCard({
         </div>
       )}
 
-      <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-[1px] text-[10px] font-semibold text-white">
+      <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-[1px] text-meta font-semibold text-white">
         {shot.sequenceIndex + 1}
       </span>
 

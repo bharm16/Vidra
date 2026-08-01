@@ -248,7 +248,7 @@ export function CanvasViewport({
         </Button>
         <span
           data-testid="space-zoom-level"
-          className="text-tool-text-subdued min-w-[3.5ch] text-center text-[11px] tabular-nums"
+          className="text-tool-text-subdued min-w-[3.5ch] text-center text-meta tabular-nums"
         >
           {Math.round(camera.scale * 100)}%
         </span>

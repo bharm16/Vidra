@@ -15,7 +15,7 @@ export function GenerationBadge({
   return (
     <span
       className={cn(
-        "rounded px-1.5 py-0.5 text-[10px] font-semibold backdrop-blur-md",
+        "rounded px-1.5 py-0.5 text-meta font-semibold backdrop-blur-md",
         "bg-black/40",
         isDraft ? "text-success-400/80" : "text-accent-2/80",
         className,

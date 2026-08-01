@@ -82,7 +82,7 @@ function PopoverRailThumbnail({
     <button
       type="button"
       onClick={onClick}
-      className={`relative h-[70px] w-full flex-shrink-0 overflow-hidden rounded-[14px] border-[2.5px] transition-opacity ${
+      className={`relative h-[70px] w-full flex-shrink-0 overflow-hidden rounded-md border-[2.5px] transition-opacity ${
         isSelected
           ? "border-tool-accent-neutral opacity-100"
           : "border-transparent opacity-50 hover:opacity-80"

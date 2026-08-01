@@ -16,7 +16,7 @@ export const VIDRA_MARK_SRC = "/vidra-mark.svg";
 export interface VidraMarkProps {
   /**
    * Size and corner radius for this surface's tile, e.g.
-   * `"h-[30px] w-[30px] rounded-[9px]"`.
+   * `"h-[30px] w-[30px] rounded-md"`.
    */
   className?: string;
 }

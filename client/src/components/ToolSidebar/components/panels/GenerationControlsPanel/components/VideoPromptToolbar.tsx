@@ -61,7 +61,7 @@ export function VideoPromptToolbar({
       <div className="flex-1" />
 
       {/* ── Character count ── */}
-      <span className="text-tool-text-label mr-2 text-[10px] tabular-nums">
+      <span className="text-tool-text-label mr-2 text-meta tabular-nums">
         {promptLength}
       </span>
 
@@ -124,7 +124,7 @@ export function VideoPromptToolbar({
           <button
             type="button"
             aria-label="AI Enhance"
-            className="border-tool-accent-neutral/25 bg-tool-accent-neutral/5 text-tool-accent-neutral hover:bg-tool-accent-neutral/13 hover:border-tool-accent-neutral/50 inline-flex h-[26px] items-center gap-1 rounded-md border px-2.5 text-[11px] font-semibold transition-colors"
+            className="border-tool-accent-neutral/25 bg-tool-accent-neutral/5 text-tool-accent-neutral hover:bg-tool-accent-neutral/13 hover:border-tool-accent-neutral/50 inline-flex h-[26px] items-center gap-1 rounded-md border px-2.5 text-meta font-semibold transition-colors"
           >
             <Wand2 className="h-[13px] w-[13px]" />
             AI Enhance

@@ -25,7 +25,7 @@ export function LibraryFilterChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "h-auto rounded-full border px-4 py-[7px] font-sans text-[12.5px] font-medium transition-all",
+        "h-auto rounded-full border px-4 py-[7px] font-sans text-meta font-medium transition-all",
         active
           ? "border-foreground bg-foreground text-app hover:bg-foreground hover:text-app"
           : "text-tool-text-dim hover:text-foreground border-white/[0.14] bg-transparent hover:border-white/30 hover:bg-white/[0.04]",

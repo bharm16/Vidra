@@ -79,7 +79,7 @@ export function InsufficientCreditsModal({
         data-motion-state="entered"
       >
         <div className="flex items-center justify-between border-b border-tool-rail-border px-5 py-4">
-          <DialogTitle className="text-[15px] font-semibold text-white">
+          <DialogTitle className="text-ui font-semibold text-white">
             Insufficient Credits
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -116,14 +116,14 @@ export function InsufficientCreditsModal({
 
           {pack ? (
             <div className="rounded-lg border border-tool-rail-border bg-tool-surface-deep p-3">
-              <p className="mb-2 text-[11px] uppercase tracking-wide text-tool-text-subdued">
+              <p className="mb-2 text-meta uppercase tracking-wide text-tool-text-subdued">
                 Quick Buy
               </p>
               <Button
                 type="button"
                 onClick={() => void handleCheckout()}
                 disabled={isLoading}
-                className="motion-pulse-once h-10 w-full rounded-[10px] bg-[linear-gradient(135deg,#6C5CE7_0%,#8B5CF6_100%)] text-body-sm font-semibold text-white hover:opacity-90"
+                className="motion-pulse-once h-10 w-full rounded-md bg-[linear-gradient(135deg,#6C5CE7_0%,#8B5CF6_100%)] text-body-sm font-semibold text-white hover:opacity-90"
               >
                 {isLoading
                   ? "Starting checkout..."

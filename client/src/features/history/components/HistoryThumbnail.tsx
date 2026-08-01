@@ -83,7 +83,7 @@ export function HistoryThumbnail({
           )}
         >
           {fallbackChar ? (
-            <span className="text-[14px] font-medium leading-none text-[rgb(198,201,210)]">
+            <span className="text-ui font-medium leading-none text-[rgb(198,201,210)]">
               {fallbackChar}
             </span>
           ) : (

@@ -400,7 +400,7 @@ export function ShotEditor({
             ))}
           </select>
           {registryError && (
-            <div className="mt-1 text-[11px] text-warning">
+            <div className="mt-1 text-meta text-warning">
               Unable to load model registry ({registryError}). Showing fallback
               models.
             </div>
@@ -408,13 +408,13 @@ export function ShotEditor({
           {showContinuityControls &&
             hasRegistry &&
             !selectedContinuityEligible && (
-              <div className="mt-1 text-[11px] text-warning">
+              <div className="mt-1 text-meta text-warning">
                 Selected model does not support image input or native style
                 reference. Choose another model for continuity.
               </div>
             )}
           {showContinuityControls && !modelResolvable && (
-            <div className="mt-1 text-[11px] text-warning">
+            <div className="mt-1 text-meta text-warning">
               Selected model is not supported for generation. Choose a supported
               model.
             </div>
@@ -422,13 +422,13 @@ export function ShotEditor({
           {showContinuityControls &&
             hasRegistry &&
             continuityEligibleModels.length === 0 && (
-              <div className="mt-1 text-[11px] text-warning">
+              <div className="mt-1 text-meta text-warning">
                 No continuity-capable models are available. Check provider
                 credentials.
               </div>
             )}
           {showContinuityControls && !hasRegistry && (
-            <div className="mt-1 text-[11px] text-warning">
+            <div className="mt-1 text-meta text-warning">
               Model capabilities unavailable; continuity eligibility will be
               enforced on the server.
             </div>

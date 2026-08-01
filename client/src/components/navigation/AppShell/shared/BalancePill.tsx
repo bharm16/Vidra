@@ -26,7 +26,7 @@ export function BalancePill(): React.ReactElement {
     <span
       data-testid="balance-pill"
       aria-label={ariaLabel}
-      className="inline-flex items-center gap-1 rounded-full border border-tool-rail-border bg-tool-surface-card px-2 py-0.5 text-[11px] font-semibold tabular-nums text-tool-text-muted"
+      className="inline-flex items-center gap-1 rounded-full border border-tool-rail-border bg-tool-surface-card px-2 py-0.5 text-meta font-semibold tabular-nums text-tool-text-muted"
     >
       {text}
     </span>

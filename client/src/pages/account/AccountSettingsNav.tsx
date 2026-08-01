@@ -45,7 +45,7 @@ export function AccountSettingsNav({
 }: AccountSettingsNavProps): React.ReactElement {
   return (
     <nav className="flex w-[236px] flex-none flex-col self-stretch border-r border-white/[0.06] px-4 py-[26px]">
-      <Eyebrow className="text-tool-text-subdued px-[10px] pb-[15px] text-[11px] tracking-[0.12em]">
+      <Eyebrow className="text-tool-text-subdued px-[10px] pb-[15px] text-meta tracking-[0.12em]">
         Settings
       </Eyebrow>
 
@@ -59,7 +59,7 @@ export function AccountSettingsNav({
             onClick={() => onSelect(id)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "mb-[3px] !h-auto w-full justify-start gap-[11px] rounded-[10px] px-[11px] py-[10px] text-[13px] font-medium",
+              "mb-[3px] !h-auto w-full justify-start gap-[11px] rounded-md px-[11px] py-[10px] text-ui font-medium",
               isActive
                 ? "text-foreground bg-white/[0.07] font-semibold hover:bg-white/[0.07]"
                 : "text-tool-text-muted hover:text-foreground hover:bg-white/[0.04]",
@@ -78,7 +78,7 @@ export function AccountSettingsNav({
         variant="ghost"
         onClick={onSignOut}
         loading={isSigningOut}
-        className="text-danger hover:text-danger !h-auto w-full justify-start gap-[9px] rounded-[9px] px-[10px] py-2 text-[12.5px] font-medium hover:bg-[color:var(--badge-danger-bg)]"
+        className="text-danger hover:text-danger !h-auto w-full justify-start gap-[9px] rounded-md px-[10px] py-2 text-meta font-medium hover:bg-[color:var(--badge-danger-bg)]"
       >
         <LogOut className="h-[15px] w-[15px]" />
         Sign out

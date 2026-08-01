@@ -147,7 +147,7 @@ export function VideoTabContent({
 
       {faceSwapMode === "face-swap" && (
         <div className="border-tool-nav-active bg-tool-surface-card space-y-3 rounded-xl border px-3 py-3">
-          <div className="text-tool-text-dim text-[11px] uppercase tracking-wide">
+          <div className="text-tool-text-dim text-meta uppercase tracking-wide">
             Face Swap
           </div>
           <div className="flex flex-col gap-2">
@@ -212,7 +212,7 @@ export function VideoTabContent({
               References
             </span>
             <div className="bg-tool-nav-active mx-2 h-px flex-1" />
-            <span className="text-tool-text-label text-[10px]">
+            <span className="text-tool-text-label text-meta">
               {videoReferenceImages.length} / {maxReferenceImages}
             </span>
           </div>
@@ -240,17 +240,17 @@ export function VideoTabContent({
       {supportsExtendVideo && extendVideo && (
         <div className="border-tool-nav-active bg-tool-surface-card flex items-center gap-2 rounded-xl border px-3 py-2.5">
           <div className="min-w-0 flex-1">
-            <div className="text-foreground truncate text-[11px] font-medium">
+            <div className="text-foreground truncate text-meta font-medium">
               Extending video
             </div>
-            <div className="text-tool-text-subdued text-[10px]">
+            <div className="text-tool-text-subdued text-meta">
               Generation will continue from this clip
             </div>
           </div>
           <button
             type="button"
             onClick={onClearExtendVideo}
-            className="text-tool-text-dim text-[10px] hover:text-white"
+            className="text-tool-text-dim text-meta hover:text-white"
           >
             Clear
           </button>

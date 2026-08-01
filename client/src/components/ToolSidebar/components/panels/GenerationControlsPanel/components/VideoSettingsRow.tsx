@@ -35,7 +35,7 @@ export function VideoSettingsRow({
       {/* Motion pill — left-aligned with icon */}
       <button
         type="button"
-        className="h-7 px-2.5 rounded-full border border-tool-nav-active text-tool-text-dim text-[11px] font-medium bg-transparent hover:bg-tool-surface-card disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+        className="h-7 px-2.5 rounded-full border border-tool-nav-active text-tool-text-dim text-meta font-medium bg-transparent hover:bg-tool-surface-card disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
         onClick={onOpenMotion}
         disabled={isMotionDisabled}
       >
@@ -59,7 +59,7 @@ export function VideoSettingsRow({
 
       {/* Right-aligned compact pills */}
       <select
-        className="h-7 px-2 rounded-md bg-transparent border border-tool-nav-active text-tool-text-subdued text-[11px] font-medium appearance-none cursor-pointer hover:text-tool-text-dim transition-colors"
+        className="h-7 px-2 rounded-md bg-transparent border border-tool-nav-active text-tool-text-subdued text-meta font-medium appearance-none cursor-pointer hover:text-tool-text-dim transition-colors"
         value={aspectRatio}
         onChange={(event) => onAspectRatioChange(event.target.value)}
         disabled={isAspectRatioDisabled}
@@ -73,7 +73,7 @@ export function VideoSettingsRow({
       </select>
 
       <select
-        className="h-7 px-2 rounded-md bg-transparent border border-tool-nav-active text-tool-text-subdued text-[11px] font-medium appearance-none cursor-pointer hover:text-tool-text-dim transition-colors"
+        className="h-7 px-2 rounded-md bg-transparent border border-tool-nav-active text-tool-text-subdued text-meta font-medium appearance-none cursor-pointer hover:text-tool-text-dim transition-colors"
         value={duration}
         onChange={(event) => onDurationChange(Number(event.target.value))}
         disabled={isDurationDisabled}

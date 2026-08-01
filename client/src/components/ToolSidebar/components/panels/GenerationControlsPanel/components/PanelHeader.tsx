@@ -28,7 +28,7 @@ export function PanelHeader({
           type="button"
           onClick={() => onSelectTab("video")}
           className={cn(
-            "h-[30px] px-3.5 rounded-[15px] text-xs font-semibold flex items-center gap-1.5 transition-colors",
+            "h-[30px] px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors",
             activeTab === "video"
               ? "bg-foreground text-tool-surface-deep shadow-[0_1px_0_rgba(255,255,255,0.15)]"
               : "text-tool-text-subdued hover:text-tool-text-dim",
@@ -43,7 +43,7 @@ export function PanelHeader({
           type="button"
           onClick={() => onSelectTab("image")}
           className={cn(
-            "h-[30px] px-3.5 rounded-[15px] text-xs font-semibold flex items-center gap-1.5 transition-colors",
+            "h-[30px] px-3.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors",
             activeTab === "image"
               ? "bg-foreground text-tool-surface-deep shadow-[0_1px_0_rgba(255,255,255,0.15)]"
               : "text-tool-text-subdued hover:text-tool-text-dim",
@@ -61,7 +61,7 @@ export function PanelHeader({
       {/* Session selector */}
       <button
         type="button"
-        className="text-[11px] font-medium text-tool-text-subdued hover:text-tool-text-dim transition-colors inline-flex items-center gap-1"
+        className="text-meta font-medium text-tool-text-subdued hover:text-tool-text-dim transition-colors inline-flex items-center gap-1"
         aria-label={onBack ? "Open sessions" : "Session selector"}
         onClick={onBack}
       >

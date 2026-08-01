@@ -255,7 +255,7 @@ export function VersionRow({
         <div className="flex max-w-24 items-center gap-1">
           <span
             className={cn(
-              "truncate text-[10px] transition-colors duration-150",
+              "truncate text-meta transition-colors duration-150",
               isSelected
                 ? "font-semibold text-foreground"
                 : "font-medium text-muted group-hover:text-foreground/70",
@@ -264,7 +264,7 @@ export function VersionRow({
             {label}
           </span>
           {index === 0 ? (
-            <span className="text-[8px] font-semibold uppercase tracking-wide text-accent/70">
+            <span className="text-meta font-semibold uppercase tracking-wide text-accent/70">
               current
             </span>
           ) : null}
@@ -272,7 +272,7 @@ export function VersionRow({
 
         {/* Meta */}
         {meta ? (
-          <span className="-mt-0.5 text-[9px] tracking-wide text-faint">
+          <span className="-mt-0.5 text-meta tracking-wide text-faint">
             {meta}
           </span>
         ) : null}

@@ -76,10 +76,10 @@ export function CreditOnboardingBanner({
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold text-white">
+          <p className="text-meta font-semibold text-white">
             Credits power generation
           </p>
-          <p className="mt-0.5 text-[11px] text-tool-text-dim">
+          <p className="mt-0.5 text-meta text-tool-text-dim">
             {starterText} You can top up anytime in{" "}
             <Link
               to="/billing"
