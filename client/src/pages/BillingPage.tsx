@@ -26,6 +26,7 @@ import { useCreditHistory } from "@/features/billing/hooks/useCreditHistory";
 import { AuthShell } from "./auth/AuthShell";
 import {
   AUTH_COLORS,
+  authAlpha,
   AUTH_CTA_CLASS,
   AUTH_CTA_STYLE,
   AUTH_CARD_STYLE,
@@ -209,13 +210,13 @@ export function BillingPage(): React.ReactElement {
         {checkout.sessionId ? (
           <div className="px-3.5 py-2.5" style={AUTH_SUCCESS_STYLE}>
             <p
-              className="text-[13px] font-semibold"
+              className="text-ui font-semibold"
               style={{ color: AUTH_COLORS.success }}
             >
               Checkout complete
             </p>
             <p
-              className="mt-1 text-[13px] leading-snug"
+              className="mt-1 text-ui leading-snug"
               style={{ color: AUTH_COLORS.success, opacity: 0.8 }}
             >
               Your subscription is being confirmed. Credits land when the
@@ -226,11 +227,11 @@ export function BillingPage(): React.ReactElement {
 
         {checkout.canceled ? (
           <div className="px-3.5 py-2.5" style={AUTH_CARD_STYLE}>
-            <p className="text-[13px] font-semibold text-white">
+            <p className="text-ui font-semibold text-white">
               Checkout canceled
             </p>
             <p
-              className="mt-1 text-[13px] leading-snug"
+              className="mt-1 text-ui leading-snug"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               No changes were made. You can pick a plan anytime.
@@ -240,11 +241,11 @@ export function BillingPage(): React.ReactElement {
 
         {!user ? (
           <div className="p-4" style={AUTH_CARD_STYLE}>
-            <p className="text-[13px] font-semibold text-white">
+            <p className="text-ui font-semibold text-white">
               Sign in to manage billing
             </p>
             <p
-              className="mt-1 text-[13px] leading-snug"
+              className="mt-1 text-ui leading-snug"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               Billing is tied to your account so credits sync everywhere you
@@ -264,16 +265,16 @@ export function BillingPage(): React.ReactElement {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-[13px] font-semibold text-white">
+                  <p className="text-ui font-semibold text-white">
                     Credit balance
                   </p>
                   <span
-                    className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    className="rounded-full border px-2 py-0.5 text-meta font-semibold uppercase tracking-wide"
                     style={
                       billingStatus?.isSubscribed
                         ? {
-                            borderColor: `${AUTH_COLORS.success}30`,
-                            background: `${AUTH_COLORS.success}15`,
+                            borderColor: authAlpha(AUTH_COLORS.success, 19),
+                            background: authAlpha(AUTH_COLORS.success, 8),
                             color: AUTH_COLORS.success,
                           }
                         : {
@@ -291,7 +292,7 @@ export function BillingPage(): React.ReactElement {
                   </span>
                 </div>
                 <p
-                  className="mt-1 text-[13px] leading-snug"
+                  className="mt-1 text-ui leading-snug"
                   style={{ color: AUTH_COLORS.textSecondary }}
                 >
                   Used for generation and previews.
@@ -299,7 +300,7 @@ export function BillingPage(): React.ReactElement {
               </div>
               <div className="text-right">
                 <p
-                  className="text-[11px] font-semibold tracking-[0.22em]"
+                  className="text-meta font-semibold tracking-[0.22em]"
                   style={{ color: AUTH_COLORS.textLabel }}
                 >
                   CREDITS
@@ -310,10 +311,7 @@ export function BillingPage(): React.ReactElement {
               </div>
             </div>
             {balanceError ? (
-              <p
-                className="mt-3 text-[13px]"
-                style={{ color: AUTH_COLORS.danger }}
-              >
+              <p className="mt-3 text-ui" style={{ color: AUTH_COLORS.danger }}>
                 {balanceError}
               </p>
             ) : null}
@@ -327,7 +325,7 @@ export function BillingPage(): React.ReactElement {
               onClick={handleOpenPortal}
               disabled={isBusy !== null}
               variant="ghost"
-              className="h-9 gap-2 rounded-lg text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 gap-2 rounded-lg text-ui font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
               style={BTN_SECONDARY}
             >
               <CreditCard className="h-3.5 w-3.5" aria-hidden="true" />
@@ -337,7 +335,7 @@ export function BillingPage(): React.ReactElement {
             <Button
               asChild
               variant="ghost"
-              className="h-9 gap-2 rounded-lg text-[13px] font-semibold transition"
+              className="h-9 gap-2 rounded-lg text-ui font-semibold transition"
               style={BTN_MUTED}
             >
               <Link to="/settings/billing/invoices">
@@ -350,11 +348,11 @@ export function BillingPage(): React.ReactElement {
 
         <div>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[15px] font-semibold tracking-tight text-white">
+            <h2 className="text-ui font-semibold tracking-tight text-white">
               Plans
             </h2>
             <p
-              className="text-[11px] font-semibold tracking-[0.22em]"
+              className="text-meta font-semibold tracking-[0.22em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               MONTHLY
@@ -368,26 +366,26 @@ export function BillingPage(): React.ReactElement {
               return (
                 <div
                   key={tier.priceId}
-                  className="rounded-[10px] p-4"
+                  className="rounded-md p-4"
                   style={{
                     background: AUTH_COLORS.card,
                     border: `1px solid ${isHighlighted ? AUTH_COLORS.accent : AUTH_COLORS.cardBorder}`,
                     boxShadow: isHighlighted
-                      ? `0 0 0 1px ${AUTH_COLORS.accent}40`
+                      ? `0 0 0 1px ${authAlpha(AUTH_COLORS.accent, 25)}`
                       : undefined,
                   }}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-[14px] font-semibold text-white">
+                        <p className="text-ui font-semibold text-white">
                           {tier.name}
                         </p>
                         {tier.highlight ? (
                           <span
-                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                            className="rounded-full px-2 py-0.5 text-meta font-semibold tracking-wide"
                             style={{
-                              background: `${AUTH_COLORS.accent}20`,
+                              background: authAlpha(AUTH_COLORS.accent, 13),
                               color: AUTH_COLORS.accent,
                             }}
                           >
@@ -396,7 +394,7 @@ export function BillingPage(): React.ReactElement {
                         ) : null}
                         {isSelected && !tier.highlight ? (
                           <span
-                            className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                            className="rounded-full px-2 py-0.5 text-meta font-semibold tracking-wide"
                             style={{
                               background: AUTH_COLORS.activeBg,
                               color: AUTH_COLORS.textDim,
@@ -407,7 +405,7 @@ export function BillingPage(): React.ReactElement {
                         ) : null}
                       </div>
                       <p
-                        className="mt-1 text-[13px] leading-snug"
+                        className="mt-1 text-ui leading-snug"
                         style={{ color: AUTH_COLORS.textSecondary }}
                       >
                         {tier.description}
@@ -418,14 +416,14 @@ export function BillingPage(): React.ReactElement {
                       <p className="text-xl font-semibold text-white tabular-nums">
                         {tier.priceMonthly}
                         <span
-                          className="ml-1 text-[12px] font-medium"
+                          className="ml-1 text-meta font-medium"
                           style={{ color: AUTH_COLORS.textLabel }}
                         >
                           /mo
                         </span>
                       </p>
                       <p
-                        className="mt-1 text-[12px] tabular-nums"
+                        className="mt-1 text-meta tabular-nums"
                         style={{ color: AUTH_COLORS.textSecondary }}
                       >
                         {formatInteger(tier.creditsPerMonth)} credits
@@ -434,7 +432,7 @@ export function BillingPage(): React.ReactElement {
                   </div>
 
                   <ul
-                    className="mt-3 space-y-1.5 text-[13px]"
+                    className="mt-3 space-y-1.5 text-ui"
                     style={{ color: AUTH_COLORS.textSecondary }}
                   >
                     {tier.bullets.map((bullet) => (
@@ -456,7 +454,7 @@ export function BillingPage(): React.ReactElement {
                       disabled={!user || isBusy !== null}
                       variant="ghost"
                       className={cn(
-                        "h-9 w-full gap-2 rounded-lg text-[13px] font-semibold transition",
+                        "h-9 w-full gap-2 rounded-lg text-ui font-semibold transition",
                         "disabled:cursor-not-allowed disabled:opacity-60",
                       )}
                       style={isHighlighted ? AUTH_CTA_STYLE : BTN_SECONDARY}
@@ -471,7 +469,7 @@ export function BillingPage(): React.ReactElement {
           </div>
 
           <p
-            className="mt-3 text-[12px] leading-relaxed"
+            className="mt-3 text-meta leading-relaxed"
             style={{ color: AUTH_COLORS.textLabel }}
           >
             Subscriptions are processed by Stripe. Credits are granted on
@@ -482,11 +480,11 @@ export function BillingPage(): React.ReactElement {
 
         <div>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[15px] font-semibold tracking-tight text-white">
+            <h2 className="text-ui font-semibold tracking-tight text-white">
               Credit packs
             </h2>
             <p
-              className="text-[11px] font-semibold tracking-[0.22em]"
+              className="text-meta font-semibold tracking-[0.22em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               ONE-TIME
@@ -497,7 +495,7 @@ export function BillingPage(): React.ReactElement {
             {CREDIT_PACKS.map((pack) => (
               <div
                 key={pack.priceId}
-                className="rounded-[10px] p-3.5"
+                className="rounded-md p-3.5"
                 style={{
                   background: AUTH_COLORS.card,
                   border: `1px solid ${AUTH_COLORS.cardBorder}`,
@@ -505,11 +503,11 @@ export function BillingPage(): React.ReactElement {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[14px] font-semibold text-white">
+                    <p className="text-ui font-semibold text-white">
                       {pack.name}
                     </p>
                     <p
-                      className="mt-1 text-[13px] leading-snug"
+                      className="mt-1 text-ui leading-snug"
                       style={{ color: AUTH_COLORS.textSecondary }}
                     >
                       {pack.description}
@@ -520,7 +518,7 @@ export function BillingPage(): React.ReactElement {
                       {pack.price}
                     </p>
                     <p
-                      className="mt-1 text-[12px] tabular-nums"
+                      className="mt-1 text-meta tabular-nums"
                       style={{ color: AUTH_COLORS.textSecondary }}
                     >
                       {formatInteger(pack.credits)} credits
@@ -534,7 +532,7 @@ export function BillingPage(): React.ReactElement {
                     onClick={() => handleCheckout(pack.priceId)}
                     disabled={!user || isBusy !== null}
                     variant="ghost"
-                    className="h-8 w-full rounded-lg text-[12px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-8 w-full rounded-lg text-meta font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                     style={BTN_MUTED}
                   >
                     {isBusy === pack.priceId ? "Redirecting…" : "Buy credits"}
@@ -545,7 +543,7 @@ export function BillingPage(): React.ReactElement {
           </div>
 
           <p
-            className="mt-3 text-[12px] leading-relaxed"
+            className="mt-3 text-meta leading-relaxed"
             style={{ color: AUTH_COLORS.textLabel }}
           >
             Credit packs are one-time purchases and add credits immediately
@@ -555,11 +553,11 @@ export function BillingPage(): React.ReactElement {
 
         <div>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[15px] font-semibold tracking-tight text-white">
+            <h2 className="text-ui font-semibold tracking-tight text-white">
               Credit activity
             </h2>
             <p
-              className="text-[11px] font-semibold tracking-[0.22em]"
+              className="text-meta font-semibold tracking-[0.22em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               HISTORY
@@ -567,7 +565,7 @@ export function BillingPage(): React.ReactElement {
           </div>
 
           <div
-            className="mt-3 overflow-hidden rounded-[10px]"
+            className="mt-3 overflow-hidden rounded-md"
             style={{
               background: AUTH_COLORS.card,
               border: `1px solid ${AUTH_COLORS.cardBorder}`,
@@ -575,7 +573,7 @@ export function BillingPage(): React.ReactElement {
           >
             {isLoadingCreditHistory ? (
               <div
-                className="px-3.5 py-3 text-[13px]"
+                className="px-3.5 py-3 text-ui"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 Loading credit activity…
@@ -584,7 +582,7 @@ export function BillingPage(): React.ReactElement {
 
             {!isLoadingCreditHistory && creditHistoryError ? (
               <div
-                className="px-3.5 py-3 text-[13px]"
+                className="px-3.5 py-3 text-ui"
                 style={{ color: AUTH_COLORS.danger }}
               >
                 {creditHistoryError}
@@ -595,7 +593,7 @@ export function BillingPage(): React.ReactElement {
             !creditHistoryError &&
             creditHistory.length === 0 ? (
               <div
-                className="px-3.5 py-3 text-[13px]"
+                className="px-3.5 py-3 text-ui"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 No credit activity yet.
@@ -616,11 +614,11 @@ export function BillingPage(): React.ReactElement {
                     style={{ borderColor: AUTH_COLORS.divider }}
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-[13px] font-medium text-white">
+                      <p className="truncate text-ui font-medium text-white">
                         {toActivityLabel(entry.type)}
                       </p>
                       <p
-                        className="mt-0.5 truncate text-[11px]"
+                        className="mt-0.5 truncate text-meta"
                         style={{ color: AUTH_COLORS.textLabel }}
                       >
                         {[
@@ -633,7 +631,7 @@ export function BillingPage(): React.ReactElement {
                       </p>
                     </div>
                     <p
-                      className="text-[13px] font-semibold tabular-nums"
+                      className="text-ui font-semibold tabular-nums"
                       style={{
                         color:
                           entry.amount >= 0 ? AUTH_COLORS.success : "#f5c05c",

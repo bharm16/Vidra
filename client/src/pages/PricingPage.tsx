@@ -4,7 +4,7 @@ import { Check } from "@promptstudio/system/components/ui";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { SUBSCRIPTION_TIERS } from "@/features/billing/subscriptionTiers";
 import { CREDIT_PACKS } from "@/features/billing/creditPacks";
-import { AUTH_COLORS } from "./auth/auth-styles";
+import { AUTH_COLORS, authAlpha } from "./auth/auth-styles";
 
 const CARD: React.CSSProperties = {
   background: AUTH_COLORS.card,
@@ -52,12 +52,12 @@ export function PricingPage(): React.ReactElement {
         <div className="mx-auto max-w-3xl flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p
-              className="text-[10px] font-semibold tracking-[0.2em]"
+              className="text-meta font-semibold tracking-[0.2em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               PRICING
             </p>
-            <h1 className="text-[15px] font-semibold text-white tracking-tight">
+            <h1 className="text-ui font-semibold text-white tracking-tight">
               Plans & credits
             </h1>
           </div>
@@ -65,7 +65,7 @@ export function PricingPage(): React.ReactElement {
             {user ? (
               <Link
                 to={billingLink}
-                className="inline-flex h-7 items-center rounded-lg px-3 text-[12px] font-semibold transition"
+                className="inline-flex h-7 items-center rounded-lg px-3 text-meta font-semibold transition"
                 style={{
                   background: AUTH_COLORS.card,
                   border: `1px solid ${AUTH_COLORS.cardBorder}`,
@@ -78,7 +78,7 @@ export function PricingPage(): React.ReactElement {
               <>
                 <Link
                   to={signUpLink}
-                  className="inline-flex h-7 items-center rounded-lg px-3 text-[12px] font-semibold transition"
+                  className="inline-flex h-7 items-center rounded-lg px-3 text-meta font-semibold transition"
                   style={{
                     background: AUTH_COLORS.accent,
                     color: AUTH_COLORS.bg,
@@ -88,7 +88,7 @@ export function PricingPage(): React.ReactElement {
                 </Link>
                 <Link
                   to={signInLink}
-                  className="inline-flex h-7 items-center rounded-lg px-3 text-[12px] font-semibold text-white transition"
+                  className="inline-flex h-7 items-center rounded-lg px-3 text-meta font-semibold text-white transition"
                   style={{
                     background: AUTH_COLORS.card,
                     border: `1px solid ${AUTH_COLORS.cardBorder}`,
@@ -100,7 +100,7 @@ export function PricingPage(): React.ReactElement {
             )}
             <Link
               to="/"
-              className="text-[12px] font-medium hover:text-white transition-colors"
+              className="text-meta font-medium hover:text-white transition-colors"
               style={{ color: AUTH_COLORS.textDim }}
             >
               Back to app
@@ -112,7 +112,7 @@ export function PricingPage(): React.ReactElement {
       {/* Content */}
       <div className="mx-auto max-w-3xl px-4 sm:px-6 pb-16">
         <p
-          className="pt-5 pb-4 text-[13px] leading-relaxed"
+          className="pt-5 pb-4 text-ui leading-relaxed"
           style={{ color: AUTH_COLORS.textSecondary }}
         >
           Simple plans that buy you speed. All plans include core prompt
@@ -124,16 +124,16 @@ export function PricingPage(): React.ReactElement {
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
-                <h2 className="text-[14px] font-semibold text-white">Free</h2>
+                <h2 className="text-ui font-semibold text-white">Free</h2>
                 <span
-                  className="text-[12px] tabular-nums"
+                  className="text-meta tabular-nums"
                   style={{ color: AUTH_COLORS.textDim }}
                 >
                   $0/mo
                 </span>
               </div>
               <p
-                className="mt-1 text-[12px]"
+                className="mt-1 text-meta"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 Local history, core prompt optimization, upgrade anytime.
@@ -141,7 +141,7 @@ export function PricingPage(): React.ReactElement {
             </div>
             <Link
               to="/"
-              className="inline-flex h-8 items-center rounded-lg px-3.5 text-[12px] font-semibold text-white transition shrink-0"
+              className="inline-flex h-8 items-center rounded-lg px-3.5 text-meta font-semibold text-white transition shrink-0"
               style={{
                 background: AUTH_COLORS.inputBg,
                 border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -162,8 +162,8 @@ export function PricingPage(): React.ReactElement {
                 tier.highlight
                   ? {
                       ...CARD,
-                      border: `1px solid ${AUTH_COLORS.accent}40`,
-                      boxShadow: `0 0 16px ${AUTH_COLORS.accent}08`,
+                      border: `1px solid ${authAlpha(AUTH_COLORS.accent, 25)}`,
+                      boxShadow: `0 0 16px ${authAlpha(AUTH_COLORS.accent, 3)}`,
                     }
                   : CARD
               }
@@ -171,24 +171,24 @@ export function PricingPage(): React.ReactElement {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5">
-                    <h3 className="text-[14px] font-semibold text-white">
+                    <h3 className="text-ui font-semibold text-white">
                       {tier.name}
                     </h3>
-                    <span className="text-[13px] font-semibold tabular-nums text-white">
+                    <span className="text-ui font-semibold tabular-nums text-white">
                       {tier.priceMonthly}
                     </span>
                     <span
-                      className="text-[12px]"
+                      className="text-meta"
                       style={{ color: AUTH_COLORS.textDim }}
                     >
                       /mo
                     </span>
                     {tier.highlight ? (
                       <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                        className="rounded-full px-2 py-0.5 text-meta font-semibold tracking-wide"
                         style={{
-                          background: `${AUTH_COLORS.accent}20`,
-                          border: `1px solid ${AUTH_COLORS.accent}40`,
+                          background: authAlpha(AUTH_COLORS.accent, 13),
+                          border: `1px solid ${authAlpha(AUTH_COLORS.accent, 25)}`,
                           color: AUTH_COLORS.accent,
                         }}
                       >
@@ -197,7 +197,7 @@ export function PricingPage(): React.ReactElement {
                     ) : null}
                   </div>
                   <p
-                    className="mt-1.5 text-[12px] leading-relaxed"
+                    className="mt-1.5 text-meta leading-relaxed"
                     style={{ color: AUTH_COLORS.textSecondary }}
                   >
                     {tier.description}
@@ -209,19 +209,19 @@ export function PricingPage(): React.ReactElement {
                     style={INSET}
                   >
                     <span
-                      className="text-[10px] font-semibold tracking-[0.15em]"
+                      className="text-meta font-semibold tracking-[0.15em]"
                       style={{ color: AUTH_COLORS.textLabel }}
                     >
                       CREDITS
                     </span>
-                    <span className="text-[13px] font-semibold tabular-nums text-white">
+                    <span className="text-ui font-semibold tabular-nums text-white">
                       {tier.creditsPerMonth.toLocaleString()}/mo
                     </span>
                   </div>
 
                   {/* Bullets inline */}
                   <ul
-                    className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[12px]"
+                    className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-meta"
                     style={{ color: AUTH_COLORS.textSecondary }}
                   >
                     {tier.bullets.map((bullet) => (
@@ -243,7 +243,7 @@ export function PricingPage(): React.ReactElement {
                       ? buildBillingLink(tier.priceId)
                       : `/signup?redirect=${encodeURIComponent(buildBillingLink(tier.priceId))}`
                   }
-                  className="inline-flex h-8 items-center rounded-lg px-3.5 text-[12px] font-semibold transition shrink-0"
+                  className="inline-flex h-8 items-center rounded-lg px-3.5 text-meta font-semibold transition shrink-0"
                   style={
                     tier.highlight
                       ? {
@@ -267,18 +267,16 @@ export function PricingPage(): React.ReactElement {
         {/* Credit packs */}
         <div className="mt-6 p-4" style={CARD}>
           <div className="flex items-center justify-between gap-3 mb-3">
-            <h3 className="text-[13px] font-semibold text-white">
-              Credit packs
-            </h3>
+            <h3 className="text-ui font-semibold text-white">Credit packs</h3>
             <span
-              className="text-[10px] font-semibold tracking-[0.2em]"
+              className="text-meta font-semibold tracking-[0.2em]"
               style={{ color: AUTH_COLORS.textLabel }}
             >
               ONE-TIME
             </span>
           </div>
           <p
-            className="text-[12px] leading-relaxed mb-3"
+            className="text-meta leading-relaxed mb-3"
             style={{ color: AUTH_COLORS.textSecondary }}
           >
             Need more credits mid-cycle? Top up with a one-time pack.
@@ -299,24 +297,24 @@ export function PricingPage(): React.ReactElement {
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-[13px] font-semibold text-white">
+                  <span className="text-ui font-semibold text-white">
                     {pack.name}
                   </span>
                   <span
-                    className="text-[12px] tabular-nums"
+                    className="text-meta tabular-nums"
                     style={{ color: AUTH_COLORS.textDim }}
                   >
                     {pack.credits.toLocaleString()} credits
                   </span>
                 </div>
-                <span className="text-[13px] font-semibold tabular-nums text-white shrink-0">
+                <span className="text-ui font-semibold tabular-nums text-white shrink-0">
                   {pack.price}
                 </span>
               </div>
             ))}
           </div>
           <p
-            className="mt-2.5 text-[11px]"
+            className="mt-2.5 text-meta"
             style={{ color: AUTH_COLORS.textDim }}
           >
             Image previews: 1 credit. Wan video previews: 5 credits. Packs
@@ -326,14 +324,14 @@ export function PricingPage(): React.ReactElement {
 
         {/* FAQ — flat list, not cards */}
         <div className="mt-6 p-4" style={CARD}>
-          <h3 className="text-[13px] font-semibold text-white mb-3">FAQ</h3>
+          <h3 className="text-ui font-semibold text-white mb-3">FAQ</h3>
           <div className="flex flex-col gap-3">
             <div>
-              <p className="text-[12px] font-semibold text-white">
+              <p className="text-meta font-semibold text-white">
                 Do I need an account to pay?
               </p>
               <p
-                className="mt-0.5 text-[12px] leading-relaxed"
+                className="mt-0.5 text-meta leading-relaxed"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 Yes — billing attaches to your account so credits sync and
@@ -346,11 +344,11 @@ export function PricingPage(): React.ReactElement {
                 paddingTop: "12px",
               }}
             >
-              <p className="text-[12px] font-semibold text-white">
+              <p className="text-meta font-semibold text-white">
                 Where do credits show up?
               </p>
               <p
-                className="mt-0.5 text-[12px] leading-relaxed"
+                className="mt-0.5 text-meta leading-relaxed"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 In the app after the invoice is paid. If you don&apos;t see
@@ -371,11 +369,11 @@ export function PricingPage(): React.ReactElement {
                 paddingTop: "12px",
               }}
             >
-              <p className="text-[12px] font-semibold text-white">
+              <p className="text-meta font-semibold text-white">
                 How much do previews cost?
               </p>
               <p
-                className="mt-0.5 text-[12px] leading-relaxed"
+                className="mt-0.5 text-meta leading-relaxed"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 Image previews cost 1 credit per image. Wan video previews cost
@@ -387,7 +385,7 @@ export function PricingPage(): React.ReactElement {
 
         {/* Footer */}
         <footer
-          className="mt-8 py-6 text-[12px]"
+          className="mt-8 py-6 text-meta"
           style={{
             borderTop: `1px solid ${AUTH_COLORS.cardBorder}`,
             color: AUTH_COLORS.textDim,

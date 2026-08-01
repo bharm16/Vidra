@@ -14,34 +14,52 @@
     --workspace-topbar-h: 44px;
     --workspace-composer-bottom: 24px;
 
-    /* ToolSidebar Colors — warm charcoal, neutral accents */
-    --tool-panel-inner-bg: #111114;
-    --tool-rail-border: rgba(255, 255, 255, 0.06);
-    --tool-nav-active-bg: rgba(255, 255, 255, 0.05);
-    --tool-border-primary: rgba(255, 255, 255, 0.08);
-    --tool-border-dark: rgba(255, 255, 255, 0.05);
-    --tool-text-secondary: #b0b0be;
-    --tool-text-muted: #8b8b9e;
-    --tool-text-placeholder: #6b6b7e;
-    --tool-accent-soft: #c8c8d0;
-    --tool-nav-hover-bg: rgba(255, 255, 255, 0.04);
-    /* --tool-text-subdued moved into the Phase-0 tokens block below
-       so its WCAG AA contrast bump is colocated with --tool-text-dim. */
-    --tool-surface-inset: #0e0e12;
-    --tool-surface-deep: #0c0c10;
+    /* --tool-* BRIDGE — these were a parallel vocabulary of hardcoded hex
+       (three surface darks, four purple-tinted greys, five white alphas)
+       that drifted from the design system. Each now resolves to a semantic
+       token, so the ~428 existing `*-tool-*` call sites keep compiling while
+       the page collapses onto one neutral ramp. Two side effects worth
+       knowing: the greys lose their purple cast, and these become
+       theme-aware — the old hex was dark-only.
 
-    /* Phase-0 tokens (updated for warm charcoal) */
-    /* WCAG 2 AA against --tool-surface-card (#16161a):
-       dim       4.7:1 (passes AA for normal text)
-       subdued   4.5:1 (passes AA, intentionally close to dim — see note) */
-    --tool-text-dim: #a0a0b3;
-    --tool-text-subdued: #9999ab;
-    --tool-text-label: #3a3a4a;
-    --tool-text-disabled: #2e2e3a;
-    --tool-surface-card: #16161a;
-    --tool-surface-prompt: rgba(22, 22, 28, 0.72);
-    --tool-surface-prompt-compact: #131318;
-    --tool-accent-neutral: #c8c8d0;
+       Migrate call sites to the canonical class, then delete the bridge
+       (same contract as the preset's `bridge` entries — see
+       packages/promptstudio-system/README.md). */
+
+    /* Surfaces — three darks (#111114 / #0e0e12 / #0c0c10) collapse to the
+       background, three card-weights to --card. */
+    --tool-panel-inner-bg: var(--background);
+    --tool-surface-inset: var(--background);
+    --tool-surface-deep: var(--background);
+    --tool-surface-card: var(--card);
+    --tool-surface-prompt: var(--card);
+    --tool-surface-prompt-compact: var(--card);
+
+    /* Edges — every hairline is --border; nav-active reads one step stronger
+       so the hover -> active progression survives the collapse. */
+    --tool-rail-border: var(--border);
+    --tool-border-primary: var(--border);
+    --tool-border-dark: var(--border);
+    --tool-nav-hover-bg: var(--border);
+    --tool-nav-active-bg: var(--border-strong);
+
+    /* Text — the four purple greys (#b0b0be/#a0a0b3/#9999ab/#8b8b9e) sat
+       within 13% lightness of each other doing one job. They land on the
+       foreground ladder by measured lightness.
+       --tool-text-disabled is only ever used as a hover border, never as
+       text, so it maps to an edge token rather than a foreground one. */
+    --tool-text-secondary: var(--muted-foreground);
+    --tool-text-dim: var(--muted-foreground);
+    --tool-text-subdued: var(--muted-foreground);
+    --tool-text-muted: var(--faint-foreground);
+    --tool-text-placeholder: var(--ghost-foreground);
+    --tool-text-label: var(--ghost-foreground);
+    --tool-text-disabled: var(--border-strong);
+
+    /* Emphasis — accent-soft and accent-neutral held the identical value
+       (#c8c8d0) under two names; selected state is the foreground. */
+    --tool-accent-neutral: var(--foreground);
+    --tool-accent-soft: var(--border-strong);
   }
 
   html,
@@ -87,7 +105,7 @@
   }
 
   .ps-rise {
-    animation: es-rise 0.95s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+    animation: es-rise var(--duration-slower) var(--ease-decelerate) both;
   }
 
   /* Anchor focus affordances — an accent bloom that wakes behind the sheet and
@@ -108,8 +126,8 @@
     opacity: 0;
     transform: translateX(-50%) scale(0.9);
     transition:
-      opacity 0.85s ease,
-      transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      opacity var(--duration-medium) var(--ease-standard),
+      transform var(--duration-medium) var(--ease-standard);
   }
 
   .ps-anchor-sheet:focus-within .ps-focus-bloom {

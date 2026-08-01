@@ -11,49 +11,69 @@
  * match the workspace aesthetic exactly.
  */
 
-/** Colors pulled from the tool-sidebar CSS variables */
+/**
+ * Bridged to the design system's semantic tokens. These were a standalone
+ * palette of hardcoded hex — four blue-tinted greys (#A1AFC5 / #8B92A5 /
+ * #7C839C / #555B6E) and a blue focus ring that competed with the system's
+ * white one. Each now resolves to a token, so the ~240 existing call sites
+ * keep working while these pages join the one neutral ramp.
+ *
+ * Because the values are now `var(...)`, they can no longer be concatenated
+ * with an 8-digit-hex alpha suffix (`${AUTH_COLORS.accent}40`). Use
+ * {@link authAlpha} instead.
+ */
 export const AUTH_COLORS = {
-  /** Page background — matches tool rail/panel bg */
-  bg: "#131416",
-  /** Card surface — matches tool-surface-card */
-  card: "#16181E",
-  /** Card border — matches tool-nav-active-bg */
-  cardBorder: "#22252C",
-  /** Input background — matches tool-surface-inset */
-  inputBg: "#0F1118",
-  /** Input border — matches tool-border-primary */
-  inputBorder: "#2C3037",
+  /** Page background */
+  bg: "var(--background)",
+  /** Card surface */
+  card: "var(--card)",
+  /** Card border */
+  cardBorder: "var(--border)",
+  /** Input background */
+  inputBg: "var(--background)",
+  /** Input border */
+  inputBorder: "var(--border)",
   /** Input border on focus */
-  inputBorderFocus: "#434651",
-  /** Focus ring */
-  focusRing: "rgba(104, 134, 255, 0.5)",
-  /** Divider — matches tool-rail-border */
-  divider: "#1B1E23",
+  inputBorderFocus: "var(--border-strong)",
+  /** Focus ring — the system's single focus treatment, not a second blue */
+  focusRing: "var(--ring)",
+  /** Divider */
+  divider: "var(--border)",
   /** Primary text */
-  text: "#FFFFFF",
-  /** Secondary text — matches tool-text-secondary */
-  textSecondary: "#A1AFC5",
-  /** Dim text — matches tool-text-dim */
-  textDim: "#8B92A5",
-  /** Placeholder text — matches tool-text-placeholder */
-  textPlaceholder: "#7C839C",
-  /** Faint label text — matches tool-text-label */
-  textLabel: "#555B6E",
-  /** Soft neutral accent — matches tool-accent-soft */
-  accent: "#C8C8D0",
-  /** Success — matches --success */
-  success: "#4ec7a2",
-  /** Danger — matches --destructive */
-  danger: "#fa6e7c",
+  text: "var(--foreground)",
+  /** Secondary text */
+  textSecondary: "var(--muted-foreground)",
+  /** Dim text */
+  textDim: "var(--faint-foreground)",
+  /** Placeholder text */
+  textPlaceholder: "var(--ghost-foreground)",
+  /** Faint label text */
+  textLabel: "var(--ghost-foreground)",
+  /** Emphasis / selected state */
+  accent: "var(--foreground)",
+  /** Success */
+  success: "var(--success)",
+  /** Danger */
+  danger: "var(--destructive)",
   /** Hover surface */
-  hoverBg: "#1C1E26",
+  hoverBg: "var(--secondary)",
   /** Active surface */
-  activeBg: "#22252C",
+  activeBg: "var(--secondary)",
 } as const;
+
+/**
+ * Alpha-blend one of the colors above.
+ *
+ * Replaces the old `${AUTH_COLORS.x}40` hex-suffix concatenation, which
+ * produced invalid CSS once these became variables — and failed silently,
+ * since an unparseable declaration is simply dropped.
+ */
+export const authAlpha = (color: string, percent: number): string =>
+  `color-mix(in srgb, ${color} ${percent}%, transparent)`;
 
 /** Input className shared across all auth forms */
 export const AUTH_INPUT_CLASS =
-  "mt-1 w-full rounded-lg px-3.5 py-2.5 text-[14px] text-white outline-none transition";
+  "mt-1 w-full rounded-lg px-3.5 py-2.5 text-ui text-white outline-none transition";
 
 /** Input inline style (colors that need exact hex values) */
 export const AUTH_INPUT_STYLE: React.CSSProperties = {
@@ -71,7 +91,7 @@ export const AUTH_INPUT_FOCUS_STYLE: React.CSSProperties = {
 
 /** Primary CTA button className */
 export const AUTH_CTA_CLASS =
-  "h-9 w-full gap-2 rounded-lg px-3.5 text-[13px] font-semibold transition";
+  "h-9 w-full gap-2 rounded-lg px-3.5 text-ui font-semibold transition";
 
 /** Primary CTA inline style */
 export const AUTH_CTA_STYLE: React.CSSProperties = {
@@ -81,7 +101,7 @@ export const AUTH_CTA_STYLE: React.CSSProperties = {
 
 /** Secondary/outline button className */
 export const AUTH_SECONDARY_BTN_CLASS =
-  "h-9 w-full gap-2 rounded-lg px-3.5 text-[13px] font-medium text-white transition";
+  "h-9 w-full gap-2 rounded-lg px-3.5 text-ui font-medium text-white transition";
 
 /** Secondary button inline style */
 export const AUTH_SECONDARY_BTN_STYLE: React.CSSProperties = {
@@ -90,7 +110,7 @@ export const AUTH_SECONDARY_BTN_STYLE: React.CSSProperties = {
 };
 
 /** Label className */
-export const AUTH_LABEL_CLASS = "text-[11px] font-semibold tracking-[0.2em]";
+export const AUTH_LABEL_CLASS = "text-meta font-semibold tracking-[0.2em]";
 
 /** Info card style — matches workspace panel card */
 export const AUTH_CARD_STYLE: React.CSSProperties = {
@@ -101,15 +121,15 @@ export const AUTH_CARD_STYLE: React.CSSProperties = {
 
 /** Error alert style */
 export const AUTH_ERROR_STYLE: React.CSSProperties = {
-  background: `${AUTH_COLORS.danger}15`,
-  border: `1px solid ${AUTH_COLORS.danger}30`,
+  background: authAlpha(AUTH_COLORS.danger, 8),
+  border: `1px solid ${authAlpha(AUTH_COLORS.danger, 19)}`,
   borderRadius: "8px",
 };
 
 /** Success alert style */
 export const AUTH_SUCCESS_STYLE: React.CSSProperties = {
-  background: `${AUTH_COLORS.success}15`,
-  border: `1px solid ${AUTH_COLORS.success}30`,
+  background: authAlpha(AUTH_COLORS.success, 8),
+  border: `1px solid ${authAlpha(AUTH_COLORS.success, 19)}`,
   borderRadius: "8px",
 };
 

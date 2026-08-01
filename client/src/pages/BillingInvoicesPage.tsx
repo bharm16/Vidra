@@ -21,6 +21,7 @@ import { useAuthUser } from "@hooks/useAuthUser";
 import { AuthShell } from "./auth/AuthShell";
 import {
   AUTH_COLORS,
+  authAlpha,
   AUTH_CTA_CLASS,
   AUTH_CTA_STYLE,
   AUTH_CARD_STYLE,
@@ -183,11 +184,11 @@ export function BillingInvoicesPage(): React.ReactElement {
       <div className="flex flex-col gap-4">
         {!user ? (
           <div className="p-4" style={AUTH_CARD_STYLE}>
-            <p className="text-[13px] font-semibold text-white">
+            <p className="text-ui font-semibold text-white">
               Sign in to view receipts
             </p>
             <p
-              className="mt-1 text-[13px] leading-snug"
+              className="mt-1 text-ui leading-snug"
               style={{ color: AUTH_COLORS.textSecondary }}
             >
               Invoices are tied to your account so you can grab receipts
@@ -221,13 +222,13 @@ export function BillingInvoicesPage(): React.ReactElement {
               />
               <div className="min-w-0">
                 <p
-                  className="text-[13px] font-semibold"
+                  className="text-ui font-semibold"
                   style={{ color: "#f5c05c" }}
                 >
                   Payment issue detected
                 </p>
                 <p
-                  className="mt-1 text-[13px] leading-snug"
+                  className="mt-1 text-ui leading-snug"
                   style={{ color: "#f5c05c", opacity: 0.7 }}
                 >
                   One of your invoices needs attention. Open the billing portal
@@ -241,7 +242,7 @@ export function BillingInvoicesPage(): React.ReactElement {
         {user && error ? (
           <div
             role="alert"
-            className="px-3.5 py-2.5 text-[13px]"
+            className="px-3.5 py-2.5 text-ui"
             style={AUTH_ERROR_STYLE}
           >
             <span style={{ color: AUTH_COLORS.danger }}>{error}</span>
@@ -255,7 +256,7 @@ export function BillingInvoicesPage(): React.ReactElement {
               onClick={handleOpenPortal}
               disabled={isBusy}
               variant="ghost"
-              className="h-9 gap-2 rounded-lg text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 gap-2 rounded-lg text-ui font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
               style={BTN_SECONDARY}
             >
               <CreditCard className="h-3.5 w-3.5" aria-hidden="true" />
@@ -267,7 +268,7 @@ export function BillingInvoicesPage(): React.ReactElement {
               onClick={() => void loadInvoices()}
               disabled={isLoading || isBusy}
               variant="ghost"
-              className="h-9 gap-2 rounded-lg text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 gap-2 rounded-lg text-ui font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
               style={BTN_MUTED}
             >
               <RefreshCw
@@ -283,18 +284,18 @@ export function BillingInvoicesPage(): React.ReactElement {
           <div className="p-4" style={AUTH_CARD_STYLE}>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[13px] font-semibold text-white">
+                <p className="text-ui font-semibold text-white">
                   Payment history
                 </p>
                 <p
-                  className="mt-1 text-[13px] leading-snug"
+                  className="mt-1 text-ui leading-snug"
                   style={{ color: AUTH_COLORS.textSecondary }}
                 >
                   Download PDFs or open hosted invoices for receipts.
                 </p>
               </div>
               <p
-                className="text-[11px] font-semibold tracking-[0.22em]"
+                className="text-meta font-semibold tracking-[0.22em]"
                 style={{ color: AUTH_COLORS.textLabel }}
               >
                 {isLoading ? "LOADING" : `${invoices.length} INVOICES`}
@@ -303,14 +304,14 @@ export function BillingInvoicesPage(): React.ReactElement {
 
             {isLoading ? (
               <p
-                className="mt-4 text-[13px]"
+                className="mt-4 text-ui"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 Loading…
               </p>
             ) : invoices.length === 0 ? (
               <p
-                className="mt-4 text-[13px]"
+                className="mt-4 text-ui"
                 style={{ color: AUTH_COLORS.textSecondary }}
               >
                 No invoices yet.
@@ -326,7 +327,7 @@ export function BillingInvoicesPage(): React.ReactElement {
                   return (
                     <div
                       key={invoice.id}
-                      className="rounded-[10px] p-3.5"
+                      className="rounded-md p-3.5"
                       style={{
                         background: AUTH_COLORS.inputBg,
                         border: `1px solid ${AUTH_COLORS.inputBorder}`,
@@ -334,13 +335,13 @@ export function BillingInvoicesPage(): React.ReactElement {
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-[13px] font-semibold text-white">
+                          <p className="text-ui font-semibold text-white">
                             {invoice.number
                               ? `Invoice ${invoice.number}`
                               : "Invoice"}
                           </p>
                           <p
-                            className="mt-1 text-[13px]"
+                            className="mt-1 text-ui"
                             style={{ color: AUTH_COLORS.textSecondary }}
                           >
                             {formatInvoiceDate(invoice.created)} •{" "}
@@ -354,12 +355,15 @@ export function BillingInvoicesPage(): React.ReactElement {
                         </div>
 
                         <span
-                          className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide"
+                          className="inline-flex items-center rounded-full border px-2.5 py-1 text-meta font-semibold tracking-wide"
                           style={
                             status.tone === "good"
                               ? {
-                                  borderColor: `${AUTH_COLORS.success}30`,
-                                  background: `${AUTH_COLORS.success}15`,
+                                  borderColor: authAlpha(
+                                    AUTH_COLORS.success,
+                                    19,
+                                  ),
+                                  background: authAlpha(AUTH_COLORS.success, 8),
                                   color: AUTH_COLORS.success,
                                 }
                               : status.tone === "warn"
@@ -384,7 +388,7 @@ export function BillingInvoicesPage(): React.ReactElement {
                           <Button
                             asChild
                             variant="ghost"
-                            className="h-8 gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-white transition"
+                            className="h-8 gap-1.5 rounded-lg px-3 text-meta font-semibold text-white transition"
                             style={BTN_SECONDARY}
                           >
                             <a
@@ -411,7 +415,7 @@ export function BillingInvoicesPage(): React.ReactElement {
                             <Button
                               asChild
                               variant="ghost"
-                              className="h-8 gap-1.5 rounded-lg px-3 text-[12px] font-semibold transition"
+                              className="h-8 gap-1.5 rounded-lg px-3 text-meta font-semibold transition"
                               style={BTN_MUTED}
                             >
                               <a
@@ -430,7 +434,7 @@ export function BillingInvoicesPage(): React.ReactElement {
                         </div>
                       ) : (
                         <p
-                          className="mt-3 text-[13px]"
+                          className="mt-3 text-ui"
                           style={{ color: AUTH_COLORS.textSecondary }}
                         >
                           Receipt links aren't available for this invoice.
