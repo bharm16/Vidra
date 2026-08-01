@@ -30,6 +30,23 @@ import { sanitizeError } from "@/utils/logging";
 
 const log = logger.child("AuthRepository");
 
+/**
+ * User-scoped local state must not survive sign-out: the next visitor on
+ * this browser is a guest (or a different user), and the local history
+ * mirror and persisted logs carry the previous user's content — session
+ * titles, prompts, media references. Firebase clears its own auth
+ * persistence in signOut(); everything the app wrote is cleared here.
+ * Runs only after the provider sign-out succeeds — a failed sign-out
+ * leaves the still-signed-in user's state alone.
+ */
+async function clearUserScopedLocalState(): Promise<void> {
+  const { LocalStoragePromptRepository } = await import(
+    "./LocalStoragePromptRepository"
+  );
+  await new LocalStoragePromptRepository().clear();
+  logger.clearStoredLogs();
+}
+
 export interface SentryIntegration {
   setUser: (user: User | null) => void;
   addBreadcrumb: (
@@ -326,6 +343,7 @@ export class AuthRepository {
   async signOut(): Promise<void> {
     try {
       await signOut(this.auth);
+      await clearUserScopedLocalState();
 
       // Clear Sentry user context if integration is provided
       if (this.sentry) {
@@ -521,6 +539,7 @@ export class MockAuthRepository {
 
   async signOut(): Promise<void> {
     this.currentUser = null;
+    await clearUserScopedLocalState();
     this._notifyAuthStateChange();
   }
 
