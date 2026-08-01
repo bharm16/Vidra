@@ -164,10 +164,10 @@ export function PromptEditorSurface({
             // values (26px / 1.45 / no inner padding) rather than out-specifying
             // it — the rule reads these vars.
             ({
-              "--ps-editor-font-size": "26px",
-              "--ps-editor-line-height": "1.45",
-              "--ps-editor-padding-y": "0px",
-              "--ps-editor-padding-x": "0px",
+              "--editor-font-size": "26px",
+              "--editor-line-height": "1.45",
+              "--editor-padding-y": "0px",
+              "--editor-padding-x": "0px",
             } as React.CSSProperties)
           : undefined
       }
@@ -346,7 +346,7 @@ export function PromptEditorSurface({
                 </form>
                 {customRequestError ? (
                   <div
-                    className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3 py-2 text-xs"
+                    className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3 py-2 text-xs"
                     role="alert"
                   >
                     {customRequestError}
@@ -356,7 +356,7 @@ export function PromptEditorSurface({
 
               {isInlineError ? (
                 <div
-                  className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3 py-2 text-xs"
+                  className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3 py-2 text-xs"
                   role="alert"
                 >
                   {inlineErrorMessage}

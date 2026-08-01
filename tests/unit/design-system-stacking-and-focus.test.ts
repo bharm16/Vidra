@@ -8,9 +8,10 @@ import preset from "@promptstudio/system/tailwind.preset";
  * Design-system stacking + focus contract (issue #49).
  *
  * The named z-index scale in @promptstudio/system is the only stacking
- * mechanism in client/src, and --ps-focus-ring is the single focus-ring
- * token. These tests pin the scale ordering and scan client sources so
- * arbitrary z values / bespoke focus rings cannot drift back in.
+ * mechanism in client/src, and --ring (driven by --focus-ring-*) is the
+ * single focus-ring treatment. These tests pin the scale ordering and
+ * scan client sources so arbitrary z values / bespoke focus rings cannot
+ * drift back in.
  */
 
 const repoRoot = path.resolve(
@@ -22,7 +23,7 @@ const tokensCss = readFileSync(path.join(systemSrc, "tokens.css"), "utf8");
 const baseCss = readFileSync(path.join(systemSrc, "base.css"), "utf8");
 
 function zTokenValue(name: string): number {
-  const needle = `--ps-z-${name}:`;
+  const needle = `--z-${name}:`;
   const start = tokensCss.indexOf(needle);
   expect(start, `tokens.css should define ${needle}`).toBeGreaterThan(-1);
   const end = tokensCss.indexOf(";", start);
@@ -47,29 +48,25 @@ function collectClientSources(dir: string, out: string[]): string[] {
 }
 
 describe("z-index scale", () => {
-  it("orders layers dropdown < popover < drawer < modal < toast", () => {
-    const dropdown = zTokenValue("dropdown");
-    const popover = zTokenValue("popover");
-    const drawer = zTokenValue("drawer");
-    const modal = zTokenValue("modal");
-    const toast = zTokenValue("toast");
-
-    expect(dropdown).toBeLessThan(popover);
-    expect(popover).toBeLessThan(drawer);
-    expect(drawer).toBeLessThan(modal);
-    expect(modal).toBeLessThan(toast);
+  it("orders the full ladder base < raised < sticky < overlay < drawer < modal < toast < tooltip", () => {
+    const pairs: Array<[string, string]> = [
+      ["base", "raised"],
+      ["raised", "sticky"],
+      ["sticky", "overlay"],
+      ["overlay", "drawer"],
+      ["drawer", "modal"],
+      ["modal", "toast"],
+      ["toast", "tooltip"],
+    ];
+    for (const [below, above] of pairs) {
+      expect(
+        zTokenValue(below),
+        `${below} should sit below ${above}`,
+      ).toBeLessThan(zTokenValue(above));
+    }
   });
 
-  it("keeps page chrome below overlays and tooltips above modals", () => {
-    expect(zTokenValue("base")).toBeLessThan(zTokenValue("sticky"));
-    expect(zTokenValue("sticky")).toBeLessThan(zTokenValue("fixed"));
-    expect(zTokenValue("fixed")).toBeLessThan(zTokenValue("dropdown"));
-    expect(zTokenValue("modal-backdrop")).toBeLessThan(zTokenValue("modal"));
-    expect(zTokenValue("modal")).toBeLessThan(zTokenValue("tooltip"));
-    expect(zTokenValue("tooltip")).toBeLessThan(zTokenValue("toast"));
-  });
-
-  it("exposes every layer as a Tailwind utility backed by its token", () => {
+  it("exposes every consumed layer as a Tailwind utility backed by its token", () => {
     const zIndex =
       (
         preset as {
@@ -77,22 +74,9 @@ describe("z-index scale", () => {
         }
       ).theme?.extend?.zIndex ?? {};
 
-    const layers = [
-      "base",
-      "sticky",
-      "fixed",
-      "dropdown",
-      "popover",
-      "drawer",
-      "modal-backdrop",
-      "modal",
-      "tooltip",
-      "toast",
-    ];
+    const layers = ["sticky", "overlay", "drawer", "modal", "toast", "tooltip"];
     for (const layer of layers) {
-      expect(zIndex[layer], `preset zIndex.${layer}`).toBe(
-        `var(--ps-z-${layer})`,
-      );
+      expect(zIndex[layer], `preset zIndex.${layer}`).toBe(`var(--z-${layer})`);
     }
   });
 
@@ -112,11 +96,13 @@ describe("z-index scale", () => {
 });
 
 describe("focus ring", () => {
-  it("defines --ps-focus-ring exactly once and applies it globally", () => {
-    const first = tokensCss.indexOf("--ps-focus-ring:");
-    expect(first).toBeGreaterThan(-1);
-    expect(tokensCss.indexOf("--ps-focus-ring:", first + 1)).toBe(-1);
-    expect(baseCss).toContain("outline: 2px solid var(--ps-focus-ring)");
+  it("drives the single global focus treatment from the ring tokens", () => {
+    expect(tokensCss).toContain("--focus-ring-width:");
+    expect(tokensCss).toContain("--focus-ring-color:");
+    expect(tokensCss).toContain("--ring:");
+    expect(baseCss).toContain(
+      "outline: var(--focus-ring-width) solid var(--ring)",
+    );
   });
 
   it("client sources roll no bespoke focus rings", () => {

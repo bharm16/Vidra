@@ -11,7 +11,7 @@ interface LibraryFilterChipProps {
 /**
  * Library filter pill — the All / Sessions / Kept clips selector from the
  * design handoff. Active reads as a solid light fill on dark text; idle is a
- * transparent pill with a hairline border. Space Grotesk, full pill radius.
+ * transparent pill with a hairline border. System sans, full pill radius.
  */
 export function LibraryFilterChip({
   active,

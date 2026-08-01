@@ -78,7 +78,7 @@ describe("CanvasSettingsRow aspect/duration menus (system DropdownMenu)", () => 
     await user.click(screen.getByRole("button", { name: "16:9" }));
 
     const menu = await screen.findByRole("menu");
-    expect(menu.className).toContain("z-dropdown");
+    expect(menu.className).toContain("z-overlay");
     expect(menu.className).toContain("bg-popover");
     expect(
       screen.getByRole("menuitemradio", { name: "9:16" }),

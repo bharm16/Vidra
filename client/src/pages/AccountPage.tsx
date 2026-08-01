@@ -311,7 +311,7 @@ export function AccountPage(): React.ReactElement {
 
   if (!user) {
     return (
-      <div className="text-foreground relative isolate flex min-h-[calc(100vh-var(--global-top-nav-height))] w-full items-center justify-center overflow-hidden font-sans [background:var(--ps-bg)]">
+      <div className="text-foreground relative isolate flex min-h-[calc(100vh-var(--global-top-nav-height))] w-full items-center justify-center overflow-hidden font-sans [background:var(--background)]">
         <AmbientLight />
         <Grain />
         <main className="relative mx-auto flex w-full max-w-sm flex-col gap-4 px-6">
@@ -348,7 +348,7 @@ export function AccountPage(): React.ReactElement {
   return (
     <div className="flex h-screen overflow-hidden">
       <NavRail active="account" />
-      <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 overflow-hidden font-sans [background:var(--ps-bg)]">
+      <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 overflow-hidden font-sans [background:var(--background)]">
         <AmbientLight />
         <Grain />
 

@@ -11,7 +11,7 @@ describe("Grid", () => {
 
       const grid = getGrid(container);
       expect(grid).not.toBeNull();
-      expect(grid).toHaveStyle({ gap: "var(--ps-space-2)" });
+      expect(grid).toHaveStyle({ gap: "var(--space-2)" });
       expect(grid).not.toHaveClass("gap-ps-2");
     });
 
@@ -20,7 +20,7 @@ describe("Grid", () => {
 
       const grid = getGrid(container);
       expect(grid).not.toBeNull();
-      expect(grid).toHaveStyle({ columnGap: "var(--ps-space-card)" });
+      expect(grid).toHaveStyle({ columnGap: "var(--space-4)" });
     });
   });
 

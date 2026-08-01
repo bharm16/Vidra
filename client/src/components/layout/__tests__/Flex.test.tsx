@@ -11,7 +11,7 @@ describe("Flex", () => {
 
       const flex = getFlex(container);
       expect(flex).not.toBeNull();
-      expect(flex).toHaveStyle({ gap: "var(--ps-space-4)" });
+      expect(flex).toHaveStyle({ gap: "var(--space-3)" });
       expect(flex).not.toHaveClass("gap-ps-4");
     });
 

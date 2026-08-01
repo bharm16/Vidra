@@ -45,14 +45,14 @@ export function DetectedAssets({
             key={trigger}
             type="button"
             onClick={() => onCreateFromTrigger?.(trigger)}
-            className="motion-pulse-once rounded border border-[color:var(--ps-badge-warning-border)] bg-[color:var(--ps-badge-warning-bg)] px-2 py-1 text-xs font-semibold text-[color:var(--ps-badge-warning-text)]"
+            className="motion-pulse-once rounded border border-[color:var(--badge-warning-border)] bg-[color:var(--badge-warning-bg)] px-2 py-1 text-xs font-semibold text-[color:var(--badge-warning-text)]"
           >
             @{trigger} (create?)
           </button>
         ))}
 
         {hasCharacter && (
-          <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--ps-badge-success-text)]">
+          <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--badge-success-text)]">
             <Check className="h-3 w-3" />
             Character consistency enabled
           </span>

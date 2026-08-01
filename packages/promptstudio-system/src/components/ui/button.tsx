@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@promptstudio/system/lib/utils";
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-ps-2 whitespace-nowrap rounded-sm text-button-14 font-medium ps-edge-lit transition-colors disabled:pointer-events-none disabled:opacity-50 ps-press [&_svg]:pointer-events-none [&_svg]:size-icon-sm [&_svg]:shrink-0",
+  "relative inline-flex items-center justify-center gap-ps-2 whitespace-nowrap rounded-sm text-button-14 font-medium ps-edge-lit transition-colors disabled:pointer-events-none disabled:opacity-50 ps-press [&_svg]:pointer-events-none [&_svg]:size-icon-md [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -34,9 +34,9 @@ const buttonVariants = cva(
         lg: "h-ps-9 px-ps-6 text-button-16",
         xl: "h-ps-10 px-ps-7 text-button-16",
         icon: "h-ps-8 w-ps-8 px-0",
-        "icon-xs": "h-ps-8 w-ps-8 px-0 [&_svg]:size-icon-xs",
+        "icon-xs": "h-ps-8 w-ps-8 px-0 [&_svg]:size-icon-sm",
         "icon-sm": "h-ps-8 w-ps-8 px-0",
-        "icon-lg": "h-ps-8 w-ps-8 px-0 [&_svg]:size-icon-md",
+        "icon-lg": "h-ps-8 w-ps-8 px-0 [&_svg]:size-icon-lg",
       },
     },
     defaultVariants: {

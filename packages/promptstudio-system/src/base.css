@@ -9,23 +9,48 @@
   }
 
   body {
-    font-family: var(--ps-font-sans);
-    font-size: var(--ps-fs-14);
-    line-height: var(--ps-lh-normal);
-    color: var(--ps-text);
-    background: var(--ps-bg);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body-lh);
   }
 
+  /* Tailwind preflight (unlayered) resets h1 size/weight, so the display
+     triple lives in the text-display-* utilities; base only contributes
+     what preflight leaves alone. */
+  h1 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    max-width: var(--container-prose);
+    text-wrap: pretty;
+  }
+
+  button,
+  [role="button"] {
+    font-size: var(--text-ui);
+    font-weight: var(--weight-ui);
+    transition: var(--transition-colors);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* The prompt editor's reading surface — body size on a fixed 32px
+     grid so highlight pills never reflow line height. */
   [contenteditable="true"] {
-    font-size: var(--ps-editor-font-size) !important;
-    line-height: var(--ps-editor-line-height) !important;
-    letter-spacing: var(--ps-editor-letter-spacing) !important;
-    padding: var(--ps-editor-padding-y) var(--ps-editor-padding-x) !important;
+    font-size: var(--editor-font-size, var(--text-body)) !important;
+    line-height: var(--editor-line-height, 2rem) !important;
+    letter-spacing: var(--editor-letter-spacing, 0.01em) !important;
+    padding: var(--editor-padding-y, var(--space-5))
+      var(--editor-padding-x, var(--space-7)) !important;
   }
 
-  *:focus-visible {
-    outline: 2px solid var(--ps-focus-ring);
-    outline-offset: 2px;
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: var(--focus-ring-offset);
   }
 
   *:focus:not(:focus-visible) {
@@ -39,6 +64,7 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
   }
 }

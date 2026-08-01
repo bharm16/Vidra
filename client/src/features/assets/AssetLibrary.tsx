@@ -236,7 +236,7 @@ export function AssetLibrary({
       </div>
 
       {error && (
-        <div className="motion-shake-x border-border border-b bg-[color:var(--ps-badge-danger-bg)] px-4 py-2">
+        <div className="motion-shake-x border-border border-b bg-[color:var(--badge-danger-bg)] px-4 py-2">
           <p className="text-danger text-sm">{error}</p>
         </div>
       )}

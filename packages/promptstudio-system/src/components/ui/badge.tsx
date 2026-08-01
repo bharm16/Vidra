@@ -8,7 +8,7 @@ import { cn } from "@promptstudio/system/lib/utils";
  *
  * `neutral` is the monochrome default for chrome-level labels; `success`,
  * `warning`, and `danger` tint from the dark-UI status tokens
- * (--ps-badge-* in tokens.css). Pass sentence-case children — uppercase
+ * (--badge-* in tokens.css). Pass sentence-case children — uppercase
  * micro-labels belong to the overline type token (`text-overline` /
  * `.ps-overline`), never to badges.
  *
@@ -27,11 +27,11 @@ const badgeVariants = cva(
         outline: "bg-transparent text-foreground",
         neutral: "bg-transparent text-muted",
         success:
-          "border-[color:var(--ps-badge-success-border)] bg-[color:var(--ps-badge-success-bg)] text-[color:var(--ps-badge-success-text)]",
+          "border-[color:var(--badge-success-border)] bg-[color:var(--badge-success-bg)] text-[color:var(--badge-success-text)]",
         warning:
-          "border-[color:var(--ps-badge-warning-border)] bg-[color:var(--ps-badge-warning-bg)] text-[color:var(--ps-badge-warning-text)]",
+          "border-[color:var(--badge-warning-border)] bg-[color:var(--badge-warning-bg)] text-[color:var(--badge-warning-text)]",
         danger:
-          "border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] text-[color:var(--ps-badge-danger-text)]",
+          "border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] text-[color:var(--badge-danger-text)]",
       },
       size: {
         xs: "gap-ps-1 px-ps-1 py-0.5 text-[10px]",

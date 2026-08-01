@@ -65,7 +65,7 @@ export function AuthModalCard({
   dismissTo = "/",
 }: AuthModalCardProps): React.ReactElement {
   return (
-    <div className="text-foreground relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[color:var(--ps-bg)] px-4 py-12">
+    <div className="text-foreground relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[color:var(--background)] px-4 py-12">
       {/* Atmosphere backdrop (ADR-0014): ambient light + grain sit behind the
           content (negative z, inside this isolated root); the vignette frames
           over them but below the modal. */}

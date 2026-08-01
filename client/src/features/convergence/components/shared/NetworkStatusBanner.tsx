@@ -87,7 +87,7 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
     return (
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 z-fixed",
+          "fixed top-0 left-0 right-0 z-sticky",
           "bg-warning/95 backdrop-blur-sm",
           "border-b border-warning/20",
           "px-4 py-3",
@@ -122,7 +122,7 @@ export const NetworkStatusBanner: React.FC<NetworkStatusBannerProps> = ({
     return (
       <div
         className={cn(
-          "fixed top-0 left-0 right-0 z-fixed",
+          "fixed top-0 left-0 right-0 z-sticky",
           "bg-success/95 backdrop-blur-sm",
           "border-b border-success/20",
           "px-4 py-3",

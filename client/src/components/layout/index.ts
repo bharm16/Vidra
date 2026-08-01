@@ -6,7 +6,7 @@
  * maintainable and easy to reason about.
  *
  * System spacing tokens:
- * - ps-0..ps-11 (mapped to CSS vars: --ps-space-0..--ps-space-11)
+ * - ps-0..ps-11 (mapped onto the --space-* scale)
  *
  * Components:
  * - Box: Most fundamental layout component with system spacing support

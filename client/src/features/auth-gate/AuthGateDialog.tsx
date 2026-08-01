@@ -204,7 +204,7 @@ export function AuthGateDialog(): React.ReactElement {
           {error ? (
             <div
               role="alert"
-              className="text-danger rounded-lg border border-[color:var(--ps-badge-danger-border)] bg-[color:var(--ps-badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
+              className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-[13px]"
             >
               {error}
             </div>

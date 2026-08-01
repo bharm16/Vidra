@@ -18,7 +18,7 @@ export interface GrainProps {
  * Full-bleed filmic-grain overlay — a signature layer of the design handoff.
  *
  * A fixed feTurbulence noise tile blended over the stage. Opacity is driven by
- * the global `--ps-grain` knob, so a theme can dial intensity without touching
+ * the global `--grain` knob, so a theme can dial intensity without touching
  * this component; the `enabled` prop gates presence entirely.
  *
  * Absolutely positioned: fills the nearest positioned ancestor, so the screen

@@ -78,7 +78,7 @@ export function AccountSettingsNav({
         variant="ghost"
         onClick={onSignOut}
         loading={isSigningOut}
-        className="text-danger hover:text-danger !h-auto w-full justify-start gap-[9px] rounded-[9px] px-[10px] py-2 text-[12.5px] font-medium hover:bg-[color:var(--ps-badge-danger-bg)]"
+        className="text-danger hover:text-danger !h-auto w-full justify-start gap-[9px] rounded-[9px] px-[10px] py-2 text-[12.5px] font-medium hover:bg-[color:var(--badge-danger-bg)]"
       >
         <LogOut className="h-[15px] w-[15px]" />
         Sign out

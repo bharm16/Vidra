@@ -1,6 +1,6 @@
 /*
  * Studio chrome — same monochrome language as the live editor
- * (dark stage, Space Grotesk, 16px radii, hairline white borders).
+ * (dark stage, system sans, 16px radii, hairline white borders).
  * Layout follows the plan's "Layout and control placement" section:
  * top bar, fixed-width left chat panel (three bands), fluid right plane.
  */
@@ -12,7 +12,7 @@
   min-width: 0;
   background: #0b0c0f;
   color: #f2f3f6;
-  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* ── Top bar: three zones (left label / centered title / reserved right) ── */

@@ -23,7 +23,7 @@ export function PromptCanvasMobileGenerations({
 }: PromptCanvasMobileGenerationsProps): React.ReactElement {
   return (
     <>
-      <div className="border-border bg-surface-2 p-ps-3 z-fixed fixed bottom-0 left-0 right-0 border-t lg:hidden">
+      <div className="border-border bg-surface-2 p-ps-3 z-sticky fixed bottom-0 left-0 right-0 border-t lg:hidden">
         <div className="flex items-center gap-3">
           <CanvasButton
             type="button"
