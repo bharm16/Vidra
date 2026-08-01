@@ -236,11 +236,15 @@ export function CanvasViewport({
         {children}
       </div>
 
-      <div className="border-tool-rail-border bg-tool-surface-card absolute bottom-4 right-4 z-20 flex items-center gap-1 rounded-lg border px-1 py-0.5">
+      {/* A floating panel is the same material as the chrome it belongs to,
+          just smaller: one surface step above the canvas, 10px radius, 4px
+          padding, and children on the one control size. */}
+      <div className="bg-surface-2 absolute bottom-3 right-3 z-20 flex items-center gap-0.5 rounded-md p-1">
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
+          size="icon"
+          className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
           aria-label="Zoom out"
           onClick={() => zoomStep(-1)}
         >
@@ -248,14 +252,15 @@ export function CanvasViewport({
         </Button>
         <span
           data-testid="space-zoom-level"
-          className="text-tool-text-subdued min-w-[3.5ch] text-center text-meta tabular-nums"
+          className="text-tool-text-subdued text-meta min-w-[44px] text-center tabular-nums"
         >
           {Math.round(camera.scale * 100)}%
         </span>
         <Button
           type="button"
           variant="ghost"
-          size="icon-xs"
+          size="icon"
+          className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
           aria-label="Zoom in"
           onClick={() => zoomStep(1)}
         >

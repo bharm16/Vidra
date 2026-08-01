@@ -32,8 +32,12 @@ describe("NavRail — Live editor entry (ADR-0017)", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: /Live editor/ }).className,
-    ).toContain("text-foreground");
+    // The active treatment is CSS keyed off aria-current (.ps-btn[aria-current]
+    // in the shared control base), so the contract to assert is the semantic
+    // marker, not a utility class that happens to carry the colour today.
+    expect(screen.getByRole("link", { name: /Live editor/ })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

@@ -634,7 +634,7 @@ export function CanvasWorkspace({
           key={chip}
           type="button"
           onClick={() => onComposerFill?.(chip)}
-          className="text-tool-text-dim hover:text-foreground bg-fill hover:bg-active h-control-md text-ui rounded-full px-3 transition-colors"
+          className="ps-btn ps-btn--md ps-btn--pill"
         >
           {chip}
         </button>

@@ -50,15 +50,12 @@ function RailItem({
       title={collapsed ? label : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        // One control recipe: 36 tall, 8 padding, 8 gap, 14px label. The size
-        // sits on the row, not only the label span, so nothing in the rail
-        // computes to the inherited 16px — including elements that paint no
-        // text of their own.
-        "h-control-lg text-ui flex w-full items-center gap-2 rounded-md p-2 transition-colors",
-        collapsed && "justify-center",
-        active
-          ? "text-foreground bg-active"
-          : "text-tool-text-muted hover:text-foreground hover:bg-hover",
+        // The shared control base owns height, type, gap, fill and states —
+        // including the selected treatment, which keys off aria-current.
+        "ps-btn ps-btn--md ps-btn--rect ps-btn--quiet",
+        // Expanded, the row is full-width and left-aligned; collapsed, the
+        // base's centring is what we want.
+        !collapsed && "ps-btn--row",
       )}
     >
       <span
@@ -69,9 +66,7 @@ function RailItem({
       >
         {icon}
       </span>
-      {collapsed ? null : (
-        <span className="text-ui whitespace-nowrap font-medium">{label}</span>
-      )}
+      {collapsed ? null : <span className="whitespace-nowrap">{label}</span>}
     </Link>
   );
 }
@@ -102,25 +97,25 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         <Link
           to="/"
           title="New session"
-          className="hover:bg-hover flex items-center gap-2 rounded-md p-2 transition-colors"
+          className="hover:bg-hover flex h-10 items-center gap-2 rounded-md p-2 transition-colors"
         >
-          <VidraMark className="h-[30px] w-[30px] rounded-md" />
+          <VidraMark className="h-6 w-6 flex-none rounded-sm" />
           {collapsed ? null : (
-            <span className="text-foreground text-body-lg whitespace-nowrap font-semibold tracking-[-0.01em]">
+            <span className="text-foreground text-ui whitespace-nowrap font-medium tracking-[-0.01em]">
               Vidra
             </span>
           )}
         </Link>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          type="button"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed((c) => !c)}
-          className="text-tool-text-muted hover:text-foreground hover:bg-hover h-control-lg w-control-lg rounded-md"
+          className="ps-btn ps-btn--icon ps-btn--rect ps-btn--quiet"
         >
-          <PanelLeft size={16} strokeWidth={1.8} />
+          <PanelLeft strokeWidth={1.8} />
         </Button>
       </div>
 
@@ -132,28 +127,28 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           collapsed={collapsed}
           accent
           active={active === "new"}
-          icon={<Plus size={16} strokeWidth={1.9} />}
+          icon={<Plus strokeWidth={1.9} />}
         />
         <RailItem
           to="/history"
           label="Library"
           collapsed={collapsed}
           active={active === "library"}
-          icon={<LibraryIcon size={16} strokeWidth={1.8} />}
+          icon={<LibraryIcon strokeWidth={1.8} />}
         />
         <RailItem
           to="/live-editor"
           label="Live editor"
           collapsed={collapsed}
           active={active === "live-editor"}
-          icon={<Paintbrush size={16} strokeWidth={1.8} />}
+          icon={<Paintbrush strokeWidth={1.8} />}
         />
         <RailItem
           to="/studio"
           label="Studio"
           collapsed={collapsed}
           active={active === "studio"}
-          icon={<Sparkles size={16} strokeWidth={1.8} />}
+          icon={<Sparkles strokeWidth={1.8} />}
         />
       </div>
 
@@ -164,34 +159,25 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         to="/docs"
         label="Docs & help"
         collapsed={collapsed}
-        icon={<CircleHelp size={16} strokeWidth={1.8} />}
+        icon={<CircleHelp strokeWidth={1.8} />}
       />
       <Link
         to={user ? "/account" : "/signin"}
         title="Account"
         className={cn(
-          "hover:bg-hover mt-1.5 flex items-center gap-2 rounded-md p-2 transition-colors",
+          "hover:bg-hover mt-1.5 flex h-10 items-center gap-2 rounded-md p-2 transition-colors",
           active === "account" && "bg-active",
         )}
       >
-        <span className="border-border bg-muted text-muted-foreground text-ui flex h-8 w-8 flex-none items-center justify-center rounded-full border font-semibold uppercase">
+        <span className="border-border bg-muted text-muted-foreground text-meta flex h-6 w-6 flex-none items-center justify-center rounded-full border uppercase">
           {accountName.charAt(0)}
         </span>
-        {collapsed ? null : user ? (
-          <span className="flex min-w-0 flex-col items-start whitespace-nowrap">
-            <span className="text-foreground text-ui font-semibold">
-              {accountName}
-            </span>
-            {/* Mono is the metadata face — right for an address. */}
-            <span className="text-tool-text-muted text-meta mt-px font-mono">
-              {user.email}
-            </span>
-          </span>
-        ) : (
-          // Signed out there is no account to name: "Guest" over "Sign in" said
-          // the same thing twice, in two faces, in one row.
-          <span className="text-foreground text-ui whitespace-nowrap font-semibold">
-            Sign in
+        {collapsed ? null : (
+          // One quiet line. This was the largest and one of only two 400-weight
+          // labels in the rail, for the least important action; signed out it
+          // additionally said "Guest" over "Sign in" — the same thing twice.
+          <span className="text-tool-text-muted text-meta min-w-0 truncate">
+            {user ? accountName : "Sign in"}
           </span>
         )}
       </Link>

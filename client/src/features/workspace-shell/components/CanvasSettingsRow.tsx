@@ -83,15 +83,13 @@ const PREVIEW_CLICK_COOLDOWN_MS = 2000;
 // Ghost-text chip trigger for the aspect/duration menus — matches the
 // retired MiniDropdown's quiet trigger, while the menu itself is the system
 // DropdownMenu (opaque popover surface on the named z-index scale).
-const MENU_TRIGGER_CLASS =
-  "inline-flex h-control-lg items-center gap-2 whitespace-nowrap rounded-md px-3 text-ui text-tool-text-muted transition-colors hover:text-foreground data-[state=open]:text-foreground";
+const MENU_TRIGGER_CLASS = "ps-btn ps-btn--md ps-btn--rect ps-btn--quiet";
 
 // Docked variant (the composer handoff): icon-only 42px control buttons —
 // aspect · duration · model · preview — styled as a compact canvas toolbar.
 // The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
 // setting is announced; the title names the control.
-const ICON_TRIGGER_CLASS =
-  "inline-flex h-control-lg w-control-lg items-center justify-center rounded-md text-tool-text-dim transition-colors hover:bg-hover hover:text-foreground data-[state=open]:bg-active data-[state=open]:text-foreground";
+const ICON_TRIGGER_CLASS = "ps-btn ps-btn--icon ps-btn--rect ps-btn--quiet";
 
 /* Control glyphs copied VERBATIM from the composer handoff
    (design_handoff_composer/Composer States.dc.html) — 21px, 1.7 stroke,
@@ -190,7 +188,7 @@ function MakeItArrowGlyph(): React.ReactElement {
 // Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
 // pills inside the glass sheet, matching the handoff's two inline chips.
 const SHEET_MENU_TRIGGER_CLASS =
-  "inline-flex h-control-lg items-center gap-2 whitespace-nowrap rounded-full bg-fill px-3 py-2 font-mono text-ui text-tool-text-dim transition-colors hover:bg-active hover:text-foreground data-[state=open]:text-foreground";
+  "ps-btn ps-btn--md ps-btn--pill font-mono text-ui-mono";
 
 export function CanvasSettingsRow({
   prompt,
@@ -455,7 +453,7 @@ export function CanvasSettingsRow({
               <>
                 {aspectRatio}
                 <CaretDown
-                  size={12}
+                  size={16}
                   aria-hidden="true"
                   className="opacity-50"
                 />
@@ -490,7 +488,7 @@ export function CanvasSettingsRow({
               <>
                 {formatDurationLabel(duration)}
                 <CaretDown
-                  size={12}
+                  size={16}
                   aria-hidden="true"
                   className="opacity-50"
                 />
@@ -614,32 +612,16 @@ export function CanvasSettingsRow({
           }
           className={cn(
             isSheet
-              ? cn(
-                  // 46px circular submit — the handoff's ghost → white → accent
-                  // states, scaling in as it fires.
-                  "flex h-control-lg w-control-lg flex-none items-center justify-center rounded-full border-hairline transition-[background-color,border-color,color] duration-300 disabled:cursor-not-allowed",
-                  isGenerationBusy
-                    ? "scale-90 border-[color:var(--accent)] bg-[color:var(--accent)] text-white shadow-[0_0_24px_rgba(91,108,255,0.45)]"
-                    : generateDisabled
-                      ? "text-tool-text-label border-white/[0.12] bg-white/[0.06]"
-                      : "text-tool-surface-deep border-white bg-white shadow-[0_6px_22px_-6px_rgba(255,255,255,0.3)]",
-                )
-              : cn(
-                  // The handoff's calm primary: off-white solid, no accent
-                  // glow, a trailing arrow. Same button in box and pill.
-                  "inline-flex h-control-lg items-center gap-2 rounded-md px-3 text-ui font-semibold",
-                  "bg-foreground text-tool-surface-deep shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
-                  "transition-[transform,background-color,opacity] hover:bg-white",
-                  "disabled:cursor-not-allowed disabled:opacity-60",
-                ),
+              ? "ps-btn ps-btn--icon ps-btn--pill ps-btn--primary"
+              : "ps-btn ps-btn--md ps-btn--rect ps-btn--primary",
           )}
         >
           {isSheet ? (
             isGenerationBusy ? (
               <svg
                 className="animate-spin"
-                width={19}
-                height={19}
+                width={16}
+                height={16}
                 viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden="true"
@@ -656,8 +638,8 @@ export function CanvasSettingsRow({
               </svg>
             ) : (
               <svg
-                width={19}
-                height={19}
+                width={16}
+                height={16}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
