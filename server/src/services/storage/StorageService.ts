@@ -1,5 +1,6 @@
 import { Storage } from "@google-cloud/storage";
 import { SignedUrlService } from "./services/SignedUrlService";
+import type { SignedUrlLedger } from "./services/SignedUrlLedger";
 import { UploadService } from "./services/UploadService";
 import { RetentionService } from "./services/RetentionService";
 import { safeUrlHost } from "@shared/utils/url";
@@ -54,6 +55,7 @@ export class StorageService {
       signedUrlService?: SignedUrlService;
       uploadService?: UploadService;
       retentionService?: RetentionService;
+      signedUrlLedger?: SignedUrlLedger | null;
     } = {},
   ) {
     if (!dependencies.storage) {
@@ -64,7 +66,11 @@ export class StorageService {
     this.bucket = this.storage.bucket(bucketName);
     this.signedUrlService =
       dependencies.signedUrlService ||
-      new SignedUrlService(this.storage, bucketName);
+      new SignedUrlService(
+        this.storage,
+        bucketName,
+        dependencies.signedUrlLedger ?? null,
+      );
     this.uploadService =
       dependencies.uploadService || new UploadService(this.storage, bucketName);
     this.retentionService =

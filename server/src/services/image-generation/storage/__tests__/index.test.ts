@@ -27,11 +27,13 @@ describe("createImageAssetStore", () => {
       basePath: "image-previews",
       signedUrlTtlMs: 3_600_000,
       cacheControl: "public, max-age=86400",
+      ledger: null,
     });
   });
 
   it("respects explicit overrides", async () => {
     const bucket = { file: vi.fn() } as never;
+    const ledger = { record: vi.fn() };
     const { createImageAssetStore } = await import("../index");
 
     createImageAssetStore({
@@ -39,6 +41,7 @@ describe("createImageAssetStore", () => {
       basePath: "custom-path",
       signedUrlTtlMs: 120_000,
       cacheControl: "public, max-age=120",
+      ledger,
     });
 
     expect(gcsCtor).toHaveBeenCalledWith({
@@ -46,6 +49,7 @@ describe("createImageAssetStore", () => {
       basePath: "custom-path",
       signedUrlTtlMs: 120_000,
       cacheControl: "public, max-age=120",
+      ledger,
     });
   });
 });

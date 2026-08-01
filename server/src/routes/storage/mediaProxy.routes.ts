@@ -15,6 +15,7 @@ import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import type { Bucket } from "@google-cloud/storage";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { logger } from "@infrastructure/Logger";
+import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 
 const log = logger.child({ module: "mediaProxy" });
 
@@ -75,9 +76,9 @@ const extractObjectPath = (url: URL, bucketName: string): string | null => {
 
 /**
  * Stream an object directly from the bucket reference. Used as a fallback
- * when the upstream signed-URL fetch returns 400 (signature expired) — the
- * server has its own GCS credentials and can read the file via the bucket
- * regardless of any expired client-side signed URL.
+ * when the upstream signed-URL fetch fails but the presented URL verified as
+ * an authentic grant — the server has its own GCS credentials and can read
+ * the file via the bucket regardless of the grant's expiry.
  */
 async function streamFromBucket(
   bucket: Bucket,
@@ -139,6 +140,7 @@ async function streamFromBucket(
 export function createMediaProxyRoutes(
   bucketName: string,
   bucket?: Bucket,
+  signedUrlLedger?: SignedUrlLedger,
 ): Router {
   const router = express.Router();
 
@@ -197,11 +199,37 @@ export function createMediaProxyRoutes(
           objectPath,
         });
 
-        // C3 fix: signed URLs expire after 1 hour. When upstream returns 400
-        // (e.g., expired X-Goog-Signature), fall back to streaming directly
-        // from the bucket reference using the server's own GCS credentials.
-        // This rescues users who reload the app with cached signed URLs.
-        if (upstream.status === 400 && bucket) {
+        // C3 fix, hardened: signed URLs expire after 1 hour (and rotate with
+        // the signing key). When the upstream fetch fails for ANY reason,
+        // fall back to streaming directly from the bucket — but only after
+        // proving the presented URL is a grant we actually minted (the
+        // signed-URL ledger records every mint, keyed to its object path).
+        // The proxy is mounted pre-auth ("the signed URL is the
+        // authorization"), so without this proof the rescue would be an
+        // unauthenticated read of arbitrary bucket objects behind a forged
+        // signature.
+        if (bucket) {
+          const presentedSignature =
+            parsedUrl.searchParams.get("X-Goog-Signature");
+          const authentic =
+            presentedSignature && signedUrlLedger
+              ? await signedUrlLedger.isMintedGrant(
+                  objectPath,
+                  presentedSignature,
+                )
+              : false;
+          if (!authentic) {
+            log.warn("Bucket rescue refused: signed URL not verifiable", {
+              metric: "media_proxy.rescue_refused_unverified",
+              objectPath,
+              upstreamStatus: upstream.status,
+            });
+            return res.status(upstream.status).json({
+              success: false,
+              error: "UPSTREAM_ERROR",
+              message: `Upstream returned ${upstream.status}`,
+            });
+          }
           const isHead = req.method === "HEAD";
           const recovered = await streamFromBucket(
             bucket,

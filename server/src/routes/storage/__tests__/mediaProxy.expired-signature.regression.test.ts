@@ -11,15 +11,17 @@
  * reference (which uses the server's own GCS credentials and never
  * expires). When upstream returns 400, we fall back to the bucket stream.
  *
- * Invariant: For any valid in-bucket object URL whose signed URL fetch
- * returns 400, the proxy responds 200 with the object bytes by streaming
- * from the bucket reference instead.
+ * Invariant: For any in-bucket object URL that is a grant we minted (on the
+ * signed-URL ledger) and whose signed URL fetch fails upstream, the proxy
+ * responds 200 with the object bytes by streaming from the bucket reference
+ * instead.
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import request from "supertest";
 import express from "express";
 import { Readable } from "node:stream";
 import { createMediaProxyRoutes } from "../mediaProxy.routes";
+import { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 
 const BUCKET = "test-bucket";
 
@@ -55,8 +57,28 @@ function makeFakeBucket(payload: { body: Buffer; contentType: string }): {
   };
 }
 
-const expiredSignedUrl =
-  "https://storage.googleapis.com/test-bucket/users/u/preview-image/asset-1?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Date=20260420T000000Z&X-Goog-Expires=3600&X-Goog-Signature=expired";
+// The rescue contract now requires a grant we minted: the signed-URL ledger
+// records every mint and the proxy only streams for signatures on it (see
+// mediaProxy.rescue-authenticity.regression.test.ts). This test pre-records
+// the grant, modeling a genuine expired-but-authentic URL.
+const EXPIRED_SIGNATURE = "cc".repeat(64);
+const OBJECT_PATH = "users/u/preview-image/asset-1";
+
+const expiredSignedUrl = `https://storage.googleapis.com/test-bucket/${OBJECT_PATH}?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Date=20260420T000000Z&X-Goog-Expires=3600&X-Goog-Signature=${EXPIRED_SIGNATURE}`;
+
+const makeLedger = (): SignedUrlLedger => {
+  const store = new Map<string, unknown>();
+  const ledger = new SignedUrlLedger({
+    get: async <T>(key: string): Promise<T | null> =>
+      store.has(key) ? (store.get(key) as T) : null,
+    set: async (key: string, value: unknown) => {
+      store.set(key, value);
+      return true;
+    },
+  });
+  ledger.record(OBJECT_PATH, expiredSignedUrl);
+  return ledger;
+};
 
 describe("regression: media proxy falls back to bucket stream on expired signed URL", () => {
   it("recovers from upstream 400 by streaming via bucket.file", async () => {
@@ -71,6 +93,7 @@ describe("regression: media proxy falls back to bucket stream on expired signed 
       createMediaProxyRoutes(
         BUCKET,
         makeFakeBucket({ body: fakePng, contentType: "image/png" }) as never,
+        makeLedger(),
       ),
     );
 

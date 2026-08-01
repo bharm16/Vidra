@@ -1,20 +1,24 @@
 import { Storage, type GetSignedUrlConfig } from "@google-cloud/storage";
 import { STORAGE_CONFIG } from "../config/storageConfig";
 import { logger } from "@infrastructure/Logger";
+import type { SignedUrlLedger } from "./SignedUrlLedger";
 
 type SuccessLogLevel = "debug" | "info";
 
 export class SignedUrlService {
   private readonly storage: Storage;
   private readonly bucket;
+  private readonly ledger: SignedUrlLedger | null;
   private readonly log = logger.child({ service: "SignedUrlService" });
 
   constructor(
     storage: Storage,
     bucketName: string = STORAGE_CONFIG.bucketName,
+    ledger: SignedUrlLedger | null = null,
   ) {
     this.storage = storage;
     this.bucket = this.storage.bucket(bucketName);
+    this.ledger = ledger;
   }
 
   private async withTiming<T>(
@@ -105,6 +109,8 @@ export class SignedUrlService {
         expires: expiresAtMs,
         responseDisposition: disposition,
       });
+      // The media proxy's bucket rescue honors only grants on this ledger.
+      this.ledger?.record(path, url);
 
       return {
         viewUrl: url,
@@ -153,6 +159,7 @@ export class SignedUrlService {
           expires: expiresAtMs,
           responseDisposition: `attachment; filename="${downloadName}"`,
         });
+        this.ledger?.record(path, url);
 
         return {
           downloadUrl: url,

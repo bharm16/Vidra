@@ -2,6 +2,10 @@ import type { DIContainer } from "@infrastructure/DIContainer";
 import { Storage, type Bucket } from "@google-cloud/storage";
 import { resolveBucketName } from "@config/storageBucket";
 import { StorageService } from "@services/storage/StorageService";
+import {
+  SignedUrlLedger,
+  type SignedUrlLedgerCache,
+} from "@services/storage/services/SignedUrlLedger";
 import { createImageAssetStore } from "@services/image-generation/storage";
 import { createVideoContentAccessService } from "@services/video-generation/access/VideoContentAccessService";
 import {
@@ -25,37 +29,60 @@ export function registerStorageServices(container: DIContainer): void {
     ["gcsStorage", "gcsBucketName"],
   );
 
+  // Ledger of every signed URL we mint — the media proxy's bucket rescue
+  // honors only grants recorded here (see mediaProxy.routes.ts).
+  container.register(
+    "signedUrlLedger",
+    (cacheService: SignedUrlLedgerCache) => new SignedUrlLedger(cacheService),
+    ["cacheService"],
+  );
+
   container.register(
     "storageService",
-    (gcsStorage: Storage, gcsBucketName: string) =>
+    (
+      gcsStorage: Storage,
+      gcsBucketName: string,
+      signedUrlLedger: SignedUrlLedger,
+    ) =>
       new StorageService({
         storage: gcsStorage,
         bucketName: gcsBucketName,
+        signedUrlLedger,
       }),
-    ["gcsStorage", "gcsBucketName"],
+    ["gcsStorage", "gcsBucketName", "signedUrlLedger"],
   );
 
   container.register(
     "videoAssetStore",
-    (gcsBucket: Bucket, config: ServiceConfig) =>
+    (
+      gcsBucket: Bucket,
+      config: ServiceConfig,
+      signedUrlLedger: SignedUrlLedger,
+    ) =>
       createVideoAssetStore({
         bucket: gcsBucket,
         basePath: config.videoAssets.storage.basePath,
         signedUrlTtlMs: config.videoAssets.storage.signedUrlTtlMs,
         cacheControl: config.videoAssets.storage.cacheControl,
+        ledger: signedUrlLedger,
       }),
-    ["gcsBucket", "config"],
+    ["gcsBucket", "config", "signedUrlLedger"],
   );
   container.register(
     "imageAssetStore",
-    (gcsBucket: Bucket, config: ServiceConfig) =>
+    (
+      gcsBucket: Bucket,
+      config: ServiceConfig,
+      signedUrlLedger: SignedUrlLedger,
+    ) =>
       createImageAssetStore({
         bucket: gcsBucket,
         basePath: config.imageAssets.storage.basePath,
         signedUrlTtlMs: config.imageAssets.storage.signedUrlTtlMs,
         cacheControl: config.imageAssets.storage.cacheControl,
+        ledger: signedUrlLedger,
       }),
-    ["gcsBucket", "config"],
+    ["gcsBucket", "config", "signedUrlLedger"],
   );
   container.register(
     "convergenceStorageService",

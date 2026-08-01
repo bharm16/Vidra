@@ -5,6 +5,7 @@ const constructorArgs: Array<{
   basePath: string;
   signedUrlTtlMs: number;
   cacheControl: string;
+  ledger?: unknown;
 }> = [];
 
 vi.mock("../GcsVideoAssetStore", () => ({
@@ -39,16 +40,19 @@ describe("createVideoAssetStore", () => {
         basePath: "video-previews",
         signedUrlTtlMs: 3_600_000,
         cacheControl: "public, max-age=86400",
+        ledger: null,
       },
     ]);
   });
 
   it("respects explicit overrides", () => {
+    const ledger = { record: vi.fn() };
     createVideoAssetStore({
       bucket,
       basePath: "custom-videos",
       signedUrlTtlMs: 120_000,
       cacheControl: "private, max-age=30",
+      ledger,
     });
 
     expect(constructorArgs).toEqual([
@@ -57,6 +61,7 @@ describe("createVideoAssetStore", () => {
         basePath: "custom-videos",
         signedUrlTtlMs: 120_000,
         cacheControl: "private, max-age=30",
+        ledger,
       },
     ]);
   });

@@ -11,6 +11,7 @@ interface CreateVideoAssetStoreOptions {
   basePath?: string;
   signedUrlTtlMs?: number;
   cacheControl?: string;
+  ledger?: { record(objectPath: string, signedUrl: string): void } | null;
 }
 
 export function createVideoAssetStore(
@@ -21,6 +22,7 @@ export function createVideoAssetStore(
     basePath: options.basePath || DEFAULT_BASE_PATH,
     signedUrlTtlMs: options.signedUrlTtlMs ?? SIGNED_URL_TTL_MS.view,
     cacheControl: options.cacheControl || DEFAULT_CACHE_CONTROL,
+    ledger: options.ledger ?? null,
   });
 }
 

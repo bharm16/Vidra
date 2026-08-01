@@ -7,6 +7,7 @@
 
 import type { Application } from "express";
 import type { Bucket } from "@google-cloud/storage";
+import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createBatchMiddleware } from "@middleware/requestBatching";
@@ -77,10 +78,14 @@ export function registerApiRoutes(
   // bucket is unconditionally registered in storage.services.ts and
   // listed in REQUIRED_TOKENS — a missing registration must fail boot
   // (loud) rather than silently lose the expired-URL recovery path.
+  // The signed-URL ledger gates that rescue: only grants we actually
+  // minted may borrow the server's credentials on this pre-auth route.
   const gcsBucket = container.resolve<Bucket>("gcsBucket");
+  const signedUrlLedger = container.resolve<SignedUrlLedger>("signedUrlLedger");
   const mediaProxyRoutes = createMediaProxyRoutes(
     STORAGE_CONFIG.bucketName,
     gcsBucket,
+    signedUrlLedger,
   );
   app.use("/api/storage", mediaProxyRoutes);
 

@@ -8,11 +8,17 @@ import type {
   VideoAssetStream,
 } from "./types";
 
+/** Structural slice of the signed-URL ledger (kept import-free across domains). */
+interface SignedUrlRecorder {
+  record(objectPath: string, signedUrl: string): void;
+}
+
 interface GcsVideoAssetStoreOptions {
   bucket: Bucket;
   basePath: string;
   signedUrlTtlMs: number;
   cacheControl: string;
+  ledger?: SignedUrlRecorder | null;
 }
 
 function isGcsNotFound(error: unknown): boolean {
@@ -29,6 +35,7 @@ export class GcsVideoAssetStore implements VideoAssetStore {
   private readonly basePath: string;
   private readonly signedUrlTtlMs: number;
   private readonly cacheControl: string;
+  private readonly ledger: SignedUrlRecorder | null;
   private readonly log = logger.child({ service: "GcsVideoAssetStore" });
 
   constructor(options: GcsVideoAssetStoreOptions) {
@@ -36,6 +43,7 @@ export class GcsVideoAssetStore implements VideoAssetStore {
     this.basePath = options.basePath.replace(/^\/+|\/+$/g, "");
     this.signedUrlTtlMs = options.signedUrlTtlMs;
     this.cacheControl = options.cacheControl;
+    this.ledger = options.ledger ?? null;
   }
 
   async storeFromBuffer(
@@ -210,6 +218,8 @@ export class GcsVideoAssetStore implements VideoAssetStore {
       action: "read",
       expires: expiresAt,
     });
+    // The media proxy's bucket rescue honors only grants on the ledger.
+    this.ledger?.record(file.name, url);
     return url;
   }
 }

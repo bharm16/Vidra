@@ -10,11 +10,17 @@ import type { Bucket, File } from "@google-cloud/storage";
 import { logger } from "@infrastructure/Logger";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
 
+/** Structural slice of the signed-URL ledger (kept import-free across domains). */
+interface SignedUrlRecorder {
+  record(objectPath: string, signedUrl: string): void;
+}
+
 interface GcsImageAssetStoreOptions {
   bucket: Bucket;
   basePath: string;
   signedUrlTtlMs: number;
   cacheControl: string;
+  ledger?: SignedUrlRecorder | null;
 }
 
 export class GcsImageAssetStore implements ImageAssetStore {
@@ -22,6 +28,7 @@ export class GcsImageAssetStore implements ImageAssetStore {
   private readonly basePath: string;
   private readonly signedUrlTtlMs: number;
   private readonly cacheControl: string;
+  private readonly ledger: SignedUrlRecorder | null;
   private readonly log = logger.child({ service: "GcsImageAssetStore" });
 
   constructor(options: GcsImageAssetStoreOptions) {
@@ -29,6 +36,7 @@ export class GcsImageAssetStore implements ImageAssetStore {
     this.basePath = options.basePath.replace(/^\/+|\/+$/g, "");
     this.signedUrlTtlMs = options.signedUrlTtlMs;
     this.cacheControl = options.cacheControl;
+    this.ledger = options.ledger ?? null;
   }
 
   async storeFromUrl(
@@ -275,6 +283,8 @@ export class GcsImageAssetStore implements ImageAssetStore {
       action: "read",
       expires: expiresAt,
     });
+    // The media proxy's bucket rescue honors only grants on the ledger.
+    this.ledger?.record(file.name, url);
     return { url, expiresAt };
   }
 }
