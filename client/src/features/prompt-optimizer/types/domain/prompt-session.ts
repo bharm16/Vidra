@@ -22,6 +22,10 @@ export interface PromptKeyframe {
   assetId?: string;
   storagePath?: string;
   viewUrlExpiresAt?: string;
+  /** Lineage for generation-sourced frames (M5 2b): the source picture… */
+  generationId?: string;
+  /** …and the words that produced it. Survive the persistence round trip. */
+  sourcePrompt?: string;
 }
 
 export interface PromptVersionEdit {

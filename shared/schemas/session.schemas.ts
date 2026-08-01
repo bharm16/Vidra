@@ -28,6 +28,11 @@ export const SessionPromptKeyframeSchema = z.object({
   assetId: z.string().optional(),
   storagePath: z.string().optional(),
   viewUrlExpiresAt: z.string().optional(),
+  // A generation-sourced frame keeps its lineage across restore: the picture
+  // it came from (M5 2b — an animated clip names its source) and the words
+  // that produced it.
+  generationId: z.string().optional(),
+  sourcePrompt: z.string().optional(),
 });
 
 export const SessionPromptVersionEditSchema = z.object({

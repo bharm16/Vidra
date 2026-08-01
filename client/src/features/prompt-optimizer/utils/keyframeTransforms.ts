@@ -45,6 +45,8 @@ export const serializeKeyframes = (
     ...(frame.viewUrlExpiresAt
       ? { viewUrlExpiresAt: frame.viewUrlExpiresAt }
       : {}),
+    ...(frame.generationId ? { generationId: frame.generationId } : {}),
+    ...(frame.sourcePrompt ? { sourcePrompt: frame.sourcePrompt } : {}),
   }));
 };
 
@@ -66,6 +68,8 @@ export const hydrateKeyframes = (
       ...(frame.viewUrlExpiresAt
         ? { viewUrlExpiresAt: frame.viewUrlExpiresAt }
         : {}),
+      ...(frame.generationId ? { generationId: frame.generationId } : {}),
+      ...(frame.sourcePrompt ? { sourcePrompt: frame.sourcePrompt } : {}),
     }));
 };
 

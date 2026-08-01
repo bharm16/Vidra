@@ -62,6 +62,9 @@ const KeyframeTileSchema = z.object({
   sourcePrompt: z.string().optional(),
   storagePath: z.string().optional(),
   viewUrlExpiresAt: z.string().optional(),
+  // Lineage for generation-sourced frames — z.object strips unknown keys,
+  // so omitting this here silently severed a rehydrated frame's source.
+  generationId: z.string().optional(),
 });
 
 const KeyframesArraySchema = z.array(KeyframeTileSchema).max(3);
