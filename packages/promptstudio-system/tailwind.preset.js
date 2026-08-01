@@ -49,6 +49,11 @@ export default {
         "border-strong": "var(--border-strong)",
         input: "var(--input)",
         ring: "var(--ring)",
+        /* The one hover step and the one active step. Controls tint with
+           bg-hover / bg-active; nothing invents its own white alpha. */
+        fill: "var(--fill)",
+        hover: "var(--hover)",
+        active: "var(--active)",
         app: "var(--background)" /* bridge → background */,
         "surface-1": "var(--surface-1)",
         "surface-2": "var(--surface-2)",
@@ -119,6 +124,15 @@ export default {
         "ps-8": "var(--control-md)" /* bridge → control-md */,
       },
       width: {
+        /* Square controls need the same value on both axes. Without these,
+           w-control-* is not a class at all — Tailwind emits nothing, the
+           element gets no width, and a flex child collapses to its content
+           (a 36px icon button rendering 19px wide). */
+        "control-xs": "var(--control-xs)",
+        "control-sm": "var(--control-sm)",
+        "control-md": "var(--control-md)",
+        "control-lg": "var(--control-lg)",
+        "control-xl": "var(--control-xl)",
         "ps-7": "var(--control-md)" /* bridge → control-md */,
         "ps-8": "var(--control-md)" /* bridge → control-md */,
       },

@@ -186,6 +186,14 @@
     --faint-foreground: oklch(65% 0.004 250); /* below muted       */
     --ghost-foreground: oklch(72% 0.004 250); /* placeholder       */
     --border-strong: oklch(24% 0.004 250 / 0.18);
+
+    /* Interaction overlays — one resting fill, one hover step, one active
+     step. Every control tints with these; nothing invents its own alpha.
+     --fill is what replaces a control's border: a chip reads as a chip
+     because it is filled, not because it is outlined. */
+    --fill: oklch(24% 0.004 250 / 0.05);
+    --hover: oklch(24% 0.004 250 / 0.06);
+    --active: oklch(24% 0.004 250 / 0.08);
     --success: oklch(56% 0.14 160); /* render-state green */
     --warning: oklch(66% 0.13 80); /* render-state amber */
 
@@ -228,7 +236,9 @@
      ambient light-blob intensity (0 = dark, 1 = default, ~1.6 max);
      --grain is the filmic-grain overlay opacity (0 = off). */
     --glow: 1;
-    --grain: 0.45;
+    /* Grain is a texture layer over a surface whose job is to sit quietly
+       behind video. At 0.45 it added visible chroma noise to every page. */
+    --grain: 0.15;
   }
 
   /* ============ SEMANTIC COLOR — DARK ============
@@ -260,6 +270,9 @@
     --faint-foreground: oklch(60% 0 0);
     --ghost-foreground: oklch(48% 0 0);
     --border-strong: oklch(100% 0 0 / 0.16);
+    --fill: oklch(100% 0 0 / 0.05);
+    --hover: oklch(100% 0 0 / 0.06);
+    --active: oklch(100% 0 0 / 0.08);
     --success: oklch(76% 0.13 165);
     --warning: oklch(82% 0.12 85);
   }
