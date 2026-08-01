@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useRealtimeSketch } from "../useRealtimeSketch";
+import { DEFAULT_STRENGTH } from "../../config/constants";
 import type { SendSketchFrame, SketchFramePayload } from "../../api/falI2i";
 
 interface CapturedFrame {
@@ -43,7 +44,7 @@ describe("useRealtimeSketch", () => {
     expect(frames[0]?.payload).toEqual({
       prompt: expect.stringContaining("lamp"),
       image_url: "data:image/jpeg;base64,frame1",
-      strength: 0.625,
+      strength: DEFAULT_STRENGTH,
       num_inference_steps: 8,
       seed: 42,
     });

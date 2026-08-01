@@ -2,14 +2,15 @@ import React from "react";
 
 import { Button } from "@promptstudio/system/components/ui/button";
 
-import { effectiveSteps } from "../config/constants";
+import { effectiveSteps, snapStrength } from "../config/constants";
 import type { SketchSettings } from "../hooks/useRealtimeSketch";
 
 /**
  * Floating composer (design_handoff_live_editor): prompt row + labeled
  * chips. The mode chip's thumbnail is the latest generated frame, live.
- * Strength opens a popover slider snapped to the 1/steps grid; steps click
- * toggles 4 ⇄ 8 (re-snapping strength so it stays on the grid).
+ * Strength opens a popover slider snapped to the 1/steps grid — the only
+ * stops the model distinguishes. Step count is fixed (see DEFAULT_STEPS):
+ * the one alternative on offer had no working strength at all.
  */
 
 interface ComposerProps {
@@ -19,10 +20,6 @@ interface ComposerProps {
   modeThumbUrl: string | null;
   strengthPopoverOpen: boolean;
   onToggleStrengthPopover: () => void;
-}
-
-function snapStrength(strength: number, steps: number): number {
-  return Math.min(1, Math.max(0, Math.round(strength * steps) / steps));
 }
 
 export function Composer({
@@ -131,36 +128,6 @@ export function Composer({
             {String(Number(settings.strength.toFixed(3)))}
           </Button>
         </div>
-
-        <Button
-          type="button"
-          variant="ghost"
-          className="le-chip"
-          aria-label={`${settings.steps} steps`}
-          onClick={() =>
-            updateSettings({
-              steps: settings.steps === 8 ? 4 : 8,
-              strength: snapStrength(
-                settings.strength,
-                settings.steps === 8 ? 4 : 8,
-              ),
-            })
-          }
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M13 3 5 13h6l-1 8 8-10h-6z" />
-          </svg>
-          {settings.steps} steps
-        </Button>
 
         <Button
           type="button"

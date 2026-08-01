@@ -20,19 +20,6 @@ function renderComposer(
 }
 
 describe("Composer", () => {
-  it("the steps chip toggles 4 ⇄ 8 and re-snaps strength to the new grid", () => {
-    const props = renderComposer({
-      settings: { prompt: "a lamp", strength: 0.625, steps: 8, seed: 42 },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /8 steps/i }));
-
-    expect(props.updateSettings).toHaveBeenCalledWith({
-      steps: 4,
-      strength: 0.75,
-    });
-  });
-
   it("the seed chip re-rolls", () => {
     const props = renderComposer();
 
