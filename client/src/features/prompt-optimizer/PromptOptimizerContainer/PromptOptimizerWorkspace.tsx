@@ -763,15 +763,18 @@ function PromptOptimizerContent({
     await handleOptimize();
   }, [handleOptimize]);
 
-  // First-run example chips: fill the composer, never submit — editing stays
-  // explicit. Both prompt states update so the editor surface re-renders.
+  // Fill the composer, never submit — editing stays explicit. The fill rides
+  // the editor's real change path (not the silent history-application setter)
+  // so the replaced working words land on the undo stack: a take-restore or
+  // "Your words" fill is a deliberate edit, and undo must bring the previous
+  // words back (UX rule 1 — clicking must never lose work irrecoverably).
   const composerFillSetInputPrompt = promptOptimizer.setInputPrompt;
   const handleComposerFill = useCallback(
     (text: string): void => {
       composerFillSetInputPrompt(text);
-      setDisplayedPromptSilently(text);
+      handleDisplayedPromptChange(text);
     },
-    [composerFillSetInputPrompt, setDisplayedPromptSilently],
+    [composerFillSetInputPrompt, handleDisplayedPromptChange],
   );
 
   // Improvement flow
