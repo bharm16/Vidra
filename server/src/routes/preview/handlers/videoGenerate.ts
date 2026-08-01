@@ -14,6 +14,8 @@ import {
   resolvePromptTriggers,
 } from "./video-generate/triggerResolution";
 import { runVideoGenerateIntake } from "./video-generate/intake";
+import { refreshOwnedMediaUrls } from "./video-generate/refreshOwnedMediaUrls";
+import { STORAGE_CONFIG } from "@services/storage/config/storageConfig";
 import type { VideoGenerateServices } from "./video-generate/types";
 
 const log = logger.child({ route: "preview.videoGenerate" });
@@ -138,6 +140,17 @@ export const createVideoGenerateHandler =
         details: "You must be logged in to generate videos.",
       });
     }
+
+    // Session records persist signed media URLs that die after ~1h; a
+    // restored session's request must not hand a dead grant to a provider.
+    // Re-mint the requester's own signed URLs before the payload flows on.
+    const generationPayload = await refreshOwnedMediaUrls(parsed.payload, {
+      userId,
+      bucketName: STORAGE_CONFIG.bucketName,
+      storageService,
+      log,
+      requestId,
+    });
 
     const idempotencyMode = resolveVideoGenerateIdempotencyMode();
     const rawIdempotencyKey = req.get("Idempotency-Key");
@@ -296,7 +309,7 @@ export const createVideoGenerateHandler =
     };
 
     const intake = await runVideoGenerateIntake({
-      payload: parsed.payload,
+      payload: generationPayload,
       userId,
       requestId,
       cleanedPrompt,

@@ -16,12 +16,9 @@ import type { Bucket } from "@google-cloud/storage";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { logger } from "@infrastructure/Logger";
 import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import { extractObjectPathFromUrl } from "@services/storage/utils/pathUtils";
 
 const log = logger.child({ module: "mediaProxy" });
-
-const STORAGE_HOST = "storage.googleapis.com";
-const STORAGE_HOST_SUFFIX = ".storage.googleapis.com";
-const FIREBASE_STORAGE_HOST = "firebasestorage.googleapis.com";
 
 const ALLOWED_CONTENT_TYPES = new Set([
   "image/webp",
@@ -32,47 +29,6 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "video/webm",
   "video/quicktime",
 ]);
-
-const extractObjectPath = (url: URL, bucketName: string): string | null => {
-  const host = url.hostname;
-  const path = url.pathname.replace(/^\/+/, "");
-
-  if (!path) return null;
-
-  // storage.googleapis.com/{bucket}/{object}
-  if (host === STORAGE_HOST) {
-    const [bucket, ...rest] = path.split("/");
-    if (bucket !== bucketName) return null;
-    return rest.join("/") || null;
-  }
-
-  // {bucket}.storage.googleapis.com/{object}
-  if (host.endsWith(STORAGE_HOST_SUFFIX)) {
-    const bucketFromHost = host.slice(0, -STORAGE_HOST_SUFFIX.length);
-    if (bucketFromHost !== bucketName) return null;
-    return path;
-  }
-
-  // firebasestorage.googleapis.com/v0/b/{bucket}/o/{encodedObject}
-  if (host === FIREBASE_STORAGE_HOST) {
-    const match = path.match(/^v0\/b\/([^/]+)\/o\/(.+)/);
-    if (!match) return null;
-    const [, bucket, encodedObject] = match;
-    // Firebase bucket names may have .appspot.com or .firebasestorage.app suffixes
-    const baseBucket = (bucket ?? "").replace(
-      /\.(appspot\.com|firebasestorage\.app)$/,
-      "",
-    );
-    const baseName = bucketName.replace(
-      /\.(appspot\.com|firebasestorage\.app)$/,
-      "",
-    );
-    if (baseBucket !== baseName) return null;
-    return decodeURIComponent(encodedObject ?? "");
-  }
-
-  return null;
-};
 
 /**
  * Stream an object directly from the bucket reference. Used as a fallback
@@ -177,7 +133,7 @@ export function createMediaProxyRoutes(
         });
       }
 
-      const objectPath = extractObjectPath(parsedUrl, bucketName);
+      const objectPath = extractObjectPathFromUrl(parsedUrl, bucketName);
       if (!objectPath) {
         return res.status(403).json({
           success: false,
