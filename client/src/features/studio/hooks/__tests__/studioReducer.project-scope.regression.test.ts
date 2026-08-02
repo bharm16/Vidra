@@ -6,12 +6,12 @@ import type {
 import { initialStudioState, studioReducer } from "../studioReducer";
 
 /**
- * Regression (latent, found during M5 hardening): projectOpened and
- * projectDeleted each hand-wrote the list of fields that belong to the
- * open project, and both forgot pendingAttachments. Attachments are
- * registered against a specific project, so a staged upload survived a
- * project switch and the next send shipped project A's attachmentIds as
- * project B's.
+ * Regression (latent, found during M5 hardening): the transitions that
+ * change which project the workspace shows each hand-wrote the list of
+ * fields belonging to that project, and they forgot pendingAttachments.
+ * Attachments are registered against a specific project, so a staged
+ * upload survived a project switch and the next send shipped project A's
+ * attachmentIds as project B's.
  *
  * Invariant: everything scoped to the open project is cleared whenever the
  * workspace stops showing that project — attachments included.
@@ -60,16 +60,15 @@ describe("regression: project-scoped state clears when the project changes", () 
     expect(switched.pendingAttachments).toEqual([]);
   });
 
-  it("deleting the open project drops its staged attachments too", () => {
+  it("leaving for a projectless workspace drops its staged attachments too", () => {
     const staged = withStagedAttachment(projectA);
 
-    const deleted = studioReducer(staged, {
-      type: "projectDeleted",
-      projectId: "p-a",
-    });
+    // /studio/new: the workspace stops showing project A, so A's staged
+    // uploads must not ride the next project's first send.
+    const emptied = studioReducer(staged, { type: "openedProjectless" });
 
-    expect(deleted.project).toBeNull();
-    expect(deleted.pendingAttachments).toEqual([]);
+    expect(emptied.project).toBeNull();
+    expect(emptied.pendingAttachments).toEqual([]);
   });
 
   it("keeps attachments across the lazy first-send creation", () => {

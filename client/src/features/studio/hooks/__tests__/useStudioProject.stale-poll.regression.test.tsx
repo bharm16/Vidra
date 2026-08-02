@@ -83,7 +83,10 @@ describe("regression: a poll that resolves after a project switch is dropped", (
     vi.mocked(getStudioModels).mockResolvedValue([]);
     vi.mocked(listStudioTurns).mockResolvedValue([]);
     vi.mocked(runStudioTurn).mockResolvedValue({ turnId: "t1", decision });
-    vi.mocked(getStudioProject).mockResolvedValue(projectA);
+    // The workspace opens whichever project the route names.
+    vi.mocked(getStudioProject).mockImplementation((projectId: string) =>
+      Promise.resolve(projectId === "p-b" ? projectB : projectA),
+    );
   });
 
   afterEach(() => {
@@ -104,7 +107,12 @@ describe("regression: a poll that resolves after a project switch is dropped", (
           }),
       );
 
-    const { result } = renderHook(() => useStudioProject());
+    // Switching projects is a route change: the same hook, re-rendered with
+    // the id the new URL names.
+    const { result, rerender } = renderHook(
+      (projectId: string) => useStudioProject(projectId),
+      { initialProps: "p-a" },
+    );
     await act(async () => {});
     expect(result.current.state.project?.id).toBe("p-a");
 
@@ -118,12 +126,16 @@ describe("regression: a poll that resolves after a project switch is dropped", (
       await vi.advanceTimersByTimeAsync(1000);
     });
 
-    // The Creator opens another project while that poll is in flight.
+    // The Creator navigates to another project while that poll is in flight.
     await act(async () => {
-      await result.current.openProject(projectB);
+      rerender("p-b");
     });
     expect(result.current.state.project?.id).toBe("p-b");
     expect(result.current.state.turns).toEqual([]);
+
+    // Opening B legitimately reads B's doc; anything the stale settle adds
+    // on top of this count would be A's doc landing over B.
+    const readsAfterSwitch = vi.mocked(getStudioProject).mock.calls.length;
 
     // Project A's poll lands now — into project B's open workspace.
     await act(async () => {
@@ -133,6 +145,8 @@ describe("regression: a poll that resolves after a project switch is dropped", (
     expect(result.current.state.project?.id).toBe("p-b");
     expect(result.current.state.turns).toEqual([]);
     // The stale settle must not refetch A's project doc over B either.
-    expect(getStudioProject).not.toHaveBeenCalled();
+    expect(vi.mocked(getStudioProject).mock.calls.length).toBe(
+      readsAfterSwitch,
+    );
   });
 });

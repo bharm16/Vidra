@@ -38,7 +38,7 @@ vi.mock("@features/studio/api/studioApi", () => ({
 
 import {
   getStudioModels,
-  listStudioProjects,
+  getStudioProject,
   listStudioTurns,
   runStudioTurn,
 } from "@features/studio/api/studioApi";
@@ -109,7 +109,7 @@ describe("regression: one definition of a turn in flight", () => {
 
 describe("regression: a second send during a turn is a no-op", () => {
   beforeEach(() => {
-    vi.mocked(listStudioProjects).mockResolvedValue([project]);
+    vi.mocked(getStudioProject).mockResolvedValue(project);
     vi.mocked(getStudioModels).mockResolvedValue([]);
     vi.mocked(listStudioTurns).mockResolvedValue([]);
     // The turn stays in flight for the whole test.
@@ -121,7 +121,7 @@ describe("regression: a second send during a turn is a no-op", () => {
   });
 
   it("ignores a suggestion pill clicked while the first turn streams", async () => {
-    const { result } = renderHook(() => useStudioProject());
+    const { result } = renderHook(() => useStudioProject("p1"));
     await act(async () => {});
 
     act(() => {

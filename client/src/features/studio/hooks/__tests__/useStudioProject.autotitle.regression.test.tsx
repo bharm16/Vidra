@@ -77,14 +77,15 @@ const completeTurn: StudioTurn = {
 describe("regression: settled turns sync the project header without a reload", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.mocked(listStudioProjects).mockResolvedValue([untitled]);
     vi.mocked(getStudioModels).mockResolvedValue([]);
     vi.mocked(listStudioTurns).mockResolvedValue([]);
     vi.mocked(runStudioTurn).mockResolvedValue({ turnId: "t1", decision });
     vi.mocked(getStudioTurn)
       .mockResolvedValueOnce(runningTurn) // turnAccepted fetch
       .mockResolvedValue(completeTurn); // poll settles
-    vi.mocked(getStudioProject).mockResolvedValue(titled);
+    vi.mocked(getStudioProject)
+      .mockResolvedValueOnce(untitled) // bootstrap opens it Untitled
+      .mockResolvedValue(titled); // the settled turn's refetch
   });
 
   afterEach(() => {
@@ -93,7 +94,7 @@ describe("regression: settled turns sync the project header without a reload", (
   });
 
   it("adopts the server's auto-title when the polled turn settles", async () => {
-    const { result } = renderHook(() => useStudioProject());
+    const { result } = renderHook(() => useStudioProject("p1"));
 
     // Bootstrap opens the Untitled project (promise flushes, no timers).
     await act(async () => {});

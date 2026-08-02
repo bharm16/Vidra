@@ -53,7 +53,7 @@ describe("regression: attaching a file stages it on the composer", () => {
       type: "image/png",
     });
 
-    const { result } = renderHook(() => useStudioProject());
+    const { result } = renderHook(() => useStudioProject(null));
     await act(async () => {});
     expect(result.current.state.project).toBeNull();
 

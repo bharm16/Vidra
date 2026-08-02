@@ -14,7 +14,6 @@ import type {
 
 export interface StudioState {
   project: StudioProject | null;
-  projects: StudioProject[];
   models: StudioModelInfo[];
   /** Chronological thread (oldest first). */
   turns: StudioTurn[];
@@ -32,7 +31,6 @@ export interface StudioState {
   selectedImageId: string | null;
   /** S-12: uploaded-but-unsent reference images, staged in the composer. */
   pendingAttachments: StudioAttachment[];
-  listOpen: boolean;
   error: string | null;
   loading: boolean;
 }
@@ -68,10 +66,8 @@ function emptyProjectScope(): ProjectScopedState {
 
 export const initialStudioState: StudioState = {
   project: null,
-  projects: [],
   models: [],
   ...emptyProjectScope(),
-  listOpen: false,
   error: null,
   loading: true,
 };
@@ -110,11 +106,12 @@ export function refinementProducedImageId(turn: StudioTurn): string | null {
 
 export type StudioAction =
   /**
-   * Bootstrap settles the roster and the project list SEPARATELY — fusing
-   * them meant a failing /models blanked the Creator's whole thread list.
+   * Bootstrap settles the roster and the open project SEPARATELY — fusing
+   * them meant a failing /models blanked the Creator's whole thread.
    */
-  | { type: "projectsLoaded"; projects: StudioProject[] }
   | { type: "rosterLoaded"; models: StudioModelInfo[] }
+  /** The route named no project (/studio/new) — stop showing the spinner. */
+  | { type: "openedProjectless" }
   | { type: "projectOpened"; project: StudioProject; turns: StudioTurn[] }
   /**
    * Lazy first-send creation: a continuation, not a switch, so this does
@@ -134,13 +131,7 @@ export type StudioAction =
   | { type: "requestFailed"; error: string }
   | { type: "errorDismissed" }
   | { type: "imageSelected"; imageId: string | null }
-  | { type: "projectPatched"; project: StudioProject }
-  /**
-   * Deleting the active project empties the workspace back to the
-   * projectless state (the next send lazily creates a fresh project).
-   */
-  | { type: "projectDeleted"; projectId: string }
-  | { type: "listToggled"; open?: boolean };
+  | { type: "projectPatched"; project: StudioProject };
 
 /** A polled turn replaces its thread entry; unknown ids append (defensive). */
 function mergeTurn(turns: StudioTurn[], turn: StudioTurn): StudioTurn[] {
@@ -158,10 +149,15 @@ export function studioReducer(
   action: StudioAction,
 ): StudioState {
   switch (action.type) {
-    case "projectsLoaded":
-      return { ...state, projects: action.projects, loading: false };
     case "rosterLoaded":
       return { ...state, models: action.models };
+    case "openedProjectless":
+      return {
+        ...state,
+        ...emptyProjectScope(),
+        project: null,
+        loading: false,
+      };
     case "projectOpened":
       return {
         ...state,
@@ -176,7 +172,6 @@ export function studioReducer(
       return {
         ...state,
         project: action.project,
-        projects: [action.project, ...state.projects],
         selectedImageId: null,
       };
     case "messageSent":
@@ -240,24 +235,7 @@ export function studioReducer(
     case "imageSelected":
       return { ...state, selectedImageId: action.imageId };
     case "projectPatched":
-      return {
-        ...state,
-        project: action.project,
-        projects: state.projects.map((project) =>
-          project.id === action.project.id ? action.project : project,
-        ),
-      };
-    case "projectDeleted": {
-      const projects = state.projects.filter(
-        (project) => project.id !== action.projectId,
-      );
-      if (state.project?.id !== action.projectId) {
-        return { ...state, projects };
-      }
-      return { ...state, ...emptyProjectScope(), projects, project: null };
-    }
-    case "listToggled":
-      return { ...state, listOpen: action.open ?? !state.listOpen };
+      return { ...state, project: action.project };
     default:
       return state;
   }

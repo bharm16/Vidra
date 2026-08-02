@@ -29,7 +29,7 @@ function ThinkingSection({ text }: { text: string }): React.ReactElement {
         Thinking
         <ChevronUp
           size={13}
-          strokeWidth={1.8}
+          strokeWidth={1.75}
           className={cn(
             "st-reasoning-chevron",
             collapsed && "st-reasoning-chevron-collapsed",

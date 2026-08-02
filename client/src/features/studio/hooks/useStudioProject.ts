@@ -1,17 +1,21 @@
 /**
- * Studio page orchestration: bootstrap (projects + roster), project
- * open/create, sending turns, and the 1s poll while a turn is running
- * (plan: "Request flow (asynchronous turns)").
+ * Studio workspace orchestration: open the project the route names, send
+ * turns, and poll the running one (plan: "Request flow (asynchronous
+ * turns)").
+ *
+ * The workspace opens exactly the project in the URL and never lists — the
+ * project index (/studio) owns listing, creation and deletion. Before the
+ * route carried a project id this hook listed and auto-opened whichever
+ * project sorted first, which is how an abandoned empty project could hide
+ * a creator's real work.
  */
 
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   createStudioProject,
-  deleteStudioProject,
   getStudioModels,
   getStudioProject,
   getStudioTurn,
-  listStudioProjects,
   listStudioTurns,
   runStudioTurn,
   updateStudioProject,
@@ -29,17 +33,30 @@ import {
 
 const POLL_INTERVAL_MS = 1000;
 
+export interface UseStudioProjectOptions {
+  /**
+   * A projectless workspace (/studio/new) births its project on the first
+   * send. The route must follow it so the address bar names the project
+   * that now exists — otherwise a reload would land back on /studio/new and
+   * show an empty thread beside work that was, in fact, saved.
+   */
+  onProjectCreated?: (project: StudioProject) => void;
+  /**
+   * The named project is gone or was never the creator's (the server reads
+   * both as absence). Deleted-elsewhere links and pasted foreign ids land
+   * here; the page sends the creator back to the index.
+   */
+  onProjectMissing?: () => void;
+}
+
 export interface UseStudioProjectReturn {
   state: StudioState;
   dispatch: React.Dispatch<StudioAction>;
-  openProject: (project: StudioProject) => Promise<void>;
-  newProject: () => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
   renameProject: (title: string) => Promise<void>;
   /** A roster slug, or null for Auto. The server owns the roster. */
   pinModel: (slug: string | null) => Promise<void>;
   selectImage: (imageId: string | null) => void;
-  deleteProject: (projectId: string) => Promise<void>;
   /** S-12: upload + stage a reference image on the composer. */
   attachFile: (file: File) => Promise<void>;
   removeAttachment: (attachmentId: string) => void;
@@ -49,8 +66,17 @@ function describeError(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
 }
 
-export function useStudioProject(): UseStudioProjectReturn {
+export function useStudioProject(
+  /** The project named by the route; null on /studio/new. */
+  routeProjectId: string | null,
+  options: UseStudioProjectOptions = {},
+): UseStudioProjectReturn {
   const [state, dispatch] = useReducer(studioReducer, initialStudioState);
+  // Callbacks are read through a ref so the bootstrap effect depends only on
+  // projectId. A caller passing an inline arrow (the normal case) would
+  // otherwise re-run the open on every render.
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   // Which project is open, readable synchronously: the poll interval reads
   // it without re-arming, and the settle guards below read it to tell their
   // own project from an abandoned one. A dispatch is invisible to already-
@@ -79,13 +105,10 @@ export function useStudioProject(): UseStudioProjectReturn {
     [],
   );
 
-  // Bootstrap: the roster and the project list settle INDEPENDENTLY. Fused
+  // Bootstrap: the roster and the open project settle INDEPENDENTLY. Fused
   // (one Promise.all, one action) a failing /models cost the Creator their
   // entire thread history; the composer already degrades to Auto on an
-  // empty roster. An empty account stays projectless — the project is
-  // created lazily on the first send (StrictMode's double-mounted effect
-  // used to create two "Untitled" projects here; bootstrap makes no
-  // writes at all).
+  // empty roster.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -98,26 +121,45 @@ export function useStudioProject(): UseStudioProjectReturn {
         }
       }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Open exactly the project the route names. Bootstrap makes no writes at
+  // all — /studio/new stays projectless until the first send creates the
+  // record (StrictMode's double-mounted effect once created two "Untitled"
+  // projects here, and an empty one left behind is what buried real work).
+  useEffect(() => {
+    let cancelled = false;
+    if (!routeProjectId) {
+      projectIdRef.current = null;
+      dispatch({ type: "openedProjectless" });
+      return;
+    }
     void (async () => {
       try {
-        const projects = await listStudioProjects();
+        const [project, turns] = await Promise.all([
+          getStudioProject(routeProjectId),
+          listStudioTurns(routeProjectId),
+        ]);
         if (cancelled) return;
-        dispatch({ type: "projectsLoaded", projects });
-        const mostRecent = projects[0];
-        if (!mostRecent) return;
-        const turns = await listStudioTurns(mostRecent.id);
-        if (cancelled) return;
-        dispatch({ type: "projectOpened", project: mostRecent, turns });
+        projectIdRef.current = project.id;
+        dispatch({ type: "projectOpened", project, turns });
       } catch (error) {
-        if (!cancelled) {
-          dispatch({ type: "requestFailed", error: describeError(error) });
+        if (cancelled) return;
+        const statusCode = (error as { statusCode?: number }).statusCode;
+        if (statusCode === 404) {
+          optionsRef.current.onProjectMissing?.();
+          return;
         }
+        dispatch({ type: "requestFailed", error: describeError(error) });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [routeProjectId]);
 
   // Poll the pending turn until it settles (reducer clears pendingTurnId).
   useEffect(() => {
@@ -165,26 +207,6 @@ export function useStudioProject(): UseStudioProjectReturn {
     return () => clearInterval(interval);
   }, [state.pendingTurnId, isCurrentProject]);
 
-  const openProject = useCallback(async (project: StudioProject) => {
-    try {
-      const turns = await listStudioTurns(project.id);
-      projectIdRef.current = project.id;
-      dispatch({ type: "projectOpened", project, turns });
-    } catch (error) {
-      dispatch({ type: "requestFailed", error: describeError(error) });
-    }
-  }, []);
-
-  const newProject = useCallback(async () => {
-    try {
-      const project = await createStudioProject();
-      projectIdRef.current = project.id;
-      dispatch({ type: "projectOpened", project, turns: [] });
-    } catch (error) {
-      dispatch({ type: "requestFailed", error: describeError(error) });
-    }
-  }, []);
-
   const sendMessage = useCallback(
     async (message: string) => {
       const trimmed = message.trim();
@@ -204,6 +226,7 @@ export function useStudioProject(): UseStudioProjectReturn {
           const project = await createStudioProject();
           projectIdRef.current = project.id;
           dispatch({ type: "projectCreated", project });
+          optionsRef.current.onProjectCreated?.(project);
           projectId = project.id;
         }
         const { turnId } = await runStudioTurn(
@@ -274,6 +297,7 @@ export function useStudioProject(): UseStudioProjectReturn {
           const project = await createStudioProject();
           projectIdRef.current = project.id;
           dispatch({ type: "projectCreated", project });
+          optionsRef.current.onProjectCreated?.(project);
           projectId = project.id;
         }
         const attachment = await uploadStudioAttachment(projectId, file);
@@ -290,26 +314,13 @@ export function useStudioProject(): UseStudioProjectReturn {
     dispatch({ type: "attachmentUnstaged", attachmentId });
   }, []);
 
-  const deleteProject = useCallback(async (projectId: string) => {
-    try {
-      await deleteStudioProject(projectId);
-      if (projectIdRef.current === projectId) projectIdRef.current = null;
-      dispatch({ type: "projectDeleted", projectId });
-    } catch (error) {
-      dispatch({ type: "requestFailed", error: describeError(error) });
-    }
-  }, []);
-
   return {
     state,
     dispatch,
-    openProject,
-    newProject,
     sendMessage,
     renameProject,
     pinModel,
     selectImage,
-    deleteProject,
     attachFile,
     removeAttachment,
   };

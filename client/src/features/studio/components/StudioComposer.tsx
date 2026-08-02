@@ -87,7 +87,7 @@ export function StudioComposer({
         <div className="st-attach-chips">
           {pendingAttachments.map((attachment) => (
             <span key={attachment.id} className="st-attach-chip">
-              <Paperclip size={11} strokeWidth={1.8} />
+              <Paperclip size={11} strokeWidth={1.75} />
               <span className="st-attach-name">{attachment.filename}</span>
               <Button
                 variant="ghost"
@@ -96,7 +96,7 @@ export function StudioComposer({
                 aria-label={`Remove ${attachment.filename}`}
                 onClick={() => onRemoveAttachment(attachment.id)}
               >
-                <X size={11} strokeWidth={1.8} />
+                <X size={11} strokeWidth={1.75} />
               </Button>
             </span>
           ))}
@@ -125,7 +125,7 @@ export function StudioComposer({
           aria-label={expanded ? "Shrink field" : "Expand field"}
           onClick={() => setExpanded((value) => !value)}
         >
-          <Maximize2 size={13} strokeWidth={1.8} />
+          <Maximize2 size={13} strokeWidth={1.75} />
         </Button>
       </div>
 
@@ -140,7 +140,7 @@ export function StudioComposer({
             onClick={() => setPickerOpen((value) => !value)}
           >
             {pinnedInfo ? pinnedInfo.displayName : "Auto"}
-            <ChevronDown size={13} strokeWidth={1.8} />
+            <ChevronDown size={13} strokeWidth={1.75} />
           </Button>
           {pickerOpen ? (
             <div className="st-picker-pop" role="listbox" aria-label="Model">
@@ -212,7 +212,7 @@ export function StudioComposer({
           disabled={busy}
           onClick={() => fileInputRef.current?.click()}
         >
-          <Paperclip size={14} strokeWidth={1.8} />
+          <Paperclip size={14} strokeWidth={1.75} />
         </Button>
 
         <Button
@@ -224,7 +224,7 @@ export function StudioComposer({
           disabled={busy || draft.trim().length === 0}
           onClick={submit}
         >
-          <ArrowUp size={16} strokeWidth={2.2} />
+          <ArrowUp size={16} strokeWidth={1.75} />
         </Button>
       </div>
     </div>

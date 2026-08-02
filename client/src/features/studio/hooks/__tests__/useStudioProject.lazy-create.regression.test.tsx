@@ -71,7 +71,7 @@ describe("regression: bootstrap never creates a project; first send creates exac
   });
 
   it("an empty account bootstraps projectless with no server writes", async () => {
-    const { result } = renderHook(() => useStudioProject());
+    const { result } = renderHook(() => useStudioProject(null));
 
     await act(async () => {});
 
@@ -81,9 +81,9 @@ describe("regression: bootstrap never creates a project; first send creates exac
   });
 
   it("a StrictMode-style double mount still creates nothing", async () => {
-    const first = renderHook(() => useStudioProject());
+    const first = renderHook(() => useStudioProject(null));
     first.unmount();
-    const second = renderHook(() => useStudioProject());
+    const second = renderHook(() => useStudioProject(null));
 
     await act(async () => {});
 
@@ -92,7 +92,10 @@ describe("regression: bootstrap never creates a project; first send creates exac
   });
 
   it("the first send creates the project once and runs the turn on it", async () => {
-    const { result } = renderHook(() => useStudioProject());
+    const onProjectCreated = vi.fn();
+    const { result } = renderHook(() =>
+      useStudioProject(null, { onProjectCreated }),
+    );
     await act(async () => {});
 
     await act(async () => {
@@ -107,7 +110,12 @@ describe("regression: bootstrap never creates a project; first send creates exac
       [],
     );
     expect(result.current.state.project?.id).toBe("p-lazy");
-    expect(result.current.state.projects.map((p) => p.id)).toContain("p-lazy");
+    // The route must follow the project that now exists — otherwise a
+    // reload returns to /studio/new and the saved thread looks lost, which
+    // is the whole failure this surface was split to prevent.
+    expect(onProjectCreated).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "p-lazy" }),
+    );
     // The clarify turn landed in the thread of the freshly created project.
     expect(result.current.state.turns.map((t) => t.id)).toContain("t1");
   });

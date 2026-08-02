@@ -95,6 +95,7 @@ const HistoryPage = lazy(() =>
 const SharedClip = lazy(() => import("./features/share/SharedClip"));
 const LiveEditor = lazy(() => import("./features/realtime-sketch/LiveEditor"));
 const StudioPage = lazy(() => import("./features/studio/StudioPage"));
+const StudioIndexPage = lazy(() => import("./features/studio/StudioIndexPage"));
 const MainWorkspace = lazy(() =>
   import("./components/layout/MainWorkspace").then((module) => ({
     default: module.MainWorkspace,
@@ -273,9 +274,32 @@ function AppRoutes(): React.ReactElement {
         }
       />
       {/* The studio (ADR-0019) — conversational image generation and editing
-          on its own rail surface and plane. */}
+          on its own rail surface and plane. The rail destination is the
+          project index; a workspace is always addressed by its project, so
+          reload, Back and a pasted link all return the same thread.
+          "/studio/new" is a literal segment and outranks ":projectId". */}
       <Route
         path="/studio"
+        element={
+          <RequireAuth>
+            <FeatureErrorBoundary featureName="Studio">
+              <StudioIndexPage />
+            </FeatureErrorBoundary>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/studio/new"
+        element={
+          <RequireAuth>
+            <FeatureErrorBoundary featureName="Studio">
+              <StudioPage />
+            </FeatureErrorBoundary>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/studio/:projectId"
         element={
           <RequireAuth>
             <FeatureErrorBoundary featureName="Studio">

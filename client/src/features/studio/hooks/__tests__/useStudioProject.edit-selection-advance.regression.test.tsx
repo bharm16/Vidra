@@ -120,7 +120,7 @@ const completeGenerateTurn: StudioTurn = {
 async function bootstrapAndSend(turnId: string): Promise<{
   result: { current: ReturnType<typeof useStudioProject> };
 }> {
-  const { result } = renderHook(() => useStudioProject());
+  const { result } = renderHook(() => useStudioProject("p-1"));
   await act(async () => {});
   expect(result.current.state.project?.id).toBe("p-1");
 
@@ -137,7 +137,7 @@ async function bootstrapAndSend(turnId: string): Promise<{
 describe("regression: refinement turns advance the working selection to their result", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.mocked(listStudioProjects).mockResolvedValue([project]);
+    vi.mocked(getStudioProject).mockResolvedValue(project);
     vi.mocked(getStudioModels).mockResolvedValue([]);
     vi.mocked(listStudioTurns).mockResolvedValue([]);
     vi.mocked(getStudioProject).mockResolvedValue(project);

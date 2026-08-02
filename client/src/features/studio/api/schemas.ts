@@ -42,6 +42,13 @@ export const StudioProjectSchema = z.object({
    * Writes stay narrow — updateStudioProject accepts only roster slugs.
    */
   pinnedModel: z.string().nullish(),
+  /**
+   * Index cover: the project's most recent image, signed per list read.
+   * Optional on purpose — projects with no images yet, projects whose
+   * images predate the denormalized field, and covers whose signing failed
+   * all arrive without one, and the card falls back to its placeholder.
+   */
+  coverUrl: z.string().optional(),
   createdAtMs: z.number(),
   updatedAtMs: z.number(),
 });

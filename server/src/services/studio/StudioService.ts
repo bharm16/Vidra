@@ -61,6 +61,16 @@ export interface StudioImageStorage {
   ): Promise<{ viewUrl: string; expiresAt: string; storagePath: string }>;
 }
 
+/**
+ * Wire shape for the project index: the record plus a freshly signed URL for
+ * its denormalized cover. Signing is best-effort — a project whose cover
+ * cannot be signed (or which has none yet) is returned without one, and the
+ * index renders its placeholder.
+ */
+export interface StudioProjectView extends StudioProjectRecord {
+  coverUrl?: string | undefined;
+}
+
 /** Wire shape for turn polling: images decorated with fresh signed URLs. */
 export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
   calls: Array<
@@ -211,8 +221,52 @@ export class StudioService {
     return project;
   }
 
-  async listProjects(userId: string): Promise<StudioProjectRecord[]> {
-    return this.store.listProjects(userId);
+  /**
+   * The project index's data. Covers are signed concurrently and degrade
+   * independently: one unsignable path costs that row its thumbnail, never
+   * the whole list (same policy decorateTurn uses for thread images).
+   */
+  async listProjects(userId: string): Promise<StudioProjectView[]> {
+    const projects = await this.store.listProjects(userId);
+    return Promise.all(
+      projects.map(async (project) => {
+        if (!project.coverStoragePath) return project;
+        try {
+          const { viewUrl } = await this.storage.getViewUrl(
+            userId,
+            project.coverStoragePath,
+          );
+          return { ...project, coverUrl: viewUrl };
+        } catch (error) {
+          this.log.warn("Failed to mint studio cover view URL", {
+            projectId: project.id,
+            storagePath: project.coverStoragePath,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return project;
+        }
+      }),
+    );
+  }
+
+  /**
+   * The cover fields for a settled turn's calls, or nothing when the turn
+   * produced no image. The LAST succeeded call wins: a project's cover is
+   * where the work got to, which is what "resume" should show.
+   */
+  private coverPatch(
+    calls: readonly StudioCallRecord[],
+  ): Pick<StudioProjectRecord, "coverImageId" | "coverStoragePath"> | null {
+    for (let i = calls.length - 1; i >= 0; i -= 1) {
+      const call = calls[i];
+      if (call?.status === "succeeded" && call.image) {
+        return {
+          coverImageId: call.image.id,
+          coverStoragePath: call.image.storagePath,
+        };
+      }
+    }
+    return null;
   }
 
   /**
@@ -737,6 +791,7 @@ export class StudioService {
     await reservation.settle([call]);
     await this.store.updateProject(project.id, {
       updatedAtMs: this.now().getTime(),
+      ...(this.coverPatch([call]) ?? {}),
     });
   }
 
@@ -840,6 +895,7 @@ export class StudioService {
     // even when the optional field is omitted (regression, live 2026-07-24).
     const patch: Partial<StudioProjectRecord> = {
       updatedAtMs: this.now().getTime(),
+      ...(this.coverPatch(calls) ?? {}),
     };
     if (project.title === "Untitled") {
       patch.title =

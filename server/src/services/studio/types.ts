@@ -143,6 +143,16 @@ export interface StudioProjectRecord {
   pinnedModel?: StudioModelSlug | null | undefined;
   /** User-uploaded reference images (S-12), capped small. */
   attachments?: StudioAttachment[] | undefined;
+  /**
+   * The most recent image the project produced, denormalized off the turns
+   * subcollection so the project index can show a cover without reading one
+   * subcollection per row. Written by the same settle-path project write
+   * that already bumps updatedAtMs, so it costs no extra round trip.
+   * Absent on projects whose images predate the field — the index renders
+   * its placeholder rather than backfilling (cosmetic, not load-bearing).
+   */
+  coverImageId?: string | undefined;
+  coverStoragePath?: string | undefined;
   createdAtMs: number;
   updatedAtMs: number;
 }

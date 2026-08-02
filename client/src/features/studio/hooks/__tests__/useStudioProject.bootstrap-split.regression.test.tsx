@@ -5,14 +5,17 @@ import { useStudioProject } from "../useStudioProject";
 
 /**
  * Regression (latent, found during M5 hardening): bootstrap fetched the
- * project list and the model roster in one Promise.all and reported them
- * with one action, so a /models failure rejected the pair — no
- * projectsLoaded, no projectOpened. A 500 on the roster cost the Creator
- * their entire thread history.
+ * project data and the model roster in one Promise.all and reported them
+ * with one action, so a /models failure rejected the pair and the Creator
+ * lost their entire thread history to a 500 on an unrelated endpoint.
  *
- * Invariant: the roster and the project list settle independently. The
+ * Invariant: the roster and the open project settle independently. The
  * composer already degrades to Auto on an empty roster (behavior 9), so a
- * missing roster must never cost the Creator their projects.
+ * missing roster must never cost the Creator their thread.
+ *
+ * (The workspace opens the project the route names; listing moved to the
+ * project index, so this now guards the roster against the project OPEN
+ * rather than against a project list.)
  */
 
 vi.mock("@features/studio/api/studioApi", () => ({
@@ -30,7 +33,7 @@ vi.mock("@features/studio/api/studioApi", () => ({
 
 import {
   getStudioModels,
-  listStudioProjects,
+  getStudioProject,
   listStudioTurns,
 } from "@features/studio/api/studioApi";
 
@@ -59,9 +62,9 @@ const turn: StudioTurn = {
   updatedAtMs: 1,
 };
 
-describe("regression: a failed roster fetch never blanks the project list", () => {
+describe("regression: a failed roster fetch never blanks the open project", () => {
   beforeEach(() => {
-    vi.mocked(listStudioProjects).mockResolvedValue([project]);
+    vi.mocked(getStudioProject).mockResolvedValue(project);
     vi.mocked(listStudioTurns).mockResolvedValue([turn]);
   });
 
@@ -69,13 +72,12 @@ describe("regression: a failed roster fetch never blanks the project list", () =
     vi.clearAllMocks();
   });
 
-  it("keeps the projects and the thread when /models rejects", async () => {
+  it("keeps the project and the thread when /models rejects", async () => {
     vi.mocked(getStudioModels).mockRejectedValue(new Error("models 500"));
 
-    const { result } = renderHook(() => useStudioProject());
+    const { result } = renderHook(() => useStudioProject("p1"));
     await act(async () => {});
 
-    expect(result.current.state.projects.map((p) => p.id)).toEqual(["p1"]);
     expect(result.current.state.project?.id).toBe("p1");
     expect(result.current.state.turns.map((t) => t.id)).toEqual(["t1"]);
     // Empty roster is the composer's documented degraded mode, not a brick.
@@ -83,7 +85,7 @@ describe("regression: a failed roster fetch never blanks the project list", () =
     expect(result.current.state.loading).toBe(false);
   });
 
-  it("keeps the roster when the project list rejects", async () => {
+  it("keeps the roster when opening the project rejects", async () => {
     vi.mocked(getStudioModels).mockResolvedValue([
       {
         slug: "recraft-v4.1",
@@ -92,14 +94,14 @@ describe("regression: a failed roster fetch never blanks the project list", () =
         latencyHintSeconds: 6,
       },
     ]);
-    vi.mocked(listStudioProjects).mockRejectedValue(new Error("projects 500"));
+    vi.mocked(getStudioProject).mockRejectedValue(new Error("project 500"));
 
-    const { result } = renderHook(() => useStudioProject());
+    const { result } = renderHook(() => useStudioProject("p1"));
     await act(async () => {});
 
     expect(result.current.state.models.map((m) => m.slug)).toEqual([
       "recraft-v4.1",
     ]);
-    expect(result.current.state.error).toContain("projects 500");
+    expect(result.current.state.error).toContain("project 500");
   });
 });

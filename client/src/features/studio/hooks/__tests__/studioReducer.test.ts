@@ -148,7 +148,7 @@ describe("studioReducer", () => {
     expect(state.error).toBe("Daily limit reached");
   });
 
-  it("deleting the active project empties the workspace to the projectless state", () => {
+  it("opening projectless empties the workspace and stops loading", () => {
     const project = {
       id: "p1",
       title: "Fox Logo",
@@ -160,38 +160,14 @@ describe("studioReducer", () => {
       project,
       turns: [makeTurn({ status: "complete" })],
     });
-    state = studioReducer(state, { type: "projectCreated", project });
 
-    state = studioReducer(state, { type: "projectDeleted", projectId: "p1" });
+    // Navigating to /studio/new from an open project: the workspace shows
+    // nothing until the first send creates the record.
+    state = studioReducer(state, { type: "openedProjectless" });
 
     expect(state.project).toBeNull();
     expect(state.turns).toEqual([]);
     expect(state.selectedImageId).toBeNull();
-    expect(state.projects.some((p) => p.id === "p1")).toBe(false);
-  });
-
-  it("deleting a background project only trims the list", () => {
-    const active = {
-      id: "p1",
-      title: "Active",
-      createdAtMs: 1,
-      updatedAtMs: 1,
-    };
-    const other = { id: "p2", title: "Other", createdAtMs: 2, updatedAtMs: 2 };
-    let state = studioReducer(initialStudioState, {
-      type: "projectsLoaded",
-      projects: [active, other],
-    });
-    state = studioReducer(state, {
-      type: "projectOpened",
-      project: active,
-      turns: [makeTurn()],
-    });
-
-    state = studioReducer(state, { type: "projectDeleted", projectId: "p2" });
-
-    expect(state.project?.id).toBe("p1");
-    expect(state.turns).toHaveLength(1);
-    expect(state.projects.map((p) => p.id)).toEqual(["p1"]);
+    expect(state.loading).toBe(false);
   });
 });
