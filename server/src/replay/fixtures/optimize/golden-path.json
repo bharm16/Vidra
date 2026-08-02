@@ -139,10 +139,7 @@
               "lighting": "warm lamplight contrasting with stormy darkness outside",
               "audio": "sound of rain and thunder",
               "duration_hint": null,
-              "risks": [
-                "vagueness in action",
-                "multiple actions in one shot"
-              ],
+              "risks": ["vagueness in action", "multiple actions in one shot"],
               "confidence": 0.9
             },
             "cleanedText": "{\n  \"shot_type\": \"action_shot\",\n  \"core_intent\": \"A lighthouse keeper is reading a book by the warm glow of a lamplight while a storm rages outside.\",\n  \"subject\": \"lighthouse keeper\",\n  \"action\": \"reading\",\n  \"visual_focus\": \"the book and the lamplight\",\n  \"setting\": \"inside a lighthouse\",\n  \"time\": \"night during a storm\",\n  \"mood\": \"cozy yet tense\",\n  \"style\": \"dramatic lighting\",\n  \"camera_move\": null,\n  \"camera_angle\": \"Medium Shot\",\n  \"lighting\": \"warm lamplight contrasting with stormy darkness outside\",\n  \"audio\": \"sound of rain and thunder\",\n  \"duration_hint\": null,\n  \"risks\": [\"vagueness in action\", \"multiple actions in one shot\"],\n  \"confidence\": 0.9\n}"

@@ -106,10 +106,7 @@
             "system_fingerprint": "fp_b1b99e3b92"
           },
           "provider": "openai",
-          "optimizations": [
-            "developer-role",
-            "bookending"
-          ],
+          "optimizations": ["developer-role", "bookending"],
           "model": "gpt-4o-mini-2024-07-18",
           "finishReason": "stop",
           "systemFingerprint": "fp_b1b99e3b92",
