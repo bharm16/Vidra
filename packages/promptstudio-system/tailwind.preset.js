@@ -54,6 +54,7 @@ export default {
         /* The canonical surface names. Prefer these at new call sites. */
         canvas: "var(--canvas)",
         chrome: "var(--chrome)",
+        float: "var(--float)",
         raise: "var(--raise)",
         hairline: "var(--hairline)",
         fg: "var(--fg)",
@@ -149,6 +150,7 @@ export default {
         xs: "var(--radius-xs)",
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",
+        panel: "var(--radius-panel)" /* 12 — content containers */,
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
         "2xl": "var(--radius-xl)" /* bridge → xl */,

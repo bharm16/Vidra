@@ -211,7 +211,8 @@
      muted grey and three for the same border. Fixing the page you were
      looking at reopened drift on the page you were not. */
     --canvas: var(--background); /* the floor */
-    --chrome: var(--card); /* rail, panel, toolbars, popovers */
+    --chrome: var(--card); /* rail, panel, toolbars */
+    --float: var(--card); /* popovers — above chrome */
     --raise: oklch(24% 0.004 250 / 0.07); /* raised over chrome */
     --hairline: oklch(24% 0.004 250 / 0.12); /* the ONLY border value */
     --fg: var(--foreground);
@@ -282,7 +283,7 @@
     --foreground: oklch(98.5% 0 0);
     --card: var(--chrome);
     --card-foreground: oklch(98.5% 0 0);
-    --popover: var(--chrome);
+    --popover: var(--float);
     --popover-foreground: oklch(98.5% 0 0);
     --primary: oklch(100% 0 0);
     --primary-foreground: oklch(0% 0 0);
@@ -308,6 +309,9 @@
        the right shape, about eight levels too dark. */
     --canvas: var(--background);
     --chrome: oklch(27.9% 0 0);
+    /* A popover must be lighter than what it covers, and popovers cover
+       chrome — so the ladder needs a third step, not a reused second one. */
+    --float: oklch(32% 0 0);
     --raise: oklch(100% 0 0 / 0.07);
     --hairline: oklch(100% 0 0 / 0.12);
     --fg: oklch(98.5% 0 0);

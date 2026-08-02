@@ -61,6 +61,42 @@
     outline: none;
   }
 
+  /* Selection was the browser's default blue — the only unbranded colour in
+     the product. */
+  ::selection {
+    background: oklch(100% 0 0 / 0.18);
+    color: var(--fg);
+  }
+
+  /* Scrollbars, so a light grey UA bar never lands on a dark surface. The
+     transparent border plus background-clip is what gives the thumb its
+     inset without a second element. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(100% 0 0 / 0.18) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(100% 0 0 / 0.18);
+    border-radius: var(--radius-full);
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(100% 0 0 / 0.28);
+    background-clip: content-box;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
