@@ -311,7 +311,7 @@ export const VersionsPanel = memo(function VersionsPanel({
         aria-label={compactLabel}
       >
         <span
-          className="border-border bg-surface-3 text-muted group-hover:text-foreground inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
+          className="border-border bg-raise text-muted group-hover:text-foreground inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
           title="Toggle versions ([)"
         >
           <Icon

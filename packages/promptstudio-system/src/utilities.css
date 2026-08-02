@@ -218,8 +218,18 @@
 }
 
 /* ---- Sizes: these three and nothing else ---- */
+/* The size/type rule, so it is a decision rather than an accident:
+   36px LIST ROWS carry 14px (nav entries, menu items — they sit in a
+   reading rhythm), 32px CONTROLS carry 12px (toolbar buttons, chips,
+   icon buttons — they sit in a control rhythm). */
+.ps-btn--sm,
+.ps-btn--icon-sm {
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
+}
+
 .ps-btn--sm {
-  height: var(--control-md); /* 32 — dense/inline only */
+  height: var(--control-md); /* 32 */
   padding-inline: var(--space-2-5);
 }
 .ps-btn--md {

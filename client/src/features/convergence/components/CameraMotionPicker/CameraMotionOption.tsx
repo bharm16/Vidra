@@ -653,7 +653,7 @@ export const CameraMotionOption: React.FC<CameraMotionOptionProps> = ({
             <div
               className={cn(
                 "absolute inset-0",
-                "bg-gradient-to-br from-surface-2 via-surface-1/70 to-surface-3/80",
+                "bg-gradient-to-br from-surface-2 via-surface-1/70 to-raise/80",
               )}
               aria-hidden="true"
             />

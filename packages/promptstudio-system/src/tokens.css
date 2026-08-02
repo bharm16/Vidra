@@ -54,7 +54,7 @@
     --text-ui-mono: 0.8125rem;
     --text-meta: 0.75rem;
     --text-meta-lh: 1rem; /* 16 */
-    --text-meta-ls: 0.005em;
+    --text-meta-ls: 0; /* tracking under 16px only blurs the rhythm */
 
     /* ---------- WEIGHTS ----------
      Display type gets presence from size + tracking, not weight. */
@@ -197,7 +197,6 @@
      system above — no new hand-painted hex. Light values. */
     --surface-1: var(--chrome);
     --surface-2: var(--chrome);
-    --surface-3: var(--raise);
     --faint-foreground: oklch(65% 0.004 250); /* below muted       */
     --ghost-foreground: oklch(72% 0.004 250); /* placeholder       */
     --border-strong: oklch(24% 0.004 250 / 0.18);
@@ -301,7 +300,6 @@
     /* Vidra extensions — dark values. */
     --surface-1: var(--chrome);
     --surface-2: var(--chrome);
-    --surface-3: var(--raise);
     --faint-foreground: oklch(60% 0 0);
     --ghost-foreground: oklch(48% 0 0);
     --border-strong: oklch(100% 0 0 / 0.16);

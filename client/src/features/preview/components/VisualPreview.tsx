@@ -264,7 +264,7 @@ export const VisualPreview: React.FC<VisualPreviewProps> = ({
               }
             }}
             className={cn(
-              "relative overflow-hidden rounded-md bg-surface-3 transition-all",
+              "relative overflow-hidden rounded-md bg-raise transition-all",
               "hover:ring-2 hover:ring-accent/50",
               selectedImageIndex === index && "ring-2 ring-accent",
               !url && "cursor-default",
@@ -284,7 +284,7 @@ export const VisualPreview: React.FC<VisualPreviewProps> = ({
                 )}
               </>
             ) : (
-              <div className="h-full w-full animate-pulse bg-surface-3" />
+              <div className="h-full w-full animate-pulse bg-raise" />
             )}
           </button>
         ))}

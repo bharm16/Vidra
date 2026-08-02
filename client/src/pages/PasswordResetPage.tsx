@@ -228,7 +228,7 @@ export function PasswordResetPage(): React.ReactElement {
         {resetState === "idle" ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <KeyRound className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">
@@ -254,7 +254,7 @@ export function PasswordResetPage(): React.ReactElement {
         {resetState === "checking" ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <Spinner />
               </span>
               <div className="min-w-0">
@@ -272,7 +272,7 @@ export function PasswordResetPage(): React.ReactElement {
         {resetState === "error" ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <KeyRound className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">

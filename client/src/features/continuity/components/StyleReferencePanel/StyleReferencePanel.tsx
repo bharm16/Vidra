@@ -169,7 +169,7 @@ export function StyleReferencePanel({
             disabled={isSavingPrimary || (!primaryVideoId && !primaryImageUrl)}
             className={`w-full rounded-md px-3 py-2 text-sm font-medium ${
               isSavingPrimary || (!primaryVideoId && !primaryImageUrl)
-                ? "bg-surface-3 text-muted cursor-not-allowed"
+                ? "bg-raise text-muted cursor-not-allowed"
                 : "bg-accent text-white"
             }`}
           >

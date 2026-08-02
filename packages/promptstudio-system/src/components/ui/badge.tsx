@@ -23,7 +23,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         surface: "bg-surface-2 text-foreground",
-        subtle: "bg-surface-3 text-muted",
+        subtle: "bg-raise text-muted",
         outline: "bg-transparent text-foreground",
         neutral: "bg-transparent text-muted",
         success:

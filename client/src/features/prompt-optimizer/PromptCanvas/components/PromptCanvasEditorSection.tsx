@@ -389,7 +389,7 @@ export function PromptCanvasEditorSection({
                   onMouseDown={(e) => e.preventDefault()}
                   className={cn(
                     "border-border bg-surface-2 text-muted absolute z-10 -mt-1.5 inline-flex h-9 w-9 -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border shadow-md transition-colors",
-                    "hover:border-border-strong hover:bg-surface-3 hover:text-foreground",
+                    "hover:border-border-strong hover:bg-hover hover:text-foreground",
                     isHoveredLocked && "border-accent text-foreground",
                   )}
                   style={{
@@ -421,7 +421,7 @@ export function PromptCanvasEditorSection({
 
             {isOutputLoading && (
               <div
-                className="bg-surface-3/80 p-ps-4 absolute inset-0 flex items-start justify-start backdrop-blur-sm"
+                className="bg-raise/80 p-ps-4 absolute inset-0 flex items-start justify-start backdrop-blur-sm"
                 role="status"
                 aria-live="polite"
                 aria-label="Optimizing prompt"

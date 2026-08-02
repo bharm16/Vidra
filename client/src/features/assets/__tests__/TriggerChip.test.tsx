@@ -43,7 +43,7 @@ describe("TriggerChip", () => {
 
       const inline = container.querySelector("span");
       expect(inline).not.toBeNull();
-      expect(inline).toHaveClass("bg-surface-3");
+      expect(inline).toHaveClass("bg-raise");
       expect(inline).toHaveClass("text-foreground");
     });
   });

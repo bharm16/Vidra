@@ -627,7 +627,7 @@ export function ShotEditor({
         disabled={isSubmitting || !prompt.trim() || !canSubmitContinuity}
         className={`w-full rounded-md px-4 py-2 text-sm font-medium ${
           isSubmitting || !prompt.trim() || !canSubmitContinuity
-            ? "bg-surface-3 text-muted cursor-not-allowed"
+            ? "bg-raise text-muted cursor-not-allowed"
             : "bg-accent text-white"
         }`}
       >

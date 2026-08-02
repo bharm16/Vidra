@@ -86,7 +86,7 @@ export function StudioPage(): React.ReactElement {
                 title="All projects"
                 aria-label="All projects"
               >
-                <ArrowLeft size={15} strokeWidth={1.75} />
+                <ArrowLeft size={16} strokeWidth={1.75} />
               </Link>
               <input
                 className="st-panel-title"

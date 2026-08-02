@@ -79,13 +79,16 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
 
   return (
     <aside
-      className="bg-canvas flex h-full flex-none flex-col overflow-hidden px-2 py-2 transition-[width] duration-[260ms] ease-out"
+      className="bg-canvas flex h-full flex-none flex-col overflow-hidden px-2 pb-2 transition-[width] duration-[260ms] ease-out"
       style={{ width: collapsed ? 64 : 256 }}
     >
       {/* Header — logo (→ new session) + collapse toggle. */}
       <div
         className={cn(
-          "mb-2 flex h-11 items-center gap-2",
+          // A 44px band flush with the top, so the rail's header baseline is the
+        // topbar's: the 8px of rail padding used to push it down and "Vidra"
+        // sat 9px lower than "Studio".
+        "mb-2 flex h-11 items-center gap-2",
           collapsed ? "flex-col" : "justify-between",
         )}
       >
@@ -164,14 +167,14 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           active === "account" && "bg-active",
         )}
       >
-        <span className="border-border bg-muted text-muted-foreground text-meta flex h-6 w-6 flex-none items-center justify-center rounded-full border uppercase">
+        <span className="border-border bg-muted text-muted-foreground text-meta flex h-6 w-6 flex-none items-center justify-center rounded-full border font-medium uppercase tracking-normal">
           {accountName.charAt(0)}
         </span>
         {collapsed ? null : (
           // One quiet line. This was the largest and one of only two 400-weight
           // labels in the rail, for the least important action; signed out it
           // additionally said "Guest" over "Sign in" — the same thing twice.
-          <span className="text-tool-text-muted text-meta min-w-0 truncate">
+          <span className="text-tool-text-muted text-meta min-w-0 truncate font-medium tracking-normal">
             {user ? accountName : "Sign in"}
           </span>
         )}

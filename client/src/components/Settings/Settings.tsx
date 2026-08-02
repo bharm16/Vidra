@@ -105,7 +105,7 @@ export default function Settings({
                       ${
                         settings.fontSize === size
                           ? "bg-primary-600 text-white shadow-md scale-105"
-                          : "bg-surface-1 text-foreground hover:bg-surface-3 border border-border"
+                          : "bg-surface-1 text-foreground hover:bg-hover border border-border"
                       }
                     `}
                       aria-pressed={settings.fontSize === size}
@@ -184,7 +184,7 @@ export default function Settings({
                       ${
                         settings.exportFormat === format.value
                           ? "bg-primary-600 text-white shadow-md scale-105"
-                          : "bg-surface-1 text-foreground hover:bg-surface-3 border border-border"
+                          : "bg-surface-1 text-foreground hover:bg-hover border border-border"
                       }
                     `}
                       aria-pressed={settings.exportFormat === format.value}

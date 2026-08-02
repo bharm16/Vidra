@@ -157,7 +157,7 @@ export function SuggestionsList({
                 type="button"
                 onClick={() => handleSuggestionSelect(suggestionObj)}
                 variant="ghost"
-                className="text-label-12 text-muted hover:text-foreground border-border bg-surface-2 hover:border-border-strong hover:bg-surface-3 mt-0.5 h-6 flex-shrink-0 rounded-full border px-2.5 font-medium transition-all duration-150"
+                className="text-label-12 text-muted hover:text-foreground border-border bg-surface-2 hover:border-border-strong hover:bg-hover mt-0.5 h-6 flex-shrink-0 rounded-full border px-2.5 font-medium transition-all duration-150"
                 aria-label={`Apply ${suggestionText}`}
               >
                 Apply

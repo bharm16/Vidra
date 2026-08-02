@@ -152,7 +152,7 @@ export function UserMenu({
               className="h-9 w-9 flex-shrink-0 rounded-full"
             />
           ) : (
-            <div className="bg-surface-3 text-foreground flex h-9 w-9 items-center justify-center rounded-full text-ui font-semibold">
+            <div className="bg-raise text-foreground flex h-9 w-9 items-center justify-center rounded-full text-ui font-semibold">
               {initial}
             </div>
           )}

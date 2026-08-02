@@ -316,7 +316,7 @@ export function VersionRow({
       {hasPreview || hasVideo ? (
         <div className="inline-flex flex-shrink-0 items-center gap-ps-2">
           {hasPreview ? (
-            <div className="inline-flex h-ps-7 w-ps-7 items-center justify-center overflow-hidden rounded-md border border-border bg-surface-3 text-faint">
+            <div className="inline-flex h-ps-7 w-ps-7 items-center justify-center overflow-hidden rounded-md border border-border bg-raise text-faint">
               {showImage ? (
                 <img
                   src={previewImageUrl!}
@@ -331,7 +331,7 @@ export function VersionRow({
             </div>
           ) : null}
           {hasVideo ? (
-            <div className="inline-flex h-ps-7 items-center gap-ps-1 rounded-md border border-border bg-surface-3 px-ps-2 text-label-sm font-semibold text-muted">
+            <div className="inline-flex h-ps-7 items-center gap-ps-1 rounded-md border border-border bg-raise px-ps-2 text-label-sm font-semibold text-muted">
               <Icon icon={Play} size="sm" weight="bold" aria-hidden="true" />
               <span>Video</span>
             </div>

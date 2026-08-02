@@ -43,7 +43,7 @@ export const CategorySection = memo<CategorySectionProps>(
             {config.label}
           </span>
           <span
-            className="rounded-full border border-border bg-surface-3 px-2 py-0.5 text-label-sm text-muted"
+            className="rounded-full border border-border bg-raise px-2 py-0.5 text-label-sm text-muted"
             aria-label={`${spans.length} items`}
           >
             {spans.length}

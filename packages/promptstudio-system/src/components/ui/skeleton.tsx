@@ -8,7 +8,7 @@ const skeletonVariants = cva("animate-pulse rounded-md bg-surface-2", {
     variant: {
       default: "bg-surface-2",
       subtle: "bg-surface-1",
-      strong: "bg-surface-3",
+      strong: "bg-raise",
     },
     rounded: {
       default: "rounded-md",

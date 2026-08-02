@@ -24,7 +24,7 @@ export function PromptCanvasDiffDialog({
 
   return (
     <Dialog open={showDiff} onOpenChange={onShowDiffChange}>
-      <DialogContent className="border-border bg-surface-3 w-full max-w-5xl gap-0 rounded-xl border p-0 shadow-lg [&>button]:hidden">
+      <DialogContent className="border-border bg-raise w-full max-w-5xl gap-0 rounded-xl border p-0 shadow-lg [&>button]:hidden">
         <div className="border-border flex items-center justify-between border-b p-4">
           <div>
             <div className="text-body-lg text-foreground font-semibold">

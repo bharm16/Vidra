@@ -32,10 +32,10 @@ const selectTriggerVariants = cva(
       variant: {
         default: "border-border hover:border-border-strong",
         filled:
-          "border-border bg-surface-2 text-muted data-[placeholder]:text-muted hover:border-border-strong hover:bg-surface-3",
+          "border-border bg-surface-2 text-muted data-[placeholder]:text-muted hover:border-border-strong hover:bg-hover",
         ghost:
           "border-transparent bg-transparent hover:bg-surface-2 hover:border-border",
-        pill: "border-border bg-surface-2 rounded-full hover:border-border-strong hover:bg-surface-3",
+        pill: "border-border bg-surface-2 rounded-full hover:border-border-strong hover:bg-hover",
         accent:
           "border-accent bg-accent text-app font-semibold ps-glow-accent data-[placeholder]:text-app/90 hover:opacity-90 focus-visible:border-accent",
         error: "border-danger hover:border-danger focus-visible:border-danger",

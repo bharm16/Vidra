@@ -74,7 +74,7 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
       <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
         <div className="text-body-sm text-foreground flex items-center gap-2 font-semibold">
           Suggestions
-          <span className="bg-surface-3 text-label-sm text-muted inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5">
+          <span className="bg-raise text-label-sm text-muted inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5">
             {suggestionCount}
           </span>
           {import.meta.env.DEV && debugPayload && (
@@ -101,16 +101,16 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
           className="text-muted hidden items-center gap-1 sm:flex"
           aria-hidden="true"
         >
-          <span className="border-border bg-surface-3 text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
+          <span className="border-border bg-raise text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
             Up
           </span>
-          <span className="border-border bg-surface-3 text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
+          <span className="border-border bg-raise text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
             Down
           </span>
-          <span className="border-border bg-surface-3 text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
+          <span className="border-border bg-raise text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
             Enter
           </span>
-          <span className="border-border bg-surface-3 text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
+          <span className="border-border bg-raise text-label-sm text-muted rounded-md border px-2 py-0.5 font-semibold">
             Esc
           </span>
         </div>
@@ -169,9 +169,9 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
 
       {isInlineLoading && (
         <div className="flex flex-1 flex-col gap-2 px-3 py-2">
-          <div className="bg-surface-3 h-9 w-full animate-pulse rounded-lg" />
-          <div className="bg-surface-3 h-9 w-full animate-pulse rounded-lg" />
-          <div className="bg-surface-3 h-9 w-full animate-pulse rounded-lg" />
+          <div className="bg-raise h-9 w-full animate-pulse rounded-lg" />
+          <div className="bg-raise h-9 w-full animate-pulse rounded-lg" />
+          <div className="bg-raise h-9 w-full animate-pulse rounded-lg" />
         </div>
       )}
 
@@ -187,7 +187,7 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
               data-selected={activeSuggestionIndex === index ? "true" : "false"}
               className={cn(
                 "border-border bg-surface-2 text-body-sm text-foreground flex cursor-pointer items-start justify-between gap-3 rounded-lg border px-3 py-2 transition-colors",
-                "hover:border-border-strong hover:bg-surface-3",
+                "hover:border-border-strong hover:bg-hover",
                 activeSuggestionIndex === index &&
                   "border-accent/50 bg-accent/10",
               )}
@@ -233,7 +233,7 @@ export function PromptCanvasSuggestionsPanel(): React.ReactElement | null {
         <div className="mt-3 flex items-center gap-2">
           <CanvasButton
             type="button"
-            className="border-border bg-surface-3 text-label-sm text-muted hover:bg-surface-2 hover:text-foreground h-9 rounded-lg border px-3 font-semibold transition-colors"
+            className="border-border bg-raise text-label-sm text-muted hover:bg-surface-2 hover:text-foreground h-9 rounded-lg border px-3 font-semibold transition-colors"
             onClick={onCloseInlinePopover}
           >
             Clear

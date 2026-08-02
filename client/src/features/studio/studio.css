@@ -63,7 +63,9 @@
   flex: none;
   padding: 0 12px;
   background: var(--studio-chrome);
-  border-bottom: 1px solid var(--studio-hairline);
+  /* No rule: it ran the full 1472px, continuing across the canvas where the
+     chrome->canvas colour step already separates. The panel header's own
+     hairline carries the load inside the panel. */
 }
 
 .st-topbar-label {
@@ -446,8 +448,8 @@
 }
 
 .st-icon-btn:hover {
-  background: var(--studio-inset);
-  color: var(--studio-fg);
+  background: var(--hover);
+  color: var(--fg);
 }
 
 /* Row B: picker left, flex gap, send always right-most (spec grammar). */
@@ -690,7 +692,7 @@
 /* ── Design-system Button overrides ──
    ADR-0008 bans raw <button>, so the chrome above rides Button
    (variant="ghost"), whose cva utilities (h-ps-6, px-ps-4,
-   hover:bg-surface-3, whitespace-nowrap) would otherwise beat these
+   hover:bg-hover, whitespace-nowrap) would otherwise beat these
    feature classes. The !important set below pins the studio's box model
    and colors — same escape hatch the rebuild used for h-9 vs h-auto. */
 
@@ -720,8 +722,8 @@
 }
 
 .st-icon-btn:hover {
-  background: var(--studio-inset) !important;
-  color: var(--studio-fg) !important;
+  background: var(--hover) !important;
+  color: var(--fg) !important;
 }
 
 .st-send {

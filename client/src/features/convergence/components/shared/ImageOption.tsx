@@ -136,7 +136,7 @@ export function ImageOption<OptionId extends string = string>({
         />
       ) : (
         // Error fallback
-        <div className="flex h-full w-full items-center justify-center bg-surface-3">
+        <div className="flex h-full w-full items-center justify-center bg-raise">
           <svg
             className="h-10 w-10 text-muted/50"
             fill="none"
@@ -157,7 +157,7 @@ export function ImageOption<OptionId extends string = string>({
       {/* Loading skeleton overlay */}
       {!isLoaded && !hasError && (
         <div
-          className="absolute inset-0 animate-pulse bg-surface-3"
+          className="absolute inset-0 animate-pulse bg-raise"
           aria-hidden="true"
         />
       )}

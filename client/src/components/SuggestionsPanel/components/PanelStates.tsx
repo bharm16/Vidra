@@ -142,7 +142,7 @@ export function ErrorState({
           <Button
             onClick={onRetry}
             variant="ghost"
-            className="text-label-12 bg-surface-2 hover:bg-surface-3 mt-3 rounded-md px-3 py-1 font-medium transition-colors"
+            className="text-label-12 bg-surface-2 hover:bg-hover mt-3 rounded-md px-3 py-1 font-medium transition-colors"
           >
             Retry
           </Button>

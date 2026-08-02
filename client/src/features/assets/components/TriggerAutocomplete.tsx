@@ -162,15 +162,15 @@ export function TriggerAutocomplete({
 
       <div className="border-t border-border bg-surface-2/70 px-3 py-2">
         <p className="text-xs text-muted">
-          <kbd className="rounded bg-surface-3 px-1 py-0.5 text-xs text-muted">
+          <kbd className="rounded bg-raise px-1 py-0.5 text-xs text-muted">
             up/down
           </kbd>{" "}
           navigate{" "}
-          <kbd className="rounded bg-surface-3 px-1 py-0.5 text-xs text-muted">
+          <kbd className="rounded bg-raise px-1 py-0.5 text-xs text-muted">
             enter
           </kbd>{" "}
           select{" "}
-          <kbd className="rounded bg-surface-3 px-1 py-0.5 text-xs text-muted">
+          <kbd className="rounded bg-raise px-1 py-0.5 text-xs text-muted">
             esc
           </kbd>{" "}
           close

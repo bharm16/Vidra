@@ -87,7 +87,7 @@ export function NavLinks({
             cn(
               "text-overline block rounded-md px-4 py-2 uppercase transition-colors",
               isActive
-                ? "bg-surface-3 text-foreground"
+                ? "bg-raise text-foreground"
                 : "text-muted hover:text-foreground",
             )
           }

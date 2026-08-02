@@ -76,7 +76,7 @@ export const CategoryLegend = memo<CategoryLegendProps>(
             </div>
             <div className="mt-1 text-label-12 text-muted">
               {hasContext ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-3 px-2 py-0.5 text-label-sm text-muted">
+                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-raise px-2 py-0.5 text-label-sm text-muted">
                   <span
                     className="h-1.5 w-1.5 rounded-full bg-success"
                     aria-hidden="true"
@@ -91,7 +91,7 @@ export const CategoryLegend = memo<CategoryLegendProps>(
           <Button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-md border border-border bg-surface-3 text-muted transition-colors hover:border-border-strong hover:text-foreground"
+            className="h-8 w-8 rounded-md border border-border bg-raise text-muted transition-colors hover:border-border-strong hover:text-foreground"
             aria-label="Close legend"
             variant="ghost"
             size="icon"

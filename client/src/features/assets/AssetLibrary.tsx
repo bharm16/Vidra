@@ -205,7 +205,7 @@ export function AssetLibrary({
           }`}
         >
           All
-          <span className="bg-surface-3 rounded-full px-1.5 py-0.5 text-xs">
+          <span className="bg-raise rounded-full px-1.5 py-0.5 text-xs">
             {assets.length}
           </span>
         </button>
@@ -227,7 +227,7 @@ export function AssetLibrary({
             >
               <Icon className="h-4 w-4" />
               {typeConfig.label}
-              <span className="bg-surface-3 rounded-full px-1.5 py-0.5 text-xs">
+              <span className="bg-raise rounded-full px-1.5 py-0.5 text-xs">
                 {count}
               </span>
             </button>

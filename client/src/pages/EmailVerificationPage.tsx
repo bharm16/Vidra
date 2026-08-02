@@ -261,7 +261,7 @@ export function EmailVerificationPage(): React.ReactElement {
         {showVerifyInProgress ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <Spinner />
               </span>
               <div className="min-w-0">
@@ -322,7 +322,7 @@ export function EmailVerificationPage(): React.ReactElement {
         {showDeliveryFailurePanel ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <ShieldAlert
                   className="text-danger h-4 w-4"
                   aria-hidden="true"
@@ -390,7 +390,7 @@ export function EmailVerificationPage(): React.ReactElement {
         {showInboxPanel ? (
           <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
             <div className="flex items-start gap-2.5">
-              <span className="border-border bg-surface-3 mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
+              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
                 <Mail className="text-faint h-4 w-4" aria-hidden="true" />
               </span>
               <div className="min-w-0">

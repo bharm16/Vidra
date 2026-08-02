@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize, Minus, Plus } from "lucide-react";
 import { Button } from "@promptstudio/system/components/ui/button";
 import {
   cameraToCenter,
@@ -248,7 +249,7 @@ export function CanvasViewport({
           aria-label="Zoom out"
           onClick={() => zoomStep(-1)}
         >
-          −
+          <Minus strokeWidth={1.75} />
         </Button>
         <Button
           type="button"
@@ -259,7 +260,7 @@ export function CanvasViewport({
           title="Fit to view"
           onClick={centerOnLiveNode}
         >
-          ⌖
+          <Maximize strokeWidth={1.75} />
         </Button>
         <span
           data-testid="space-zoom-level"
@@ -275,7 +276,7 @@ export function CanvasViewport({
           aria-label="Zoom in"
           onClick={() => zoomStep(1)}
         >
-          +
+          <Plus strokeWidth={1.75} />
         </Button>
       </div>
     </div>

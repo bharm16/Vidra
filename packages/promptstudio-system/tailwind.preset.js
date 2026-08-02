@@ -66,7 +66,6 @@ export default {
         app: "var(--background)" /* bridge → background */,
         "surface-1": "var(--surface-1)",
         "surface-2": "var(--surface-2)",
-        "surface-3": "var(--surface-3)",
         faint: "var(--faint-foreground)",
         ghost: "var(--ghost-foreground)",
         "foreground-warm": "var(--foreground)" /* bridge → foreground */,

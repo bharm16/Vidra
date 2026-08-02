@@ -76,7 +76,7 @@ export default function KeyboardShortcuts({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-md border border-border bg-surface-3 text-muted transition-all duration-150 hover:border-border-strong"
+            className="h-8 w-8 rounded-md border border-border bg-raise text-muted transition-all duration-150 hover:border-border-strong"
             onClick={onClose}
             aria-label="Close command palette"
           >
@@ -85,7 +85,7 @@ export default function KeyboardShortcuts({
         </div>
 
         <div
-          className="mx-6 mb-5 flex items-center gap-3 rounded-lg border border-border bg-surface-3 px-3 py-2.5 text-faint"
+          className="mx-6 mb-5 flex items-center gap-3 rounded-lg border border-border bg-raise px-3 py-2.5 text-faint"
           role="search"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
@@ -120,7 +120,7 @@ export default function KeyboardShortcuts({
                     return (
                       <div
                         key={shortcut.id}
-                        className="flex items-center justify-between gap-4 rounded-md border border-transparent bg-surface-2 px-3 py-2.5 text-muted transition-colors duration-150 hover:border-border-strong hover:bg-surface-3 hover:text-foreground"
+                        className="flex items-center justify-between gap-4 rounded-md border border-transparent bg-surface-2 px-3 py-2.5 text-muted transition-colors duration-150 hover:border-border-strong hover:bg-hover hover:text-foreground"
                         role="listitem"
                       >
                         <span>{shortcut.description}</span>
@@ -130,7 +130,7 @@ export default function KeyboardShortcuts({
                         >
                           {formattedKeys.map((key, keyIdx) => (
                             <React.Fragment key={`${shortcut.id}-${key}`}>
-                              <kbd className="min-w-7 rounded-sm border border-border bg-surface-3 px-1.5 py-0.5 text-label-sm font-mono text-muted">
+                              <kbd className="min-w-7 rounded-sm border border-border bg-raise px-1.5 py-0.5 text-label-sm font-mono text-muted">
                                 {key === "Cmd" || key === "Ctrl" ? (
                                   <Command
                                     className="h-3 w-3"

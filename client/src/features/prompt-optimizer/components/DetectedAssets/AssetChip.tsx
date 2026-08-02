@@ -40,7 +40,7 @@ export function AssetChip({
         aria-label={triggerLabel}
         className={cn(
           "flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold transition",
-          "bg-surface-2 text-foreground hover:bg-surface-3",
+          "bg-surface-2 text-foreground hover:bg-hover",
           config.colorClass,
         )}
       >

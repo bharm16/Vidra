@@ -42,8 +42,8 @@ const VARIANT_STYLES: Record<
 > = {
   default: {
     wrapper: "border-border bg-surface-2 text-foreground",
-    action: "font-medium hover:bg-surface-3",
-    trigger: "text-muted hover:bg-surface-3",
+    action: "font-medium hover:bg-hover",
+    trigger: "text-muted hover:bg-hover",
     icon: "text-muted",
     separator: "text-muted",
   },
