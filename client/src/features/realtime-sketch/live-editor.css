@@ -320,7 +320,7 @@
   /* Same treatment as the Studio composer so the two screens agree: flush
      chrome material, shaped by its radius, no shadow stack. */
   border-radius: var(--radius-panel);
-  background: var(--chrome);
+  background: var(--raise);
   padding: 16px 18px 13px;
 }
 

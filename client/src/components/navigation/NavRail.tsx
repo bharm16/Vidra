@@ -79,7 +79,7 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
 
   return (
     <aside
-      className="bg-chrome flex h-full flex-none flex-col overflow-hidden px-2 py-2 transition-[width] duration-[260ms] ease-out"
+      className="bg-canvas flex h-full flex-none flex-col overflow-hidden px-2 py-2 transition-[width] duration-[260ms] ease-out"
       style={{ width: collapsed ? 64 : 256 }}
     >
       {/* Header — logo (→ new session) + collapse toggle. */}

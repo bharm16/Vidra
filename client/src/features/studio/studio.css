@@ -68,34 +68,12 @@
 
 .st-topbar-label {
   font-size: var(--studio-text-chrome);
+  line-height: var(--studio-lh-chrome);
   font-weight: 500;
   color: var(--studio-fg);
 }
 
 /* Centered in the full frame width, not the canvas width. */
-.st-topbar-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 40%;
-  background: transparent;
-  border: none;
-  color: var(--studio-fg);
-  font: inherit;
-  font-size: var(--studio-text-content);
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-  border-radius: var(--studio-r-control);
-  padding: 4px 10px;
-}
-
-.st-topbar-title:hover,
-.st-topbar-title:focus {
-  background: var(--studio-inset);
-  outline: none;
-}
 
 /* Right zone stays right-anchored even while nearly empty (spec). */
 .st-topbar-right {
@@ -134,14 +112,27 @@
   border-bottom: 1px solid var(--studio-hairline);
 }
 
+/* The project title — editable in place, and the only copy on the page. */
 .st-panel-title {
   flex: 1;
   min-width: 0;
+  background: transparent;
+  border: none;
+  font: inherit;
   font-size: var(--studio-text-content);
+  line-height: var(--studio-lh-content);
   color: var(--studio-fg-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-radius: var(--studio-r-control);
+  padding: 0 6px;
+}
+.st-panel-title:hover,
+.st-panel-title:focus {
+  background: var(--raise);
+  color: var(--studio-fg);
+  outline: none;
 }
 
 /* Band 2 — the thread. */
@@ -149,7 +140,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 14px 12px 20px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
@@ -361,10 +352,11 @@
      detached widget floating over a hole. */
   border: none;
   border-radius: var(--studio-r-panel);
-  /* Flush material, not a raised field: the same surface as the panel it
-     sits in, shaped by its radius and the control row beneath it. The Live
-     Editor's composer uses the same treatment so the two screens agree. */
-  background: var(--studio-chrome);
+  /* Raised, not flush. Recraft's composer gets away with flush because it
+     sits under a full transcript and carries a dense row of bordered
+     controls; in an empty panel a flush composer has no container at all —
+     the placeholder floats in open space. */
+  background: var(--raise);
   padding: 10px 12px 8px;
 }
 
@@ -485,6 +477,7 @@
   border-radius: var(--studio-r-control);
   padding: 0 10px;
   font-size: var(--studio-text-chrome);
+  line-height: var(--studio-lh-chrome);
   cursor: pointer;
 }
 
@@ -554,7 +547,12 @@
 }
 
 .st-send:disabled {
-  opacity: 0.35;
+  /* Dimming a white fill composites to ~#5a5a5a — indistinguishable from
+     the ghost buttons beside it, so the page had no visible primary action.
+     A disabled primary is a different fill, not a faded one. */
+  background: var(--raise);
+  color: oklch(100% 0 0deg / 0.3);
+  opacity: 1;
   cursor: default;
 }
 
@@ -592,9 +590,11 @@
   text-align: center;
   padding: 1.25rem;
   font-size: var(--studio-text-content);
+  line-height: var(--studio-lh-content);
   color: var(--studio-fg-muted);
   border: 1px solid var(--studio-hairline);
   border-radius: var(--studio-r-panel);
+  line-height: var(--studio-lh-content);
 }
 
 /* ── Project list overlay (band-1 menu) ── */
@@ -699,6 +699,7 @@
   padding: 0 10px !important;
   border-radius: var(--studio-r-control) !important;
   font-size: var(--studio-text-chrome) !important;
+  line-height: var(--studio-lh-chrome) !important;
   white-space: normal !important;
   justify-content: flex-start !important;
   background: var(--studio-inset) !important;
@@ -728,8 +729,17 @@
   width: 32px !important;
   padding: 0 !important;
   border-radius: var(--studio-r-control) !important;
+}
+
+.st-send:enabled {
   background: var(--studio-fg) !important;
   color: var(--on-primary) !important;
+}
+
+.st-send:disabled {
+  background: var(--raise) !important;
+  color: oklch(100% 0 0deg / 0.3) !important;
+  opacity: 1 !important;
 }
 
 .st-picker-btn {
@@ -737,6 +747,7 @@
   padding: 0 10px !important;
   border-radius: var(--studio-r-control) !important;
   font-size: var(--studio-text-chrome) !important;
+  line-height: var(--studio-lh-chrome) !important;
   background: var(--studio-inset) !important;
   color: var(--studio-fg) !important;
 }
@@ -860,4 +871,10 @@
   transform: translateY(-50%);
   flex-direction: column;
   width: 40px;
+}
+
+/* The zoom readout is a label, not canvas — it must not offer the pan grab. */
+.st-float span,
+.st-float .value {
+  cursor: default;
 }

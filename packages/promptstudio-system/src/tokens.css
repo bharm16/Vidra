@@ -46,14 +46,14 @@
     --text-body-lh: 1.5;
     --text-body-ls: 0em;
     --text-ui: 0.875rem;
-    --text-ui-lh: 1.4;
+    --text-ui-lh: 1.125rem; /* 18 — exact, not a ratio that rounds */
     --text-ui-ls: 0em;
     /* Mono sets ~8% wider than sans at the same nominal size, so a mono label
        beside a sans one reads a step larger. This is --text-ui corrected for
        that, not a new size in the scale. */
     --text-ui-mono: 0.8125rem;
     --text-meta: 0.75rem;
-    --text-meta-lh: 1.35;
+    --text-meta-lh: 1rem; /* 16 */
     --text-meta-ls: 0.005em;
 
     /* ---------- WEIGHTS ----------
@@ -277,11 +277,13 @@
   /* ============ SEMANTIC COLOR — DARK ============
    The workspace goes dark so generated media pops. */
   .dark {
-    --background: oklch(14.5% 0 0); /* #101010, not pure black */
+    /* One floor: --background IS --canvas. A rail on the canvas value
+       otherwise sat lighter than every non-canvas page in the app. */
+    --background: oklch(22% 0 0);
     --foreground: oklch(98.5% 0 0);
-    --card: oklch(20.5% 0 0);
+    --card: var(--chrome);
     --card-foreground: oklch(98.5% 0 0);
-    --popover: oklch(26.9% 0 0); /* one step ABOVE --card, not equal */
+    --popover: var(--chrome);
     --popover-foreground: oklch(98.5% 0 0);
     --primary: oklch(100% 0 0);
     --primary-foreground: oklch(0% 0 0);
@@ -306,14 +308,14 @@
     /* The canvas-app ladder, measured against Recraft: #1b1b1b board,
        #292929 chrome. The previous 18.5/25.5 rendered #131313/#232323 —
        the right shape, about eight levels too dark. */
-    --canvas: oklch(22% 0 0);
+    --canvas: var(--background);
     --chrome: oklch(27.9% 0 0);
     --raise: oklch(100% 0 0 / 0.07);
     --hairline: oklch(100% 0 0 / 0.12);
     --fg: oklch(98.5% 0 0);
     --fg-muted: oklch(100% 0 0 / 0.6);
     --fg-dim: oklch(100% 0 0 / 0.4);
-    --on-primary: oklch(22% 0 0);
+    --on-primary: var(--background);
 
     --fill: oklch(100% 0 0 / 0.05);
     --hover: var(--raise);

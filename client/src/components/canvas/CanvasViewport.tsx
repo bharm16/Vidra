@@ -23,15 +23,8 @@ export function CanvasViewport({
   children,
   liveNodeId,
   onBackgroundClick,
-  actionsRef,
 }: {
   children: React.ReactNode;
-  /**
-   * Filled with the camera actions a surrounding tool rail can drive. The
-   * camera is ephemeral state owned here, so this is how a sibling asks for
-   * "fit to view" without lifting it.
-   */
-  actionsRef?: React.MutableRefObject<{ recenter: () => void } | null>;
   /** The current take; when it changes the camera recenters on it. */
   liveNodeId?: string | null;
   /**
@@ -179,14 +172,6 @@ export function CanvasViewport({
     centerOnLiveNode();
   }, [liveNodeId, centerOnLiveNode]);
 
-  useEffect(() => {
-    if (!actionsRef) return;
-    actionsRef.current = { recenter: centerOnLiveNode };
-    return () => {
-      actionsRef.current = null;
-    };
-  }, [actionsRef, centerOnLiveNode]);
-
   // A stage that resizes after mount (collapsing the rail, resizing the
   // window, opening devtools) would otherwise strand the node off-center —
   // it was centered for a viewport that no longer exists. Re-center only
@@ -265,9 +250,20 @@ export function CanvasViewport({
         >
           −
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
+          aria-label="Fit to view"
+          title="Fit to view"
+          onClick={centerOnLiveNode}
+        >
+          ⌖
+        </Button>
         <span
           data-testid="space-zoom-level"
-          className="text-tool-text-subdued text-meta min-w-[44px] text-center tabular-nums"
+          className="text-tool-text-subdued text-meta min-w-[44px] cursor-default text-center font-medium tabular-nums"
         >
           {Math.round(camera.scale * 100)}%
         </span>

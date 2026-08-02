@@ -182,8 +182,8 @@
   font-size: var(--text-ui);
   font-weight: var(--weight-ui);
   /* 1 clipped descenders in "Library" and "Live editor" — a 14px box for
-     14px text. ~18px is the control leading. */
-  line-height: 1.3;
+     14px text. The scale's own leading is the control leading. */
+  line-height: var(--text-ui-lh);
   border: none;
   background: var(--fill);
   color: var(--muted-foreground);
