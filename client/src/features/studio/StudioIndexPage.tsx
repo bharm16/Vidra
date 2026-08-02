@@ -23,8 +23,11 @@ import { useStudioProjects } from "./hooks/useStudioProjects";
  * rail, handoff atmosphere, header, card grid.
  */
 
+/* Reflows instead of stepping through fixed breakpoints — the grid was four
+   335px columns, so it neither filled a wide window nor collapsed gracefully.
+   One gap value on the scale, not 22x20. */
 const GRID_CLASS =
-  "grid grid-cols-2 gap-x-5 gap-y-[22px] sm:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6";
 
 export function StudioIndexPage(): React.ReactElement {
   const { projects, loading, error, deleteProject, dismissError } =
@@ -33,24 +36,26 @@ export function StudioIndexPage(): React.ReactElement {
   return (
     <div className="flex h-screen overflow-hidden">
       <NavRail active="studio" />
-      <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden [background:var(--background)]">
+      <div className="text-foreground bg-canvas relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         <AmbientLight />
         <Grain />
 
-        <header className="flex-none px-9 pb-[18px] pt-[30px]">
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-foreground text-heading font-sans font-semibold tracking-[-0.015em]">
-              Studio
-            </h1>
-          </div>
-          <p className="text-tool-text-muted text-ui mt-1.5">
+        {/* The same 44px chrome band the project route carries, so opening a
+            project does not shift the whole content area down by 44px. The
+            page name sits at the control size here, as it does there. */}
+        <div className="bg-chrome text-fg text-meta flex h-11 flex-none items-center px-3 font-medium">
+          Studio
+        </div>
+
+        <header className="flex-none px-6 pb-4 pt-6">
+          <p className="text-tool-text-muted text-ui">
             Your image projects — pick up where you left off, or start a new
             one.
           </p>
         </header>
 
         {error ? (
-          <div className="mx-9 mb-3 flex flex-none items-center justify-between gap-3 rounded-md border border-white/10 bg-white/[0.04] px-4 py-2.5">
+          <div className="border-border bg-raise mx-6 mb-3 flex flex-none items-center justify-between gap-3 rounded-md border px-4 py-2.5">
             <span className="text-ui text-foreground">{error}</span>
             <Button
               type="button"
@@ -63,7 +68,7 @@ export function StudioIndexPage(): React.ReactElement {
           </div>
         ) : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-9 pb-10">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
           {loading ? (
             <p className="text-tool-text-muted text-ui">Loading projects…</p>
           ) : (
@@ -77,8 +82,8 @@ export function StudioIndexPage(): React.ReactElement {
                 aria-label="Create new project"
                 className="group flex flex-col"
               >
-                <div className="text-tool-text-muted group-hover:text-foreground flex h-[172px] items-center justify-center rounded-md border border-dashed border-white/15 transition-colors group-hover:border-white/35">
-                  <Plus size={26} strokeWidth={1.6} />
+                <div className="text-tool-text-muted group-hover:text-foreground border-border group-hover:border-border-strong bg-chrome rounded-panel flex h-[172px] items-center justify-center border transition-colors">
+                  <Plus size={20} strokeWidth={1.75} />
                 </div>
                 <div className="text-foreground text-ui mt-2.5 truncate font-sans font-medium">
                   Create new project

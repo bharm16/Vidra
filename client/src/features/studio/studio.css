@@ -2,54 +2,21 @@
  * Studio chrome.
  *
  * Canvas-app surface model, measured off Recraft: the board is the FLOOR and
- * every piece of chrome floats above it as one lighter material. That is the
- * inversion this file used to have — the canvas was lighter than the panel
- * beside it, so the board read as raised and the tools read as a hole, and
- * dividers were doing work the colour step should do.
+ * every piece of chrome floats above it as one lighter material.
  *
- * Two surfaces, one inset, one hairline. Two type sizes. Two control sizes.
- * Nothing else exists here.
+ * There is no --studio-* namespace. It aliased root tokens for one component,
+ * which meant every rule using it broke the moment its selector matched an
+ * element outside .st-frame — the project rows on /studio lost their hover
+ * entirely, because var() on an undefined property falls back to transparent
+ * and the broken rule won on source order.
  */
-.st-frame {
-  /* The floor and the chrome. A 7-level step is visible without a divider. */
-  --studio-canvas: var(--canvas);
-  --studio-chrome: var(--chrome);
-  --studio-inset: var(--raise);
-  --studio-hairline: var(--hairline);
-
-  /* One text ramp. --fg-muted measures ~7:1 on --studio-chrome; the old
-     rgba(242,243,246,.45) on the old dark panel measured 3.7:1. */
-  --studio-fg: var(--fg);
-  --studio-fg-muted: var(--fg-muted);
-  --studio-fg-subtle: var(--fg-dim);
-
-  /* Chrome type and content type. Nothing fractional — 11.5 and 12.5 do not
-     land on pixel boundaries and render soft. */
-  --studio-text-chrome: 12px;
-  --studio-lh-chrome: 16px;
-  --studio-text-content: 14px;
-  --studio-lh-content: 18px;
-
-  /* Radius set: control / floating panel / panel. Nothing else. */
-  --studio-r-control: var(--radius-sm); /* 6  buttons, chips */
-  --studio-r-float: var(--radius-md); /* 10 floating panels */
-  --studio-r-panel: var(--radius-panel); /* 12 composer, cells */
-}
-
-/*
- * Studio chrome — same monochrome language as the live editor
- * (dark stage, system sans, 16px radii, hairline white borders).
- * Layout follows the plan's "Layout and control placement" section:
- * top bar, fixed-width left chat panel (three bands), fluid right plane.
- */
-
 .st-frame {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  background: var(--studio-canvas);
-  color: var(--studio-fg);
+  background: var(--canvas);
+  color: var(--fg);
   font-family: var(--font-sans);
 }
 
@@ -62,17 +29,17 @@
   height: 44px;
   flex: none;
   padding: 0 12px;
-  background: var(--studio-chrome);
+  background: var(--chrome);
   /* No rule: it ran the full 1472px, continuing across the canvas where the
      chrome->canvas colour step already separates. The panel header's own
      hairline carries the load inside the panel. */
 }
 
 .st-topbar-label {
-  font-size: var(--studio-text-chrome);
-  line-height: var(--studio-lh-chrome);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
   font-weight: 500;
-  color: var(--studio-fg);
+  color: var(--fg);
 }
 
 /* Centered in the full frame width, not the canvas width. */
@@ -100,7 +67,7 @@
   /* No divider: chrome against canvas is a 7-level step and reads as an edge
      on its own. A rule here was compensating for surfaces that were 3 levels
      apart. */
-  background: var(--studio-chrome);
+  background: var(--chrome);
 }
 
 /* Band 1 — header: menu far left, title, new-project far right. */
@@ -111,7 +78,7 @@
   flex: none;
   height: 44px;
   padding: 0 10px;
-  border-bottom: 1px solid var(--studio-hairline);
+  border-bottom: 1px solid var(--hairline);
 }
 
 /* The project title — editable in place, and the only copy on the page. */
@@ -121,19 +88,19 @@
   background: transparent;
   border: none;
   font: inherit;
-  font-size: var(--studio-text-content);
-  line-height: var(--studio-lh-content);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  color: var(--fg-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-radius: var(--studio-r-control);
+  border-radius: var(--radius-sm);
   padding: 0 6px;
 }
 .st-panel-title:hover,
 .st-panel-title:focus {
   background: var(--raise);
-  color: var(--studio-fg);
+  color: var(--fg);
   outline: none;
 }
 
@@ -150,9 +117,9 @@
 
 .st-thread-empty {
   margin: auto 8px;
-  font-size: var(--studio-text-content);
-  line-height: var(--studio-lh-content);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  color: var(--fg-muted);
   text-align: center;
 }
 
@@ -166,10 +133,10 @@
   align-self: flex-end;
   max-width: 88%;
   padding: 8px 11px;
-  border-radius: var(--studio-r-panel);
-  background: var(--studio-inset);
-  font-size: var(--studio-text-content);
-  line-height: var(--studio-lh-content);
+  border-radius: var(--radius-panel);
+  background: var(--raise);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -179,9 +146,9 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.625rem;
-  border-radius: var(--studio-r-panel);
-  background: var(--studio-inset);
-  border: 1px solid var(--studio-hairline);
+  border-radius: var(--radius-panel);
+  background: var(--raise);
+  border: 1px solid var(--hairline);
 }
 
 .st-card-error {
@@ -189,9 +156,9 @@
 }
 
 .st-card-text {
-  font-size: var(--studio-text-content);
-  line-height: var(--studio-lh-content);
-  color: var(--studio-fg);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  color: var(--fg);
 }
 
 .st-question + .st-question {
@@ -199,8 +166,8 @@
 }
 
 .st-thinking {
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
   padding-left: 2px;
 }
 
@@ -217,8 +184,8 @@
   align-items: center;
   gap: 0.25rem;
   align-self: flex-start;
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
   cursor: pointer;
 }
 
@@ -233,9 +200,9 @@
 .st-reasoning-text {
   margin: 0;
   padding-left: 2px;
-  font-size: var(--studio-text-chrome);
-  line-height: var(--studio-lh-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
+  color: var(--fg-muted);
 }
 
 /* Suggestion / quick-pick pills — a horizontal wrap row directly beneath
@@ -247,20 +214,20 @@
 }
 
 .st-pill {
-  border: 1px solid var(--studio-hairline);
-  background: var(--studio-inset);
-  color: var(--studio-fg);
+  border: 1px solid var(--hairline);
+  background: var(--raise);
+  color: var(--fg);
   height: 32px;
-  border-radius: var(--studio-r-control);
+  border-radius: var(--radius-sm);
   padding: 0 10px;
-  font-size: var(--studio-text-chrome);
-  line-height: var(--studio-lh-chrome);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
   cursor: pointer;
   text-align: left;
 }
 
 .st-pill:hover:not(:disabled) {
-  background: var(--studio-inset);
+  background: var(--raise);
 }
 
 .st-pill:disabled {
@@ -284,10 +251,10 @@
 .st-cell {
   position: relative;
   aspect-ratio: 1;
-  border-radius: var(--studio-r-panel);
+  border-radius: var(--radius-panel);
   overflow: hidden;
   border: 2px solid transparent;
-  background: var(--studio-chrome);
+  background: var(--chrome);
   padding: 0;
   cursor: pointer;
   display: flex;
@@ -318,8 +285,8 @@
 }
 
 .st-cell-note {
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
   padding: 0.5rem;
   text-align: center;
 }
@@ -327,8 +294,8 @@
 .st-pulse {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
-  background: var(--studio-fg-muted);
+  border-radius: var(--radius-full);
+  background: var(--fg-muted);
   animation: st-pulse 1.1s ease-in-out infinite;
 }
 
@@ -353,7 +320,7 @@
      outline plus a background identical to the canvas made it read as a
      detached widget floating over a hole. */
   border: none;
-  border-radius: var(--studio-r-panel);
+  border-radius: var(--radius-panel);
   /* Raised, not flush. Recraft's composer gets away with flush because it
      sits under a full transcript and carries a dense row of bordered
      controls; in an empty panel a flush composer has no container at all —
@@ -376,10 +343,10 @@
   gap: 0.25rem;
   max-width: 100%;
   padding: 3px 8px;
-  border: 1px solid var(--studio-hairline);
+  border: 1px solid var(--hairline);
   border-radius: 9999px;
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
 }
 
 .st-attach-name {
@@ -393,8 +360,8 @@
 .st-stale-pin-note {
   margin: 0;
   padding: 8px 12px 0;
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
 }
 
 .st-composer-field {
@@ -409,10 +376,10 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--studio-fg);
+  color: var(--fg);
   font: inherit;
-  font-size: var(--studio-text-content);
-  line-height: var(--studio-lh-content);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
   /* The composer wrapper owns the padding — the old asymmetric
      10/30/6/11 was compensating for the expand toggle's position. */
   padding: 0;
@@ -424,7 +391,7 @@
 }
 
 .st-input::placeholder {
-  color: var(--studio-fg-subtle);
+  color: var(--fg-dim);
 }
 
 /* Expand toggle at the field's top-right corner (spec Row A). */
@@ -440,10 +407,10 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--studio-r-control);
+  border-radius: var(--radius-sm);
   border: none;
   background: transparent;
-  color: var(--studio-fg-muted);
+  color: var(--fg-muted);
   cursor: pointer;
 }
 
@@ -472,19 +439,19 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3125rem;
-  border: 1px solid var(--studio-hairline);
-  background: var(--studio-inset);
-  color: var(--studio-fg);
+  border: 1px solid var(--hairline);
+  background: var(--raise);
+  color: var(--fg);
   height: 32px;
-  border-radius: var(--studio-r-control);
+  border-radius: var(--radius-sm);
   padding: 0 10px;
-  font-size: var(--studio-text-chrome);
-  line-height: var(--studio-lh-chrome);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
   cursor: pointer;
 }
 
 .st-picker-btn:hover {
-  background: var(--studio-inset);
+  background: var(--raise);
 }
 
 /* Opens upward, overlaying the lower thread (observed in the reference). */
@@ -495,12 +462,14 @@
   width: 236px;
   max-height: 300px;
   overflow-y: auto;
-  background: var(--studio-chrome);
-  border: 1px solid var(--studio-hairline);
-  border-radius: var(--studio-r-panel);
-  padding: 0.25rem;
+  /* Floating panel: a step above the chrome it covers, on the same 10px
+     radius as the zoom cluster — 12 made it a third floating radius. */
+  background: var(--float);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
   z-index: 30;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-popover);
 }
 
 .st-picker-row {
@@ -511,28 +480,34 @@
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--studio-fg);
-  border-radius: var(--studio-r-control);
-  padding: 7px 9px;
+  color: var(--fg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
   cursor: pointer;
   text-align: left;
 }
 
 .st-picker-row:hover {
-  background: var(--studio-inset);
+  background: var(--raise);
 }
 
 .st-picker-row-active {
-  background: var(--studio-inset);
+  background: var(--raise);
 }
 
 .st-picker-name {
-  font-size: var(--studio-text-chrome);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  font-weight: var(--weight-ui-active);
 }
 
 .st-picker-hint {
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
+  font-weight: var(--weight-ui);
+  color: var(--fg-muted);
 }
 
 .st-send {
@@ -541,9 +516,9 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--studio-r-control);
+  border-radius: var(--radius-sm);
   border: none;
-  background: var(--studio-fg);
+  background: var(--fg);
   color: var(--on-primary);
   cursor: pointer;
 }
@@ -573,10 +548,10 @@
 
 .st-plane-cell {
   position: absolute;
-  border-radius: var(--studio-r-panel);
+  border-radius: var(--radius-panel);
   overflow: hidden;
   border: 2px solid transparent;
-  background: var(--studio-chrome);
+  background: var(--chrome);
   padding: 0;
   cursor: pointer;
 }
@@ -591,12 +566,12 @@
   justify-content: center;
   text-align: center;
   padding: 1.25rem;
-  font-size: var(--studio-text-content);
-  line-height: var(--studio-lh-content);
-  color: var(--studio-fg-muted);
-  border: 1px solid var(--studio-hairline);
-  border-radius: var(--studio-r-panel);
-  line-height: var(--studio-lh-content);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  color: var(--fg-muted);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  line-height: var(--text-ui-lh);
 }
 
 /* ── Project list overlay (band-1 menu) ── */
@@ -608,9 +583,9 @@
   width: 268px;
   max-height: 50vh;
   overflow-y: auto;
-  background: var(--studio-chrome);
-  border: 1px solid var(--studio-hairline);
-  border-radius: var(--studio-r-panel);
+  background: var(--chrome);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
   padding: 0.25rem;
   z-index: 40;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -618,8 +593,8 @@
 
 .st-projects-empty {
   padding: 0.75rem;
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
 }
 
 .st-projects-row {
@@ -627,16 +602,16 @@
   align-items: center;
   gap: 0.25rem;
   width: 100%;
-  border-radius: var(--studio-r-control);
+  border-radius: var(--radius-sm);
   padding: 2px;
 }
 
 .st-projects-row:hover {
-  background: var(--studio-inset);
+  background: var(--raise);
 }
 
 .st-projects-row-active {
-  background: var(--studio-inset);
+  background: var(--raise);
 }
 
 /* The open button carries the title/date pair and fills the row. */
@@ -649,8 +624,8 @@
   min-width: 0;
   border: none;
   background: transparent;
-  color: var(--studio-fg);
-  border-radius: var(--studio-r-control);
+  color: var(--fg);
+  border-radius: var(--radius-sm);
   padding: 6px 7px;
   cursor: pointer;
   text-align: left;
@@ -661,15 +636,15 @@
   flex: none;
   border: none;
   background: transparent;
-  color: var(--studio-fg-muted);
-  border-radius: var(--studio-r-control);
+  color: var(--fg-muted);
+  border-radius: var(--radius-sm);
   padding: 0.375rem;
-  font-size: var(--studio-text-chrome);
+  font-size: var(--text-meta);
   cursor: pointer;
 }
 
 .st-projects-delete:hover {
-  color: var(--studio-fg);
+  color: var(--fg);
 }
 
 .st-projects-delete-armed {
@@ -677,7 +652,7 @@
 }
 
 .st-projects-title {
-  font-size: var(--studio-text-chrome);
+  font-size: var(--text-meta);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -685,8 +660,8 @@
 
 .st-projects-date {
   flex: none;
-  font-size: var(--studio-text-chrome);
-  color: var(--studio-fg-muted);
+  font-size: var(--text-meta);
+  color: var(--fg-muted);
 }
 
 /* ── Design-system Button overrides ──
@@ -699,26 +674,26 @@
 .st-pill {
   height: 32px !important;
   padding: 0 10px !important;
-  border-radius: var(--studio-r-control) !important;
-  font-size: var(--studio-text-chrome) !important;
-  line-height: var(--studio-lh-chrome) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: var(--text-meta) !important;
+  line-height: var(--text-meta-lh) !important;
   white-space: normal !important;
   justify-content: flex-start !important;
-  background: var(--studio-inset) !important;
-  color: var(--studio-fg) !important;
+  background: var(--raise) !important;
+  color: var(--fg) !important;
 }
 
 .st-pill:hover:not(:disabled) {
-  background: var(--studio-inset) !important;
+  background: var(--raise) !important;
 }
 
 .st-icon-btn {
   height: 32px !important;
   width: 32px !important;
   padding: 0 !important;
-  border-radius: var(--studio-r-control) !important;
+  border-radius: var(--radius-sm) !important;
   background: transparent !important;
-  color: var(--studio-fg-muted) !important;
+  color: var(--fg-muted) !important;
 }
 
 .st-icon-btn:hover {
@@ -730,11 +705,11 @@
   height: 32px !important;
   width: 32px !important;
   padding: 0 !important;
-  border-radius: var(--studio-r-control) !important;
+  border-radius: var(--radius-sm) !important;
 }
 
 .st-send:enabled {
-  background: var(--studio-fg) !important;
+  background: var(--fg) !important;
   color: var(--on-primary) !important;
 }
 
@@ -747,47 +722,49 @@
 .st-picker-btn {
   height: 32px !important;
   padding: 0 10px !important;
-  border-radius: var(--studio-r-control) !important;
-  font-size: var(--studio-text-chrome) !important;
-  line-height: var(--studio-lh-chrome) !important;
-  background: var(--studio-inset) !important;
-  color: var(--studio-fg) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: var(--text-meta) !important;
+  line-height: var(--text-meta-lh) !important;
+  background: var(--raise) !important;
+  color: var(--fg) !important;
 }
 
 .st-picker-btn:hover {
-  background: var(--studio-inset) !important;
+  background: var(--raise) !important;
 }
 
 .st-picker-row {
   height: auto !important;
   width: 100% !important;
-  padding: 7px 9px !important;
-  border-radius: var(--studio-r-control) !important;
+  padding: var(--space-1) var(--space-2-5) !important;
+  font-size: var(--text-ui) !important;
+  line-height: var(--text-ui-lh) !important;
+  border-radius: var(--radius-sm) !important;
   flex-direction: column !important;
   align-items: flex-start !important;
   gap: 1px !important;
   white-space: normal !important;
   background: transparent !important;
-  color: var(--studio-fg) !important;
+  color: var(--fg) !important;
 }
 
 .st-picker-row:hover {
-  background: var(--studio-inset) !important;
+  background: var(--raise) !important;
 }
 
 .st-picker-row-active {
-  background: var(--studio-inset) !important;
+  background: var(--raise) !important;
 }
 
 .st-projects-open {
   height: auto !important;
   width: auto !important;
   padding: 6px 7px !important;
-  border-radius: var(--studio-r-control) !important;
+  border-radius: var(--radius-sm) !important;
   white-space: normal !important;
   justify-content: space-between !important;
   background: transparent !important;
-  color: var(--studio-fg) !important;
+  color: var(--fg) !important;
 }
 
 .st-projects-delete {
@@ -809,28 +786,28 @@
   width: auto !important;
   padding: 2px !important;
   background: transparent !important;
-  color: var(--studio-fg-muted) !important;
+  color: var(--fg-muted) !important;
 }
 
 .st-projects-row:hover {
-  background: var(--studio-inset) !important;
+  background: var(--raise) !important;
 }
 
 .st-projects-row-active {
-  background: var(--studio-inset) !important;
+  background: var(--raise) !important;
 }
 
 .st-cell {
   height: auto !important;
   padding: 0 !important;
-  border-radius: var(--studio-r-panel) !important;
+  border-radius: var(--radius-panel) !important;
   white-space: normal !important;
-  background: var(--studio-chrome) !important;
+  background: var(--chrome) !important;
   border: 2px solid transparent !important;
 }
 
 .st-cell:hover {
-  background: var(--studio-chrome) !important;
+  background: var(--chrome) !important;
 }
 
 .st-cell-selected {
@@ -841,13 +818,13 @@
   /* height comes from the inline style (computed layout) — an !important
      height here would beat the inline value and flatten the cells. */
   padding: 0 !important;
-  border-radius: var(--studio-r-panel) !important;
-  background: var(--studio-chrome) !important;
+  border-radius: var(--radius-panel) !important;
+  background: var(--chrome) !important;
   border: 2px solid transparent !important;
 }
 
 .st-plane-cell:hover {
-  background: var(--studio-chrome) !important;
+  background: var(--chrome) !important;
 }
 
 .st-plane-cell.st-cell-selected {
@@ -862,8 +839,8 @@
   display: flex;
   padding: var(--space-1);
   gap: var(--space-1);
-  background: var(--studio-chrome);
-  border-radius: var(--studio-r-float);
+  background: var(--chrome);
+  border-radius: var(--radius-md);
   z-index: 20;
 }
 

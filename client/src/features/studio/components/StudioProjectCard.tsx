@@ -39,7 +39,7 @@ export function StudioProjectCard({
         aria-label={`Open studio project: ${project.title}`}
         className="flex flex-col"
       >
-        <div className="relative h-[172px] overflow-hidden rounded-md border border-white/10 shadow-[0_16px_36px_-20px_rgba(0,0,0,0.7)] transition-all duration-200 group-hover:-translate-y-[3px] group-hover:border-white/30 group-hover:shadow-[0_22px_46px_-20px_rgba(0,0,0,0.8)]">
+        <div className="border-border group-hover:border-border-strong bg-chrome rounded-panel relative h-[172px] overflow-hidden border transition-colors">
           {project.coverUrl ? (
             <img
               src={project.coverUrl}
@@ -48,7 +48,7 @@ export function StudioProjectCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="text-tool-text-muted bg-muted/40 text-meta flex h-full w-full items-center justify-center font-mono">
+            <div className="text-tool-text-muted text-meta flex h-full w-full items-center justify-center">
               No images
             </div>
           )}
@@ -57,7 +57,7 @@ export function StudioProjectCard({
         <div className="text-foreground text-ui mt-2.5 truncate font-sans font-medium">
           {project.title}
         </div>
-        <div className="text-tool-text-muted text-meta mt-0.5 font-mono">
+        <div className="text-tool-text-muted text-meta mt-0.5">
           {formatRelativeOrDate(new Date(project.updatedAtMs).toISOString())}
         </div>
       </Link>
@@ -77,11 +77,11 @@ export function StudioProjectCard({
           }
         }}
         className={cn(
-          "absolute right-2 top-2 h-7 rounded-md bg-black/60 px-2 opacity-0 backdrop-blur-[4px] transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
+          "ps-btn ps-btn--sm ps-btn--rect bg-float absolute right-2 top-2 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
           armed && "text-meta opacity-100",
         )}
       >
-        {armed ? "Delete?" : <Trash2 size={13} strokeWidth={1.75} />}
+        {armed ? "Delete?" : <Trash2 size={16} strokeWidth={1.75} />}
       </Button>
     </div>
   );
