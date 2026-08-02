@@ -28,7 +28,9 @@
   align-items: center;
   height: 44px;
   flex: none;
-  padding: 0 12px;
+  /* Matches the content column's gutter — the title sat 12px inside the
+     subtitle and the grid, so the page had two left edges. */
+  padding: 0 24px;
   background: var(--chrome);
   /* No rule: it ran the full 1472px, continuing across the canvas where the
      chrome->canvas colour step already separates. The panel header's own
@@ -856,4 +858,42 @@
 .st-float span,
 .st-float .value {
   cursor: default;
+}
+
+/* ── Segmented control ─────────────────────────────────────────────────────
+   A well, not a raised panel: the track is recessed BELOW the floor and the
+   active item rises to chrome. Radius is concentric — 6 outer minus 2 of
+   padding gives 4 inner. */
+.st-segment {
+  display: inline-flex;
+  height: 32px;
+  padding: 2px;
+  gap: 0;
+  border-radius: var(--radius-sm);
+  background: var(--recess);
+}
+
+.st-segment-item {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
+  cursor: pointer;
+  transition: var(--transition-colors);
+}
+
+.st-segment-item:hover {
+  color: var(--fg);
+}
+
+.st-segment-item[data-active="true"] {
+  background: var(--chrome);
+  color: var(--fg);
+  font-weight: var(--weight-ui-active);
 }

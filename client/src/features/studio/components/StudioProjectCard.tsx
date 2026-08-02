@@ -39,7 +39,7 @@ export function StudioProjectCard({
         aria-label={`Open studio project: ${project.title}`}
         className="flex flex-col"
       >
-        <div className="border-border group-hover:border-border-strong bg-chrome rounded-panel relative h-[172px] overflow-hidden border transition-colors">
+        <div className="bg-chrome group-hover:bg-float relative aspect-video overflow-hidden rounded-card transition-colors">
           {project.coverUrl ? (
             <img
               src={project.coverUrl}
@@ -48,7 +48,7 @@ export function StudioProjectCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="text-tool-text-muted text-meta flex h-full w-full items-center justify-center">
+            <div className="text-float text-heading flex h-full w-full items-center justify-center font-semibold">
               No images
             </div>
           )}
@@ -77,8 +77,8 @@ export function StudioProjectCard({
           }
         }}
         className={cn(
-          "ps-btn ps-btn--sm ps-btn--rect bg-float absolute right-2 top-2 opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100",
-          armed && "text-meta opacity-100",
+          "ps-btn ps-btn--rect text-fg absolute right-2 top-2 !h-7 !w-7 bg-white/10 p-0 opacity-0 transition-opacity hover:bg-white/[0.16] focus-visible:opacity-100 group-hover:opacity-100",
+          armed && "w-auto px-2 opacity-100",
         )}
       >
         {armed ? "Delete?" : <Trash2 size={16} strokeWidth={1.75} />}

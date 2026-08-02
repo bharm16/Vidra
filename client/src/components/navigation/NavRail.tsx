@@ -117,16 +117,24 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         </Button>
       </div>
 
-      {/* Primary nav. */}
+      {/* The verb, separated from the destinations. Styled as a nav row it was
+          indistinguishable from Library and Studio, so the rail read as four
+          equal-weight places with nothing to do — the reference tools all put
+          a filled primary at the top of the rail. */}
+      <Link
+        to="/"
+        title={collapsed ? "New session" : undefined}
+        className={cn(
+          "ps-btn ps-btn--md ps-btn--rect ps-btn--primary mb-3",
+          !collapsed && "ps-btn--row justify-center",
+        )}
+      >
+        <Plus strokeWidth={1.75} />
+        {collapsed ? null : <span className="whitespace-nowrap">New session</span>}
+      </Link>
+
+      {/* Destinations. */}
       <div className="flex flex-col gap-1">
-        <RailItem
-          to="/"
-          label="New session"
-          collapsed={collapsed}
-          accent
-          active={active === "new"}
-          icon={<Plus strokeWidth={1.75} />}
-        />
         <RailItem
           to="/history"
           label="Library"
@@ -167,7 +175,7 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
           active === "account" && "bg-active",
         )}
       >
-        <span className="border-border bg-muted text-muted-foreground text-meta flex h-6 w-6 flex-none items-center justify-center rounded-full border font-medium uppercase tracking-normal">
+        <span className="border-border bg-chrome text-fg text-meta flex h-6 w-6 flex-none items-center justify-center rounded-full border font-medium uppercase tracking-normal">
           {accountName.charAt(0)}
         </span>
         {collapsed ? null : (

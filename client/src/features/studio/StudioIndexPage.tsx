@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@promptstudio/system/components/ui/button";
@@ -7,6 +7,20 @@ import { NavRail } from "@components/navigation/NavRail";
 
 import { StudioProjectCard } from "./components/StudioProjectCard";
 import { useStudioProjects } from "./hooks/useStudioProjects";
+import "./studio.css";
+
+/**
+ * Sort orders the roster already carries the fields for. There is no
+ * segmented filter ("Shared with me", "Featured") because sharing does not
+ * exist yet — an inert control would be worse than none.
+ */
+const SORTS = [
+  { id: "opened", label: "Last opened" },
+  { id: "created", label: "Newest" },
+  { id: "name", label: "Name" },
+] as const;
+
+type SortId = (typeof SORTS)[number]["id"];
 
 /**
  * The studio project index — what the Studio rail destination shows.
@@ -32,6 +46,16 @@ const GRID_CLASS =
 export function StudioIndexPage(): React.ReactElement {
   const { projects, loading, error, deleteProject, dismissError } =
     useStudioProjects();
+  const [sort, setSort] = useState<SortId>("opened");
+
+  const sorted = useMemo(() => {
+    const copy = [...projects];
+    if (sort === "name") {
+      return copy.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    const key = sort === "created" ? "createdAtMs" : "updatedAtMs";
+    return copy.sort((a, b) => b[key] - a[key]);
+  }, [projects, sort]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -43,15 +67,30 @@ export function StudioIndexPage(): React.ReactElement {
         {/* The same 44px chrome band the project route carries, so opening a
             project does not shift the whole content area down by 44px. The
             page name sits at the control size here, as it does there. */}
-        <div className="bg-chrome text-fg text-meta flex h-11 flex-none items-center px-3 font-medium">
+        <div className="bg-chrome text-fg text-meta flex h-11 flex-none items-center px-6 font-medium">
           Studio
         </div>
 
-        <header className="flex-none px-6 pb-4 pt-6">
+        <header className="flex flex-none items-end justify-between gap-4 px-6 pb-4 pt-6">
           <p className="text-tool-text-muted text-ui">
             Your image projects — pick up where you left off, or start a new
             one.
           </p>
+          <div className="st-segment" role="group" aria-label="Sort projects">
+            {SORTS.map((option) => (
+              <Button
+                key={option.id}
+                type="button"
+                variant="ghost"
+                className="st-segment-item"
+                data-active={sort === option.id}
+                aria-pressed={sort === option.id}
+                onClick={() => setSort(option.id)}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
         </header>
 
         {error ? (
@@ -83,14 +122,14 @@ export function StudioIndexPage(): React.ReactElement {
                 className="group flex flex-col"
               >
                 <div className="text-tool-text-muted group-hover:text-foreground border-border group-hover:border-border-strong bg-chrome rounded-panel flex h-[172px] items-center justify-center border transition-colors">
-                  <Plus size={20} strokeWidth={1.75} />
+                  <Plus size={16} strokeWidth={1.75} />
                 </div>
                 <div className="text-foreground text-ui mt-2.5 truncate font-sans font-medium">
                   Create new project
                 </div>
               </Link>
 
-              {projects.map((project) => (
+              {sorted.map((project) => (
                 <StudioProjectCard
                   key={project.id}
                   project={project}
