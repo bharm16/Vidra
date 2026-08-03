@@ -79,16 +79,19 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
 
   return (
     <aside
-      className="bg-canvas flex h-full flex-none flex-col overflow-hidden px-2 pb-2 transition-[width] duration-[260ms] ease-out"
+      // 16px gutters, not 8. At 8 the 240px-wide pills had almost no air
+      // either side of them and the filled CTA read as bleeding into the
+      // rail's edges; items reflow to 224 inside the same 256px rail.
+      className="bg-canvas flex h-full flex-none flex-col overflow-hidden px-4 pb-4 transition-[width] duration-[260ms] ease-out"
       style={{ width: collapsed ? 64 : 256 }}
     >
       {/* Header — logo (→ new session) + collapse toggle. */}
       <div
         className={cn(
           // A 44px band flush with the top, so the rail's header baseline is the
-        // topbar's: the 8px of rail padding used to push it down and "Vidra"
-        // sat 9px lower than "Studio".
-        "mb-2 flex h-11 items-center gap-2",
+          // topbar's: the 8px of rail padding used to push it down and "Vidra"
+          // sat 9px lower than "Studio".
+          "mb-2 flex h-11 items-center gap-2",
           collapsed ? "flex-col" : "justify-between",
         )}
       >
@@ -130,7 +133,9 @@ export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
         )}
       >
         <Plus strokeWidth={1.75} />
-        {collapsed ? null : <span className="whitespace-nowrap">New session</span>}
+        {collapsed ? null : (
+          <span className="whitespace-nowrap">New session</span>
+        )}
       </Link>
 
       {/* Destinations. */}

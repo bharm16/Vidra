@@ -1,17 +1,28 @@
 import { MemoryRouter } from "react-router-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { StudioProject } from "@features/studio/api/schemas";
 import { StudioProjectCard } from "../StudioProjectCard";
 
 /**
- * The two-step delete, carried over from the project overlay this card
- * replaced: the first click arms the row, the second confirms. Deleting a
- * studio project takes its whole thread with it, so it must not be one
- * stray click away (UX rule: destructive actions are deliberate and
- * labeled).
+ * Deleting a studio project takes its whole thread with it, so it must never
+ * be one click away (UX rule: destructive actions are deliberate and
+ * labeled). This used to be an arm-then-confirm trash chip; it is now the
+ * conventional overflow menu. The invariant is the same either way and is
+ * what these tests hold: the card's own surface exposes no delete verb, and
+ * reaching one costs a deliberate second step that names the action.
  */
+
+// Radix menus measure themselves via ResizeObserver, which jsdom lacks.
+class ResizeObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+window.ResizeObserver =
+  window.ResizeObserver ?? (ResizeObserverStub as typeof ResizeObserver);
 
 const project: StudioProject = {
   id: "p1",
@@ -29,35 +40,40 @@ function renderCard(onDelete = vi.fn()) {
   return onDelete;
 }
 
-describe("StudioProjectCard — two-step delete", () => {
-  it("arms on the first click and does not delete", () => {
-    const onDelete = renderCard();
+describe("StudioProjectCard — delete is never one click", () => {
+  it("exposes no delete control until the menu is opened", () => {
+    renderCard();
 
-    fireEvent.click(screen.getByLabelText("Delete Fox Logo"));
-
-    expect(onDelete).not.toHaveBeenCalled();
+    // The chip is an overflow menu, not a verb: nothing on the resting card
+    // deletes anything.
     expect(
-      screen.getByLabelText("Confirm delete Fox Logo"),
+      screen.getByLabelText("Project options: Fox Logo"),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Delete project")).toBeNull();
   });
 
-  it("deletes on the confirming second click", () => {
+  it("opening the menu still does not delete", async () => {
+    const user = userEvent.setup();
     const onDelete = renderCard();
 
-    fireEvent.click(screen.getByLabelText("Delete Fox Logo"));
-    fireEvent.click(screen.getByLabelText("Confirm delete Fox Logo"));
+    await user.click(screen.getByLabelText("Project options: Fox Logo"));
+
+    expect(await screen.findByRole("menuitem")).toHaveTextContent(
+      "Delete project",
+    );
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("deletes on the named item inside the menu", async () => {
+    const user = userEvent.setup();
+    const onDelete = renderCard();
+
+    await user.click(screen.getByLabelText("Project options: Fox Logo"));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Delete project" }),
+    );
 
     expect(onDelete).toHaveBeenCalledWith("p1");
-  });
-
-  it("disarms when the pointer leaves the card", () => {
-    const onDelete = renderCard();
-
-    fireEvent.click(screen.getByLabelText("Delete Fox Logo"));
-    fireEvent.pointerLeave(screen.getByLabelText("Confirm delete Fox Logo"));
-
-    expect(screen.getByLabelText("Delete Fox Logo")).toBeInTheDocument();
-    expect(onDelete).not.toHaveBeenCalled();
   });
 
   it("opens the project's own workspace URL", () => {

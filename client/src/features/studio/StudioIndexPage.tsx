@@ -1,8 +1,16 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
+import { CaretDown } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { AmbientLight, Grain } from "@/components/atmosphere";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@promptstudio/system/components/ui/dropdown-menu";
+import { Grain } from "@/components/atmosphere";
 import { NavRail } from "@components/navigation/NavRail";
 
 import { StudioProjectCard } from "./components/StudioProjectCard";
@@ -10,9 +18,14 @@ import { useStudioProjects } from "./hooks/useStudioProjects";
 import "./studio.css";
 
 /**
- * Sort orders the roster already carries the fields for. There is no
- * segmented filter ("Shared with me", "Featured") because sharing does not
- * exist yet — an inert control would be worse than none.
+ * Sort orders the roster already carries the fields for.
+ *
+ * These live in a dropdown, not a segmented track. A segmented control picks
+ * between mutually-exclusive *views* — scope, in the reference tool ("Shared
+ * with me", "Featured"). Sort order is a setting on whatever view you are
+ * already in, and putting it in the track spent the one control that scope
+ * will want. Vidra has no sharing, so there is no scope to segment yet and
+ * the track is simply absent rather than inert.
  */
 const SORTS = [
   { id: "opened", label: "Last opened" },
@@ -37,16 +50,11 @@ type SortId = (typeof SORTS)[number]["id"];
  * rail, handoff atmosphere, header, card grid.
  */
 
-/* Reflows instead of stepping through fixed breakpoints — the grid was four
-   335px columns, so it neither filled a wide window nor collapsed gracefully.
-   One gap value on the scale, not 22x20. */
-const GRID_CLASS =
-  "grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6";
-
 export function StudioIndexPage(): React.ReactElement {
   const { projects, loading, error, deleteProject, dismissError } =
     useStudioProjects();
   const [sort, setSort] = useState<SortId>("opened");
+  const activeSort = SORTS.find((option) => option.id === sort) ?? SORTS[0];
 
   const sorted = useMemo(() => {
     const copy = [...projects];
@@ -61,7 +69,6 @@ export function StudioIndexPage(): React.ReactElement {
     <div className="flex h-screen overflow-hidden">
       <NavRail active="studio" />
       <div className="text-foreground bg-canvas relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <AmbientLight />
         <Grain />
 
         {/* The same 44px chrome band the project route carries, so opening a
@@ -71,26 +78,31 @@ export function StudioIndexPage(): React.ReactElement {
           Studio
         </div>
 
-        <header className="flex flex-none items-end justify-between gap-4 px-6 pb-4 pt-6">
-          <p className="text-tool-text-muted text-ui">
-            Your image projects — pick up where you left off, or start a new
-            one.
-          </p>
-          <div className="st-segment" role="group" aria-label="Sort projects">
-            {SORTS.map((option) => (
-              <Button
-                key={option.id}
-                type="button"
-                variant="ghost"
-                className="st-segment-item"
-                data-active={sort === option.id}
-                aria-pressed={sort === option.id}
-                onClick={() => setSort(option.id)}
+        {/* Controls get their own full-width line at the content origin, with
+            an even 24px above and below — the reference tool's rhythm is band,
+            controls, grid at one interval. The sort used to sit right-aligned
+            on an explanatory sentence, which put it on no origin at all and
+            bottom-aligned the two by accident. The sentence went with it:
+            onboarding copy that is noise by the third visit. */}
+        <header className="flex flex-none items-center gap-2 px-6 pb-6 pt-6">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="st-sort" aria-label="Sort projects">
+              {activeSort.label}
+              <CaretDown aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuRadioGroup
+                value={sort}
+                onValueChange={(next) => setSort(next as SortId)}
               >
-                {option.label}
-              </Button>
-            ))}
-          </div>
+                {SORTS.map((option) => (
+                  <DropdownMenuRadioItem key={option.id} value={option.id}>
+                    {option.label}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         {error ? (
@@ -111,22 +123,25 @@ export function StudioIndexPage(): React.ReactElement {
           {loading ? (
             <p className="text-tool-text-muted text-ui">Loading projects…</p>
           ) : (
-            <div className={GRID_CLASS}>
+            <div className="st-project-grid">
               {/* The create tile leads the grid — a destination for the
                   creator who came here to start, not to resume. It routes
                   rather than writing: the project is born on the first
-                  message, so abandoning the composer leaves nothing behind. */}
+                  message, so abandoning the composer leaves nothing behind.
+
+                  Dimensionally it IS a project tile: same thumb ratio, radius
+                  and fill, so the row's thumb bottoms and caption baselines
+                  are one line. Only the glyph differs — deliberately off the
+                  16px icon scale, because it is a target, not an icon. */}
               <Link
                 to="/studio/new"
                 aria-label="Create new project"
-                className="group flex flex-col"
+                className="st-project-card flex flex-col"
               >
-                <div className="text-tool-text-muted group-hover:text-foreground border-border group-hover:border-border-strong bg-chrome rounded-panel flex h-[172px] items-center justify-center border transition-colors">
-                  <Plus size={16} strokeWidth={1.75} />
+                <div className="st-card-thumb rounded-card flex aspect-video items-center justify-center overflow-hidden">
+                  <Plus size={40} strokeWidth={1.75} className="text-fg-dim" />
                 </div>
-                <div className="text-foreground text-ui mt-2.5 truncate font-sans font-medium">
-                  Create new project
-                </div>
+                <div className="st-card-title truncate">Create new project</div>
               </Link>
 
               {sorted.map((project) => (

@@ -860,40 +860,111 @@
   cursor: default;
 }
 
-/* ── Segmented control ─────────────────────────────────────────────────────
-   A well, not a raised panel: the track is recessed BELOW the floor and the
-   active item rises to chrome. Radius is concentric — 6 outer minus 2 of
-   padding gives 4 inner. */
-.st-segment {
-  display: inline-flex;
-  height: 32px;
-  padding: 2px;
-  gap: 0;
-  border-radius: var(--radius-sm);
-  background: var(--recess);
-}
-
-.st-segment-item {
+/* ── Sort control ──────────────────────────────────────────────────────────
+   A well, not a raised panel: the track is recessed BELOW the floor, and
+   rises to it on hover. This was a segmented track holding sort orders — but
+   a segmented control picks between mutually-exclusive views, and sort is a
+   setting on the view you are already in. */
+.st-sort {
   display: inline-flex;
   align-items: center;
-  height: 28px;
-  padding: 0 var(--space-2);
+  gap: var(--space-1-5);
+  height: var(--control-md);
+  padding: 0 var(--space-2-5);
   border: none;
-  border-radius: var(--radius-xs);
-  background: transparent;
-  color: var(--fg-muted);
+  border-radius: var(--radius-sm);
+  background: var(--recess);
+  color: var(--fg);
   font-size: var(--text-meta);
   line-height: var(--text-meta-lh);
+  font-weight: var(--weight-ui-active);
   cursor: pointer;
   transition: var(--transition-colors);
 }
 
-.st-segment-item:hover {
-  color: var(--fg);
+.st-sort:hover,
+.st-sort[data-state="open"] {
+  background: var(--chrome);
 }
 
-.st-segment-item[data-active="true"] {
+/* ── Project index ─────────────────────────────────────────────────────────
+   Tight across, loose down: a row reads as one group and the eye then drops.
+   A uniform 24px lattice has no reading direction — and it also cost a whole
+   column, because auto-fill only lays six 280px tracks once 6×280 + 5×gap
+   fits the content width. At a 24px gap that is 1800px; at 12px, 1740. */
+.st-project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  column-gap: var(--space-3);
+  row-gap: var(--space-6);
+}
+
+/* One thumb treatment for every tile in the grid, the create tile included.
+   They used to carry different heights, radii and borders, so a row's thumb
+   bottoms and caption baselines disagreed by 13px. */
+.st-card-thumb {
+  background: var(--chrome);
+  transition: var(--transition-colors);
+}
+
+.st-project-card:hover .st-card-thumb {
+  background: var(--float);
+  /* An outline, not a border: painted outside the box, so arming a card on
+     hover cannot reflow the grid. At rest there is no ring at all. */
+  outline: 1px solid var(--hairline);
+}
+
+/* An overlay, not a solid. The old #333 was the same value as the hover
+   fill, so the label went invisible exactly when the pointer arrived. 20%
+   white composites to a readable grey on the resting fill and survives the
+   hover step too. */
+.st-card-empty {
+  color: oklch(100% 0 0deg / 0.2);
+  font-size: 26px;
+  font-weight: 580;
+  line-height: 32px;
+  letter-spacing: -0.035em;
+}
+
+/* Geist is variable, and the half-stops are what make a caption read dense
+   at this size — 500/400 sets loose under a 280px thumb. */
+.st-card-title {
+  margin-top: var(--space-2);
+  color: var(--fg);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  font-weight: 550;
+}
+
+.st-card-meta {
+  margin-top: var(--space-0-5);
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
+  font-weight: 450;
+}
+
+/* Opaque fill plus hairline, not a bare white overlay: 10% white reads fine
+   over an empty dark thumb and disappears over a bright generated one. */
+.st-card-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
   background: var(--chrome);
   color: var(--fg);
-  font-weight: var(--weight-ui-active);
+  cursor: pointer;
+  opacity: 0;
+  transition: var(--transition-opacity);
+}
+
+/* Stays up while its own menu is open — otherwise travelling to the menu
+   takes the pointer off the card and hides the trigger under it. */
+.st-project-card:hover .st-card-menu,
+.st-card-menu:focus-visible,
+.st-card-menu[data-state="open"] {
+  opacity: 1;
 }

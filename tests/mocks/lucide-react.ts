@@ -39,6 +39,7 @@ export const Maximize = icon("Maximize");
 export const Maximize2 = icon("Maximize2");
 export const Minus = icon("Minus");
 export const MessageCircle = icon("MessageCircle");
+export const MoreHorizontal = icon("MoreHorizontal");
 export const MoreVertical = icon("MoreVertical");
 export const CircleHelp = icon("CircleHelp");
 export const Library = icon("Library");
