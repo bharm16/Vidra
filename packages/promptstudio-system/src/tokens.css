@@ -315,8 +315,11 @@
        chrome — so the ladder needs a third step, not a reused second one. */
     --float: oklch(32% 0 0);
     /* And a fourth, going the other way: a well is recessed BELOW the floor,
-       which is what a segmented track or a sort control sits in. */
-    --recess: oklch(15.5% 0 0);
+       which is what a segmented track or a sort control sits in. 15.5%
+       rendered #0c0c0c — a 15-level drop, deeper than chrome's 14-level rise,
+       so the well shouted louder than the content sitting on it. OKLCH L is a
+       cube-root scale: #121212 is 18.2%, not 15.5%. */
+    --recess: oklch(18.2% 0 0);
     --raise: oklch(100% 0 0 / 0.07);
     --hairline: oklch(100% 0 0 / 0.12);
     --fg: oklch(98.5% 0 0);
