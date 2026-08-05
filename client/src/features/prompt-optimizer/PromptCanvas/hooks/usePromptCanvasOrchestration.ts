@@ -49,6 +49,9 @@ import {
 import { serializeKeyframes } from "@features/prompt-optimizer/utils/keyframeTransforms";
 
 import type { PromptCanvasViewProps } from "../components/PromptCanvasView.types";
+import { LABELLED_HIGHLIGHT_SELECTOR } from "@features/span-highlighting/config/spanSelectors";
+import { isEditableTarget } from "@components/KeyboardShortcuts/editableTarget";
+import { isMac } from "@components/KeyboardShortcuts/shortcuts.config";
 
 /**
  * PromptCanvas orchestration: composes the canvas's hooks, effects, and
@@ -404,7 +407,7 @@ export function usePromptCanvasOrchestration({
     const root = editorRef.current;
     if (!root) return;
     const interval = window.setInterval(() => {
-      const nodes = root.querySelectorAll("span.value-word[data-span-id]");
+      const nodes = root.querySelectorAll(LABELLED_HIGHLIGHT_SELECTOR);
       if (!nodes.length) return;
       const node = nodes[
         Math.floor(Math.random() * nodes.length)
@@ -505,17 +508,8 @@ export function usePromptCanvasOrchestration({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      const target = event.target as HTMLElement | null;
-      const isEditable =
-        !!target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable);
+      if (isEditableTarget(event.target)) return;
 
-      if (isEditable) return;
-
-      const isMac = navigator.platform.toUpperCase().includes("MAC");
       const isMod = isMac ? event.metaKey : event.ctrlKey;
 
       if (!isMod || !["1", "2", "3"].includes(event.key)) return;

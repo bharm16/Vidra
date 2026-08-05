@@ -18,6 +18,10 @@ import type { LockedSpan } from "@features/prompt-optimizer/types";
 import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
+import {
+  HIGHLIGHT_SELECTOR,
+  spanIdSelector,
+} from "@features/span-highlighting/config/spanSelectors";
 
 const log = logger.child("useLockedSpanInteractions");
 
@@ -186,7 +190,7 @@ export const useLockedSpanInteractions = ({
       return;
     }
     const editor = editorRef.current;
-    const allHighlights = editor.querySelectorAll(".value-word");
+    const allHighlights = editor.querySelectorAll(HIGHLIGHT_SELECTOR);
     allHighlights.forEach((highlight) => {
       const element = highlight as HTMLElement;
       const spanId = element.dataset?.spanId;
@@ -217,7 +221,7 @@ export const useLockedSpanInteractions = ({
     }
 
     const spanElement = editorRef.current.querySelector(
-      `[data-span-id="${hoveredSpanId}"]`,
+      spanIdSelector(hoveredSpanId),
     ) as HTMLElement | null;
 
     if (!spanElement) {

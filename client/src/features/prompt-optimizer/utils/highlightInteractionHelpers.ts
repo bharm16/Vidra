@@ -1,3 +1,4 @@
+import { HIGHLIGHT_CLASS } from "@features/span-highlighting/config/spanSelectors";
 /**
  * Finds a highlighted word element from a click target by traversing up the DOM tree.
  */
@@ -12,7 +13,7 @@ export function findHighlightNode(
   let node: HTMLElement | null = targetElement;
 
   while (node && node !== rootElement) {
-    if (node.classList && node.classList.contains("value-word")) {
+    if (node.classList && node.classList.contains(HIGHLIGHT_CLASS)) {
       return node;
     }
     node = node.parentElement;

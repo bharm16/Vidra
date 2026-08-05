@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { RefObject } from "react";
 
 import type { PromptCanvasState } from "../types";
+import { HIGHLIGHT_SELECTOR } from "@features/span-highlighting/config/spanSelectors";
 
 export interface UseSpanSelectionEffectsOptions {
   editorRef: RefObject<HTMLElement>;
@@ -49,7 +50,7 @@ export function useSpanSelectionEffects({
     if (!editorRef.current || !enableMLHighlighting) return;
 
     const editor = editorRef.current;
-    const allHighlights = editor.querySelectorAll(".value-word");
+    const allHighlights = editor.querySelectorAll(HIGHLIGHT_SELECTOR);
     const selectedClasses = [
       "border-2",
       "ring-4",

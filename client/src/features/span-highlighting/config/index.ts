@@ -19,3 +19,12 @@ export { calculateSmartDebounce } from "./debounce";
 
 // Highlight styles
 export { getHighlightClassName, applyHighlightStyles } from "./highlightStyles";
+
+// How other modules find a rendered highlight
+export {
+  HIGHLIGHT_CLASS,
+  HIGHLIGHT_SELECTOR,
+  LABELLED_HIGHLIGHT_SELECTOR,
+  SPAN_ID_ATTR,
+  spanIdSelector,
+} from "./spanSelectors";

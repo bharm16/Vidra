@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
+import { spanIdSelector } from "@features/span-highlighting/config/spanSelectors";
 
 type OverlayState = "closed" | "opening" | "open" | "closing";
 
@@ -17,13 +18,6 @@ interface UseOutlineOverlayReturn {
   outlineOverlayActive: boolean;
   openOutlineOverlay: () => void;
   closeOutlineOverlay: () => void;
-}
-
-function escapeAttr(value: string): string {
-  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
-    return CSS.escape(value);
-  }
-  return value.replace(/["\\]/g, "\\$&");
 }
 
 export function useOutlineOverlay({
@@ -108,7 +102,7 @@ export function useOutlineOverlay({
     }
 
     const el = root.querySelector(
-      `[data-span-id="${escapeAttr(hoveredSpanId)}"]`,
+      spanIdSelector(hoveredSpanId),
     ) as HTMLElement | null;
     if (!el) return;
     el.classList.add("brightness-90");

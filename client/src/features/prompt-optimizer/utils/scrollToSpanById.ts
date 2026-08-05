@@ -1,13 +1,9 @@
+import { spanIdSelector } from "@features/span-highlighting/config/spanSelectors";
 export function scrollToSpanById(spanId: string): void {
   if (!spanId || typeof document === "undefined") return;
 
-  const safeId =
-    typeof CSS !== "undefined" && typeof CSS.escape === "function"
-      ? CSS.escape(spanId)
-      : spanId.replace(/["\\]/g, "\\$&");
-
   const target = document.querySelector(
-    `[data-span-id="${safeId}"]`,
+    spanIdSelector(spanId),
   ) as HTMLElement | null;
 
   if (!target) return;

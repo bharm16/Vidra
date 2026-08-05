@@ -4,6 +4,7 @@
 
 import type { RefObject } from "react";
 import { logger } from "@/services/LoggingService";
+import { spanIdSelector } from "@features/span-highlighting/config/spanSelectors";
 
 const log = logger.child("spanFormatting");
 
@@ -27,7 +28,7 @@ export function scrollToSpan(
 
   // Find the highlight wrapper with matching span ID
   const wrapper = editorRef.current.querySelector(
-    `[data-span-id="${span.id}"]`,
+    spanIdSelector(span.id),
   ) as HTMLElement | null;
 
   if (!wrapper) {

@@ -4,6 +4,8 @@
  * CSS class names and style properties for highlight elements.
  */
 
+import { HIGHLIGHT_CLASS } from "./spanSelectors";
+
 export interface HighlightColor {
   bg: string;
   border: string;
@@ -17,7 +19,7 @@ export function getHighlightClassName(
   category: string | null | undefined,
 ): string {
   const baseClasses = [
-    "value-word",
+    HIGHLIGHT_CLASS,
     "relative",
     "cursor-pointer",
     "transition-colors",

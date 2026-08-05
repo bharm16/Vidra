@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import type { RefObject } from "react";
+import { HIGHLIGHT_SELECTOR } from "@features/span-highlighting/config/spanSelectors";
 
 const COHERENCE_BASE_CLASSES = [
   "underline",
@@ -54,7 +55,7 @@ export function useCoherenceSpanMarkers({
     const editor = editorRef.current;
     if (!editor) return;
 
-    const highlightNodes = editor.querySelectorAll(".value-word");
+    const highlightNodes = editor.querySelectorAll(HIGHLIGHT_SELECTOR);
     if (!highlightNodes.length) return;
 
     const isActive = enableMLHighlighting && showHighlights;
