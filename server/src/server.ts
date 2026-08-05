@@ -14,6 +14,8 @@ import type Redis from "ioredis";
 import type { ServiceConfig } from "./config/services.config.ts";
 import { logger } from "./infrastructure/Logger.ts";
 import { closeRedisClient } from "./config/redis.ts";
+import { isTransientError } from "./utils/transientErrors.ts";
+import { toError } from "@shared/utils/error";
 import type { DIContainer } from "./infrastructure/DIContainer.ts";
 import type { IPostHogClient } from "./infrastructure/PostHogClient.ts";
 import type { SpanLabelingCacheService } from "./services/cache/SpanLabelingCacheService.ts";
@@ -28,40 +30,6 @@ import type { BillingProfileRepairWorker } from "./services/payment/BillingProfi
 import type { DlqReprocessorWorker } from "./services/video-generation/jobs/DlqReprocessorWorker.ts";
 import type { VideoJobReconciler } from "./services/video-generation/jobs/VideoJobReconciler.ts";
 import { getRuntimeFlags } from "./config/feature-flags.ts";
-
-const OPERATIONAL_REJECTION_CODES = new Set([
-  "aborted",
-  "cancelled",
-  "deadline-exceeded",
-  "eai_again",
-  "econnrefused",
-  "econnreset",
-  "enotfound",
-  "etimedout",
-  "resource-exhausted",
-  "unavailable",
-]);
-
-const OPERATIONAL_REJECTION_HINTS = [
-  "aborted",
-  "cancelled",
-  "connection reset",
-  "deadline exceeded",
-  "rate limit",
-  "resource exhausted",
-  "service unavailable",
-  "temporarily unavailable",
-  "timed out",
-  "timeout",
-];
-
-function toError(reason: unknown): Error {
-  if (reason instanceof Error) {
-    return reason;
-  }
-
-  return new Error(String(reason));
-}
 
 function isFatalUnhandledRejection(reason: unknown): boolean {
   if (!reason || typeof reason !== "object") {
@@ -83,21 +51,11 @@ function isFatalUnhandledRejection(reason: unknown): boolean {
     return true;
   }
 
-  const codeRaw = (reason as { code?: unknown }).code;
-  const code =
-    typeof codeRaw === "string" && codeRaw.trim().length > 0
-      ? codeRaw.trim().toLowerCase()
-      : null;
-  if (code && OPERATIONAL_REJECTION_CODES.has(code)) {
-    return false;
-  }
-
-  const message = error.message.toLowerCase();
-  if (OPERATIONAL_REJECTION_HINTS.some((hint) => message.includes(hint))) {
-    return false;
-  }
-
-  return true;
+  // "Did the world misbehave, or did we?" is not this file's question to
+  // answer — @utils/transientErrors owns it, and owns it for the retry paths
+  // too. This used to be a second pair of tables here, missing `socket hang
+  // up` and `fetch failed`; a miss on this path exits the process.
+  return !isTransientError(reason);
 }
 
 /**

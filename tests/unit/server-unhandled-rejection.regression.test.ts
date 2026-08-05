@@ -18,6 +18,56 @@ describe("regression: unhandled rejection classification", () => {
     vi.restoreAllMocks();
   });
 
+  /**
+   * Regression: the classifier used to keep its own pair of tables here rather
+   * than asking `@utils/transientErrors`, and they had drifted apart. The
+   * shared set knew `socket hang up` and `fetch failed` — the two commonest
+   * undici network failures — and this file did not, so either one arriving as
+   * an unhandled rejection took the whole process down instead of being logged
+   * and survived.
+   */
+  const expectSurvives = (reason: unknown): void => {
+    const listeners = new Map<string, ProcessHandler>();
+    vi.spyOn(process, "on").mockImplementation(((
+      event: string,
+      handler: ProcessHandler,
+    ) => {
+      listeners.set(event, handler);
+      return process;
+    }) as typeof process.on);
+
+    const close = vi.fn();
+    const server = { close } as unknown as Server;
+    const container = {
+      resolve: vi.fn(() => {
+        throw new Error("not registered");
+      }),
+    };
+
+    setupGracefulShutdown(server, container as never);
+    listeners.get("unhandledRejection")?.(reason, Promise.resolve());
+
+    expect(close).not.toHaveBeenCalled();
+  };
+
+  it("survives a socket hang up rejection instead of shutting down", () => {
+    expectSurvives(new Error("socket hang up"));
+  });
+
+  it("survives a fetch failed rejection instead of shutting down", () => {
+    expectSurvives(Object.assign(new Error("fetch failed"), { code: "" }));
+  });
+
+  it("survives an EPIPE rejection instead of shutting down", () => {
+    expectSurvives(Object.assign(new Error("write EPIPE"), { code: "EPIPE" }));
+  });
+
+  it("survives an ENETUNREACH rejection instead of shutting down", () => {
+    expectSurvives(
+      Object.assign(new Error("connect ENETUNREACH"), { code: "ENETUNREACH" }),
+    );
+  });
+
   it("does not trigger shutdown for operational rejections in classified mode", () => {
     const listeners = new Map<string, ProcessHandler>();
     vi.spyOn(process, "on").mockImplementation(((

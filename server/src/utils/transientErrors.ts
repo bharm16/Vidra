@@ -6,11 +6,15 @@
  * compose on top of this shared set.
  */
 
+import { toErrorMessage } from "@shared/utils/error";
+
 /**
  * Message substrings that indicate a transient/retryable failure
  * regardless of the originating service.
  */
 const TRANSIENT_MESSAGE_HINTS = [
+  "aborted",
+  "cancelled",
   "timed out",
   "timeout",
   "etimedout",
@@ -29,6 +33,22 @@ const TRANSIENT_MESSAGE_HINTS = [
   "socket hang up",
   "fetch failed",
 ] as const;
+
+/**
+ * Node/libuv error codes for a network that misbehaved rather than a caller
+ * that did. Kept beside the gRPC set because a process-level classifier needs
+ * both: an unhandled rejection can carry either.
+ */
+const TRANSIENT_NETWORK_CODES = new Set([
+  "eai_again",
+  "econnaborted",
+  "econnrefused",
+  "econnreset",
+  "enetunreach",
+  "enotfound",
+  "epipe",
+  "etimedout",
+]);
 
 /**
  * Firestore gRPC status codes that represent transient failures.
@@ -61,13 +81,6 @@ function extractErrorCode(error: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
-}
-
 /**
  * Check if an error message contains any known transient failure hints.
  */
@@ -90,11 +103,27 @@ export function isTransientFirestoreError(error: unknown): boolean {
 }
 
 /**
- * Generic transient error check.
- * Returns true for network-level failures that any service might encounter.
- * Domain-specific code should use the more specific variants
- * (e.g. `isTransientFirestoreError`) when available.
+ * Generic transient error check — the question a caller with no domain asks:
+ * "did the world misbehave, or did we?"
+ *
+ * Matches a network code, a gRPC status, or a message hint. Domain-specific
+ * code should use the narrower variants (e.g. `isTransientFirestoreError`)
+ * when it knows what it is talking to.
+ *
+ * This used to test message hints only, which is why `server.ts` — the
+ * process-level unhandled-rejection classifier, which must weigh codes too —
+ * grew its own pair of tables instead. Those tables then drifted: they were
+ * missing `socket hang up` and `fetch failed`, the two commonest undici
+ * failures, and there a miss means the process exits rather than retries.
  */
 export function isTransientError(error: unknown): boolean {
+  const code = extractErrorCode(error);
+  if (
+    code &&
+    (TRANSIENT_NETWORK_CODES.has(code) || TRANSIENT_FIRESTORE_CODES.has(code))
+  ) {
+    return true;
+  }
+
   return hasTransientMessageHint(error);
 }
