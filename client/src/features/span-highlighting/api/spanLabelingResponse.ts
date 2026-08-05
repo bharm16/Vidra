@@ -1,17 +1,12 @@
 import { z } from "zod";
 import { ApiResponseSchema } from "@shared/schemas/api.schemas";
+import { isRecord } from "@shared/utils/typeGuards";
 import type { LabelSpansResponse, SpanLabel } from "./spanLabelingTypes";
 
 // The envelope is the hard contract; the payload stays `unknown` because the
 // span reshaping below is intentionally tolerant (invalid spans are dropped,
 // not rejected wholesale).
 const LabelSpansEnvelopeSchema = ApiResponseSchema(z.unknown());
-
-type UnknownRecord = Record<string, unknown>;
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === "object" && value !== null;
-}
 
 export function parseSpanLabel(value: unknown): SpanLabel | null {
   if (!isRecord(value)) return null;

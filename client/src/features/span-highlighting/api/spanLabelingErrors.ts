@@ -1,3 +1,5 @@
+import { isRecord } from "@shared/utils/typeGuards";
+
 interface RequestError extends Error {
   status?: number;
 }
@@ -20,8 +22,4 @@ export async function buildRequestError(res: Response): Promise<RequestError> {
     status: res.status,
   });
   return error;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }

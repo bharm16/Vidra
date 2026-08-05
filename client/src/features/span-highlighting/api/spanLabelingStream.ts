@@ -1,3 +1,4 @@
+import { isRecord } from "@shared/utils/typeGuards";
 import type { SpanLabel } from "./spanLabelingTypes";
 import { parseSpanLabel } from "./spanLabelingResponse";
 
@@ -74,8 +75,4 @@ export async function readSpanLabelStream(
   }
 
   return { spans, linesProcessed, parseErrors };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
