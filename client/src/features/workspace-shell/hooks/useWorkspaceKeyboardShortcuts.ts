@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { dispatchPromptFocusIntent } from "../events";
+import { isEditableTarget } from "@components/KeyboardShortcuts/editableTarget";
 
 /**
  * Mounts global keyboard shortcuts for the unified workspace.
@@ -19,25 +20,11 @@ export function useWorkspaceKeyboardShortcuts(): void {
       const isMod = event.metaKey || event.ctrlKey;
       if (!isMod || key !== "k") return;
 
-      // Skip when the user is typing into a text input or contenteditable
-      // surface — Cmd+K should jump to the composer from the canvas, not
-      // hijack a keystroke from the editor itself or the project rename
-      // input. This also prevents the unconditional preventDefault from
-      // shadowing future native shortcuts in inputs that get added later.
-      // Use `closest("[contenteditable]")` alongside `isContentEditable`
-      // because the keydown target may be a nested element inside an
-      // editable region, and jsdom's `isContentEditable` getter is
-      // unreliable in tests.
-      const target = event.target;
-      if (target instanceof HTMLElement) {
-        const tag = target.tagName;
-        const inEditable =
-          target.isContentEditable ||
-          target.closest('[contenteditable="true"]') !== null;
-        if (inEditable || tag === "INPUT" || tag === "TEXTAREA") {
-          return;
-        }
-      }
+      // Skip when the user is typing — Cmd+K should jump to the composer from
+      // the canvas, not hijack a keystroke from the editor itself or the
+      // project rename input. This also prevents the unconditional
+      // preventDefault from shadowing native shortcuts in inputs added later.
+      if (isEditableTarget(event.target)) return;
 
       event.preventDefault();
       dispatchPromptFocusIntent({ source: "tool-rail" });

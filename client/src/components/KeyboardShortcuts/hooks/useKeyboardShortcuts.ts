@@ -1,18 +1,6 @@
 import { useEffect } from "react";
 import { isMac } from "../shortcuts.config";
-
-// `closest()` walks up the parent chain, so this catches both direct hits
-// (input/textarea/select) and nested editor hosts (rich-text editors that
-// dispatch from a leaf node inside a contenteditable wrapper). The
-// attribute-value enumeration is required because a bare `[contenteditable]`
-// selector also matches `contenteditable="false"`, which is NOT editable.
-const EDITABLE_SELECTOR =
-  'input, textarea, select, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]';
-
-const isEditableTarget = (target: EventTarget | null): boolean => {
-  if (!(target instanceof Element)) return false;
-  return target.closest(EDITABLE_SELECTOR) !== null;
-};
+import { isEditableTarget } from "../editableTarget";
 
 export interface KeyboardShortcutsCallbacks {
   openShortcuts?: () => void;
