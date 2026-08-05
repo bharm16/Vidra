@@ -85,13 +85,6 @@ const CameraMotionModal = lazy(() =>
 
 interface CanvasWorkspaceProps {
   generationsPanelProps: GenerationsPanelProps;
-  copied: boolean;
-  canUndo: boolean;
-  canRedo: boolean;
-  onCopy: () => void;
-  onShare: () => void;
-  onUndo: () => void;
-  onRedo: () => void;
   editorRef: React.RefObject<HTMLDivElement>;
   onTextSelection: (event: React.MouseEvent<HTMLDivElement>) => void;
   onHighlightClick: (event: React.MouseEvent<HTMLDivElement>) => void;

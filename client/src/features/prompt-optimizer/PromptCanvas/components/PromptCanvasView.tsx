@@ -98,13 +98,6 @@ export function PromptCanvasView({
         generationsPanelProps={generationsPanelProps}
         onReuseGeneration={onReuseGeneration}
         onToggleGenerationFavorite={onToggleGenerationFavorite}
-        copied={copied}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onCopy={onCopy}
-        onShare={onShare}
-        onUndo={onUndo}
-        onRedo={onRedo}
         editorRef={editorRef as React.RefObject<HTMLDivElement>}
         onTextSelection={onTextSelection}
         onHighlightClick={onHighlightClick}

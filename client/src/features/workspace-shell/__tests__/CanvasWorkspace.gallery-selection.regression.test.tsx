@@ -152,13 +152,6 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
     versions: [],
     promptVersionId: "version-1",
   } as unknown as GenerationsPanelProps,
-  copied: false,
-  canUndo: false,
-  canRedo: false,
-  onCopy: vi.fn(),
-  onShare: vi.fn(),
-  onUndo: vi.fn(),
-  onRedo: vi.fn(),
   editorRef:
     React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
   onTextSelection: vi.fn(),
