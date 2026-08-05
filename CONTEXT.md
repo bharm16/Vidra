@@ -136,6 +136,10 @@ The persisted unit of studio work: one conversation thread plus every image it p
 
 One studio turn's set of sibling variations, generated together and landing as one cluster on the studio plane. Cluster placement is derived from thread order — nothing spatial is stored, the same rule the space lives by. Resolved 2026-07-24 during studio grilling. Avoid synonyms: grid, set, generation group.
 
+### Camera focus
+
+What the shared plane centers on: every element tagged with the live id, centered as one union rather than one at a time. A focus target is a **set**, so [The player](#the-player)'s single live node and a studio [Batch](#batch-studio)'s four siblings are the same case — the plane owes no consumer a "there must be exactly one" rule. The tag is `data-canvas-focus`, published by `CanvasViewport` as `CANVAS_FOCUS_ATTR` and keyed by the same id the `liveNodeId` prop carries, so the two halves cannot disagree about which object is live; a mismatch centers nothing rather than centering the wrong thing. Resolved 2026-08-04 during architecture-deepening review, replacing an undeclared `data-live="true"` first-match lookup that centered a batch on its top-left tile. Avoid synonyms: live node (that is one focus target, not the concept), camera target.
+
 <!-- New terms go here, following the format above. -->
 
 ## Relationship to ADRs

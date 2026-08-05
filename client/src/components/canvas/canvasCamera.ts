@@ -48,11 +48,34 @@ export function zoomAtPoint(
   };
 }
 
-interface ScreenRect {
+export interface ScreenRect {
   left: number;
   top: number;
   width: number;
   height: number;
+}
+
+/**
+ * The smallest rect containing all of them, or null when given none.
+ *
+ * A focus target is a set, not a single element: the studio centers a batch of
+ * sibling variations, the space and the live editor a single object. Centering
+ * the union makes the one-element case fall out of the many-element one, so no
+ * consumer has to satisfy a "there must be exactly one" rule.
+ */
+export function unionRect(rects: readonly ScreenRect[]): ScreenRect | null {
+  if (rects.length === 0) return null;
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const rect of rects) {
+    left = Math.min(left, rect.left);
+    top = Math.min(top, rect.top);
+    right = Math.max(right, rect.left + rect.width);
+    bottom = Math.max(bottom, rect.top + rect.height);
+  }
+  return { left, top, width: right - left, height: bottom - top };
 }
 
 /**

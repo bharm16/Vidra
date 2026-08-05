@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { CanvasViewport } from "@/components/canvas/CanvasViewport";
+import {
+  CANVAS_FOCUS_ATTR,
+  CanvasViewport,
+} from "@/components/canvas/CanvasViewport";
 import { cn } from "@/utils/cn";
 import { NavRail } from "@components/navigation/NavRail";
 
@@ -24,6 +27,13 @@ import "./live-editor.css";
  * the screen. Select pans the plane; brush and eraser strokes never do.
  * The generation loop underneath is untouched.
  */
+
+/**
+ * The live editor holds exactly one editor object (ADR-0017), so its camera
+ * focus key is a constant rather than a take's id. Declared once and used on
+ * both sides of the focus contract, so the two cannot drift apart.
+ */
+const EDITOR_PAIR_ID = "editor-pair";
 
 type OpenPopover = "brush" | "strength" | null;
 
@@ -94,11 +104,12 @@ export function LiveEditor({
     <div className="flex h-screen min-h-0 overflow-hidden">
       <NavRail active="live-editor" />
       <div className="le-stage min-w-0 flex-1">
-        <CanvasViewport liveNodeId="editor-pair">
+        <CanvasViewport liveNodeId={EDITOR_PAIR_ID}>
           <div
             className="le-editor-pair"
             data-live="true"
             data-testid="live-editor-pair"
+            {...{ [CANVAS_FOCUS_ATTR]: EDITOR_PAIR_ID }}
             // The page is sized BY the generation frame — one source of
             // truth, so the canvas is never stretched away from its bitmap.
             style={

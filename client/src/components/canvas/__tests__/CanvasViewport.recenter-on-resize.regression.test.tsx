@@ -75,7 +75,7 @@ describe("regression: stage resizes re-center the untouched camera", () => {
             height: 600,
           });
         }
-        if (this.getAttribute("data-live") === "true") {
+        if (this.getAttribute("data-canvas-focus") === "editor-pair") {
           return rect({ left: 900, top: 700, width: 200, height: 120 });
         }
         return rect({});
@@ -83,7 +83,7 @@ describe("regression: stage resizes re-center the untouched camera", () => {
     );
     render(
       <CanvasViewport liveNodeId="editor-pair">
-        <div data-live="true">live node</div>
+        <div data-canvas-focus="editor-pair">live node</div>
       </CanvasViewport>,
     );
     return observer;

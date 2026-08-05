@@ -181,7 +181,7 @@ describe("CanvasViewport", () => {
 
     const { rerender } = render(
       <CanvasViewport liveNodeId={null}>
-        <div data-live="true">live node</div>
+        <div data-canvas-focus="a">live node</div>
       </CanvasViewport>,
     );
     vi.spyOn(
@@ -195,7 +195,7 @@ describe("CanvasViewport", () => {
 
     rerender(
       <CanvasViewport liveNodeId="a">
-        <div data-live="true">live node</div>
+        <div data-canvas-focus="a">live node</div>
       </CanvasViewport>,
     );
 

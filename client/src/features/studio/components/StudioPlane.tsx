@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { cn } from "@/utils/cn";
+import { CANVAS_FOCUS_ATTR } from "@/components/canvas/CanvasViewport";
 import type { StudioTurn } from "../api/schemas";
 import {
   computeStudioLayout,
@@ -10,9 +11,17 @@ import {
 /**
  * The plane's contents: every succeeded image, grouped per turn by the
  * derived layout — computed positions, nothing draggable, nothing stored
- * (ADR-0019 §4). The newest group carries data-live so the shared camera
- * centers on it.
+ * (ADR-0019 §4).
+ *
+ * Every cell carries its turn's id as the camera's focus key, so the viewport
+ * centers a batch as a whole: a generate lands four siblings, and the group —
+ * not whichever cell happens to be first in the DOM — is what the creator sees.
+ * `data-live` stays, but only as the studio's own visual mark on the newest
+ * batch; the camera no longer reads it.
  */
+
+/** The focus key while the plane is empty — the greeting is the camera target. */
+export const STUDIO_EMPTY_FOCUS_ID = "studio-empty";
 
 interface StudioPlaneProps {
   turns: StudioTurn[];
@@ -56,6 +65,7 @@ export function StudioPlane({
             type="button"
             className={cn("st-plane-cell", selected && "st-cell-selected")}
             data-live={item.turnId === liveTurnId ? "true" : undefined}
+            {...{ [CANVAS_FOCUS_ATTR]: item.turnId }}
             style={{
               left: item.x,
               top: item.y,
@@ -83,6 +93,7 @@ export function StudioPlane({
         <div
           className="st-plane-empty"
           data-live="true"
+          {...{ [CANVAS_FOCUS_ATTR]: STUDIO_EMPTY_FOCUS_ID }}
           style={{ width: STUDIO_CELL_SIZE * 2, height: STUDIO_CELL_SIZE }}
         >
           Generations land here as groups — pan and zoom to browse.

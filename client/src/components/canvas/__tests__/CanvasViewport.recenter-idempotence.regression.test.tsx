@@ -38,7 +38,7 @@ describe("regression: recentering is idempotent across StrictMode re-runs", () =
         if (this.getAttribute("data-testid") === "space-canvas") {
           return rect({ left: 0, top: 0, width: 800, height: 600 });
         }
-        if (this.getAttribute("data-live") === "true") {
+        if (this.getAttribute("data-canvas-focus") === "editor-pair") {
           return rect({ left: 900, top: 700, width: 200, height: 120 });
         }
         return rect({});
@@ -48,7 +48,7 @@ describe("regression: recentering is idempotent across StrictMode re-runs", () =
     render(
       <React.StrictMode>
         <CanvasViewport liveNodeId="editor-pair">
-          <div data-live="true">live node</div>
+          <div data-canvas-focus="editor-pair">live node</div>
         </CanvasViewport>
       </React.StrictMode>,
     );

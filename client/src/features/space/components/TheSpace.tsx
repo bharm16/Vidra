@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
 
 import { cn } from "@/utils/cn";
+import { CANVAS_FOCUS_ATTR } from "@/components/canvas/CanvasViewport";
 import { computeLineageLayout } from "../lineage/computeLineageLayout";
 import { rewriteGcsUrlToProxy } from "@/services/media/MediaUrlResolver";
 import { deriveEdgeKind } from "../lineage/deriveEdgeKind";
@@ -167,6 +168,7 @@ export function TheSpace({
               type="button"
               data-testid={`space-node-${node.id}`}
               data-live={isLive ? "true" : "false"}
+              {...{ [CANVAS_FOCUS_ATTR]: node.id }}
               onClick={() => onSelectNode?.(node.id)}
               className="group absolute flex !h-auto flex-col items-stretch !p-0 text-left hover:bg-transparent"
               style={{ left: nodeLeft(node), top: nodeTop(node), width: w }}
@@ -176,7 +178,7 @@ export function TheSpace({
                    door on hover — it is the only way back to editing. */
                 <span
                   className={cn(
-                    "inline-flex items-center justify-center gap-[7px] rounded-md border px-3 font-mono text-meta",
+                    "text-meta inline-flex items-center justify-center gap-[7px] rounded-md border px-3 font-mono",
                     "text-tool-text-muted border-white/[0.08] bg-white/[0.03]",
                     "transition-all group-hover:scale-[1.04]",
                     "group-hover:border-[color:color-mix(in_srgb,var(--accent)_52%,transparent)]",
@@ -201,7 +203,7 @@ export function TheSpace({
                     <path d="M4 18h10" />
                   </svg>
                   Prompt
-                  <span className="text-tool-text-muted hidden text-meta group-hover:inline">
+                  <span className="text-tool-text-muted text-meta hidden group-hover:inline">
                     Edit words
                   </span>
                 </span>
@@ -223,7 +225,7 @@ export function TheSpace({
                   >
                     <SpaceNodeBody node={node} />
                     {isLive ? (
-                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 text-meta font-medium text-white">
+                      <span className="text-meta absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 font-medium text-white">
                         <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />
                         LIVE
                       </span>
@@ -273,7 +275,7 @@ function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
   if (node.kind === "words") {
     return (
       <div className="flex h-full w-full items-center px-4 py-3">
-        <span className="text-foreground line-clamp-4 text-ui leading-snug">
+        <span className="text-foreground text-ui line-clamp-4 leading-snug">
           {node.label ?? "—"}
         </span>
       </div>
@@ -294,7 +296,7 @@ function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
         <div className="bg-tool-surface-deep absolute inset-0" />
       )}
       {node.status === "kept" ? (
-        <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-meta text-white">
+        <span className="text-meta absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-white">
           kept
         </span>
       ) : null}

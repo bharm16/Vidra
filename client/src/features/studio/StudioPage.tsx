@@ -7,7 +7,7 @@ import { CanvasViewport } from "@/components/canvas/CanvasViewport";
 import { NavRail } from "@components/navigation/NavRail";
 
 import { StudioComposer } from "./components/StudioComposer";
-import { StudioPlane } from "./components/StudioPlane";
+import { StudioPlane, STUDIO_EMPTY_FOCUS_ID } from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
 import { useStudioProject } from "./hooks/useStudioProject";
 import { isTurnInFlight } from "./hooks/studioReducer";
@@ -58,7 +58,7 @@ export function StudioPage(): React.ReactElement {
       .reverse()
       .find((turn) =>
         turn.calls.some((call) => call.status === "succeeded" && call.image),
-      )?.id ?? "studio-empty";
+      )?.id ?? STUDIO_EMPTY_FOCUS_ID;
 
   // One source of "a turn is in flight" for both bands — the thread's pills
   // and the composer must agree, or the pills stay clickable through the

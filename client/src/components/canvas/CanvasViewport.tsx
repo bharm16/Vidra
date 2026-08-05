@@ -5,13 +5,26 @@ import {
   cameraToCenter,
   clampScale,
   panBy,
+  unionRect,
   zoomAtPoint,
   type CanvasCamera,
+  type ScreenRect,
 } from "./canvasCamera";
 
 const ZOOM_STEP = 0.1;
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
+
+/**
+ * The camera's focus contract, published so consumers name it instead of
+ * repeating a string. Tag every element the camera may center on with its own
+ * id; the viewport centers the union of those whose value equals `liveNodeId`.
+ *
+ * Keying the mark by the same id the prop carries means the two halves cannot
+ * disagree about *which* object is live — a mismatch centers nothing rather
+ * than silently centering the wrong thing.
+ */
+export const CANVAS_FOCUS_ATTR = "data-canvas-focus";
 
 /**
  * The shared infinite-canvas viewport (born as the space's, ADR-0012 / M5;
@@ -26,7 +39,10 @@ export function CanvasViewport({
   onBackgroundClick,
 }: {
   children: React.ReactNode;
-  /** The current take; when it changes the camera recenters on it. */
+  /**
+   * The current take. When it changes the camera recenters on every descendant
+   * marked `CANVAS_FOCUS_ATTR={liveNodeId}` — one element or a whole batch.
+   */
   liveNodeId?: string | null;
   /**
    * A clean click on empty canvas (not a node, not a pan-drag's trailing
@@ -155,17 +171,27 @@ export function CanvasViewport({
   // the pan — the regression that left the live editor cut off-center.
   const centerOnLiveNode = useCallback((): void => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const node = canvas.querySelector<HTMLElement>('[data-live="true"]');
-    if (!node) return;
+    if (!canvas || !liveNodeId) return;
+    // Matched in JS rather than through a built selector: the id is caller
+    // data, and a value carrying quotes would otherwise be parsed as syntax.
+    const marked = canvas.querySelectorAll<HTMLElement>(
+      `[${CANVAS_FOCUS_ATTR}]`,
+    );
+    const rects: ScreenRect[] = [];
+    for (const element of marked) {
+      if (element.getAttribute(CANVAS_FOCUS_ATTR) !== liveNodeId) continue;
+      rects.push(element.getBoundingClientRect());
+    }
+    const focus = unionRect(rects);
+    if (!focus) return;
     const next = cameraToCenter(
       committedCameraRef.current,
       canvas.getBoundingClientRect(),
-      node.getBoundingClientRect(),
+      focus,
     );
     autoCameraRef.current = next;
     setCamera(next);
-  }, []);
+  }, [liveNodeId]);
 
   // Camera: recenter on the live node when it changes. Ephemeral by design.
   useEffect(() => {

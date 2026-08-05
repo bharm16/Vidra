@@ -5,8 +5,10 @@ import {
   MIN_SCALE,
   cameraToCenter,
   panBy,
+  unionRect,
   zoomAtPoint,
   type CanvasCamera,
+  type ScreenRect,
 } from "../canvasCamera";
 
 /**
@@ -114,5 +116,63 @@ describe("cameraToCenter", () => {
       { left: 200, top: 130, width: 200, height: 120 },
     );
     expect(next).toEqual(camera);
+  });
+});
+
+/**
+ * A focus target is a set: the studio centers a batch of siblings, the space
+ * and the live editor a single object. The union is what makes one interface
+ * serve both without a "there must be exactly one" rule.
+ */
+describe("unionRect", () => {
+  // Pixel space: getBoundingClientRect values live in this range. Unbounded
+  // doubles would only exercise float error in `(left + width) - left`, which
+  // is a property of IEEE arithmetic rather than of the union.
+  const rectArb = fc.record({
+    left: fc.integer({ min: -5000, max: 5000 }),
+    top: fc.integer({ min: -5000, max: 5000 }),
+    width: fc.integer({ min: 0, max: 2000 }),
+    height: fc.integer({ min: 0, max: 2000 }),
+  });
+
+  it("returns null for an empty set — nothing to center on", () => {
+    expect(unionRect([])).toBeNull();
+  });
+
+  it("is the identity on a single rect", () => {
+    fc.assert(
+      fc.property(rectArb, (rect) => {
+        expect(unionRect([rect])).toEqual(rect);
+      }),
+    );
+  });
+
+  it("contains every rect it was given", () => {
+    fc.assert(
+      fc.property(fc.array(rectArb, { minLength: 1 }), (rects) => {
+        const union = unionRect(rects) as ScreenRect;
+        for (const rect of rects) {
+          expect(union.left).toBeLessThanOrEqual(rect.left);
+          expect(union.top).toBeLessThanOrEqual(rect.top);
+          expect(union.left + union.width).toBeGreaterThanOrEqual(
+            rect.left + rect.width,
+          );
+          expect(union.top + union.height).toBeGreaterThanOrEqual(
+            rect.top + rect.height,
+          );
+        }
+      }),
+    );
+  });
+
+  it("spans a 2×2 batch — the studio's generate", () => {
+    expect(
+      unionRect([
+        { left: 900, top: 700, width: 200, height: 120 },
+        { left: 1140, top: 700, width: 200, height: 120 },
+        { left: 900, top: 840, width: 200, height: 120 },
+        { left: 1140, top: 840, width: 200, height: 120 },
+      ]),
+    ).toEqual({ left: 900, top: 700, width: 440, height: 260 });
   });
 });
