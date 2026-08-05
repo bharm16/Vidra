@@ -42,6 +42,7 @@ import {
   setPendingGenerationIntent,
 } from "../utils/pendingGenerationIntent";
 import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
+import { addWorkspaceResetListener } from "@features/prompt-optimizer/events";
 
 const log = logger.child("useGenerationsRuntime");
 
@@ -162,9 +163,7 @@ export function useGenerationsRuntime({
     const handleWorkspaceReset = (): void => {
       clearGenerations();
     };
-    window.addEventListener("po:workspace-reset", handleWorkspaceReset);
-    return () =>
-      window.removeEventListener("po:workspace-reset", handleWorkspaceReset);
+    return addWorkspaceResetListener(handleWorkspaceReset);
   }, [clearGenerations]);
 
   useGenerationMediaRefresh(generations, dispatch);

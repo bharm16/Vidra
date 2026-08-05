@@ -14,6 +14,7 @@ import type { HighlightSnapshot } from "@features/prompt-optimizer/context/types
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
 import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
+import { dispatchWorkspaceReset } from "@features/prompt-optimizer/events";
 
 const log = logger.child("usePromptLoader");
 
@@ -259,7 +260,7 @@ export function usePromptLoader({
         // last session on the fresh canvas.
         setCurrentPromptUuidRef.current(null);
         setCurrentPromptDocIdRef.current(null);
-        window.dispatchEvent(new Event("po:workspace-reset"));
+        dispatchWorkspaceReset();
         setIsLoading(false);
         return;
       }

@@ -76,6 +76,7 @@ import {
 import { PromptResultsActionsProvider } from "../context/PromptResultsActionsContext";
 import { PromptInsertionBusProvider } from "../context/PromptInsertionBusContext";
 import { SidebarDataProvider } from "./providers/sidebar";
+import { addWorkspaceResetListener } from "../events";
 
 const log = logger.child("PromptOptimizerWorkspace");
 const buildDefaultCameraTransform = (): CameraPath["start"] => ({
@@ -288,9 +289,7 @@ function PromptOptimizerContent({
       setSubjectMotion("");
       setShowResults(false);
     };
-    window.addEventListener("po:workspace-reset", handleWorkspaceReset);
-    return () =>
-      window.removeEventListener("po:workspace-reset", handleWorkspaceReset);
+    return addWorkspaceResetListener(handleWorkspaceReset);
   }, [
     clearStartFrame,
     clearEndFrame,

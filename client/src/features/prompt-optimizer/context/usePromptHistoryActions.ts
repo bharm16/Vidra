@@ -11,6 +11,7 @@ import type {
   PromptKeyframe,
   PromptVersionEntry,
 } from "./types";
+import { dispatchWorkspaceReset } from "../events";
 
 type DebugLogger = ReturnType<typeof useDebugLogger>;
 type PromptOptimizer = ReturnType<typeof usePromptOptimizer>;
@@ -200,7 +201,7 @@ export const usePromptHistoryActions = ({
     // Notify workspace to reset generation controls (start frame, keyframes,
     // camera motion, etc.) which live outside the prompt state context.
     // dispatchEvent is synchronous — listeners fire before navigate() below.
-    window.dispatchEvent(new Event("po:workspace-reset"));
+    dispatchWorkspaceReset();
 
     navigate(`/session/${draft.id}`, { replace: true });
     debug.logAction("createNewComplete");
