@@ -13,40 +13,9 @@ import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { AuthModalCard } from "./auth/AuthModalCard";
-
-function getSafeRedirect(search: string): string | null {
-  const params = new URLSearchParams(search);
-  const raw = params.get("redirect");
-  if (!raw) return null;
-  if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  return raw;
-}
-
-function Spinner(): React.ReactElement {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}
+import { Spinner } from "./auth/Spinner";
+import { safeRedirect } from "./auth/authParams";
+import { authErrorCopy } from "./auth/authErrorCopy";
 
 /* The four-color Google mark from the handoff — rendered directly on the white
    provider button. */
@@ -75,39 +44,6 @@ function GoogleGlyph(): React.ReactElement {
 
 type AuthFlow = "google" | "email";
 
-function mapAuthError(error: unknown, flow: AuthFlow): string {
-  if (!error || typeof error !== "object")
-    return "Something went wrong. Please try again.";
-  const code =
-    "code" in error && typeof error.code === "string" ? error.code : null;
-
-  switch (code) {
-    case "auth/email-already-in-use":
-      return "That email is already in use. Try signing in instead.";
-    case "auth/invalid-email":
-      return "Enter a valid email address.";
-    case "auth/weak-password":
-      return "Password is too weak. Use at least 6 characters.";
-    case "auth/operation-not-allowed":
-      return flow === "google"
-        ? "Google sign-in is disabled in Firebase Auth. Enable the Google provider in the Firebase console."
-        : "Email/password sign-up is disabled in Firebase Auth.";
-    case "auth/popup-blocked":
-      return "Google popup was blocked. Allow popups for this tab and try again.";
-    case "auth/popup-closed-by-user":
-      return "Google popup was closed before sign-up completed.";
-    case "auth/cancelled-popup-request":
-      return "Google sign-up popup request was cancelled. Try again.";
-    case "auth/unauthorized-domain":
-      return "This localhost domain is not authorized in Firebase Auth settings.";
-    case "auth/operation-not-supported-in-this-environment":
-    case "auth/web-storage-unsupported":
-      return "Google sign-in is not supported in this embedded browser. Use email sign-up here or open the app in a regular browser.";
-    default:
-      return "Failed to create account. Please try again.";
-  }
-}
-
 function secureEquals(left: string, right: string): boolean {
   const encoder = new TextEncoder();
   const leftBytes = encoder.encode(left);
@@ -126,7 +62,7 @@ export function SignUpPage(): React.ReactElement {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirect = getSafeRedirect(location.search);
+  const redirect = safeRedirect(location.search);
   const signInLink = redirect
     ? `/signin?redirect=${encodeURIComponent(redirect)}`
     : "/signin";
@@ -169,7 +105,7 @@ export function SignUpPage(): React.ReactElement {
       toast.success(`Welcome, ${name}!`);
       navigate(redirect ?? "/", { replace: true });
     } catch (err) {
-      setError(mapAuthError(err, "google"));
+      setError(authErrorCopy(err, "signUp", "google"));
       toast.error("Failed to create account. Please try again.");
     } finally {
       setIsBusy(false);
@@ -219,7 +155,7 @@ export function SignUpPage(): React.ReactElement {
         state: { delivery },
       });
     } catch (err) {
-      setError(mapAuthError(err, "email"));
+      setError(authErrorCopy(err, "signUp", "email"));
     } finally {
       setIsBusy(false);
     }

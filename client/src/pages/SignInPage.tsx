@@ -7,40 +7,9 @@ import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { AuthModalCard } from "./auth/AuthModalCard";
-
-function getSafeRedirect(search: string): string | null {
-  const params = new URLSearchParams(search);
-  const raw = params.get("redirect");
-  if (!raw) return null;
-  if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  return raw;
-}
-
-function Spinner(): React.ReactElement {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}
+import { Spinner } from "./auth/Spinner";
+import { safeRedirect } from "./auth/authParams";
+import { authErrorCopy } from "./auth/authErrorCopy";
 
 /* The four-color Google mark from the handoff — rendered directly on the white
    provider button. */
@@ -69,49 +38,11 @@ function GoogleGlyph(): React.ReactElement {
 
 type AuthFlow = "google" | "email";
 
-function mapAuthError(error: unknown, flow: AuthFlow): string {
-  if (!error || typeof error !== "object")
-    return "Something went wrong. Please try again.";
-  const code =
-    "code" in error && typeof error.code === "string" ? error.code : null;
-
-  switch (code) {
-    case "auth/invalid-email":
-      return "Enter a valid email address.";
-    case "auth/user-disabled":
-      return "This account is disabled.";
-    case "auth/user-not-found":
-    case "auth/wrong-password":
-    case "auth/invalid-credential":
-    case "auth/invalid-login-credentials":
-      return "Incorrect email or password.";
-    case "auth/too-many-requests":
-      return "Too many attempts. Try again in a bit.";
-    case "auth/operation-not-allowed":
-      return flow === "google"
-        ? "Google sign-in is disabled in Firebase Auth. Enable the Google provider in the Firebase console."
-        : "Email/password sign-in is disabled in Firebase Auth.";
-    case "auth/popup-blocked":
-      return "Google popup was blocked. Allow popups for this tab and try again.";
-    case "auth/popup-closed-by-user":
-      return "Google popup was closed before sign-in completed.";
-    case "auth/cancelled-popup-request":
-      return "Google sign-in popup request was cancelled. Try again.";
-    case "auth/unauthorized-domain":
-      return "This localhost domain is not authorized in Firebase Auth settings.";
-    case "auth/operation-not-supported-in-this-environment":
-    case "auth/web-storage-unsupported":
-      return "Google sign-in is not supported in this embedded browser. Use email sign-in here or open the app in a regular browser.";
-    default:
-      return "Failed to sign in. Please try again.";
-  }
-}
-
 export function SignInPage(): React.ReactElement {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirect = getSafeRedirect(location.search);
+  const redirect = safeRedirect(location.search);
   const signUpLink = redirect
     ? `/signup?redirect=${encodeURIComponent(redirect)}`
     : "/signup";
@@ -147,7 +78,7 @@ export function SignInPage(): React.ReactElement {
       toast.success(`Welcome, ${displayName}!`);
       navigate(redirect ?? "/", { replace: true });
     } catch (err) {
-      setError(mapAuthError(err, "google"));
+      setError(authErrorCopy(err, "signIn", "google"));
       toast.error("Failed to sign in. Please try again.");
     } finally {
       setIsBusy(false);
@@ -176,7 +107,7 @@ export function SignInPage(): React.ReactElement {
       toast.success(`Welcome back, ${displayName}!`);
       navigate(redirect ?? "/", { replace: true });
     } catch (err) {
-      setError(mapAuthError(err, "email"));
+      setError(authErrorCopy(err, "signIn", "email"));
     } finally {
       setIsBusy(false);
     }

@@ -6,15 +6,9 @@ import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { AuthShell } from "./auth/AuthShell";
-
-function getSafeRedirect(search: string): string | null {
-  const params = new URLSearchParams(search);
-  const raw = params.get("redirect");
-  if (!raw) return null;
-  if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  return raw;
-}
+import { Spinner } from "./auth/Spinner";
+import { safeRedirect } from "./auth/authParams";
+import { authErrorCopy } from "./auth/authErrorCopy";
 
 function getInitialEmail(search: string): string {
   const params = new URLSearchParams(search);
@@ -23,57 +17,10 @@ function getInitialEmail(search: string): string {
   return raw.trim();
 }
 
-function Spinner(): React.ReactElement {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}
-
-function mapAuthError(error: unknown): string {
-  if (!error || typeof error !== "object")
-    return "Something went wrong. Please try again.";
-  const code =
-    "code" in error && typeof error.code === "string" ? error.code : null;
-
-  switch (code) {
-    case "auth/invalid-email":
-      return "Enter a valid email address.";
-    case "auth/user-not-found":
-      return "No account found for that email.";
-    case "auth/too-many-requests":
-      return "Too many attempts. Try again in a bit.";
-    case "auth/unauthorized-continue-uri":
-    case "auth/invalid-continue-uri":
-    case "auth/missing-continue-uri":
-      return "Password reset links aren't configured for this domain yet.";
-    default:
-      return "Failed to send reset email. Please try again.";
-  }
-}
-
 export function ForgotPasswordPage(): React.ReactElement {
   const toast = useToast();
   const location = useLocation();
-  const redirect = getSafeRedirect(location.search);
+  const redirect = safeRedirect(location.search);
 
   const [email, setEmail] = React.useState(() =>
     getInitialEmail(location.search),
@@ -109,7 +56,7 @@ export function ForgotPasswordPage(): React.ReactElement {
       setSentTo(normalizedEmail);
       toast.success("Password reset email sent.");
     } catch (err) {
-      setError(mapAuthError(err));
+      setError(authErrorCopy(err, "forgotPassword"));
       toast.error("Failed to send reset email.");
     } finally {
       setIsBusy(false);

@@ -12,74 +12,9 @@ import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import { AuthShell } from "./auth/AuthShell";
-
-function getSafeRedirect(search: string): string | null {
-  const params = new URLSearchParams(search);
-  const raw = params.get("redirect");
-  if (!raw) return null;
-  if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  return raw;
-}
-
-function getOobCode(search: string): string | null {
-  const params = new URLSearchParams(search);
-  const code = params.get("oobCode");
-  return code ? code.trim() : null;
-}
-
-function getMode(search: string): string | null {
-  const params = new URLSearchParams(search);
-  const mode = params.get("mode");
-  return mode ? mode.trim() : null;
-}
-
-function Spinner(): React.ReactElement {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}
-
-function mapResetError(error: unknown): string {
-  if (!error || typeof error !== "object")
-    return "Something went wrong. Please try again.";
-  const code =
-    "code" in error && typeof error.code === "string" ? error.code : null;
-
-  switch (code) {
-    case "auth/invalid-action-code":
-      return "That reset link is invalid or already used.";
-    case "auth/expired-action-code":
-      return "That reset link has expired. Request a new one.";
-    case "auth/weak-password":
-      return "Password is too weak. Use at least 6 characters.";
-    case "auth/user-disabled":
-      return "This account is disabled.";
-    case "auth/too-many-requests":
-      return "Too many attempts. Try again in a bit.";
-    default:
-      return "Failed to reset password. Please try again.";
-  }
-}
+import { Spinner } from "./auth/Spinner";
+import { readActionMode, readOobCode, safeRedirect } from "./auth/authParams";
+import { authErrorCopy } from "./auth/authErrorCopy";
 
 type ResetState = "idle" | "checking" | "ready" | "success" | "error";
 
@@ -88,9 +23,9 @@ export function PasswordResetPage(): React.ReactElement {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const redirect = getSafeRedirect(location.search);
-  const oobCode = getOobCode(location.search);
-  const mode = getMode(location.search);
+  const redirect = safeRedirect(location.search);
+  const oobCode = readOobCode(location.search);
+  const mode = readActionMode(location.search);
 
   const [resetState, setResetState] = React.useState<ResetState>(
     oobCode ? "checking" : "idle",
@@ -132,7 +67,7 @@ export function PasswordResetPage(): React.ReactElement {
       } catch (err) {
         if (cancelled) return;
         setResetState("error");
-        setError(mapResetError(err));
+        setError(authErrorCopy(err, "passwordReset"));
       }
     })();
 
@@ -174,7 +109,7 @@ export function PasswordResetPage(): React.ReactElement {
       setResetState("success");
       toast.success("Password updated.");
     } catch (err) {
-      setError(mapResetError(err));
+      setError(authErrorCopy(err, "passwordReset"));
       toast.error("Password reset failed.");
     } finally {
       setIsBusy(false);
