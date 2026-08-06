@@ -27,7 +27,7 @@ window.ResizeObserver =
 Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? vi.fn();
 
 vi.mock(
-  "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping",
+  "../../hooks/useCapabilitiesClamping",
   () => ({
     useCapabilitiesClamping: () => ({
       schema: null,

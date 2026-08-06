@@ -30,7 +30,7 @@ import type {
   SuggestionItem,
 } from "@/features/prompt-optimizer/PromptCanvas/types";
 import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
-import { useModelSelectionRecommendation } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useModelSelectionRecommendation";
+import { useModelSelectionRecommendation } from "./hooks/useModelSelectionRecommendation";
 import { GenerationPopover } from "@/features/prompt-optimizer/components/GenerationPopover";
 import { cn } from "@/utils/cn";
 import {

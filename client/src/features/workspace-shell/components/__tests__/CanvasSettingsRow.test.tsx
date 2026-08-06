@@ -13,7 +13,7 @@ import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls
 import { VIDEO_DRAFT_MODEL } from "@/components/ToolSidebar/config/modelConfig";
 
 vi.mock(
-  "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping",
+  "../../hooks/useCapabilitiesClamping",
   () => ({
     useCapabilitiesClamping: () => ({
       schema: {

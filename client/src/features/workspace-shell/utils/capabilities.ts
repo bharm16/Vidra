@@ -7,6 +7,14 @@ import {
   type CapabilityValues,
 } from "@shared/capabilities";
 
+/**
+ * Fallbacks for when a model's capability schema declares a field but offers no
+ * enumerated values. They live beside the resolvers that consume them rather
+ * than in a constants module of their own — one caller, one concern.
+ */
+export const DEFAULT_ASPECT_RATIOS = ["16:9", "9:16", "1:1", "4:5"];
+export const DEFAULT_DURATIONS = [5, 10, 15];
+
 export interface FieldInfo {
   field: CapabilityField;
   state: CapabilityFieldState;

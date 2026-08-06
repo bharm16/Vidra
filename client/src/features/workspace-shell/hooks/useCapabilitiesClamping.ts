@@ -6,17 +6,18 @@ import type {
 import { useCapabilities } from "@features/prompt-optimizer/hooks/useCapabilities";
 import { logger } from "@/services/LoggingService";
 import { VIDEO_DRAFT_MODEL } from "@components/ToolSidebar/config/modelConfig";
-import { DEFAULT_ASPECT_RATIOS, DEFAULT_DURATIONS } from "../constants";
 import {
+  DEFAULT_ASPECT_RATIOS,
+  DEFAULT_DURATIONS,
   getFieldInfo,
   resolveNumberOptions,
   resolveStringOptions,
   type FieldInfo,
 } from "../utils/capabilities";
-import type { GenerationControlsTab } from "../types";
+import type { GenerationControlsTab } from "@/features/generation-controls";
 import type { VideoTier } from "@components/ToolSidebar/types";
 
-const log = logger.child("GenerationControlsPanel");
+const log = logger.child("useCapabilitiesClamping");
 
 interface UseCapabilitiesClampingOptions {
   activeTab: GenerationControlsTab;

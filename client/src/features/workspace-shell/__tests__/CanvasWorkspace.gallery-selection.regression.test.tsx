@@ -93,7 +93,7 @@ vi.mock("@/components/ToolSidebar/context", () => ({
 }));
 
 vi.mock(
-  "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useModelSelectionRecommendation",
+  "../hooks/useModelSelectionRecommendation",
   () => ({
     useModelSelectionRecommendation: () => ({
       recommendationMode: "t2v",

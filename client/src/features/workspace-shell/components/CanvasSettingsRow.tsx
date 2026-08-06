@@ -14,8 +14,8 @@ import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
-import { useCapabilitiesClamping } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping";
-import { ModelRecommendationDropdown } from "@/components/ToolSidebar/components/panels/GenerationControlsPanel/components/ModelRecommendationDropdown";
+import { useCapabilitiesClamping } from "../hooks/useCapabilitiesClamping";
+import { ModelRecommendationDropdown } from "./ModelRecommendationDropdown";
 import type { ModelRecommendation } from "@/features/model-intelligence/types";
 import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
 import {

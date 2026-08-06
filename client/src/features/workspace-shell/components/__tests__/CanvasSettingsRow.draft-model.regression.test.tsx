@@ -12,7 +12,7 @@ import type { GenerationControlsState } from "@features/generation-controls";
 import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls";
 
 vi.mock(
-  "@/components/ToolSidebar/components/panels/GenerationControlsPanel/hooks/useCapabilitiesClamping",
+  "../../hooks/useCapabilitiesClamping",
   () => ({
     useCapabilitiesClamping: () => ({
       schema: null,
