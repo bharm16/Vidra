@@ -15,12 +15,12 @@ import { HistoryPage } from "../HistoryPage";
 const mockUseAuthUser = vi.hoisted(() => vi.fn());
 const mockUsePromptHistory = vi.hoisted(() => vi.fn());
 
-// HistoryThumbnail -> useResolvedMediaUrl -> storageApi initializes Firebase
-// at import time; stub the config so the page renders hermetically.
+// HistoryThumbnail -> useResolvedMediaUrl -> storageApi reaches Firebase;
+// stub the config so the page renders hermetically.
 vi.mock("@/config/firebase", () => ({
-  auth: {},
-  db: {},
-  analytics: null,
+  getFirebaseAuth: () => ({}),
+  getFirebaseDb: () => ({}),
+  getFirebaseAnalytics: () => null,
 }));
 
 vi.mock("@hooks/useAuthUser", () => ({

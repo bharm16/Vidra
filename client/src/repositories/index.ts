@@ -5,7 +5,7 @@
  * Implements the Service Locator pattern for repositories
  */
 
-import { auth } from "../config/firebase";
+import { getFirebaseAuth } from "../config/firebase";
 import { setSentryUser, addSentryBreadcrumb } from "../config/sentry";
 import { AuthRepository, MockAuthRepository } from "./AuthRepository";
 import { PromptRepository } from "./PromptRepository";
@@ -43,7 +43,7 @@ export function getAuthRepository(): AuthRepository {
       authRepository = mockRepo as unknown as AuthRepository;
       return authRepository;
     }
-    authRepository = new AuthRepository(auth, sentryAdapter);
+    authRepository = new AuthRepository(getFirebaseAuth(), sentryAdapter);
   }
   return authRepository;
 }

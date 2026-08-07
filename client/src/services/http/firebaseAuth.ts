@@ -1,4 +1,4 @@
-import { auth } from "@/config/firebase";
+import { getFirebaseAuth } from "@/config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 const FIREBASE_TOKEN_HEADER = "X-Firebase-Token";
@@ -13,7 +13,7 @@ export const waitForAuthReady = async (): Promise<void> => {
     authReadyPromise = new Promise((resolve) => {
       const timeoutId = setTimeout(resolve, AUTH_READY_TIMEOUT_MS);
       const unsubscribe = onAuthStateChanged(
-        auth,
+        getFirebaseAuth(),
         () => {
           clearTimeout(timeoutId);
           resolve();
@@ -33,7 +33,7 @@ export const waitForAuthReady = async (): Promise<void> => {
 
 export async function getFirebaseToken(): Promise<string | null> {
   await waitForAuthReady();
-  const user = auth.currentUser;
+  const user = getFirebaseAuth().currentUser;
   if (!user) {
     return null;
   }
@@ -54,7 +54,7 @@ export async function buildFirebaseAuthHeaders(): Promise<
   const devFallbackHeaders = isProduction
     ? {}
     : { [API_KEY_HEADER]: DEV_FALLBACK_API_KEY };
-  const user = auth.currentUser;
+  const user = getFirebaseAuth().currentUser;
   if (!user) {
     return devFallbackHeaders;
   }

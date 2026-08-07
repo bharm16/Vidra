@@ -76,9 +76,31 @@ global.fetch = vi.fn().mockResolvedValue({
     }),
 });
 
-// Mock Firebase
-vi.mock("./src/firebase.js", () => ({
-  db: {
+// Mock Firebase.
+//
+// Previously this mocked "./src/firebase.js" — a path with no file behind it
+// since the module became client/src/config/firebase.ts, so it stubbed nothing
+// and no one noticed. Tests that render auth-aware UI reach the real
+// accessors, and `getAuth` throws `auth/invalid-api-key` without the
+// VITE_FIREBASE_* vars, which CI does not set.
+//
+// The factory runs once per module registry, so the stub instances are stable
+// across calls — consumers that compare identity (or subscribe once) behave as
+// they would against the memoized real accessors.
+vi.mock("@/config/firebase", () => {
+  // firebase/auth's modular helpers delegate to methods on the instance —
+  // `onAuthStateChanged(auth, cb)` calls `auth.onAuthStateChanged(cb)` — so the
+  // stub has to carry them, not just the data fields. Each returns an
+  // unsubscribe, which is what callers store and invoke on cleanup.
+  const noopUnsubscribe = () => {};
+  const auth = {
+    currentUser: null,
+    onAuthStateChanged: vi.fn(() => noopUnsubscribe),
+    onIdTokenChanged: vi.fn(() => noopUnsubscribe),
+    signInWithEmailAndPassword: vi.fn(),
+    signOut: vi.fn(),
+  };
+  const db = {
     collection: vi.fn(() => ({
       doc: vi.fn(() => ({
         set: vi.fn(),
@@ -89,13 +111,13 @@ vi.mock("./src/firebase.js", () => ({
       add: vi.fn(),
       where: vi.fn(),
     })),
-  },
-  auth: {
-    currentUser: null,
-    signInWithEmailAndPassword: vi.fn(),
-    signOut: vi.fn(),
-  },
-}));
+  };
+  return {
+    getFirebaseAuth: () => auth,
+    getFirebaseDb: () => db,
+    getFirebaseAnalytics: () => null,
+  };
+});
 
 // Mock Toast context for components
 vi.mock("./src/components/Toast.jsx", () => ({

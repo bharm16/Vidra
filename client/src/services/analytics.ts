@@ -7,7 +7,7 @@
  * - Keeps tracking calls centralized rather than scattered across components
  */
 
-import { analytics } from "@/config/firebase";
+import { getFirebaseAnalytics } from "@/config/firebase";
 
 type EventParams = Record<string, string | number | boolean>;
 
@@ -38,6 +38,7 @@ export async function trackEvent(
   name: string,
   params?: EventParams,
 ): Promise<void> {
+  const analytics = getFirebaseAnalytics();
   if (!analytics) return;
   const log = await ensureLogEvent();
   if (log) log(analytics, name, params);

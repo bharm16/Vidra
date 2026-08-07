@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import type { Asset, AssetType } from "@shared/types/asset";
-import { auth } from "@/config/firebase";
+import { getFirebaseAuth } from "@/config/firebase";
 import { assetsSidebarApi } from "../api/assetsSidebarApi";
 
 const DEFAULT_EXPANDED: AssetType[] = [
@@ -49,7 +49,7 @@ export function useAssetsSidebar() {
   useEffect(() => {
     isMountedRef.current = true;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), (user) => {
       if (!isMountedRef.current) return;
 
       if (user) {

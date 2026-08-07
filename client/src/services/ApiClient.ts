@@ -19,7 +19,7 @@ import { setupApiAuth } from "./http/AuthInterceptors";
 import { setupTelemetrySource } from "./http/TelemetrySourceInterceptor";
 import { AuthRetryTransport } from "./http/AuthRetryTransport";
 import { buildFirebaseAuthHeaders } from "./http/firebaseAuth";
-import { auth } from "@/config/firebase";
+import { getFirebaseAuth } from "@/config/firebase";
 import { authGateController } from "@/features/auth-gate/authGateController";
 
 interface BuiltRequest {
@@ -177,7 +177,7 @@ export { ApiError } from "./http/ApiError";
 const authRetryTransport = new AuthRetryTransport({
   transport: new FetchHttpTransport(),
   authGate: authGateController,
-  isAuthenticated: () => auth.currentUser !== null,
+  isAuthenticated: () => getFirebaseAuth().currentUser !== null,
   buildAuthHeaders: buildFirebaseAuthHeaders,
 });
 

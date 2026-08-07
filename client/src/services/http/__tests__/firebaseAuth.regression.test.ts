@@ -10,7 +10,7 @@ const { mockAuth, mockOnAuthStateChanged } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/config/firebase", () => ({
-  auth: mockAuth,
+  getFirebaseAuth: () => mockAuth,
 }));
 
 vi.mock("firebase/auth", () => ({

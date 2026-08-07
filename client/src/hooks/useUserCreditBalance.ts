@@ -1,6 +1,6 @@
 import React from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/config/firebase";
+import { getFirebaseDb } from "@/config/firebase";
 import { fetchCreditBalance } from "@/features/billing/api/billingApi";
 
 const CREDIT_BALANCE_SYNC_EVENT = "vidra:credit-balance-sync";
@@ -234,7 +234,7 @@ export function useUserCreditBalance(
       error: null,
     }));
 
-    const userRef = doc(db, "users", userId);
+    const userRef = doc(getFirebaseDb(), "users", userId);
     const unsubscribe = onSnapshot(
       userRef,
       (snapshot) => {
