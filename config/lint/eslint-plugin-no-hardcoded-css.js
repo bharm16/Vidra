@@ -21,13 +21,13 @@ export default {
      * Allows: bg-[linear-gradient(...)], bg-[length:...], bg-[url(...)],
      * and non-color arbitrary values like w-[200px], h-[30px], text-[13px].
      */
-    'no-arbitrary-color': {
+    "no-arbitrary-color": {
       meta: {
-        type: 'suggestion',
+        type: "suggestion",
         docs: {
           description:
-            'Disallow arbitrary hex colors in Tailwind className strings',
-          category: 'Best Practices',
+            "Disallow arbitrary hex colors in Tailwind className strings",
+          category: "Best Practices",
           recommended: true,
         },
         messages: {
@@ -43,16 +43,16 @@ export default {
           /(?:bg|text|border|ring|divide|decoration|from|to|via|caret|shadow|placeholder|outline|fill|stroke|accent)-\[#[0-9a-fA-F]{3,8}\]/g;
 
         function checkString(node, value) {
-          if (typeof value !== 'string') return;
+          if (typeof value !== "string") return;
           // Allow linear-gradient which legitimately uses hex
-          if (value.includes('linear-gradient')) return;
+          if (value.includes("linear-gradient")) return;
 
           let match;
           HEX_PATTERN.lastIndex = 0;
           while ((match = HEX_PATTERN.exec(value)) !== null) {
             context.report({
               node,
-              messageId: 'noArbitraryColor',
+              messageId: "noArbitraryColor",
               data: { value: match[0] },
             });
           }
@@ -60,7 +60,7 @@ export default {
 
         return {
           Literal(node) {
-            if (typeof node.value === 'string') {
+            if (typeof node.value === "string") {
               checkString(node, node.value);
             }
           },
@@ -85,13 +85,13 @@ export default {
      * (neutral, success, warning, error, info, primary, secondary, accent)
      * are NOT flagged — those resolve to CSS variables, not the raw palette.
      */
-    'no-raw-palette': {
+    "no-raw-palette": {
       meta: {
-        type: 'suggestion',
+        type: "suggestion",
         docs: {
           description:
-            'Disallow raw Tailwind palette classes in favor of semantic design tokens (ADR-0008)',
-          category: 'Best Practices',
+            "Disallow raw Tailwind palette classes in favor of semantic design tokens (ADR-0008)",
+          category: "Best Practices",
           recommended: true,
         },
         messages: {
@@ -107,14 +107,14 @@ export default {
           /(?:bg|text|border|ring|divide|decoration|from|to|via|caret|shadow|placeholder|outline|fill|stroke|accent)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|stone)-\d{2,3}\b/g;
 
         function checkString(node, value) {
-          if (typeof value !== 'string') return;
+          if (typeof value !== "string") return;
 
           let match;
           PALETTE_PATTERN.lastIndex = 0;
           while ((match = PALETTE_PATTERN.exec(value)) !== null) {
             context.report({
               node,
-              messageId: 'noRawPalette',
+              messageId: "noRawPalette",
               data: { value: match[0] },
             });
           }
@@ -122,7 +122,7 @@ export default {
 
         return {
           Literal(node) {
-            if (typeof node.value === 'string') {
+            if (typeof node.value === "string") {
               checkString(node, node.value);
             }
           },
@@ -154,13 +154,13 @@ export default {
      * Matching is literal string inspection (startsWith/endsWith over
      * whitespace-split class tokens), not pattern matching.
      */
-    'no-arbitrary-scale-value': {
+    "no-arbitrary-scale-value": {
       meta: {
-        type: 'suggestion',
+        type: "suggestion",
         docs: {
           description:
-            'Disallow arbitrary px font-size/border-radius in Tailwind className strings',
-          category: 'Best Practices',
+            "Disallow arbitrary px font-size/border-radius in Tailwind className strings",
+          category: "Best Practices",
           recommended: true,
         },
         messages: {
@@ -175,39 +175,39 @@ export default {
         /** Split on whitespace without a pattern: normalize, then split. */
         function classTokens(value) {
           let normalized = value;
-          for (const ws of ['\n', '\r', '\t']) {
-            normalized = normalized.split(ws).join(' ');
+          for (const ws of ["\n", "\r", "\t"]) {
+            normalized = normalized.split(ws).join(" ");
           }
-          return normalized.split(' ').filter(Boolean);
+          return normalized.split(" ").filter(Boolean);
         }
 
         /** Strip variant prefixes (hover:, md:, dark:) and the ! modifier. */
         function bareClass(token) {
-          const afterVariants = token.slice(token.lastIndexOf(':') + 1);
-          return afterVariants.startsWith('!')
+          const afterVariants = token.slice(token.lastIndexOf(":") + 1);
+          return afterVariants.startsWith("!")
             ? afterVariants.slice(1)
             : afterVariants;
         }
 
         function checkString(node, value) {
-          if (typeof value !== 'string') return;
+          if (typeof value !== "string") return;
 
           for (const token of classTokens(value)) {
             const cls = bareClass(token);
             // Only arbitrary values carrying a px unit; text-[color:...] and
             // similar non-px arbitrary values are left alone.
-            if (!cls.endsWith('px]')) continue;
+            if (!cls.endsWith("px]")) continue;
 
-            if (cls.startsWith('text-[')) {
+            if (cls.startsWith("text-[")) {
               context.report({
                 node,
-                messageId: 'noArbitraryType',
+                messageId: "noArbitraryType",
                 data: { value: cls },
               });
-            } else if (cls.startsWith('rounded') && cls.includes('-[')) {
+            } else if (cls.startsWith("rounded") && cls.includes("-[")) {
               context.report({
                 node,
-                messageId: 'noArbitraryRadius',
+                messageId: "noArbitraryRadius",
                 data: { value: cls },
               });
             }
@@ -216,7 +216,7 @@ export default {
 
         return {
           Literal(node) {
-            if (typeof node.value === 'string') {
+            if (typeof node.value === "string") {
               checkString(node, node.value);
             }
           },
@@ -230,12 +230,12 @@ export default {
         };
       },
     },
-    'no-hardcoded-css': {
+    "no-hardcoded-css": {
       meta: {
-        type: 'problem',
+        type: "problem",
         docs: {
-          description: 'Disallow hardcoded CSS values in inline styles',
-          category: 'Best Practices',
+          description: "Disallow hardcoded CSS values in inline styles",
+          category: "Best Practices",
           recommended: true,
         },
         messages: {
@@ -248,22 +248,22 @@ export default {
         },
         schema: [
           {
-            type: 'object',
+            type: "object",
             properties: {
               allowPixelValues: {
-                type: 'boolean',
+                type: "boolean",
                 default: false,
               },
               allowedProperties: {
-                type: 'array',
+                type: "array",
                 items: {
-                  type: 'string',
+                  type: "string",
                 },
                 default: [],
               },
               // Properties that commonly need hardcoded values
               allowSmallValues: {
-                type: 'boolean',
+                type: "boolean",
                 default: true, // Allow 0px, 1px, 2px for borders, etc.
               },
             },
@@ -281,39 +281,39 @@ export default {
 
         // Spacing properties that should use spacing tokens
         const spacingProperties = [
-          'padding',
-          'paddingTop',
-          'paddingBottom',
-          'paddingLeft',
-          'paddingRight',
-          'margin',
-          'marginTop',
-          'marginBottom',
-          'marginLeft',
-          'marginRight',
-          'gap',
-          'rowGap',
-          'columnGap',
+          "padding",
+          "paddingTop",
+          "paddingBottom",
+          "paddingLeft",
+          "paddingRight",
+          "margin",
+          "marginTop",
+          "marginBottom",
+          "marginLeft",
+          "marginRight",
+          "gap",
+          "rowGap",
+          "columnGap",
         ];
 
         // Sizing properties
         const sizingProperties = [
-          'width',
-          'height',
-          'minWidth',
-          'minHeight',
-          'maxWidth',
-          'maxHeight',
+          "width",
+          "height",
+          "minWidth",
+          "minHeight",
+          "maxWidth",
+          "maxHeight",
         ];
 
         // Position properties
-        const positionProperties = ['top', 'bottom', 'left', 'right', 'inset'];
+        const positionProperties = ["top", "bottom", "left", "right", "inset"];
 
         /**
          * Check if a string value contains hardcoded spacing/formatting values
          */
         function checkStringValue(value, node, propertyName) {
-          if (typeof value !== 'string') return;
+          if (typeof value !== "string") return;
 
           // Skip if property is in allowed list
           if (allowedProperties.includes(propertyName)) return;
@@ -337,7 +337,7 @@ export default {
           if (spacingProperties.includes(propertyName)) {
             context.report({
               node,
-              messageId: 'hardcodedSpacingValue',
+              messageId: "hardcodedSpacingValue",
               data: { value: value.trim(), property: propertyName },
             });
             return;
@@ -347,7 +347,7 @@ export default {
           if (sizingProperties.includes(propertyName)) {
             context.report({
               node,
-              messageId: 'hardcodedSizingValue',
+              messageId: "hardcodedSizingValue",
               data: { value: value.trim(), property: propertyName },
             });
             return;
@@ -357,7 +357,7 @@ export default {
           if (positionProperties.includes(propertyName)) {
             context.report({
               node,
-              messageId: 'hardcodedPositionValue',
+              messageId: "hardcodedPositionValue",
               data: { value: value.trim(), property: propertyName },
             });
             return;
@@ -371,19 +371,19 @@ export default {
           if (!node.properties) return;
 
           node.properties.forEach((prop) => {
-            if (prop.type === 'Property' || prop.type === 'ObjectProperty') {
+            if (prop.type === "Property" || prop.type === "ObjectProperty") {
               const key = prop.key;
               const value = prop.value;
 
               const propertyName = key.name || key.value;
 
               // Check string literal values
-              if (value.type === 'Literal' && typeof value.value === 'string') {
+              if (value.type === "Literal" && typeof value.value === "string") {
                 checkStringValue(value.value, value, propertyName);
               }
 
               // Check template literals
-              if (value.type === 'TemplateLiteral') {
+              if (value.type === "TemplateLiteral") {
                 // Check if template literal contains hardcoded values
                 value.quasis.forEach((quasi) => {
                   if (quasi.value && quasi.value.raw) {
@@ -399,14 +399,14 @@ export default {
           JSXAttribute(node) {
             // Check style={{ ... }} attributes
             if (
-              node.name.name === 'style' &&
+              node.name.name === "style" &&
               node.value &&
               node.value.expression
             ) {
               const expression = node.value.expression;
 
               // Handle style={{ ... }}
-              if (expression.type === 'ObjectExpression') {
+              if (expression.type === "ObjectExpression") {
                 checkStyleObject(expression);
               }
 

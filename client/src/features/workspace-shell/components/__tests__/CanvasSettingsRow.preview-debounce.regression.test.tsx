@@ -11,27 +11,24 @@ import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import type { GenerationControlsState } from "@features/generation-controls";
 import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls";
 
-vi.mock(
-  "../../hooks/useCapabilitiesClamping",
-  () => ({
-    useCapabilitiesClamping: () => ({
-      schema: {
-        provider: "generic",
-        model: "google/veo-3",
-        version: "1",
-        fields: {
-          last_frame: { type: "bool", default: true },
-          reference_images: { type: "bool", default: true },
-          extend_video: { type: "bool", default: true },
-        },
+vi.mock("../../hooks/useCapabilitiesClamping", () => ({
+  useCapabilitiesClamping: () => ({
+    schema: {
+      provider: "generic",
+      model: "google/veo-3",
+      version: "1",
+      fields: {
+        last_frame: { type: "bool", default: true },
+        reference_images: { type: "bool", default: true },
+        extend_video: { type: "bool", default: true },
       },
-      aspectRatioInfo: null,
-      durationInfo: null,
-      aspectRatioOptions: ["16:9", "9:16"],
-      durationOptions: [5, 10],
-    }),
+    },
+    aspectRatioInfo: null,
+    durationInfo: null,
+    aspectRatioOptions: ["16:9", "9:16"],
+    durationOptions: [5, 10],
   }),
-);
+}));
 
 vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),

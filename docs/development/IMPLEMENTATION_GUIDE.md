@@ -64,14 +64,14 @@ useEffect(() => {
 ### 2. Modern Panel Header
 
 ```jsx
-<div className="flex-shrink-0 px-4 py-3.5 border-b border-neutral-200 bg-gradient-to-b from-neutral-50/50 to-white backdrop-blur-sm">
+<div className="flex-shrink-0 border-b border-neutral-200 bg-gradient-to-b from-neutral-50/50 to-white px-4 py-3.5 backdrop-blur-sm">
   <div className="flex items-center justify-between gap-2">
     {/* Icon Container with Gradient */}
-    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-      <div className="p-1.5 bg-gradient-to-br from-neutral-100 to-neutral-50 rounded-lg shadow-sm ring-1 ring-neutral-200/50">
+    <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      <div className="rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-50 p-1.5 shadow-sm ring-1 ring-neutral-200/50">
         <Sparkles className="h-3.5 w-3.5 text-neutral-700" />
       </div>
-      <h3 className="text-[13px] font-semibold text-neutral-900 tracking-tight">
+      <h3 className="text-[13px] font-semibold tracking-tight text-neutral-900">
         AI Suggestions
       </h3>
     </div>
@@ -80,7 +80,7 @@ useEffect(() => {
     {activeElement && (
       <button
         onClick={() => fetchSuggestionsForElement(activeElement)}
-        className="p-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-md transition-all duration-150 active:scale-95"
+        className="rounded-md p-1.5 text-neutral-500 transition-all duration-150 hover:bg-neutral-100 hover:text-neutral-900 active:scale-95"
         title="Refresh suggestions"
       >
         <RefreshCw className="h-3.5 w-3.5" />
@@ -91,10 +91,10 @@ useEffect(() => {
   {/* Active Element Badge */}
   {activeElement && (
     <div className="mt-3 flex items-center gap-2">
-      <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
         For:
       </span>
-      <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-neutral-900 text-white rounded-md shadow-sm">
+      <div className="inline-flex items-center gap-1.5 rounded-md bg-neutral-900 px-2 py-1 text-white shadow-sm">
         {React.createElement(elementConfig[activeElement].icon, {
           className: "h-3 w-3",
         })}
@@ -174,24 +174,24 @@ useEffect(() => {
     >
       <button
         onClick={() => handleSuggestionClick(suggestion)}
-        className="w-full p-3.5 text-left bg-white border border-neutral-200 rounded-xl hover:border-neutral-300 hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400 active:scale-[0.98]"
+        className="w-full rounded-xl border border-neutral-200 bg-white p-3.5 text-left transition-all duration-150 hover:border-neutral-300 hover:shadow-md focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10 active:scale-[0.98]"
       >
         {/* Keyboard Shortcut Badge (Hover-Reveal) */}
         {idx < 8 && (
-          <kbd className="absolute top-2.5 right-2.5 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-400 bg-neutral-100 border border-neutral-200 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <kbd className="absolute right-2.5 top-2.5 rounded border border-neutral-200 bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-400 opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100">
             {idx + 1}
           </kbd>
         )}
 
         {/* Card Content */}
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="text-[14px] font-semibold text-neutral-900 leading-snug flex-1 pr-6">
+        <div className="mb-2 flex items-start justify-between gap-3">
+          <div className="flex-1 pr-6 text-[14px] font-semibold leading-snug text-neutral-900">
             {suggestion.text}
           </div>
 
           {/* Modern Compatibility Score */}
           {suggestion.compatibility && (
-            <div className="flex-shrink-0 flex items-center gap-1.5">
+            <div className="flex flex-shrink-0 items-center gap-1.5">
               <div
                 className={`h-1.5 w-1.5 rounded-full shadow-sm ${
                   suggestion.compatibility >= 0.8
@@ -218,19 +218,19 @@ useEffect(() => {
 
         {/* Explanation Text */}
         {suggestion.explanation && (
-          <div className="text-[12px] text-neutral-600 leading-relaxed line-clamp-2">
+          <div className="line-clamp-2 text-[12px] leading-relaxed text-neutral-600">
             {suggestion.explanation}
           </div>
         )}
 
         {/* Hover Action Bar */}
-        <div className="mt-3 pt-3 border-t border-neutral-100 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <div className="mt-3 flex items-center gap-2 border-t border-neutral-100 pt-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
           <button
             onClick={(e) => {
               e.stopPropagation();
               navigator.clipboard.writeText(suggestion.text);
             }}
-            className="text-[11px] font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-150"
+            className="text-[11px] font-medium text-neutral-600 transition-colors duration-150 hover:text-neutral-900"
           >
             Copy
           </button>
@@ -258,35 +258,35 @@ useEffect(() => {
 
 ```jsx
 <div className="flex flex-1 items-center justify-center p-6">
-  <div className="text-center max-w-[240px]">
+  <div className="max-w-[240px] text-center">
     {/* Icon with Pulsing Halo */}
-    <div className="relative inline-flex mb-4">
-      <div className="absolute inset-0 bg-neutral-200/50 rounded-full blur-xl animate-pulse" />
-      <div className="relative p-3 bg-gradient-to-br from-neutral-100 to-neutral-50 rounded-2xl shadow-sm ring-1 ring-neutral-200/50">
+    <div className="relative mb-4 inline-flex">
+      <div className="absolute inset-0 animate-pulse rounded-full bg-neutral-200/50 blur-xl" />
+      <div className="relative rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-50 p-3 shadow-sm ring-1 ring-neutral-200/50">
         <Sparkles className="h-8 w-8 text-neutral-400" />
       </div>
     </div>
 
     {/* Hierarchy: Heading → Description → Tips */}
-    <h4 className="text-[14px] font-semibold text-neutral-900 mb-2">
+    <h4 className="mb-2 text-[14px] font-semibold text-neutral-900">
       Ready to inspire
     </h4>
-    <p className="text-[12px] text-neutral-600 leading-relaxed mb-4">
+    <p className="mb-4 text-[12px] leading-relaxed text-neutral-600">
       Click any element card to get AI-powered suggestions tailored to your
       concept
     </p>
 
     {/* Quick Tips */}
     <div className="space-y-2 text-left">
-      <div className="flex items-start gap-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200/50">
-        <Info className="h-3.5 w-3.5 text-neutral-400 flex-shrink-0 mt-0.5" />
-        <span className="text-[11px] text-neutral-600 leading-relaxed">
+      <div className="flex items-start gap-2 rounded-lg border border-neutral-200/50 bg-neutral-50 p-2">
+        <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-neutral-400" />
+        <span className="text-[11px] leading-relaxed text-neutral-600">
           Suggestions adapt based on your filled elements
         </span>
       </div>
-      <div className="flex items-start gap-2 p-2 bg-neutral-50 rounded-lg border border-neutral-200/50">
-        <Zap className="h-3.5 w-3.5 text-neutral-400 flex-shrink-0 mt-0.5" />
-        <span className="text-[11px] text-neutral-600 leading-relaxed">
+      <div className="flex items-start gap-2 rounded-lg border border-neutral-200/50 bg-neutral-50 p-2">
+        <Zap className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-neutral-400" />
+        <span className="text-[11px] leading-relaxed text-neutral-600">
           Use keyboard shortcuts for faster workflow
         </span>
       </div>
@@ -653,7 +653,7 @@ useEffect(() => {
 
 ```jsx
 <div className="group relative ...">
-  <kbd className="... opacity-0 group-hover:opacity-100">
+  <kbd className="opacity-0 group-hover:opacity-100 ...">
     {/* Keyboard badge */}
   </kbd>
 </div>
@@ -697,7 +697,7 @@ className =
 ```javascript
 // Add tooltip on hover showing full prompt
 <div className="absolute bottom-full mb-2 ...">
-  <div className="p-3 bg-neutral-900 text-white rounded-lg ...">
+  <div className="rounded-lg bg-neutral-900 p-3 text-white ...">
     {fullPromptPreview}
   </div>
 </div>

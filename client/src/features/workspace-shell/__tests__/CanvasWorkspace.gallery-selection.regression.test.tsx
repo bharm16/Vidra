@@ -92,20 +92,17 @@ vi.mock("@/components/ToolSidebar/context", () => ({
   useSidebarGenerationDomain: () => null,
 }));
 
-vi.mock(
-  "../hooks/useModelSelectionRecommendation",
-  () => ({
-    useModelSelectionRecommendation: () => ({
-      recommendationMode: "t2v",
-      modelRecommendation: null,
-      recommendedModelId: undefined,
-      efficientModelId: undefined,
-      renderModelOptions: [{ id: "sora-2", label: "Sora" }],
-      renderModelId: "sora-2",
-      recommendationAgeMs: null,
-    }),
+vi.mock("../hooks/useModelSelectionRecommendation", () => ({
+  useModelSelectionRecommendation: () => ({
+    recommendationMode: "t2v",
+    modelRecommendation: null,
+    recommendedModelId: undefined,
+    efficientModelId: undefined,
+    renderModelOptions: [{ id: "sora-2", label: "Sora" }],
+    renderModelId: "sora-2",
+    recommendationAgeMs: null,
   }),
-);
+}));
 
 // WorkspaceTopBar pulls credit/auth contexts that the regression doesn't
 // exercise — replace with a minimal landmark.

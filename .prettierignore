@@ -1,3 +1,7 @@
 # Auto-generated files — do not reformat
 docs/architecture/architecture-map.json
 docs/openapi.json
+
+# Agent session scratch. Gitignored, so CI never sees it; without this the
+# local format:check reports a failure CI cannot reproduce.
+.remember/

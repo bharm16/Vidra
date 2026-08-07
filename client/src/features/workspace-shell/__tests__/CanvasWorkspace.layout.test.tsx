@@ -76,20 +76,17 @@ vi.mock("@/components/ToolSidebar/context", () => ({
   useSidebarGenerationDomain: () => null,
 }));
 
-vi.mock(
-  "../hooks/useModelSelectionRecommendation",
-  () => ({
-    useModelSelectionRecommendation: () => ({
-      recommendationMode: "t2v",
-      modelRecommendation: null,
-      recommendedModelId: undefined,
-      efficientModelId: undefined,
-      renderModelOptions: [{ id: "sora-2", label: "Sora" }],
-      renderModelId: "sora-2",
-      recommendationAgeMs: null,
-    }),
+vi.mock("../hooks/useModelSelectionRecommendation", () => ({
+  useModelSelectionRecommendation: () => ({
+    recommendationMode: "t2v",
+    modelRecommendation: null,
+    recommendedModelId: undefined,
+    efficientModelId: undefined,
+    renderModelOptions: [{ id: "sora-2", label: "Sora" }],
+    renderModelId: "sora-2",
+    recommendationAgeMs: null,
   }),
-);
+}));
 
 // Stub child components to keep the test focused on the outer layout shell.
 // WorkspaceTopBar's real implementation depends on CreditBalanceContext +

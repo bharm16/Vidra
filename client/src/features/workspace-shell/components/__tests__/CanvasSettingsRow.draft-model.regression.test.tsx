@@ -11,18 +11,15 @@ import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import type { GenerationControlsState } from "@features/generation-controls";
 import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls";
 
-vi.mock(
-  "../../hooks/useCapabilitiesClamping",
-  () => ({
-    useCapabilitiesClamping: () => ({
-      schema: null,
-      aspectRatioInfo: null,
-      durationInfo: null,
-      aspectRatioOptions: ["16:9"],
-      durationOptions: [5],
-    }),
+vi.mock("../../hooks/useCapabilitiesClamping", () => ({
+  useCapabilitiesClamping: () => ({
+    schema: null,
+    aspectRatioInfo: null,
+    durationInfo: null,
+    aspectRatioOptions: ["16:9"],
+    durationOptions: [5],
   }),
-);
+}));
 
 vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),

@@ -26,18 +26,15 @@ window.ResizeObserver =
   window.ResizeObserver ?? (ResizeObserverStub as typeof ResizeObserver);
 Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? vi.fn();
 
-vi.mock(
-  "../../hooks/useCapabilitiesClamping",
-  () => ({
-    useCapabilitiesClamping: () => ({
-      schema: null,
-      aspectRatioInfo: null,
-      durationInfo: null,
-      aspectRatioOptions: ["16:9", "9:16", "1:1"],
-      durationOptions: [5, 10],
-    }),
+vi.mock("../../hooks/useCapabilitiesClamping", () => ({
+  useCapabilitiesClamping: () => ({
+    schema: null,
+    aspectRatioInfo: null,
+    durationInfo: null,
+    aspectRatioOptions: ["16:9", "9:16", "1:1"],
+    durationOptions: [5, 10],
   }),
-);
+}));
 
 vi.mock("@/features/model-intelligence/api", () => ({
   trackModelRecommendationEvent: vi.fn(),
