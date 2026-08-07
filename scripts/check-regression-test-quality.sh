@@ -60,13 +60,20 @@ ALLOWED_MOCKS=(
   'uuid'
   '@infrastructure/Logger'
   '@utils/sleep'
+  'replicate'
 )
 
 if [ "$#" -gt 0 ]; then
   # Scoped mode: scan only the given files (non-regression args are skipped).
   FILES="$(printf '%s\n' "$@" | grep -E '\.regression\.test\.' || true)"
 else
-  FILES="$(find "$ROOT" -name '*.regression.test.*' -not -path '*/node_modules/*' | sort)"
+  # .claude/worktrees holds other agents' checkouts of this repo. Their tests
+  # are not this working tree's to gate on, and scanning them made the local
+  # run disagree with CI (which has no worktrees) — dozens of phantom
+  # violations that hid the two real ones.
+  FILES="$(find "$ROOT" -name '*.regression.test.*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/.claude/worktrees/*' | sort)"
 fi
 
 if [ -z "$FILES" ]; then

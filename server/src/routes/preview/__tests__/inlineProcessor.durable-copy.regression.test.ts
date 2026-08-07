@@ -23,10 +23,6 @@ const mocks = vi.hoisted(() => ({
   loggerInfo: vi.fn(),
   loggerWarn: vi.fn(),
   loggerError: vi.fn(),
-  buildRefundKey: vi.fn(
-    (parts: Array<string | number>) => `refund-${parts.join("-")}`,
-  ),
-  refundWithGuard: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@infrastructure/Logger", () => {
@@ -48,27 +44,11 @@ vi.mock("@infrastructure/Logger", () => {
   };
 });
 
-vi.mock("@services/credits/refundGuard", () => ({
-  buildRefundKey: mocks.buildRefundKey,
-  refundWithGuard: mocks.refundWithGuard,
-}));
-
-// Passthrough mocks: resolve aliased paths so Vitest loads the REAL modules —
-// the invariant lives in processVideoJob and must run for real.
-vi.mock("@services/video-generation/jobs/classifyError", async () => {
-  return await import("../../../services/video-generation/jobs/classifyError");
-});
-vi.mock("@services/video-generation/jobs/processVideoJob", async () => {
-  return await import(
-    "../../../services/video-generation/jobs/processVideoJob"
-  );
-});
-vi.mock("@server/utils/RetryPolicy", async () => {
-  return await import("../../../utils/RetryPolicy");
-});
-vi.mock("@server/utils/sleep", async () => {
-  return await import("../../../utils/sleep");
-});
+// refundGuard is NOT mocked. It takes userCreditService as a parameter, so the
+// refund is observable through the injected credit service below — the real
+// guard runs, and the assertion watches the effect rather than the collaborator.
+// Substituting the module here would have pinned "we called refundWithGuard"
+// instead of "the user got their credits back".
 
 interface MockJobStore {
   claimJob: ReturnType<typeof vi.fn>;
@@ -120,7 +100,7 @@ async function flushMicrotasks(rounds = 10): Promise<void> {
 describe("regression: a paid render either lands durably or the job fails and refunds", () => {
   let jobStore: MockJobStore;
   let generateVideo: ReturnType<typeof vi.fn>;
-  let userCreditService: Record<string, unknown>;
+  let userCreditService: { refundCredits: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -128,7 +108,9 @@ describe("regression: a paid render either lands durably or the job fails and re
 
     jobStore = createMockJobStore();
     generateVideo = vi.fn().mockResolvedValue(FAKE_RESULT);
-    userCreditService = { refundCredits: vi.fn() };
+    // Truthy: refundWithGuard returns on the first attempt, so the real guard
+    // runs its success path without retry sleeps under fake timers.
+    userCreditService = { refundCredits: vi.fn().mockResolvedValue(true) };
     jobStore.claimJob.mockResolvedValue(createClaimedJob());
   });
 
@@ -172,7 +154,11 @@ describe("regression: a paid render either lands durably or the job fails and re
     // must not read as a success the user paid for and cannot keep.
     expect(jobStore.markCompleted).not.toHaveBeenCalled();
     expect(jobStore.markFailed).toHaveBeenCalled();
-    expect(mocks.refundWithGuard).toHaveBeenCalled();
+    expect(userCreditService.refundCredits).toHaveBeenCalledWith(
+      "user-1",
+      5,
+      expect.objectContaining({ refundKey: expect.any(String) }),
+    );
   });
 
   it("a completed job's record always carries the durable storage path", async () => {
