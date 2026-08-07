@@ -106,6 +106,20 @@ export default mergeConfig(
               "client/src/**/*.{test,spec}.{ts,tsx,js,jsx}",
               "tests/unit/**/*.{test,spec}.{tsx,jsx}",
             ],
+            // A jsdom interaction test that takes ~1-3s on an idle machine takes
+            // well past the 10s base budget while the server project saturates
+            // the remaining cores, so the full suite failed a shifting handful of
+            // tests every run while each one passed in isolation. Headroom, not
+            // the base budget, is what these tests need: a timeout only costs
+            // wall-clock on a test that was going to fail anyway.
+            testTimeout: 30000,
+            // Projects run in parallel by default, which put 2 jsdom forks
+            // against 8 server threads on a 10-core machine. Starved that hard,
+            // a 350ms menu interaction took over 30s — userEvent awaits a
+            // macrotask per synthetic event, so event-loop latency multiplies
+            // across the dozens of events one interaction fires. A later group
+            // runs after the server project instead of alongside it.
+            sequence: { groupOrder: 1 },
           },
         },
       ],

@@ -77,7 +77,11 @@ describe("Qwen model id consistency (regression)", () => {
     };
     await walk(serverSrc);
     expect(offenders).toEqual([]);
-  });
+    // Reads every source file under server/src one at a time — ~350ms alone, but
+    // it is the only server test whose cost scales with the codebase, and the
+    // 10s default leaves it nothing to give when the other server threads are
+    // mid-transform. Its own budget rather than a looser default for all of them.
+  }, 30000);
 
   it("GroqQwenAdapter's constructor default matches DEFAULT_QWEN_MODEL", () => {
     const adapter = new GroqQwenAdapter({ apiKey: "test-key" });

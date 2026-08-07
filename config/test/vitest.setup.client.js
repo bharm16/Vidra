@@ -116,8 +116,9 @@ vi.mock("./src/components/Toast.jsx", () => ({
 
 // Mock PromptStudio UI primitives used in components
 vi.mock("@promptstudio/system/components/ui/button", () => ({
-  Button: ({ children, ...props }) =>
-    React.createElement("button", props, children),
+  Button: React.forwardRef(({ children, ...props }, ref) =>
+    React.createElement("button", { ...props, ref }, children),
+  ),
 }));
 
 vi.mock("@promptstudio/system/components/ui/input", () => ({
