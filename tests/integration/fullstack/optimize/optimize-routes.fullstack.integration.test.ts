@@ -25,6 +25,7 @@ interface MockAIService {
   stream: ReturnType<typeof vi.fn>;
   supportsStreaming: ReturnType<typeof vi.fn>;
   getAvailableClients: ReturnType<typeof vi.fn>;
+  resolveExecution: ReturnType<typeof vi.fn>;
 }
 
 describe("Optimize Routes (full-stack integration)", () => {
@@ -161,6 +162,12 @@ describe("Optimize Routes (full-stack integration)", () => {
       ),
       supportsStreaming: vi.fn(() => true),
       getAvailableClients: vi.fn(() => ["mock-ai"]),
+      resolveExecution: vi.fn(() => ({
+        client: "mock-ai",
+        provider: "openai",
+        model: "mock-model",
+        viaFallback: false,
+      })),
     };
 
     const container = await configureServices();

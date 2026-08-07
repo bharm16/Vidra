@@ -91,4 +91,30 @@ describe("GitHub workflow startup validity", () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it("never backslash-escapes quotes inside a `run:` command", () => {
+    // A YAML plain scalar does not process escapes, so `\"` reaches the shell
+    // as a literal backslash followed by a quote. The shell then splits on the
+    // whitespace the quotes were meant to protect.
+    //
+    // `firebase emulators:exec ... \"npm run test:integration\"` arrived as
+    // `\"npm`, `run`, `test:integration\"` — three arguments where one was
+    // intended. firebase answered "Too many arguments", so the emulator never
+    // started and the integration job failed without running a single test.
+    // The job looked like a real failing suite; it had executed nothing.
+    const offenders: string[] = [];
+
+    for (const file of workflowFiles()) {
+      readWorkflow(file)
+        .split("\n")
+        .forEach((line, index) => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("run:") && trimmed.includes('\\"')) {
+            offenders.push(`${file}:${index + 1} → ${trimmed}`);
+          }
+        });
+    }
+
+    expect(offenders).toEqual([]);
+  });
 });

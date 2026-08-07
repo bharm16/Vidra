@@ -20,6 +20,7 @@ interface MockAIService {
   supportsStreaming: ReturnType<typeof vi.fn>;
   getAvailableClients: ReturnType<typeof vi.fn>;
   getOperationConfig: ReturnType<typeof vi.fn>;
+  resolveExecution: ReturnType<typeof vi.fn>;
 }
 
 describe("Label Spans Routes (full-stack integration)", () => {
@@ -88,6 +89,12 @@ describe("Label Spans Routes (full-stack integration)", () => {
       supportsStreaming: vi.fn(() => true),
       getAvailableClients: vi.fn(() => ["mock-provider"]),
       getOperationConfig: vi.fn(() => ({ model: "mock-model" })),
+      resolveExecution: vi.fn(() => ({
+        client: "mock-provider",
+        provider: "groq",
+        model: "mock-model",
+        viaFallback: false,
+      })),
     };
 
     const container = await configureServices();

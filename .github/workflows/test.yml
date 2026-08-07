@@ -157,7 +157,12 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Run integration tests against Firestore emulator
-        run: firebase emulators:exec --project demo-test --only firestore \"npm run test:integration\"
+        # The command must reach firebase as ONE argument. The backslashes that
+        # used to escape these quotes were literal in a YAML plain scalar, so
+        # the shell passed `\"npm`, `run`, `test:integration\"` as three args
+        # and firebase rejected them with "Too many arguments" — the emulator
+        # never started and no integration test ran.
+        run: firebase emulators:exec --project demo-test --only firestore "npm run test:integration"
         env:
           RUN_FIREBASE_INTEGRATION: "true"
           FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
