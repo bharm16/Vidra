@@ -16,8 +16,7 @@ const buttonVariants = cva(
           "border border-border bg-transparent text-muted hover:border-border-strong hover:bg-hover hover:text-foreground",
         secondary:
           "border border-border bg-surface-2 text-foreground hover:bg-hover",
-        ghost:
-          "bg-transparent text-muted hover:bg-hover hover:text-foreground",
+        ghost: "bg-transparent text-muted hover:bg-hover hover:text-foreground",
         canvas:
           "border border-transparent bg-transparent text-muted hover:border-border hover:bg-hover hover:text-foreground",
         "canvas-solid":
