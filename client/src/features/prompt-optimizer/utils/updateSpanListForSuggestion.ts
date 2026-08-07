@@ -1,4 +1,4 @@
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 
 const isFiniteNumber = (value: unknown): value is number =>
   Number.isFinite(value);

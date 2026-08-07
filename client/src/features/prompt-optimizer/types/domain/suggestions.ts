@@ -1,4 +1,4 @@
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 
 export interface SuggestionPayload {
   highlightedText?: string;

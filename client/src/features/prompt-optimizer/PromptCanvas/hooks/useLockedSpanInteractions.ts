@@ -15,13 +15,13 @@ import {
   isSpanLocked,
 } from "@features/prompt-optimizer/utils/lockedSpans";
 import type { LockedSpan } from "@features/prompt-optimizer/types";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
 import {
   HIGHLIGHT_SELECTOR,
   spanIdSelector,
-} from "@features/span-highlighting/config/spanSelectors";
+} from "@features/span-highlighting";
 
 const log = logger.child("useLockedSpanInteractions");
 

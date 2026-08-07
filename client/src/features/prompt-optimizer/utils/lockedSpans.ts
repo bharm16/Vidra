@@ -1,4 +1,4 @@
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import type { LockedSpan } from "../types";
 
 const normalize = (value?: string | null): string => (value ?? "").trim();

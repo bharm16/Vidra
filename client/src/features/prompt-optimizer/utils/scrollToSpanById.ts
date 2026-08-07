@@ -1,4 +1,4 @@
-import { spanIdSelector } from "@features/span-highlighting/config/spanSelectors";
+import { spanIdSelector } from "@features/span-highlighting";
 export function scrollToSpanById(spanId: string): void {
   if (!spanId || typeof document === "undefined") return;
 

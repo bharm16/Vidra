@@ -1,4 +1,4 @@
-import { HIGHLIGHT_CLASS } from "@features/span-highlighting/config/spanSelectors";
+import { HIGHLIGHT_CLASS } from "@features/span-highlighting";
 /**
  * Finds a highlighted word element from a click target by traversing up the DOM tree.
  */

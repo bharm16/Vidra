@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { RefObject } from "react";
-import { HIGHLIGHT_SELECTOR } from "@features/span-highlighting/config/spanSelectors";
+import { HIGHLIGHT_SELECTOR } from "@features/span-highlighting";
 
 const COHERENCE_BASE_CLASSES = [
   "underline",

@@ -13,7 +13,7 @@ import {
   createHighlightSignature,
 } from "@features/span-highlighting";
 import type { CanonicalText } from "@utils/canonicalText";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import type { ParseResult, ParseResultStatus } from "../types";
 
 const EMPTY_SPANS: HighlightSpan[] = [];

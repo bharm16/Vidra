@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { RefObject } from "react";
 
 import type { PromptCanvasState } from "../types";
-import { HIGHLIGHT_SELECTOR } from "@features/span-highlighting/config/spanSelectors";
+import { HIGHLIGHT_SELECTOR } from "@features/span-highlighting";
 
 export interface UseSpanSelectionEffectsOptions {
   editorRef: RefObject<HTMLElement>;

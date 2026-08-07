@@ -5,7 +5,7 @@
 import type { OptimizationOptions } from "../types";
 import type { PromptContext } from "@utils/PromptContext/PromptContext";
 import type { CanonicalText } from "@utils/canonicalText";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import type { SpanLabelingResult } from "@features/span-highlighting/hooks/types";
 import type {
   Mode,

@@ -4,7 +4,7 @@
 
 import type { RefObject } from "react";
 import { logger } from "@/services/LoggingService";
-import { spanIdSelector } from "@features/span-highlighting/config/spanSelectors";
+import { spanIdSelector } from "@features/span-highlighting";
 
 const log = logger.child("spanFormatting");
 

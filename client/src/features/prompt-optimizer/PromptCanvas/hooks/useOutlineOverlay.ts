@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
-import { spanIdSelector } from "@features/span-highlighting/config/spanSelectors";
+import { spanIdSelector } from "@features/span-highlighting";
 
 type OverlayState = "closed" | "opening" | "open" | "closing";
 

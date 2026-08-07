@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCustomRequest } from "@components/SuggestionsPanel/hooks/useCustomRequest";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import type {
   InlineSuggestion,
   PromptCanvasState,

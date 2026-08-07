@@ -3,7 +3,7 @@ import type {
   CoherenceRecommendation,
   CoherenceSpan,
 } from "@features/prompt-optimizer/types/coherence";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import { applySpanEditToPrompt } from "./applySpanEdit";
 import {
   updateHighlightSnapshotForSuggestion,

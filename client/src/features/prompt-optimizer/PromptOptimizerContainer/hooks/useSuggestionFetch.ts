@@ -29,7 +29,7 @@ import {
   prepareSpanContext,
   buildSpanFingerprint,
 } from "@features/span-highlighting/utils/spanProcessing";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
+import type { HighlightSpan } from "@features/span-highlighting";
 import type { Toast } from "@hooks/types";
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";

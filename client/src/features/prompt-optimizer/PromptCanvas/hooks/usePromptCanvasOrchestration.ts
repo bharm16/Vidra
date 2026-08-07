@@ -9,7 +9,10 @@ import { useDrawerState } from "@components/CollapsibleDrawer";
 import { useToast } from "@components/Toast";
 import { useDebugLogger } from "@hooks/useDebugLogger";
 // Performance config consumed internally by useSpanLabelingPipeline
-import { sanitizeText } from "@/features/span-highlighting";
+import {
+  sanitizeText,
+  LABELLED_HIGHLIGHT_SELECTOR,
+} from "@features/span-highlighting";
 import { useTriggerAutocomplete } from "@features/assets/hooks/useTriggerAutocomplete";
 import { useOutlineOverlay } from "./useOutlineOverlay";
 import { useEditorInput } from "./useEditorInput";
@@ -49,7 +52,6 @@ import {
 import { serializeKeyframes } from "@features/prompt-optimizer/utils/keyframeTransforms";
 
 import type { PromptCanvasViewProps } from "../components/PromptCanvasView.types";
-import { LABELLED_HIGHLIGHT_SELECTOR } from "@features/span-highlighting/config/spanSelectors";
 import { isEditableTarget } from "@components/KeyboardShortcuts/editableTarget";
 import { isMac } from "@components/KeyboardShortcuts/shortcuts.config";
 
