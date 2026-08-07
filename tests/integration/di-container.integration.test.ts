@@ -91,9 +91,9 @@ describe("DI Container (integration)", () => {
     } finally {
       if (previousEnableConvergence === undefined) {
         delete process.env.ENABLE_CONVERGENCE;
-        return;
+      } else {
+        process.env.ENABLE_CONVERGENCE = previousEnableConvergence;
       }
-      process.env.ENABLE_CONVERGENCE = previousEnableConvergence;
     }
   });
 

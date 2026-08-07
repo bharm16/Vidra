@@ -77,8 +77,7 @@ export function useCreditHistory(
             : "Failed to load credit history",
         );
       } finally {
-        if (cancelled) return;
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     })();
 

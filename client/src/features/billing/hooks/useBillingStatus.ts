@@ -73,8 +73,7 @@ export function useBillingStatus(): UseBillingStatusResult {
             : "Failed to load billing status",
         );
       } finally {
-        if (cancelled) return;
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     })();
 
