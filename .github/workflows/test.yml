@@ -208,11 +208,32 @@ jobs:
   quality-gate:
     runs-on: ubuntu-latest
     needs: [unit-tests]
+    # FROZEN 2026-08-07 — does not run, does not gate merges, spends nothing.
+    #
+    # Its number is not currently interpretable. The eval draws a random,
+    # UNSEEDED 25 of 54 prompts (span-labeling-evaluation.ts `--sample`) and
+    # compares that subset's mean against a baseline mean over all 54 — two
+    # different populations. Against the baseline's own spread (n=54, sd 1.76)
+    # the standard error of a 25-prompt mean is 0.26, so the 0.50 allowed drop
+    # is 1.9 SE: sampling error alone fails this gate roughly 1 run in 41 with
+    # zero regression, and because the draw is unseeded the same commit can
+    # pass or fail on re-run. The judge is likewise unpinned (no seed, no
+    # temperature), which adds variance on top.
+    #
+    # The baseline snapshot is also stale: its content timestamp is
+    # 2025-12-25, predating LightingService, the visual-only filter, the July
+    # span-labeling unification, and the provider-routing change. It encodes
+    # the extraction policy those commits deliberately replaced.
+    #
+    # To unfreeze: seed the sample (or evaluate all 54), pin the judge seed and
+    # temperature, re-bless the baseline on current main, then restore
+    #   if: github.event_name != 'schedule'
+    #
     # The secrets context is not available inside `if:`, so the old
     # `secrets.OPENAI_API_KEY != ''` clause failed the workflow at startup.
     # Job env is readable from a step-level `if:`, so the key gate moves onto
     # the steps that actually need it.
-    if: github.event_name != 'schedule'
+    if: false
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
@@ -263,8 +284,15 @@ jobs:
   quality-gate-nightly:
     runs-on: ubuntu-latest
     needs: [unit-tests]
+    # FROZEN 2026-08-07 — see quality-gate above for why. This job compares a
+    # full 54 against the baseline's 54 (SAMPLE_SIZE 120 exceeds the corpus, so
+    # no sampling happens), which is the statistically sound half of the pair —
+    # but it reads the same 2025-12-25 baseline, so it is stale for the same
+    # reason. Unfreeze it together with quality-gate by restoring
+    #   if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    #
     # Same startup-failure fix as quality-gate above: no secrets context in `if:`.
-    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    if: false
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
