@@ -7,7 +7,7 @@ import {
   VIDEO_DRAFT_MODEL,
   VIDEO_RENDER_MODELS,
 } from "@components/ToolSidebar/config/modelConfig";
-import type { VideoTier } from "@components/ToolSidebar/types";
+import type { VideoTier } from "@features/generation-controls";
 import type { HighlightSnapshot } from "@/features/prompt-optimizer/context/types";
 import type {
   ModelRecommendation,

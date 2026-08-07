@@ -15,7 +15,7 @@ import {
   type FieldInfo,
 } from "../utils/capabilities";
 import type { GenerationControlsTab } from "@/features/generation-controls";
-import type { VideoTier } from "@components/ToolSidebar/types";
+import type { VideoTier } from "@features/generation-controls";
 
 const log = logger.child("useCapabilitiesClamping");
 

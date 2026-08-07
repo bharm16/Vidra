@@ -1,9 +1,25 @@
 import { TELEMETRY_SOURCE_HEADER } from "#shared/types/telemetry";
-import type { ApiClient } from "../ApiClient";
 
 interface BuiltRequest {
   url: string;
   init: RequestInit;
+}
+
+/**
+ * The one method this module needs from ApiClient.
+ *
+ * Importing the class itself closed a cycle — ApiClient imports
+ * setupTelemetrySource, and the type import pointed straight back — over a
+ * dependency that is a single method. Structural typing means ApiClient still
+ * satisfies this without either module knowing about the other's shape, the
+ * same way the sibling interceptors already redeclare BuiltRequest locally.
+ */
+interface InterceptorRegistrar {
+  addRequestInterceptor(
+    interceptor: (
+      payload: BuiltRequest,
+    ) => BuiltRequest | Promise<BuiltRequest> | undefined,
+  ): void;
 }
 
 /** Not covered by unit tests — `import.meta.env.MODE` is a Vite build-time
@@ -40,6 +56,6 @@ export function applyTelemetrySourceHeader(
   };
 }
 
-export function setupTelemetrySource(apiClient: ApiClient): void {
+export function setupTelemetrySource(apiClient: InterceptorRegistrar): void {
   apiClient.addRequestInterceptor(applyTelemetrySourceHeader);
 }
