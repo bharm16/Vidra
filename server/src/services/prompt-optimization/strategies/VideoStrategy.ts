@@ -1,6 +1,5 @@
 import { logger } from "@infrastructure/Logger";
 import OptimizationConfig from "@config/OptimizationConfig";
-import { ModelConfig } from "@config/modelConfig";
 // Import the examples along with the generator
 import {
   generateUniversalVideoPrompt,
@@ -11,7 +10,6 @@ import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
 import { hashString } from "@utils/hash";
 import { getVideoTemplateBuilder } from "./video-templates/index";
 import { getVideoOptimizationSchema } from "@utils/provider/SchemaFactory";
-import { detectProvider } from "@utils/provider/ProviderDetector";
 import type { CapabilityValues } from "@shared/capabilities";
 import type {
   AIService,
@@ -135,19 +133,15 @@ export class VideoStrategy implements OptimizationStrategy {
       "Optimizing prompt with video strategy (Provider-Aware + Strict Schema + Few-Shot)",
     );
     const config = this.getConfig();
-    const optimizeConfig = ModelConfig.optimize_standard;
-    if (!optimizeConfig) {
-      throw new Error("Missing optimize_standard model configuration");
-    }
 
-    // Detect provider for this operation
-    const provider = detectProvider({
-      operation: "optimize_standard",
-      client: optimizeConfig.client,
-      model: optimizeConfig.model,
-    });
+    // The provider that will actually run this call. Read from the router
+    // rather than derived from ModelConfig: the table records what was
+    // requested, and it drives both the template builder and the strict
+    // schema below — so a stale answer shapes the request for a provider that
+    // never sees it.
+    const { provider, model } = this.ai.resolveExecution("optimize_standard");
 
-    logger.debug("Provider detected for video optimization", { provider });
+    logger.debug("Provider resolved for video optimization", { provider });
 
     const originalUserPrompt =
       typeof brainstormContext?.originalUserPrompt === "string" &&
@@ -160,8 +154,7 @@ export class VideoStrategy implements OptimizationStrategy {
     try {
       // Get provider-specific template builder
       const templateBuilder = getVideoTemplateBuilder({
-        operation: "optimize_standard",
-        client: provider,
+        provider,
         ...(lockedSpans && lockedSpans.length > 0 ? { lockedSpans } : {}),
       });
 
@@ -181,7 +174,7 @@ export class VideoStrategy implements OptimizationStrategy {
       const schema = getVideoOptimizationSchema({
         operation: "optimize_standard",
         provider,
-        model: optimizeConfig.model,
+        model,
       });
 
       logger.debug("Using provider-specific template", {

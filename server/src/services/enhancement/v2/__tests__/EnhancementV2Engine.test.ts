@@ -33,6 +33,12 @@ function createEngine(responses: string[] = []) {
       temperature: 0.7,
       client: "groq",
     })),
+    resolveExecution: vi.fn(() => ({
+      client: "groq",
+      provider: "groq",
+      model: "llama-3.1-8b-instant",
+      viaFallback: false,
+    })),
     execute,
   } as unknown as AIService;
 

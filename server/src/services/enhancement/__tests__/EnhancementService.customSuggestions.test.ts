@@ -34,6 +34,12 @@ function createService(responses: string[] = []) {
       client: "groq",
       model: "llama-3.1-8b-instant",
     })),
+    resolveExecution: vi.fn(() => ({
+      client: "groq",
+      provider: "groq",
+      model: "llama-3.1-8b-instant",
+      viaFallback: false,
+    })),
     execute,
   } as unknown as AIService;
 

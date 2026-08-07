@@ -268,11 +268,15 @@ export class EnhancementV2Engine {
       typeof operationConfig?.temperature === "number"
         ? operationConfig.temperature
         : 0.7;
-    const provider = operationConfig?.client as
-      | "openai"
-      | "groq"
-      | "qwen"
-      | undefined;
+    // Schema shape must match the provider that runs the call, not the one the
+    // config table names — those diverge whenever a client is unregistered or
+    // its circuit is open.
+    const executed =
+      this.dependencies.aiService.resolveExecution(operation).provider;
+    const provider =
+      executed === "openai" || executed === "groq" || executed === "qwen"
+        ? executed
+        : undefined;
     const schemaOptions = provider ? { provider } : {};
     const schema =
       schemaName === "custom"

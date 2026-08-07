@@ -1,139 +1,74 @@
 /**
  * Video Template Builder Factory
  *
- * Routes to provider-specific template builders based on detected provider.
- * Follows the factory pattern established in the Enhancement service.
+ * Maps the provider that will run the optimization onto the builder that
+ * shapes its template.
  *
- * Architecture:
- * - Singleton instances for performance
- * - Provider detection via ProviderDetector
- * - Returns appropriate builder (OpenAI vs Groq)
+ * The provider is supplied by the caller from
+ * `aiService.resolveExecution("optimize_standard")` — the router's answer,
+ * which accounts for client availability and circuit state. It is not
+ * re-derived here.
+ *
+ * The four concrete builders are the implementation of this mapping, not part
+ * of its interface: they used to be re-exported so callers could bypass the
+ * factory, and the only thing that ever did was a test.
  */
 
 import { logger } from "@infrastructure/Logger";
-import { detectProvider } from "@utils/provider/ProviderDetector";
 import { OpenAIVideoTemplateBuilder } from "./OpenAIVideoTemplateBuilder";
 import { OpenAIVideoTemplateBuilderLocked } from "./OpenAIVideoTemplateBuilderLocked";
 import { GroqVideoTemplateBuilder } from "./GroqVideoTemplateBuilder";
 import { GroqVideoTemplateBuilderLocked } from "./GroqVideoTemplateBuilderLocked";
 import type { BaseVideoTemplateBuilder } from "./BaseVideoTemplateBuilder";
+import type { ProviderType } from "@utils/provider/ProviderDetector";
 
 const log = logger.child({ service: "VideoTemplateBuilderFactory" });
 
-// Singleton instances (initialized on first use)
-let openaiBuilder: OpenAIVideoTemplateBuilder | null = null;
-let groqBuilder: GroqVideoTemplateBuilder | null = null;
-let openaiLockedBuilder: OpenAIVideoTemplateBuilderLocked | null = null;
-let groqLockedBuilder: GroqVideoTemplateBuilderLocked | null = null;
+type BuilderKey = "openai" | "openai-locked" | "groq" | "groq-locked";
+
+const CONSTRUCTORS: Record<BuilderKey, () => BaseVideoTemplateBuilder> = {
+  openai: () => new OpenAIVideoTemplateBuilder(),
+  "openai-locked": () => new OpenAIVideoTemplateBuilderLocked(),
+  groq: () => new GroqVideoTemplateBuilder(),
+  "groq-locked": () => new GroqVideoTemplateBuilderLocked(),
+};
+
+/** Builders are stateless; one instance each is reused across requests. */
+const instances = new Map<BuilderKey, BaseVideoTemplateBuilder>();
 
 /**
- * Get template builder based on provider detection
+ * Get the template builder for a provider.
  *
- * @param options - Provider detection options
- * @returns Provider-specific template builder
- *
- * @example
- * ```typescript
- * const builder = getVideoTemplateBuilder({
- *   operation: 'optimize_standard',
- *   client: 'openai'
- * });
- *
- * const template = builder.buildTemplate({
- *   userConcept: 'A cat walking',
- *   includeInstructions: true
- * });
- * ```
+ * @param options.provider - From `aiService.resolveExecution(...)`. Anthropic,
+ *   Gemini and unknown providers use the Groq template.
+ * @param options.lockedSpans - Present and non-empty selects the locked-span
+ *   variant of the same provider's builder.
  */
 export function getVideoTemplateBuilder(options: {
-  operation?: string;
-  model?: string;
-  client?: string;
+  provider: ProviderType;
   lockedSpans?: Array<{ text: string }>;
 }): BaseVideoTemplateBuilder {
-  const operation = "getVideoTemplateBuilder";
-
-  log.debug("Getting video template builder", {
-    operation,
-    options,
-  });
-
-  const provider = detectProvider(options);
-  const hasLockedSpans =
+  const family = options.provider === "openai" ? "openai" : "groq";
+  const locked =
     Array.isArray(options.lockedSpans) && options.lockedSpans.length > 0;
+  const key: BuilderKey = locked ? `${family}-locked` : family;
 
-  if (provider === "openai") {
-    if (hasLockedSpans) {
-      if (!openaiLockedBuilder) {
-        log.debug("Creating OpenAI locked video template builder instance", {
-          operation,
-          provider,
-        });
-        openaiLockedBuilder = new OpenAIVideoTemplateBuilderLocked();
-      }
-      log.debug("Returning OpenAI locked video template builder", {
-        operation,
-        provider,
-      });
-      return openaiLockedBuilder;
-    }
-
-    if (!openaiBuilder) {
-      log.debug("Creating OpenAI video template builder instance", {
-        operation,
-        provider,
-      });
-      openaiBuilder = new OpenAIVideoTemplateBuilder();
-    }
-
-    log.debug("Returning OpenAI video template builder", {
-      operation,
-      provider,
+  let builder = instances.get(key);
+  if (!builder) {
+    builder = CONSTRUCTORS[key]();
+    instances.set(key, builder);
+    log.debug("Created video template builder", {
+      operation: "getVideoTemplateBuilder",
+      provider: options.provider,
+      key,
     });
-
-    return openaiBuilder;
   }
 
-  // Default to Groq for all other providers
-  // (Anthropic, Gemini, and unknown providers use Groq template)
-  if (hasLockedSpans) {
-    if (!groqLockedBuilder) {
-      log.debug("Creating Groq locked video template builder instance", {
-        operation,
-        provider,
-      });
-      groqLockedBuilder = new GroqVideoTemplateBuilderLocked();
-    }
-    log.debug("Returning Groq locked video template builder", {
-      operation,
-      provider,
-    });
-    return groqLockedBuilder;
-  }
-
-  if (!groqBuilder) {
-    log.debug("Creating Groq video template builder instance", {
-      operation,
-      provider,
-    });
-    groqBuilder = new GroqVideoTemplateBuilder();
-  }
-
-  log.debug("Returning Groq video template builder", {
-    operation,
-    provider,
-  });
-
-  return groqBuilder;
+  return builder;
 }
 
-// Re-export types and classes
 export { BaseVideoTemplateBuilder } from "./BaseVideoTemplateBuilder";
 export type {
   VideoTemplateContext,
   VideoTemplateResult,
 } from "./BaseVideoTemplateBuilder";
-export { OpenAIVideoTemplateBuilder } from "./OpenAIVideoTemplateBuilder";
-export { GroqVideoTemplateBuilder } from "./GroqVideoTemplateBuilder";
-export { OpenAIVideoTemplateBuilderLocked } from "./OpenAIVideoTemplateBuilderLocked";
-export { GroqVideoTemplateBuilderLocked } from "./GroqVideoTemplateBuilderLocked";
