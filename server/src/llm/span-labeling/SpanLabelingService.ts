@@ -3,16 +3,14 @@ import SpanLabelingConfig from "./config/SpanLabelingConfig";
 import { sanitizePolicy, sanitizeOptions } from "./utils/policyUtils";
 import { TextChunker, countWords } from "./utils/chunkingUtils";
 import { NlpSpanStrategy } from "./strategies/NlpSpanStrategy";
-import {
-  createLlmClient,
-  getCurrentSpanProvider,
-} from "./services/LlmClientFactory";
+import { createLlmClient } from "./services/LlmClientFactory";
 import { resolveOverlaps } from "./processing/OverlapResolver";
 import { SpanProcessor } from "./processing/SpanProcessor";
 import { validateSpans } from "./validation/SpanValidator";
 import { detectInjectionPatterns } from "@utils/SecurityPrompts";
 import { logger } from "@infrastructure/Logger";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
+import type { ProviderType } from "@utils/provider/ProviderDetector";
 import type {
   LabelSpansParams,
   LabelSpansResult,
@@ -33,8 +31,28 @@ import type {
  * Provider Isolation:
  * - Groq/Llama 3: Uses GroqLlmClient with logprobs confidence, min_p, stop sequences
  * - OpenAI/GPT-4o: Uses OpenAILlmClient with strict schema, developer role
- * - Provider selection via SPAN_PROVIDER env var or auto-detection
+ * - Provider comes from `aiService.resolveExecution("span_labeling")` — the
+ *   router's answer, which accounts for client availability and circuit state.
+ *   Every result is stamped with it via `meta.provider` so callers (cache keys,
+ *   telemetry) read the provider instead of re-deriving it.
  */
+
+/**
+ * Stamp a result with the provider responsible for it.
+ *
+ * Downstream cache keys and telemetry need to know which provider a result
+ * came from. Carrying it on the result is what stops each of them from
+ * re-deriving it out of `ModelConfig`, which cannot see routing.
+ */
+function withExecutionProvenance(
+  result: LabelSpansResult,
+  provider: ProviderType,
+): LabelSpansResult {
+  return {
+    ...result,
+    meta: { ...result.meta, provider },
+  };
+}
 
 /**
  * Label spans using an LLM with validation and optional repair attempt.
@@ -80,11 +98,10 @@ export async function labelSpans(
   const maxWordsPerChunk = SpanLabelingConfig.CHUNKING.MAX_WORDS_PER_CHUNK;
 
   if (wordCount > maxWordsPerChunk) {
-    const provider = getCurrentSpanProvider();
     logger.debug("Large text detected, using chunked processing", {
       operation: "labelSpans",
       wordCount,
-      provider,
+      provider: aiService.resolveExecution("span_labeling").provider,
     });
     const result = await labelSpansChunked(params, aiService);
     return applyI2VFilterIfNeeded(result, params.templateVersion);
@@ -134,26 +151,20 @@ async function labelSpansSingle(
       cache,
     );
 
+    // Shape the request for the provider the router will actually dispatch to,
+    // not the one the config table names. Resolved before the NLP fast-path so
+    // every result carries provenance, including results no LLM produced.
+    const executedBy = aiService.resolveExecution("span_labeling");
+
     if (nlpResult) {
       // NLP fast-path succeeded
-      return nlpResult;
+      return withExecutionProvenance(nlpResult, executedBy.provider);
     }
 
     // Fall back to LLM-based extraction with repair loop.
-    // Resolve model from operation config so provider selection tracks configured span labeling defaults.
-    let modelName: string | undefined;
-    try {
-      const config = aiService.getOperationConfig?.("span_labeling");
-      modelName = config?.model;
-    } catch {
-      modelName = undefined;
-    }
-    const llmClient = createLlmClient({
-      operation: "span_labeling",
-      ...(modelName ? { model: modelName } : {}),
-    });
+    const llmClient = createLlmClient(executedBy.provider);
 
-    return await llmClient.getSpans({
+    const result = await llmClient.getSpans({
       text: params.text,
       policy,
       options: sanitizedOptions,
@@ -162,6 +173,8 @@ async function labelSpansSingle(
       cache,
       nlpSpansAttempted: 0, // Could track NLP attempt count if needed
     });
+
+    return withExecutionProvenance(result, executedBy.provider);
   } catch (error) {
     // Re-throw errors to let caller handle them
     throw error;
@@ -233,7 +246,7 @@ async function labelSpansChunked(
   const chunks = chunker.chunkText(params.text);
 
   const wordCount = countWords(params.text);
-  const provider = getCurrentSpanProvider();
+  const { provider } = aiService.resolveExecution("span_labeling");
   logger.debug("Processing chunks", {
     operation: "labelSpansChunked",
     wordCount,
@@ -421,6 +434,10 @@ export async function* labelSpansStream(
     params.templateVersion ||
     SpanLabelingConfig.DEFAULT_OPTIONS.templateVersion;
 
+  // Shape the stream for the provider the router will dispatch to. Resolved
+  // before the adversarial short-circuit so every finalization is stamped.
+  const executedBy = aiService.resolveExecution("span_labeling");
+
   // Pre-check for adversarial input
   const adversarialCheck = detectInjectionPatterns(params.text);
   if (adversarialCheck.hasPatterns) {
@@ -430,24 +447,15 @@ export async function* labelSpansStream(
     });
     return {
       spans: [],
-      meta: { version: templateVersion, notes: "adversarial input flagged" },
+      meta: {
+        version: templateVersion,
+        notes: "adversarial input flagged",
+        provider: executedBy.provider,
+      },
     };
   }
 
-  // Resolve model from AI Service config to ensure correct provider detection
-  let modelName: string | undefined;
-  try {
-    const config = aiService.getOperationConfig?.("span_labeling");
-    modelName = config?.model;
-  } catch (e) {
-    // Ignore config lookup errors
-  }
-
-  // Create client with explicit model for auto-detection
-  const llmClient = createLlmClient({
-    operation: "span_labeling",
-    ...(modelName ? { model: modelName } : {}),
-  });
+  const llmClient = createLlmClient(executedBy.provider);
 
   // Fallback if streaming not supported
   if (!llmClient.streamSpans) {
@@ -527,6 +535,7 @@ export async function* labelSpansStream(
     meta: {
       version: sanitizedOptions.templateVersion ?? templateVersion,
       notes: finalized.notes.filter(Boolean).join(" | "),
+      provider: executedBy.provider,
     },
   };
 }

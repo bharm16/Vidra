@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { labelSpans } from "../SpanLabelingService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
-import type { AIResponse } from "@interfaces/IAIClient";
+import type {
+  ResolvedExecution,
+  RoutedAIResponse,
+} from "@services/ai-model/types";
+
+/**
+ * The port's routing answer. Which span client shapes the request now comes
+ * from here rather than being inferred from the model string, so a test says
+ * which provider it is exercising instead of encoding it in a model name.
+ */
+const EXECUTED_BY_OPENAI = (model: string): ResolvedExecution => ({
+  client: "openai",
+  provider: "openai",
+  model,
+  viaFallback: false,
+});
 
 /**
  * Port-seam tests for the span-labeling pipeline.
@@ -43,13 +58,17 @@ function makePort(
   const calls: Array<{ operation: string }> = [];
   return {
     calls,
-    async execute(operation: string): Promise<AIResponse> {
+    async execute(operation: string): Promise<RoutedAIResponse> {
       calls.push({ operation });
       const index = Math.min(calls.length - 1, responses.length - 1);
       return {
         text: responses[index] ?? "",
         metadata: { model, provider: "openai" },
+        executedBy: EXECUTED_BY_OPENAI(model),
       };
+    },
+    resolveExecution() {
+      return EXECUTED_BY_OPENAI(model);
     },
     getOperationConfig() {
       return { client: "openai", model } as never;

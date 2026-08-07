@@ -247,19 +247,6 @@ const MODEL_CONFIG_ENTRIES = {
     useSeed: true, // Same text should label identically
   },
 
-  /**
-   * Explicit Gemini configuration for span labeling
-   * Used by GeminiLlmClient to force Gemini usage regardless of SPAN_PROVIDER
-   */
-  span_labeling_gemini: {
-    client: "gemini",
-    model: "gemini-2.5-flash",
-    temperature: 0.1,
-    maxTokens: 16384,
-    timeout: 45000,
-    useSeed: true,
-  },
-
   // ============================================================================
   // Video Prompt Analysis Operations
   // ============================================================================

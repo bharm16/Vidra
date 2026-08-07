@@ -15,7 +15,6 @@ import { ReplayContractViolationError } from "./errors";
  */
 const OPERATION_CONTRACTS: Record<string, ReplayContractName> = {
   span_labeling: "span-labeling-payload",
-  span_labeling_gemini: "span-labeling-payload",
   enhance_suggestions: "suggestions-payload",
   custom_suggestions: "suggestions-payload",
   optimize_standard: "optimize-text",

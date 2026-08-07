@@ -22,10 +22,6 @@ vi.mock("@infrastructure/Logger", () => ({
 import { GeminiLlmClient } from "@server/llm/span-labeling/services/GeminiLlmClient";
 import { GroqLlmClient } from "@server/llm/span-labeling/services/GroqLlmClient";
 import { OpenAILlmClient } from "@server/llm/span-labeling/services/OpenAILlmClient";
-import {
-  createLlmClient,
-  getCurrentSpanProvider,
-} from "@server/llm/span-labeling/services/LlmClientFactory";
 import type { LabelSpansResult } from "@server/llm/span-labeling/types";
 
 class TestGroqClient extends GroqLlmClient {
@@ -332,61 +328,6 @@ describe("GeminiLlmClient (additional)", () => {
         const value = parsed.value as { spans?: Array<{ role?: string }> };
         expect(value.spans?.[0]?.role).toBe("subject");
       }
-    });
-  });
-});
-
-describe("LlmClientFactory (additional)", () => {
-  const originalEnv = { ...process.env };
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-  });
-
-  afterEach(() => {
-    process.env = { ...originalEnv };
-  });
-
-  describe("error handling", () => {
-    it("falls back to RobustLlmClient when provider is unknown", () => {
-      const client = createLlmClient({ provider: "unknown" });
-
-      expect(client.constructor.name).toBe("RobustLlmClient");
-    });
-
-    it("returns current provider using operation env overrides", () => {
-      process.env.SPAN_LABELING_PROVIDER = "openai";
-
-      const provider = getCurrentSpanProvider();
-
-      expect(provider).toBe("openai");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("selects provider based on SPAN_MODEL when set", () => {
-      process.env.SPAN_MODEL = "gemini-2.0-pro";
-
-      const client = createLlmClient();
-
-      expect(client.constructor.name).toBe("GeminiLlmClient");
-    });
-
-    it("respects explicit provider override", () => {
-      const client = createLlmClient({ provider: "openai" });
-
-      expect(client.constructor.name).toBe("OpenAILlmClient");
-    });
-  });
-
-  describe("core behavior", () => {
-    it("defaults to Groq client when no hints are provided", () => {
-      delete process.env.SPAN_PROVIDER;
-      delete process.env.SPAN_MODEL;
-
-      const client = createLlmClient();
-
-      expect(client.constructor.name).toBe("GroqLlmClient");
     });
   });
 });

@@ -3,8 +3,19 @@ import { labelSpans, labelSpansStream } from "../SpanLabelingService";
 import type { SpanStreamFinalization } from "../SpanLabelingService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { StreamParams } from "@services/ai-model/AIModelService";
-import type { AIResponse } from "@interfaces/IAIClient";
+import type {
+  ResolvedExecution,
+  RoutedAIResponse,
+} from "@services/ai-model/types";
 import type { LabelSpansParams, SpanLike } from "../types";
+
+/** The port's routing answer — the span client is chosen from this. */
+const GEMINI_EXECUTION: ResolvedExecution = {
+  client: "gemini",
+  provider: "gemini",
+  model: "gemini-2.5-flash",
+  viaFallback: false,
+};
 
 /**
  * Regression: the streaming route and the blocking route must run ONE span
@@ -50,7 +61,7 @@ function makePort(rawSpans: RawSpan[]): ScriptedPort {
   const port: ScriptedPort = {
     executeCalls: 0,
     streamCalls: 0,
-    async execute(): Promise<AIResponse> {
+    async execute(): Promise<RoutedAIResponse> {
       port.executeCalls += 1;
       return {
         text: JSON.stringify({
@@ -59,6 +70,7 @@ function makePort(rawSpans: RawSpan[]): ScriptedPort {
           spans: rawSpans,
         }),
         metadata: { model: "gemini-2.5-flash", provider: "gemini" },
+        executedBy: GEMINI_EXECUTION,
       };
     },
     async stream(_operation: string, options: StreamParams): Promise<string> {
@@ -66,6 +78,9 @@ function makePort(rawSpans: RawSpan[]): ScriptedPort {
       const body = rawSpans.map((span) => JSON.stringify(span) + "\n").join("");
       options.onChunk?.(body);
       return body;
+    },
+    resolveExecution() {
+      return GEMINI_EXECUTION;
     },
     getOperationConfig() {
       return { client: "gemini", model: "gemini-2.5-flash" } as never;

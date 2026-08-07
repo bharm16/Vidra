@@ -3,8 +3,19 @@ import { labelSpansStream } from "../SpanLabelingService";
 import type { SpanStreamFinalization } from "../SpanLabelingService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { StreamParams } from "@services/ai-model/AIModelService";
-import type { AIResponse } from "@interfaces/IAIClient";
+import type {
+  ResolvedExecution,
+  RoutedAIResponse,
+} from "@services/ai-model/types";
 import type { LabelSpansParams, SpanLike } from "../types";
+
+/** The port's routing answer — the span client is chosen from this. */
+const GEMINI_EXECUTION: ResolvedExecution = {
+  client: "gemini",
+  provider: "gemini",
+  model: "gemini-2.5-flash",
+  viaFallback: false,
+};
 
 /**
  * Regression: a span line the provider ends the stream on — with no trailing
@@ -46,10 +57,11 @@ interface RawSpan {
  */
 function makeUnterminatedStreamPort(rawSpans: RawSpan[]): AIExecutionPort {
   return {
-    async execute(): Promise<AIResponse> {
+    async execute(): Promise<RoutedAIResponse> {
       return {
         text: JSON.stringify({ spans: rawSpans }),
         metadata: { model: "gemini-2.5-flash", provider: "gemini" },
+        executedBy: GEMINI_EXECUTION,
       };
     },
     async stream(_operation: string, options: StreamParams): Promise<string> {
@@ -59,6 +71,9 @@ function makeUnterminatedStreamPort(rawSpans: RawSpan[]): AIExecutionPort {
       options.onChunk?.(body.slice(0, mid));
       options.onChunk?.(body.slice(mid));
       return body;
+    },
+    resolveExecution() {
+      return GEMINI_EXECUTION;
     },
     getOperationConfig() {
       return { client: "gemini", model: "gemini-2.5-flash" } as never;

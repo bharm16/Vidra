@@ -1,6 +1,5 @@
 import { logger } from "@infrastructure/Logger";
 import { labelSpans } from "@llm/span-labeling/SpanLabelingService";
-import { getCurrentSpanProvider } from "@llm/span-labeling/services/LlmClientFactory";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type {
@@ -72,7 +71,12 @@ export function createLabelSpansCoordinator(
         return { result, headers };
       }
 
-      const cacheProvider = getCurrentSpanProvider();
+      // The key must exist before the value does, so this is the router's
+      // pre-flight answer. It replaces a static ModelConfig read that could
+      // not see client availability or circuit state, which let a fallback
+      // provider's labels be stored under the primary's key.
+      const cacheProvider =
+        aiService.resolveExecution("span_labeling").provider;
       const ttl = text.length > 2000 ? 300 : 3600;
       const operationStart = performance.now();
 

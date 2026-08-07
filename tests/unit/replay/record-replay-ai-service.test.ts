@@ -158,7 +158,7 @@ describe("RecordReplayAiService", () => {
     });
 
     const recordedChunks: string[] = [];
-    const recordedText = await recorder.stream("span_labeling_gemini", {
+    const recordedText = await recorder.stream("span_labeling", {
       systemPrompt: "label the spans",
       userMessage: "a cat",
       onChunk: (chunk: string) => recordedChunks.push(chunk),
@@ -176,13 +176,13 @@ describe("RecordReplayAiService", () => {
     });
 
     const replayChunks: string[] = [];
-    const replayedText = await replayer.stream("span_labeling_gemini", {
+    const replayedText = await replayer.stream("span_labeling", {
       systemPrompt: "label the spans",
       userMessage: "a cat",
       onChunk: (chunk: string) => replayChunks.push(chunk),
     });
     expect(replayedText).toBe(SPAN_JSON);
     expect(replayChunks.join("")).toBe(SPAN_JSON);
-    expect(replayer.supportsStreaming("span_labeling_gemini")).toBe(true);
+    expect(replayer.supportsStreaming("span_labeling")).toBe(true);
   });
 });

@@ -1,11 +1,19 @@
 /**
  * LLM Client Factory
  *
- * Creates provider-specific LLM clients based on environment configuration.
- * This ensures proper isolation of provider-specific optimizations.
+ * Selects the client whose prompt and JSON-schema shaping matches the provider
+ * that will actually run the request.
  *
- * CRITICAL CONSTRAINT: Changes to Groq must not affect OpenAI behavior.
- * The factory pattern ensures this by routing to completely separate implementations.
+ * The provider is supplied by the caller, from `aiService.resolveExecution()`.
+ * It is deliberately NOT re-derived here. This module used to resolve it from
+ * `process.env` and `ModelConfig` through a five-tier cascade — neither of
+ * which can see client availability or circuit state — so a Gemini-shaped
+ * request could be built for a call the router had already rerouted to the
+ * Groq-hosted fallback.
+ *
+ * CRITICAL CONSTRAINT: Changes to Groq must not affect OpenAI behavior. The
+ * factory pattern ensures this by routing to completely separate
+ * implementations.
  */
 
 import { logger } from "@infrastructure/Logger";
@@ -13,40 +21,39 @@ import { RobustLlmClient } from "./RobustLlmClient";
 import { GroqLlmClient } from "./GroqLlmClient";
 import { OpenAILlmClient } from "./OpenAILlmClient";
 import { GeminiLlmClient } from "./GeminiLlmClient";
-import { detectProvider } from "@utils/provider/ProviderDetector";
+import type { ProviderType } from "@utils/provider/ProviderDetector";
 import type { ILlmClient, LlmClientProvider } from "./ILlmClient";
 
 /**
- * Factory options for creating an LLM client
+ * Map an executing provider onto the client that shapes requests for it.
+ *
+ * Qwen is Groq-hosted and shares Groq's JSON-mode handling, so it maps to the
+ * Groq client. Anthropic has no dedicated span client and falls through to the
+ * generic one.
  */
-interface LlmClientFactoryOptions {
-  /** Explicit provider override */
-  provider?: LlmClientProvider;
-  /** Model name for auto-detection */
-  model?: string;
-  /** Operation name for config lookup */
-  operation?: string;
+export function spanClientProviderFor(
+  provider: ProviderType,
+): LlmClientProvider {
+  switch (provider) {
+    case "openai":
+      return "openai";
+    case "gemini":
+      return "gemini";
+    case "groq":
+    case "qwen":
+      return "groq";
+    default:
+      return "unknown";
+  }
 }
 
 /**
- * Create an LLM client for the specified provider
+ * Create the span-labeling client for the provider that will execute the call.
  *
- * Provider selection priority:
- * 1. Explicit provider parameter
- * 2. SPAN_PROVIDER environment variable
- * 3. Auto-detect from model name
- * 4. Operation-specific provider override / operation config detection
- * 5. Default to Groq
- *
- * @param options - Factory options
- * @returns Provider-specific LLM client
+ * @param provider - From `aiService.resolveExecution("span_labeling").provider`
  */
-export function createLlmClient(
-  options: LlmClientFactoryOptions = {},
-): ILlmClient {
-  const provider = resolveProvider(options);
-
-  switch (provider) {
+export function createLlmClient(provider: ProviderType): ILlmClient {
+  switch (spanClientProviderFor(provider)) {
     case "openai":
       return new OpenAILlmClient();
 
@@ -57,88 +64,11 @@ export function createLlmClient(
       return new GeminiLlmClient();
 
     default:
-      // Default to RobustLlmClient which has generic handling
-      // This is safer than guessing wrong
-      logger.warn("Unknown provider, using default RobustLlmClient", {
+      // Generic handling is safer than guessing wrong.
+      logger.warn("No provider-specific span client; using generic client", {
         operation: "createLlmClient",
         provider,
       });
       return new RobustLlmClient();
   }
 }
-
-/**
- * Resolve provider from options, environment, or auto-detection
- */
-function resolveProvider(options: LlmClientFactoryOptions): LlmClientProvider {
-  // 1. Explicit provider parameter
-  if (options.provider) {
-    return options.provider;
-  }
-
-  // 2. Environment variable for span labeling
-  const envProvider = process.env.SPAN_PROVIDER?.toLowerCase();
-  if (
-    envProvider === "openai" ||
-    envProvider === "groq" ||
-    envProvider === "anthropic" ||
-    envProvider === "gemini"
-  ) {
-    return envProvider as LlmClientProvider;
-  }
-
-  // 2.5 Auto-detect from SPAN_MODEL env var
-  const envModel = process.env.SPAN_MODEL;
-  if (envModel) {
-    const detected = detectProvider({ model: envModel });
-    if (detected === "openai" || detected === "groq" || detected === "gemini") {
-      return detected;
-    }
-  }
-
-  // 3. Auto-detect from model name
-  if (options.model) {
-    const detected = detectProvider({ model: options.model });
-    if (detected === "openai" || detected === "groq" || detected === "gemini") {
-      return detected;
-    }
-  }
-
-  // 4. Auto-detect from operation-specific env var
-  if (options.operation) {
-    const operationUpper = options.operation.toUpperCase().replace(/-/g, "_");
-    const operationProvider =
-      process.env[`${operationUpper}_PROVIDER`]?.toLowerCase();
-    if (
-      operationProvider === "openai" ||
-      operationProvider === "groq" ||
-      operationProvider === "gemini"
-    ) {
-      return operationProvider as LlmClientProvider;
-    }
-
-    const detected = detectProvider({ operation: options.operation });
-    if (detected === "openai" || detected === "groq" || detected === "gemini") {
-      return detected;
-    }
-    if (detected === "qwen") {
-      return "groq";
-    }
-  }
-
-  // 5. Default to Groq (current production default)
-  return "groq";
-}
-
-/**
- * Get the current provider for span labeling
- * Useful for logging and debugging
- */
-export function getCurrentSpanProvider(): LlmClientProvider {
-  return resolveProvider({ operation: "span_labeling" });
-}
-
-export default {
-  createLlmClient,
-  getCurrentSpanProvider,
-};

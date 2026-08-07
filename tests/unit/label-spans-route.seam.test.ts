@@ -6,7 +6,18 @@ import { toPublicLabelSpansResult } from "@routes/labelSpans/transform";
 import { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
-import type { AIResponse } from "@interfaces/IAIClient";
+import type {
+  ResolvedExecution,
+  RoutedAIResponse,
+} from "@services/ai-model/types";
+
+/** The port's routing answer; the span client is chosen from this. */
+const OPENAI_EXECUTION: ResolvedExecution = {
+  client: "openai",
+  provider: "openai",
+  model: "gpt-4o-2024-08-06",
+  viaFallback: false,
+};
 import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
 
 /**
@@ -42,7 +53,7 @@ function makePort(responses: string[], delayMs = 0): ScriptedPort {
   const calls: Array<{ operation: string }> = [];
   return {
     calls,
-    async execute(operation: string): Promise<AIResponse> {
+    async execute(operation: string): Promise<RoutedAIResponse> {
       calls.push({ operation });
       if (delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -51,7 +62,11 @@ function makePort(responses: string[], delayMs = 0): ScriptedPort {
       return {
         text: responses[index] ?? "",
         metadata: { model: "gpt-4o-2024-08-06", provider: "openai" },
+        executedBy: OPENAI_EXECUTION,
       };
+    },
+    resolveExecution() {
+      return OPENAI_EXECUTION;
     },
     getOperationConfig() {
       return { client: "openai", model: "gpt-4o-2024-08-06" } as never;

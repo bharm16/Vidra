@@ -3,7 +3,6 @@ import { logger } from "@infrastructure/Logger";
 import { createSseWriter } from "@middleware/sseBackpressure";
 import { labelSpansStream } from "@llm/span-labeling/SpanLabelingService";
 import type { SpanStreamFinalization } from "@llm/span-labeling/SpanLabelingService";
-import { getCurrentSpanProvider } from "@llm/span-labeling/services/LlmClientFactory";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type {
@@ -157,7 +156,9 @@ export async function handleLabelSpansStreamRequest({
   ) {
     try {
       const ttl = text.length > 2000 ? 300 : 3600;
-      const provider = getCurrentSpanProvider();
+      // This write happens after the result exists, so it keys on the provider
+      // that actually produced these spans rather than a pre-flight guess.
+      const provider = finalization?.meta.provider;
       const backfillNotes = [finalization?.meta.notes, "stream backfill"]
         .filter(Boolean)
         .join(" | ");
@@ -174,9 +175,10 @@ export async function handleLabelSpansStreamRequest({
               payload.templateVersion ||
               "",
             notes: backfillNotes,
+            ...(provider ? { provider } : {}),
           },
         },
-        { ttl, provider },
+        { ttl, ...(provider ? { provider } : {}) },
       );
       logger.debug("Stream cache backfill completed", {
         operation,

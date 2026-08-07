@@ -116,15 +116,18 @@ export class GeminiLlmClient extends RobustLlmClient {
       }
     };
 
-    // Start streaming in background
-    // Use explicit 'span_labeling_gemini' operation to ensure we use Gemini client
-    // regardless of what the generic 'span_labeling' is configured to.
+    // Start streaming in background.
+    //
+    // This runs on "span_labeling", not a Gemini-pinned operation. This client
+    // is only constructed when the router already resolved the operation to
+    // Gemini, so pinning would only serve to defeat the failover that made the
+    // resolution correct in the first place.
     if (!aiService.stream) {
       throw new Error("AI service does not support streaming");
     }
 
     aiService
-      .stream("span_labeling_gemini", {
+      .stream("span_labeling", {
         systemPrompt,
         userMessage: text,
         maxTokens: 16384,

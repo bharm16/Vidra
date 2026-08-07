@@ -2,6 +2,8 @@
  * Types for span labeling service
  */
 
+import type { ProviderType } from "@utils/provider/ProviderDetector";
+
 /**
  * Span from LLM response
  */
@@ -32,6 +34,12 @@ export interface SpanLike {
 export interface LLMMeta {
   version: string;
   notes: string;
+  /**
+   * Provider family responsible for this result, as reported by the router.
+   * Set by SpanLabelingService — clients must not populate it, and callers
+   * must not re-derive it from ModelConfig.
+   */
+  provider?: ProviderType;
   [key: string]: unknown;
 }
 

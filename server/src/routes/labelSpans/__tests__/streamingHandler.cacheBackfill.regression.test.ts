@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Response } from "express";
 import { handleLabelSpansStreamRequest } from "../streamingHandler";
 import type { AIModelService } from "@services/ai-model/AIModelService";
@@ -86,6 +86,12 @@ function makeAiService(
       options.onChunk?.(body);
       return body;
     },
+    resolveExecution: () => ({
+      client: "gemini",
+      provider: "gemini" as const,
+      model: "gemini-2.5-flash",
+      viaFallback: false,
+    }),
     getOperationConfig() {
       return { client: "gemini", model: "gemini-2.5-flash" };
     },
@@ -93,15 +99,6 @@ function makeAiService(
 }
 
 describe("stream cache backfill", () => {
-  beforeEach(() => {
-    vi.stubEnv("SPAN_PROVIDER", "gemini");
-    vi.stubEnv("SPAN_MODEL", "gemini-2.5-flash");
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it("caches the finalized spans under the real template version, not the raw wire spans under a placeholder", async () => {
     const captured: CapturedSet[] = [];
     const written: string[] = [];
