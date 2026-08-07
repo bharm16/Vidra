@@ -32,141 +32,6 @@
       "sourceFile": "server/src/openapi/devRoute.ts"
     },
     {
-      "method": "DELETE",
-      "fullPath": "/api/:id",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "DELETE",
-      "fullPath": "/api/:id",
-      "sourceFile": "server/src/routes/reference-images.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/:id",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:id",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/:id/for-generation",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:id/images",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "DELETE",
-      "fullPath": "/api/:id/images/:imageId",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:id/images/:imageId/primary",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "DELETE",
-      "fullPath": "/api/:path(*)",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "DELETE",
-      "fullPath": "/api/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:sessionId/generations/:generationId/archive",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:sessionId/highlights",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:sessionId/output",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:sessionId/prompt",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:sessionId/scene-proxy",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/:sessionId/settings",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:sessionId/shots",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:sessionId/shots/:shotId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:sessionId/shots/:shotId/generate",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:sessionId/shots/:shotId/generate-stream",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/:sessionId/shots/:shotId/scene-proxy-preview",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/:sessionId/shots/:shotId/status",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/:sessionId/shots/:shotId/style-reference",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/:sessionId/style-reference",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/:sessionId/versions",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
       "method": "GET",
       "fullPath": "/api/assets",
       "sourceFile": "server/src/routes/asset.routes.ts"
@@ -228,23 +93,8 @@
     },
     {
       "method": "GET",
-      "fullPath": "/api/by-prompt/:uuid",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
       "fullPath": "/api/capabilities",
       "sourceFile": "server/src/routes/capabilities.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/confirm-upload",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/continuity",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "GET",
@@ -303,16 +153,6 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/delete-batch",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/download-url",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/enhancement/custom-suggestions",
       "sourceFile": "server/src/routes/enhancement/customSuggestionsRoute.ts"
     },
@@ -348,16 +188,6 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/from-keyframe",
-      "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/from-url",
-      "sourceFile": "server/src/routes/reference-images.routes.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/generate/consistent/from-keyframe",
       "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
     },
@@ -370,16 +200,6 @@
       "method": "POST",
       "fullPath": "/api/generate/consistent/video",
       "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/keyframe",
-      "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/list",
-      "sourceFile": "server/src/routes/storage.routes.ts"
     },
     {
       "method": "POST",
@@ -415,21 +235,6 @@
       "method": "POST",
       "fullPath": "/api/motion/depth",
       "sourceFile": "server/src/routes/motion.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/motion/media/cache-control",
-      "sourceFile": "server/src/routes/convergence/convergenceMedia.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/motion/media/content-length",
-      "sourceFile": "server/src/routes/convergence/convergenceMedia.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/motion/media/content-type",
-      "sourceFile": "server/src/routes/convergence/convergenceMedia.routes.ts"
     },
     {
       "method": "GET",
@@ -500,26 +305,6 @@
       "method": "POST",
       "fullPath": "/api/preview/generate/storyboard",
       "sourceFile": "server/src/routes/preview.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/preview/Idempotency-Key",
-      "sourceFile": "server/src/routes/preview/handlers/imageGenerate.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/preview/Idempotency-Key",
-      "sourceFile": "server/src/routes/preview/handlers/imageStoryboardGenerate.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/preview/Idempotency-Key",
-      "sourceFile": "server/src/routes/preview/handlers/videoGenerate.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/preview/Idempotency-Key",
-      "sourceFile": "server/src/routes/preview/handlers/faceSwap.ts"
     },
     {
       "method": "GET",
@@ -603,33 +388,13 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/resolve",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/role-classify",
       "sourceFile": "server/src/routes/roleClassifyRoute.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/save-from-url",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/sessions",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
       "method": "GET",
       "fullPath": "/api/sessions",
       "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/sessions",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
       "method": "POST",
@@ -640,11 +405,6 @@
       "method": "DELETE",
       "fullPath": "/api/sessions/:sessionId",
       "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/sessions/:sessionId",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
       "method": "GET",
@@ -679,17 +439,7 @@
     {
       "method": "POST",
       "fullPath": "/api/sessions/:sessionId/scene-proxy",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/sessions/:sessionId/scene-proxy",
       "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/sessions/:sessionId/settings",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
       "method": "PUT",
@@ -699,27 +449,12 @@
     {
       "method": "POST",
       "fullPath": "/api/sessions/:sessionId/shots",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/sessions/:sessionId/shots",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
       "method": "PATCH",
       "fullPath": "/api/sessions/:sessionId/shots/:shotId",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/sessions/:sessionId/shots/:shotId",
       "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/sessions/:sessionId/shots/:shotId/generate",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
       "method": "POST",
@@ -734,11 +469,6 @@
     {
       "method": "POST",
       "fullPath": "/api/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
@@ -749,17 +479,7 @@
     {
       "method": "PUT",
       "fullPath": "/api/sessions/:sessionId/shots/:shotId/style-reference",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/sessions/:sessionId/shots/:shotId/style-reference",
       "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/sessions/:sessionId/style-reference",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
     },
     {
       "method": "PUT",
@@ -792,24 +512,9 @@
       "sourceFile": "server/src/routes/storage.routes.ts"
     },
     {
-      "method": "GET",
-      "fullPath": "/api/storage/cache-control",
-      "sourceFile": "server/src/routes/storage/mediaProxy.routes.ts"
-    },
-    {
       "method": "POST",
       "fullPath": "/api/storage/confirm-upload",
       "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/storage/content-length",
-      "sourceFile": "server/src/routes/storage/mediaProxy.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/storage/content-type",
-      "sourceFile": "server/src/routes/storage/mediaProxy.routes.ts"
     },
     {
       "method": "POST",
@@ -882,6 +587,11 @@
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/studio/projects/:projectId/attachments",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/api/studio/projects/:projectId/turns",
       "sourceFile": "server/src/routes/studio.routes.ts"
@@ -895,11 +605,6 @@
       "method": "GET",
       "fullPath": "/api/studio/projects/:projectId/turns/:turnId",
       "sourceFile": "server/src/routes/studio.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/suggestions",
-      "sourceFile": "server/src/routes/asset.routes.ts"
     },
     {
       "method": "POST",
@@ -920,31 +625,6 @@
       "method": "GET",
       "fullPath": "/api/suggestions/rubrics",
       "sourceFile": "server/src/routes/suggestions/router.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/upload-url",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/usage",
-      "sourceFile": "server/src/routes/storage.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/validate",
-      "sourceFile": "server/src/routes/asset.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/video",
-      "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/view-url",
-      "sourceFile": "server/src/routes/storage.routes.ts"
     },
     {
       "method": "GET",
@@ -1500,6 +1180,11 @@
       "file": "storage.services.ts"
     },
     {
+      "from": "imageAssetStore",
+      "to": "signedUrlLedger",
+      "file": "storage.services.ts"
+    },
+    {
       "from": "imageGenerationService",
       "to": "config",
       "file": "image-generation.services.ts"
@@ -1507,16 +1192,6 @@
     {
       "from": "imageGenerationService",
       "to": "imageAssetStore",
-      "file": "image-generation.services.ts"
-    },
-    {
-      "from": "imageGenerationService",
-      "to": "replicateFluxKontextFastProvider",
-      "file": "image-generation.services.ts"
-    },
-    {
-      "from": "imageGenerationService",
-      "to": "replicateFluxSchnellProvider",
       "file": "image-generation.services.ts"
     },
     {
@@ -1690,6 +1365,11 @@
       "file": "image-generation.services.ts"
     },
     {
+      "from": "replicateFluxKontextFastProvider",
+      "to": "replayCassetteStore",
+      "file": "image-generation.services.ts"
+    },
+    {
       "from": "replicateFluxSchnellProvider",
       "to": "config",
       "file": "image-generation.services.ts"
@@ -1760,6 +1440,11 @@
       "file": "share.services.ts"
     },
     {
+      "from": "signedUrlLedger",
+      "to": "cacheService",
+      "file": "storage.services.ts"
+    },
+    {
       "from": "spanLabelingCacheService",
       "to": "config",
       "file": "cache.services.ts"
@@ -1795,6 +1480,11 @@
       "file": "storage.services.ts"
     },
     {
+      "from": "storageService",
+      "to": "signedUrlLedger",
+      "file": "storage.services.ts"
+    },
+    {
       "from": "storyboardFramePlanner",
       "to": "geminiClient",
       "file": "image-generation.services.ts"
@@ -1827,6 +1517,11 @@
     {
       "from": "studioService",
       "to": "config",
+      "file": "studio.services.ts"
+    },
+    {
+      "from": "studioService",
+      "to": "replayCassetteStore",
       "file": "studio.services.ts"
     },
     {
@@ -1877,6 +1572,11 @@
     {
       "from": "videoAssetStore",
       "to": "gcsBucket",
+      "file": "storage.services.ts"
+    },
+    {
+      "from": "videoAssetStore",
+      "to": "signedUrlLedger",
       "file": "storage.services.ts"
     },
     {

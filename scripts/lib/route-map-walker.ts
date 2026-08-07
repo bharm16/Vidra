@@ -267,6 +267,18 @@ function collectLocalVars(body: ts.Node): Map<string, ts.Expression> {
   return locals;
 }
 
+/**
+ * The bindings a route registration is actually made on. Express verbs collide
+ * with ordinary Node/DOM method names — `req.get("Idempotency-Key")` and
+ * `parsedUrl.searchParams.get("X-Goog-Signature")` are not routes — so the
+ * receiver, not just the method name, decides whether a call registers a route.
+ */
+const ROUTER_BINDINGS = new Set(["router", "app"]);
+
+function isRouterReceiver(receiver: ts.Expression): boolean {
+  return ts.isIdentifier(receiver) && ROUTER_BINDINGS.has(receiver.text);
+}
+
 /** Join two path segments, normalizing duplicate slashes and trailing slashes. */
 function joinPaths(prefix: string, segment: string): string {
   const combined = `${prefix}/${segment}`.replace(/\/+/g, "/");
@@ -288,6 +300,8 @@ function expandBody(
   const fileRecord = getFileRecord(filePath);
   const localVars = collectLocalVars(body);
   const entries: RouteEntry[] = [];
+  /** Factory-call arguments already descended by an enclosing `router.use`. */
+  const mounted = new Set<ts.Node>();
 
   const descend = (ref: FunctionRef | null, nextPrefix: string): void => {
     if (!ref) return;
@@ -307,7 +321,10 @@ function expandBody(
       if (ts.isPropertyAccessExpression(callee)) {
         const methodName = callee.name.text;
 
-        if (HTTP_METHODS.has(methodName)) {
+        if (
+          HTTP_METHODS.has(methodName) &&
+          isRouterReceiver(callee.expression)
+        ) {
           const firstArg = node.arguments[0];
           if (firstArg) {
             const literal = literalString(firstArg);
@@ -330,6 +347,7 @@ function expandBody(
                 const ref = resolveExpressionToRef(arg, localVars, fileRecord);
                 if (ref) {
                   descend(ref, joinPaths(prefix, subPath));
+                  mounted.add(arg);
                   break;
                 }
               }
@@ -340,10 +358,18 @@ function expandBody(
                 fileRecord,
               );
               if (ref) descend(ref, prefix);
+              mounted.add(firstArg);
             }
           }
         }
-      } else if (ts.isIdentifier(callee)) {
+      } else if (ts.isIdentifier(callee) && !mounted.has(node)) {
+        // A bare factory call contributes its routes at the caller's own prefix
+        // — both `registerFooRoute(router, deps)` and a delegating
+        // `return createSuggestionsRouter(handlers)`. But the same call also
+        // appears as the argument of its own `router.use("/sub", factory(...))`,
+        // where it was already descended at the sub-router's prefix; inlining it
+        // again here would re-emit every one of its routes under the parent
+        // prefix. `mounted` marks those already-descended arguments.
         const firstArg = node.arguments[0];
         if (firstArg && ts.isIdentifier(firstArg)) {
           const ref = resolveExpressionToRef(callee, localVars, fileRecord);
