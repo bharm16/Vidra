@@ -5,6 +5,15 @@ import { StudioPolicyEngine } from "../StudioPolicyEngine";
 import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
 import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
 import type { StudioDecision, StudioTurnRecord } from "../types";
+import type { ResolvedExecution } from "@services/ai-model/types";
+
+/** Routing answer for the port stub; Studio does not vary provider by test. */
+const STUB_EXECUTION: ResolvedExecution = {
+  client: "openai",
+  provider: "openai",
+  model: "stub-model",
+  viaFallback: false,
+};
 
 /**
  * Regression (found live 2026-07-24, M3 verification): answering a clarify
@@ -119,7 +128,9 @@ function makeService(llmResponses: string[]) {
       }),
     },
     // REAL policy engine — only the LLM behind it is mocked.
-    policy: new StudioPolicyEngine({ ai: { execute } }),
+    policy: new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    }),
     dailyCapCents: 500,
     now: () => new Date("2026-07-24T12:00:00Z"),
     idFactory: () => `id-${++idCounter}`,

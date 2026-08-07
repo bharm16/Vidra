@@ -24,8 +24,11 @@ import { ExecutionPlanResolver } from "./routing/ExecutionPlan";
 import type {
   ClientsMap,
   ExecuteParams,
+  ExecutionPlan,
   ModelConfigEntry,
   RequestOptions,
+  ResolvedExecution,
+  RoutedAIResponse,
   StreamParams,
 } from "./types";
 
@@ -45,7 +48,7 @@ function buildLlmCallSummary({
 }: {
   executionType: string;
   durationMs: number;
-  response: AIResponse | undefined;
+  response: RoutedAIResponse | undefined;
   error: unknown;
 }): LlmCallSummary {
   const usage = response?.metadata?.usage as
@@ -55,6 +58,11 @@ function buildLlmCallSummary({
         total_tokens?: number;
       }
     | undefined;
+  // Deliberately the adapter's metadata, not `response.executedBy`: metadata
+  // carries what the provider echoed back — the model that actually produced
+  // these tokens — while `executedBy` carries what the router asked for. They
+  // differ when a provider serves an aliased or substituted model, and cost
+  // attribution wants the served one.
   const provider = (response?.metadata?.provider as string | undefined) ?? null;
   const model = (response?.metadata?.model as string | undefined) ?? null;
   const finishReason =
@@ -167,13 +175,13 @@ export class AIModelService {
   async execute(
     operation: OperationName,
     params: ExecuteParams,
-  ): Promise<AIResponse> {
+  ): Promise<RoutedAIResponse> {
     const telemetry = this.llmCallTelemetry;
     if (!telemetry) {
       return this._executeImpl(operation, params);
     }
     const startedAt = performance.now();
-    let response: AIResponse | undefined;
+    let response: RoutedAIResponse | undefined;
     let executionError: unknown;
     try {
       response = await this._executeImpl(operation, params);
@@ -197,10 +205,89 @@ export class AIModelService {
     }
   }
 
+  /**
+   * The one place that decides which client runs an operation.
+   *
+   * `_executeImpl` and `resolveExecution` both route through here, so a
+   * caller's pre-flight answer and the actual dispatch cannot disagree. Note
+   * that `canDispatch` transitions an expired-cooldown circuit to half-open,
+   * so this is not a pure read — it is the same transition dispatch would
+   * have made a moment later.
+   */
+  private _planRoute(operation: OperationName): {
+    plan: ExecutionPlan;
+    config: ModelConfigEntry;
+    circuitFallback: { client: string; model: string; timeout: number } | null;
+  } {
+    const plan = this.planResolver.resolve(operation);
+    const config = plan.primaryConfig;
+
+    // Health-based failover: when the primary provider's circuit is open and
+    // a healthy fallback exists, route there without paying the primary's
+    // failure/timeout. When every candidate is unhealthy, fail open — attempt
+    // the primary anyway rather than hard-failing the request.
+    const circuitFallback =
+      this.providerCircuit &&
+      plan.fallback &&
+      !this.providerCircuit.canDispatch(config.client) &&
+      this.clientResolver.hasClient(plan.fallback.client) &&
+      this.providerCircuit.canDispatch(plan.fallback.client)
+        ? plan.fallback
+        : null;
+
+    return { plan, config, circuitFallback };
+  }
+
+  /**
+   * The provider/model that will run `operation` if dispatched now.
+   *
+   * Reflects client availability and circuit state; `getOperationConfig` does
+   * not. Callers shaping a provider-specific request (JSON schema, prompt
+   * template, cache key) must use this.
+   *
+   * Total by design — it never throws. Planning can fail when no provider is
+   * configured at all (replay mode runs that way deliberately), but a query
+   * that throws forces every caller into a try/catch, and those catch blocks
+   * are precisely where the ModelConfig re-derivations this method replaces
+   * used to live. When nothing can be dispatched, it reports the configured
+   * primary; `execute` is what surfaces the failure.
+   */
+  resolveExecution(operation: OperationName): ResolvedExecution {
+    let config: ModelConfigEntry;
+    let circuitFallback: { client: string; model: string } | null = null;
+
+    try {
+      const route = this._planRoute(operation);
+      config = route.config;
+      circuitFallback = route.circuitFallback;
+    } catch {
+      config = this.planResolver.getConfig(operation);
+    }
+
+    return circuitFallback
+      ? this._describeExecution(
+          operation,
+          circuitFallback.client,
+          circuitFallback.model,
+          true,
+        )
+      : this._describeExecution(operation, config.client, config.model, false);
+  }
+
+  private _describeExecution(
+    operation: OperationName,
+    client: string,
+    model: string,
+    viaFallback: boolean,
+  ): ResolvedExecution {
+    const { provider } = detectAndGetCapabilities({ operation, model, client });
+    return { client, provider, model, viaFallback };
+  }
+
   private async _executeImpl(
     operation: OperationName,
     params: ExecuteParams,
-  ): Promise<AIResponse> {
+  ): Promise<RoutedAIResponse> {
     if (!params.systemPrompt) {
       throw new Error("systemPrompt is required");
     }
@@ -211,33 +298,22 @@ export class AIModelService {
       );
     }
 
-    const plan = this.planResolver.resolve(operation);
-    const config = plan.primaryConfig;
+    const { plan, config, circuitFallback } = this._planRoute(operation);
 
-    // Health-based failover: when the primary provider's circuit is open and
-    // a healthy fallback exists, route there without paying the primary's
-    // failure/timeout. When every candidate is unhealthy, fail open — attempt
-    // the primary anyway rather than hard-failing the request.
-    if (
-      this.providerCircuit &&
-      plan.fallback &&
-      !this.providerCircuit.canDispatch(config.client) &&
-      this.clientResolver.hasClient(plan.fallback.client) &&
-      this.providerCircuit.canDispatch(plan.fallback.client)
-    ) {
+    if (circuitFallback) {
       logger.warn("Primary provider circuit open, routing to fallback", {
         operation,
         primary: config.client,
-        fallback: plan.fallback.client,
+        fallback: circuitFallback.client,
       });
 
       return await this._executeFallback(
-        plan.fallback.client,
+        circuitFallback.client,
         operation,
         params.systemPrompt,
         params,
         config,
-        { model: plan.fallback.model, timeout: plan.fallback.timeout },
+        { model: circuitFallback.model, timeout: circuitFallback.timeout },
       );
     }
 
@@ -321,7 +397,15 @@ export class AIModelService {
         durationMs,
       });
 
-      return response;
+      return {
+        ...response,
+        executedBy: {
+          client: config.client,
+          provider,
+          model: requestOptions.model,
+          viaFallback: false,
+        },
+      };
     } catch (error: unknown) {
       const durationMs = Date.now() - start;
       const err = error as {
@@ -492,7 +576,7 @@ export class AIModelService {
     params: ExecuteParams,
     primaryConfig: ModelConfigEntry,
     fallbackConfig?: { model: string; timeout: number },
-  ): Promise<AIResponse> {
+  ): Promise<RoutedAIResponse> {
     logger.info("Attempting fallback to alternative client", {
       operation,
       fallbackClient,
@@ -555,7 +639,15 @@ export class AIModelService {
         durationMs: fallbackDurationMs,
       });
 
-      return response;
+      return {
+        ...response,
+        executedBy: this._describeExecution(
+          operation,
+          fallbackClient,
+          fallbackModel,
+          true,
+        ),
+      };
     } catch (fallbackError: unknown) {
       const err = fallbackError as { message: string };
       if (dispatched) {

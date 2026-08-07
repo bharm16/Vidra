@@ -3,6 +3,7 @@ import { AIModelService } from "@services/ai-model/index";
 import type {
   ClientsMap,
   ExecuteParams,
+  RoutedAIResponse,
   StreamParams,
 } from "@services/ai-model/types";
 import type { OperationName } from "@config/modelConfig";
@@ -62,7 +63,7 @@ export class RecordReplayAiService extends AIModelService {
   override async execute(
     operation: OperationName,
     params: ExecuteParams,
-  ): Promise<AIResponse> {
+  ): Promise<RoutedAIResponse> {
     const request = this.toRequest(operation, params, false);
     const response = await this.seam.through({
       request,
@@ -75,7 +76,13 @@ export class RecordReplayAiService extends AIModelService {
         metadata: (live.metadata ?? {}) as Record<string, unknown>,
       }),
     });
-    return response as AIResponse;
+    // A cassette records the response body, not the routing decision. Report
+    // the same answer `resolveExecution` gave the caller pre-flight, so a
+    // replayed run shapes provider-specific work the way the live run did.
+    return {
+      ...(response as AIResponse),
+      executedBy: this.resolveExecution(operation),
+    };
   }
 
   override async stream(

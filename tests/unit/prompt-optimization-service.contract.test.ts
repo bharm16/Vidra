@@ -13,6 +13,18 @@ const createService = (): PromptOptimizationService => {
         finishReason: "stop",
         usage: null,
       },
+      executedBy: {
+        client: "mock",
+        provider: "unknown" as const,
+        model: "mock",
+        viaFallback: false,
+      },
+    })),
+    resolveExecution: vi.fn(() => ({
+      client: "mock",
+      provider: "unknown" as const,
+      model: "mock",
+      viaFallback: false,
     })),
     getAvailableClients: vi.fn(() => ["mock"]),
   };

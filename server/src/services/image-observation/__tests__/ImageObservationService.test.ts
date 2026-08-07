@@ -16,6 +16,12 @@ const createAIStub = (
   return {
     ai: {
       execute: executeMock,
+      resolveExecution: () => ({
+        client: "openai",
+        provider: "openai" as const,
+        model: "stub-model",
+        viaFallback: false,
+      }),
     },
     executeMock,
   };

@@ -5,6 +5,15 @@ import {
 } from "../StudioPolicyEngine";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { StudioDecision, StudioTurnRecord } from "../types";
+import type { ResolvedExecution } from "@services/ai-model/types";
+
+/** Routing answer for the port stub; Studio does not vary provider by test. */
+const STUB_EXECUTION: ResolvedExecution = {
+  client: "openai",
+  provider: "openai",
+  model: "stub-model",
+  viaFallback: false,
+};
 
 /**
  * Regression (found live 2026-07-25, M5 rejection-fork verification):
@@ -79,7 +88,9 @@ function llmResponses(...decisions: StudioDecision[]) {
 describe("regression: the rejection flow never repeats an answered question", () => {
   it("rejects an identical consecutive diagnose and accepts the fork question", async () => {
     const execute = llmResponses(sameDiagnose, forkDiagnose);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(makeContext());
 
@@ -91,7 +102,9 @@ describe("regression: the rejection flow never repeats an answered question", ()
 
   it("accepts a different follow-up question without a retry", async () => {
     const execute = llmResponses(forkDiagnose);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(makeContext());
 

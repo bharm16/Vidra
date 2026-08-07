@@ -6,6 +6,15 @@ import {
 } from "../StudioPolicyEngine";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { StudioDecision, StudioTurnRecord } from "../types";
+import type { ResolvedExecution } from "@services/ai-model/types";
+
+/** Routing answer for the port stub; Studio does not vary provider by test. */
+const STUB_EXECUTION: ResolvedExecution = {
+  client: "openai",
+  provider: "openai",
+  model: "stub-model",
+  viaFallback: false,
+};
 
 const registry = new StudioModelRegistry();
 
@@ -84,7 +93,9 @@ function makeGenerateTurn(id: string, message: string): StudioTurnRecord {
 describe("StudioPolicyEngine", () => {
   it("returns a valid generate decision and prompts with roster + Auto mode", async () => {
     const execute = llmResponses(GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(makeContext());
 
@@ -106,7 +117,9 @@ describe("StudioPolicyEngine", () => {
 
   it("names the pinned model and its capabilities when one is pinned", async () => {
     const execute = llmResponses(GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     await engine.decideTurn(
       makeContext({ pinnedModel: registry.getModel("recraft-v4.1-pro") }),
@@ -119,7 +132,9 @@ describe("StudioPolicyEngine", () => {
 
   it("renders history and image inventory into the user message", async () => {
     const execute = llmResponses(GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
     const prior = makeGenerateTurn("t1", "a fox logo");
 
     await engine.decideTurn(
@@ -153,7 +168,9 @@ describe("StudioPolicyEngine", () => {
       variants: GENERATE.variants.slice(0, 3),
     };
     const execute = llmResponses(badGenerate, GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(makeContext());
 
@@ -172,7 +189,9 @@ describe("StudioPolicyEngine", () => {
       suggestions: ["a", "b", "c"],
     };
     const execute = llmResponses(edit, GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(
       makeContext({ projectImageIds: new Set(["img-1"]) }),
@@ -191,7 +210,9 @@ describe("StudioPolicyEngine", () => {
       suggestions: ["a", "b", "c"],
     };
     const execute = llmResponses(edit, GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(
       makeContext({
@@ -207,7 +228,9 @@ describe("StudioPolicyEngine", () => {
 
   it("nudges titling while Untitled and stops once the project is titled", async () => {
     const execute = llmResponses(GENERATE, GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     await engine.decideTurn(makeContext());
     await engine.decideTurn(makeContext({ projectTitle: "Fox Coffee Logo" }));
@@ -227,7 +250,9 @@ describe("StudioPolicyEngine", () => {
       questions: [{ text: "What mood?", quickPicks: ["Playful", "Serious"] }],
     };
     const execute = llmResponses(clarify, GENERATE);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(
       makeContext({ allowedActions: ["generate", "diagnose", "negotiate"] }),
@@ -264,7 +289,9 @@ describe("StudioPolicyEngine", () => {
       ],
     };
     const execute = llmResponses(edit, negotiate);
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     const decision = await engine.decideTurn(
       makeContext({
@@ -311,6 +338,7 @@ describe("StudioPolicyEngine", () => {
     const engine = new StudioPolicyEngine({
       ai: {
         execute: vi.fn(),
+        resolveExecution: () => STUB_EXECUTION,
         stream,
         supportsStreaming: () => true,
       },
@@ -336,7 +364,11 @@ describe("StudioPolicyEngine", () => {
   it("falls back to execute() when the provider cannot stream", async () => {
     const execute = llmResponses(GENERATE);
     const engine = new StudioPolicyEngine({
-      ai: { execute, supportsStreaming: () => false },
+      ai: {
+        execute,
+        resolveExecution: () => STUB_EXECUTION,
+        supportsStreaming: () => false,
+      },
     });
 
     const deltas: string[] = [];
@@ -370,7 +402,12 @@ describe("StudioPolicyEngine", () => {
         },
       );
     const engine = new StudioPolicyEngine({
-      ai: { execute: vi.fn(), stream, supportsStreaming: () => true },
+      ai: {
+        execute: vi.fn(),
+        resolveExecution: () => STUB_EXECUTION,
+        stream,
+        supportsStreaming: () => true,
+      },
     });
 
     let starts = 0;
@@ -391,7 +428,9 @@ describe("StudioPolicyEngine", () => {
 
   it("throws StudioPolicyError after exhausting corrective attempts", async () => {
     const execute = llmResponses({ action: "unknown" }, { action: "unknown" });
-    const engine = new StudioPolicyEngine({ ai: { execute } });
+    const engine = new StudioPolicyEngine({
+      ai: { execute, resolveExecution: () => STUB_EXECUTION },
+    });
 
     await expect(engine.decideTurn(makeContext())).rejects.toBeInstanceOf(
       StudioPolicyError,
