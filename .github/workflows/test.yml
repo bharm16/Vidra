@@ -48,9 +48,18 @@ jobs:
           VITE_ANTHROPIC_API_KEY: ${{ secrets.VITE_ANTHROPIC_API_KEY || 'sk-test-key' }}
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'test-key' }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'test-project' }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN || 'test.firebaseapp.com' }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET || 'test.appspot.com' }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789' }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID || 'test-app-id' }}
+          NODE_ENV: test
 
       - name: Golden-path replay gate (offline, zero network)
         run: npm run test:replay
+        env:
+          VITE_ANTHROPIC_API_KEY: ${{ secrets.VITE_ANTHROPIC_API_KEY || 'sk-test-key' }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'test-key' }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'test-project' }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN || 'test.firebaseapp.com' }}
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET || 'test.appspot.com' }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789' }}
@@ -199,7 +208,13 @@ jobs:
   quality-gate:
     runs-on: ubuntu-latest
     needs: [unit-tests]
-    if: ${{ github.event_name != 'schedule' && secrets.OPENAI_API_KEY != '' }}
+    # The secrets context is not available inside `if:`, so the old
+    # `secrets.OPENAI_API_KEY != ''` clause failed the workflow at startup.
+    # Job env is readable from a step-level `if:`, so the key gate moves onto
+    # the steps that actually need it.
+    if: github.event_name != 'schedule'
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -214,6 +229,7 @@ jobs:
         run: npm ci
 
       - name: Run quality gate (real LLM eval)
+        if: env.OPENAI_API_KEY != ''
         run: npm run quality:gate
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -225,6 +241,7 @@ jobs:
           REDIS_DISABLED: "true"
 
       - name: Generate regression report (non-blocking)
+        if: env.OPENAI_API_KEY != ''
         run: npm run eval:regression
         continue-on-error: true
         env:
@@ -246,7 +263,10 @@ jobs:
   quality-gate-nightly:
     runs-on: ubuntu-latest
     needs: [unit-tests]
-    if: ${{ github.event_name == 'schedule' && github.ref == 'refs/heads/main' && secrets.OPENAI_API_KEY != '' }}
+    # Same startup-failure fix as quality-gate above: no secrets context in `if:`.
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -261,6 +281,7 @@ jobs:
         run: npm ci
 
       - name: Run nightly quality gate (expanded sample)
+        if: env.OPENAI_API_KEY != ''
         run: npm run quality:gate
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -272,6 +293,7 @@ jobs:
           REDIS_DISABLED: "true"
 
       - name: Generate nightly regression report (non-blocking)
+        if: env.OPENAI_API_KEY != ''
         run: npm run eval:regression
         continue-on-error: true
         env:

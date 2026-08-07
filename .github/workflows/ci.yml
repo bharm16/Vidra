@@ -9,6 +9,13 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # The secrets context is not available inside an `if:` expression, so
+    # `if: ${{ secrets.GCP_SA_KEY != '' }}` below failed the whole workflow at
+    # startup — every run ended in 0s with no steps executed. Hoisting the key
+    # into env lets the step gate on `env.`, which is the shape security-scan.yml
+    # already uses successfully.
+    env:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Authenticate Google Cloud
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY != ''
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}

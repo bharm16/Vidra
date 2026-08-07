@@ -60,6 +60,11 @@ jobs:
           REDIS_URL: redis://localhost:6379
           FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET || 'test.appspot.com' }}
           GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME || 'test.appspot.com' }}
+          # env.ts requires these two unconditionally; without them the server
+          # exits before ever binding :3001 and the health poll below spends
+          # 60s failing to connect. The build job further down already sets them.
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'test-key' }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || 'test-project' }}
 
       - name: Install k6
         run: |

@@ -82,7 +82,12 @@ jobs:
 
           # Storage for generated media (Tier 2+). JSON service account.
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
+          # storageConfig.ts resolves the bucket at module load and throws when
+          # both bucket vars are empty, so an unset secret killed the server
+          # during import — before Tier 1, which needs no storage at all, could
+          # run. The placeholder keeps boot alive so the paid legs fail on their
+          # own missing credentials instead of taking the whole suite with them.
+          GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME || 'test.appspot.com' }}
 
           # Client boot env (mirrors e2e.yml).
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'test-key' }}

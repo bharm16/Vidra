@@ -62,7 +62,12 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
+          # A diff scan only makes sense for a pull request. On push and on the
+          # nightly cron, base resolved to the default branch while head was its
+          # own tip, so TruffleHog saw base == head and aborted without scanning
+          # anything. An empty base scans the full history that fetch-depth: 0
+          # already checked out.
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
           head: HEAD
           extra_args: --debug --only-verified
 

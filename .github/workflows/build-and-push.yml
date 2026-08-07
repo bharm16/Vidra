@@ -66,6 +66,17 @@ jobs:
             VERSION=${{ steps.meta.outputs.version }}
             SPAN_LABELING_MODELS_GCS_URI=${{ secrets.SPAN_LABELING_MODELS_GCS_URI }}
 
+      # github.repository is "bharm16/Vidra", but OCI repository names must be
+      # lowercase. metadata-action lowercases the tags it emits, so the pushed
+      # image is .../vidra — anything built from env.IMAGE_NAME directly keeps
+      # the capital V and is rejected as an invalid reference.
+      - name: Resolve lowercase image reference
+        run: |
+          # tr rather than ${VAR,,} so the same line is verifiable on a bash 3.2
+          # shell (macOS) as on the runner's bash 5.
+          lower=$(printf '%s/%s' "$REGISTRY" "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_REF=${lower}" >> "$GITHUB_ENV"
+
       # Install Cosign for image signing
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -78,11 +89,15 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           echo "Signing image with digest: ${DIGEST}"
-          cosign sign --yes \
+          # metadata-action emits one tag per line. Quoting the whole list made
+          # "${TAGS}@${DIGEST}" a single newline-laden argument, and cosign
+          # rejected it: "could not parse reference". Sign each tag separately
+          # against the one digest instead.
+          echo "${TAGS}" | xargs -I {} cosign sign --yes \
             -a "repo=${{ github.repository }}" \
             -a "workflow=${{ github.workflow }}" \
             -a "ref=${{ github.sha }}" \
-            "${TAGS}@${DIGEST}"
+            "{}@${DIGEST}"
 
       - name: Generate SBOM
         # SBOM scans the registry image, which only exists when push: true
@@ -93,7 +108,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-and-push.outputs.digest }}
+          image: ${{ env.IMAGE_REF }}@${{ steps.build-and-push.outputs.digest }}
           format: spdx-json
           output-file: sbom.spdx.json
 
@@ -109,4 +124,4 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           cosign attach sbom --sbom sbom.spdx.json \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-and-push.outputs.digest }}
+            "${IMAGE_REF}@${{ steps.build-and-push.outputs.digest }}"
