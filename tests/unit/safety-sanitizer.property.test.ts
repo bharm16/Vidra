@@ -148,15 +148,18 @@ describe("SafetySanitizer Property Tests", () => {
               },
             )
             .map((chars) => chars.join(""))
-            .filter((s) => {
-              const lower = s.toLowerCase();
-              // Ensure no blocked terms are present
-              const hasBlockedTerm =
-                celebrityNames.some((c) => lower.includes(c.toLowerCase())) ||
-                nsfwTerms.some((t) => lower.includes(t)) ||
-                violenceTerms.some((t) => lower.includes(t));
-              return !hasBlockedTerm && s.trim().length > 0;
-            }),
+            // Ask the sanitizer itself whether the input is clean, rather than
+            // re-deriving it from the sample lists above: those name six
+            // celebrities where the real blocklist carries forty-one, so a
+            // generated string can satisfy the sample filter and still hold a
+            // blocked term. Seeds that reach one are rare but real — a full-suite
+            // run turned up "aaaaaaa ye", and "ye" is Kanye West's legal name.
+            // containsBlockedTerms is the broader check (it matches celebrities
+            // as substrings where sanitize replaces on word boundaries), so
+            // anything it calls clean is guaranteed to come back unmodified.
+            .filter(
+              (s) => !sanitizer.containsBlockedTerms(s) && s.trim().length > 0,
+            ),
           (safeInput) => {
             const result = sanitizer.sanitize(safeInput);
 
