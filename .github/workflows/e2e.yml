@@ -42,7 +42,18 @@ jobs:
         run: npm ci
 
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: |
+          # An unset repository secret resolves to "" in env: above, and
+          # optionalApiKey() in server/src/config/env.ts is
+          # z.string().min(1).optional() — absent passes validation, empty does
+          # not. Left as "", the server refuses to boot and the entire job dies
+          # on env validation rather than running a single spec (that is how
+          # a fork PR, which cannot read secrets, would see it). Drop the
+          # empties so the optional branch applies and the suite still runs,
+          # with golden-path failing honestly on the missing provider.
+          [ -n "${OPENAI_API_KEY:-}" ] || unset OPENAI_API_KEY
+          [ -n "${GROQ_API_KEY:-}" ] || unset GROQ_API_KEY
+          npm run test:e2e
         env:
           # Firefox refuses to start when $HOME is not owned by the running
           # user. This job runs as root inside the playwright container, where
@@ -72,6 +83,20 @@ jobs:
           GCS_BUCKET_NAME: prompt-builder-test-bucket
           FIREBASE_STORAGE_BUCKET: test.appspot.com
           VIDEO_GENERATE_IDEMPOTENCY_MODE: soft
+          # golden-path.spec.ts mocks nothing on the network by design — it
+          # exists to catch isolated-green/integrated-broken, so it needs the
+          # server to have real providers. Without these the server logged "No
+          # AI clients configured" and expansion never returned, so the spec
+          # failed as a 60s waitForURL timeout rather than as a missing key.
+          #
+          # These two cover all five operations the golden path reaches:
+          # optimize_standard / _shot_interpreter / _intent_check are openai;
+          # enhance_suggestions is qwen, which the Qwen client reads
+          # GROQ_API_KEY for. span_labeling is configured for gemini, and with
+          # no GEMINI_API_KEY the execution planner remaps it to its declared
+          # fallbackTo ("qwen") before dispatch — so it lands on Groq too.
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           # Chromium-only on PRs (fast feedback). Push to main / develop
           # and the nightly schedule run all browsers for regression
           # coverage. The flag is consumed by config/test/playwright.config.js.
