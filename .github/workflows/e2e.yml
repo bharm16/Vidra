@@ -44,6 +44,13 @@ jobs:
       - name: Run Playwright tests
         run: npm run test:e2e
         env:
+          # Firefox refuses to start when $HOME is not owned by the running
+          # user. This job runs as root inside the playwright container, where
+          # $HOME is /github/home owned by pwuser, so every firefox test died
+          # in ~5ms at browserType.launch — 81 of 93 failures in the run before
+          # this, all reported as test failures rather than a launch problem.
+          # HOME=/root is the workaround Playwright's own error message gives.
+          HOME: /root
           VITE_ANTHROPIC_API_KEY: ${{ secrets.VITE_ANTHROPIC_API_KEY || 'sk-test-key' }}
           VITE_FIREBASE_API_KEY: test-key
           VITE_FIREBASE_PROJECT_ID: test-project
