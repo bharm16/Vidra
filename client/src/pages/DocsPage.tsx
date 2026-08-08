@@ -101,7 +101,7 @@ export function DocsPage(): React.ReactElement {
         <Link
           to="/"
           title="Back to app"
-          className="text-tool-text-muted hover:text-foreground flex h-[38px] w-[38px] items-center justify-center rounded-md transition-colors hover:bg-hover"
+          className="text-tool-text-muted hover:text-foreground hover:bg-hover flex h-[38px] w-[38px] items-center justify-center rounded-md transition-colors"
         >
           <svg
             width="18"
@@ -143,7 +143,12 @@ export function DocsPage(): React.ReactElement {
 
       {/* Table of contents */}
       <aside
-        className={`w-[222px] flex-none border-r px-[22px] py-[30px] ${HAIRLINE}`}
+        // Hidden below lg: this is a table of contents for a page short enough
+        // to scroll. At 393px it and the icon rail took 286px of the viewport,
+        // leaving main narrower than its own 112px of horizontal padding — so
+        // the prose column computed to zero width and every heading in it was
+        // correctly reported as not visible.
+        className={`hidden w-[222px] flex-none border-r px-[22px] py-[30px] lg:block ${HAIRLINE}`}
       >
         <div className="text-tool-text-placeholder text-meta mb-[15px] font-mono font-semibold uppercase tracking-[0.16em]">
           On this page
@@ -156,7 +161,7 @@ export function DocsPage(): React.ReactElement {
       </aside>
 
       {/* Prose */}
-      <main className="min-w-0 flex-1 px-[56px] py-[46px]">
+      <main className="min-w-0 flex-1 px-5 py-8 lg:px-[56px] lg:py-[46px]">
         <h1 className="text-foreground text-display-sm font-semibold tracking-[-0.02em]">
           How it works
         </h1>

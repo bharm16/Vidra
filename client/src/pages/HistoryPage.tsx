@@ -60,12 +60,17 @@ export function HistoryPage(): React.ReactElement {
         <Grain />
 
         {/* Header — title, search pill, filter chips. */}
-        <header className="flex-none px-9 pb-[18px] pt-[30px]">
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-foreground font-sans text-heading font-semibold tracking-[-0.015em]">
+        <header className="flex-none px-4 pb-[18px] pt-[30px] sm:px-9">
+          {/* Stacked until sm. The nav rail is a fixed 256px, so a 393px phone
+              leaves ~137px here; a row put the title and a fixed 264px pill in
+              that space and the pill was pushed to x=382 — past the viewport,
+              clipped by the overflow-hidden root, with the input itself
+              computing to zero width. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <h1 className="text-foreground text-heading font-sans font-semibold tracking-[-0.015em]">
               Library
             </h1>
-            <div className="flex w-[264px] items-center gap-[9px] rounded-full border border-white/[0.12] bg-white/[0.04] px-[15px] py-[9px]">
+            <div className="flex w-full min-w-0 items-center gap-[9px] rounded-full border border-white/[0.12] bg-white/[0.04] px-[15px] py-[9px] sm:w-[264px]">
               <Search
                 className="text-tool-text-muted h-[15px] w-[15px] shrink-0"
                 aria-hidden="true"
@@ -78,7 +83,7 @@ export function HistoryPage(): React.ReactElement {
                 }
                 placeholder="Search your work"
                 aria-label="Search your library"
-                className="placeholder:text-tool-text-muted text-foreground w-full bg-transparent font-sans text-ui leading-none outline-none"
+                className="placeholder:text-tool-text-muted text-foreground text-ui w-full bg-transparent font-sans leading-none outline-none"
               />
             </div>
           </div>
@@ -125,7 +130,7 @@ export function HistoryPage(): React.ReactElement {
                   aria-hidden="true"
                 />
               </div>
-              <p className="text-tool-text-muted font-sans text-ui">
+              <p className="text-tool-text-muted text-ui font-sans">
                 {emptyMessage}
               </p>
               {showStartCta ? (
