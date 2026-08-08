@@ -5,6 +5,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createAssetRoutes } from "@routes/asset.routes";
 
+// A real PNG signature + IHDR. The routes validate uploads by magic bytes
+// (validateImageBuffer -> fileTypeFromBuffer), so arbitrary text is rejected
+// as "expected image, got unknown" and surfaces as a 500. Matches the fixture
+// in tests/unit/validate-file-type.test.ts.
+const PNG_BYTES = Buffer.from([
+  0x89,
+  0x50,
+  0x4e,
+  0x47,
+  0x0d,
+  0x0a,
+  0x1a,
+  0x0a, // PNG signature
+  0x00,
+  0x00,
+  0x00,
+  0x0d,
+  0x49,
+  0x48,
+  0x44,
+  0x52, // IHDR chunk
+]);
+
 const TEST_API_KEY = "integration-asset-key";
 const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
 
@@ -15,9 +38,14 @@ function createApp() {
       total: 1,
       byType: { character: 1, style: 0, location: 0, object: 0 },
     }),
-    listAssetsByType: vi
-      .fn()
-      .mockResolvedValue([{ id: "asset_1", type: "character" }]),
+    // AssetCrudService.listAssetsByType returns ListAssetsByTypeResult
+    // ({ items, hasMore }), and the route destructures it. A bare array left
+    // `items` undefined and the route threw on `items.length` — a 500 that read
+    // as a route bug rather than a stale fake.
+    listAssetsByType: vi.fn().mockResolvedValue({
+      items: [{ id: "asset_1", type: "character" }],
+      hasMore: false,
+    }),
     createAsset: vi
       .fn()
       .mockResolvedValue({ id: "asset_2", type: "style", trigger: "@neon" }),
@@ -178,7 +206,7 @@ describe("Asset Routes (integration)", () => {
       .post("/api/assets/asset_1/images")
       .set("x-api-key", TEST_API_KEY)
       .field("angle", "front")
-      .attach("image", Buffer.from("asset-image-data"), {
+      .attach("image", PNG_BYTES, {
         filename: "asset.png",
         contentType: "image/png",
       });
@@ -226,7 +254,12 @@ describe("Asset Routes (integration)", () => {
       .set("x-api-key", TEST_API_KEY)
       .send({});
     expect(invalidResolveResponse.status).toBe(400);
-    expect(invalidResolveResponse.body.error).toBe("prompt is required");
+    // requireBody reports a generic error with a machine-readable code and puts
+    // the offending field in `details` ("prompt: ..."). Assert the code and the
+    // field, so this still fails if the route stops naming what was missing.
+    expect(invalidResolveResponse.body.error).toBe("Invalid request");
+    expect(invalidResolveResponse.body.code).toBe("INVALID_REQUEST");
+    expect(invalidResolveResponse.body.details).toContain("prompt");
     expect(assetService.resolvePrompt).not.toHaveBeenCalled();
 
     const noAuthResponse = await request(app).get("/api/assets");

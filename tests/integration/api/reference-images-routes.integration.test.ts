@@ -5,6 +5,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createReferenceImagesRoutes } from "@routes/reference-images.routes";
 
+// A real PNG signature + IHDR. The routes validate uploads by magic bytes
+// (validateImageBuffer -> fileTypeFromBuffer), so arbitrary text is rejected
+// as "expected image, got unknown" and surfaces as a 500. Matches the fixture
+// in tests/unit/validate-file-type.test.ts.
+const PNG_BYTES = Buffer.from([
+  0x89,
+  0x50,
+  0x4e,
+  0x47,
+  0x0d,
+  0x0a,
+  0x1a,
+  0x0a, // PNG signature
+  0x00,
+  0x00,
+  0x00,
+  0x0d,
+  0x49,
+  0x48,
+  0x44,
+  0x52, // IHDR chunk
+]);
+
 const TEST_API_KEY = "integration-reference-images-key";
 const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
 
@@ -64,7 +87,8 @@ describe("Reference Images Routes (integration)", () => {
       .set("x-api-key", TEST_API_KEY);
 
     expect(response.status).toBe(200);
-    expect(response.body.images).toHaveLength(1);
+    // Response envelope: the payload sits under `data`.
+    expect(response.body.data.images).toHaveLength(1);
     expect(referenceImageService.listImages).toHaveBeenCalledWith(
       TEST_USER_ID,
       { limit: 5 },
@@ -83,7 +107,7 @@ describe("Reference Images Routes (integration)", () => {
       });
 
     expect(fromUrlResponse.status).toBe(201);
-    expect(fromUrlResponse.body.id).toBe("ref_img_2");
+    expect(fromUrlResponse.body.data.id).toBe("ref_img_2");
     expect(referenceImageService.createFromUrl).toHaveBeenCalledWith(
       TEST_USER_ID,
       "https://example.com/reference.png",
@@ -94,13 +118,13 @@ describe("Reference Images Routes (integration)", () => {
       .post("/api/reference-images")
       .set("x-api-key", TEST_API_KEY)
       .field("label", "Uploaded")
-      .attach("file", Buffer.from("image-data"), {
+      .attach("file", PNG_BYTES, {
         filename: "reference.png",
         contentType: "image/png",
       });
 
     expect(uploadResponse.status).toBe(201);
-    expect(uploadResponse.body.id).toBe("ref_img_upload");
+    expect(uploadResponse.body.data.id).toBe("ref_img_upload");
     expect(referenceImageService.createFromBuffer).toHaveBeenCalledWith(
       TEST_USER_ID,
       expect.any(Buffer),

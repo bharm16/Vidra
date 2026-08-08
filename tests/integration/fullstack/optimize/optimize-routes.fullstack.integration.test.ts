@@ -214,7 +214,11 @@ describe("Optimize Routes (full-stack integration)", () => {
       .send({ prompt: "" });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Validation failed");
+    // The envelope carries a generic top-level error and puts the specifics
+    // in `details` (formatValidationDetails: "path: message"). Assert both, so
+    // this still fails if validation stops saying which field was wrong.
+    expect(response.body.error).toBe("Invalid request");
+    expect(response.body.details).toContain("prompt");
   });
 
   it("POST /api/optimize returns optimized prompt for valid requests", async () => {
@@ -225,9 +229,11 @@ describe("Optimize Routes (full-stack integration)", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.prompt).toBeTypeOf("string");
-    expect(response.body.prompt.length).toBeGreaterThan(0);
-    expect(response.body.optimizedPrompt).toBe(response.body.prompt);
+    // Response envelope v3: the payload lives under `data`, not at the top
+    // level (see X-Response-Version and ApiResponse<T> in the handler).
+    expect(response.body.data.prompt).toBeTypeOf("string");
+    expect(response.body.data.prompt.length).toBeGreaterThan(0);
+    expect(response.body.data.optimizedPrompt).toBe(response.body.data.prompt);
   });
 
   it("POST /api/optimize returns 500 when optimization service fails", async () => {
@@ -266,7 +272,11 @@ describe("Optimize Routes (full-stack integration)", () => {
       .send({ prompt: "runner in city" });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Validation failed");
+    // The envelope carries a generic top-level error and puts the specifics
+    // in `details` (formatValidationDetails: "path: message"). This payload is
+    // missing targetModel, so that is the field the details must name.
+    expect(response.body.error).toBe("Invalid request");
+    expect(response.body.details).toContain("targetModel");
   });
 
   it("POST /api/optimize-compile returns compiled prompt for valid requests", async () => {
@@ -277,7 +287,7 @@ describe("Optimize Routes (full-stack integration)", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.compiledPrompt).toBeTypeOf("string");
-    expect(response.body.compiledPrompt.length).toBeGreaterThan(0);
+    expect(response.body.data.compiledPrompt).toBeTypeOf("string");
+    expect(response.body.data.compiledPrompt.length).toBeGreaterThan(0);
   });
 });

@@ -99,7 +99,8 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       .send({ prompt: "runner in rain", mode: "video" });
 
     expect(optimizeResponse.status).toBe(200);
-    expect(optimizeResponse.body.prompt).toBe(
+    // Response envelope: /api/optimize returns its payload under `data`.
+    expect(optimizeResponse.body.data.prompt).toBe(
       "A cinematic runner in neon rain",
     );
 
@@ -112,7 +113,7 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       .send({
         highlightedText,
         highlightedPhrase: highlightedText,
-        fullPrompt: optimizeResponse.body.prompt,
+        fullPrompt: optimizeResponse.body.data.prompt,
         originalUserPrompt: "runner in rain",
         contextBefore: "A cinematic ",
         contextAfter: " in neon rain",
@@ -121,10 +122,12 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       });
 
     expect(suggestionsResponse.status).toBe(200);
-    expect(Array.isArray(suggestionsResponse.body.suggestions)).toBe(true);
-    expect(suggestionsResponse.body.suggestions.length).toBeGreaterThan(0);
+    // Response envelope: the service result (with its `suggestions` array)
+    // is returned under `data`.
+    expect(Array.isArray(suggestionsResponse.body.data.suggestions)).toBe(true);
+    expect(suggestionsResponse.body.data.suggestions.length).toBeGreaterThan(0);
 
-    for (const suggestion of suggestionsResponse.body.suggestions as Array<
+    for (const suggestion of suggestionsResponse.body.data.suggestions as Array<
       Record<string, unknown>
     >) {
       expect(typeof suggestion.text).toBe("string");
@@ -191,6 +194,7 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Validation failed");
+    expect(response.body.error).toBe("Invalid request");
+    expect(typeof response.body.details).toBe("string");
   });
 });

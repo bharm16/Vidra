@@ -157,9 +157,11 @@ describe("Label Spans Routes (full-stack integration)", () => {
       });
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body.spans)).toBe(true);
-    expect(response.body.spans.length).toBeGreaterThan(0);
-    expect(response.body.spans[0]).toMatchObject({
+    // Response envelope: toPublicLabelSpansResult(result) is returned under
+    // `data`, not spread at the top level.
+    expect(Array.isArray(response.body.data.spans)).toBe(true);
+    expect(response.body.data.spans.length).toBeGreaterThan(0);
+    expect(response.body.data.spans[0]).toMatchObject({
       category: "subject.identity",
       confidence: expect.any(Number),
     });

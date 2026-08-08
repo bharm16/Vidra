@@ -326,9 +326,22 @@ describe("Replicate adapter empty-prompt handling", () => {
 
 describe("Sora adapter empty-prompt handling", () => {
   it("forwards an empty prompt unchanged to openai.videos.create", async () => {
+    // buildSoraInputReference reads the fetched body with `arrayBuffer()` and
+    // feeds it to sharp, so the stub needs that method and genuinely decodable
+    // bytes — a bare header would fail inside resize() instead. This is a real
+    // 1x1 PNG.
+    const ONE_PIXEL_PNG = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4//8/AwAI/AL+Q5dbWQAAAABJRU5ErkJggg==",
+      "base64",
+    );
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       headers: { get: () => "image/png" },
+      arrayBuffer: async () =>
+        ONE_PIXEL_PNG.buffer.slice(
+          ONE_PIXEL_PNG.byteOffset,
+          ONE_PIXEL_PNG.byteOffset + ONE_PIXEL_PNG.byteLength,
+        ),
     });
     vi.stubGlobal("fetch", fetchMock);
 
