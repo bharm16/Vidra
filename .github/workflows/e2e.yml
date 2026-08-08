@@ -123,6 +123,15 @@ jobs:
           # "never contacts production".
           FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
           GCLOUD_PROJECT: demo-test
+          # Without this every API call 403s and nothing downstream can work.
+          # apiAuth requires ALLOWED_API_KEYS or API_KEY and has no dev
+          # fallback of its own; the client does, and it sends dev-key-12345
+          # (DEV_FALLBACK_API_KEY in client/src/services/http/firebaseAuth.ts),
+          # which is the value the integration job already uses. The last run
+          # logged 390 responses, every one of them a 403 — /sessions and
+          # /optimize included — so the save never happened and golden-path sat
+          # on waitForURL until it timed out.
+          ALLOWED_API_KEYS: dev-key-12345
           # Chromium-only on PRs (fast feedback). Push to main / develop
           # and the nightly schedule run all browsers for regression
           # coverage. The flag is consumed by config/test/playwright.config.js.
