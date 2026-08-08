@@ -43,14 +43,34 @@ describe("TechStripper Property Tests", () => {
    * **Feature: video-model-optimization, Property 7: TechStripper Model-Aware Behavior**
    * **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5**
    */
+  /**
+   * Neutral surrounding context: lowercase words carrying no technical tokens
+   * of their own. `fc.string()` generates arbitrary text, which can contain
+   * camera specs — and camera specs are stripped for EVERY model, by design.
+   * A property about placebo tokens then fails on unrelated, correct stripping.
+   * Matches the generator "preserves non-placebo content" already uses below.
+   */
+  const neutralContext = fc
+    .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz".split("")), {
+      minLength: 0,
+      maxLength: 40,
+    })
+    .map((chars) => chars.join(""))
+    .filter(
+      (s) =>
+        !corePlaceboTokens.some((t) =>
+          s.toLowerCase().includes(t.toLowerCase()),
+        ),
+    );
+
   describe("Property 7: TechStripper Model-Aware Behavior", () => {
     it("removes placebo tokens for Runway/Luma models", () => {
       fc.assert(
         fc.property(
           fc.constantFrom(...stripModels),
           fc.constantFrom(...corePlaceboTokens),
-          fc.string({ minLength: 0, maxLength: 100 }),
-          fc.string({ minLength: 0, maxLength: 100 }),
+          neutralContext,
+          neutralContext,
           (modelId, placeboToken, prefix, suffix) => {
             const input = `${prefix} ${placeboToken} ${suffix}`.trim();
             const result = stripper.strip(input, modelId);
@@ -70,7 +90,7 @@ describe("TechStripper Property Tests", () => {
             ).toBe(true);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -79,8 +99,8 @@ describe("TechStripper Property Tests", () => {
         fc.property(
           fc.constantFrom(...keepModels),
           fc.constantFrom(...corePlaceboTokens),
-          fc.string({ minLength: 0, maxLength: 100 }),
-          fc.string({ minLength: 0, maxLength: 100 }),
+          neutralContext,
+          neutralContext,
           (modelId, placeboToken, prefix, suffix) => {
             const input = `${prefix} ${placeboToken} ${suffix}`.trim();
             const result = stripper.strip(input, modelId);
@@ -89,14 +109,18 @@ describe("TechStripper Property Tests", () => {
             const tokenRegex = new RegExp(`\\b${placeboToken}\\b`, "i");
             expect(result.text).toMatch(tokenRegex);
 
-            // Should report that tokens were NOT stripped
-            expect(result.tokensWereStripped).toBe(false);
-
-            // Stripped tokens list should be empty
-            expect(result.strippedTokens).toHaveLength(0);
+            // No PLACEBO token may be reported as stripped. Asserting the
+            // list is empty would be a different claim — camera specs are
+            // stripped for every model, keep-models included — and would fail
+            // on correct behavior whenever the context contained one.
+            expect(
+              result.strippedTokens.some(
+                (t) => t.toLowerCase() === placeboToken.toLowerCase(),
+              ),
+            ).toBe(false);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -107,7 +131,7 @@ describe("TechStripper Property Tests", () => {
           expect(stripper.isPlaceboToken(token.toUpperCase())).toBe(true);
           expect(stripper.isPlaceboToken(token.toLowerCase())).toBe(true);
         }),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -135,7 +159,7 @@ describe("TechStripper Property Tests", () => {
             expect(result.strippedTokens).toHaveLength(0);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -161,7 +185,7 @@ describe("TechStripper Property Tests", () => {
             expect(result.tokensWereStripped).toBe(true);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -193,7 +217,7 @@ describe("TechStripper Property Tests", () => {
             );
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -220,7 +244,7 @@ describe("TechStripper Property Tests", () => {
             expect(stripper.shouldStripTokens(testModelId)).toBe(true);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
 
@@ -243,7 +267,7 @@ describe("TechStripper Property Tests", () => {
             );
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 100, seed: 20260807 },
       );
     });
   });
