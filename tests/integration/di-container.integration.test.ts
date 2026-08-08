@@ -97,9 +97,23 @@ describe("DI Container (integration)", () => {
     }
   });
 
-  it("exercises real GCS storage boundary in CI", async () => {
-    if (process.env.CI !== "true") {
-      expect(true).toBe(true);
+  it("exercises real GCS storage boundary when one is configured", async (ctx) => {
+    // Gate on the boundary actually existing, not on CI. `CI === "true"` says
+    // nothing about whether a bucket and credentials are present, so in CI this
+    // ran against real GCS with neither and failed on "The specified bucket
+    // does not exist" — a red test reporting missing infrastructure, not a
+    // defect. It also never ran locally, so nothing ever exercised it.
+    const bucket = process.env.GCS_BUCKET_NAME;
+    const credentials =
+      process.env.GOOGLE_APPLICATION_CREDENTIALS ??
+      process.env.FIREBASE_SERVICE_ACCOUNT_JSON ??
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+
+    if (!bucket || !credentials) {
+      // A real skip, so the run reports it as skipped. The previous
+      // `expect(true).toBe(true)` counted as a pass and hid that this
+      // assertion had not executed.
+      ctx.skip();
       return;
     }
 
