@@ -115,7 +115,22 @@ export class TechStripper {
     for (const { label, source, flags } of CAMERA_SPEC_PATTERNS) {
       const pattern = new RegExp(source, flags);
       const before = processedText;
-      processedText = processedText.replace(pattern, "");
+      processedText = processedText.replace(
+        pattern,
+        // No capture groups in CAMERA_SPEC_PATTERNS, so the replacer receives
+        // (match, offset, whole) — keep it that way if a pattern is added.
+        (match: string, offset: number, whole: string) => {
+          if (this.runsIntoAWord(match, offset, whole)) {
+            return match;
+          }
+          // Replace with a space rather than "". The patterns' leading and
+          // trailing \s* sit INSIDE the match (they exist for "( f/2.8 )"), so
+          // deleting outright takes the neighbours' separator with it:
+          // "portrait f/1.8 award winning" became "portraitaward winning".
+          // cleanWhitespace collapses the space this leaves behind.
+          return " ";
+        },
+      );
       if (processedText !== before) {
         strippedTokens.push(label);
       }
@@ -178,6 +193,31 @@ export class TechStripper {
       ? PLACEBO_TOKEN_POLICY[canonicalModelId]
       : DEFAULT_PLACEBO_TOKEN_POLICY;
     return policy === "strip";
+  }
+
+  /**
+   * True when a camera-spec match ends on a digit that the source continues
+   * with a letter — meaning the digit belongs to the following word, not to
+   * the spec.
+   *
+   * The f-stop pattern tolerates whitespace after the slash (for the "f / 2.8"
+   * form), which also lets it reach across a space into whatever follows. In
+   * "f/ 8k" it matched "f/ 8" and stripping left "k": the resolution lost its
+   * leading digit. An aperture value never runs straight into letters, so this
+   * rejects the match instead of narrowing the pattern.
+   *
+   * Deliberately no regex: `toLowerCase() !== toUpperCase()` identifies a
+   * letter in any alphabet that has case, and the digit test is a range check.
+   */
+  private runsIntoAWord(match: string, offset: number, whole: string): boolean {
+    const lastChar = match[match.length - 1];
+    const nextChar = whole[offset + match.length];
+    if (lastChar === undefined || nextChar === undefined) {
+      return false;
+    }
+    const endsOnDigit = lastChar >= "0" && lastChar <= "9";
+    const nextIsLetter = nextChar.toLowerCase() !== nextChar.toUpperCase();
+    return endsOnDigit && nextIsLetter;
   }
 
   /**
