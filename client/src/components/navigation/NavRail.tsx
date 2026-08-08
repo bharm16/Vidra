@@ -71,8 +71,27 @@ function RailItem({
  * workspace's chrome once the space exists (the empty state keeps a minimal top
  * bar instead). Collapses 256⇄64px; logo doubles as "new session".
  */
+/**
+ * Below this width the expanded rail costs more than it gives: at 393px it took
+ * 256px — 65% of the viewport — and left every surface behind it a 137px column.
+ * 767px is Tailwind's `md` boundary, so the rail starts collapsed exactly where
+ * the layouts stop having room for it.
+ */
+const RAIL_COLLAPSE_BELOW = "(max-width: 767px)";
+
+/**
+ * Whether the rail should START collapsed. Read once, for the initial state
+ * only: after that the toggle is the user's, and a resize listener that forced
+ * the rail shut would fight anyone who deliberately opened it (UX rule 2 —
+ * tools persist).
+ */
+function shouldStartCollapsed(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia(RAIL_COLLAPSE_BELOW).matches;
+}
+
 export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(shouldStartCollapsed);
   const user = useAuthUser();
   const accountName =
     user?.displayName ?? user?.email?.split("@")[0] ?? "Guest";
