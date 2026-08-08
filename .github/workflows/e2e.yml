@@ -41,6 +41,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # golden-path persists a session and then reloads to prove it survived,
+      # so it needs a Firestore the server can actually write to. There is none
+      # in CI — the readiness probe failed every 15s for the whole run — so the
+      # save never returned an id, the app never navigated to /session/, and
+      # the spec died on a 60s waitForURL. Same emulator the integration job
+      # uses; no credentials, nothing to leak, nothing written to a real
+      # project. JDK 21 because firebase-tools >= 15 refuses to start on less.
+      - name: Setup Java (Firestore emulator requirement)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
       - name: Run Playwright tests
         run: |
           # An unset repository secret resolves to "" in env: above, and
@@ -53,7 +69,11 @@ jobs:
           # with golden-path failing honestly on the missing provider.
           [ -n "${OPENAI_API_KEY:-}" ] || unset OPENAI_API_KEY
           [ -n "${GROQ_API_KEY:-}" ] || unset GROQ_API_KEY
-          npm run test:e2e
+          # One argument after --only, and no backslash-escaped quotes: a YAML
+          # plain scalar does not process escapes, and firebase answers "Too
+          # many arguments" to the pieces (that is what kept the integration
+          # job from running a single test until dab39f0f).
+          firebase emulators:exec --project demo-test --only firestore "npm run test:e2e"
         env:
           # Firefox refuses to start when $HOME is not owned by the running
           # user. This job runs as root inside the playwright container, where
@@ -97,6 +117,12 @@ jobs:
           # fallbackTo ("qwen") before dispatch — so it lands on Groq too.
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Firebase Admin routes to the emulator off this env var alone — no
+          # app code reads it, which is why the integration suite needs no
+          # wiring either. demo-* project ids are the emulator's convention for
+          # "never contacts production".
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          GCLOUD_PROJECT: demo-test
           # Chromium-only on PRs (fast feedback). Push to main / develop
           # and the nightly schedule run all browsers for regression
           # coverage. The flag is consumed by config/test/playwright.config.js.
