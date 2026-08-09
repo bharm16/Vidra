@@ -1,4 +1,5 @@
 import { findProviderForModel } from "./registry";
+import { CAPABILITY_ID_TO_VENDOR } from "@shared/modelIdentity";
 
 const MODEL_ID_ALIASES: Record<string, string> = {
   runway: "runway-gen45",
@@ -27,15 +28,21 @@ const MODEL_ID_ALIASES: Record<string, string> = {
   "wan-video/wan-2.5-i2v-fast": "wan-2.5",
 };
 
-const MODEL_PROVIDER_MAP: Record<string, string> = {
-  "runway-gen45": "runway",
-  "luma-ray3": "luma",
-  "sora-2": "openai",
-  "veo-4": "google",
-  "kling-26": "kling",
-  "wan-2.2": "wan",
-  "wan-2.5": "wan",
-};
+/**
+ * Capability-registry spelling → vendor bucket.
+ *
+ * Derived from `shared/modelIdentity.ts`. This is the VENDOR vocabulary
+ * (who makes the model — `google`, `wan`, `runway`), deliberately not the
+ * adapter vocabulary used on the generation path (`gemini`, `replicate`).
+ * Conflating the two is what let `runway` look callable and `wan` look like
+ * a provider; the identity table now carries both facts separately.
+ *
+ * Wider than the literal it replaces: it also covers `veo-3`, `kling-2.1` and
+ * `sora-2-pro`. Each of those resolved to the same vendor before — the first
+ * two via MODEL_ID_ALIASES, the third via the `findProviderForModel` registry
+ * fallback below — so answers are unchanged, with two fewer hops.
+ */
+const MODEL_PROVIDER_MAP: Record<string, string> = CAPABILITY_ID_TO_VENDOR;
 
 export const resolveModelId = (modelId?: string | null): string | null => {
   if (!modelId) {

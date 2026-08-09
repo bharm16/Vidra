@@ -10,6 +10,10 @@ import type {
   VeoModelId,
   VideoModelId,
 } from "@shared/videoModels";
+import {
+  GENERATION_ID_TO_ADAPTER,
+  type GenerationAdapter,
+} from "@shared/modelIdentity";
 
 // Derive `VideoModelKey` locally from the runtime config to avoid a circular
 // type edge with `@services/video-generation`. This is the same type exported
@@ -171,35 +175,23 @@ export function isVeoModelId(modelId: VideoModelId): modelId is VeoModelId {
   return modelId === VIDEO_MODELS.VEO_3;
 }
 
-export type VideoProviderName =
-  | "openai"
-  | "luma"
-  | "kling"
-  | "gemini"
-  | "replicate";
+/**
+ * The adapter that dispatches a generation call.
+ *
+ * An alias of `GenerationAdapter` rather than a second declaration of the same
+ * five names — the shared identity table owns the set.
+ */
+export type VideoProviderName = GenerationAdapter;
 
 /**
- * Single source of truth mapping every known video model ID to its provider.
+ * Every known video model ID → the adapter that dispatches it.
  *
- * Declaring this as `Record<VideoModelId, VideoProviderName>` forces the
- * compiler to require an entry for every value in `VIDEO_MODELS`. When a new
- * model is added to the config, TypeScript will refuse to build until the
- * author assigns a provider here — catching the "silently falls through to
- * replicate" class of bug at build time rather than at runtime.
+ * Derived from `shared/modelIdentity.ts`, which is the one place that answers
+ * "which adapter can call this model". Adding a model there is what puts it
+ * here; there is no second list to keep in step.
  */
-export const VIDEO_MODEL_PROVIDERS: Record<VideoModelId, VideoProviderName> = {
-  "sora-2": "openai",
-  "sora-2-pro": "openai",
-  "kling-v2-1-master": "kling",
-  "luma-ray3": "luma",
-  "google/veo-3": "gemini",
-  "wan-video/wan-2.2-t2v-fast": "replicate",
-  "wan-video/wan-2.2-i2v-fast": "replicate",
-  "wan-video/wan-2.5-i2v": "replicate",
-  "wan-video/wan-2.5-i2v-fast": "replicate",
-  "genmo/mochi-1-final": "replicate",
-  "minimax/video-02": "replicate",
-};
+export const VIDEO_MODEL_PROVIDERS: Record<VideoModelId, VideoProviderName> =
+  GENERATION_ID_TO_ADAPTER;
 
 export function resolveProviderForGenerationModel(
   modelId: VideoModelId,

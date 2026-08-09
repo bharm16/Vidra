@@ -9,7 +9,12 @@ import {
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import type { VideoAvailabilitySnapshot } from "@services/video-generation/types";
 import type { UserCreditService } from "@services/credits/UserCreditService";
-import type { CanonicalPromptModelId, VideoModelId } from "@shared/videoModels";
+import {
+  CANONICAL_PROMPT_MODEL_IDS,
+  type CanonicalPromptModelId,
+  type VideoModelId,
+} from "@shared/videoModels";
+import { isGenerable } from "@shared/modelIdentity";
 import type { BillingProfileStore } from "@services/payment/BillingProfileStore";
 import type { PlanTier } from "@config/subscriptionTiers";
 
@@ -34,24 +39,43 @@ const UNKNOWN_REASONS = new Set([
 ]);
 
 /**
- * Maps canonical prompt-side ids to a representative generation-side id.
+ * Which generation-side id THIS deployment runs for each canonical model.
  *
- * `null` for recommendation-only models that don't have a generation adapter
- * wired in `VIDEO_MODELS` (Runway). The recommender still scores these
- * models, but the gate marks them `no_generation_provider` so the UI can
- * recommend them while explaining they aren't directly generable here.
+ * Server-local because the values come from `VIDEO_MODELS`, several of which
+ * are env-overridable (`WAN_2_5_I2V_MODEL`, `DRAFT_I2V_MODEL`). Models with
+ * no adapter are simply absent.
  */
-const CANONICAL_TO_GENERATION_ID: Record<
-  CanonicalPromptModelId,
-  VideoModelId | null
+const CONFIGURED_GENERATION_ID: Partial<
+  Record<CanonicalPromptModelId, VideoModelId>
 > = {
-  "runway-gen45": null,
   "luma-ray3": VIDEO_MODELS.LUMA_RAY3,
   "kling-2.1": VIDEO_MODELS.KLING_V2_1,
   "sora-2": VIDEO_MODELS.SORA_2,
   "veo-3": VIDEO_MODELS.VEO_3,
   "wan-2.2": VIDEO_MODELS.DRAFT,
 };
+
+/**
+ * Maps canonical prompt-side ids to a representative generation-side id.
+ *
+ * `null` for recommendation-only models with no generation adapter (Runway).
+ * The recommender still scores these, but the gate marks them
+ * `no_generation_provider` so the UI can recommend them while explaining they
+ * aren't directly generable here.
+ *
+ * Whether a model HAS an adapter is not decided here — `shared/modelIdentity.ts`
+ * owns that fact for the whole codebase. This used to be a hand-written `null`
+ * that could silently disagree with the rest of the app.
+ */
+const CANONICAL_TO_GENERATION_ID: Record<
+  CanonicalPromptModelId,
+  VideoModelId | null
+> = Object.fromEntries(
+  CANONICAL_PROMPT_MODEL_IDS.map((id) => [
+    id,
+    isGenerable(id) ? (CONFIGURED_GENERATION_ID[id] ?? null) : null,
+  ]),
+) as Record<CanonicalPromptModelId, VideoModelId | null>;
 
 const isUserIdEligibleForCredits = (
   userId: string | null | undefined,

@@ -1,4 +1,5 @@
 import { getCapabilitiesRegistry } from "@services/capabilities";
+import type { VideoAvailabilityReport } from "@services/video-generation/types";
 
 let capabilityModelIdsCache: string[] | null = null;
 
@@ -18,7 +19,15 @@ export const getCapabilityModelIds = (): string[] => {
   return capabilityModelIdsCache;
 };
 
-export const emptyAvailability = () => ({
+/**
+ * The availability payload returned when nothing is configured.
+ *
+ * Annotated, not inferred: as a bare literal this restated the five provider
+ * names where no type could reach it, so a provider added or removed anywhere
+ * else left this endpoint silently wrong. The annotation is what makes that a
+ * build error.
+ */
+export const emptyAvailability = (): VideoAvailabilityReport => ({
   providers: {
     replicate: false,
     openai: false,
