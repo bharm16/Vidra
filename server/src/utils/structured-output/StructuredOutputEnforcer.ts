@@ -2,7 +2,7 @@ import { logger } from "@infrastructure/Logger";
 import { extractResponseText } from "../JsonExtractor";
 import { RetryPolicy } from "../RetryPolicy";
 import {
-  detectAndGetCapabilities,
+  capabilitiesFor,
   type ProviderType,
 } from "../provider/ProviderDetector";
 import type { AIResponse } from "@interfaces/IAIClient";
@@ -87,7 +87,7 @@ export class StructuredOutputEnforcer {
     }
 
     // Detect provider and capabilities
-    const { provider, capabilities } = detectAndGetCapabilities({
+    const { provider, capabilities } = capabilitiesFor({
       operation,
       model,
       client: explicitProvider,

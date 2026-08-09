@@ -1,11 +1,23 @@
 /**
- * Provider Detection Utility
+ * Provider capabilities, keyed by the client the router actually chose.
  *
- * Centralizes logic for determining which LLM provider is being used
- * and what capabilities it supports.
+ * This file used to *detect* the provider through a five-tier cascade whose
+ * third tier classified by substring on the model name — `includes("gpt")`,
+ * `includes("llama")`, `includes("claude")`. Two problems (ADR-0020):
  *
- * This enables provider-specific optimizations without polluting
- * business logic with provider detection code.
+ *   - It could disagree with the router. The cascade cannot see client
+ *     availability or circuit-breaker state, so after a failover reroute it
+ *     kept reporting the primary provider and requests were shaped for a
+ *     model that was no longer running them.
+ *   - An unrecognised model id fell through to the `unknown` row
+ *     (`strictJsonSchema: false`, `needsPromptFormatInstructions: true`) —
+ *     silently producing Groq-shaped prompts, with no error.
+ *
+ * It is also the pattern this project bans: substring/wordlist matching
+ * standing in for classification.
+ *
+ * Resolution is now an exact lookup on the client name, falling back to the
+ * operation's configured client — which is what the router itself reads.
  */
 
 import { ModelConfig, isOperationName } from "@config/modelConfig";
@@ -23,197 +35,106 @@ export interface ProviderCapabilities {
   strictJsonSchema: boolean;
   /** Supports developer role message (highest priority instructions) */
   developerRole: boolean;
-  /** Supports seed parameter for reproducibility */
-  seed: boolean;
-  /** Supports logprobs for token-level confidence */
-  logprobs: boolean;
-  /** Supports predicted outputs for faster structured responses */
-  predictedOutputs: boolean;
-  /** Supports bookending strategy for long prompts */
+  /** Benefits from repeating format instructions at the end of long prompts */
   bookending: boolean;
-  /** Supports sandwich prompting (format reminder at end) */
-  sandwichPrompting: boolean;
-  /** Supports assistant prefill for JSON start */
-  assistantPrefill: boolean;
-  /** Optimal temperature for structured output (0.0 for OpenAI, 0.1 for Llama) */
-  structuredOutputTemperature: number;
   /** Whether to add format instructions to prompts (not needed with strict schema) */
   needsPromptFormatInstructions: boolean;
 }
 
 /**
- * Provider capability definitions
+ * Capability rows.
  *
- * OpenAI GPT-4o:
- * - Strict JSON schema with grammar-constrained decoding
- * - Developer role for hard constraints
- * - Temperature 0.0 for deterministic structured output
- * - No need for prompt format instructions when using strict schema
- *
- * Groq/Llama 3:
- * - Validation-based JSON schema (not grammar-constrained)
- * - No developer role
- * - Temperature 0.1 (0.0 causes repetition loops)
- * - Sandwich prompting and prefill for format adherence
- * - Still needs prompt format instructions
- *
- * Qwen (Groq-hosted):
- * - Similar capabilities to Groq for JSON mode
- * - No developer role
- * - Benefits from sandwich prompting + format reminders
+ * Trimmed to the four fields anything actually reads. The removed
+ * fields — `seed`, `logprobs`, `predictedOutputs`, `sandwichPrompting`,
+ * `assistantPrefill`, `structuredOutputTemperature` — had no production
+ * readers: per-provider request flags are declared on the
+ * span provider profiles (ADR-0020), and temperature comes from ModelConfig.
+ * Keeping them invited the belief that editing one changed behavior.
  */
 const PROVIDER_CAPABILITIES: Record<ProviderType, ProviderCapabilities> = {
   openai: {
     strictJsonSchema: true,
     developerRole: true,
-    seed: true,
-    logprobs: true,
-    predictedOutputs: true,
     bookending: true,
-    sandwichPrompting: false, // Not needed with strict schema
-    assistantPrefill: false, // Not needed with strict schema
-    structuredOutputTemperature: 0.0,
     needsPromptFormatInstructions: false, // Strict schema handles it
   },
   groq: {
-    strictJsonSchema: false, // Validation-based, not grammar-constrained
+    // Validation-based JSON schema, not grammar-constrained.
+    strictJsonSchema: false,
     developerRole: false,
-    seed: true,
-    logprobs: true,
-    predictedOutputs: false,
     bookending: false,
-    sandwichPrompting: true,
-    assistantPrefill: true,
-    structuredOutputTemperature: 0.1,
-    needsPromptFormatInstructions: true, // Still needed
+    needsPromptFormatInstructions: true,
   },
   qwen: {
     strictJsonSchema: false,
     developerRole: false,
-    seed: true,
-    logprobs: true,
-    predictedOutputs: false,
     bookending: false,
-    sandwichPrompting: true,
-    assistantPrefill: true,
-    structuredOutputTemperature: 0.1,
     needsPromptFormatInstructions: true,
   },
   anthropic: {
     strictJsonSchema: false,
     developerRole: false,
-    seed: false,
-    logprobs: false,
-    predictedOutputs: false,
     bookending: false,
-    sandwichPrompting: false,
-    assistantPrefill: true,
-    structuredOutputTemperature: 0.0,
     needsPromptFormatInstructions: true,
   },
   gemini: {
     strictJsonSchema: true, // Supports responseSchema
     developerRole: false,
-    seed: false,
-    logprobs: false,
-    predictedOutputs: false,
     bookending: false,
-    sandwichPrompting: false,
-    assistantPrefill: false,
-    structuredOutputTemperature: 0.0,
     needsPromptFormatInstructions: true,
   },
   unknown: {
     strictJsonSchema: false,
     developerRole: false,
-    seed: false,
-    logprobs: false,
-    predictedOutputs: false,
     bookending: false,
-    sandwichPrompting: false,
-    assistantPrefill: false,
-    structuredOutputTemperature: 0.0,
     needsPromptFormatInstructions: true,
   },
 };
 
+/** Registered client name → provider. Exact, not substring. */
+const CLIENT_PROVIDERS: Record<string, ProviderType> = {
+  openai: "openai",
+  groq: "groq",
+  qwen: "qwen",
+  anthropic: "anthropic",
+  gemini: "gemini",
+};
+
 /**
- * Detect provider from operation name, model name, or environment
+ * The provider behind a client name, or `undefined` if it isn't one we know.
  */
-export function detectProvider(options: {
+function providerForClient(
+  client: string | undefined,
+): ProviderType | undefined {
+  if (!client) return undefined;
+  return CLIENT_PROVIDERS[client.trim().toLowerCase()];
+}
+
+/**
+ * Resolve the provider for a call.
+ *
+ * Prefer passing the client from `aiService.resolveExecution(operation)`:
+ * that is the only value that accounts for availability and circuit state.
+ * The operation fallback reads `ModelConfig[operation].client`, the same
+ * configuration the router starts from — so it agrees with the router on
+ * everything except an active failover.
+ */
+export function resolveProvider(options: {
   operation?: string | undefined;
-  model?: string | undefined;
   client?: string | undefined;
-  providerEnvVar?: string | undefined;
 }): ProviderType {
-  const { operation, model, client, providerEnvVar } = options;
+  const fromClient = providerForClient(options.client);
+  if (fromClient) return fromClient;
 
-  // Check explicit client specification
-  if (client) {
-    if (client.toLowerCase().includes("openai")) return "openai";
-    if (client.toLowerCase().includes("groq")) return "groq";
-    if (client.toLowerCase().includes("qwen")) return "qwen";
-    if (client.toLowerCase().includes("anthropic")) return "anthropic";
-    if (client.toLowerCase().includes("gemini")) return "gemini";
-  }
-
-  // Check environment variable override
-  if (providerEnvVar) {
-    const envValue = process.env[providerEnvVar]?.toLowerCase();
-    if (envValue === "openai") return "openai";
-    if (envValue === "groq") return "groq";
-    if (envValue === "qwen") return "qwen";
-    if (envValue === "anthropic") return "anthropic";
-    if (envValue === "gemini") return "gemini";
-  }
-
-  // Detect from model name
-  if (model) {
-    const modelLower = model.toLowerCase();
-    if (
-      modelLower.includes("gpt") ||
-      modelLower.includes("o1") ||
-      modelLower.includes("o3")
-    ) {
-      return "openai";
-    }
-    if (modelLower.includes("qwen")) {
-      return "qwen";
-    }
-    if (modelLower.includes("llama") || modelLower.includes("mixtral")) {
-      return "groq";
-    }
-    if (modelLower.includes("claude")) {
-      return "anthropic";
-    }
-    if (modelLower.includes("gemini")) {
-      return "gemini";
-    }
-  }
-
-  // Detect from operation-specific environment variables
-  if (operation) {
-    const operationUpper = operation.toUpperCase().replace(/-/g, "_");
-    const providerEnv = process.env[`${operationUpper}_PROVIDER`];
-    if (providerEnv) {
-      return detectProvider({ client: providerEnv });
-    }
-
-    // Deliberately still a runtime string: detectProvider is a best-effort
-    // detector for callers that may not hold a configured operation, and
-    // "unknown" is its documented answer for one it cannot place.
-    if (isOperationName(operation)) {
-      const config = ModelConfig[operation];
-      return detectProvider({ client: config.client, model: config.model });
-    }
+  const { operation } = options;
+  if (operation && isOperationName(operation)) {
+    const fromConfig = providerForClient(ModelConfig[operation].client);
+    if (fromConfig) return fromConfig;
   }
 
   return "unknown";
 }
 
-/**
- * Get capabilities for a provider
- */
 export function getProviderCapabilities(
   provider: ProviderType,
 ): ProviderCapabilities {
@@ -221,52 +142,16 @@ export function getProviderCapabilities(
 }
 
 /**
- * Get capabilities based on detection options
+ * Resolve provider and capabilities together — the common case.
+ *
+ * `model` is accepted and ignored: call sites still have it to hand, and
+ * taking it keeps them honest that it is NOT what decides the provider.
  */
-export function detectAndGetCapabilities(options: {
+export function capabilitiesFor(options: {
   operation?: string | undefined;
   model?: string | undefined;
   client?: string | undefined;
-  providerEnvVar?: string | undefined;
 }): { provider: ProviderType; capabilities: ProviderCapabilities } {
-  const provider = detectProvider(options);
-  return {
-    provider,
-    capabilities: getProviderCapabilities(provider),
-  };
+  const provider = resolveProvider(options);
+  return { provider, capabilities: getProviderCapabilities(provider) };
 }
-
-/**
- * Check if current operation should use strict JSON schema
- */
-export function shouldUseStrictSchema(options: {
-  operation?: string | undefined;
-  model?: string | undefined;
-  client?: string | undefined;
-  hasSchema?: boolean | undefined;
-}): boolean {
-  if (!options.hasSchema) return false;
-
-  const { capabilities } = detectAndGetCapabilities(options);
-  return capabilities.strictJsonSchema;
-}
-
-/**
- * Check if developer message should be used
- */
-export function shouldUseDeveloperMessage(options: {
-  operation?: string | undefined;
-  model?: string | undefined;
-  client?: string | undefined;
-}): boolean {
-  const { capabilities } = detectAndGetCapabilities(options);
-  return capabilities.developerRole;
-}
-
-export default {
-  detectProvider,
-  getProviderCapabilities,
-  detectAndGetCapabilities,
-  shouldUseStrictSchema,
-  shouldUseDeveloperMessage,
-};

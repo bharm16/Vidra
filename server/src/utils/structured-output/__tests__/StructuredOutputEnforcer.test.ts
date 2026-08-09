@@ -35,7 +35,7 @@ vi.mock("@infrastructure/Logger", () => ({
 }));
 
 vi.mock("../../provider/ProviderDetector", () => ({
-  detectAndGetCapabilities: vi.fn(() => ({
+  capabilitiesFor: vi.fn(() => ({
     provider: "openai",
     capabilities: {
       strictJsonSchema: true,
