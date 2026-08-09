@@ -25,6 +25,20 @@ import {
   GENERATION_PRICING,
   getGenerationCreditsPerSecond,
 } from "../shared/generationPricing.ts";
+import {
+  CAPABILITY_ID_TO_VENDOR,
+  GENERATION_ADAPTERS,
+  GENERATION_ID_TO_ADAPTER,
+  MODEL_IDENTITIES,
+  declaredPricingKeys,
+} from "../shared/modelIdentity.ts";
+import { ModelConfig, VIDEO_MODELS } from "../server/src/config/modelConfig.ts";
+import {
+  REGISTERED_LLM_CLIENTS,
+  isRegisteredLlmClient,
+} from "../server/src/config/llmClients.ts";
+import { MANUAL_CAPABILITIES_REGISTRY } from "../server/src/services/capabilities/manualRegistry.ts";
+import generatedRegistry from "../server/src/services/capabilities/registry.generated.json" with { type: "json" };
 
 interface Finding {
   severity: "error" | "warn";
@@ -102,10 +116,16 @@ for (const canonical of CANONICAL_PROMPT_MODEL_IDS) {
   }
 }
 
-// ─── Check 6: every pricing key is resolvable (canonical or alias) ──
+// ─── Check 6: every pricing key is resolvable ───────────────────────
+// A key is reachable either through the PROMPT vocabulary (an alias or a
+// canonical id) or through the GENERATION vocabulary (a variant declared in
+// the identity table). Checking only the first is why `sora-2-pro`,
+// `minimax/video-02` and `genmo/mochi-1-final` looked unreachable: they are
+// callable generation models that no prompt-side model claims.
 const resolvableKeys = new Set<string>([
   ...CANONICAL_PROMPT_MODEL_IDS,
   ...Object.keys(PROMPT_MODEL_ALIASES),
+  ...declaredPricingKeys(),
   // Known non-video pricing keys that are intentionally outside the model registry:
   "flux-kontext",
   "storyboard",
@@ -115,6 +135,112 @@ for (const priceKey of Object.keys(GENERATION_PRICING)) {
     warn(
       "pricing",
       `GENERATION_PRICING has an entry for "${priceKey}" which is not in the canonical set or alias table. It is effectively unreachable via prompt flow.`,
+    );
+  }
+}
+
+// ─── Identity checks ────────────────────────────────────────────────
+// These exist because "which provider runs this model" was restated across
+// eight hand-maintained tables in three vocabularies with nothing checking
+// they agreed. shared/modelIdentity.ts is now the answer key; the checks
+// below hold every other table to it.
+
+const capabilityBuckets: Record<string, Record<string, unknown>> = {};
+for (const [bucket, models] of Object.entries(MANUAL_CAPABILITIES_REGISTRY)) {
+  capabilityBuckets[bucket] = { ...models };
+}
+for (const [bucket, models] of Object.entries(
+  generatedRegistry as Record<string, Record<string, unknown>>,
+)) {
+  capabilityBuckets[bucket] = { ...capabilityBuckets[bucket], ...models };
+}
+
+// ─── Check 7: every declared capability id exists in the registry ───
+for (const identity of Object.values(MODEL_IDENTITIES)) {
+  for (const capabilityId of identity.capabilityIds) {
+    const bucket = capabilityBuckets[identity.vendor];
+    if (!bucket || !(capabilityId in bucket)) {
+      err(
+        "identity",
+        `MODEL_IDENTITIES["${identity.canonicalId}"] claims capability id "${capabilityId}" under vendor "${identity.vendor}", but the capability registry has no such entry.`,
+      );
+    }
+  }
+}
+
+// ─── Check 8: every registry model is claimed by exactly one identity ─
+for (const [bucket, models] of Object.entries(capabilityBuckets)) {
+  if (bucket === "generic") continue;
+  for (const modelId of Object.keys(models)) {
+    const vendor = CAPABILITY_ID_TO_VENDOR[modelId];
+    if (!vendor) {
+      err(
+        "identity",
+        `Capability registry declares "${modelId}" under "${bucket}", but no entry in MODEL_IDENTITIES claims it. Add it to capabilityIds, or drop it from the registry.`,
+      );
+    } else if (vendor !== bucket) {
+      err(
+        "identity",
+        `Capability registry files "${modelId}" under vendor "${bucket}", but MODEL_IDENTITIES says its vendor is "${vendor}".`,
+      );
+    }
+  }
+}
+
+// ─── Check 9: adapters named by the identity table are real ─────────
+for (const [generationId, adapter] of Object.entries(
+  GENERATION_ID_TO_ADAPTER,
+)) {
+  if (!(GENERATION_ADAPTERS as readonly string[]).includes(adapter)) {
+    err(
+      "identity",
+      `Generation model "${generationId}" names adapter "${adapter}", which is not a GenerationAdapter.`,
+    );
+  }
+}
+
+// ─── Check 10: every configured VIDEO_MODELS value has an adapter ───
+// This is the check that would have caught the standing env-override hole:
+// WAN_2_5_I2V_MODEL and DRAFT_I2V_MODEL can point VIDEO_MODELS at a model id
+// the identity table has never heard of, and provider resolution then falls
+// through to Replicate by default rather than failing.
+for (const [key, configuredId] of Object.entries(VIDEO_MODELS)) {
+  if (!GENERATION_ID_TO_ADAPTER[configuredId]) {
+    warn(
+      "identity",
+      `VIDEO_MODELS.${key} is configured as "${configuredId}", which has no entry in the identity table. Provider resolution will fall back to "replicate" for it.`,
+    );
+  }
+}
+
+// ─── Check 11: declared pricing keys exist ──────────────────────────
+for (const pricingKey of declaredPricingKeys()) {
+  if (!(pricingKey in GENERATION_PRICING)) {
+    err(
+      "identity",
+      `The identity table declares pricing key "${pricingKey}", which is absent from GENERATION_PRICING.`,
+    );
+  }
+}
+
+// ─── Check 12: every ModelConfig client is actually registered ──────
+// `llm_judge_general` shipped naming `anthropic`, which has no adapter, no DI
+// registration and no key. It did not fail loudly — the router remapped it —
+// so the declared judge model simply never ran. This is the check that would
+// have caught it.
+for (const [operation, entry] of Object.entries(ModelConfig)) {
+  if (!isRegisteredLlmClient(entry.client)) {
+    err(
+      "routing",
+      `ModelConfig.${operation} names client "${entry.client}", which is not a registered LLM client (${REGISTERED_LLM_CLIENTS.join(", ")}). The router will silently remap it, so the declared model never runs.`,
+    );
+  }
+
+  const fallback = (entry as { fallbackTo?: string }).fallbackTo;
+  if (fallback && !isRegisteredLlmClient(fallback)) {
+    err(
+      "routing",
+      `ModelConfig.${operation} declares fallbackTo "${fallback}", which is not a registered LLM client (${REGISTERED_LLM_CLIENTS.join(", ")}).`,
     );
   }
 }
