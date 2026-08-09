@@ -7,7 +7,7 @@ import {
   resolveProviderForModel,
 } from "../providers/ProviderRegistry";
 import { getModelAvailability } from "../availability";
-import type { VideoProviderMap } from "../providers/VideoProviders";
+import type { VideoProviderMap } from "../providers/types";
 import { getWorkflowWatchdogTimeoutMs } from "../providers/timeoutPolicy";
 
 type LogSink = {

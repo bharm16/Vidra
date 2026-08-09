@@ -1,6 +1,7 @@
 import { VIDEO_MODELS } from "@config/modelConfig";
 import type { VideoModelId } from "@shared/videoModels";
 import type { VideoAssetStore } from "./storage";
+import type { VideoProviderId, VideoProviderMap } from "./providers/types";
 
 // Pure type family lives in `shared/videoModels.ts`. Re-exported here for
 // backward compatibility with existing importers under
@@ -16,17 +17,9 @@ export type {
   VideoModelId,
 } from "@shared/videoModels";
 
-export interface ReplicateOptions {
-  apiToken?: string;
-  openAIKey?: string;
-  lumaApiKey?: string;
-  klingApiKey?: string;
-  klingBaseUrl?: string;
-  geminiApiKey?: string;
-  geminiBaseUrl?: string;
-}
-
-export interface VideoGenerationServiceOptions extends ReplicateOptions {
+export interface VideoGenerationServiceOptions {
+  /** The providers this service dispatches to, assembled in DI. */
+  providers: VideoProviderMap;
   assetStore?: VideoAssetStore;
 }
 
@@ -85,13 +78,14 @@ export interface VideoGenerationResult {
   providerCost?: { amount: number; currency: string; unit: string };
 }
 
-export interface VideoProviderAvailability {
-  replicate: boolean;
-  openai: boolean;
-  luma: boolean;
-  kling: boolean;
-  gemini: boolean;
-}
+/**
+ * Which providers are usable right now.
+ *
+ * Derived from `VideoProviderId` rather than restating the five names: as a
+ * hand-written interface, adding or removing a provider meant remembering to
+ * edit this too, and nothing failed if you didn't.
+ */
+export type VideoProviderAvailability = Record<VideoProviderId, boolean>;
 
 export interface VideoModelAvailability {
   id: string;
