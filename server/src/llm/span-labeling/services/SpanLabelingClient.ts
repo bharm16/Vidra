@@ -5,8 +5,6 @@ import type { UserPayloadParams } from "../utils/jsonUtils";
 import { validateSchemaOrThrow } from "../validation/SchemaValidator";
 import { validateSpans } from "../validation/SpanValidator";
 import { buildSystemPrompt } from "../utils/promptBuilder";
-import { detectAndGetCapabilities } from "@utils/provider/ProviderDetector";
-import { getSpanLabelingSchema } from "@utils/provider/SchemaFactory";
 import { logger } from "@infrastructure/Logger";
 import type {
   LabelSpansResult,
@@ -25,6 +23,7 @@ import {
   type ProviderRequestOptions,
 } from "./robust-llm-client/modelInvocation";
 import { twoPassExtraction } from "./robust-llm-client/twoPassExtraction";
+import type { SpanProviderProfile } from "../providers/types";
 
 export type {
   ModelResponse,
@@ -44,23 +43,38 @@ interface ParsedLLMResponse {
 }
 
 /**
- * Base LLM Client - Provider Agnostic
+ * The span-labeling extraction strategy: the "try, validate, repair" cycle,
+ * shared by every provider.
  *
- * Encapsulates the "try, validate, repair" cycle for LLM-based span labeling.
- *
- * DESIGN: This base class contains NO provider-specific logic.
- * Subclasses (GroqLlmClient, OpenAILlmClient) override hooks to customize behavior.
- *
- * Hook methods that subclasses should override:
- * - _getProviderRequestOptions(): Configure provider-specific request options
- * - _postProcessResult(): Apply provider-specific post-processing
- * - _getProviderName(): Return provider identifier for logging
+ * Provider-specific behavior arrives as a {@link SpanProviderProfile} rather
+ * than through subclass hooks (ADR-0020). One class, one algorithm; what
+ * varies is data plus a few named functions the profile supplies.
  */
-export class RobustLlmClient implements ILlmClient {
+export class SpanLabelingClient implements ILlmClient {
+  private _lastResponseMetadata: ModelResponse["metadata"] = {};
+
   /**
-   * Last response metadata - available for subclass post-processing
+   * Per-span streaming, present only when the profile can do it.
+   *
+   * Assigned conditionally, not declared as a method: `SpanLabelingService`
+   * branches on `if (!llmClient.streamSpans)` to fall back to a buffered
+   * call, so a method that always exists would silently disable that
+   * fallback for every provider that cannot actually stream.
    */
-  protected _lastResponseMetadata: ModelResponse["metadata"] = {};
+  streamSpans?: (
+    params: LlmSpanParams,
+  ) => AsyncGenerator<Record<string, unknown>, void, unknown>;
+
+  constructor(private readonly profile: SpanProviderProfile) {
+    if (profile.streamSpans) {
+      this.streamSpans = profile.streamSpans;
+    }
+  }
+
+  /** Which provider profile this client was built for. */
+  get providerId(): SpanProviderProfile["id"] {
+    return this.profile.id;
+  }
 
   /**
    * Get spans using LLM with validation and optional repair
@@ -76,16 +90,13 @@ export class RobustLlmClient implements ILlmClient {
       nlpSpansAttempted,
     } = params;
 
-    // Get provider-specific options from subclass (merge providerName for few-shot lookup)
-    const providerName = this._getProviderName();
-    const isGemini = providerName === "gemini";
+    const providerName = this.profile.promptProviderName;
 
-    // Use higher maxTokens for Gemini Flash to handle multi-paragraph responses
-    const estimatedMaxTokens = isGemini
-      ? 16384 // Match test script - allows full multi-paragraph extraction
-      : SpanLabelingConfig.estimateMaxTokens(
-          options.maxSpans || SpanLabelingConfig.DEFAULT_OPTIONS.maxSpans,
-        );
+    const estimatedMaxTokens =
+      this.profile.maxTokens ??
+      SpanLabelingConfig.estimateMaxTokens(
+        options.maxSpans || SpanLabelingConfig.DEFAULT_OPTIONS.maxSpans,
+      );
 
     const task = buildTaskDescription(
       options.maxSpans || SpanLabelingConfig.DEFAULT_OPTIONS.maxSpans,
@@ -100,10 +111,10 @@ export class RobustLlmClient implements ILlmClient {
         options.templateVersion ||
         SpanLabelingConfig.DEFAULT_OPTIONS.templateVersion,
     };
-    const validationPolicy: ValidationPolicy = isGemini
+    const validationPolicy: ValidationPolicy = this.profile.relaxValidation
       ? { ...(policy || {}), nonTechnicalWordLimit: 0 }
       : policy;
-    const validationOptions: ProcessingOptions = isGemini
+    const validationOptions: ProcessingOptions = this.profile.relaxValidation
       ? {
           ...options,
           minConfidence: Math.min(options.minConfidence ?? 0.5, 0.2),
@@ -112,24 +123,12 @@ export class RobustLlmClient implements ILlmClient {
     const modelConfig = this._getModelConfig(aiService, "span_labeling");
     const configuredModelName = modelConfig?.model;
     const modelName = configuredModelName || process.env.SPAN_MODEL || "";
-    const clientName = process.env.SPAN_PROVIDER || providerName;
-    const { provider, capabilities } = detectAndGetCapabilities({
-      operation: "span_labeling",
-      ...(modelName && { model: modelName }),
-      ...(clientName && { client: clientName }),
-    });
-    const supportsSchema =
-      capabilities.strictJsonSchema ||
-      provider === "groq" ||
-      provider === "qwen";
-    const spanSchema = supportsSchema
-      ? getSpanLabelingSchema({
-          operation: "span_labeling",
-          ...(modelName && { model: modelName }),
-          provider,
-        })
-      : undefined;
-    const baseProviderOptions = this._getProviderRequestOptions();
+    // The profile states the schema outright. This used to be a capability
+    // lookup (`strictJsonSchema || provider === "groq" || provider === "qwen"`)
+    // feeding a schema-factory if-chain, re-deriving the provider from env and
+    // ModelConfig — which could disagree with the provider the router chose.
+    const spanSchema = this.profile.jsonSchema;
+    const baseProviderOptions = this.profile.requestOptions;
     const providerOptions: ProviderRequestOptions = {
       developerMessage: baseProviderOptions.developerMessage,
       enableBookending: baseProviderOptions.enableBookending,
@@ -139,7 +138,9 @@ export class RobustLlmClient implements ILlmClient {
       providerName,
     };
 
-    const userPayload = isGemini ? text : buildUserPayload(basePayload);
+    const userPayload = this.profile.rawTextPayload
+      ? text
+      : buildUserPayload(basePayload);
 
     // Build system prompt
     const contextAwareSystemPrompt = buildSystemPrompt(
@@ -190,7 +191,7 @@ export class RobustLlmClient implements ILlmClient {
     // Store metadata for subclass access
     this._lastResponseMetadata = primaryResponse.metadata;
 
-    const parsedPrimary = this._parseResponseText(primaryResponse.text);
+    const parsedPrimary = this._parse(primaryResponse.text);
     if (!parsedPrimary.ok) {
       throw new Error(parsedPrimary.error);
     }
@@ -209,9 +210,7 @@ export class RobustLlmClient implements ILlmClient {
     let parsedValue = parsedPrimary.value as ParsedLLMResponse;
 
     // Allow provider-specific normalization before validation
-    parsedValue = this._normalizeParsedResponse(
-      parsedValue,
-    ) as ParsedLLMResponse;
+    parsedValue = this._normalize(parsedValue) as ParsedLLMResponse;
 
     // Inject default meta if LLM omitted it
     injectDefensiveMeta(parsedValue, validationOptions, nlpSpansAttempted);
@@ -294,7 +293,7 @@ export class RobustLlmClient implements ILlmClient {
       });
 
       logGeminiSummary("adversarial", validation.result);
-      return this._postProcessResult(validation.result);
+      return this._finish(validation.result);
     }
 
     // Validate spans (strict mode)
@@ -312,7 +311,7 @@ export class RobustLlmClient implements ILlmClient {
 
     if (validation.ok) {
       logGeminiSummary("strict", validation.result);
-      return this._postProcessResult(validation.result);
+      return this._finish(validation.result);
     }
 
     // Handle validation failure. A `terminal` verdict means every error can
@@ -341,7 +340,7 @@ export class RobustLlmClient implements ILlmClient {
       });
 
       logGeminiSummary("lenient", validation.result);
-      return this._postProcessResult(validation.result);
+      return this._finish(validation.result);
     }
 
     // Repair attempt
@@ -357,15 +356,15 @@ export class RobustLlmClient implements ILlmClient {
       estimatedMaxTokens,
       providerOptions,
       providerName,
-      parseResponseText: (value) => this._parseResponseText(value),
-      normalizeParsedResponse: (value) => this._normalizeParsedResponse(value),
+      parseResponseText: (value) => this._parse(value),
+      normalizeParsedResponse: (value) => this._normalize(value),
       injectDefensiveMeta,
       ...(spanSchema && { schema: spanSchema }),
     });
     this._lastResponseMetadata = repairOutcome.metadata;
 
     logGeminiSummary("repair", repairOutcome.result);
-    return this._postProcessResult(repairOutcome.result);
+    return this._finish(repairOutcome.result);
   }
 
   // ============================================================
@@ -373,62 +372,28 @@ export class RobustLlmClient implements ILlmClient {
   // ============================================================
 
   /**
-   * HOOK: Get provider-specific request options
-   *
-   * Override in subclasses to configure:
-   * - enableBookending: Repeat instructions at end (OpenAI)
-   * - useFewShot: Include few-shot examples (Groq)
-   * - useSeedFromConfig: Enable deterministic output
-   * - enableLogprobs: Request token probabilities (Groq)
-   * - developerMessage: Hard constraints (OpenAI)
+   * Parse the response body, deferring to the profile when it supplies its
+   * own parser (Gemini recovers spans from NDJSON the generic parser can't
+   * read).
    */
-  protected _getProviderRequestOptions(): ProviderRequestOptions {
-    // Default: Conservative options that work for any provider
-    return {
-      enableBookending: false,
-      useFewShot: false,
-      useSeedFromConfig: true,
-      enableLogprobs: false,
-    };
+  private _parse(text: string): ReturnType<typeof parseJson> {
+    return this.profile.parseResponseText
+      ? this.profile.parseResponseText(text)
+      : parseJson(text);
   }
 
-  /**
-   * HOOK: Get provider name for logging and prompt building
-   */
-  protected _getProviderName(): string {
-    return "unknown";
+  /** Reshape the parsed object before validation, if the profile needs to. */
+  private _normalize<T extends Record<string, unknown>>(value: T): T {
+    return this.profile.normalizeParsedResponse
+      ? this.profile.normalizeParsedResponse(value)
+      : value;
   }
 
-  /**
-   * HOOK: Post-process result with provider-specific adjustments
-   *
-   * Override in subclasses for:
-   * - Groq: Logprobs-based confidence adjustment
-   * - OpenAI: No adjustments needed (strict schema handles it)
-   */
-  protected _postProcessResult(result: LabelSpansResult): LabelSpansResult {
-    // Default: No post-processing
-    return result;
-  }
-
-  /**
-   * HOOK: Parse response text into JSON
-   *
-   * Override in subclasses to provide provider-specific parsing or repair.
-   */
-  protected _parseResponseText(text: string): ReturnType<typeof parseJson> {
-    return parseJson(text);
-  }
-
-  /**
-   * HOOK: Normalize parsed response before validation
-   *
-   * Override in subclasses to map provider-specific fields.
-   */
-  protected _normalizeParsedResponse<T extends Record<string, unknown>>(
-    value: T,
-  ): T {
-    return value;
+  /** Apply the profile's finishing pass (Groq caps confidence by logprobs). */
+  private _finish(result: LabelSpansResult): LabelSpansResult {
+    return this.profile.postProcess
+      ? this.profile.postProcess(result, this._lastResponseMetadata ?? {})
+      : result;
   }
 
   // ============================================================

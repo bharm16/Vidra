@@ -3,7 +3,7 @@ import SpanLabelingConfig from "./config/SpanLabelingConfig";
 import { sanitizePolicy, sanitizeOptions } from "./utils/policyUtils";
 import { TextChunker, countWords } from "./utils/chunkingUtils";
 import { NlpSpanStrategy } from "./strategies/NlpSpanStrategy";
-import { createLlmClient } from "./services/LlmClientFactory";
+import { createLlmClient, spanProfileIdFor } from "./services/LlmClientFactory";
 import { resolveOverlaps } from "./processing/OverlapResolver";
 import { SpanProcessor } from "./processing/SpanProcessor";
 import { validateSpans } from "./validation/SpanValidator";
@@ -29,8 +29,8 @@ import type {
  * - Processing: Pipeline of span transformations (dedupe, overlap, filter, truncate)
  *
  * Provider Isolation:
- * - Groq/Llama 3: Uses GroqLlmClient with logprobs confidence, min_p, stop sequences
- * - OpenAI/GPT-4o: Uses OpenAILlmClient with strict schema, developer role
+ * - Groq/Llama 3: logprobs confidence capping, few-shot examples
+ * - OpenAI/GPT-4o: strict schema, developer role
  * - Provider comes from `aiService.resolveExecution("span_labeling")` — the
  *   router's answer, which accounts for client availability and circuit state.
  *   Every result is stamped with it via `meta.provider` so callers (cache keys,
@@ -116,8 +116,8 @@ export async function labelSpans(
  * Label spans for a single chunk of text (original implementation)
  *
  * Uses provider-specific LLM client via factory pattern:
- * - Groq: GroqLlmClient with Llama 3 optimizations
- * - OpenAI: OpenAILlmClient with GPT-4o optimizations
+ * - Groq: Llama 3 optimizations
+ * - OpenAI: GPT-4o optimizations
  */
 async function labelSpansSingle(
   params: LabelSpansParams,
@@ -463,7 +463,7 @@ export async function* labelSpansStream(
       "Client does not support streaming, falling back to blocking",
       {
         operation: "labelSpansStream",
-        client: llmClient.constructor.name,
+        client: spanProfileIdFor(executedBy.provider),
       },
     );
     const result = await labelSpans(params, aiService);
