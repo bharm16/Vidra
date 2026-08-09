@@ -1,26 +1,29 @@
 /**
  * Span Labeling Services - Index
  *
- * Provider-specific LLM clients for span labeling operations.
- * Use LlmClientFactory.createLlmClient() to get the appropriate client.
+ * One extraction strategy, parameterised by a provider profile (ADR-0020).
+ * Use `createLlmClient()` with the provider from
+ * `aiService.resolveExecution("span_labeling")`.
  *
  * Architecture:
- * - RobustLlmClient: Base class with shared validation/repair logic
- * - GroqLlmClient: Groq/Llama 3 optimizations (logprobs, few-shot)
- * - OpenAILlmClient: OpenAI/GPT-4o optimizations (developer role, strict schema)
- * - LlmClientFactory: Maps the router's resolved provider to the right client
+ * - SpanLabelingClient: the try/validate/repair cycle, shared by all providers
+ * - providers/*.profile.ts: everything provider-specific, one module each
+ * - LlmClientFactory: maps the router's resolved provider to its profile
  */
 
 export {
-  RobustLlmClient,
+  SpanLabelingClient,
   type ModelResponse,
   type ProviderRequestOptions,
-} from "./RobustLlmClient.js";
-export { GroqLlmClient } from "./GroqLlmClient.js";
-export { OpenAILlmClient } from "./OpenAILlmClient.js";
-export { createLlmClient, spanClientProviderFor } from "./LlmClientFactory.js";
+} from "./SpanLabelingClient.js";
+export { createLlmClient, spanProfileIdFor } from "./LlmClientFactory.js";
 export type {
   ILlmClient,
   LlmSpanParams,
   LlmClientProvider,
 } from "./ILlmClient.js";
+export type {
+  SpanProviderId,
+  SpanProviderProfile,
+} from "../providers/types.js";
+export { SPAN_PROVIDER_PROFILES } from "../providers/registry.js";

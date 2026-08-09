@@ -1,6 +1,12 @@
 # Span labeling's `ILlmClient` family is an internal extraction strategy, not a second routing layer
 
-**Status:** accepted
+**Status:** superseded by
+[ADR-0020](0020-span-provider-profiles-supersede-the-client-family.md)
+
+> The "Considered and deferred" collapse below was accepted on 2026-08-08.
+> ADR-0020 records the decision and the re-bless procedure. This document is
+> kept for the reasoning that shaped it — in particular the OpenAI
+> `enableLogprobs: false` override, which ADR-0020 preserves verbatim.
 
 Span labeling has its own client family — `LlmClientFactory` plus
 `GroqLlmClient` / `OpenAILlmClient` / `GeminiLlmClient` / `RobustLlmClient`
