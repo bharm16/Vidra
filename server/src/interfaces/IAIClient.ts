@@ -7,17 +7,25 @@
  * - DIP: Abstraction that high-level modules depend on
  */
 
-export interface CompletionOptions {
-  userMessage?: string;
-  maxTokens?: number;
-  temperature?: number;
-  timeout?: number;
-  signal?: AbortSignal;
-  schema?: Record<string, unknown>;
-  jsonMode?: boolean;
-  isArray?: boolean;
-  responseFormat?: { type: string; [key: string]: unknown };
-  messages?: Array<{ role: string; content: MessageContent }>;
+import type { LLMAdapterOptions } from "./ILLMAdapter";
+
+/**
+ * What a caller may ask of an LLM client.
+ *
+ * Extends the adapter-facing {@link LLMAdapterOptions} rather than restating
+ * it: these used to be two unrelated declarations — 21 members here, 12 in a
+ * private type inside LLMClient — so the caller-facing type promised options
+ * the adapter-facing type had never heard of. Nothing broke, because
+ * `_applyDefaults` spreads and the index signature below swallowed the
+ * difference, but the types disagreed about what a request is.
+ *
+ * The members added here are ones the CLIENT layer understands (retry policy,
+ * concurrency priority) or that only some providers implement (prefill,
+ * bookending, logprobs). Adapters ignore what they don't support.
+ */
+export interface CompletionOptions extends LLMAdapterOptions {
+  /** Concurrency-limiter hint; consumed by LLMClient, never sent upstream. */
+  priority?: boolean;
   developerMessage?: string;
   enableBookending?: boolean;
   enableSandwich?: boolean;
@@ -30,7 +38,6 @@ export interface CompletionOptions {
   prediction?: { type: "content"; content: string };
   retryOnValidationFailure?: boolean;
   maxRetries?: number;
-  [key: string]: unknown;
 }
 
 export type MessageContentPart = {

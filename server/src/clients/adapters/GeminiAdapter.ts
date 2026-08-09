@@ -14,6 +14,7 @@ import { createAbortController } from "@clients/utils/abortController";
 import { GeminiMessageBuilder } from "./gemini/GeminiMessageBuilder.ts";
 import { GeminiResponseParser } from "./gemini/GeminiResponseParser.ts";
 import { z } from "zod";
+import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import type {
   CompletionOptions,
   AdapterConfig,
@@ -21,7 +22,7 @@ import type {
   AIResponse,
 } from "./gemini/types.ts";
 
-export class GeminiAdapter {
+export class GeminiAdapter implements LLMAdapter<CompletionOptions> {
   private apiKey: string;
   private baseURL: string;
   private defaultModel: string;

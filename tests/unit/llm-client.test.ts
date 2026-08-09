@@ -70,11 +70,10 @@ describe("LLMClient", () => {
   });
 
   describe("error handling", () => {
-    it("throws when adapter lacks a complete method", () => {
-      expect(
-        () => new LLMClient({ adapter: {} as never, providerName: "test" }),
-      ).toThrow("LLMClient requires an adapter with a complete() method");
-    });
+    // "throws when adapter lacks a complete method" died with the runtime
+    // guard it covered. `complete` is required by LLMAdapter, so an adapter
+    // without one is now a compile error — the old test could only reach the
+    // guard by defeating the type with `{} as never`.
 
     it("requires onChunk for streaming", async () => {
       const adapter = createAdapter({ streamComplete: vi.fn() });
