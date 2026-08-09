@@ -118,3 +118,72 @@ describe("GitHub workflow startup validity", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/**
+ * Bug 2026-08-09: `accessibility-tests` and `lighthouse-performance` were both
+ * red on main for one reason, and it was not an accessibility defect —
+ * `axe-core Error: Unable to parse color "oklch(0.279 0 0)"`. The action was
+ * pinned to v10 (Lighthouse 10.1.0, April 2023), whose axe-core predates
+ * modern colour functions, while the design system emits thousands of oklch()
+ * declarations. The audit ERRORED, its score became null, and the assertion
+ * failed on the null.
+ *
+ * Two invariants keep that from coming back, and they matter in opposite
+ * directions: the config must not let individual audits block (the preset),
+ * and the runner must be new enough to actually compute the scores being
+ * asserted. Reverting either one alone reproduces a failure — with the old
+ * runner the accessibility category is NaN, which passes while measuring
+ * nothing.
+ */
+describe("Lighthouse gate", () => {
+  const LIGHTHOUSE_CONFIG = ".lighthouserc.json";
+  const MIN_ACTION_MAJOR = 12;
+
+  function lighthouseConfig(): {
+    ci?: { assert?: { preset?: string; assertions?: Record<string, unknown> } };
+  } {
+    return JSON.parse(readFileSync(repoPath(LIGHTHOUSE_CONFIG), "utf8"));
+  }
+
+  it("declares no preset, so no individual audit can block", () => {
+    // Every category in this config is "warn" — the file's plain intent is
+    // that Lighthouse advises rather than blocks. A preset re-introduces ~100
+    // individual audits at ERROR underneath that, so the config would read as
+    // advisory and behave as blocking.
+    expect(lighthouseConfig().ci?.assert?.preset).toBeUndefined();
+  });
+
+  it("still asserts all four category scores", () => {
+    // Dropping the preset must not quietly drop the real assertions with it.
+    const assertions = lighthouseConfig().ci?.assert?.assertions ?? {};
+    for (const category of [
+      "performance",
+      "accessibility",
+      "best-practices",
+      "seo",
+    ]) {
+      expect(Object.keys(assertions)).toContain(`categories:${category}`);
+    }
+  });
+
+  it("pins a Lighthouse runner new enough to parse oklch()", () => {
+    const offenders: string[] = [];
+
+    for (const file of workflowFiles()) {
+      const lines = readWorkflow(file).split("\n");
+      lines.forEach((line, index) => {
+        const match = line.match(/treosh\/lighthouse-ci-action@v(\d+)/);
+        if (!match) return;
+        const major = Number(match[1]);
+        if (major < MIN_ACTION_MAJOR) {
+          offenders.push(`${file}:${index + 1} uses v${major}`);
+        }
+      });
+    }
+
+    expect(
+      offenders,
+      `lighthouse-ci-action must be >= v${MIN_ACTION_MAJOR}; older bundles ship an axe-core that cannot parse oklch()`,
+    ).toEqual([]);
+  });
+});

@@ -290,7 +290,11 @@ jobs:
           done
 
       - name: Run Lighthouse
-        uses: treosh/lighthouse-ci-action@v10
+        # Pinned to v12 (@lhci/cli 0.15.x -> Lighthouse 12.x). v10 bundled
+        # Lighthouse 10.1.0, whose axe-core cannot parse oklch(); the design
+        # system emits 5229 oklch declarations, so color-contrast ERRORED
+        # (score null) and failed its assertion. Not a contrast violation.
+        uses: treosh/lighthouse-ci-action@v12
         with:
           urls: "http://localhost:8080"
           uploadArtifacts: false
