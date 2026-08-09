@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
-import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
 import type { StudioDecision, StudioTurnRecord } from "../types";
 
 /**
@@ -73,7 +72,7 @@ function makeService(decision: StudioDecision) {
         imageUrl: "https://replicate.delivery/out.webp",
         durationMs: 1,
       }),
-    } as unknown as ReplicateStudioImageRunner,
+    },
     storage: {
       saveFromUrl: vi
         .fn()

@@ -6,6 +6,10 @@ import {
   type StudioAIService,
 } from "@services/studio/StudioPolicyEngine";
 import { ReplicateStudioImageRunner } from "@services/studio/providers/ReplicateStudioImageRunner";
+import type {
+  LiveStudioImageRunner,
+  StudioImageRunner,
+} from "@services/studio/providers/types";
 import { FirestoreStudioProjectStore } from "@services/studio/storage/FirestoreStudioProjectStore";
 import {
   StudioService,
@@ -22,9 +26,9 @@ import type { ServiceConfig } from "./service-config.types.ts";
  * bypass the seam.
  */
 function throughReplaySeam(
-  runner: ReplicateStudioImageRunner,
+  runner: LiveStudioImageRunner,
   replayCassetteStore: CassetteStore | null,
-): ReplicateStudioImageRunner {
+): StudioImageRunner {
   if (!replayCassetteStore) {
     return runner;
   }

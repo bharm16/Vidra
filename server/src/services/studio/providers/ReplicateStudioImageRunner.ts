@@ -18,6 +18,11 @@ import {
   parseReplicateErrorDetail,
   extractImageUrl,
 } from "@services/image-generation/providers/replicatePrediction";
+import type {
+  LiveStudioImageRunner,
+  StudioImageCall,
+  StudioImageCallResult,
+} from "./types";
 
 interface ReplicatePrediction {
   id: string;
@@ -37,19 +42,12 @@ interface ReplicateClient {
   };
 }
 
-export interface StudioImageCall {
-  /** Replicate model id, e.g. "recraft-ai/recraft-v4.1". */
-  model: string;
-  input: Record<string, unknown>;
-  userId: string;
-  /** Hard budget for create+poll; on exceed the call fails (plan: "Timeouts"). */
-  timeoutMs: number;
-}
-
-export interface StudioImageCallResult {
-  imageUrl: string;
-  durationMs: number;
-}
+export type {
+  LiveStudioImageRunner,
+  StudioImageCall,
+  StudioImageCallResult,
+  StudioImageRunner,
+} from "./types";
 
 export class StudioCallError extends Error {
   constructor(
@@ -69,7 +67,7 @@ export interface ReplicateStudioImageRunnerOptions {
   apiToken?: string;
 }
 
-export class ReplicateStudioImageRunner {
+export class ReplicateStudioImageRunner implements LiveStudioImageRunner {
   private readonly replicate: ReplicateClient | null;
   private readonly log = logger.child({
     service: "ReplicateStudioImageRunner",

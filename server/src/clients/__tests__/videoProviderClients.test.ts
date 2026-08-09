@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  createVideoProviderSdks,
-  type VideoProviderClientConfig,
+  createLumaVideoClient,
+  createReplicateVideoClient,
+  createSoraVideoClient,
+  normalizeBaseUrl,
+  resolveKlingCredential,
+  resolveVeoCredential,
 } from "@clients/videoProviderClients";
 import { DEFAULT_KLING_BASE_URL } from "@services/video-generation/providers/klingProvider";
 import { DEFAULT_VEO_BASE_URL } from "@services/video-generation/providers/veoProvider";
@@ -40,17 +44,7 @@ vi.mock("lumaai", () => ({
   },
 }));
 
-function makeLog(): { warn: ReturnType<typeof vi.fn> } {
-  return { warn: vi.fn() };
-}
-
-const fullConfig: VideoProviderClientConfig = {
-  replicateApiToken: "rep-token",
-  openAIKey: "openai-key",
-  lumaApiKey: "luma-key",
-  klingApiKey: "kling-key",
-  geminiApiKey: "gemini-key",
-};
+const makeLog = () => ({ warn: vi.fn() });
 
 beforeEach(() => {
   openAIInstances.length = 0;
@@ -58,120 +52,85 @@ beforeEach(() => {
   lumaInstances.length = 0;
 });
 
-describe("createVideoProviderSdks", () => {
-  it("constructs every SDK when all keys are present", () => {
+describe("video provider client factories", () => {
+  it("constructs each SDK from its own credential", () => {
     const log = makeLog();
-    const sdks = createVideoProviderSdks(fullConfig, log);
 
-    expect(sdks.replicate).not.toBeNull();
-    expect(sdks.openai).not.toBeNull();
-    expect(sdks.luma).not.toBeNull();
-    expect(sdks.klingApiKey).toBe("kling-key");
-    expect(sdks.geminiApiKey).toBe("gemini-key");
-    expect(replicateInstances).toEqual([{ auth: "rep-token" }]);
+    expect(createReplicateVideoClient("replicate-token", log)).not.toBeNull();
+    expect(createSoraVideoClient("openai-key", log)).not.toBeNull();
+    expect(createLumaVideoClient("luma-key", log)).not.toBeNull();
+
+    expect(replicateInstances).toEqual([{ auth: "replicate-token" }]);
     expect(openAIInstances).toEqual([{ apiKey: "openai-key" }]);
     expect(lumaInstances).toEqual([{ authToken: "luma-key" }]);
     expect(log.warn).not.toHaveBeenCalled();
   });
 
-  it("leaves openai null and warns when openAIKey is missing", () => {
+  it("passes raw credentials through for the SDK-less providers", () => {
     const log = makeLog();
-    const sdks = createVideoProviderSdks(
-      { ...fullConfig, openAIKey: undefined },
-      log,
-    );
 
-    expect(sdks.openai).toBeNull();
-    expect(sdks.replicate).not.toBeNull();
-    expect(sdks.luma).not.toBeNull();
-    expect(sdks.klingApiKey).toBe("kling-key");
-    expect(sdks.geminiApiKey).toBe("gemini-key");
-    expect(log.warn).toHaveBeenCalledWith(
-      "OPENAI_API_KEY not provided, Sora video generation will be disabled",
-    );
+    expect(resolveKlingCredential("kling-key", log)).toBe("kling-key");
+    expect(resolveVeoCredential("gemini-key", log)).toBe("gemini-key");
+    expect(log.warn).not.toHaveBeenCalled();
   });
 
-  it("leaves replicate null and warns when replicateApiToken is missing", () => {
+  it("emits a separate warn line for every missing key", () => {
     const log = makeLog();
-    const sdks = createVideoProviderSdks(
-      { ...fullConfig, replicateApiToken: undefined },
-      log,
-    );
 
-    expect(sdks.replicate).toBeNull();
-    expect(sdks.openai).not.toBeNull();
-    expect(sdks.luma).not.toBeNull();
+    expect(createReplicateVideoClient(undefined, log)).toBeNull();
+    expect(createSoraVideoClient(undefined, log)).toBeNull();
+    expect(createLumaVideoClient(undefined, log)).toBeNull();
+    expect(resolveKlingCredential(undefined, log)).toBeNull();
+    expect(resolveVeoCredential(undefined, log)).toBeNull();
+
+    expect(log.warn).toHaveBeenCalledTimes(5);
     expect(log.warn).toHaveBeenCalledWith(
       "REPLICATE_API_TOKEN not provided, Replicate-based video generation will be disabled",
     );
-  });
-
-  it("leaves luma null and warns when lumaApiKey is missing", () => {
-    const log = makeLog();
-    const sdks = createVideoProviderSdks(
-      { ...fullConfig, lumaApiKey: undefined },
-      log,
+    expect(log.warn).toHaveBeenCalledWith(
+      "OPENAI_API_KEY not provided, Sora video generation will be disabled",
     );
-
-    expect(sdks.luma).toBeNull();
     expect(log.warn).toHaveBeenCalledWith(
       "LUMA_API_KEY or LUMAAI_API_KEY not provided, Luma video generation will be disabled",
     );
-  });
-
-  it("leaves klingApiKey null and warns when missing", () => {
-    const log = makeLog();
-    const sdks = createVideoProviderSdks(
-      { ...fullConfig, klingApiKey: undefined },
-      log,
-    );
-
-    expect(sdks.klingApiKey).toBeNull();
     expect(log.warn).toHaveBeenCalledWith(
       "KLING_API_KEY not provided, Kling video generation will be disabled",
     );
-  });
-
-  it("leaves geminiApiKey null and warns when missing", () => {
-    const log = makeLog();
-    const sdks = createVideoProviderSdks(
-      { ...fullConfig, geminiApiKey: undefined },
-      log,
-    );
-
-    expect(sdks.geminiApiKey).toBeNull();
     expect(log.warn).toHaveBeenCalledWith(
       "GEMINI_API_KEY not provided, Veo video generation will be disabled",
     );
   });
 
-  it("uses provider defaults when no base URLs are provided", () => {
+  it("constructs no SDK when the credential is missing", () => {
     const log = makeLog();
-    const sdks = createVideoProviderSdks(fullConfig, log);
+    createReplicateVideoClient(undefined, log);
+    createSoraVideoClient(undefined, log);
+    createLumaVideoClient(undefined, log);
 
-    expect(sdks.klingBaseUrl).toBe(DEFAULT_KLING_BASE_URL);
-    expect(sdks.geminiBaseUrl).toBe(DEFAULT_VEO_BASE_URL);
+    expect(replicateInstances).toEqual([]);
+    expect(openAIInstances).toEqual([]);
+    expect(lumaInstances).toEqual([]);
+  });
+});
+
+describe("normalizeBaseUrl", () => {
+  it("falls back to the provider default when nothing is configured", () => {
+    expect(normalizeBaseUrl(undefined, DEFAULT_KLING_BASE_URL)).toBe(
+      DEFAULT_KLING_BASE_URL,
+    );
+    expect(normalizeBaseUrl("", DEFAULT_VEO_BASE_URL)).toBe(
+      DEFAULT_VEO_BASE_URL,
+    );
   });
 
   it("trims trailing slashes off configured base URLs", () => {
-    const log = makeLog();
-    const sdks = createVideoProviderSdks(
-      {
-        ...fullConfig,
-        klingBaseUrl: "https://kling.example.com//",
-        geminiBaseUrl: "https://gemini.example.com/v1//",
-      },
-      log,
-    );
-
-    expect(sdks.klingBaseUrl).toBe("https://kling.example.com");
-    expect(sdks.geminiBaseUrl).toBe("https://gemini.example.com/v1");
-  });
-
-  it("emits a separate warn line for every missing key", () => {
-    const log = makeLog();
-    createVideoProviderSdks({}, log);
-
-    expect(log.warn).toHaveBeenCalledTimes(5);
+    // An un-trimmed operator value produces double-slash request paths
+    // against a live provider.
+    expect(
+      normalizeBaseUrl("https://kling.example.com//", DEFAULT_KLING_BASE_URL),
+    ).toBe("https://kling.example.com");
+    expect(
+      normalizeBaseUrl("https://gemini.example.com/v1//", DEFAULT_VEO_BASE_URL),
+    ).toBe("https://gemini.example.com/v1");
   });
 });

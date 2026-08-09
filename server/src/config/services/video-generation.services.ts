@@ -8,6 +8,23 @@ import ConsistentVideoService from "@services/video-generation/ConsistentVideoSe
 import FaceSwapService from "@services/video-generation/FaceSwapService";
 import KeyframeGenerationService from "@services/video-generation/KeyframeGenerationService";
 import { FalFaceSwapProvider } from "@services/video-generation/providers/FalFaceSwapProvider";
+import { ReplicateVideoProvider } from "@services/video-generation/providers/ReplicateVideoProvider";
+import { SoraVideoProvider } from "@services/video-generation/providers/SoraVideoProvider";
+import { LumaVideoProvider } from "@services/video-generation/providers/LumaVideoProvider";
+import { KlingVideoProvider } from "@services/video-generation/providers/KlingVideoProvider";
+import { VeoVideoProvider } from "@services/video-generation/providers/VeoVideoProvider";
+import {
+  VIDEO_PROVIDER_IDS,
+  type VideoProvider,
+  type VideoProviderMap,
+} from "@services/video-generation/providers/types";
+import {
+  createLumaVideoClient,
+  createReplicateVideoClient,
+  createSoraVideoClient,
+  resolveKlingCredential,
+  resolveVeoCredential,
+} from "@clients/videoProviderClients";
 import { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
 import { VideoWorkerHeartbeatStore } from "@services/video-generation/jobs/VideoWorkerHeartbeatStore";
@@ -24,42 +41,129 @@ import { setTimeoutPolicyConfig } from "@services/video-generation/providers/tim
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import type { ServiceConfig } from "./service-config.types.ts";
 
+/**
+ * Every video provider registration that feeds VideoGenerationService.
+ *
+ * Mirrors IMAGE_PREVIEW_PROVIDER_TOKENS: a provider missing from this list
+ * never reaches the service, and the map assembled below is keyed by
+ * VideoProviderId so the compiler requires one entry per provider.
+ */
+export const VIDEO_PROVIDER_TOKENS = [
+  "replicateVideoProvider",
+  "soraVideoProvider",
+  "lumaVideoProvider",
+  "klingVideoProvider",
+  "veoVideoProvider",
+] as const;
+
 export function registerVideoGenerationServices(container: DIContainer): void {
   container.register(
+    "replicateVideoProvider",
+    (config: ServiceConfig) =>
+      new ReplicateVideoProvider({
+        replicate: createReplicateVideoClient(
+          config.videoProviders.credentials.replicateApiToken,
+          logger,
+        ),
+      }),
+    ["config"],
+  );
+
+  container.register(
+    "soraVideoProvider",
+    (config: ServiceConfig) =>
+      new SoraVideoProvider({
+        openai: createSoraVideoClient(
+          config.videoProviders.credentials.openAIKey,
+          logger,
+        ),
+      }),
+    ["config"],
+  );
+
+  container.register(
+    "lumaVideoProvider",
+    (config: ServiceConfig) =>
+      new LumaVideoProvider({
+        luma: createLumaVideoClient(
+          config.videoProviders.credentials.lumaApiKey,
+          logger,
+        ),
+      }),
+    ["config"],
+  );
+
+  container.register(
+    "klingVideoProvider",
+    (config: ServiceConfig) =>
+      new KlingVideoProvider({
+        apiKey: resolveKlingCredential(
+          config.videoProviders.credentials.klingApiKey,
+          logger,
+        ),
+        ...(config.videoProviders.credentials.klingBaseUrl
+          ? { baseUrl: config.videoProviders.credentials.klingBaseUrl }
+          : {}),
+      }),
+    ["config"],
+  );
+
+  container.register(
+    "veoVideoProvider",
+    (config: ServiceConfig) =>
+      new VeoVideoProvider({
+        apiKey: resolveVeoCredential(
+          config.videoProviders.credentials.geminiApiKey,
+          logger,
+        ),
+        ...(config.videoProviders.credentials.geminiBaseUrl
+          ? { baseUrl: config.videoProviders.credentials.geminiBaseUrl }
+          : {}),
+      }),
+    ["config"],
+  );
+
+  container.register(
     "videoGenerationService",
-    (videoAssetStore: VideoAssetStore, config: ServiceConfig) => {
+    (
+      replicate: VideoProvider,
+      sora: VideoProvider,
+      luma: VideoProvider,
+      kling: VideoProvider,
+      veo: VideoProvider,
+      videoAssetStore: VideoAssetStore,
+      config: ServiceConfig,
+    ) => {
       setTimeoutPolicyConfig({
         pollTimeoutMs: config.videoProviders.pollTimeoutMs,
         workflowTimeoutMs: config.videoProviders.workflowTimeoutMs,
       });
 
-      const creds = config.videoProviders.credentials;
+      const providers: VideoProviderMap = {
+        replicate,
+        openai: sora,
+        luma,
+        kling,
+        gemini: veo,
+      };
+
+      // Asked of the providers rather than re-reading the five credential
+      // fields, which used to be a fourth restatement of the same fact.
       if (
-        !creds.replicateApiToken &&
-        !creds.openAIKey &&
-        !creds.lumaApiKey &&
-        !creds.klingApiKey &&
-        !creds.geminiApiKey
+        !Object.values(providers).some((provider) => provider.isAvailable())
       ) {
         logger.warn(
           "No video generation credentials provided (REPLICATE_API_TOKEN, OPENAI_API_KEY, LUMA_API_KEY or LUMAAI_API_KEY, KLING_API_KEY, or GEMINI_API_KEY)",
         );
         return null;
       }
+
       return new VideoGenerationService({
+        providers,
         assetStore: videoAssetStore,
-        ...(creds.replicateApiToken
-          ? { apiToken: creds.replicateApiToken }
-          : {}),
-        ...(creds.openAIKey ? { openAIKey: creds.openAIKey } : {}),
-        ...(creds.lumaApiKey ? { lumaApiKey: creds.lumaApiKey } : {}),
-        ...(creds.klingApiKey ? { klingApiKey: creds.klingApiKey } : {}),
-        ...(creds.klingBaseUrl ? { klingBaseUrl: creds.klingBaseUrl } : {}),
-        ...(creds.geminiApiKey ? { geminiApiKey: creds.geminiApiKey } : {}),
-        ...(creds.geminiBaseUrl ? { geminiBaseUrl: creds.geminiBaseUrl } : {}),
       });
     },
-    ["videoAssetStore", "config"],
+    [...VIDEO_PROVIDER_TOKENS, "videoAssetStore", "config"],
   );
 
   container.register(
@@ -226,7 +330,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
         ...(wc.perProviderMaxConcurrent !== undefined
           ? { perProviderMaxConcurrent: wc.perProviderMaxConcurrent }
           : {}),
-        providerIds: ["replicate", "openai", "luma", "kling", "gemini"],
+        providerIds: [...VIDEO_PROVIDER_IDS],
       });
     },
     [

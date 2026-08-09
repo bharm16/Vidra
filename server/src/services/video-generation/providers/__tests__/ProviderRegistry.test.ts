@@ -5,13 +5,19 @@ import {
   resolveAutoModelId,
   resolveProviderForModel,
 } from "../ProviderRegistry";
-import type { VideoProvider, VideoProviderMap } from "../VideoProviders";
+import {
+  VIDEO_PROVIDER_CREDENTIALS,
+  type VideoProvider,
+  type VideoProviderMap,
+} from "../types";
 
 const createProvider = (
   available: boolean,
   id: VideoProvider["id"],
 ): VideoProvider => ({
   id,
+  displayName: id,
+  requiredKey: VIDEO_PROVIDER_CREDENTIALS[id].requiredKey,
   isAvailable: () => available,
   generate: vi.fn(async () => ({
     asset: {

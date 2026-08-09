@@ -8,12 +8,19 @@ runs the full authoring loop offline with zero network.
 ## What it is
 
 `REPLAY_MODE` (Debug flag, `off | record | replay`) puts a record/replay seam
-at the two places the authoring loop leaves the process:
+at each place the authoring loop leaves the process:
 
 | Seam                           | Class                                                   | Covers                                                                                                                  |
 | ------------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | aiService boundary             | `server/src/replay/RecordReplayAiService.ts`            | label-spans, suggestions, optimize, motion ideas, and any nested LLM call (`video_prompt_rewrite`, `image_observation`) |
 | Image preview provider adapter | `server/src/replay/RecordReplayImagePreviewProvider.ts` | first-frame preview (Replicate Flux Schnell)                                                                            |
+| Studio image runner            | `server/src/replay/RecordReplayStudioImageRunner.ts`    | Studio's generate/edit/transform image runs (Replicate)                                                                 |
+
+Each seam is an adapter satisfying the same port as the live provider it
+wraps, so it substitutes by registration rather than by inheritance —
+`StudioImageRunner` for the studio runner, `ImagePreviewProvider` for
+preview. Adding a member to one of those ports is a three-file change (port,
+live adapter, replay adapter); the compiler enforces it.
 
 - **record** — calls pass through to the live providers; each request/response
   pair is captured into a cassette fixture, contract-validated at capture time.
@@ -23,9 +30,9 @@ at the two places the authoring loop leaves the process:
   `ReplayContractViolationError`. Nothing degrades silently.
 
 Wiring lives in `server/src/config/services/replay.services.ts` (cassette
-store), `llm.services.ts` (aiService seam), and
-`image-generation.services.ts` (preview seam). When `REPLAY_MODE=off` both
-seams resolve to the untouched live classes.
+store), `llm.services.ts` (aiService seam), `image-generation.services.ts`
+(preview seam), and `studio.services.ts` (studio image seam). When
+`REPLAY_MODE=off` every seam resolves to the untouched live class.
 
 ## Fixtures
 

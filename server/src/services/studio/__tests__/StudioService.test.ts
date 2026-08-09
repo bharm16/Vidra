@@ -5,7 +5,7 @@ import {
   StudioCapExceededError,
   type FirestoreStudioProjectStore,
 } from "../storage/FirestoreStudioProjectStore";
-import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
+import type { StudioImageRunner } from "../providers/types";
 import type { StudioTurnContext } from "../StudioPolicyEngine";
 import type {
   StudioDecision,
@@ -130,7 +130,7 @@ function m1StyleGenerate(message: string): StudioDecision {
 const DAY_MS = new Date("2026-07-24T12:00:00Z").getTime();
 
 function makeService(overrides?: {
-  runner?: Partial<ReplicateStudioImageRunner>;
+  runner?: Partial<StudioImageRunner>;
   capCents?: number;
   decide?: (context: StudioTurnContext) => Promise<StudioDecision>;
 }) {
@@ -139,13 +139,12 @@ function makeService(overrides?: {
   let idCounter = 0;
 
   const runner = {
-    isAvailable: () => true,
     run: vi.fn().mockResolvedValue({
       imageUrl: "https://replicate.delivery/out.webp",
       durationMs: 1000,
     }),
     ...overrides?.runner,
-  } as unknown as ReplicateStudioImageRunner;
+  } as StudioImageRunner;
 
   const storage = {
     saveFromUrl: vi.fn().mockResolvedValue({
@@ -312,7 +311,7 @@ describe("StudioService", () => {
           imageUrl: "https://r.dev/4.webp",
           durationMs: 1,
         });
-      const { service, store } = makeService({ runner: { run } as never });
+      const { service, store } = makeService({ runner: { run } });
       const project = await service.createProject("user-1");
 
       const result = await service.runTurn("user-1", project.id, "a logo");
@@ -329,7 +328,7 @@ describe("StudioService", () => {
 
     it("marks an all-failed batch failed and refunds everything", async () => {
       const run = vi.fn().mockRejectedValue(new Error("Insufficient credit"));
-      const { service, store } = makeService({ runner: { run } as never });
+      const { service, store } = makeService({ runner: { run } });
       const project = await service.createProject("user-1");
 
       const result = await service.runTurn("user-1", project.id, "a logo");
@@ -605,7 +604,7 @@ describe("StudioService", () => {
         durationMs: 1,
       });
       const { service, store, project } = await withImages({
-        runner: { run } as never,
+        runner: { run },
         decide: decideThen((imageIds) => ({
           action: "edit",
           instruction: "remove the background and thicken the outline",
@@ -680,7 +679,7 @@ describe("StudioService", () => {
         })
         .mockRejectedValueOnce(new Error("NSFW content detected"));
       const { service, store, project } = await withImages({
-        runner: { run } as never,
+        runner: { run },
         decide: decideThen((imageIds) => ({
           action: "edit",
           instruction: "impossible edit",
@@ -706,7 +705,7 @@ describe("StudioService", () => {
         durationMs: 1,
       });
       const { service, store, project } = await withImages({
-        runner: { run } as never,
+        runner: { run },
         decide: decideThen((imageIds) => ({
           action: "transform",
           operation: "remove_background",

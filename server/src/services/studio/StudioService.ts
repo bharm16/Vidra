@@ -22,9 +22,9 @@ import type {
   StudioTurnPolicy,
 } from "./StudioPolicyEngine";
 import type {
-  ReplicateStudioImageRunner,
   StudioImageCallResult,
-} from "./providers/ReplicateStudioImageRunner";
+  StudioImageRunner,
+} from "./providers/types";
 import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
 import type { FirestoreStudioProjectStore } from "./storage/FirestoreStudioProjectStore";
 import type {
@@ -83,7 +83,7 @@ export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
 export interface StudioServiceDeps {
   store: FirestoreStudioProjectStore;
   registry: StudioModelRegistry;
-  runner: ReplicateStudioImageRunner;
+  runner: StudioImageRunner;
   storage: StudioImageStorage;
   policy: StudioTurnPolicy;
   dailyCapCents: number;
@@ -151,7 +151,7 @@ const FOLLOW_UP_ACTIONS = [
 export class StudioService {
   private readonly store: FirestoreStudioProjectStore;
   private readonly registry: StudioModelRegistry;
-  private readonly runner: ReplicateStudioImageRunner;
+  private readonly runner: StudioImageRunner;
   private readonly storage: StudioImageStorage;
   private readonly policy: StudioTurnPolicy;
   private readonly ledger: StudioSpendLedger;

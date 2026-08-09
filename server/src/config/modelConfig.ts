@@ -411,21 +411,28 @@ const MODEL_CONFIG_ENTRIES = {
     temperature: 0.2,
     maxTokens: 2048,
     timeout: 45000,
-    fallbackTo: "anthropic",
+    fallbackTo: "gemini",
     useSeed: true, // Consistent evaluation scores
     useDeveloperMessage: true,
   },
 
   /**
    * LLM-as-a-Judge for general text evaluation
+   *
+   * Was `client: "anthropic"` / `model: "claude-sonnet-4"` — a provider with
+   * no adapter, no DI registration and no API key. The router silently
+   * remapped it to OpenAI with OpenAI's *default* model, so the declared
+   * judge never ran and the entry was fiction (the rule at the top of this
+   * file forbids exactly that). Naming the provider that actually runs it
+   * also makes the judge model deliberate rather than inherited.
    */
   llm_judge_general: {
-    client: process.env.JUDGE_GENERAL_PROVIDER || "anthropic",
-    model: process.env.JUDGE_GENERAL_MODEL || "claude-sonnet-4",
+    client: process.env.JUDGE_GENERAL_PROVIDER || "openai",
+    model: process.env.JUDGE_GENERAL_MODEL || "gpt-4o-2024-08-06",
     temperature: 0.3,
     maxTokens: 2048,
     timeout: 45000,
-    fallbackTo: "openai",
+    fallbackTo: "gemini",
     useSeed: true, // Consistent evaluation
   },
 } as const satisfies Record<string, ModelConfigEntry>;
