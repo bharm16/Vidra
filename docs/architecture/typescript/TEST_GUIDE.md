@@ -1504,7 +1504,7 @@ The `generateVideoWorkflow` function orchestrates model resolution, provider dis
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { generateVideoWorkflow } from "@services/video-generation/workflows/generateVideo";
-import type { VideoProviderMap } from "@services/video-generation/providers/VideoProviders";
+import type { VideoProviderMap } from "@services/video-generation/providers/types";
 
 describe("generateVideoWorkflow", () => {
   let mockProviders: VideoProviderMap;

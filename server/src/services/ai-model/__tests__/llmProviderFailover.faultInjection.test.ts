@@ -136,11 +136,22 @@ describe("viable fallback matrix derived from ModelConfig", () => {
     expect(operations).toContain("optimize_standard");
   });
 
-  it("excludes operations whose fallback provider is not registered", () => {
+  it("includes the judge surfaces, which now name registered providers", () => {
+    // Both judge operations used to name "anthropic" — a provider the DI
+    // layer never registers — so they had no viable second provider and were
+    // excluded here. `catalogs:check` now fails on any ModelConfig client or
+    // fallbackTo that isn't registered, so that state can't recur silently.
     const operations = VIABLE_FALLBACK_OPERATIONS.map((v) => v.operation);
-    // llm_judge_video falls back to "anthropic", which the DI layer never
-    // registers — there is no viable second provider for it.
-    expect(operations).not.toContain("llm_judge_video");
+    expect(operations).toContain("llm_judge_video");
+    expect(operations).toContain("llm_judge_general");
+  });
+
+  it("only ever admits operations whose primary and fallback are both registered", () => {
+    for (const { primary, fallback } of VIABLE_FALLBACK_OPERATIONS) {
+      expect(REGISTERED_PROVIDERS).toContain(primary);
+      expect(REGISTERED_PROVIDERS).toContain(fallback);
+      expect(primary).not.toBe(fallback);
+    }
   });
 });
 

@@ -1,40 +1,18 @@
 import OpenAI from "openai";
 import Replicate from "replicate";
 import { LumaAI } from "lumaai";
-import { DEFAULT_KLING_BASE_URL } from "@services/video-generation/providers/klingProvider";
-import { DEFAULT_VEO_BASE_URL } from "@services/video-generation/providers/veoProvider";
 
 /**
- * Pre-constructed SDK clients for the video-generation providers.
+ * SDK construction for the video-generation providers.
  *
- * Each field is null when the corresponding API key is not configured. The
- * KlingApiKey / geminiApiKey fields hold raw credentials because those
- * providers use raw HTTP rather than an SDK object.
+ * One factory per provider rather than one struct holding all of them: the
+ * shared `VideoProviderSdks` bag meant every provider's constructor reached
+ * into a type that named all five, so adding or removing one edited a file
+ * belonging to the other four. Each provider now takes only its own client.
+ *
+ * `clients/` still owns SDK instantiation — see server/CLAUDE.md — so the
+ * provider classes stay free of `new Replicate(...)`.
  */
-export interface VideoProviderSdks {
-  replicate: Replicate | null;
-  openai: OpenAI | null;
-  luma: LumaAI | null;
-  klingApiKey: string | null;
-  klingBaseUrl: string;
-  geminiApiKey: string | null;
-  geminiBaseUrl: string;
-}
-
-/**
- * Configuration inputs to {@link createVideoProviderSdks}. All fields are
- * optional — the factory emits warnings and returns null clients when a key
- * is missing.
- */
-export interface VideoProviderClientConfig {
-  replicateApiToken?: string | undefined;
-  openAIKey?: string | undefined;
-  lumaApiKey?: string | undefined;
-  klingApiKey?: string | undefined;
-  klingBaseUrl?: string | undefined;
-  geminiApiKey?: string | undefined;
-  geminiBaseUrl?: string | undefined;
-}
 
 type WarnSink = {
   warn: (message: string, meta?: Record<string, unknown>) => void;
@@ -42,81 +20,87 @@ type WarnSink = {
 
 const TRAILING_SLASH_REGEX = /\/+$/;
 
-function normalizeBaseUrl(
+/**
+ * Apply a provider's default base URL and strip trailing slashes.
+ *
+ * Exported because the Kling and Veo providers speak raw HTTP and normalize
+ * their own base URL. An un-trimmed operator-supplied value
+ * (`KLING_BASE_URL=https://api.klingai.com/`) produces double-slash request
+ * paths against a live provider, which is why this is not inlined.
+ */
+export function normalizeBaseUrl(
   candidate: string | undefined,
   fallback: string,
 ): string {
   return (candidate || fallback).replace(TRAILING_SLASH_REGEX, "");
 }
 
-/**
- * Construct the SDK clients used by the video-generation providers.
- *
- * This is the canonical place to instantiate `OpenAI`, `Replicate`, and
- * `LumaAI` for video generation. Passing the resulting {@link VideoProviderSdks}
- * object to `createVideoProviders` keeps business-logic files free of SDK
- * construction, matching the project rule that `clients/` owns external SDK
- * instantiation.
- *
- * @param config - API keys and base URLs.
- * @param log - Logger sink used to report missing credentials.
- */
-export function createVideoProviderSdks(
-  config: VideoProviderClientConfig,
+export function createReplicateVideoClient(
+  apiToken: string | undefined,
   log: WarnSink,
-): VideoProviderSdks {
-  let replicate: Replicate | null = null;
-  if (!config.replicateApiToken) {
+): Replicate | null {
+  if (!apiToken) {
     log.warn(
       "REPLICATE_API_TOKEN not provided, Replicate-based video generation will be disabled",
     );
-  } else {
-    replicate = new Replicate({ auth: config.replicateApiToken });
+    return null;
   }
+  return new Replicate({ auth: apiToken });
+}
 
-  let openai: OpenAI | null = null;
-  if (!config.openAIKey) {
+export function createSoraVideoClient(
+  apiKey: string | undefined,
+  log: WarnSink,
+): OpenAI | null {
+  if (!apiKey) {
     log.warn(
       "OPENAI_API_KEY not provided, Sora video generation will be disabled",
     );
-  } else {
-    openai = new OpenAI({ apiKey: config.openAIKey });
+    return null;
   }
+  return new OpenAI({ apiKey });
+}
 
-  let luma: LumaAI | null = null;
-  if (!config.lumaApiKey) {
+export function createLumaVideoClient(
+  apiKey: string | undefined,
+  log: WarnSink,
+): LumaAI | null {
+  if (!apiKey) {
     log.warn(
       "LUMA_API_KEY or LUMAAI_API_KEY not provided, Luma video generation will be disabled",
     );
-  } else {
-    luma = new LumaAI({ authToken: config.lumaApiKey });
+    return null;
   }
+  return new LumaAI({ authToken: apiKey });
+}
 
-  let klingApiKey: string | null = null;
-  if (!config.klingApiKey) {
+/**
+ * Kling and Veo have no SDK — they are raw HTTP — so their "client" is the
+ * credential itself. These exist so the missing-key warning stays uniform
+ * across all five providers instead of only the three with SDKs.
+ */
+export function resolveKlingCredential(
+  apiKey: string | undefined,
+  log: WarnSink,
+): string | null {
+  if (!apiKey) {
     log.warn(
       "KLING_API_KEY not provided, Kling video generation will be disabled",
     );
-  } else {
-    klingApiKey = config.klingApiKey;
+    return null;
   }
+  return apiKey;
+}
 
-  let geminiApiKey: string | null = null;
-  if (!config.geminiApiKey) {
+export function resolveVeoCredential(
+  apiKey: string | undefined,
+  log: WarnSink,
+): string | null {
+  if (!apiKey) {
     log.warn(
       "GEMINI_API_KEY not provided, Veo video generation will be disabled",
     );
-  } else {
-    geminiApiKey = config.geminiApiKey;
+    return null;
   }
-
-  return {
-    replicate,
-    openai,
-    luma,
-    klingApiKey,
-    klingBaseUrl: normalizeBaseUrl(config.klingBaseUrl, DEFAULT_KLING_BASE_URL),
-    geminiApiKey,
-    geminiBaseUrl: normalizeBaseUrl(config.geminiBaseUrl, DEFAULT_VEO_BASE_URL),
-  };
+  return apiKey;
 }

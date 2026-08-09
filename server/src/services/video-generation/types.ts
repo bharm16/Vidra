@@ -1,6 +1,17 @@
 import { VIDEO_MODELS } from "@config/modelConfig";
 import type { VideoModelId } from "@shared/videoModels";
 import type { VideoAssetStore } from "./storage";
+import type {
+  VideoGenerationOptions,
+  VideoModelKey,
+  VideoProviderId,
+  VideoProviderMap,
+} from "./providers/types";
+
+// The port owns the request shape; re-exported so existing importers of
+// `@services/video-generation/types` keep working. Importing it back the
+// other way made these two modules a cycle.
+export type { VideoGenerationOptions, VideoModelKey };
 
 // Pure type family lives in `shared/videoModels.ts`. Re-exported here for
 // backward compatibility with existing importers under
@@ -16,57 +27,13 @@ export type {
   VideoModelId,
 } from "@shared/videoModels";
 
-export interface ReplicateOptions {
-  apiToken?: string;
-  openAIKey?: string;
-  lumaApiKey?: string;
-  klingApiKey?: string;
-  klingBaseUrl?: string;
-  geminiApiKey?: string;
-  geminiBaseUrl?: string;
-}
-
-export interface VideoGenerationServiceOptions extends ReplicateOptions {
+export interface VideoGenerationServiceOptions {
+  /** The providers this service dispatches to, assembled in DI. */
+  providers: VideoProviderMap;
   assetStore?: VideoAssetStore;
 }
 
-// `VideoModelKey` stays here — it is `keyof typeof VIDEO_MODELS`, which
-// depends on the server-local runtime config. It cannot be moved to `shared/`
-// without also exporting `VIDEO_MODELS` (a Node-scoped value) from shared.
-export type VideoModelKey = keyof typeof VIDEO_MODELS;
 
-export interface VideoGenerationOptions {
-  model?: VideoModelKey | VideoModelId;
-  aspectRatio?: "16:9" | "9:16" | "21:9" | "1:1";
-  numFrames?: number;
-  fps?: number;
-  negativePrompt?: string;
-  /** Override Replicate's prompt_extend behavior for Wan models */
-  promptExtend?: boolean;
-  startImage?: string;
-  /** End/last frame image URL for interpolation (Veo, Luma, Kling) */
-  endImage?: string;
-  /** Reference image URLs for style/character consistency (Veo: up to 3) */
-  referenceImages?: Array<{ url: string; type: "asset" | "style" }>;
-  /** URL of an existing video to extend/continue (Veo scene extension) */
-  extendVideoUrl?: string;
-  inputReference?: string;
-  seconds?: "4" | "5" | "6" | "8" | "10" | "12";
-  size?: string;
-  seed?: number;
-  /** Provider-native style reference image (if supported) */
-  style_reference?: string;
-  /** Optional weight/strength for provider-native style reference */
-  style_reference_weight?: number;
-  /** Asset ID of a character - triggers automatic PuLID keyframe generation */
-  characterAssetId?: string;
-  /** If true (default), automatically generate keyframe for character assets */
-  autoKeyframe?: boolean;
-  /** When true, startImage already includes a face-swap result (skip preprocessing). */
-  faceSwapAlreadyApplied?: boolean;
-  /** Optional face-swap preview URL for provenance/metadata. */
-  faceSwapUrl?: string;
-}
 
 export interface VideoGenerationResult {
   assetId: string;
@@ -85,13 +52,14 @@ export interface VideoGenerationResult {
   providerCost?: { amount: number; currency: string; unit: string };
 }
 
-export interface VideoProviderAvailability {
-  replicate: boolean;
-  openai: boolean;
-  luma: boolean;
-  kling: boolean;
-  gemini: boolean;
-}
+/**
+ * Which providers are usable right now.
+ *
+ * Derived from `VideoProviderId` rather than restating the five names: as a
+ * hand-written interface, adding or removing a provider meant remembering to
+ * edit this too, and nothing failed if you didn't.
+ */
+export type VideoProviderAvailability = Record<VideoProviderId, boolean>;
 
 export interface VideoModelAvailability {
   id: string;

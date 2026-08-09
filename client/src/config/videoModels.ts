@@ -1,17 +1,23 @@
 /**
  * Video model identifiers and labels shared across features.
+ *
+ * The id set and the vendor map are derived from `@shared/modelIdentity` —
+ * the client used to restate both, which is how it ended up listing `runway`
+ * as a model the app can generate with when no adapter can call it. Copy
+ * (labels, URLs) stays here: it is presentation, and keeping it keyed by the
+ * shared union means adding a model upstream fails the client build until
+ * someone writes the copy.
  */
 
-export const AI_MODEL_IDS = [
-  "runway-gen45",
-  "luma-ray3",
-  "sora-2",
-  "veo-3",
-  "kling-2.1",
-  "wan-2.2",
-] as const;
+import { CANONICAL_TO_VENDOR, type ModelVendor } from "@shared/modelIdentity";
+import {
+  CANONICAL_PROMPT_MODEL_IDS,
+  type CanonicalPromptModelId,
+} from "@shared/videoModels";
 
-export type AIModelId = (typeof AI_MODEL_IDS)[number];
+export const AI_MODEL_IDS = CANONICAL_PROMPT_MODEL_IDS;
+
+export type AIModelId = CanonicalPromptModelId;
 
 export const AI_MODEL_URLS: Record<AIModelId, string> = {
   "runway-gen45": "https://runwayml.com/",
@@ -31,14 +37,8 @@ export const AI_MODEL_LABELS: Record<AIModelId, string> = {
   "wan-2.2": "Wan 2.2",
 } as const;
 
-export const AI_MODEL_PROVIDERS: Record<AIModelId, string> = {
-  "runway-gen45": "runway",
-  "luma-ray3": "luma",
-  "sora-2": "openai",
-  "veo-3": "google",
-  "kling-2.1": "kling",
-  "wan-2.2": "wan",
-} as const;
+export const AI_MODEL_PROVIDERS: Record<AIModelId, ModelVendor> =
+  CANONICAL_TO_VENDOR;
 
 /**
  * Showroom sample stills — static bundled assets served from

@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { AppError } from "@server/types/common";
 import { generateVideoWorkflow } from "../workflows/generateVideo";
-import type {
-  VideoProvider,
-  VideoProviderMap,
-} from "../providers/VideoProviders";
+import {
+  VIDEO_PROVIDER_CREDENTIALS,
+  type VideoProvider,
+  type VideoProviderMap,
+} from "../providers/types";
 import type { VideoAssetStore, StoredVideoAsset } from "../storage";
 
 const createAssetStore = (): VideoAssetStore => ({
@@ -31,6 +32,8 @@ const createProvider = (
   asset: StoredVideoAsset,
 ): VideoProvider => ({
   id,
+  displayName: id,
+  requiredKey: VIDEO_PROVIDER_CREDENTIALS[id].requiredKey,
   isAvailable: () => isAvailable,
   generate: vi.fn(async () => ({ asset })),
 });

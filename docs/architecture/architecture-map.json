@@ -1210,6 +1210,11 @@
       "file": "video-generation.services.ts"
     },
     {
+      "from": "klingVideoProvider",
+      "to": "config",
+      "file": "video-generation.services.ts"
+    },
+    {
       "from": "llmCallTelemetryService",
       "to": "postHogClient",
       "file": "observability.services.ts"
@@ -1218,6 +1223,11 @@
       "from": "llmJudgeService",
       "to": "aiService",
       "file": "core.services.ts"
+    },
+    {
+      "from": "lumaVideoProvider",
+      "to": "config",
+      "file": "video-generation.services.ts"
     },
     {
       "from": "modelIntelligenceAvailabilityGate",
@@ -1380,6 +1390,11 @@
       "file": "image-generation.services.ts"
     },
     {
+      "from": "replicateVideoProvider",
+      "to": "config",
+      "file": "video-generation.services.ts"
+    },
+    {
       "from": "requestIdempotencyService",
       "to": "config",
       "file": "video-jobs.services.ts"
@@ -1443,6 +1458,11 @@
       "from": "signedUrlLedger",
       "to": "cacheService",
       "file": "storage.services.ts"
+    },
+    {
+      "from": "soraVideoProvider",
+      "to": "config",
+      "file": "video-generation.services.ts"
     },
     {
       "from": "spanLabelingCacheService",
@@ -1553,6 +1573,11 @@
       "from": "userCreditService",
       "to": "firestoreCircuitExecutor",
       "file": "credit.services.ts"
+    },
+    {
+      "from": "veoVideoProvider",
+      "to": "config",
+      "file": "video-generation.services.ts"
     },
     {
       "from": "videoAssetRetentionService",

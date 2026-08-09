@@ -11,6 +11,7 @@ import {
   resolveAutoModelId,
   resolveProviderForModel,
 } from "./providers/ProviderRegistry";
+import { VIDEO_PROVIDER_CREDENTIALS } from "./providers/types";
 import { MANUAL_CAPABILITIES_REGISTRY } from "@services/capabilities/manualRegistry";
 import { getDynamicCapabilitiesRegistry } from "@services/capabilities/dynamicRegistry";
 import { resolveModelId as resolveCapabilityModelId } from "@services/capabilities/modelProviders";
@@ -31,25 +32,14 @@ const withCapabilityModelId = (
 ): { capabilityModelId?: string } =>
   capabilityModelId ? { capabilityModelId } : {};
 
-const PROVIDER_REQUIRED_KEYS: Record<keyof VideoProviderAvailability, string> =
-  {
-    openai: "OPENAI_API_KEY",
-    luma: "LUMA_API_KEY",
-    kling: "KLING_API_KEY",
-    gemini: "GEMINI_API_KEY",
-    replicate: "REPLICATE_API_TOKEN",
-  };
+// Credential facts come from VIDEO_PROVIDER_CREDENTIALS. Two verbatim copies
+// of these strings used to live here and inside each provider closure, so the
+// error a caller saw could drift from the one the report explained.
+const requiredKeyFor = (provider: keyof VideoProviderAvailability): string =>
+  VIDEO_PROVIDER_CREDENTIALS[provider].requiredKey;
 
-const PROVIDER_MISSING_MESSAGES: Record<
-  keyof VideoProviderAvailability,
-  string
-> = {
-  openai: "Sora video generation requires OPENAI_API_KEY.",
-  luma: "Luma video generation requires LUMA_API_KEY or LUMAAI_API_KEY.",
-  kling: "Kling video generation requires KLING_API_KEY.",
-  gemini: "Veo video generation requires GEMINI_API_KEY.",
-  replicate: "Replicate API token is required for the selected video model.",
-};
+const missingMessageFor = (provider: keyof VideoProviderAvailability): string =>
+  VIDEO_PROVIDER_CREDENTIALS[provider].missingMessage;
 
 export function getModelCapabilities(modelId: string): {
   supportsImageInput: boolean;
@@ -173,9 +163,9 @@ export function getModelAvailability(
       ...base,
       available: false,
       reason: "missing_credentials",
-      requiredKey: PROVIDER_REQUIRED_KEYS[providerKey],
+      requiredKey: requiredKeyFor(providerKey),
       statusCode: 424,
-      message: PROVIDER_MISSING_MESSAGES[providerKey],
+      message: missingMessageFor(providerKey),
       entitled: false,
       planTier: "unknown",
     };

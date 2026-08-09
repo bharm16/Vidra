@@ -3,7 +3,6 @@ import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import { StudioPolicyEngine } from "../StudioPolicyEngine";
 import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
-import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
 import type { StudioDecision, StudioTurnRecord } from "../types";
 import type { ResolvedExecution } from "@services/ai-model/types";
 
@@ -116,7 +115,7 @@ function makeService(llmResponses: string[]) {
         imageUrl: "https://replicate.delivery/out.webp",
         durationMs: 1,
       }),
-    } as unknown as ReplicateStudioImageRunner,
+    },
     storage: {
       saveFromUrl: vi
         .fn()
