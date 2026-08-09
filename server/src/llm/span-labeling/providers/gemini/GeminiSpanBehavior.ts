@@ -1,15 +1,13 @@
 import {
-  RobustLlmClient,
-  type ProviderRequestOptions,
-} from "./RobustLlmClient";
-import { parseJson, cleanJsonEnvelope } from "../utils/jsonUtils";
-import type { LabelSpansResult } from "../types";
-import type { LlmSpanParams } from "./ILlmClient";
+  parseJson,
+  cleanJsonEnvelope,
+} from "@llm/span-labeling/utils/jsonUtils";
+import type { LlmSpanParams } from "@llm/span-labeling/services/ILlmClient";
 import { attemptJsonRepair } from "@clients/adapters/jsonRepair";
 import { logger } from "@infrastructure/Logger";
-import { buildSystemPrompt } from "../utils/promptBuilder";
+import { buildSystemPrompt } from "@llm/span-labeling/utils/promptBuilder";
 
-const log = logger.child({ service: "GeminiLlmClient" });
+const log = logger.child({ service: "GeminiSpanBehavior" });
 
 /**
  * Parse one NDJSON line from the model into a raw span object, tolerating the
@@ -62,12 +60,16 @@ function parseNdjsonSpanLine(line: string): Record<string, unknown> | null {
 }
 
 /**
- * Gemini LLM Client for Span Labeling
+ * Gemini's span-labeling behavior: NDJSON streaming, and the response
+ * parsing/normalizing that the generic parser cannot do.
  *
- * Specialized client for Google's Gemini models.
- * Extends RobustLlmClient to reuse the "try, validate, repair" cycle.
+ * Held by `geminiSpanProfile` rather than inherited from a client base class.
+ * Gemini genuinely differs in behavior, not just configuration — it streams
+ * spans one NDJSON line at a time and needs recovery for the envelope noise
+ * it adds despite the instruction — so these are functions on a profile, not
+ * overrides on a subclass.
  */
-export class GeminiLlmClient extends RobustLlmClient {
+export class GeminiSpanBehavior {
   /**
    * Stream spans using NDJSON format
    */
@@ -80,7 +82,7 @@ export class GeminiLlmClient extends RobustLlmClient {
     const systemPrompt = buildSystemPrompt(
       text,
       true,
-      this._getProviderName(),
+      "gemini",
       false,
       options?.templateVersion,
       true,
@@ -187,43 +189,11 @@ export class GeminiLlmClient extends RobustLlmClient {
     }
   }
 
-  /**
-   * HOOK: Get provider name for logging and prompt building
-   */
-  protected override _getProviderName(): string {
-    return "gemini";
-  }
-
-  /**
-   * HOOK: Get provider-specific request options
-   */
-  protected override _getProviderRequestOptions(): ProviderRequestOptions {
-    return {
-      enableBookending: false, // Gemini follows instructions well without bookending
-      useFewShot: false, // Zero-shot works well with Flash 2.5/2.0
-      useSeedFromConfig: false, // Gemini doesn't support seed in the same way as OpenAI
-      enableLogprobs: false, // Not typically used for Gemini JSON mode
-    };
-  }
-
-  /**
-   * HOOK: Post-process result with provider-specific adjustments
-   */
-  protected override _postProcessResult(
-    result: LabelSpansResult,
-  ): LabelSpansResult {
-    // Gemini 2.5 Flash is very fast but can sometimes be verbose
-    // No specific post-processing needed yet, but keeping hook available
-    return result;
-  }
-
-  protected override _parseResponseText(
-    text: string,
-  ): ReturnType<typeof parseJson> {
+  parseResponseText(text: string): ReturnType<typeof parseJson> {
     const parsed = parseJson(text);
     if (parsed.ok) return parsed;
 
-    const spans = this._recoverSpansFromText(text);
+    const spans = this.recoverSpansFromText(text);
     if (spans && spans.length > 0) {
       log.debug("Gemini response parsed via recovery", {
         operation: "span_labeling",
@@ -242,9 +212,7 @@ export class GeminiLlmClient extends RobustLlmClient {
     return parsed;
   }
 
-  protected override _normalizeParsedResponse<
-    T extends Record<string, unknown>,
-  >(value: T): T {
+  normalizeParsedResponse<T extends Record<string, unknown>>(value: T): T {
     const spanContainer = value as { spans?: unknown };
     if (!Array.isArray(spanContainer.spans)) {
       return value;
@@ -272,7 +240,7 @@ export class GeminiLlmClient extends RobustLlmClient {
     return value;
   }
 
-  private _recoverSpansFromText(
+  private recoverSpansFromText(
     text: string,
   ): Array<Record<string, unknown>> | null {
     const cleaned = this._stripCodeFences(cleanJsonEnvelope(text));

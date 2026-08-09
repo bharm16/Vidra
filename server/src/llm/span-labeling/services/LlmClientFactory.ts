@@ -1,8 +1,5 @@
 /**
- * LLM Client Factory
- *
- * Selects the client whose prompt and JSON-schema shaping matches the provider
- * that will actually run the request.
+ * Build the span-labeling client for the provider that will run the request.
  *
  * The provider is supplied by the caller, from `aiService.resolveExecution()`.
  * It is deliberately NOT re-derived here. This module used to resolve it from
@@ -11,64 +8,22 @@
  * request could be built for a call the router had already rerouted to the
  * Groq-hosted fallback.
  *
- * CRITICAL CONSTRAINT: Changes to Groq must not affect OpenAI behavior. The
- * factory pattern ensures this by routing to completely separate
- * implementations.
+ * There is one client class now (ADR-0020). What used to be four subclasses
+ * is a profile looked up here; "changes to Groq must not affect OpenAI" is
+ * enforced by each provider owning its own profile module rather than by
+ * separate subclasses sharing a base.
  */
 
-import { logger } from "@infrastructure/Logger";
-import { RobustLlmClient } from "./RobustLlmClient";
-import { GroqLlmClient } from "./GroqLlmClient";
-import { OpenAILlmClient } from "./OpenAILlmClient";
-import { GeminiLlmClient } from "./GeminiLlmClient";
+import { SpanLabelingClient } from "./SpanLabelingClient";
+import { resolveSpanProviderProfile } from "../providers/registry";
 import type { ProviderType } from "@utils/provider/ProviderDetector";
-import type { ILlmClient, LlmClientProvider } from "./ILlmClient";
+import type { ILlmClient } from "./ILlmClient";
+
+export { spanProfileIdFor } from "../providers/registry";
 
 /**
- * Map an executing provider onto the client that shapes requests for it.
- *
- * Qwen is Groq-hosted and shares Groq's JSON-mode handling, so it maps to the
- * Groq client. Anthropic has no dedicated span client and falls through to the
- * generic one.
- */
-export function spanClientProviderFor(
-  provider: ProviderType,
-): LlmClientProvider {
-  switch (provider) {
-    case "openai":
-      return "openai";
-    case "gemini":
-      return "gemini";
-    case "groq":
-    case "qwen":
-      return "groq";
-    default:
-      return "unknown";
-  }
-}
-
-/**
- * Create the span-labeling client for the provider that will execute the call.
- *
  * @param provider - From `aiService.resolveExecution("span_labeling").provider`
  */
 export function createLlmClient(provider: ProviderType): ILlmClient {
-  switch (spanClientProviderFor(provider)) {
-    case "openai":
-      return new OpenAILlmClient();
-
-    case "groq":
-      return new GroqLlmClient();
-
-    case "gemini":
-      return new GeminiLlmClient();
-
-    default:
-      // Generic handling is safer than guessing wrong.
-      logger.warn("No provider-specific span client; using generic client", {
-        operation: "createLlmClient",
-        provider,
-      });
-      return new RobustLlmClient();
-  }
+  return new SpanLabelingClient(resolveSpanProviderProfile(provider));
 }
