@@ -99,15 +99,21 @@ API placement rules:
 
 ## Commit Protocol (MANDATORY)
 
-Before EVERY commit, run all three checks in order:
+Before EVERY commit, run all five checks in order:
 
 1. `npx tsc --noEmit` — must exit 0
 2. `npx eslint --config config/lint/eslint.config.js . --quiet` — must have 0 errors
-3. `npm run test:unit` — must pass all shards
+3. `npm run arch:check` — no circular imports, no forbidden cross-layer imports (~12s)
+4. `npm run test:unit` — must pass all shards
+5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
+
+`npm run verify` runs all five in that order. Check 3 is the only local gate
+that sees a type-only import cycle (`tsc` accepts them) or a client→server
+import.
 
 If any check fails, DO NOT commit. Fix the failures first.
 
-A pre-commit hook enforces checks 1-2 automatically. Run `bash scripts/install-hooks.sh` after cloning.
+A pre-commit hook enforces checks 1-3 automatically. Run `bash scripts/install-hooks.sh` after cloning.
 
 ### Commit Scope Rules
 
