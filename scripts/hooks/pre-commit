@@ -15,6 +15,13 @@ npx tsc --noEmit
 echo ">> Pre-commit: lint (errors only)"
 npx eslint --config config/lint/eslint.config.js . --quiet
 
+# Circular imports and forbidden cross-layer imports. ~12s.
+# tsc accepts a type-only import cycle, so this is the only local check that
+# sees one: two cycles reached main because the four gates above were all
+# green (2026-08-08, the provider-port work).
+echo ">> Pre-commit: architecture (cycles + forbidden imports)"
+npm run arch:check
+
 # Keep the local Obsidian vault (docs/ opened as a vault) in sync with the
 # architecture map. Non-blocking: a docs visualization must never stop a
 # commit, and older branches don't have the generator.

@@ -17,8 +17,8 @@ verification gate — this skill defines that gate and the cost tiers around it.
 ### The oracle: `npm run verify`
 
 `verify` **is** the mandatory Commit Protocol collapsed into one command:
-`tsc --noEmit` → `eslint --quiet` → `test:unit`. Offline, deterministic, no API keys,
-no network. Run it after every change. Non-zero exit means the iteration **failed** —
+`tsc --noEmit` → `eslint --quiet` → `arch:check` → `test:unit` → `test:replay`.
+Offline, deterministic, no API keys, no network. Run it after every change. Non-zero exit means the iteration **failed** —
 do not commit; fix and re-run. If you believe something is "done" but `verify` is red,
 it is not done.
 

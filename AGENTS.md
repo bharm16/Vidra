@@ -213,15 +213,23 @@ npm run migrate:backfill
 
 ## Commit Protocol (MANDATORY)
 
-Before EVERY commit, run all three checks in order:
+Before EVERY commit, run all five checks in order:
 
 1. `npx tsc --noEmit` — must exit 0
 2. `npx eslint --config config/lint/eslint.config.js . --quiet` — must have 0 errors
-3. `npm run test:unit` — must pass all shards
+3. `npm run arch:check` — no circular imports, no forbidden cross-layer imports (~12s)
+4. `npm run test:unit` — must pass all shards
+5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
+
+`npm run verify` runs all five in that order.
+
+Check 3 is here because `tsc` accepts a type-only import cycle and the other
+four gates cannot see one: two cycles reached `main` on 2026-08-08 with every
+other gate green.
 
 If any check fails, DO NOT commit. Fix the failures first.
 
-A pre-commit hook enforces checks 1-2 automatically, plus: **fix commits must include a regression test** (the hook rejects `fix:` / `fix(` commits without new test blocks). Run `bash scripts/install-hooks.sh` to install it.
+A pre-commit hook enforces checks 1-3 automatically, plus: **fix commits must include a regression test** (the hook rejects `fix:` / `fix(` commits without new test blocks). Run `bash scripts/install-hooks.sh` to install it.
 
 ### Integration Test Gate (Service Changes)
 

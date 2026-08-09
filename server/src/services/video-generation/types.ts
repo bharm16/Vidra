@@ -33,8 +33,6 @@ export interface VideoGenerationServiceOptions {
   assetStore?: VideoAssetStore;
 }
 
-
-
 export interface VideoGenerationResult {
   assetId: string;
   videoUrl: string;

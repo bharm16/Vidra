@@ -267,16 +267,24 @@ Worktrees may not have valid Firebase credentials. The startup probe (`admin.aut
 
 ## Commit Protocol (MANDATORY)
 
-Before EVERY commit, run all four checks in order:
+Before EVERY commit, run all five checks in order:
 
 1. `npx tsc --noEmit` — must exit 0
 2. `npx eslint --config config/lint/eslint.config.js . --quiet` — must have 0 errors
-3. `npm run test:unit` — must pass all shards
-4. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
+3. `npm run arch:check` — no circular imports, no forbidden cross-layer imports (~12s)
+4. `npm run test:unit` — must pass all shards
+5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
+
+`npm run verify` runs all five in that order.
+
+Check 3 is here because `tsc` accepts a type-only import cycle and the other
+four gates cannot see one: two cycles reached `main` on 2026-08-08 with every
+other gate green. It also catches a client→server import, which no type error
+would report.
 
 If any check fails, DO NOT commit. Fix the failures first.
 
-A pre-commit hook enforces checks 1-2 automatically. The commit-msg hook enforces the bugfix protocol: **fix commits must add a regression test in a `*.regression.test.*` file**, and any commit touching regression tests must pass the mock-boundary quality check (`scripts/check-regression-test-quality.sh`). When no correct test seam exists, declare `No-Seam: <reason>` in the commit body — the missing seam is an architecture finding, not a free pass. Run `bash scripts/install-hooks.sh` after cloning.
+A pre-commit hook enforces checks 1-3 automatically. The commit-msg hook enforces the bugfix protocol: **fix commits must add a regression test in a `*.regression.test.*` file**, and any commit touching regression tests must pass the mock-boundary quality check (`scripts/check-regression-test-quality.sh`). When no correct test seam exists, declare `No-Seam: <reason>` in the commit body — the missing seam is an architecture finding, not a free pass. Run `bash scripts/install-hooks.sh` after cloning.
 
 ### Test Policy
 
