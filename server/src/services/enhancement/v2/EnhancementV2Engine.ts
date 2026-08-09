@@ -1,9 +1,6 @@
 import { logger } from "@infrastructure/Logger";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
-import {
-  getCustomSuggestionSchema,
-  getEnhancementSchema,
-} from "../config/schemas.js";
+import { resolveEnhancementProfile } from "../providers/enhancementProfiles.js";
 import {
   CUSTOM_POLICY_CATEGORY_ID,
   SlotPolicyRegistry,
@@ -271,17 +268,19 @@ export class EnhancementV2Engine {
     // Schema shape must match the provider that runs the call, not the one the
     // config table names — those diverge whenever a client is unregistered or
     // its circuit is open.
-    const executed =
-      this.dependencies.aiService.resolveExecution(operation).provider;
+    //
+    // The profile lookup is total over ProviderType, so there is no allowlist
+    // here any more. The previous one narrowed to {openai, groq, qwen} and
+    // passed `undefined` for anything else, which sent schema selection back
+    // to resolving from ModelConfig — reintroducing the divergence the
+    // paragraph above exists to prevent.
     const provider =
-      executed === "openai" || executed === "groq" || executed === "qwen"
-        ? executed
-        : undefined;
-    const schemaOptions = provider ? { provider } : {};
+      this.dependencies.aiService.resolveExecution(operation).provider;
+    const profile = resolveEnhancementProfile(provider);
     const schema =
       schemaName === "custom"
-        ? getCustomSuggestionSchema(schemaOptions)
-        : getEnhancementSchema(context.isPlaceholder, schemaOptions);
+        ? profile.customSuggestionSchema()
+        : profile.enhancementSchema(context.isPlaceholder);
 
     // Custom-request path: Sub-project B2 extended this to capture
     // scene_summary alongside the unwrapped suggestions. Mirrors the
@@ -300,7 +299,7 @@ export class EnhancementV2Engine {
         maxRetries: 1,
         temperature,
         captureSiblings: true,
-        ...(provider ? { provider } : {}),
+        provider,
       })) as unknown as {
         value: Suggestion[];
         siblings: Record<string, unknown>;
@@ -339,7 +338,7 @@ export class EnhancementV2Engine {
         maxRetries: 1,
         temperature,
         captureSiblings: true,
-        ...(provider ? { provider } : {}),
+        provider,
       },
     )) as unknown as {
       value: Suggestion[];

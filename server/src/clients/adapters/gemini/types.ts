@@ -6,7 +6,7 @@
  * of the transport or parsing logic.
  */
 
-import type { AIResponse } from "@interfaces/IAIClient";
+import type { AIResponse, MessageContent } from "@interfaces/IAIClient";
 export type { AbortControllerResult } from "@clients/utils/abortController";
 
 /**
@@ -21,10 +21,10 @@ export interface CompletionOptions {
   signal?: AbortSignal;
   jsonMode?: boolean;
   isArray?: boolean;
-  messages?: Array<{ role: string; content: string | unknown }>;
+  messages?: Array<{ role: string; content: MessageContent }>;
   onChunk?: (chunk: string) => void;
   responseSchema?: object;
-  schema?: object;
+  schema?: Record<string, unknown>;
   thinkingBudget?: number;
 }
 

@@ -1,302 +1,118 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
-  detectProvider,
+  capabilitiesFor,
   getProviderCapabilities,
-  detectAndGetCapabilities,
-  shouldUseStrictSchema,
-  shouldUseDeveloperMessage,
+  resolveProvider,
+  type ProviderType,
 } from "../ProviderDetector";
 import { ModelConfig } from "@config/modelConfig";
 
-describe("detectProvider", () => {
-  const originalEnv = process.env;
+/**
+ * Provider resolution is an exact lookup now (ADR-0020). The tests that
+ * covered the old five-tier cascade — model-name substring matching, the
+ * `${OPERATION}_PROVIDER` env read, the `providerEnvVar` parameter — died
+ * with it. What replaces them is the equivalence claim: for every client name
+ * the router can actually produce, the answer is the same as before.
+ */
 
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-    vi.clearAllMocks();
+const REGISTERED_CLIENTS: Array<[string, ProviderType]> = [
+  ["openai", "openai"],
+  ["groq", "groq"],
+  ["qwen", "qwen"],
+  ["anthropic", "anthropic"],
+  ["gemini", "gemini"],
+];
+
+describe("resolveProvider", () => {
+  it("maps every registered client name to its provider", () => {
+    for (const [client, expected] of REGISTERED_CLIENTS) {
+      expect(resolveProvider({ client })).toBe(expected);
+    }
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
+  it("is case- and whitespace-insensitive on the client name", () => {
+    expect(resolveProvider({ client: "OpenAI" })).toBe("openai");
+    expect(resolveProvider({ client: "  groq " })).toBe("groq");
   });
 
-  describe("error handling", () => {
-    it("returns unknown for empty options", () => {
-      expect(detectProvider({})).toBe("unknown");
-    });
-
-    it("returns unknown for undefined options", () => {
-      expect(detectProvider({ client: undefined, model: undefined })).toBe(
-        "unknown",
-      );
-    });
-
-    it("returns unknown for unrecognized client", () => {
-      expect(detectProvider({ client: "unknownprovider" })).toBe("unknown");
-    });
-
-    it("returns unknown for unrecognized model", () => {
-      expect(detectProvider({ model: "some-unknown-model-xyz" })).toBe(
-        "unknown",
-      );
-    });
+  it("falls back to the operation's configured client", () => {
+    // The same configuration the router starts from, so the two agree except
+    // during an active failover — where the caller should pass the routed
+    // client explicitly.
+    const configured = ModelConfig.span_labeling.client;
+    expect(resolveProvider({ operation: "span_labeling" })).toBe(
+      resolveProvider({ client: configured }),
+    );
   });
 
-  describe("client detection", () => {
-    it("detects openai from client string", () => {
-      expect(detectProvider({ client: "openai" })).toBe("openai");
-      expect(detectProvider({ client: "OpenAI" })).toBe("openai");
-      expect(detectProvider({ client: "openai-client" })).toBe("openai");
-    });
-
-    it("detects groq from client string", () => {
-      expect(detectProvider({ client: "groq" })).toBe("groq");
-      expect(detectProvider({ client: "Groq" })).toBe("groq");
-      expect(detectProvider({ client: "groq-llama" })).toBe("groq");
-    });
-
-    it("detects qwen from client string", () => {
-      expect(detectProvider({ client: "qwen" })).toBe("qwen");
-      expect(detectProvider({ client: "Qwen-2.5" })).toBe("qwen");
-    });
-
-    it("detects anthropic from client string", () => {
-      expect(detectProvider({ client: "anthropic" })).toBe("anthropic");
-      expect(detectProvider({ client: "Anthropic" })).toBe("anthropic");
-    });
-
-    it("detects gemini from client string", () => {
-      expect(detectProvider({ client: "gemini" })).toBe("gemini");
-      expect(detectProvider({ client: "Gemini-Pro" })).toBe("gemini");
-    });
+  it("prefers an explicit client over the operation default", () => {
+    expect(
+      resolveProvider({ operation: "span_labeling", client: "openai" }),
+    ).toBe("openai");
   });
 
-  describe("model detection", () => {
-    it("detects openai from gpt models", () => {
-      expect(detectProvider({ model: "gpt-4" })).toBe("openai");
-      expect(detectProvider({ model: "gpt-4o" })).toBe("openai");
-      expect(detectProvider({ model: "gpt-3.5-turbo" })).toBe("openai");
-    });
-
-    it("detects openai from o1/o3 models", () => {
-      expect(detectProvider({ model: "o1-preview" })).toBe("openai");
-      expect(detectProvider({ model: "o3-mini" })).toBe("openai");
-    });
-
-    it("detects qwen from qwen models", () => {
-      expect(detectProvider({ model: "qwen-2.5-72b" })).toBe("qwen");
-      expect(detectProvider({ model: "Qwen-VL" })).toBe("qwen");
-    });
-
-    it("detects groq from llama models", () => {
-      expect(detectProvider({ model: "llama-3.1-70b" })).toBe("groq");
-      expect(detectProvider({ model: "llama-3.2-11b" })).toBe("groq");
-    });
-
-    it("detects groq from mixtral models", () => {
-      expect(detectProvider({ model: "mixtral-8x7b" })).toBe("groq");
-    });
-
-    it("detects anthropic from claude models", () => {
-      expect(detectProvider({ model: "claude-3.5-sonnet" })).toBe("anthropic");
-      expect(detectProvider({ model: "claude-3-opus" })).toBe("anthropic");
-    });
-
-    it("detects gemini from gemini models", () => {
-      expect(detectProvider({ model: "gemini-pro" })).toBe("gemini");
-      expect(detectProvider({ model: "gemini-1.5-flash" })).toBe("gemini");
-    });
+  it("answers 'unknown' rather than guessing", () => {
+    expect(resolveProvider({})).toBe("unknown");
+    expect(resolveProvider({ client: "some-new-vendor" })).toBe("unknown");
+    expect(resolveProvider({ operation: "not-an-operation" })).toBe("unknown");
   });
 
-  describe("environment variable detection", () => {
-    it("detects from explicit providerEnvVar", () => {
-      process.env.CUSTOM_PROVIDER = "openai";
-      expect(detectProvider({ providerEnvVar: "CUSTOM_PROVIDER" })).toBe(
-        "openai",
-      );
-    });
-
-    it("handles case-insensitive env var values", () => {
-      process.env.CUSTOM_PROVIDER = "GROQ";
-      expect(detectProvider({ providerEnvVar: "CUSTOM_PROVIDER" })).toBe(
-        "groq",
-      );
-    });
-
-    it("detects from operation-based env var", () => {
-      process.env.SPAN_LABELING_PROVIDER = "groq";
-      expect(detectProvider({ operation: "span-labeling" })).toBe("groq");
-    });
-  });
-
-  // Real config, no module mock: the operation branch is a lookup, so the
-  // operations under test are the configured ones.
-  describe("operation-based detection", () => {
-    it("detects from ModelConfig for known operation", () => {
-      expect(ModelConfig.optimize_standard.client).toBe("openai");
-      expect(detectProvider({ operation: "optimize_standard" })).toBe("openai");
-    });
-
-    it("detects qwen from the enhance_suggestions config", () => {
-      expect(ModelConfig.enhance_suggestions.client).toBe("qwen");
-      expect(detectProvider({ operation: "enhance_suggestions" })).toBe("qwen");
-    });
-
-    it("returns unknown for unknown operation without env var", () => {
-      expect(detectProvider({ operation: "unknown-operation" })).toBe(
-        "unknown",
-      );
-    });
-  });
-
-  describe("priority order", () => {
-    it("prioritizes client over model", () => {
-      expect(detectProvider({ client: "groq", model: "gpt-4" })).toBe("groq");
-    });
-
-    it("prioritizes client over providerEnvVar", () => {
-      process.env.PROVIDER = "openai";
-      expect(
-        detectProvider({ client: "groq", providerEnvVar: "PROVIDER" }),
-      ).toBe("groq");
-    });
+  it("never infers a provider from the model name", () => {
+    // The banned pattern: `model.includes("gpt")` and friends. A model id
+    // alone is not evidence of which client is running it — after a failover
+    // reroute it is actively misleading.
+    expect(capabilitiesFor({ model: "gpt-4o-2024-08-06" }).provider).toBe(
+      "unknown",
+    );
+    expect(capabilitiesFor({ model: "llama-3.3-70b" }).provider).toBe(
+      "unknown",
+    );
+    expect(capabilitiesFor({ model: "claude-opus-4" }).provider).toBe(
+      "unknown",
+    );
+    expect(capabilitiesFor({ model: "gemini-2.5-flash" }).provider).toBe(
+      "unknown",
+    );
   });
 });
 
 describe("getProviderCapabilities", () => {
-  describe("core behavior", () => {
-    it("returns openai capabilities", () => {
-      const caps = getProviderCapabilities("openai");
+  it("gives OpenAI strict schema, developer role and bookending", () => {
+    const caps = getProviderCapabilities("openai");
+    expect(caps.strictJsonSchema).toBe(true);
+    expect(caps.developerRole).toBe(true);
+    expect(caps.bookending).toBe(true);
+    expect(caps.needsPromptFormatInstructions).toBe(false);
+  });
 
-      expect(caps.strictJsonSchema).toBe(true);
-      expect(caps.developerRole).toBe(true);
-      expect(caps.structuredOutputTemperature).toBe(0.0);
-      expect(caps.needsPromptFormatInstructions).toBe(false);
-    });
+  it("gives Groq validation-based schema and prompt format instructions", () => {
+    const caps = getProviderCapabilities("groq");
+    expect(caps.strictJsonSchema).toBe(false);
+    expect(caps.developerRole).toBe(false);
+    expect(caps.needsPromptFormatInstructions).toBe(true);
+  });
 
-    it("returns groq capabilities", () => {
-      const caps = getProviderCapabilities("groq");
+  it("gives Gemini strict schema without the developer role", () => {
+    const caps = getProviderCapabilities("gemini");
+    expect(caps.strictJsonSchema).toBe(true);
+    expect(caps.developerRole).toBe(false);
+  });
 
-      expect(caps.strictJsonSchema).toBe(false);
-      expect(caps.developerRole).toBe(false);
-      expect(caps.sandwichPrompting).toBe(true);
-      expect(caps.assistantPrefill).toBe(true);
-      expect(caps.structuredOutputTemperature).toBe(0.1);
-      expect(caps.needsPromptFormatInstructions).toBe(true);
-    });
-
-    it("returns qwen capabilities", () => {
-      const caps = getProviderCapabilities("qwen");
-
-      expect(caps.strictJsonSchema).toBe(false);
-      expect(caps.sandwichPrompting).toBe(true);
-      expect(caps.assistantPrefill).toBe(true);
-    });
-
-    it("returns anthropic capabilities", () => {
-      const caps = getProviderCapabilities("anthropic");
-
-      expect(caps.strictJsonSchema).toBe(false);
-      expect(caps.assistantPrefill).toBe(true);
-      expect(caps.seed).toBe(false);
-    });
-
-    it("returns gemini capabilities", () => {
-      const caps = getProviderCapabilities("gemini");
-
-      expect(caps.strictJsonSchema).toBe(true);
-      expect(caps.developerRole).toBe(false);
-      expect(caps.seed).toBe(false);
-    });
-
-    it("returns unknown capabilities for unknown provider", () => {
-      const caps = getProviderCapabilities("unknown");
-
-      expect(caps.strictJsonSchema).toBe(false);
-      expect(caps.developerRole).toBe(false);
-      expect(caps.needsPromptFormatInstructions).toBe(true);
-    });
+  it("falls back to the conservative row for an unknown provider", () => {
+    const caps = getProviderCapabilities("unknown");
+    expect(caps.strictJsonSchema).toBe(false);
+    expect(caps.developerRole).toBe(false);
+    expect(caps.bookending).toBe(false);
+    expect(caps.needsPromptFormatInstructions).toBe(true);
   });
 });
 
-describe("detectAndGetCapabilities", () => {
-  describe("core behavior", () => {
-    it("returns both provider and capabilities", () => {
-      const result = detectAndGetCapabilities({ client: "openai" });
-
-      expect(result.provider).toBe("openai");
-      expect(result.capabilities.strictJsonSchema).toBe(true);
-    });
-
-    it("returns unknown provider with fallback capabilities", () => {
-      const result = detectAndGetCapabilities({});
-
-      expect(result.provider).toBe("unknown");
-      expect(result.capabilities).toBeDefined();
-    });
-  });
-});
-
-describe("shouldUseStrictSchema", () => {
-  describe("error handling", () => {
-    it("returns false when hasSchema is false", () => {
-      expect(
-        shouldUseStrictSchema({ client: "openai", hasSchema: false }),
-      ).toBe(false);
-    });
-
-    it("returns false when hasSchema is undefined", () => {
-      expect(shouldUseStrictSchema({ client: "openai" })).toBe(false);
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns true for openai with schema", () => {
-      expect(shouldUseStrictSchema({ client: "openai", hasSchema: true })).toBe(
-        true,
-      );
-    });
-
-    it("returns true for gemini with schema", () => {
-      expect(shouldUseStrictSchema({ client: "gemini", hasSchema: true })).toBe(
-        true,
-      );
-    });
-
-    it("returns false for groq even with schema", () => {
-      expect(shouldUseStrictSchema({ client: "groq", hasSchema: true })).toBe(
-        false,
-      );
-    });
-
-    it("returns false for anthropic even with schema", () => {
-      expect(
-        shouldUseStrictSchema({ client: "anthropic", hasSchema: true }),
-      ).toBe(false);
-    });
-  });
-});
-
-describe("shouldUseDeveloperMessage", () => {
-  describe("core behavior", () => {
-    it("returns true for openai", () => {
-      expect(shouldUseDeveloperMessage({ client: "openai" })).toBe(true);
-    });
-
-    it("returns false for groq", () => {
-      expect(shouldUseDeveloperMessage({ client: "groq" })).toBe(false);
-    });
-
-    it("returns false for anthropic", () => {
-      expect(shouldUseDeveloperMessage({ client: "anthropic" })).toBe(false);
-    });
-
-    it("returns false for gemini", () => {
-      expect(shouldUseDeveloperMessage({ client: "gemini" })).toBe(false);
-    });
-
-    it("returns false for unknown provider", () => {
-      expect(shouldUseDeveloperMessage({})).toBe(false);
-    });
+describe("capabilitiesFor", () => {
+  it("returns the provider alongside its capability row", () => {
+    for (const [client, expected] of REGISTERED_CLIENTS) {
+      const { provider, capabilities } = capabilitiesFor({ client });
+      expect(provider).toBe(expected);
+      expect(capabilities).toEqual(getProviderCapabilities(expected));
+    }
   });
 });

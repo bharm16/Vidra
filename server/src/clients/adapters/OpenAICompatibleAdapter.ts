@@ -29,6 +29,7 @@ import { OpenAiMessageBuilder } from "./openai/OpenAiMessageBuilder.ts";
 import { OpenAiRequestBuilder } from "./openai/OpenAiRequestBuilder.ts";
 import { OpenAiResponseParser } from "./openai/OpenAiResponseParser.ts";
 import { OpenAiStreamParser } from "./openai/OpenAiStreamParser.ts";
+import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import type {
   CompletionOptions,
   AdapterConfig,
@@ -44,7 +45,7 @@ import type {
  * Note: For Groq/Llama 3, use GroqLlamaAdapter instead
  * (different temperature, penalties, and optimizations)
  */
-export class OpenAICompatibleAdapter {
+export class OpenAICompatibleAdapter implements LLMAdapter<CompletionOptions> {
   private apiKey: string;
   private baseURL: string;
   private defaultModel: string;

@@ -1,4 +1,4 @@
-import { detectAndGetCapabilities } from "@utils/provider/ProviderDetector";
+import { capabilitiesFor } from "@utils/provider/ProviderDetector";
 import {
   buildCapabilityOptions,
   type JSONSchema,
@@ -11,7 +11,7 @@ import {
 export function getVideoOptimizationSchema(
   options: SchemaOptions = {},
 ): JSONSchema {
-  const { capabilities } = detectAndGetCapabilities(
+  const { capabilities } = capabilitiesFor(
     buildCapabilityOptions(options, "optimize_standard"),
   );
 

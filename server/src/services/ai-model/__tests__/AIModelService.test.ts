@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   loggerMock,
   hashStringMock,
-  detectAndGetCapabilitiesMock,
+  capabilitiesForMock,
   buildRequestOptionsMock,
   buildResponseFormatMock,
   resolvePlanMock,
@@ -16,7 +16,7 @@ const {
     debug: vi.fn(),
   },
   hashStringMock: vi.fn(),
-  detectAndGetCapabilitiesMock: vi.fn(),
+  capabilitiesForMock: vi.fn(),
   buildRequestOptionsMock: vi.fn(),
   buildResponseFormatMock: vi.fn(),
   resolvePlanMock: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock("@utils/hash", () => ({
 }));
 
 vi.mock("@utils/provider/ProviderDetector", () => ({
-  detectAndGetCapabilities: detectAndGetCapabilitiesMock,
+  capabilitiesFor: capabilitiesForMock,
 }));
 
 vi.mock("../request/RequestOptionsBuilder", () => ({
@@ -81,7 +81,7 @@ describe("AIModelService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     hashStringMock.mockReturnValue(12345);
-    detectAndGetCapabilitiesMock.mockReturnValue({
+    capabilitiesForMock.mockReturnValue({
       provider: "openai",
       capabilities: {
         strictJsonSchema: true,

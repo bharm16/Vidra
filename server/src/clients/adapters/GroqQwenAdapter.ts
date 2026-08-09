@@ -22,6 +22,7 @@ import { sleep } from "@utils/sleep";
 import type { ILogger } from "@interfaces/ILogger";
 import type { AIResponse } from "@interfaces/IAIClient";
 import { validateLLMResponse } from "./ResponseValidator.js";
+import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 
 interface QwenCompletionOptions {
   userMessage?: string;
@@ -67,7 +68,7 @@ interface GroqResponseData {
  * 2. No need for Llama-specific tricks (prefill, sandwich prompting)
  * 3. Qwen3 follows JSON instructions more reliably out of the box
  */
-export class GroqQwenAdapter {
+export class GroqQwenAdapter implements LLMAdapter<QwenCompletionOptions> {
   private apiKey: string;
   private baseURL: string;
   private defaultModel: string;

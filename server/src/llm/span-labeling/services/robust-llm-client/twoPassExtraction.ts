@@ -1,4 +1,4 @@
-import { detectAndGetCapabilities } from "@utils/provider/ProviderDetector";
+import { capabilitiesFor } from "@utils/provider/ProviderDetector";
 import { logger } from "@infrastructure/Logger";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import {
@@ -30,7 +30,7 @@ export async function twoPassExtraction({
 }): Promise<ModelResponse> {
   const payloadData = JSON.parse(userPayload);
 
-  const { capabilities } = detectAndGetCapabilities({
+  const { capabilities } = capabilitiesFor({
     operation: "span_labeling",
     ...(modelName ? { model: modelName } : {}),
     ...(clientName ? { client: clientName } : {}),
