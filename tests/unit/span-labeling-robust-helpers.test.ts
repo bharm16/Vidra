@@ -519,10 +519,10 @@ describe("twoPassExtraction", () => {
         .spyOn(ModelInvocation, "callModel")
         .mockResolvedValueOnce({ text: "analysis" })
         .mockResolvedValueOnce({ text: "final" });
-      vi.spyOn(ProviderDetector, "detectAndGetCapabilities").mockReturnValue({
+      vi.spyOn(ProviderDetector, "capabilitiesFor").mockReturnValue({
         provider: "openai",
         capabilities: { developerRole: false },
-      } as ReturnType<typeof ProviderDetector.detectAndGetCapabilities>);
+      } as ReturnType<typeof ProviderDetector.capabilitiesFor>);
 
       await twoPassExtraction({
         systemPrompt: "SYSTEM",
@@ -547,10 +547,10 @@ describe("twoPassExtraction", () => {
         .spyOn(ModelInvocation, "callModel")
         .mockResolvedValueOnce({ text: "analysis" })
         .mockResolvedValueOnce({ text: "final" });
-      vi.spyOn(ProviderDetector, "detectAndGetCapabilities").mockReturnValue({
+      vi.spyOn(ProviderDetector, "capabilitiesFor").mockReturnValue({
         provider: "openai",
         capabilities: { developerRole: true },
-      } as ReturnType<typeof ProviderDetector.detectAndGetCapabilities>);
+      } as ReturnType<typeof ProviderDetector.capabilitiesFor>);
 
       await twoPassExtraction({
         systemPrompt: "SYSTEM",
@@ -579,10 +579,10 @@ describe("twoPassExtraction", () => {
         .spyOn(ModelInvocation, "callModel")
         .mockResolvedValueOnce({ text: "analysis text" })
         .mockResolvedValueOnce({ text: "final" });
-      vi.spyOn(ProviderDetector, "detectAndGetCapabilities").mockReturnValue({
+      vi.spyOn(ProviderDetector, "capabilitiesFor").mockReturnValue({
         provider: "groq",
         capabilities: { developerRole: false },
-      } as ReturnType<typeof ProviderDetector.detectAndGetCapabilities>);
+      } as ReturnType<typeof ProviderDetector.capabilitiesFor>);
 
       await twoPassExtraction({
         systemPrompt: "SYSTEM",
@@ -607,10 +607,10 @@ describe("twoPassExtraction", () => {
         .spyOn(ModelInvocation, "callModel")
         .mockResolvedValueOnce({ text: "analysis text" })
         .mockResolvedValueOnce({ text: "final" });
-      vi.spyOn(ProviderDetector, "detectAndGetCapabilities").mockReturnValue({
+      vi.spyOn(ProviderDetector, "capabilitiesFor").mockReturnValue({
         provider: "openai",
         capabilities: { developerRole: true },
-      } as ReturnType<typeof ProviderDetector.detectAndGetCapabilities>);
+      } as ReturnType<typeof ProviderDetector.capabilitiesFor>);
 
       await twoPassExtraction({
         systemPrompt: "SYSTEM",
@@ -637,10 +637,10 @@ describe("twoPassExtraction", () => {
       vi.spyOn(ModelInvocation, "callModel")
         .mockResolvedValueOnce({ text: "analysis" })
         .mockResolvedValueOnce(structured);
-      vi.spyOn(ProviderDetector, "detectAndGetCapabilities").mockReturnValue({
+      vi.spyOn(ProviderDetector, "capabilitiesFor").mockReturnValue({
         provider: "openai",
         capabilities: { developerRole: false },
-      } as ReturnType<typeof ProviderDetector.detectAndGetCapabilities>);
+      } as ReturnType<typeof ProviderDetector.capabilitiesFor>);
 
       const result = await twoPassExtraction({
         systemPrompt: "SYSTEM",

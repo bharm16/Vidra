@@ -47,6 +47,24 @@ interface EnhancementServiceDependencies {
   diversityEnforcer: DiversityEnforcer;
   cacheService: CacheService;
   enhancementConfig?: EnhancementV2Config;
+
+  /**
+   * Pipeline collaborators. Optional with production defaults: callers that
+   * just want the service should not have to assemble four internals, but
+   * they are injectable so they can be substituted.
+   *
+   * `enhancementV2` in particular is where suggestion generation happens —
+   * while it was `new`ed in the constructor it could not be exercised or
+   * replaced without standing up the whole 691-line service.
+   */
+  pipeline?: Partial<EnhancementPipeline>;
+}
+
+interface EnhancementPipeline {
+  metricsLogger: EnhancementMetricsService;
+  videoContextDetection: VideoContextDetectionService;
+  enhancementV2: EnhancementV2Engine;
+  spanContextBuilder: SpanContextBuilder;
 }
 
 interface EnhancementCoreServices {
@@ -104,18 +122,22 @@ export class EnhancementService {
       namespace: "enhancement",
     };
 
+    const injected = dependencies.pipeline ?? {};
     this.pipeline = {
-      metricsLogger: new EnhancementMetricsService(),
-      videoContextDetection: new VideoContextDetectionService(
-        videoPromptService,
-      ),
-      enhancementV2: new EnhancementV2Engine({
-        aiService,
-        videoPromptService,
-        diversityEnforcer,
-        policyVersion: enhancementConfig.policyVersion,
-      }),
-      spanContextBuilder: new SpanContextBuilder(),
+      metricsLogger: injected.metricsLogger ?? new EnhancementMetricsService(),
+      videoContextDetection:
+        injected.videoContextDetection ??
+        new VideoContextDetectionService(videoPromptService),
+      enhancementV2:
+        injected.enhancementV2 ??
+        new EnhancementV2Engine({
+          aiService,
+          videoPromptService,
+          diversityEnforcer,
+          policyVersion: enhancementConfig.policyVersion,
+        }),
+      spanContextBuilder:
+        injected.spanContextBuilder ?? new SpanContextBuilder(),
     };
   }
 

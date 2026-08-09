@@ -6,7 +6,7 @@ import {
   type OperationName,
 } from "@config/modelConfig";
 import { hashString } from "@utils/hash";
-import { detectAndGetCapabilities } from "@utils/provider/ProviderDetector";
+import { capabilitiesFor } from "@utils/provider/ProviderDetector";
 import {
   AIClientError,
   type IAIClient,
@@ -280,7 +280,7 @@ export class AIModelService {
     model: string,
     viaFallback: boolean,
   ): ResolvedExecution {
-    const { provider } = detectAndGetCapabilities({ operation, model, client });
+    const { provider } = capabilitiesFor({ operation, model, client });
     return { client, provider, model, viaFallback };
   }
 
@@ -348,7 +348,7 @@ export class AIModelService {
     }
 
     // Detect provider capabilities
-    const { provider, capabilities } = detectAndGetCapabilities({
+    const { provider, capabilities } = capabilitiesFor({
       operation,
       model: config.model,
       client: config.client,
@@ -698,7 +698,7 @@ export class AIModelService {
       timeout: fallbackEntry.timeout,
     };
 
-    const { capabilities } = detectAndGetCapabilities({
+    const { capabilities } = capabilitiesFor({
       operation,
       model: fallbackEntry.model,
       client: fallbackEntry.client,

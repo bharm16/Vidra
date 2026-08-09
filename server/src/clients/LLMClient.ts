@@ -1,8 +1,10 @@
 import CircuitBreaker from "opossum";
+import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import { logger } from "@infrastructure/Logger";
 import type {
   IAIClient,
   AIResponse,
+  CompletionOptions,
   MessageContent,
 } from "@interfaces/IAIClient";
 
@@ -73,37 +75,21 @@ export class ClientAbortError extends Error {
   }
 }
 
-interface Adapter {
-  complete(
-    systemPrompt: string,
-    options?: CompletionOptions,
-  ): Promise<AIResponse>;
-  streamComplete?(
-    systemPrompt: string,
-    options: StreamCompletionOptions,
-  ): Promise<string>;
-  healthCheck?(): Promise<{ healthy: boolean; [key: string]: unknown }>;
-  capabilities?: {
-    streaming?: boolean;
-  };
-}
+/**
+ * The adapter contract now lives at `@interfaces/ILLMAdapter` so adapters can
+ * declare `implements` against it. While it was file-private here, nothing
+ * outside could name it, so conformance was checked by feature-detecting at
+ * runtime instead of by the compiler.
+ */
+type Adapter = LLMAdapter;
 
-interface CompletionOptions {
-  userMessage?: string;
-  model?: string;
-  maxTokens?: number;
-  temperature?: number;
-  timeout?: number;
-  signal?: AbortSignal;
-  priority?: boolean;
-  jsonMode?: boolean;
-  isArray?: boolean;
-  responseFormat?: { type: string; [key: string]: unknown };
-  messages?: Array<{ role: string; content: MessageContent }>;
-  /** Gemini 2.5+: cap thinking tokens (0 disables thinking). Thinking tokens count against maxTokens. */
-  thinkingBudget?: number;
-}
-
+/**
+ * The caller-facing options type is `CompletionOptions` from IAIClient, which
+ * now extends the adapter port's `LLMAdapterOptions`. This file used to
+ * declare a second, narrower copy — so the type describing what LLMClient
+ * forwards listed 12 members while `_applyDefaults` demonstrably spread
+ * through whatever it was given.
+ */
 interface StreamCompletionOptions extends CompletionOptions {
   onChunk: (chunk: string) => void;
 }
@@ -184,10 +170,10 @@ export class LLMClient implements IAIClient {
     concurrencyLimiter = null,
     metricsService,
   }: LLMClientConfig) {
-    if (!adapter || typeof adapter.complete !== "function") {
-      throw new Error("LLMClient requires an adapter with a complete() method");
-    }
-
+    // No `typeof adapter.complete === "function"` check: `complete` is
+    // required by LLMAdapter, so the compiler enforces it. The
+    // `streamComplete` / `healthCheck` probes below stay — those members are
+    // genuinely optional on the port, so presence is real information.
     this.adapter = adapter;
     this.providerName = providerName;
     this.defaultModel = defaultModel;
