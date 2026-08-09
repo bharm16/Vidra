@@ -3,7 +3,6 @@ import { StudioService } from "../StudioService";
 import { StudioSpendLedger } from "../StudioSpendLedger";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
-import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
 import type {
   StudioDecision,
   StudioProjectRecord,
@@ -125,7 +124,7 @@ describe("regression: a crashed turn never strands reserved cents", () => {
     const service = new StudioService({
       store: store as unknown as FirestoreStudioProjectStore,
       registry: new StudioModelRegistry(),
-      runner: { run } as unknown as ReplicateStudioImageRunner,
+      runner: { run },
       storage: {
         saveFromUrl: vi.fn(),
         // The unprotected step: minting the source image's signed URL

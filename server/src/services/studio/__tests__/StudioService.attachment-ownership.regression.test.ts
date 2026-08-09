@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
-import type { ReplicateStudioImageRunner } from "../providers/ReplicateStudioImageRunner";
 import type { StudioProjectRecord } from "../types";
 
 /**
@@ -57,7 +56,7 @@ function makeService(overrides?: { getViewUrl?: ReturnType<typeof vi.fn> }) {
   const service = new StudioService({
     store: store as unknown as FirestoreStudioProjectStore,
     registry: new StudioModelRegistry(),
-    runner: { run: vi.fn() } as unknown as ReplicateStudioImageRunner,
+    runner: { run: vi.fn() },
     storage,
     policy: { decideTurn: vi.fn() },
     dailyCapCents: 500,
