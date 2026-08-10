@@ -1,4 +1,8 @@
 import crypto from "node:crypto";
+import {
+  bucketNamesMatch,
+  parseGcsObjectUrl,
+} from "@shared/utils/gcsObjectUrl";
 import type { StorageType } from "../config/storageConfig";
 
 const DEFAULT_EXTENSIONS: Record<StorageType, string> = {
@@ -40,57 +44,21 @@ export function storagePathForBasename(
   return `users/${userId}/${TYPE_SEGMENTS[type]}/${basename}`;
 }
 
-const GCS_HOST = "storage.googleapis.com";
-const GCS_HOST_SUFFIX = ".storage.googleapis.com";
-const FIREBASE_STORAGE_HOST = "firebasestorage.googleapis.com";
-
 /**
  * Resolve a GCS/Firebase Storage URL to its object path within the given
- * bucket, or null when the host or bucket doesn't match. Shared by the media
- * proxy and the generation intake's owned-URL refresh.
+ * bucket, or null when the URL names a different bucket (or no object at
+ * all). Shared by the media proxy and the generation intake's owned-URL
+ * refresh — both of which treat a null as "not ours, refuse".
  */
 export function extractObjectPathFromUrl(
   url: URL,
   bucketName: string,
 ): string | null {
-  const host = url.hostname;
-  const path = url.pathname.replace(/^\/+/, "");
-
-  if (!path) return null;
-
-  // storage.googleapis.com/{bucket}/{object}
-  if (host === GCS_HOST) {
-    const [bucket, ...rest] = path.split("/");
-    if (bucket !== bucketName) return null;
-    return rest.join("/") || null;
+  const ref = parseGcsObjectUrl(url);
+  if (!ref || !bucketNamesMatch(ref.bucket, bucketName)) {
+    return null;
   }
-
-  // {bucket}.storage.googleapis.com/{object}
-  if (host.endsWith(GCS_HOST_SUFFIX)) {
-    const bucketFromHost = host.slice(0, -GCS_HOST_SUFFIX.length);
-    if (bucketFromHost !== bucketName) return null;
-    return path;
-  }
-
-  // firebasestorage.googleapis.com/v0/b/{bucket}/o/{encodedObject}
-  if (host === FIREBASE_STORAGE_HOST) {
-    const match = path.match(/^v0\/b\/([^/]+)\/o\/(.+)/);
-    if (!match) return null;
-    const [, bucket, encodedObject] = match;
-    // Firebase bucket names may have .appspot.com or .firebasestorage.app suffixes
-    const baseBucket = (bucket ?? "").replace(
-      /\.(appspot\.com|firebasestorage\.app)$/,
-      "",
-    );
-    const baseName = bucketName.replace(
-      /\.(appspot\.com|firebasestorage\.app)$/,
-      "",
-    );
-    if (baseBucket !== baseName) return null;
-    return decodeURIComponent(encodedObject ?? "");
-  }
-
-  return null;
+  return ref.objectPath;
 }
 
 export function extractUserIdFromPath(path: string): string | null {

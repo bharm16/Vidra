@@ -12,6 +12,10 @@ import { Bucket } from "@google-cloud/storage";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
 import { fetchRemoteMedia } from "@services/owned-media";
+import {
+  bucketNamesMatch,
+  parseGcsObjectUrl,
+} from "@shared/utils/gcsObjectUrl";
 import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { SESSION_TTL_MS } from "../constants";
 
@@ -490,7 +494,8 @@ export class GCSStorageService implements StorageService {
   }
 
   /**
-   * Extract object path from a signed or unsigned GCS URL.
+   * Extract object path from a signed or unsigned GCS URL. A bare path is
+   * accepted as-is — session records persist object paths, not only URLs.
    */
   private extractObjectPath(url: string): string | null {
     if (!url) {
@@ -498,40 +503,15 @@ export class GCSStorageService implements StorageService {
     }
 
     if (!url.includes("://")) {
-      const path = url.replace(/^\/+/, "");
+      const path = url.split("/").filter(Boolean).join("/");
       return path || null;
     }
 
-    try {
-      const urlObj = new URL(url);
-      const host = urlObj.hostname;
-      const path = urlObj.pathname.replace(/^\/+/, "");
-
-      if (host === "storage.googleapis.com") {
-        const parts = path.split("/").filter(Boolean);
-        if (parts[0] !== this.bucket.name) {
-          return null;
-        }
-        const objectPath = parts.slice(1).join("/");
-        return objectPath || null;
-      }
-
-      if (host === `${this.bucket.name}.storage.googleapis.com`) {
-        return path || null;
-      }
-
-      if (host.endsWith(".storage.googleapis.com")) {
-        const bucketFromHost = host.slice(0, -".storage.googleapis.com".length);
-        if (bucketFromHost !== this.bucket.name) {
-          return null;
-        }
-        return path || null;
-      }
-
-      return null;
-    } catch {
+    const ref = parseGcsObjectUrl(url);
+    if (!ref || !bucketNamesMatch(ref.bucket, this.bucket.name)) {
       return null;
     }
+    return ref.objectPath;
   }
 }
 

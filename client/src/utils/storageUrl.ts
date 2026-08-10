@@ -1,3 +1,5 @@
+import { parseGcsObjectUrl } from "@shared/utils/gcsObjectUrl";
+
 const VIDEO_CONTENT_PREFIX = "/api/preview/video/content/";
 
 export function safeParseUrl(rawUrl: string): URL | null {
@@ -15,6 +17,13 @@ export function safeParseUrl(rawUrl: string): URL | null {
   }
 }
 
+/**
+ * Resolve a media URL to the storage object it names, for any bucket.
+ *
+ * The app-local video-content route is handled here because it is app
+ * routing, not storage addressing; every genuine storage URL shape is
+ * parsed by the shared parser both tiers use.
+ */
 export function extractStorageObjectPath(rawUrl: string): string | null {
   const url = safeParseUrl(rawUrl);
   if (!url) return null;
@@ -28,47 +37,7 @@ export function extractStorageObjectPath(rawUrl: string): string | null {
     }
   }
 
-  const host = url.host;
-  if (
-    host === "storage.googleapis.com" ||
-    host === "storage.cloud.google.com"
-  ) {
-    const parts = url.pathname.split("/").filter(Boolean);
-    if (parts.length < 2) return null;
-    if (
-      parts[0] === "download" &&
-      parts[1] === "storage" &&
-      parts[2] === "v1" &&
-      parts[3] === "b" &&
-      parts[4] &&
-      parts[5] === "o"
-    ) {
-      const objectPath = parts.slice(6).join("/");
-      return objectPath ? decodeURIComponent(objectPath) : null;
-    }
-    return decodeURIComponent(parts.slice(1).join("/"));
-  }
-
-  if (host.endsWith(".storage.googleapis.com")) {
-    const path = url.pathname.replace(/^\/+/, "");
-    return path ? decodeURIComponent(path) : null;
-  }
-
-  if (host === "firebasestorage.googleapis.com") {
-    const match =
-      url.pathname.match(/\/b\/[^/]+\/o\/(.+)$/) ||
-      url.pathname.match(/\/download\/storage\/v1\/b\/[^/]+\/o\/(.+)$/);
-    if (match?.[1]) {
-      return decodeURIComponent(match[1]);
-    }
-  }
-
-  if (url.protocol === "gs:") {
-    const path = url.pathname.replace(/^\/+/, "");
-    return path ? decodeURIComponent(path) : null;
-  }
-
-  return null;
+  return parseGcsObjectUrl(url)?.objectPath ?? null;
 }
 
 export function extractVideoContentAssetId(rawUrl: string): string | null {
