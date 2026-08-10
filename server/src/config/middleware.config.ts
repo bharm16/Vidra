@@ -55,14 +55,6 @@ interface RateLimitConfig {
     windowMs: number;
     max: number;
   };
-  videoValidate: {
-    burst: { windowMs: number; max: number };
-    minute: { windowMs: number; max: number };
-  };
-  videoSuggestions: {
-    burst: { windowMs: number; max: number };
-    minute: { windowMs: number; max: number };
-  };
   falI2i: {
     burst: { windowMs: number; max: number };
     minute: { windowMs: number; max: number };
@@ -98,14 +90,6 @@ const RATE_LIMIT_CONFIG: RateLimitConfig = {
     max: 60,
   },
   // Route-specific burst limits
-  videoValidate: {
-    burst: { windowMs: 2 * 1000, max: 3 },
-    minute: { windowMs: 60 * 1000, max: 30 },
-  },
-  videoSuggestions: {
-    burst: { windowMs: 3 * 1000, max: 2 },
-    minute: { windowMs: 60 * 1000, max: 20 },
-  },
   // Realtime sketch frames (live editor): the loop is completion-gated at
   // ~1.2–1.6 frames/s per tab (~70–100/min sustained), which starves under
   // the general API budget. Burst clears the loop's physical max (~3 per 2s
@@ -462,18 +446,23 @@ export function applyRateLimitingMiddleware(
     );
   };
 
-  // Session hydration fires multiple parallel reads (session, versions, payment
-  // status) during page load and enhance flows. These read-only, idempotent
-  // endpoints are exempt from the main API limiter to prevent 429s during
-  // normal workspace transitions.
+  // Session hydration fires multiple parallel reads (session, payment status)
+  // during page load and enhance flows. These read-only, idempotent endpoints
+  // are exempt from the main API limiter to prevent 429s during normal
+  // workspace transitions.
+  //
+  // Paths are matched AFTER the mount prefix is stripped: this limiter mounts
+  // at "/api/", so GET /api/sessions/<id> arrives here as "/sessions/<id>".
+  // The exemption was written against "/v2/sessions/<id>", the mount of the
+  // day, and commit 68a35b685 renamed the route to /sessions across 14 files
+  // without touching this predicate — so session hydration silently stopped
+  // being exempt and started burning the shared budget it exists to bypass.
   const isSessionHydrationRoute = (req: express.Request): boolean => {
     if (req.method !== "GET") return false;
     const p = req.path;
-    return (
-      p === "/payment/status" ||
-      /^\/v2\/sessions\/[^/]+$/.test(p) ||
-      /^\/v2\/sessions\/[^/]+\/versions$/.test(p)
-    );
+    if (p === "/payment/status") return true;
+    const [, resource, sessionId, ...rest] = p.split("/");
+    return resource === "sessions" && !!sessionId && rest.length === 0;
   };
 
   // Realtime sketch frames run at drawing cadence — they live under their
@@ -554,36 +543,6 @@ export function applyRateLimitingMiddleware(
         ? { store: storeFactory(`burst${burstLimiterIndex++}`) }
         : {}),
     });
-
-  // Video validation endpoint burst limits
-  app.use(
-    "/api/video/validate",
-    makeBurstLimiter(
-      RATE_LIMIT_CONFIG.videoValidate.burst.windowMs,
-      RATE_LIMIT_CONFIG.videoValidate.burst.max,
-      "Too many compatibility checks in a short time",
-    ),
-    makeBurstLimiter(
-      RATE_LIMIT_CONFIG.videoValidate.minute.windowMs,
-      RATE_LIMIT_CONFIG.videoValidate.minute.max,
-      "Too many compatibility checks per minute",
-    ),
-  );
-
-  // Video suggestions endpoint burst limits
-  app.use(
-    "/api/video/suggestions",
-    makeBurstLimiter(
-      RATE_LIMIT_CONFIG.videoSuggestions.burst.windowMs,
-      RATE_LIMIT_CONFIG.videoSuggestions.burst.max,
-      "Too many suggestion requests in a short time",
-    ),
-    makeBurstLimiter(
-      RATE_LIMIT_CONFIG.videoSuggestions.minute.windowMs,
-      RATE_LIMIT_CONFIG.videoSuggestions.minute.max,
-      "Too many suggestion requests per minute",
-    ),
-  );
 
   // Realtime sketch frame burst limits (live editor)
   app.use(
