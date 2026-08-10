@@ -18,12 +18,20 @@ import {
   getStartupWarmupPromise,
 } from "@services/convergence/depth";
 import type { GCSStorageService } from "@services/convergence/storage";
+import { getRuntimeFlags } from "../feature-flags.ts";
 import { resolveOptionalService } from "./resolve-utils.ts";
 
 export function registerMotionRoutes(
   app: Application,
   container: DIContainer,
 ): void {
+  // ADR-0002 froze convergence, but ENABLE_CONVERGENCE gated only the
+  // continuity services — /api/motion stayed mounted with the flag off.
+  if (!getRuntimeFlags().enableConvergence) {
+    logger.info("Motion routes not mounted: ENABLE_CONVERGENCE is off");
+    return;
+  }
+
   const convergenceStorageService =
     resolveOptionalService<GCSStorageService | null>(
       container,

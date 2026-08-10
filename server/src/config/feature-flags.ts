@@ -216,14 +216,14 @@ const EXPERIMENTAL_FLAGS = {
     requiresEnv: ["REPLICATE_API_TOKEN"],
     dependsOn: ["ENABLE_CONVERGENCE"],
   },
-  // Note: FAL_DEPTH_WARMUP_ENABLED is intentionally NOT in this registry.
-  // Its effective default depends on NODE_ENV (true in dev, false in prod),
-  // which can't be modeled with the registry's static defaults. It is
-  // resolved inline in core.services.ts via resolveBoolFlag.
+  // Note: FAL_DEPTH_WARMUP_ENABLED is NOT in this registry — it stays inline
+  // in core.services.ts via resolveBoolFlag, alongside the other depth knobs.
+  // Both depth warmups default OFF: they call fal on the same FAL_KEY the live
+  // editor spends, for a stack ADR-0002 froze.
   depthWarmupOnStartup: {
     kind: "bool",
     envName: "DEPTH_WARMUP_ON_STARTUP",
-    default: true,
+    default: false,
     description: "Controls depth estimation service warmup during server boot.",
     category: "experimental",
   },

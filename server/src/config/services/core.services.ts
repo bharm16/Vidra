@@ -386,9 +386,13 @@ export function registerCoreServices(container: DIContainer): void {
           20_000,
           5_000,
         ),
+        // Defaults OFF. This arms a 120s setInterval calling fal for the
+        // lifetime of the process, on the same FAL_KEY the live editor spends,
+        // warming a stack ADR-0002 froze. It was on by default everywhere but
+        // production, so every dev boot paid for it.
         falWarmupEnabled: resolveBoolFlag(
           process.env.FAL_DEPTH_WARMUP_ENABLED,
-          (process.env.NODE_ENV || "development") !== "production",
+          false,
         ),
         falWarmupIntervalMs: resolvePositiveNumber(
           process.env.FAL_DEPTH_WARMUP_INTERVAL_MS,

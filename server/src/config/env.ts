@@ -332,8 +332,8 @@ const convergenceSchema = z.object({
   // DEPTH_WARMUP_ON_STARTUP is a registered flag — validated by the derived
   // featureFlagSchema above, not here.
   DEPTH_WARMUP_TIMEOUT_MS: coercePositiveInt(60_000),
-  // FAL_DEPTH_WARMUP_ENABLED default is NODE_ENV-dependent (see core.services.ts);
-  // declared here as optional for pass-through validation only.
+  // FAL_DEPTH_WARMUP_ENABLED defaults OFF (see core.services.ts); declared
+  // here as optional for pass-through validation only.
   FAL_DEPTH_WARMUP_ENABLED: optionalString(),
   FAL_DEPTH_WARMUP_IMAGE_URL: optionalString(),
   FAL_DEPTH_WARMUP_INTERVAL_MS: coercePositiveInt(120_000),

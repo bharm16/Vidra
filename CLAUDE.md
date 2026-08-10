@@ -153,7 +153,7 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 | ------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------ |
 | `ENABLE_FACE_EMBEDDING`   | `false` | —              | Enables face embedding service for continuity quality gates. Requires Replicate API token. |
 | `CONTINUITY_CLIP_ENABLED` | `true`  | —              | Enables CLIP embedding in continuity quality gate checks.                                  |
-| `DEPTH_WARMUP_ON_STARTUP` | `true`  | —              | Controls depth estimation service warmup during server boot.                               |
+| `DEPTH_WARMUP_ON_STARTUP` | `false` | —              | Controls depth estimation service warmup during server boot.                               |
 
 #### Debug
 

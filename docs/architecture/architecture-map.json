@@ -787,7 +787,7 @@
       "name": "depthWarmupOnStartup",
       "envName": "DEPTH_WARMUP_ON_STARTUP",
       "aliases": [],
-      "defaultValue": "true",
+      "defaultValue": "false",
       "description": "Controls depth estimation service warmup during server boot.",
       "category": "experimental"
     },
