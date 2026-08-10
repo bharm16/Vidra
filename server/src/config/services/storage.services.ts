@@ -86,13 +86,17 @@ export function registerStorageServices(container: DIContainer): void {
   );
   container.register(
     "convergenceStorageService",
-    (gcsBucket: Bucket, config: ServiceConfig) => {
+    (
+      gcsBucket: Bucket,
+      config: ServiceConfig,
+      signedUrlLedger: SignedUrlLedger,
+    ) => {
       setConvergenceStorageSignedUrlTtl(
         config.convergence.storage.signedUrlTtlSeconds,
       );
-      return createGCSStorageService(gcsBucket);
+      return createGCSStorageService(gcsBucket, signedUrlLedger);
     },
-    ["gcsBucket", "config"],
+    ["gcsBucket", "config", "signedUrlLedger"],
   );
 
   container.register(

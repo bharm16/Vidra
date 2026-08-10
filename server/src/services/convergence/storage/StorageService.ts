@@ -11,6 +11,7 @@
 import { Bucket, type File } from "@google-cloud/storage";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
+import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 import { SESSION_TTL_MS } from "../constants";
 
 // ============================================================================
@@ -66,12 +67,17 @@ export interface StorageService {
   delete(gcsUrls: string[]): Promise<void>;
 
   /**
-   * Refresh a signed GCS URL for an object in this bucket.
+   * Refresh a signed GCS URL for a convergence object owned by the user.
    *
-   * Returns null if the URL does not map to this bucket.
+   * Returns null if the URL does not map to an object owned by that user.
    */
-  refreshSignedUrl?(url: string): Promise<string | null>;
+  refreshSignedUrl?(url: string, userId: string): Promise<string | null>;
 }
+
+export const isOwnedConvergenceObjectPath = (
+  objectPath: string,
+  userId: string,
+): boolean => objectPath.startsWith(`convergence/${userId}/`);
 
 // ============================================================================
 // Configuration
@@ -111,7 +117,10 @@ const CONVERGENCE_STORAGE_CONFIG = {
 export class GCSStorageService implements StorageService {
   private readonly log = logger.child({ service: "GCSStorageService" });
 
-  constructor(private readonly bucket: Bucket) {}
+  constructor(
+    private readonly bucket: Bucket,
+    private readonly signedUrlLedger?: SignedUrlLedger,
+  ) {}
 
   getBucketName(): string {
     return this.bucket.name;
@@ -370,13 +379,13 @@ export class GCSStorageService implements StorageService {
   }
 
   /**
-   * Refresh a signed URL for an object in this bucket.
+   * Refresh a signed URL for a convergence object owned by the user.
    *
-   * Returns null when the URL is not for this bucket.
+   * Returns null when the URL is not in the user's convergence namespace.
    */
-  async refreshSignedUrl(url: string): Promise<string | null> {
+  async refreshSignedUrl(url: string, userId: string): Promise<string | null> {
     const objectPath = this.extractObjectPath(url);
-    if (!objectPath) {
+    if (!objectPath || !isOwnedConvergenceObjectPath(objectPath, userId)) {
       return null;
     }
 
@@ -411,6 +420,7 @@ export class GCSStorageService implements StorageService {
       action: "read",
       expires: expiresAt,
     });
+    this.signedUrlLedger?.record(file.name, url);
     return url;
   }
 
@@ -474,8 +484,11 @@ export class GCSStorageService implements StorageService {
 /**
  * Create a GCSStorageService with a provided bucket.
  */
-export function createGCSStorageService(bucket: Bucket): GCSStorageService {
-  return new GCSStorageService(bucket);
+export function createGCSStorageService(
+  bucket: Bucket,
+  signedUrlLedger?: SignedUrlLedger,
+): GCSStorageService {
+  return new GCSStorageService(bucket, signedUrlLedger);
 }
 
 export default GCSStorageService;

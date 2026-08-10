@@ -268,7 +268,7 @@ function loadTexture(url: string): Promise<THREE.Texture> {
   });
 }
 
-const CONVERGENCE_MEDIA_PROXY_PATH = "/motion/media/proxy";
+const MEDIA_PROXY_PATH = "/storage/proxy";
 
 const shouldProxyUrl = (url: string): boolean => {
   try {
@@ -291,18 +291,18 @@ export const buildProxyUrl = (url: string): string => {
     ? API_CONFIG.baseURL.slice(0, -1)
     : API_CONFIG.baseURL;
 
-  if (url.includes(CONVERGENCE_MEDIA_PROXY_PATH)) {
+  if (url.includes(MEDIA_PROXY_PATH)) {
     return url;
   }
 
-  const proxiedUrl = `${base}${CONVERGENCE_MEDIA_PROXY_PATH}?url=${encodeURIComponent(url)}`;
+  const proxiedUrl = `${base}${MEDIA_PROXY_PATH}?url=${encodeURIComponent(url)}`;
   const host = safeUrlHost(url);
   if (host && !proxiedHostsLogged.has(host)) {
     proxiedHostsLogged.add(host);
-    log.info("Proxying camera motion media URL", {
+    log.info("Proxying camera motion media through the signed-url proxy", {
       operation: "buildProxyUrl",
       host,
-      proxyPath: CONVERGENCE_MEDIA_PROXY_PATH,
+      proxyPath: MEDIA_PROXY_PATH,
     });
   }
 

@@ -405,10 +405,12 @@ export class FalDepthEstimationService implements DepthEstimationService {
   private readonly log = logger.child({ service: "DepthEstimationService" });
   private readonly falAvailable: boolean;
   private readonly storageService: StorageService;
+  private readonly userId: string | undefined;
 
   constructor(options: DepthEstimationServiceOptions) {
     const falApiKey = resolveFalApiKey(options.falApiKey);
     this.storageService = options.storageService;
+    this.userId = options.userId;
 
     if (falApiKey) {
       fal.config({ credentials: falApiKey });
@@ -578,12 +580,18 @@ export class FalDepthEstimationService implements DepthEstimationService {
       return imageUrl;
     }
 
-    if (typeof this.storageService.refreshSignedUrl !== "function") {
+    if (
+      !this.userId ||
+      typeof this.storageService.refreshSignedUrl !== "function"
+    ) {
       return imageUrl;
     }
 
     try {
-      const refreshedUrl = await this.storageService.refreshSignedUrl(imageUrl);
+      const refreshedUrl = await this.storageService.refreshSignedUrl(
+        imageUrl,
+        this.userId,
+      );
       if (!refreshedUrl) {
         return imageUrl;
       }

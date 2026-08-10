@@ -6,6 +6,7 @@
  */
 
 import type { Application } from "express";
+import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
@@ -18,6 +19,7 @@ import {
   getStartupWarmupPromise,
 } from "@services/convergence/depth";
 import type { GCSStorageService } from "@services/convergence/storage";
+import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 import { getRuntimeFlags } from "../feature-flags.ts";
 import { resolveOptionalService } from "./resolve-utils.ts";
 
@@ -40,8 +42,13 @@ export function registerMotionRoutes(
     );
 
   if (convergenceStorageService) {
+    const gcsBucket = container.resolve<Bucket>("gcsBucket");
+    const signedUrlLedger =
+      container.resolve<SignedUrlLedger>("signedUrlLedger");
     const motionMediaRoutes = createConvergenceMediaRoutes(
       () => convergenceStorageService,
+      gcsBucket,
+      signedUrlLedger,
     );
     app.use("/api/motion/media", motionMediaRoutes);
   } else {
