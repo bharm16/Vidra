@@ -27,6 +27,9 @@ const REQUIRED_TOKENS = [
   "sessionService",
   "storageService",
   "gcsBucket",
+  // Every store signs through this one minter; a missing registration would
+  // take out image, video, convergence and reference-image URLs at once.
+  "signedUrlMinter",
   "imageObservationService",
   "assetService",
   // Conditionally-mounted in api.routes.ts:107-150 but expected to register

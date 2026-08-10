@@ -6,8 +6,9 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import type { Bucket, File } from "@google-cloud/storage";
+import type { Bucket } from "@google-cloud/storage";
 import { logger } from "@infrastructure/Logger";
+import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { fetchRemoteMedia } from "@services/owned-media";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
 
@@ -19,33 +20,28 @@ const IMAGE_CONTENT_TYPES = [
 ] as const;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-/** Structural slice of the signed-URL ledger (kept import-free across domains). */
-interface SignedUrlRecorder {
-  record(objectPath: string, signedUrl: string): void;
-}
-
 interface GcsImageAssetStoreOptions {
   bucket: Bucket;
+  minter: SignedUrlMinter;
   basePath: string;
   signedUrlTtlMs: number;
   cacheControl: string;
-  ledger?: SignedUrlRecorder | null;
 }
 
 export class GcsImageAssetStore implements ImageAssetStore {
   private readonly bucket: Bucket;
+  private readonly minter: SignedUrlMinter;
   private readonly basePath: string;
   private readonly signedUrlTtlMs: number;
   private readonly cacheControl: string;
-  private readonly ledger: SignedUrlRecorder | null;
   private readonly log = logger.child({ service: "GcsImageAssetStore" });
 
   constructor(options: GcsImageAssetStoreOptions) {
     this.bucket = options.bucket;
+    this.minter = options.minter;
     this.basePath = options.basePath.replace(/^\/+|\/+$/g, "");
     this.signedUrlTtlMs = options.signedUrlTtlMs;
     this.cacheControl = options.cacheControl;
-    this.ledger = options.ledger ?? null;
   }
 
   async storeFromUrl(
@@ -75,9 +71,10 @@ export class GcsImageAssetStore implements ImageAssetStore {
       remoteMedia.sourceUrl.slice(0, 500),
     );
 
-    const file = this.bucket.file(objectPath);
-    const [metadata] = await file.getMetadata();
-    const { url, expiresAt } = await this.getSignedUrl(file);
+    const [metadata] = await this.bucket.file(objectPath).getMetadata();
+    const { url, expiresAtMs } = await this.minter.mintRead(objectPath, {
+      ttlMs: this.signedUrlTtlMs,
+    });
     const resolvedSize = Number(metadata.size || 0);
     const sizeBytes =
       Number.isFinite(resolvedSize) && resolvedSize > 0
@@ -96,7 +93,7 @@ export class GcsImageAssetStore implements ImageAssetStore {
       url,
       contentType: resolvedContentType,
       createdAt: Date.now(),
-      expiresAt,
+      expiresAt: expiresAtMs,
       ...(sizeBytes !== undefined ? { sizeBytes } : {}),
     };
   }
@@ -111,9 +108,10 @@ export class GcsImageAssetStore implements ImageAssetStore {
 
     await this.uploadBuffer(objectPath, buffer, contentType);
 
-    const file = this.bucket.file(objectPath);
-    const [metadata] = await file.getMetadata();
-    const { url, expiresAt } = await this.getSignedUrl(file);
+    const [metadata] = await this.bucket.file(objectPath).getMetadata();
+    const { url, expiresAtMs } = await this.minter.mintRead(objectPath, {
+      ttlMs: this.signedUrlTtlMs,
+    });
     const resolvedSize = Number(metadata.size || 0);
     const sizeBytes =
       Number.isFinite(resolvedSize) && resolvedSize > 0
@@ -126,32 +124,34 @@ export class GcsImageAssetStore implements ImageAssetStore {
       url,
       contentType,
       createdAt: Date.now(),
-      expiresAt,
+      expiresAt: expiresAtMs,
       ...(sizeBytes !== undefined ? { sizeBytes } : {}),
     };
   }
 
   async getPublicUrl(assetId: string, userId: string): Promise<string | null> {
-    // Try the current path convention: {basePath}/{userId}/{assetId}
-    const primaryFile = this.bucket.file(this.objectPath(userId, assetId));
     try {
-      const [exists] = await primaryFile.exists();
-      if (exists) {
-        const { url } = await this.getSignedUrl(primaryFile);
-        return url;
+      // Current path convention: {basePath}/{userId}/{assetId}
+      const grant = await this.minter.mintReadIfPresent(
+        this.objectPath(userId, assetId),
+        { ttlMs: this.signedUrlTtlMs },
+      );
+      if (grant) {
+        return grant.url;
       }
 
       // Fallback: legacy path convention without userId prefix: {basePath}/{assetId}
       // Assets created before the userId-scoped path change live here.
-      const legacyFile = this.bucket.file(this.legacyObjectPath(assetId));
-      const [legacyExists] = await legacyFile.exists();
-      if (legacyExists) {
+      const legacyGrant = await this.minter.mintReadIfPresent(
+        this.legacyObjectPath(assetId),
+        { ttlMs: this.signedUrlTtlMs },
+      );
+      if (legacyGrant) {
         this.log.info("Resolved image from legacy path (no userId prefix)", {
           assetId,
           userId,
         });
-        const { url } = await this.getSignedUrl(legacyFile);
-        return url;
+        return legacyGrant.url;
       }
 
       return null;
@@ -278,19 +278,5 @@ export class GcsImageAssetStore implements ImageAssetStore {
     }
 
     throw lastError;
-  }
-
-  private async getSignedUrl(
-    file: File,
-  ): Promise<{ url: string; expiresAt: number }> {
-    const expiresAt = Date.now() + this.signedUrlTtlMs;
-    const [url] = await file.getSignedUrl({
-      version: "v4",
-      action: "read",
-      expires: expiresAt,
-    });
-    // The media proxy's bucket rescue honors only grants on the ledger.
-    this.ledger?.record(file.name, url);
-    return { url, expiresAt };
   }
 }

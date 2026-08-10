@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { SignedUrlService } from "../services/SignedUrlService";
 
 const buildService = () => {
@@ -11,11 +12,10 @@ const buildService = () => {
   const mockBucket = {
     file: vi.fn().mockReturnValue(mockFile),
   };
-  const mockStorage = {
-    bucket: vi.fn().mockReturnValue(mockBucket),
-  };
 
-  const service = new SignedUrlService(mockStorage as unknown as any);
+  const service = new SignedUrlService(
+    new SignedUrlMinter(mockBucket as unknown as never),
+  );
   return { service, mockFile };
 };
 

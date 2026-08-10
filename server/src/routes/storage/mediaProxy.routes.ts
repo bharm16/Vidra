@@ -20,7 +20,7 @@ import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import type { Bucket } from "@google-cloud/storage";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { logger } from "@infrastructure/Logger";
-import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import type { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 import { extractObjectPathFromUrl } from "@services/storage/utils/pathUtils";
 
 const log = logger.child({ module: "mediaProxy" });

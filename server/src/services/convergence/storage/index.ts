@@ -10,5 +10,5 @@ export type { StorageService } from "./StorageService";
 export {
   GCSStorageService,
   createGCSStorageService,
-  setConvergenceStorageSignedUrlTtl,
+  DEFAULT_CONVERGENCE_SIGNED_URL_TTL_MS,
 } from "./StorageService";

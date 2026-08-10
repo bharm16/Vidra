@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { Bucket } from "@google-cloud/storage";
 import { getFirestore } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
+import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { ReferenceImageProcessingService } from "@services/asset/ReferenceImageProcessingService";
 import { fetchRemoteMedia } from "@services/owned-media";
 import type {
@@ -16,12 +17,10 @@ interface FirestoreReferenceImageStoreOptions {
   bucket: Bucket;
   bucketName?: string;
   processor?: ReferenceImageProcessingService;
-  signedUrlLedger?: SignedUrlRecorder | null;
+  minter: SignedUrlMinter;
 }
 
-interface SignedUrlRecorder {
-  record(objectPath: string, signedUrl: string): void;
-}
+const PRESENTATION_URL_TTL_MS = 60 * 60 * 1000;
 
 interface StoredReferenceImageDocument {
   id: string;
@@ -56,7 +55,7 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
   private readonly bucket: Bucket;
   private readonly bucketName: string;
   private readonly processor: ReferenceImageProcessingService;
-  private readonly signedUrlLedger: SignedUrlRecorder | null;
+  private readonly minter: SignedUrlMinter;
   private readonly log = logger.child({
     service: "FirestoreReferenceImageStore",
   });
@@ -71,7 +70,7 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
     this.bucket = options.bucket;
     this.bucketName = options.bucketName || options.bucket.name;
     this.processor = options.processor || new ReferenceImageProcessingService();
-    this.signedUrlLedger = options.signedUrlLedger ?? null;
+    this.minter = options.minter;
   }
 
   private collection(userId: string): FirebaseFirestore.CollectionReference {
@@ -296,13 +295,9 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
   }
 
   private async getPresentationUrl(storagePath: string): Promise<string> {
-    const file = this.bucket.file(storagePath);
-    const [url] = await file.getSignedUrl({
-      version: "v4",
-      action: "read",
-      expires: Date.now() + 60 * 60 * 1000,
+    const { url } = await this.minter.mintRead(storagePath, {
+      ttlMs: PRESENTATION_URL_TTL_MS,
     });
-    this.signedUrlLedger?.record(storagePath, url);
     return url;
   }
 }

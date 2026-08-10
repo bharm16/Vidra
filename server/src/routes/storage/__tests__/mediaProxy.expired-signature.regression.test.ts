@@ -21,7 +21,7 @@ import request from "supertest";
 import express from "express";
 import { Readable } from "node:stream";
 import { createMediaProxyRoutes } from "../mediaProxy.routes";
-import { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 
 const BUCKET = "test-bucket";
 

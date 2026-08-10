@@ -10,7 +10,7 @@ import { FirestoreReferenceImageStore } from "@services/asset/reference-images/s
 import { SessionService } from "@services/sessions/SessionService";
 import { SessionStore } from "@services/sessions/SessionStore";
 import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
-import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 /**
@@ -72,13 +72,13 @@ export function registerSessionServices(container: DIContainer): void {
     (
       gcsBucket: Bucket,
       gcsBucketName: string,
-      signedUrlLedger: SignedUrlLedger | null,
+      signedUrlMinter: SignedUrlMinter,
     ) => {
       try {
         return new FirestoreReferenceImageStore({
           bucket: gcsBucket,
           bucketName: gcsBucketName,
-          signedUrlLedger,
+          minter: signedUrlMinter,
         });
       } catch (error) {
         const errorMessage =
@@ -89,6 +89,6 @@ export function registerSessionServices(container: DIContainer): void {
         return null;
       }
     },
-    ["gcsBucket", "gcsBucketName", "signedUrlLedger"],
+    ["gcsBucket", "gcsBucketName", "signedUrlMinter"],
   );
 }

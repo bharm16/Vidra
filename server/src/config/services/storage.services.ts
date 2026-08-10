@@ -5,7 +5,8 @@ import { StorageService } from "@services/storage/StorageService";
 import {
   SignedUrlLedger,
   type SignedUrlLedgerCache,
-} from "@services/storage/services/SignedUrlLedger";
+} from "@infrastructure/signedUrl/SignedUrlLedger";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { createImageAssetStore } from "@services/image-generation/storage";
 import { createVideoContentAccessService } from "@services/video-generation/access/VideoContentAccessService";
 import {
@@ -13,10 +14,7 @@ import {
   type VideoAssetStore,
 } from "@services/video-generation/storage";
 import { createVideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
-import {
-  createGCSStorageService,
-  setConvergenceStorageSignedUrlTtl,
-} from "@services/convergence/storage";
+import { createGCSStorageService } from "@services/convergence/storage";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerStorageServices(container: DIContainer): void {
@@ -35,6 +33,15 @@ export function registerStorageServices(container: DIContainer): void {
     "signedUrlLedger",
     (cacheService: SignedUrlLedgerCache) => new SignedUrlLedger(cacheService),
     ["cacheService"],
+  );
+
+  // The one signer in the process. Every store takes this rather than the
+  // ledger, so recording a grant is not something a mint site can forget.
+  container.register(
+    "signedUrlMinter",
+    (gcsBucket: Bucket, signedUrlLedger: SignedUrlLedger) =>
+      new SignedUrlMinter(gcsBucket, signedUrlLedger),
+    ["gcsBucket", "signedUrlLedger"],
   );
 
   container.register(
@@ -57,46 +64,46 @@ export function registerStorageServices(container: DIContainer): void {
     (
       gcsBucket: Bucket,
       config: ServiceConfig,
-      signedUrlLedger: SignedUrlLedger,
+      signedUrlMinter: SignedUrlMinter,
     ) =>
       createVideoAssetStore({
         bucket: gcsBucket,
+        minter: signedUrlMinter,
         basePath: config.videoAssets.storage.basePath,
         signedUrlTtlMs: config.videoAssets.storage.signedUrlTtlMs,
         cacheControl: config.videoAssets.storage.cacheControl,
-        ledger: signedUrlLedger,
       }),
-    ["gcsBucket", "config", "signedUrlLedger"],
+    ["gcsBucket", "config", "signedUrlMinter"],
   );
   container.register(
     "imageAssetStore",
     (
       gcsBucket: Bucket,
       config: ServiceConfig,
-      signedUrlLedger: SignedUrlLedger,
+      signedUrlMinter: SignedUrlMinter,
     ) =>
       createImageAssetStore({
         bucket: gcsBucket,
+        minter: signedUrlMinter,
         basePath: config.imageAssets.storage.basePath,
         signedUrlTtlMs: config.imageAssets.storage.signedUrlTtlMs,
         cacheControl: config.imageAssets.storage.cacheControl,
-        ledger: signedUrlLedger,
       }),
-    ["gcsBucket", "config", "signedUrlLedger"],
+    ["gcsBucket", "config", "signedUrlMinter"],
   );
   container.register(
     "convergenceStorageService",
     (
       gcsBucket: Bucket,
       config: ServiceConfig,
-      signedUrlLedger: SignedUrlLedger,
-    ) => {
-      setConvergenceStorageSignedUrlTtl(
-        config.convergence.storage.signedUrlTtlSeconds,
-      );
-      return createGCSStorageService(gcsBucket, signedUrlLedger);
-    },
-    ["gcsBucket", "config", "signedUrlLedger"],
+      signedUrlMinter: SignedUrlMinter,
+    ) =>
+      createGCSStorageService(
+        gcsBucket,
+        signedUrlMinter,
+        config.convergence.storage.signedUrlTtlSeconds * 1000,
+      ),
+    ["gcsBucket", "config", "signedUrlMinter"],
   );
 
   container.register(

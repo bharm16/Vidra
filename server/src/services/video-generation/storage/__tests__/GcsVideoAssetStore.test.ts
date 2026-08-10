@@ -45,6 +45,7 @@ vi.mock("uuid", () => ({
 }));
 
 import { v4 as uuidv4 } from "uuid";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { GcsVideoAssetStore } from "../GcsVideoAssetStore";
 
 const createFile = (name: string, overrides?: Partial<MockFile>): MockFile => ({
@@ -94,6 +95,7 @@ describe("GcsVideoAssetStore", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "/video-previews/",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",
@@ -135,6 +137,7 @@ describe("GcsVideoAssetStore", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "base",
       signedUrlTtlMs: 120_000,
       cacheControl: "private, max-age=30",
@@ -175,6 +178,7 @@ describe("GcsVideoAssetStore", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",
@@ -194,6 +198,7 @@ describe("GcsVideoAssetStore", () => {
     mocks.files.set(
       missingName,
       createFile(missingName, {
+        exists: vi.fn().mockResolvedValue([false]),
         getMetadata: vi.fn().mockRejectedValue(notFound),
       }),
     );
@@ -201,12 +206,14 @@ describe("GcsVideoAssetStore", () => {
     mocks.files.set(
       errorName,
       createFile(errorName, {
+        exists: vi.fn().mockRejectedValue(new Error("gcs unavailable")),
         getMetadata: vi.fn().mockRejectedValue(new Error("gcs unavailable")),
       }),
     );
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",
@@ -230,13 +237,15 @@ describe("GcsVideoAssetStore", () => {
   });
 
   // Regression: V4 signed URLs are signed client-side and do not perform any
-  // GCS round-trip. A previous refactor removed the `exists()` precheck and
+  // GCS round-trip. A previous refactor removed the presence precheck and
   // relied on `getSignedUrl` throwing on missing objects — which it never
   // does. `getPublicUrl` must return null for any assetId not present in GCS.
+  // The precheck now lives in SignedUrlMinter.mintReadIfPresent.
   it("regression: getPublicUrl returns null when the asset is absent in GCS", async () => {
     const objectName = "video-previews/absent";
     const notFound = Object.assign(new Error("No such object"), { code: 404 });
     const file = createFile(objectName, {
+      exists: vi.fn().mockResolvedValue([false]),
       getMetadata: vi.fn().mockRejectedValue(notFound),
       getSignedUrl: vi
         .fn()
@@ -246,6 +255,7 @@ describe("GcsVideoAssetStore", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",
@@ -283,6 +293,7 @@ describe("GcsVideoAssetStore", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",

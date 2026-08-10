@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { SignedUrlService } from "../services/SignedUrlService";
 import { StorageService } from "../StorageService";
 
@@ -39,8 +40,10 @@ describe("regression: preview-image resolution signs only existing objects", () 
   });
 
   it("getViewUrlIfPresent returns null for an absent object instead of a dead URL", async () => {
-    const { mockFile, mockStorage } = buildMocks(false);
-    const service = new SignedUrlService(mockStorage as unknown as never);
+    const { mockFile, mockBucket } = buildMocks(false);
+    const service = new SignedUrlService(
+      new SignedUrlMinter(mockBucket as unknown as never),
+    );
 
     const result = await service.getViewUrlIfPresent(
       "users/user-1/previews/images/1785598164559-abc.webp",
@@ -52,8 +55,10 @@ describe("regression: preview-image resolution signs only existing objects", () 
   });
 
   it("getViewUrlIfPresent signs a read URL when the object exists", async () => {
-    const { mockFile, mockStorage } = buildMocks(true);
-    const service = new SignedUrlService(mockStorage as unknown as never);
+    const { mockFile, mockBucket } = buildMocks(true);
+    const service = new SignedUrlService(
+      new SignedUrlMinter(mockBucket as unknown as never),
+    );
 
     const result = await service.getViewUrlIfPresent(
       "users/user-1/previews/images/1785598164559-abc.webp",

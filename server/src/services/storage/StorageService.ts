@@ -1,6 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 import { SignedUrlService } from "./services/SignedUrlService";
-import type { SignedUrlLedger } from "./services/SignedUrlLedger";
+import type { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { UploadService } from "./services/UploadService";
 import { RetentionService } from "./services/RetentionService";
 import { safeUrlHost } from "@shared/utils/url";
@@ -72,9 +73,7 @@ export class StorageService {
     this.signedUrlService =
       dependencies.signedUrlService ||
       new SignedUrlService(
-        this.storage,
-        bucketName,
-        dependencies.signedUrlLedger ?? null,
+        new SignedUrlMinter(this.bucket, dependencies.signedUrlLedger ?? null),
       );
     this.uploadService =
       dependencies.uploadService || new UploadService(this.storage, bucketName);
@@ -471,7 +470,9 @@ export class StorageService {
     );
     return {
       ...result,
-      ...(type ? { mediaRef: createOwnedMediaReference(type, storagePath) } : {}),
+      ...(type
+        ? { mediaRef: createOwnedMediaReference(type, storagePath) }
+        : {}),
     };
   }
 

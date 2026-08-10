@@ -20,7 +20,7 @@ import {
   isOwnedConvergenceObjectPath,
   type GCSStorageService,
 } from "@services/convergence/storage/StorageService";
-import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import type { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 
 const upload = createDiskUpload({
   fileSizeBytes: 10 * 1024 * 1024,

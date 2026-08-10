@@ -8,11 +8,11 @@
  * @module convergence/storage
  */
 
-import { Bucket, type File } from "@google-cloud/storage";
+import { Bucket } from "@google-cloud/storage";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
 import { fetchRemoteMedia } from "@services/owned-media";
-import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { SESSION_TTL_MS } from "../constants";
 
 // ============================================================================
@@ -115,11 +115,7 @@ export const isOwnedConvergenceObjectPath = (
 // Configuration
 // ============================================================================
 
-let convergenceSignedUrlTtlMs = SESSION_TTL_MS;
-
-export function setConvergenceStorageSignedUrlTtl(ttlSeconds: number): void {
-  convergenceSignedUrlTtlMs = ttlSeconds * 1000;
-}
+export const DEFAULT_CONVERGENCE_SIGNED_URL_TTL_MS = SESSION_TTL_MS;
 
 const CONVERGENCE_STORAGE_CONFIG = {
   /** Default content type for uploaded images */
@@ -130,9 +126,6 @@ const CONVERGENCE_STORAGE_CONFIG = {
   maxBytes: 500 * 1024 * 1024,
   /** Maximum concurrent uploads in a batch */
   maxConcurrentUploads: 10,
-  get signedUrlTtlMs() {
-    return convergenceSignedUrlTtlMs;
-  },
 } as const;
 
 const CONVERGENCE_CONTENT_TYPES = [
@@ -190,7 +183,8 @@ export class GCSStorageService implements StorageService {
 
   constructor(
     private readonly bucket: Bucket,
-    private readonly signedUrlLedger?: SignedUrlLedger,
+    private readonly minter: SignedUrlMinter,
+    private readonly signedUrlTtlMs: number = DEFAULT_CONVERGENCE_SIGNED_URL_TTL_MS,
   ) {}
 
   getBucketName(): string {
@@ -248,7 +242,7 @@ export class GCSStorageService implements StorageService {
 
       await file.save(buffer, saveOptions);
 
-      const signedUrl = await this.getSignedUrl(file);
+      const signedUrl = await this.getSignedUrl(destination);
       const duration = Date.now() - startTime;
 
       this.log.info("Image upload completed", {
@@ -381,7 +375,7 @@ export class GCSStorageService implements StorageService {
 
       await file.save(buffer, saveOptions);
 
-      const signedUrl = await this.getSignedUrl(file);
+      const signedUrl = await this.getSignedUrl(destination);
       const duration = Date.now() - startTime;
 
       this.log.info("Buffer upload completed", {
@@ -460,8 +454,7 @@ export class GCSStorageService implements StorageService {
       return null;
     }
 
-    const file = this.bucket.file(objectPath);
-    const signedUrl = await this.getSignedUrl(file);
+    const signedUrl = await this.getSignedUrl(objectPath);
 
     this.log.debug("Refreshed signed URL for convergence media asset", {
       objectPath,
@@ -476,18 +469,12 @@ export class GCSStorageService implements StorageService {
   // ============================================================================
 
   /**
-   * Normalize content type by removing charset and other parameters
-   */
-  /**
    * Generate a signed URL for a stored object.
    */
-  private async getSignedUrl(file: File): Promise<string> {
-    const expiresAt = Date.now() + CONVERGENCE_STORAGE_CONFIG.signedUrlTtlMs;
-    const [url] = await file.getSignedUrl({
-      action: "read",
-      expires: expiresAt,
+  private async getSignedUrl(objectPath: string): Promise<string> {
+    const { url } = await this.minter.mintRead(objectPath, {
+      ttlMs: this.signedUrlTtlMs,
     });
-    this.signedUrlLedger?.record(file.name, url);
     return url;
   }
 
@@ -553,9 +540,10 @@ export class GCSStorageService implements StorageService {
  */
 export function createGCSStorageService(
   bucket: Bucket,
-  signedUrlLedger?: SignedUrlLedger,
+  minter: SignedUrlMinter,
+  signedUrlTtlMs: number = DEFAULT_CONVERGENCE_SIGNED_URL_TTL_MS,
 ): GCSStorageService {
-  return new GCSStorageService(bucket, signedUrlLedger);
+  return new GCSStorageService(bucket, minter, signedUrlTtlMs);
 }
 
 export default GCSStorageService;

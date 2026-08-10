@@ -1,25 +1,17 @@
-import { Storage, type GetSignedUrlConfig } from "@google-cloud/storage";
 import { STORAGE_CONFIG } from "../config/storageConfig";
 import { logger } from "@infrastructure/Logger";
-import type { SignedUrlLedger } from "./SignedUrlLedger";
+import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 
 type SuccessLogLevel = "debug" | "info";
 
+/**
+ * Storage-domain grant policy: which TTL and disposition each verb gets.
+ * The signing itself — version, ledger recording — belongs to the minter.
+ */
 export class SignedUrlService {
-  private readonly storage: Storage;
-  private readonly bucket;
-  private readonly ledger: SignedUrlLedger | null;
   private readonly log = logger.child({ service: "SignedUrlService" });
 
-  constructor(
-    storage: Storage,
-    bucketName: string = STORAGE_CONFIG.bucketName,
-    ledger: SignedUrlLedger | null = null,
-  ) {
-    this.storage = storage;
-    this.bucket = this.storage.bucket(bucketName);
-    this.ledger = ledger;
-  }
+  constructor(private readonly minter: SignedUrlMinter) {}
 
   private async withTiming<T>(
     operation: string,
@@ -65,29 +57,12 @@ export class SignedUrlService {
       "getUploadUrl",
       { path, contentType, maxSizeBytes: maxSize ?? null },
       async () => {
-        const file = this.bucket.file(path);
-        const expiresAtMs = Date.now() + STORAGE_CONFIG.urlExpiration.upload;
-
-        const extensionHeaders: Record<string, string> = {
-          "x-goog-if-generation-match": "0",
-        };
-        const options: GetSignedUrlConfig = {
-          version: "v4",
-          action: "write",
-          expires: expiresAtMs,
+        const grant = await this.minter.mintWrite(path, {
+          ttlMs: STORAGE_CONFIG.urlExpiration.upload,
           contentType,
-        };
-
-        if (maxSize) {
-          extensionHeaders["x-goog-content-length-range"] = `0,${maxSize}`;
-        }
-        options.extensionHeaders = extensionHeaders;
-
-        const [url] = await file.getSignedUrl(options);
-        return {
-          uploadUrl: url,
-          expiresAt: new Date(expiresAtMs).toISOString(),
-        };
+          maxSizeBytes: maxSize ?? null,
+        });
+        return { uploadUrl: grant.url, expiresAt: grant.expiresAt };
       },
       "info",
     );
@@ -101,41 +76,35 @@ export class SignedUrlService {
     expiresAt: string;
   }> {
     return this.withTiming("getViewUrl", { path, disposition }, async () => {
-      const file = this.bucket.file(path);
-      const expiresAtMs = Date.now() + STORAGE_CONFIG.urlExpiration.view;
-      const [url] = await file.getSignedUrl({
-        version: "v4",
-        action: "read",
-        expires: expiresAtMs,
-        responseDisposition: disposition,
+      const grant = await this.minter.mintRead(path, {
+        ttlMs: STORAGE_CONFIG.urlExpiration.view,
+        disposition,
       });
-      // The media proxy's bucket rescue honors only grants on this ledger.
-      this.ledger?.record(path, url);
-
-      return {
-        viewUrl: url,
-        expiresAt: new Date(expiresAtMs).toISOString(),
-      };
+      return { viewUrl: grant.url, expiresAt: grant.expiresAt };
     });
   }
 
   /**
-   * Sign a view URL only when the object actually exists. Plain getViewUrl
-   * signs blindly (GCS mints URLs for absent objects), which would turn a
-   * caller's honest 404 into a URL that dies at the bucket.
+   * Sign a view URL only when the object actually exists, so a caller's
+   * honest 404 stays a 404 instead of becoming a URL that dies at the bucket.
    */
   async getViewUrlIfPresent(
     path: string,
     disposition = "inline",
   ): Promise<{ viewUrl: string; expiresAt: string } | null> {
-    const exists = await this.withTiming("existsCheck", { path }, async () => {
-      const [fileExists] = await this.bucket.file(path).exists();
-      return fileExists;
-    });
-    if (!exists) {
-      return null;
-    }
-    return this.getViewUrl(path, disposition);
+    return this.withTiming(
+      "getViewUrlIfPresent",
+      { path, disposition },
+      async () => {
+        const grant = await this.minter.mintReadIfPresent(path, {
+          ttlMs: STORAGE_CONFIG.urlExpiration.view,
+          disposition,
+        });
+        return grant
+          ? { viewUrl: grant.url, expiresAt: grant.expiresAt }
+          : null;
+      },
+    );
   }
 
   async getDownloadUrl(
@@ -149,22 +118,12 @@ export class SignedUrlService {
       "getDownloadUrl",
       { path, hasFilename: Boolean(filename) },
       async () => {
-        const file = this.bucket.file(path);
         const downloadName = filename || path.split("/").pop() || "download";
-        const expiresAtMs = Date.now() + STORAGE_CONFIG.urlExpiration.download;
-
-        const [url] = await file.getSignedUrl({
-          version: "v4",
-          action: "read",
-          expires: expiresAtMs,
-          responseDisposition: `attachment; filename="${downloadName}"`,
+        const grant = await this.minter.mintRead(path, {
+          ttlMs: STORAGE_CONFIG.urlExpiration.download,
+          disposition: `attachment; filename="${downloadName}"`,
         });
-        this.ledger?.record(path, url);
-
-        return {
-          downloadUrl: url,
-          expiresAt: new Date(expiresAtMs).toISOString(),
-        };
+        return { downloadUrl: grant.url, expiresAt: grant.expiresAt };
       },
     );
   }

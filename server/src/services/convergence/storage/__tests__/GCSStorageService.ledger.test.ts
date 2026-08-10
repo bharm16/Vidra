@@ -3,13 +3,15 @@ import {
   GCSStorageService,
   isOwnedConvergenceObjectPath,
 } from "../StorageService";
-import { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
+import { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
+import {
+  createFakeBucket,
+  SIGNATURE,
+} from "@infrastructure/signedUrl/__tests__/fakeGcsSigning";
 
-const OBJECT_PATH = "convergence/user-1/frames/frame.png";
-const SIGNATURE = "minted-convergence-signature";
-const SIGNED_URL =
-  `https://storage.googleapis.com/test-bucket/${OBJECT_PATH}` +
-  `?X-Goog-Signature=${SIGNATURE}`;
+const objectPathOf = (signedUrl: string): string =>
+  new URL(signedUrl).pathname.replace("/test-bucket/", "");
 
 describe("GCSStorageService signed URL ledger", () => {
   it("uses the same owner segment for object construction authorization", () => {
@@ -37,48 +39,68 @@ describe("GCSStorageService signed URL ledger", () => {
         return true;
       },
     });
-    const save = vi.fn().mockResolvedValue(undefined);
+    const bucket = createFakeBucket();
     const storage = new GCSStorageService(
-      {
-        name: "test-bucket",
-        file: vi.fn(() => ({
-          name: OBJECT_PATH,
-          save,
-          getSignedUrl: vi.fn().mockResolvedValue([SIGNED_URL]),
-        })),
-      } as never,
-      ledger,
+      bucket as never,
+      new SignedUrlMinter(bucket as never, ledger),
     );
 
-    await storage.uploadBuffer(
+    const url = await storage.uploadBuffer(
       Buffer.from([0x89, 0x50, 0x4e, 0x47]),
       "user-1",
       "image/png",
       "frame",
     );
+    await new Promise((resolve) => setImmediate(resolve));
 
-    await expect(ledger.isMintedGrant(OBJECT_PATH, SIGNATURE)).resolves.toBe(
-      true,
-    );
-    expect(save).toHaveBeenCalledOnce();
+    const objectPath = objectPathOf(url);
+    expect(objectPath.startsWith("convergence/user-1/frame/")).toBe(true);
+    expect(await ledger.isMintedGrant(objectPath, SIGNATURE)).toBe(true);
+    expect(bucket.file(objectPath).save).toHaveBeenCalledOnce();
   });
 
   it("does not re-sign another user's convergence object", async () => {
-    const getSignedUrl = vi.fn().mockResolvedValue([SIGNED_URL]);
-    const storage = new GCSStorageService({
-      name: "test-bucket",
-      file: vi.fn(() => ({
-        name: "convergence/user-2/frames/frame.png",
-        getSignedUrl,
-      })),
-    } as never);
+    const bucket = createFakeBucket();
+    const otherPath = "convergence/user-2/frames/frame.png";
+    const storage = new GCSStorageService(
+      bucket as never,
+      new SignedUrlMinter(bucket as never),
+    );
 
     const refreshedUrl = await storage.refreshSignedUrl(
-      "https://storage.googleapis.com/test-bucket/convergence/user-2/frames/frame.png",
+      `https://storage.googleapis.com/test-bucket/${otherPath}`,
       "user-1",
     );
 
     expect(refreshedUrl).toBeNull();
-    expect(getSignedUrl).not.toHaveBeenCalled();
+    expect(bucket.file(otherPath).getSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("honours an injected signed-URL TTL instead of process-wide state", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-10T12:00:00.000Z"));
+    try {
+      const bucket = createFakeBucket();
+      const storage = new GCSStorageService(
+        bucket as never,
+        new SignedUrlMinter(bucket as never),
+        120_000,
+      );
+
+      const url = await storage.uploadBuffer(
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+        "user-1",
+        "image/png",
+        "frame",
+      );
+
+      expect(
+        bucket.file(objectPathOf(url)).getSignedUrl.mock.calls[0]?.[0],
+      ).toMatchObject({
+        expires: Date.parse("2026-08-10T12:02:00.000Z"),
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

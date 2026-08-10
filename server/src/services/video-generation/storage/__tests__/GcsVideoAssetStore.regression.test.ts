@@ -44,6 +44,7 @@ vi.mock("uuid", () => ({
   v4: vi.fn(),
 }));
 
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { GcsVideoAssetStore } from "../GcsVideoAssetStore";
 
 // A "missing" file responds as a non-existent GCS object would across every
@@ -106,6 +107,7 @@ describe("regression: missing GCS objects must surface as null", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",
@@ -124,6 +126,7 @@ describe("regression: missing GCS objects must surface as null", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",
@@ -142,6 +145,7 @@ describe("regression: missing GCS objects must surface as null", () => {
 
     const store = new GcsVideoAssetStore({
       bucket: mocks.bucket as never,
+      minter: new SignedUrlMinter(mocks.bucket as never),
       basePath: "video-previews",
       signedUrlTtlMs: 60_000,
       cacheControl: "public, max-age=86400",

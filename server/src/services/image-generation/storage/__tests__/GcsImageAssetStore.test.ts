@@ -7,6 +7,7 @@ import {
   afterEach,
   type MockedFunction,
 } from "vitest";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { GcsImageAssetStore } from "../GcsImageAssetStore";
 
 vi.mock("uuid", () => ({
@@ -64,6 +65,7 @@ describe("GcsImageAssetStore", () => {
     it("throws when fetching the source image fails", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "/image-previews/",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",
@@ -84,6 +86,7 @@ describe("GcsImageAssetStore", () => {
     it("retries uploads when the GCS stream is destroyed", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "image-previews",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",
@@ -111,6 +114,7 @@ describe("GcsImageAssetStore", () => {
     it("handles delete errors when cleaning up expired assets", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "image-previews",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",
@@ -132,6 +136,7 @@ describe("GcsImageAssetStore", () => {
     it("returns null when the asset does not exist", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "image-previews",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",
@@ -147,6 +152,7 @@ describe("GcsImageAssetStore", () => {
     it("returns 0 when cleanup is called with an invalid threshold", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "image-previews",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",
@@ -160,6 +166,7 @@ describe("GcsImageAssetStore", () => {
     it("omits sizeBytes when metadata size is not positive", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "image-previews",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",
@@ -194,6 +201,7 @@ describe("GcsImageAssetStore", () => {
       const nowSpy = vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
         basePath: "/image-previews/",
         signedUrlTtlMs: 60000,
         cacheControl: "public, max-age=60",

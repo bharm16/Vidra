@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { GcsVideoAssetStore } from "../GcsVideoAssetStore";
 
 /**
@@ -23,6 +24,7 @@ describe("regression: the retention sweep is confined to the staging namespace",
     const getFiles = vi.fn().mockResolvedValue([[]]);
     const store = new GcsVideoAssetStore({
       bucket: { getFiles, file: vi.fn() } as unknown as never,
+      minter: new SignedUrlMinter({ file: vi.fn() } as unknown as never),
       basePath: "video-previews",
       signedUrlTtlMs: 3_600_000,
       cacheControl: "public",
@@ -38,6 +40,7 @@ describe("regression: the retention sweep is confined to the staging namespace",
     const getFiles = vi.fn();
     const store = new GcsVideoAssetStore({
       bucket: { getFiles, file: vi.fn() } as unknown as never,
+      minter: new SignedUrlMinter({ file: vi.fn() } as unknown as never),
       basePath: "video-previews",
       signedUrlTtlMs: 3_600_000,
       cacheControl: "public",

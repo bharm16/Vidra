@@ -19,7 +19,7 @@ import {
   getStartupWarmupPromise,
 } from "@services/convergence/depth";
 import type { GCSStorageService } from "@services/convergence/storage";
-import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import type { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 import { getRuntimeFlags } from "../feature-flags.ts";
 import { resolveOptionalService } from "./resolve-utils.ts";
 

@@ -7,7 +7,7 @@
 
 import type { Application } from "express";
 import type { Bucket } from "@google-cloud/storage";
-import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import type { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createBatchMiddleware } from "@middleware/requestBatching";

@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createConvergenceMediaRoutes } from "../convergenceMedia.routes";
-import { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
+import { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 
 // Security-maintenance exception to ADR-0002's frozen-stack test policy:
 // this P0 regression must keep the ownership boundary executable.

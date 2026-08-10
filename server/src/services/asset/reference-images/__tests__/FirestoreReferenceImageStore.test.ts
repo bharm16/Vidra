@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { FirestoreReferenceImageStore } from "../storage/FirestoreReferenceImageStore";
 
 // Mock logger
@@ -88,7 +89,9 @@ function createMockBucket(name = "test-bucket") {
       delete: vi.fn().mockResolvedValue(undefined),
       getSignedUrl: vi
         .fn()
-        .mockResolvedValue(["https://storage.googleapis.com/test-bucket/signed"]),
+        .mockResolvedValue([
+          "https://storage.googleapis.com/test-bucket/signed",
+        ]),
     }),
   } as unknown as ConstructorParameters<
     typeof FirestoreReferenceImageStore
@@ -102,7 +105,10 @@ describe("FirestoreReferenceImageStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockBucket = createMockBucket();
-    service = new FirestoreReferenceImageStore({ bucket: mockBucket });
+    service = new FirestoreReferenceImageStore({
+      bucket: mockBucket,
+      minter: new SignedUrlMinter(mockBucket),
+    });
   });
 
   describe("constructor", () => {
@@ -113,6 +119,7 @@ describe("FirestoreReferenceImageStore", () => {
             bucket: undefined as unknown as ConstructorParameters<
               typeof FirestoreReferenceImageStore
             >[0]["bucket"],
+            minter: undefined as unknown as SignedUrlMinter,
           }),
       ).toThrow(
         "FirestoreReferenceImageStore requires an injected storage bucket",
@@ -122,6 +129,7 @@ describe("FirestoreReferenceImageStore", () => {
     it("accepts custom bucket name", () => {
       const svc = new FirestoreReferenceImageStore({
         bucket: mockBucket,
+        minter: new SignedUrlMinter(mockBucket),
         bucketName: "custom-bucket",
       });
       expect(svc).toBeDefined();
@@ -216,6 +224,7 @@ describe("FirestoreReferenceImageStore", () => {
 
       const svc = new FirestoreReferenceImageStore({
         bucket: mockBucket,
+        minter: new SignedUrlMinter(mockBucket),
         processor: mockInstance,
       });
 
@@ -305,6 +314,7 @@ describe("FirestoreReferenceImageStore", () => {
       const svc = new FirestoreReferenceImageStore({
         db: mockDb as unknown as FirebaseFirestore.Firestore,
         bucket: mockBucket,
+        minter: new SignedUrlMinter(mockBucket),
       });
 
       const result = await svc.deleteImage("user-1", "nonexistent");
@@ -345,6 +355,7 @@ describe("FirestoreReferenceImageStore", () => {
       const svc = new FirestoreReferenceImageStore({
         db: mockDb as unknown as FirebaseFirestore.Firestore,
         bucket,
+        minter: new SignedUrlMinter(bucket),
       });
 
       const result = await svc.deleteImage("user-1", "ref_abc");
@@ -388,6 +399,7 @@ describe("FirestoreReferenceImageStore", () => {
       const svc = new FirestoreReferenceImageStore({
         db: mockDb as unknown as FirebaseFirestore.Firestore,
         bucket,
+        minter: new SignedUrlMinter(bucket),
       });
 
       const result = await svc.deleteImage("user-1", "ref_abc");

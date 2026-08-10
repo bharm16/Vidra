@@ -1,24 +1,20 @@
 import { pipeline } from "node:stream/promises";
 import { v4 as uuidv4 } from "uuid";
-import type { Bucket, File } from "@google-cloud/storage";
+import type { Bucket } from "@google-cloud/storage";
 import { logger } from "@infrastructure/Logger";
+import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import type {
   StoredVideoAsset,
   VideoAssetStore,
   VideoAssetStream,
 } from "./types";
 
-/** Structural slice of the signed-URL ledger (kept import-free across domains). */
-interface SignedUrlRecorder {
-  record(objectPath: string, signedUrl: string): void;
-}
-
 interface GcsVideoAssetStoreOptions {
   bucket: Bucket;
+  minter: SignedUrlMinter;
   basePath: string;
   signedUrlTtlMs: number;
   cacheControl: string;
-  ledger?: SignedUrlRecorder | null;
 }
 
 function isGcsNotFound(error: unknown): boolean {
@@ -32,18 +28,18 @@ function isGcsNotFound(error: unknown): boolean {
 
 export class GcsVideoAssetStore implements VideoAssetStore {
   private readonly bucket: Bucket;
+  private readonly minter: SignedUrlMinter;
   private readonly basePath: string;
   private readonly signedUrlTtlMs: number;
   private readonly cacheControl: string;
-  private readonly ledger: SignedUrlRecorder | null;
   private readonly log = logger.child({ service: "GcsVideoAssetStore" });
 
   constructor(options: GcsVideoAssetStoreOptions) {
     this.bucket = options.bucket;
+    this.minter = options.minter;
     this.basePath = options.basePath.replace(/^\/+|\/+$/g, "");
     this.signedUrlTtlMs = options.signedUrlTtlMs;
     this.cacheControl = options.cacheControl;
-    this.ledger = options.ledger ?? null;
   }
 
   async storeFromBuffer(
@@ -51,7 +47,8 @@ export class GcsVideoAssetStore implements VideoAssetStore {
     contentType: string,
   ): Promise<StoredVideoAsset> {
     const id = uuidv4();
-    const file = this.bucket.file(this.objectPath(id));
+    const objectPath = this.objectPath(id);
+    const file = this.bucket.file(objectPath);
 
     await file.save(buffer, {
       contentType,
@@ -62,9 +59,9 @@ export class GcsVideoAssetStore implements VideoAssetStore {
       preconditionOpts: { ifGenerationMatch: 0 },
     });
 
-    const [[metadata], url] = await Promise.all([
+    const [[metadata], { url }] = await Promise.all([
       file.getMetadata(),
-      this.getSignedUrl(file),
+      this.minter.mintRead(objectPath, { ttlMs: this.signedUrlTtlMs }),
     ]);
     const resolvedSize = Number(metadata.size || 0);
     const sizeBytes =
@@ -85,7 +82,8 @@ export class GcsVideoAssetStore implements VideoAssetStore {
     contentType: string,
   ): Promise<StoredVideoAsset> {
     const id = uuidv4();
-    const file = this.bucket.file(this.objectPath(id));
+    const objectPath = this.objectPath(id);
+    const file = this.bucket.file(objectPath);
 
     await pipeline(
       stream,
@@ -98,9 +96,9 @@ export class GcsVideoAssetStore implements VideoAssetStore {
       }),
     );
 
-    const [[metadata], url] = await Promise.all([
+    const [[metadata], { url }] = await Promise.all([
       file.getMetadata(),
-      this.getSignedUrl(file),
+      this.minter.mintRead(objectPath, { ttlMs: this.signedUrlTtlMs }),
     ]);
     const resolvedSize = Number(metadata.size || 0);
     const sizeBytes =
@@ -143,14 +141,20 @@ export class GcsVideoAssetStore implements VideoAssetStore {
   }
 
   async getPublicUrl(assetId: string): Promise<string | null> {
-    const file = this.bucket.file(this.objectPath(assetId));
     try {
-      // V4 signed URLs are signed client-side without any GCS round-trip, so
-      // getSignedUrl alone cannot detect a missing object. Probe with
-      // getMetadata first; downstream (e.g. GradingService.matchPalette)
-      // relies on null-on-missing for clean short-circuit behavior.
-      await file.getMetadata();
-      return await this.getSignedUrl(file);
+      // Signed URLs are minted without a GCS round-trip, so signing alone
+      // cannot detect a missing object — mintReadIfPresent probes first.
+      // Downstream (e.g. GradingService.matchPalette) relies on
+      // null-on-missing for clean short-circuit behavior.
+      const grant = await this.minter.mintReadIfPresent(
+        this.objectPath(assetId),
+        { ttlMs: this.signedUrlTtlMs },
+      );
+      if (!grant) {
+        this.log.warn("Video asset missing in GCS", { assetId });
+        return null;
+      }
+      return grant.url;
     } catch (error) {
       if (isGcsNotFound(error)) {
         this.log.warn("Video asset missing in GCS", { assetId });
@@ -209,17 +213,5 @@ export class GcsVideoAssetStore implements VideoAssetStore {
 
   private objectPath(assetId: string): string {
     return `${this.basePath}/${assetId}`;
-  }
-
-  private async getSignedUrl(file: File): Promise<string> {
-    const expiresAt = Date.now() + this.signedUrlTtlMs;
-    const [url] = await file.getSignedUrl({
-      version: "v4",
-      action: "read",
-      expires: expiresAt,
-    });
-    // The media proxy's bucket rescue honors only grants on the ledger.
-    this.ledger?.record(file.name, url);
-    return url;
   }
 }
