@@ -4,12 +4,18 @@ set -euo pipefail
 # List all regression test files in the codebase.
 # Used for auditing: every file should test an invariant, not a specific fix.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "=== Regression Test Audit ==="
 echo ""
 
-FILES=$(find "$ROOT" -name '*.regression.test.*' -not -path '*/node_modules/*' | sort)
+# .claude/worktrees holds other agents' checkouts of this repo. Their tests are
+# not this working tree's to audit — the same exclusion the sibling
+# check-regression-test-quality.sh already makes. Anchored to $ROOT so that a
+# run from inside a worktree still audits that tree instead of pruning it away.
+FILES=$(find "$ROOT" \
+  \( -path '*/node_modules' -o -path "$ROOT/.claude/worktrees" \) -prune -o \
+  -name '*.regression.test.*' -print | sort)
 
 if [ -z "$FILES" ]; then
   echo "No regression tests found (*.regression.test.*)."
