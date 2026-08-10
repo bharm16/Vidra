@@ -1,4 +1,4 @@
-import { TAXONOMY } from "#shared/taxonomy";
+import { getParentCategory, TAXONOMY } from "#shared/taxonomy";
 
 /**
  * Category mapping patterns for video phrase role detection
@@ -220,6 +220,49 @@ export const CATEGORY_PATTERNS: Record<string, CategoryPatternConfig> = {
     role: "quality booster",
   },
 };
+
+/**
+ * Role lookup keyed by taxonomy id.
+ *
+ * CATEGORY_PATTERNS is keyed by `TAXONOMY.*.id`, so an id resolves by key.
+ * Testing the patterns in sequence instead resolves an attribute id to its
+ * parent's entry — every attribute id contains its parent's name and the parent
+ * is declared first, so `camera.movement` matches the ACTION pattern before it
+ * ever reaches its own. Keys are folded to lower case because attribute ids are
+ * camelCase (`lighting.timeOfDay`) while callers pass the id normalized.
+ */
+const ROLE_BY_CATEGORY_ID = new Map<string, string>(
+  Object.entries(CATEGORY_PATTERNS).map(
+    ([categoryId, config]): [string, string] => [
+      categoryId.toLowerCase(),
+      config.role,
+    ],
+  ),
+);
+
+/**
+ * Resolve the role declared for a taxonomy category id.
+ *
+ * An attribute id with no entry of its own falls back to its parent's role.
+ * Anything the taxonomy does not declare returns null, so the caller falls
+ * through to context-based detection exactly as it does today.
+ */
+export function getRoleForCategoryId(
+  categoryId: string | null | undefined,
+): string | null {
+  if (!categoryId) return null;
+
+  const normalized = categoryId.trim().toLowerCase();
+  const declared = ROLE_BY_CATEGORY_ID.get(normalized);
+  if (declared) return declared;
+
+  const parent = getParentCategory(normalized);
+  if (parent && parent !== normalized) {
+    return ROLE_BY_CATEGORY_ID.get(parent) ?? null;
+  }
+
+  return null;
+}
 
 /**
  * Context patterns for phrase role detection

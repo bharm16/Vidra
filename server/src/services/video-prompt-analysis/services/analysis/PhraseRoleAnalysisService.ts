@@ -2,6 +2,7 @@ import {
   CATEGORY_PATTERNS,
   CONTEXT_PATTERNS,
   DEFAULT_ROLE,
+  getRoleForCategoryId,
 } from "@services/video-prompt-analysis/config/categoryMapping";
 import { normalizeText } from "@services/video-prompt-analysis/utils/textHelpers";
 import { logger } from "@infrastructure/Logger";
@@ -26,7 +27,7 @@ export class PhraseRoleAnalysisService {
 
     // Try to map from explicit category first
     if (normalizedCategory) {
-      const categoryRole = this._mapCategory(normalizedCategory);
+      const categoryRole = getRoleForCategoryId(normalizedCategory);
       if (categoryRole) {
         logger.debug("Category mapped from explicit category", {
           input: normalizedCategory,

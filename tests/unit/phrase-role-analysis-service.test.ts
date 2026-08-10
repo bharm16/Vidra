@@ -131,13 +131,13 @@ describe("PhraseRoleAnalysisService", () => {
       expect(result).toContain("subject");
     });
 
-    it('maps "character" category to subject role', () => {
+    it('maps "subject.identity" category to subject role', () => {
       const service = createService();
       const result = service.detectVideoPhraseRole(
         "the hero",
         null,
         null,
-        "character",
+        "subject.identity",
       );
       expect(result).toContain("subject");
     });
@@ -164,13 +164,13 @@ describe("PhraseRoleAnalysisService", () => {
       expect(result).toContain("lighting");
     });
 
-    it('maps "location" category to location role', () => {
+    it('maps "environment.location" category to location role', () => {
       const service = createService();
       const result = service.detectVideoPhraseRole(
         "dark alley",
         null,
         null,
-        "location",
+        "environment.location",
       );
       expect(result).toContain("location");
     });
@@ -219,13 +219,13 @@ describe("PhraseRoleAnalysisService", () => {
       expect(result).toContain("movement");
     });
 
-    it('maps "wardrobe" category to wardrobe role', () => {
+    it('maps "subject.wardrobe" category to wardrobe role', () => {
       const service = createService();
       const result = service.detectVideoPhraseRole(
         "red jacket",
         null,
         null,
-        "wardrobe",
+        "subject.wardrobe",
       );
       expect(result).toContain("wardrobe");
     });
