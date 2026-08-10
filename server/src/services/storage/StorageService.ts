@@ -222,10 +222,10 @@ export class StorageService {
     return result;
   }
 
-  async saveFromBuffer(
+  async uploadBuffer(
     userId: string,
-    buffer: Buffer,
     type: StorageType,
+    buffer: Buffer,
     contentType: string,
     metadata: Record<string, unknown> = {},
   ): Promise<{
@@ -242,7 +242,7 @@ export class StorageService {
     }
 
     const result = await this.withTiming(
-      "saveFromBuffer",
+      "uploadBuffer",
       {
         userId,
         type,
@@ -292,117 +292,13 @@ export class StorageService {
     contentType: string;
     createdAt: string;
   }> {
-    return this.saveFromBuffer(
+    return this.uploadBuffer(
       userId,
-      buffer,
       STORAGE_TYPES.PREVIEW_IMAGE,
+      buffer,
       "image/png",
       metadata,
     );
-  }
-
-  async uploadBuffer(
-    userId: string,
-    type: StorageType,
-    buffer: Buffer,
-    contentType: string,
-    metadata: Record<string, unknown> = {},
-  ): Promise<{
-    storagePath: string;
-    mediaRef: string;
-    viewUrl: string;
-    expiresAt: string;
-    sizeBytes: number;
-    contentType: string;
-  }> {
-    if (!Object.values(STORAGE_TYPES).includes(type)) {
-      throw new Error(`Invalid storage type: ${type}`);
-    }
-
-    const result = await this.withTiming(
-      "uploadBuffer",
-      {
-        userId,
-        type,
-        contentType: normalizeContentType(contentType),
-        sizeBytes: buffer.length,
-      },
-      async () => {
-        const uploadResult = await this.uploadService.uploadBuffer(
-          buffer,
-          userId,
-          type,
-          contentType,
-          metadata,
-        );
-
-        const { viewUrl, expiresAt } = await this.signedUrlService.getViewUrl(
-          uploadResult.storagePath,
-        );
-
-        return {
-          ...uploadResult,
-          mediaRef: createOwnedMediaReference(type, uploadResult.storagePath),
-          viewUrl,
-          expiresAt,
-        };
-      },
-    );
-
-    return result;
-  }
-
-  async uploadStream(
-    userId: string,
-    type: StorageType,
-    stream: NodeJS.ReadableStream,
-    sizeBytes: number,
-    contentType: string,
-    metadata: Record<string, unknown> = {},
-  ): Promise<{
-    storagePath: string;
-    mediaRef: string;
-    viewUrl: string;
-    expiresAt: string;
-    sizeBytes: number;
-    contentType: string;
-  }> {
-    if (!Object.values(STORAGE_TYPES).includes(type)) {
-      throw new Error(`Invalid storage type: ${type}`);
-    }
-
-    const result = await this.withTiming(
-      "uploadStream",
-      {
-        userId,
-        type,
-        contentType: normalizeContentType(contentType),
-        sizeBytes,
-      },
-      async () => {
-        const uploadResult = await this.uploadService.uploadStream(
-          stream,
-          sizeBytes,
-          userId,
-          type,
-          contentType,
-          metadata,
-        );
-
-        const { viewUrl, expiresAt } = await this.signedUrlService.getViewUrl(
-          uploadResult.storagePath,
-        );
-
-        return {
-          ...uploadResult,
-          mediaRef: createOwnedMediaReference(type, uploadResult.storagePath),
-          viewUrl,
-          expiresAt,
-        };
-      },
-    );
-
-    return result;
   }
 
   async confirmUpload(
@@ -588,54 +484,6 @@ export class StorageService {
       "getStorageUsage",
       { userId },
       async () => this.retentionService.getUserStorageUsage(userId),
-      "debug",
-    );
-  }
-
-  async fileExists(storagePath: string): Promise<boolean> {
-    return this.withTiming(
-      "fileExists",
-      { storagePath },
-      async () => {
-        const file = this.bucket.file(storagePath);
-        const [exists] = await file.exists();
-        return exists;
-      },
-      "debug",
-    );
-  }
-
-  async getFileMetadata(
-    userId: string,
-    storagePath: string,
-  ): Promise<{
-    storagePath: string;
-    sizeBytes: number;
-    contentType: string | undefined;
-    createdAt: string;
-    updatedAt: string | undefined;
-    metadata: Record<string, unknown>;
-  }> {
-    if (!validatePathOwnership(storagePath, userId)) {
-      throw createForbiddenError("Unauthorized");
-    }
-
-    return this.withTiming(
-      "getFileMetadata",
-      { userId, storagePath },
-      async () => {
-        const file = this.bucket.file(storagePath);
-        const [metadata] = await file.getMetadata();
-
-        return {
-          storagePath,
-          sizeBytes: Number.parseInt(String(metadata.size ?? "0"), 10),
-          contentType: metadata.contentType,
-          createdAt: metadata.timeCreated ?? new Date().toISOString(),
-          updatedAt: metadata.updated,
-          metadata: metadata.metadata || {},
-        };
-      },
       "debug",
     );
   }

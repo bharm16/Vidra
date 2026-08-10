@@ -5,10 +5,24 @@
 import { resolveBucketName } from "@config/storageBucket";
 import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
 
-const bucketName = resolveBucketName();
+/**
+ * Resolved on first read, not at import.
+ *
+ * `resolveBucketName` throws when neither bucket env var is set, and this
+ * module is imported transitively by route registration — so resolving at
+ * module scope made merely *loading* the storage routes require bucket
+ * config. Memoising here also keeps this the single resolution for the
+ * process: the DI container reads `STORAGE_CONFIG.bucketName` rather than
+ * calling `resolveBucketName` a second time, so the name the media proxy
+ * validates against and the bucket it streams from cannot drift apart.
+ */
+let memoizedBucketName: string | null = null;
 
 export const STORAGE_CONFIG = {
-  bucketName,
+  get bucketName(): string {
+    memoizedBucketName ??= resolveBucketName();
+    return memoizedBucketName;
+  },
   paths: {
     previewImage: "users/{userId}/previews/images/{timestamp}-{hash}.webp",
     previewVideo: "users/{userId}/previews/videos/{timestamp}-{hash}.mp4",

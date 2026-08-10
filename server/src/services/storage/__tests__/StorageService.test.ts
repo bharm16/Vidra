@@ -170,19 +170,6 @@ describe("StorageService", () => {
     });
   });
 
-  it("rejects metadata requests for non-owned files with 403", async () => {
-    const { service } = buildStorageService();
-    await expect(
-      service.getFileMetadata(
-        "user123",
-        "users/otheruser/generations/123-abc.mp4",
-      ),
-    ).rejects.toMatchObject({
-      message: "Unauthorized",
-      statusCode: 403,
-    });
-  });
-
   it("deletes owned file", async () => {
     const { service, mockRetentionService } = buildStorageService();
     const result = await service.deleteFile(
@@ -259,29 +246,6 @@ describe("StorageService", () => {
     );
   });
 
-  it("checks file existence via bucket file handle", async () => {
-    const { service } = buildStorageService();
-
-    const exists = await service.fileExists(
-      "users/user123/generations/exists.mp4",
-    );
-
-    expect(exists).toBe(true);
-  });
-
-  it("returns metadata for owned files", async () => {
-    const { service } = buildStorageService();
-
-    const metadata = await service.getFileMetadata(
-      "user123",
-      "users/user123/generations/123-abc.mp4",
-    );
-
-    expect(metadata.storagePath).toBe("users/user123/generations/123-abc.mp4");
-    expect(metadata.sizeBytes).toBe(1024);
-    expect(metadata.contentType).toBe("video/mp4");
-  });
-
   it("propagates delegated upload errors", async () => {
     const { service, mockUploadService } = buildStorageService();
     mockUploadService.uploadFromUrl.mockRejectedValueOnce(
@@ -299,7 +263,7 @@ describe("StorageService", () => {
 
   it("savePreviewImage fixes the preview-image type and png mime behind the verb", async () => {
     const { service } = buildStorageService();
-    const saveSpy = vi.spyOn(service, "saveFromBuffer").mockResolvedValue({
+    const saveSpy = vi.spyOn(service, "uploadBuffer").mockResolvedValue({
       storagePath: "users/user123/previews/images/x.png",
       mediaRef: "om1.preview-image.x.png",
       viewUrl: "https://storage.googleapis.com/view",
@@ -316,8 +280,8 @@ describe("StorageService", () => {
 
     expect(saveSpy).toHaveBeenCalledWith(
       "user123",
-      buffer,
       "preview-image",
+      buffer,
       "image/png",
       { source: "scene-proxy" },
     );

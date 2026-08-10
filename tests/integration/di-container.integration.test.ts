@@ -125,10 +125,10 @@ describe("DI Container (integration)", () => {
     const userId = `api-key:ci-storage-user-${Date.now()}`;
     const otherUserId = `${userId}-other`;
 
-    const saved = await storageService.saveFromBuffer(
+    const saved = await storageService.uploadBuffer(
       userId,
-      Buffer.from("integration-image-bytes"),
       "preview-image",
+      Buffer.from("integration-image-bytes"),
       "image/png",
       { source: "integration-test" },
     );

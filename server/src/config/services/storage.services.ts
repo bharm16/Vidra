@@ -1,6 +1,6 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { Storage, type Bucket } from "@google-cloud/storage";
-import { resolveBucketName } from "@config/storageBucket";
+import { STORAGE_CONFIG } from "@services/storage/config/storageConfig";
 import { StorageService } from "@services/storage/StorageService";
 import {
   SignedUrlLedger,
@@ -19,7 +19,7 @@ import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerStorageServices(container: DIContainer): void {
   container.register("gcsStorage", () => new Storage(), []);
-  container.registerValue("gcsBucketName", resolveBucketName());
+  container.registerValue("gcsBucketName", STORAGE_CONFIG.bucketName);
   container.register(
     "gcsBucket",
     (gcsStorage: Storage, gcsBucketName: string) =>

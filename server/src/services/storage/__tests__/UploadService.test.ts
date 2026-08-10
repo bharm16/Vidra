@@ -37,7 +37,7 @@ describe("UploadService", () => {
     const { service, mockFile } = buildService();
     const buffer = Buffer.from("test");
 
-    const result = await service.uploadBuffer(
+    const result = await service.uploadFromBuffer(
       buffer,
       "user123",
       "preview-image",
