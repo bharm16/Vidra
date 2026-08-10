@@ -91,7 +91,9 @@ describe("ImageGenerationService", () => {
         skipStorage: true,
       });
 
-      await expect(service.generatePreview("cat")).rejects.toMatchObject({
+      await expect(
+        service.generatePreview("cat", { userId: "user-1" }),
+      ).rejects.toMatchObject({
         message: expect.stringContaining(
           "No available image preview providers",
         ),
@@ -126,9 +128,9 @@ describe("ImageGenerationService", () => {
         skipStorage: true,
       });
 
-      await expect(service.generatePreview("cat")).rejects.toThrow(
-        "second failure",
-      );
+      await expect(
+        service.generatePreview("cat", { userId: "user-1" }),
+      ).rejects.toThrow("second failure");
     });
 
     it("propagates asset store errors when resolving public URLs", async () => {
@@ -182,9 +184,9 @@ describe("ImageGenerationService", () => {
         assetStore,
       });
 
-      await expect(service.generatePreview("prompt")).rejects.toThrow(
-        "storage down",
-      );
+      await expect(
+        service.generatePreview("prompt", { userId: "user-1" }),
+      ).rejects.toThrow("storage down");
     });
   });
 
@@ -209,7 +211,9 @@ describe("ImageGenerationService", () => {
         skipStorage: true,
       });
 
-      const result = await service.generatePreview("  a prompt  ");
+      const result = await service.generatePreview("  a prompt  ", {
+        userId: "user-1",
+      });
 
       expect(result.imageUrl).toBe(previewResult.imageUrl);
       expect(result.providerUrl).toBe(previewResult.imageUrl);
@@ -330,7 +334,9 @@ describe("ImageGenerationService", () => {
         assetStore,
       });
 
-      const result = await service.generatePreview("prompt");
+      const result = await service.generatePreview("prompt", {
+        userId: "user-1",
+      });
 
       expect(result.imageUrl).toBe(storedAsset.url);
       expect(result.providerUrl).toBe(previewResult.imageUrl);
@@ -376,7 +382,9 @@ describe("ImageGenerationService", () => {
         skipStorage: true,
       });
 
-      const result = await service.generatePreview("prompt");
+      const result = await service.generatePreview("prompt", {
+        userId: "user-1",
+      });
 
       expect(result.imageUrl).toBe("https://cdn.example.com/secondary.webp");
       expect(result.metadata.aspectRatio).toBe("4:5");
@@ -408,6 +416,7 @@ describe("ImageGenerationService", () => {
       });
 
       const result = await service.generatePreview("prompt", {
+        userId: "user-1",
         provider: "replicate-flux-kontext-fast",
       });
 
@@ -442,7 +451,9 @@ describe("ImageGenerationService", () => {
         skipStorage: true,
       });
 
-      const result = await service.generatePreview("prompt");
+      const result = await service.generatePreview("prompt", {
+        userId: "user-1",
+      });
 
       expect(result.imageUrl).toBe("https://cdn.example.com/second.webp");
       expect(firstProvider.generatePreview).toHaveBeenCalledTimes(1);

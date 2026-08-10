@@ -5,6 +5,7 @@ export {
   resolveOwnedMediaPath,
   type OwnedMediaReference,
 } from "./OwnedMediaReference";
+export { ownerSegment } from "./OwnerSegment";
 export {
   fetchRemoteMedia,
   type FetchedRemoteMedia,

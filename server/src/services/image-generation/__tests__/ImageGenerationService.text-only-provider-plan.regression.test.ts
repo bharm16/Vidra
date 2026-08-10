@@ -126,9 +126,9 @@ describe("regression: text-only preview requests never route to img2img-only pro
             skipStorage: true,
           });
 
-          await expect(service.generatePreview(prompt)).rejects.toThrow(
-            "invalid_grant",
-          );
+          await expect(
+            service.generatePreview(prompt, { userId: "user-1" }),
+          ).rejects.toThrow("invalid_grant");
           expect(kontext.generatePreview).not.toHaveBeenCalled();
         },
       ),

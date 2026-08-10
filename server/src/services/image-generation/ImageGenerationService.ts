@@ -12,6 +12,7 @@ import type {
   ImagePreviewProviderSelection,
   ImagePreviewRequest,
 } from "./providers/types";
+import { ownerSegment } from "@services/owned-media";
 import { buildProviderPlan } from "./providers/registry";
 import type { ImageAssetStore } from "./storage";
 
@@ -51,7 +52,10 @@ export class ImageGenerationService {
       throw new Error("Prompt is required and must be a non-empty string");
     }
 
-    const userId = options.userId ?? "anonymous";
+    // Throws rather than filing the result under a shared `anonymous/`
+    // namespace. Both entry routes 401 without a uid, so this is unreachable
+    // in practice — and must stay that way to keep previews owner-scoped.
+    const userId = ownerSegment(options.userId);
     const trimmedPrompt = prompt.trim();
     const requestedProvider = options.provider ?? this.defaultProvider;
 

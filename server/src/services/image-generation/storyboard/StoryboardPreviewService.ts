@@ -8,6 +8,7 @@ import {
   EDIT_PROVIDER,
   STORYBOARD_FRAME_COUNT,
 } from "./constants";
+import { ownerSegment } from "@services/owned-media";
 import { buildEditPrompt } from "./prompts";
 import {
   computeEditSeed,
@@ -59,7 +60,7 @@ export class StoryboardPreviewService {
     }
     const storyboardPrompt = stripPreviewSections(trimmedPrompt);
 
-    const userId = request.userId ?? "anonymous";
+    const userId = ownerSegment(request.userId);
     const seedImageUrl = normalizeSeedImageUrl(request.seedImageUrl);
     const referenceImageUrl = normalizeSeedImageUrl(request.referenceImageUrl);
     const effectiveReferenceImageUrl = seedImageUrl

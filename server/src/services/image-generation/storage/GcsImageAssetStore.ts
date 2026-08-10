@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { Bucket } from "@google-cloud/storage";
 import { logger } from "@infrastructure/Logger";
 import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
-import { fetchRemoteMedia } from "@services/owned-media";
+import { fetchRemoteMedia, ownerSegment } from "@services/owned-media";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
 
 const IMAGE_CONTENT_TYPES = [
@@ -205,15 +205,7 @@ export class GcsImageAssetStore implements ImageAssetStore {
   }
 
   private objectPath(userId: string, assetId: string): string {
-    return `${this.basePath}/${this.sanitizeUserId(userId)}/${assetId}`;
-  }
-
-  private sanitizeUserId(userId: string): string {
-    const trimmed = userId.trim();
-    if (trimmed.length === 0) {
-      return "anonymous";
-    }
-    return trimmed.replace(/[^a-zA-Z0-9._:@-]/g, "_");
+    return `${this.basePath}/${ownerSegment(userId)}/${assetId}`;
   }
 
   private async uploadBuffer(

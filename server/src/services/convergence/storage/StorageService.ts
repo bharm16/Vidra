@@ -11,7 +11,7 @@
 import { Bucket } from "@google-cloud/storage";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
-import { fetchRemoteMedia } from "@services/owned-media";
+import { fetchRemoteMedia, ownerSegment } from "@services/owned-media";
 import {
   bucketNamesMatch,
   parseGcsObjectUrl,
@@ -101,19 +101,10 @@ export const CONVERGENCE_MEDIA_PURPOSES = [
 export type ConvergenceMediaPurpose =
   (typeof CONVERGENCE_MEDIA_PURPOSES)[number];
 
-function convergenceOwnerSegment(userId: string): string {
-  const normalized = userId.trim().replace(/[^a-zA-Z0-9._:@-]/g, "_");
-  if (!normalized) {
-    throw new Error("Convergence media owner is required");
-  }
-  return normalized;
-}
-
 export const isOwnedConvergenceObjectPath = (
   objectPath: string,
   userId: string,
-): boolean =>
-  objectPath.startsWith(`convergence/${convergenceOwnerSegment(userId)}/`);
+): boolean => objectPath.startsWith(`convergence/${ownerSegment(userId)}/`);
 
 // ============================================================================
 // Configuration
@@ -166,7 +157,7 @@ function buildConvergenceObjectPath(
   purpose: ConvergenceMediaPurpose,
   contentType: string,
 ): string {
-  return `convergence/${convergenceOwnerSegment(userId)}/${purpose}/${uuidv4()}.${extensionForContentType(contentType)}`;
+  return `convergence/${ownerSegment(userId)}/${purpose}/${uuidv4()}.${extensionForContentType(contentType)}`;
 }
 
 // ============================================================================

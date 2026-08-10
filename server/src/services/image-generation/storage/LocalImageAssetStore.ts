@@ -8,7 +8,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
-import { fetchRemoteMedia } from "@services/owned-media";
+import { fetchRemoteMedia, ownerSegment } from "@services/owned-media";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
 
 const IMAGE_CONTENT_TYPES = [
@@ -72,7 +72,7 @@ export class LocalImageAssetStore implements ImageAssetStore {
 
     return {
       id,
-      storagePath: `${this.sanitizeUserId(userId)}/${filename}`,
+      storagePath: `${ownerSegment(userId)}/${filename}`,
       url,
       contentType: resolvedContentType,
       createdAt: Date.now(),
@@ -100,7 +100,7 @@ export class LocalImageAssetStore implements ImageAssetStore {
 
     return {
       id,
-      storagePath: `${this.sanitizeUserId(userId)}/${filename}`,
+      storagePath: `${ownerSegment(userId)}/${filename}`,
       url,
       contentType,
       createdAt: Date.now(),
@@ -197,19 +197,11 @@ export class LocalImageAssetStore implements ImageAssetStore {
   }
 
   private resolveUserDirectory(userId: string): string {
-    return path.join(this.directory, this.sanitizeUserId(userId));
+    return path.join(this.directory, ownerSegment(userId));
   }
 
   private buildPublicUrl(userId: string, assetId: string): string {
-    return `${this.publicPath}/${this.sanitizeUserId(userId)}/${assetId}`;
-  }
-
-  private sanitizeUserId(userId: string): string {
-    const trimmed = userId.trim();
-    if (trimmed.length === 0) {
-      return "anonymous";
-    }
-    return trimmed.replace(/[^a-zA-Z0-9._:@-]/g, "_");
+    return `${this.publicPath}/${ownerSegment(userId)}/${assetId}`;
   }
 
   private getExtension(contentType: string): string {
