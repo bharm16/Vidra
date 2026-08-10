@@ -45,8 +45,8 @@ quality — see CLAUDE.md → "Span Labeling Evaluation". Bless a new baseline
 ### The loop
 
 1. **Spec** — state the change as a concrete, testable goal. Reuse the existing process
-   skills for shape: `bugfix` (invariant-first regression test) for fixes,
-   `cross-layer-change` for shared-contract edits, `new-feature` for scaffolding. A spec
+   skills when they independently apply: `cross-layer-change` for shared-contract
+   edits and `new-feature` for scaffolding. A spec
    is done when success reads as: "`npm run verify` passes **and** <explicit behavior assertion>".
 2. **Implement** — the smallest change that satisfies the spec. Surgical; match surrounding style.
 3. **Verify** — `npm run verify`. Red → return to step 2. Green → continue.

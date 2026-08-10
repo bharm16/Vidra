@@ -1,7 +1,7 @@
 /**
  * Regression: highlight-cache hash parity (migration <-> client).
  *
- * Pre-test checklist (per .claude/skills/bugfix/SKILL.md):
+ * Regression boundary:
  *   1. Failure boundary: pure function (hashString in migrations + client)
  *   2. Mock boundary: none -- pure function on both sides
  *   3. Invariant: For any string s, migration hashString(s) === client hashString(s)

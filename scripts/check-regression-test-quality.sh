@@ -12,7 +12,7 @@ set -euo pipefail
 #   Only process-external boundaries may be mocked. Everything else runs
 #   for real; if a test cannot run its collaborators for real, it sits at
 #   the wrong seam — move it up one layer (route-level, or the replay
-#   suite). See docs/architecture/BUGFIX_PROTOCOL.md.
+#   suite). See CLAUDE.md -> Test Policy.
 #
 # Client-side exemption (client/src/** and *.tsx files):
 #   For jsdom component/hook tests the network seam IS the feature's api
@@ -173,7 +173,7 @@ if [ "$VIOLATIONS" -gt 0 ]; then
   echo "If you need to mock an internal module, the test sits at the wrong"
   echo "seam — move it up one layer (HTTP route, or the replay suite)."
   echo ""
-  echo "See: docs/architecture/BUGFIX_PROTOCOL.md"
+  echo "See: CLAUDE.md -> Test Policy"
   echo ""
   echo "To add an allowed external mock pattern, edit:"
   echo "  scripts/check-regression-test-quality.sh (ALLOWED_MOCKS array)"

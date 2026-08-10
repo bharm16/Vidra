@@ -12,10 +12,6 @@ These constraints are absolute. No task justifies violating them.
 - No `container.resolve()` outside DI config files or route factory functions
 - All LLM calls go through `aiService` — never call provider clients directly
 - `continuitySessionService` may be `null` — always guard before access
-- `fix:` commits must include a `*.regression.test.ts` — pre-commit hook enforces this
-- Never mock the service being fixed in a regression test
-- Never weaken an existing test to accommodate a fix
-- Fixes should modify ≤5 files. If >5, stop and find the root cause fix
 - Never combine dependency upgrades with code changes in the same commit
 - Import only from canonical domain paths (`@services/enhancement/*`, not `@services/EnhancementService`)
 
@@ -111,11 +107,12 @@ Server DTO → feature/api/schemas.ts (Zod) → feature/api/*.ts (transform) →
 3. Add/update tests close to changed behavior.
 4. Run targeted verification first, then full checks before handoff.
 
-### 2) Bugfix Workflow
+### 2) Behavior Changes
 
-Read `.agents/skills/bugfix/SKILL.md` before every bugfix.
-
-Key principle: invariant-first regression tests at the failure boundary. Never mock the service being fixed. The pre-commit hook rejects `fix:` commits without new test blocks.
+Add or strengthen the smallest behavioral test that would have caught the issue
+when a useful test seam exists. Authentication, authorization, payment, and
+user-data changes require a negative-path test. Do not auto-load an additional
+TDD or debugging workflow merely because a change is a bugfix.
 
 ### 3) Performance Workflow
 
@@ -229,7 +226,10 @@ other gate green.
 
 If any check fails, DO NOT commit. Fix the failures first.
 
-A pre-commit hook enforces checks 1-3 automatically, plus: **fix commits must include a regression test** (the hook rejects `fix:` / `fix(` commits without new test blocks). Run `bash scripts/install-hooks.sh` to install it.
+A pre-commit hook enforces checks 1-3 automatically and checks staged regression
+tests for mock-boundary violations. Commit-message prefixes do not require new
+test blocks. Run `bash scripts/install-hooks.sh` after cloning and after pulling
+hook changes; it preserves independently installed custom hooks.
 
 ### Integration Test Gate (Service Changes)
 
@@ -299,7 +299,6 @@ These are architectural constraints, not styling opinions.
 
 - Route/service/client mapping: `docs/architecture/ROUTE_MAP.md`
 - Service boundaries: `docs/architecture/SERVICE_BOUNDARIES.md`
-- Bugfix protocol: `.agents/skills/bugfix/SKILL.md`
 - Integration tests: `.agents/skills/integration-test/SKILL.md`
 - Architecture rules: `docs/architecture/CLAUDE_CODE_RULES.md`
 - Root CLAUDE.md: `CLAUDE.md`

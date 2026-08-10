@@ -22,6 +22,21 @@ npx eslint --config config/lint/eslint.config.js . --quiet
 echo ">> Pre-commit: architecture (cycles + forbidden imports)"
 npm run arch:check
 
+# Regression tests remain subject to the mock-boundary quality check, but a
+# commit is never required to add a new regression test based on its message.
+CHANGED_REGRESSION_TESTS=()
+while IFS= read -r TEST_FILE; do
+  if [ -n "$TEST_FILE" ]; then
+    CHANGED_REGRESSION_TESTS+=("$TEST_FILE")
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACMR -- '*.regression.test.*')
+
+if [ "${#CHANGED_REGRESSION_TESTS[@]}" -gt 0 ]; then
+  echo ">> Pre-commit: regression-test mock boundaries"
+  bash "$(git rev-parse --show-toplevel)/scripts/check-regression-test-quality.sh" \
+    "${CHANGED_REGRESSION_TESTS[@]}"
+fi
+
 # Keep the local Obsidian vault (docs/ opened as a vault) in sync with the
 # architecture map. Non-blocking: a docs visualization must never stop a
 # commit, and older branches don't have the generator.

@@ -19,9 +19,6 @@ FILES=$(find "$ROOT" \
 
 if [ -z "$FILES" ]; then
   echo "No regression tests found (*.regression.test.*)."
-  echo ""
-  echo "Regression tests should be added for every bugfix."
-  echo "See: docs/architecture/BUGFIX_PROTOCOL.md"
   exit 0
 fi
 

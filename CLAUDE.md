@@ -284,13 +284,18 @@ would report.
 
 If any check fails, DO NOT commit. Fix the failures first.
 
-A pre-commit hook enforces checks 1-3 automatically. The commit-msg hook enforces the bugfix protocol: **fix commits must add a regression test in a `*.regression.test.*` file**, and any commit touching regression tests must pass the mock-boundary quality check (`scripts/check-regression-test-quality.sh`). When no correct test seam exists, declare `No-Seam: <reason>` in the commit body — the missing seam is an architecture finding, not a free pass. Run `bash scripts/install-hooks.sh` after cloning.
+A pre-commit hook enforces checks 1-3 automatically and runs the mock-boundary
+quality check (`scripts/check-regression-test-quality.sh`) when staged regression
+tests are present. Commit-message prefixes do not require new test blocks. Run
+`bash scripts/install-hooks.sh` after cloning and after pulling hook changes; the
+installer also removes obsolete project-managed hooks without touching custom hooks.
 
 ### Test Policy
 
 - **The replay golden path is the merge gate.** `npm run test:replay` runs the full authoring loop offline against recorded fixtures (see `docs/architecture/replay-mode.md`). If it is red, the product is broken no matter how green the unit suite is.
 - **Frozen domains carry no tests.** Stacks frozen by ADR-0002 run zero tests in any gate; their suites were removed 2026-07-25. Git history is the archive — if a frozen stack revives, its tests revive with it.
 - **Tests die with their code.** Deleting, freezing, or replacing a module deletes its tests in the same commit.
+- **Behavior changes use the smallest useful test seam.** Add or strengthen a test when it materially protects observable behavior. Authentication, authorization, payment, and user-data changes require a negative-path test. Do not auto-load an additional TDD or debugging workflow merely because a change is a bugfix.
 - **Server-side regression tests mock only process-external boundaries** (LLM SDKs, Firebase, Stripe, Redis, `node:*`, logging, time). If a test needs to mock an internal module, it sits at the wrong seam — move it up a layer or into the replay suite. Client-side (jsdom) tests may mock at their feature's `api/` module: that is the client's wire boundary.
 
 ### Integration Test Gate (Service Changes)
@@ -376,7 +381,6 @@ These are architectural constraints, not styling opinions.
 
 These are on-demand — loaded via skills when the task applies:
 
-- **Bugfix protocol:** `.claude/skills/bugfix/SKILL.md` — invariant-first regression tests at the failure boundary. **Read this before every bugfix.**
 - **Integration tests:** `docs/architecture/typescript/TEST_GUIDE.md` Part 3
 - **Cross-layer changes:** `.claude/skills/cross-layer-change/SKILL.md`
 - **New feature scaffolding:** `.claude/skills/new-feature/SKILL.md`
