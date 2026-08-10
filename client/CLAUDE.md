@@ -43,7 +43,7 @@ client/src/
 
 ## Architecture Pattern
 
-Follow the **preview** feature pattern in `client/src/features/preview/`:
+Follow the **studio** feature pattern in `client/src/features/studio/`:
 
 ```
 FeatureName/

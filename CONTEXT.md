@@ -42,7 +42,7 @@ The source image handed to an I2V model — the dominant control over the final 
 
 ### Preview-image persistence
 
-The storage concern of saving a draft preview image (always PNG). Owned by the `StorageService` interface via `savePreviewImage(userId, buffer, metadata?)`, which fixes the storage type (`PREVIEW_IMAGE`) and the mime behind the verb so callers never name `STORAGE_TYPES` or reach into `storage/config/`. Resolved 2026-06-08 during architecture-deepening review. Avoid synonyms: image upload, saveFromBuffer.
+The storage concern of saving an intermediate image produced by the **continuity** stack (always PNG) — quality-gate crops, scene proxies, frame bridges, style references. Owned by the `StorageService` interface via `savePreviewImage(userId, buffer, metadata?)`, which fixes the storage type (`PREVIEW_IMAGE`) and the mime behind the verb so callers never name `STORAGE_TYPES` or reach into `storage/config/`. **Not the picture path**: a creator-facing picture is persisted by `ImageGenerationService` through `ImageAssetStore` under `image-previews/`, and never touches this verb. The two are separate namespaces that happen to share the word — the verb and the `PREVIEW_IMAGE` storage type are named for the bucket prefix, not for a domain concept (see the CLAUDE.md glossary note on "Preview"). Resolved 2026-06-08 during architecture-deepening review; scoped to continuity 2026-08-10 during the Preview audit. Avoid synonyms: image upload, saveFromBuffer.
 
 ### Public span category
 
@@ -110,7 +110,7 @@ The drawing surface of the realtime sketch: where the creator lays rough strokes
 
 ### Live output
 
-The continuously updating generated image produced from the sketchpad and the prompt, and the pane that shows it. Ephemeral by definition — nothing is kept or paired durably, so a live output is not a Take and not a Preview (the Flux Schnell/Wan draft mechanism in the CLAUDE.md glossary). Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: preview, preview pane, render pane, result.
+The continuously updating generated image produced from the sketchpad and the prompt, and the pane that shows it. Ephemeral by definition — nothing is kept or paired durably, so a live output is not a Take. It is the only ephemeral generated image in the product: everything the CLAUDE.md-glossary Generation produces is persisted and becomes a node. Resolved 2026-07-09 during realtime-sketch grilling; the contrast term was "Preview" until that was retired 2026-08-10. Avoid synonyms: preview, preview pane, render pane, result.
 
 ### Realtime sketch
 

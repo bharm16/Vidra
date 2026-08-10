@@ -49,8 +49,10 @@ These terms have specific meanings in this codebase. Do not conflate them.
 | **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                                                     | `server/src/services/continuity/`                                                | `/api/continuity`                        |
 | **Convergence**               | Motion and visual convergence pipeline (iterative refinement toward target)                                 | `server/src/services/convergence/`                                               | `/api/motion`                            |
 | **Model Intelligence**        | AI-powered model recommendation based on prompt analysis                                                    | `server/src/services/model-intelligence/`                                        | `/api/model-intelligence`                |
-| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation before final render                               | `server/src/services/image-generation/`, `server/src/services/video-generation/` | `/api/preview`                           |
-| **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway                                                       | `server/src/services/video-generation/`                                          | `/api/preview` (shared routes)           |
+| **Generation**                | Producing a take — a picture (Flux Schnell, Flux Kontext) or a clip (Wan, Sora, Veo, Kling, Luma)           | `server/src/services/image-generation/`, `server/src/services/video-generation/` | `/api/preview/*` (legacy prefix)         |
+| **Draft tier**                | The cost/quality tier a creator picks per generation (`draft` \| `render`) — model selection, not lifecycle | `server/src/config/videoModelRegistry.ts`                                        | — (never crosses the wire)               |
+
+> **"Preview" is not a domain term.** It was retired 2026-08-10: nothing this pipeline produces is a draft awaiting a final. Every picture and clip is persisted, id'd, and becomes a node in the space (see `CONTEXT.md` → Take). `/api/preview/*` survives only as a URL prefix — renaming it would break media URLs already persisted inside generation records — and `client/src/features/preview/api/` keeps the name to match the route. Neither names a concept. When you mean the artifact, say picture, clip, or take; when you mean the tier, say draft or render.
 
 > **Product priority (see [ADR-0002](docs/adr/0002-vidra-is-an-authoring-tool-for-non-experts.md)).** These terms name capabilities, not equal priorities. Vidra's active product is the **authoring loop** (Span labeling, Enhancement, Optimization, plus first-frame Generation and motion). **Generation economics** (credits, payment, video-job resilience) and the **multi-shot/consistency stack** (Continuity, Convergence) are **frozen, not active** — dormant until ADR-0002 is revisited. Do not treat the frozen stacks as load-bearing when planning work.
 
@@ -312,7 +314,7 @@ PORT=0 npx vitest run tests/integration/bootstrap.integration.test.ts tests/inte
 
 1. Read relevant scope docs and impacted modules first (`client/`, `server/`, `shared/`).
 2. Implement using established patterns:
-   - Frontend: `client/src/features/preview/` style (orchestrator + hooks + api + components).
+   - Frontend: `client/src/features/studio/` style (orchestrator + hooks + api + components).
    - Backend: `server/src/services/prompt-optimization/` style (thin orchestrator + specialized services).
 3. Add/update tests close to changed behavior.
 4. Run targeted verification first, then full checks before handoff.
