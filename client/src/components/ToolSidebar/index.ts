@@ -7,6 +7,10 @@ export {
   useSidebarAssetsDomain,
 } from "./context";
 export type { SidebarDataContextValue } from "./context";
+// Only ToolSidebar's own domain types. DraftModel, KeyframeTile and VideoTier
+// belong to @features/generation-controls, which exports them directly —
+// re-exporting them here reopened, one directory shallower, the ownership hole
+// the arch fence exists to close.
 export type {
   ToolSidebarSessionsDomain,
   ToolSidebarPromptInteractionDomain,
@@ -16,7 +20,4 @@ export type {
   OptionalToolSidebarPromptInteractionDomain,
   OptionalToolSidebarGenerationDomain,
   OptionalToolSidebarAssetsDomain,
-  DraftModel,
-  KeyframeTile,
-  VideoTier,
 } from "./types";
