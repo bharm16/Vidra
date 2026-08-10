@@ -9,7 +9,7 @@ import type { Asset, AssetType } from "@shared/types/asset";
 import type {
   DraftModel,
   GenerationOverrides,
-} from "@/components/ToolSidebar/types";
+} from "@features/generation-controls";
 import { SidebarDataContextProvider } from "@/components/ToolSidebar/context";
 import { useGenerationControlsContext } from "@/features/prompt-optimizer/context/GenerationControlsContext";
 import { usePromptInsertionBus } from "@/features/prompt-optimizer/context/PromptInsertionBusContext";

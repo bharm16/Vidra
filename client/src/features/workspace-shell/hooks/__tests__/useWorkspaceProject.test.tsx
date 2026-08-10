@@ -5,7 +5,7 @@ import {
   SidebarDataContextProvider,
   type SidebarDataContextValue,
 } from "@/components/ToolSidebar/context";
-import type { ToolSidebarSessionsDomain } from "@/components/ToolSidebar/types";
+import type { ToolSidebarSessionsDomain } from "@/components/ToolSidebar";
 import { useWorkspaceProject } from "../useWorkspaceProject";
 
 const buildSessionsDomain = (

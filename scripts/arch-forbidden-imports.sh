@@ -63,7 +63,9 @@ fi
 # ── Domain type ownership: ToolSidebar/types only inside ToolSidebar ───────
 # Other client code imports domain types from @features/generation-controls.
 
-toolsidebar_types_pattern='@components/ToolSidebar/types'
+# Both `@components/*` and `@/components/*` resolve to client/src/components,
+# so a fence that names only one spelling reports green while the other is live.
+toolsidebar_types_pattern='@/?components/ToolSidebar/types'
 
 toolsidebar_hits="$(rg -n "$toolsidebar_types_pattern" --glob '!**/ToolSidebar/**' client/src || true)"
 
