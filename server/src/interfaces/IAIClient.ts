@@ -7,7 +7,6 @@
  * - DIP: Abstraction that high-level modules depend on
  */
 
-
 export interface LLMAdapterOptions {
   userMessage?: string;
   model?: string;

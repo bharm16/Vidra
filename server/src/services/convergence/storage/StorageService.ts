@@ -11,6 +11,7 @@
 import { Bucket, type File } from "@google-cloud/storage";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
+import { fetchRemoteMedia } from "@services/owned-media";
 import type { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 import { SESSION_TTL_MS } from "../constants";
 
@@ -26,45 +27,59 @@ export interface StorageService {
   /**
    * Upload a single image from temporary URL to GCS
    * @param tempUrl Temporary Replicate URL
-   * @param destination GCS path (e.g., "convergence/userId123/image.png")
+   * @param userId Authenticated owner of the new object
+   * @param purpose Fixed media purpose; callers cannot supply a bucket path
    * @returns Signed GCS URL
    */
-  upload(tempUrl: string, destination: string): Promise<string>;
+  upload(
+    tempUrl: string,
+    userId: string,
+    purpose: ConvergenceMediaPurpose,
+  ): Promise<string>;
 
   /**
    * Upload multiple images in parallel
    * @param tempUrls Array of temporary Replicate URLs
-   * @param destinationPrefix GCS path prefix (e.g., "convergence/userId123")
+   * @param userId Authenticated owner of the new objects
    * @returns Array of signed GCS URLs in same order
    */
-  uploadBatch(tempUrls: string[], destinationPrefix: string): Promise<string[]>;
+  uploadBatch(
+    tempUrls: string[],
+    userId: string,
+    purpose: ConvergenceMediaPurpose,
+  ): Promise<string[]>;
 
   /**
    * Upload a remote image URL to GCS with a generated filename
    * @param sourceUrl Remote URL to fetch
-   * @param destinationPrefix GCS path prefix (e.g., "convergence/userId123/final-frame")
+   * @param userId Authenticated owner of the new object
    * @returns Signed GCS URL
    */
-  uploadFromUrl(sourceUrl: string, destinationPrefix: string): Promise<string>;
+  uploadFromUrl(
+    sourceUrl: string,
+    userId: string,
+    purpose: ConvergenceMediaPurpose,
+  ): Promise<string>;
 
   /**
-   * Upload a buffer to GCS with a provided destination path
+   * Upload a buffer to the authenticated owner's fixed convergence namespace.
    * @param buffer File contents
-   * @param destination GCS object path
+   * @param userId Authenticated owner of the new object
    * @param contentType MIME type for the file
    * @returns Signed GCS URL
    */
   uploadBuffer(
     buffer: Buffer,
-    destination: string,
+    userId: string,
     contentType: string,
+    purpose: ConvergenceMediaPurpose,
   ): Promise<string>;
 
   /**
    * Delete images (for cleanup on session abandonment)
    * @param gcsUrls Array of signed GCS URLs to delete
    */
-  delete(gcsUrls: string[]): Promise<void>;
+  delete(userId: string, gcsUrls: string[]): Promise<void>;
 
   /**
    * Refresh a signed GCS URL for a convergence object owned by the user.
@@ -74,10 +89,27 @@ export interface StorageService {
   refreshSignedUrl?(url: string, userId: string): Promise<string | null>;
 }
 
+export const CONVERGENCE_MEDIA_PURPOSES = [
+  "upload",
+  "frame",
+  "preview",
+] as const;
+export type ConvergenceMediaPurpose =
+  (typeof CONVERGENCE_MEDIA_PURPOSES)[number];
+
+function convergenceOwnerSegment(userId: string): string {
+  const normalized = userId.trim().replace(/[^a-zA-Z0-9._:@-]/g, "_");
+  if (!normalized) {
+    throw new Error("Convergence media owner is required");
+  }
+  return normalized;
+}
+
 export const isOwnedConvergenceObjectPath = (
   objectPath: string,
   userId: string,
-): boolean => objectPath.startsWith(`convergence/${userId}/`);
+): boolean =>
+  objectPath.startsWith(`convergence/${convergenceOwnerSegment(userId)}/`);
 
 // ============================================================================
 // Configuration
@@ -94,12 +126,51 @@ const CONVERGENCE_STORAGE_CONFIG = {
   defaultContentType: "image/png",
   /** Timeout for fetching from temporary URLs (5 minutes) */
   fetchTimeoutMs: 5 * 60 * 1000,
+  /** Convergence previews can be video, but remote intake still has a ceiling. */
+  maxBytes: 500 * 1024 * 1024,
   /** Maximum concurrent uploads in a batch */
   maxConcurrentUploads: 10,
   get signedUrlTtlMs() {
     return convergenceSignedUrlTtlMs;
   },
 } as const;
+
+const CONVERGENCE_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+] as const;
+
+function extensionForContentType(contentType: string): string {
+  if (contentType === "image/jpeg") return "jpg";
+  if (contentType === "video/quicktime") return "mov";
+  return contentType.split("/")[1] || "bin";
+}
+
+function normalizeContentType(contentType: string): string {
+  return contentType.split(";", 1)[0]?.trim().toLowerCase() || "";
+}
+
+function assertConvergenceContentType(contentType: string): string {
+  const normalized = normalizeContentType(contentType);
+  if (!CONVERGENCE_CONTENT_TYPES.includes(normalized as never)) {
+    throw new Error(
+      `Invalid convergence media content type: ${normalized || "unknown"}`,
+    );
+  }
+  return normalized;
+}
+
+function buildConvergenceObjectPath(
+  userId: string,
+  purpose: ConvergenceMediaPurpose,
+  contentType: string,
+): string {
+  return `convergence/${convergenceOwnerSegment(userId)}/${purpose}/${uuidv4()}.${extensionForContentType(contentType)}`;
+}
 
 // ============================================================================
 // Implementation
@@ -130,49 +201,36 @@ export class GCSStorageService implements StorageService {
    * Upload a single image from temporary URL to GCS
    *
    * @param tempUrl - Temporary URL (e.g., from Replicate)
-   * @param destination - GCS path for the file
+   * @param userId - Authenticated owner of the new object
    * @returns Signed GCS URL
    * @throws Error if fetch or upload fails
    */
-  async upload(tempUrl: string, destination: string): Promise<string> {
+  async upload(
+    tempUrl: string,
+    userId: string,
+    purpose: ConvergenceMediaPurpose,
+  ): Promise<string> {
     const startTime = Date.now();
     this.log.debug("Starting image upload", {
-      destination,
+      userId,
+      purpose,
       tempUrlHost: this.getUrlHost(tempUrl),
     });
 
     try {
-      // Fetch image from temporary URL with timeout
-      const controller = new AbortController();
-      const timeout = setTimeout(
-        () => controller.abort(),
-        CONVERGENCE_STORAGE_CONFIG.fetchTimeoutMs,
-      );
-
-      let response: Response;
-      try {
-        response = await fetch(tempUrl, {
-          signal: controller.signal,
-          redirect: "follow",
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch image: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      // Get the image data as buffer
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      // Determine content type from response or use default
-      const contentType = this.normalizeContentType(
-        response.headers.get("content-type") ||
-          CONVERGENCE_STORAGE_CONFIG.defaultContentType,
+      const remoteMedia = await fetchRemoteMedia({
+        sourceUrl: tempUrl,
+        fieldName: "tempUrl",
+        allowedContentTypes: CONVERGENCE_CONTENT_TYPES,
+        maxBytes: CONVERGENCE_STORAGE_CONFIG.maxBytes,
+        timeoutMs: CONVERGENCE_STORAGE_CONFIG.fetchTimeoutMs,
+      });
+      const buffer = remoteMedia.buffer;
+      const contentType = assertConvergenceContentType(remoteMedia.contentType);
+      const destination = buildConvergenceObjectPath(
+        userId,
+        purpose,
+        contentType,
       );
 
       // Upload to GCS
@@ -182,7 +240,7 @@ export class GCSStorageService implements StorageService {
         metadata: {
           cacheControl: "public, max-age=31536000", // 1 year cache
           metadata: {
-            sourceUrl: tempUrl.slice(0, 200), // Truncate for metadata limits
+            sourceUrl: remoteMedia.sourceUrl.slice(0, 200),
             uploadedAt: new Date().toISOString(),
           },
         },
@@ -194,7 +252,8 @@ export class GCSStorageService implements StorageService {
       const duration = Date.now() - startTime;
 
       this.log.info("Image upload completed", {
-        destination,
+        userId,
+        purpose,
         sizeBytes: buffer.length,
         contentType,
         duration,
@@ -204,7 +263,8 @@ export class GCSStorageService implements StorageService {
     } catch (error) {
       const duration = Date.now() - startTime;
       this.log.error("Image upload failed", error as Error, {
-        destination,
+        userId,
+        purpose,
         tempUrlHost: this.getUrlHost(tempUrl),
         duration,
       });
@@ -216,13 +276,14 @@ export class GCSStorageService implements StorageService {
    * Upload multiple images in parallel
    *
    * @param tempUrls - Array of temporary URLs
-   * @param destinationPrefix - GCS path prefix (e.g., "convergence/userId123")
+   * @param userId - Authenticated owner of the new objects
    * @returns Array of signed GCS URLs in same order as input
    * @throws Error if any upload fails
    */
   async uploadBatch(
     tempUrls: string[],
-    destinationPrefix: string,
+    userId: string,
+    purpose: ConvergenceMediaPurpose,
   ): Promise<string[]> {
     if (tempUrls.length === 0) {
       return [];
@@ -231,16 +292,14 @@ export class GCSStorageService implements StorageService {
     const startTime = Date.now();
     this.log.debug("Starting batch upload", {
       count: tempUrls.length,
-      destinationPrefix,
+      userId,
+      purpose,
     });
 
     try {
-      // Generate unique destinations for each URL
-      const uploadPromises = tempUrls.map((url) => {
-        const filename = `${uuidv4()}.png`;
-        const destination = `${destinationPrefix}/${filename}`;
-        return this.upload(url, destination);
-      });
+      const uploadPromises = tempUrls.map((url) =>
+        this.upload(url, userId, purpose),
+      );
 
       // Execute all uploads in parallel
       const results = await Promise.all(uploadPromises);
@@ -248,7 +307,8 @@ export class GCSStorageService implements StorageService {
       const duration = Date.now() - startTime;
       this.log.info("Batch upload completed", {
         count: tempUrls.length,
-        destinationPrefix,
+        userId,
+        purpose,
         duration,
       });
 
@@ -257,7 +317,8 @@ export class GCSStorageService implements StorageService {
       const duration = Date.now() - startTime;
       this.log.error("Batch upload failed", error as Error, {
         count: tempUrls.length,
-        destinationPrefix,
+        userId,
+        purpose,
         duration,
       });
       throw error;
@@ -269,11 +330,10 @@ export class GCSStorageService implements StorageService {
    */
   async uploadFromUrl(
     sourceUrl: string,
-    destinationPrefix: string,
+    userId: string,
+    purpose: ConvergenceMediaPurpose,
   ): Promise<string> {
-    const sanitizedPrefix = destinationPrefix.replace(/\/+$/, "");
-    const destination = `${sanitizedPrefix}/${uuidv4()}.png`;
-    return this.upload(sourceUrl, destination);
+    return this.upload(sourceUrl, userId, purpose);
   }
 
   /**
@@ -281,12 +341,23 @@ export class GCSStorageService implements StorageService {
    */
   async uploadBuffer(
     buffer: Buffer,
-    destination: string,
+    userId: string,
     contentType: string,
+    purpose: ConvergenceMediaPurpose,
   ): Promise<string> {
     const startTime = Date.now();
-    const normalizedContentType = this.normalizeContentType(
+    const normalizedContentType = assertConvergenceContentType(
       contentType || CONVERGENCE_STORAGE_CONFIG.defaultContentType,
+    );
+    if (buffer.length > CONVERGENCE_STORAGE_CONFIG.maxBytes) {
+      throw new Error(
+        `Convergence media exceeds maximum size of ${CONVERGENCE_STORAGE_CONFIG.maxBytes} bytes`,
+      );
+    }
+    const destination = buildConvergenceObjectPath(
+      userId,
+      purpose,
+      normalizedContentType,
     );
 
     this.log.debug("Starting buffer upload", {
@@ -341,7 +412,7 @@ export class GCSStorageService implements StorageService {
    *
    * @param gcsUrls - Array of signed GCS URLs to delete
    */
-  async delete(gcsUrls: string[]): Promise<void> {
+  async delete(userId: string, gcsUrls: string[]): Promise<void> {
     if (gcsUrls.length === 0) {
       return;
     }
@@ -352,7 +423,7 @@ export class GCSStorageService implements StorageService {
     const deletePromises = gcsUrls.map(async (url) => {
       try {
         const path = this.extractObjectPath(url);
-        if (!path) {
+        if (!path || !isOwnedConvergenceObjectPath(path, userId)) {
           this.log.warn("Skipping non-matching URL in delete", { url });
           return;
         }
@@ -407,10 +478,6 @@ export class GCSStorageService implements StorageService {
   /**
    * Normalize content type by removing charset and other parameters
    */
-  private normalizeContentType(contentType: string): string {
-    return contentType.split(";")[0]?.trim().toLowerCase() || "image/png";
-  }
-
   /**
    * Generate a signed URL for a stored object.
    */

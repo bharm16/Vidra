@@ -37,7 +37,7 @@ describe("LocalImageAssetStore", () => {
 
       await expect(
         store.storeFromUrl("https://example.com/image.webp", "user-1"),
-      ).rejects.toThrow("Failed to fetch image: 500 Server Error");
+      ).rejects.toThrow("Failed to fetch remote media: 500 Server Error");
     });
 
     it("propagates filesystem write failures", async () => {

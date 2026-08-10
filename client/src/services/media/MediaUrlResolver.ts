@@ -1,11 +1,8 @@
-import { storageApi } from "@/api/storageApi";
 import {
-  getImageAssetViewUrl,
-  getVideoAssetViewUrl,
+  getImageAssetViewUrlBatch,
+  getMediaReferenceViewUrl,
 } from "@/features/preview/api/previewApi";
 import {
-  extractStorageObjectPath,
-  extractVideoContentAssetId,
   hasGcsSignedUrlParams,
   parseGcsSignedUrlExpiryMs,
   safeParseUrl,
@@ -17,6 +14,9 @@ export type MediaKind = "image" | "video";
 export interface MediaUrlRequest {
   kind: MediaKind;
   url?: string | null;
+  /** Preferred opaque media reference. */
+  mediaRef?: string | null;
+  /** Legacy references accepted during migration. */
   storagePath?: string | null;
   assetId?: string | null;
   preferFresh?: boolean;
@@ -27,6 +27,7 @@ export interface MediaUrlResult {
   expiresAt?: string | null;
   storagePath?: string | null;
   assetId?: string | null;
+  mediaRef?: string | null;
   source: "storage" | "preview" | "content" | "raw" | "unknown";
 }
 
@@ -129,6 +130,7 @@ const isFreshCache = (entry: {
 };
 
 const buildCacheKey = (req: MediaUrlRequest): string => {
+  if (req.mediaRef) return `${req.kind}|media|${req.mediaRef}`;
   if (req.storagePath) return `${req.kind}|storage|${req.storagePath}`;
   if (req.assetId) return `${req.kind}|asset|${req.assetId}`;
   if (req.url) return `${req.kind}|url|${req.url}`;
@@ -141,35 +143,13 @@ const withFallbackUrl = (
 ): MediaUrlResult =>
   result.url ? result : { ...result, url: pickSafeFallbackUrl(fallbackUrl) };
 
-const resolveViaStoragePath = async (
-  storagePath: string,
-): Promise<MediaUrlResult> => {
-  const data = (await storageApi.getViewUrl(storagePath)) as {
-    viewUrl?: string;
-    expiresAt?: string;
-    storagePath?: string;
-  };
-  if (!data?.viewUrl) {
-    return { url: null, storagePath, source: "storage" };
-  }
-  return {
-    url: data.viewUrl,
-    expiresAt: data.expiresAt ?? null,
-    storagePath: data.storagePath ?? storagePath,
-    source: "storage",
-  };
-};
-
-const resolveViaAssetId = async (
-  assetId: string,
+const resolveViaMediaReference = async (
+  reference: string,
   kind: MediaKind,
 ): Promise<MediaUrlResult> => {
-  const response =
-    kind === "video"
-      ? await getVideoAssetViewUrl(assetId)
-      : await getImageAssetViewUrl(assetId);
+  const response = await getMediaReferenceViewUrl(reference, kind);
   if (!response.success) {
-    return { url: null, assetId, source: "preview" };
+    return { url: null, mediaRef: reference, source: "unknown" };
   }
   const data = response.data;
   return {
@@ -179,10 +159,9 @@ const resolveViaAssetId = async (
         ?.expiresAt ??
       (data as { viewUrlExpiresAt?: string } | undefined)?.viewUrlExpiresAt ??
       null,
-    storagePath:
-      (data as { storagePath?: string } | undefined)?.storagePath ?? null,
-    assetId,
-    source: "preview",
+    mediaRef:
+      (data as { mediaRef?: string } | undefined)?.mediaRef ?? reference,
+    source: data?.source === "owned" ? "storage" : "preview",
   };
 };
 
@@ -222,28 +201,6 @@ const resolveFromUrl = async (
     }
   }
 
-  const objectPath = extractStorageObjectPath(trimmed);
-  if (objectPath) {
-    if (objectPath.startsWith("users/")) {
-      const resolved = await resolveViaStoragePath(objectPath);
-      if (resolved.url) return resolved;
-      return resolved;
-    }
-    const assetId = objectPath.split("/").filter(Boolean).pop() ?? null;
-    if (assetId) {
-      const resolved = await resolveViaAssetId(assetId, kind);
-      if (resolved.url) return resolved;
-      if (isBlockedRawPreviewUrl(trimmed)) return resolved;
-    }
-  }
-
-  const assetIdFromContent = extractVideoContentAssetId(trimmed);
-  if (assetIdFromContent) {
-    const resolved = await resolveViaAssetId(assetIdFromContent, "video");
-    if (resolved.url) return resolved;
-    if (isBlockedRawPreviewUrl(trimmed)) return resolved;
-  }
-
   const safeFallback = pickSafeFallbackUrl(trimmed);
   if (!safeFallback) {
     return { url: null, source: "unknown" };
@@ -258,6 +215,7 @@ export async function resolveMediaUrl(
   const resolvedReq: MediaUrlRequest = {
     ...req,
     url: trimmedUrl || null,
+    mediaRef: req.mediaRef?.trim?.() ?? null,
     storagePath: req.storagePath?.trim?.() ?? null,
     assetId: req.assetId?.trim?.() ?? null,
     preferFresh: req.preferFresh ?? true,
@@ -276,24 +234,13 @@ export async function resolveMediaUrl(
 
   const task: Promise<MediaUrlResult> = (async (): Promise<MediaUrlResult> => {
     try {
-      if (resolvedReq.storagePath) {
-        const normalizedPath = resolvedReq.storagePath;
-        if (normalizedPath.startsWith("users/")) {
-          const result = await resolveViaStoragePath(normalizedPath);
-          return withFallbackUrl(result, resolvedReq.url ?? null);
-        }
-        const assetId = normalizedPath.split("/").filter(Boolean).pop();
-        if (assetId) {
-          const result = await resolveViaAssetId(assetId, resolvedReq.kind);
-          return withFallbackUrl(result, resolvedReq.url ?? null);
-        }
-      }
-
-      if (resolvedReq.assetId) {
-        const result = await resolveViaAssetId(
-          resolvedReq.assetId,
-          resolvedReq.kind,
-        );
+      const reference =
+        resolvedReq.mediaRef ??
+        resolvedReq.storagePath ??
+        resolvedReq.assetId ??
+        null;
+      if (reference) {
+        const result = await resolveViaMediaReference(reference, resolvedReq.kind);
         return withFallbackUrl(result, resolvedReq.url ?? null);
       }
 
@@ -312,6 +259,7 @@ export async function resolveMediaUrl(
       }
       log.warn("Failed to resolve media URL", {
         kind: resolvedReq.kind,
+        mediaRef: resolvedReq.mediaRef ?? null,
         storagePath: resolvedReq.storagePath ?? null,
         assetId: resolvedReq.assetId ?? null,
         error: error instanceof Error ? error.message : String(error),
@@ -344,8 +292,6 @@ export async function resolveMediaUrl(
 // ---------------------------------------------------------------------------
 // Batch resolution for image assets (reduces N API calls to 1)
 // ---------------------------------------------------------------------------
-
-import { getImageAssetViewUrlBatch } from "@/features/preview/api/previewApi";
 
 /** Maximum consecutive not-found results before the circuit opens. */
 const CIRCUIT_BREAKER_THRESHOLD = 10;

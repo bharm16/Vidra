@@ -2,19 +2,14 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Generation } from "@features/generations/types";
 import { useGenerationMediaRefresh } from "@features/generations/hooks/useGenerationMediaRefresh";
-import {
-  resolveMediaUrl,
-  resolveImageAssetBatch,
-} from "@/services/media/MediaUrlResolver";
+import { resolveMediaUrl } from "@/services/media/MediaUrlResolver";
 
 vi.mock("@/services/media/MediaUrlResolver", () => ({
   resolveMediaUrl: vi.fn(),
-  resolveImageAssetBatch: vi.fn().mockResolvedValue(new Map()),
   isMediaCircuitOpen: vi.fn().mockReturnValue(false),
 }));
 
 const mockResolveMediaUrl = vi.mocked(resolveMediaUrl);
-const mockResolveImageAssetBatch = vi.mocked(resolveImageAssetBatch);
 
 const buildGeneration = (id: string): Generation => ({
   id,
@@ -85,7 +80,6 @@ describe("regression: gallery thumbnails re-resolve media URLs after laptop slee
 
     // Clear mocks to track only new calls after wake
     mockResolveMediaUrl.mockClear();
-    mockResolveImageAssetBatch.mockClear();
     dispatch.mockClear();
 
     mockResolveMediaUrl.mockResolvedValue({

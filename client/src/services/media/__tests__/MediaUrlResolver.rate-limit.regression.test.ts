@@ -1,20 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveMediaUrl } from "../MediaUrlResolver";
-import { storageApi } from "@/api/storageApi";
-import {
-  getImageAssetViewUrl,
-  getVideoAssetViewUrl,
-} from "@/features/preview/api/previewApi";
-
-vi.mock("@/api/storageApi", () => ({
-  storageApi: {
-    getViewUrl: vi.fn(),
-  },
-}));
+import { getMediaReferenceViewUrl } from "@/features/preview/api/previewApi";
 
 vi.mock("@/features/preview/api/previewApi", () => ({
-  getImageAssetViewUrl: vi.fn(),
-  getVideoAssetViewUrl: vi.fn(),
+  getMediaReferenceViewUrl: vi.fn(),
+  getImageAssetViewUrlBatch: vi.fn(),
 }));
 
 describe("regression: media URL resolver retries after transient rate limits", () => {
@@ -27,14 +17,15 @@ describe("regression: media URL resolver retries after transient rate limits", (
       status: 429,
     });
 
-    (getImageAssetViewUrl as ReturnType<typeof vi.fn>)
+    (getMediaReferenceViewUrl as ReturnType<typeof vi.fn>)
       .mockRejectedValueOnce(rateLimitedError)
       .mockResolvedValueOnce({
         success: true,
         data: {
           viewUrl: "https://storage.example.com/image-previews/asset-429",
           expiresAt: new Date(Date.now() + 60_000).toISOString(),
-          assetId: "asset-429",
+          mediaRef: "asset-429",
+          source: "preview",
         },
       });
 
@@ -50,9 +41,7 @@ describe("regression: media URL resolver retries after transient rate limits", (
       assetId: "asset-429",
     });
 
-    expect(storageApi.getViewUrl).not.toHaveBeenCalled();
-    expect(getVideoAssetViewUrl).not.toHaveBeenCalled();
-    expect(getImageAssetViewUrl).toHaveBeenCalledTimes(2);
+    expect(getMediaReferenceViewUrl).toHaveBeenCalledTimes(2);
     expect(result.url).toBe(
       "https://storage.example.com/image-previews/asset-429",
     );

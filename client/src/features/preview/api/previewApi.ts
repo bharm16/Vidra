@@ -284,6 +284,19 @@ export async function getVideoAssetViewUrl(
   return MediaViewUrlResponseSchema.parse(payload);
 }
 
+/** Resolve an opaque or legacy owned-media reference through one endpoint. */
+export async function getMediaReferenceViewUrl(
+  reference: string,
+  kind: "image" | "video",
+): Promise<MediaViewUrlResponse> {
+  requireNonEmptyString(reference, "reference");
+  const params = new URLSearchParams({ ref: reference.trim(), kind });
+  const payload = (await apiClient.get(
+    `/preview/media/view?${params.toString()}`,
+  )) as unknown;
+  return MediaViewUrlResponseSchema.parse(payload);
+}
+
 export type BatchViewUrlItem = z.infer<typeof MediaViewUrlBatchItemSchema>;
 
 export type BatchViewUrlResponse = z.infer<

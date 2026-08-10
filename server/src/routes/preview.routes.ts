@@ -20,6 +20,7 @@ import { createImageUploadHandler } from "./preview/handlers/imageUpload";
 import { createImageAssetViewHandler } from "./preview/handlers/imageAssetView";
 import { createImageAssetViewBatchHandler } from "./preview/handlers/imageAssetViewBatch";
 import { createVideoAssetViewHandler } from "./preview/handlers/videoAssetView";
+import { createMediaReferenceViewHandler } from "./preview/handlers/mediaReferenceView";
 import { createFaceSwapPreviewHandler } from "./preview/handlers/faceSwap";
 
 const upload = createDiskUpload({
@@ -62,6 +63,8 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   const imageAssetViewBatchHandler =
     createImageAssetViewBatchHandler(resolvedServices);
   const videoAssetViewHandler = createVideoAssetViewHandler(resolvedServices);
+  const mediaReferenceViewHandler =
+    createMediaReferenceViewHandler(resolvedServices);
   const faceSwapPreviewHandler = createFaceSwapPreviewHandler(resolvedServices);
 
   router.post("/generate", asyncHandler(imageGenerateHandler));
@@ -77,6 +80,7 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   router.get("/image/view", asyncHandler(imageAssetViewHandler));
   router.post("/image/view-batch", asyncHandler(imageAssetViewBatchHandler));
   router.get("/video/view", asyncHandler(videoAssetViewHandler));
+  router.get("/media/view", asyncHandler(mediaReferenceViewHandler));
   router.get("/video/availability", asyncHandler(videoAvailabilityHandler));
   router.post("/face-swap", asyncHandler(faceSwapPreviewHandler));
   router.post("/video/generate", asyncHandler(videoGenerateHandler));

@@ -37,9 +37,6 @@ interface AuthenticatedRequest extends Request {
   user?: { uid: string };
 }
 
-const sanitizeFilename = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, "_");
-
 export function createConvergenceMediaRoutes(
   getStorageService: () => GCSStorageService,
   bucket: Bucket,
@@ -72,15 +69,14 @@ export function createConvergenceMediaRoutes(
         });
       }
 
-      const safeName = sanitizeFilename(file.originalname || "upload.png");
-      const destination = `convergence/${userId}/uploads/${Date.now()}-${safeName}`;
       let url: string;
       try {
         const buffer = await readUploadBuffer(file);
         url = await storageService.uploadBuffer(
           buffer,
-          destination,
+          userId,
           file.mimetype || "image/png",
+          "upload",
         );
       } finally {
         await cleanupUploadFile(file);
@@ -88,7 +84,6 @@ export function createConvergenceMediaRoutes(
 
       logger.info("Convergence image uploaded", {
         userId,
-        destination,
         sizeBytes: file.size,
         contentType: file.mimetype,
       });

@@ -86,6 +86,9 @@ function createMockBucket(name = "test-bucket") {
     file: vi.fn().mockReturnValue({
       save: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
+      getSignedUrl: vi
+        .fn()
+        .mockResolvedValue(["https://storage.googleapis.com/test-bucket/signed"]),
     }),
   } as unknown as ConstructorParameters<
     typeof FirestoreReferenceImageStore
@@ -152,10 +155,12 @@ describe("FirestoreReferenceImageStore", () => {
 
       expect(result.userId).toBe("user-1");
       expect(result.id).toMatch(/^ref_/);
-      expect(result.imageUrl).toContain("firebasestorage.googleapis.com");
-      expect(result.thumbnailUrl).toContain("firebasestorage.googleapis.com");
-      expect(result.storagePath).toContain("users/user-1/reference-images/");
-      expect(result.thumbnailPath).toContain("_thumb.jpg");
+      expect(result.imageUrl).toContain("storage.googleapis.com");
+      expect(result.thumbnailUrl).toContain("storage.googleapis.com");
+      expect(result.imageRef).toBe(result.id);
+      expect(result.thumbnailRef).toBe(`${result.id}:thumbnail`);
+      expect(result).not.toHaveProperty("storagePath");
+      expect(result).not.toHaveProperty("thumbnailPath");
       expect(result.metadata.width).toBe(1024);
       expect(result.metadata.height).toBe(768);
       expect(result.metadata.contentType).toBe("image/jpeg");
@@ -192,7 +197,9 @@ describe("FirestoreReferenceImageStore", () => {
       const bucketAny = mockBucket as unknown as {
         file: ReturnType<typeof vi.fn>;
       };
-      expect(bucketAny.file).toHaveBeenCalledTimes(2);
+      // Two writes plus two fresh presentation-url mints. Neither Firestore
+      // document receives a Firebase bearer-token URL.
+      expect(bucketAny.file).toHaveBeenCalledTimes(4);
     });
 
     it("propagates processor errors", async () => {
@@ -220,11 +227,14 @@ describe("FirestoreReferenceImageStore", () => {
 
   describe("createFromUrl", () => {
     it("fetches URL and delegates to createFromBuffer", async () => {
-      const mockResponse = {
-        ok: true,
-        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(100)),
-      };
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse));
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(new Uint8Array(100), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
+      );
 
       const result = await service.createFromUrl(
         "user-1",
@@ -248,7 +258,7 @@ describe("FirestoreReferenceImageStore", () => {
 
       await expect(
         service.createFromUrl("user-1", "https://example.com/missing.jpg"),
-      ).rejects.toThrow("Failed to fetch reference image: 404 Not Found");
+      ).rejects.toThrow("Failed to fetch remote media: 404 Not Found");
 
       vi.unstubAllGlobals();
     });
@@ -256,10 +266,11 @@ describe("FirestoreReferenceImageStore", () => {
     it("preserves custom source when provided", async () => {
       vi.stubGlobal(
         "fetch",
-        vi.fn().mockResolvedValue({
-          ok: true,
-          arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(100)),
-        }),
+        vi.fn().mockResolvedValue(
+          new Response(new Uint8Array(100), {
+            headers: { "content-type": "image/jpeg" },
+          }),
+        ),
       );
 
       const result = await service.createFromUrl(

@@ -164,10 +164,10 @@ export const ReferenceImageSchema = z
   .object({
     id: z.string(),
     userId: z.string(),
+    imageRef: z.string(),
+    thumbnailRef: z.string(),
     imageUrl: z.string(),
     thumbnailUrl: z.string(),
-    storagePath: z.string(),
-    thumbnailPath: z.string(),
     label: z.string().nullable().optional(),
     metadata: ReferenceImageMetadataSchema,
     createdAt: z.string(),

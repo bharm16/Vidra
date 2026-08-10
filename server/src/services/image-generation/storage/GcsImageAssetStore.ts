@@ -8,7 +8,16 @@
 import { v4 as uuidv4 } from "uuid";
 import type { Bucket, File } from "@google-cloud/storage";
 import { logger } from "@infrastructure/Logger";
+import { fetchRemoteMedia } from "@services/owned-media";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
+
+const IMAGE_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 /** Structural slice of the signed-URL ledger (kept import-free across domains). */
 interface SignedUrlRecorder {
@@ -51,22 +60,19 @@ export class GcsImageAssetStore implements ImageAssetStore {
       sourceUrl: sourceUrl.slice(0, 100),
     });
 
-    const response = await fetch(sourceUrl);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch image: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const resolvedContentType =
-      contentType || response.headers.get("content-type") || "image/webp";
+    const remoteMedia = await fetchRemoteMedia({
+      sourceUrl,
+      fieldName: "sourceUrl",
+      allowedContentTypes: IMAGE_CONTENT_TYPES,
+      maxBytes: MAX_IMAGE_BYTES,
+    });
+    const resolvedContentType = contentType || remoteMedia.contentType;
 
     await this.uploadBuffer(
       objectPath,
-      buffer,
+      remoteMedia.buffer,
       resolvedContentType,
-      sourceUrl.slice(0, 500),
+      remoteMedia.sourceUrl.slice(0, 500),
     );
 
     const file = this.bucket.file(objectPath);

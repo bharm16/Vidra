@@ -235,6 +235,9 @@ function generateHomeNote(domains: Map<string, string[]>): void {
     "npm run architecture:map:write && npm run obsidian:vault",
     "```",
     "",
+    "The hand-written half of the vault lives in `vault/` and is not generated:",
+    "[[vault/Vidra Vault Index|Vidra Vault Index]].",
+    "",
     "## Service domains (DI registration files)",
     "",
     ...[...domains.keys()].sort().map((d) => {

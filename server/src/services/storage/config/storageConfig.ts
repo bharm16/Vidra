@@ -19,17 +19,6 @@ export const STORAGE_CONFIG = {
     view: SIGNED_URL_TTL_MS.view,
     download: SIGNED_URL_TTL_MS.download,
   },
-  retention: {
-    previewImage: 7,
-    previewVideo: 14,
-    generation: 30,
-  },
-  retentionByPlan: {
-    free: { previewImage: 7, previewVideo: 14, generation: 30 },
-    explorer: { previewImage: 30, previewVideo: 30, generation: 90 },
-    creator: { previewImage: 60, previewVideo: 60, generation: 180 },
-    agency: { previewImage: 90, previewVideo: 90, generation: 365 },
-  },
   maxFileSize: {
     previewImage: 10 * 1024 * 1024,
     previewVideo: 500 * 1024 * 1024,

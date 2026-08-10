@@ -78,7 +78,7 @@ describe("GcsImageAssetStore", () => {
 
       await expect(
         store.storeFromUrl("https://example.com/missing.webp", "user-1"),
-      ).rejects.toThrow("Failed to fetch image: 404 Not Found");
+      ).rejects.toThrow("Failed to fetch remote media: 404 Not Found");
     });
 
     it("retries uploads when the GCS stream is destroyed", async () => {

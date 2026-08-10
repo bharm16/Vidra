@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { GCSStorageService } from "../StorageService";
+import {
+  GCSStorageService,
+  isOwnedConvergenceObjectPath,
+} from "../StorageService";
 import { SignedUrlLedger } from "@services/storage/services/SignedUrlLedger";
 
 const OBJECT_PATH = "convergence/user-1/frames/frame.png";
@@ -9,6 +12,21 @@ const SIGNED_URL =
   `?X-Goog-Signature=${SIGNATURE}`;
 
 describe("GCSStorageService signed URL ledger", () => {
+  it("uses the same owner segment for object construction authorization", () => {
+    expect(
+      isOwnedConvergenceObjectPath(
+        "convergence/user_with_slash/frame/object.png",
+        "user/with/slash",
+      ),
+    ).toBe(true);
+    expect(
+      isOwnedConvergenceObjectPath(
+        "convergence/another-user/frame/object.png",
+        "user/with/slash",
+      ),
+    ).toBe(false);
+  });
+
   it("records the grant when it mints a convergence media URL", async () => {
     const grants = new Map<string, unknown>();
     const ledger = new SignedUrlLedger({
@@ -34,8 +52,9 @@ describe("GCSStorageService signed URL ledger", () => {
 
     await storage.uploadBuffer(
       Buffer.from([0x89, 0x50, 0x4e, 0x47]),
-      OBJECT_PATH,
+      "user-1",
       "image/png",
+      "frame",
     );
 
     await expect(ledger.isMintedGrant(OBJECT_PATH, SIGNATURE)).resolves.toBe(

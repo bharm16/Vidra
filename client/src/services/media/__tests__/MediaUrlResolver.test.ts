@@ -1,20 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveMediaUrl } from "../MediaUrlResolver";
-import { storageApi } from "@/api/storageApi";
-import {
-  getImageAssetViewUrl,
-  getVideoAssetViewUrl,
-} from "@/features/preview/api/previewApi";
-
-vi.mock("@/api/storageApi", () => ({
-  storageApi: {
-    getViewUrl: vi.fn(),
-  },
-}));
+import { getMediaReferenceViewUrl } from "@/features/preview/api/previewApi";
 
 vi.mock("@/features/preview/api/previewApi", () => ({
-  getImageAssetViewUrl: vi.fn(),
-  getVideoAssetViewUrl: vi.fn(),
+  getMediaReferenceViewUrl: vi.fn(),
+  getImageAssetViewUrlBatch: vi.fn(),
 }));
 
 describe("MediaUrlResolver", () => {
@@ -22,37 +12,40 @@ describe("MediaUrlResolver", () => {
     vi.clearAllMocks();
   });
 
-  it("resolves user storage paths via storage API", async () => {
-    (storageApi.getViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
-      viewUrl: "https://storage.example.com/users/user123/preview.webp",
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-      storagePath: "users/user123/previews/images/preview.webp",
+  it("resolves opaque owned-media references through one endpoint", async () => {
+    (getMediaReferenceViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
+      success: true,
+      data: {
+        viewUrl: "https://storage.example.com/users/user123/preview.webp",
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        mediaRef: "om1.preview-image.preview.webp",
+        source: "owned",
+      },
     });
 
     const result = await resolveMediaUrl({
       kind: "image",
-      storagePath: "users/user123/previews/images/preview.webp",
+      mediaRef: "om1.preview-image.preview.webp",
     });
 
-    expect(storageApi.getViewUrl).toHaveBeenCalledWith(
-      "users/user123/previews/images/preview.webp",
+    expect(getMediaReferenceViewUrl).toHaveBeenCalledWith(
+      "om1.preview-image.preview.webp",
+      "image",
     );
     expect(result.url).toBe(
       "https://storage.example.com/users/user123/preview.webp",
     );
     expect(result.source).toBe("storage");
-    expect(result.storagePath).toBe(
-      "users/user123/previews/images/preview.webp",
-    );
+    expect(result.mediaRef).toBe("om1.preview-image.preview.webp");
   });
 
-  it("refreshes expired signed URLs via preview asset view", async () => {
-    (getVideoAssetViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
+  it("refreshes a preview asset by its explicit reference", async () => {
+    (getMediaReferenceViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: {
         viewUrl: "https://storage.example.com/video-previews/asset-123",
         expiresAt: new Date(Date.now() + 60_000).toISOString(),
-        assetId: "asset-123",
+        mediaRef: "asset-123",
         source: "preview",
       },
     });
@@ -63,9 +56,10 @@ describe("MediaUrlResolver", () => {
     const result = await resolveMediaUrl({
       kind: "video",
       url: expiredUrl,
+      mediaRef: "asset-123",
     });
 
-    expect(getVideoAssetViewUrl).toHaveBeenCalledWith("asset-123");
+    expect(getMediaReferenceViewUrl).toHaveBeenCalledWith("asset-123", "video");
     expect(result.url).toBe(
       "https://storage.example.com/video-previews/asset-123",
     );
@@ -82,38 +76,26 @@ describe("MediaUrlResolver", () => {
       preferFresh: false,
     });
 
-    expect(getImageAssetViewUrl).not.toHaveBeenCalled();
+    expect(getMediaReferenceViewUrl).not.toHaveBeenCalled();
     // GCS signed URLs are rewritten through the media proxy to avoid ORB
     expect(result.url).toContain("/api/storage/proxy?url=");
     expect(result.url).toContain(encodeURIComponent("storage.googleapis.com"));
     expect(result.source).toBe("raw");
   });
 
-  it("resolves local preview content URLs that embed user storage paths", async () => {
-    (storageApi.getViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
-      viewUrl:
-        "https://storage.example.com/users/user123/generations/generated.mp4",
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-      storagePath: "users/user123/generations/generated.mp4",
-    });
-
+  it("does not extract a storage path from protected preview content URLs", async () => {
     const result = await resolveMediaUrl({
       kind: "video",
       url: "/api/preview/video/content/users/user123/generations/generated.mp4",
     });
 
-    expect(storageApi.getViewUrl).toHaveBeenCalledWith(
-      "users/user123/generations/generated.mp4",
-    );
-    expect(getVideoAssetViewUrl).not.toHaveBeenCalled();
-    expect(result.url).toBe(
-      "https://storage.example.com/users/user123/generations/generated.mp4",
-    );
-    expect(result.source).toBe("storage");
+    expect(getMediaReferenceViewUrl).not.toHaveBeenCalled();
+    expect(result.url).toBeNull();
+    expect(result.source).toBe("unknown");
   });
 
   it("does not fall back to protected preview content URL when asset lookup fails", async () => {
-    (getVideoAssetViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (getMediaReferenceViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: false,
       error: "Video asset not found",
     });
@@ -124,29 +106,30 @@ describe("MediaUrlResolver", () => {
       assetId: "2b540a8b-e96b-4810-bfd2-8a9e9b1fade6",
     });
 
-    expect(getVideoAssetViewUrl).toHaveBeenCalledWith(
+    expect(getMediaReferenceViewUrl).toHaveBeenCalledWith(
       "2b540a8b-e96b-4810-bfd2-8a9e9b1fade6",
+      "video",
     );
     expect(result.url).toBeNull();
-    expect(result.source).toBe("preview");
+    expect(result.source).toBe("unknown");
   });
 
-  it("does not attempt preview-asset lookup when users storage path resolution fails", async () => {
-    (storageApi.getViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
-      viewUrl: undefined,
-      storagePath: "users/user123/generations/generated.mp4",
+  it("sends a legacy path to the server migration boundary without parsing it", async () => {
+    (getMediaReferenceViewUrl as ReturnType<typeof vi.fn>).mockResolvedValue({
+      success: false,
+      error: "Video asset not found",
     });
 
     const result = await resolveMediaUrl({
       kind: "video",
-      url: "/api/preview/video/content/users/user123/generations/generated.mp4",
+      storagePath: "users/user123/generations/generated.mp4",
     });
 
-    expect(storageApi.getViewUrl).toHaveBeenCalledWith(
+    expect(getMediaReferenceViewUrl).toHaveBeenCalledWith(
       "users/user123/generations/generated.mp4",
+      "video",
     );
-    expect(getVideoAssetViewUrl).not.toHaveBeenCalled();
     expect(result.url).toBeNull();
-    expect(result.source).toBe("storage");
+    expect(result.source).toBe("unknown");
   });
 });

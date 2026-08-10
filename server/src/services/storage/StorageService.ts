@@ -6,6 +6,10 @@ import { RetentionService } from "./services/RetentionService";
 import { safeUrlHost } from "@shared/utils/url";
 import { logger } from "@infrastructure/Logger";
 import {
+  createOwnedMediaReference,
+  resolveOwnedMediaPath,
+} from "@services/owned-media";
+import {
   STORAGE_CONFIG,
   STORAGE_TYPES,
   resolveStorageTypeKey,
@@ -13,6 +17,7 @@ import {
 } from "./config/storageConfig";
 import {
   generateStoragePath,
+  getTypeFromPath,
   storagePathForBasename,
   validatePathOwnership,
 } from "./utils/pathUtils";
@@ -118,6 +123,7 @@ export class StorageService {
   ): Promise<{
     uploadUrl: string;
     storagePath: string;
+    mediaRef: string;
     expiresAt: string;
     maxSizeBytes: number;
   }> {
@@ -158,6 +164,7 @@ export class StorageService {
         return {
           uploadUrl,
           storagePath: path,
+          mediaRef: createOwnedMediaReference(type, path),
           expiresAt,
           maxSizeBytes: maxSize,
         };
@@ -174,6 +181,7 @@ export class StorageService {
     metadata: Record<string, unknown> = {},
   ): Promise<{
     storagePath: string;
+    mediaRef: string;
     viewUrl: string;
     expiresAt: string;
     sizeBytes: number;
@@ -205,6 +213,7 @@ export class StorageService {
 
         return {
           ...uploadResult,
+          mediaRef: createOwnedMediaReference(type, uploadResult.storagePath),
           viewUrl,
           expiresAt,
         };
@@ -222,6 +231,7 @@ export class StorageService {
     metadata: Record<string, unknown> = {},
   ): Promise<{
     storagePath: string;
+    mediaRef: string;
     viewUrl: string;
     expiresAt: string;
     sizeBytes: number;
@@ -255,6 +265,7 @@ export class StorageService {
 
         return {
           ...uploadResult,
+          mediaRef: createOwnedMediaReference(type, uploadResult.storagePath),
           viewUrl,
           expiresAt,
         };
@@ -275,6 +286,7 @@ export class StorageService {
     metadata: Record<string, unknown> = {},
   ): Promise<{
     storagePath: string;
+    mediaRef: string;
     viewUrl: string;
     expiresAt: string;
     sizeBytes: number;
@@ -298,6 +310,7 @@ export class StorageService {
     metadata: Record<string, unknown> = {},
   ): Promise<{
     storagePath: string;
+    mediaRef: string;
     viewUrl: string;
     expiresAt: string;
     sizeBytes: number;
@@ -330,6 +343,7 @@ export class StorageService {
 
         return {
           ...uploadResult,
+          mediaRef: createOwnedMediaReference(type, uploadResult.storagePath),
           viewUrl,
           expiresAt,
         };
@@ -348,6 +362,7 @@ export class StorageService {
     metadata: Record<string, unknown> = {},
   ): Promise<{
     storagePath: string;
+    mediaRef: string;
     viewUrl: string;
     expiresAt: string;
     sizeBytes: number;
@@ -381,6 +396,7 @@ export class StorageService {
 
         return {
           ...uploadResult,
+          mediaRef: createOwnedMediaReference(type, uploadResult.storagePath),
           viewUrl,
           expiresAt,
         };
@@ -426,6 +442,37 @@ export class StorageService {
       },
       "debug",
     );
+  }
+
+  /**
+   * Resolve a client-facing owned-media reference for the authenticated owner.
+   * New callers receive `om1.*` references; raw paths remain accepted only to
+   * preserve already-persisted sessions during migration.
+   */
+  async getOwnedMediaViewUrl(
+    userId: string,
+    reference: string,
+  ): Promise<{ viewUrl: string; expiresAt: string; mediaRef?: string }> {
+    const normalizedReference = reference.trim();
+    const storagePath =
+      resolveOwnedMediaPath(userId, normalizedReference) ?? normalizedReference;
+    if (!validatePathOwnership(storagePath, userId)) {
+      throw createForbiddenError(
+        "Unauthorized - cannot access media belonging to other users",
+      );
+    }
+
+    const type = getTypeFromPath(storagePath);
+    const result = await this.withTiming(
+      "getOwnedMediaViewUrl",
+      { userId, reference: normalizedReference },
+      async () => this.signedUrlService.getViewUrl(storagePath),
+      "debug",
+    );
+    return {
+      ...result,
+      ...(type ? { mediaRef: createOwnedMediaReference(type, storagePath) } : {}),
+    };
   }
 
   /**

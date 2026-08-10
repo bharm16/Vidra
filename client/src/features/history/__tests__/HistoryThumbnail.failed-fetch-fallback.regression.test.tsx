@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { HistoryThumbnail } from "../components/HistoryThumbnail";
-import { getImageAssetViewUrl } from "@/features/preview/api/previewApi";
+import { getMediaReferenceViewUrl } from "@/features/preview/api/previewApi";
 
 /**
  * Regression: session thumbnails whose asset fetch errors (e.g. storage 403)
@@ -17,19 +17,12 @@ import { getImageAssetViewUrl } from "@/features/preview/api/previewApi";
  * itself falls back on error) — never a permanently broken <img>.
  */
 
-vi.mock("@/api/storageApi", () => ({
-  storageApi: {
-    getViewUrl: vi.fn(),
-  },
-}));
-
 vi.mock("@/features/preview/api/previewApi", () => ({
-  getImageAssetViewUrl: vi.fn(),
-  getVideoAssetViewUrl: vi.fn(),
+  getMediaReferenceViewUrl: vi.fn(),
   getImageAssetViewUrlBatch: vi.fn(),
 }));
 
-const mockedGetImageAssetViewUrl = vi.mocked(getImageAssetViewUrl);
+const mockedGetMediaReferenceViewUrl = vi.mocked(getMediaReferenceViewUrl);
 
 /**
  * A view-url response whose signed URL expires inside MediaUrlResolver's
@@ -41,13 +34,19 @@ const staleSignedResponse = (
   viewUrl: string,
 ): {
   success: true;
-  data: { viewUrl: string; expiresAt: string; assetId: string };
+  data: {
+    viewUrl: string;
+    expiresAt: string;
+    mediaRef: string;
+    source: "preview";
+  };
 } => ({
   success: true,
   data: {
     viewUrl,
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
-    assetId,
+    mediaRef: assetId,
+    source: "preview",
   },
 });
 
@@ -83,7 +82,7 @@ describe("regression: failed thumbnail fetches fall back to the letter avatar", 
   it("shows the letter avatar when the refresh attempt fails transiently (no new URL ever reaches the img)", async () => {
     // NOTE: unique asset id per test — MediaUrlResolver caches module-wide.
     const signedUrl = "https://media.example.com/thumbs/dead-refresh.png";
-    mockedGetImageAssetViewUrl
+    mockedGetMediaReferenceViewUrl
       .mockResolvedValueOnce(
         staleSignedResponse("asset-dead-refresh", signedUrl),
       )
@@ -107,7 +106,7 @@ describe("regression: failed thumbnail fetches fall back to the letter avatar", 
 
   it("shows the letter avatar when the refresh resolves the same dead URL", async () => {
     const signedUrl = "https://media.example.com/thumbs/same-url.png";
-    mockedGetImageAssetViewUrl
+    mockedGetMediaReferenceViewUrl
       .mockResolvedValueOnce(staleSignedResponse("asset-same-url", signedUrl))
       .mockResolvedValueOnce(staleSignedResponse("asset-same-url", signedUrl));
 
@@ -127,7 +126,7 @@ describe("regression: failed thumbnail fetches fall back to the letter avatar", 
   it("retries a genuinely new URL once, then falls back when that URL errors too", async () => {
     const firstUrl = "https://media.example.com/thumbs/retry-first.png";
     const secondUrl = "https://media.example.com/thumbs/retry-second.png";
-    mockedGetImageAssetViewUrl
+    mockedGetMediaReferenceViewUrl
       .mockResolvedValueOnce(staleSignedResponse("asset-retry", firstUrl))
       .mockResolvedValueOnce(staleSignedResponse("asset-retry", secondUrl));
 
@@ -152,7 +151,7 @@ describe("regression: failed thumbnail fetches fall back to the letter avatar", 
 
   it("keeps the tile frame identical between thumbnail and fallback (no layout shift)", async () => {
     const signedUrl = "https://media.example.com/thumbs/layout.png";
-    mockedGetImageAssetViewUrl
+    mockedGetMediaReferenceViewUrl
       .mockResolvedValueOnce(staleSignedResponse("asset-layout", signedUrl))
       .mockRejectedValueOnce(transientError(503));
 

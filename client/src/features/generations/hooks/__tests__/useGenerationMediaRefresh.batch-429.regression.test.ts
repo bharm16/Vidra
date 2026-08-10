@@ -2,19 +2,14 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Generation } from "@features/generations/types";
 import { useGenerationMediaRefresh } from "@features/generations/hooks/useGenerationMediaRefresh";
-import {
-  resolveMediaUrl,
-  resolveImageAssetBatch,
-} from "@/services/media/MediaUrlResolver";
+import { resolveMediaUrl } from "@/services/media/MediaUrlResolver";
 
 vi.mock("@/services/media/MediaUrlResolver", () => ({
   resolveMediaUrl: vi.fn(),
-  resolveImageAssetBatch: vi.fn().mockResolvedValue(new Map()),
   isMediaCircuitOpen: vi.fn().mockReturnValue(false),
 }));
 
 const mockResolveMediaUrl = vi.mocked(resolveMediaUrl);
-const mockResolveImageAssetBatch = vi.mocked(resolveImageAssetBatch);
 
 const buildGeneration = (id: string): Generation => ({
   id,
@@ -27,11 +22,11 @@ const buildGeneration = (id: string): Generation => ({
   completedAt: Date.now(),
   mediaType: "image",
   mediaUrls: [`/api/preview/image/view?assetId=${id}`],
-  mediaAssetIds: [id],
+  mediaAssetIds: [`om1.preview-image.${id}.webp`],
   thumbnailUrl: null,
 });
 
-describe("regression: batch 429 aborts individual resolution to prevent retry storm", () => {
+describe("regression: generation refresh uses opaque references", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
@@ -41,11 +36,11 @@ describe("regression: batch 429 aborts individual resolution to prevent retry st
     vi.useRealTimers();
   });
 
-  it("when batch pre-resolution returns 429, no individual resolveMediaUrl calls are made in that cycle", async () => {
-    const rateLimitedError = Object.assign(new Error("Too many requests"), {
-      status: 429,
+  it("does not infer storage paths or choose a refresh endpoint from a prefix", async () => {
+    mockResolveMediaUrl.mockResolvedValue({
+      url: "https://storage.example.com/resolved.webp",
+      source: "preview",
     });
-    mockResolveImageAssetBatch.mockRejectedValueOnce(rateLimitedError);
 
     const dispatch = vi.fn();
     const generations = [
@@ -60,36 +55,20 @@ describe("regression: batch 429 aborts individual resolution to prevent retry st
       await Promise.resolve();
     });
 
-    // Batch was called and 429'd
-    expect(mockResolveImageAssetBatch).toHaveBeenCalledTimes(1);
-
-    // Individual resolution must NOT have been called — the batch 429 should
-    // have aborted Phase 2 entirely to avoid a cascade of individual 429s.
-    expect(mockResolveMediaUrl).not.toHaveBeenCalled();
-    expect(dispatch).not.toHaveBeenCalled();
-
-    // After the retry cooldown, the hook should re-attempt
-    mockResolveImageAssetBatch.mockResolvedValueOnce(
-      new Map([
-        ["asset-a", "https://storage.example.com/asset-a"],
-        ["asset-b", "https://storage.example.com/asset-b"],
-      ]),
+    expect(mockResolveMediaUrl).toHaveBeenCalledTimes(2);
+    expect(mockResolveMediaUrl).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        mediaRef: "om1.preview-image.asset-a.webp",
+        preferFresh: false,
+      }),
     );
-    mockResolveMediaUrl.mockResolvedValue({
-      url: "https://storage.example.com/resolved",
-      source: "preview",
-    });
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(15_000);
-      await Promise.resolve();
-    });
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    // Now the batch should succeed and individual resolution should proceed
-    expect(mockResolveImageAssetBatch).toHaveBeenCalledTimes(2);
+    expect(mockResolveMediaUrl).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        mediaRef: "om1.preview-image.asset-b.webp",
+        preferFresh: false,
+      }),
+    );
   });
 });

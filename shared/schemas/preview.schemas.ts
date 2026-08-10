@@ -144,6 +144,7 @@ export const MediaViewUrlResponseSchema = previewEnvelope(
     expiresAt: z.string().optional(),
     storagePath: z.string().optional(),
     assetId: z.string().optional(),
+    mediaRef: z.string().optional(),
     source: z.string().optional(),
   }),
 );

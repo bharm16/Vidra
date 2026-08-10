@@ -36,6 +36,14 @@ export interface PreviewStorageService {
     expiresAt: string;
     storagePath: string;
   }>;
+  getOwnedMediaViewUrl: (
+    userId: string,
+    reference: string,
+  ) => Promise<{
+    viewUrl: string;
+    expiresAt: string;
+    mediaRef?: string;
+  }>;
   getPreviewImageViewUrl: (
     userId: string,
     assetBasename: string,

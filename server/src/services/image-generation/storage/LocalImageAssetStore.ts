@@ -8,7 +8,16 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
+import { fetchRemoteMedia } from "@services/owned-media";
 import type { ImageAssetStore, StoredImageAsset } from "./types";
+
+const IMAGE_CONTENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 interface LocalImageAssetStoreOptions {
   directory: string;
@@ -40,16 +49,14 @@ export class LocalImageAssetStore implements ImageAssetStore {
     await this.ensureUserDirectory(userId);
 
     const id = uuidv4();
-    const response = await fetch(sourceUrl);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch image: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const resolvedContentType =
-      contentType || response.headers.get("content-type") || "image/webp";
+    const remoteMedia = await fetchRemoteMedia({
+      sourceUrl,
+      fieldName: "sourceUrl",
+      allowedContentTypes: IMAGE_CONTENT_TYPES,
+      maxBytes: MAX_IMAGE_BYTES,
+    });
+    const buffer = remoteMedia.buffer;
+    const resolvedContentType = contentType || remoteMedia.contentType;
 
     const extension = this.getExtension(resolvedContentType);
     const filename = `${id}${extension}`;

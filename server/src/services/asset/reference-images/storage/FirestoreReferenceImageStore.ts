@@ -3,7 +3,7 @@ import type { Bucket } from "@google-cloud/storage";
 import { getFirestore } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
 import { ReferenceImageProcessingService } from "@services/asset/ReferenceImageProcessingService";
-import { assertUrlSafe } from "@server/shared/urlValidation";
+import { fetchRemoteMedia } from "@services/owned-media";
 import type {
   CreateReferenceImageInput,
   ListReferenceImagesOptions,
@@ -16,15 +16,22 @@ interface FirestoreReferenceImageStoreOptions {
   bucket: Bucket;
   bucketName?: string;
   processor?: ReferenceImageProcessingService;
+  signedUrlLedger?: SignedUrlRecorder | null;
 }
 
-function buildDownloadUrl(
-  bucketName: string,
-  storagePath: string,
-  token: string,
-): string {
-  const encodedPath = encodeURIComponent(storagePath);
-  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
+interface SignedUrlRecorder {
+  record(objectPath: string, signedUrl: string): void;
+}
+
+interface StoredReferenceImageDocument {
+  id: string;
+  userId: string;
+  storagePath: string;
+  thumbnailPath: string;
+  label: string | null;
+  metadata: ReferenceImageRecord["metadata"];
+  createdAt: string;
+  updatedAt: string;
 }
 
 function getUrlHost(value: string): string | null {
@@ -49,6 +56,7 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
   private readonly bucket: Bucket;
   private readonly bucketName: string;
   private readonly processor: ReferenceImageProcessingService;
+  private readonly signedUrlLedger: SignedUrlRecorder | null;
   private readonly log = logger.child({
     service: "FirestoreReferenceImageStore",
   });
@@ -63,6 +71,7 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
     this.bucket = options.bucket;
     this.bucketName = options.bucketName || options.bucket.name;
     this.processor = options.processor || new ReferenceImageProcessingService();
+    this.signedUrlLedger = options.signedUrlLedger ?? null;
   }
 
   private collection(userId: string): FirebaseFirestore.CollectionReference {
@@ -85,10 +94,14 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
       .limit(limit)
       .get();
 
-    return snapshot.docs.map((doc) => {
-      const data = doc.data() as ReferenceImageRecord;
-      return { ...data, id: data.id || doc.id };
-    });
+    return await Promise.all(
+      snapshot.docs.map(async (doc) =>
+        this.toPresentationRecord(
+          { ...(doc.data() as StoredReferenceImageDocument), id: doc.id },
+          userId,
+        ),
+      ),
+    );
   }
 
   async createFromBuffer(
@@ -117,17 +130,11 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
         processedImage.buffer,
       );
 
-      const imageToken = uuidv4();
-      const thumbnailToken = uuidv4();
-
       await this.bucket.file(storagePath).save(processedImage.buffer, {
         resumable: false,
         contentType: "image/jpeg",
         metadata: {
           cacheControl: "public, max-age=31536000",
-          metadata: {
-            firebaseStorageDownloadTokens: imageToken,
-          },
         },
         preconditionOpts: { ifGenerationMatch: 0 },
       });
@@ -137,23 +144,14 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
         contentType: "image/jpeg",
         metadata: {
           cacheControl: "public, max-age=31536000",
-          metadata: {
-            firebaseStorageDownloadTokens: thumbnailToken,
-          },
         },
         preconditionOpts: { ifGenerationMatch: 0 },
       });
 
       const now = new Date().toISOString();
-      const record: ReferenceImageRecord = {
+      const record: StoredReferenceImageDocument = {
         id: imageId,
         userId,
-        imageUrl: buildDownloadUrl(this.bucketName, storagePath, imageToken),
-        thumbnailUrl: buildDownloadUrl(
-          this.bucketName,
-          thumbnailPath,
-          thumbnailToken,
-        ),
         storagePath,
         thumbnailPath,
         label: input.label ?? null,
@@ -183,7 +181,7 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
         height: processedImage.height,
       });
 
-      return record;
+      return await this.toPresentationRecord(record, userId);
     } catch (error) {
       const errorObj =
         error instanceof Error ? error : new Error(String(error));
@@ -209,24 +207,13 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
       ...(sourceHost ? { sourceHost } : {}),
     });
 
-    assertUrlSafe(sourceUrl, "sourceUrl");
-
-    const response = await fetch(sourceUrl);
-    if (!response.ok) {
-      this.log.warn("Failed to fetch reference image.", {
-        operation,
-        userId,
-        status: response.status,
-        statusText: response.statusText,
-        ...(sourceHost ? { sourceHost } : {}),
-      });
-      throw new Error(
-        `Failed to fetch reference image: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    return await this.createFromBuffer(userId, buffer, {
+    const remoteMedia = await fetchRemoteMedia({
+      sourceUrl,
+      fieldName: "sourceUrl",
+      allowedContentTypes: ["image/jpeg", "image/png", "image/webp"],
+      maxBytes: 5 * 1024 * 1024,
+    });
+    return await this.createFromBuffer(userId, remoteMedia.buffer, {
       ...input,
       source: input.source ?? "url",
     });
@@ -251,7 +238,7 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
       return false;
     }
 
-    const data = snapshot.data() as ReferenceImageRecord | undefined;
+    const data = snapshot.data() as StoredReferenceImageDocument | undefined;
     const paths = [data?.storagePath, data?.thumbnailPath].filter(
       (path): path is string => typeof path === "string" && path.length > 0,
     );
@@ -285,5 +272,37 @@ export class FirestoreReferenceImageStore implements ReferenceImageStorePort {
       failedDeletes,
     });
     return true;
+  }
+
+  private async toPresentationRecord(
+    record: StoredReferenceImageDocument,
+    userId: string,
+  ): Promise<ReferenceImageRecord> {
+    if (record.userId !== userId) {
+      throw new Error("Reference image owner does not match its collection");
+    }
+    return {
+      id: record.id,
+      userId: record.userId,
+      imageRef: record.id,
+      thumbnailRef: `${record.id}:thumbnail`,
+      imageUrl: await this.getPresentationUrl(record.storagePath),
+      thumbnailUrl: await this.getPresentationUrl(record.thumbnailPath),
+      label: record.label,
+      metadata: record.metadata,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    };
+  }
+
+  private async getPresentationUrl(storagePath: string): Promise<string> {
+    const file = this.bucket.file(storagePath);
+    const [url] = await file.getSignedUrl({
+      version: "v4",
+      action: "read",
+      expires: Date.now() + 60 * 60 * 1000,
+    });
+    this.signedUrlLedger?.record(storagePath, url);
+    return url;
   }
 }

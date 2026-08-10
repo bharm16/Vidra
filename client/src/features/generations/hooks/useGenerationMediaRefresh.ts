@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   resolveMediaUrl,
-  resolveImageAssetBatch,
   isMediaCircuitOpen,
   type MediaUrlRequest,
 } from "@/services/media/MediaUrlResolver";
-import { extractStorageObjectPath } from "@/utils/storageUrl";
 import { logger } from "@/services/LoggingService";
 import type { Generation } from "../types";
 import type { GenerationsAction } from "./useGenerationsState";
@@ -32,19 +30,10 @@ const isRetryableError = (error: unknown): boolean => {
 };
 
 const resolveAssetHints = (
-  url: string | null | undefined,
   ref: string | null | undefined,
-): { storagePath: string | null; assetId: string | null } => {
+): { mediaRef: string | null } => {
   const normalizedRef = typeof ref === "string" ? ref.trim() : "";
-  const storagePath =
-    normalizedRef && normalizedRef.startsWith("users/")
-      ? normalizedRef
-      : url
-        ? extractStorageObjectPath(url)
-        : null;
-  const assetId =
-    normalizedRef && !normalizedRef.startsWith("users/") ? normalizedRef : null;
-  return { storagePath, assetId };
+  return { mediaRef: normalizedRef || null };
 };
 
 const resolveGenerationMedia = async (
@@ -65,16 +54,12 @@ const resolveGenerationMedia = async (
   if (hasMedia) {
     for (let index = 0; index < generation.mediaUrls.length; index += 1) {
       const url = generation.mediaUrls[index] ?? "";
-      const { storagePath, assetId } = resolveAssetHints(
-        url,
-        assetRefs?.[index] || null,
-      );
+      const { mediaRef } = resolveAssetHints(assetRefs?.[index] || null);
       const request: MediaUrlRequest = {
         kind: mediaKind,
         url,
         preferFresh: false,
-        ...(storagePath !== null ? { storagePath } : { storagePath: null }),
-        ...(assetId !== null ? { assetId } : { assetId: null }),
+        ...(mediaRef !== null ? { mediaRef } : {}),
       };
       const result = await resolveMediaUrl(request);
       resolvedMediaUrls[index] = result.url ?? url;
@@ -86,8 +71,6 @@ const resolveGenerationMedia = async (
         await resolveMediaUrl({
           kind: "image",
           url: generation.thumbnailUrl,
-          storagePath:
-            extractStorageObjectPath(generation.thumbnailUrl) ?? null,
           preferFresh: false,
         })
       ).url ?? generation.thumbnailUrl)
@@ -224,9 +207,7 @@ export function useGenerationMediaRefresh(
         return;
       }
 
-      // Phase 1: Collect all image asset IDs that need resolution and batch-resolve them
       const pendingGenerations: Generation[] = [];
-      const allImageAssetIds: string[] = [];
 
       for (const generation of generations) {
         if (generation.status !== "completed") continue;
@@ -241,59 +222,11 @@ export function useGenerationMediaRefresh(
 
         pendingGenerations.push(generation);
 
-        // Collect asset IDs for batch pre-resolution
-        if (generation.mediaType !== "video") {
-          const refs = generation.mediaAssetIds ?? [];
-          for (let i = 0; i < generation.mediaUrls.length; i++) {
-            const ref = refs[i];
-            if (
-              typeof ref === "string" &&
-              ref.trim() &&
-              !ref.startsWith("users/")
-            ) {
-              allImageAssetIds.push(ref.trim());
-            }
-          }
-        }
       }
 
       if (pendingGenerations.length === 0) return;
 
-      // Batch pre-resolve image asset IDs (populates the cache for individual resolution)
-      let batchRateLimited = false;
-      if (allImageAssetIds.length > 0) {
-        try {
-          await resolveImageAssetBatch([...new Set(allImageAssetIds)]);
-        } catch (batchError) {
-          // If the batch itself was rate-limited, skip Phase 2 entirely to avoid
-          // hammering the server with individual requests that will also 429.
-          if (isRetryableError(batchError)) {
-            batchRateLimited = true;
-          }
-          // Other errors: individual resolution will handle each one
-        }
-      }
-
-      if (batchRateLimited) {
-        log.warn(
-          "Batch pre-resolution rate-limited, deferring all pending generations",
-        );
-        for (const generation of pendingGenerations) {
-          const retryAt = Date.now() + MEDIA_REFRESH_RETRY_COOLDOWN_MS;
-          retryAfterRef.current.set(generation.id, retryAt);
-          if (!retryTimersRef.current.has(generation.id)) {
-            const timeoutId = window.setTimeout(() => {
-              retryTimersRef.current.delete(generation.id);
-              retryAfterRef.current.delete(generation.id);
-              setRetryToken((value) => value + 1);
-            }, MEDIA_REFRESH_RETRY_COOLDOWN_MS);
-            retryTimersRef.current.set(generation.id, timeoutId);
-          }
-        }
-        return;
-      }
-
-      // Phase 2: Process each generation individually (cache is now warm from batch)
+      // Resolve each opaque/legacy reference through the single media boundary.
       for (const generation of pendingGenerations) {
         if (!isActive) return;
         if (isMediaCircuitOpen()) return;

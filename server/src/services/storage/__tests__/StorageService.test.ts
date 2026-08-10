@@ -132,6 +132,31 @@ describe("StorageService", () => {
     });
   });
 
+  it("resolves an opaque reference only within the requesting owner namespace", async () => {
+    const { service, mockSignedUrlService } = buildStorageService();
+
+    const result = await service.getOwnedMediaViewUrl(
+      "user123",
+      "om1.preview-image.preview.webp",
+    );
+
+    expect(mockSignedUrlService.getViewUrl).toHaveBeenCalledWith(
+      "users/user123/previews/images/preview.webp",
+    );
+    expect(result.mediaRef).toBe("om1.preview-image.preview.webp");
+  });
+
+  it("rejects a legacy reference outside the requesting owner namespace", async () => {
+    const { service } = buildStorageService();
+
+    await expect(
+      service.getOwnedMediaViewUrl(
+        "user123",
+        "users/otheruser/previews/images/preview.webp",
+      ),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
   it("rejects download URL requests for non-owned files with 403", async () => {
     const { service } = buildStorageService();
     await expect(
@@ -276,6 +301,7 @@ describe("StorageService", () => {
     const { service } = buildStorageService();
     const saveSpy = vi.spyOn(service, "saveFromBuffer").mockResolvedValue({
       storagePath: "users/user123/previews/images/x.png",
+      mediaRef: "om1.preview-image.x.png",
       viewUrl: "https://storage.googleapis.com/view",
       expiresAt: "2024-01-21T12:00:00Z",
       sizeBytes: 10,

@@ -201,8 +201,7 @@ export class ReplicateVideoPreviewService implements VideoPreviewService {
       );
 
       // Upload video to GCS and generate a signed URL
-      const destination = `convergence/${this.userId}/preview/${Date.now()}-preview.mp4`;
-      const signedUrl = await this.uploadVideoToGCS(videoTempUrl, destination);
+      const signedUrl = await this.uploadVideoToGCS(videoTempUrl);
 
       const totalDuration = Date.now() - startTime;
       this.log.info("Video preview generation completed", {
@@ -303,21 +302,21 @@ export class ReplicateVideoPreviewService implements VideoPreviewService {
    * Upload video from temporary URL to GCS
    *
    * @param tempUrl - Temporary Replicate URL
-   * @param destination - GCS destination path
    * @returns Signed GCS URL
    */
-  private async uploadVideoToGCS(
-    tempUrl: string,
-    destination: string,
-  ): Promise<string> {
+  private async uploadVideoToGCS(tempUrl: string): Promise<string> {
     this.log.debug("Uploading video to GCS", {
       tempUrlHost: this.getUrlHost(tempUrl),
-      destination,
+      userId: this.userId,
     });
 
     // Use the storage service's upload method
     // Note: StorageService.upload handles fetching from temp URL and uploading to GCS
-    const signedUrl = await this.storageService.upload(tempUrl, destination);
+    const signedUrl = await this.storageService.upload(
+      tempUrl,
+      this.userId,
+      "preview",
+    );
 
     return signedUrl;
   }
