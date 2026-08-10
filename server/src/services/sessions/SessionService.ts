@@ -141,7 +141,7 @@ export class SessionService {
     return sessions;
   }
 
-  async updateSession(
+  private async updateSession(
     sessionId: string,
     updates: SessionUpdateRequest,
   ): Promise<SessionRecord> {
@@ -224,7 +224,7 @@ export class SessionService {
     return this.updateSession(sessionId, updates);
   }
 
-  async updatePrompt(
+  private async updatePrompt(
     sessionId: string,
     updates: SessionPromptUpdate,
   ): Promise<SessionRecord> {
@@ -255,7 +255,7 @@ export class SessionService {
     return this.updatePrompt(sessionId, updates);
   }
 
-  async updateHighlights(
+  private async updateHighlights(
     sessionId: string,
     updates: SessionHighlightUpdate,
   ): Promise<SessionRecord> {
@@ -306,16 +306,6 @@ export class SessionService {
     return this.updateHighlights(sessionId, updates);
   }
 
-  async updateOutput(
-    sessionId: string,
-    updates: SessionOutputUpdate,
-  ): Promise<SessionRecord> {
-    const promptUpdates: Partial<SessionPrompt> = {
-      ...(updates.output !== undefined ? { output: updates.output } : {}),
-    };
-    return this.updateSession(sessionId, { prompt: promptUpdates });
-  }
-
   async updateOutputForUser(
     userId: string,
     sessionId: string,
@@ -324,7 +314,7 @@ export class SessionService {
     return this.updateSessionForUser(userId, sessionId, { prompt: updates });
   }
 
-  async updateVersions(
+  private async updateVersions(
     sessionId: string,
     updates: SessionVersionsUpdate,
   ): Promise<SessionRecord> {
@@ -498,11 +488,6 @@ export class SessionService {
     };
     await this.sessionStore.save(next);
     return next;
-  }
-
-  async deleteSession(sessionId: string): Promise<void> {
-    await this.cascadeVideoJobs(sessionId);
-    await this.sessionStore.delete(sessionId);
   }
 
   async deleteSessionForUser(userId: string, sessionId: string): Promise<void> {

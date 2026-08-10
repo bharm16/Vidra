@@ -157,7 +157,7 @@ describe("SessionService", () => {
     sessionStore.get.mockResolvedValue(current);
 
     const service = new SessionService(sessionStore as never);
-    const updated = await service.updateSession("session-1", {
+    const updated = await service.updateSessionForUser("user-1", "session-1", {
       status: "completed",
       name: "Done Session",
     });
@@ -244,10 +244,14 @@ describe("SessionService", () => {
     sessionStore.get.mockResolvedValue(current);
 
     const service = new SessionService(sessionStore as never);
-    const updated = await service.updateHighlights("session-1", {
-      highlightCache: { spans: [{ start: 0, end: 4 }] },
-      versionEntry: { timestamp: "2026-02-11T00:00:00.000Z" },
-    });
+    const updated = await service.updateHighlightsForUser(
+      "user-1",
+      "session-1",
+      {
+        highlightCache: { spans: [{ start: 0, end: 4 }] },
+        versionEntry: { timestamp: "2026-02-11T00:00:00.000Z" },
+      },
+    );
 
     expect(updated.prompt?.highlightCache).toEqual({
       spans: [{ start: 0, end: 4 }],
@@ -283,7 +287,7 @@ describe("SessionService", () => {
     sessionStore.get.mockResolvedValue(current);
 
     const service = new SessionService(sessionStore as never);
-    const updated = await service.updateVersions("session-1", {
+    const updated = await service.updateVersionsForUser("user-1", "session-1", {
       versions: [
         {
           versionId: "v1",
