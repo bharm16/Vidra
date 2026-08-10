@@ -49,4 +49,32 @@ describe("buildGalleryGenerationEntries", () => {
       "https://storage.example.com/users/u1/previews/images/version-thumb.webp",
     );
   });
+
+  // A storyboard used to be rewritten to a `"preview"` tier, which made the
+  // gallery say "Preview" for something generated at the render tier — being
+  // an image-sequence is a media type, not a tier.
+  it("keeps a storyboard's own tier instead of retiering it", () => {
+    const entries = buildGalleryGenerationEntries({
+      versions: [],
+      runtimeGenerations: [
+        createGeneration({
+          id: "storyboard-1",
+          tier: "render",
+          mediaType: "image-sequence",
+          mediaUrls: ["https://storage.example.com/frame-1.webp"],
+        }),
+        createGeneration({
+          id: "draft-1",
+          tier: "draft",
+          mediaUrls: ["https://storage.example.com/clip-1.mp4"],
+        }),
+      ],
+    });
+
+    const tierById = new Map(
+      entries.map((entry) => [entry.gallery.id, entry.gallery.tier]),
+    );
+    expect(tierById.get("storyboard-1")).toBe("render");
+    expect(tierById.get("draft-1")).toBe("draft");
+  });
 });

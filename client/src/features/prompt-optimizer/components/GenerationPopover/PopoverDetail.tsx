@@ -21,15 +21,20 @@ type PromptSegment = {
   color: string | null;
 };
 
+// A storyboard is called out by its media type, not by its tier — it is a
+// multi-image take, and it was generated at a tier like any other.
+const isStoryboard = (generation: GalleryGeneration): boolean =>
+  generation.mediaType === "image-sequence";
+
 const resolveTierLabel = (generation: GalleryGeneration): string => {
-  if (generation.tier === "preview") return "Preview";
+  if (isStoryboard(generation)) return "Storyboard";
   if (generation.tier === "draft") return "Draft";
-  return "Final";
+  return "Render";
 };
 
 const resolveTierColor = (generation: GalleryGeneration): string => {
+  if (isStoryboard(generation)) return "#6C5CE7";
   if (generation.tier === "draft") return "#4ADE80";
-  if (generation.tier === "preview") return "#6C5CE7";
   return "#8B92A5";
 };
 
@@ -125,12 +130,12 @@ export function PopoverDetail({
   );
 
   return (
-    <aside className="flex h-full w-[320px] flex-shrink-0 flex-col overflow-hidden border-l border-tool-rail-border bg-tool-panel-inner">
+    <aside className="border-tool-rail-border bg-tool-panel-inner flex h-full w-[320px] flex-shrink-0 flex-col overflow-hidden border-l">
       <div className="px-5 pb-0 pt-6">
-        <h2 className="line-clamp-3 text-ui font-semibold leading-[1.5] text-foreground">
+        <h2 className="text-ui text-foreground line-clamp-3 font-semibold leading-[1.5]">
           {generation.prompt}
         </h2>
-        <div className="mt-2.5 flex flex-wrap items-center gap-1 text-meta text-tool-text-subdued">
+        <div className="text-meta text-tool-text-subdued mt-2.5 flex flex-wrap items-center gap-1">
           <span>{generation.model}</span>
           <span>·</span>
           <span style={{ color: resolveTierColor(generation) }}>
@@ -147,11 +152,11 @@ export function PopoverDetail({
         </div>
       </div>
 
-      <div className="mx-5 mt-[18px] h-px bg-tool-rail-border" />
+      <div className="bg-tool-rail-border mx-5 mt-[18px] h-px" />
 
       <div className="px-5 pb-0 pt-[14px]">
         <div className="flex items-center">
-          <span className="text-meta font-semibold text-tool-text-dim">
+          <span className="text-meta text-tool-text-dim font-semibold">
             Prompt
           </span>
           <div className="flex-1" />
@@ -161,14 +166,14 @@ export function PopoverDetail({
               void copyText(generation.prompt);
               onCopyPrompt();
             }}
-            className="inline-flex h-5 w-5 items-center justify-center text-tool-text-subdued transition-colors hover:text-tool-text-dim"
+            className="text-tool-text-subdued hover:text-tool-text-dim inline-flex h-5 w-5 items-center justify-center transition-colors"
             aria-label="Copy prompt text"
           >
             <CopyIcon />
           </button>
         </div>
 
-        <div className="mt-2 max-h-[100px] overflow-auto text-ui leading-[1.65] text-tool-text-dim">
+        <div className="text-ui text-tool-text-dim mt-2 max-h-[100px] overflow-auto leading-[1.65]">
           {promptSegments.map((segment, index) => (
             <span
               key={`${generation.id}-segment-${index}`}
@@ -180,19 +185,19 @@ export function PopoverDetail({
         </div>
       </div>
 
-      <div className="mx-5 mt-4 h-px bg-tool-rail-border" />
+      <div className="bg-tool-rail-border mx-5 mt-4 h-px" />
 
       <div className="px-5 py-4">
         <button
           type="button"
           onClick={onReuse}
-          className="inline-flex h-[42px] w-full items-center justify-center rounded-md bg-foreground text-ui font-bold text-tool-surface-deep transition-opacity hover:opacity-90"
+          className="bg-foreground text-ui text-tool-surface-deep inline-flex h-[42px] w-full items-center justify-center rounded-md font-bold transition-opacity hover:opacity-90"
         >
           Reuse prompt and settings
         </button>
       </div>
 
-      <div className="mx-5 h-px bg-tool-rail-border" />
+      <div className="bg-tool-rail-border mx-5 h-px" />
 
       <PopoverThumbnailRail
         generations={generations}

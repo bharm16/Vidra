@@ -35,11 +35,14 @@ const resolveTimestamp = (
   versionTimestamp ??
   Date.now();
 
-const mapTier = (generation: Generation): GalleryTier => {
-  if (generation.mediaType === "image-sequence") return "preview";
-  if (generation.tier === "draft") return "draft";
-  return "final";
-};
+/**
+ * Carry the generation's own tier through unchanged, mapping the legacy
+ * persisted `"final"` (see `selectHeroGeneration`) onto its current name.
+ * Storyboards are no longer rewritten to a `"preview"` tier — being an
+ * image-sequence is a media type, not a tier, and `mediaType` already says so.
+ */
+const mapTier = (generation: Generation): GalleryTier =>
+  generation.tier === "draft" ? "draft" : "render";
 
 const normalizeNonEmpty = (value: string | null | undefined): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value.trim() : null;

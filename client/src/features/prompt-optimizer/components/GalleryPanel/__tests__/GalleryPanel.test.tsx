@@ -15,7 +15,7 @@ const makeGeneration = (
   overrides: Partial<GalleryGeneration> = {},
 ): GalleryGeneration => ({
   id,
-  tier: "final",
+  tier: "render",
   thumbnailUrl: "https://example.com/thumb.jpg",
   mediaUrl: "https://example.com/video.mp4",
   mediaType: "video",
@@ -31,9 +31,9 @@ describe("GalleryPanel", () => {
   it("renders all generations and selects one", () => {
     const onSelectGeneration = vi.fn();
     const generations = [
-      makeGeneration("g-1", { tier: "preview" }),
+      makeGeneration("g-1", { mediaType: "image-sequence" }),
       makeGeneration("g-2", { tier: "draft" }),
-      makeGeneration("g-3", { tier: "final" }),
+      makeGeneration("g-3", { tier: "render" }),
     ];
 
     render(
@@ -54,7 +54,7 @@ describe("GalleryPanel", () => {
 
   it("renders all tiers in compact mode without filter controls", () => {
     const generations = [
-      makeGeneration("preview-1", { tier: "preview" }),
+      makeGeneration("storyboard-1", { mediaType: "image-sequence" }),
       makeGeneration("draft-1", { tier: "draft" }),
       makeGeneration("favorite-1", { isFavorite: true }),
     ];
@@ -69,7 +69,7 @@ describe("GalleryPanel", () => {
     );
 
     expect(
-      screen.getByTestId("gallery-thumbnail-preview-1"),
+      screen.getByTestId("gallery-thumbnail-storyboard-1"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("gallery-thumbnail-draft-1")).toBeInTheDocument();
     expect(

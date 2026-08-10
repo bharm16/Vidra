@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { VIDEO_MODELS } from "./modelConfig";
 import type { VideoModelId } from "@shared/videoModels";
 
 export type PlanTier = "free" | "explorer" | "creator" | "agency" | "unknown";
@@ -99,22 +98,10 @@ export const CANONICAL_PLAN_TIER_LABELS: Record<PlanTier, string> = {
   unknown: "Unknown",
 };
 
-// Keys are derived from `VIDEO_MODELS` values at runtime — that record is
-// not declared `as const`, so each property is widened to `string`. We cannot
-// assert a strict `Record<VideoModelId, string>` because the literal known-id
-// union isn't satisfied by widened-string keys.
-export const CANONICAL_MODEL_TIER_LABELS: Record<string, string> = {
-  [VIDEO_MODELS.DRAFT]: "draft",
-  [VIDEO_MODELS.DRAFT_I2V]: "draft",
-  [VIDEO_MODELS.DRAFT_I2V_LEGACY]: "draft",
-  [VIDEO_MODELS.DRAFT_I2V_WAN_2_5]: "draft",
-  [VIDEO_MODELS.PRO]: "pro",
-  [VIDEO_MODELS.SORA_2]: "flagship",
-  [VIDEO_MODELS.SORA_2_PRO]: "flagship",
-  [VIDEO_MODELS.KLING_V2_1]: "production",
-  [VIDEO_MODELS.LUMA_RAY3]: "production",
-  [VIDEO_MODELS.VEO_3]: "production",
-  [VIDEO_MODELS.ARTISTIC]: "specialized",
-  [VIDEO_MODELS.TIER_1]: "fallback",
-  [VIDEO_MODELS.TIER_2]: "fallback",
-};
+// `CANONICAL_MODEL_TIER_LABELS` was removed 2026-08-10. It mapped model ids to
+// tier names ("draft", "pro", "flagship", …), had no consumers, and could not
+// have worked: `VIDEO_MODELS.DRAFT` and `VIDEO_MODELS.PRO` are the same string
+// (`wan-video/wan-2.2-t2v-fast`), so the later key silently overwrote the
+// earlier and the model labelled as "pro". Tier is a per-generation choice the
+// client makes (`draft | render`), not a property of a model id — see the
+// "Draft tier" row in the CLAUDE.md Domain Glossary.

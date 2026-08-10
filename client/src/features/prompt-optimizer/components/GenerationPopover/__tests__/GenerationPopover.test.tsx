@@ -20,7 +20,7 @@ const makeGeneration = (
   overrides: Partial<GalleryGeneration> = {},
 ): GalleryGeneration => ({
   id,
-  tier: "final",
+  tier: "render",
   thumbnailUrl: "https://example.com/thumb.jpg",
   mediaUrl: "https://example.com/video.mp4",
   mediaType: "video",

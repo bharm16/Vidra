@@ -469,10 +469,17 @@ const DEFAULT_DRAFT_I2V_MODEL = process.env.DRAFT_I2V_MODEL || WAN_2_5_I2V;
 /**
  * Video Models Configuration (Dec 2025 Update)
  *
- * Defines the hierarchy of video generation models used in the application.
+ * The catalogue of video generation models. These keys are *labels for model
+ * ids*, not a lifecycle: a clip generated with `DRAFT` is not superseded by
+ * one generated with `PRO`. Both are takes. The creator-facing tier is the
+ * `draft | render` choice the client makes per generation — see the "Draft
+ * tier" row in the CLAUDE.md Domain Glossary.
+ *
+ * `DRAFT` and `PRO` currently resolve to the SAME model. Anything that needs
+ * to tell them apart must key off something other than these two constants.
  */
 export const VIDEO_MODELS = {
-  /** ⚡ DRAFT TIER: Extremely cheap ($0.01), fast, decent motion. */
+  /** ⚡ Cheap, fast t2v. Same id as `PRO` — see the note above. */
   DRAFT: WAN_2_2_T2V_FAST,
 
   /** ⚡ DRAFT TIER i2v: image-to-video fast (toggle via DRAFT_I2V_MODEL). */
@@ -484,7 +491,11 @@ export const VIDEO_MODELS = {
   /** ⚡ DRAFT TIER i2v (Wan 2.5). */
   DRAFT_I2V_WAN_2_5: WAN_2_5_I2V,
 
-  /** 🎬 PRO TIER: Cinematic 1080p, MoE Architecture. Default for paid subscribers. */
+  /**
+   * 🎬 The process-wide default video model (`videoModelRegistry`). Despite the
+   * name it is the same cheap t2v id as `DRAFT` — it is NOT a cinematic 1080p
+   * tier, and nothing paid gates on it.
+   */
   PRO: WAN_2_2_T2V_FAST,
 
   /** 🌌 FLAGSHIP: OpenAI Sora 2 (text/image → video, audio-capable). */

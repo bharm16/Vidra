@@ -2,9 +2,20 @@ import type {
   GenerationMediaType,
   GenerationSettingsSnapshot,
 } from "@features/generations/types";
+import type { GenerationTier } from "@/features/prompt-optimizer/types/domain/generation";
 
-export type GalleryTier = "preview" | "draft" | "final";
-export type GalleryFilter = "all" | "preview" | "draft" | "favorites";
+/**
+ * The tier a gallery entry was generated at — the same `draft | render` axis
+ * the rest of the client speaks (`GenerationTier`, `VideoTier`). It carries no
+ * lifecycle meaning: a draft is not superseded by a render, both are takes.
+ *
+ * Deliberately NOT a third vocabulary. This used to be
+ * `"preview" | "draft" | "final"`, where `"preview"` meant *storyboard* — a
+ * fourth meaning of a word the glossary had already spent twice. Storyboards
+ * are identified by `mediaType === "image-sequence"`, which is where that
+ * distinction actually lives.
+ */
+export type GalleryTier = GenerationTier;
 
 export interface GalleryPromptSpan {
   start: number;
