@@ -65,20 +65,38 @@ ALLOWED_MOCKS=(
 
 if [ "$#" -gt 0 ]; then
   # Scoped mode: scan only the given files (non-regression args are skipped).
+  SCOPED=1
   FILES="$(printf '%s\n' "$@" | grep -E '\.regression\.test\.' || true)"
 else
   # .claude/worktrees holds other agents' checkouts of this repo. Their tests
   # are not this working tree's to gate on, and scanning them made the local
   # run disagree with CI (which has no worktrees) — dozens of phantom
   # violations that hid the two real ones.
-  FILES="$(find "$ROOT" -name '*.regression.test.*' \
-    -not -path '*/node_modules/*' \
-    -not -path '*/.claude/worktrees/*' | sort)"
+  #
+  # Anchored to $ROOT. Matched as a bare '*/...' substring it prunes the entire
+  # walk whenever this checkout is itself inside a worktree, and the gate then
+  # reports success having scanned nothing.
+  SCOPED=0
+  FILES="$(find "$ROOT" \
+    \( -path '*/node_modules' -o -path "$ROOT/.claude/worktrees" \) -prune -o \
+    -name '*.regression.test.*' -print | sort)"
 fi
 
 if [ -z "$FILES" ]; then
-  echo "No regression test files to scan."
-  exit 0
+  if [ "$SCOPED" -eq 1 ]; then
+    # The hook passes the whole staged set; a commit touching no regression
+    # test has nothing to gate, which is a pass.
+    echo "No regression test files to scan."
+    exit 0
+  fi
+
+  # Whole-repo mode is different: this repository tracks regression tests, so
+  # finding none means the scan is broken rather than the repo being clean.
+  # Exiting 0 here is precisely how this gate stayed green while checking zero
+  # files.
+  echo "ERROR: no regression test files found under $ROOT" >&2
+  echo "A whole-repo scan that matches nothing is a defect in this script." >&2
+  exit 1
 fi
 
 VIOLATIONS=0
