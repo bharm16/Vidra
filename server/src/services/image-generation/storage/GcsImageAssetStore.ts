@@ -129,32 +129,21 @@ export class GcsImageAssetStore implements ImageAssetStore {
     };
   }
 
+  /**
+   * Resolve a signed URL for an image the requester owns.
+   *
+   * The path is rebuilt from the caller's own uid, so an assetId alone never
+   * grants a read: an object is reachable only where its owner's path puts
+   * it. There is deliberately no unscoped fallback — an object whose owner
+   * cannot be established from its path is not one we can safely serve.
+   */
   async getPublicUrl(assetId: string, userId: string): Promise<string | null> {
     try {
-      // Current path convention: {basePath}/{userId}/{assetId}
       const grant = await this.minter.mintReadIfPresent(
         this.objectPath(userId, assetId),
         { ttlMs: this.signedUrlTtlMs },
       );
-      if (grant) {
-        return grant.url;
-      }
-
-      // Fallback: legacy path convention without userId prefix: {basePath}/{assetId}
-      // Assets created before the userId-scoped path change live here.
-      const legacyGrant = await this.minter.mintReadIfPresent(
-        this.legacyObjectPath(assetId),
-        { ttlMs: this.signedUrlTtlMs },
-      );
-      if (legacyGrant) {
-        this.log.info("Resolved image from legacy path (no userId prefix)", {
-          assetId,
-          userId,
-        });
-        return legacyGrant.url;
-      }
-
-      return null;
+      return grant?.url ?? null;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -168,14 +157,10 @@ export class GcsImageAssetStore implements ImageAssetStore {
   }
 
   async exists(assetId: string, userId: string): Promise<boolean> {
-    const file = this.bucket.file(this.objectPath(userId, assetId));
-    const [exists] = await file.exists();
-    if (exists) return true;
-
-    // Fallback: check legacy path without userId prefix
-    const legacyFile = this.bucket.file(this.legacyObjectPath(assetId));
-    const [legacyExists] = await legacyFile.exists();
-    return legacyExists;
+    const [exists] = await this.bucket
+      .file(this.objectPath(userId, assetId))
+      .exists();
+    return exists;
   }
 
   async cleanupExpired(
@@ -221,11 +206,6 @@ export class GcsImageAssetStore implements ImageAssetStore {
 
   private objectPath(userId: string, assetId: string): string {
     return `${this.basePath}/${this.sanitizeUserId(userId)}/${assetId}`;
-  }
-
-  /** Legacy path convention used before userId-scoped storage was introduced. */
-  private legacyObjectPath(assetId: string): string {
-    return `${this.basePath}/${assetId}`;
   }
 
   private sanitizeUserId(userId: string): string {
