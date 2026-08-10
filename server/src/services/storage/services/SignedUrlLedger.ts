@@ -17,10 +17,19 @@ import { logger } from "@infrastructure/Logger";
  * checks membership. Binding the signature to its object path means a leaked
  * signature can never be replayed onto a different object.
  *
- * Backed by the cache service (Redis when configured, in-memory otherwise).
- * Everything fails safe: a missing cache, a write error, or an evicted entry
- * just means "not verifiable" — the client's media resolver re-mints through
- * the authed asset routes, so availability never depends on this ledger.
+ * Durability is whatever the injected cache provides, and today that is the
+ * process-local one: grants do not survive a restart and are not shared across
+ * instances, so isMintedGrant answers false for URLs this deployment really
+ * minted. The rescue is best-effort by construction, not a guarantee.
+ *
+ * Everything fails safe: a missing cache, a write error, an evicted entry, or a
+ * grant minted by a process that has since gone away all mean the same thing —
+ * "not verifiable". The rescue is itself a fallback for an upstream fetch that
+ * already failed, so refusing it returns the status the caller would have seen
+ * anyway, and the client's media resolver re-mints through the authed asset
+ * routes. Availability never depends on this ledger. Refusals are visible at
+ * the proxy as `media_proxy.rescue_refused_unverified`; a sustained rate of
+ * them on restarts is the expected shape, not an incident.
  */
 
 /** Structural slice of CacheService the ledger needs. */
