@@ -117,10 +117,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type-check (tsc --noEmit)
+      - name: Type-check (root + server configs)
         # Mirrors the local pre-commit gate documented in CLAUDE.md so
         # `git commit --no-verify` cannot smuggle type errors past CI.
-        run: npx tsc --noEmit
+        # The script also compiles server/tsconfig.json (lib: ES2022, node
+        # types) — the only check that catches server code reaching for a
+        # DOM global. That coverage used to arrive via a unit test that
+        # shelled out to tsc; the test was removed for costing 55s, so a
+        # bare root `tsc --noEmit` here would silently drop it from CI.
+        run: npm run typecheck
 
       - name: Run ESLint
         run: npm run lint
