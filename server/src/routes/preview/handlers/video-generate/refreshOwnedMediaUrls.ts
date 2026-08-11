@@ -1,4 +1,4 @@
-import type { VideoPreviewPayload } from "@routes/preview/videoRequest";
+import type { VideoRequestPayload } from "@routes/preview/videoRequest";
 import {
   extractObjectPathFromUrl,
   validatePathOwnership,
@@ -74,10 +74,10 @@ const refreshOwnedSignedUrl = async (
 };
 
 export const refreshOwnedMediaUrls = async (
-  payload: VideoPreviewPayload,
+  payload: VideoRequestPayload,
   context: RefreshContext,
-): Promise<VideoPreviewPayload> => {
-  const refreshed: VideoPreviewPayload = { ...payload };
+): Promise<VideoRequestPayload> => {
+  const refreshed: VideoRequestPayload = { ...payload };
 
   if (refreshed.startImage) {
     refreshed.startImage = await refreshOwnedSignedUrl(

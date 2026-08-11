@@ -13,7 +13,7 @@ const { scheduleInlineMock, normalizeGenerationParamsMock } = vi.hoisted(
 );
 
 vi.mock("@routes/preview/inlineProcessor", () => ({
-  scheduleInlineVideoPreviewProcessing: scheduleInlineMock,
+  scheduleInlineVideoProcessing: scheduleInlineMock,
 }));
 
 vi.mock("@routes/optimize/normalizeGenerationParams", () => ({

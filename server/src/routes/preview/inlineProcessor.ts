@@ -3,7 +3,7 @@ import type { PreviewRoutesServices } from "@routes/types";
 import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
 import { processVideoJob } from "@services/video-generation/jobs/processVideoJob";
 
-interface InlinePreviewProcessorParams {
+interface InlineVideoProcessorParams {
   jobId: string;
   requestId?: string;
   videoJobStore: VideoJobStore;
@@ -30,14 +30,14 @@ function getVideoJobLeaseMs(): number {
   return leaseSeconds * 1000;
 }
 
-export function scheduleInlineVideoPreviewProcessing({
+export function scheduleInlineVideoProcessing({
   jobId,
   requestId,
   videoJobStore,
   videoGenerationService,
   userCreditService,
   storageService,
-}: InlinePreviewProcessorParams): void {
+}: InlineVideoProcessorParams): void {
   const leaseMs = getVideoJobLeaseMs();
   const workerId = `inline-preview-${requestId || Date.now()}`;
 

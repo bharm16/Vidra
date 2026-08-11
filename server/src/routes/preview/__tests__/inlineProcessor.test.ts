@@ -113,7 +113,7 @@ async function flushMicrotasks(rounds = 10): Promise<void> {
   }
 }
 
-describe("scheduleInlineVideoPreviewProcessing", () => {
+describe("scheduleInlineVideoProcessing", () => {
   let jobStore: MockJobStore;
   let generateVideo: ReturnType<typeof vi.fn>;
   let storageService: { saveFromUrl: ReturnType<typeof vi.fn> };
@@ -148,10 +148,10 @@ describe("scheduleInlineVideoPreviewProcessing", () => {
       jobStore.claimJob.mockResolvedValue(overrides.claimResult);
     }
 
-    const { scheduleInlineVideoPreviewProcessing } = await import(
+    const { scheduleInlineVideoProcessing } = await import(
       "../inlineProcessor"
     );
-    scheduleInlineVideoPreviewProcessing({
+    scheduleInlineVideoProcessing({
       jobId: overrides?.jobId ?? "job-1",
       requestId: overrides?.requestId ?? "req-1",
       videoJobStore: jobStore as never,
@@ -215,10 +215,10 @@ describe("scheduleInlineVideoPreviewProcessing", () => {
       }),
     );
 
-    const { scheduleInlineVideoPreviewProcessing } = await import(
+    const { scheduleInlineVideoProcessing } = await import(
       "../inlineProcessor"
     );
-    scheduleInlineVideoPreviewProcessing({
+    scheduleInlineVideoProcessing({
       jobId: "job-1",
       requestId: "req-1",
       videoJobStore: jobStore as never,
@@ -288,10 +288,10 @@ describe("scheduleInlineVideoPreviewProcessing", () => {
       }),
     );
 
-    const { scheduleInlineVideoPreviewProcessing } = await import(
+    const { scheduleInlineVideoProcessing } = await import(
       "../inlineProcessor"
     );
-    scheduleInlineVideoPreviewProcessing({
+    scheduleInlineVideoProcessing({
       jobId: "job-1",
       requestId: "req-1",
       videoJobStore: jobStore as never,

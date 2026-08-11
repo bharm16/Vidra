@@ -3,8 +3,8 @@ import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import { resolveModelId as resolveCapabilityModelId } from "@services/capabilities/modelProviders";
 import type { ILogger } from "@interfaces/ILogger";
 import type { VideoModelId } from "@shared/videoModels";
-import type { VideoPreviewPayload } from "@routes/preview/videoRequest";
-import { scheduleInlineVideoPreviewProcessing } from "../../inlineProcessor";
+import type { VideoRequestPayload } from "@routes/preview/videoRequest";
+import { scheduleInlineVideoProcessing } from "../../inlineProcessor";
 import { extractMotionMeta } from "./motion";
 import {
   buildVideoRequestPlan,
@@ -26,7 +26,7 @@ const hasStatusCode = (value: unknown): value is { statusCode: number } => {
 };
 
 export interface VideoGenerateIntakeArgs {
-  payload: VideoPreviewPayload;
+  payload: VideoRequestPayload;
   userId: string;
   requestId?: string | undefined;
   /** Prompt after stripping AND @-trigger resolution (overrides payload.prompt). */
@@ -178,7 +178,7 @@ export async function runVideoGenerateIntake(
     return { ok: false, error: unavailable };
   }
 
-  const operation = "generateVideoPreview";
+  const operation = "generateVideo";
   const costModel = availability.resolvedModelId || model;
 
   const planResult = buildVideoRequestPlan({
@@ -347,7 +347,7 @@ export async function runVideoGenerateIntake(
       motionGuidanceAppended: plan.motionGuidanceAppended,
     });
 
-    scheduleInlineVideoPreviewProcessing({
+    scheduleInlineVideoProcessing({
       jobId: job.id,
       ...(requestId ? { requestId } : {}),
       videoJobStore,

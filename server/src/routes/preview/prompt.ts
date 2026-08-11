@@ -1,4 +1,4 @@
-export function stripVideoPreviewPrompt(prompt: string): {
+export function stripOptimizerScaffolding(prompt: string): {
   cleaned: string;
   wasStripped: boolean;
 } {

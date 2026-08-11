@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
 import { isIP } from "node:net";
 import { logger } from "@infrastructure/Logger";
-import { parseVideoPreviewRequest } from "@routes/preview/videoRequest";
+import { parseVideoRequest } from "@routes/preview/videoRequest";
 import { sendApiError } from "@middleware/apiErrorResponse";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import type { ApiErrorCode } from "@shared/types/api";
 import { resolveVideoGenerateIdempotencyMode } from "@services/video-generation/jobs/RequestIdempotencyService";
 import { assertUrlSafe } from "@server/shared/urlValidation";
-import { stripVideoPreviewPrompt } from "../prompt";
+import { stripOptimizerScaffolding } from "../prompt";
 import { extractMotionMeta } from "./video-generate/motion";
 import {
   extractPromptTriggers,
@@ -40,7 +40,7 @@ export const createVideoGenerateHandler =
       });
     }
 
-    const parsed = parseVideoPreviewRequest(req.body);
+    const parsed = parseVideoRequest(req.body);
     if (!parsed.ok) {
       return sendApiError(res, req, parsed.status, {
         error: parsed.error,
@@ -124,7 +124,7 @@ export const createVideoGenerateHandler =
     }
 
     let { cleaned: cleanedPrompt, wasStripped: promptWasStripped } =
-      stripVideoPreviewPrompt(prompt);
+      stripOptimizerScaffolding(prompt);
     const userId =
       (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
     const requestId = (req as Request & { id?: string }).id;

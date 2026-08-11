@@ -4,7 +4,7 @@ import { isKnownGenerationModelInput } from "@config/videoModelRegistry";
 
 export type VideoAspectRatio = "16:9" | "9:16" | "21:9" | "1:1";
 
-export interface VideoPreviewPayload {
+export interface VideoRequestPayload {
   prompt: string;
   aspectRatio?: VideoAspectRatio;
   model?: string;
@@ -27,20 +27,20 @@ export interface VideoPreviewPayload {
   sourceGenerationId?: string;
 }
 
-interface VideoPreviewParseSuccess {
+interface VideoRequestParseSuccess {
   ok: true;
-  payload: VideoPreviewPayload;
+  payload: VideoRequestPayload;
 }
 
-interface VideoPreviewParseFailure {
+interface VideoRequestParseFailure {
   ok: false;
   status: number;
   error: string;
 }
 
-export type VideoPreviewParseResult =
-  | VideoPreviewParseSuccess
-  | VideoPreviewParseFailure;
+export type VideoRequestParseResult =
+  | VideoRequestParseSuccess
+  | VideoRequestParseFailure;
 
 const VIDEO_ASPECT_RATIOS = new Set<VideoAspectRatio>([
   "16:9",
@@ -49,9 +49,9 @@ const VIDEO_ASPECT_RATIOS = new Set<VideoAspectRatio>([
   "1:1",
 ]);
 
-export const parseVideoPreviewRequest = (
+export const parseVideoRequest = (
   body: unknown,
-): VideoPreviewParseResult => {
+): VideoRequestParseResult => {
   const {
     prompt,
     aspectRatio,

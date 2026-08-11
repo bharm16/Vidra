@@ -7,7 +7,7 @@ const { scheduleInlineMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@routes/preview/inlineProcessor", () => ({
-  scheduleInlineVideoPreviewProcessing: scheduleInlineMock,
+  scheduleInlineVideoProcessing: scheduleInlineMock,
 }));
 
 import { createVideoGenerateHandler } from "@routes/preview/handlers/videoGenerate";

@@ -121,10 +121,10 @@ describe("regression: a paid render either lands durably or the job fails and re
   async function invokeProcessor(storageService: {
     saveFromUrl: ReturnType<typeof vi.fn>;
   }): Promise<void> {
-    const { scheduleInlineVideoPreviewProcessing } = await import(
+    const { scheduleInlineVideoProcessing } = await import(
       "../inlineProcessor"
     );
-    scheduleInlineVideoPreviewProcessing({
+    scheduleInlineVideoProcessing({
       jobId: "job-1",
       requestId: "req-1",
       videoJobStore: jobStore as never,

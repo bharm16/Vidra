@@ -2,7 +2,7 @@ import { Readable, Writable } from "node:stream";
 import type { Response } from "express";
 import { describe, expect, it } from "vitest";
 import { VIDEO_MODELS } from "@config/modelConfig";
-import { parseVideoPreviewRequest, sendVideoContent } from "../videoRequest";
+import { parseVideoRequest, sendVideoContent } from "../videoRequest";
 
 class MockResponse extends Writable {
   public headers = new Map<string, string>();
@@ -34,7 +34,7 @@ class MockResponse extends Writable {
 
 describe("video request parser regression", () => {
   it("rejects invalid aspect ratios", () => {
-    const result = parseVideoPreviewRequest({
+    const result = parseVideoRequest({
       prompt: "Cinematic prompt",
       aspectRatio: "4:3",
       model: "sora",
@@ -48,7 +48,7 @@ describe("video request parser regression", () => {
   });
 
   it("rejects unknown model identifiers", () => {
-    const result = parseVideoPreviewRequest({
+    const result = parseVideoRequest({
       prompt: "Cinematic prompt",
       aspectRatio: "16:9",
       model: "model-that-does-not-exist",
@@ -66,7 +66,7 @@ describe("video request parser regression", () => {
     const acceptedModels = ["sora", "SORA_2", VIDEO_MODELS.SORA_2];
 
     for (const model of acceptedModels) {
-      const result = parseVideoPreviewRequest({
+      const result = parseVideoRequest({
         prompt: "Cinematic prompt",
         aspectRatio: "16:9",
         model,
@@ -81,7 +81,7 @@ describe("video request parser regression", () => {
   });
 
   it("accepts endImage, referenceImages, and extendVideoUrl when valid", () => {
-    const result = parseVideoPreviewRequest({
+    const result = parseVideoRequest({
       prompt: "Cinematic prompt",
       endImage: "https://images.example.com/end.png",
       referenceImages: [
@@ -103,14 +103,14 @@ describe("video request parser regression", () => {
   });
 
   it("rejects empty prompt when no startImage is provided", () => {
-    const missing = parseVideoPreviewRequest({});
+    const missing = parseVideoRequest({});
     expect(missing).toEqual({
       ok: false,
       status: 400,
       error: "Prompt must be a non-empty string when no startImage is provided",
     });
 
-    const blank = parseVideoPreviewRequest({ prompt: "   " });
+    const blank = parseVideoRequest({ prompt: "   " });
     expect(blank).toEqual({
       ok: false,
       status: 400,
@@ -119,7 +119,7 @@ describe("video request parser regression", () => {
   });
 
   it("accepts empty prompt when startImage is provided (i2v)", () => {
-    const withMissingPrompt = parseVideoPreviewRequest({
+    const withMissingPrompt = parseVideoRequest({
       startImage: "https://images.example.com/start.png",
     });
     expect(withMissingPrompt.ok).toBe(true);
@@ -131,7 +131,7 @@ describe("video request parser regression", () => {
       "https://images.example.com/start.png",
     );
 
-    const withBlankPrompt = parseVideoPreviewRequest({
+    const withBlankPrompt = parseVideoRequest({
       prompt: "   ",
       startImage: "https://images.example.com/start.png",
     });
@@ -145,7 +145,7 @@ describe("video request parser regression", () => {
   });
 
   it("rejects non-string prompt regardless of startImage", () => {
-    const result = parseVideoPreviewRequest({
+    const result = parseVideoRequest({
       prompt: 123,
       startImage: "https://images.example.com/start.png",
     });
@@ -157,7 +157,7 @@ describe("video request parser regression", () => {
   });
 
   it("rejects invalid referenceImages payloads", () => {
-    const notArray = parseVideoPreviewRequest({
+    const notArray = parseVideoRequest({
       prompt: "Cinematic prompt",
       referenceImages: "bad",
     });
@@ -167,7 +167,7 @@ describe("video request parser regression", () => {
       error: "referenceImages must be an array",
     });
 
-    const tooMany = parseVideoPreviewRequest({
+    const tooMany = parseVideoRequest({
       prompt: "Cinematic prompt",
       referenceImages: [
         { url: "https://images.example.com/1.png", type: "asset" },
@@ -182,7 +182,7 @@ describe("video request parser regression", () => {
       error: "referenceImages supports a maximum of 3 items",
     });
 
-    const invalidType = parseVideoPreviewRequest({
+    const invalidType = parseVideoRequest({
       prompt: "Cinematic prompt",
       referenceImages: [
         { url: "https://images.example.com/1.png", type: "other" },
