@@ -24,6 +24,7 @@ import { useSpanLabelingPipeline } from "./useSpanLabelingPipeline";
 import { useSuggestionDetection } from "./useSuggestionDetection";
 // parseResult, highlight rendering consumed by useSpanLabelingPipeline
 import { usePromptCanvasState } from "./usePromptCanvasState";
+import { useResolvedGenerationParams } from "./useResolvedGenerationParams";
 import { usePromptStatus } from "./usePromptStatus";
 import { useSpanSelectionEffects } from "./useSpanSelectionEffects";
 import { useCoherenceSpanMarkers } from "./useCoherenceSpanMarkers";
@@ -159,32 +160,8 @@ export function usePromptCanvasOrchestration({
     [keyframes],
   );
 
-  const effectiveAspectRatio = useMemo(() => {
-    const fromParams = generationParams?.aspect_ratio;
-    if (typeof fromParams === "string" && fromParams.trim()) {
-      return fromParams.trim();
-    }
-    return previewAspectRatio;
-  }, [generationParams, previewAspectRatio]);
-
-  const durationSeconds = useMemo(() => {
-    const durationValue = generationParams?.duration_s;
-    if (typeof durationValue === "number") {
-      return Number.isFinite(durationValue) ? durationValue : null;
-    }
-    if (typeof durationValue === "string") {
-      const parsed = Number.parseFloat(durationValue);
-      return Number.isFinite(parsed) ? parsed : null;
-    }
-    return null;
-  }, [generationParams?.duration_s]);
-
-  const fpsNumber = useMemo(() => {
-    const fpsValue = generationParams?.fps;
-    return typeof fpsValue === "number" && Number.isFinite(fpsValue)
-      ? fpsValue
-      : null;
-  }, [generationParams?.fps]);
+  const { effectiveAspectRatio, durationSeconds, fpsNumber } =
+    useResolvedGenerationParams({ generationParams, previewAspectRatio });
 
   const enableMLHighlighting = selectedMode === "video" && showResults;
 

@@ -328,8 +328,7 @@ export function useVersionManagement({
     const draft = createDraft({
       mode: selectedMode,
       targetModel: selectedModel?.trim() ? selectedModel.trim() : null,
-      generationParams:
-        (generationParams as unknown as Record<string, unknown>) ?? null,
+      generationParams: generationParams ?? null,
       keyframes: serializedKeyframes,
     });
     setCurrentPromptUuid(draft.uuid);

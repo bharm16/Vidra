@@ -145,8 +145,7 @@ export const usePromptHistoryActions = ({
       ...(currentPromptDocId ? { id: currentPromptDocId } : {}),
       mode: selectedMode,
       targetModel: selectedModel?.trim() ? selectedModel.trim() : null,
-      generationParams:
-        (generationParams as unknown as Record<string, unknown>) ?? null,
+      generationParams: generationParams ?? null,
       keyframes:
         Array.isArray(currentKeyframes) && currentKeyframes.length > 0
           ? currentKeyframes
@@ -183,8 +182,7 @@ export const usePromptHistoryActions = ({
     const draft = createDraft({
       mode: selectedMode,
       targetModel: selectedModel?.trim() ? selectedModel.trim() : null,
-      generationParams:
-        (generationParams as unknown as Record<string, unknown>) ?? null,
+      generationParams: generationParams ?? null,
     });
 
     // Eagerly reset prompt state before navigation to prevent stale UI flash.

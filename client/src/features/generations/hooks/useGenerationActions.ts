@@ -396,30 +396,70 @@ export function useGenerationActions(
   );
 
   /**
-   * Take on the id the server persisted this take under, replacing the
-   * optimistic local one (CONTEXT.md → Take identity).
+   * Take ownership of one submission's lifecycle: its abort controller, the id
+   * the take is currently known by, and the cleanup that must happen on every
+   * exit.
    *
-   * A take is known by one id, and it is the server's: a session refetch has
-   * to match the take already on screen rather than land a second copy of it.
-   * The picture paths do this inline with the id their response returns; a
-   * clip's server id is its job id, which is what `processVideoJob` writes the
-   * generation record under.
+   * `release` belongs in a `finally`, which is the whole point. Each generate*
+   * callback below has roughly eight exits, and each one previously had to
+   * remember to deregister the controller and hand back the pending flag
+   * itself. Miss one and the controller leaks — so cancel and prompt-version
+   * aborts stop finding the take — while the submit button keeps spinning.
    *
-   * Called before the take enters state, so only the in-flight controller —
-   * registered under the local id so the request could be cancelled — needs
-   * re-keying. Miss that and cancel/abort silently stop finding the take.
+   * The id lives in here rather than beside the caller's `takeId` on purpose:
+   * cleanup has to deregister whatever the take is called *now*, and adoption
+   * happens mid-flight. `adoptServerId` is the only way to re-key, so the two
+   * cannot drift apart.
    */
-  const adoptServerGenerationId = useCallback(
-    (localId: string, serverId: string | null | undefined): string => {
-      if (!serverId || serverId === localId) return localId;
-      const controller = inFlightRef.current.get(localId);
-      if (controller) {
-        inFlightRef.current.delete(localId);
-        inFlightRef.current.set(serverId, controller);
-      }
-      return serverId;
+  const registerSubmission = useCallback(
+    (initialId: string, controller: AbortController) => {
+      let currentId = initialId;
+      inFlightRef.current.set(currentId, controller);
+      return {
+        /**
+         * Take on the id the server persisted this take under, replacing the
+         * optimistic local one (CONTEXT.md → Take identity).
+         *
+         * A take is known by one id, and it is the server's: a session refetch
+         * has to match the take already on screen rather than land a second copy
+         * of it. The picture paths do this inline with the id their response
+         * returns; a clip's server id is its job id, which is what
+         * `processVideoJob` writes the generation record under.
+         *
+         * Called before the take enters state, so only the in-flight controller
+         * — registered under the local id so the request could be cancelled —
+         * needs re-keying. Miss that and cancel/abort silently stop finding the
+         * take.
+         */
+        adoptServerId: (serverId: string | null | undefined): string => {
+          if (!serverId || serverId === currentId) return currentId;
+          const registered = inFlightRef.current.get(currentId);
+          if (registered) {
+            inFlightRef.current.delete(currentId);
+            inFlightRef.current.set(serverId, registered);
+          }
+          currentId = serverId;
+          return currentId;
+        },
+        /**
+         * Deregister the controller and hand back the pending flag.
+         *
+         * Deregistration is unconditional, which is a deliberate superset of
+         * what the individual exits did: abort paths used to return with the
+         * controller still registered. Nothing depended on it staying there —
+         * `abortAll`, `abortMismatched` and `markGenerationCancelled` all remove
+         * it — and `resumeGenerationJob` reads the same map to decide whether a
+         * job is already being watched, so releasing it promptly is the
+         * behaviour it wants. The flag half stays conditional: an accepted take
+         * drives the UI from its own status.
+         */
+        release: (generationAccepted: boolean): void => {
+          inFlightRef.current.delete(currentId);
+          clearSubmissionPendingIfNeeded(generationAccepted);
+        },
+      };
     },
-    [],
+    [clearSubmissionPendingIfNeeded],
   );
 
   // ISSUE-12 follow-up: ADD_GENERATION was retired in favour of
@@ -589,7 +629,7 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      inFlightRef.current.set(takeId, controller);
+      const submission = registerSubmission(takeId, controller);
 
       try {
         if (model === "flux-kontext") {
@@ -600,7 +640,6 @@ export function useGenerationActions(
             ...readSessionParams(optionsRef.current),
           });
           if (controller.signal.aborted) {
-            clearSubmissionPendingIfNeeded(generationAccepted);
             return;
           }
           if (!response.success) {
@@ -660,7 +699,6 @@ export function useGenerationActions(
           // the next bigger transaction. Mirrors the same call on the
           // draft-render and full-render success paths.
           syncCreditBalanceFromResponse(response.remainingCredits);
-          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
           return;
         }
@@ -693,7 +731,6 @@ export function useGenerationActions(
           }
         }
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
 
@@ -713,14 +750,12 @@ export function useGenerationActions(
           wanPrompt = promptForCompilation;
         }
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         const motionPromptInjected = false;
 
         const videoInputSupport = await getVideoInputSupport(model);
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
 
@@ -755,7 +790,6 @@ export function useGenerationActions(
           ? await resolveExtendVideoUrl(allowedExtendVideoUrl)
           : null;
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         const requestStartImageUrlHost = resolvedStartImage?.url
@@ -831,7 +865,6 @@ export function useGenerationActions(
           },
         );
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
 
@@ -864,7 +897,6 @@ export function useGenerationActions(
               ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
             },
           );
-          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
           videoUrl = response.videoUrl;
         } else if (response.success && response.jobId) {
@@ -872,7 +904,7 @@ export function useGenerationActions(
           // id (processVideoJob), so that is this take's identity from here
           // on. Without adopting it a session refetch lands a second copy of
           // the same clip — the duplicate the picture paths already avoid.
-          takeId = adoptServerGenerationId(takeId, response.jobId);
+          takeId = submission.adoptServerId(response.jobId);
           generationAccepted = true;
           acceptGeneration(
             { ...generation, id: takeId },
@@ -918,7 +950,6 @@ export function useGenerationActions(
         }
 
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         if (!generationAccepted) {
@@ -961,11 +992,9 @@ export function useGenerationActions(
         }
       } catch (error) {
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         if (isInsufficientCreditsError(error)) {
-          inFlightRef.current.delete(takeId);
           if (generationAccepted) {
             finalizeGeneration(takeId, {
               status: "failed",
@@ -1009,17 +1038,17 @@ export function useGenerationActions(
               error: errObj.message,
             },
           );
-          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
         }
+      } finally {
+        submission.release(generationAccepted);
       }
     },
     [
       acceptGeneration,
-      adoptServerGenerationId,
-      clearSubmissionPendingIfNeeded,
       dispatch,
       finalizeGeneration,
+      registerSubmission,
       setSubmissionPending,
     ],
   );
@@ -1049,7 +1078,7 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      inFlightRef.current.set(generation.id, controller);
+      const submission = registerSubmission(generation.id, controller);
 
       try {
         const resolvedSeedImageUrl = await resolveSeedImageUrl(
@@ -1076,7 +1105,6 @@ export function useGenerationActions(
             : {}),
         });
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         if (!response.success) {
@@ -1154,15 +1182,12 @@ export function useGenerationActions(
         // the next bigger transaction. Mirrors the same call on the
         // draft-render and full-render success paths.
         syncCreditBalanceFromResponse(response.remainingCredits);
-        inFlightRef.current.delete(generation.id);
         setSubmissionPending(false);
       } catch (error) {
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         if (isInsufficientCreditsError(error)) {
-          inFlightRef.current.delete(generation.id);
           if (generationAccepted) {
             finalizeGeneration(generation.id, {
               status: "failed",
@@ -1200,15 +1225,16 @@ export function useGenerationActions(
             completedAt: Date.now(),
             error: errObj.message,
           });
-          inFlightRef.current.delete(generation.id);
           setSubmissionPending(false);
         }
+      } finally {
+        submission.release(generationAccepted);
       }
     },
     [
       acceptGeneration,
-      clearSubmissionPendingIfNeeded,
       finalizeGeneration,
+      registerSubmission,
       setSubmissionPending,
     ],
   );
@@ -1266,12 +1292,11 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      inFlightRef.current.set(takeId, controller);
+      const submission = registerSubmission(takeId, controller);
 
       try {
         const videoInputSupport = await getVideoInputSupport(model);
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
 
@@ -1306,7 +1331,6 @@ export function useGenerationActions(
           ? await resolveExtendVideoUrl(allowedExtendVideoUrl)
           : null;
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         const requestStartImageUrlHost =
@@ -1384,7 +1408,6 @@ export function useGenerationActions(
           },
         );
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
 
@@ -1417,7 +1440,6 @@ export function useGenerationActions(
               ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
             },
           );
-          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
           videoUrl = response.videoUrl;
         } else if (response.success && response.jobId) {
@@ -1425,7 +1447,7 @@ export function useGenerationActions(
           // id (processVideoJob), so that is this take's identity from here
           // on. Without adopting it a session refetch lands a second copy of
           // the same clip — the duplicate the picture paths already avoid.
-          takeId = adoptServerGenerationId(takeId, response.jobId);
+          takeId = submission.adoptServerId(response.jobId);
           generationAccepted = true;
           acceptGeneration(
             { ...generation, id: takeId },
@@ -1471,7 +1493,6 @@ export function useGenerationActions(
         }
 
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         if (!generationAccepted) {
@@ -1514,11 +1535,9 @@ export function useGenerationActions(
         }
       } catch (error) {
         if (controller.signal.aborted) {
-          clearSubmissionPendingIfNeeded(generationAccepted);
           return;
         }
         if (isInsufficientCreditsError(error)) {
-          inFlightRef.current.delete(takeId);
           if (generationAccepted) {
             finalizeGeneration(takeId, {
               status: "failed",
@@ -1561,17 +1580,17 @@ export function useGenerationActions(
               error: errObj.message,
             },
           );
-          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
         }
+      } finally {
+        submission.release(generationAccepted);
       }
     },
     [
       acceptGeneration,
-      adoptServerGenerationId,
-      clearSubmissionPendingIfNeeded,
       dispatch,
       finalizeGeneration,
+      registerSubmission,
       setSubmissionPending,
     ],
   );

@@ -156,7 +156,7 @@ export function useConceptBrainstorm({
               result.score,
               selectedMode,
               selectedMode === "video" ? (selectedModel ?? null) : null,
-              (generationParams as unknown as Record<string, unknown>) ?? null,
+              generationParams ?? null,
               keyframes ?? null,
               serializedContext as unknown as Record<string, unknown>,
             );

@@ -1,5 +1,5 @@
 import express, { type Request, type Response, type Router } from "express";
-import { z } from "zod";
+import { z, type ZodType } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { requireBody } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
@@ -16,6 +16,7 @@ import type {
   SessionListOptions,
   SessionOutputUpdate,
   SessionPromptUpdate,
+  SessionRecord,
   SessionUpdateRequest,
   SessionVersionsUpdate,
 } from "@services/sessions/types";
@@ -256,6 +257,53 @@ export function createSessionRoutes(
 ): Router {
   const router = express.Router();
 
+  /**
+   * Register a session mutation: PATCH a body, get the updated session DTO.
+   *
+   * The five mutations below differ only in schema, transform, and service
+   * method. Everything else is identical — the ownership guard, the body parse,
+   * the `sessionId` param, the DTO response, and the SessionService-error →
+   * status mapping — and each route previously spelled all of it out. Adding a
+   * sixth field is now three lines that cannot forget a guard or drop a 404 to
+   * the generic error handler.
+   */
+  const registerSessionMutation = <Body, Update>(config: {
+    path: string;
+    schema: ZodType<Body>;
+    toUpdate: (data: Body) => Update;
+    apply: (
+      userId: string,
+      sessionId: string,
+      update: Update,
+    ) => Promise<SessionRecord>;
+  }): void => {
+    router.patch(
+      config.path,
+      asyncHandler(async (req: Request, res: Response) => {
+        const userId = requireUserId(req as RequestWithUser, res);
+        if (!userId) return;
+        const parsed = requireBody(config.schema, req, res);
+        if (!parsed.ok) return;
+        const sessionId = requireRouteParam(req, res, "sessionId");
+        if (!sessionId) return;
+        try {
+          const session = await config.apply(
+            userId,
+            sessionId,
+            config.toUpdate(parsed.value),
+          );
+          res.json({
+            success: true,
+            data: sessionService.toDto(session),
+          } satisfies ApiResponse<SessionDto>);
+        } catch (error) {
+          if (handleSessionMutationError(error, res)) return;
+          throw error;
+        }
+      }),
+    );
+  };
+
   if (continuityService) {
     router.post(
       "/continuity",
@@ -397,31 +445,13 @@ export function createSessionRoutes(
     }),
   );
 
-  router.patch(
-    "/:sessionId",
-    asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
-      if (!userId) return;
-      const parsed = requireBody(UpdateSessionSchema, req, res);
-      if (!parsed.ok) return;
-      const sessionId = requireRouteParam(req, res, "sessionId");
-      if (!sessionId) return;
-      try {
-        const session = await sessionService.updateSessionForUser(
-          userId,
-          sessionId,
-          toSessionUpdateRequest(parsed.value),
-        );
-        res.json({
-          success: true,
-          data: sessionService.toDto(session),
-        } satisfies ApiResponse<SessionDto>);
-      } catch (error) {
-        if (handleSessionMutationError(error, res)) return;
-        throw error;
-      }
-    }),
-  );
+  registerSessionMutation({
+    path: "/:sessionId",
+    schema: UpdateSessionSchema,
+    toUpdate: toSessionUpdateRequest,
+    apply: (userId, sessionId, update) =>
+      sessionService.updateSessionForUser(userId, sessionId, update),
+  });
 
   router.delete(
     "/:sessionId",
@@ -471,109 +501,37 @@ export function createSessionRoutes(
     }),
   );
 
-  router.patch(
-    "/:sessionId/prompt",
-    asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
-      if (!userId) return;
-      const parsed = requireBody(UpdatePromptSchema, req, res);
-      if (!parsed.ok) return;
-      const sessionId = requireRouteParam(req, res, "sessionId");
-      if (!sessionId) return;
-      try {
-        const session = await sessionService.updatePromptForUser(
-          userId,
-          sessionId,
-          toSessionPromptUpdate(parsed.value),
-        );
-        res.json({
-          success: true,
-          data: sessionService.toDto(session),
-        } satisfies ApiResponse<SessionDto>);
-      } catch (error) {
-        if (handleSessionMutationError(error, res)) return;
-        throw error;
-      }
-    }),
-  );
+  registerSessionMutation({
+    path: "/:sessionId/prompt",
+    schema: UpdatePromptSchema,
+    toUpdate: toSessionPromptUpdate,
+    apply: (userId, sessionId, update) =>
+      sessionService.updatePromptForUser(userId, sessionId, update),
+  });
 
-  router.patch(
-    "/:sessionId/highlights",
-    asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
-      if (!userId) return;
-      const parsed = requireBody(UpdateHighlightsSchema, req, res);
-      if (!parsed.ok) return;
-      const sessionId = requireRouteParam(req, res, "sessionId");
-      if (!sessionId) return;
-      try {
-        const session = await sessionService.updateHighlightsForUser(
-          userId,
-          sessionId,
-          toSessionHighlightUpdate(parsed.value),
-        );
-        res.json({
-          success: true,
-          data: sessionService.toDto(session),
-        } satisfies ApiResponse<SessionDto>);
-      } catch (error) {
-        if (handleSessionMutationError(error, res)) return;
-        throw error;
-      }
-    }),
-  );
+  registerSessionMutation({
+    path: "/:sessionId/highlights",
+    schema: UpdateHighlightsSchema,
+    toUpdate: toSessionHighlightUpdate,
+    apply: (userId, sessionId, update) =>
+      sessionService.updateHighlightsForUser(userId, sessionId, update),
+  });
 
-  router.patch(
-    "/:sessionId/output",
-    asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
-      if (!userId) return;
-      const parsed = requireBody(UpdateOutputSchema, req, res);
-      if (!parsed.ok) return;
-      const sessionId = requireRouteParam(req, res, "sessionId");
-      if (!sessionId) return;
-      try {
-        const session = await sessionService.updateOutputForUser(
-          userId,
-          sessionId,
-          toSessionOutputUpdate(parsed.value),
-        );
-        res.json({
-          success: true,
-          data: sessionService.toDto(session),
-        } satisfies ApiResponse<SessionDto>);
-      } catch (error) {
-        if (handleSessionMutationError(error, res)) return;
-        throw error;
-      }
-    }),
-  );
+  registerSessionMutation({
+    path: "/:sessionId/output",
+    schema: UpdateOutputSchema,
+    toUpdate: toSessionOutputUpdate,
+    apply: (userId, sessionId, update) =>
+      sessionService.updateOutputForUser(userId, sessionId, update),
+  });
 
-  router.patch(
-    "/:sessionId/versions",
-    asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
-      if (!userId) return;
-      const parsed = requireBody(UpdateVersionsSchema, req, res);
-      if (!parsed.ok) return;
-      const sessionId = requireRouteParam(req, res, "sessionId");
-      if (!sessionId) return;
-      try {
-        const session = await sessionService.updateVersionsForUser(
-          userId,
-          sessionId,
-          toSessionVersionsUpdate(parsed.value),
-        );
-        res.json({
-          success: true,
-          data: sessionService.toDto(session),
-        } satisfies ApiResponse<SessionDto>);
-      } catch (error) {
-        if (handleSessionMutationError(error, res)) return;
-        throw error;
-      }
-    }),
-  );
+  registerSessionMutation({
+    path: "/:sessionId/versions",
+    schema: UpdateVersionsSchema,
+    toUpdate: toSessionVersionsUpdate,
+    apply: (userId, sessionId, update) =>
+      sessionService.updateVersionsForUser(userId, sessionId, update),
+  });
 
   if (continuityService) {
     // Continuity operations (session-scoped)
