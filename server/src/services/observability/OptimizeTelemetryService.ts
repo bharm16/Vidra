@@ -93,6 +93,18 @@ export class OptimizeTrace {
       // structuredArtifact branch didn't run.
       previewPrompt: summary.previewPrompt ?? null,
       modelVariant: summary.modelVariant ?? null,
+      ...(summary.intentLockPassed !== undefined
+        ? { intentLockPassed: summary.intentLockPassed }
+        : {}),
+      ...(summary.intentLockRepaired !== undefined
+        ? { intentLockRepaired: summary.intentLockRepaired }
+        : {}),
+      ...(summary.promptLintOk !== undefined
+        ? { promptLintOk: summary.promptLintOk }
+        : {}),
+      ...(summary.promptLintOverBudget !== undefined
+        ? { promptLintOverBudget: summary.promptLintOverBudget }
+        : {}),
     };
 
     try {

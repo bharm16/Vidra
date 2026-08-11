@@ -59,12 +59,13 @@ export async function driveOptimize(
     await runInSyntheticContext(requestId, async () => {
       const trace = deps.optimize.startOptimizeTrace(requestId, distinctId);
 
-      // C4 (2026-05-22): capture previewPrompt via onMetadata callback so
-      // we can distinguish pre-compile output (renderer) from post-compile
-      // output (target-model-specific freeform). Comparing the two answers
-      // whether the LLM populates camera_lens (visible in previewPrompt as
-      // "on {lens}") and whether the compile step strips it.
-      let capturedPreviewPrompt: string | null = null;
+      // C4 (2026-05-22): previewPrompt distinguishes pre-compile output
+      // (renderer) from post-compile output (target-model-specific freeform).
+      // Comparing the two answers whether the LLM populates camera_lens
+      // (visible in previewPrompt as "on {lens}") and whether the compile step
+      // strips it. It is a typed response field, so cache hits and misses both
+      // carry it — this used to need an onMetadata callback plus a metadata-bag
+      // fallback for the cache-hit path.
       try {
         const response = await optimizer.optimize({
           prompt: prompt.text,
@@ -89,25 +90,7 @@ export async function driveOptimize(
           // measurement matches the prompt-builder + renderer + compile
           // path operators actually maintain.
           skipCache: true,
-          onMetadata: (metadata: Record<string, unknown>) => {
-            const preview = metadata.previewPrompt;
-            if (typeof preview === "string" && preview.length > 0) {
-              capturedPreviewPrompt = preview;
-            }
-          },
         });
-
-        // Fallback: cache-hit path skips the structuredArtifact branch that
-        // calls onMetadata, but exposes the cached metadata on
-        // response.metadata. Pull previewPrompt from there if onMetadata
-        // didn't deliver it.
-        if (
-          capturedPreviewPrompt === null &&
-          response.metadata &&
-          typeof response.metadata.previewPrompt === "string"
-        ) {
-          capturedPreviewPrompt = response.metadata.previewPrompt;
-        }
 
         const outputPrompt = response.prompt;
         trace.complete({
@@ -126,7 +109,7 @@ export async function driveOptimize(
           // C4 telemetry: previewPrompt is the renderer's pre-compile output.
           // Joined to outputPrompt in dashboards to detect compile-stage
           // wash-out of slot-level details (camera_lens, lighting, etc.).
-          previewPrompt: capturedPreviewPrompt,
+          previewPrompt: response.previewPrompt ?? null,
           modelVariant: deps.variantTag,
         });
         surfaceEvents++;

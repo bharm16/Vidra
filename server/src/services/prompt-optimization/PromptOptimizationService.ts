@@ -9,7 +9,7 @@ import { VideoPromptCompilationService } from "./services/VideoPromptCompilation
 import { TemplateService } from "./services/TemplateService";
 import { IntentLockService } from "./services/IntentLockService";
 import { PromptLintGateService } from "./services/PromptLintGateService";
-import { applyIntentLockPolicy } from "./services/intentLockPolicy";
+import { finishPrompt } from "./services/finishPrompt";
 import type { ImageObservationService } from "@services/image-observation";
 import type { VideoPromptService } from "../video-prompt-analysis/VideoPromptService";
 import type { CacheService } from "@services/cache/CacheService";
@@ -121,7 +121,10 @@ export class PromptOptimizationService {
   }
 
   /**
-   * Compile a pre-optimized prompt for a specific video model (Stage 3 only)
+   * Compile a pre-optimized prompt for a specific video model (Stage 3 only).
+   *
+   * Shares `finishPrompt` with the optimize flow so both entrypoints apply the
+   * same intent policy and the same lint pass; they used to open-code it twice.
    */
   async compilePrompt({
     prompt,
@@ -141,7 +144,6 @@ export class PromptOptimizationService {
     const normalizedPrompt = typeof prompt === "string" ? prompt : "";
     const compilation = await this.compilationService.compile({
       operation: "compilePrompt",
-      mode: "video",
       targetModel,
       source: artifactKey
         ? { kind: "artifactKey", artifactKey }
@@ -150,51 +152,33 @@ export class PromptOptimizationService {
       fallbackPrompt: normalizedPrompt,
       ...(artifactKey ? { artifactKey } : {}),
     });
-    let compiledPrompt = compilation.prompt;
-    let metadata = compilation.metadata;
-    let compilationState = compilation.compilation;
 
-    const originalPrompt = this.resolveOriginalPromptForCompile(
-      context,
-      normalizedPrompt,
-    );
-    const intent = applyIntentLockPolicy({
-      intentLock: this.intentLock,
-      originalPrompt,
-      optimizedPrompt: compiledPrompt,
+    const resolvedTargetModel =
+      compilation.compilation.compiledFor ?? targetModel;
+    const finished = finishPrompt({
+      prompt: compilation.prompt,
+      originalPrompt: this.resolveOriginalPromptForCompile(
+        context,
+        normalizedPrompt,
+      ),
       shotPlan: null,
-      compilation: compilationState,
+      phase: "post-compile",
+      modelId: resolvedTargetModel,
+      intentLock: this.intentLock,
+      promptLint: this.promptLint,
+      compilation: compilation.compilation,
     });
-    compiledPrompt = intent.prompt;
-    compilationState = {
-      ...compilationState,
-      ...(intent.compilationIntentLock
-        ? { intentLock: intent.compilationIntentLock }
-        : {}),
-    };
-
-    const lint = this.promptLint.enforce({
-      prompt: compiledPrompt,
-      modelId: compilationState.compiledFor ?? targetModel,
-    });
-    compiledPrompt = lint.prompt;
-
-    metadata = {
-      ...(metadata || {}),
-      ...intent.legacyMetadata,
-      promptLint: lint.lint,
-      promptLintRepaired: lint.repaired,
-      compilation: compilationState,
-    };
 
     return {
-      compiledPrompt,
-      metadata,
-      targetModel: compilationState.compiledFor ?? targetModel,
+      compiledPrompt: finished.prompt,
+      metadata: compilation.metadata,
+      targetModel: resolvedTargetModel,
       ...(compilation.artifactKey
         ? { artifactKey: compilation.artifactKey }
         : {}),
-      compilation: compilationState,
+      // The intent verdict rides on the compilation state, which is already a
+      // typed wire field — no second copy.
+      compilation: finished.compilation ?? compilation.compilation,
     };
   }
 

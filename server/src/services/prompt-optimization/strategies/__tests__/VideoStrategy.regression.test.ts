@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { VideoStrategy } from "../VideoStrategy";
 
 describe("VideoStrategy regression", () => {
-  it("reassembles plain prose without technical/variation markdown blocks", () => {
+  it("renders plain prose without technical/variation markdown blocks", () => {
     const strategy = new VideoStrategy(
       {
         execute: async () => ({
@@ -33,25 +33,9 @@ describe("VideoStrategy regression", () => {
       variations: [{ label: "Different Angle", prompt: "alt angle" }],
     };
 
-    type ReassembleFn = (
-      parsed: Record<string, unknown>,
-      onMetadata?: (metadata: Record<string, unknown>) => void,
-      generationParams?: Record<string, unknown> | null,
-    ) => string;
-
-    const output = (
-      strategy as unknown as {
-        _reassembleOutput: (
-          parsed: Record<string, unknown>,
-          onMetadata?: (metadata: Record<string, unknown>) => void,
-          generationParams?: Record<string, unknown> | null,
-        ) => string;
-      }
-    )._reassembleOutput(
-      parsed as unknown as Parameters<ReassembleFn>[0],
-      undefined,
-      null,
-    );
+    // Through the public interface: rendering is what callers get, and the
+    // private reassemble helper this used to reach into is gone.
+    const output = strategy.renderStructuredPrompt(parsed as never);
 
     expect(output).not.toContain("**TECHNICAL SPECS**");
     expect(output).not.toContain("**ALTERNATIVE APPROACHES**");
@@ -128,14 +112,17 @@ describe("VideoStrategy regression", () => {
     expect(requiredArrayContents).not.toContain("camera_lens");
   });
 
-  it("isQualityVideoPromptLintError recognizes camera_lens lint messages (eligible for reroll)", async () => {
-    // The lint message text is the contract between the linter and the
-    // reroll path. This test protects against future drift in either the
-    // lint message string or the filter regex by asserting the linter's
-    // observable error text matches the patterns isQualityVideoPromptLintError
-    // checks for.
+  it("makes a malformed camera_lens eligible for reroll on severity, not wording", async () => {
+    // The contract between the linter and the reroll path is `severity`, not
+    // the message text. This test used to assert that the message matched the
+    // strategy's filter regexes — meaning a reworded message silently disabled
+    // the reroll.
     const { lintVideoPromptSlots } = await import("../videoPromptLinter.js");
-    const errors = lintVideoPromptSlots({
+    const { decideSlotRepair } = await import(
+      "../video/slots/decideSlotRepair.js"
+    );
+
+    const lint = lintVideoPromptSlots({
       shot_framing: "Wide Shot",
       camera_angle: "Eye-Level Shot",
       camera_move: "slow dolly in",
@@ -143,16 +130,22 @@ describe("VideoStrategy regression", () => {
       subject_details: ["with green eyes", "wearing a red collar"],
       action: "walking across the kitchen slowly",
       camera_lens: "anamorphic lens at",
-    }).errors;
+    });
 
-    const cameraLensError = errors.find((e) => e.includes("camera_lens"));
-    expect(cameraLensError).toBeDefined();
+    const lensFindings = lint.findings.filter((finding) =>
+      finding.code.startsWith("camera_lens_"),
+    );
+    expect(lensFindings.length).toBeGreaterThan(0);
     expect(
-      /`camera_lens` must contain aperture/i.test(cameraLensError!) ||
-        /`camera_lens` ends in a dangling preposition/i.test(
-          cameraLensError!,
-        ) ||
-        /`camera_lens` is too long/i.test(cameraLensError!),
+      lensFindings.every((finding) => finding.severity === "quality"),
     ).toBe(true);
+
+    const decision = decideSlotRepair({
+      findings: lint.findings,
+      completenessScore: 1,
+      minAcceptableScore: 0.5,
+    });
+    expect(decision.shouldRepair).toBe(true);
+    expect(decision.rerollAttempts).toBe(3);
   });
 });

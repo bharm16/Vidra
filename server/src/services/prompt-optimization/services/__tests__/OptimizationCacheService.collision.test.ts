@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { OptimizationCacheService } from "../OptimizationCacheService";
-import type { OptimizationMode } from "@services/prompt-optimization/types";
+import type {
+  OptimizationMode,
+  OptimizationResponse,
+} from "@services/prompt-optimization/types";
 import type { CacheService } from "@services/cache/CacheService";
 
 const VIDEO_MODE: OptimizationMode = "video";
@@ -28,14 +31,34 @@ vi.mock("@config/OptimizationConfig", () => ({
   },
 }));
 
-function createCacheServiceStub(): CacheService {
+function createCacheServiceStub(stored: unknown = null): CacheService {
   const stub = {
-    get: vi.fn(async () => null),
+    get: vi.fn(async () => stored),
     set: vi.fn(async () => true),
     getConfig: vi.fn(() => ({ ttl: 3600, namespace: "prompt" })),
   };
   return stub as unknown as CacheService;
 }
+
+const outcome = (): OptimizationResponse => ({
+  prompt: "cached prompt",
+  previewPrompt: "cached preview",
+  quality: {
+    intentLock: {
+      passed: true,
+      repaired: false,
+      skippedRepair: false,
+      required: { subject: "baby", action: "driving" },
+    },
+    lint: {
+      ok: true,
+      errors: [],
+      warnings: [],
+      wordCount: 2,
+      repaired: false,
+    },
+  },
+});
 
 describe("OptimizationCacheService.buildCacheKey collision", () => {
   it("produces different keys for prompts that differ only after char 100", () => {
@@ -72,5 +95,32 @@ describe("OptimizationCacheService.buildCacheKey collision", () => {
     const key = service.buildCacheKey(prompt, VIDEO_MODE, null, null);
 
     expect(key).not.toContain("unique-marker-Z");
+  });
+});
+
+describe("OptimizationCacheService.getCachedOutcome", () => {
+  it("returns a stored outcome record", async () => {
+    const stored = outcome();
+    const service = new OptimizationCacheService(
+      createCacheServiceStub(stored),
+    );
+
+    await expect(service.getCachedOutcome("key")).resolves.toEqual(stored);
+  });
+
+  it("treats a pre-record entry (bare prompt string) as a miss", async () => {
+    const service = new OptimizationCacheService(
+      createCacheServiceStub("just the prompt text"),
+    );
+
+    await expect(service.getCachedOutcome("key")).resolves.toBeNull();
+  });
+
+  it("treats a record without quality verdicts as a miss", async () => {
+    const service = new OptimizationCacheService(
+      createCacheServiceStub({ prompt: "cached prompt" }),
+    );
+
+    await expect(service.getCachedOutcome("key")).resolves.toBeNull();
   });
 });

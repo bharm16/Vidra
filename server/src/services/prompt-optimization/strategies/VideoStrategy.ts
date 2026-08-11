@@ -25,46 +25,14 @@ import {
   type VideoPromptSlots,
   type VideoPromptStructuredResponse,
 } from "./videoPromptTypes";
-import { lintVideoPromptSlots } from "./videoPromptLinter";
+import { lintVideoPromptSlots, mergeLintResults } from "./videoPromptLinter";
 import {
   renderMainVideoPrompt,
   renderPreviewPrompt,
 } from "./videoPromptRenderer";
 import { normalizeSlots } from "./video/slots/normalizeSlots";
 import { rerollSlots } from "./video/slots/rerollSlots";
-
-function isCriticalVideoPromptLintError(error: string): boolean {
-  return (
-    /Missing `shot_framing`/i.test(error) ||
-    /`shot_framing` looks like an angle/i.test(error) ||
-    /Missing `camera_angle`/i.test(error) ||
-    /If `subject` is null, `subject_details` must be null/i.test(error)
-  );
-}
-
-function isQualityVideoPromptLintError(error: string): boolean {
-  return (
-    /viewer\/audience language/i.test(error) ||
-    /`style` is too generic/i.test(error) ||
-    /present-participle/i.test(error) ||
-    /`action` is too short/i.test(error) ||
-    /`action` must be ONE continuous action/i.test(error) ||
-    /`action` looks like multiple actions/i.test(error) ||
-    /appears to contain multiple actions/i.test(error) ||
-    /`camera_lens` must contain aperture/i.test(error) ||
-    /`camera_lens` ends in a dangling preposition/i.test(error) ||
-    /`camera_lens` is too long/i.test(error)
-  );
-}
-
-function mergeLintResults(
-  ...results: Array<{ ok: boolean; errors: string[] }>
-) {
-  const errors = Array.from(
-    new Set(results.flatMap((result) => result.errors)),
-  );
-  return { ok: errors.length === 0, errors };
-}
+import { decideSlotRepair } from "./video/slots/decideSlotRepair";
 
 function slotCompletenessScore(slots: VideoPromptSlots): number {
   const signals = [
@@ -94,33 +62,15 @@ export class VideoStrategy implements OptimizationStrategy {
   }
 
   /**
-   * Optimize prompt for video generation
+   * Optimize a prompt into video prompt slots.
    *
-   * Provider-Aware Optimization (NEW):
-   * - Detects provider (OpenAI vs Groq)
-   * - Uses provider-specific template builder
-   * - OpenAI: developerMessage + strict schema (~1,300 tokens)
-   * - Groq: embedded instructions + sandwich prompting (~2,000 tokens)
-   *
-   * Uses progressive enhancement: attempts native Structured Outputs first,
-   * falls back to StructuredOutputEnforcer for unsupported providers
-   * Uses Few-Shot Prompting to prevent structural arrows in output
+   * Provider-aware: the execution router decides which provider will run the
+   * call, which selects the template builder (OpenAI gets a developerMessage +
+   * strict schema; Groq gets embedded instructions + sandwich prompting) and the
+   * strict schema. Native Structured Outputs first, StructuredOutputEnforcer as
+   * the fallback, few-shot examples throughout to keep structural arrows out of
+   * the slot values.
    */
-  async optimize({
-    onMetadata,
-    ...request
-  }: OptimizationRequest): Promise<string> {
-    const artifact = await this.optimizeStructured(request);
-    if (onMetadata) {
-      onMetadata({
-        previewPrompt: artifact.previewPrompt,
-        ...(artifact.aspectRatio ? { aspectRatio: artifact.aspectRatio } : {}),
-      });
-    }
-
-    return this.renderStructuredPrompt(artifact.structuredPrompt);
-  }
-
   async optimizeStructured({
     prompt,
     shotPlan = null,
@@ -363,30 +313,6 @@ export class VideoStrategy implements OptimizationStrategy {
     );
   }
 
-  /**
-   * Reassemble structured JSON into text format for backward compatibility
-   */
-  private _reassembleOutput(
-    parsed: VideoPromptStructuredResponse,
-    onMetadata?: (metadata: Record<string, unknown>) => void,
-    generationParams?: CapabilityValues | null,
-  ): string {
-    const artifact = this.buildStructuredArtifact(
-      parsed,
-      generationParams,
-      parsed.subject?.trim() || parsed.action?.trim() || "",
-    );
-
-    if (onMetadata) {
-      onMetadata({
-        previewPrompt: artifact.previewPrompt,
-        ...(artifact.aspectRatio ? { aspectRatio: artifact.aspectRatio } : {}),
-      });
-    }
-
-    return this.renderStructuredPrompt(artifact.structuredPrompt);
-  }
-
   private applyGenerationParams(
     parsed: VideoPromptStructuredResponse,
     generationParams?: CapabilityValues | null,
@@ -494,23 +420,14 @@ ${JSON.stringify(options.originalJson, null, 2)}
       return { ...options.parsedResponse, ...normalizedSlots };
     }
 
-    const criticalErrors = lint.errors.filter(isCriticalVideoPromptLintError);
-    const qualityErrors = lint.errors.filter(isQualityVideoPromptLintError);
-    const minorErrors = lint.errors.filter(
-      (error) =>
-        !isCriticalVideoPromptLintError(error) &&
-        !isQualityVideoPromptLintError(error),
-    );
     const completenessScore = slotCompletenessScore(normalizedSlots);
-    const shouldEscalateMinor =
-      minorErrors.length >= 2 ||
-      completenessScore < OptimizationConfig.quality.minAcceptableScore;
-    const shouldAttemptRepair =
-      criticalErrors.length > 0 ||
-      qualityErrors.length > 0 ||
-      shouldEscalateMinor;
+    const decision = decideSlotRepair({
+      findings: lint.findings,
+      completenessScore,
+      minAcceptableScore: OptimizationConfig.quality.minAcceptableScore,
+    });
 
-    if (!shouldAttemptRepair) {
+    if (!decision.shouldRepair) {
       logger.warn(
         "Video prompt slot lint has non-critical issues (skipping repair)",
         {
@@ -524,12 +441,12 @@ ${JSON.stringify(options.originalJson, null, 2)}
 
     logger.warn("Video prompt slot lint failed (repairing critical issues)", {
       errors: lint.errors,
-      criticalErrors,
+      criticalErrors: decision.critical.map((finding) => finding.code),
+      qualityErrors: decision.quality.map((finding) => finding.code),
       provider: options.provider,
     });
 
-    const rerollAttempts =
-      criticalErrors.length > 0 || qualityErrors.length > 0 ? 3 : 1;
+    const rerollAttempts = decision.rerollAttempts;
     const rerolled = await rerollSlots({
       ai: this.ai,
       templateSystemPrompt: options.templateSystemPrompt,
@@ -598,13 +515,6 @@ ${JSON.stringify(options.originalJson, null, 2)}
       lintVideoPromptSlots(parsed),
       lintVideoPromptSlots(normalizedSlots),
     ).ok;
-  }
-
-  /**
-   * Video mode does not generate domain content
-   */
-  async generateDomainContent(): Promise<null> {
-    return null;
   }
 
   /**

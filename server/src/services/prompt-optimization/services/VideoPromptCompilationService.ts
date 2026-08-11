@@ -4,9 +4,7 @@ import { resolvePromptModelId } from "@config/videoModelRegistry";
 import type {
   CompilationState,
   CompileContext,
-  CompilePromptResponse,
   CompileSource,
-  OptimizationMode,
   StructuredOptimizationArtifact,
 } from "../types";
 import type { VideoPromptService } from "../../video-prompt-analysis/VideoPromptService";
@@ -20,7 +18,6 @@ interface StructuredArtifactCacheLike {
 
 interface CompileParams {
   operation: string;
-  mode: OptimizationMode;
   targetModel?: string;
   source: CompileSource;
   context?: CompileContext | null;
@@ -61,7 +58,6 @@ export class VideoPromptCompilationService {
 
   async compile({
     operation,
-    mode,
     targetModel,
     source,
     context = null,
@@ -76,25 +72,6 @@ export class VideoPromptCompilationService {
         ? source.artifactKey
         : resolvedSource.artifactKey);
 
-    if (mode !== "video") {
-      return this.buildResult({
-        prompt: resolvedSource.compileInput,
-        compilation: {
-          status: "compile-skipped",
-          usedFallback: resolvedSource.usedFallback,
-          reason: "Compilation skipped for non-video mode.",
-          sourceKind: resolvedSource.sourceKind,
-          structuredArtifactReused: false,
-          analyzerBypassed: false,
-          compiledFor: null,
-        },
-        ...(resolvedSource.genericPrompt
-          ? { genericPrompt: resolvedSource.genericPrompt }
-          : {}),
-        ...(artifactRef ? { artifactKey: artifactRef } : {}),
-      });
-    }
-
     if (!resolvedTargetModel) {
       return this.buildResult({
         prompt: resolvedSource.compileInput,
@@ -107,9 +84,6 @@ export class VideoPromptCompilationService {
           analyzerBypassed: false,
           compiledFor: null,
         },
-        ...(resolvedSource.genericPrompt
-          ? { genericPrompt: resolvedSource.genericPrompt }
-          : {}),
         ...(artifactRef ? { artifactKey: artifactRef } : {}),
       });
     }
@@ -183,9 +157,6 @@ export class VideoPromptCompilationService {
           string,
           unknown
         >,
-        ...(resolvedSource.genericPrompt
-          ? { genericPrompt: resolvedSource.genericPrompt }
-          : {}),
         ...(artifactRef ? { artifactKey: artifactRef } : {}),
       });
     } catch (error) {
@@ -212,67 +183,9 @@ export class VideoPromptCompilationService {
           analyzerBypassed: false,
           compiledFor: resolvedTargetModel,
         },
-        genericPrompt: fallbackPrompt,
         ...(artifactRef ? { artifactKey: artifactRef } : {}),
       });
     }
-  }
-
-  async compileOptimizedPrompt({
-    operation,
-    optimizedPrompt,
-    targetModel,
-    mode,
-    sourcePrompt,
-    structuredArtifact,
-  }: {
-    operation: string;
-    optimizedPrompt?: string;
-    targetModel?: string;
-    mode: OptimizationMode;
-    sourcePrompt?: string;
-    structuredArtifact?: StructuredOptimizationArtifact | null;
-  }): Promise<CompileResult> {
-    return this.compile({
-      operation,
-      mode,
-      ...(targetModel ? { targetModel } : {}),
-      source: structuredArtifact
-        ? { kind: "artifact", artifact: structuredArtifact }
-        : { kind: "prompt", prompt: optimizedPrompt ?? sourcePrompt ?? "" },
-      fallbackPrompt: optimizedPrompt ?? sourcePrompt ?? "",
-    });
-  }
-
-  async compilePrompt(
-    prompt: string,
-    targetModel: string,
-    options: {
-      artifactKey?: string;
-      context?: CompileContext | null;
-    } = {},
-  ): Promise<CompilePromptResponse> {
-    const result = await this.compile({
-      operation: "compilePrompt",
-      mode: "video",
-      targetModel,
-      source: options.artifactKey
-        ? { kind: "artifactKey", artifactKey: options.artifactKey }
-        : { kind: "prompt", prompt },
-      context: options.context ?? null,
-      fallbackPrompt: prompt,
-      ...(options.artifactKey ? { artifactKey: options.artifactKey } : {}),
-    });
-
-    const resolvedTargetModel =
-      this.resolveTargetModel(targetModel) ?? targetModel.trim();
-    return {
-      compiledPrompt: result.prompt,
-      metadata: result.metadata,
-      targetModel: resolvedTargetModel,
-      ...(result.artifactKey ? { artifactKey: result.artifactKey } : {}),
-      compilation: result.compilation,
-    };
   }
 
   private async resolveSource(
@@ -398,32 +311,26 @@ export class VideoPromptCompilationService {
     };
   }
 
+  /**
+   * `metadata` carries provider phase details only. Everything else this used to
+   * copy in — compiledFor, normalizedModelId, artifactKey, genericPrompt,
+   * structuredArtifactReused, and the compilation state itself — is now a typed
+   * field on the result or on CompilationState, so the same fact no longer
+   * travels in two places. The fallback text is not returned: whether a fallback
+   * happened is `compilation.usedFallback` + `reason`, and the caller already
+   * holds the pre-compile prompt it passed in.
+   */
   private buildResult(params: {
     prompt: string;
     compilation: CompilationState;
     compilationMeta?: Record<string, unknown> | null;
-    genericPrompt?: string;
     artifactKey?: string;
   }): CompileResult {
-    const metadata: Record<string, unknown> = {
-      ...(params.compilation.compiledFor
-        ? {
-            compiledFor: params.compilation.compiledFor,
-            normalizedModelId: params.compilation.compiledFor,
-          }
-        : {}),
-      ...(params.compilationMeta
-        ? { compilationMeta: params.compilationMeta }
-        : {}),
-      ...(params.genericPrompt ? { genericPrompt: params.genericPrompt } : {}),
-      ...(params.artifactKey ? { artifactKey: params.artifactKey } : {}),
-      structuredArtifactReused: params.compilation.structuredArtifactReused,
-      compilation: params.compilation,
-    };
-
     return {
       prompt: params.prompt,
-      metadata,
+      metadata: params.compilationMeta
+        ? { compilationMeta: params.compilationMeta }
+        : null,
       compilation: params.compilation,
       ...(params.artifactKey ? { artifactKey: params.artifactKey } : {}),
     };

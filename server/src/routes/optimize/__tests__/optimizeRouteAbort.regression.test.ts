@@ -42,10 +42,23 @@ function createApp() {
         }
         return {
           prompt: `expanded: ${req.prompt}`,
-          score: 90,
-          metadata: {},
+          quality: {
+            intentLock: {
+              passed: true,
+              repaired: false,
+              skippedRepair: false,
+              required: { subject: null, action: null },
+            },
+            lint: {
+              ok: true,
+              errors: [],
+              warnings: [],
+              wordCount: 2,
+              repaired: false,
+            },
+          },
         };
-      }) as OptimizeServices["promptOptimizationService"]["optimize"],
+      }) as unknown as OptimizeServices["promptOptimizationService"]["optimize"],
       compilePrompt: vi.fn(),
     } as unknown as OptimizeServices["promptOptimizationService"];
 

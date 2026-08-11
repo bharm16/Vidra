@@ -95,30 +95,15 @@ export async function runOptimization({
   actions.setOptimizedPrompt(optimized);
   actions.setDisplayedPrompt(optimized);
   actions.setQualityScore(score);
-  if (
-    response.metadata?.genericPrompt &&
-    typeof response.metadata.genericPrompt === "string"
-  ) {
-    actions.setGenericOptimizedPrompt(response.metadata.genericPrompt);
+  if (response.genericPrompt) {
+    actions.setGenericOptimizedPrompt(response.genericPrompt);
   }
-  actions.setArtifactKey(
-    typeof response.artifactKey === "string"
-      ? response.artifactKey
-      : typeof response.metadata?.artifactKey === "string"
-        ? response.metadata.artifactKey
-        : null,
-  );
-  if (
-    response.metadata?.previewPrompt &&
-    typeof response.metadata.previewPrompt === "string"
-  ) {
-    actions.setPreviewPrompt(response.metadata.previewPrompt);
+  actions.setArtifactKey(response.artifactKey ?? null);
+  if (response.previewPrompt) {
+    actions.setPreviewPrompt(response.previewPrompt);
   }
-  if (
-    typeof response.metadata?.aspectRatio === "string" &&
-    response.metadata.aspectRatio.trim()
-  ) {
-    actions.setPreviewAspectRatio(response.metadata.aspectRatio.trim());
+  if (response.aspectRatio?.trim()) {
+    actions.setPreviewAspectRatio(response.aspectRatio.trim());
   }
   actions.bumpOptimizationResultVersion();
 

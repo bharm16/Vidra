@@ -647,9 +647,16 @@ export class IntentLockService {
       };
     }
 
-    throw new Error(
-      "Intent lock failed: optimized prompt does not preserve required subject/action semantics",
-    );
+    // Repair could not satisfy the lock — hand back the caller's own prompt and
+    // report the failure. Throwing here used to discard a completed
+    // optimization (two LLM calls) as a 500; the caller can see `passed: false`
+    // and decide, which is the whole point of returning a verdict.
+    return {
+      prompt: currentPrompt,
+      passed: false,
+      repaired: false,
+      required,
+    };
   }
 
   /**

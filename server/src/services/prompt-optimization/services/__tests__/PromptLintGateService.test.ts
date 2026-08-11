@@ -19,8 +19,8 @@ describe("PromptLintGateService", () => {
     );
   });
 
-  it("sanitizes markdown artifacts during enforcement", () => {
-    const result = service.enforce({
+  it("sanitizes markdown artifacts", () => {
+    const result = service.sanitize({
       prompt: "Scene text\n\n**ALTERNATIVE APPROACHES**\n- Variation 1: ...",
     });
     expect(result.prompt).toBe("Scene text");
@@ -34,7 +34,7 @@ describe("PromptLintGateService", () => {
       error: logError,
     } as never;
 
-    const result = service.enforce({
+    const result = service.sanitize({
       prompt: longPrompt,
       modelId: "wan-2.2",
     });
@@ -45,5 +45,38 @@ describe("PromptLintGateService", () => {
       "Prompt too long for wan-2.2 (120 words > 60).",
     );
     expect(logError).toHaveBeenCalled();
+  });
+
+  // The one lint outcome with a downstream cost: the provider truncates after
+  // the spend. Typed so a caller can act on it without parsing an error string.
+  it("reports a budget overrun as a typed outcome", () => {
+    const result = service.sanitize({
+      prompt: new Array(120).fill("word").join(" "),
+      modelId: "wan-2.2",
+    });
+
+    expect(result.lint.overBudget).toEqual({
+      modelId: "wan-2.2",
+      wordCount: 120,
+      limit: 60,
+    });
+  });
+
+  it("leaves overBudget unset for a prompt inside the budget", () => {
+    const result = service.sanitize({
+      prompt: new Array(40).fill("word").join(" "),
+      modelId: "wan-2.2",
+    });
+
+    expect(result.lint.overBudget).toBeUndefined();
+    expect(result.lint.ok).toBe(true);
+  });
+
+  it("leaves overBudget unset when no model constrains the prompt", () => {
+    const result = service.sanitize({
+      prompt: new Array(400).fill("word").join(" "),
+    });
+
+    expect(result.lint.overBudget).toBeUndefined();
   });
 });

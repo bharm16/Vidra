@@ -63,9 +63,7 @@ export interface OptimizationRequest {
   lockedSpans?: LockedSpan[];
   shotPlan?: ShotPlan | null;
   shotPlanAttempted?: boolean;
-  domainContent?: string | null;
   useConstitutionalAI?: boolean;
-  onMetadata?: (metadata: Record<string, unknown>) => void;
   signal?: AbortSignal;
   /** Present in legacy I2V calls; ignored after the I2V pipeline removal. */
   startImage?: string;
@@ -127,6 +125,28 @@ export interface CompileContext {
   assets?: Array<Record<string, unknown>>;
 }
 
+/**
+ * Quality verdicts produced by the finishing stages.
+ *
+ * Server-internal: telemetry is the consumer (see OptimizeTraceCompleteSummary),
+ * and the intent verdict additionally reaches the client inside
+ * `CompilationState.intentLock`, which is already on the wire. Deliberately NOT
+ * a wire field of its own — that would ship the same verdict twice for no reader.
+ */
+export interface PromptQualityReport {
+  intentLock: CompilationIntentLockState;
+  lint: PromptLintReport;
+}
+
+export interface PromptLintReport {
+  ok: boolean;
+  errors: string[];
+  warnings: string[];
+  wordCount: number;
+  repaired: boolean;
+  overBudget?: { modelId: string; wordCount: number; limit: number };
+}
+
 export interface CompilePromptResponse {
   compiledPrompt: string;
   metadata: Record<string, unknown> | null;
@@ -137,27 +157,43 @@ export interface CompilePromptResponse {
 
 export interface OptimizationResponse {
   prompt: string;
-  metadata?: Record<string, unknown>;
+  /**
+   * Renderer output before any model-specific compile. Present whenever the
+   * structured branch ran.
+   */
+  previewPrompt?: string;
+  aspectRatio?: string;
+  /**
+   * The prompt as it stands before any model-specific compile. Equal to
+   * `prompt` when no compile ran. The canvas keeps it so a re-compile for
+   * another model starts from generic text rather than from compiled,
+   * model-shaped output.
+   */
+  genericPrompt?: string;
   artifactKey?: string;
   compilation?: CompilationState;
+  quality: PromptQualityReport;
+  /**
+   * Free-form additions from the compile stage (provider phase details). Not a
+   * home for anything a caller needs — put that on a typed field.
+   */
+  metadata?: Record<string, unknown>;
 }
 
 /**
- * Optimization strategy interface
+ * Optimization strategy interface.
+ *
+ * Structured-first: every strategy produces a slot artifact and renders it. The
+ * previous shape made both optional and kept a third `optimize()` entrypoint,
+ * so the flow probed for methods that its one adapter always defined.
  */
 export interface OptimizationStrategy {
-  optimize(request: OptimizationRequest): Promise<string>;
-  optimizeStructured?(
+  optimizeStructured(
     request: OptimizationRequest,
   ): Promise<StructuredOptimizationArtifact>;
-  renderStructuredPrompt?(
+  renderStructuredPrompt(
     structuredPrompt: VideoPromptStructuredResponse,
   ): string;
-  generateDomainContent?(
-    prompt: string,
-    context?: InferredContext | null,
-    shotPlan?: ShotPlan | null,
-  ): Promise<unknown>;
   name: string;
 }
 

@@ -110,20 +110,11 @@ export const createOptimizeCompileHandler =
         targetModel: result.targetModel,
       });
 
-      const responseMetadata = {
-        ...(result.metadata || {}),
-        normalizedModelId: result.targetModel,
-        intentLockPassed:
-          typeof result.metadata?.intentLockPassed === "boolean"
-            ? result.metadata.intentLockPassed
-            : true,
-      };
-
       const responsePayload = {
         compiledPrompt: result.compiledPrompt,
         ...(result.artifactKey ? { artifactKey: result.artifactKey } : {}),
         ...(result.compilation ? { compilation: result.compilation } : {}),
-        metadata: responseMetadata,
+        ...(result.metadata ? { metadata: result.metadata } : {}),
         ...(result.targetModel ? { targetModel: result.targetModel } : {}),
       };
 

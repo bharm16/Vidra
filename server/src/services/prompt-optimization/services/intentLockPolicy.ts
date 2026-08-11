@@ -1,8 +1,18 @@
-import type {
-  CompilationIntentLockState,
-  CompilationState,
-  ShotPlan,
-} from "../types";
+import type { CompilationIntentLockState, ShotPlan } from "../types";
+
+/**
+ * Where in the pipeline the lock is being applied. This is the whole policy:
+ *
+ * - `generic` — the prompt is still ours to rewrite, so a failed lock is
+ *   repaired in place.
+ * - `post-compile` — the prompt now carries model-specific structure (shot
+ *   markers, audio lines, character handles) that a repair would flatten, so the
+ *   lock validates and reports without mutating.
+ *
+ * Passing the phase explicitly replaced inferring it from
+ * `compilation.status === "compiled"`, which two callers derived differently.
+ */
+export type IntentLockPhase = "generic" | "post-compile";
 
 interface IntentLockLike {
   enforceIntentLock(params: {
@@ -15,16 +25,23 @@ interface IntentLockLike {
     repaired: boolean;
     required: { subject: string | null; action: string | null };
   };
+  validateIntentPreservation(params: {
+    originalPrompt: string;
+    optimizedPrompt: string;
+    shotPlan: ShotPlan | null;
+  }): {
+    passed: boolean;
+    required: { subject: string | null; action: string | null };
+  };
 }
+
+const SKIPPED_REPAIR_WARNING =
+  "Intent lock requested a repair, but repair was skipped to preserve model-specific output structure.";
 
 export interface IntentLockPolicyResult {
   prompt: string;
-  legacyMetadata: {
-    intentLockPassed: boolean;
-    intentLockRepaired: boolean;
-    requiredIntent: { subject: string | null; action: string | null };
-  };
-  compilationIntentLock?: CompilationIntentLockState;
+  /** Verdict for the response's compilation state and for telemetry. */
+  intentLock: CompilationIntentLockState;
 }
 
 export function applyIntentLockPolicy(params: {
@@ -32,74 +49,50 @@ export function applyIntentLockPolicy(params: {
   originalPrompt: string;
   optimizedPrompt: string;
   shotPlan: ShotPlan | null;
-  compilation?: CompilationState | null;
+  phase: IntentLockPhase;
 }): IntentLockPolicyResult {
-  const validateOnly = params.compilation?.status === "compiled";
-  const originalCompiledPrompt = params.optimizedPrompt.trim();
+  const prompt = params.optimizedPrompt.trim();
+  const request = {
+    originalPrompt: params.originalPrompt,
+    optimizedPrompt: params.optimizedPrompt,
+    shotPlan: params.shotPlan,
+  };
 
   try {
-    const result = params.intentLock.enforceIntentLock({
-      originalPrompt: params.originalPrompt,
-      optimizedPrompt: params.optimizedPrompt,
-      shotPlan: params.shotPlan,
-    });
-
-    if (validateOnly && result.repaired) {
-      const warning =
-        "Intent lock requested a repair, but repair was skipped to preserve model-specific output structure.";
+    if (params.phase === "post-compile") {
+      const verdict = params.intentLock.validateIntentPreservation(request);
       return {
-        prompt: originalCompiledPrompt,
-        legacyMetadata: {
-          intentLockPassed: false,
-          intentLockRepaired: false,
-          requiredIntent: result.required,
-        },
-        compilationIntentLock: {
-          passed: false,
+        prompt,
+        intentLock: {
+          passed: verdict.passed,
           repaired: false,
-          skippedRepair: true,
-          warning,
-          required: result.required,
+          skippedRepair: !verdict.passed,
+          required: verdict.required,
+          ...(verdict.passed ? {} : { warning: SKIPPED_REPAIR_WARNING }),
         },
       };
     }
 
+    const result = params.intentLock.enforceIntentLock(request);
     return {
       prompt: result.prompt,
-      legacyMetadata: {
-        intentLockPassed: result.passed,
-        intentLockRepaired: result.repaired,
-        requiredIntent: result.required,
+      intentLock: {
+        passed: result.passed,
+        repaired: result.repaired,
+        skippedRepair: false,
+        required: result.required,
       },
-      ...(params.compilation
-        ? {
-            compilationIntentLock: {
-              passed: result.passed,
-              repaired: result.repaired,
-              skippedRepair: false,
-              required: result.required,
-            },
-          }
-        : {}),
     };
   } catch (error) {
-    if (!validateOnly) {
-      throw error;
-    }
-
-    const warning = error instanceof Error ? error.message : String(error);
+    // The lock is a quality gate, not a delivery gate: a collaborator that
+    // throws must not cost the caller a prompt it already paid for.
     return {
-      prompt: originalCompiledPrompt,
-      legacyMetadata: {
-        intentLockPassed: false,
-        intentLockRepaired: false,
-        requiredIntent: { subject: null, action: null },
-      },
-      compilationIntentLock: {
+      prompt,
+      intentLock: {
         passed: false,
         repaired: false,
         skippedRepair: true,
-        warning,
+        warning: error instanceof Error ? error.message : String(error),
         required: { subject: null, action: null },
       },
     };

@@ -9,10 +9,10 @@ describe("VideoPromptCompilationService", () => {
     } as unknown as VideoPromptService;
     const service = new VideoPromptCompilationService(videoPromptService);
 
-    const result = await service.compileOptimizedPrompt({
+    const result = await service.compile({
       operation: "optimize",
-      optimizedPrompt: "generic optimized prompt",
-      mode: "video",
+      source: { kind: "prompt", prompt: "generic optimized prompt" },
+      fallbackPrompt: "generic optimized prompt",
     });
 
     expect(result.prompt).toBe("generic optimized prompt");
@@ -21,11 +21,7 @@ describe("VideoPromptCompilationService", () => {
       compiledFor: null,
       sourceKind: "prompt",
     });
-    expect(result.metadata).toMatchObject({
-      compilation: expect.objectContaining({
-        status: "compile-skipped",
-      }),
-    });
+    expect(result.metadata).toBeNull();
     expect(videoPromptService.optimizeForModel).not.toHaveBeenCalled();
   });
 
@@ -45,11 +41,11 @@ describe("VideoPromptCompilationService", () => {
     } as unknown as VideoPromptService;
     const service = new VideoPromptCompilationService(videoPromptService);
 
-    const result = await service.compileOptimizedPrompt({
+    const result = await service.compile({
       operation: "optimize",
-      optimizedPrompt: "generic optimized prompt",
+      source: { kind: "prompt", prompt: "generic optimized prompt" },
+      fallbackPrompt: "generic optimized prompt",
       targetModel: "kling",
-      mode: "video",
     });
 
     expect(videoPromptService.optimizeForModel).toHaveBeenCalledWith(
@@ -61,17 +57,14 @@ describe("VideoPromptCompilationService", () => {
       },
     );
     expect(result.prompt).toBe("kling-compiled prompt");
-    expect(result.metadata).toMatchObject({
+    expect(result.compilation).toMatchObject({
+      status: "compiled",
+      sourceKind: "prompt",
       compiledFor: "kling-2.1",
-      normalizedModelId: "kling-2.1",
-      genericPrompt: "generic optimized prompt",
-      compilation: expect.objectContaining({
-        status: "compiled",
-        sourceKind: "prompt",
-      }),
     });
-    expect(result.metadata).not.toHaveProperty("compilationQuality");
-    expect(result.metadata).not.toHaveProperty("compilationWarning");
+    // Provider phase details are all that metadata carries now; every other
+    // fact is a typed field.
+    expect(Object.keys(result.metadata ?? {})).toEqual(["compilationMeta"]);
   });
 
   it("keeps successful terse compilations instead of falling back to the generic prompt", async () => {
@@ -83,18 +76,19 @@ describe("VideoPromptCompilationService", () => {
     } as unknown as VideoPromptService;
     const service = new VideoPromptCompilationService(videoPromptService);
 
-    const result = await service.compileOptimizedPrompt({
+    const genericPrompt =
+      "A much longer generic optimized prompt with many details and camera controls.";
+    const result = await service.compile({
       operation: "optimize",
-      optimizedPrompt:
-        "A much longer generic optimized prompt with many details and camera controls.",
+      source: { kind: "prompt", prompt: genericPrompt },
+      fallbackPrompt: genericPrompt,
       targetModel: "wan",
-      mode: "video",
     });
 
     expect(result.prompt).toBe(
       "Tabby cat walks along a sandy beach at golden hour.",
     );
-    expect(result.metadata?.compiledFor).toBe("wan-2.2");
+    expect(result.compilation.compiledFor).toBe("wan-2.2");
     expect(result.compilation.status).toBe("compiled");
   });
 });

@@ -51,14 +51,28 @@ function sanitizeMarkdownArtifacts(prompt: string): string {
     .trim();
 }
 
+/**
+ * A model's hard word budget was exceeded. Typed rather than left as one string
+ * among many in `errors`, because this is the one lint outcome with a
+ * downstream cost: the provider truncates the prompt after the spend. Callers
+ * that surface it can warn before generating; callers that ignore it at least
+ * cannot claim they were not told.
+ */
+export interface PromptLintOverBudget {
+  modelId: string;
+  wordCount: number;
+  limit: number;
+}
+
 export interface PromptLintResult {
   ok: boolean;
   errors: string[];
   warnings: string[];
   wordCount: number;
+  overBudget?: PromptLintOverBudget;
 }
 
-export interface PromptLintEnforcementResult {
+export interface PromptLintSanitizeResult {
   prompt: string;
   lint: PromptLintResult;
   repaired: boolean;
@@ -95,6 +109,7 @@ export class PromptLintGateService {
     const errors: string[] = [];
     const warnings: string[] = [];
     const wordCount = countWords(prompt);
+    let overBudget: PromptLintOverBudget | undefined;
 
     for (const rule of FORBIDDEN_PATTERNS) {
       if (rule.pattern.test(prompt)) {
@@ -103,11 +118,12 @@ export class PromptLintGateService {
     }
 
     const limits = this.resolveLimits(modelId);
-    if (limits) {
+    if (limits && modelId) {
       if (wordCount > limits.max) {
         errors.push(
           `Prompt too long for ${modelId} (${wordCount} words > ${limits.max}).`,
         );
+        overBudget = { modelId, wordCount, limit: limits.max };
       } else if (wordCount < limits.min) {
         warnings.push(
           `Prompt short for ${modelId} (${wordCount} words < ${limits.min}).`,
@@ -120,23 +136,32 @@ export class PromptLintGateService {
       errors,
       warnings,
       wordCount,
+      ...(overBudget ? { overBudget } : {}),
     };
   }
 
-  enforce(params: {
+  /**
+   * Strip template artifacts and report what remains. Deliberately non-fatal —
+   * see the sanitize-then-warn regression suite: throwing here 500s a request
+   * whose LLM spend has already happened. The name says sanitize because that is
+   * all this does; enforcement, if any, belongs to whoever reads `lint`.
+   */
+  sanitize(params: {
     prompt: string;
     modelId?: string | null;
-  }): PromptLintEnforcementResult {
+  }): PromptLintSanitizeResult {
     const originalPrompt = params.prompt.trim();
-    let candidate = sanitizeMarkdownArtifacts(originalPrompt);
+    const candidate = sanitizeMarkdownArtifacts(originalPrompt);
 
     const lint = this.evaluate(candidate, params.modelId);
-    const hasNonLengthErrors = lint.errors.some(
-      (error) => !error.startsWith("Prompt too long for "),
-    );
-    const hasOnlyLengthError = lint.errors.length > 0 && !hasNonLengthErrors;
+    // The budget violation contributes exactly one error, so anything beyond it
+    // is a formatting problem. Counted rather than re-matched: this used to sniff
+    // its own message prefix.
+    const nonLengthErrorCount = lint.errors.length - (lint.overBudget ? 1 : 0);
+    const hasOnlyLengthError =
+      Boolean(lint.overBudget) && nonLengthErrorCount === 0;
 
-    if (params.modelId && hasOnlyLengthError) {
+    if (hasOnlyLengthError) {
       this.log.error(
         "Model-specific prompt exceeded word budget; returning unchanged prompt",
         undefined,

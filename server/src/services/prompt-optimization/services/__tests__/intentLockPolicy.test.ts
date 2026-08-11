@@ -2,18 +2,65 @@ import { describe, expect, it, vi } from "vitest";
 
 import { applyIntentLockPolicy } from "../intentLockPolicy";
 
+const compiledPrompt =
+  "Shot 1: A cyclist pushes off into the frame. Shot 2: The camera tracks behind as rain sprays from the tires.";
+
+const required = { subject: "cyclist", action: "pushes off" };
+
 describe("applyIntentLockPolicy", () => {
-  it("preserves model-compiled prompt structure when intent lock requests a repair", () => {
-    const compiledPrompt =
-      "Shot 1: A cyclist pushes off into the frame. Shot 2: The camera tracks behind as rain sprays from the tires.";
+  it("repairs in place during the generic phase", () => {
+    const repaired = "A cyclist pushes off into the frame. Rain sprays.";
     const intentLock = {
       enforceIntentLock: vi.fn(() => ({
-        prompt:
-          "A repaired single-sentence prompt that drops temporal sequencing.",
+        prompt: repaired,
         passed: true,
         repaired: true,
-        required: { subject: "cyclist", action: "pushes off" },
+        required,
       })),
+      validateIntentPreservation: vi.fn(),
+    };
+
+    const result = applyIntentLockPolicy({
+      intentLock,
+      originalPrompt: "A cyclist pushes off into the frame",
+      optimizedPrompt: "A rider rolls away.",
+      shotPlan: null,
+      phase: "generic",
+    });
+
+    expect(result.prompt).toBe(repaired);
+    expect(result.intentLock).toMatchObject({ passed: true, repaired: true });
+    expect(intentLock.validateIntentPreservation).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed generic lock without discarding the prompt", () => {
+    const candidate = "A rider rolls away.";
+    const intentLock = {
+      enforceIntentLock: vi.fn(() => ({
+        prompt: candidate,
+        passed: false,
+        repaired: false,
+        required,
+      })),
+      validateIntentPreservation: vi.fn(),
+    };
+
+    const result = applyIntentLockPolicy({
+      intentLock,
+      originalPrompt: "A cyclist pushes off into the frame",
+      optimizedPrompt: candidate,
+      shotPlan: null,
+      phase: "generic",
+    });
+
+    expect(result.prompt).toBe(candidate);
+    expect(result.intentLock.passed).toBe(false);
+  });
+
+  it("preserves model-compiled prompt structure when the lock fails post-compile", () => {
+    const intentLock = {
+      enforceIntentLock: vi.fn(),
+      validateIntentPreservation: vi.fn(() => ({ passed: false, required })),
     };
 
     const result = applyIntentLockPolicy({
@@ -21,33 +68,47 @@ describe("applyIntentLockPolicy", () => {
       originalPrompt: "A cyclist pushes off into the frame",
       optimizedPrompt: compiledPrompt,
       shotPlan: null,
-      compilation: {
-        status: "compiled",
-        usedFallback: false,
-        sourceKind: "artifact",
-        structuredArtifactReused: true,
-        analyzerBypassed: true,
-        compiledFor: "sora-2",
-      },
+      phase: "post-compile",
     });
 
     expect(result.prompt).toBe(compiledPrompt);
-    expect(result.legacyMetadata.intentLockPassed).toBe(false);
-    expect(result.compilationIntentLock).toMatchObject({
-      skippedRepair: true,
+    expect(result.intentLock).toMatchObject({
+      passed: false,
       repaired: false,
-      required: { subject: "cyclist", action: "pushes off" },
+      skippedRepair: true,
+      required,
     });
+    // Post-compile never pays for a repair it intends to throw away.
+    expect(intentLock.enforceIntentLock).not.toHaveBeenCalled();
   });
 
-  it("preserves model-compiled prompt structure when intent lock throws", () => {
-    const compiledPrompt =
-      "@CharacterA walks into frame. Audio: rain on metal roof. Camera: medium tracking shot.";
+  it("passes a compiled prompt through cleanly when the lock holds", () => {
     const intentLock = {
-      enforceIntentLock: vi.fn(() => {
-        throw new Error(
-          "Intent lock failed: optimized prompt does not preserve required subject/action semantics",
-        );
+      enforceIntentLock: vi.fn(),
+      validateIntentPreservation: vi.fn(() => ({ passed: true, required })),
+    };
+
+    const result = applyIntentLockPolicy({
+      intentLock,
+      originalPrompt: "A cyclist pushes off into the frame",
+      optimizedPrompt: compiledPrompt,
+      shotPlan: null,
+      phase: "post-compile",
+    });
+
+    expect(result.prompt).toBe(compiledPrompt);
+    expect(result.intentLock).toMatchObject({
+      passed: true,
+      skippedRepair: false,
+    });
+    expect(result.intentLock.warning).toBeUndefined();
+  });
+
+  it("preserves the prompt when the lock throws", () => {
+    const intentLock = {
+      enforceIntentLock: vi.fn(),
+      validateIntentPreservation: vi.fn(() => {
+        throw new Error("Intent lock failed: tokenizer blew up");
       }),
     };
 
@@ -56,21 +117,12 @@ describe("applyIntentLockPolicy", () => {
       originalPrompt: "Character A walks into frame under a metal roof",
       optimizedPrompt: compiledPrompt,
       shotPlan: null,
-      compilation: {
-        status: "compiled",
-        usedFallback: false,
-        sourceKind: "artifact",
-        structuredArtifactReused: true,
-        analyzerBypassed: true,
-        compiledFor: "kling-2.1",
-      },
+      phase: "post-compile",
     });
 
     expect(result.prompt).toBe(compiledPrompt);
-    expect(result.legacyMetadata.intentLockPassed).toBe(false);
-    expect(result.compilationIntentLock?.warning).toContain(
-      "Intent lock failed",
-    );
-    expect(result.compilationIntentLock?.skippedRepair).toBe(true);
+    expect(result.intentLock.passed).toBe(false);
+    expect(result.intentLock.warning).toContain("Intent lock failed");
+    expect(result.intentLock.skippedRepair).toBe(true);
   });
 });

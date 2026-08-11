@@ -29,16 +29,57 @@ function createArtifact(): StructuredOptimizationArtifact {
   };
 }
 
+const passingIntentLock = () => ({
+  enforceIntentLock: vi.fn(({ optimizedPrompt }) => ({
+    prompt: optimizedPrompt,
+    passed: true,
+    repaired: false,
+    required: { subject: "baby", action: "driving" },
+  })),
+  validateIntentPreservation: vi.fn(() => ({
+    passed: true,
+    required: { subject: "baby", action: "driving" },
+  })),
+});
+
+const passingLint = () => ({
+  sanitize: vi.fn(({ prompt }) => ({
+    prompt,
+    lint: {
+      ok: true,
+      errors: [],
+      warnings: [],
+      wordCount: prompt.split(/\s+/).length,
+    },
+    repaired: false,
+  })),
+});
+
+const silentLog = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  child: vi.fn(),
+});
+
+const noopTelemetry = () =>
+  ({
+    recordStage: vi.fn(),
+    recordLlmCall: vi.fn(),
+    recordCacheHit: vi.fn(),
+    recordError: vi.fn(),
+    complete: vi.fn(),
+  }) as never;
+
 describe("regression: targeted optimize reuses structured artifacts", () => {
-  it("skips generic prose rendering while preserving preview metadata for target-model runs", async () => {
-    const onMetadata = vi.fn();
+  it("compiles from the artifact and returns preview/generic prompts as typed fields", async () => {
     const structuredArtifact = createArtifact();
-    const optimize = vi.fn(async () => "generic prose should not run");
     const optimizeStructured = vi.fn(async () => structuredArtifact);
-    const renderStructuredPrompt = vi.fn(() => "generic render should not run");
+    const renderStructuredPrompt = vi.fn(() => "generic rendered prompt");
     const compile = vi.fn(async () => ({
       prompt: "wan-specific compiled prompt",
-      metadata: { compiledFor: "wan-2.2", structuredArtifactReused: true },
+      metadata: { compilationMeta: { phases: [] } },
       compilation: {
         status: "compiled" as const,
         usedFallback: false,
@@ -59,71 +100,36 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
         brainstormContext: {
           originalUserPrompt: "baby driving a car",
         },
-        onMetadata,
       },
-      log: {
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-        child: vi.fn(),
-      },
+      log: silentLog(),
       optimizationCache: {
         buildCacheKey: vi.fn(() => "cache-key"),
         buildStructuredArtifactKeyFromInputs: vi.fn(
           () => "structured-cache-key",
         ),
-        getCachedResult: vi.fn(async () => null),
-        getCachedMetadata: vi.fn(async () => null),
+        getCachedOutcome: vi.fn(async () => null),
         getStructuredArtifact: vi.fn(async () => null),
-        cacheResult: vi.fn(async () => undefined),
+        cacheOutcome: vi.fn(async () => undefined),
         cacheStructuredArtifact,
       },
       shotInterpreter: {
         interpret: vi.fn(async () => null),
       },
       strategy: {
-        optimize,
         optimizeStructured,
         renderStructuredPrompt,
-        generateDomainContent: vi.fn(async () => null),
       },
       compilationService: {
         compile,
       },
       applyConstitutionalAI: vi.fn(async (prompt: string) => prompt),
       logOptimizationMetrics: vi.fn(),
-      intentLock: {
-        enforceIntentLock: vi.fn(({ optimizedPrompt }) => ({
-          prompt: optimizedPrompt,
-          passed: true,
-          repaired: false,
-          required: { subject: "baby", action: "driving" },
-        })),
-      },
-      promptLint: {
-        enforce: vi.fn(({ prompt }) => ({
-          prompt,
-          lint: {
-            ok: true,
-            errors: [],
-            warnings: [],
-            wordCount: prompt.split(/\s+/).length,
-          },
-          repaired: false,
-        })),
-      },
-      telemetry: {
-        recordStage: vi.fn(),
-        recordLlmCall: vi.fn(),
-        recordCacheHit: vi.fn(),
-        recordError: vi.fn(),
-        complete: vi.fn(),
-      } as never,
+      intentLock: passingIntentLock(),
+      promptLint: passingLint(),
+      telemetry: noopTelemetry(),
     });
 
     expect(optimizeStructured).toHaveBeenCalledTimes(1);
-    expect(optimize).not.toHaveBeenCalled();
     // renderStructuredPrompt IS called to produce the generic prompt before
     // intent lock enforcement, which runs prior to model-specific compilation.
     expect(renderStructuredPrompt).toHaveBeenCalledTimes(1);
@@ -134,7 +140,6 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
     expect(compile).toHaveBeenCalledWith(
       expect.objectContaining({
         operation: "optimize",
-        mode: "video",
         targetModel: "wan-2.2",
         source: { kind: "artifact", artifact: structuredArtifact },
         artifactKey: "structured-cache-key",
@@ -142,22 +147,71 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
     );
     expect(result.prompt).toBe("wan-specific compiled prompt");
     expect(result.artifactKey).toBe("structured-cache-key");
+    expect(result.previewPrompt).toBe("baby driving a toy car");
+    expect(result.aspectRatio).toBe("16:9");
+    expect(result.genericPrompt).toBe("generic rendered prompt");
     expect(result.compilation).toMatchObject({
       status: "compiled",
       sourceKind: "artifact",
-    });
-    expect(result.metadata).toMatchObject({
-      previewPrompt: "baby driving a toy car",
-      aspectRatio: "16:9",
-      artifactKey: "structured-cache-key",
       compiledFor: "wan-2.2",
-      structuredArtifactReused: true,
     });
-    expect(onMetadata).toHaveBeenCalledWith({ normalizedModelId: "wan-2.2" });
-    expect(onMetadata).toHaveBeenCalledWith({
-      previewPrompt: "baby driving a toy car",
-      aspectRatio: "16:9",
-      artifactKey: "structured-cache-key",
+    expect(result.quality.intentLock.passed).toBe(true);
+    expect(result.quality.lint.ok).toBe(true);
+  });
+
+  it("returns the same shape from a cache hit as from a miss", async () => {
+    const structuredArtifact = createArtifact();
+    const cacheOutcome = vi.fn(async (_key: string, _outcome: unknown) => undefined);
+    const deps = {
+      request: {
+        prompt: "baby driving a car",
+        mode: "video" as const,
+      },
+      log: silentLog(),
+      shotInterpreter: { interpret: vi.fn(async () => null) },
+      strategy: {
+        optimizeStructured: vi.fn(async () => structuredArtifact),
+        renderStructuredPrompt: vi.fn(() => "generic rendered prompt"),
+      },
+      compilationService: null,
+      applyConstitutionalAI: vi.fn(async (prompt: string) => prompt),
+      logOptimizationMetrics: vi.fn(),
+      intentLock: passingIntentLock(),
+      promptLint: passingLint(),
+      telemetry: noopTelemetry(),
+    };
+
+    const miss = await runOptimizeFlow({
+      ...deps,
+      optimizationCache: {
+        buildCacheKey: vi.fn(() => "cache-key"),
+        buildStructuredArtifactKeyFromInputs: vi.fn(() => "artifact-key"),
+        getCachedOutcome: vi.fn(async () => null),
+        getStructuredArtifact: vi.fn(async () => null),
+        cacheOutcome,
+        cacheStructuredArtifact: vi.fn(async () => undefined),
+      },
     });
+
+    // Whatever the miss path wrote is what the hit path replays — the two used
+    // to be assembled independently, so a partial write produced a hit with a
+    // prompt and no preview.
+    const written = cacheOutcome.mock.calls[0]?.[1];
+    expect(written).toEqual(miss);
+
+    const hit = await runOptimizeFlow({
+      ...deps,
+      optimizationCache: {
+        buildCacheKey: vi.fn(() => "cache-key"),
+        buildStructuredArtifactKeyFromInputs: vi.fn(() => "artifact-key"),
+        getCachedOutcome: vi.fn(async () => miss),
+        getStructuredArtifact: vi.fn(async () => null),
+        cacheOutcome: vi.fn(async () => undefined),
+        cacheStructuredArtifact: vi.fn(async () => undefined),
+      },
+    });
+
+    expect(hit).toEqual(miss);
+    expect(Object.keys(hit).sort()).toEqual(Object.keys(miss).sort());
   });
 });

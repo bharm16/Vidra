@@ -53,27 +53,41 @@ describe("PromptOptimizationService contract", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns cached optimize response and emits cached metadata", async () => {
+  it("returns the cached optimize response whole", async () => {
     const service = createService();
-    const onMetadata = vi.fn();
+    const cached = {
+      prompt: "cached optimized prompt",
+      previewPrompt: "cached preview",
+      genericPrompt: "cached optimized prompt",
+      artifactKey: "cached-artifact",
+      quality: {
+        intentLock: {
+          passed: true,
+          repaired: false,
+          skippedRepair: false,
+          required: { subject: "baby", action: "driving" },
+        },
+        lint: {
+          ok: true,
+          errors: [],
+          warnings: [],
+          wordCount: 3,
+          repaired: false,
+        },
+      },
+    };
 
     (service as unknown as { optimizationCache: unknown }).optimizationCache = {
       buildCacheKey: vi.fn(() => "cache-key"),
-      getCachedResult: vi.fn(async () => "cached optimized prompt"),
-      getCachedMetadata: vi.fn(async () => ({ source: "cache", score: 0.9 })),
-      cacheResult: vi.fn(async () => {}),
+      getCachedOutcome: vi.fn(async () => cached),
+      cacheOutcome: vi.fn(async () => {}),
     };
 
-    const result = await service.optimize({
-      prompt: "optimize this",
-      onMetadata,
-    });
+    const result = await service.optimize({ prompt: "optimize this" });
 
-    expect(result).toEqual({
-      prompt: "cached optimized prompt",
-      metadata: { source: "cache", score: 0.9 },
-    });
-    expect(onMetadata).toHaveBeenCalledWith({ source: "cache", score: 0.9 });
+    // One record in, the same record out — the hit path cannot assemble a
+    // different shape than the miss path wrote.
+    expect(result).toEqual(cached);
   });
 
   it("ignores startImage on optimize and runs the T2V flow with a warning", async () => {
@@ -81,9 +95,25 @@ describe("PromptOptimizationService contract", () => {
 
     (service as unknown as { optimizationCache: unknown }).optimizationCache = {
       buildCacheKey: vi.fn(() => "cache-key"),
-      getCachedResult: vi.fn(async () => "cached optimized prompt"),
-      getCachedMetadata: vi.fn(async () => null),
-      cacheResult: vi.fn(async () => {}),
+      getCachedOutcome: vi.fn(async () => ({
+        prompt: "cached optimized prompt",
+        quality: {
+          intentLock: {
+            passed: true,
+            repaired: false,
+            skippedRepair: false,
+            required: { subject: null, action: null },
+          },
+          lint: {
+            ok: true,
+            errors: [],
+            warnings: [],
+            wordCount: 3,
+            repaired: false,
+          },
+        },
+      })),
+      cacheOutcome: vi.fn(async () => {}),
     };
 
     const result = await service.optimize({

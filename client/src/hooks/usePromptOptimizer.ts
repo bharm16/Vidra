@@ -335,18 +335,9 @@ export const usePromptOptimizer = (
         }
         bumpOptimizationResultVersion();
 
-        if (
-          result.metadata?.previewPrompt &&
-          typeof result.metadata.previewPrompt === "string"
-        ) {
-          setPreviewPrompt(result.metadata.previewPrompt);
-        }
-        if (
-          typeof result.metadata?.aspectRatio === "string" &&
-          result.metadata.aspectRatio.trim()
-        ) {
-          setPreviewAspectRatio(result.metadata.aspectRatio.trim());
-        }
+        // No preview/aspect-ratio handling here: compile never produced either
+        // (they come from the renderer, pre-compile). These were reads of keys
+        // the compile response has never carried.
 
         return {
           optimized: compiled,
@@ -384,8 +375,6 @@ export const usePromptOptimizer = (
       setGenericOptimizedPrompt,
       setArtifactKey,
       bumpOptimizationResultVersion,
-      setPreviewPrompt,
-      setPreviewAspectRatio,
       toast,
     ],
   );

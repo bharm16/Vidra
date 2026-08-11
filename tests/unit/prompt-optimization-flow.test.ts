@@ -69,11 +69,9 @@ describe("runOptimization", () => {
     const analyzeAndOptimize = vi.fn().mockResolvedValue({
       prompt: "optimized prompt",
       artifactKey: "artifact-123",
-      metadata: {
-        genericPrompt: "generic prompt",
-        previewPrompt: "preview prompt",
-        aspectRatio: "16:9",
-      },
+      genericPrompt: "generic prompt",
+      previewPrompt: "preview prompt",
+      aspectRatio: "16:9",
     });
 
     const result = await runOptimization({

@@ -177,23 +177,19 @@ export const createOptimizeHandler =
         outputLength: result.prompt?.length || 0,
       });
 
-      const responseMetadata = {
-        ...(result.metadata || {}),
-        ...(normalizedTargetModel
-          ? { normalizedModelId: normalizedTargetModel }
-          : {}),
-        intentLockPassed:
-          typeof result.metadata?.intentLockPassed === "boolean"
-            ? result.metadata.intentLockPassed
-            : true,
-      };
-
       const responsePayload = {
         prompt: result.prompt,
         optimizedPrompt: result.prompt,
+        ...(result.previewPrompt
+          ? { previewPrompt: result.previewPrompt }
+          : {}),
+        ...(result.aspectRatio ? { aspectRatio: result.aspectRatio } : {}),
+        ...(result.genericPrompt
+          ? { genericPrompt: result.genericPrompt }
+          : {}),
         ...(result.artifactKey ? { artifactKey: result.artifactKey } : {}),
         ...(result.compilation ? { compilation: result.compilation } : {}),
-        metadata: responseMetadata,
+        ...(result.metadata ? { metadata: result.metadata } : {}),
       };
 
       res.setHeader("X-Response-Version", "3");

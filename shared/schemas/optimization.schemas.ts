@@ -89,11 +89,29 @@ export type CompilationState = z.infer<typeof CompilationStateSchema>;
 // Optimize response (wire format from POST /api/optimize)
 // ---------------------------------------------------------------------------
 
-/** The `data` payload of a successful optimize response. */
+/**
+ * The `data` payload of a successful optimize response.
+ *
+ * `previewPrompt`, `aspectRatio` and `genericPrompt` are typed fields because
+ * clients read them. They used to be loose keys inside `metadata`, which meant
+ * two client hooks each hand-wrote `typeof x === "string"` guards to read them.
+ * Quality verdicts are NOT here: the intent verdict already travels inside
+ * `compilation.intentLock`, and lint verdicts go to telemetry, whose consumer is
+ * the Measurement Program rather than the UI.
+ */
 export const OptimizeDataSchema = z
   .object({
     prompt: z.string(),
     optimizedPrompt: z.string().optional(),
+    /**
+     * The renderer's short preview composition of the slots, produced before any
+     * model-specific compile. Distinct from `genericPrompt`, which is the full
+     * rendering the compile step consumes.
+     */
+    previewPrompt: z.string().optional(),
+    aspectRatio: z.string().optional(),
+    /** The full prompt before any model-specific compile; equals `prompt` when none ran. */
+    genericPrompt: z.string().optional(),
     artifactKey: z.string().optional(),
     compilation: CompilationStateSchema.optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),

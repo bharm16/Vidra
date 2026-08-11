@@ -94,6 +94,34 @@ describe("IntentLockService", () => {
     expect(result.repaired).toBe(false);
   });
 
+  // Reachable: shot-plan context sentences are appended without a semantics
+  // check, so a plan whose setting carries a downgrade modifier ("toy car
+  // showroom") can reintroduce exactly what the lock exists to strip. This used
+  // to throw, which turned a completed two-LLM-call optimization into a 500 on
+  // the main authoring loop. The lock now reports failure and hands back the
+  // model's own prompt.
+  it("reports failure instead of throwing when repair cannot preserve semantics", () => {
+    const candidate = "A close-up in a sunny park with butterflies.";
+
+    const result = service.enforceIntentLock({
+      originalPrompt: "baby driving a car",
+      optimizedPrompt: candidate,
+      shotPlan: {
+        shot_type: "close-up",
+        core_intent: "baby driving",
+        setting: "a toy car showroom",
+      },
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.repaired).toBe(false);
+    expect(result.prompt).toBe(candidate);
+    expect(result.required).toEqual({
+      subject: "baby",
+      action: "driving a car",
+    });
+  });
+
   it("repairs sitting-in-driver-seat drift for driving intent", () => {
     const result = service.enforceIntentLock({
       originalPrompt: "baby driving a car",

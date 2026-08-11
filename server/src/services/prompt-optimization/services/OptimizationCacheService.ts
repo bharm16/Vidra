@@ -2,6 +2,7 @@ import type { CacheService } from "@services/cache/CacheService";
 import OptimizationConfig from "@config/OptimizationConfig";
 import type {
   LockedSpan,
+  OptimizationResponse,
   ShotPlan,
   StructuredOptimizationArtifact,
 } from "../types";
@@ -19,18 +20,25 @@ export class OptimizationCacheService {
     );
   }
 
-  async getCachedResult(key: string): Promise<string | null> {
-    return this.cacheService.get<string>(key, "optimization");
-  }
-
-  async getCachedMetadata(
-    key: string,
-  ): Promise<Record<string, unknown> | null> {
-    const metaKey = this.buildMetadataCacheKey(key);
-    return this.cacheService.get<Record<string, unknown>>(
-      metaKey,
-      "optimization_metadata",
-    );
+  /**
+   * A previously completed optimization, whole.
+   *
+   * The stored record IS the response, under one key: the hit path and the miss
+   * path cannot return different shapes when there is only one shape. Prompt and
+   * metadata used to live under two independently-written keys, so a partial
+   * write produced a hit with the right prompt and no preview. Entries that
+   * predate this layout (a bare prompt string) read as a miss.
+   */
+  async getCachedOutcome(key: string): Promise<OptimizationResponse | null> {
+    const cached = await this.cacheService.get<unknown>(key, "optimization");
+    if (!cached || typeof cached !== "object") {
+      return null;
+    }
+    const candidate = cached as Partial<OptimizationResponse>;
+    if (typeof candidate.prompt !== "string" || !candidate.quality) {
+      return null;
+    }
+    return candidate as OptimizationResponse;
   }
 
   async getStructuredArtifact(
@@ -42,32 +50,11 @@ export class OptimizationCacheService {
     );
   }
 
-  /**
-   * Fetch a cached optimization result, or run `compute` exactly once across
-   * concurrent callers and cache the produced value. Single-flight coalescing
-   * prevents duplicate LLM calls when multiple identical /api/optimize
-   * requests land in the same burst.
-   */
-  async getOrComputeResult(
+  async cacheOutcome(
     key: string,
-    compute: () => Promise<string>,
-  ): Promise<{ value: string; source: "cache" | "computed" | "coalesced" }> {
-    return this.cacheService.getOrCompute<string>(key, compute, {
-      ttl: this.cacheConfig.ttl,
-      cacheType: "optimization",
-    });
-  }
-
-  async cacheResult(
-    key: string,
-    result: string,
-    metadata?: Record<string, unknown> | null,
+    outcome: OptimizationResponse,
   ): Promise<void> {
-    await this.cacheService.set(key, result, this.cacheConfig);
-    if (metadata) {
-      const metaKey = this.buildMetadataCacheKey(key);
-      await this.cacheService.set(metaKey, metadata, this.cacheConfig);
-    }
+    await this.cacheService.set(key, outcome, this.cacheConfig);
   }
 
   async cacheStructuredArtifact(
@@ -91,7 +78,8 @@ export class OptimizationCacheService {
       this.buildGenerationParamsSignature(generationParams);
     const promptHash = sha256Hex(prompt, 16);
     const parts = [
-      "prompt-opt-v4",
+      // v6: entries store the whole response record, not a bare prompt string.
+      "prompt-opt-v6",
       mode,
       targetModel || "generic",
       promptHash,
@@ -105,13 +93,6 @@ export class OptimizationCacheService {
       parts.push(`locked:${lockedSpanSignature}`);
     }
     return parts.join("::");
-  }
-
-  buildStructuredArtifactKey(genericPrompt: string): string {
-    return this.buildStructuredArtifactKeyFromInputs({
-      prompt: genericPrompt,
-      sourcePrompt: genericPrompt,
-    });
   }
 
   buildStructuredArtifactKeyFromInputs(params: {
@@ -142,10 +123,6 @@ export class OptimizationCacheService {
     );
 
     return ["prompt-opt-v5", "structured-artifact", promptHash].join("::");
-  }
-
-  private buildMetadataCacheKey(baseKey: string): string {
-    return `${baseKey}::meta`;
   }
 
   /**

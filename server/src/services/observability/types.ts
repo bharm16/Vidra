@@ -37,6 +37,16 @@ export interface OptimizeTraceCompleteSummary {
    * the synthetic harness runs without `--variant-tag`.
    */
   modelVariant?: string | null;
+  /**
+   * Quality verdicts from the finishing stages. These live here rather than on
+   * the API response's metadata bag, where no client ever read them — the
+   * Measurement Program is their actual consumer.
+   */
+  intentLockPassed?: boolean;
+  intentLockRepaired?: boolean;
+  promptLintOk?: boolean;
+  /** A model word budget was exceeded — the provider will truncate post-spend. */
+  promptLintOverBudget?: boolean;
 }
 
 export interface OptimizeEventStages {
@@ -76,6 +86,10 @@ export interface OptimizeEventProperties {
    */
   previewPrompt?: string | null;
   modelVariant?: string | null;
+  intentLockPassed?: boolean;
+  intentLockRepaired?: boolean;
+  promptLintOk?: boolean;
+  promptLintOverBudget?: boolean;
 }
 
 // ----- LLM call telemetry -----

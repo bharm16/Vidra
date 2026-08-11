@@ -1,5 +1,6 @@
 import type { ILogger } from "@interfaces/ILogger";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
+import type { PromptLintResult } from "../services/PromptLintGateService";
 import type {
   AIService,
   CompilationState,
@@ -9,6 +10,7 @@ import type {
   LockedSpan,
   OptimizationMode,
   OptimizationRequest,
+  OptimizationResponse,
   ShotPlan,
   StructuredOptimizationArtifact,
 } from "../types";
@@ -32,16 +34,11 @@ export type OptimizationCacheLike = {
     generationParams?: Record<string, unknown> | null;
     lockedSpans?: LockedSpan[];
   }): string;
-  getCachedResult(key: string): Promise<string | null>;
-  getCachedMetadata(key: string): Promise<MetadataMap | null>;
+  getCachedOutcome(key: string): Promise<OptimizationResponse | null>;
   getStructuredArtifact(
     key: string,
   ): Promise<StructuredOptimizationArtifact | null>;
-  cacheResult(
-    key: string,
-    result: string,
-    metadata?: MetadataMap | null,
-  ): Promise<void>;
+  cacheOutcome(key: string, outcome: OptimizationResponse): Promise<void>;
   cacheStructuredArtifact(
     key: string,
     artifact: StructuredOptimizationArtifact,
@@ -53,24 +50,17 @@ export type ShotInterpreterLike = {
 };
 
 export type OptimizationStrategyLike = {
-  optimize(request: OptimizationRequest): Promise<string>;
-  optimizeStructured?(
+  optimizeStructured(
     request: OptimizationRequest,
   ): Promise<StructuredOptimizationArtifact>;
-  renderStructuredPrompt?(
+  renderStructuredPrompt(
     structuredPrompt: StructuredOptimizationArtifact["structuredPrompt"],
   ): string;
-  generateDomainContent?(
-    prompt: string,
-    context?: InferredContext | null,
-    shotPlan?: ShotPlan | null,
-  ): Promise<unknown>;
 };
 
 export type CompilationServiceLike = {
   compile(args: {
     operation: string;
-    mode: OptimizationMode;
     targetModel?: string;
     source: CompileSource;
     context?: CompileContext | null;
@@ -101,7 +91,7 @@ export type IntentLockLike = {
     repaired: boolean;
     required: { subject: string | null; action: string | null };
   };
-  validateIntentPreservation?(params: {
+  validateIntentPreservation(params: {
     originalPrompt: string;
     optimizedPrompt: string;
     shotPlan: ShotPlan | null;
@@ -112,14 +102,9 @@ export type IntentLockLike = {
 };
 
 export type PromptLintLike = {
-  enforce(params: { prompt: string; modelId?: string | null }): {
+  sanitize(params: { prompt: string; modelId?: string | null }): {
     prompt: string;
-    lint: {
-      ok: boolean;
-      errors: string[];
-      warnings: string[];
-      wordCount: number;
-    };
+    lint: PromptLintResult;
     repaired: boolean;
   };
 };

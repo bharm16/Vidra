@@ -4,7 +4,10 @@ import {
   type VideoPromptStructuredResponse,
   type VideoPromptSlots,
 } from "@services/prompt-optimization/strategies/videoPromptTypes";
-import { lintVideoPromptSlots } from "../../videoPromptLinter";
+import {
+  lintVideoPromptSlots,
+  mergeLintResults,
+} from "../../videoPromptLinter";
 import { normalizeSlots } from "./normalizeSlots";
 import { scoreSlots } from "./scoreSlots";
 
@@ -28,12 +31,6 @@ export async function rerollSlots(options: {
     score: number;
   };
   const candidates: Candidate[] = [];
-  const mergeLint = (...results: Array<{ ok: boolean; errors: string[] }>) => {
-    const errors = Array.from(
-      new Set(results.flatMap((result) => result.errors)),
-    );
-    return { ok: errors.length === 0, errors };
-  };
 
   for (let i = 0; i < attempts; i++) {
     const seed = (options.baseSeed + i + 1) % 2147483647;
@@ -54,7 +51,7 @@ export async function rerollSlots(options: {
 
       const parsed = parseVideoPromptStructuredResponse(response.text);
       const slots = normalizeSlots(parsed);
-      const lint = mergeLint(
+      const lint = mergeLintResults(
         lintVideoPromptSlots(parsed),
         lintVideoPromptSlots(slots),
       );

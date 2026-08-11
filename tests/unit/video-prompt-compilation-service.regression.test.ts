@@ -153,22 +153,26 @@ describe("regression: compile hot path reuses structured artifacts", () => {
     const analyzer = new TrackingAnalyzer();
     const service = createCompilationService(analyzer, createArtifact());
 
-    const result = await service.compilePrompt(
-      "Baby driving a car. The camera uses static tripod at eye level.",
-      "wan",
-      { artifactKey: "artifact-key" },
-    );
+    const result = await service.compile({
+      operation: "compilePrompt",
+      targetModel: "wan",
+      source: { kind: "artifactKey", artifactKey: "artifact-key" },
+      fallbackPrompt:
+        "Baby driving a car. The camera uses static tripod at eye level.",
+      artifactKey: "artifact-key",
+    });
 
     expect(analyzer.analyzeSpy).not.toHaveBeenCalled();
-    expect(result.compiledPrompt).toContain("subject:baby");
-    expect(result.compiledPrompt).toContain("action:driving a tiny toy car");
-    expect(result.compiledPrompt).toContain(
+    expect(result.prompt).toContain("subject:baby");
+    expect(result.prompt).toContain("action:driving a tiny toy car");
+    expect(result.prompt).toContain(
       'raw:baby says "go" while pretending to drive a toy car',
     );
-    expect(result.compiledPrompt).not.toContain("flattened subject");
-    expect(result.metadata).toMatchObject({
+    expect(result.prompt).not.toContain("flattened subject");
+    expect(result.compilation).toMatchObject({
       compiledFor: "wan-2.2",
       structuredArtifactReused: true,
+      analyzerBypassed: true,
     });
   });
 
@@ -182,27 +186,26 @@ describe("regression: compile hot path reuses structured artifacts", () => {
       }),
     );
 
-    const result = await service.compilePrompt(
-      "generic compiled prose that flattened the original prompt",
-      "wan-2.2",
-      { artifactKey: "artifact-key" },
-    );
+    const result = await service.compile({
+      operation: "compilePrompt",
+      targetModel: "wan-2.2",
+      source: { kind: "artifactKey", artifactKey: "artifact-key" },
+      fallbackPrompt: "generic compiled prose that flattened the original prompt",
+      artifactKey: "artifact-key",
+    });
 
     expect(analyzer.analyzeSpy).toHaveBeenCalledTimes(1);
     expect(analyzer.analyzeSpy).toHaveBeenCalledWith(
       'baby says "go" while pretending to drive a toy car',
     );
-    expect(result.compiledPrompt).toContain("subject:flattened subject");
-    expect(result.compiledPrompt).toContain("action:generic motion");
-    expect(result.compiledPrompt).toContain(
+    expect(result.prompt).toContain("subject:flattened subject");
+    expect(result.prompt).toContain("action:generic motion");
+    expect(result.prompt).toContain(
       'raw:baby says "go" while pretending to drive a toy car',
     );
-    expect(result.metadata).toMatchObject({
+    expect(result.compilation).toMatchObject({
       structuredArtifactReused: false,
-      compilation: expect.objectContaining({
-        structuredArtifactReused: false,
-        analyzerBypassed: false,
-      }),
+      analyzerBypassed: false,
     });
   });
 });

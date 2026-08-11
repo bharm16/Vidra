@@ -18,7 +18,7 @@ describe("regression: lint enforcement is non-fatal (sanitize-then-warn)", () =>
     } as never;
     const longPrompt = new Array(75).fill("word").join(" ");
 
-    const result = service.enforce({
+    const result = service.sanitize({
       prompt: longPrompt,
       modelId: "wan-2.2",
     });
@@ -44,7 +44,7 @@ describe("regression: lint enforcement is non-fatal (sanitize-then-warn)", () =>
 
     let result;
     expect(() => {
-      result = service.enforce({
+      result = service.sanitize({
         prompt: "# Heading\nThis should not 500 the request.",
         modelId: "wan-2.2",
       });
@@ -64,14 +64,14 @@ describe("regression: lint enforcement is non-fatal (sanitize-then-warn)", () =>
       warn: logWarn,
     } as never;
 
-    const result = service.enforce({
+    const result = service.sanitize({
       prompt:
         "A cinematic shot Variation 2 of the city at dusk, fog drifting low.",
     });
 
     expect(result.lint.ok).toBe(false);
     expect(
-      result.lint.errors.some((e) =>
+      result.lint.errors.some((e: string) =>
         e.toLowerCase().includes("variation artifact"),
       ),
     ).toBe(true);
@@ -85,7 +85,7 @@ describe("regression: lint enforcement is non-fatal (sanitize-then-warn)", () =>
       warn: logWarn,
     } as never;
 
-    const result = service.enforce({
+    const result = service.sanitize({
       prompt:
         "A cinematic dolly shot of a neon alley at dusk, fog rolling in from the harbor.",
     });
