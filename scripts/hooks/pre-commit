@@ -9,11 +9,14 @@ elif [ -d "/usr/local/bin" ]; then
   export PATH="/usr/local/bin:$PATH"
 fi
 
+# Both run incrementally/cached — a warm hook costs seconds, not a minute.
+# Use the npm scripts rather than inlining the commands, so the hook and
+# `npm run verify` can never check different things.
 echo ">> Pre-commit: type check"
-npx tsc --noEmit
+npm run typecheck
 
 echo ">> Pre-commit: lint (errors only)"
-npx eslint --config config/lint/eslint.config.js . --quiet
+npm run lint:quiet
 
 # Circular imports and forbidden cross-layer imports. ~12s.
 # tsc accepts a type-only import cycle, so this is the only local check that

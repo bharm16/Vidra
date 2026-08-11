@@ -44,11 +44,26 @@ afterAll(() => {
   for (const dir of tempRoots) rmSync(dir, { recursive: true, force: true });
 });
 
+/**
+ * The audit walks the whole checkout, which costs ~1.5s. Four of the tests
+ * below run it against this repo and only differ in what they assert about the
+ * one output, so the walk is memoized per script path — the real script runs
+ * once instead of four times, and each synthetic fixture (a fresh temp dir, so
+ * a distinct key) still gets its own run. Nothing mutates a tree between calls,
+ * so a repeated invocation could only reproduce its own result.
+ */
+const auditCache = new Map<string, string>();
+
 function runAudit(scriptPath: string): string {
-  return execFileSync("bash", [scriptPath], {
+  const cached = auditCache.get(scriptPath);
+  if (cached !== undefined) return cached;
+
+  const output = execFileSync("bash", [scriptPath], {
     encoding: "utf8",
     maxBuffer: 32 * 1024 * 1024,
   });
+  auditCache.set(scriptPath, output);
+  return output;
 }
 
 /**

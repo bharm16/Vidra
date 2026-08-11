@@ -3,9 +3,6 @@
  *
  * Feature: typescript-config-fixes
  *
- * Property 1: Zero TypeScript Compilation Errors
- * Validates: Requirements 1.3, 1.4, 2.3-2.6, 3.1, 3.4, 4.1-4.5, 5.1-5.3, 6.1-6.4, 7.1-7.4
- *
  * Property 2: No Deep Relative Imports
  * Validates: Requirements 1.9, 8.1, 8.2, 8.4
  *
@@ -13,13 +10,22 @@
  * Validates: Requirements 1.1, 1.2, 1.6-1.10, 2.7, 3.2, 3.3, 6.3
  *
  * These property tests verify that the TypeScript configuration is correct
- * and all TypeScript files compile without errors and follow import conventions.
+ * and that imports follow the project's conventions.
+ *
+ * Property 1 ("zero compilation errors") used to live here and shelled out to
+ * `tsc` three times — root, client, and server. It cost 55s of a 56s server
+ * suite, four times the next slowest file, and the root run duplicated
+ * `verify`'s own first gate verbatim. Compiling is a gate, not a unit test:
+ * all three now run in `scripts/typecheck.sh`, concurrently and incrementally.
+ * The client config adds nothing the root config does not already check (it
+ * extends root, narrows nothing, and its extra `vite.config.ts` entry does not
+ * exist), so that one is simply gone; the server config narrows `lib` to
+ * ES2022 with `types: ["node"]`, which is the only check that catches server
+ * code reaching for a DOM global, and it is kept.
  */
 
-import { execFile } from "child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { join } from "path";
-import { promisify } from "util";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -32,32 +38,6 @@ const DEEP_IMPORT_BASELINE = {
   server: 39,
   client: 49,
 } as const;
-
-const execFileAsync = promisify(execFile);
-
-async function runTypeCheck(
-  args: string[],
-  timeout: number,
-): Promise<{ result: string; hasErrors: boolean }> {
-  try {
-    const { stdout, stderr } = await execFileAsync("npx", args, {
-      encoding: "utf-8",
-      cwd: process.cwd(),
-      timeout,
-      maxBuffer: 10 * 1024 * 1024,
-    });
-    return {
-      result: `${stdout}${stderr}`,
-      hasErrors: false,
-    };
-  } catch (error) {
-    const execError = error as { stdout?: string; stderr?: string };
-    return {
-      result: execError.stdout || execError.stderr || String(error),
-      hasErrors: true,
-    };
-  }
-}
 
 /**
  * Parse JSON with comments (JSONC) by stripping comments
@@ -162,106 +142,6 @@ function getAllTypeScriptFiles(dir: string, files: string[] = []): string[] {
 }
 
 describe("TypeScript Configuration - Property Tests", () => {
-  /**
-   * Property 1: Zero TypeScript Compilation Errors
-   *
-   * For any TypeScript file in the project (client, server, or tests),
-   * running `tsc --noEmit` SHALL produce zero errors.
-   *
-   * This is a universal property that must hold for all TypeScript files
-   * in the codebase.
-   */
-  describe("Property 1: Zero TypeScript Compilation Errors", () => {
-    it("should compile server code without TypeScript errors", async () => {
-      // Run TypeScript compiler on server code with noEmit flag
-      // This validates all type checking without producing output files
-      const { result, hasErrors } = await runTypeCheck(
-        ["tsc", "--project", "server/tsconfig.json", "--noEmit"],
-        120000,
-      );
-
-      // Check for TypeScript error patterns
-      const errorPattern = /error TS\d+:/g;
-      const errors = result.match(errorPattern) || [];
-
-      if (hasErrors || errors.length > 0) {
-        // Extract first few errors for diagnostic purposes
-        const errorLines = result
-          .split("\n")
-          .filter((line) => line.includes("error TS"))
-          .slice(0, 10);
-
-        console.error("TypeScript compilation errors found in server code:");
-        console.error(`Total errors: ${errors.length}`);
-        console.error("First 10 errors:");
-        errorLines.forEach((line) => console.error(`  ${line}`));
-      }
-
-      expect(
-        errors.length,
-        `Expected zero TypeScript errors, but found ${errors.length}`,
-      ).toBe(0);
-    }, 180000);
-
-    it("should compile client code without TypeScript errors", async () => {
-      // Run TypeScript compiler on client code with noEmit flag
-      const { result, hasErrors } = await runTypeCheck(
-        ["tsc", "--project", "client/tsconfig.json", "--noEmit"],
-        120000,
-      );
-
-      // Check for TypeScript error patterns
-      const errorPattern = /error TS\d+:/g;
-      const errors = result.match(errorPattern) || [];
-
-      if (hasErrors || errors.length > 0) {
-        const errorLines = result
-          .split("\n")
-          .filter((line) => line.includes("error TS"))
-          .slice(0, 10);
-
-        console.error("TypeScript compilation errors found in client code:");
-        console.error(`Total errors: ${errors.length}`);
-        console.error("First 10 errors:");
-        errorLines.forEach((line) => console.error(`  ${line}`));
-      }
-
-      expect(
-        errors.length,
-        `Expected zero TypeScript errors, but found ${errors.length}`,
-      ).toBe(0);
-    }, 180000);
-
-    it("should compile root project without TypeScript errors", async () => {
-      // Run TypeScript compiler on root tsconfig (includes all code)
-      const { result, hasErrors } = await runTypeCheck(
-        ["tsc", "--noEmit"],
-        180000,
-      );
-
-      // Check for TypeScript error patterns
-      const errorPattern = /error TS\d+:/g;
-      const errors = result.match(errorPattern) || [];
-
-      if (hasErrors || errors.length > 0) {
-        const errorLines = result
-          .split("\n")
-          .filter((line) => line.includes("error TS"))
-          .slice(0, 10);
-
-        console.error("TypeScript compilation errors found in project:");
-        console.error(`Total errors: ${errors.length}`);
-        console.error("First 10 errors:");
-        errorLines.forEach((line) => console.error(`  ${line}`));
-      }
-
-      expect(
-        errors.length,
-        `Expected zero TypeScript errors, but found ${errors.length}`,
-      ).toBe(0);
-    }, 240000);
-  });
-
   /**
    * Property 2: No Deep Relative Imports
    *

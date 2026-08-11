@@ -69,7 +69,15 @@ const localStorageMock = (() => {
     }),
   };
 })();
-global.localStorage = localStorageMock;
+// defineProperty rather than assignment: vmThreads' jsdom window exposes
+// localStorage through a getter-only accessor, so `global.localStorage = …`
+// throws there while silently working under forks. Configurable so a test
+// that swaps in its own storage stub still can.
+Object.defineProperty(globalThis, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+  configurable: true,
+});
 
 // Mock fetch
 // Provide a safe default fetch mock so tests that indirectly touch adapters
