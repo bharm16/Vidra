@@ -310,15 +310,6 @@ export function useGenerationActions(
     setIsSubmitting(pending);
   }, []);
 
-  const clearSubmissionPendingIfNeeded = useCallback(
-    (generationAccepted: boolean): void => {
-      if (!generationAccepted) {
-        setSubmissionPending(false);
-      }
-    },
-    [setSubmissionPending],
-  );
-
   useEffect(() => {
     generationsRef.current = options.generations ?? [];
   }, [options.generations]);
@@ -414,6 +405,9 @@ export function useGenerationActions(
   const registerSubmission = useCallback(
     (initialId: string, controller: AbortController) => {
       let currentId = initialId;
+      // The pending flag is exclusive while held: the isSubmittingRef guard
+      // blocks a second submission until this one hands it back.
+      let ownsPendingFlag = true;
       inFlightRef.current.set(currentId, controller);
       return {
         /**
@@ -442,24 +436,43 @@ export function useGenerationActions(
           return currentId;
         },
         /**
-         * Deregister the controller and hand back the pending flag.
-         *
-         * Deregistration is unconditional, which is a deliberate superset of
-         * what the individual exits did: abort paths used to return with the
-         * controller still registered. Nothing depended on it staying there —
-         * `abortAll`, `abortMismatched` and `markGenerationCancelled` all remove
-         * it — and `resumeGenerationJob` reads the same map to decide whether a
-         * job is already being watched, so releasing it promptly is the
-         * behaviour it wants. The flag half stays conditional: an accepted take
-         * drives the UI from its own status.
+         * Hand the pending flag back, which a take does the moment it is
+         * accepted: from then on its own status drives the UI, and the next
+         * submission is free to start. Idempotent.
          */
-        release: (generationAccepted: boolean): void => {
+        releasePendingFlag: (): void => {
+          if (!ownsPendingFlag) return;
+          ownsPendingFlag = false;
+          setSubmissionPending(false);
+        },
+        /**
+         * Deregister the controller and, if this submission still holds the
+         * pending flag, release it.
+         *
+         * Ownership is what makes this safe to call on every exit. Clearing the
+         * flag unconditionally would stomp a *later* submission that started
+         * after this take was accepted; keying off `generationAccepted` instead
+         * — the previous shape — silently skipped the release when a throw
+         * landed between acceptance and the handoff, and the flag stuck true for
+         * the rest of the session with the generate buttons disabled.
+         *
+         * Deregistration is unconditional, a deliberate superset of what the
+         * individual exits did: abort paths used to return with the controller
+         * still registered. Nothing depended on that — `abortAll`,
+         * `abortMismatched` and `markGenerationCancelled` all remove it — and
+         * `resumeGenerationJob` reads the same map to decide whether a job is
+         * already being watched.
+         */
+        release: (): void => {
           inFlightRef.current.delete(currentId);
-          clearSubmissionPendingIfNeeded(generationAccepted);
+          if (ownsPendingFlag) {
+            ownsPendingFlag = false;
+            setSubmissionPending(false);
+          }
         },
       };
     },
-    [clearSubmissionPendingIfNeeded],
+    [setSubmissionPending],
   );
 
   // ISSUE-12 follow-up: ADD_GENERATION was retired in favour of
@@ -699,7 +712,7 @@ export function useGenerationActions(
           // the next bigger transaction. Mirrors the same call on the
           // draft-render and full-render success paths.
           syncCreditBalanceFromResponse(response.remainingCredits);
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
           return;
         }
 
@@ -897,7 +910,7 @@ export function useGenerationActions(
               ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
             },
           );
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
           videoUrl = response.videoUrl;
         } else if (response.success && response.jobId) {
           // The server persists this clip's generation record under the job
@@ -915,7 +928,7 @@ export function useGenerationActions(
               ...buildFaceSwapUpdate(response, generation),
             },
           );
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
           log.debug("Waiting for video draft job to complete", {
             generationId: takeId,
             jobId: response.jobId,
@@ -953,7 +966,7 @@ export function useGenerationActions(
           return;
         }
         if (!generationAccepted) {
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
         }
         if (!videoUrl) {
           log.warn("Video draft completed without a video URL", {
@@ -1002,7 +1015,7 @@ export function useGenerationActions(
               error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
             });
           } else {
-            setSubmissionPending(false);
+            submission.releasePendingFlag();
           }
           optionsRef.current.onInsufficientCredits?.(
             requiredCredits,
@@ -1038,10 +1051,10 @@ export function useGenerationActions(
               error: errObj.message,
             },
           );
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
         }
       } finally {
-        submission.release(generationAccepted);
+        submission.release();
       }
     },
     [
@@ -1182,7 +1195,7 @@ export function useGenerationActions(
         // the next bigger transaction. Mirrors the same call on the
         // draft-render and full-render success paths.
         syncCreditBalanceFromResponse(response.remainingCredits);
-        setSubmissionPending(false);
+        submission.releasePendingFlag();
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -1195,7 +1208,7 @@ export function useGenerationActions(
               error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
             });
           } else {
-            setSubmissionPending(false);
+            submission.releasePendingFlag();
           }
           optionsRef.current.onInsufficientCredits?.(
             requiredCredits,
@@ -1225,10 +1238,10 @@ export function useGenerationActions(
             completedAt: Date.now(),
             error: errObj.message,
           });
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
         }
       } finally {
-        submission.release(generationAccepted);
+        submission.release();
       }
     },
     [
@@ -1440,7 +1453,7 @@ export function useGenerationActions(
               ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
             },
           );
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
           videoUrl = response.videoUrl;
         } else if (response.success && response.jobId) {
           // The server persists this clip's generation record under the job
@@ -1458,7 +1471,7 @@ export function useGenerationActions(
               ...buildFaceSwapUpdate(response, generation),
             },
           );
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
           log.debug("Waiting for render job to complete", {
             generationId: takeId,
             jobId: response.jobId,
@@ -1496,7 +1509,7 @@ export function useGenerationActions(
           return;
         }
         if (!generationAccepted) {
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
         }
         if (!videoUrl) {
           log.warn("Render completed without a video URL", {
@@ -1545,7 +1558,7 @@ export function useGenerationActions(
               error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
             });
           } else {
-            setSubmissionPending(false);
+            submission.releasePendingFlag();
           }
           optionsRef.current.onInsufficientCredits?.(
             requiredCredits,
@@ -1580,10 +1593,10 @@ export function useGenerationActions(
               error: errObj.message,
             },
           );
-          setSubmissionPending(false);
+          submission.releasePendingFlag();
         }
       } finally {
-        submission.release(generationAccepted);
+        submission.release();
       }
     },
     [

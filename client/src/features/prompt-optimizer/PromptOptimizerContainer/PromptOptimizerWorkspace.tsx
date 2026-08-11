@@ -77,6 +77,7 @@ import { PromptResultsActionsProvider } from "../context/PromptResultsActionsCon
 import { PromptInsertionBusProvider } from "../context/PromptInsertionBusContext";
 import { SidebarDataProvider } from "./providers/sidebar";
 import { addWorkspaceResetListener } from "../events";
+import { toCapabilityValues } from "@hooks/usePromptHistory/utils/capabilityValues";
 
 const log = logger.child("PromptOptimizerWorkspace");
 const buildDefaultCameraTransform = (): CameraPath["start"] => ({
@@ -410,10 +411,7 @@ function PromptOptimizerContent({
         typeof entry.mode === "string" && entry.mode.trim()
           ? entry.mode.trim()
           : "video";
-      const generationParams =
-        entry.generationParams && typeof entry.generationParams === "object"
-          ? entry.generationParams
-          : null;
+      const generationParams = toCapabilityValues(entry.generationParams);
 
       const existing = promptHistoryEntries.find((item) => item.uuid === uuid);
       if (!existing) {

@@ -107,6 +107,44 @@ describe("regression: a submission is released on every exit path", () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
+  /**
+   * The pending flag is handed off the moment a take is accepted, because from
+   * then on the take's own status drives the UI. Between acceptance and that
+   * handoff the storyboard path calls back into the caller
+   * (`onServerGenerationPersisted`) — and a throw there landed in the catch with
+   * the take already accepted, where the conditional clear is a no-op. The flag
+   * stuck true, and `isGenerationBusy` keeps the generate and preview buttons
+   * disabled for the rest of the session.
+   */
+  it("releases the pending flag when a post-acceptance callback throws", async () => {
+    const dispatch = vi.fn();
+    generateStoryboardPreviewMock.mockResolvedValue({
+      success: true,
+      data: {
+        imageUrls: ["https://example.com/frame-1.png"],
+        generationId: "server-generation-1",
+        baseImageUrl: "https://example.com/base.png",
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useGenerationActions(dispatch, {
+        sessionId: "session-1",
+        onServerGenerationPersisted: () => {
+          throw new Error("session refetch blew up");
+        },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.generateStoryboard("a prompt", {
+        seedImageUrl: "https://example.com/seed.png",
+      });
+    });
+
+    expect(result.current.isSubmitting).toBe(false);
+  });
+
   // The guard that blocks a concurrent submission reads the same flag, so a
   // release that never happened also permanently wedges the next submission.
   it("lets a second submission start after the first one failed", async () => {

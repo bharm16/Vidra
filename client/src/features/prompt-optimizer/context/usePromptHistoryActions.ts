@@ -11,6 +11,7 @@ import type {
   PromptKeyframe,
   PromptVersionEntry,
 } from "./types";
+import type { CreateDraftParams } from "@hooks/usePromptHistory/types";
 import { dispatchWorkspaceReset } from "../events";
 
 type DebugLogger = ReturnType<typeof useDebugLogger>;
@@ -21,21 +22,7 @@ interface PromptHistoryActionsOptions {
   navigate: NavigateFunction;
   promptOptimizer: PromptOptimizer;
   promptHistory: {
-    createDraft: (params: {
-      id?: string | null;
-      mode: string;
-      targetModel: string | null;
-      generationParams: Record<string, unknown> | null;
-      keyframes?: PromptHistoryEntry["keyframes"];
-      uuid?: string;
-      input?: string;
-      output?: string;
-      title?: string | null;
-      brainstormContext?: Record<string, unknown> | null;
-      highlightCache?: Record<string, unknown> | null;
-      versions?: PromptVersionEntry[];
-      persist?: boolean;
-    }) => { uuid: string; id: string };
+    createDraft: (params: CreateDraftParams) => { uuid: string; id: string };
   };
   selectedMode: string;
   selectedModel: string;

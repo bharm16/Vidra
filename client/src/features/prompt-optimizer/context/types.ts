@@ -22,6 +22,7 @@ import type {
   SuggestionsData,
 } from "../PromptCanvas/types";
 import type { LockedSpan, OptimizationOptions } from "../types";
+import type { CreateDraftParams } from "@hooks/usePromptHistory/types";
 import type { VideoTier } from "@features/generation-controls";
 
 export type { PromptHistoryEntry, PromptKeyframe, PromptVersionEntry, User };
@@ -87,21 +88,7 @@ export interface PromptHistory {
     existingUuid?: string | null,
     title?: string | null,
   ) => Promise<{ uuid: string; id: string } | null>;
-  createDraft: (params: {
-    id?: string | null;
-    mode: string;
-    targetModel: string | null;
-    generationParams: Record<string, unknown> | null;
-    keyframes?: PromptHistoryEntry["keyframes"];
-    uuid?: string;
-    input?: string;
-    output?: string;
-    title?: string | null;
-    brainstormContext?: Record<string, unknown> | null;
-    highlightCache?: Record<string, unknown> | null;
-    versions?: PromptVersionEntry[];
-    persist?: boolean;
-  }) => { uuid: string; id: string };
+  createDraft: (params: CreateDraftParams) => { uuid: string; id: string };
   updateEntryLocal: (
     uuid: string,
     updates: Partial<PromptHistoryEntry>,

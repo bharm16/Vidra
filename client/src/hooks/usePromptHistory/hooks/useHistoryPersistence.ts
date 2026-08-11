@@ -26,6 +26,7 @@ import type {
   PromptVersionEntry,
   Toast,
   SaveResult,
+  CreateDraftParams,
 } from "../types";
 import {
   enforceImmutableKeyframes,
@@ -62,21 +63,7 @@ interface UseHistoryPersistenceReturn {
     existingUuid?: string | null,
     title?: string | null,
   ) => Promise<SaveResult | null>;
-  createDraft: (params: {
-    id?: string | null;
-    mode: string;
-    targetModel: string | null;
-    generationParams: Record<string, unknown> | null;
-    keyframes?: PromptHistoryEntry["keyframes"];
-    uuid?: string;
-    input?: string;
-    output?: string;
-    title?: string | null;
-    brainstormContext?: Record<string, unknown> | null;
-    highlightCache?: Record<string, unknown> | null;
-    versions?: PromptVersionEntry[];
-    persist?: boolean;
-  }) => SaveResult;
+  createDraft: (params: CreateDraftParams) => SaveResult;
   updateEntryLocal: (
     uuid: string,
     updates: Partial<PromptHistoryEntry>,
@@ -498,21 +485,7 @@ export function useHistoryPersistence({
   );
 
   const createDraft = useCallback(
-    (params: {
-      id?: string | null;
-      mode: string;
-      targetModel: string | null;
-      generationParams: Record<string, unknown> | null;
-      keyframes?: PromptHistoryEntry["keyframes"];
-      uuid?: string;
-      input?: string;
-      output?: string;
-      title?: string | null;
-      brainstormContext?: Record<string, unknown> | null;
-      highlightCache?: Record<string, unknown> | null;
-      versions?: PromptVersionEntry[];
-      persist?: boolean;
-    }): SaveResult => {
+    (params: CreateDraftParams): SaveResult => {
       const uuid =
         typeof params.uuid === "string" && params.uuid.trim()
           ? params.uuid.trim()

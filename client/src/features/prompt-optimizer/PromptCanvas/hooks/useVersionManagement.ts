@@ -19,7 +19,7 @@ interface PromptHistoryStore {
   createDraft: (params: {
     mode: string;
     targetModel: string | null;
-    generationParams: Record<string, unknown> | null;
+    generationParams: CapabilityValues | null;
     keyframes?: PromptHistoryEntry["keyframes"];
     uuid?: string;
   }) => { uuid: string; id: string };

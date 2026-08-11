@@ -56,7 +56,7 @@ interface UsePromptLoaderParams {
     id?: string | null;
     mode: string;
     targetModel: string | null;
-    generationParams: Record<string, unknown> | null;
+    generationParams: CapabilityValues | null;
     keyframes?: PromptKeyframe[] | null;
     uuid?: string;
     persist?: boolean;
@@ -413,11 +413,7 @@ export function usePromptLoader({
               selectedModelValueRef.current.trim()
                 ? selectedModelValueRef.current.trim()
                 : null,
-            generationParams:
-              (generationParamsValueRef.current as
-                | Record<string, unknown>
-                | null
-                | undefined) ?? null,
+            generationParams: generationParamsValueRef.current ?? null,
             persist: false,
           });
           setCurrentPromptUuidRef.current(draft.uuid);
