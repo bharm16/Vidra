@@ -218,7 +218,7 @@ Before EVERY commit, run all five checks in order:
 4. `npm run test:unit` — must pass all shards
 5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
 
-`npm run verify` runs all five in that order.
+`npm run verify` runs all five concurrently (they are independent; wall-clock cost is the unit suite) and fails if any gate fails. `npm run verify:seq` is the sequential fallback.
 
 Check 3 is here because `tsc` accepts a type-only import cycle and the other
 four gates cannot see one: two cycles reached `main` on 2026-08-08 with every
@@ -243,8 +243,6 @@ If these fail, the change broke application startup or DI wiring. Fix the source
 
 ### Commit Scope Rules
 
-- Maximum ~10 files per commit unless it's a mechanical refactor (rename, import path change).
-- If a fix requires touching 20+ files, stop and reconsider — there's probably a root cause fix that touches 2-3 files.
 - Never combine dependency upgrades with code changes in the same commit.
 - Never combine test infrastructure changes with production code changes.
 

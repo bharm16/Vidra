@@ -107,7 +107,7 @@ Before EVERY commit, run all five checks in order:
 4. `npm run test:unit` — must pass all shards
 5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
 
-`npm run verify` runs all five in that order. Check 3 is the only local gate
+`npm run verify` runs all five concurrently and fails if any gate fails. Check 3 is the only local gate
 that sees a type-only import cycle (`tsc` accepts them) or a client→server
 import.
 
@@ -117,8 +117,6 @@ A pre-commit hook enforces checks 1-3 automatically. Run `bash scripts/install-h
 
 ### Commit Scope Rules
 
-- Maximum ~10 files per commit unless it's a mechanical refactor (rename, import path change).
-- If a fix requires touching 20+ files, stop and reconsider — there's probably a root cause fix that touches 2-3 files.
 - Never combine dependency upgrades with code changes in the same commit.
 
 ### Change Scope Limits

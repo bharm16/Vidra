@@ -41,16 +41,16 @@ tests/           # E2E, load, and evaluation suites
 
 These terms have specific meanings in this codebase. Do not conflate them.
 
-| Term                          | Meaning                                                                                                     | Server Path                                                                      | Route                                    |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories (subject, camera, lighting…) for UI highlights | `server/src/llm/span-labeling/`                                                  | `/api/llm/label-spans`                   |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                | `server/src/services/enhancement/`                                               | `/api/suggestions`, `/api/enhancement/*` |
-| **Optimization**              | Two-stage prompt rewriting pipeline (Groq fast draft → OpenAI refinement)                                   | `server/src/services/prompt-optimization/`                                       | `/api/optimize` (buffered)               |
-| **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                                                     | `server/src/services/continuity/`                                                | `/api/continuity`                        |
-| **Convergence**               | Motion and visual convergence pipeline (iterative refinement toward target)                                 | `server/src/services/convergence/`                                               | `/api/motion`                            |
-| **Model Intelligence**        | AI-powered model recommendation based on prompt analysis                                                    | `server/src/services/model-intelligence/`                                        | `/api/model-intelligence`                |
-| **Generation**                | Producing a take — a picture (Flux Schnell, Flux Kontext) or a clip (Wan, Sora, Veo, Kling, Luma)           | `server/src/services/image-generation/`, `server/src/services/video-generation/` | `/api/preview/*` (legacy prefix)         |
-| **Draft tier**                | The cost/quality tier a creator picks per generation (`draft` \| `render`) — model selection, not lifecycle | `server/src/config/videoModelRegistry.ts`                                        | — (never crosses the wire)               |
+| Term                          | Meaning                                                                                                                                                                                                                                   | Server Path                                                                      | Route                                    |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------- |
+| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories (subject, camera, lighting…) for UI highlights                                                                                                                               | `server/src/llm/span-labeling/`                                                  | `/api/llm/label-spans`                   |
+| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                                                                                                                                              | `server/src/services/enhancement/`                                               | `/api/suggestions`, `/api/enhancement/*` |
+| **Optimization**              | Two-stage prompt rewriting pipeline (Groq fast draft → OpenAI refinement)                                                                                                                                                                 | `server/src/services/prompt-optimization/`                                       | `/api/optimize` (buffered)               |
+| **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                                                                                                                                                                                   | `server/src/services/continuity/`                                                | `/api/continuity`                        |
+| **Convergence**               | Motion and visual convergence pipeline (iterative refinement toward target)                                                                                                                                                               | `server/src/services/convergence/`                                               | `/api/motion`                            |
+| **Model Intelligence**        | AI-powered model recommendation based on prompt analysis                                                                                                                                                                                  | `server/src/services/model-intelligence/`                                        | `/api/model-intelligence`                |
+| **Generation**                | Producing a take — a picture (Flux Schnell, Flux Kontext) or a clip (Wan, Sora, Veo, Kling, Luma)                                                                                                                                         | `server/src/services/image-generation/`, `server/src/services/video-generation/` | `/api/preview/*` (legacy prefix)         |
+| **Draft tier**                | The cost/quality tier a creator picks per generation (`draft` \| `render`) — model selection, not lifecycle, and derived from the model rather than stored ([ADR-0021](docs/adr/0021-the-draft-render-tier-is-derived-from-the-model.md)) | `server/src/config/videoModelRegistry.ts`                                        | — (never crosses the wire)               |
 
 > **"Preview" is not a domain term.** It was retired 2026-08-10: nothing this pipeline produces is a draft awaiting a final. Every picture and clip is persisted, id'd, and becomes a node in the space (see `CONTEXT.md` → Take). `/api/preview/*` survives only as a URL prefix — renaming it would break media URLs already persisted inside generation records — and `client/src/features/preview/api/` keeps the name to match the route. Neither names a concept. When you mean the artifact, say picture, clip, or take; when you mean the tier, say draft or render.
 
@@ -277,7 +277,7 @@ Before EVERY commit, run all five checks in order:
 4. `npm run test:unit` — must pass all shards
 5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
 
-`npm run verify` runs all five in that order.
+`npm run verify` runs all five concurrently (they are independent; wall-clock cost is the unit suite) and fails if any gate fails. `npm run verify:seq` is the sequential fallback.
 
 Check 3 is here because `tsc` accepts a type-only import cycle and the other
 four gates cannot see one: two cycles reached `main` on 2026-08-08 with every
@@ -329,8 +329,6 @@ PORT=0 npx vitest run tests/integration/bootstrap.integration.test.ts tests/inte
 
 ### Commit Scope Rules
 
-- Maximum ~10 files per commit unless it's a mechanical refactor (rename, import path change)
-- If a fix requires touching 20+ files, stop and reconsider — there's probably a root cause fix that touches 2-3 files
 - Never combine dependency upgrades with code changes in the same commit
 - Never combine test infrastructure changes with production code changes
 
