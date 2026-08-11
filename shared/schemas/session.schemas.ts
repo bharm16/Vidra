@@ -41,7 +41,17 @@ export const SessionPromptVersionEditSchema = z.object({
   source: z.enum(["manual", "suggestion", "unknown"]).optional(),
 });
 
-export const SessionPromptVersionPreviewSchema = z.object({
+/**
+ * The first frame generated for a words-version — the source image an I2V model
+ * animates (CONTEXT.md → First frame).
+ *
+ * Persisted under `preview` until 2026-08-10, when that term was retired for
+ * naming nothing. `SessionPromptVersionEntrySchema` still accepts the old
+ * spelling so sessions written before the rename keep their frames; readers
+ * coalesce the two and writers emit `firstFrame`, so a session migrates the
+ * first time it is saved.
+ */
+export const SessionPromptVersionFirstFrameSchema = z.object({
   generatedAt: z.string(),
   imageUrl: z.string().nullable().optional(),
   aspectRatio: z.string().nullable().optional(),
@@ -99,7 +109,9 @@ export const SessionPromptVersionEntrySchema = z.object({
   highlights: z.record(z.string(), z.unknown()).optional(),
   editCount: z.number().optional(),
   edits: z.array(SessionPromptVersionEditSchema).optional(),
-  preview: SessionPromptVersionPreviewSchema.optional(),
+  firstFrame: SessionPromptVersionFirstFrameSchema.optional(),
+  /** @deprecated Pre-2026-08-10 spelling of `firstFrame`. Read-only compatibility. */
+  preview: SessionPromptVersionFirstFrameSchema.optional(),
   video: SessionPromptVersionVideoSchema.optional(),
   generations: z.array(SessionGenerationRecordSchema).optional(),
 });

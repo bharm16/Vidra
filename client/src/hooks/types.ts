@@ -5,7 +5,7 @@ import type {
   PromptKeyframeSource,
   PromptVersionEdit,
   PromptVersionEntry,
-  PromptVersionPreview,
+  PromptVersionFirstFrame,
   PromptVersionVideo,
   User,
 } from "@features/prompt-optimizer";
@@ -84,7 +84,7 @@ export type {
   PromptKeyframeSource,
   PromptVersionEdit,
   PromptVersionEntry,
-  PromptVersionPreview,
+  PromptVersionFirstFrame,
   PromptVersionVideo,
   User,
 };

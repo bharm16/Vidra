@@ -35,7 +35,7 @@ const versionWithPreview = (preview: {
   signature: "s1",
   prompt: "p",
   timestamp: new Date(1000).toISOString(),
-  preview: {
+  firstFrame: {
     generatedAt: new Date(2000).toISOString(),
     imageUrl: IMAGE_URL,
     storagePath: preview.storagePath,

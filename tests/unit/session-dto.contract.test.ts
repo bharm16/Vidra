@@ -4,7 +4,7 @@ import {
   SessionDtoSchema,
   SessionContinuityShotSchema,
   SessionPromptVersionEntrySchema,
-  SessionPromptVersionPreviewSchema,
+  SessionPromptVersionFirstFrameSchema,
   SessionContinuitySchema,
   SessionPromptSchema,
 } from "#shared/schemas/session.schemas";
@@ -120,7 +120,7 @@ describe("SessionPrompt contract", () => {
 
 describe("SessionPromptVersionPreview contract", () => {
   it("accepts a minimal preview with only generatedAt", () => {
-    const result = SessionPromptVersionPreviewSchema.safeParse({
+    const result = SessionPromptVersionFirstFrameSchema.safeParse({
       generatedAt: "2025-01-01T00:00:00Z",
     });
 
@@ -128,7 +128,7 @@ describe("SessionPromptVersionPreview contract", () => {
   });
 
   it("accepts preview with null fields (server sends null, not undefined)", () => {
-    const result = SessionPromptVersionPreviewSchema.safeParse({
+    const result = SessionPromptVersionFirstFrameSchema.safeParse({
       generatedAt: "2025-01-01T00:00:00Z",
       imageUrl: null,
       aspectRatio: null,
@@ -141,7 +141,7 @@ describe("SessionPromptVersionPreview contract", () => {
   });
 
   it("accepts preview with populated fields", () => {
-    const result = SessionPromptVersionPreviewSchema.safeParse({
+    const result = SessionPromptVersionFirstFrameSchema.safeParse({
       generatedAt: "2025-01-01T00:00:00Z",
       imageUrl: "https://storage.example.com/preview.png",
       aspectRatio: "16:9",

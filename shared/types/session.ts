@@ -27,7 +27,7 @@ import type {
   SessionPromptSchema,
   SessionPromptVersionEditSchema,
   SessionPromptVersionEntrySchema,
-  SessionPromptVersionPreviewSchema,
+  SessionPromptVersionFirstFrameSchema,
   SessionPromptVersionVideoSchema,
   SessionSceneProxySchema,
   SessionSeedInfoSchema,
@@ -47,8 +47,8 @@ export type SessionPromptVersionEdit = z.infer<
   typeof SessionPromptVersionEditSchema
 >;
 
-export type SessionPromptVersionPreview = z.infer<
-  typeof SessionPromptVersionPreviewSchema
+export type SessionPromptVersionFirstFrame = z.infer<
+  typeof SessionPromptVersionFirstFrameSchema
 >;
 
 export type SessionPromptVersionVideo = z.infer<

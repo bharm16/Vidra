@@ -9,7 +9,7 @@ import type { Generation } from "@features/prompt-optimizer/types/domain/generat
  * Regression (ADR-0011 D4): takes are server-persisted generation records —
  * a session authored through the current loop stores its still as a
  * completed image generation on the version, and writes NO legacy
- * `version.preview`. The Library cover must resolve from those records;
+ * `version.firstFrame`. The Library cover must resolve from those records;
  * reading only `preview` left every current-loop session blank.
  */
 
@@ -108,14 +108,14 @@ describe("regression: Library covers resolve from persisted generation records",
     expect(resolveHistoryThumbnail(entry).url).toBeNull();
   });
 
-  it("the legacy version.preview still wins when both exist", () => {
+  it("the legacy version.firstFrame still wins when both exist", () => {
     const entry = entryWith([
       {
         versionId: "v-1",
         signature: "sig",
         prompt: "a clockmaker",
         timestamp: "2026-07-31T00:00:00.000Z",
-        preview: {
+        firstFrame: {
           imageUrl: "https://storage.googleapis.com/bucket/legacy.webp",
           generatedAt: "2026-07-31T00:00:00.000Z",
         },
@@ -159,7 +159,7 @@ describe("regression: Library covers resolve from persisted generation records",
               ...(previewUrl === undefined
                 ? {}
                 : {
-                    preview: {
+                    firstFrame: {
                       imageUrl: previewUrl,
                       generatedAt: "2026-07-31T00:00:00.000Z",
                     },

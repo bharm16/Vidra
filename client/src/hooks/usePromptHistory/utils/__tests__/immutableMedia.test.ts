@@ -23,7 +23,7 @@ describe("immutableMedia utils", () => {
       signature: "sig",
       prompt: "prompt",
       timestamp: "now",
-      preview: {
+      firstFrame: {
         generatedAt: "now",
         imageUrl: "https://old.example.com/image.png",
         storagePath: "users/user1/previews/images/original.webp",
@@ -32,7 +32,7 @@ describe("immutableMedia utils", () => {
     };
     const incoming: PromptVersionEntry = {
       ...existing,
-      preview: {
+      firstFrame: {
         generatedAt: "now",
         imageUrl: "https://new.example.com/image.png",
         storagePath: "users/user1/previews/images/overwritten.webp",
@@ -42,10 +42,10 @@ describe("immutableMedia utils", () => {
 
     const result = enforceImmutableVersions(buildEntry([existing]), [incoming]);
 
-    expect(result.versions[0]?.preview?.storagePath).toBe(
+    expect(result.versions[0]?.firstFrame?.storagePath).toBe(
       "users/user1/previews/images/original.webp",
     );
-    expect(result.versions[0]?.preview?.assetId).toBe("asset-123");
+    expect(result.versions[0]?.firstFrame?.assetId).toBe("asset-123");
     expect(result.warnings.length).toBeGreaterThan(0);
   });
 

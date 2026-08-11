@@ -45,11 +45,11 @@ const preserveImmutableString = (
 };
 
 const mergePreview = (
-  existing: PromptVersionEntry["preview"] | null | undefined,
-  incoming: PromptVersionEntry["preview"] | null | undefined,
+  existing: PromptVersionEntry["firstFrame"] | null | undefined,
+  incoming: PromptVersionEntry["firstFrame"] | null | undefined,
   versionId: string,
   warnings: ImmutableMediaWarning[],
-): PromptVersionEntry["preview"] | null | undefined => {
+): PromptVersionEntry["firstFrame"] | null | undefined => {
   if (!existing) return incoming;
   if (!incoming) return existing;
 
@@ -265,9 +265,9 @@ export function enforceImmutableVersions(
   const merged = versions.map((version) => {
     const existing = existingMap.get(version.versionId);
     if (!existing) return version;
-    const preview = mergePreview(
-      existing.preview,
-      version.preview,
+    const firstFrame = mergePreview(
+      existing.firstFrame,
+      version.firstFrame,
       version.versionId,
       warnings,
     );
@@ -285,7 +285,7 @@ export function enforceImmutableVersions(
     );
     return {
       ...version,
-      ...(preview != null ? { preview } : {}),
+      ...(firstFrame != null ? { firstFrame } : {}),
       ...(video != null ? { video } : {}),
       ...(generations != null ? { generations } : {}),
     };

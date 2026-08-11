@@ -1,5 +1,5 @@
 /**
- * Regression: a session whose version.preview was clobbered with the clip's
+ * Regression: a session whose version.firstFrame was clobbered with the clip's
  * own mp4 (legacy write path — the thumbnail extractor used to fall back to
  * "any first media URL") must not hand that video URL to the Library card's
  * <img>. Such a preview is treated as absent: earlier versions may still
@@ -31,7 +31,7 @@ describe("resolveHistoryThumbnail vs video previews (regression)", () => {
         signature: "s1",
         prompt: "p",
         timestamp: new Date(1000).toISOString(),
-        preview: {
+        firstFrame: {
           generatedAt: new Date(2000).toISOString(),
           imageUrl: PROXIED_MP4,
           storagePath: "users/u1/generations/1785521699821-abc.mp4",
@@ -52,7 +52,7 @@ describe("resolveHistoryThumbnail vs video previews (regression)", () => {
         signature: "s1",
         prompt: "p",
         timestamp: new Date(1000).toISOString(),
-        preview: {
+        firstFrame: {
           generatedAt: new Date(1500).toISOString(),
           imageUrl: "https://storage.example.com/users/u1/frames/frame.webp",
           storagePath: "users/u1/frames/frame.webp",
@@ -66,7 +66,7 @@ describe("resolveHistoryThumbnail vs video previews (regression)", () => {
         signature: "s2",
         prompt: "p2",
         timestamp: new Date(2000).toISOString(),
-        preview: {
+        firstFrame: {
           generatedAt: new Date(2500).toISOString(),
           imageUrl: PROXIED_MP4,
           storagePath: "users/u1/generations/1785521699821-abc.mp4",

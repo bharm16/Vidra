@@ -54,7 +54,7 @@ const resolveLatestVersionMediaSnapshot = (
     const version = versions[index];
     if (!version || typeof version !== "object") continue;
 
-    const previewImageUrl = normalizeNonEmptyString(version.preview?.imageUrl);
+    const previewImageUrl = normalizeNonEmptyString(version.firstFrame?.imageUrl);
     const videoUrl = normalizeNonEmptyString(version.video?.videoUrl);
     const videoStoragePath = normalizeNonEmptyString(
       version.video?.storagePath,
@@ -212,7 +212,7 @@ export function useShotGenerations({
         timestamp,
         ...(currentShot.generatedKeyframeUrl
           ? {
-              preview: {
+              firstFrame: {
                 generatedAt: timestamp,
                 imageUrl: currentShot.generatedKeyframeUrl,
                 aspectRatio: null,

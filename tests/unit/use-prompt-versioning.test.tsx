@@ -139,7 +139,7 @@ describe("usePromptVersioning", () => {
       editCount: 2,
       edits: [{ timestamp: "2024-01-01T00:00:00.000Z", source: "manual" }],
       highlights: { spans: [], signature: "sig-new" },
-      preview: {
+      firstFrame: {
         generatedAt: new Date(1700000000000).toISOString(),
         imageUrl: "https://example.com/image.png",
         aspectRatio: "4:3",
@@ -211,7 +211,7 @@ describe("usePromptVersioning", () => {
     expect(versions).toHaveLength(1);
     expect(versions?.[0]).toMatchObject({
       signature: "sig-same",
-      preview: {
+      firstFrame: {
         generatedAt: "2024-01-01T00:00:00.000Z",
         imageUrl: null,
         aspectRatio: "16:9",

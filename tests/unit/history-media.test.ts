@@ -47,10 +47,10 @@ describe("historyMedia", () => {
     it("returns null when no preview images are available", () => {
       const entry = createEntry({
         versions: [
-          createVersionEntry({ preview: { generatedAt, imageUrl: "   " } }),
+          createVersionEntry({ firstFrame: { generatedAt, imageUrl: "   " } }),
           createVersionEntry({
             versionId: "v2",
-            preview: { generatedAt, imageUrl: "" },
+            firstFrame: { generatedAt, imageUrl: "" },
           }),
         ],
       });
@@ -71,18 +71,18 @@ describe("historyMedia", () => {
       const entry = createEntry({
         versions: [
           createVersionEntry({
-            preview: {
+            firstFrame: {
               generatedAt,
               imageUrl: "https://cdn.example.com/first.png",
             },
           }),
           createVersionEntry({
             versionId: "v2",
-            preview: { generatedAt, imageUrl: "  " },
+            firstFrame: { generatedAt, imageUrl: "  " },
           }),
           createVersionEntry({
             versionId: "v3",
-            preview: {
+            firstFrame: {
               generatedAt,
               imageUrl: "https://cdn.example.com/last.png",
             },

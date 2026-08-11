@@ -7,7 +7,7 @@ export type {
   PromptKeyframe,
   PromptHistoryEntry,
   PromptVersionEdit,
-  PromptVersionPreview,
+  PromptVersionFirstFrame,
   PromptVersionVideo,
   PromptVersionEntry,
 } from "@features/prompt-optimizer";

@@ -34,7 +34,8 @@ export interface PromptVersionEdit {
   source?: "manual" | "suggestion" | "unknown";
 }
 
-export interface PromptVersionPreview {
+/** The first frame generated for this words-version (CONTEXT.md → First frame). */
+export interface PromptVersionFirstFrame {
   generatedAt: string;
   imageUrl?: string | null;
   aspectRatio?: string | null;
@@ -62,7 +63,7 @@ export interface PromptVersionEntry {
   highlights?: Record<string, unknown>;
   editCount?: number;
   edits?: PromptVersionEdit[];
-  preview?: PromptVersionPreview;
+  firstFrame?: PromptVersionFirstFrame;
   video?: PromptVersionVideo;
   generations?: Generation[];
 }

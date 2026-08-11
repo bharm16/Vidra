@@ -149,7 +149,7 @@ const extractThumbnailFromGenerations = (
   }
 
   // No blind mediaUrls fallback: for a video-only version that URL is the
-  // mp4 itself, and it used to get written into version.preview.imageUrl —
+  // mp4 itself, and it used to get written into version.firstFrame.imageUrl —
   // an <img> src — leaving broken posters on the space tile and Library
   // card. A version with no still simply has no preview.
   return null;
@@ -320,13 +320,13 @@ export function usePromptVersioning({
       signature,
       prompt,
       highlights,
-      preview,
+      firstFrame,
       video,
     }: {
       signature: string;
       prompt: string;
       highlights?: PromptVersionEntry["highlights"];
-      preview?: PromptVersionEntry["preview"];
+      firstFrame?: PromptVersionEntry["firstFrame"];
       video?: PromptVersionEntry["video"];
     }): PromptVersionEntry => {
       const versionNumber = currentVersions.length + 1;
@@ -343,7 +343,7 @@ export function usePromptVersioning({
         ...(typeof highlights !== "undefined" ? { highlights } : {}),
         ...(editCount > 0 ? { editCount } : {}),
         ...(edits.length ? { edits } : {}),
-        ...(typeof preview !== "undefined" ? { preview } : {}),
+        ...(typeof firstFrame !== "undefined" ? { firstFrame } : {}),
         ...(typeof video !== "undefined" ? { video } : {}),
       };
     },
@@ -363,7 +363,7 @@ export function usePromptVersioning({
       const hasEditsSinceLastVersion =
         !lastVersion || lastVersion.signature !== signature;
 
-      const previewPayload =
+      const firstFramePayload =
         params.action === "preview"
           ? {
               generatedAt: toIsoString(params.generatedAt),
@@ -412,7 +412,7 @@ export function usePromptVersioning({
           signature,
           prompt: promptText,
           highlights: latestHighlightRef.current ?? undefined,
-          preview: previewPayload,
+          firstFrame: firstFramePayload,
           video: videoPayload,
         });
         persistVersions([...versions, newVersion]);
@@ -423,7 +423,7 @@ export function usePromptVersioning({
       if (!lastVersion) return;
       const updatedLast: PromptVersionEntry = {
         ...lastVersion,
-        ...(previewPayload ? { preview: previewPayload } : {}),
+        ...(firstFramePayload ? { firstFrame: firstFramePayload } : {}),
         ...(videoPayload ? { video: videoPayload } : {}),
       };
       const updatedVersions = [...versions.slice(0, -1), updatedLast];
@@ -577,7 +577,7 @@ export function usePromptVersioning({
 
       // Extract thumbnail from the merged set (includes all completed generations)
       const thumbnailUrl = extractThumbnailFromGenerations(mergedGenerations);
-      const existingPreviewUrl = target.preview?.imageUrl;
+      const existingPreviewUrl = target.firstFrame?.imageUrl;
 
       const alreadyPersisted =
         thumbnailUrl === lastPersistedThumbnailRef.current;
@@ -602,10 +602,10 @@ export function usePromptVersioning({
 
       // Update preview with thumbnail from generations if available
       if (shouldUpdatePreview && thumbnailUrl) {
-        updated.preview = {
+        updated.firstFrame = {
           generatedAt: new Date().toISOString(),
           imageUrl: thumbnailUrl,
-          aspectRatio: target.preview?.aspectRatio ?? null,
+          aspectRatio: target.firstFrame?.aspectRatio ?? null,
           storagePath: extractStorageObjectPath(thumbnailUrl),
           assetId: (() => {
             const path = extractStorageObjectPath(thumbnailUrl);

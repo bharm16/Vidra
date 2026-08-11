@@ -294,7 +294,7 @@ describe("SessionService", () => {
           signature: "sig",
           prompt: "prompt",
           timestamp: "2026-02-11T00:01:00.000Z",
-          preview: {
+          firstFrame: {
             generatedAt: "2026-02-11T00:01:00.000Z",
             imageUrl: "https://example.com/new.png",
             storagePath: "users/user-1/previews/images/overwritten.webp",
@@ -304,10 +304,10 @@ describe("SessionService", () => {
       ],
     });
 
-    expect(updated.prompt?.versions?.[0]?.preview?.storagePath).toBe(
+    expect(updated.prompt?.versions?.[0]?.firstFrame?.storagePath).toBe(
       "users/user-1/previews/images/original.webp",
     );
-    expect(updated.prompt?.versions?.[0]?.preview?.assetId).toBe("asset-old");
+    expect(updated.prompt?.versions?.[0]?.firstFrame?.assetId).toBe("asset-old");
   });
 
   it("maps continuity sessions to DTO with ISO date fields", () => {

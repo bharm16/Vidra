@@ -45,8 +45,8 @@ export function resolveHistoryThumbnail(
 ): HistoryThumbnailRef {
   const versions = Array.isArray(entry.versions) ? entry.versions : [];
   for (let i = versions.length - 1; i >= 0; i -= 1) {
-    const preview = versions[i]?.preview;
-    const candidate = preview?.imageUrl;
+    const firstFrame = versions[i]?.firstFrame;
+    const candidate = firstFrame?.imageUrl;
     // Legacy records wrote the clip's own mp4 where a still belongs; a video
     // URL in an <img src> renders a broken cover, so those previews are
     // treated as absent (the whole record — its storagePath is the same mp4).
@@ -69,12 +69,12 @@ export function resolveHistoryThumbnail(
     // minted a fresh signed VIDEO url for the card's <img>. Only the image
     // url (rescuable via the media proxy) survives such records.
     const recordPointsAtVideo =
-      typeof preview?.storagePath === "string" &&
-      isLikelyVideoUrl(preview.storagePath);
+      typeof firstFrame?.storagePath === "string" &&
+      isLikelyVideoUrl(firstFrame.storagePath);
     const storagePath = recordPointsAtVideo
       ? null
-      : (preview?.storagePath ?? null);
-    const assetId = recordPointsAtVideo ? null : (preview?.assetId ?? null);
+      : (firstFrame?.storagePath ?? null);
+    const assetId = recordPointsAtVideo ? null : (firstFrame?.assetId ?? null);
     if (typeof candidate === "string" && candidate.trim()) {
       return { url: candidate, storagePath, assetId };
     }

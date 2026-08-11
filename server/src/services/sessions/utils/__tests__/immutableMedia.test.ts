@@ -9,7 +9,44 @@ import {
 } from "../immutableMedia";
 
 describe("server immutable media utils", () => {
-  it("preserves preview storagePath and assetId when incoming differs", () => {
+  it("preserves first-frame storagePath and assetId when incoming differs", () => {
+    const existing: SessionPromptVersionEntry = {
+      versionId: "v1",
+      signature: "sig",
+      prompt: "prompt",
+      timestamp: "now",
+      firstFrame: {
+        generatedAt: "now",
+        imageUrl: "https://old.example.com/image.png",
+        storagePath: "users/user1/previews/images/original.webp",
+        assetId: "asset-123",
+      },
+    };
+    const incoming: SessionPromptVersionEntry = {
+      ...existing,
+      firstFrame: {
+        generatedAt: "now",
+        imageUrl: "https://new.example.com/image.png",
+        storagePath: "users/user1/previews/images/overwritten.webp",
+        assetId: "asset-999",
+      },
+    };
+
+    const result = enforceImmutableVersions([existing], [incoming]);
+
+    expect(result.versions?.[0]?.firstFrame?.storagePath).toBe(
+      "users/user1/previews/images/original.webp",
+    );
+    expect(result.versions?.[0]?.firstFrame?.assetId).toBe("asset-123");
+    expect(result.warnings.length).toBeGreaterThan(0);
+  });
+
+  // The first frame was persisted under `preview` until 2026-08-10. A session
+  // stored before the rename still holds it there, while a client that has
+  // read and re-saved it sends `firstFrame`. Comparing the names directly
+  // would read as "the client dropped the frame" and resurrect the old copy,
+  // leaving two records of one frame in the document.
+  it("coalesces the legacy preview spelling with an incoming firstFrame", () => {
     const existing: SessionPromptVersionEntry = {
       versionId: "v1",
       signature: "sig",
@@ -23,8 +60,11 @@ describe("server immutable media utils", () => {
       },
     };
     const incoming: SessionPromptVersionEntry = {
-      ...existing,
-      preview: {
+      versionId: "v1",
+      signature: "sig",
+      prompt: "prompt",
+      timestamp: "now",
+      firstFrame: {
         generatedAt: "now",
         imageUrl: "https://new.example.com/image.png",
         storagePath: "users/user1/previews/images/overwritten.webp",
@@ -34,11 +74,13 @@ describe("server immutable media utils", () => {
 
     const result = enforceImmutableVersions([existing], [incoming]);
 
-    expect(result.versions?.[0]?.preview?.storagePath).toBe(
+    // The immutable identifiers still win across the spelling change...
+    expect(result.versions?.[0]?.firstFrame?.storagePath).toBe(
       "users/user1/previews/images/original.webp",
     );
-    expect(result.versions?.[0]?.preview?.assetId).toBe("asset-123");
-    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.versions?.[0]?.firstFrame?.assetId).toBe("asset-123");
+    // ...and the document is left with exactly one frame, under the new name.
+    expect(result.versions?.[0]?.preview).toBeUndefined();
   });
 
   it("preserves generation mediaAssetIds when incoming differs", () => {

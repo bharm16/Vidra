@@ -295,9 +295,14 @@ export function enforceImmutableVersions(
     const existingVersion = existingMap.get(version.versionId);
     if (!existingVersion) return version;
     const next: SessionPromptVersionEntry = { ...version };
-    const preview = mergePreview(
-      existingVersion.preview,
-      version.preview,
+    // Coalesce both spellings on each side before comparing. A session stored
+    // before 2026-08-10 holds the frame under `preview`; a client that has
+    // since read and re-saved it sends `firstFrame`. Comparing the two names
+    // directly would read as "the client dropped the frame" and restore a
+    // duplicate under the old key.
+    const firstFrame = mergePreview(
+      existingVersion.firstFrame ?? existingVersion.preview,
+      version.firstFrame ?? version.preview,
       version.versionId,
       warnings,
     );
@@ -314,8 +319,11 @@ export function enforceImmutableVersions(
       warnings,
     );
 
-    if (preview != null) {
-      next.preview = preview;
+    if (firstFrame != null) {
+      next.firstFrame = firstFrame;
+      // Writers emit the new spelling only; leaving the old key behind would
+      // keep two copies of one frame alive in the stored document.
+      delete next.preview;
     }
     if (video != null) {
       next.video = video;
