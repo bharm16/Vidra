@@ -10,6 +10,7 @@ import {
   waitForVideoJob,
 } from "@features/generations/api";
 import { assetApi } from "@features/assets/api/assetApi";
+import { deriveGenerationTier } from "@features/generations/config/generationConfig";
 import {
   buildGeneration,
   resolveGenerationOptions,
@@ -31,6 +32,19 @@ vi.mock("@features/assets/api/assetApi", () => ({
   assetApi: {
     resolve: vi.fn(),
   },
+}));
+
+// Unmocked, getVideoInputSupport reaches the capabilities API through the http
+// client, whose waitForAuthReady only resolves via its 3s timeout in jsdom
+// (there is no Firebase to fire onAuthStateChanged) — the first render test in
+// this file silently cost 3.0s. The stub returns the same all-unsupported
+// shape that timeout path degrades to.
+vi.mock("@features/generations/utils/videoInputSupport", () => ({
+  getVideoInputSupport: vi.fn().mockResolvedValue({
+    supportsEndFrame: false,
+    supportsReferenceImages: false,
+    supportsExtendVideo: false,
+  }),
 }));
 
 const mockCompileWanPrompt = vi.mocked(compileWanPrompt);
@@ -79,11 +93,12 @@ describe("useGenerationActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     let counter = 0;
-    mockBuildGeneration.mockImplementation((tier, model, prompt, params) => {
+    mockBuildGeneration.mockImplementation((model, prompt, params) => {
       counter += 1;
       return createGeneration({
         id: `gen-${counter}`,
-        tier,
+        // ADR-0021: buildGeneration derives the tier from the model.
+        tier: deriveGenerationTier(model),
         model,
         prompt,
         promptVersionId: params.promptVersionId ?? null,
@@ -200,7 +215,9 @@ describe("useGenerationActions", () => {
         expect.objectContaining({
           type: "UPDATE_GENERATION",
           payload: expect.objectContaining({
-            id: "gen-1",
+            // "job-1", not the local "gen-1": the take adopted the server id
+            // when the job was accepted, so every later update must follow it.
+            id: "job-1",
             updates: expect.objectContaining({
               status: "failed",
               error: "Failed to render video",
@@ -208,6 +225,50 @@ describe("useGenerationActions", () => {
           }),
         }),
       );
+    });
+
+    // Regression: a clip's server-persisted generation record is written under
+    // the job id (processVideoJob). The client used to keep its optimistic
+    // `gen-<n>` id and stash the job id in a separate `jobId` field, so a
+    // session refetch could not match the two and landed a duplicate take —
+    // the exact hazard the picture paths adopt the server id to avoid.
+    it("adopts the server job id as the clip's identity", async () => {
+      const dispatch = vi.fn();
+      mockGenerateVideoPreview.mockResolvedValue({
+        success: true,
+        jobId: "job-42",
+        status: "queued",
+      });
+      mockWaitForVideoJob.mockResolvedValue({
+        videoUrl: "https://example.com/clip.mp4",
+      });
+
+      const { result } = renderHook(() =>
+        useGenerationActions(dispatch, { promptVersionId: "version-1" }),
+      );
+
+      await act(async () => {
+        await result.current.generateRender("sora-2", "Prompt", {
+          promptVersionId: "version-1",
+        });
+      });
+
+      const accepted = dispatch.mock.calls
+        .map(([action]) => action)
+        .find((action) => action.type === "SET_GENERATIONS");
+      expect(accepted?.payload).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: "job-42" })]),
+      );
+
+      // And nothing is left addressing the take by its provisional id.
+      const staleIdCalls = dispatch.mock.calls
+        .map(([action]) => action)
+        .filter(
+          (action) =>
+            action.type === "UPDATE_GENERATION" &&
+            action.payload.id === "gen-1",
+        );
+      expect(staleIdCalls).toEqual([]);
     });
   });
 

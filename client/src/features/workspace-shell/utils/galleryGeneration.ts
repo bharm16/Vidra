@@ -1,5 +1,8 @@
 import type { PromptVersionEntry } from "@features/prompt-optimizer";
-import { getModelConfig } from "@features/generations/config/generationConfig";
+import {
+  deriveGenerationTier,
+  getModelConfig,
+} from "@features/generations/config/generationConfig";
 import type { Generation } from "@features/generations/types";
 import { resolveTakePosterUrl } from "./takePosterUrl";
 import type {
@@ -35,15 +38,6 @@ const resolveTimestamp = (
   versionTimestamp ??
   Date.now();
 
-/**
- * Carry the generation's own tier through unchanged, mapping the legacy
- * persisted `"final"` (see `selectHeroGeneration`) onto its current name.
- * Storyboards are no longer rewritten to a `"preview"` tier — being an
- * image-sequence is a media type, not a tier, and `mediaType` already says so.
- */
-const mapTier = (generation: Generation): GalleryTier =>
-  generation.tier === "draft" ? "draft" : "render";
-
 const normalizeNonEmpty = (value: string | null | undefined): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 
@@ -57,7 +51,7 @@ const buildVersionMediaFallbackGeneration = (
   version: PromptVersionEntry,
 ): Generation | null => {
   const videoUrl = normalizeNonEmpty(version.video?.videoUrl ?? null);
-  const previewUrl = normalizeNonEmpty(version.preview?.imageUrl ?? null);
+  const previewUrl = normalizeNonEmpty(version.firstFrame?.imageUrl ?? null);
 
   if (!videoUrl && !previewUrl) {
     return null;
@@ -67,25 +61,30 @@ const buildVersionMediaFallbackGeneration = (
   const mediaUrl = videoUrl ?? previewUrl;
   if (!mediaUrl) return null;
 
+  const model = normalizeNonEmpty(version.video?.model ?? null) ?? "unknown";
+
   const mediaRef = videoUrl
     ? normalizeNonEmpty(
         version.video?.storagePath ?? version.video?.assetId ?? null,
       )
     : normalizeNonEmpty(
-        version.preview?.storagePath ?? version.preview?.assetId ?? null,
+        version.firstFrame?.storagePath ?? version.firstFrame?.assetId ?? null,
       );
 
   const completedAt = toEpochMs(
-    (videoUrl ? version.video?.generatedAt : version.preview?.generatedAt) ??
+    (videoUrl ? version.video?.generatedAt : version.firstFrame?.generatedAt) ??
       version.timestamp,
   );
   const createdAt = toEpochMs(version.timestamp) ?? completedAt ?? Date.now();
 
   return {
     id: `version-media-${version.versionId}`,
-    tier: "render",
+    // Derived like every other take (ADR-0021). This used to be a hardcoded
+    // "render", which badged the same clip differently depending on whether it
+    // was reached through its generation record or through this fallback.
+    tier: deriveGenerationTier(model),
     status: "completed",
-    model: normalizeNonEmpty(version.video?.model ?? null) ?? "unknown",
+    model,
     prompt: version.prompt ?? "",
     promptVersionId: version.versionId,
     createdAt,
@@ -210,7 +209,9 @@ const mapGalleryGeneration = (
   versionPreviewAssetId: string | null,
 ): GalleryGeneration => ({
   id: generation.id,
-  tier: mapTier(generation),
+  // Carried straight through: every take's tier is derived from its model at
+  // the repository boundary (ADR-0021), so there is nothing left to map.
+  tier: generation.tier,
   thumbnailUrl: resolveTakePosterUrl(generation, versionPreviewImageUrl),
   mediaUrl: generation.mediaUrls[0] ?? null,
   mediaType: generation.mediaType,
@@ -236,10 +237,10 @@ export function buildGalleryGenerationEntries({
     const versionTimestamp = Number.isFinite(timestamp) ? timestamp : null;
     const promptSpans = parsePromptSpans(version.highlights);
     const versionPreviewImageUrl = normalizeNonEmpty(
-      version.preview?.imageUrl ?? null,
+      version.firstFrame?.imageUrl ?? null,
     );
     const versionPreviewAssetId = normalizeNonEmpty(
-      version.preview?.assetId ?? null,
+      version.firstFrame?.assetId ?? null,
     );
     const explicitGenerations =
       Array.isArray(version.generations) && version.generations.length > 0

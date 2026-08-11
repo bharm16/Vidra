@@ -12,6 +12,7 @@ import type {
   PromptKeyframe,
   PromptVersionEntry,
 } from "../hooks/types";
+import { normalizePersistedVersions } from "./normalizePersistedVersions";
 import type {
   PromptData,
   SavedPromptResult,
@@ -304,8 +305,7 @@ export class PromptRepository {
         (prompt.brainstormContext as Record<string, unknown>) ?? null,
       highlightCache:
         (prompt.highlightCache as Record<string, unknown>) ?? null,
-      versions:
-        (prompt.versions as unknown as PromptVersionEntry[] | undefined) ?? [],
+      versions: normalizePersistedVersions(prompt.versions),
       ...(prompt.uuid ? { uuid: prompt.uuid } : {}),
       ...(prompt.mode ? { mode: prompt.mode } : {}),
     };

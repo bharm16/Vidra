@@ -148,7 +148,7 @@ describe("generationProgress utilities", () => {
 describe("generationUtils", () => {
   describe("error handling", () => {
     it("falls back to default media type and null credits when model is unknown", () => {
-      const generation = buildGeneration("draft", "unknown-model", "Prompt", {
+      const generation = buildGeneration("unknown-model", "Prompt", {
         promptVersionId: null,
       });
       expect(generation.mediaType).toBe("video");
@@ -171,7 +171,7 @@ describe("generationUtils", () => {
 
   describe("core behavior", () => {
     it("builds a generation with config-driven cost and media type", () => {
-      const generation = buildGeneration("draft", "flux-kontext", "Prompt", {
+      const generation = buildGeneration("flux-kontext", "Prompt", {
         promptVersionId: "version-2",
       });
 

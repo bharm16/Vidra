@@ -164,12 +164,7 @@ describe("buildGeneration", () => {
     it("uses null for estimatedCost when model config not found", () => {
       vi.mocked(getModelConfig).mockReturnValue(null);
 
-      const result = buildGeneration(
-        "draft",
-        "unknown-model",
-        "test prompt",
-        {},
-      );
+      const result = buildGeneration("unknown-model", "test prompt", {});
 
       // getModelCreditCost returns 0 for unknown models; 0 is falsy → null
       expect(result.estimatedCost).toBeNull();
@@ -192,7 +187,7 @@ describe("buildGeneration", () => {
         startImage: null,
       };
 
-      const result = buildGeneration("render", "sora-2", "prompt", params);
+      const result = buildGeneration("sora-2", "prompt", params);
 
       expect(result.promptVersionId).toBeNull();
       expect(result.aspectRatio).toBeNull();
@@ -210,7 +205,7 @@ describe("buildGeneration", () => {
         mediaType: "video",
       });
 
-      const result = buildGeneration("draft", "wan-2.2", "A cat walking", {
+      const result = buildGeneration("wan-2.2", "A cat walking", {
         promptVersionId: "v1",
         aspectRatio: "16:9",
       });
@@ -233,25 +228,32 @@ describe("buildGeneration", () => {
         frameCount: 4,
       });
 
-      const result = buildGeneration("draft", "flux-kontext", "test", {});
+      const result = buildGeneration("flux-kontext", "test", {});
 
       expect(result.estimatedCost).toBe(4);
       expect(result.mediaType).toBe("image-sequence");
     });
 
-    it("sets tier correctly from parameter", () => {
+    // ADR-0021: the tier IS the model choice, so it is derived rather than
+    // passed in. Before this, the render button could resolve to the draft
+    // model and still stamp `tier: "render"` on a wan clip.
+    it("derives tier from the model rather than taking it as a parameter", () => {
       vi.mocked(getModelConfig).mockReturnValue({
-        label: "Sora",
-        credits: 80,
-        eta: "2-4m",
+        label: "Test",
+        credits: 10,
+        eta: "1m",
         mediaType: "video",
       });
 
-      const draftGen = buildGeneration("draft", "sora-2", "prompt", {});
-      const renderGen = buildGeneration("render", "sora-2", "prompt", {});
+      expect(buildGeneration("wan-2.5", "prompt", {}).tier).toBe("draft");
+      expect(buildGeneration("sora-2", "prompt", {}).tier).toBe("render");
+      expect(buildGeneration("google/veo-3", "prompt", {}).tier).toBe("render");
+    });
 
-      expect(draftGen.tier).toBe("draft");
-      expect(renderGen.tier).toBe("render");
+    it("treats a model outside the render table as draft", () => {
+      vi.mocked(getModelConfig).mockReturnValue(null);
+
+      expect(buildGeneration("unknown-model", "prompt", {}).tier).toBe("draft");
     });
 
     it("copies params to generation fields", () => {
@@ -269,7 +271,7 @@ describe("buildGeneration", () => {
         fps: 30,
       };
 
-      const result = buildGeneration("render", "model", "prompt", params);
+      const result = buildGeneration("model", "prompt", params);
 
       expect(result.promptVersionId).toBe("version-abc");
       expect(result.aspectRatio).toBe("9:16");
@@ -285,8 +287,8 @@ describe("buildGeneration", () => {
         mediaType: "video",
       });
 
-      const gen1 = buildGeneration("draft", "model", "prompt", {});
-      const gen2 = buildGeneration("draft", "model", "prompt", {});
+      const gen1 = buildGeneration("model", "prompt", {});
+      const gen2 = buildGeneration("model", "prompt", {});
 
       expect(gen1.id).not.toBe(gen2.id);
       expect(gen1.id).toMatch(/^gen-/);

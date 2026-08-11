@@ -1,4 +1,4 @@
-import type { GenerationMediaType } from "../types";
+import type { GenerationMediaType, GenerationTier } from "../types";
 import {
   DEFAULT_GENERATION_DURATION_SECONDS,
   getGenerationCreditCost,
@@ -132,6 +132,40 @@ export const getModelConfig = (modelId: string): ModelConfig | null => {
   const renderConfig = RENDER_MODELS[modelId];
   if (renderConfig) return renderConfig;
   return null;
+};
+
+/**
+ * The tier a take belongs to (ADR-0021).
+ *
+ * Derived, never stored: the tier IS the model choice, so the two tables above
+ * already answer it and a persisted copy could only drift from them — which is
+ * exactly what happened before ADR-0021, when every writer stamped `"draft"`.
+ * A model absent from both tables is a draft: only the render table's models
+ * cost render money.
+ */
+export const deriveGenerationTier = (modelId: string): GenerationTier =>
+  RENDER_MODELS[modelId] ? "render" : "draft";
+
+/**
+ * The generation-side model ids the server persists on a picture record, which
+ * are provider ids rather than the UI-facing ids keyed above. Sourced from
+ * `ReplicateFluxSchnellProvider` and `ReplicateFluxKontextFastProvider`.
+ */
+const PERSISTED_IMAGE_MODEL_IDS: ReadonlySet<string> = new Set([
+  "black-forest-labs/flux-schnell",
+  "prunaai/flux-kontext-fast",
+]);
+
+/**
+ * What kind of take a model produces, for records persisted before the writer
+ * stamped `mediaType` itself. Returns null when the model is unknown — the
+ * caller decides, rather than this table guessing.
+ */
+export const deriveGenerationMediaType = (
+  modelId: string,
+): GenerationMediaType | null => {
+  if (PERSISTED_IMAGE_MODEL_IDS.has(modelId)) return "image";
+  return getModelConfig(modelId)?.mediaType ?? null;
 };
 
 /**

@@ -1,5 +1,9 @@
 import type { Generation, GenerationParams } from "../types";
-import { getModelConfig, getModelCreditCost } from "../config/generationConfig";
+import {
+  deriveGenerationTier,
+  getModelConfig,
+  getModelCreditCost,
+} from "../config/generationConfig";
 
 export const createGenerationId = (): string =>
   `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -24,13 +28,20 @@ export const resolveGenerationOptions = (
   faceSwapUrl: overrides?.faceSwapUrl ?? base?.faceSwapUrl ?? null,
 });
 
+/**
+ * Build the take a creator just asked for.
+ *
+ * The tier is derived from `model` rather than passed in (ADR-0021): the
+ * render button can legitimately resolve to the draft model, so a caller-
+ * supplied tier was free to contradict the model actually run — and did.
+ */
 export const buildGeneration = (
-  tier: Generation["tier"],
   model: string,
   prompt: string,
   params: GenerationParams,
 ): Generation => {
   const config = getModelConfig(model);
+  const tier = deriveGenerationTier(model);
   const resolvedFaceSwapUrl =
     params.faceSwapUrl ??
     (params.faceSwapAlreadyApplied ? (params.startImage?.url ?? null) : null);

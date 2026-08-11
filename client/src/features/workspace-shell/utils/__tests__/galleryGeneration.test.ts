@@ -28,7 +28,7 @@ describe("buildGalleryGenerationEntries", () => {
           signature: "sig",
           prompt: "Prompt",
           timestamp: "2026-02-20T18:00:00.000Z",
-          preview: {
+          firstFrame: {
             generatedAt: "2026-02-20T18:00:00.000Z",
             imageUrl:
               "https://storage.example.com/users/u1/previews/images/version-thumb.webp",

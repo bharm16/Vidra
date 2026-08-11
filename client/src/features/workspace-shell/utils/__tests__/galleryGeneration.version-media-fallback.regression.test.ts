@@ -10,7 +10,7 @@ describe("regression: gallery fallback when generations are missing from version
           signature: "sig-corrupted",
           prompt: "A cinematic shot of a baby driving a tiny car.",
           timestamp: "2026-02-21T12:00:00.000Z",
-          preview: {
+          firstFrame: {
             generatedAt: "2026-02-21T12:00:00.000Z",
             imageUrl:
               "https://storage.example.com/users/u1/previews/images/preview.webp",

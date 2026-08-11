@@ -395,6 +395,33 @@ export function useGenerationActions(
     [dispatch],
   );
 
+  /**
+   * Take on the id the server persisted this take under, replacing the
+   * optimistic local one (CONTEXT.md → Take identity).
+   *
+   * A take is known by one id, and it is the server's: a session refetch has
+   * to match the take already on screen rather than land a second copy of it.
+   * The picture paths do this inline with the id their response returns; a
+   * clip's server id is its job id, which is what `processVideoJob` writes the
+   * generation record under.
+   *
+   * Called before the take enters state, so only the in-flight controller —
+   * registered under the local id so the request could be cancelled — needs
+   * re-keying. Miss that and cancel/abort silently stop finding the take.
+   */
+  const adoptServerGenerationId = useCallback(
+    (localId: string, serverId: string | null | undefined): string => {
+      if (!serverId || serverId === localId) return localId;
+      const controller = inFlightRef.current.get(localId);
+      if (controller) {
+        inFlightRef.current.delete(localId);
+        inFlightRef.current.set(serverId, controller);
+      }
+      return serverId;
+    },
+    [],
+  );
+
   // ISSUE-12 follow-up: ADD_GENERATION was retired in favour of
   // SET_GENERATIONS over a known-good set. The helper keeps its name
   // because every call site already reads as "accept this generation into
@@ -522,7 +549,11 @@ export function useGenerationActions(
       if (isSubmittingRef.current) return;
       setSubmissionPending(true);
       const resolved = resolveGenerationOptions(optionsRef.current, params);
-      const generation = buildGeneration("draft", model, prompt, resolved);
+      const generation = buildGeneration(model, prompt, resolved);
+      // Provisional until the server names this take (CONTEXT.md → Take
+      // identity). Every state reference below follows this, not the
+      // original id, so adoption mid-flight cannot orphan the take.
+      let takeId = generation.id;
       const modelConfig = getModelConfig(model);
       const requiredCredits = getModelCreditCost(model, resolved.duration);
       const operationLabel = `${modelConfig?.label ?? "Video"} preview`;
@@ -539,7 +570,7 @@ export function useGenerationActions(
       const requestedExtendMode = Boolean(resolved.extendVideoUrl);
 
       log.info("Draft generation started", {
-        generationId: generation.id,
+        generationId: takeId,
         tier: "draft",
         model,
         promptLength: prompt.trim().length,
@@ -558,7 +589,7 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      inFlightRef.current.set(generation.id, controller);
+      inFlightRef.current.set(takeId, controller);
 
       try {
         if (model === "flux-kontext") {
@@ -576,7 +607,7 @@ export function useGenerationActions(
             const reason =
               response.message || response.error || "Failed to generate frames";
             log.warn("Storyboard draft response invalid", {
-              generationId: generation.id,
+              generationId: takeId,
               success: false,
               hasImageUrls: false,
               error: reason,
@@ -586,7 +617,7 @@ export function useGenerationActions(
           }
           if (!response.data.imageUrls?.length) {
             log.warn("Storyboard draft response invalid", {
-              generationId: generation.id,
+              generationId: takeId,
               success: true,
               hasImageUrls: false,
               error: "Failed to generate frames",
@@ -600,7 +631,7 @@ export function useGenerationActions(
           const durationMs = Date.now() - startedAt;
 
           log.info("Storyboard draft generation succeeded", {
-            generationId: generation.id,
+            generationId: takeId,
             durationMs,
             framesCount: urls.length,
             serverPersisted: Boolean(serverGenerationId),
@@ -629,7 +660,7 @@ export function useGenerationActions(
           // the next bigger transaction. Mirrors the same call on the
           // draft-render and full-render success paths.
           syncCreditBalanceFromResponse(response.remainingCredits);
-          inFlightRef.current.delete(generation.id);
+          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
           return;
         }
@@ -654,7 +685,7 @@ export function useGenerationActions(
             log.warn(
               "Prompt trigger resolution failed; falling back to raw prompt",
               {
-                generationId: generation.id,
+                generationId: takeId,
                 error: info.message,
                 errorName: info.name,
               },
@@ -675,7 +706,7 @@ export function useGenerationActions(
         } catch (error) {
           const info = sanitizeError(error);
           log.warn("WAN prompt compilation failed; using raw prompt", {
-            generationId: generation.id,
+            generationId: takeId,
             error: info.message,
             errorName: info.name,
           });
@@ -738,7 +769,7 @@ export function useGenerationActions(
           : null;
 
         log.info("Video draft request dispatched", {
-          generationId: generation.id,
+          generationId: takeId,
           model,
           promptLength: wanPrompt.length,
           aspectRatio: resolved.aspectRatio ?? null,
@@ -805,7 +836,7 @@ export function useGenerationActions(
         }
 
         log.info("Video draft response received", {
-          generationId: generation.id,
+          generationId: takeId,
           success: response.success,
           hasVideoUrl: Boolean(response.videoUrl),
           hasJobId: Boolean(response.jobId),
@@ -823,27 +854,38 @@ export function useGenerationActions(
         let videoAssetId: string | null = response.assetId ?? null;
         if (response.success && response.videoUrl) {
           generationAccepted = true;
-          acceptGeneration(generation, {
-            status: "completed",
-            completedAt: Date.now(),
-            mediaUrls: [response.videoUrl],
-            ...buildFaceSwapUpdate(response, generation),
-            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
-          });
-          inFlightRef.current.delete(generation.id);
+          acceptGeneration(
+            { ...generation, id: takeId },
+            {
+              status: "completed",
+              completedAt: Date.now(),
+              mediaUrls: [response.videoUrl],
+              ...buildFaceSwapUpdate(response, generation),
+              ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
+            },
+          );
+          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
           videoUrl = response.videoUrl;
         } else if (response.success && response.jobId) {
+          // The server persists this clip's generation record under the job
+          // id (processVideoJob), so that is this take's identity from here
+          // on. Without adopting it a session refetch lands a second copy of
+          // the same clip — the duplicate the picture paths already avoid.
+          takeId = adoptServerGenerationId(takeId, response.jobId);
           generationAccepted = true;
-          acceptGeneration(generation, {
-            status: resolveAcceptedGenerationStatus(response.status),
-            jobId: response.jobId,
-            ...(response.status ? { serverJobStatus: response.status } : {}),
-            ...buildFaceSwapUpdate(response, generation),
-          });
+          acceptGeneration(
+            { ...generation, id: takeId },
+            {
+              status: resolveAcceptedGenerationStatus(response.status),
+              jobId: response.jobId,
+              ...(response.status ? { serverJobStatus: response.status } : {}),
+              ...buildFaceSwapUpdate(response, generation),
+            },
+          );
           setSubmissionPending(false);
           log.debug("Waiting for video draft job to complete", {
-            generationId: generation.id,
+            generationId: takeId,
             jobId: response.jobId,
           });
           const jobResult = await waitForVideoJob(
@@ -853,7 +895,7 @@ export function useGenerationActions(
               dispatch({
                 type: "UPDATE_GENERATION",
                 payload: {
-                  id: generation.id,
+                  id: takeId,
                   updates: {
                     status: resolveAcceptedGenerationStatus(update.status),
                     jobId: response.jobId,
@@ -869,7 +911,7 @@ export function useGenerationActions(
           videoAssetId = jobResult?.assetId ?? videoAssetId;
           videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
           log.debug("Video draft job completed", {
-            generationId: generation.id,
+            generationId: takeId,
             jobId: response.jobId,
             hasVideoUrl: Boolean(videoUrl),
           });
@@ -884,7 +926,7 @@ export function useGenerationActions(
         }
         if (!videoUrl) {
           log.warn("Video draft completed without a video URL", {
-            generationId: generation.id,
+            generationId: takeId,
             jobId: response.jobId ?? null,
             error:
               response.error || response.message || "Failed to generate video",
@@ -896,7 +938,7 @@ export function useGenerationActions(
         }
         const durationMs = Date.now() - startedAt;
         log.info("Video draft generation succeeded", {
-          generationId: generation.id,
+          generationId: takeId,
           durationMs,
           faceSwapApplied:
             response?.faceSwapApplied ?? faceSwapMeta.faceSwapApplied,
@@ -906,7 +948,7 @@ export function useGenerationActions(
           // The i2v start frame doubles as the clip's poster — the space
           // tile and Library card render stills, never the video itself.
           const posterUrl = videoPosterUrl ?? resolved.startImage?.url ?? null;
-          finalizeGeneration(generation.id, {
+          finalizeGeneration(takeId, {
             status: "completed",
             completedAt: Date.now(),
             mediaUrls: [videoUrl],
@@ -923,9 +965,9 @@ export function useGenerationActions(
           return;
         }
         if (isInsufficientCreditsError(error)) {
-          inFlightRef.current.delete(generation.id);
+          inFlightRef.current.delete(takeId);
           if (generationAccepted) {
-            finalizeGeneration(generation.id, {
+            finalizeGeneration(takeId, {
               status: "failed",
               completedAt: Date.now(),
               error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
@@ -944,14 +986,14 @@ export function useGenerationActions(
         const errObj = error instanceof Error ? error : new Error(info.message);
 
         log.error("Draft generation failed", errObj, {
-          generationId: generation.id,
+          generationId: takeId,
           model,
           durationMs,
           errorName: info.name,
           ...motionMeta,
         });
         if (generationAccepted) {
-          finalizeGeneration(generation.id, {
+          finalizeGeneration(takeId, {
             status: "failed",
             completedAt: Date.now(),
             error: errObj.message,
@@ -959,18 +1001,22 @@ export function useGenerationActions(
             serverJobStatus: "failed",
           });
         } else {
-          acceptGeneration(generation, {
-            status: "failed",
-            completedAt: Date.now(),
-            error: errObj.message,
-          });
-          inFlightRef.current.delete(generation.id);
+          acceptGeneration(
+            { ...generation, id: takeId },
+            {
+              status: "failed",
+              completedAt: Date.now(),
+              error: errObj.message,
+            },
+          );
+          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
         }
       }
     },
     [
       acceptGeneration,
+      adoptServerGenerationId,
       clearSubmissionPendingIfNeeded,
       dispatch,
       finalizeGeneration,
@@ -984,12 +1030,7 @@ export function useGenerationActions(
       setSubmissionPending(true);
       const { seedImageUrl, ...baseParams } = params;
       const resolved = resolveGenerationOptions(optionsRef.current, baseParams);
-      const generation = buildGeneration(
-        "draft",
-        "flux-kontext",
-        prompt,
-        resolved,
-      );
+      const generation = buildGeneration("flux-kontext", prompt, resolved);
       const modelConfig = getModelConfig("flux-kontext");
       const requiredCredits = modelConfig?.credits ?? 4;
       const operationLabel = "Storyboard";
@@ -1177,7 +1218,11 @@ export function useGenerationActions(
       if (isSubmittingRef.current) return;
       setSubmissionPending(true);
       const resolved = resolveGenerationOptions(optionsRef.current, params);
-      const generation = buildGeneration("render", model, prompt, resolved);
+      const generation = buildGeneration(model, prompt, resolved);
+      // Provisional until the server names this take (CONTEXT.md → Take
+      // identity). Every state reference below follows this, not the
+      // original id, so adoption mid-flight cannot orphan the take.
+      let takeId = generation.id;
       const modelConfig = getModelConfig(model);
       const requiredCredits = getModelCreditCost(model, resolved.duration);
       const operationLabel = `${modelConfig?.label ?? "Video"} render`;
@@ -1198,7 +1243,7 @@ export function useGenerationActions(
       const requestedExtendMode = Boolean(resolved.extendVideoUrl);
 
       log.info("Render generation started", {
-        generationId: generation.id,
+        generationId: takeId,
         tier: "render",
         model,
         promptLength: prompt.trim().length,
@@ -1221,7 +1266,7 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      inFlightRef.current.set(generation.id, controller);
+      inFlightRef.current.set(takeId, controller);
 
       try {
         const videoInputSupport = await getVideoInputSupport(model);
@@ -1276,7 +1321,7 @@ export function useGenerationActions(
           : null;
 
         log.info("Render request dispatched", {
-          generationId: generation.id,
+          generationId: takeId,
           model,
           aspectRatio: resolved.aspectRatio ?? null,
           isCharacterAsset,
@@ -1344,7 +1389,7 @@ export function useGenerationActions(
         }
 
         log.info("Render response received", {
-          generationId: generation.id,
+          generationId: takeId,
           success: response.success,
           hasVideoUrl: Boolean(response.videoUrl),
           hasJobId: Boolean(response.jobId),
@@ -1362,27 +1407,38 @@ export function useGenerationActions(
         let videoAssetId: string | null = response.assetId ?? null;
         if (response.success && response.videoUrl) {
           generationAccepted = true;
-          acceptGeneration(generation, {
-            status: "completed",
-            completedAt: Date.now(),
-            mediaUrls: [response.videoUrl],
-            ...buildFaceSwapUpdate(response, generation),
-            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
-          });
-          inFlightRef.current.delete(generation.id);
+          acceptGeneration(
+            { ...generation, id: takeId },
+            {
+              status: "completed",
+              completedAt: Date.now(),
+              mediaUrls: [response.videoUrl],
+              ...buildFaceSwapUpdate(response, generation),
+              ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
+            },
+          );
+          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
           videoUrl = response.videoUrl;
         } else if (response.success && response.jobId) {
+          // The server persists this clip's generation record under the job
+          // id (processVideoJob), so that is this take's identity from here
+          // on. Without adopting it a session refetch lands a second copy of
+          // the same clip — the duplicate the picture paths already avoid.
+          takeId = adoptServerGenerationId(takeId, response.jobId);
           generationAccepted = true;
-          acceptGeneration(generation, {
-            status: resolveAcceptedGenerationStatus(response.status),
-            jobId: response.jobId,
-            ...(response.status ? { serverJobStatus: response.status } : {}),
-            ...buildFaceSwapUpdate(response, generation),
-          });
+          acceptGeneration(
+            { ...generation, id: takeId },
+            {
+              status: resolveAcceptedGenerationStatus(response.status),
+              jobId: response.jobId,
+              ...(response.status ? { serverJobStatus: response.status } : {}),
+              ...buildFaceSwapUpdate(response, generation),
+            },
+          );
           setSubmissionPending(false);
           log.debug("Waiting for render job to complete", {
-            generationId: generation.id,
+            generationId: takeId,
             jobId: response.jobId,
           });
           const jobResult = await waitForVideoJob(
@@ -1392,7 +1448,7 @@ export function useGenerationActions(
               dispatch({
                 type: "UPDATE_GENERATION",
                 payload: {
-                  id: generation.id,
+                  id: takeId,
                   updates: {
                     status: resolveAcceptedGenerationStatus(update.status),
                     jobId: response.jobId,
@@ -1408,7 +1464,7 @@ export function useGenerationActions(
           videoAssetId = jobResult?.assetId ?? videoAssetId;
           videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
           log.debug("Render job completed", {
-            generationId: generation.id,
+            generationId: takeId,
             jobId: response.jobId,
             hasVideoUrl: Boolean(videoUrl),
           });
@@ -1423,7 +1479,7 @@ export function useGenerationActions(
         }
         if (!videoUrl) {
           log.warn("Render completed without a video URL", {
-            generationId: generation.id,
+            generationId: takeId,
             jobId: response.jobId ?? null,
             error:
               response.error || response.message || "Failed to render video",
@@ -1435,7 +1491,7 @@ export function useGenerationActions(
         }
         const durationMs = Date.now() - startedAt;
         log.info("Render generation succeeded", {
-          generationId: generation.id,
+          generationId: takeId,
           durationMs,
           faceSwapApplied:
             response?.faceSwapApplied ?? faceSwapMeta.faceSwapApplied,
@@ -1445,7 +1501,7 @@ export function useGenerationActions(
           // The i2v start frame doubles as the clip's poster — the space
           // tile and Library card render stills, never the video itself.
           const posterUrl = videoPosterUrl ?? resolved.startImage?.url ?? null;
-          finalizeGeneration(generation.id, {
+          finalizeGeneration(takeId, {
             status: "completed",
             completedAt: Date.now(),
             mediaUrls: [videoUrl],
@@ -1462,9 +1518,9 @@ export function useGenerationActions(
           return;
         }
         if (isInsufficientCreditsError(error)) {
-          inFlightRef.current.delete(generation.id);
+          inFlightRef.current.delete(takeId);
           if (generationAccepted) {
-            finalizeGeneration(generation.id, {
+            finalizeGeneration(takeId, {
               status: "failed",
               completedAt: Date.now(),
               error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
@@ -1483,13 +1539,13 @@ export function useGenerationActions(
         const errObj = error instanceof Error ? error : new Error(info.message);
 
         log.error("Render generation failed", errObj, {
-          generationId: generation.id,
+          generationId: takeId,
           durationMs,
           errorName: info.name,
           ...motionMeta,
         });
         if (generationAccepted) {
-          finalizeGeneration(generation.id, {
+          finalizeGeneration(takeId, {
             status: "failed",
             completedAt: Date.now(),
             error: errObj.message,
@@ -1497,18 +1553,22 @@ export function useGenerationActions(
             serverJobStatus: "failed",
           });
         } else {
-          acceptGeneration(generation, {
-            status: "failed",
-            completedAt: Date.now(),
-            error: errObj.message,
-          });
-          inFlightRef.current.delete(generation.id);
+          acceptGeneration(
+            { ...generation, id: takeId },
+            {
+              status: "failed",
+              completedAt: Date.now(),
+              error: errObj.message,
+            },
+          );
+          inFlightRef.current.delete(takeId);
           setSubmissionPending(false);
         }
       }
     },
     [
       acceptGeneration,
+      adoptServerGenerationId,
       clearSubmissionPendingIfNeeded,
       dispatch,
       finalizeGeneration,

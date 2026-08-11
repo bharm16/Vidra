@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Generation } from "@features/generations/types";
+import { normalizePersistedGeneration } from "../normalizePersistedGeneration";
 import { selectHeroGeneration } from "../selectHeroGeneration";
 
 // Test fixture shape for legacy persisted records. Real `Generation` requires
@@ -138,38 +139,44 @@ describe("regression: legacy storyboard records (no mediaType) still excluded fr
     expect(result?.id).toBe("flux-video");
   });
 
-  it("treats legacy tier 'final' as a render for default-hero preference", () => {
+  it("keeps a legacy tier 'final' record on the hero, now via derivation", () => {
     // Live repro (Tokyo alleyway session, 2026-04-30): the persisted Sora
     // record had `tier: "final"` instead of the now-canonical `"render"`.
-    // No production code path writes "final" today — the rename happened in
-    // the prelaunch-stability refactor. Treat any non-draft non-storyboard
-    // tier as render-equivalent so legacy records still win the hero slot.
-    const legacyRenderFinal = buildGeneration({
+    //
+    // selectHeroGeneration used to carry an explicit "final" allowlist. Since
+    // ADR-0021 the tier is derived from `model` at the repository boundary, so
+    // the persisted value — "final", "draft", or absent — never reaches the
+    // selector at all. Driving the fixture through the real normalizer proves
+    // the guarantee survived the move rather than merely relocating.
+    const legacyRenderFinal = normalizePersistedGeneration({
       id: "sora-legacy",
-      // The LegacyGeneration fixture type accepts "final" — a tier value
-      // dropped from the canonical GenerationTier union during the
-      // prelaunch-stability rename, but still present in persisted data.
       tier: "final",
       model: "sora-2",
       mediaType: "video",
+      status: "completed",
+      mediaUrls: ["https://example.com/sora.mp4"],
       createdAt: 50,
     });
-    const newerDraftPreview = buildGeneration({
+    const newerDraftPreview = normalizePersistedGeneration({
       id: "draft-preview",
       tier: "draft",
-      model: "wan-2.2-flash",
+      model: "wan-2.5",
       mediaType: "video",
+      status: "completed",
+      mediaUrls: ["https://example.com/wan.mp4"],
       createdAt: 100,
     });
 
+    expect(legacyRenderFinal?.tier).toBe("render");
+    expect(newerDraftPreview?.tier).toBe("draft");
+
     const result = selectHeroGeneration({
-      generations: [legacyRenderFinal, newerDraftPreview],
+      generations: [legacyRenderFinal!, newerDraftPreview!],
       activeGenerationId: null,
       heroOverrideGenerationId: null,
     });
 
-    // The newer draft preview must NOT shadow the legacy render — even
-    // though "final" is no longer a declared tier.
+    // The newer draft must NOT shadow the legacy render.
     expect(result?.id).toBe("sora-legacy");
   });
 });

@@ -62,7 +62,7 @@ describe("regression: gallery propagates asset IDs for URL resolution", () => {
           signature: "sig-2",
           prompt: "A baby driving a race car",
           timestamp: new Date(Date.now() - 120_000).toISOString(),
-          preview: {
+          firstFrame: {
             generatedAt: new Date(Date.now() - 130_000).toISOString(),
             imageUrl:
               "https://storage.googleapis.com/bucket/preview-images/u1/asset-thumb-1?X-Goog-Signature=expired",

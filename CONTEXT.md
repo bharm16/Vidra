@@ -38,7 +38,7 @@ The empty-canvas entry surface of the workspace: a creator's submit runs the exp
 
 ### First frame
 
-The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Consequently the frame (or its pending/failed state) owns the workspace canvas at every beat of the expansion loop, and the prompt renders as its editable caption — never the reverse. Resolved 2026-06-08 during scope-clarification grilling; canvas-ownership corollary resolved 2026-07-02 during UX-review grilling. Avoid synonyms: source image, still.
+The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Consequently the frame (or its pending/failed state) owns the workspace canvas at every beat of the expansion loop, and the prompt renders as its editable caption — never the reverse. The session contract still spells it `version.preview`, which names nothing (the term was retired 2026-08-10) — read that field as the first frame. Resolved 2026-06-08 during scope-clarification grilling; canvas-ownership corollary resolved 2026-07-02 during UX-review grilling; contract-spelling note added 2026-08-10 during the generation audit. Avoid synonyms: source image, still, preview.
 
 ### Preview-image persistence
 
@@ -139,6 +139,10 @@ One studio turn's set of sibling variations, generated together and landing as o
 ### Camera focus
 
 What the shared plane centers on: every element tagged with the live id, centered as one union rather than one at a time. A focus target is a **set**, so [The player](#the-player)'s single live node and a studio [Batch](#batch-studio)'s four siblings are the same case — the plane owes no consumer a "there must be exactly one" rule. The tag is `data-canvas-focus`, published by `CanvasViewport` as `CANVAS_FOCUS_ATTR` and keyed by the same id the `liveNodeId` prop carries, so the two halves cannot disagree about which object is live; a mismatch centers nothing rather than centering the wrong thing. Resolved 2026-08-04 during architecture-deepening review, replacing an undeclared `data-live="true"` first-match lookup that centered a batch on its top-left tile. Avoid synonyms: live node (that is one focus target, not the concept), camera target.
+
+### Take identity
+
+The one id a [Take](#take) is known by: the id the server assigned when it persisted the take. The client's optimistic id is provisional — it is replaced by the server's on persist, so a later session refetch matches the take already on screen instead of duplicating it, and a lineage edge (ADR-0013) always names an id that exists. A take's identity is not its job id: the job is the work that produced the take, and it ends; the take does not. Resolved 2026-08-10 during the generation audit, generalizing the rule the picture path already followed. Avoid synonyms: generation id, job id, local id.
 
 <!-- New terms go here, following the format above. -->
 

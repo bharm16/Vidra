@@ -12,14 +12,6 @@ interface SelectHeroGenerationInput {
 // "image-sequence"` carry undefined mediaType, but the model name remains.
 const STORYBOARD_MODEL = "flux-kontext";
 
-// Tiers that should be treated as render-equivalent for hero selection.
-// `"render"` is the canonical current value; `"final"` is the legacy value
-// from before the prelaunch-stability rename. Listing them as an explicit
-// allowlist (rather than `tier !== "draft"`) prevents unknown / future tier
-// values from accidentally winning the hero slot if the union is ever
-// extended without updating this file.
-const RENDER_LIKE_TIERS: ReadonlySet<string> = new Set(["render", "final"]);
-
 const isStoryboard = (generation: Generation): boolean => {
   if (generation.mediaType === "image-sequence") return true;
   // Legacy fallback: a flux-kontext record with no canonical mediaType is a
@@ -65,21 +57,15 @@ export function selectHeroGeneration({
     if (activeMatch) return activeMatch;
   }
 
-  // Default fallback: prefer the latest render-equivalent generation, since
-  // users pay materially more for render output than for draft previews.
-  // We match against an explicit allowlist (RENDER_LIKE_TIERS) so legacy
-  // persisted records carrying the deprecated `"final"` tier still win, but
-  // unknown / future tier values do NOT silently slip in.
+  // Default fallback: prefer the latest render take, since users pay
+  // materially more for render output than for draft output.
   //
-  // `String(g.tier)` (rather than `g.tier as string`) makes the runtime
-  // widening explicit: `GenerationTier` is declared as `"draft" | "render"`,
-  // but `shared/schemas/session.schemas.ts` parses generations as
-  // `z.record(z.string(), z.unknown())` — so legacy `"final"` values flow
-  // through Zod unchanged. The coercion documents the gap rather than
-  // hiding it behind an unsafe cast.
-  const renders = nonStoryboard.filter((g) =>
-    RENDER_LIKE_TIERS.has(String(g.tier)),
-  );
+  // A plain equality check is now sound. `tier` used to arrive straight off
+  // the wire, where a legacy `"final"` could slip through the open generation
+  // bag — hence the old allowlist. Since ADR-0021 the tier is derived from
+  // `model` at the repository boundary, so only the two canonical values ever
+  // reach here.
+  const renders = nonStoryboard.filter((g) => g.tier === "render");
   if (renders.length > 0) {
     return renders[renders.length - 1] ?? null;
   }

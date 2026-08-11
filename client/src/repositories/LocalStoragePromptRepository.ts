@@ -2,6 +2,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "../services/LoggingService";
 import type { PromptHistoryEntry, PromptVersionEntry } from "../hooks/types";
+import { normalizePersistedVersions } from "./normalizePersistedVersions";
 import type {
   PromptData,
   SavedPromptResult,
@@ -31,7 +32,7 @@ const PromptVersionEditSchema = z
   })
   .passthrough();
 
-const PromptVersionPreviewSchema = z
+const PromptVersionFirstFrameSchema = z
   .object({
     generatedAt: z.string(),
     imageUrl: z.string().nullable().optional(),
@@ -58,7 +59,10 @@ const PromptVersionEntrySchema = z
     highlights: z.unknown().nullable().optional(),
     editCount: z.number().optional(),
     edits: z.array(PromptVersionEditSchema).optional(),
-    preview: PromptVersionPreviewSchema.nullable().optional(),
+    firstFrame: PromptVersionFirstFrameSchema.nullable().optional(),
+    // Pre-2026-08-10 spelling; normalizePersistedVersions folds it into
+    // firstFrame so nothing downstream sees two names for one frame.
+    preview: PromptVersionFirstFrameSchema.nullable().optional(),
     video: PromptVersionVideoSchema.nullable().optional(),
   })
   .passthrough();
@@ -452,7 +456,13 @@ export class LocalStoragePromptRepository {
         localStorage.removeItem(this.storageKey);
         return [];
       }
-      return parsed;
+      // The version schema passes generations through unvalidated (an open bag
+      // by contract), so this is the local-store half of the same boundary
+      // PromptRepository applies to the server's sessions.
+      return parsed.map((entry) => ({
+        ...entry,
+        versions: normalizePersistedVersions(entry.versions),
+      }));
     } catch (error) {
       log.error("Error parsing localStorage history", error as Error);
       localStorage.removeItem(this.storageKey);
