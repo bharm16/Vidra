@@ -350,7 +350,11 @@ export async function processVideoJob(
           job.promptVersionId,
           {
             id: job.id,
-            tier: "draft",
+            // A take says what it is. Without this the space's picture/clip
+            // split matches neither branch and drops the clip entirely
+            // (deriveSpaceNodes), and the poster/refresh paths treat it as an
+            // image. No `tier`: it is derived from `model` (ADR-0021).
+            mediaType: "video",
             model: job.request.options?.model ?? null,
             prompt: job.request.prompt,
             status: "completed",

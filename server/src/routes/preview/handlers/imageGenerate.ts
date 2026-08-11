@@ -407,7 +407,7 @@ export const createImageGenerateHandler =
           : null;
         const generationRecord: Record<string, unknown> = {
           id: generationId,
-          tier: "draft",
+          // No `tier`: derived from `model` at read time (ADR-0021).
           model: result.metadata.model,
           mediaType: "image",
           prompt,

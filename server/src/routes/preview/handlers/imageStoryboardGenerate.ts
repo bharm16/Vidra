@@ -347,7 +347,7 @@ export const createImageStoryboardGenerateHandler =
           .filter((id): id is string => Boolean(id));
         const generationRecord: Record<string, unknown> = {
           id: generationId,
-          tier: "draft",
+          // No `tier`: derived from `model` at read time (ADR-0021).
           model: "flux-kontext",
           mediaType: "image-sequence",
           prompt,
