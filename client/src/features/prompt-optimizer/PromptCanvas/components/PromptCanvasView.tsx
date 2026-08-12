@@ -125,6 +125,14 @@ export function PromptCanvasView({
             </div>
           </div>
 
+          {/*
+            Unreachable while CANVAS_FIRST_LAYOUT is on (it defaults to true):
+            this is below the early return above, so only the legacy layout
+            renders it. The coherence check and its span underlines are live on
+            both branches — it is the explaining surface that is missing. Kept
+            rather than moved or deleted; see CoherenceContextValue for the two
+            decisions that settle it.
+          */}
           <CoherencePanel
             issues={coherence.issues}
             isChecking={coherence.isChecking}

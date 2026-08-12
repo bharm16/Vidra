@@ -16,8 +16,42 @@ import type { CoherenceRecommendation } from "@/features/prompt-optimizer/types/
  * (`?? []`, `Boolean()`, `?? (() => {})`) at the end of the tunnel.
  *
  * Non-optional here on purpose: whoever provides coherence provides all of it.
+ *
+ * ## Only half of this reaches a user today
+ *
+ * The check runs and the span markers render on both layout branches, but the
+ * panel that lists the issues and offers the fixes is inside
+ * `PromptCanvasView`'s legacy branch — after the
+ * `if (FEATURES.CANVAS_FIRST_LAYOUT) return <CanvasWorkspace …>` early return —
+ * and that flag defaults to `true`. So a creator sees underlines under
+ * contradicting spans and has no surface explaining them.
+ *
+ * Left that way deliberately, on two existing decisions rather than a
+ * preference:
+ *
+ * - Giving the panel a home in the canvas-first layout would add a surface the
+ *   design handoff does not specify, and per ADR-0014 the handoff is the
+ *   authoritative visual spec. `design_handoff_vidra/` has no coherence screen.
+ * - Deleting it now would pre-empt a scheduled sweep. `docs/REBUILD.md` puts
+ *   "the old-layout deletion (LAST)" at the end of the rebuild, and the
+ *   2026-08-09 deep-module audit sizes that branch at 8 components and 55 props
+ *   — the panel is one of the eight. Taking it alone leaves the other seven and
+ *   the branch itself, against the build-scope rule that deletions land
+ *   alongside their replacements.
+ *
+ * When that sweep runs, the panel's half of this value goes with it: `issues`,
+ * `isChecking`, `isPanelExpanded`, `onTogglePanelExpanded`, `onDismissIssue`,
+ * `onDismissAll`, `onApplyFix`, `onScrollToSpan`. What survives is what the
+ * editor underlines with — `affectedSpanIds` and `spanIssueMap` — unless the
+ * handoff grows a coherence surface first, which is the decision that would
+ * reverse this one.
+ *
+ * Note the term: this is *prompt* coherence, contradictions inside one prompt.
+ * Not the multi-shot coherence ADR-0002 and CONTEXT.md put out of scope — that
+ * is the expert's problem and a different subsystem (`services/continuity`).
  */
 export interface CoherenceContextValue {
+  // --- the panel's half: unreachable while CANVAS_FIRST_LAYOUT is on ---
   issues: CoherenceIssue[];
   isChecking: boolean;
   isPanelExpanded: boolean;
@@ -29,6 +63,7 @@ export interface CoherenceContextValue {
     recommendation: CoherenceRecommendation,
   ) => void;
   onScrollToSpan: (spanId: string) => void;
+  // --- the editor's half: live on both branches ---
   /** Spans an issue touches — the editor underlines these. */
   affectedSpanIds: Set<string>;
   /** Per-span marker style, keyed by span id. */
