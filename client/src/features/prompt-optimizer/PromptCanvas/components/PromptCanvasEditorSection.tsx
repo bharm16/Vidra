@@ -22,61 +22,24 @@ import { cn } from "@/utils/cn";
 import { TriggerAutocomplete } from "@features/assets/components/TriggerAutocomplete";
 import { PromptEditor } from "@features/prompt-optimizer/components/PromptEditor";
 import { usePromptResultsData } from "@features/prompt-optimizer/context/PromptResultsActionsContext";
-import type { PromptCanvasViewProps } from "./PromptCanvasView.types";
+import type { PromptEditorWiring } from "@features/workspace-shell/components/PromptEditorSurface";
+import type {
+  EditorSectionOwnProps,
+  PromptCanvasViewProps,
+} from "./PromptCanvasView.types";
 import { PromptCanvasSuggestionsPanel } from "./PromptCanvasSuggestionsPanel";
 import { CanvasButton } from "./PromptCanvasView.shared";
 
-type PromptCanvasEditorSectionProps = Pick<
-  PromptCanvasViewProps,
-  | "modelFormatValue"
-  | "modelFormatLabel"
-  | "modelFormatOptions"
-  | "modelFormatDisabled"
-  | "onModelFormatChange"
-  | "outlineOverlayActive"
-  | "openOutlineOverlay"
-  | "onCopy"
-  | "copied"
-  | "onUndo"
-  | "canUndo"
-  | "onRedo"
-  | "canRedo"
-  | "exportMenuRef"
-  | "showExportMenu"
-  | "onToggleExportMenu"
-  | "onShowDiffChange"
-  | "onExport"
-  | "onShare"
-  | "isOutputLoading"
-  | "editorWrapperRef"
-  | "editorRef"
-  | "onTextSelection"
-  | "onHighlightClick"
-  | "onHighlightMouseDown"
-  | "onHighlightMouseEnter"
-  | "onHighlightMouseLeave"
-  | "onCopyEvent"
-  | "onInput"
-  | "onEditorKeyDown"
-  | "onEditorBlur"
-  | "autocompleteOpen"
-  | "autocompleteSuggestions"
-  | "autocompleteSelectedIndex"
-  | "autocompletePosition"
-  | "autocompleteLoading"
-  | "onAutocompleteSelect"
-  | "onAutocompleteClose"
-  | "onAutocompleteIndexChange"
-  | "outputLocklineRef"
-  | "enableMLHighlighting"
-  | "hoveredSpanId"
-  | "lockButtonPosition"
-  | "lockButtonRef"
-  | "onToggleLock"
-  | "onCancelHideLockButton"
-  | "onLockButtonMouseLeave"
-  | "isHoveredLocked"
->;
+/**
+ * The editor wiring plus everything else this section needs.
+ *
+ * The wiring half is shared with CanvasWorkspace, so it arrives as one named
+ * cluster instead of a `Pick` of the view's props — the previous shape derived
+ * this component's contract from its parent's, which is backwards.
+ */
+type PromptCanvasEditorSectionProps = PromptEditorWiring &
+  EditorSectionOwnProps &
+  Pick<PromptCanvasViewProps, "outlineOverlayActive" | "onShowDiffChange">;
 
 export function PromptCanvasEditorSection({
   modelFormatValue,
@@ -150,7 +113,7 @@ export function PromptCanvasEditorSection({
           <SelectTrigger
             size="xs"
             variant="ghost"
-            className="text-muted hover:bg-surface-2 hover:text-foreground h-7 min-w-24 max-w-40 justify-start rounded-md px-2 text-meta font-medium transition-colors [&>span]:!flex [&>span]:overflow-visible"
+            className="text-muted hover:bg-surface-2 hover:text-foreground text-meta h-7 min-w-24 max-w-40 justify-start rounded-md px-2 font-medium transition-colors [&>span]:!flex [&>span]:overflow-visible"
             aria-label={`Model format: ${modelFormatLabel}`}
             title={`Model format: ${modelFormatLabel}`}
           >
@@ -161,7 +124,7 @@ export function PromptCanvasEditorSection({
                 weight="bold"
                 aria-hidden="true"
               />
-              <span className="truncate text-meta">{modelFormatLabel}</span>
+              <span className="text-meta truncate">{modelFormatLabel}</span>
             </span>
           </SelectTrigger>
           <SelectContent align="start" className="max-h-72">

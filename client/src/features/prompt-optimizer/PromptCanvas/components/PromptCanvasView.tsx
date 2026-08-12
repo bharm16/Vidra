@@ -20,41 +20,12 @@ export function PromptCanvasView({
   outlineOverlayState,
   outlineOverlayRef,
   categorySpans,
-  editorRef,
   onCategorySpanHoverChange,
   showLegend,
   onCloseLegend,
   promptContext,
   isSuggestionsOpen,
   editorColumnRef,
-  editorWrapperRef,
-  outputLocklineRef,
-  lockButtonRef,
-  onTextSelection,
-  onHighlightClick,
-  onHighlightMouseDown,
-  onHighlightMouseEnter,
-  onHighlightMouseLeave,
-  onCopyEvent,
-  onInput,
-  onEditorKeyDown,
-  onEditorBlur,
-  autocompleteOpen,
-  autocompleteSuggestions,
-  autocompleteSelectedIndex,
-  autocompletePosition,
-  autocompleteLoading,
-  onAutocompleteSelect,
-  onAutocompleteClose,
-  onAutocompleteIndexChange,
-  enableMLHighlighting,
-  hoveredSpanId,
-  lockButtonPosition,
-  isHoveredLocked,
-  onToggleLock,
-  onCancelHideLockButton,
-  onLockButtonMouseLeave,
-  isOutputLoading,
   coherenceIssues,
   isCoherenceChecking,
   isCoherencePanelExpanded,
@@ -74,23 +45,8 @@ export function PromptCanvasView({
   onShowDiffChange,
   inputPrompt,
   normalizedDisplayedPrompt,
-  openOutlineOverlay,
-  copied,
-  onCopy,
-  modelFormatValue,
-  modelFormatLabel,
-  modelFormatOptions,
-  modelFormatDisabled,
-  onModelFormatChange,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
-  exportMenuRef,
-  showExportMenu,
-  onToggleExportMenu,
-  onExport,
-  onShare,
+  editing,
+  editorSection,
 }: PromptCanvasViewProps): React.ReactElement {
   if (FEATURES.CANVAS_FIRST_LAYOUT) {
     return (
@@ -98,24 +54,7 @@ export function PromptCanvasView({
         generationsPanelProps={generationsPanelProps}
         onReuseGeneration={onReuseGeneration}
         onToggleGenerationFavorite={onToggleGenerationFavorite}
-        editorRef={editorRef as React.RefObject<HTMLDivElement>}
-        onTextSelection={onTextSelection}
-        onHighlightClick={onHighlightClick}
-        onHighlightMouseDown={onHighlightMouseDown}
-        onHighlightMouseEnter={onHighlightMouseEnter}
-        onHighlightMouseLeave={onHighlightMouseLeave}
-        onCopyEvent={onCopyEvent}
-        onInput={onInput}
-        onEditorKeyDown={onEditorKeyDown}
-        onEditorBlur={onEditorBlur}
-        autocompleteOpen={autocompleteOpen}
-        autocompleteSuggestions={autocompleteSuggestions}
-        autocompleteSelectedIndex={autocompleteSelectedIndex}
-        autocompletePosition={autocompletePosition}
-        autocompleteLoading={autocompleteLoading}
-        onAutocompleteSelect={onAutocompleteSelect}
-        onAutocompleteClose={onAutocompleteClose}
-        onAutocompleteIndexChange={onAutocompleteIndexChange}
+        editing={editing}
       />
     );
   }
@@ -156,7 +95,7 @@ export function PromptCanvasView({
             <HighlightingErrorBoundary>
               <SpanCategoryAccordion
                 spans={categorySpans}
-                editorRef={editorRef as React.RefObject<HTMLElement>}
+                editorRef={editing.editorRef as React.RefObject<HTMLElement>}
                 onSpanHoverChange={onCategorySpanHoverChange}
               />
             </HighlightingErrorBoundary>
@@ -182,54 +121,10 @@ export function PromptCanvasView({
               <div className="flex min-h-[200px] flex-auto flex-col overflow-y-auto lg:min-h-[300px]">
                 <div className="pb-ps-card flex h-full min-h-0 w-full flex-1 flex-col gap-0 overflow-hidden px-0">
                   <PromptCanvasEditorSection
-                    modelFormatValue={modelFormatValue}
-                    modelFormatLabel={modelFormatLabel}
-                    modelFormatOptions={modelFormatOptions}
-                    modelFormatDisabled={modelFormatDisabled}
-                    onModelFormatChange={onModelFormatChange}
+                    {...editorSection}
+                    {...editing}
                     outlineOverlayActive={outlineOverlayActive}
-                    openOutlineOverlay={openOutlineOverlay}
-                    onCopy={onCopy}
-                    copied={copied}
-                    onUndo={onUndo}
-                    canUndo={canUndo}
-                    onRedo={onRedo}
-                    canRedo={canRedo}
-                    exportMenuRef={exportMenuRef}
-                    showExportMenu={showExportMenu}
-                    onToggleExportMenu={onToggleExportMenu}
                     onShowDiffChange={onShowDiffChange}
-                    onExport={onExport}
-                    onShare={onShare}
-                    isOutputLoading={isOutputLoading}
-                    editorWrapperRef={editorWrapperRef}
-                    editorRef={editorRef}
-                    onTextSelection={onTextSelection}
-                    onHighlightClick={onHighlightClick}
-                    onHighlightMouseDown={onHighlightMouseDown}
-                    onHighlightMouseEnter={onHighlightMouseEnter}
-                    onHighlightMouseLeave={onHighlightMouseLeave}
-                    onCopyEvent={onCopyEvent}
-                    onInput={onInput}
-                    onEditorKeyDown={onEditorKeyDown}
-                    onEditorBlur={onEditorBlur}
-                    autocompleteOpen={autocompleteOpen}
-                    autocompleteSuggestions={autocompleteSuggestions}
-                    autocompleteSelectedIndex={autocompleteSelectedIndex}
-                    autocompletePosition={autocompletePosition}
-                    autocompleteLoading={autocompleteLoading}
-                    onAutocompleteSelect={onAutocompleteSelect}
-                    onAutocompleteClose={onAutocompleteClose}
-                    onAutocompleteIndexChange={onAutocompleteIndexChange}
-                    outputLocklineRef={outputLocklineRef}
-                    enableMLHighlighting={enableMLHighlighting}
-                    hoveredSpanId={hoveredSpanId}
-                    lockButtonPosition={lockButtonPosition}
-                    lockButtonRef={lockButtonRef}
-                    onToggleLock={onToggleLock}
-                    onCancelHideLockButton={onCancelHideLockButton}
-                    onLockButtonMouseLeave={onLockButtonMouseLeave}
-                    isHoveredLocked={isHoveredLocked}
                   />
                 </div>
               </div>

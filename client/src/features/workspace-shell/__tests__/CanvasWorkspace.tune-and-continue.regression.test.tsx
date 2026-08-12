@@ -25,6 +25,7 @@ vi.mock(
 );
 
 import { CanvasWorkspace } from "../CanvasWorkspace";
+import { buildPromptEditorWiring } from "./__fixtures__/promptEditorWiring";
 import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import { dispatchContinueScene } from "../events";
 import type {
@@ -134,25 +135,7 @@ const buildProps = (
     versions: [],
     promptVersionId: "v-1",
   } as unknown as GenerationsPanelProps,
-  editorRef:
-    React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
-  onTextSelection: vi.fn(),
-  onHighlightClick: vi.fn(),
-  onHighlightMouseDown: vi.fn(),
-  onHighlightMouseEnter: vi.fn(),
-  onHighlightMouseLeave: vi.fn(),
-  onCopyEvent: vi.fn(),
-  onInput: vi.fn(),
-  onEditorKeyDown: vi.fn(),
-  onEditorBlur: vi.fn(),
-  autocompleteOpen: false,
-  autocompleteSuggestions: [],
-  autocompleteSelectedIndex: 0,
-  autocompletePosition: { top: 0, left: 0 },
-  autocompleteLoading: false,
-  onAutocompleteSelect: vi.fn(),
-  onAutocompleteClose: vi.fn(),
-  onAutocompleteIndexChange: vi.fn(),
+  editing: buildPromptEditorWiring(),
   onReuseGeneration: vi.fn(),
   onToggleGenerationFavorite: vi.fn(),
 });

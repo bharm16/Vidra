@@ -18,11 +18,19 @@ import { addPromptFocusIntentListener } from "@features/workspace-shell/events";
 import { useAnimatedPresence } from "@/hooks/useAnimatedPresence";
 import { cn } from "@/utils/cn";
 
-export interface PromptEditorSurfaceProps {
+/**
+ * Everything needed to drive a prompt-editing surface: the editable node, the
+ * pointer/keyboard handlers that turn edits and selections into spans, and the
+ * trigger-autocomplete state that rides along with them.
+ *
+ * One name for a cluster that four types used to declare independently — this
+ * surface, `CanvasWorkspaceProps`, `PromptCanvasViewProps` (flat, among 88
+ * props), and `PromptCanvasEditorSectionProps` (as a `Pick` of those). They all
+ * pass the same 18 values to the same two renderers, so adding a handler meant
+ * finding four declarations and three call sites.
+ */
+export interface PromptEditorWiring {
   editorRef: React.RefObject<HTMLDivElement>;
-  prompt: string;
-  /** Visual variant — "empty" mirrors today's centered hero text styling; "active" mirrors the docked variant. */
-  variant?: "empty" | "active";
   onTextSelection: (event: React.MouseEvent<HTMLDivElement>) => void;
   onHighlightClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   onHighlightMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -40,6 +48,12 @@ export interface PromptEditorSurfaceProps {
   onAutocompleteSelect: (asset: AssetSuggestion) => void;
   onAutocompleteClose: () => void;
   onAutocompleteIndexChange: (index: number) => void;
+}
+
+export interface PromptEditorSurfaceProps extends PromptEditorWiring {
+  prompt: string;
+  /** Visual variant — "empty" mirrors today's centered hero text styling; "active" mirrors the docked variant. */
+  variant?: "empty" | "active";
 }
 
 export function PromptEditorSurface({

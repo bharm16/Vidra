@@ -7,7 +7,6 @@ import React, {
   useState,
 } from "react";
 import { VIDEO_DRAFT_MODEL } from "@/components/ToolSidebar/config/modelConfig";
-import type { AssetSuggestion } from "@/features/assets/hooks/useTriggerAutocomplete";
 import type { CameraPath } from "@/features/convergence/types";
 import {
   useGenerationControlsStoreActions,
@@ -73,7 +72,10 @@ import { createShare } from "@/features/share/api/createShare";
 import { useToast } from "@components/Toast";
 import type { SpaceNode } from "@/features/space/lineage/types";
 import { archiveGeneration } from "@/features/space/api/spaceApi";
-import type { PromptEditorSurfaceProps } from "./components/PromptEditorSurface";
+import type {
+  PromptEditorWiring,
+  PromptEditorSurfaceProps,
+} from "./components/PromptEditorSurface";
 
 // Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
 // CameraMotionModal's renderer) stays out of the workspace landing chunk.
@@ -85,24 +87,7 @@ const CameraMotionModal = lazy(() =>
 
 interface CanvasWorkspaceProps {
   generationsPanelProps: GenerationsPanelProps;
-  editorRef: React.RefObject<HTMLDivElement>;
-  onTextSelection: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onHighlightClick: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onHighlightMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onHighlightMouseEnter: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onHighlightMouseLeave: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onCopyEvent: (event: React.ClipboardEvent<HTMLDivElement>) => void;
-  onInput: (event: React.FormEvent<HTMLDivElement>) => void;
-  onEditorKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
-  onEditorBlur: (event: React.FocusEvent<HTMLDivElement>) => void;
-  autocompleteOpen: boolean;
-  autocompleteSuggestions: AssetSuggestion[];
-  autocompleteSelectedIndex: number;
-  autocompletePosition: { top: number; left: number };
-  autocompleteLoading: boolean;
-  onAutocompleteSelect: (asset: AssetSuggestion) => void;
-  onAutocompleteClose: () => void;
-  onAutocompleteIndexChange: (index: number) => void;
+  editing: PromptEditorWiring;
   onReuseGeneration: (generation: Generation) => void;
   onToggleGenerationFavorite: (
     generationId: string,
@@ -124,24 +109,7 @@ const parseDurationSeconds = (
 
 export function CanvasWorkspace({
   generationsPanelProps,
-  editorRef,
-  onTextSelection,
-  onHighlightClick,
-  onHighlightMouseDown,
-  onHighlightMouseEnter,
-  onHighlightMouseLeave,
-  onCopyEvent,
-  onInput,
-  onEditorKeyDown,
-  onEditorBlur,
-  autocompleteOpen,
-  autocompleteSuggestions,
-  autocompleteSelectedIndex,
-  autocompletePosition,
-  autocompleteLoading,
-  onAutocompleteSelect,
-  onAutocompleteClose,
-  onAutocompleteIndexChange,
+  editing,
   onReuseGeneration,
   onToggleGenerationFavorite,
 }: CanvasWorkspaceProps): React.ReactElement {
@@ -389,7 +357,7 @@ export function CanvasWorkspace({
 
   // Persist the front-door prompt across reloads (the session autosave only
   // covers post-submit words); restore replays through the editor's input path.
-  useAnchorDraft({ isPreWork, prompt, editorRef });
+  useAnchorDraft({ isPreWork, prompt, editorRef: editing.editorRef });
 
   // "Your words" — once the one-liner has grown into the full description, offer
   // an explicit way back to the immutable original (SessionPrompt.input, D1).
@@ -551,27 +519,7 @@ export function CanvasWorkspace({
     ],
   );
 
-  const surfaceProps: PromptEditorSurfaceProps = {
-    editorRef,
-    prompt,
-    onTextSelection,
-    onHighlightClick,
-    onHighlightMouseDown,
-    onHighlightMouseEnter,
-    onHighlightMouseLeave,
-    onCopyEvent,
-    onInput,
-    onEditorKeyDown,
-    onEditorBlur,
-    autocompleteOpen,
-    autocompleteSuggestions,
-    autocompleteSelectedIndex,
-    autocompletePosition,
-    autocompleteLoading,
-    onAutocompleteSelect,
-    onAutocompleteClose,
-    onAutocompleteIndexChange,
-  };
+  const surfaceProps: PromptEditorSurfaceProps = { ...editing, prompt };
 
   const recommendationPromptId = modelRecommendation?.promptId;
   const hasGenerations = galleryEntries.length > 0;

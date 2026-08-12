@@ -6,6 +6,7 @@ import type {
   GenerationsPanelProps,
 } from "@features/generations/types";
 import { CanvasWorkspace } from "../CanvasWorkspace";
+import { buildPromptEditorWiring } from "./__fixtures__/promptEditorWiring";
 import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 
 // ADR-0010 / M3 slice 4 — the "your words" control. Once the one-liner has
@@ -132,25 +133,7 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
     versions: [],
     promptVersionId: "",
   } as unknown as GenerationsPanelProps,
-  editorRef:
-    React.createRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>,
-  onTextSelection: vi.fn(),
-  onHighlightClick: vi.fn(),
-  onHighlightMouseDown: vi.fn(),
-  onHighlightMouseEnter: vi.fn(),
-  onHighlightMouseLeave: vi.fn(),
-  onCopyEvent: vi.fn(),
-  onInput: vi.fn(),
-  onEditorKeyDown: vi.fn(),
-  onEditorBlur: vi.fn(),
-  autocompleteOpen: false,
-  autocompleteSuggestions: [],
-  autocompleteSelectedIndex: 0,
-  autocompletePosition: { top: 0, left: 0 },
-  autocompleteLoading: false,
-  onAutocompleteSelect: vi.fn(),
-  onAutocompleteClose: vi.fn(),
-  onAutocompleteIndexChange: vi.fn(),
+  editing: buildPromptEditorWiring(),
   onReuseGeneration: vi.fn((_generation: Generation) => undefined),
   onToggleGenerationFavorite: vi.fn(),
 });
