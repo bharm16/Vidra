@@ -9,8 +9,6 @@ import React, {
 } from "react";
 import type { PromptContext } from "@utils/PromptContext/PromptContext";
 import type { SpanLabelingResult } from "@/features/span-highlighting/hooks/types";
-import type { CoherenceIssue } from "@/features/prompt-optimizer/components/coherence/useCoherenceAnnotations";
-import type { CoherenceRecommendation } from "@/features/prompt-optimizer/types/coherence";
 import type {
   SuggestionPayload,
   SuggestionItem,
@@ -40,13 +38,6 @@ interface PromptResultsActionsOnly {
   onUndo: () => void;
   onRedo: () => void;
   stablePromptContext: PromptContext | null;
-  onToggleCoherencePanelExpanded?: (() => void) | undefined;
-  onDismissCoherenceIssue?: ((issueId: string) => void) | undefined;
-  onDismissAllCoherenceIssues?: (() => void) | undefined;
-  onApplyCoherenceFix?:
-    | ((issueId: string, recommendation: CoherenceRecommendation) => void)
-    | undefined;
-  onScrollToCoherenceSpan?: ((spanId: string) => void) | undefined;
   /** Idea Box gate — accept the generated frame (dismisses the gate). */
   onIdeaBoxAccept?: (() => void) | undefined;
   /** Idea Box gate — reject: regenerate the frame from the current prompt. */
@@ -70,11 +61,6 @@ interface PromptResultsActionsOnly {
 
 interface PromptResultsDataOnly {
   suggestionsData: SuggestionsData | null;
-  coherenceAffectedSpanIds?: Set<string> | undefined;
-  coherenceSpanIssueMap?: Map<string, "conflict" | "harmonization"> | undefined;
-  coherenceIssues?: CoherenceIssue[] | undefined;
-  isCoherenceChecking?: boolean | undefined;
-  isCoherencePanelExpanded?: boolean | undefined;
   i2vContext?: I2VContext | null | undefined;
   /** Idea Box — stage of the expand→frame chain (idle when inactive). */
   ideaBoxStage?: IdeaBoxStage | undefined;
@@ -153,16 +139,6 @@ export function PromptResultsActionsProvider({
   onRedo,
   stablePromptContext,
   suggestionsData,
-  coherenceAffectedSpanIds,
-  coherenceSpanIssueMap,
-  coherenceIssues,
-  isCoherenceChecking,
-  isCoherencePanelExpanded,
-  onToggleCoherencePanelExpanded,
-  onDismissCoherenceIssue,
-  onDismissAllCoherenceIssues,
-  onApplyCoherenceFix,
-  onScrollToCoherenceSpan,
   i2vContext,
   ideaBoxStage,
   isExpanding,
@@ -213,11 +189,6 @@ export function PromptResultsActionsProvider({
       onUndo,
       onRedo,
       stablePromptContext,
-      onToggleCoherencePanelExpanded,
-      onDismissCoherenceIssue,
-      onDismissAllCoherenceIssues,
-      onApplyCoherenceFix,
-      onScrollToCoherenceSpan,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
       onIdeaBoxExpand,
@@ -233,11 +204,6 @@ export function PromptResultsActionsProvider({
       onUndo,
       onRedo,
       stablePromptContext,
-      onToggleCoherencePanelExpanded,
-      onDismissCoherenceIssue,
-      onDismissAllCoherenceIssues,
-      onApplyCoherenceFix,
-      onScrollToCoherenceSpan,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
       onIdeaBoxExpand,
@@ -249,11 +215,6 @@ export function PromptResultsActionsProvider({
   const dataValue = useMemo<PromptResultsDataOnly>(
     () => ({
       suggestionsData,
-      coherenceAffectedSpanIds,
-      coherenceSpanIssueMap,
-      coherenceIssues,
-      isCoherenceChecking,
-      isCoherencePanelExpanded,
       i2vContext,
       ideaBoxStage,
       isExpanding,
@@ -262,11 +223,6 @@ export function PromptResultsActionsProvider({
     }),
     [
       suggestionsData,
-      coherenceAffectedSpanIds,
-      coherenceSpanIssueMap,
-      coherenceIssues,
-      isCoherenceChecking,
-      isCoherencePanelExpanded,
       i2vContext,
       ideaBoxStage,
       isExpanding,

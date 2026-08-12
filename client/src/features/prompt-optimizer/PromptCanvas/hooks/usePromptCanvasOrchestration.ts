@@ -28,6 +28,7 @@ import { useResolvedGenerationParams } from "./useResolvedGenerationParams";
 import { usePromptStatus } from "./usePromptStatus";
 import { useSpanSelectionEffects } from "./useSpanSelectionEffects";
 import { useCoherenceSpanMarkers } from "./useCoherenceSpanMarkers";
+import { useCoherence } from "@features/prompt-optimizer/context/CoherenceContext";
 import { useSuggestionSelection } from "./useSuggestionSelection";
 import { useTextSelection } from "./useTextSelection";
 import { useEditorContent } from "./useEditorContent";
@@ -38,7 +39,6 @@ import { useTriggerValidation } from "./useTriggerValidation";
 import { useInlineSuggestionState } from "./useInlineSuggestionState";
 import { useCanvasEditorState } from "./useCanvasEditorState";
 import { useCanvasGenerations } from "./useCanvasGenerations";
-import { useCanvasCoherence } from "./useCanvasCoherence";
 import { buildBulkDebugPayload } from "../utils/bulkDebugPayload";
 import { useGenerationControlsStoreState } from "@features/generation-controls";
 import { useWorkspaceSession } from "@features/prompt-optimizer/context/WorkspaceSessionContext";
@@ -88,16 +88,6 @@ export function usePromptCanvasOrchestration({
   canRedo = false,
   isProcessing = false,
   optimizationResultVersion = 0,
-  coherenceAffectedSpanIds,
-  coherenceSpanIssueMap,
-  coherenceIssues,
-  isCoherenceChecking,
-  isCoherencePanelExpanded,
-  onToggleCoherencePanelExpanded,
-  onDismissCoherenceIssue,
-  onDismissAllCoherenceIssues,
-  onApplyCoherenceFix,
-  onScrollToCoherenceSpan,
   i2vContext,
 }: PromptCanvasProps): {
   selectedSpanValue: SelectedSpanContextValue;
@@ -114,6 +104,7 @@ export function usePromptCanvasOrchestration({
 
   // Refs
   const outlineOverlayRef = useRef<HTMLDivElement>(null!);
+  const coherence = useCoherence();
   const { registerInsertHandler } = usePromptInsertionBus();
   const toast = useToast();
   const versionsDrawer = useDrawerState({
@@ -465,8 +456,8 @@ export function usePromptCanvasOrchestration({
     editorRef: editorRef as React.RefObject<HTMLElement>,
     enableMLHighlighting,
     showHighlights,
-    affectedSpanIds: coherenceAffectedSpanIds ?? null,
-    spanIssueMap: coherenceSpanIssueMap ?? null,
+    affectedSpanIds: coherence.affectedSpanIds,
+    spanIssueMap: coherence.spanIssueMap,
     highlightFingerprint,
   });
 
@@ -561,17 +552,6 @@ export function usePromptCanvasOrchestration({
     normalizedDisplayedPrompt,
     ...(onSuggestionClick ? { onSuggestionClick } : {}),
     setState,
-  });
-
-  const coherence = useCanvasCoherence({
-    coherenceIssues,
-    isCoherenceChecking,
-    isCoherencePanelExpanded,
-    onToggleCoherencePanelExpanded,
-    onDismissCoherenceIssue,
-    onDismissAllCoherenceIssues,
-    onApplyCoherenceFix,
-    onScrollToCoherenceSpan,
   });
 
   const handleCopyAllDebug = useCallback(async (): Promise<void> => {
@@ -723,14 +703,6 @@ export function usePromptCanvasOrchestration({
     promptContext,
     isSuggestionsOpen,
     editorColumnRef,
-    coherenceIssues: coherence.coherenceIssues,
-    isCoherenceChecking: coherence.isCoherenceChecking,
-    isCoherencePanelExpanded: coherence.isCoherencePanelExpanded,
-    onToggleCoherencePanelExpanded: coherence.onToggleCoherencePanelExpanded,
-    onDismissCoherenceIssue: coherence.onDismissCoherenceIssue,
-    onDismissAllCoherenceIssues: coherence.onDismissAllCoherenceIssues,
-    onApplyCoherenceFix: coherence.onApplyCoherenceFix,
-    onScrollToCoherenceSpan: coherence.onScrollToCoherenceSpan,
     versionsDrawer,
     versionsPanelProps,
     generationsPanelProps,

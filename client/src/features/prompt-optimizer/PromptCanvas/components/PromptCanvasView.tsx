@@ -8,6 +8,7 @@ import { GenerationsPanel } from "@features/generations";
 import { SpanCategoryAccordion } from "@features/prompt-optimizer/SpanCategoryAccordion/SpanCategoryAccordion";
 import { HighlightingErrorBoundary } from "@features/span-highlighting/components/HighlightingErrorBoundary";
 import { CoherencePanel } from "@features/prompt-optimizer/components/coherence/CoherencePanel";
+import { useCoherence } from "@features/prompt-optimizer/context/CoherenceContext";
 import { CanvasWorkspace } from "@features/workspace-shell";
 import type { PromptCanvasViewProps } from "./PromptCanvasView.types";
 import { PromptCanvasEditorSection } from "./PromptCanvasEditorSection";
@@ -26,14 +27,6 @@ export function PromptCanvasView({
   promptContext,
   isSuggestionsOpen,
   editorColumnRef,
-  coherenceIssues,
-  isCoherenceChecking,
-  isCoherencePanelExpanded,
-  onToggleCoherencePanelExpanded,
-  onDismissCoherenceIssue,
-  onDismissAllCoherenceIssues,
-  onApplyCoherenceFix,
-  onScrollToCoherenceSpan,
   versionsDrawer,
   versionsPanelProps,
   generationsPanelProps,
@@ -48,6 +41,7 @@ export function PromptCanvasView({
   editing,
   editorSection,
 }: PromptCanvasViewProps): React.ReactElement {
+  const coherence = useCoherence();
   if (FEATURES.CANVAS_FIRST_LAYOUT) {
     return (
       <CanvasWorkspace
@@ -132,14 +126,14 @@ export function PromptCanvasView({
           </div>
 
           <CoherencePanel
-            issues={coherenceIssues ?? []}
-            isChecking={Boolean(isCoherenceChecking)}
-            isExpanded={Boolean(isCoherencePanelExpanded)}
-            onToggleExpanded={onToggleCoherencePanelExpanded ?? (() => {})}
-            onDismissIssue={onDismissCoherenceIssue ?? (() => {})}
-            onDismissAll={onDismissAllCoherenceIssues ?? (() => {})}
-            onApplyFix={onApplyCoherenceFix ?? (() => {})}
-            onScrollToSpan={onScrollToCoherenceSpan}
+            issues={coherence.issues}
+            isChecking={coherence.isChecking}
+            isExpanded={coherence.isPanelExpanded}
+            onToggleExpanded={coherence.onTogglePanelExpanded}
+            onDismissIssue={coherence.onDismissIssue}
+            onDismissAll={coherence.onDismissAll}
+            onApplyFix={coherence.onApplyFix}
+            onScrollToSpan={coherence.onScrollToSpan}
           />
 
           <CollapsibleDrawer

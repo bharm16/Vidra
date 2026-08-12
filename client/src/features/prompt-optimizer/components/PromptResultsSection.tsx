@@ -34,16 +34,6 @@ export const PromptResultsSection = (): React.ReactElement => {
     onUndo,
     onRedo,
     stablePromptContext,
-    coherenceAffectedSpanIds,
-    coherenceSpanIssueMap,
-    coherenceIssues,
-    isCoherenceChecking,
-    isCoherencePanelExpanded,
-    onToggleCoherencePanelExpanded,
-    onDismissCoherenceIssue,
-    onDismissAllCoherenceIssues,
-    onApplyCoherenceFix,
-    onScrollToCoherenceSpan,
     i2vContext,
   } = usePromptResultsActionsContext();
 
@@ -83,16 +73,6 @@ export const PromptResultsSection = (): React.ReactElement => {
       canRedo={canRedo}
       isProcessing={promptOptimizer.isProcessing}
       optimizationResultVersion={promptOptimizer.optimizationResultVersion}
-      coherenceAffectedSpanIds={coherenceAffectedSpanIds}
-      coherenceSpanIssueMap={coherenceSpanIssueMap}
-      coherenceIssues={coherenceIssues}
-      isCoherenceChecking={isCoherenceChecking}
-      isCoherencePanelExpanded={isCoherencePanelExpanded}
-      onToggleCoherencePanelExpanded={onToggleCoherencePanelExpanded}
-      onDismissCoherenceIssue={onDismissCoherenceIssue}
-      onDismissAllCoherenceIssues={onDismissAllCoherenceIssues}
-      onApplyCoherenceFix={onApplyCoherenceFix}
-      onScrollToCoherenceSpan={onScrollToCoherenceSpan}
       i2vContext={i2vContext}
     />
   );

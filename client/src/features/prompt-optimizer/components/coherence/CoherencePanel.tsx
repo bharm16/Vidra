@@ -23,7 +23,7 @@ interface CoherencePanelProps {
     issueId: string,
     recommendation: CoherenceRecommendation,
   ) => void;
-  onScrollToSpan?: ((spanId: string) => void) | undefined;
+  onScrollToSpan: (spanId: string) => void;
 }
 
 export function CoherencePanel({
@@ -57,7 +57,7 @@ export function CoherencePanel({
         >
           <div className="flex min-w-0 items-center gap-2">
             {isChecking ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-accent" />
+              <div className="border-muted border-t-accent h-4 w-4 animate-spin rounded-full border-2" />
             ) : conflicts.length > 0 ? (
               <Icon icon={WarningCircle} size="sm" className="text-error" />
             ) : harmonizations.length > 0 ? (
@@ -83,7 +83,7 @@ export function CoherencePanel({
                     </span>
                   )}
                   {harmonizations.length > 0 && (
-                    <span className="border-[rgb(67,70,81)] bg-surface-2 text-muted inline-flex items-center rounded-md border px-3 py-1 text-xs font-medium">
+                    <span className="bg-surface-2 text-muted inline-flex items-center rounded-md border border-[rgb(67,70,81)] px-3 py-1 text-xs font-medium">
                       {harmonizations.length} suggestion
                       {harmonizations.length > 1 ? "s" : ""}
                     </span>
@@ -108,7 +108,7 @@ export function CoherencePanel({
             variant="ghost"
             size="icon"
             onClick={onDismissAll}
-            className="ml-2 h-8 w-8 shrink-0 text-muted hover:text-foreground"
+            className="text-muted hover:text-foreground ml-2 h-8 w-8 shrink-0"
             aria-label="Dismiss all"
           >
             <Icon icon={X} size="sm" />

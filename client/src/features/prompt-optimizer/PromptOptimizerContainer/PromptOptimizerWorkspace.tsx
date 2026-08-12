@@ -78,6 +78,10 @@ import { PromptInsertionBusProvider } from "../context/PromptInsertionBusContext
 import { SidebarDataProvider } from "./providers/sidebar";
 import { addWorkspaceResetListener } from "../events";
 import { toCapabilityValues } from "@hooks/usePromptHistory/utils/capabilityValues";
+import {
+  CoherenceProvider,
+  type CoherenceContextValue,
+} from "../context/CoherenceContext";
 
 const log = logger.child("PromptOptimizerWorkspace");
 const buildDefaultCameraTransform = (): CameraPath["start"] => ({
@@ -829,6 +833,40 @@ function PromptOptimizerContent({
     log,
   });
 
+  // Coherence travels by context, not through the canvas props: the producer is
+  // here and the consumers (the panel, the editor's span markers) are deep in
+  // the canvas subtree.
+  //
+  // The memo does not currently buy stability — `applyFix` re-derives on every
+  // keystroke (usePromptCoherence depends on displayedPrompt), and nothing on
+  // the path is memo'd, so consumers re-render per keystroke either way. It is
+  // here so the identity is correct if that ever changes.
+  const coherenceValue = useMemo<CoherenceContextValue>(
+    () => ({
+      issues: coherenceIssues,
+      isChecking: isCoherenceChecking,
+      isPanelExpanded,
+      onTogglePanelExpanded: toggleCoherencePanelExpanded,
+      onDismissIssue: dismissIssue,
+      onDismissAll: dismissAll,
+      onApplyFix: applyFix,
+      onScrollToSpan: scrollToSpanById,
+      affectedSpanIds,
+      spanIssueMap,
+    }),
+    [
+      coherenceIssues,
+      isCoherenceChecking,
+      isPanelExpanded,
+      toggleCoherencePanelExpanded,
+      dismissIssue,
+      dismissAll,
+      applyFix,
+      affectedSpanIds,
+      spanIssueMap,
+    ],
+  );
+
   // Enhancement suggestions
   const { fetchEnhancementSuggestions, handleSuggestionClick } =
     useEnhancementSuggestions({
@@ -927,16 +965,6 @@ function PromptOptimizerContent({
             onRedo={handleRedo}
             stablePromptContext={stablePromptContext}
             suggestionsData={suggestionsData}
-            coherenceAffectedSpanIds={affectedSpanIds}
-            coherenceSpanIssueMap={spanIssueMap}
-            coherenceIssues={coherenceIssues}
-            isCoherenceChecking={isCoherenceChecking}
-            isCoherencePanelExpanded={isPanelExpanded}
-            onToggleCoherencePanelExpanded={toggleCoherencePanelExpanded}
-            onDismissCoherenceIssue={dismissIssue}
-            onDismissAllCoherenceIssues={dismissAll}
-            onApplyCoherenceFix={applyFix}
-            onScrollToCoherenceSpan={scrollToSpanById}
             i2vContext={i2vContext}
             ideaBoxStage={ideaBoxStage}
             isExpanding={promptOptimizer.isProcessing}
@@ -949,47 +977,50 @@ function PromptOptimizerContent({
             onIdeaBoxExpand={handleIdeaBoxExpand}
             onComposerFill={handleComposerFill}
           >
-            <PromptOptimizerWorkspaceView
-              showHistory={showHistory}
-              onToggleHistory={setShowHistory}
-              shouldShowLoading={shouldShowLoading}
-              promptModalsProps={{
-                onImprovementComplete: handleImprovementComplete,
-                onConceptComplete: handleConceptComplete,
-                onSkipBrainstorm: handleSkipBrainstorm,
-              }}
-              quickCreateState={quickCreateState}
-              onQuickCreateClose={assetManagement.onCloseQuickCreate}
-              onQuickCreateComplete={assetManagement.onQuickCreateComplete}
-              assetEditorState={assetEditorState}
-              assetEditorHandlers={{
-                onClose: assetManagement.onCloseAssetEditor,
-                onCreate: assetManagement.onCreate,
-                onUpdate: assetManagement.onUpdate,
-                onAddImage: assetManagement.onAddImage,
-                onDeleteImage: assetManagement.onDeleteImage,
-                onSetPrimaryImage: assetManagement.onSetPrimaryImage,
-              }}
-              detectedAssetsPrompt={promptForAssets}
-              detectedAssets={assetsSidebar.assets}
-              onEditAsset={assetManagement.onEditAsset}
-              onCreateFromTrigger={assetManagement.onCreateFromTrigger}
-              debugProps={{
-                enabled:
-                  false &&
-                  (import.meta.env.DEV ||
-                    new URLSearchParams(window.location.search).get("debug") ===
-                      "true"),
-                inputPrompt: promptOptimizer.inputPrompt,
-                displayedPrompt: promptOptimizer.displayedPrompt,
-                optimizedPrompt: promptOptimizer.optimizedPrompt,
-                selectedMode,
-                promptContext: stablePromptContext as unknown as Record<
-                  string,
-                  unknown
-                > | null,
-              }}
-            />
+            <CoherenceProvider value={coherenceValue}>
+              <PromptOptimizerWorkspaceView
+                showHistory={showHistory}
+                onToggleHistory={setShowHistory}
+                shouldShowLoading={shouldShowLoading}
+                promptModalsProps={{
+                  onImprovementComplete: handleImprovementComplete,
+                  onConceptComplete: handleConceptComplete,
+                  onSkipBrainstorm: handleSkipBrainstorm,
+                }}
+                quickCreateState={quickCreateState}
+                onQuickCreateClose={assetManagement.onCloseQuickCreate}
+                onQuickCreateComplete={assetManagement.onQuickCreateComplete}
+                assetEditorState={assetEditorState}
+                assetEditorHandlers={{
+                  onClose: assetManagement.onCloseAssetEditor,
+                  onCreate: assetManagement.onCreate,
+                  onUpdate: assetManagement.onUpdate,
+                  onAddImage: assetManagement.onAddImage,
+                  onDeleteImage: assetManagement.onDeleteImage,
+                  onSetPrimaryImage: assetManagement.onSetPrimaryImage,
+                }}
+                detectedAssetsPrompt={promptForAssets}
+                detectedAssets={assetsSidebar.assets}
+                onEditAsset={assetManagement.onEditAsset}
+                onCreateFromTrigger={assetManagement.onCreateFromTrigger}
+                debugProps={{
+                  enabled:
+                    false &&
+                    (import.meta.env.DEV ||
+                      new URLSearchParams(window.location.search).get(
+                        "debug",
+                      ) === "true"),
+                  inputPrompt: promptOptimizer.inputPrompt,
+                  displayedPrompt: promptOptimizer.displayedPrompt,
+                  optimizedPrompt: promptOptimizer.optimizedPrompt,
+                  selectedMode,
+                  promptContext: stablePromptContext as unknown as Record<
+                    string,
+                    unknown
+                  > | null,
+                }}
+              />
+            </CoherenceProvider>
           </PromptResultsActionsProvider>
         </SidebarDataProvider>
       </PromptInsertionBusProvider>

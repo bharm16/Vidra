@@ -8,8 +8,6 @@ import type {
   GenerationsPanelProps,
 } from "@features/generations/types";
 import type { Span } from "@features/prompt-optimizer/SpanCategoryAccordion/components/types";
-import type { CoherenceIssue } from "@features/prompt-optimizer/components/coherence/useCoherenceAnnotations";
-import type { CoherenceRecommendation } from "@features/prompt-optimizer/types/coherence";
 
 export interface VersionsDrawerState {
   isOpen: boolean;
@@ -85,16 +83,6 @@ export interface PromptCanvasViewProps {
   promptContext: PromptContext | null;
   isSuggestionsOpen: boolean;
   editorColumnRef: React.RefObject<HTMLDivElement>;
-  coherenceIssues?: CoherenceIssue[] | undefined;
-  isCoherenceChecking?: boolean | undefined;
-  isCoherencePanelExpanded?: boolean | undefined;
-  onToggleCoherencePanelExpanded?: (() => void) | undefined;
-  onDismissCoherenceIssue?: ((issueId: string) => void) | undefined;
-  onDismissAllCoherenceIssues?: (() => void) | undefined;
-  onApplyCoherenceFix?:
-    | ((issueId: string, recommendation: CoherenceRecommendation) => void)
-    | undefined;
-  onScrollToCoherenceSpan?: ((spanId: string) => void) | undefined;
   versionsDrawer: VersionsDrawerState;
   versionsPanelProps: VersionsPanelPropsBase;
   generationsPanelProps: GenerationsPanelProps;

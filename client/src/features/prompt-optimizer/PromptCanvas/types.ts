@@ -16,8 +16,6 @@ import type {
   SuggestionPayload,
 } from "@features/prompt-optimizer/types/domain/suggestions";
 
-import type { CoherenceIssue } from "../components/coherence/useCoherenceAnnotations";
-import type { CoherenceRecommendation } from "@features/prompt-optimizer/types/coherence";
 import type { I2VContext } from "../types/i2v";
 
 export interface HighlightSnapshot {
@@ -200,20 +198,8 @@ export interface PromptCanvasProps {
   canRedo?: boolean | undefined;
   isProcessing?: boolean | undefined;
   optimizationResultVersion?: number | undefined;
-  coherenceAffectedSpanIds?: Set<string> | undefined;
-  coherenceSpanIssueMap?: Map<string, "conflict" | "harmonization"> | undefined;
 
   // Coherence panel (inline, collapsible)
-  coherenceIssues?: CoherenceIssue[] | undefined;
-  isCoherenceChecking?: boolean | undefined;
-  isCoherencePanelExpanded?: boolean | undefined;
-  onToggleCoherencePanelExpanded?: (() => void) | undefined;
-  onDismissCoherenceIssue?: ((issueId: string) => void) | undefined;
-  onDismissAllCoherenceIssues?: (() => void) | undefined;
-  onApplyCoherenceFix?:
-    | ((issueId: string, recommendation: CoherenceRecommendation) => void)
-    | undefined;
-  onScrollToCoherenceSpan?: ((spanId: string) => void) | undefined;
   i2vContext?: I2VContext | null | undefined;
 }
 
