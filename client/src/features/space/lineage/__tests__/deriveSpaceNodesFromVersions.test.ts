@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SessionPromptVersionEntry } from "@shared/types/session";
+import { normalizePersistedGenerations } from "@features/generations/utils/normalizePersistedGeneration";
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
 import { computeLineageLayout } from "../computeLineageLayout";
 
@@ -12,9 +13,23 @@ const version = (
   ...over,
 });
 
+/**
+ * Persisted records reach the space the way they reach it in production: read
+ * once by `normalizePersistedGenerations`, then adapted. The space no longer
+ * carries a second reader of the open bag.
+ */
+const lineageOf = (versions: ReturnType<typeof version>[]) =>
+  deriveSpaceNodesFromVersions(
+    versions.map((v) => ({
+      versionId: v.versionId,
+      prompt: v.prompt,
+      generations: normalizePersistedGenerations(v.generations),
+    })),
+  );
+
 describe("deriveSpaceNodesFromVersions", () => {
   it("maps a single version with one picture to a words node and a picture node", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       version({
         versionId: "v-1",
         prompt: "a cozy coffee shop ad",
@@ -48,7 +63,7 @@ describe("deriveSpaceNodesFromVersions", () => {
   });
 
   it("chains reword edges across versions in array order (survives reload)", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       version({ versionId: "v-1", prompt: "first wording" }),
       version({ versionId: "v-2", prompt: "second wording" }),
       version({ versionId: "v-3", prompt: "third wording" }),
@@ -65,7 +80,7 @@ describe("deriveSpaceNodesFromVersions", () => {
   });
 
   it("links a clip to its persisted source picture via ancestorGenerationId", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       version({
         versionId: "v-1",
         generations: [
@@ -85,7 +100,7 @@ describe("deriveSpaceNodesFromVersions", () => {
   });
 
   it("falls back to the first picture when a clip has no persisted source", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       version({
         versionId: "v-1",
         generations: [
@@ -103,7 +118,7 @@ describe("deriveSpaceNodesFromVersions", () => {
   });
 
   it("marks archived generations so the layout excludes them (leaf removal)", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       version({
         versionId: "v-1",
         generations: [
@@ -129,5 +144,32 @@ describe("deriveSpaceNodesFromVersions", () => {
 
   it("returns no nodes for an empty version list", () => {
     expect(deriveSpaceNodesFromVersions([])).toEqual([]);
+  });
+
+  it("shows a clip persisted before its writer stamped mediaType", () => {
+    // The space used to read persisted records a second time, straight off the
+    // bag and with no derivation — so a clip written before af16e933 (no
+    // `mediaType`) matched neither the picture nor the clip branch and was
+    // dropped, despite normalizePersistedGeneration already healing it from
+    // the model. One reader, one answer.
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "a dancer",
+        generations: [
+          {
+            id: "gen-clip-legacy",
+            model: "wan-2.2",
+            status: "completed",
+            thumbnailUrl: "https://img/last.webp",
+          },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "gen-clip-legacy")).toMatchObject({
+      kind: "clip",
+      status: "ready",
+    });
   });
 });

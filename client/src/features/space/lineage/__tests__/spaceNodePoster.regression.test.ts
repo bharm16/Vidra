@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { normalizePersistedGenerations } from "@features/generations/utils/normalizePersistedGeneration";
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
 
 /**
@@ -13,6 +14,25 @@ import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
  * CanvasWorkspace.tune-and-continue.regression). The invariant below is now
  * owned by one module, and every surface resolves its poster through it.
  */
+/**
+ * Persisted records reach the space the way they reach it in production: read
+ * once by `normalizePersistedGenerations`, then adapted.
+ */
+const lineageOf = (
+  versions: Array<{
+    versionId: string;
+    prompt: string;
+    generations: unknown[];
+  }>,
+) =>
+  deriveSpaceNodesFromVersions(
+    versions.map((v) => ({
+      versionId: v.versionId,
+      prompt: v.prompt,
+      generations: normalizePersistedGenerations(v.generations),
+    })),
+  );
+
 describe("regression: a clip's video URL is not a still", () => {
   const clipWithNoStill = {
     id: "clip-1",
@@ -23,7 +43,7 @@ describe("regression: a clip's video URL is not a still", () => {
   };
 
   it("gives a poster-less clip no mediaUrl on the space path", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       {
         versionId: "v1",
         prompt: "a dancer",
@@ -51,7 +71,7 @@ describe("regression: a clip's video URL is not a still", () => {
   });
 
   it("keeps a clip that does have a still", () => {
-    const nodes = deriveSpaceNodesFromVersions([
+    const nodes = lineageOf([
       {
         versionId: "v1",
         prompt: "a dancer",

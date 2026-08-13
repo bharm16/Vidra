@@ -1,6 +1,22 @@
 import { resolveTakePosterUrl } from "@/features/workspace-shell/utils/takePosterUrl";
+import type { Generation } from "@features/generations/types";
 import { buildSpaceNodes, type LineageInput } from "./buildSpaceNodes";
 import type { SpaceNode } from "./types";
+
+/**
+ * ADR-0013 lineage and the soft-removal flag are written by the server and ride
+ * `SessionGenerationRecordSchema`'s passthrough; they are not on the client's
+ * runtime `Generation`, so they are read off the record here.
+ */
+function readAncestorGenerationId(gen: Generation): string | null {
+  const value = (gen as { ancestorGenerationId?: unknown })
+    .ancestorGenerationId;
+  return typeof value === "string" ? value : null;
+}
+
+function readArchived(gen: Generation): boolean {
+  return (gen as { archived?: unknown }).archived === true;
+}
 
 function mapStatus(status: string): SpaceNode["status"] {
   if (status === "completed") return "ready";
@@ -8,60 +24,21 @@ function mapStatus(status: string): SpaceNode["status"] {
   return "forming"; // pending | generating | anything still in flight
 }
 
-interface ReadGeneration {
-  id: string;
-  mediaType: string;
-  status: SpaceNode["status"];
-  mediaUrl?: string;
-  ancestorGenerationId: string | null;
-  archived: boolean;
-}
-
 /**
  * The minimal structural shape this adapter needs from a persisted version.
- * Deliberately loose (`generations` is `unknown[]`) so both the shared
- * `SessionPromptVersionEntry` and the client `PromptVersionEntry` satisfy it
- * without coupling the space to either — the anti-corruption boundary.
+ *
+ * `generations` are already-typed takes: `normalizePersistedGeneration` is the
+ * one place a persisted record is read out of its open bag, and it runs before
+ * this (`normalizePersistedVersions` on load, `buildGeneration` at runtime).
+ * This used to re-parse each record from `unknown` a second time — and because
+ * that second read did no derivation, a clip persisted without `mediaType`
+ * matched neither branch below and vanished from the space, even though the
+ * first read had already healed it from the model.
  */
 export interface VersionLineageInput {
   versionId: string;
   prompt: string;
-  generations?: ReadonlyArray<unknown> | undefined;
-}
-
-/**
- * Read a persisted generation record (a loose bag) into a typed shape. Returns
- * null for anything without a usable id — it cannot be a node.
- */
-function readGeneration(record: unknown): ReadGeneration | null {
-  if (typeof record !== "object" || record === null) return null;
-  const bag = record as Record<string, unknown>;
-  const id = typeof bag.id === "string" ? bag.id : null;
-  if (!id) return null;
-  const mediaType = typeof bag.mediaType === "string" ? bag.mediaType : "";
-  const status = typeof bag.status === "string" ? bag.status : "";
-  // A clip's still is never its own video URL — the space renders mediaUrl into
-  // an <img>, so resolveTakePosterUrl is the single place that rule lives.
-  const media = resolveTakePosterUrl({
-    mediaType,
-    status,
-    thumbnailUrl:
-      typeof bag.thumbnailUrl === "string" ? bag.thumbnailUrl : undefined,
-    mediaUrls: Array.isArray(bag.mediaUrls)
-      ? bag.mediaUrls.filter((u): u is string => typeof u === "string")
-      : [],
-  });
-  return {
-    id,
-    mediaType,
-    status: mapStatus(status),
-    ...(media ? { mediaUrl: media } : {}),
-    ancestorGenerationId:
-      typeof bag.ancestorGenerationId === "string"
-        ? bag.ancestorGenerationId
-        : null,
-    archived: bag.archived === true,
-  };
+  generations?: ReadonlyArray<Generation> | undefined;
 }
 
 /**
@@ -86,34 +63,46 @@ export function deriveSpaceNodesFromVersions(
   const clips: LineageInput["clips"] = [];
 
   for (const version of versions) {
-    const generations = (version.generations ?? [])
-      .map(readGeneration)
-      .filter((gen): gen is ReadGeneration => gen !== null);
+    const generations = version.generations ?? [];
     const firstPictureId = generations.find(
       (gen) => gen.mediaType === "image",
     )?.id;
 
     for (const gen of generations) {
+      // A clip's still is never its own video URL — the space renders mediaUrl
+      // into an <img>, so resolveTakePosterUrl is the single place that rule
+      // lives.
+      const mediaUrl = resolveTakePosterUrl({
+        mediaType: gen.mediaType,
+        status: gen.status,
+        ...(gen.thumbnailUrl ? { thumbnailUrl: gen.thumbnailUrl } : {}),
+        mediaUrls: gen.mediaUrls,
+      });
+      const status = mapStatus(gen.status);
+      const archived = readArchived(gen);
+
       if (gen.mediaType === "image") {
         pictures.push({
           id: gen.id,
           versionId: version.versionId,
-          status: gen.status,
-          ...(gen.mediaUrl ? { mediaUrl: gen.mediaUrl } : {}),
-          ...(gen.archived ? { archived: true } : {}),
+          status,
+          ...(mediaUrl ? { mediaUrl } : {}),
+          ...(archived ? { archived: true } : {}),
         });
       } else if (gen.mediaType === "video") {
         clips.push({
           id: gen.id,
           pictureId:
-            gen.ancestorGenerationId ??
+            readAncestorGenerationId(gen) ??
             firstPictureId ??
             `words-${version.versionId}`,
-          status: gen.status,
-          ...(gen.mediaUrl ? { mediaUrl: gen.mediaUrl } : {}),
-          ...(gen.archived ? { archived: true } : {}),
+          status,
+          ...(mediaUrl ? { mediaUrl } : {}),
+          ...(archived ? { archived: true } : {}),
         });
       }
+      // "image-sequence" (storyboards) is deliberately not a node: the space
+      // shows words → pictures → clips, and a storyboard is neither.
     }
   }
 

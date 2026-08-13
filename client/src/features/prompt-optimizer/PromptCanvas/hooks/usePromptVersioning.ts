@@ -184,6 +184,35 @@ const generationCompleteness = (gen: Generation): number => {
  * overwrites gen1 (status: "completed") because the callback read a stale
  * snapshot that didn't include gen1's completed data.
  */
+/**
+ * Fields the server writes onto a persisted take record that the client's
+ * runtime `Generation` never carries. Read off the record rather than the type
+ * because that is where they live — `SessionGenerationRecordSchema` validates
+ * them and passes them through.
+ */
+const SERVER_OWNED_RECORD_FIELDS = [
+  "ancestorGenerationId",
+  "archived",
+] as const;
+
+const preserveServerOwnedFields = (
+  incoming: Generation,
+  persisted: Generation,
+): Record<string, unknown> => {
+  const restored: Record<string, unknown> = {};
+  for (const field of SERVER_OWNED_RECORD_FIELDS) {
+    const incomingValue = (incoming as unknown as Record<string, unknown>)[
+      field
+    ];
+    const persistedValue = (persisted as unknown as Record<string, unknown>)[
+      field
+    ];
+    const value = incomingValue ?? persistedValue;
+    if (value !== undefined) restored[field] = value;
+  }
+  return restored;
+};
+
 const mergeGenerationsById = (
   persisted: Generation[] | null | undefined,
   incoming: Generation[],
@@ -211,6 +240,13 @@ const mergeGenerationsById = (
       incomingScore >= persistedScore ? incomingGen : persistedGen;
     return {
       ...preferred,
+      // Server-owned fields, restored after the whole-object pick above.
+      // `ancestorGenerationId` (ADR-0013) and `archived` are written by the
+      // worker and ride the record's passthrough; they are not on the client's
+      // runtime `Generation`, so a runtime object that wins the completeness
+      // tie would otherwise PATCH the lineage edge away — the space would lose
+      // the picture→clip edge on the next reload.
+      ...preserveServerOwnedFields(incomingGen, persistedGen),
       isFavorite:
         typeof incomingGen.isFavorite === "boolean"
           ? incomingGen.isFavorite

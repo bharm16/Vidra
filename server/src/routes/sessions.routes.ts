@@ -23,6 +23,7 @@ import type {
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { CreateSessionRequest as ContinuityCreateSessionRequest } from "@services/continuity/types";
 import type { UserCreditService } from "@services/credits/UserCreditService";
+import { SessionPromptVersionEntrySchema } from "@shared/schemas/session.schemas";
 import type { SessionDto } from "@shared/types/session";
 import type { ApiResponse } from "@shared/types/api";
 import { logger } from "@infrastructure/Logger";
@@ -87,9 +88,18 @@ const UpdateOutputSchema = z
   })
   .strip();
 
+/**
+ * `version.generations` has two writers — this route (the client PATCHing its
+ * whole versions array) and processVideoJob's `appendGenerationToVersion` — so
+ * the shared entry schema is what keeps them describing the same record. It
+ * was `z.array(z.record(z.string(), z.unknown()))` here, which accepted any
+ * object at all; a take record is an open bag by contract
+ * (`SessionGenerationRecordSchema` passes extras through), but the lineage
+ * fields the space depends on are validated rather than assumed.
+ */
 const UpdateVersionsSchema = z
   .object({
-    versions: z.array(z.record(z.string(), z.unknown())).optional(),
+    versions: z.array(SessionPromptVersionEntrySchema).optional(),
   })
   .strip();
 
@@ -240,13 +250,7 @@ function toSessionVersionsUpdate(
   data: z.infer<typeof UpdateVersionsSchema>,
 ): SessionVersionsUpdate {
   return {
-    ...(data.versions !== undefined
-      ? {
-          versions: data.versions as unknown as NonNullable<
-            SessionVersionsUpdate["versions"]
-          >,
-        }
-      : {}),
+    ...(data.versions !== undefined ? { versions: data.versions } : {}),
   };
 }
 
