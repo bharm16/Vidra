@@ -34,16 +34,12 @@ import type {
   LogprobInfo,
 } from "./groq/types";
 import type { AIResponse } from "@interfaces/IAIClient";
-import { hashString } from "@utils/hash";
+import { buildGroqPayload } from "./groq/requestBuilder";
 import { validateLLMResponse, ValidationResult } from "./ResponseValidator.js";
 import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import { buildLlamaMessages, wrapInXmlTags } from "./groq/messageBuilder";
 import { normalizeResponse } from "./groq/responseNormalizer";
-import {
-  calculateMaxTokens,
-  checkContextSize,
-  estimateContextTokens,
-} from "./groq/contextBudget";
+import { checkContextSize, estimateContextTokens } from "./groq/contextBudget";
 
 /**
  * Groq API Adapter optimized for Llama 3.x models
@@ -220,13 +216,6 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
     try {
       const messages = buildLlamaMessages(systemPrompt, options);
 
-      // Determine if this is a structured output request
-      const isStructuredOutput = !!(
-        options.schema ||
-        options.responseFormat ||
-        options.jsonMode
-      );
-
       /**
        * Llama 3 PDF Section 8.3: Context Size Monitoring
        *
@@ -236,201 +225,17 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
       const estimatedTokens = estimateContextTokens(systemPrompt, messages);
       checkContextSize(estimatedTokens, this.log);
 
-      /**
-       * Llama 3 PDF Section 4.1: Temperature Configuration
-       *
-       * - Creative/Chat: 0.6–0.8
-       * - Analytical/Extraction: 0.1 (AVOID 0.0 for Llama 3)
-       */
-      const defaultTemp = isStructuredOutput ? 0.1 : 0.7;
-      const temperature =
-        options.temperature !== undefined ? options.temperature : defaultTemp;
-
-      /**
-       * Llama 3 PDF Section 6.1: max_tokens Configuration
-       *
-       * "Set this aggressively to prevent infinite loops (a common failure mode)."
-       * Structured outputs should use conservative limits to prevent runaway generation.
-       */
-      const maxTokens = calculateMaxTokens(
-        isStructuredOutput,
-        options.maxTokens,
-        options.expectedOutputSize,
-      );
-
-      const payload: Record<string, unknown> = {
-        model: options.model || this.defaultModel,
+      const { payload, injectedJsonInstruction } = buildGroqPayload({
+        systemPrompt,
         messages,
-        max_tokens: maxTokens,
-        temperature,
-      };
-
-      /**
-       * Seed Parameter: Reproducibility & Caching
-       *
-       * Same seed + same input = deterministic output
-       * Benefits:
-       * - Debugging: Reproduce exact failures
-       * - Caching: Hash(seed + input) as cache key
-       * - A/B testing: Compare prompts with identical randomness
-       */
-      if (options.seed !== undefined) {
-        payload.seed = options.seed;
-      } else if (isStructuredOutput) {
-        // Default seed for structured outputs (reproducibility)
-        // Use a hash of the system prompt for consistency
-        payload.seed = hashString(systemPrompt) % 2147483647;
-      }
-
-      /**
-       * Logprobs: Token-level Confidence
-       *
-       * More reliable than asking the model to self-report confidence.
-       * The model's token probabilities reveal actual certainty.
-       *
-       * NOTE: Only supported on larger models (70b variants), not instant/8b models.
-       * Check model name before enabling to avoid API errors.
-       */
-      if (options.logprobs) {
-        const modelName = (options.model || this.defaultModel).toLowerCase();
-        // Logprobs is only supported on larger models (70b, versatile), not instant/8b models
-        const supportsLogprobs =
-          !modelName.includes("instant") &&
-          !modelName.includes("8b") &&
-          (modelName.includes("70b") || modelName.includes("versatile"));
-
-        if (supportsLogprobs) {
-          payload.logprobs = true;
-          payload.top_logprobs = options.topLogprobs ?? 3;
-        }
-        // Silently skip logprobs for models that don't support it
-        // This allows GroqLlmClient to request it without breaking
-      }
-
-      /**
-       * Llama 3 PDF Section 4.1: Top-P Configuration
-       */
-      payload.top_p = isStructuredOutput ? 0.95 : 0.9;
-
-      /**
-       * Llama 3 PDF Section 4.2: Repetition Penalty
-       * Disabled for JSON to allow structural tokens to repeat
-       */
-      if (isStructuredOutput) {
-        payload.frequency_penalty = 0;
-        payload.presence_penalty = 0;
-      }
-
-      /**
-       * Llama 3 PDF Section 4.3: Stop Sequences
-       *
-       * Halt generation at common failure patterns. This is processed at the
-       * token level (not post-hoc), so generation stops immediately.
-       *
-       * Benefits:
-       * - Eliminates markdown code blocks in output
-       * - Prevents "I hope this helps" postambles
-       * - Faster responses (fewer tokens generated)
-       * - Replaces prompt-based "no markdown" instructions
-       */
-      /**
-       * Groq API Constraint: Maximum 4 stop sequences
-       * Prioritizing the most common failure patterns:
-       * - ``` (markdown code blocks)
-       * - \n\n\n (excessive whitespace)
-       * - Note: (explanatory postamble)
-       * - I hope (conversational postamble)
-       */
-      if (isStructuredOutput) {
-        payload.stop = ["```", "\n\n\n", "Note:", "I hope"];
-      }
-
-      /**
-       * Llama 3 PDF Section 4.1: Min-P Sampling
-       *
-       * NOTE: min_p is NOT supported by Groq's API (returns 400 error).
-       * The Llama 3 research paper mentions it, but Groq hasn't implemented it.
-       * We rely on top_p + temperature for output consistency instead.
-       *
-       * Dynamic nucleus that adapts to the model's confidence distribution.
-       * - High confidence (peaked distribution): More restrictive filtering
-       * - Low confidence (flat distribution): Allows more diversity
-       */
-      // DISABLED: Groq API does not support min_p parameter
-      // if (isStructuredOutput) {
-      //   payload.min_p = 0.05;
-      // }
-
-      /**
-       * Structured Output Mode Selection
-       *
-       * Groq now supports json_schema mode (validation-based, not grammar-constrained).
-       * Priority order:
-       * 1. Explicit schema provided → use json_schema mode
-       * 2. responseFormat with json_schema → pass through
-       * 3. jsonMode only → use json_object mode (basic validation)
-       *
-       * Benefits of json_schema over json_object:
-       * - Enum constraints enforce valid taxonomy IDs
-       * - Required fields are validated
-       * - Type constraints (number min/max) are checked
-       *
-       * IMPORTANT: Groq requires 'json' to appear in messages when using json_object mode.
-       * json_schema mode does NOT have this requirement.
-       */
-      if (options.schema) {
-        // Full schema provided - use json_schema mode for validation
-        payload.response_format = {
-          type: "json_schema",
-          json_schema: {
-            name:
-              (options.schema as { name?: string }).name ||
-              "structured_response",
-            schema:
-              (options.schema as { schema?: unknown }).schema || options.schema,
-          },
-        };
-      } else if (options.responseFormat?.type === "json_schema") {
-        // responseFormat already specifies json_schema - pass through
-        payload.response_format = options.responseFormat;
-      } else if (
-        options.responseFormat?.type === "json_object" ||
-        (options.jsonMode && !options.isArray)
-      ) {
-        // Using json_object mode - must ensure 'json' appears in messages (Groq requirement)
-        const messagesContainJson = messages.some((m) =>
-          m.content.toLowerCase().includes("json"),
-        );
-
-        if (!messagesContainJson) {
-          this.log.debug(
-            "Injecting JSON instruction for Groq json_object mode",
-            {
-              model: options.model || this.defaultModel,
-            },
-          );
-          // Prepend to system message to satisfy Groq's requirement
-          const systemIdx = messages.findIndex((m) => m.role === "system");
-          const systemMessage =
-            systemIdx >= 0 ? messages[systemIdx] : undefined;
-          if (systemMessage) {
-            systemMessage.content = `Respond with valid JSON.\n\n${systemMessage.content}`;
-          } else if (messages[0]) {
-            messages[0].content = `Respond with valid JSON.\n\n${messages[0].content}`;
-          } else {
-            messages.push({
-              role: "system",
-              content: "Respond with valid JSON.",
-            });
-          }
-        }
-
-        payload.response_format = options.responseFormat || {
-          type: "json_object",
-        };
-      } else if (options.responseFormat) {
-        // Other responseFormat - pass through
-        payload.response_format = options.responseFormat;
+        options,
+        defaultModel: this.defaultModel,
+        stream: false,
+      });
+      if (injectedJsonInstruction) {
+        this.log.debug("Injecting JSON instruction for Groq json_object mode", {
+          model: options.model || this.defaultModel,
+        });
       }
 
       const response = await fetch(`${this.baseURL}/chat/completions`, {
@@ -488,105 +293,23 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
 
     try {
       const messages = buildLlamaMessages(systemPrompt, options);
-      const isStructuredOutput = !!(
-        options.schema ||
-        options.responseFormat ||
-        options.jsonMode
-      );
 
       // Context size monitoring (same as _executeRequest)
       const estimatedTokens = estimateContextTokens(systemPrompt, messages);
       checkContextSize(estimatedTokens, this.log);
 
-      const defaultTemp = isStructuredOutput ? 0.1 : 0.7;
-      const temperature =
-        options.temperature !== undefined ? options.temperature : defaultTemp;
-
-      // Calculate max_tokens with smart defaults
-      const maxTokens = calculateMaxTokens(
-        isStructuredOutput,
-        options.maxTokens,
-        options.expectedOutputSize,
-      );
-
-      const payload: Record<string, unknown> = {
-        model: options.model || this.defaultModel,
+      const { payload, injectedJsonInstruction } = buildGroqPayload({
+        systemPrompt,
         messages,
-        max_tokens: maxTokens,
-        temperature,
-        top_p: isStructuredOutput ? 0.95 : 0.9,
+        options,
+        defaultModel: this.defaultModel,
         stream: true,
-      };
-
-      // Seed for reproducibility
-      if (options.seed !== undefined) {
-        payload.seed = options.seed;
-      } else if (isStructuredOutput) {
-        payload.seed = hashString(systemPrompt) % 2147483647;
-      }
-
-      if (isStructuredOutput) {
-        payload.frequency_penalty = 0;
-        payload.presence_penalty = 0;
-      }
-
-      // Stop sequences (same logic as _executeRequest)
-      // NOTE: Groq API allows max 4 stop sequences
-      if (isStructuredOutput) {
-        payload.stop = ["```", "\n\n\n", "Note:", "I hope"];
-      }
-
-      // Structured Output Mode (same logic as _executeRequest)
-      // IMPORTANT: Groq requires 'json' to appear in messages when using json_object mode.
-      if (options.schema) {
-        payload.response_format = {
-          type: "json_schema",
-          json_schema: {
-            name:
-              (options.schema as { name?: string }).name ||
-              "structured_response",
-            schema:
-              (options.schema as { schema?: unknown }).schema || options.schema,
-          },
-        };
-      } else if (options.responseFormat?.type === "json_schema") {
-        payload.response_format = options.responseFormat;
-      } else if (
-        options.responseFormat?.type === "json_object" ||
-        (options.jsonMode && !options.isArray)
-      ) {
-        // Using json_object mode - must ensure 'json' appears in messages (Groq requirement)
-        const messagesContainJson = messages.some((m) =>
-          m.content.toLowerCase().includes("json"),
+      });
+      if (injectedJsonInstruction) {
+        this.log.debug(
+          "Injecting JSON instruction for Groq json_object mode (streaming)",
+          { model: options.model || this.defaultModel },
         );
-
-        if (!messagesContainJson) {
-          this.log.debug(
-            "Injecting JSON instruction for Groq json_object mode (streaming)",
-            {
-              model: options.model || this.defaultModel,
-            },
-          );
-          const systemIdx = messages.findIndex((m) => m.role === "system");
-          const systemMessage =
-            systemIdx >= 0 ? messages[systemIdx] : undefined;
-          if (systemMessage) {
-            systemMessage.content = `Respond with valid JSON.\n\n${systemMessage.content}`;
-          } else if (messages[0]) {
-            messages[0].content = `Respond with valid JSON.\n\n${messages[0].content}`;
-          } else {
-            messages.push({
-              role: "system",
-              content: "Respond with valid JSON.",
-            });
-          }
-        }
-
-        payload.response_format = options.responseFormat || {
-          type: "json_object",
-        };
-      } else if (options.responseFormat) {
-        payload.response_format = options.responseFormat;
       }
 
       const response = await fetch(`${this.baseURL}/chat/completions`, {
