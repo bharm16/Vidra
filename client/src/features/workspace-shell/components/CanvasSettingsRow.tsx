@@ -6,7 +6,6 @@ import {
   STORYBOARD_COST,
   getVideoCost,
 } from "@/components/ToolSidebar/config/modelConfig";
-import { getDefaultGenerationDurationSeconds } from "@shared/generationPricing";
 import { useGenerationControlsContext } from "@/features/prompt-optimizer/context/GenerationControlsContext";
 import { usePromptResultsActionsOptional } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import { useCreditBalance } from "@/contexts/CreditBalanceContext";
@@ -14,6 +13,11 @@ import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
+import {
+  DEFAULT_ASPECT_RATIO,
+  readAspectRatio,
+  resolveDurationSeconds,
+} from "@features/generation-controls/resolveGenerationParams";
 import { useCapabilitiesClamping } from "../hooks/useCapabilitiesClamping";
 import { ModelRecommendationDropdown } from "./ModelRecommendationDropdown";
 import type { ModelRecommendation } from "@/features/model-intelligence/types";
@@ -55,25 +59,6 @@ interface CanvasSettingsRowProps {
    */
   variant?: "docked" | "sheet";
 }
-
-const parseAspectRatio = (
-  generationParams: Record<string, unknown>,
-): string => {
-  const ratio = generationParams.aspect_ratio;
-  if (typeof ratio === "string" && ratio.trim()) return ratio.trim();
-  return "16:9";
-};
-
-const parseDuration = (generationParams: Record<string, unknown>): number => {
-  const durationValue = generationParams.duration_s;
-  if (typeof durationValue === "number" && Number.isFinite(durationValue))
-    return durationValue;
-  if (typeof durationValue === "string") {
-    const parsed = Number.parseFloat(durationValue);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return getDefaultGenerationDurationSeconds();
-};
 
 // C8 cooldown window: how long after a Preview-storyboard click we drop
 // repeat clicks. Sized to outlast the multi-step prelude (optimize →
@@ -218,12 +203,12 @@ export function CanvasSettingsRow({
   const onIdeaBoxExpand = usePromptResultsActionsOptional()?.onIdeaBoxExpand;
 
   const aspectRatio = useMemo(
-    () => parseAspectRatio(domain.generationParams as Record<string, unknown>),
+    () => readAspectRatio(domain.generationParams) ?? DEFAULT_ASPECT_RATIO,
     [domain.generationParams],
   );
   const duration = useMemo(
-    () => parseDuration(domain.generationParams as Record<string, unknown>),
-    [domain.generationParams],
+    () => resolveDurationSeconds(domain.generationParams, domain.selectedModel),
+    [domain.generationParams, domain.selectedModel],
   );
 
   const hasPrompt = Boolean(prompt.trim());

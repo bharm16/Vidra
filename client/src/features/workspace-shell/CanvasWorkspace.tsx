@@ -12,6 +12,7 @@ import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
+import { resolveDurationSeconds } from "@features/generation-controls/resolveGenerationParams";
 import { useOptionalPromptHighlights } from "@/features/prompt-optimizer/context/PromptStateContext";
 import {
   useRegisterPersistenceTarget,
@@ -95,18 +96,6 @@ interface CanvasWorkspaceProps {
   ) => void;
 }
 
-const parseDurationSeconds = (
-  generationParams: Record<string, unknown>,
-): number => {
-  const value = generationParams.duration_s;
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number.parseFloat(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return 5;
-};
-
 export function CanvasWorkspace({
   generationsPanelProps,
   editing,
@@ -137,8 +126,9 @@ export function CanvasWorkspace({
   const [viewingId, setViewingId] = useState<string | null>(null);
 
   const prompt = generationsPanelProps.prompt;
-  const durationSeconds = parseDurationSeconds(
-    domain.generationParams as Record<string, unknown>,
+  const durationSeconds = resolveDurationSeconds(
+    domain.generationParams,
+    domain.selectedModel,
   );
 
   const {

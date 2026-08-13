@@ -1,5 +1,10 @@
 import { useMemo } from "react";
 import type { CapabilityValues } from "@shared/capabilities";
+import {
+  readAspectRatio,
+  readDurationSeconds,
+  readFps,
+} from "@features/generation-controls/resolveGenerationParams";
 
 export interface ResolvedGenerationParams {
   /** Aspect ratio the next generation will actually use. */
@@ -13,13 +18,14 @@ export interface ResolvedGenerationParams {
 /**
  * Read the generation parameters the canvas needs to display.
  *
- * One reason to change — the capability parameter vocabulary — so it lives in one
- * place instead of three memos inside the canvas orchestrator. The coercions are
- * the interesting part and each has an edge case worth pinning: capability values
- * arrive as `string | number | boolean`, so a duration can be a numeric string,
- * a non-finite number must read as absent rather than as NaN, and a blank
- * aspect ratio must fall through to the preview's own ratio rather than blanking
- * the frame.
+ * The coercions live in `@features/generation-controls`, which owns the
+ * capability parameter vocabulary; this hook is the memoized view of them plus
+ * the one rule that is genuinely local — a blank aspect ratio falls through to
+ * the preview's own ratio rather than blanking the frame.
+ *
+ * These reads report what the creator set, so an unset value is null. A caller
+ * that needs the value the generation will actually run with wants
+ * `resolveDurationSeconds`, which applies the model's default.
  */
 export function useResolvedGenerationParams(params: {
   generationParams: CapabilityValues | null | undefined;
@@ -27,32 +33,20 @@ export function useResolvedGenerationParams(params: {
 }): ResolvedGenerationParams {
   const { generationParams, previewAspectRatio } = params;
 
-  const effectiveAspectRatio = useMemo(() => {
-    const fromParams = generationParams?.aspect_ratio;
-    if (typeof fromParams === "string" && fromParams.trim()) {
-      return fromParams.trim();
-    }
-    return previewAspectRatio ?? null;
-  }, [generationParams?.aspect_ratio, previewAspectRatio]);
+  const effectiveAspectRatio = useMemo(
+    () => readAspectRatio(generationParams) ?? previewAspectRatio ?? null,
+    [generationParams, previewAspectRatio],
+  );
 
-  const durationSeconds = useMemo(() => {
-    const durationValue = generationParams?.duration_s;
-    if (typeof durationValue === "number") {
-      return Number.isFinite(durationValue) ? durationValue : null;
-    }
-    if (typeof durationValue === "string") {
-      const parsed = Number.parseFloat(durationValue);
-      return Number.isFinite(parsed) ? parsed : null;
-    }
-    return null;
-  }, [generationParams?.duration_s]);
+  const durationSeconds = useMemo(
+    () => readDurationSeconds(generationParams),
+    [generationParams],
+  );
 
-  const fpsNumber = useMemo(() => {
-    const fpsValue = generationParams?.fps;
-    return typeof fpsValue === "number" && Number.isFinite(fpsValue)
-      ? fpsValue
-      : null;
-  }, [generationParams?.fps]);
+  const fpsNumber = useMemo(
+    () => readFps(generationParams),
+    [generationParams],
+  );
 
   return { effectiveAspectRatio, durationSeconds, fpsNumber };
 }
