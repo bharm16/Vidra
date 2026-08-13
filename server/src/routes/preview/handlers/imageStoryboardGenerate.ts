@@ -8,6 +8,7 @@ import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import type { ApiErrorCode } from "@shared/types/api";
 import type { PreviewRoutesServices } from "@routes/types";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
+import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
 import type { ResolvedPrompt } from "@shared/types/asset";
 import { STORYBOARD_FRAME_COUNT } from "@services/image-generation/storyboard/constants";
 import { parseImageStoryboardGenerateRequest } from "../imageStoryboardRequest";
@@ -345,19 +346,20 @@ export const createImageStoryboardGenerateHandler =
         const mediaAssetIds = (result.storagePaths ?? [])
           .map((path) => path.split("/").filter(Boolean).pop() ?? null)
           .filter((id): id is string => Boolean(id));
-        const generationRecord: Record<string, unknown> = {
+        const generationRecord = buildCompletedTakeRecord({
           id: generationId,
-          // No `tier`: derived from `model` at read time (ADR-0021).
           model: "flux-kontext",
           mediaType: "image-sequence",
           prompt,
-          status: "completed",
+          promptVersionId,
           mediaUrls: result.imageUrls,
           ...(mediaAssetIds.length ? { mediaAssetIds } : {}),
           thumbnailUrl: result.baseImageUrl || result.imageUrls[0] || null,
-          promptVersionId,
-          completedAt: new Date().toISOString(),
-        };
+          // A storyboard roots at its words-version like a picture does; the
+          // old inline record left the field off, which read the same but hid
+          // the decision.
+          ancestorGenerationId: null,
+        });
         try {
           await sessionService.appendGenerationToVersion(
             userId,

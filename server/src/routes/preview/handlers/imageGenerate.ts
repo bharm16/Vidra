@@ -14,6 +14,7 @@ import type {
 } from "@services/image-generation/providers/types";
 import { IMAGE_PREVIEW_SPEED_MODES } from "@shared/schemas/preview.schemas";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
+import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
 
 type ImageGenerateServices = Pick<
   PreviewRoutesServices,
@@ -405,22 +406,19 @@ export const createImageGenerateHandler =
           ? (storageResult.storagePath.split("/").filter(Boolean).pop() ??
             storageResult.storagePath)
           : null;
-        const generationRecord: Record<string, unknown> = {
+        const generationRecord = buildCompletedTakeRecord({
           id: generationId,
-          // No `tier`: derived from `model` at read time (ADR-0021).
           model: result.metadata.model,
           mediaType: "image",
           prompt,
-          status: "completed",
+          promptVersionId,
           mediaUrls: [finalImageUrl],
           ...(mediaAssetId ? { mediaAssetIds: [mediaAssetId] } : {}),
           thumbnailUrl: finalImageUrl,
-          promptVersionId,
           // ADR-0013: a picture roots at its words-version — the version→picture
           // edge is structural (this record lives in that version's generations).
           ancestorGenerationId: null,
-          completedAt: new Date().toISOString(),
-        };
+        });
         try {
           await sessionService.appendGenerationToVersion(
             userId,

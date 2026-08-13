@@ -10,6 +10,7 @@ import { HeartbeatManager } from "./HeartbeatManager";
 import { RetryPolicy } from "@server/utils/RetryPolicy";
 import type { VideoJobError, VideoJobRecord } from "./types";
 import type { VideoGenerationResult } from "../types";
+import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
 
 // ────────────────────────────────────────────────────────────────
 // Dependency interfaces — kept minimal so both worker and inline
@@ -348,27 +349,23 @@ export async function processVideoJob(
           job.userId,
           job.sessionId,
           job.promptVersionId,
-          {
+          // A clip's take identity is its job id — the record is written under
+          // the id the client will adopt (CONTEXT.md → Take identity).
+          buildCompletedTakeRecord({
             id: job.id,
-            // A take says what it is. Without this the space's picture/clip
-            // split matches neither branch and drops the clip entirely
-            // (deriveSpaceNodes), and the poster/refresh paths treat it as an
-            // image. No `tier`: it is derived from `model` (ADR-0021).
-            mediaType: "video",
             model: job.request.options?.model ?? null,
+            mediaType: "video",
             prompt: job.request.prompt,
-            status: "completed",
+            promptVersionId: job.promptVersionId,
             mediaUrls: [result.videoUrl],
             ...(result.assetId ? { mediaAssetIds: [result.assetId] } : {}),
             ...(resultWithStorage.storagePath
               ? { storagePath: resultWithStorage.storagePath }
               : {}),
-            promptVersionId: job.promptVersionId,
             // ADR-0013: name the source picture (or null = root) so the space
             // draws the picture→clip edge from real lineage.
             ancestorGenerationId: job.sourceGenerationId ?? null,
-            completedAt: new Date().toISOString(),
-          },
+          }),
         );
         log.info(`${logPrefix} generation persisted to session`, {
           jobId: job.id,
