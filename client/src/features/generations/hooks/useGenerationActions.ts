@@ -597,6 +597,96 @@ export function useGenerationActions(
   }, [options.generations, resumeGenerationJob]);
 
   // Bug 9 fix: read options from ref to avoid callback recreation on every options change
+  /**
+   * End a failed run.
+   *
+   * The three run paths — draft, storyboard, render — had a byte-identical
+   * copy of this block, differing only in the log line. That is where the
+   * pending-flag wedge of 6840ffa7 lived, and a fix to it had to be applied
+   * three times or land in two of three places. The rules stated once:
+   *
+   * - An aborted run reports nothing: the caller asked for it to stop.
+   * - Insufficient credits is not a failure of the take. If the take was
+   *   already accepted it is marked failed with the credit message; otherwise
+   *   it never entered state and only the pending flag is handed back. Either
+   *   way the caller's credit handler is invited to surface the gate.
+   * - Otherwise the take is marked failed if it exists, or accepted as failed
+   *   if it does not, so a failure is always visible as a take rather than as
+   *   nothing happening.
+   *
+   * `submission.release()` is NOT called here — it belongs in the caller's
+   * `finally`, which runs on the success path too.
+   */
+  const failGenerationRun = useCallback(
+    (
+      error: unknown,
+      run: {
+        runLabel: "Draft" | "Storyboard" | "Render";
+        model: string;
+        generation: Generation;
+        /** The id the take is known by right now — server-adopted if it got that far. */
+        takeId: string;
+        /** Whether the take already entered state. */
+        accepted: boolean;
+        controller: AbortController;
+        submission: { releasePendingFlag: () => void };
+        operationLabel: string;
+        requiredCredits: number;
+        startedAt: number;
+        motionMeta: Record<string, unknown>;
+        /** A job-backed run clears its job fields when it fails; storyboards have no job. */
+        jobBacked: boolean;
+      },
+    ): void => {
+      if (run.controller.signal.aborted) return;
+
+      if (isInsufficientCreditsError(error)) {
+        if (run.accepted) {
+          finalizeGeneration(run.takeId, {
+            status: "failed",
+            completedAt: Date.now(),
+            error: `Insufficient credits — ${run.operationLabel} requires ${run.requiredCredits} credits`,
+          });
+        } else {
+          run.submission.releasePendingFlag();
+        }
+        optionsRef.current.onInsufficientCredits?.(
+          run.requiredCredits,
+          run.operationLabel,
+        );
+        return;
+      }
+
+      const info = sanitizeError(error);
+      const errObj = error instanceof Error ? error : new Error(info.message);
+
+      log.error(`${run.runLabel} generation failed`, errObj, {
+        generationId: run.takeId,
+        model: run.model,
+        durationMs: Date.now() - run.startedAt,
+        errorName: info.name,
+        ...run.motionMeta,
+      });
+
+      const failure: Partial<Generation> = {
+        status: "failed",
+        completedAt: Date.now(),
+        error: errObj.message,
+      };
+
+      if (run.accepted) {
+        finalizeGeneration(run.takeId, {
+          ...failure,
+          ...(run.jobBacked ? { jobId: null, serverJobStatus: "failed" } : {}),
+        });
+        return;
+      }
+      acceptGeneration({ ...run.generation, id: run.takeId }, failure);
+      run.submission.releasePendingFlag();
+    },
+    [acceptGeneration, finalizeGeneration],
+  );
+
   const generateDraft = useCallback(
     async (model: DraftModel, prompt: string, params: GenerationParams) => {
       if (isSubmittingRef.current) return;
@@ -1004,55 +1094,20 @@ export function useGenerationActions(
           });
         }
       } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (isInsufficientCreditsError(error)) {
-          if (generationAccepted) {
-            finalizeGeneration(takeId, {
-              status: "failed",
-              completedAt: Date.now(),
-              error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
-            });
-          } else {
-            submission.releasePendingFlag();
-          }
-          optionsRef.current.onInsufficientCredits?.(
-            requiredCredits,
-            operationLabel,
-          );
-          return;
-        }
-        const durationMs = Date.now() - startedAt;
-        const info = sanitizeError(error);
-        const errObj = error instanceof Error ? error : new Error(info.message);
-
-        log.error("Draft generation failed", errObj, {
-          generationId: takeId,
+        failGenerationRun(error, {
+          runLabel: "Draft",
           model,
-          durationMs,
-          errorName: info.name,
-          ...motionMeta,
+          generation,
+          takeId,
+          accepted: generationAccepted,
+          controller,
+          submission,
+          operationLabel,
+          requiredCredits,
+          startedAt,
+          motionMeta,
+          jobBacked: true,
         });
-        if (generationAccepted) {
-          finalizeGeneration(takeId, {
-            status: "failed",
-            completedAt: Date.now(),
-            error: errObj.message,
-            jobId: null,
-            serverJobStatus: "failed",
-          });
-        } else {
-          acceptGeneration(
-            { ...generation, id: takeId },
-            {
-              status: "failed",
-              completedAt: Date.now(),
-              error: errObj.message,
-            },
-          );
-          submission.releasePendingFlag();
-        }
       } finally {
         submission.release();
       }
@@ -1060,6 +1115,7 @@ export function useGenerationActions(
     [
       acceptGeneration,
       dispatch,
+      failGenerationRun,
       finalizeGeneration,
       registerSubmission,
       setSubmissionPending,
@@ -1197,56 +1253,27 @@ export function useGenerationActions(
         syncCreditBalanceFromResponse(response.remainingCredits);
         submission.releasePendingFlag();
       } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (isInsufficientCreditsError(error)) {
-          if (generationAccepted) {
-            finalizeGeneration(generation.id, {
-              status: "failed",
-              completedAt: Date.now(),
-              error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
-            });
-          } else {
-            submission.releasePendingFlag();
-          }
-          optionsRef.current.onInsufficientCredits?.(
-            requiredCredits,
-            operationLabel,
-          );
-          return;
-        }
-        const durationMs = Date.now() - startedAt;
-        const info = sanitizeError(error);
-        const errObj = error instanceof Error ? error : new Error(info.message);
-
-        log.error("Storyboard generation failed", errObj, {
-          generationId: generation.id,
-          durationMs,
-          errorName: info.name,
-          ...motionMeta,
+        failGenerationRun(error, {
+          runLabel: "Storyboard",
+          model: "flux-kontext",
+          generation,
+          takeId: generation.id,
+          accepted: generationAccepted,
+          controller,
+          submission,
+          operationLabel,
+          requiredCredits,
+          startedAt,
+          motionMeta,
+          jobBacked: false,
         });
-        if (generationAccepted) {
-          finalizeGeneration(generation.id, {
-            status: "failed",
-            completedAt: Date.now(),
-            error: errObj.message,
-          });
-        } else {
-          acceptGeneration(generation, {
-            status: "failed",
-            completedAt: Date.now(),
-            error: errObj.message,
-          });
-          submission.releasePendingFlag();
-        }
       } finally {
         submission.release();
       }
     },
     [
       acceptGeneration,
-      finalizeGeneration,
+      failGenerationRun,
       registerSubmission,
       setSubmissionPending,
     ],
@@ -1547,54 +1574,20 @@ export function useGenerationActions(
           });
         }
       } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (isInsufficientCreditsError(error)) {
-          if (generationAccepted) {
-            finalizeGeneration(takeId, {
-              status: "failed",
-              completedAt: Date.now(),
-              error: `Insufficient credits — ${operationLabel} requires ${requiredCredits} credits`,
-            });
-          } else {
-            submission.releasePendingFlag();
-          }
-          optionsRef.current.onInsufficientCredits?.(
-            requiredCredits,
-            operationLabel,
-          );
-          return;
-        }
-        const durationMs = Date.now() - startedAt;
-        const info = sanitizeError(error);
-        const errObj = error instanceof Error ? error : new Error(info.message);
-
-        log.error("Render generation failed", errObj, {
-          generationId: takeId,
-          durationMs,
-          errorName: info.name,
-          ...motionMeta,
+        failGenerationRun(error, {
+          runLabel: "Render",
+          model,
+          generation,
+          takeId,
+          accepted: generationAccepted,
+          controller,
+          submission,
+          operationLabel,
+          requiredCredits,
+          startedAt,
+          motionMeta,
+          jobBacked: true,
         });
-        if (generationAccepted) {
-          finalizeGeneration(takeId, {
-            status: "failed",
-            completedAt: Date.now(),
-            error: errObj.message,
-            jobId: null,
-            serverJobStatus: "failed",
-          });
-        } else {
-          acceptGeneration(
-            { ...generation, id: takeId },
-            {
-              status: "failed",
-              completedAt: Date.now(),
-              error: errObj.message,
-            },
-          );
-          submission.releasePendingFlag();
-        }
       } finally {
         submission.release();
       }
@@ -1602,6 +1595,7 @@ export function useGenerationActions(
     [
       acceptGeneration,
       dispatch,
+      failGenerationRun,
       finalizeGeneration,
       registerSubmission,
       setSubmissionPending,
