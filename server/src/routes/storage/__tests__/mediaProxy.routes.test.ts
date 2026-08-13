@@ -13,7 +13,13 @@ const BUCKET = "test-bucket";
 
 function createApp(): express.Express {
   const app = express();
-  app.use("/api/storage", createMediaProxyRoutes(BUCKET));
+  app.use(
+    "/api/storage",
+    createMediaProxyRoutes({
+      bucketName: BUCKET,
+      access: { kind: "signed-url-is-authorization" },
+    }),
+  );
   return app;
 }
 

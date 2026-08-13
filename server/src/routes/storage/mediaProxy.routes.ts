@@ -35,11 +35,48 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "video/quicktime",
 ]);
 
-export interface MediaProxyAccessPolicy {
-  canAccessObject?: (
-    req: Request,
-    objectPath: string,
-  ) => boolean | Promise<boolean>;
+/**
+ * Who may read an object through this mount. Required at every mount, because
+ * the two postures are opposite and the difference is invisible in the URL:
+ *
+ * - `signed-url-is-authorization` — the pre-auth mount. Anyone presenting a
+ *   parseable in-bucket URL is served, on the theory that holding the signature
+ *   IS the grant. Correct only where every object in the bucket is reachable
+ *   solely by a URL the server minted.
+ * - `owner-scoped` — the authenticated mount. The request's own identity is
+ *   checked against the object path before anything is fetched.
+ *
+ * These were previously one optional trailing parameter, so leaving it off
+ * silently chose the permissive posture.
+ */
+export type MediaProxyAccess =
+  | { kind: "signed-url-is-authorization" }
+  | {
+      kind: "owner-scoped";
+      canAccessObject: (
+        req: Request,
+        objectPath: string,
+      ) => boolean | Promise<boolean>;
+    };
+
+/**
+ * The expired-signature rescue: stream from the bucket with the server's own
+ * credentials when the upstream signed-URL fetch fails.
+ *
+ * Both halves are required. A bucket without a ledger could never verify that
+ * the presented URL was a grant this server minted, so it refused every rescue
+ * while logging `media_proxy.rescue_refused_unverified` — a silently degraded
+ * mode with no signal at the type level. Configure the rescue or don't.
+ */
+export interface MediaProxyRescue {
+  bucket: Bucket;
+  signedUrlLedger: SignedUrlLedger;
+}
+
+export interface MediaProxyOptions {
+  bucketName: string;
+  access: MediaProxyAccess;
+  rescue?: MediaProxyRescue;
 }
 
 /**
@@ -105,12 +142,11 @@ async function streamFromBucket(
   }
 }
 
-export function createMediaProxyHandler(
-  bucketName: string,
-  bucket?: Bucket,
-  signedUrlLedger?: SignedUrlLedger,
-  accessPolicy?: MediaProxyAccessPolicy,
-): RequestHandler {
+export function createMediaProxyHandler({
+  bucketName,
+  access,
+  rescue,
+}: MediaProxyOptions): RequestHandler {
   return asyncHandler(async (req: Request, res: Response) => {
     const urlParam =
       typeof req.query.url === "string" ? req.query.url.trim() : "";
@@ -152,8 +188,8 @@ export function createMediaProxyHandler(
     }
 
     if (
-      accessPolicy?.canAccessObject &&
-      !(await accessPolicy.canAccessObject(req, objectPath))
+      access.kind === "owner-scoped" &&
+      !(await access.canAccessObject(req, objectPath))
     ) {
       return res.status(403).json({
         success: false,
@@ -183,17 +219,17 @@ export function createMediaProxyHandler(
       // The proxy is mounted pre-auth ("the signed URL is the
       // authorization"), so without this proof the rescue would be an
       // unauthenticated read of arbitrary bucket objects behind a forged
-      // signature.
-      if (bucket) {
+      // signature. The ledger travels with the bucket in MediaProxyRescue —
+      // a bucket alone can no longer be configured.
+      if (rescue) {
         const presentedSignature =
           parsedUrl.searchParams.get("X-Goog-Signature");
-        const authentic =
-          presentedSignature && signedUrlLedger
-            ? await signedUrlLedger.isMintedGrant(
-                objectPath,
-                presentedSignature,
-              )
-            : false;
+        const authentic = presentedSignature
+          ? await rescue.signedUrlLedger.isMintedGrant(
+              objectPath,
+              presentedSignature,
+            )
+          : false;
         if (!authentic) {
           log.warn("Bucket rescue refused: signed URL not verifiable", {
             metric: "media_proxy.rescue_refused_unverified",
@@ -208,7 +244,7 @@ export function createMediaProxyHandler(
         }
         const isHead = req.method === "HEAD";
         const recovered = await streamFromBucket(
-          bucket,
+          rescue.bucket,
           objectPath,
           res,
           isHead,
@@ -287,15 +323,8 @@ export function createMediaProxyHandler(
   });
 }
 
-export function createMediaProxyRoutes(
-  bucketName: string,
-  bucket?: Bucket,
-  signedUrlLedger?: SignedUrlLedger,
-): Router {
+export function createMediaProxyRoutes(options: MediaProxyOptions): Router {
   const router = express.Router();
-  router.get(
-    "/proxy",
-    createMediaProxyHandler(bucketName, bucket, signedUrlLedger),
-  );
+  router.get("/proxy", createMediaProxyHandler(options));
   return router;
 }

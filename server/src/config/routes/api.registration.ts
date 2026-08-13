@@ -82,11 +82,11 @@ export function registerApiRoutes(
   // minted may borrow the server's credentials on this pre-auth route.
   const gcsBucket = container.resolve<Bucket>("gcsBucket");
   const signedUrlLedger = container.resolve<SignedUrlLedger>("signedUrlLedger");
-  const mediaProxyRoutes = createMediaProxyRoutes(
-    STORAGE_CONFIG.bucketName,
-    gcsBucket,
-    signedUrlLedger,
-  );
+  const mediaProxyRoutes = createMediaProxyRoutes({
+    bucketName: STORAGE_CONFIG.bucketName,
+    access: { kind: "signed-url-is-authorization" },
+    rescue: { bucket: gcsBucket, signedUrlLedger },
+  });
   app.use("/api/storage", mediaProxyRoutes);
 
   // Public clip share (ADR-0010 site-scope D8) — no auth. Returns only a

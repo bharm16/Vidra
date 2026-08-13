@@ -85,7 +85,11 @@ const buildApp = (
   const app = express();
   app.use(
     "/api/storage",
-    createMediaProxyRoutes(BUCKET, bucket as never, ledger),
+    createMediaProxyRoutes({
+      bucketName: BUCKET,
+      access: { kind: "signed-url-is-authorization" },
+      rescue: { bucket: bucket as never, signedUrlLedger: ledger },
+    }),
   );
   return app;
 };

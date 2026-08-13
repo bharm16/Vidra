@@ -98,11 +98,10 @@ export function createConvergenceMediaRoutes(
   router.get(
     "/proxy",
     apiAuthMiddleware,
-    createMediaProxyHandler(
-      storageService.getBucketName(),
-      bucket,
-      signedUrlLedger,
-      {
+    createMediaProxyHandler({
+      bucketName: storageService.getBucketName(),
+      access: {
+        kind: "owner-scoped",
         canAccessObject: (req, objectPath) => {
           const userId = (req as AuthenticatedRequest).user?.uid;
           return Boolean(
@@ -110,7 +109,8 @@ export function createConvergenceMediaRoutes(
           );
         },
       },
-    ),
+      rescue: { bucket, signedUrlLedger },
+    }),
   );
 
   return router;

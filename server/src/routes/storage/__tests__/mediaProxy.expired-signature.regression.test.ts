@@ -90,11 +90,17 @@ describe("regression: media proxy falls back to bucket stream on expired signed 
     const app = express();
     app.use(
       "/api/storage",
-      createMediaProxyRoutes(
-        BUCKET,
-        makeFakeBucket({ body: fakePng, contentType: "image/png" }) as never,
-        makeLedger(),
-      ),
+      createMediaProxyRoutes({
+        bucketName: BUCKET,
+        access: { kind: "signed-url-is-authorization" },
+        rescue: {
+          bucket: makeFakeBucket({
+            body: fakePng,
+            contentType: "image/png",
+          }) as never,
+          signedUrlLedger: makeLedger(),
+        },
+      }),
     );
 
     const res = await request(app).get(
@@ -112,9 +118,15 @@ describe("regression: media proxy falls back to bucket stream on expired signed 
     );
 
     const app = express();
-    // No bucket argument — proxy should preserve the existing pass-through
+    // No rescue configured — proxy should preserve the existing pass-through
     // behavior so existing deployments keep working.
-    app.use("/api/storage", createMediaProxyRoutes(BUCKET));
+    app.use(
+      "/api/storage",
+      createMediaProxyRoutes({
+        bucketName: BUCKET,
+        access: { kind: "signed-url-is-authorization" },
+      }),
+    );
 
     const res = await request(app).get(
       `/api/storage/proxy?url=${encodeURIComponent(expiredSignedUrl)}`,
