@@ -80,7 +80,6 @@ const setup = (identity: { uuid: string | null; docId: string | null }) =>
       serializedKeyframes: [],
       promptOptimizer: { setOptimizedPrompt: vi.fn() },
       applyInitialHighlightSnapshot: vi.fn(),
-      resetEditStacks: vi.fn(),
       setDisplayedPromptSilently: vi.fn(),
       latestHighlightRef: { current: null },
       versionEditCountRef: { current: 0 },

@@ -17,7 +17,6 @@ import { useTriggerAutocomplete } from "@features/assets/hooks/useTriggerAutocom
 import { useOutlineOverlay } from "./useOutlineOverlay";
 import { useEditorInput } from "./useEditorInput";
 
-import type { PromptCanvasProps } from "../types";
 import type { SelectedSpanContextValue } from "@features/prompt-optimizer/context/SelectedSpanContext";
 
 import { useSpanLabelingPipeline } from "./useSpanLabelingPipeline";
@@ -38,7 +37,16 @@ import { useLockedSpanInteractions } from "./useLockedSpanInteractions";
 import { useTriggerValidation } from "./useTriggerValidation";
 import { useInlineSuggestionState } from "./useInlineSuggestionState";
 import { useCanvasEditorState } from "./useCanvasEditorState";
-import { useCanvasGenerations } from "./useCanvasGenerations";
+import { useShotGenerations } from "./useShotGenerations";
+import { useVersionManagement } from "./useVersionManagement";
+import { applyGenerationReuse } from "../utils/reuseGeneration";
+import { resolveInitialGenerations } from "../utils/resolveInitialGenerations";
+import type {
+  Generation,
+  GenerationsPanelProps,
+} from "@features/generations/types";
+import type { VersionsPanelPropsBase } from "../components/PromptCanvasView.types";
+import { DEFAULT_ASPECT_RATIO } from "@features/generation-controls/resolveGenerationParams";
 import { buildBulkDebugPayload } from "../utils/bulkDebugPayload";
 import { useGenerationControlsStoreState } from "@features/generation-controls";
 import { useWorkspaceSession } from "@features/prompt-optimizer/context/WorkspaceSessionContext";
@@ -49,7 +57,12 @@ import {
   usePromptHighlights,
   usePromptServices,
   usePromptSession,
+  usePromptUIStateContext,
 } from "@features/prompt-optimizer/context/PromptStateContext";
+import {
+  usePromptResultsActions,
+  usePromptResultsData,
+} from "@features/prompt-optimizer/context/PromptResultsActionsContext";
 import { serializeKeyframes } from "@features/prompt-optimizer/utils/keyframeTransforms";
 
 import type { PromptCanvasViewProps } from "../components/PromptCanvasView.types";
@@ -58,64 +71,23 @@ import { isMac } from "@components/KeyboardShortcuts/shortcuts.config";
 
 /**
  * PromptCanvas orchestration: composes the canvas's hooks, effects, and
- * handlers behind one interface. Takes the canvas props, returns the
- * selected-span session for the provider and a fully-formed set of view
- * props — the component renders, this hook decides.
+ * handlers behind one interface. Returns the selected-span session for the
+ * provider and a fully-formed set of view props — the component renders, this
+ * hook decides.
+ *
+ * Reads the workspace contexts directly. It used to receive 26 props from
+ * PromptResultsSection, which read six contexts to build them — five of which
+ * this hook then read again for other fields, so the same `currentPromptUuid`
+ * arrived twice by two routes. Four of those props (`optimizedPrompt`,
+ * `previewPrompt`, `currentMode`, `onCreateNew`) were never read at all.
  */
-export function usePromptCanvasOrchestration({
-  user = null,
-  showResults = false,
-  inputPrompt,
-  onInputPromptChange,
-  onReoptimize,
-  onResetResultsForEditing,
-  displayedPrompt,
-  previewAspectRatio = null,
-  qualityScore,
-  selectedMode,
-  promptUuid,
-  promptContext,
-  onDisplayedPromptChange,
-  suggestionsData,
-  onFetchSuggestions,
-  onSuggestionClick,
-  initialHighlights = null,
-  initialHighlightsVersion = 0,
-  onHighlightsPersist,
-  onUndo = () => {},
-  onRedo = () => {},
-  canUndo = false,
-  canRedo = false,
-  isProcessing = false,
-  optimizationResultVersion = 0,
-  i2vContext,
-}: PromptCanvasProps): {
+export function usePromptCanvasOrchestration(): {
   selectedSpanValue: SelectedSpanContextValue;
   viewProps: PromptCanvasViewProps;
 } {
-  const [isBulkCopyLoading, setIsCopyAllDebugLoading] = useState(false);
-
-  // Debug logging
-  const debug = useDebugLogger("PromptCanvas", {
-    mode: selectedMode,
-    hasPrompt: !!displayedPrompt,
-    hasHighlights: !!initialHighlights,
-  });
-
-  // Refs
-  const outlineOverlayRef = useRef<HTMLDivElement>(null!);
-  const coherence = useCoherence();
-  const { registerInsertHandler } = usePromptInsertionBus();
-  const toast = useToast();
-  const versionsDrawer = useDrawerState({
-    defaultOpen: true,
-    storageKey: "prompt-optimizer:versions-drawer",
-    position: "bottom",
-    desktopMode: "push",
-  });
-
   // Get model + layout state from context
   const {
+    currentMode,
     selectedModel,
     generationParams,
     setSelectedModel,
@@ -136,15 +108,79 @@ export function usePromptCanvasOrchestration({
     setCurrentPromptDocId,
     activeVersionId,
     setActiveVersionId,
+    suggestionsData,
   } = usePromptSession();
+  const { showResults, setShowResults } = usePromptUIStateContext();
+  const {
+    user,
+    onDisplayedPromptChange,
+    onReoptimize,
+    onFetchSuggestions,
+    onSuggestionClick,
+    onHighlightsPersist,
+    onUndo,
+    onRedo,
+    stablePromptContext: promptContext,
+  } = usePromptResultsActions();
+  const { i2vContext } = usePromptResultsData();
+
+  const {
+    inputPrompt,
+    setInputPrompt: onInputPromptChange,
+    displayedPrompt,
+    previewAspectRatio,
+    qualityScore,
+    isProcessing,
+    optimizationResultVersion,
+  } = promptOptimizer;
+  const selectedMode = currentMode.id;
+  const promptUuid = currentPromptUuid;
+
+  const [isBulkCopyLoading, setIsCopyAllDebugLoading] = useState(false);
+
+  // Refs
+  const outlineOverlayRef = useRef<HTMLDivElement>(null!);
+  const coherence = useCoherence();
+  const { registerInsertHandler } = usePromptInsertionBus();
+  const toast = useToast();
+  const versionsDrawer = useDrawerState({
+    defaultOpen: true,
+    storageKey: "prompt-optimizer:versions-drawer",
+    position: "bottom",
+    desktopMode: "push",
+  });
+
   const {
     applyInitialHighlightSnapshot,
     resetEditStacks,
     setDisplayedPromptSilently,
     resetVersionEdits,
   } = usePromptActions();
-  const { latestHighlightRef, versionEditCountRef, versionEditsRef } =
-    usePromptHighlights();
+  const {
+    initialHighlights,
+    initialHighlightsVersion,
+    canUndo,
+    canRedo,
+    latestHighlightRef,
+    versionEditCountRef,
+    versionEditsRef,
+  } = usePromptHighlights();
+
+  // Debug logging
+  const debug = useDebugLogger("PromptCanvas", {
+    mode: selectedMode,
+    hasPrompt: !!displayedPrompt,
+    hasHighlights: !!initialHighlights,
+  });
+
+
+  // Leaving the results view for editing: clear the displayed prompt and drop
+  // back to the input. Was passed down as a prop built from the same two
+  // setters this hook already holds.
+  const onResetResultsForEditing = useCallback((): void => {
+    setDisplayedPromptSilently("");
+    setShowResults(false);
+  }, [setDisplayedPromptSilently, setShowResults]);
   const { lockedSpans, addLockedSpan, removeLockedSpan } = promptOptimizer;
   const serializedKeyframes = useMemo(
     () => serializeKeyframes(keyframes),
@@ -231,25 +267,30 @@ export function usePromptCanvasOrchestration({
   const isSuggestionsOpen = Boolean(
     selectedSpanId || (suggestionsData && suggestionsData.show !== false),
   );
+  const { shotId, shotPromptEntry, updateShotVersions } = useShotGenerations({
+    currentShot,
+    updateShot,
+  });
+
   const {
     currentVersions,
     orderedVersions,
+    versionsForPanel,
     selectedVersionId,
+    activeVersion,
     promptVersionId,
     handleSelectVersion,
     handleCreateVersion,
     createVersionIfNeeded,
     handleGenerationsChange,
+    setGenerationFavorite,
     syncVersionHighlights,
     versioningPromptUuid,
-    versionsPanelProps,
-    generationsPanelProps,
-    handleReuseGeneration,
-    handleToggleGenerationFavorite,
-  } = useCanvasGenerations({
+  } = useVersionManagement({
     hasShotContext,
-    currentShot,
-    updateShot,
+    shotId,
+    shotPromptEntry,
+    updateShotVersions,
     promptHistory,
     currentPromptUuid,
     currentPromptDocId,
@@ -266,23 +307,83 @@ export function usePromptCanvasOrchestration({
     serializedKeyframes,
     promptOptimizer,
     applyInitialHighlightSnapshot,
-    resetEditStacks,
     setDisplayedPromptSilently,
     latestHighlightRef,
     versionEditCountRef,
     versionEditsRef,
     resetVersionEdits,
     effectiveAspectRatio,
-    showResults,
-    normalizedInputPrompt,
-    durationSeconds,
-    fpsNumber,
-    onInputPromptChange,
-    onResetResultsForEditing,
-    setSelectedModel,
-    setVideoTier,
-    setGenerationParams,
   });
+
+  const handleReuseGeneration = useCallback(
+    (generation: Generation): void => {
+      applyGenerationReuse(generation, {
+        onInputPromptChange,
+        onResetResultsForEditing,
+        setSelectedModel,
+        setVideoTier,
+        setGenerationParams,
+      });
+    },
+    [
+      onInputPromptChange,
+      onResetResultsForEditing,
+      setGenerationParams,
+      setSelectedModel,
+      setVideoTier,
+    ],
+  );
+
+  const versionsPanelProps = useMemo<VersionsPanelPropsBase>(
+    () => ({
+      versions: versionsForPanel,
+      selectedVersionId,
+      onSelectVersion: handleSelectVersion,
+      onCreateVersion: handleCreateVersion,
+    }),
+    [
+      versionsForPanel,
+      selectedVersionId,
+      handleSelectVersion,
+      handleCreateVersion,
+    ],
+  );
+
+  const generationsPanelProps = useMemo<GenerationsPanelProps>(
+    () => ({
+      prompt: showResults
+        ? (normalizedDisplayedPrompt ?? "")
+        : normalizedInputPrompt,
+      promptVersionId,
+      aspectRatio: effectiveAspectRatio ?? DEFAULT_ASPECT_RATIO,
+      duration: durationSeconds ?? undefined,
+      fps: fpsNumber ?? undefined,
+      generationParams: generationParams ?? undefined,
+      initialGenerations: resolveInitialGenerations(
+        activeVersion?.generations ?? undefined,
+        promptVersionId,
+      ),
+      onGenerationsChange: handleGenerationsChange,
+      versions: currentVersions,
+      onRestoreVersion: handleSelectVersion,
+      onCreateVersionIfNeeded: createVersionIfNeeded,
+    }),
+    [
+      showResults,
+      normalizedDisplayedPrompt,
+      normalizedInputPrompt,
+      promptVersionId,
+      effectiveAspectRatio,
+      durationSeconds,
+      fpsNumber,
+      generationParams,
+      activeVersion,
+      handleGenerationsChange,
+      currentVersions,
+      handleSelectVersion,
+      createVersionIfNeeded,
+    ],
+  );
 
   const setShowLegend = useCallback(
     (value: boolean) => setState({ showLegend: value }),
@@ -550,7 +651,7 @@ export function usePromptCanvasOrchestration({
     setSelectedSpanId,
     parseResultSpans: parseResult.spans,
     normalizedDisplayedPrompt,
-    ...(onSuggestionClick ? { onSuggestionClick } : {}),
+    onSuggestionClick,
     setState,
   });
 
@@ -707,7 +808,7 @@ export function usePromptCanvasOrchestration({
     versionsPanelProps,
     generationsPanelProps,
     onReuseGeneration: handleReuseGeneration,
-    onToggleGenerationFavorite: handleToggleGenerationFavorite,
+    onToggleGenerationFavorite: setGenerationFavorite,
     generationsSheetOpen,
     onGenerationsSheetOpenChange: setGenerationsSheetOpen,
     showDiff,

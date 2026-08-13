@@ -71,12 +71,6 @@ interface UseVersionManagementOptions {
     snapshot: HighlightSnapshot | null,
     options: { bumpVersion: boolean; markPersisted: boolean },
   ) => void;
-  /**
-   * Accepted but never invoked: selecting a take is browsing, and browsing must
-   * not clear the creator's undo/redo history. Retained only so the existing
-   * caller keeps type-checking; safe to drop from both sides in one change.
-   */
-  resetEditStacks: () => void;
   setDisplayedPromptSilently: (text: string) => void;
   latestHighlightRef: MutableRefObject<HighlightSnapshot | null>;
   versionEditCountRef: MutableRefObject<number>;

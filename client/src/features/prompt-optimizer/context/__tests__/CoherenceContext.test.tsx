@@ -2,7 +2,7 @@
  * The coherence seam.
  *
  * These ten values used to reach the panel by travelling workspace hook →
- * PromptResultsActionsProvider → PromptResultsSection → PromptCanvasProps →
+ * PromptResultsActionsProvider → PromptCanvas →
  * useCanvasCoherence → viewProps → PromptCanvasView, optional at every hop and
  * with no test anywhere on the path. The context replaced the tunnel, so this
  * pins both halves of its contract: a provided value reaches a consumer intact,

@@ -6,7 +6,6 @@
 
 export { PromptCanvas } from "./PromptCanvas";
 export type {
-  PromptCanvasProps,
   HighlightSnapshot,
   ParseResult,
   SuggestionPayload,

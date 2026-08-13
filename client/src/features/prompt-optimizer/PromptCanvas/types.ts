@@ -163,44 +163,4 @@ export interface ValidSpan {
   confidence: number;
 }
 
-export interface PromptCanvasProps {
-  user?: User | null | undefined;
-  showResults?: boolean | undefined;
-  inputPrompt: string;
-  onInputPromptChange: (text: string) => void;
-  onResetResultsForEditing?: (() => void) | undefined;
-  onReoptimize: (
-    promptToOptimize?: string,
-    options?: OptimizationOptions,
-  ) => Promise<void>;
-  displayedPrompt: string | null;
-  optimizedPrompt: string;
-  previewPrompt?: string | null | undefined;
-  previewAspectRatio?: string | null | undefined;
-  qualityScore: number | null;
-  selectedMode: string;
-  currentMode: Mode;
-  promptUuid: string | null;
-  promptContext: PromptContext | null;
-  onDisplayedPromptChange: (text: string) => void;
-  suggestionsData: SuggestionsData | null;
-  onFetchSuggestions?: ((payload: SuggestionPayload) => void) | undefined;
-  onSuggestionClick?:
-    | ((suggestion: SuggestionItem | string) => void)
-    | undefined;
-  onCreateNew: () => void;
-  initialHighlights?: HighlightSnapshot | null | undefined;
-  initialHighlightsVersion?: number | undefined;
-  onHighlightsPersist?: ((result: SpanLabelingResult) => void) | undefined;
-  onUndo?: (() => void) | undefined;
-  onRedo?: (() => void) | undefined;
-  canUndo?: boolean | undefined;
-  canRedo?: boolean | undefined;
-  isProcessing?: boolean | undefined;
-  optimizationResultVersion?: number | undefined;
-
-  // Coherence panel (inline, collapsible)
-  i2vContext?: I2VContext | null | undefined;
-}
-
 export type { SuggestionItem, SuggestionPayload };

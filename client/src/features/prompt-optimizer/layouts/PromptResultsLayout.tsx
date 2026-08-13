@@ -6,7 +6,7 @@ import { useBillingStatus } from "@/features/billing/hooks/useBillingStatus";
 import { CreditOnboardingBanner } from "@/features/billing/components/CreditOnboardingBanner";
 import { useCreditBalance } from "@/contexts/CreditBalanceContext";
 import type { ContinuityShot } from "@/features/continuity/types";
-import { PromptResultsSection } from "../components/PromptResultsSection";
+import { PromptCanvas } from "../PromptCanvas";
 import { useWorkspaceSession } from "../context/WorkspaceSessionContext";
 import {
   ContinuityIntentPicker,
@@ -19,7 +19,7 @@ import {
 /**
  * PromptResultsLayout - Results/Canvas View Layout
  *
- * Main content layout for the results/canvas view (PromptCanvas via PromptResultsSection).
+ * Main content layout for the results/canvas view (PromptCanvas).
  *
  * App shell (history sidebar + top bar) lives in PromptOptimizerWorkspace.
  */
@@ -264,7 +264,7 @@ export const PromptResultsLayout = (): React.ReactElement => {
           </div>
         )}
 
-      <PromptResultsSection />
+      <PromptCanvas />
       {FEATURES.SEQUENCE_EDITOR_UI ? (
         <div className="bg-app px-3 py-2">
           <PipelineStatus shot={currentShot} isGenerating={isGeneratingShot} />

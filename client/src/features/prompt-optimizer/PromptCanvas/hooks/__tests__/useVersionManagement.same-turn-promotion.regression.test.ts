@@ -72,7 +72,6 @@ const setup = () => {
       serializedKeyframes: [],
       promptOptimizer: { setOptimizedPrompt: vi.fn() },
       applyInitialHighlightSnapshot: vi.fn(),
-      resetEditStacks: vi.fn(),
       setDisplayedPromptSilently: vi.fn(),
       latestHighlightRef: { current: null },
       versionEditCountRef: { current: 0 },

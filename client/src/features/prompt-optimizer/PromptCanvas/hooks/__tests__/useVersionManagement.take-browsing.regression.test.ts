@@ -89,7 +89,6 @@ const setup = () => {
       promptOptimizer: { setOptimizedPrompt },
       applyInitialHighlightSnapshot:
         highlightState.applyInitialHighlightSnapshot,
-      resetEditStacks: highlightState.resetEditStacks,
       setDisplayedPromptSilently,
       latestHighlightRef: highlightState.latestHighlightRef,
       versionEditCountRef: { current: 0 },

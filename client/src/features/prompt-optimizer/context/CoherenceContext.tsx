@@ -9,8 +9,8 @@ import type { CoherenceRecommendation } from "@/features/prompt-optimizer/types/
  * consumers (the coherence panel and the editor's span markers) are both single
  * and both far apart. These ten values used to travel the distance as props:
  * workspace hook → PromptResultsActionsProvider → PromptResultsSection (which
- * read the context only to write the same values back out as props) →
- * PromptCanvasProps → a pass-through `useCanvasCoherence` hook → viewProps →
+ * read the context only to write the same values back out as props; since
+ * retired) → the canvas orchestration hook → viewProps →
  * PromptCanvasView → the panel. Six declarations for one producer, and every
  * field optional at every hop, so the panel normalized all eight of its inputs
  * (`?? []`, `Boolean()`, `?? (() => {})`) at the end of the tunnel.
