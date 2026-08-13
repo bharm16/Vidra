@@ -687,10 +687,32 @@ export function useGenerationActions(
     [acceptGeneration, finalizeGeneration],
   );
 
-  const generateDraft = useCallback(
-    async (model: DraftModel, prompt: string, params: GenerationParams) => {
+  /**
+   * The one video run. Draft and render were two ~400-line copies of this
+   * pipeline — input-support gating, media resolution, dispatch, the
+   * direct-URL/job fork, server-id adoption, polling, finalize — differing
+   * only in prompt preparation, character-asset handling, and label strings.
+   * The tier is data the run carries: it picks the prompt prep and the log
+   * vocabulary, not which pipeline executes.
+   *
+   * Draft-only phases: a flux-kontext draft is a storyboard (a different
+   * provider call inside the same submission envelope), and a video draft
+   * resolves @-triggers then compiles the WAN prompt. Render-only: a start
+   * frame that IS a character asset skips URL resolution and travels as
+   * `characterAssetId`, never as `startImage`.
+   */
+  const runVideoGeneration = useCallback(
+    async (
+      tier: Generation["tier"],
+      model: string,
+      prompt: string,
+      params: GenerationParams,
+    ) => {
       if (isSubmittingRef.current) return;
       setSubmissionPending(true);
+      const isDraft = tier === "draft";
+      const runLabel = isDraft ? ("Draft" as const) : ("Render" as const);
+      const dispatchNoun = isDraft ? "Video draft" : "Render";
       const resolved = resolveGenerationOptions(optionsRef.current, params);
       const generation = buildGeneration(model, prompt, resolved);
       // Provisional until the server names this take (CONTEXT.md → Take
@@ -699,32 +721,54 @@ export function useGenerationActions(
       let takeId = generation.id;
       const modelConfig = getModelConfig(model);
       const requiredCredits = getModelCreditCost(model, resolved.duration);
-      const operationLabel = `${modelConfig?.label ?? "Video"} preview`;
+      const operationLabel = `${modelConfig?.label ?? "Video"} ${
+        isDraft ? "preview" : "render"
+      }`;
       let generationAccepted = false;
       const startedAt = Date.now();
       const motionMeta = extractMotionMeta(resolved.generationParams);
       const faceSwapMeta = extractFaceSwapMeta(resolved);
-      const startImageUrlHost = resolved.startImage?.url
-        ? safeUrlHost(resolved.startImage.url)
-        : null;
+      const isCharacterAsset =
+        !isDraft &&
+        resolved.startImage?.source === "asset" &&
+        Boolean(resolved.startImage?.assetId);
+      const startImageUrlHost =
+        !isCharacterAsset && resolved.startImage?.url
+          ? safeUrlHost(resolved.startImage.url)
+          : null;
       const requestedEndImage = Boolean(resolved.endImage?.url);
       const requestedReferenceImageCount =
         resolved.referenceImages?.length ?? 0;
       const requestedExtendMode = Boolean(resolved.extendVideoUrl);
 
-      log.info("Draft generation started", {
+      log.info(`${runLabel} generation started`, {
         generationId: takeId,
-        tier: "draft",
+        tier,
         model,
         promptLength: prompt.trim().length,
         aspectRatio: resolved.aspectRatio ?? null,
         hasStartImage: Boolean(resolved.startImage),
-        startImageUrlHost,
-        faceSwapApplied: faceSwapMeta.faceSwapApplied,
-        faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-          ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-          : null,
-        characterAssetId: faceSwapMeta.characterAssetId,
+        ...(isDraft
+          ? {
+              startImageUrlHost,
+              faceSwapApplied: faceSwapMeta.faceSwapApplied,
+              faceSwapUrlHost: faceSwapMeta.faceSwapUrl
+                ? safeUrlHost(faceSwapMeta.faceSwapUrl)
+                : null,
+              characterAssetId: faceSwapMeta.characterAssetId,
+            }
+          : {
+              isCharacterAsset,
+              startImageUrlHost,
+              characterAssetId: isCharacterAsset
+                ? (resolved.startImage?.assetId ?? null)
+                : null,
+              faceSwapApplied: faceSwapMeta.faceSwapApplied,
+              faceSwapUrlHost: faceSwapMeta.faceSwapUrl
+                ? safeUrlHost(faceSwapMeta.faceSwapUrl)
+                : null,
+              characterAssetIdOverride: faceSwapMeta.characterAssetId,
+            }),
         requestedEndImage,
         requestedReferenceImageCount,
         requestedExtendMode,
@@ -735,7 +779,7 @@ export function useGenerationActions(
       const submission = registerSubmission(takeId, controller);
 
       try {
-        if (model === "flux-kontext") {
+        if (isDraft && model === "flux-kontext") {
           const response = await generateStoryboardPreview(prompt, {
             ...(resolved.aspectRatio
               ? { aspectRatio: resolved.aspectRatio }
@@ -806,56 +850,59 @@ export function useGenerationActions(
           return;
         }
 
-        let promptForCompilation = prompt.trim();
+        // Draft-only prompt preparation: resolve @-triggers into their asset
+        // text, then compile the WAN prompt. A render sends the words as-is.
+        let requestPrompt = prompt;
         let resolvedCharacterAssetId =
           resolved.characterAssetId?.trim() || null;
+        if (isDraft) {
+          let promptForCompilation = prompt.trim();
+          if (hasPromptTriggers(promptForCompilation)) {
+            try {
+              const resolvedPrompt =
+                await assetApi.resolve(promptForCompilation);
+              const expandedPrompt = resolvedPrompt.expandedText.trim();
+              if (expandedPrompt.length > 0) {
+                promptForCompilation = expandedPrompt;
+              }
+              if (!resolvedCharacterAssetId) {
+                resolvedCharacterAssetId =
+                  resolvedPrompt.characters[0]?.id ?? null;
+              }
+            } catch (error) {
+              const info = sanitizeError(error);
+              log.warn(
+                "Prompt trigger resolution failed; falling back to raw prompt",
+                {
+                  generationId: takeId,
+                  error: info.message,
+                  errorName: info.name,
+                },
+              );
+            }
+          }
+          if (controller.signal.aborted) {
+            return;
+          }
 
-        if (hasPromptTriggers(promptForCompilation)) {
           try {
-            const resolvedPrompt = await assetApi.resolve(promptForCompilation);
-            const expandedPrompt = resolvedPrompt.expandedText.trim();
-            if (expandedPrompt.length > 0) {
-              promptForCompilation = expandedPrompt;
-            }
-            if (!resolvedCharacterAssetId) {
-              resolvedCharacterAssetId =
-                resolvedPrompt.characters[0]?.id ?? null;
-            }
+            requestPrompt = await compileWanPrompt(
+              promptForCompilation,
+              controller.signal,
+            );
           } catch (error) {
             const info = sanitizeError(error);
-            log.warn(
-              "Prompt trigger resolution failed; falling back to raw prompt",
-              {
-                generationId: takeId,
-                error: info.message,
-                errorName: info.name,
-              },
-            );
+            log.warn("WAN prompt compilation failed; using raw prompt", {
+              generationId: takeId,
+              error: info.message,
+              errorName: info.name,
+            });
+            requestPrompt = promptForCompilation;
+          }
+          if (controller.signal.aborted) {
+            return;
           }
         }
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        let wanPrompt = promptForCompilation;
-        try {
-          wanPrompt = await compileWanPrompt(
-            promptForCompilation,
-            controller.signal,
-          );
-        } catch (error) {
-          const info = sanitizeError(error);
-          log.warn("WAN prompt compilation failed; using raw prompt", {
-            generationId: takeId,
-            error: info.message,
-            errorName: info.name,
-          });
-          wanPrompt = promptForCompilation;
-        }
-        if (controller.signal.aborted) {
-          return;
-        }
-        const motionPromptInjected = false;
 
         const videoInputSupport = await getVideoInputSupport(model);
         if (controller.signal.aborted) {
@@ -876,9 +923,11 @@ export function useGenerationActions(
           ? requestedExtendVideoUrl
           : null;
 
-        const resolvedStartImage = resolved.startImage
-          ? await resolveStartImageUrl(resolved.startImage)
-          : null;
+        const resolvedStartImage = isCharacterAsset
+          ? (resolved.startImage ?? null)
+          : resolved.startImage
+            ? await resolveStartImageUrl(resolved.startImage)
+            : null;
         const resolvedEndImage = allowedEndImageInput
           ? await resolveEndImageUrl(allowedEndImageInput)
           : null;
@@ -895,9 +944,10 @@ export function useGenerationActions(
         if (controller.signal.aborted) {
           return;
         }
-        const requestStartImageUrlHost = resolvedStartImage?.url
-          ? safeUrlHost(resolvedStartImage.url)
-          : startImageUrlHost;
+        const requestStartImageUrlHost =
+          !isCharacterAsset && resolvedStartImage?.url
+            ? safeUrlHost(resolvedStartImage.url)
+            : startImageUrlHost;
         const requestEndImageUrlHost = resolvedEndImage?.url
           ? safeUrlHost(resolvedEndImage.url)
           : null;
@@ -905,19 +955,38 @@ export function useGenerationActions(
           ? safeUrlHost(resolvedExtendVideoUrl)
           : null;
 
-        log.info("Video draft request dispatched", {
+        // What the request names as the character: a render whose start frame
+        // IS the asset names that asset; otherwise whatever the options
+        // carried (a draft may have upgraded it from a prompt trigger).
+        const requestCharacterAssetId = isCharacterAsset
+          ? (resolved.startImage?.assetId ?? null)
+          : resolvedCharacterAssetId;
+
+        log.info(`${dispatchNoun} request dispatched`, {
           generationId: takeId,
           model,
-          promptLength: wanPrompt.length,
           aspectRatio: resolved.aspectRatio ?? null,
-          hasStartImage: Boolean(resolvedStartImage?.url),
-          startImageUrlHost: requestStartImageUrlHost,
-          motionPromptInjected,
-          faceSwapApplied: faceSwapMeta.faceSwapApplied,
-          faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-            ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-            : null,
-          characterAssetId: resolvedCharacterAssetId,
+          ...(isDraft
+            ? {
+                promptLength: requestPrompt.length,
+                hasStartImage: Boolean(resolvedStartImage?.url),
+                startImageUrlHost: requestStartImageUrlHost,
+                motionPromptInjected: false,
+                faceSwapApplied: faceSwapMeta.faceSwapApplied,
+                faceSwapUrlHost: faceSwapMeta.faceSwapUrl
+                  ? safeUrlHost(faceSwapMeta.faceSwapUrl)
+                  : null,
+                characterAssetId: resolvedCharacterAssetId,
+              }
+            : {
+                isCharacterAsset,
+                startImageUrlHost: requestStartImageUrlHost,
+                faceSwapApplied: faceSwapMeta.faceSwapApplied,
+                faceSwapUrlHost: faceSwapMeta.faceSwapUrl
+                  ? safeUrlHost(faceSwapMeta.faceSwapUrl)
+                  : null,
+                characterAssetId: faceSwapMeta.characterAssetId,
+              }),
           requestedEndImage,
           requestedReferenceImageCount,
           requestedExtendMode,
@@ -929,14 +998,14 @@ export function useGenerationActions(
           ...motionMeta,
         });
         const response = await generateVideoPreview(
-          wanPrompt,
+          requestPrompt,
           resolved.aspectRatio ?? undefined,
           model,
           {
-            ...(resolvedStartImage?.url
+            ...(!isCharacterAsset && resolvedStartImage?.url
               ? { startImage: resolvedStartImage.url }
               : {}),
-            ...(resolvedStartImage?.generationId
+            ...(!isCharacterAsset && resolvedStartImage?.generationId
               ? { sourceGenerationId: resolvedStartImage.generationId }
               : {}),
             ...(resolvedEndImage?.url
@@ -955,11 +1024,11 @@ export function useGenerationActions(
             ...(resolvedExtendVideoUrl
               ? { extendVideoUrl: resolvedExtendVideoUrl }
               : {}),
+            ...(requestCharacterAssetId
+              ? { characterAssetId: requestCharacterAssetId }
+              : {}),
             ...(resolved.generationParams
               ? { generationParams: resolved.generationParams }
-              : {}),
-            ...(resolvedCharacterAssetId
-              ? { characterAssetId: resolvedCharacterAssetId }
               : {}),
             ...(resolved.faceSwapAlreadyApplied
               ? { faceSwapAlreadyApplied: true }
@@ -971,7 +1040,7 @@ export function useGenerationActions(
           return;
         }
 
-        log.info("Video draft response received", {
+        log.info(`${dispatchNoun} response received`, {
           generationId: takeId,
           success: response.success,
           hasVideoUrl: Boolean(response.videoUrl),
@@ -1019,7 +1088,7 @@ export function useGenerationActions(
             },
           );
           submission.releasePendingFlag();
-          log.debug("Waiting for video draft job to complete", {
+          log.debug(`Waiting for ${dispatchNoun.toLowerCase()} job to complete`, {
             generationId: takeId,
             jobId: response.jobId,
           });
@@ -1045,7 +1114,7 @@ export function useGenerationActions(
           videoStoragePath = jobResult?.storagePath ?? videoStoragePath;
           videoAssetId = jobResult?.assetId ?? videoAssetId;
           videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
-          log.debug("Video draft job completed", {
+          log.debug(`${dispatchNoun} job completed`, {
             generationId: takeId,
             jobId: response.jobId,
             hasVideoUrl: Boolean(videoUrl),
@@ -1059,19 +1128,19 @@ export function useGenerationActions(
           submission.releasePendingFlag();
         }
         if (!videoUrl) {
-          log.warn("Video draft completed without a video URL", {
+          const fallbackError = isDraft
+            ? "Failed to generate video"
+            : "Failed to render video";
+          log.warn(`${dispatchNoun} completed without a video URL`, {
             generationId: takeId,
             jobId: response.jobId ?? null,
-            error:
-              response.error || response.message || "Failed to generate video",
+            error: response.error || response.message || fallbackError,
             ...motionMeta,
           });
-          throw new Error(
-            response.error || response.message || "Failed to generate video",
-          );
+          throw new Error(response.error || response.message || fallbackError);
         }
         const durationMs = Date.now() - startedAt;
-        log.info("Video draft generation succeeded", {
+        log.info(`${dispatchNoun} generation succeeded`, {
           generationId: takeId,
           durationMs,
           faceSwapApplied:
@@ -1095,7 +1164,7 @@ export function useGenerationActions(
         }
       } catch (error) {
         failGenerationRun(error, {
-          runLabel: "Draft",
+          runLabel,
           model,
           generation,
           takeId,
@@ -1120,6 +1189,12 @@ export function useGenerationActions(
       registerSubmission,
       setSubmissionPending,
     ],
+  );
+
+  const generateDraft = useCallback(
+    (model: DraftModel, prompt: string, params: GenerationParams) =>
+      runVideoGeneration("draft", model, prompt, params),
+    [runVideoGeneration],
   );
 
   const generateStoryboard = useCallback(
@@ -1280,326 +1355,9 @@ export function useGenerationActions(
   );
 
   const generateRender = useCallback(
-    async (model: string, prompt: string, params: GenerationParams) => {
-      if (isSubmittingRef.current) return;
-      setSubmissionPending(true);
-      const resolved = resolveGenerationOptions(optionsRef.current, params);
-      const generation = buildGeneration(model, prompt, resolved);
-      // Provisional until the server names this take (CONTEXT.md → Take
-      // identity). Every state reference below follows this, not the
-      // original id, so adoption mid-flight cannot orphan the take.
-      let takeId = generation.id;
-      const modelConfig = getModelConfig(model);
-      const requiredCredits = getModelCreditCost(model, resolved.duration);
-      const operationLabel = `${modelConfig?.label ?? "Video"} render`;
-      let generationAccepted = false;
-      const startedAt = Date.now();
-      const motionMeta = extractMotionMeta(resolved.generationParams);
-      const faceSwapMeta = extractFaceSwapMeta(resolved);
-      const isCharacterAsset =
-        resolved.startImage?.source === "asset" &&
-        Boolean(resolved.startImage?.assetId);
-      const startImageUrlHost =
-        !isCharacterAsset && resolved.startImage?.url
-          ? safeUrlHost(resolved.startImage.url)
-          : null;
-      const requestedEndImage = Boolean(resolved.endImage?.url);
-      const requestedReferenceImageCount =
-        resolved.referenceImages?.length ?? 0;
-      const requestedExtendMode = Boolean(resolved.extendVideoUrl);
-
-      log.info("Render generation started", {
-        generationId: takeId,
-        tier: "render",
-        model,
-        promptLength: prompt.trim().length,
-        aspectRatio: resolved.aspectRatio ?? null,
-        hasStartImage: Boolean(resolved.startImage),
-        isCharacterAsset,
-        startImageUrlHost,
-        characterAssetId: isCharacterAsset
-          ? (resolved.startImage?.assetId ?? null)
-          : null,
-        faceSwapApplied: faceSwapMeta.faceSwapApplied,
-        faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-          ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-          : null,
-        characterAssetIdOverride: faceSwapMeta.characterAssetId,
-        requestedEndImage,
-        requestedReferenceImageCount,
-        requestedExtendMode,
-        ...motionMeta,
-      });
-
-      const controller = new AbortController();
-      const submission = registerSubmission(takeId, controller);
-
-      try {
-        const videoInputSupport = await getVideoInputSupport(model);
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        const requestedEndImageInput = resolved.endImage ?? null;
-        const requestedReferenceInputs = resolved.referenceImages ?? [];
-        const requestedExtendVideoUrl = resolved.extendVideoUrl ?? null;
-
-        const allowedEndImageInput = videoInputSupport.supportsEndFrame
-          ? requestedEndImageInput
-          : null;
-        const allowedReferenceInputs = videoInputSupport.supportsReferenceImages
-          ? requestedReferenceInputs
-          : [];
-        const allowedExtendVideoUrl = videoInputSupport.supportsExtendVideo
-          ? requestedExtendVideoUrl
-          : null;
-
-        const resolvedStartImage = !isCharacterAsset
-          ? await resolveStartImageUrl(resolved.startImage ?? null)
-          : (resolved.startImage ?? null);
-        const resolvedEndImage = allowedEndImageInput
-          ? await resolveEndImageUrl(allowedEndImageInput)
-          : null;
-        const resolvedReferenceImages = allowedReferenceInputs.length
-          ? await Promise.all(
-              allowedReferenceInputs.map((referenceImage) =>
-                resolveReferenceImageUrl(referenceImage),
-              ),
-            )
-          : [];
-        const resolvedExtendVideoUrl = allowedExtendVideoUrl
-          ? await resolveExtendVideoUrl(allowedExtendVideoUrl)
-          : null;
-        if (controller.signal.aborted) {
-          return;
-        }
-        const requestStartImageUrlHost =
-          !isCharacterAsset && resolvedStartImage?.url
-            ? safeUrlHost(resolvedStartImage.url)
-            : startImageUrlHost;
-        const requestEndImageUrlHost = resolvedEndImage?.url
-          ? safeUrlHost(resolvedEndImage.url)
-          : null;
-        const requestExtendVideoUrlHost = resolvedExtendVideoUrl
-          ? safeUrlHost(resolvedExtendVideoUrl)
-          : null;
-
-        log.info("Render request dispatched", {
-          generationId: takeId,
-          model,
-          aspectRatio: resolved.aspectRatio ?? null,
-          isCharacterAsset,
-          startImageUrlHost: requestStartImageUrlHost,
-          faceSwapApplied: faceSwapMeta.faceSwapApplied,
-          faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-            ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-            : null,
-          characterAssetId: faceSwapMeta.characterAssetId,
-          requestedEndImage,
-          requestedReferenceImageCount,
-          requestedExtendMode,
-          dispatchedEndImage: Boolean(resolvedEndImage?.url),
-          dispatchedReferenceImageCount: resolvedReferenceImages.length,
-          dispatchedExtendMode: Boolean(resolvedExtendVideoUrl),
-          endImageUrlHost: requestEndImageUrlHost,
-          extendVideoUrlHost: requestExtendVideoUrlHost,
-          ...motionMeta,
-        });
-        const response = await generateVideoPreview(
-          prompt,
-          resolved.aspectRatio ?? undefined,
-          model,
-          {
-            ...(!isCharacterAsset && resolvedStartImage?.url
-              ? { startImage: resolvedStartImage.url }
-              : {}),
-            ...(!isCharacterAsset && resolvedStartImage?.generationId
-              ? { sourceGenerationId: resolvedStartImage.generationId }
-              : {}),
-            ...(resolvedEndImage?.url
-              ? { endImage: resolvedEndImage.url }
-              : {}),
-            ...(resolvedReferenceImages.length
-              ? {
-                  referenceImages: resolvedReferenceImages.map(
-                    (referenceImage) => ({
-                      url: referenceImage.url,
-                      type: referenceImage.type,
-                    }),
-                  ),
-                }
-              : {}),
-            ...(resolvedExtendVideoUrl
-              ? { extendVideoUrl: resolvedExtendVideoUrl }
-              : {}),
-            ...(isCharacterAsset
-              ? { characterAssetId: resolved.startImage?.assetId }
-              : {}),
-            ...(!isCharacterAsset && resolved.characterAssetId
-              ? { characterAssetId: resolved.characterAssetId }
-              : {}),
-            ...(resolved.generationParams
-              ? { generationParams: resolved.generationParams }
-              : {}),
-            ...(resolved.faceSwapAlreadyApplied
-              ? { faceSwapAlreadyApplied: true }
-              : {}),
-            ...readSessionParams(optionsRef.current),
-          },
-        );
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        log.info("Render response received", {
-          generationId: takeId,
-          success: response.success,
-          hasVideoUrl: Boolean(response.videoUrl),
-          hasJobId: Boolean(response.jobId),
-          jobId: response.jobId ?? null,
-          faceSwapApplied: response.faceSwapApplied ?? false,
-          faceSwapUrlHost: response.faceSwapUrl
-            ? safeUrlHost(response.faceSwapUrl)
-            : null,
-          ...motionMeta,
-        });
-        syncCreditBalanceFromResponse(response.remainingCredits);
-        let videoUrl: string | null = null;
-        let videoStoragePath: string | null = response.storagePath ?? null;
-        let videoPosterUrl: string | null = response.startImageUrl ?? null;
-        let videoAssetId: string | null = response.assetId ?? null;
-        if (response.success && response.videoUrl) {
-          generationAccepted = true;
-          acceptGeneration(
-            { ...generation, id: takeId },
-            {
-              status: "completed",
-              completedAt: Date.now(),
-              mediaUrls: [response.videoUrl],
-              ...buildFaceSwapUpdate(response, generation),
-              ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
-            },
-          );
-          submission.releasePendingFlag();
-          videoUrl = response.videoUrl;
-        } else if (response.success && response.jobId) {
-          // The server persists this clip's generation record under the job
-          // id (processVideoJob), so that is this take's identity from here
-          // on. Without adopting it a session refetch lands a second copy of
-          // the same clip — the duplicate the picture paths already avoid.
-          takeId = submission.adoptServerId(response.jobId);
-          generationAccepted = true;
-          acceptGeneration(
-            { ...generation, id: takeId },
-            {
-              status: resolveAcceptedGenerationStatus(response.status),
-              jobId: response.jobId,
-              ...(response.status ? { serverJobStatus: response.status } : {}),
-              ...buildFaceSwapUpdate(response, generation),
-            },
-          );
-          submission.releasePendingFlag();
-          log.debug("Waiting for render job to complete", {
-            generationId: takeId,
-            jobId: response.jobId,
-          });
-          const jobResult = await waitForVideoJob(
-            response.jobId,
-            controller.signal,
-            (update) => {
-              dispatch({
-                type: "UPDATE_GENERATION",
-                payload: {
-                  id: takeId,
-                  updates: {
-                    status: resolveAcceptedGenerationStatus(update.status),
-                    jobId: response.jobId,
-                    serverProgress: update.progress,
-                    serverJobStatus: update.status,
-                  },
-                },
-              });
-            },
-          );
-          videoUrl = jobResult?.videoUrl ?? null;
-          videoStoragePath = jobResult?.storagePath ?? videoStoragePath;
-          videoAssetId = jobResult?.assetId ?? videoAssetId;
-          videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
-          log.debug("Render job completed", {
-            generationId: takeId,
-            jobId: response.jobId,
-            hasVideoUrl: Boolean(videoUrl),
-          });
-        }
-
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (!generationAccepted) {
-          submission.releasePendingFlag();
-        }
-        if (!videoUrl) {
-          log.warn("Render completed without a video URL", {
-            generationId: takeId,
-            jobId: response.jobId ?? null,
-            error:
-              response.error || response.message || "Failed to render video",
-            ...motionMeta,
-          });
-          throw new Error(
-            response.error || response.message || "Failed to render video",
-          );
-        }
-        const durationMs = Date.now() - startedAt;
-        log.info("Render generation succeeded", {
-          generationId: takeId,
-          durationMs,
-          faceSwapApplied:
-            response?.faceSwapApplied ?? faceSwapMeta.faceSwapApplied,
-          ...motionMeta,
-        });
-        if (response.jobId) {
-          // The i2v start frame doubles as the clip's poster — the space
-          // tile and Library card render stills, never the video itself.
-          const posterUrl = videoPosterUrl ?? resolved.startImage?.url ?? null;
-          finalizeGeneration(takeId, {
-            status: "completed",
-            completedAt: Date.now(),
-            mediaUrls: [videoUrl],
-            jobId: null,
-            serverProgress: 100,
-            serverJobStatus: "completed",
-            ...(posterUrl ? { thumbnailUrl: posterUrl } : {}),
-            ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
-          });
-        }
-      } catch (error) {
-        failGenerationRun(error, {
-          runLabel: "Render",
-          model,
-          generation,
-          takeId,
-          accepted: generationAccepted,
-          controller,
-          submission,
-          operationLabel,
-          requiredCredits,
-          startedAt,
-          motionMeta,
-          jobBacked: true,
-        });
-      } finally {
-        submission.release();
-      }
-    },
-    [
-      acceptGeneration,
-      dispatch,
-      failGenerationRun,
-      finalizeGeneration,
-      registerSubmission,
-      setSubmissionPending,
-    ],
+    (model: string, prompt: string, params: GenerationParams) =>
+      runVideoGeneration("render", model, prompt, params),
+    [runVideoGeneration],
   );
 
   const cancelGeneration = useCallback(
@@ -1636,17 +1394,17 @@ export function useGenerationActions(
         fps: generation.fps ?? opts.fps ?? null,
         generationParams: opts.generationParams,
       };
-      if (generation.tier === "draft") {
-        generateDraft(
-          generation.model as DraftModel,
-          generation.prompt,
-          params,
-        );
-        return;
-      }
-      generateRender(generation.model, generation.prompt, params);
+      // One pipeline: the take's tier is data it carries (derived from its
+      // model, ADR-0021), not a fork between two copies of the run. A
+      // flux-kontext draft re-enters its storyboard branch the same way.
+      runVideoGeneration(
+        generation.tier,
+        generation.model,
+        generation.prompt,
+        params,
+      );
     },
-    [generateDraft, generateRender],
+    [runVideoGeneration],
   );
 
   return {
