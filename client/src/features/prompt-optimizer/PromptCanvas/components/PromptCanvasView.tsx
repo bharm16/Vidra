@@ -8,6 +8,7 @@ import { GenerationsPanel } from "@features/generations";
 import { SpanCategoryAccordion } from "@features/prompt-optimizer/SpanCategoryAccordion/SpanCategoryAccordion";
 import { HighlightingErrorBoundary } from "@features/span-highlighting/components/HighlightingErrorBoundary";
 import { CoherencePanel } from "@features/prompt-optimizer/components/coherence/CoherencePanel";
+import { CoherenceMarkPopover } from "./CoherenceMarkPopover";
 import { useCoherence } from "@features/prompt-optimizer/context/CoherenceContext";
 import { CanvasWorkspace } from "@features/workspace-shell";
 import type { PromptCanvasViewProps } from "./PromptCanvasView.types";
@@ -44,12 +45,20 @@ export function PromptCanvasView({
   const coherence = useCoherence();
   if (FEATURES.CANVAS_FIRST_LAYOUT) {
     return (
-      <CanvasWorkspace
-        generationsPanelProps={generationsPanelProps}
-        onReuseGeneration={onReuseGeneration}
-        onToggleGenerationFavorite={onToggleGenerationFavorite}
-        editing={editing}
-      />
+      <>
+        <CanvasWorkspace
+          generationsPanelProps={generationsPanelProps}
+          onReuseGeneration={onReuseGeneration}
+          onToggleGenerationFavorite={onToggleGenerationFavorite}
+          editing={editing}
+        />
+        {/*
+          The canvas-first layout has no coherence panel (the handoff specifies
+          none — see CoherenceContextValue), so the mark itself is the surface:
+          hovering an underlined span opens the explanation and the fix.
+        */}
+        <CoherenceMarkPopover editorRef={editing.editorRef} />
+      </>
     );
   }
 
@@ -128,10 +137,9 @@ export function PromptCanvasView({
           {/*
             Unreachable while CANVAS_FIRST_LAYOUT is on (it defaults to true):
             this is below the early return above, so only the legacy layout
-            renders it. The coherence check and its span underlines are live on
-            both branches — it is the explaining surface that is missing. Kept
-            rather than moved or deleted; see CoherenceContextValue for the two
-            decisions that settle it.
+            renders it. The shipping layout explains marks with
+            CoherenceMarkPopover instead. Kept rather than moved or deleted;
+            see CoherenceContextValue for the decisions that settle it.
           */}
           <CoherencePanel
             issues={coherence.issues}

@@ -17,57 +17,54 @@ import type { CoherenceRecommendation } from "@/features/prompt-optimizer/types/
  *
  * Non-optional here on purpose: whoever provides coherence provides all of it.
  *
- * ## Only half of this reaches a user today
+ * ## Who consumes what
  *
- * The check runs and the span markers render on both layout branches, but the
- * panel that lists the issues and offers the fixes is inside
- * `PromptCanvasView`'s legacy branch — after the
- * `if (FEATURES.CANVAS_FIRST_LAYOUT) return <CanvasWorkspace …>` early return —
- * and that flag defaults to `true`. So a creator sees underlines under
- * contradicting spans and has no surface explaining them.
+ * Three consumers, two branches:
  *
- * Left that way deliberately, on two existing decisions rather than a
- * preference:
+ * - The editor's span markers (`useCoherenceSpanMarkers`) underline affected
+ *   spans on both layout branches — `affectedSpanIds`, `spanIssueMap`.
+ * - `CoherenceMarkPopover` explains a mark on hover and offers the first fix.
+ *   It is the canvas-first surface for issues (the layout that actually ships:
+ *   `CANVAS_FIRST_LAYOUT` defaults true) — `issues`, `onDismissIssue`,
+ *   `onApplyFix`.
+ * - `CoherencePanel` lists everything with per-recommendation diffs. It sits in
+ *   `PromptCanvasView`'s legacy branch only, so it is unreachable under the
+ *   default flag. Kept there anyway: ADR-0014 makes the design handoff the
+ *   visual authority and the handoff has no coherence *panel*, and
+ *   `docs/REBUILD.md` schedules the whole legacy branch for one deletion sweep
+ *   (LAST) — the 2026-08-09 audit counts the panel among its 8 components.
  *
- * - Giving the panel a home in the canvas-first layout would add a surface the
- *   design handoff does not specify, and per ADR-0014 the handoff is the
- *   authoritative visual spec. `design_handoff_vidra/` has no coherence screen.
- * - Deleting it now would pre-empt a scheduled sweep. `docs/REBUILD.md` puts
- *   "the old-layout deletion (LAST)" at the end of the rebuild, and the
- *   2026-08-09 deep-module audit sizes that branch at 8 components and 55 props
- *   — the panel is one of the eight. Taking it alone leaves the other seven and
- *   the branch itself, against the build-scope rule that deletions land
- *   alongside their replacements.
+ * When that sweep runs, only the panel-exclusive fields go with it:
+ * `isChecking`, `isPanelExpanded`, `onTogglePanelExpanded`, `onDismissAll`,
+ * `onScrollToSpan`. Everything else has a live consumer.
  *
- * When that sweep runs, the panel's half of this value goes with it: `issues`,
- * `isChecking`, `isPanelExpanded`, `onTogglePanelExpanded`, `onDismissIssue`,
- * `onDismissAll`, `onApplyFix`, `onScrollToSpan`. What survives is what the
- * editor underlines with — `affectedSpanIds` and `spanIssueMap` — unless the
- * handoff grows a coherence surface first, which is the decision that would
- * reverse this one.
+ * The popover itself is a provisional treatment (ADR-0014): built strictly from
+ * existing canvas vocabulary, pending a handoff ruling on how coherence should
+ * look. Restyling or replacing it happens in one component.
  *
  * Note the term: this is *prompt* coherence, contradictions inside one prompt.
  * Not the multi-shot coherence ADR-0002 and CONTEXT.md put out of scope — that
  * is the expert's problem and a different subsystem (`services/continuity`).
  */
 export interface CoherenceContextValue {
-  // --- the panel's half: unreachable while CANVAS_FIRST_LAYOUT is on ---
+  // --- live in the shipping layout: markers + CoherenceMarkPopover ---
   issues: CoherenceIssue[];
-  isChecking: boolean;
-  isPanelExpanded: boolean;
-  onTogglePanelExpanded: () => void;
   onDismissIssue: (issueId: string) => void;
-  onDismissAll: () => void;
   onApplyFix: (
     issueId: string,
     recommendation: CoherenceRecommendation,
   ) => void;
-  onScrollToSpan: (spanId: string) => void;
-  // --- the editor's half: live on both branches ---
   /** Spans an issue touches — the editor underlines these. */
   affectedSpanIds: Set<string>;
   /** Per-span marker style, keyed by span id. */
   spanIssueMap: Map<string, "conflict" | "harmonization">;
+  // --- panel-only: unreachable while CANVAS_FIRST_LAYOUT is on; goes with
+  // --- the legacy-branch deletion sweep
+  isChecking: boolean;
+  isPanelExpanded: boolean;
+  onTogglePanelExpanded: () => void;
+  onDismissAll: () => void;
+  onScrollToSpan: (spanId: string) => void;
 }
 
 const CoherenceContext = createContext<CoherenceContextValue | null>(null);
