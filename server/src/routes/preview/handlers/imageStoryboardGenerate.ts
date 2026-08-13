@@ -346,21 +346,24 @@ export const createImageStoryboardGenerateHandler =
         const mediaAssetIds = (result.storagePaths ?? [])
           .map((path) => path.split("/").filter(Boolean).pop() ?? null)
           .filter((id): id is string => Boolean(id));
-        const generationRecord = buildCompletedTakeRecord({
-          id: generationId,
-          model: "flux-kontext",
-          mediaType: "image-sequence",
-          prompt,
-          promptVersionId,
-          mediaUrls: result.imageUrls,
-          ...(mediaAssetIds.length ? { mediaAssetIds } : {}),
-          thumbnailUrl: result.baseImageUrl || result.imageUrls[0] || null,
-          // A storyboard roots at its words-version like a picture does; the
-          // old inline record left the field off, which read the same but hid
-          // the decision.
-          ancestorGenerationId: null,
-        });
         try {
+          // Built inside the soft-fail guard: the builder validates its output
+          // against the record schema, and a persist-side throw — validation
+          // included — must never void the already-charged generation.
+          const generationRecord = buildCompletedTakeRecord({
+            id: generationId,
+            model: "flux-kontext",
+            mediaType: "image-sequence",
+            prompt,
+            promptVersionId,
+            mediaUrls: result.imageUrls,
+            ...(mediaAssetIds.length ? { mediaAssetIds } : {}),
+            thumbnailUrl: result.baseImageUrl || result.imageUrls[0] || null,
+            // A storyboard roots at its words-version like a picture does; the
+            // old inline record left the field off, which read the same but
+            // hid the decision.
+            ancestorGenerationId: null,
+          });
           await sessionService.appendGenerationToVersion(
             userId,
             sessionId,

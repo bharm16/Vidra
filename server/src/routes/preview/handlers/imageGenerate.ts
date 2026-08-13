@@ -406,20 +406,24 @@ export const createImageGenerateHandler =
           ? (storageResult.storagePath.split("/").filter(Boolean).pop() ??
             storageResult.storagePath)
           : null;
-        const generationRecord = buildCompletedTakeRecord({
-          id: generationId,
-          model: result.metadata.model,
-          mediaType: "image",
-          prompt,
-          promptVersionId,
-          mediaUrls: [finalImageUrl],
-          ...(mediaAssetId ? { mediaAssetIds: [mediaAssetId] } : {}),
-          thumbnailUrl: finalImageUrl,
-          // ADR-0013: a picture roots at its words-version — the version→picture
-          // edge is structural (this record lives in that version's generations).
-          ancestorGenerationId: null,
-        });
         try {
+          // Built inside the soft-fail guard: the builder validates its output
+          // against the record schema, and a persist-side throw — validation
+          // included — must never void the already-charged generation.
+          const generationRecord = buildCompletedTakeRecord({
+            id: generationId,
+            model: result.metadata.model,
+            mediaType: "image",
+            prompt,
+            promptVersionId,
+            mediaUrls: [finalImageUrl],
+            ...(mediaAssetId ? { mediaAssetIds: [mediaAssetId] } : {}),
+            thumbnailUrl: finalImageUrl,
+            // ADR-0013: a picture roots at its words-version — the
+            // version→picture edge is structural (this record lives in that
+            // version's generations).
+            ancestorGenerationId: null,
+          });
           await sessionService.appendGenerationToVersion(
             userId,
             sessionId,
