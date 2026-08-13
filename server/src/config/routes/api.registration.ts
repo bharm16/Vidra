@@ -71,15 +71,11 @@ export function registerApiRoutes(
           "consistent-generation",
         );
 
-  // Media proxy — no auth required (signed URL is the authorization).
-  // Must be registered before the auth middleware on /api.
-  // C3 fix: pass the bucket so the proxy can fall back to streaming
-  // directly from GCS when a client-side signed URL has expired. The
-  // bucket is unconditionally registered in storage.services.ts and
-  // listed in REQUIRED_TOKENS — a missing registration must fail boot
-  // (loud) rather than silently lose the expired-URL recovery path.
-  // The signed-URL ledger gates that rescue: only grants we actually
-  // minted may borrow the server's credentials on this pre-auth route.
+  // Media proxy — mounted before the auth middleware on /api; the access
+  // posture and the rescue's requirements are carried by MediaProxyOptions.
+  // The bucket is unconditionally registered in storage.services.ts and
+  // listed in REQUIRED_TOKENS, so a missing registration fails boot (loud)
+  // rather than silently losing the expired-URL recovery path.
   const gcsBucket = container.resolve<Bucket>("gcsBucket");
   const signedUrlLedger = container.resolve<SignedUrlLedger>("signedUrlLedger");
   const mediaProxyRoutes = createMediaProxyRoutes({
