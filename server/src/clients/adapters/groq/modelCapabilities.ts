@@ -24,6 +24,10 @@ const GROQ_MODEL_CAPABILITIES: Readonly<Record<string, GroqModelCapabilities>> =
     "llama-3.3-70b-versatile": { logprobs: true },
   };
 
+export function isDeclaredGroqModel(modelId: string): boolean {
+  return modelId in GROQ_MODEL_CAPABILITIES;
+}
+
 export function supportsLogprobs(modelId: string): boolean {
   return GROQ_MODEL_CAPABILITIES[modelId]?.logprobs ?? false;
 }

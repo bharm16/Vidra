@@ -23,7 +23,7 @@ import type {
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { CreateSessionRequest as ContinuityCreateSessionRequest } from "@services/continuity/types";
 import type { UserCreditService } from "@services/credits/UserCreditService";
-import { SessionPromptVersionEntrySchema } from "@shared/schemas/session.schemas";
+import { SessionGenerationRecordSchema } from "@shared/schemas/session.schemas";
 import type { SessionDto } from "@shared/types/session";
 import type { ApiResponse } from "@shared/types/api";
 import { logger } from "@infrastructure/Logger";
@@ -91,15 +91,30 @@ const UpdateOutputSchema = z
 /**
  * `version.generations` has two writers — this route (the client PATCHing its
  * whole versions array) and processVideoJob's `appendGenerationToVersion` — so
- * the shared entry schema is what keeps them describing the same record. It
- * was `z.array(z.record(z.string(), z.unknown()))` here, which accepted any
- * object at all; a take record is an open bag by contract
+ * the take record is what needs a shape here. It was
+ * `z.array(z.record(z.string(), z.unknown()))`, which accepted any object at
+ * all. A take record stays an open bag by contract
  * (`SessionGenerationRecordSchema` passes extras through), but the lineage
- * fields the space depends on are validated rather than assumed.
+ * fields the space depends on are now validated rather than assumed.
+ *
+ * The version entry around them stays open on purpose. The client sends back
+ * whatever it read — `normalizePersistedVersions` passes entries through
+ * without guaranteeing any particular field — so validating the entry itself
+ * would let one legacy version reject an entire save, and a plain object
+ * schema would silently strip any version-level field it does not model.
+ * The record is the contract; the envelope is not.
  */
 const UpdateVersionsSchema = z
   .object({
-    versions: z.array(SessionPromptVersionEntrySchema).optional(),
+    versions: z
+      .array(
+        z
+          .object({
+            generations: z.array(SessionGenerationRecordSchema).optional(),
+          })
+          .passthrough(),
+      )
+      .optional(),
   })
   .strip();
 
@@ -250,7 +265,18 @@ function toSessionVersionsUpdate(
   data: z.infer<typeof UpdateVersionsSchema>,
 ): SessionVersionsUpdate {
   return {
-    ...(data.versions !== undefined ? { versions: data.versions } : {}),
+    // The take records inside are validated; the entry around them is not (see
+    // UpdateVersionsSchema), while `SessionPrompt["versions"]` declares four
+    // required entry fields. That gap is the server's own belief about entries,
+    // not something this route can prove about the wire — so it is asserted
+    // here rather than enforced by rejecting saves.
+    ...(data.versions !== undefined
+      ? {
+          versions: data.versions as unknown as NonNullable<
+            SessionVersionsUpdate["versions"]
+          >,
+        }
+      : {}),
   };
 }
 

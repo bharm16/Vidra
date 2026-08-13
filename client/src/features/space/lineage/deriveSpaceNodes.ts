@@ -1,22 +1,11 @@
 import { resolveTakePosterUrl } from "@/features/workspace-shell/utils/takePosterUrl";
 import type { Generation } from "@features/generations/types";
+import {
+  readAncestorGenerationId,
+  readArchived,
+} from "@features/generations/utils/serverOwnedRecordFields";
 import { buildSpaceNodes, type LineageInput } from "./buildSpaceNodes";
 import type { SpaceNode } from "./types";
-
-/**
- * ADR-0013 lineage and the soft-removal flag are written by the server and ride
- * `SessionGenerationRecordSchema`'s passthrough; they are not on the client's
- * runtime `Generation`, so they are read off the record here.
- */
-function readAncestorGenerationId(gen: Generation): string | null {
-  const value = (gen as { ancestorGenerationId?: unknown })
-    .ancestorGenerationId;
-  return typeof value === "string" ? value : null;
-}
-
-function readArchived(gen: Generation): boolean {
-  return (gen as { archived?: unknown }).archived === true;
-}
 
 function mapStatus(status: string): SpaceNode["status"] {
   if (status === "completed") return "ready";

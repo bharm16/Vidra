@@ -34,7 +34,10 @@ import type {
   LogprobInfo,
 } from "./groq/types";
 import type { AIResponse } from "@interfaces/IAIClient";
-import { buildGroqPayload } from "./groq/requestBuilder";
+import {
+  buildGroqPayload,
+  takeUndeclaredGroqModels,
+} from "./groq/requestBuilder";
 import { validateLLMResponse, ValidationResult } from "./ResponseValidator.js";
 import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import { buildLlamaMessages, wrapInXmlTags } from "./groq/messageBuilder";
@@ -235,6 +238,15 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
       if (injectedJsonInstruction) {
         this.log.debug("Injecting JSON instruction for Groq json_object mode", {
           model: options.model || this.defaultModel,
+        });
+      }
+      // Logprobs were requested for a model with no capability entry. Dropping
+      // them is the safe answer; saying so is what the old substring test did
+      // not do.
+      for (const undeclared of takeUndeclaredGroqModels()) {
+        this.log.warn("Groq model has no declared capabilities", {
+          model: undeclared,
+          capability: "logprobs",
         });
       }
 

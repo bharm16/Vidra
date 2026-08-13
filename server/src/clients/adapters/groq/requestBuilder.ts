@@ -1,9 +1,21 @@
 import { calculateMaxTokens } from "./contextBudget";
-import { supportsLogprobs } from "./modelCapabilities";
+import { isDeclaredGroqModel, supportsLogprobs } from "./modelCapabilities";
 import type { LlamaCompletionOptions } from "./types";
 import { hashString } from "@utils/hash";
 
 type LlamaMessage = { role: string; content: string };
+
+/**
+ * Models seen without a capability entry. Reported once each so an undeclared
+ * model shows up in logs instead of quietly losing a capability.
+ */
+const undeclaredModels = new Set<string>();
+
+export function takeUndeclaredGroqModels(): string[] {
+  const seen = [...undeclaredModels];
+  undeclaredModels.clear();
+  return seen;
+}
 
 export interface GroqPayloadInput {
   systemPrompt: string;
@@ -17,7 +29,6 @@ export interface GroqPayloadInput {
 
 export interface GroqPayloadResult {
   payload: Record<string, unknown>;
-  messages: LlamaMessage[];
   /**
    * Whether the JSON instruction had to be prepended for json_object mode. The
    * adapter logs it; the builder stays free of transport concerns.
@@ -96,9 +107,16 @@ export function buildGroqPayload({
 
   // Streaming has never requested logprobs; only the buffered path consumes
   // them (see logprobConfidence).
-  if (options.logprobs && !stream && supportsLogprobs(model)) {
-    payload.logprobs = true;
-    payload.top_logprobs = options.topLogprobs ?? 3;
+  if (options.logprobs && !stream) {
+    if (supportsLogprobs(model)) {
+      payload.logprobs = true;
+      payload.top_logprobs = options.topLogprobs ?? 3;
+    } else if (!isDeclaredGroqModel(model)) {
+      // GROQ_MODEL is an arbitrary env string, so a model can reach here
+      // without an entry. Dropping logprobs is the safe answer, but doing it
+      // silently is what made the old substring test hard to notice.
+      undeclaredModels.add(model);
+    }
   }
 
   let injectedJsonInstruction = false;
@@ -142,5 +160,5 @@ export function buildGroqPayload({
     payload.response_format = options.responseFormat;
   }
 
-  return { payload, messages, injectedJsonInstruction };
+  return { payload, injectedJsonInstruction };
 }

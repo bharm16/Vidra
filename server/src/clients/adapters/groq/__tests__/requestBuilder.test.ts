@@ -5,7 +5,10 @@
  * builder, and these tests pin that they agree.
  */
 import { describe, expect, it } from "vitest";
-import { buildGroqPayload } from "../requestBuilder";
+import {
+  buildGroqPayload,
+  takeUndeclaredGroqModels,
+} from "../requestBuilder";
 import { supportsLogprobs } from "../modelCapabilities";
 
 const DEFAULT_MODEL = "llama-3.1-8b-instant";
@@ -58,17 +61,18 @@ describe("buildGroqPayload", () => {
 
   it("reports when json_object mode needs the JSON instruction injected", () => {
     // Groq rejects json_object mode unless 'json' appears in the messages.
+    const messages = [{ role: "system", content: "Describe the shot" }];
     const withoutJson = buildGroqPayload({
       systemPrompt: "Describe the shot",
-      messages: [{ role: "system", content: "Describe the shot" }],
+      messages,
       options: { jsonMode: true },
       defaultModel: DEFAULT_MODEL,
       stream: false,
     });
     expect(withoutJson.injectedJsonInstruction).toBe(true);
-    expect(withoutJson.messages[0]?.content).toContain(
-      "Respond with valid JSON",
-    );
+    // The builder mutates the messages it was handed — the caller keeps the
+    // reference and sends them.
+    expect(messages[0]?.content).toContain("Respond with valid JSON");
 
     const withJson = buildGroqPayload({
       systemPrompt: "Reply in json",
@@ -114,6 +118,20 @@ describe("buildGroqPayload", () => {
       true,
     );
     expect(payload.logprobs).toBeUndefined();
+  });
+});
+
+describe("undeclared models are reported, not silently downgraded", () => {
+  it("names a model it has no capability entry for", () => {
+    takeUndeclaredGroqModels();
+    build({ logprobs: true, model: "llama-9-brand-new" });
+    expect(takeUndeclaredGroqModels()).toEqual(["llama-9-brand-new"]);
+  });
+
+  it("says nothing about a declared model that simply lacks the capability", () => {
+    takeUndeclaredGroqModels();
+    build({ logprobs: true, model: "llama-3.1-8b-instant" });
+    expect(takeUndeclaredGroqModels()).toEqual([]);
   });
 });
 

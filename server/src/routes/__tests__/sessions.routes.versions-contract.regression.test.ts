@@ -98,13 +98,32 @@ describe("regression: PATCH /sessions/:id/versions validates the take record", (
     expect(updateVersionsForUser).not.toHaveBeenCalled();
   });
 
-  it("rejects a version entry that is not a version entry", async () => {
+  it("saves a legacy entry that is missing entry-level fields", async () => {
+    // The client sends back whatever it read, and normalizePersistedVersions
+    // guarantees no particular entry field. Validating the entry would let one
+    // old version reject the whole save.
     const { service, updateVersionsForUser } = buildService();
     const response = await request(buildApp(service))
       .patch("/sessions/session-1/versions")
-      .send({ versions: [{ nonsense: true }] });
+      .send({ versions: [{ versionId: "v-old", generations: [] }] });
 
-    expect(response.status).toBe(400);
-    expect(updateVersionsForUser).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(updateVersionsForUser).toHaveBeenCalled();
+  });
+
+  it("keeps version-level fields it does not model", async () => {
+    const { service, updateVersionsForUser } = buildService();
+    await request(buildApp(service))
+      .patch("/sessions/session-1/versions")
+      .send({
+        versions: [{ ...versionWith([]), somethingNewer: { kept: true } }],
+      });
+
+    const [, , update] = updateVersionsForUser.mock.calls[0] as [
+      string,
+      string,
+      { versions: Array<Record<string, unknown>> },
+    ];
+    expect(update.versions[0]!.somethingNewer).toEqual({ kept: true });
   });
 });
