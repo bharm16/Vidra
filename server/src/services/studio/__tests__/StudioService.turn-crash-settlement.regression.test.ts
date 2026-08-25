@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { StudioService } from "../StudioService";
 import { StudioSpendLedger } from "../StudioSpendLedger";
 import { StudioModelRegistry } from "../StudioModelRegistry";
-import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type {
   StudioDecision,
   StudioProjectRecord,
@@ -122,7 +122,7 @@ describe("regression: a crashed turn never strands reserved cents", () => {
     const run = vi.fn();
     let idCounter = 0;
     const service = new StudioService({
-      store: store as unknown as FirestoreStudioProjectStore,
+      store: store as unknown as StudioProjectStore,
       registry: new StudioModelRegistry(),
       runner: { run },
       storage: {
@@ -154,7 +154,7 @@ describe("regression: a crashed turn never strands reserved cents", () => {
   it("refunds every reserved call, not just one, on a multi-call turn", async () => {
     const store = new FakeStore();
     const ledger = new StudioSpendLedger({
-      store: store as unknown as FirestoreStudioProjectStore,
+      store: store as unknown as StudioProjectStore,
       dailyCapCents: 500,
       now: () => NOW,
     });

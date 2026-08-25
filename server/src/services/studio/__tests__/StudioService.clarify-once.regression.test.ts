@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import { StudioPolicyEngine } from "../StudioPolicyEngine";
-import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type { StudioDecision, StudioTurnRecord } from "../types";
 import type { ResolvedExecution } from "@services/ai-model/types";
 
@@ -108,7 +108,7 @@ function makeService(llmResponses: string[]) {
 
   let idCounter = 0;
   const service = new StudioService({
-    store: store as unknown as FirestoreStudioProjectStore,
+    store: store as unknown as StudioProjectStore,
     registry: new StudioModelRegistry(),
     runner: {
       run: vi.fn().mockResolvedValue({

@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { StudioService, StudioNotFoundError } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
-import {
-  StudioCapExceededError,
-  type FirestoreStudioProjectStore,
-} from "../storage/FirestoreStudioProjectStore";
+import { StudioCapExceededError } from "../storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type { StudioImageRunner } from "../providers/types";
 import type { StudioTurnContext } from "../StudioPolicyEngine";
 import type {
@@ -18,7 +16,7 @@ import type {
  * before write, per-user-per-day counters). Injected structurally — the
  * service never knows it isn't Firestore.
  */
-class FakeStore {
+class FakeStore implements StudioProjectStore {
   projects = new Map<string, StudioProjectRecord>();
   turns = new Map<string, StudioTurnRecord>();
   reserved = new Map<string, number>();
@@ -167,7 +165,7 @@ function makeService(overrides?: {
     );
 
   const service = new StudioService({
-    store: store as unknown as FirestoreStudioProjectStore,
+    store,
     registry,
     runner,
     storage,

@@ -18,6 +18,7 @@
 
 import { getFirestore } from "@infrastructure/firebaseAdmin";
 import type { StudioProjectRecord, StudioTurnRecord } from "../types";
+import type { StudioProjectStore } from "./StudioProjectStore";
 
 export class StudioCapExceededError extends Error {
   public readonly statusCode = 429;
@@ -48,7 +49,7 @@ export function studioUsageDayKey(at: Date): string {
 /** Under Firestore's 500-writes-per-batch limit with headroom. */
 const DELETE_BATCH_SIZE = 400;
 
-export class FirestoreStudioProjectStore {
+export class FirestoreStudioProjectStore implements StudioProjectStore {
   private readonly db = getFirestore();
   private readonly projects = this.db.collection("studio_projects");
   private readonly usage = this.db.collection("studio_usage");

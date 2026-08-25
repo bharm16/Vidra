@@ -16,10 +16,8 @@
  */
 
 import { logger } from "@infrastructure/Logger";
-import {
-  studioUsageDayKey,
-  type FirestoreStudioProjectStore,
-} from "./storage/FirestoreStudioProjectStore";
+import { studioUsageDayKey } from "./storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "./storage/StudioProjectStore";
 import type { StudioCallRecord, StudioTurnRecord } from "./types";
 
 /** The only thing a turn's work can do with its reservation. */
@@ -33,13 +31,13 @@ export interface StudioReservation {
 }
 
 export interface StudioSpendLedgerDeps {
-  store: FirestoreStudioProjectStore;
+  store: StudioProjectStore;
   dailyCapCents: number;
   now: () => Date;
 }
 
 export class StudioSpendLedger {
-  private readonly store: FirestoreStudioProjectStore;
+  private readonly store: StudioProjectStore;
   private readonly dailyCapCents: number;
   private readonly now: () => Date;
   private readonly log = logger.child({ service: "StudioSpendLedger" });

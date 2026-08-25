@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
-import type { FirestoreStudioProjectStore } from "../storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type { StudioDecision, StudioTurnRecord } from "../types";
 
 /**
@@ -65,7 +65,7 @@ function makeService(decision: StudioDecision) {
 
   let idCounter = 0;
   const service = new StudioService({
-    store: store as unknown as FirestoreStudioProjectStore,
+    store: store as unknown as StudioProjectStore,
     registry: new StudioModelRegistry(),
     runner: {
       run: vi.fn().mockResolvedValue({

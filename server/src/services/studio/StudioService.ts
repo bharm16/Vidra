@@ -26,7 +26,7 @@ import type {
   StudioImageRunner,
 } from "./providers/types";
 import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
-import type { FirestoreStudioProjectStore } from "./storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "./storage/StudioProjectStore";
 import type {
   StudioAttachment,
   StudioCallRecord,
@@ -81,7 +81,7 @@ export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
 }
 
 export interface StudioServiceDeps {
-  store: FirestoreStudioProjectStore;
+  store: StudioProjectStore;
   registry: StudioModelRegistry;
   runner: StudioImageRunner;
   storage: StudioImageStorage;
@@ -149,7 +149,7 @@ const FOLLOW_UP_ACTIONS = [
 ] as const satisfies readonly StudioDecision["action"][];
 
 export class StudioService {
-  private readonly store: FirestoreStudioProjectStore;
+  private readonly store: StudioProjectStore;
   private readonly registry: StudioModelRegistry;
   private readonly runner: StudioImageRunner;
   private readonly storage: StudioImageStorage;
