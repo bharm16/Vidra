@@ -338,22 +338,6 @@ const MODEL_CONFIG_ENTRIES = {
   },
 
   /**
-   * Role classification for spans
-   * Temperature 0.0 for deterministic classification
-   */
-  role_classification: {
-    client: process.env.ROLE_PROVIDER || "openai",
-    model: process.env.ROLE_MODEL || "gpt-4o-mini-2024-07-18",
-    temperature: 0,
-    maxTokens: 600,
-    timeout: 20000,
-    fallbackTo: "qwen",
-    fallbackConfig: QWEN_FALLBACK,
-    useSeed: true, // Same spans should classify identically
-    useDeveloperMessage: true,
-  },
-
-  /**
    * Requirements extraction for model-intelligence recommendations.
    * Reads a prompt and reports objective visual/physical observations as JSON.
    * Full GPT-4o (not mini) — recommendation quality hinges on this perception

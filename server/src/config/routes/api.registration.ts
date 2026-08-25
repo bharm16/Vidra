@@ -13,7 +13,6 @@ import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createBatchMiddleware } from "@middleware/requestBatching";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
-import { createRoleClassifyRoute } from "@routes/roleClassifyRoute";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createSuggestionsRoute } from "@routes/suggestions";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
@@ -146,12 +145,6 @@ export function registerApiRoutes(
     apiAuthMiddleware,
     createBatchMiddleware(container.resolve("spanLabelingProvider")),
   );
-
-  // Role classification
-  const roleClassifyRoute = createRoleClassifyRoute(
-    container.resolve("aiService"),
-  );
-  app.use("/api/role-classify", apiAuthMiddleware, roleClassifyRoute);
 
   // Suggestions evaluation (LLM-as-a-Judge)
   const suggestionsRoute = createSuggestionsRoute({

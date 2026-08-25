@@ -66,6 +66,7 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/preview/image/content/:contentId`                                 | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/image/view`                                               | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/image/view-batch`                                         | `server/src/routes/preview.routes.ts`                          |
+| GET    | `/api/preview/media/view`                                               | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/upload`                                                   | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/availability`                                       | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/content/:contentId`                                 | `server/src/routes/preview.routes.ts`                          |
@@ -79,16 +80,11 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | DELETE | `/api/reference-images/:id`                                             | `server/src/routes/reference-images.routes.ts`                 |
 | POST   | `/api/reference-images/from-url`                                        | `server/src/routes/reference-images.routes.ts`                 |
 | GET    | `/api/registry`                                                         | `server/src/routes/capabilities.routes.ts`                     |
-| POST   | `/api/role-classify`                                                    | `server/src/routes/roleClassifyRoute.ts`                       |
 | GET    | `/api/sessions`                                                         | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions`                                                         | `server/src/routes/sessions.routes.ts`                         |
 | DELETE | `/api/sessions/:sessionId`                                              | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/:sessionId`                                              | `server/src/routes/sessions.routes.ts`                         |
-| PATCH  | `/api/sessions/:sessionId`                                              | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/generations/:generationId/archive`            | `server/src/routes/sessions.routes.ts`                         |
-| PATCH  | `/api/sessions/:sessionId/highlights`                                   | `server/src/routes/sessions.routes.ts`                         |
-| PATCH  | `/api/sessions/:sessionId/output`                                       | `server/src/routes/sessions.routes.ts`                         |
-| PATCH  | `/api/sessions/:sessionId/prompt`                                       | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/scene-proxy`                                  | `server/src/routes/sessions.routes.ts`                         |
 | PUT    | `/api/sessions/:sessionId/settings`                                     | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/shots`                                        | `server/src/routes/sessions.routes.ts`                         |
@@ -99,7 +95,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/sessions/:sessionId/shots/:shotId/status`                         | `server/src/routes/sessions.routes.ts`                         |
 | PUT    | `/api/sessions/:sessionId/shots/:shotId/style-reference`                | `server/src/routes/sessions.routes.ts`                         |
 | PUT    | `/api/sessions/:sessionId/style-reference`                              | `server/src/routes/sessions.routes.ts`                         |
-| PATCH  | `/api/sessions/:sessionId/versions`                                     | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/by-prompt/:uuid`                                         | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/continuity`                                              | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/share`                                                            | `server/src/routes/share.routes.ts`                            |
@@ -132,4 +127,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                                          | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                         | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **124**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **119**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

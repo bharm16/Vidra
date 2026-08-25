@@ -22,8 +22,6 @@ import type { AssetService } from "@services/asset/AssetService";
  *   storage.routes.ts     401 via a private resolveUserId + rejectAnonymous
  *   asset.routes.ts       400 {success,error:"prompt is required"} — no `code`,
  *                             and POST / validated NOTHING at all
- *   roleClassifyRoute.ts  400 {error:"Invalid request format"} — no `success`,
- *                             which the client's discriminated union rejects
  *   sessions/continuity   400 details: ZodIssue[] — an ARRAY, though the shared
  *                             contract types `details` as a string
  *

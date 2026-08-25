@@ -322,6 +322,11 @@
       "sourceFile": "server/src/routes/preview.routes.ts"
     },
     {
+      "method": "GET",
+      "fullPath": "/api/preview/media/view",
+      "sourceFile": "server/src/routes/preview.routes.ts"
+    },
+    {
       "method": "POST",
       "fullPath": "/api/preview/upload",
       "sourceFile": "server/src/routes/preview.routes.ts"
@@ -387,11 +392,6 @@
       "sourceFile": "server/src/routes/capabilities.routes.ts"
     },
     {
-      "method": "POST",
-      "fullPath": "/api/role-classify",
-      "sourceFile": "server/src/routes/roleClassifyRoute.ts"
-    },
-    {
       "method": "GET",
       "fullPath": "/api/sessions",
       "sourceFile": "server/src/routes/sessions.routes.ts"
@@ -412,28 +412,8 @@
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
-      "method": "PATCH",
-      "fullPath": "/api/sessions/:sessionId",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
       "method": "POST",
       "fullPath": "/api/sessions/:sessionId/generations/:generationId/archive",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/sessions/:sessionId/highlights",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/sessions/:sessionId/output",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/sessions/:sessionId/prompt",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
@@ -484,11 +464,6 @@
     {
       "method": "PUT",
       "fullPath": "/api/sessions/:sessionId/style-reference",
-      "sourceFile": "server/src/routes/sessions.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/sessions/:sessionId/versions",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
@@ -1020,6 +995,11 @@
       "file": "storage.services.ts"
     },
     {
+      "from": "convergenceStorageService",
+      "to": "signedUrlMinter",
+      "file": "storage.services.ts"
+    },
+    {
       "from": "creditReconciliationService",
       "to": "config",
       "file": "credit.services.ts"
@@ -1181,7 +1161,7 @@
     },
     {
       "from": "imageAssetStore",
-      "to": "signedUrlLedger",
+      "to": "signedUrlMinter",
       "file": "storage.services.ts"
     },
     {
@@ -1311,11 +1291,6 @@
     },
     {
       "from": "promptOptimizationService",
-      "to": "templateService",
-      "file": "optimization.services.ts"
-    },
-    {
-      "from": "promptOptimizationService",
       "to": "videoPromptService",
       "file": "optimization.services.ts"
     },
@@ -1362,6 +1337,11 @@
     {
       "from": "referenceImageRepository",
       "to": "gcsBucketName",
+      "file": "session.services.ts"
+    },
+    {
+      "from": "referenceImageRepository",
+      "to": "signedUrlMinter",
       "file": "session.services.ts"
     },
     {
@@ -1457,6 +1437,16 @@
     {
       "from": "signedUrlLedger",
       "to": "cacheService",
+      "file": "storage.services.ts"
+    },
+    {
+      "from": "signedUrlMinter",
+      "to": "gcsBucket",
+      "file": "storage.services.ts"
+    },
+    {
+      "from": "signedUrlMinter",
+      "to": "signedUrlLedger",
       "file": "storage.services.ts"
     },
     {
@@ -1601,7 +1591,7 @@
     },
     {
       "from": "videoAssetStore",
-      "to": "signedUrlLedger",
+      "to": "signedUrlMinter",
       "file": "storage.services.ts"
     },
     {
