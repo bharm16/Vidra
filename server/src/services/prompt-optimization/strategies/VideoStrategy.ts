@@ -13,7 +13,6 @@ import { getVideoOptimizationSchema } from "@utils/provider/SchemaFactory";
 import type { CapabilityValues } from "@shared/capabilities";
 import type {
   AIService,
-  TemplateService,
   LockedSpan,
   OptimizationRequest,
   ShotPlan,
@@ -54,11 +53,9 @@ function slotCompletenessScore(slots: VideoPromptSlots): number {
 export class VideoStrategy implements OptimizationStrategy {
   readonly name = "video";
   private readonly ai: AIService;
-  private readonly templateService: TemplateService;
 
-  constructor(aiService: AIService, templateService: TemplateService) {
+  constructor(aiService: AIService) {
     this.ai = aiService;
-    this.templateService = templateService;
   }
 
   /**

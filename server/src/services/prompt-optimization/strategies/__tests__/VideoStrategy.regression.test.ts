@@ -3,15 +3,12 @@ import { VideoStrategy } from "../VideoStrategy";
 
 describe("VideoStrategy regression", () => {
   it("renders plain prose without technical/variation markdown blocks", () => {
-    const strategy = new VideoStrategy(
-      {
-        execute: async () => ({
-          text: "",
-          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-        }),
-      } as never,
-      {} as never,
-    );
+    const strategy = new VideoStrategy({
+      execute: async () => ({
+        text: "",
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      }),
+    } as never);
 
     const parsed = {
       _creative_strategy: "test",

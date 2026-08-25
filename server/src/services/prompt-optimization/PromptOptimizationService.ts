@@ -6,7 +6,6 @@ import { VideoStrategy } from "./strategies/VideoStrategy";
 import { ShotInterpreterService } from "./services/ShotInterpreterService";
 import { OptimizationCacheService } from "./services/OptimizationCacheService";
 import { VideoPromptCompilationService } from "./services/VideoPromptCompilationService";
-import { TemplateService } from "./services/TemplateService";
 import { IntentLockService } from "./services/IntentLockService";
 import { PromptLintGateService } from "./services/PromptLintGateService";
 import { finishPrompt } from "./services/finishPrompt";
@@ -53,14 +52,12 @@ export class PromptOptimizationService {
     cacheService: CacheService,
     videoPromptService: VideoPromptService | null = null,
     imageObservationService: ImageObservationService,
-    templateService?: TemplateService,
     shotPlanCacheConfig?: { cacheTtlMs: number; cacheMax: number },
   ) {
     this.ai = aiService;
     this.log = logger.child({ service: "PromptOptimizationService" });
 
-    const resolvedTemplateService = templateService ?? new TemplateService();
-    this.videoStrategy = new VideoStrategy(aiService, resolvedTemplateService);
+    this.videoStrategy = new VideoStrategy(aiService);
     this.shotInterpreter = new ShotInterpreterService(
       aiService,
       shotPlanCacheConfig,

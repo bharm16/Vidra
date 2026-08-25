@@ -199,18 +199,3 @@ export interface OptimizationStrategy {
 
 /** @deprecated Use AIExecutionPort from @services/ai-model/ports/AIExecutionPort */
 export type AIService = AIExecutionPort;
-
-/**
- * Template service interface (minimal)
- */
-export interface TemplateService {
-  getTemplate?(name: string, version?: string): Promise<string>;
-  load?(
-    templateName: string,
-    variables?: Record<string, string | number | null | undefined>,
-  ): Promise<string>;
-  loadSection?(
-    sectionName: string,
-    variables?: Record<string, string | number | null | undefined>,
-  ): Promise<string>;
-}
