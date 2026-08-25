@@ -56,7 +56,6 @@ describe("videoGenerate prompt truth", () => {
           available: true,
           resolvedModelId: "sora-2",
         }),
-        getAvailabilityReport: () => ({ availableModels: [] }),
       } as never,
       videoJobStore: {
         createJob: createJobMock,

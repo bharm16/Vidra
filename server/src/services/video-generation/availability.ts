@@ -1,6 +1,5 @@
 import { resolveModelSelection } from "./modelResolver";
 import type {
-  VideoAvailabilityReport,
   VideoAvailabilitySnapshot,
   VideoModelAvailability,
   VideoModelId,
@@ -177,25 +176,6 @@ export function getModelAvailability(
     entitled: true,
     planTier: "unknown",
   };
-}
-
-export function getAvailabilityReport(
-  modelIds: string[],
-  providers: VideoProviderAvailability,
-  log: LogSink,
-): VideoAvailabilityReport {
-  const uniqueIds = Array.from(new Set(modelIds));
-  const models = uniqueIds.map((id) =>
-    getModelAvailability(id, providers, log),
-  );
-  const availableModels = models
-    .filter((model) => model.available)
-    .map((model) => model.resolvedModelId ?? model.id);
-  const availableCapabilityModels = models
-    .filter((model) => model.available)
-    .map((model) => model.capabilityModelId ?? model.id);
-
-  return { providers, models, availableModels, availableCapabilityModels };
 }
 
 export function getAvailabilitySnapshot(

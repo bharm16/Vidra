@@ -1,7 +1,6 @@
 import { logger } from "@infrastructure/Logger";
 import type { VideoAssetStore, VideoAssetStream } from "./storage";
 import type {
-  VideoAvailabilityReport,
   VideoAvailabilitySnapshot,
   VideoGenerationOptions,
   VideoGenerationResult,
@@ -13,11 +12,7 @@ import type {
 import type { VideoProviderMap } from "./providers/types";
 import { getProviderAvailability } from "./providers/ProviderRegistry";
 import { generateVideoWorkflow } from "./workflows/generateVideo";
-import {
-  getAvailabilityReport,
-  getAvailabilitySnapshot,
-  getModelAvailability,
-} from "./availability";
+import { getAvailabilitySnapshot, getModelAvailability } from "./availability";
 
 /**
  * VideoGenerationService - Orchestrates video generation providers
@@ -65,7 +60,7 @@ export class VideoGenerationService {
     return await this.assetStore.getPublicUrl(id);
   }
 
-  public getProviderAvailability(): VideoProviderAvailability {
+  private getProviderAvailability(): VideoProviderAvailability {
     return getProviderAvailability(this.providers);
   }
 
@@ -74,25 +69,6 @@ export class VideoGenerationService {
       model,
       this.getProviderAvailability(),
       this.log,
-    );
-  }
-
-  public getAvailabilityReport(modelIds: string[]): VideoAvailabilityReport {
-    const availabilityLog = {
-      warn: (message: string, meta?: Record<string, unknown>) => {
-        if (
-          message === "Unknown video model requested; falling back to default"
-        ) {
-          return;
-        }
-        this.log.warn(message, meta);
-      },
-    };
-
-    return getAvailabilityReport(
-      modelIds,
-      this.getProviderAvailability(),
-      availabilityLog,
     );
   }
 
