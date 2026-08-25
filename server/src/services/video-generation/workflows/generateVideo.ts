@@ -1,5 +1,5 @@
 import { AppError } from "@server/types/common";
-import { resolveModelSelection } from "../modelResolver";
+import { resolveGenerationModelSelection } from "@config/videoModelRegistry";
 import type { StoredVideoAsset, VideoAssetStore } from "../storage";
 import type { VideoGenerationOptions, VideoGenerationResult } from "../types";
 import {
@@ -74,7 +74,7 @@ export async function generateVideoWorkflow(
     );
   }
 
-  const resolution = resolveModelSelection(modelSelection, log);
+  const resolution = resolveGenerationModelSelection(modelSelection, log);
   const modelId = availability.resolvedModelId || resolution.modelId;
 
   log.info("Starting video generation", {

@@ -1,6 +1,8 @@
 import type { VideoModelId, VideoProviderAvailability } from "../types";
-import { resolveModelSelection } from "../modelResolver";
-import { resolveProviderForGenerationModel } from "@config/videoModelRegistry";
+import {
+  resolveGenerationModelSelection,
+  resolveProviderForGenerationModel,
+} from "@config/videoModelRegistry";
 import {
   VIDEO_PROVIDER_IDS,
   type VideoProviderId,
@@ -29,7 +31,7 @@ const AUTO_MODEL_PRIORITY: ReadonlyArray<{
 }> = [
   {
     provider: "replicate",
-    modelId: () => resolveModelSelection("PRO").modelId,
+    modelId: () => resolveGenerationModelSelection("PRO").modelId,
   },
   { provider: "openai", modelId: () => "sora-2" },
   { provider: "luma", modelId: () => "luma-ray3" },

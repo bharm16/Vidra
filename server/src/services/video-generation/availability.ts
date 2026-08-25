@@ -1,4 +1,4 @@
-import { resolveModelSelection } from "./modelResolver";
+import { resolveGenerationModelSelection } from "@config/videoModelRegistry";
 import type {
   VideoAvailabilitySnapshot,
   VideoModelAvailability,
@@ -97,7 +97,7 @@ export function getModelAvailability(
   providers: VideoProviderAvailability,
   log: LogSink,
 ): VideoModelAvailability {
-  const resolution = resolveModelSelection(model || undefined, log);
+  const resolution = resolveGenerationModelSelection(model || undefined, log);
   const isAuto =
     !model ||
     (typeof model === "string" &&

@@ -5,11 +5,11 @@ import {
 } from "./types";
 import { logger } from "@infrastructure/Logger";
 import {
-  isKlingModel,
-  isLumaModel,
-  isOpenAISoraModel,
-  isVeoModel,
-} from "@services/video-generation/modelResolver";
+  isKlingModelId,
+  isLumaModelId,
+  isOpenAISoraModelId,
+  isVeoModelId,
+} from "@config/videoModelRegistry";
 import { getModelCapabilities } from "@services/video-generation/availability";
 import type { VideoModelId } from "@shared/videoModels";
 
@@ -117,10 +117,10 @@ export class ProviderStyleAdapter {
   }
 
   getProviderFromModel(modelId: VideoModelId): string {
-    if (isKlingModel(modelId)) return "kling";
-    if (isLumaModel(modelId)) return "luma";
-    if (isOpenAISoraModel(modelId)) return "sora";
-    if (isVeoModel(modelId)) return "veo";
+    if (isKlingModelId(modelId)) return "kling";
+    if (isLumaModelId(modelId)) return "luma";
+    if (isOpenAISoraModelId(modelId)) return "sora";
+    if (isVeoModelId(modelId)) return "veo";
     return "replicate";
   }
 
