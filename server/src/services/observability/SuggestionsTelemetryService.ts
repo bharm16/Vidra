@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { logger } from "@infrastructure/Logger";
 import type { IPostHogClient } from "@infrastructure/PostHogClient";
+import { emitCaptured, resolveDistinctId } from "./telemetryHelpers";
 import type {
   SuggestionsEventProperties,
   SuggestionsEventStages,
@@ -88,18 +87,15 @@ export class SuggestionsTrace {
       modelVariant: summary.modelVariant ?? null,
     };
 
-    try {
-      this.client.capture({
+    emitCaptured(
+      this.client,
+      {
         distinctId: this.distinctId,
         event: "suggestions.completed",
         properties: { ...properties },
-      });
-    } catch (err) {
-      logger.debug("Telemetry emission failed (non-fatal)", {
-        error: err instanceof Error ? err.message : String(err),
-        requestId: this.requestId,
-      });
-    }
+      },
+      this.requestId,
+    );
   }
 }
 
@@ -110,8 +106,7 @@ export class SuggestionsTelemetryService {
     requestId: string,
     userId: string | null,
   ): SuggestionsTrace {
-    const distinctId =
-      userId && userId.trim().length > 0 ? userId : `anon-${randomUUID()}`;
+    const distinctId = resolveDistinctId(userId);
     return new SuggestionsTrace(this.client, distinctId, requestId, userId);
   }
 }

@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { logger } from "@infrastructure/Logger";
 import type { IPostHogClient } from "@infrastructure/PostHogClient";
+import { emitCaptured, resolveDistinctId } from "./telemetryHelpers";
 import type {
   OptimizeEventProperties,
   OptimizeEventStages,
@@ -107,18 +106,15 @@ export class OptimizeTrace {
         : {}),
     };
 
-    try {
-      this.client.capture({
+    emitCaptured(
+      this.client,
+      {
         distinctId: this.distinctId,
         event: "optimize.completed",
         properties: { ...properties },
-      });
-    } catch (err) {
-      logger.debug("Telemetry emission failed (non-fatal)", {
-        error: err instanceof Error ? err.message : String(err),
-        requestId: this.requestId,
-      });
-    }
+      },
+      this.requestId,
+    );
   }
 }
 
@@ -126,8 +122,7 @@ export class OptimizeTelemetryService {
   constructor(private readonly client: IPostHogClient) {}
 
   startOptimizeTrace(requestId: string, userId: string | null): OptimizeTrace {
-    const distinctId =
-      userId && userId.trim().length > 0 ? userId : `anon-${randomUUID()}`;
+    const distinctId = resolveDistinctId(userId);
     return new OptimizeTrace(this.client, distinctId, requestId, userId);
   }
 }
