@@ -1,105 +1,75 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 import { checkPromptCoherence } from "@features/prompt-optimizer/api/coherenceCheckApi";
-import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
+import { apiClient } from "@/services/ApiClient";
 
-vi.mock("@/services/http/firebaseAuth", () => ({
-  buildFirebaseAuthHeaders: vi.fn(),
+// checkPromptCoherence is now a thin wrapper over apiRequest, which routes
+// through apiClient.rawRequest (auth headers, telemetry-source, 401-retry).
+// Mock the transport seam so the real apiRequest + CoherenceCheckResultSchema
+// run end-to-end; header/envelope mechanics are covered by apiRequest's own test.
+vi.mock("@/services/ApiClient", () => ({
+  apiClient: { rawRequest: vi.fn() },
 }));
 
-const mockBuildFirebaseAuthHeaders = vi.mocked(buildFirebaseAuthHeaders);
+const rawRequest = vi.mocked(apiClient.rawRequest);
+
+const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
+  ({ ok, status, json: async () => body }) as unknown as Response;
 
 describe("checkPromptCoherence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("error handling", () => {
-    it("throws when fetch is unavailable", async () => {
-      const originalFetch = globalThis.fetch;
-      delete (globalThis as { fetch?: typeof fetch }).fetch;
+  it("posts the payload to the coherence endpoint and returns the unwrapped result", async () => {
+    rawRequest.mockResolvedValue(
+      jsonResponse({
+        success: true,
+        data: { conflicts: [], harmonizations: [] },
+      }),
+    );
 
-      await expect(
-        checkPromptCoherence({ beforePrompt: "test", afterPrompt: "test" }),
-      ).rejects.toThrow("Fetch is not available in this environment.");
-
-      globalThis.fetch = originalFetch;
+    const result = await checkPromptCoherence({
+      beforePrompt: "test",
+      afterPrompt: "test",
     });
 
-    it("throws when the response is not ok", async () => {
-      mockBuildFirebaseAuthHeaders.mockResolvedValue({
-        Authorization: "Bearer token",
-      });
-      const fetchImpl = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-      });
-
-      await expect(
-        checkPromptCoherence(
-          { beforePrompt: "test", afterPrompt: "test" },
-          { fetchImpl },
-        ),
-      ).rejects.toThrow("Failed to check coherence: 500");
-    });
+    expect(rawRequest).toHaveBeenCalledWith(
+      "/enhancement/prompt-coherence",
+      expect.objectContaining({
+        method: "POST",
+        body: { beforePrompt: "test", afterPrompt: "test" },
+      }),
+    );
+    expect(result).toEqual({ conflicts: [], harmonizations: [] });
   });
 
-  describe("core behavior", () => {
-    it("returns parsed JSON for successful responses", async () => {
-      mockBuildFirebaseAuthHeaders.mockResolvedValue({
-        Authorization: "Bearer token",
-      });
-      const fetchImpl = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            data: {
-              conflicts: [],
-              harmonizations: [],
-            },
-          }),
-      });
+  it("throws the server error message on a non-OK response", async () => {
+    rawRequest.mockResolvedValue(
+      jsonResponse(
+        { success: false, error: "coherence unavailable" },
+        false,
+        500,
+      ),
+    );
 
-      const result = await checkPromptCoherence(
-        { beforePrompt: "test", afterPrompt: "test" },
-        { fetchImpl },
-      );
+    await expect(
+      checkPromptCoherence({ beforePrompt: "test", afterPrompt: "test" }),
+    ).rejects.toThrow("coherence unavailable");
+  });
 
-      expect(fetchImpl).toHaveBeenCalledWith(
-        "/api/enhancement/prompt-coherence",
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            "Content-Type": "application/json",
-            Authorization: "Bearer token",
-          }),
-        }),
-      );
-      expect(result).toEqual({ conflicts: [], harmonizations: [] });
-    });
+  it("rejects a malformed (non-envelope) payload at the schema boundary", async () => {
+    rawRequest.mockResolvedValue(
+      jsonResponse({
+        conflicts: [
+          { message: "Missing recommendations", reasoning: "bad payload" },
+        ],
+        harmonizations: [],
+      }),
+    );
 
-    it("rejects malformed coherence payloads at the boundary", async () => {
-      mockBuildFirebaseAuthHeaders.mockResolvedValue({
-        Authorization: "Bearer token",
-      });
-      const fetchImpl = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            conflicts: [
-              { message: "Missing recommendations", reasoning: "bad payload" },
-            ],
-            harmonizations: [],
-          }),
-      });
-
-      await expect(
-        checkPromptCoherence(
-          { beforePrompt: "test", afterPrompt: "test" },
-          { fetchImpl },
-        ),
-      ).rejects.toThrow();
-    });
+    await expect(
+      checkPromptCoherence({ beforePrompt: "test", afterPrompt: "test" }),
+    ).rejects.toThrow();
   });
 });
