@@ -1,4 +1,5 @@
 import { labelSpans } from "../SpanLabelingService";
+import { computeCachedSpans } from "../spanCache";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type { PromptSpanProvider } from "../ports/PromptSpanProvider";
@@ -35,21 +36,15 @@ export class CachedPromptSpanProvider implements PromptSpanProvider {
       return labelSpans(params, this.aiService);
     }
 
-    // The key must exist before the value does, so this is the router's
-    // pre-flight answer rather than the produced provider. It is accurate
-    // unless a circuit trips mid-call; the post-compute paths that CAN key on
-    // the produced provider (see streamingHandler's backfill) do so.
-    const provider = this.aiService.resolveExecution("span_labeling").provider;
-    const ttl = prompt.length > 2000 ? 300 : 3600;
+    const { result } = await computeCachedSpans({
+      cache: this.cache,
+      aiService: this.aiService,
+      text: prompt,
+      policy: options.policy ?? null,
+      templateVersion: options.templateVersion ?? null,
+      compute: () => labelSpans(params, this.aiService),
+    });
 
-    const { value } = await this.cache.getOrCompute(
-      prompt,
-      options.policy ?? null,
-      options.templateVersion ?? null,
-      () => labelSpans(params, this.aiService),
-      { ttl, provider },
-    );
-
-    return value as LabelSpansResult;
+    return result;
   }
 }

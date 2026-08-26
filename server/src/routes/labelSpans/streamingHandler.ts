@@ -3,6 +3,7 @@ import { logger } from "@infrastructure/Logger";
 import { createSseWriter } from "@middleware/sseBackpressure";
 import { labelSpansStream } from "@llm/span-labeling/SpanLabelingService";
 import type { SpanStreamFinalization } from "@llm/span-labeling/SpanLabelingService";
+import { spanCacheTtlSeconds } from "@llm/span-labeling/spanCache";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type {
@@ -155,7 +156,7 @@ export async function handleLabelSpansStreamRequest({
     text
   ) {
     try {
-      const ttl = text.length > 2000 ? 300 : 3600;
+      const ttl = spanCacheTtlSeconds(text.length);
       // This write happens after the result exists, so it keys on the provider
       // that actually produced these spans rather than a pre-flight guess.
       const provider = finalization?.meta.provider;
