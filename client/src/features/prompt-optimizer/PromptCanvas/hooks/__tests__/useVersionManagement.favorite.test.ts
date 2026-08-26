@@ -96,7 +96,6 @@ describe("useVersionManagement setGenerationFavorite", () => {
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: null,
       }),
     );
 
@@ -155,7 +154,6 @@ describe("useVersionManagement setGenerationFavorite", () => {
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: null,
       }),
     );
 

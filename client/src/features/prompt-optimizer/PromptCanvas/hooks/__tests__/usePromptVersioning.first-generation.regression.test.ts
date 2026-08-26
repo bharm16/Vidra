@@ -49,9 +49,6 @@ describe("usePromptVersioning syncVersionGenerations", () => {
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: "16:9",
-        generationParams: {},
-        selectedModel: "sora-2",
       }),
     );
 

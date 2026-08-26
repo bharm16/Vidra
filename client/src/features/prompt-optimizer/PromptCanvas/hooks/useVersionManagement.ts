@@ -76,7 +76,6 @@ interface UseVersionManagementOptions {
   versionEditCountRef: MutableRefObject<number>;
   versionEditsRef: MutableRefObject<PromptVersionEdit[]>;
   resetVersionEdits: () => void;
-  effectiveAspectRatio: string | null;
 }
 
 interface UseVersionManagementResult {
@@ -124,7 +123,6 @@ export function useVersionManagement({
   versionEditCountRef,
   versionEditsRef,
   resetVersionEdits,
-  effectiveAspectRatio,
 }: UseVersionManagementOptions): UseVersionManagementResult {
   const { history, createDraft, updateEntryVersions } = promptHistory;
   const { setOptimizedPrompt } = promptOptimizer;
@@ -264,9 +262,6 @@ export function useVersionManagement({
       versionEditCountRef,
       versionEditsRef,
       resetVersionEdits,
-      effectiveAspectRatio,
-      generationParams,
-      selectedModel,
     },
   );
 

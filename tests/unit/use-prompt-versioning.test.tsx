@@ -65,164 +65,6 @@ describe("usePromptVersioning", () => {
     vi.useRealTimers();
   });
 
-  it("creates a new version when the prompt has changed", () => {
-    const existingVersions: PromptVersionEntry[] = [
-      {
-        versionId: "v-1",
-        label: "v1",
-        signature: "sig-old",
-        prompt: "Old prompt",
-        timestamp: "2023-01-01T00:00:00.000Z",
-      },
-    ];
-
-    const promptHistory = createPromptHistory({
-      history: [
-        {
-          uuid: "uuid-1",
-          input: "input",
-          output: "output",
-          versions: existingVersions,
-        },
-      ],
-    });
-
-    const latestHighlightRef: MutableRefObject<HighlightSnapshot | null> = {
-      current: { spans: [], signature: "sig-new" },
-    };
-    const versionEditCountRef: MutableRefObject<number> = { current: 2 };
-    const versionEditsRef: MutableRefObject<PromptVersionEdit[]> = {
-      current: [{ timestamp: "2024-01-01T00:00:00.000Z", source: "manual" }],
-    };
-    const resetVersionEdits = vi.fn();
-
-    const { result } = renderHook(() =>
-      usePromptVersioning({
-        promptHistory,
-        currentPromptUuid: "uuid-1",
-        currentPromptDocId: "doc-1",
-        latestHighlightRef,
-        versionEditCountRef,
-        versionEditsRef,
-        resetVersionEdits,
-        effectiveAspectRatio: "1:1",
-        generationParams: { steps: 10 },
-        selectedModel: "model-a",
-      }),
-    );
-
-    act(() => {
-      result.current.upsertVersionOutput({
-        action: "preview",
-        prompt: "New prompt",
-        generatedAt: 1700000000000,
-        imageUrl: "https://example.com/image.png",
-        aspectRatio: "4:3",
-      });
-    });
-
-    expect(promptHistory.updateEntryVersions).toHaveBeenCalledWith(
-      "uuid-1",
-      "doc-1",
-      expect.any(Array),
-    );
-    const versions = vi.mocked(promptHistory.updateEntryVersions).mock
-      .calls[0]?.[2];
-    expect(versions).toHaveLength(2);
-    expect(versions?.[0]).toEqual(existingVersions[0]);
-    expect(versions?.[1]).toMatchObject({
-      versionId: expect.stringMatching(/^v-1704067200000-/),
-      label: "v2",
-      signature: "sig-new",
-      prompt: "New prompt",
-      timestamp: "2024-01-01T00:00:00.000Z",
-      editCount: 2,
-      edits: [{ timestamp: "2024-01-01T00:00:00.000Z", source: "manual" }],
-      highlights: { spans: [], signature: "sig-new" },
-      firstFrame: {
-        generatedAt: new Date(1700000000000).toISOString(),
-        imageUrl: "https://example.com/image.png",
-        aspectRatio: "4:3",
-        storagePath: null,
-        assetId: null,
-        viewUrlExpiresAt: null,
-      },
-    });
-    expect(resetVersionEdits).toHaveBeenCalled();
-  });
-
-  it("updates the last version when signatures match", () => {
-    mockCreateHighlightSignature.mockReturnValue("sig-same");
-
-    const existingVersions: PromptVersionEntry[] = [
-      {
-        versionId: "v-1",
-        label: "v1",
-        signature: "sig-same",
-        prompt: "Prompt",
-        timestamp: "2023-01-01T00:00:00.000Z",
-      },
-    ];
-
-    const promptHistory = createPromptHistory({
-      history: [
-        {
-          uuid: "uuid-2",
-          input: "input",
-          output: "output",
-          versions: existingVersions,
-        },
-      ],
-    });
-
-    const resetVersionEdits = vi.fn();
-
-    const { result } = renderHook(() =>
-      usePromptVersioning({
-        promptHistory,
-        currentPromptUuid: "uuid-2",
-        currentPromptDocId: "doc-2",
-        latestHighlightRef: { current: null },
-        versionEditCountRef: { current: 0 },
-        versionEditsRef: { current: [] },
-        resetVersionEdits,
-        effectiveAspectRatio: "16:9",
-        generationParams: { steps: 12 },
-        selectedModel: "model-a",
-      }),
-    );
-
-    act(() => {
-      result.current.upsertVersionOutput({
-        action: "preview",
-        prompt: "Prompt",
-        generatedAt: "2024-01-01T00:00:00.000Z",
-        imageUrl: null,
-      });
-    });
-
-    expect(promptHistory.updateEntryVersions).toHaveBeenCalledWith(
-      "uuid-2",
-      "doc-2",
-      expect.any(Array),
-    );
-    const versions = vi.mocked(promptHistory.updateEntryVersions).mock
-      .calls[0]?.[2];
-    expect(versions).toHaveLength(1);
-    expect(versions?.[0]).toMatchObject({
-      signature: "sig-same",
-      firstFrame: {
-        generatedAt: "2024-01-01T00:00:00.000Z",
-        imageUrl: null,
-        aspectRatio: "16:9",
-        storagePath: null,
-        assetId: null,
-        viewUrlExpiresAt: null,
-      },
-    });
-    expect(resetVersionEdits).not.toHaveBeenCalled();
-  });
-
   it("creates an initial version when syncing highlights without versions", () => {
     const promptHistory = createPromptHistory({
       history: [
@@ -241,9 +83,6 @@ describe("usePromptVersioning", () => {
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits,
-        effectiveAspectRatio: null,
-        generationParams: {},
-        selectedModel: "",
       }),
     );
 
@@ -299,9 +138,6 @@ describe("usePromptVersioning", () => {
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: null,
-        generationParams: {},
-        selectedModel: "",
       }),
     );
 
