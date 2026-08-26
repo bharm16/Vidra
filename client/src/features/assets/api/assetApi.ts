@@ -1,5 +1,7 @@
+import { z } from "zod";
 import type { Asset, AssetListResponse } from "@shared/types/asset";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
+import { apiClient } from "@/services/ApiClient";
 import {
   AssetSchema,
   AssetListResponseSchema,
@@ -29,60 +31,74 @@ async function handleError(
   }
 }
 
+/**
+ * Shared plumbing for the JSON asset endpoints. Routes through the apiClient
+ * seam — Firebase auth headers, the telemetry-source header, the 401 →
+ * sign-in-and-retry transport, backoff, and timeout — while preserving the
+ * cookie credentials and the per-endpoint fallback message, then unwraps the
+ * `{ success, data }` envelope. `endpoint` is relative to `/assets`.
+ */
+async function assetRequest<T extends z.ZodTypeAny>(
+  endpoint: string,
+  schema: T,
+  fallback: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<z.infer<T>> {
+  const response = await apiClient.rawRequest(`/assets${endpoint}`, {
+    method: init.method ?? "GET",
+    body: init.body,
+    fetchOptions: { credentials: "include" },
+  });
+  if (!response.ok) {
+    return handleError(response, fallback);
+  }
+  const payload = await response.json();
+  // The generic ApiSuccessResponseSchema wrapper loses the precise `data` type
+  // through `.passthrough()`, so re-assert it at this boundary (same as the
+  // shared apiRequest helper).
+  return ApiSuccessResponseSchema(schema).parse(payload).data as z.infer<T>;
+}
+
+/** Envelope-less variant for endpoints whose success is just a 2xx status. */
+async function assetRequestOk(
+  endpoint: string,
+  fallback: string,
+  method: string,
+): Promise<boolean> {
+  const response = await apiClient.rawRequest(`/assets${endpoint}`, {
+    method,
+    fetchOptions: { credentials: "include" },
+  });
+  if (!response.ok) {
+    return handleError(response, fallback);
+  }
+  return true;
+}
+
 export const assetApi = {
-  async list(type: string | null = null): Promise<AssetListResponse> {
-    const url = type ? `${API_BASE}?type=${type}` : API_BASE;
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(url, {
-      headers: authHeaders,
-      credentials: "include",
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to fetch assets");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetListResponseSchema).parse(payload)
-      .data;
-  },
+  list: (type: string | null = null): Promise<AssetListResponse> =>
+    assetRequest(
+      type ? `?type=${type}` : "",
+      AssetListResponseSchema,
+      "Failed to fetch assets",
+    ),
 
-  async get(assetId: string): Promise<Asset> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/${assetId}`, {
-      headers: authHeaders,
-      credentials: "include",
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to fetch asset");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data;
-  },
+  get: (assetId: string): Promise<Asset> =>
+    assetRequest(`/${assetId}`, AssetSchema, "Failed to fetch asset"),
 
-  async create(data: {
+  create: (data: {
     type: string;
     trigger: string;
     name: string;
     textDefinition?: string;
     negativePrompt?: string;
-  }): Promise<Asset> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(API_BASE, {
+  }): Promise<Asset> =>
+    assetRequest("", AssetSchema, "Failed to create asset", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to create asset");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data;
-  },
+      body: data,
+    }),
 
-  async update(
+  update: (
     assetId: string,
     data: {
       trigger?: string;
@@ -90,92 +106,40 @@ export const assetApi = {
       textDefinition?: string;
       negativePrompt?: string;
     },
-  ): Promise<Asset> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/${assetId}`, {
+  ): Promise<Asset> =>
+    assetRequest(`/${assetId}`, AssetSchema, "Failed to update asset", {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to update asset");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data;
-  },
+      body: data,
+    }),
 
-  async delete(assetId: string): Promise<boolean> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/${assetId}`, {
-      method: "DELETE",
-      headers: authHeaders,
-      credentials: "include",
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to delete asset");
-    }
-    return true;
-  },
+  delete: (assetId: string): Promise<boolean> =>
+    assetRequestOk(`/${assetId}`, "Failed to delete asset", "DELETE"),
 
-  async getSuggestions(query: string) {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(
-      `${API_BASE}/suggestions?q=${encodeURIComponent(query)}`,
-      {
-        headers: authHeaders,
-        credentials: "include",
-      },
-    );
-    if (!response.ok) {
-      return await handleError(response, "Failed to get suggestions");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetSuggestionSchema.array()).parse(
-      payload,
-    ).data;
-  },
+  getSuggestions: (query: string) =>
+    assetRequest(
+      `/suggestions?q=${encodeURIComponent(query)}`,
+      AssetSuggestionSchema.array(),
+      "Failed to get suggestions",
+    ),
 
-  async resolve(prompt: string) {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/resolve`, {
+  resolve: (prompt: string) =>
+    assetRequest("/resolve", ResolvedPromptSchema, "Failed to resolve prompt", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      credentials: "include",
-      body: JSON.stringify({ prompt }),
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to resolve prompt");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(ResolvedPromptSchema).parse(payload).data;
-  },
+      body: { prompt },
+    }),
 
-  async validate(prompt: string) {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/validate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      credentials: "include",
-      body: JSON.stringify({ prompt }),
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to validate triggers");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(TriggerValidationSchema).parse(payload)
-      .data;
-  },
+  validate: (prompt: string) =>
+    assetRequest(
+      "/validate",
+      TriggerValidationSchema,
+      "Failed to validate triggers",
+      { method: "POST", body: { prompt } },
+    ),
 
+  // FormData upload stays on hand-rolled fetch: the shared apiClient forces
+  // `Content-Type: application/json` on every request, which would clobber the
+  // multipart boundary. This one endpoint remains direct until the client
+  // learns to skip Content-Type for FormData bodies.
   async addImage(
     assetId: string,
     file: File,
@@ -205,49 +169,27 @@ export const assetApi = {
     ).data;
   },
 
-  async deleteImage(assetId: string, imageId: string): Promise<boolean> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/${assetId}/images/${imageId}`, {
-      method: "DELETE",
-      headers: authHeaders,
-      credentials: "include",
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to delete image");
-    }
-    return true;
-  },
+  deleteImage: (assetId: string, imageId: string): Promise<boolean> =>
+    assetRequestOk(
+      `/${assetId}/images/${imageId}`,
+      "Failed to delete image",
+      "DELETE",
+    ),
 
-  async setPrimaryImage(assetId: string, imageId: string): Promise<Asset> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(
-      `${API_BASE}/${assetId}/images/${imageId}/primary`,
-      {
-        method: "PATCH",
-        headers: authHeaders,
-        credentials: "include",
-      },
-    );
-    if (!response.ok) {
-      return await handleError(response, "Failed to set primary image");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetSchema).parse(payload).data;
-  },
+  setPrimaryImage: (assetId: string, imageId: string): Promise<Asset> =>
+    assetRequest(
+      `/${assetId}/images/${imageId}/primary`,
+      AssetSchema,
+      "Failed to set primary image",
+      { method: "PATCH" },
+    ),
 
-  async getForGeneration(assetId: string) {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/${assetId}/for-generation`, {
-      headers: authHeaders,
-      credentials: "include",
-    });
-    if (!response.ok) {
-      return await handleError(response, "Asset not ready for generation");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetForGenerationSchema).parse(payload)
-      .data;
-  },
+  getForGeneration: (assetId: string) =>
+    assetRequest(
+      `/${assetId}/for-generation`,
+      AssetForGenerationSchema,
+      "Asset not ready for generation",
+    ),
 };
 
 export default assetApi;

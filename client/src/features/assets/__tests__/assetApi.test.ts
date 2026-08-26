@@ -22,19 +22,23 @@ describe("assetApi", () => {
     it("throws server error message when list response is not ok", async () => {
       fetchMock.mockResolvedValue({
         ok: false,
+        status: 500,
+        headers: new Headers(),
         json: async () => ({ error: "Nope" }),
       });
 
       await expect(assetApi.list()).rejects.toThrow("Nope");
-      expect(fetchMock).toHaveBeenCalledWith("/api/assets", {
-        headers: { Authorization: "Bearer token" },
-        credentials: "include",
-      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/assets",
+        expect.objectContaining({ credentials: "include" }),
+      );
     });
 
     it("uses fallback message when error payload cannot be parsed", async () => {
       fetchMock.mockResolvedValue({
         ok: false,
+        status: 500,
+        headers: new Headers(),
         json: async () => {
           throw "bad";
         },
@@ -55,15 +59,17 @@ describe("assetApi", () => {
       };
       fetchMock.mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: new Headers(),
         json: async () => ({ success: true, data: response }),
       });
 
       const result = await assetApi.list("character");
 
-      expect(fetchMock).toHaveBeenCalledWith("/api/assets?type=character", {
-        headers: { Authorization: "Bearer token" },
-        credentials: "include",
-      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/assets?type=character",
+        expect.objectContaining({ credentials: "include" }),
+      );
       expect(result).toEqual(response);
     });
 
@@ -125,6 +131,8 @@ describe("assetApi", () => {
 
       fetchMock.mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: new Headers(),
         json: async () => ({ success: true, data: asset }),
       });
 
@@ -136,12 +144,10 @@ describe("assetApi", () => {
 
       const firstCall = fetchMock.mock.calls[0];
       expect(firstCall).toBeDefined();
-      const [, options] = firstCall!;
+      const [url, options] = firstCall!;
+      expect(url).toBe("/api/assets");
       expect(options?.method).toBe("POST");
-      expect(options?.headers).toEqual({
-        "Content-Type": "application/json",
-        Authorization: "Bearer token",
-      });
+      expect(options?.credentials).toBe("include");
       expect(options?.body).toBe(
         JSON.stringify({ type: "character", trigger: "@Ada", name: "Ada" }),
       );
