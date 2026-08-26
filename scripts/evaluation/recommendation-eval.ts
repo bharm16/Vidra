@@ -32,9 +32,11 @@
  *   2 = setup error (missing baseline, bad input file, runtime error)
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { createBaselineStore } from "./baseline-store.js";
 
 import { ModelIntelligenceService } from "../../server/src/services/model-intelligence/ModelIntelligenceService.js";
 import { ModelCapabilityRegistry } from "../../server/src/services/model-intelligence/services/ModelCapabilityRegistry.js";
@@ -64,6 +66,8 @@ const __dirname = dirname(__filename);
 const PROMPTS_PATH = join(__dirname, "recommendation-prompts.json");
 const BASELINES_DIR = join(__dirname, "recommendation-baselines");
 const RESULTS_PATH = join(__dirname, "recommendation-results-latest.json");
+
+const baselineStore = createBaselineStore<Baseline>(BASELINES_DIR);
 
 // ---------------------------------------------------------------------------
 // Types
@@ -419,25 +423,6 @@ function loadPrompts(path: string): EvalPromptSet {
   return parsed;
 }
 
-function baselinePath(name: string): string {
-  return join(BASELINES_DIR, `${name}.json`);
-}
-
-function readBaseline(name: string): Baseline | null {
-  const path = baselinePath(name);
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf8")) as Baseline;
-}
-
-function writeBaseline(baseline: Baseline): void {
-  if (!existsSync(BASELINES_DIR)) mkdirSync(BASELINES_DIR, { recursive: true });
-  writeFileSync(
-    baselinePath(baseline.baselineName),
-    JSON.stringify(baseline, null, 2) + "\n",
-    "utf8",
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -542,9 +527,11 @@ async function main(): Promise<number> {
         ...(opts.commit !== undefined && { commit: opts.commit }),
         snapshots,
       };
-      writeBaseline(baseline);
+      baselineStore.write(baseline.baselineName, baseline);
       // eslint-disable-next-line no-console
-      console.log(`\nBaseline blessed: ${baselinePath(opts.baselineName)}`);
+      console.log(
+        `\nBaseline blessed: ${baselineStore.path(opts.baselineName)}`,
+      );
       metrics = {
         driftDetectedCount: 0,
         totalPrompts: promptCount,
@@ -555,14 +542,14 @@ async function main(): Promise<number> {
       return 0;
     }
 
-    const baseline = readBaseline(opts.baselineName);
+    const baseline = baselineStore.read(opts.baselineName);
     if (!baseline) {
       // eslint-disable-next-line no-console
       console.error(
-        `\nNo baseline at ${baselinePath(opts.baselineName)}. Run with --bless first to establish one.`,
+        `\nNo baseline at ${baselineStore.path(opts.baselineName)}. Run with --bless first to establish one.`,
       );
       outcome = "setup_error";
-      errorMessage = `No baseline at ${baselinePath(opts.baselineName)}`;
+      errorMessage = `No baseline at ${baselineStore.path(opts.baselineName)}`;
       metrics = {
         driftDetectedCount: 0,
         totalPrompts: promptCount,

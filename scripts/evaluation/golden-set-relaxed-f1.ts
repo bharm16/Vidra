@@ -28,13 +28,7 @@
  */
 
 import { config as loadEnv } from "dotenv";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -51,6 +45,7 @@ import {
   type Baseline,
   type EvaluationReport,
 } from "./baseline-gate.js";
+import { createBaselineStore } from "./baseline-store.js";
 import { createEvalEmitter, resolveDistinctId } from "./posthog-emitter.js";
 import type { Outcome, SpanLabelingF1Metrics } from "./eval-event-types.js";
 
@@ -65,6 +60,8 @@ const GOLDEN_SET_DIR = join(
 );
 const BASELINES_DIR = join(__dirname, "golden-set-baselines");
 const RESULTS_PATH = join(__dirname, "golden-set-results-latest.json");
+
+const baselineStore = createBaselineStore<Baseline>(BASELINES_DIR);
 
 // Abort if more than this fraction of prompts fail — F1 numbers from a partial
 // run can't be trusted as a baseline or compared against one.
@@ -291,25 +288,6 @@ function toEvaluationReport(
   };
 }
 
-function baselinePath(provider: string): string {
-  return join(BASELINES_DIR, `${provider}.json`);
-}
-
-function readBaseline(provider: string): Baseline | null {
-  const path = baselinePath(provider);
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf8")) as Baseline;
-}
-
-function writeBaseline(baseline: Baseline): void {
-  if (!existsSync(BASELINES_DIR)) mkdirSync(BASELINES_DIR, { recursive: true });
-  writeFileSync(
-    baselinePath(baseline.provider),
-    JSON.stringify(baseline, null, 2) + "\n",
-    "utf8",
-  );
-}
-
 async function main(): Promise<number> {
   const opts = parseArgs(process.argv.slice(2));
   const emitter = createEvalEmitter();
@@ -444,19 +422,19 @@ async function main(): Promise<number> {
         provider,
         ...(opts.commit !== undefined && { commit: opts.commit }),
       });
-      writeBaseline(baseline);
-      console.log(`\n✅ Baseline blessed: ${baselinePath(provider)}`);
+      baselineStore.write(baseline.provider, baseline);
+      console.log(`\n✅ Baseline blessed: ${baselineStore.path(provider)}`);
       outcome = "passed";
       return 0;
     }
 
-    const baseline = readBaseline(provider);
+    const baseline = baselineStore.read(provider);
     if (!baseline) {
       console.error(
-        `\n❌ No baseline at ${baselinePath(provider)}. Run with --bless first to establish one.`,
+        `\n❌ No baseline at ${baselineStore.path(provider)}. Run with --bless first to establish one.`,
       );
       outcome = "setup_error";
-      errorMessage = `No baseline at ${baselinePath(provider)}`;
+      errorMessage = `No baseline at ${baselineStore.path(provider)}`;
       return 2;
     }
 
