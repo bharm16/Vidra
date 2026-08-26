@@ -1,8 +1,8 @@
 /**
  * Replicate Flux Schnell provider
  *
- * Handles prompt cleanup, optional video-to-image transformation,
- * and Replicate polling for Flux Schnell preview images.
+ * Shapes the Schnell request (prompt cleanup, aspect ratio) and delegates the
+ * create → poll → URL protocol to the shared runReplicatePrediction.
  */
 
 import Replicate from "replicate";
@@ -15,39 +15,13 @@ import type {
 } from "./types";
 import { stripPreviewSections } from "@services/image-generation/promptSanitization";
 import {
-  parseRetryAfterMs,
-  parseReplicateErrorDetail,
-  extractImageUrl,
-} from "./replicatePrediction";
-
-interface ReplicateClient {
-  predictions: {
-    create: (params: {
-      model: string;
-      input: {
-        prompt: string;
-        aspect_ratio: string;
-        output_format: string;
-        output_quality: number;
-      };
-    }) => Promise<ReplicatePrediction>;
-    get: (id: string) => Promise<ReplicatePrediction>;
-  };
-}
-
-type ReplicatePredictionInput = Parameters<
-  ReplicateClient["predictions"]["create"]
->[0]["input"];
-
-interface ReplicatePrediction {
-  id: string;
-  status: "starting" | "processing" | "succeeded" | "failed" | "canceled";
-  output: string | string[] | null | undefined;
-  error?: string | null;
-  logs?: string | null;
-}
+  runReplicatePrediction,
+  classifyReplicateError,
+  type ReplicatePredictionClient,
+} from "./runReplicatePrediction";
 
 const FLUX_MODEL_ID = "black-forest-labs/flux-schnell";
+const FLUX_TIMEOUT_MS = 60000;
 
 const FLUX_ASPECT_RATIOS = [
   "1:1",
@@ -65,8 +39,6 @@ type FluxAspectRatio = (typeof FLUX_ASPECT_RATIOS)[number];
 
 const DEFAULT_ASPECT_RATIO: FluxAspectRatio = "16:9";
 const FLUX_ASPECT_RATIO_SET = new Set<string>(FLUX_ASPECT_RATIOS);
-const MAX_CREATE_RETRIES = 2;
-const DEFAULT_RETRY_AFTER_MS = 4000;
 
 const isFluxAspectRatio = (value: string): value is FluxAspectRatio =>
   FLUX_ASPECT_RATIO_SET.has(value);
@@ -88,7 +60,7 @@ export class ReplicateFluxSchnellProvider implements ImagePreviewProvider {
   public readonly id = "replicate-flux-schnell" as const;
   public readonly displayName = "Replicate Flux Schnell";
 
-  private readonly replicate: ReplicateClient | null;
+  private readonly replicate: ReplicatePredictionClient | null;
   private readonly log = logger.child({
     service: "ReplicateFluxSchnellProvider",
   });
@@ -98,7 +70,7 @@ export class ReplicateFluxSchnellProvider implements ImagePreviewProvider {
     this.replicate = apiToken
       ? (new Replicate({
           auth: apiToken,
-        }) as ReplicateClient)
+        }) as unknown as ReplicatePredictionClient)
       : null;
   }
 
@@ -123,7 +95,6 @@ export class ReplicateFluxSchnellProvider implements ImagePreviewProvider {
     const userId = request.userId;
     const aspectRatio = normalizeAspectRatio(request.aspectRatio);
     const cleanedPrompt = stripPreviewSections(trimmedPrompt);
-
     const promptForModel = cleanedPrompt;
 
     this.log.info("Generating image preview", {
@@ -136,119 +107,22 @@ export class ReplicateFluxSchnellProvider implements ImagePreviewProvider {
     try {
       const startTime = Date.now();
 
-      const prediction = await this.createPrediction(
-        {
+      const imageUrl = await runReplicatePrediction({
+        client: this.replicate,
+        model: FLUX_MODEL_ID,
+        input: {
           prompt: promptForModel,
           aspect_ratio: aspectRatio,
           output_format: "webp",
           output_quality: 80,
         },
+        timeoutMs: FLUX_TIMEOUT_MS,
         userId,
-      );
-
-      this.log.info("Prediction created", {
-        predictionId: prediction.id,
-        status: prediction.status,
-        userId,
+        log: this.log,
+        sleep: (ms) => this.sleep(ms),
       });
 
-      const maxWaitTime = 60000; // 60 seconds max
-      const pollInterval = 1000; // Poll every second
-      const endTime = Date.now() + maxWaitTime;
-      let currentPrediction = prediction;
-
-      while (Date.now() < endTime) {
-        if (currentPrediction.status === "succeeded") {
-          break;
-        }
-        if (
-          currentPrediction.status === "failed" ||
-          currentPrediction.status === "canceled"
-        ) {
-          const predictionError = new Error(
-            `Image generation failed: ${currentPrediction.error || "Unknown error"}`,
-          );
-          this.log.error("Prediction failed", predictionError, {
-            predictionId: currentPrediction.id,
-            status: currentPrediction.status,
-            error: currentPrediction.error,
-            logs: currentPrediction.logs,
-            userId,
-          });
-          throw predictionError;
-        }
-
-        await this.sleep(pollInterval);
-        try {
-          currentPrediction = await this.replicate.predictions.get(
-            prediction.id,
-          );
-        } catch (pollError) {
-          // A transient poll failure must not kill a healthy in-flight
-          // prediction — keep the last known state and poll again; the
-          // deadline bounds total exposure.
-          this.log.warn("Prediction poll failed; retrying until deadline", {
-            predictionId: prediction.id,
-            pollError:
-              pollError instanceof Error
-                ? pollError.message
-                : String(pollError),
-            userId,
-          });
-          continue;
-        }
-
-        this.log.debug("Polling prediction", {
-          predictionId: currentPrediction.id,
-          status: currentPrediction.status,
-          userId,
-        });
-      }
-
-      if (currentPrediction.status !== "succeeded") {
-        throw new Error(
-          `Prediction timed out or failed. Status: ${currentPrediction.status}`,
-        );
-      }
-
-      const output = currentPrediction.output;
       const durationMs = Date.now() - startTime;
-
-      if (output === null || output === undefined) {
-        const outputError = new Error(
-          "Replicate API returned no output. The image generation may have failed silently.",
-        );
-        this.log.error(
-          "Replicate API returned null/undefined output",
-          outputError,
-          {
-            userId,
-            duration: durationMs,
-          },
-        );
-        throw outputError;
-      }
-
-      this.log.info("Replicate API response received", {
-        outputType: typeof output,
-        isArray: Array.isArray(output),
-        outputLength: Array.isArray(output) ? output.length : null,
-        outputPreview: JSON.stringify(output, null, 2).substring(0, 1000),
-        userId,
-      });
-
-      const imageUrl = extractImageUrl(output, userId, this.log);
-
-      if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
-        const urlError = new Error(
-          "Invalid image URL format returned from Replicate API",
-        );
-        this.log.error("Invalid URL format returned", urlError, {
-          imageUrl: imageUrl.substring(0, 100),
-          userId,
-        });
-        throw urlError;
-      }
 
       this.log.info("Image preview generated successfully", {
         imageUrl: imageUrl.substring(0, 100),
@@ -256,100 +130,13 @@ export class ReplicateFluxSchnellProvider implements ImagePreviewProvider {
         userId,
       });
 
-      return {
-        imageUrl,
-        model: FLUX_MODEL_ID,
-        durationMs,
-        aspectRatio,
-      };
+      return { imageUrl, model: FLUX_MODEL_ID, durationMs, aspectRatio };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      let parsedError = errorMessage;
-      let statusCode = 500;
-
-      if (
-        errorMessage.includes("402") ||
-        errorMessage.includes("Insufficient credit")
-      ) {
-        statusCode = 402;
-        parsedError = parseReplicateErrorDetail(
-          errorMessage,
-          "Insufficient credit. Please add payment method to your Replicate account.",
-        );
-      } else if (
-        errorMessage.includes("429") ||
-        errorMessage.includes("rate limit") ||
-        errorMessage.includes("throttled")
-      ) {
-        statusCode = 429;
-        parsedError = parseReplicateErrorDetail(
-          errorMessage,
-          "Rate limit exceeded. Please wait a moment and try again.",
-        );
-      }
-
-      this.log.error(
-        "Image generation failed",
-        error instanceof Error ? error : new Error(errorMessage),
-        {
-          parsedError,
-          statusCode,
-          prompt: promptForModel.substring(0, 100),
-          userId,
-        },
-      );
-
-      const enhancedError = new Error(parsedError) as Error & {
-        statusCode?: number;
-      };
-      enhancedError.statusCode = statusCode;
-      throw enhancedError;
+      throw classifyReplicateError(error, this.log, {
+        prompt: promptForModel.substring(0, 100),
+        userId,
+      });
     }
-  }
-
-  private async createPrediction(
-    input: ReplicatePredictionInput,
-    userId: string,
-  ): Promise<ReplicatePrediction> {
-    if (!this.replicate) {
-      throw new Error(
-        "Replicate provider is not configured. REPLICATE_API_TOKEN is required.",
-      );
-    }
-
-    for (let attempt = 0; attempt <= MAX_CREATE_RETRIES; attempt += 1) {
-      try {
-        return await this.replicate.predictions.create({
-          model: FLUX_MODEL_ID,
-          input,
-        });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        const retryAfterMs = parseRetryAfterMs(errorMessage);
-        const isRateLimitError =
-          retryAfterMs !== null ||
-          /429|throttled|rate limit/i.test(errorMessage);
-
-        if (!isRateLimitError || attempt >= MAX_CREATE_RETRIES) {
-          throw error;
-        }
-
-        const delayMs = retryAfterMs ?? DEFAULT_RETRY_AFTER_MS;
-        this.log.warn(
-          "Replicate rate limit encountered, retrying create prediction",
-          {
-            attempt: attempt + 1,
-            delayMs,
-            userId,
-          },
-        );
-        await this.sleep(delayMs);
-      }
-    }
-
-    throw new Error("Replicate create prediction failed after retries");
   }
 
   private async sleep(ms: number): Promise<void> {

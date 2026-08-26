@@ -204,7 +204,10 @@ describe("ReplicateFluxKontextFastProvider", () => {
         apiToken: "token",
       });
       const sleepSpy = vi
-        .spyOn(provider as any, "sleep")
+        .spyOn(
+          provider as unknown as { sleep: (ms: number) => Promise<void> },
+          "sleep",
+        )
         .mockResolvedValue(undefined);
 
       createPredictionMock
@@ -215,17 +218,13 @@ describe("ReplicateFluxKontextFastProvider", () => {
           output: "https://images.example.com/output.webp",
         });
 
-      const result = await (provider as any).createPrediction(
-        {
-          prompt: "prompt",
-          aspect_ratio: "1:1",
-          output_format: "webp",
-          output_quality: 80,
-        },
-        "user-1",
-      );
+      const result = await provider.generatePreview({
+        prompt: "prompt",
+        userId: "user-1",
+        inputImageUrl: "https://images.example.com/base.webp",
+      });
 
-      expect(result.id).toBe("pred-2");
+      expect(result.imageUrl).toBe("https://images.example.com/output.webp");
       expect(createPredictionMock).toHaveBeenCalledTimes(2);
       expect(sleepSpy).toHaveBeenCalledWith(1000);
     });
