@@ -76,6 +76,8 @@ describe("assetApi", () => {
     it("sends FormData with metadata when uploading images", async () => {
       fetchMock.mockResolvedValue({
         ok: true,
+        status: 200,
+        headers: new Headers(),
         json: async () => ({
           success: true,
           data: {

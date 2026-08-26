@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { Asset, AssetListResponse } from "@shared/types/asset";
-import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import { apiClient } from "@/services/ApiClient";
 import {
   AssetSchema,
@@ -13,8 +12,6 @@ import {
 } from "./schemas";
 
 import { ApiSuccessResponseSchema } from "@shared/schemas/api.schemas";
-
-const API_BASE = "/api/assets";
 
 async function handleError(
   response: Response,
@@ -136,15 +133,11 @@ export const assetApi = {
       { method: "POST", body: { prompt } },
     ),
 
-  // FormData upload stays on hand-rolled fetch: the shared apiClient forces
-  // `Content-Type: application/json` on every request, which would clobber the
-  // multipart boundary. This one endpoint remains direct until the client
-  // learns to skip Content-Type for FormData bodies.
-  async addImage(
+  addImage: (
     assetId: string,
     file: File,
     metadata: Record<string, string | undefined> = {},
-  ) {
+  ) => {
     const formData = new FormData();
     formData.append("image", file);
     Object.entries(metadata).forEach(([key, value]) => {
@@ -152,21 +145,12 @@ export const assetApi = {
         formData.append(key, value);
       }
     });
-
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const response = await fetch(`${API_BASE}/${assetId}/images`, {
-      method: "POST",
-      headers: authHeaders,
-      credentials: "include",
-      body: formData,
-    });
-    if (!response.ok) {
-      return await handleError(response, "Failed to upload image");
-    }
-    const payload = await response.json();
-    return ApiSuccessResponseSchema(AssetImageUploadResponseSchema).parse(
-      payload,
-    ).data;
+    return assetRequest(
+      `/${assetId}/images`,
+      AssetImageUploadResponseSchema,
+      "Failed to upload image",
+      { method: "POST", body: formData },
+    );
   },
 
   deleteImage: (assetId: string, imageId: string): Promise<boolean> =>
