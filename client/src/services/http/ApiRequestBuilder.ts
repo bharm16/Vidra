@@ -7,6 +7,12 @@ interface RequestOptions {
   signal?: AbortSignal;
   timeout?: number;
   fetchOptions?: RequestInit;
+  /**
+   * Skip the automatic timeout signal. Streaming responses (NDJSON) stay open
+   * far longer than the default request timeout, which would otherwise abort
+   * them mid-flight. A caller-supplied `signal` still applies (for cancellation).
+   */
+  stream?: boolean;
 }
 
 interface BuiltRequest {
@@ -21,7 +27,9 @@ export class ApiRequestBuilder {
     const method = options.method || "GET";
     const url = this.config.buildUrl(endpoint);
     const headers = this.config.mergeHeaders(options.headers);
-    const signal = options.signal || this.config.createSignal(options.timeout);
+    const signal =
+      options.signal ??
+      (options.stream ? undefined : this.config.createSignal(options.timeout));
     const body = this.serializeBody(method, options.body);
 
     // FormData must carry its own multipart Content-Type (with the boundary the
@@ -33,7 +41,9 @@ export class ApiRequestBuilder {
     const init: RequestInit = {
       method,
       headers,
-      signal,
+      // Omitted entirely for streaming (no timeout, no caller signal), so the
+      // stream is never aborted by an idle timeout.
+      ...(signal ? { signal } : {}),
       ...options.fetchOptions,
     };
     if (body !== undefined) {

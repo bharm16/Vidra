@@ -34,6 +34,8 @@ interface RequestOptions {
   signal?: AbortSignal;
   timeout?: number;
   fetchOptions?: RequestInit;
+  /** Skip the automatic timeout signal — for long-lived streaming responses. */
+  stream?: boolean;
 }
 
 interface ApiClientOptions {

@@ -73,15 +73,14 @@ describe("SpanLabelingApi", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/llm/label-spans",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          "Content-Type": "application/json",
-          "X-Test": "token",
-        }),
-        body: expectedBody,
-      }),
+      expect.objectContaining({ method: "POST", body: expectedBody }),
     );
+    // The request now flows through apiClient, which normalizes header casing;
+    // check the auth + content-type headers case-insensitively.
+    const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const headers = new Headers(options.headers);
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("X-Test")).toBe("token");
     expect(result).toEqual({ spans: [], meta: null });
   });
 
