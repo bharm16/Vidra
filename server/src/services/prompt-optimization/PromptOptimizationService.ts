@@ -9,7 +9,6 @@ import { VideoPromptCompilationService } from "./services/VideoPromptCompilation
 import { IntentLockService } from "./services/IntentLockService";
 import { PromptLintGateService } from "./services/PromptLintGateService";
 import { finishPrompt } from "./services/finishPrompt";
-import type { ImageObservationService } from "@services/image-observation";
 import type { VideoPromptService } from "../video-prompt-analysis/VideoPromptService";
 import type { CacheService } from "@services/cache/CacheService";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
@@ -42,7 +41,6 @@ export class PromptOptimizationService {
   private readonly shotInterpreter: ShotInterpreterService;
   private readonly optimizationCache: OptimizationCacheService;
   private readonly compilationService: VideoPromptCompilationService | null;
-  private readonly imageObservation: ImageObservationService;
   private readonly intentLock: IntentLockService;
   private readonly promptLint: PromptLintGateService;
   private readonly log: ILogger;
@@ -51,7 +49,6 @@ export class PromptOptimizationService {
     aiService: AIService,
     cacheService: CacheService,
     videoPromptService: VideoPromptService | null = null,
-    imageObservationService: ImageObservationService,
     shotPlanCacheConfig?: { cacheTtlMs: number; cacheMax: number },
   ) {
     this.ai = aiService;
@@ -69,7 +66,6 @@ export class PromptOptimizationService {
           this.optimizationCache,
         )
       : null;
-    this.imageObservation = imageObservationService;
     this.intentLock = new IntentLockService();
     this.promptLint = new PromptLintGateService(
       videoPromptService

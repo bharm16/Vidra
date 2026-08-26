@@ -30,7 +30,6 @@ import { AIModelService } from "../../server/src/services/ai-model/AIModelServic
 import type { ClientsMap } from "../../server/src/services/ai-model/types.js";
 import { OpenAICompatibleAdapter } from "../../server/src/clients/adapters/OpenAICompatibleAdapter.js";
 import { PromptOptimizationService } from "../../server/src/services/prompt-optimization/PromptOptimizationService.js";
-import { ImageObservationService } from "../../server/src/services/image-observation/ImageObservationService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -312,13 +311,7 @@ async function main(): Promise<void> {
     set: async () => true,
     generateKey: () => "eval",
   } as never;
-  const imageObserver = new ImageObservationService(aiService, nullCache);
-  const optimizer = new PromptOptimizationService(
-    aiService,
-    nullCache,
-    null,
-    imageObserver,
-  );
+  const optimizer = new PromptOptimizationService(aiService, nullCache, null);
   console.log("Services ready\n");
 
   // Process each prompt
