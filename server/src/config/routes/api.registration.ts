@@ -10,7 +10,6 @@ import type { Bucket } from "@google-cloud/storage";
 import type { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
-import { createBatchMiddleware } from "@middleware/requestBatching";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
@@ -139,12 +138,6 @@ export function registerApiRoutes(
     ),
   );
   app.use("/api/llm/label-spans", apiAuthMiddleware, labelSpansRoute);
-
-  app.post(
-    "/api/llm/label-spans-batch",
-    apiAuthMiddleware,
-    createBatchMiddleware(container.resolve("spanLabelingProvider")),
-  );
 
   // Suggestions evaluation (LLM-as-a-Judge)
   const suggestionsRoute = createSuggestionsRoute({

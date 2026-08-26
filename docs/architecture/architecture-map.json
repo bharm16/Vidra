@@ -208,11 +208,6 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/llm/label-spans-batch",
-      "sourceFile": "server/src/config/routes/api.registration.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/llm/label-spans/stream",
       "sourceFile": "server/src/routes/labelSpansRoute.ts"
     },
@@ -1282,11 +1277,6 @@
     {
       "from": "promptOptimizationService",
       "to": "config",
-      "file": "optimization.services.ts"
-    },
-    {
-      "from": "promptOptimizationService",
-      "to": "imageObservationService",
       "file": "optimization.services.ts"
     },
     {

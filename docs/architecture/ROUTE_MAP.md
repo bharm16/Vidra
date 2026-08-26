@@ -43,7 +43,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/generate/consistent/keyframe`                                     | `server/src/routes/consistentGeneration.routes.ts`             |
 | POST   | `/api/generate/consistent/video`                                        | `server/src/routes/consistentGeneration.routes.ts`             |
 | POST   | `/api/llm/label-spans`                                                  | `server/src/routes/labelSpansRoute.ts`                         |
-| POST   | `/api/llm/label-spans-batch`                                            | `server/src/config/routes/api.registration.ts`                 |
 | POST   | `/api/llm/label-spans/stream`                                           | `server/src/routes/labelSpansRoute.ts`                         |
 | POST   | `/api/model-intelligence/recommend`                                     | `server/src/routes/model-intelligence.routes.ts`               |
 | POST   | `/api/model-intelligence/track`                                         | `server/src/routes/model-intelligence.routes.ts`               |
@@ -127,4 +126,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                                          | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                         | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **119**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **118**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
