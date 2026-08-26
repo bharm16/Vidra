@@ -4,6 +4,7 @@
  */
 
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
+import { apiClient } from "@/services/ApiClient";
 import { storageApi } from "@/api/storageApi";
 import { z } from "zod";
 import {
@@ -26,13 +27,14 @@ async function request<T extends z.ZodTypeAny>(
   schema: T,
   init?: RequestInit,
 ): Promise<z.infer<T>> {
-  const response = await fetch(`${BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(await buildFirebaseAuthHeaders()),
-      ...init?.headers,
-    },
+  // Routes through the shared apiClient seam (Firebase auth headers, the
+  // telemetry-source header, the 401 → sign-in-and-retry transport, backoff).
+  // The bespoke error handling below — statusCode enrichment, graceful non-JSON
+  // body — is a caller contract (useStudioProject reads err.statusCode), so this
+  // uses rawRequest rather than the generic apiRequest helper.
+  const response = await apiClient.rawRequest(`/studio${path}`, {
+    method: init?.method ?? "GET",
+    body: init?.body,
   });
 
   const body: unknown = await response.json().catch(() => null);
@@ -188,6 +190,8 @@ export async function runStudioTurn(
   hooks?: RunTurnStreamHooks,
   attachmentIds?: readonly string[],
 ): Promise<RunTurnResponse> {
+  // Stays on hand-rolled fetch: the shared apiClient attaches a timeout signal
+  // to every request, which would abort this long-lived NDJSON stream mid-turn.
   const response = await fetch(`${BASE}/projects/${projectId}/turns`, {
     method: "POST",
     body: JSON.stringify({
