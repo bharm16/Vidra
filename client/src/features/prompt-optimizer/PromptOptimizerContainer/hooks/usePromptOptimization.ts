@@ -12,6 +12,7 @@ import type { CapabilityValues } from "@shared/capabilities";
 import type { KeyframeTile } from "@features/generation-controls";
 import { resolveMediaUrl } from "@/services/media/MediaUrlResolver";
 import { applyOptimizationResult } from "../utils/persistOptimizationResult";
+import { mintVersionId } from "@features/prompt-optimizer/PromptCanvas/utils/versioning";
 import {
   extractStorageObjectPath,
   hasGcsSignedUrlParams,
@@ -385,7 +386,7 @@ export function usePromptOptimization({
 
             if (!last || last.signature !== signature) {
               const nextVersion: PromptVersionEntry = {
-                versionId: `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                versionId: mintVersionId(),
                 label: `v${currentVersions.length + 1}`,
                 signature,
                 prompt: promptText,

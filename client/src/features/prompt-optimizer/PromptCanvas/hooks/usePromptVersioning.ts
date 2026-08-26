@@ -12,6 +12,7 @@ import {
   extractStorageObjectPath,
   parseGcsSignedUrlExpiryMs,
 } from "@/utils/storageUrl";
+import { mintVersionId, buildVersionEditMetadata } from "../utils/versioning";
 import type { HighlightSnapshot } from "../types";
 
 // Per-span content equality for the idempotency guard in
@@ -224,7 +225,7 @@ const buildSeedVersionFromGeneration = (
     typeof generation.promptVersionId === "string" &&
     generation.promptVersionId.trim().length > 0
       ? generation.promptVersionId.trim()
-      : `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      : mintVersionId();
 
   return {
     versionId,
@@ -303,19 +304,17 @@ export function usePromptVersioning({
       video?: PromptVersionEntry["video"];
     }): PromptVersionEntry => {
       const versionNumber = currentVersions.length + 1;
-      const editCount = versionEditCountRef.current;
-      const edits = versionEditsRef.current.length
-        ? [...versionEditsRef.current]
-        : [];
       return {
-        versionId: `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        versionId: mintVersionId(),
         label: `v${versionNumber}`,
         signature,
         prompt,
         timestamp: new Date().toISOString(),
         ...(typeof highlights !== "undefined" ? { highlights } : {}),
-        ...(editCount > 0 ? { editCount } : {}),
-        ...(edits.length ? { edits } : {}),
+        ...buildVersionEditMetadata(
+          versionEditCountRef.current,
+          versionEditsRef.current,
+        ),
         ...(typeof firstFrame !== "undefined" ? { firstFrame } : {}),
         ...(typeof video !== "undefined" ? { video } : {}),
       };
