@@ -9,7 +9,7 @@ import type {
   ValidationPolicy,
 } from "@llm/span-labeling/types";
 
-interface LabelSpansCoordinatorInput {
+export interface LabelSpansCoordinatorInput {
   payload: LabelSpansParams;
   text: string;
   policy?: ValidationPolicy | null;
