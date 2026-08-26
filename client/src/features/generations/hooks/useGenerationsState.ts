@@ -163,24 +163,6 @@ export function useGenerationsState({
     onGenerationsChangeRef.current?.(state.generations);
   }, [state.generations]);
 
-  // ISSUE-12 follow-up: `addGeneration` is retained as a test-facing
-  // convenience — it dispatches SET_GENERATIONS over the current ref
-  // snapshot so the reducer keeps a single "state grows" entry point. It
-  // has no production caller (state grows via SET_GENERATIONS directly).
-  //
-  // CAVEAT: do NOT call it twice in the same React tick. Each call reads
-  // `generationsRef.current`, which only updates after re-render; two sync
-  // calls each compute `[...stale, gen]` and the second clobbers the first.
-  // To batch multiple entries, dispatch SET_GENERATIONS with the full array.
-  const addGeneration = useCallback(
-    (generation: Generation) =>
-      dispatch({
-        type: "SET_GENERATIONS",
-        payload: [...generationsRef.current, generation],
-      }),
-    [],
-  );
-
   const removeGeneration = useCallback(
     (id: string) => dispatch({ type: "REMOVE_GENERATION", payload: { id } }),
     [],
@@ -208,7 +190,6 @@ export function useGenerationsState({
     activeGenerationId: state.activeGenerationId,
     isGenerating: state.isGenerating,
     dispatch,
-    addGeneration,
     removeGeneration,
     setActiveGeneration,
     clearGenerations,
