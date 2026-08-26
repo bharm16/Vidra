@@ -97,5 +97,3 @@ ServiceName/
 ## Reference Docs
 
 - Logging patterns: `docs/architecture/typescript/LOGGING_PATTERNS.md`
-- Zod patterns: `docs/architecture/typescript/ZOD_PATTERNS.md`
-- Architecture standard: `docs/architecture/typescript/ARCHITECTURE_STANDARD.md`

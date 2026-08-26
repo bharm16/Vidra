@@ -38,9 +38,9 @@ This directory contains the architectural standards and patterns for the Prompt 
 - Clarifies span labeling, semantic parsing, and video prompt analysis responsibilities
 - Avoids overlapping pipelines and duplicate LLM calls
 
-### TypeScript Migration
+### TypeScript
 
-For TypeScript patterns and migration guides, see [typescript/](./typescript/README.md)
+Project-specific TypeScript references: [logging patterns](./typescript/LOGGING_PATTERNS.md) and the [test writing guide](./typescript/TEST_GUIDE.md). General TS/Zod conventions live in the root `CLAUDE.md`.
 
 ## Quick Start
 
