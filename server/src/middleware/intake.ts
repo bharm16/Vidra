@@ -55,9 +55,10 @@ export type AuthMode = "required" | "anonymous";
 
 /**
  * The shape `apiAuthMiddleware` and `payment/auth.ts` attach to the request.
- * Deliberately not exported: the cast it enables is this module's job.
+ * The canonical home for the type — route handlers that still cast to it import
+ * it from here (some via the `continuityRouteShared` re-export).
  */
-type RequestWithUser = Request & { user?: { uid?: string } };
+export type RequestWithUser = Request & { user?: { uid?: string } };
 
 /**
  * Read the authenticated Creator's id, or `null` when the request carries no

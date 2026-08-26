@@ -6,7 +6,7 @@ import {
 } from "@utils/upload";
 import { validateImageBuffer } from "@utils/validateFileType";
 import { asyncHandler } from "@middleware/asyncHandler";
-import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
+import { requireCreatorId } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import type { ReferenceImageStorePort } from "@services/asset/reference-images/ports/ReferenceImageStorePort";
 import type { ApiResponse } from "@shared/types/api";
@@ -36,7 +36,7 @@ export function createReferenceImagesRoutes(
   router.get(
     "/",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const limitValue =
@@ -59,7 +59,7 @@ export function createReferenceImagesRoutes(
     "/",
     upload.single("file"),
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const file = (req as Request & { file?: Express.Multer.File }).file;
@@ -105,7 +105,7 @@ export function createReferenceImagesRoutes(
   router.post(
     "/from-url",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const { sourceUrl, label, source } = (req.body || {}) as {
@@ -144,7 +144,7 @@ export function createReferenceImagesRoutes(
   router.delete(
     "/:id",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const imageId = requireRouteParam(req, res, "id");

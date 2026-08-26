@@ -1,8 +1,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
-import { requireBody } from "@middleware/intake";
+import { requireBody, requireCreatorId } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
-import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
 import { CreateShareRequestSchema } from "@shared/schemas/share.schemas";
 import type {
   CreateShareResponse,
@@ -21,7 +20,7 @@ export function createShareRouter(shareService: ShareService): Router {
   router.post(
     "/",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const parsed = requireBody(CreateShareRequestSchema, req, res);
       if (!parsed.ok) return;

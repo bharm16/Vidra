@@ -5,7 +5,7 @@ import { respond } from "./respond.js";
  * Resolve a required route parameter, or write a 400 and return null.
  *
  * Emits the canonical error envelope via `respond.fail` so route handlers
- * never reconstruct it. Pairs with requireUserId — the two guards a handler
+ * never reconstruct it. Pairs with requireCreatorId — the two guards a handler
  * runs before it trusts `req.params` / `req.user`.
  */
 export function requireRouteParam(

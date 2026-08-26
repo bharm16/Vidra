@@ -1,7 +1,7 @@
 import express, { type Request, type Response, type Router } from "express";
 import { z, type ZodType } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
-import { requireBody } from "@middleware/intake";
+import { requireBody, requireCreatorId } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import {
   GenerationNotFoundError,
@@ -29,7 +29,6 @@ import type { ApiResponse } from "@shared/types/api";
 import { logger } from "@infrastructure/Logger";
 import {
   ContinuitySessionInputSchema,
-  RequestWithUser,
   handleCreateSceneProxy,
   handleCreateShot,
   handleGenerateShot,
@@ -39,7 +38,6 @@ import {
   handleUpdateShot,
   handleUpdateStyleReference,
   requireSessionForUser,
-  requireUserId,
 } from "./continuity/continuityRouteShared";
 import { handleGenerateShotStream } from "./continuity/handleGenerateShotStream";
 
@@ -310,7 +308,7 @@ export function createSessionRoutes(
     router.patch(
       config.path,
       asyncHandler(async (req: Request, res: Response) => {
-        const userId = requireUserId(req as RequestWithUser, res);
+        const userId = requireCreatorId(req, res);
         if (!userId) return;
         const parsed = requireBody(config.schema, req, res);
         if (!parsed.ok) return;
@@ -338,7 +336,7 @@ export function createSessionRoutes(
     router.post(
       "/continuity",
       asyncHandler(async (req: Request, res: Response) => {
-        const userId = requireUserId(req as RequestWithUser, res);
+        const userId = requireCreatorId(req, res);
         if (!userId) return;
         const parsed = requireBody(CreateContinuitySessionSchema, req, res);
         if (!parsed.ok) return;
@@ -383,7 +381,7 @@ export function createSessionRoutes(
   router.get(
     "/",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const parsedLimit =
         typeof req.query.limit === "string"
@@ -408,7 +406,7 @@ export function createSessionRoutes(
   router.get(
     "/by-prompt/:uuid",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const uuid = requireRouteParam(req, res, "uuid");
       if (!uuid) return;
@@ -427,7 +425,7 @@ export function createSessionRoutes(
   router.get(
     "/:sessionId",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
@@ -460,7 +458,7 @@ export function createSessionRoutes(
   router.post(
     "/",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const parsed = requireBody(CreateSessionSchema, req, res);
       if (!parsed.ok) return;
@@ -486,7 +484,7 @@ export function createSessionRoutes(
   router.delete(
     "/:sessionId",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
@@ -508,7 +506,7 @@ export function createSessionRoutes(
   router.post(
     "/:sessionId/generations/:generationId/archive",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
       const sessionId = requireRouteParam(req, res, "sessionId");
       if (!sessionId) return;
