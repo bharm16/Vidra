@@ -83,8 +83,6 @@ function redactSensitiveData(obj: unknown): unknown {
  * Global error handling middleware
  * Catches and formats errors consistently with sensitive data redaction
  */
-type RequestWithId = Request & { id?: string; body?: Record<string, unknown> };
-
 function toDetailsString(value: unknown): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -103,7 +101,7 @@ function toDetailsString(value: unknown): string | undefined {
 
 export function errorHandler(
   err: unknown,
-  req: RequestWithId,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void {

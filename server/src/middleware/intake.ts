@@ -132,7 +132,7 @@ export function requireBody<T>(
 
   const details = formatValidationDetails(result.error.issues);
   logger.warn("Request validation failed", {
-    requestId: (req as Request & { id?: string }).id,
+    requestId: req.id,
     path: req.path,
     details,
   });

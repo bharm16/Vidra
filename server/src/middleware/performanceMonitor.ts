@@ -12,13 +12,13 @@ interface PerfContext {
   metadata: Record<string, unknown>;
 }
 
-interface PerfMetrics {
+export interface PerfMetrics {
   total: number;
   operations: Record<string, number>;
   metadata: Record<string, unknown>;
 }
 
-interface RequestPerfMonitor {
+export interface RequestPerfMonitor {
   start: (operationName: string) => void;
   end: (operationName: string) => void;
   addMetadata: (key: string, value: unknown) => void;
