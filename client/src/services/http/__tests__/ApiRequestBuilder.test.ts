@@ -131,6 +131,44 @@ describe("ApiRequestBuilder", () => {
     expect(result.init.headers).toEqual({ Authorization: "Bearer x" });
   });
 
+  it("skips the automatic timeout signal for streaming requests", () => {
+    const config = {
+      buildUrl: vi.fn().mockReturnValue("https://api.test/stream"),
+      mergeHeaders: vi.fn().mockReturnValue({}),
+      createSignal: vi.fn().mockReturnValue(new AbortController().signal),
+    } as unknown as HttpClientConfig;
+
+    const builder = new ApiRequestBuilder(config);
+    const result = builder.build("/stream", {
+      method: "POST",
+      body: "{}",
+      stream: true,
+    });
+
+    // A timeout would abort a long-lived NDJSON stream mid-flight.
+    expect(config.createSignal).not.toHaveBeenCalled();
+    expect(result.init.signal).toBeUndefined();
+  });
+
+  it("still honors an explicit signal on a streaming request", () => {
+    const providedSignal = new AbortController().signal;
+    const config = {
+      buildUrl: vi.fn().mockReturnValue("https://api.test/stream"),
+      mergeHeaders: vi.fn().mockReturnValue({}),
+      createSignal: vi.fn().mockReturnValue(new AbortController().signal),
+    } as unknown as HttpClientConfig;
+
+    const builder = new ApiRequestBuilder(config);
+    const result = builder.build("/stream", {
+      method: "POST",
+      stream: true,
+      signal: providedSignal,
+    });
+
+    expect(config.createSignal).not.toHaveBeenCalled();
+    expect(result.init.signal).toBe(providedSignal);
+  });
+
   it("merges fetchOptions into request init", () => {
     const config = {
       buildUrl: vi.fn().mockReturnValue("https://api.test/resource"),
