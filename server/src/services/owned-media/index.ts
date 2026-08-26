@@ -1,7 +1,6 @@
 export {
   createOwnedMediaReference,
   isOwnedMediaReference,
-  parseOwnedMediaReference,
   resolveOwnedMediaPath,
   type OwnedMediaReference,
 } from "./OwnedMediaReference";
