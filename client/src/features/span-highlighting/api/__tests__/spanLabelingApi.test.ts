@@ -278,12 +278,17 @@ describe("SpanLabelingApi", () => {
     expect(result).toEqual(blockingResult);
   });
 
-  it("labelSpansStream rethrows AbortError without fallback when request is aborted", async () => {
+  it("labelSpansStream does not fall back to blocking when the request is aborted", async () => {
     const controller = new AbortController();
     controller.abort();
 
-    const abortError = new DOMException("Aborted", "AbortError");
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(abortError));
+    // The aborted signal short-circuits the transport. Cancellation is detected
+    // via signal.aborted (not the error type), so the stream rethrows rather
+    // than silently falling back to a blocking request.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new DOMException("Aborted", "AbortError")),
+    );
 
     const blockingSpy = vi.spyOn(SpanLabelingApi, "labelSpans");
 
@@ -293,7 +298,7 @@ describe("SpanLabelingApi", () => {
         vi.fn(),
         controller.signal,
       ),
-    ).rejects.toBe(abortError);
+    ).rejects.toThrow();
 
     expect(blockingSpy).not.toHaveBeenCalled();
   });

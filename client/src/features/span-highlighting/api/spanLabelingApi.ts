@@ -6,7 +6,7 @@
  */
 
 import { logger } from "@/services/LoggingService";
-import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
+import { apiClient } from "@/services/ApiClient";
 import type {
   LabelSpansPayload,
   LabelSpansResponse,
@@ -47,15 +47,11 @@ export class SpanLabelingApi {
     payload: LabelSpansPayload,
     signal: AbortSignal | null = null,
   ): Promise<LabelSpansResponse> {
-    const authHeaders = await buildFirebaseAuthHeaders();
-    const res = await fetch("/api/llm/label-spans", {
+    // Blocking (non-streaming), so it keeps the shared client's request timeout.
+    const res = await apiClient.rawRequest("/llm/label-spans", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
       body: buildLabelSpansBody(payload),
-      ...(signal && { signal }),
+      ...(signal ? { signal } : {}),
     });
 
     if (!res.ok) {
@@ -83,17 +79,16 @@ export class SpanLabelingApi {
       maxSpans: payload.maxSpans,
     });
 
-    const authHeaders = await buildFirebaseAuthHeaders();
+    // stream: true opts out of the request timeout (which would abort the
+    // NDJSON stream mid-flight). Cancellation still works via the caller's
+    // signal, and everything downstream detects it via signal.aborted.
     let res: Response;
     try {
-      res = await fetch("/api/llm/label-spans/stream", {
+      res = await apiClient.rawRequest("/llm/label-spans/stream", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
         body: buildLabelSpansBody(payload),
-        ...(signal && { signal }),
+        stream: true,
+        ...(signal ? { signal } : {}),
       });
     } catch (error) {
       const shouldSkipFallback =
