@@ -163,29 +163,21 @@ export function useGenerationsState({
     onGenerationsChangeRef.current?.(state.generations);
   }, [state.generations]);
 
-  // ISSUE-12 follow-up: public `addGeneration` kept as a convenience —
-  // internally dispatches SET_GENERATIONS over the current ref snapshot so
-  // the reducer has a single "state grows" entry point.
+  // ISSUE-12 follow-up: `addGeneration` is retained as a test-facing
+  // convenience — it dispatches SET_GENERATIONS over the current ref
+  // snapshot so the reducer keeps a single "state grows" entry point. It
+  // has no production caller (state grows via SET_GENERATIONS directly).
   //
-  // CAVEAT: do NOT call this twice in the same React tick. Each call reads
-  // `generationsRef.current`, which only updates after re-render; two
-  // sync calls will each compute `[...stale, gen]` and the second
-  // clobbers the first. In production this is fine because the hook's
-  // only caller (acceptGeneration in useGenerationActions) fires once per
-  // async POST completion. If you need to batch multiple entries in a
-  // single tick, dispatch SET_GENERATIONS directly with the full array.
+  // CAVEAT: do NOT call it twice in the same React tick. Each call reads
+  // `generationsRef.current`, which only updates after re-render; two sync
+  // calls each compute `[...stale, gen]` and the second clobbers the first.
+  // To batch multiple entries, dispatch SET_GENERATIONS with the full array.
   const addGeneration = useCallback(
     (generation: Generation) =>
       dispatch({
         type: "SET_GENERATIONS",
         payload: [...generationsRef.current, generation],
       }),
-    [],
-  );
-
-  const updateGeneration = useCallback(
-    (id: string, updates: Partial<Generation>) =>
-      dispatch({ type: "UPDATE_GENERATION", payload: { id, updates } }),
     [],
   );
 
@@ -198,24 +190,6 @@ export function useGenerationsState({
     (id: string | null) => dispatch({ type: "SET_ACTIVE", payload: id }),
     [],
   );
-
-  const getDraftGenerations = useCallback(
-    () => state.generations.filter((gen) => gen.tier === "draft"),
-    [state.generations],
-  );
-
-  const getRenderGenerations = useCallback(
-    () => state.generations.filter((gen) => gen.tier === "render"),
-    [state.generations],
-  );
-
-  const getActiveGeneration = useCallback(() => {
-    if (!state.activeGenerationId) return null;
-    return (
-      state.generations.find((gen) => gen.id === state.activeGenerationId) ??
-      null
-    );
-  }, [state.activeGenerationId, state.generations]);
 
   const getLatestByTier = useCallback(
     (tier: GenerationTier) => {
@@ -235,13 +209,9 @@ export function useGenerationsState({
     isGenerating: state.isGenerating,
     dispatch,
     addGeneration,
-    updateGeneration,
     removeGeneration,
     setActiveGeneration,
     clearGenerations,
-    getDraftGenerations,
-    getRenderGenerations,
-    getActiveGeneration,
     getLatestByTier,
   };
 }
