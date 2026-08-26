@@ -67,9 +67,7 @@ export interface ModelRecommendationDropdownProps {
   modelRecommendation?: ModelRecommendation | null | undefined;
   recommendedModelId?: string | undefined;
   efficientModelId?: string | undefined;
-  filteredOut?: Array<{ modelId: string; reason: string }> | undefined;
   triggerClassName?: string | undefined;
-  triggerPrefixLabel?: string | undefined;
   /** Optional icon node rendered before the label (e.g. the bullseye/Target
    *  icon used by the canvas composer chip). The component receives it as a
    *  React node so the caller controls icon size and weight. */
@@ -340,9 +338,7 @@ export function ModelRecommendationDropdown({
   modelRecommendation,
   recommendedModelId,
   efficientModelId,
-  filteredOut,
   triggerClassName,
-  triggerPrefixLabel,
   triggerPrefixIcon,
   triggerAriaLabel,
   triggerLabelHidden = false,
@@ -385,15 +381,9 @@ export function ModelRecommendationDropdown({
         modelRecommendation,
         recommendedModelId,
         efficientModelId,
-        filteredOut ?? modelRecommendation?.filteredOut,
+        modelRecommendation?.filteredOut,
       ),
-    [
-      models,
-      modelRecommendation,
-      recommendedModelId,
-      efficientModelId,
-      filteredOut,
-    ],
+    [models, modelRecommendation, recommendedModelId, efficientModelId],
   );
 
   const unavailIds = useMemo(
@@ -552,11 +542,6 @@ export function ModelRecommendationDropdown({
               {triggerPrefixIcon}
             </span>
           ) : null}
-          {triggerPrefixLabel && (
-            <span className="text-tool-text-subdued text-meta font-medium">
-              {triggerPrefixLabel}
-            </span>
-          )}
           {triggerLabelHidden ? null : (
             <>
               {current?.label ?? "Model"}
@@ -590,7 +575,7 @@ export function ModelRecommendationDropdown({
             <button
               type="button"
               onClick={() => setMode("cards")}
-              className="text-tool-text-dim hover:text-foreground flex w-full items-center gap-1.5 px-4 py-2.5 text-ui font-medium transition-colors"
+              className="text-tool-text-dim hover:text-foreground text-ui flex w-full items-center gap-1.5 px-4 py-2.5 font-medium transition-colors"
             >
               Click to view all models
               <CaretDown className="h-3 w-3" />
@@ -667,7 +652,7 @@ export function ModelRecommendationDropdown({
                 <h3 className="text-overline text-tool-text-subdued">
                   Render models
                 </h3>
-                <p className="text-tool-text-dim mb-5 mt-1 text-ui">
+                <p className="text-tool-text-dim text-ui mb-5 mt-1">
                   High-quality models for final production output.
                 </p>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -690,7 +675,7 @@ export function ModelRecommendationDropdown({
                 <h3 className="text-overline text-tool-text-subdued">
                   Draft models
                 </h3>
-                <p className="text-tool-text-dim mb-5 mt-1 text-ui">
+                <p className="text-tool-text-dim text-ui mb-5 mt-1">
                   Fast models for previewing and iterating.
                 </p>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
