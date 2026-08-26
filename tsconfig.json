@@ -97,7 +97,6 @@
     "scripts/get-highlight-stats.ts",
     "scripts/migrations/backfill-highlight-cache.ts",
     "scripts/migrations/force-highlight-rerender.ts",
-    "scripts/evaluation/span-labeling-evaluation.ts",
-    "scripts/evaluation/span-labeling-evaluation-gemini.ts"
+    "scripts/evaluation/span-labeling-evaluation.ts"
   ]
 }
