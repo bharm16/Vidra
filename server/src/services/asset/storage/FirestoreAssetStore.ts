@@ -7,6 +7,7 @@ import type {
   AssetReferenceImage,
   AssetType,
 } from "@shared/types/asset";
+import { parseGcsObjectUrl } from "@shared/utils/gcsObjectUrl";
 import type {
   AssetStorePort,
   BulkUsageRecord,
@@ -46,14 +47,9 @@ function extractTokenFromUrl(url: string): string | null {
 }
 
 function extractBucketFromUrl(url: string): string | null {
-  try {
-    const match = url.match(
-      /firebasestorage\.googleapis\.com\/v0\/b\/([^/]+)\/o\//,
-    );
-    return match?.[1] ?? null;
-  } catch {
-    return null;
-  }
+  // Delegate to the shared GCS URL parser (as the sibling storage/pathUtils
+  // already does) rather than re-deriving the bucket with a local regex.
+  return parseGcsObjectUrl(url)?.bucket ?? null;
 }
 
 function isValidFirebaseStorageUrl(url: string): boolean {
