@@ -494,7 +494,6 @@ describe("DI Container", () => {
       "enhancementService",
       "sceneDetectionService",
       "promptCoherenceService",
-      "videoConceptService",
       "spanLabelingCacheService",
       "metricsService",
       "logger",
@@ -842,16 +841,16 @@ describe("OpenAI Client (contract)", () => {
 ```typescript
 // ❌ This is a unit test in an integration test's clothing
 function createApp() {
-  const videoConceptService = {
-    getCreativeSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
+  const exampleService = {
+    getSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
     checkCompatibility: vi.fn().mockResolvedValue({ compatible: true }),
     // ... every method mocked
   };
 
   const app = express();
   app.use(express.json());
-  app.use("/api/video", createVideoRoutes({ videoConceptService } as never));
-  return { app, videoConceptService };
+  app.use("/api/example", createExampleRoutes({ exampleService } as never));
+  return { app, exampleService };
 }
 ```
 

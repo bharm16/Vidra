@@ -13,7 +13,7 @@ allowed-tools:
 
 ### Frontend Feature (Client)
 
-Follow the **VideoConceptBuilder** pattern. Reference: `client/src/components/VideoConceptBuilder/`
+Follow the feature-slice pattern (orchestrator + hooks + api + components). Reference: `client/src/features/studio/`
 
 ```
 client/src/features/<feature-name>/

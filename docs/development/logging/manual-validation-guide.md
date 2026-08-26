@@ -75,16 +75,6 @@ npm run dev
 }
 ```
 
-#### Test: VideoConceptService
-
-**Steps:**
-
-1. Make a POST request to `/api/video-concept/generate`
-2. Check backend logs for:
-   - ✅ Debug log at operation start
-   - ✅ Info log at completion with duration
-   - ✅ Verify service field is "VideoConceptService"
-
 #### Test: CacheService
 
 **Steps:**
@@ -533,7 +523,6 @@ Use this template to record validation results:
 ## Backend Service Logging
 
 - [ ] EnhancementService logs correctly
-- [ ] VideoConceptService logs correctly
 - [ ] CacheService logs correctly
 - [ ] All services include operation and duration
 - [ ] All services use child loggers

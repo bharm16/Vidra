@@ -18,7 +18,6 @@ This directory contains the architectural standards and patterns for the Prompt 
 **The How-To Guide**
 
 - Step-by-step refactoring checklist
-- Based on successful VideoConceptBuilder refactoring
 - Shows the standard directory structure
 - Includes template for Claude Code requests
 
@@ -57,5 +56,4 @@ Project-specific TypeScript references: [logging patterns](./typescript/LOGGING_
 
 Successful refactorings following these patterns:
 
-- `client/src/features/video-concept-builder/` (Frontend)
 - `server/src/services/prompt-optimization/` (Backend)

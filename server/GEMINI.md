@@ -25,19 +25,18 @@
 
 These terms have specific meanings in this codebase. Do not conflate them.
 
-| Term                          | Meaning                                                                | Service Path                                               | Route                              |
-| ----------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories           | `llm/span-labeling/`                                       | `/api/llm/label-spans`             |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span              | `services/enhancement/`                                    | `/api/suggestions`, `/api/enhance` |
-| **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement)       | `services/prompt-optimization/`                            | `/api/optimize` (buffered)         |
-| **Continuity**                | Shot-to-shot visual consistency (frame-bridge, style-match)            | `services/continuity/`                                     | `/api/continuity`                  |
-| **Convergence**               | Motion/visual convergence pipeline                                     | `services/convergence/`                                    | `/api/motion`                      |
-| **Video Concept**             | Guided wizard: subject → action → location → camera → lighting → style | `services/video-concept/`                                  | via `/api` routes                  |
-| **Model Intelligence**        | AI-powered model recommendation                                        | `services/model-intelligence/`                             | `/api/model-intelligence`          |
-| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation              | `services/image-generation/`, `services/video-generation/` | `/api/preview`                     |
-| **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway                  | `services/video-generation/`                               | `/api/preview` (shared routes)     |
+| Term                          | Meaning                                                          | Service Path                                               | Route                              |
+| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------- |
+| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories     | `llm/span-labeling/`                                       | `/api/llm/label-spans`             |
+| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span        | `services/enhancement/`                                    | `/api/suggestions`, `/api/enhance` |
+| **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement) | `services/prompt-optimization/`                            | `/api/optimize` (buffered)         |
+| **Continuity**                | Shot-to-shot visual consistency (frame-bridge, style-match)      | `services/continuity/`                                     | `/api/continuity`                  |
+| **Convergence**               | Motion/visual convergence pipeline                               | `services/convergence/`                                    | `/api/motion`                      |
+| **Model Intelligence**        | AI-powered model recommendation                                  | `services/model-intelligence/`                             | `/api/model-intelligence`          |
+| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation        | `services/image-generation/`, `services/video-generation/` | `/api/preview`                     |
+| **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway            | `services/video-generation/`                               | `/api/preview` (shared routes)     |
 
-**Service imports:** Use canonical domain paths — `services/enhancement/EnhancementService.ts`, `services/video-concept/VideoConceptService.ts`. Domain directories are the only source.
+**Service imports:** Use canonical domain paths — `services/enhancement/EnhancementService.ts`. Domain directories are the only source.
 
 See also: `docs/architecture/SERVICE_BOUNDARIES.md`.
 
@@ -94,7 +93,6 @@ Server route files map to client-side API files. Reference this when adding/modi
 | `/api/continuity/*`                     | `continuity.routes.ts`                    | `features/continuity/api/`                          |
 | `/api/model-intelligence/*`             | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
 | `/api/sessions/*`                       | `sessions.routes.ts`                      | (uses ApiClient directly)                           |
-| `/api/video/*`                          | `video.routes.ts`                         | `services/VideoConceptApi.ts`                       |
 | `/api/assets/*`                         | `asset.routes.ts`                         | `features/assets/`                                  |
 | `/api/reference-images/*`               | `reference-images.routes.ts`              | `features/reference-images/`                        |
 | `/health`                               | `health.routes.ts`                        | (not called from client)                            |

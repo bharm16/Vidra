@@ -1,8 +1,8 @@
-description = "Plan or implement a frontend change using the VideoConceptBuilder pattern."
+description = "Plan or implement a frontend change using the feature-slice pattern."
 prompt = """
 You are working in the Vidra (PromptCanvas) repo.
 
-Follow the VideoConceptBuilder pattern (see client/src/components/VideoConceptBuilder/):
+Follow the feature-slice pattern (see client/src/features/studio/):
 - Orchestrator component
 - hooks/ with useReducer for state
 - api/ for fetch calls

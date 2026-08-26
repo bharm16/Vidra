@@ -3,11 +3,11 @@ prompt = """
 You are working in the Vidra (PromptCanvas) repo.
 
 Backend first:
-- Pattern: PromptOptimizationService (server/src/services/prompt-optimization/PromptOptimizationService.js)
+- Pattern: PromptOptimizationService (server/src/services/prompt-optimization/)
 - Define the API contract (route, method, request/response shape)
 
 Frontend next:
-- Pattern: VideoConceptBuilder (client/src/components/VideoConceptBuilder/)
+- Pattern: feature-slice (client/src/features/studio/)
 - Orchestrator + hooks/useReducer + api/ + UI components
 
 Show the complete proposed file structure before writing code.

@@ -50,7 +50,7 @@ If changing the API response format requires touching 6 files, you have a coupli
 
 ## Patterns
 
-### Frontend: VideoConceptBuilder Pattern
+### Frontend: Feature-Slice Pattern
 
 ```
 ComponentName/
@@ -137,7 +137,7 @@ If any answer is "no," you have a cohesion problem—not a line count problem.
 
 ## Reference Implementations
 
-- **Frontend:** `client/src/components/VideoConceptBuilder/`
-- **Backend:** `server/src/services/PromptOptimizationService.js`
+- **Frontend:** `client/src/features/studio/`
+- **Backend:** `server/src/services/prompt-optimization/`
 
 Read these to understand the _why_, not just the structure.
