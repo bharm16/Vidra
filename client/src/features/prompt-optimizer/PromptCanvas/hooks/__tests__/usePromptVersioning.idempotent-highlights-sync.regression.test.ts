@@ -72,9 +72,6 @@ describe("regression: passive session load does not re-PATCH highlights (ISSUE-3
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: "16:9",
-        generationParams: {},
-        selectedModel: "sora-2",
       }),
     );
 
@@ -107,9 +104,6 @@ describe("regression: passive session load does not re-PATCH highlights (ISSUE-3
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: "16:9",
-        generationParams: {},
-        selectedModel: "sora-2",
       }),
     );
 
@@ -154,9 +148,6 @@ describe("regression: passive session load does not re-PATCH highlights (ISSUE-3
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: "16:9",
-        generationParams: {},
-        selectedModel: "sora-2",
       }),
     );
 
@@ -197,9 +188,6 @@ describe("regression: passive session load does not re-PATCH highlights (ISSUE-3
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: "16:9",
-        generationParams: {},
-        selectedModel: "sora-2",
       }),
     );
 
@@ -243,9 +231,6 @@ describe("regression: passive session load does not re-PATCH highlights (ISSUE-3
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
         resetVersionEdits: vi.fn(),
-        effectiveAspectRatio: "16:9",
-        generationParams: {},
-        selectedModel: "sora-2",
       }),
     );
 

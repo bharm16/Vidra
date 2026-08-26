@@ -10,7 +10,9 @@ import type { Generation } from "@features/generations/types";
 import type { HighlightSnapshot } from "../types";
 import { usePromptVersioning } from "./usePromptVersioning";
 import {
+  buildVersionEditMetadata,
   isHighlightSnapshot,
+  mintVersionId,
   resolveVersionTimestamp,
 } from "../utils/versioning";
 
@@ -76,7 +78,6 @@ interface UseVersionManagementOptions {
   versionEditCountRef: MutableRefObject<number>;
   versionEditsRef: MutableRefObject<PromptVersionEdit[]>;
   resetVersionEdits: () => void;
-  effectiveAspectRatio: string | null;
 }
 
 interface UseVersionManagementResult {
@@ -124,7 +125,6 @@ export function useVersionManagement({
   versionEditCountRef,
   versionEditsRef,
   resetVersionEdits,
-  effectiveAspectRatio,
 }: UseVersionManagementOptions): UseVersionManagementResult {
   const { history, createDraft, updateEntryVersions } = promptHistory;
   const { setOptimizedPrompt } = promptOptimizer;
@@ -264,9 +264,6 @@ export function useVersionManagement({
       versionEditCountRef,
       versionEditsRef,
       resetVersionEdits,
-      effectiveAspectRatio,
-      generationParams,
-      selectedModel,
     },
   );
 
@@ -376,12 +373,8 @@ export function useVersionManagement({
       return;
     }
 
-    const editCount = versionEditCountRef.current;
-    const edits = versionEditsRef.current.length
-      ? [...versionEditsRef.current]
-      : [];
     const nextVersion = {
-      versionId: `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      versionId: mintVersionId(),
       label: `v${currentVersions.length + 1}`,
       signature,
       prompt: promptText,
@@ -389,8 +382,10 @@ export function useVersionManagement({
       ...(latestHighlightRef.current
         ? { highlights: latestHighlightRef.current }
         : {}),
-      ...(editCount > 0 ? { editCount } : {}),
-      ...(edits.length ? { edits } : {}),
+      ...buildVersionEditMetadata(
+        versionEditCountRef.current,
+        versionEditsRef.current,
+      ),
     };
 
     persistVersions([...currentVersions, nextVersion], { uuid, docId });
@@ -420,12 +415,8 @@ export function useVersionManagement({
     const signature = createHighlightSignature(promptText);
 
     if (!currentVersions.length) {
-      const editCount = versionEditCountRef.current;
-      const edits = versionEditsRef.current.length
-        ? [...versionEditsRef.current]
-        : [];
       const newVersion = {
-        versionId: `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        versionId: mintVersionId(),
         label: "v1",
         signature,
         prompt: promptText,
@@ -434,8 +425,10 @@ export function useVersionManagement({
           ? { highlights: latestHighlightRef.current }
           : {}),
         generations: [],
-        ...(editCount > 0 ? { editCount } : {}),
-        ...(edits.length ? { edits } : {}),
+        ...buildVersionEditMetadata(
+          versionEditCountRef.current,
+          versionEditsRef.current,
+        ),
       };
 
       persistVersions([newVersion], { uuid, docId });
@@ -449,12 +442,8 @@ export function useVersionManagement({
       return lastVersion.versionId;
     }
 
-    const editCount = versionEditCountRef.current;
-    const edits = versionEditsRef.current.length
-      ? [...versionEditsRef.current]
-      : [];
     const newVersion = {
-      versionId: `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      versionId: mintVersionId(),
       label: `v${currentVersions.length + 1}`,
       signature,
       prompt: promptText,
@@ -463,8 +452,10 @@ export function useVersionManagement({
         ? { highlights: latestHighlightRef.current }
         : {}),
       generations: [],
-      ...(editCount > 0 ? { editCount } : {}),
-      ...(edits.length ? { edits } : {}),
+      ...buildVersionEditMetadata(
+        versionEditCountRef.current,
+        versionEditsRef.current,
+      ),
     };
 
     persistVersions([...currentVersions, newVersion], { uuid, docId });

@@ -173,7 +173,6 @@ export function usePromptCanvasOrchestration(): {
     hasHighlights: !!initialHighlights,
   });
 
-
   // Leaving the results view for editing: clear the displayed prompt and drop
   // back to the input. Was passed down as a prop built from the same two
   // setters this hook already holds.
@@ -312,7 +311,6 @@ export function usePromptCanvasOrchestration(): {
     versionEditCountRef,
     versionEditsRef,
     resetVersionEdits,
-    effectiveAspectRatio,
   });
 
   const handleReuseGeneration = useCallback(

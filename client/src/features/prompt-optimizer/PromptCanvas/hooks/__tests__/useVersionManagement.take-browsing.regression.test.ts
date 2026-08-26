@@ -94,7 +94,6 @@ const setup = () => {
       versionEditCountRef: { current: 0 },
       versionEditsRef: { current: [] },
       resetVersionEdits: vi.fn(),
-      effectiveAspectRatio: null,
     });
     return { highlightState, versioning };
   });

@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, type MutableRefObject } from "react";
 import { createHighlightSignature } from "@/features/span-highlighting";
-import type { CapabilityValues } from "@shared/capabilities";
 import type {
   PromptHistoryEntry,
   PromptVersionEdit,
@@ -11,9 +10,9 @@ import { preserveServerOwnedFields } from "@features/generations/utils/serverOwn
 import { areGenerationsEqual } from "@features/generations/utils/generationComparison";
 import {
   extractStorageObjectPath,
-  extractVideoContentAssetId,
   parseGcsSignedUrlExpiryMs,
 } from "@/utils/storageUrl";
+import { mintVersionId, buildVersionEditMetadata } from "../utils/versioning";
 import type { HighlightSnapshot } from "../types";
 
 // Per-span content equality for the idempotency guard in
@@ -57,9 +56,6 @@ interface UsePromptVersioningOptions {
   versionEditCountRef: MutableRefObject<number>;
   versionEditsRef: MutableRefObject<PromptVersionEdit[]>;
   resetVersionEdits: () => void;
-  effectiveAspectRatio: string | null;
-  generationParams: CapabilityValues;
-  selectedModel: string;
 }
 
 interface PromptVersionStore {
@@ -71,37 +67,13 @@ interface PromptVersionStore {
   ) => void;
 }
 
-interface UpsertVersionOutputParams {
-  action: "preview" | "video";
-  prompt: string;
-  generatedAt: number | string;
-  imageUrl?: string | null;
-  videoUrl?: string | null;
-  aspectRatio?: string | null;
-}
-
 interface UsePromptVersioningReturn {
-  upsertVersionOutput: (params: UpsertVersionOutputParams) => void;
   syncVersionHighlights: (
     snapshot: HighlightSnapshot,
     promptText: string,
   ) => void;
   syncVersionGenerations: (generations: Generation[]) => void;
 }
-
-const toIsoString = (value: number | string): string => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return new Date(value).toISOString();
-  }
-  if (typeof value === "string" && value.trim()) {
-    const parsed = Date.parse(value);
-    if (!Number.isNaN(parsed)) {
-      return new Date(parsed).toISOString();
-    }
-    return value;
-  }
-  return new Date().toISOString();
-};
 
 const toExpiresAtIso = (url?: string | null): string | null => {
   if (!url || typeof url !== "string") return null;
@@ -253,7 +225,7 @@ const buildSeedVersionFromGeneration = (
     typeof generation.promptVersionId === "string" &&
     generation.promptVersionId.trim().length > 0
       ? generation.promptVersionId.trim()
-      : `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      : mintVersionId();
 
   return {
     versionId,
@@ -275,9 +247,6 @@ export function usePromptVersioning({
   versionEditCountRef,
   versionEditsRef,
   resetVersionEdits,
-  effectiveAspectRatio,
-  generationParams,
-  selectedModel,
 }: UsePromptVersioningOptions): UsePromptVersioningReturn {
   const { history, updateEntryVersions } = promptHistory;
   // Track last persisted thumbnail to prevent infinite update loops
@@ -335,115 +304,22 @@ export function usePromptVersioning({
       video?: PromptVersionEntry["video"];
     }): PromptVersionEntry => {
       const versionNumber = currentVersions.length + 1;
-      const editCount = versionEditCountRef.current;
-      const edits = versionEditsRef.current.length
-        ? [...versionEditsRef.current]
-        : [];
       return {
-        versionId: `v-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        versionId: mintVersionId(),
         label: `v${versionNumber}`,
         signature,
         prompt,
         timestamp: new Date().toISOString(),
         ...(typeof highlights !== "undefined" ? { highlights } : {}),
-        ...(editCount > 0 ? { editCount } : {}),
-        ...(edits.length ? { edits } : {}),
+        ...buildVersionEditMetadata(
+          versionEditCountRef.current,
+          versionEditsRef.current,
+        ),
         ...(typeof firstFrame !== "undefined" ? { firstFrame } : {}),
         ...(typeof video !== "undefined" ? { video } : {}),
       };
     },
     [currentVersions.length, versionEditCountRef, versionEditsRef],
-  );
-
-  const upsertVersionOutput = useCallback(
-    (params: UpsertVersionOutputParams): void => {
-      if (!currentPromptUuid) return;
-      if (!currentPromptEntryRef.current) return;
-      const promptText = params.prompt.trim();
-      if (!promptText) return;
-
-      const versions = currentVersionsRef.current;
-      const signature = createHighlightSignature(promptText);
-      const lastVersion = versions[versions.length - 1] ?? null;
-      const hasEditsSinceLastVersion =
-        !lastVersion || lastVersion.signature !== signature;
-
-      const firstFramePayload =
-        params.action === "preview"
-          ? {
-              generatedAt: toIsoString(params.generatedAt),
-              imageUrl: params.imageUrl ?? null,
-              aspectRatio: params.aspectRatio ?? effectiveAspectRatio ?? null,
-              storagePath: params.imageUrl
-                ? extractStorageObjectPath(params.imageUrl)
-                : null,
-              assetId: params.imageUrl
-                ? (() => {
-                    const path = extractStorageObjectPath(params.imageUrl);
-                    return path && !path.startsWith("users/")
-                      ? extractAssetIdFromPath(path)
-                      : null;
-                  })()
-                : null,
-              viewUrlExpiresAt: toExpiresAtIso(params.imageUrl),
-            }
-          : undefined;
-
-      const videoPayload =
-        params.action === "video"
-          ? {
-              generatedAt: toIsoString(params.generatedAt),
-              videoUrl: params.videoUrl ?? null,
-              model: selectedModel?.trim() ? selectedModel.trim() : null,
-              generationParams: generationParams ?? null,
-              storagePath: params.videoUrl
-                ? extractStorageObjectPath(params.videoUrl)
-                : null,
-              assetId: params.videoUrl
-                ? (extractVideoContentAssetId(params.videoUrl) ??
-                  (() => {
-                    const path = extractStorageObjectPath(params.videoUrl);
-                    return path && !path.startsWith("users/")
-                      ? extractAssetIdFromPath(path)
-                      : null;
-                  })())
-                : null,
-              viewUrlExpiresAt: toExpiresAtIso(params.videoUrl),
-            }
-          : undefined;
-
-      if (hasEditsSinceLastVersion) {
-        const newVersion = createVersionEntry({
-          signature,
-          prompt: promptText,
-          highlights: latestHighlightRef.current ?? undefined,
-          firstFrame: firstFramePayload,
-          video: videoPayload,
-        });
-        persistVersions([...versions, newVersion]);
-        resetVersionEdits();
-        return;
-      }
-
-      if (!lastVersion) return;
-      const updatedLast: PromptVersionEntry = {
-        ...lastVersion,
-        ...(firstFramePayload ? { firstFrame: firstFramePayload } : {}),
-        ...(videoPayload ? { video: videoPayload } : {}),
-      };
-      const updatedVersions = [...versions.slice(0, -1), updatedLast];
-      persistVersions(updatedVersions);
-    },
-    [
-      currentPromptUuid,
-      createVersionEntry,
-      effectiveAspectRatio,
-      generationParams,
-      latestHighlightRef,
-      persistVersions,
-      resetVersionEdits,
-      selectedModel,
-    ],
   );
 
   const syncVersionHighlights = useCallback(
@@ -631,5 +507,5 @@ export function usePromptVersioning({
     [activeVersionId, currentPromptUuid, latestHighlightRef, persistVersions],
   );
 
-  return { upsertVersionOutput, syncVersionHighlights, syncVersionGenerations };
+  return { syncVersionHighlights, syncVersionGenerations };
 }

@@ -175,7 +175,15 @@ describe("useGenerationsState", () => {
     expect(onGenerationsChange).not.toHaveBeenCalled();
 
     act(() => {
-      result.current.addGeneration(buildGeneration("g3", "pending"));
+      // Mirror how production grows state: dispatch SET_GENERATIONS directly
+      // (the retired addGeneration wrapper did exactly this over the ref).
+      result.current.dispatch({
+        type: "SET_GENERATIONS",
+        payload: [
+          ...result.current.generations,
+          buildGeneration("g3", "pending"),
+        ],
+      });
     });
 
     expect(onGenerationsChange).toHaveBeenCalledTimes(1);

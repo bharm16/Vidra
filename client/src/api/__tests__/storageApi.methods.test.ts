@@ -8,10 +8,10 @@ vi.mock("@/services/http/firebaseAuth", () => ({
   buildFirebaseAuthHeaders: vi.fn(),
 }));
 
-vi.mock("@/config/api.config", () => ({
-  API_CONFIG: { baseURL: "https://example.com" },
-}));
-
+// storageApi now routes through the shared apiClient (via apiRequest); the
+// mocked fetch responses therefore carry the full { success, data } success
+// envelope the server actually sends (respond.ok), a status, and a headers
+// object (the transport reads Retry-After on the error path).
 describe("storageApi", () => {
   const mockBuildHeaders = vi.mocked(buildFirebaseAuthHeaders);
   const fetchMock = vi.fn<typeof fetch>();
@@ -19,38 +19,42 @@ describe("storageApi", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = fetchMock as typeof fetch;
+    mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
   });
 
   describe("error handling", () => {
-    it("throws the payload error message when response is not ok", async () => {
-      mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
+    it("throws the payload error message when the response is not ok", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: false,
+        status: 403,
+        headers: new Headers(),
         json: async () => ({ error: "No access" }),
       } as Response);
 
       await expect(storageApi.getUsage()).rejects.toThrow("No access");
     });
 
-    it("falls back to a default error message when payload has no details", async () => {
-      mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
+    it("throws a status-tagged fallback when the error body has no message", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: false,
+        status: 400,
+        headers: new Headers(),
         json: async () => ({}),
       } as Response);
 
       await expect(storageApi.deleteFile("path/to/file")).rejects.toThrow(
-        "Storage API error",
+        /Request failed \(400\)/,
       );
     });
   });
 
   describe("edge cases", () => {
     it("builds query params for listFiles", async () => {
-      mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
       fetchMock.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: { items: [] } }),
+        status: 200,
+        headers: new Headers(),
+        json: async () => ({ success: true, data: { items: [] } }),
       } as Response);
 
       const result = await storageApi.listFiles({
@@ -66,11 +70,12 @@ describe("storageApi", () => {
       );
     });
 
-    it("includes filename in download URL query", async () => {
-      mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
+    it("includes filename in the download URL query", async () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: { downloadUrl: "url" } }),
+        status: 200,
+        headers: new Headers(),
+        json: async () => ({ success: true, data: { downloadUrl: "url" } }),
       } as Response);
 
       const result = await storageApi.getDownloadUrl(
@@ -88,10 +93,14 @@ describe("storageApi", () => {
 
   describe("core behavior", () => {
     it("returns data payloads on successful responses", async () => {
-      mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
       fetchMock.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: { viewUrl: "https://example.com/view" } }),
+        status: 200,
+        headers: new Headers(),
+        json: async () => ({
+          success: true,
+          data: { viewUrl: "https://example.com/view" },
+        }),
       } as Response);
 
       const result = await storageApi.getViewUrl("path/asset.png");

@@ -44,9 +44,13 @@ describe("useGenerationsState", () => {
       );
 
       act(() => {
-        result.current.addGeneration(
-          createGeneration({ id: "local-1", promptVersionId: "version-1" }),
-        );
+        result.current.dispatch({
+          type: "SET_GENERATIONS",
+          payload: [
+            ...result.current.generations,
+            createGeneration({ id: "local-1", promptVersionId: "version-1" }),
+          ],
+        });
       });
 
       rerender({ initialGenerations: [], promptVersionId: "version-1" });
@@ -116,9 +120,13 @@ describe("useGenerationsState", () => {
       );
 
       act(() => {
-        result.current.addGeneration(
-          createGeneration({ id: "gen-1", status: "generating" }),
-        );
+        result.current.dispatch({
+          type: "SET_GENERATIONS",
+          payload: [
+            ...result.current.generations,
+            createGeneration({ id: "gen-1", status: "generating" }),
+          ],
+        });
       });
 
       expect(result.current.generations).toHaveLength(1);

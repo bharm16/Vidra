@@ -22,6 +22,13 @@ export class ApiRequestBuilder {
     const url = this.config.buildUrl(endpoint);
     const headers = this.config.mergeHeaders(options.headers);
     const signal = options.signal || this.config.createSignal(options.timeout);
+    const body = this.serializeBody(method, options.body);
+
+    // FormData must carry its own multipart Content-Type (with the boundary the
+    // browser generates); the default application/json header would clobber it.
+    if (body instanceof FormData) {
+      delete headers["Content-Type"];
+    }
 
     const init: RequestInit = {
       method,
@@ -29,8 +36,6 @@ export class ApiRequestBuilder {
       signal,
       ...options.fetchOptions,
     };
-
-    const body = this.serializeBody(method, options.body);
     if (body !== undefined) {
       init.body = body;
     }
