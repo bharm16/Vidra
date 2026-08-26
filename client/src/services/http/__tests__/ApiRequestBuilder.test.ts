@@ -111,6 +111,26 @@ describe("ApiRequestBuilder", () => {
     expect(blobReq.init.body).toBe(blob);
   });
 
+  it("strips the default Content-Type for FormData so the browser sets the multipart boundary", () => {
+    const config = {
+      buildUrl: vi.fn().mockReturnValue("https://api.test/upload"),
+      mergeHeaders: vi.fn().mockReturnValue({
+        "Content-Type": "application/json",
+        Authorization: "Bearer x",
+      }),
+      createSignal: vi.fn().mockReturnValue(new AbortController().signal),
+    } as unknown as HttpClientConfig;
+
+    const builder = new ApiRequestBuilder(config);
+    const formData = new FormData();
+    formData.append("file", new Blob(["x"]), "x.txt");
+    const result = builder.build("/upload", { method: "POST", body: formData });
+
+    expect(result.init.body).toBe(formData);
+    // Content-Type gone (browser adds multipart/form-data; boundary), auth kept.
+    expect(result.init.headers).toEqual({ Authorization: "Bearer x" });
+  });
+
   it("merges fetchOptions into request init", () => {
     const config = {
       buildUrl: vi.fn().mockReturnValue("https://api.test/resource"),
