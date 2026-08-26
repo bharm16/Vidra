@@ -5,7 +5,6 @@
  */
 
 import { CacheService } from "../../../server/src/services/cache/CacheService.js";
-import { ImageObservationService } from "../../../server/src/services/image-observation/ImageObservationService.js";
 import { PromptOptimizationService } from "../../../server/src/services/prompt-optimization/PromptOptimizationService.js";
 import { VideoPromptService } from "../../../server/src/services/video-prompt-analysis/index.js";
 import { AIServiceVideoPromptLlmGateway } from "../../../server/src/services/video-prompt-analysis/services/llm/VideoPromptLlmGateway.js";
@@ -37,15 +36,10 @@ export async function driveOptimize(
   const videoPromptService = new VideoPromptService({
     videoPromptLlmGateway: new AIServiceVideoPromptLlmGateway(deps.aiService),
   });
-  const imageObservationService = new ImageObservationService(
-    deps.aiService,
-    cacheService,
-  );
   const optimizer = new PromptOptimizationService(
     deps.aiService,
     cacheService,
     videoPromptService,
-    imageObservationService,
   );
 
   for (let i = 0; i < prompts.length; i++) {

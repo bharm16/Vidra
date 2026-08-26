@@ -71,7 +71,6 @@ Use this to find the correct client file for a given backend route. Do not creat
 | `/api/continuity/*`                     | `continuity.routes.ts`                    | `features/continuity/api/`                          |
 | `/api/model-intelligence/*`             | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
 | `/api/sessions/*`                       | `sessions.routes.ts`                      | (uses ApiClient directly)                           |
-| `/api/video/*`                          | `video.routes.ts`                         | `services/VideoConceptApi.ts`                       |
 | `/api/assets/*`                         | `asset.routes.ts`                         | `features/assets/`                                  |
 | `/api/reference-images/*`               | `reference-images.routes.ts`              | `features/reference-images/`                        |
 

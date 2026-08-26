@@ -45,10 +45,9 @@ services it should (and should not) be paired with.
 
 ## Canonical import and composition rules
 
-- Import service implementations from domain paths only (`server/src/services/enhancement/*`,
-  `server/src/services/video-concept/*`).
+- Import service implementations from domain paths only (`server/src/services/enhancement/*`).
 - Root-level compatibility shims are retired. Do not add or reintroduce
-  `server/src/services/EnhancementService.ts` or `server/src/services/VideoConceptService.ts`.
+  `server/src/services/EnhancementService.ts`.
 - Runtime feature-flag decisions belong at composition boundaries:
   `server/src/config/feature-flags.ts` and `server/src/config/routes.config.ts`.
 - Route handlers and middleware should consume DI-injected services, not singleton imports.

@@ -7,8 +7,7 @@ import {
 import { validateImageBuffer } from "@utils/validateFileType";
 import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
-import { requireBody } from "@middleware/intake";
-import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
+import { requireBody, requireCreatorId } from "@middleware/intake";
 import { requireRouteParam } from "@middleware/requireRouteParam";
 import { AssetTypeSchema } from "@shared/schemas/asset.schemas";
 import type { AssetType } from "@shared/types/asset";
@@ -79,7 +78,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.get(
     "/",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const typeParam =
@@ -117,7 +116,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.post(
     "/",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const parsed = requireBody(CreateAssetBodySchema, req, res);
@@ -143,7 +142,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.get(
     "/suggestions",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const query = typeof req.query.q === "string" ? req.query.q : "";
@@ -166,7 +165,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.post(
     "/resolve",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const parsed = requireBody(PromptBodySchema, req, res);
@@ -186,7 +185,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.post(
     "/validate",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const parsed = requireBody(PromptBodySchema, req, res);
@@ -206,7 +205,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.get(
     "/:id",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");
@@ -222,7 +221,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.patch(
     "/:id",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");
@@ -247,7 +246,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.delete(
     "/:id",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");
@@ -261,7 +260,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
     "/:id/images",
     upload.single("image"),
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");
@@ -305,7 +304,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.delete(
     "/:id/images/:imageId",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");
@@ -320,7 +319,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.patch(
     "/:id/images/:imageId/primary",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");
@@ -342,7 +341,7 @@ export function createAssetRoutes(assetService: AssetService): Router {
   router.get(
     "/:id/for-generation",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const assetId = requireRouteParam(req, res, "id");

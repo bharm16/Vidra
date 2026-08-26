@@ -151,7 +151,7 @@ const mockService = { complete: vi.fn() } as unknown as AIService;
 
 ### Service Test with Dependency Injection
 
-This pattern matches `VideoConceptService`, `EnhancementService`, and other orchestrators that accept dependencies via constructor.
+This pattern matches `EnhancementService`, `PromptOptimizationService`, and other orchestrators that accept dependencies via constructor.
 
 ```typescript
 import {
@@ -162,16 +162,16 @@ import {
   beforeEach,
   type MockedFunction,
 } from "vitest";
-import { VideoConceptService } from "@services/VideoConceptService";
+import { EnhancementService } from "@services/EnhancementService";
 import type { AIService } from "@services/prompt-optimization/types";
 
-describe("VideoConceptService", () => {
+describe("EnhancementService", () => {
   let mockAi: { complete: MockedFunction<AIService["complete"]> };
-  let service: VideoConceptService;
+  let service: EnhancementService;
 
   beforeEach(() => {
     mockAi = { complete: vi.fn() };
-    service = new VideoConceptService(mockAi as AIService);
+    service = new EnhancementService(mockAi as AIService);
   });
 
   describe("error handling", () => {
@@ -221,19 +221,19 @@ describe("VideoConceptService", () => {
 ```typescript
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { vi, type MockedFunction } from "vitest";
-import { useVideoConceptState } from "../useVideoConceptState";
-import type { VideoConceptState } from "../types";
+import { usePromptPanelState } from "../usePromptPanelState";
+import type { PromptPanelState } from "../types";
 
-describe("useVideoConceptState", () => {
+describe("usePromptPanelState", () => {
   it("initializes with empty element values", () => {
-    const { result } = renderHook(() => useVideoConceptState());
+    const { result } = renderHook(() => usePromptPanelState());
 
     expect(result.current.state.elements.subject).toBe("");
     expect(result.current.state.step).toBe(0);
   });
 
   it("updates element and clears field-specific error", async () => {
-    const { result } = renderHook(() => useVideoConceptState());
+    const { result } = renderHook(() => usePromptPanelState());
 
     // Set an error
     act(() => {
@@ -258,7 +258,7 @@ describe("useVideoConceptState", () => {
 
   it("clears interval on unmount", () => {
     const clearSpy = vi.spyOn(window, "clearInterval");
-    const { unmount } = renderHook(() => useVideoConceptState());
+    const { unmount } = renderHook(() => usePromptPanelState());
     unmount();
     expect(clearSpy).toHaveBeenCalled();
   });
@@ -272,13 +272,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, type MockedFunction } from 'vitest';
 
-vi.mock('../api', () => ({ fetchVideoConcept: vi.fn() }));
-import { fetchVideoConcept } from '../api';
-const mockFetch = fetchVideoConcept as MockedFunction<typeof fetchVideoConcept>;
+vi.mock('../api', () => ({ fetchPrompt: vi.fn() }));
+import { fetchPrompt } from '../api';
+const mockFetch = fetchPrompt as MockedFunction<typeof fetchPrompt>;
 
-describe('VideoConceptBuilder', () => {
+describe('PromptPanel', () => {
   // Default props factory — ensures type safety, avoids partial casts
-  const createProps = (overrides?: Partial<VideoBuilderProps>): VideoBuilderProps => ({
+  const createProps = (overrides?: Partial<PromptPanelProps>): PromptPanelProps => ({
     onComplete: vi.fn(),
     mode: 'video',
     ...overrides,
@@ -294,7 +294,7 @@ describe('VideoConceptBuilder', () => {
     });
 
     const user = userEvent.setup();
-    render(<VideoConceptBuilder {...createProps({ onComplete })} />);
+    render(<PromptPanel {...createProps({ onComplete })} />);
 
     await user.type(screen.getByLabelText(/subject/i), 'A cat');
     await user.click(screen.getByRole('button', { name: /generate/i }));
@@ -310,7 +310,7 @@ describe('VideoConceptBuilder', () => {
     mockFetch.mockRejectedValue(new Error('API Error'));
 
     const user = userEvent.setup();
-    render(<VideoConceptBuilder {...createProps()} />);
+    render(<PromptPanel {...createProps()} />);
     await user.click(screen.getByRole('button', { name: /generate/i }));
 
     await waitFor(() => {
@@ -494,7 +494,6 @@ describe("DI Container", () => {
       "enhancementService",
       "sceneDetectionService",
       "promptCoherenceService",
-      "videoConceptService",
       "spanLabelingCacheService",
       "metricsService",
       "logger",
@@ -842,16 +841,16 @@ describe("OpenAI Client (contract)", () => {
 ```typescript
 // ❌ This is a unit test in an integration test's clothing
 function createApp() {
-  const videoConceptService = {
-    getCreativeSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
+  const exampleService = {
+    getSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
     checkCompatibility: vi.fn().mockResolvedValue({ compatible: true }),
     // ... every method mocked
   };
 
   const app = express();
   app.use(express.json());
-  app.use("/api/video", createVideoRoutes({ videoConceptService } as never));
-  return { app, videoConceptService };
+  app.use("/api/example", createExampleRoutes({ exampleService } as never));
+  return { app, exampleService };
 }
 ```
 
@@ -1035,6 +1034,12 @@ You don't need to rename or move them. But when you encounter a bug that these t
 ---
 
 ## Part 4: Codebase-Specific Patterns
+
+> **Reference only for frozen domains.** Sections below that cover billing,
+> payment, video-generation, or continuity/convergence describe stacks frozen by
+> [ADR-0002](../../adr/0002-vidra-is-an-authoring-tool-for-non-experts.md).
+> Per the root `CLAUDE.md` Test Policy, **frozen domains carry no tests** — treat
+> those subsections as historical context, not as a mandate to add coverage.
 
 ### Testing SSE / Streaming Endpoints
 
@@ -2023,21 +2028,19 @@ Before submitting any test, verify:
 
 ## References
 
-| Resource                    | Location                                                                                 |
-| --------------------------- | ---------------------------------------------------------------------------------------- |
-| Property-based test example | `tests/unit/cross-model-translation-isolation.property.test.ts`                          |
-| Service test example        | `server/src/services/storage/__tests__/StorageService.test.ts`                           |
-| Hook test example           | `client/src/components/VideoConceptBuilder/hooks/__tests__/useVideoConceptState.test.ts` |
-| SSE helper                  | `server/src/routes/optimize/sse.ts`                                                      |
-| Span labeling service       | `server/src/llm/span-labeling/SpanLabelingService.ts`                                    |
-| Enhancement service         | `server/src/services/enhancement/EnhancementService.ts`                                  |
-| Shared taxonomy             | `shared/taxonomy.ts`                                                                     |
-| Credit service              | `server/src/services/credits/UserCreditService.ts`                                       |
-| Refund guard                | `server/src/services/credits/refundGuard.ts`                                             |
-| Refund failure store        | `server/src/services/credits/RefundFailureStore.ts`                                      |
-| Credit refund sweeper       | `server/src/services/credits/CreditRefundSweeper.ts`                                     |
-| Video generation workflow   | `server/src/services/video-generation/workflows/generateVideo.ts`                        |
-| Payment service             | `server/src/services/payment/PaymentService.ts`                                          |
-| Shared test helpers         | `tests/unit/test-helpers/`                                                               |
-
-_Companion docs: [ARCHITECTURE_STANDARD.md](./ARCHITECTURE_STANDARD.md), [STYLE_RULES.md](./STYLE_RULES.md)_
+| Resource                    | Location                                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Property-based test example | `tests/unit/suggestion-key-generation.property.test.ts`                                      |
+| Service test example        | `server/src/services/storage/__tests__/StorageService.test.ts`                               |
+| Hook test example           | `client/src/features/generation-controls/context/__tests__/GenerationControlsStore.test.tsx` |
+| SSE helper                  | `server/src/routes/optimize/sse.ts`                                                          |
+| Span labeling service       | `server/src/llm/span-labeling/SpanLabelingService.ts`                                        |
+| Enhancement service         | `server/src/services/enhancement/EnhancementService.ts`                                      |
+| Shared taxonomy             | `shared/taxonomy.ts`                                                                         |
+| Credit service              | `server/src/services/credits/UserCreditService.ts`                                           |
+| Refund guard                | `server/src/services/credits/refundGuard.ts`                                                 |
+| Refund failure store        | `server/src/services/credits/RefundFailureStore.ts`                                          |
+| Credit refund sweeper       | `server/src/services/credits/CreditRefundSweeper.ts`                                         |
+| Video generation workflow   | `server/src/services/video-generation/workflows/generateVideo.ts`                            |
+| Payment service             | `server/src/services/payment/PaymentService.ts`                                              |
+| Shared test helpers         | `tests/unit/test-helpers/`                                                                   |

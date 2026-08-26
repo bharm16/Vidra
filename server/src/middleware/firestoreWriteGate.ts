@@ -4,8 +4,6 @@ import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCirc
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-type RequestWithId = Request & { id?: string };
-
 export function createFirestoreWriteGateMiddleware(
   firestoreCircuitExecutor: FirestoreCircuitExecutor,
 ): (req: Request, res: Response, next: NextFunction) => void {
@@ -21,7 +19,7 @@ export function createFirestoreWriteGateMiddleware(
     }
 
     const retryAfterSeconds = firestoreCircuitExecutor.getRetryAfterSeconds();
-    const requestId = (req as RequestWithId).id;
+    const requestId = req.id;
     logger.warn("Firestore write gate blocked mutating request", {
       method: req.method,
       path: req.path,

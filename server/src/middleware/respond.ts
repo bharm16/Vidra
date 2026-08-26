@@ -28,8 +28,6 @@ import type {
   ApiSuccessResponse,
 } from "@shared/types/api";
 
-type RequestWithId = Request & { id?: string };
-
 export interface FailPayload {
   /**
    * Machine-readable code.
@@ -58,7 +56,7 @@ export function buildErrorBody(
   req: Request,
   payload: FailPayload,
 ): ApiErrorResponse {
-  const requestId = (req as RequestWithId).id;
+  const requestId = req.id;
   return {
     success: false,
     error: payload.error,
@@ -75,7 +73,7 @@ export function ok<T>(
   data: T,
   status = 200,
 ): Response<ApiSuccessResponse<T>> {
-  const requestId = (req as RequestWithId).id;
+  const requestId = req.id;
   const body: ApiSuccessResponse<T> = {
     success: true,
     data,

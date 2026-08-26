@@ -107,7 +107,6 @@ Moved to `docs/QUICKSTART.md`.
 | **Direct Video Generation**            | Generate actual videos using OpenAI Sora 2, Google Veo 3, Runway Gen-45, Luma Ray 3, and Kling                                        |
 | **Visual Preview**                     | Auto-generates preview images using Flux Schnell as you type (debounced)                                                              |
 | **Two-Stage Speed**                    | Sub-300ms draft (Groq) + background refinement (OpenAI)                                                                               |
-| **Video Concept Builder**              | Guided wizard: subject → action → location → camera → lighting → style                                                                |
 | **Consistency Tracking**               | Suggestions respect your edit history to maintain coherence                                                                           |
 | **Integrated Asset System**            | Create and reuse **characters, styles, locations, and objects** directly inside the prompt optimizer for consistent production output |
 | **`@trigger` Prompt Assembly**         | Reference assets via `@trigger` tokens with UX support (autocomplete/detection) so prompt building becomes reusable “building blocks” |
@@ -251,14 +250,12 @@ prompt-builder/
 │       │       ├── PromptOptimizerContainer/  # Workspace orchestration
 │       │       └── SpanCategoryAccordion/ # Category accordion overview
 │       └── components/
-│           ├── SuggestionsPanel/         # AI suggestions
-│           └── VideoConceptBuilder/      # Guided wizard
+│           └── SuggestionsPanel/         # AI suggestions
 ├── server/                    # Express backend
 │   └── src/
 │       ├── services/
 │       │   ├── prompt-optimization/      # Core optimization
 │       │   ├── enhancement/              # Suggestions
-│       │   ├── video-concept/            # Video concept orchestration
 │       │   └── ai-model/                 # LLM routing
 │       └── llm/
 │           └── span-labeling/            # Semantic labeling
@@ -268,8 +265,8 @@ prompt-builder/
 
 ### Architecture Notes
 
-- Canonical service imports are domain-scoped (`server/src/services/enhancement/*`, `server/src/services/video-concept/*`).
-- Legacy root shims (`server/src/services/EnhancementService.ts`, `server/src/services/VideoConceptService.ts`) are removed.
+- Canonical service imports are domain-scoped (`server/src/services/enhancement/*`).
+- Legacy root shims (`server/src/services/EnhancementService.ts`) are removed.
 - Composition is DI-first through `server/src/config/services*.ts` and `server/src/config/routes.config.ts`.
 - Architecture gates run via `npm run arch:check` (client/server cycle checks + forbidden import checks).
 
@@ -371,7 +368,6 @@ npm run arch:check  # Architecture gates (cycles + forbidden imports)
 - ✅ Direct Video Generation (Sora 2, Veo 3, Luma Ray 3, Runway Gen-45)
 - ✅ Video Preview Generation (Wan 2.2)
 - ✅ Image Preview Generation (Flux Schnell)
-- ✅ Video Concept Builder
 - ✅ Multi-provider LLM support
 - ⏳ Payment integration
 - ⏳ Team collaboration

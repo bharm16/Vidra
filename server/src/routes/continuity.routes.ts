@@ -1,11 +1,10 @@
 import express, { type Request, type Response, type Router } from "express";
 import { asyncHandler } from "@middleware/asyncHandler";
-import { requireBody } from "@middleware/intake";
+import { requireBody, requireCreatorId } from "@middleware/intake";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { UserCreditService } from "@services/credits/UserCreditService";
 import {
   ContinuitySessionInputSchema,
-  RequestWithUser,
   handleCreateSceneProxy,
   handleCreateShot,
   handleGenerateShot,
@@ -15,7 +14,6 @@ import {
   handleUpdateShot,
   handleUpdateStyleReference,
   requireSessionForUser,
-  requireUserId,
 } from "./continuity/continuityRouteShared";
 
 export function createContinuityRoutes(
@@ -35,7 +33,7 @@ export function createContinuityRoutes(
   router.post(
     "/sessions",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const parsed = requireBody(ContinuitySessionInputSchema, req, res);
@@ -66,7 +64,7 @@ export function createContinuityRoutes(
   router.get(
     "/sessions",
     asyncHandler(async (req: Request, res: Response) => {
-      const userId = requireUserId(req as RequestWithUser, res);
+      const userId = requireCreatorId(req, res);
       if (!userId) return;
 
       const sessions = await service.getUserSessions(userId);

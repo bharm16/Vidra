@@ -5,4 +5,4 @@
 - [ ] Business logic in hooks/ or services/
 - [ ] Config in config/ files
 - [ ] Components under 200 lines
-- [ ] Follows VideoConceptBuilder pattern (if frontend)
+- [ ] Follows the feature-slice pattern (`client/src/features/studio/`) (if frontend)

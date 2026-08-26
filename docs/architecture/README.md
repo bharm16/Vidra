@@ -18,7 +18,6 @@ This directory contains the architectural standards and patterns for the Prompt 
 **The How-To Guide**
 
 - Step-by-step refactoring checklist
-- Based on successful VideoConceptBuilder refactoring
 - Shows the standard directory structure
 - Includes template for Claude Code requests
 
@@ -38,9 +37,9 @@ This directory contains the architectural standards and patterns for the Prompt 
 - Clarifies span labeling, semantic parsing, and video prompt analysis responsibilities
 - Avoids overlapping pipelines and duplicate LLM calls
 
-### TypeScript Migration
+### TypeScript
 
-For TypeScript patterns and migration guides, see [typescript/](./typescript/README.md)
+Project-specific TypeScript references: [logging patterns](./typescript/LOGGING_PATTERNS.md) and the [test writing guide](./typescript/TEST_GUIDE.md). General TS/Zod conventions live in the root `CLAUDE.md`.
 
 ## Quick Start
 
@@ -57,5 +56,4 @@ For TypeScript patterns and migration guides, see [typescript/](./typescript/REA
 
 Successful refactorings following these patterns:
 
-- `client/src/features/video-concept-builder/` (Frontend)
 - `server/src/services/prompt-optimization/` (Backend)

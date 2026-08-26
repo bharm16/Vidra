@@ -795,7 +795,7 @@ const result = await withTiming(
 
 ```typescript
 // ❌ BAD - Random console.logs
-function VideoBuilder() {
+function PromptPanel() {
   console.log('render');
 
   useEffect(() => {
@@ -808,8 +808,8 @@ function VideoBuilder() {
 // ✅ GOOD - Use debug logger hook
 import { useDebugLogger } from '@/hooks/useDebugLogger';
 
-function VideoBuilder(props: VideoBuilderProps) {
-  const debug = useDebugLogger('VideoBuilder', props);
+function PromptPanel(props: PromptPanelProps) {
+  const debug = useDebugLogger('PromptPanel', props);
 
   useEffect(() => {
     debug.logEffect('mounted');
@@ -1252,7 +1252,3 @@ window.__logger.clearStoredLogs();
 - [ ] No sensitive data (passwords, tokens, PII) in logs
 - [ ] Structured metadata instead of string concatenation
 - [ ] Child logger created with service/component context
-
----
-
-_Companion docs: [ARCHITECTURE_STANDARD.md](./ARCHITECTURE_STANDARD.md), [STYLE_RULES.md](./STYLE_RULES.md), [ZOD_PATTERNS.md](./ZOD_PATTERNS.md)_

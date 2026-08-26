@@ -5,46 +5,9 @@
  * added by middleware (requestId and performanceMonitor).
  */
 import "express";
-
-/**
- * Performance metrics returned by getMetrics()
- */
-interface PerfMetrics {
-  total: number;
-  operations: Record<string, number>;
-  metadata: Record<string, unknown>;
-}
-
-/**
- * Performance monitor interface attached to requests
- * by the PerformanceMonitor middleware
- */
-interface RequestPerfMonitor {
-  /**
-   * Start timing for a specific operation
-   * @param operationName - Name of the operation to track
-   */
-  start: (operationName: string) => void;
-
-  /**
-   * End timing and record duration for an operation
-   * @param operationName - Name of the operation to complete
-   */
-  end: (operationName: string) => void;
-
-  /**
-   * Add metadata to the request performance context
-   * @param key - Metadata key
-   * @param value - Metadata value
-   */
-  addMetadata: (key: string, value: unknown) => void;
-
-  /**
-   * Get current performance metrics
-   * @returns Current metrics including total time, operations, and metadata
-   */
-  getMetrics: () => PerfMetrics;
-}
+// The performance-monitor shapes are owned by the middleware that attaches
+// them; imported here so the Request augmentation cannot drift from the impl.
+import type { RequestPerfMonitor } from "../middleware/performanceMonitor";
 
 declare global {
   namespace Express {

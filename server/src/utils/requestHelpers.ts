@@ -48,21 +48,3 @@ export function extractUserId(req: Request): string {
 export function extractFirebaseUid(req: Request): string | null {
   return (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
 }
-
-/**
- * Extract standard request metadata for logging
- *
- * @param req - Express request object
- * @returns Standard metadata object
- */
-export function extractRequestMetadata(req: Request) {
-  const reqWithId = req as Request & { id?: string };
-
-  return {
-    requestId: reqWithId.id,
-    userId: extractUserId(req),
-    method: req.method,
-    path: req.path,
-    ip: req.ip,
-  };
-}

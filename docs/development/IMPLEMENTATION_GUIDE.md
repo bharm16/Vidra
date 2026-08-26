@@ -8,10 +8,9 @@ The AI suggestions panel has been completely redesigned following 2025 design pr
 
 ## File Changes
 
-### Modified: `/Users/bryceharmon/Desktop/prompt-builder/src/components/VideoConceptBuilder.jsx`
-
-**Lines 464-494**: Added keyboard shortcut handlers
-**Lines 714-944**: Complete panel redesign with modern components
+The AI suggestions panel lives in `client/src/components/SuggestionsPanel/`. The
+redesign added keyboard shortcut handlers and rebuilt the panel with the modern
+component set described below.
 
 ---
 

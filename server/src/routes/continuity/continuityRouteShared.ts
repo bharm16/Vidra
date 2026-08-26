@@ -12,7 +12,7 @@ import type {
 import { CreditCostCalculator } from "@services/continuity/CreditCostCalculator";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
-import { requireUserId, type RequestWithUser } from "@middleware/requireUserId";
+import { type RequestWithUser } from "@middleware/intake";
 import {
   CreateSceneProxySchema,
   CreateShotSchema,
@@ -23,7 +23,7 @@ import {
   UpdateStyleReferenceSchema,
 } from "@server/schemas/continuity.schemas";
 
-export { requireUserId, type RequestWithUser };
+export { type RequestWithUser };
 export {
   CreateSceneProxySchema,
   CreateShotSchema,

@@ -4,16 +4,6 @@
  */
 
 /**
- * Cache configuration options
- */
-export interface CacheConfig {
-  defaultTTL?: number;
-  checkperiod?: number;
-  useClones?: boolean;
-  [key: string]: unknown;
-}
-
-/**
  * Cache key generation options
  */
 export interface GenerateKeyOptions {
@@ -24,33 +14,6 @@ export interface GenerateKeyOptions {
 }
 
 /**
- * Semantic enhancer interface for cache key generation
- */
-export interface SemanticEnhancer {
-  generateSemanticKey?: (
-    namespace: string,
-    data: Record<string, unknown>,
-    options?: GenerateKeyOptions,
-  ) => string;
-}
-
-/**
- * Cache adapter constructor options
- */
-export interface CacheAdapterOptions {
-  config?: CacheConfig;
-  keyGenerator: CacheKeyGenerator;
-  logger?: Logger | null;
-}
-
-/**
- * Cache key generator constructor options
- */
-export interface CacheKeyGeneratorOptions {
-  semanticEnhancer?: SemanticEnhancer | null;
-}
-
-/**
  * Logger interface (minimal)
  */
 export interface Logger {
@@ -58,17 +21,6 @@ export interface Logger {
   info?: (message: string, meta?: Record<string, unknown>) => void;
   warn?: (message: string, meta?: Record<string, unknown>) => void;
   error?: (message: string, error?: Error) => void;
-}
-
-/**
- * Cache key generator (forward declaration)
- */
-export interface CacheKeyGenerator {
-  generate(
-    namespace: string,
-    data: Record<string, unknown>,
-    options?: GenerateKeyOptions,
-  ): string;
 }
 
 /**
