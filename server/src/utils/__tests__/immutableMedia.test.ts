@@ -6,7 +6,7 @@ import type {
 import {
   enforceImmutableKeyframes,
   enforceImmutableVersions,
-} from "../immutableMedia";
+} from "@utils/immutableMedia";
 
 describe("server immutable media utils", () => {
   it("preserves first-frame storagePath and assetId when incoming differs", () => {
