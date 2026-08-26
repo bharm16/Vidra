@@ -1,9 +1,5 @@
 import type { PromptVersionEntry } from "@features/prompt-optimizer";
-import type {
-  DraftModel,
-  GenerationOverrides,
-  VideoTier,
-} from "@features/generation-controls";
+import type { VideoTier } from "@features/generation-controls";
 import type { Asset } from "@shared/types/asset";
 import type { TimelineItem } from "@features/prompt-optimizer/types/domain/timeline";
 import type {
@@ -44,13 +40,6 @@ export interface GenerationsPanelRuntime {
   hasActiveContinuityShot: boolean;
   isStartingSequence: boolean;
   heroGeneration: Generation | null;
-  activeDraftModel: string | null;
-  handleDraft: (model: DraftModel, overrides?: GenerationOverrides) => void;
-  handleRenderWithFaceSwap: (
-    model: string,
-    overrides?: GenerationOverrides,
-  ) => void;
-  handleStoryboard: () => void;
   handleApproveKeyframe: (keyframeUrl: string) => void;
   handleSkipKeyframe: () => void;
   handleRetry: (generation: Generation) => void;
