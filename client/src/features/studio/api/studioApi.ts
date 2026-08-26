@@ -3,7 +3,6 @@
  * same seam pattern as the realtime sketch's falI2i.ts).
  */
 
-import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import { apiClient } from "@/services/ApiClient";
 import { storageApi } from "@/api/storageApi";
 import { z } from "zod";
@@ -19,8 +18,6 @@ import {
   type StudioProject,
   type StudioTurn,
 } from "./schemas";
-
-const BASE = "/api/studio";
 
 async function request<T extends z.ZodTypeAny>(
   path: string,
@@ -190,21 +187,22 @@ export async function runStudioTurn(
   hooks?: RunTurnStreamHooks,
   attachmentIds?: readonly string[],
 ): Promise<RunTurnResponse> {
-  // Stays on hand-rolled fetch: the shared apiClient attaches a timeout signal
-  // to every request, which would abort this long-lived NDJSON stream mid-turn.
-  const response = await fetch(`${BASE}/projects/${projectId}/turns`, {
-    method: "POST",
-    body: JSON.stringify({
-      message,
-      ...(attachmentIds && attachmentIds.length > 0
-        ? { attachmentIds: [...attachmentIds] }
-        : {}),
-    }),
-    headers: {
-      "Content-Type": "application/json",
-      ...(await buildFirebaseAuthHeaders()),
+  // Streams NDJSON, so it opts out of the shared client's request timeout
+  // (stream: true) — otherwise the timeout signal would abort the turn
+  // mid-stream. Auth + telemetry-source headers still come from the seam.
+  const response = await apiClient.rawRequest(
+    `/studio/projects/${projectId}/turns`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        ...(attachmentIds && attachmentIds.length > 0
+          ? { attachmentIds: [...attachmentIds] }
+          : {}),
+      }),
+      stream: true,
     },
-  });
+  );
 
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("ndjson")) {
