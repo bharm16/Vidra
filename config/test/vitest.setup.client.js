@@ -128,8 +128,12 @@ vi.mock("@/config/firebase", () => {
 // exist (they carry per-test spies); this is the default for everyone
 // else. tests/unit/toast.test.tsx exercises the real module and opts out
 // via vi.unmock.
-vi.mock("@components/Toast", () => ({
-  useToast: vi.fn(() => ({
+vi.mock("@components/Toast", () => {
+  // One stable instance, same reason as the firebase stub above: the real
+  // useToast returns memoized references, and consumers put them in effect
+  // dependency arrays — a fresh object per call re-fires those effects on
+  // every render.
+  const toastApi = {
     // Generic API
     showToast: vi.fn(),
     hideToast: vi.fn(),
@@ -139,10 +143,13 @@ vi.mock("@components/Toast", () => ({
     info: vi.fn(),
     warning: vi.fn(),
     error: vi.fn(),
-  })),
-  ToastProvider: ({ children }) => children,
-  default: () => null,
-}));
+  };
+  return {
+    useToast: vi.fn(() => toastApi),
+    ToastProvider: ({ children }) => children,
+    default: () => null,
+  };
+});
 
 // Mock PromptStudio UI primitives used in components
 vi.mock("@promptstudio/system/components/ui/button", () => ({
