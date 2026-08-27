@@ -20,7 +20,7 @@ export const AppShell = memo(function AppShell(
   props: AppShellProps,
 ): ReactElement {
   const { children } = props;
-  const { variant, navItems } = useNavigationConfig();
+  const { variant } = useNavigationConfig();
   const user = useAuthUser();
 
   // CreditBalanceProvider must wrap every variant so routes like /account
@@ -39,7 +39,7 @@ export const AppShell = memo(function AppShell(
   if (variant === "topnav") {
     return withCreditBalance(
       <div className="bg-app flex min-h-full flex-col">
-        <TopNavbar navItems={navItems.topNav} user={user} />
+        <TopNavbar user={user} />
         <div className="min-h-0 flex-1 pt-[var(--global-top-nav-height)]">
           {children}
         </div>

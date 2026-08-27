@@ -182,8 +182,6 @@ function PromptOptimizerContent({
     setShowSettings,
     showShortcuts,
     setShowShortcuts,
-    showHistory,
-    setShowHistory,
     showImprover,
     setShowImprover,
     showBrainstorm,
@@ -904,7 +902,6 @@ function PromptOptimizerContent({
       toast.success("Copied to clipboard!");
     },
     export: () => showResults && toast.info("Use export button in canvas"),
-    toggleSidebar: () => setShowHistory(!showHistory),
     switchMode: () => {
       // Implementation from original
     },
@@ -979,8 +976,6 @@ function PromptOptimizerContent({
           >
             <CoherenceProvider value={coherenceValue}>
               <PromptOptimizerWorkspaceView
-                showHistory={showHistory}
-                onToggleHistory={setShowHistory}
                 shouldShowLoading={shouldShowLoading}
                 promptModalsProps={{
                   onImprovementComplete: handleImprovementComplete,

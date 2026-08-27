@@ -1,8 +1,6 @@
 import { useState } from "react";
 
 export function usePromptUiState(): {
-  showHistory: boolean;
-  setShowHistory: (show: boolean) => void;
   showResults: boolean;
   setShowResults: (show: boolean) => void;
   showSettings: boolean;
@@ -20,7 +18,6 @@ export function usePromptUiState(): {
   outputLastSavedAt: number | null;
   setOutputLastSavedAt: (timestampMs: number | null) => void;
 } {
-  const [showHistory, setShowHistory] = useState<boolean>(false);
   const [showResults, setShowResults] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
@@ -35,8 +32,6 @@ export function usePromptUiState(): {
   );
 
   return {
-    showHistory,
-    setShowHistory,
     showResults,
     setShowResults,
     showSettings,

@@ -8,7 +8,6 @@ describe("usePromptUiState", () => {
     it("defaults visibility toggles to false", () => {
       const { result } = renderHook(() => usePromptUiState());
 
-      expect(result.current.showHistory).toBe(false);
       expect(result.current.showResults).toBe(false);
       expect(result.current.showSettings).toBe(false);
       expect(result.current.showShortcuts).toBe(false);
@@ -44,12 +43,10 @@ describe("usePromptUiState", () => {
       const { result } = renderHook(() => usePromptUiState());
 
       act(() => {
-        result.current.setShowHistory(true);
         result.current.setShowResults(true);
         result.current.setCurrentAIIndex(2);
       });
 
-      expect(result.current.showHistory).toBe(true);
       expect(result.current.showResults).toBe(true);
       expect(result.current.currentAIIndex).toBe(2);
     });

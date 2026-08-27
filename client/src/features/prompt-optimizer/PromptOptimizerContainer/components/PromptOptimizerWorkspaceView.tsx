@@ -57,8 +57,6 @@ interface DebugProps {
 }
 
 interface PromptOptimizerWorkspaceViewProps {
-  showHistory: boolean;
-  onToggleHistory: (show: boolean) => void;
   shouldShowLoading: boolean;
   promptModalsProps: PromptModalsProps;
   quickCreateState: QuickCreateState;
@@ -74,8 +72,6 @@ interface PromptOptimizerWorkspaceViewProps {
 }
 
 export function PromptOptimizerWorkspaceView({
-  showHistory,
-  onToggleHistory,
   shouldShowLoading,
   promptModalsProps,
   quickCreateState,
@@ -90,7 +86,7 @@ export function PromptOptimizerWorkspaceView({
   debugProps,
 }: PromptOptimizerWorkspaceViewProps): React.ReactElement {
   return (
-    <AppShell showHistory={showHistory} onToggleHistory={onToggleHistory}>
+    <AppShell>
       <div className="flex h-full min-h-0 flex-col overflow-hidden font-sans text-foreground">
         <a href="#main-content" className="ps-skip-link">
           Skip to main content

@@ -8,15 +8,10 @@ import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import {
   AUTH_ROUTES,
-  NAV_ITEMS,
   WORKSPACE_ROUTE_PREFIXES,
   WORKSPACE_ROUTES_EXACT,
 } from "../constants";
-import type {
-  NavItemsByVariant,
-  NavigationConfig,
-  ShellVariant,
-} from "../types";
+import type { NavigationConfig, ShellVariant } from "../types";
 
 /**
  * Determines shell variant based on current pathname.
@@ -51,16 +46,8 @@ export function useNavigationConfig(): NavigationConfig {
     [location.pathname],
   );
 
-  const navItems = useMemo((): NavItemsByVariant => {
-    return {
-      topNav: NAV_ITEMS.filter((item) => item.showInTopNav),
-      sidebar: NAV_ITEMS.filter((item) => item.showInSidebar),
-    };
-  }, []);
-
   return {
     variant,
-    navItems,
     currentPath: location.pathname,
   };
 }

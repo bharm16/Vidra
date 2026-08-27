@@ -149,8 +149,6 @@ export function PromptStateProvider({
   } = usePromptConfigState();
 
   const {
-    showHistory,
-    setShowHistory,
     showResults,
     setShowResults,
     showSettings,
@@ -280,8 +278,6 @@ export function PromptStateProvider({
 
   const uiValue = useMemo<PromptUIState>(
     () => ({
-      showHistory,
-      setShowHistory,
       showResults,
       setShowResults,
       showSettings,
@@ -300,8 +296,6 @@ export function PromptStateProvider({
       setOutputLastSavedAt,
     }),
     [
-      showHistory,
-      setShowHistory,
       showResults,
       setShowResults,
       showSettings,

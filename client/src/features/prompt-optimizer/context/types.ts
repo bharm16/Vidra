@@ -140,8 +140,6 @@ export interface PromptConfigState {
 
 export interface PromptUIState {
   // UI State
-  showHistory: boolean;
-  setShowHistory: (show: boolean) => void;
   showResults: boolean;
   setShowResults: (show: boolean) => void;
   showSettings: boolean;

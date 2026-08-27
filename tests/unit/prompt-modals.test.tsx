@@ -58,8 +58,6 @@ const baseSettings: AppSettings = {
 const createPromptUiState = (
   overrides: Partial<PromptUIState> = {},
 ): PromptUIState => ({
-  showHistory: false,
-  setShowHistory: vi.fn(),
   showResults: false,
   setShowResults: vi.fn(),
   showSettings: false,
