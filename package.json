@@ -147,7 +147,6 @@
     "lint": "eslint . --config config/lint/eslint.config.js --cache --cache-location node_modules/.cache/eslint/",
     "lint:quiet": "eslint . --config config/lint/eslint.config.js --quiet --cache --cache-location node_modules/.cache/eslint/",
     "lint:fix": "eslint . --fix --config config/lint/eslint.config.js --cache --cache-location node_modules/.cache/eslint/",
-    "lint:security": "eslint . --no-eslintrc --config config/lint/eslint.config.js",
     "lint:critical": "node scripts/lint-critical.mjs",
     "lint:css": "stylelint \"client/src/**/*.css\" \"packages/promptstudio-system/src/**/*.css\" --config config/lint/stylelint.config.js",
     "lint:css:fix": "stylelint \"client/src/**/*.css\" \"packages/promptstudio-system/src/**/*.css\" --fix --config config/lint/stylelint.config.js",
