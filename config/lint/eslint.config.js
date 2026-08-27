@@ -127,11 +127,6 @@ export default [
         {
           patterns: [
             {
-              group: ["@services/EnhancementService"],
-              message:
-                "Use canonical domain imports instead of legacy root service shims.",
-            },
-            {
               group: [
                 "@/features/prompt-optimizer/PromptOptimizerContainer/PromptOptimizerContainer",
                 "@features/prompt-optimizer/PromptOptimizerContainer/PromptOptimizerContainer",
@@ -226,21 +221,6 @@ export default [
       ],
     },
   },
-  // Server-side configuration
-  {
-    files: [
-      "server.{js,ts}",
-      "utils/**/*.{js,ts}",
-      "src/**/*.{js,ts}",
-      "migrate-*.*",
-      "verify-*.*",
-    ],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-      },
-    },
-  },
   // Test files configuration
   {
     files: [
@@ -250,7 +230,6 @@ export default [
       "config/test/vitest.setup.client.js",
       "config/test/vitest.setup.server.js",
       "config/test/vitest.config.js",
-      "config/test/vitest.workspace.js",
       "config/test/playwright.config.js",
     ],
     languageOptions: {
@@ -278,7 +257,7 @@ export default [
   },
   // Load test files (k6)
   {
-    files: ["load-tests/**/*.js"],
+    files: ["tests/load/**/*.js"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -301,7 +280,6 @@ export default [
   {
     files: [
       "server/src/services/prompt-optimization/PromptOptimizationService.{js,ts}",
-      "server/src/services/EnhancementService.{js,ts}",
     ],
     rules: {
       "no-secrets/no-secrets": "off", // Templates contain high-entropy strings

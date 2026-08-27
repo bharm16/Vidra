@@ -273,7 +273,6 @@ const coverageExclude = [
   "**/*.config.{js,ts}",
   "vite.config.js",
   "vitest.config.js",
-  "vitest.workspace.js",
   "vitest.setup.js",
   "vitest.setup.client.js",
   "vitest.setup.server.js",
