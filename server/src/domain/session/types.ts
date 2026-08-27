@@ -6,12 +6,7 @@
  * from the sessions service layer. The concrete `SessionService`,
  * `SessionStore`, etc. stay in `services/sessions/`.
  */
-import type {
-  SessionPrompt,
-  SessionStatus,
-  SessionDto,
-  SessionContinuity,
-} from "@shared/types/session";
+import type { SessionPrompt, SessionStatus } from "@shared/types/session";
 import type { ContinuitySession } from "@server/domain/continuity/types";
 
 export interface SessionRecord {
@@ -69,12 +64,4 @@ export interface SessionOutputUpdate {
 
 export interface SessionVersionsUpdate {
   versions?: SessionPrompt["versions"];
-}
-
-export interface SessionDtoResult {
-  session: SessionDto;
-}
-
-export interface SessionContinuityDtoResult {
-  continuity: SessionContinuity;
 }

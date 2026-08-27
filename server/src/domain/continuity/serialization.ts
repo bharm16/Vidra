@@ -98,7 +98,7 @@ export const deserializeContinuitySession = (
   };
 };
 
-export const serializeShot = (
+const serializeShot = (
   shot: ContinuityShot,
 ): Record<string, unknown> => ({
   ...Object.fromEntries(
@@ -129,7 +129,7 @@ export const serializeShot = (
   ),
 });
 
-export const deserializeShot = (
+const deserializeShot = (
   raw: Record<string, unknown>,
 ): ContinuityShot => {
   const parsed = StoredShotSchema.safeParse(raw);
@@ -184,14 +184,14 @@ export const deserializeShot = (
   } as ContinuityShot;
 };
 
-export const serializeStyleReference = (
+const serializeStyleReference = (
   ref: ContinuitySession["primaryStyleReference"],
 ): Record<string, unknown> => ({
   ...ref,
   extractedAt: ref.extractedAt.getTime(),
 });
 
-export const deserializeStyleReference = (
+const deserializeStyleReference = (
   raw: Record<string, unknown>,
 ): ContinuitySession["primaryStyleReference"] => {
   const extractedAt =
@@ -201,14 +201,14 @@ export const deserializeStyleReference = (
   return { ...raw, extractedAt } as ContinuitySession["primaryStyleReference"];
 };
 
-export const serializeSceneProxy = (
+const serializeSceneProxy = (
   proxy: ContinuitySession["sceneProxy"],
 ): Record<string, unknown> => ({
   ...proxy,
   createdAt: proxy?.createdAt ? proxy.createdAt.getTime() : Date.now(),
 });
 
-export const deserializeSceneProxy = (
+const deserializeSceneProxy = (
   raw: Record<string, unknown>,
 ): ContinuitySession["sceneProxy"] => {
   const createdAt =

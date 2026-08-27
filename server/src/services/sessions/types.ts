@@ -16,6 +16,4 @@ export type {
   SessionHighlightUpdate,
   SessionOutputUpdate,
   SessionVersionsUpdate,
-  SessionDtoResult,
-  SessionContinuityDtoResult,
 } from "@server/domain/session/types";
