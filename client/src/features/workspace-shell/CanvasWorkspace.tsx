@@ -163,12 +163,7 @@ export function CanvasWorkspace({
         mode: recommendationMode,
         durationSeconds,
         ...(typeof recommendationAgeMs === "number"
-          ? {
-              timeSinceRecommendationMs: Math.max(
-                0,
-                Math.round(recommendationAgeMs),
-              ),
-            }
+          ? { timeSinceRecommendationMs: recommendationAgeMs }
           : {}),
       });
 

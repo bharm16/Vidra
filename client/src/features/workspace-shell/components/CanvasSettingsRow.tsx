@@ -306,7 +306,7 @@ export function CanvasSettingsRow({
 
   const trackGenerationStart = useCallback(
     (selectedModelId: string) => {
-      if (!FEATURES.MODEL_INTELLIGENCE_UI) return;
+      // Flag gating lives inside trackModelRecommendationEvent (ADR-0002).
       void trackModelRecommendationEvent({
         event: "generation_started",
         ...(recommendationPromptId
@@ -320,12 +320,7 @@ export function CanvasSettingsRow({
         ...(recommendationMode ? { mode: recommendationMode } : {}),
         durationSeconds: duration,
         ...(typeof recommendationAgeMs === "number"
-          ? {
-              timeSinceRecommendationMs: Math.max(
-                0,
-                Math.round(recommendationAgeMs),
-              ),
-            }
+          ? { timeSinceRecommendationMs: recommendationAgeMs }
           : {}),
       });
     },
