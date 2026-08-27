@@ -139,8 +139,16 @@ vi.mock("@/config/firebase", () => {
   };
 });
 
-// Mock Toast context for components
-vi.mock("./src/components/Toast.jsx", () => ({
+// Mock Toast context for components.
+//
+// Previously this mocked "./src/components/Toast.jsx" — a path with no file
+// behind it since the module became client/src/components/Toast.tsx (the
+// same silent-no-op bug as the firebase mock above), so 18 test files
+// re-declared the mock locally. Those local mocks still win where they
+// exist (they carry per-test spies); this is the default for everyone
+// else. tests/unit/toast.test.tsx exercises the real module and opts out
+// via vi.unmock.
+vi.mock("@components/Toast", () => ({
   useToast: vi.fn(() => ({
     // Generic API
     showToast: vi.fn(),
