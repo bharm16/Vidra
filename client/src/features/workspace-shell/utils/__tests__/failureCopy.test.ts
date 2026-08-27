@@ -10,7 +10,6 @@ import type { FailureKind } from "../deriveWorkspaceStage";
 describe("failureCopy", () => {
   const ALL: FailureKind[] = [
     "writing",
-    "labeling",
     "picture",
     "motion",
     "video",
@@ -28,9 +27,8 @@ describe("failureCopy", () => {
     expect(failureCopy("picture").notCharged).toBe(true);
     expect(failureCopy("motion").notCharged).toBe(true);
     expect(failureCopy("video").notCharged).toBe(true);
-    // Writing (expansion) and labeling are free — no charge line.
+    // Writing (expansion) is free — no charge line.
     expect(failureCopy("writing").notCharged).toBe(false);
-    expect(failureCopy("labeling").notCharged).toBe(false);
   });
 
   it("names the picture and clip in their respective failures", () => {

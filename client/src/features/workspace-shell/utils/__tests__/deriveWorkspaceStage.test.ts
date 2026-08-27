@@ -8,7 +8,6 @@ const noArtifacts: WorkspaceArtifacts = {
   hasDescription: false,
   hasFrame: false,
   hasClip: false,
-  isKept: false,
 };
 
 describe("deriveWorkspaceStage", () => {
@@ -23,13 +22,12 @@ describe("deriveWorkspaceStage", () => {
   });
 
   // The happy-path spine: an in-flight run wins; otherwise the furthest-completed
-  // artifact decides, most-advanced first (kept > clip > picture).
+  // artifact decides, most-advanced first (clip > picture).
   const spine: Array<[Partial<WorkspaceArtifacts>, string]> = [
     [{ inFlight: "painting" }, "painting"],
     [{ inFlight: "moving" }, "moving"],
     [{ hasFrame: true }, "picture"],
     [{ hasFrame: true, hasClip: true }, "clip"],
-    [{ hasFrame: true, hasClip: true, isKept: true }, "kept"],
   ];
 
   it.each(spine)("derives the spine: %o → %s", (partial, expected) => {
@@ -42,7 +40,6 @@ describe("deriveWorkspaceStage", () => {
   // failed — never a separate stage (ADR-0010 / M2a).
   const failures: Array<[Partial<WorkspaceArtifacts>, string, string]> = [
     [{ failure: "writing" }, "writing", "writing"],
-    [{ hasDescription: true, failure: "labeling" }, "painting", "labeling"],
     [{ hasDescription: true, failure: "picture" }, "picture", "picture"],
     [{ hasFrame: true, failure: "motion" }, "moving", "motion"],
     [{ hasFrame: true, failure: "video" }, "moving", "video"],

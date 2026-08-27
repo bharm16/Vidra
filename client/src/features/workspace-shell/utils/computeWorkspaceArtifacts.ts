@@ -84,7 +84,6 @@ export function computeWorkspaceArtifacts(
     hasDescription,
     hasFrame,
     hasClip,
-    isKept: false,
     ...(inFlight ? { inFlight } : {}),
     ...(failure ? { failure } : {}),
   };

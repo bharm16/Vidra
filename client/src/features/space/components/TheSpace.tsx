@@ -295,11 +295,6 @@ function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
       ) : (
         <div className="bg-tool-surface-deep absolute inset-0" />
       )}
-      {node.status === "kept" ? (
-        <span className="text-meta absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-white">
-          kept
-        </span>
-      ) : null}
     </>
   );
 }

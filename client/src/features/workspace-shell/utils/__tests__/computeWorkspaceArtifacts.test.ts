@@ -18,7 +18,6 @@ describe("computeWorkspaceArtifacts", () => {
       hasDescription: false,
       hasFrame: false,
       hasClip: false,
-      isKept: false,
     });
   });
 

@@ -15,15 +15,9 @@ export type WorkspaceStage =
   | "painting"
   | "picture"
   | "moving"
-  | "clip"
-  | "kept";
+  | "clip";
 
-export type FailureKind =
-  | "writing"
-  | "labeling"
-  | "picture"
-  | "motion"
-  | "video";
+export type FailureKind = "writing" | "picture" | "motion" | "video";
 
 /** The in-flight run's kind, when a generation is currently running. */
 export type InFlightKind = "writing" | "painting" | "moving";
@@ -35,8 +29,6 @@ export interface WorkspaceArtifacts {
   hasFrame: boolean;
   /** A ready clip (completed video) exists. */
   hasClip: boolean;
-  /** The current clip has been kept. */
-  isKept: boolean;
   /** A generation is in flight, and which kind. */
   inFlight?: InFlightKind;
   /** The most recent run failed, and at which stage. */
@@ -53,8 +45,6 @@ function stageForFailure(failure: FailureKind): WorkspaceStage {
   switch (failure) {
     case "writing":
       return "writing";
-    case "labeling":
-      return "painting";
     case "picture":
       return "picture";
     case "motion":
@@ -75,7 +65,6 @@ export function deriveWorkspaceStage(
   if (artifacts.inFlight === "writing") return { stage: "writing" };
   if (artifacts.inFlight === "painting") return { stage: "painting" };
   if (artifacts.inFlight === "moving") return { stage: "moving" };
-  if (artifacts.isKept) return { stage: "kept" };
   if (artifacts.hasClip) return { stage: "clip" };
   if (artifacts.hasFrame) return { stage: "picture" };
   // A description with no frame yet is post-writing, awaiting the picture — the
