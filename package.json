@@ -127,7 +127,6 @@
     "restart": "lsof -ti :3001 | xargs kill -9 2>/dev/null || true && lsof -ti :5173 | xargs kill -9 2>/dev/null || true && npm start",
     "verify-keys": "tsx scripts/verify-api-keys.ts",
     "sync:capabilities": "tsx --tsconfig server/tsconfig.json scripts/sync-capabilities.ts",
-    "openapi:generate": "tsx --tsconfig server/tsconfig.json scripts/generate-openapi.ts",
     "routemap:generate": "tsx --tsconfig server/tsconfig.json scripts/generate-route-map.ts --write",
     "routemap:write": "tsx --tsconfig server/tsconfig.json scripts/generate-route-map.ts --write",
     "routemap:check": "tsx --tsconfig server/tsconfig.json scripts/generate-route-map.ts --check",

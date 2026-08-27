@@ -10,7 +10,11 @@
  * 1. Import the Zod schema for your request/response.
  * 2. Convert with `zodToOpenApi(MySchema)`.
  * 3. Add the path definition to `buildPaths()`.
- * 4. Run `npm run openapi:generate` to regenerate `docs/openapi.json`.
+ *
+ * The spec is served fresh by the dev-only /api-docs route and is never
+ * committed: a checked-in docs/openapi.json existed until 2026-08-27, had
+ * zero consumers, and had silently drifted six error codes behind
+ * API_ERROR_CODES — building from source is the only shape that can't rot.
  *
  * ## Design decisions
  *
@@ -24,10 +28,7 @@
 
 import { z } from "zod";
 
-import {
-  promptSchema,
-  compileSchema,
-} from "../config/schemas/promptSchemas.ts";
+import { compileSchema } from "../config/schemas/promptSchemas.ts";
 import {
   ApiErrorCodeSchema,
   ApiErrorResponseSchema,
@@ -146,7 +147,6 @@ function buildComponentSchemas(): Record<string, JsonSchema> {
     },
 
     // -- Request schemas (from Zod) --
-    PromptOptimizeRequest: zodToOpenApi(promptSchema),
     PromptCompileRequest: zodToOpenApi(compileSchema),
 
     // -- Rate limit --
