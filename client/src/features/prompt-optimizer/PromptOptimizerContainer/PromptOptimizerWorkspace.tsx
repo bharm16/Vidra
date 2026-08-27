@@ -16,11 +16,6 @@ import { useToast } from "@components/Toast";
 import { logger } from "@/services/LoggingService";
 import { useAuthUser } from "@hooks/useAuthUser";
 import type { User } from "../context/types";
-import type {
-  CameraMotionCategory,
-  CameraPath,
-  ConvergenceHandoff,
-} from "@/features/convergence/types";
 import type { CapabilityValues } from "@shared/capabilities";
 import type {
   PromptHistoryEntry,
@@ -84,40 +79,6 @@ import {
 } from "../context/CoherenceContext";
 
 const log = logger.child("PromptOptimizerWorkspace");
-const buildDefaultCameraTransform = (): CameraPath["start"] => ({
-  position: { x: 0, y: 0, z: 0 },
-  rotation: { pitch: 0, yaw: 0, roll: 0 },
-});
-
-const formatCameraMotionLabel = (id: string): string =>
-  id
-    .replace(/[_-]+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-
-const inferCameraMotionCategory = (id: string): CameraMotionCategory => {
-  if (id === "static") return "static";
-  if (
-    id.startsWith("pan_") ||
-    id.startsWith("tilt_") ||
-    id.startsWith("dutch_")
-  ) {
-    return "pan_tilt";
-  }
-  if (["push_in", "pull_back", "track_left", "track_right"].includes(id)) {
-    return "dolly";
-  }
-  if (id.startsWith("crane_") || id.startsWith("pedestal_")) {
-    return "crane";
-  }
-  if (id.startsWith("arc_")) {
-    return "orbital";
-  }
-  if (id === "reveal") {
-    return "compound";
-  }
-  return "static";
-};
 
 interface HydratedPromptHistoryInput {
   id?: string;
@@ -136,33 +97,19 @@ interface HydratedPromptHistoryInput {
   versions?: PromptVersionEntry[];
 }
 
-const buildFallbackCameraPath = (cameraMotionId: string): CameraPath => ({
-  id: cameraMotionId,
-  label: formatCameraMotionLabel(cameraMotionId),
-  category: inferCameraMotionCategory(cameraMotionId),
-  start: buildDefaultCameraTransform(),
-  end: buildDefaultCameraTransform(),
-  duration: 1,
-});
-
 /**
  * Inner component with access to PromptStateContext
  */
 interface PromptOptimizerContentProps {
   user: User | null;
   isAuthResolved: boolean;
-  /** Handoff data from Visual Convergence for prompt pre-fill (Requirement 17.2) */
-  convergenceHandoff?: ConvergenceHandoff | null | undefined;
 }
 
 function PromptOptimizerContent({
   user,
   isAuthResolved,
-  convergenceHandoff,
 }: PromptOptimizerContentProps): React.ReactElement {
   const location = useLocation();
-  // Track if we've already applied the handoff to prevent re-applying
-  const handoffAppliedRef = React.useRef<string | null>(null);
 
   const toast = useToast();
   // Config
@@ -258,7 +205,6 @@ function PromptOptimizerContent({
   const startFrame = domain.startFrame;
   const cameraMotion = domain.cameraMotion;
   const subjectMotion = domain.subjectMotion;
-  const setInputPrompt = promptOptimizer.setInputPrompt;
   const i2vContext = useI2VContext();
   const { hasActiveContinuityShot, currentShotId, currentShot, updateShot } =
     useWorkspaceSession();
@@ -321,58 +267,6 @@ function PromptOptimizerContent({
     location.search,
     navigate,
     setShowSettings,
-  ]);
-
-  /**
-   * Handle convergence handoff - pre-fill prompt when provided
-   * (Requirement 17.2: Switch to Studio mode with converged prompt pre-filled)
-   */
-  useEffect(() => {
-    if (!convergenceHandoff) return;
-
-    // Create a unique key for this handoff to prevent re-applying
-    const handoffKey = `${convergenceHandoff.prompt.slice(0, 50)}-${convergenceHandoff.cameraMotion}`;
-
-    // Skip if we've already applied this handoff
-    if (handoffAppliedRef.current === handoffKey) return;
-
-    // Mark this handoff as applied
-    handoffAppliedRef.current = handoffKey;
-
-    // Pre-fill the input prompt with the converged prompt
-    setInputPrompt(convergenceHandoff.prompt);
-
-    const handoffCameraMotionId = convergenceHandoff.cameraMotion?.trim();
-    if (handoffCameraMotionId) {
-      setCameraMotion(buildFallbackCameraPath(handoffCameraMotionId));
-    }
-    const handoffSubjectMotion = convergenceHandoff.subjectMotion?.trim();
-    if (handoffSubjectMotion) {
-      setSubjectMotion(handoffSubjectMotion);
-    }
-
-    // Clear any existing displayed prompt to show the input
-    setDisplayedPromptSilently("");
-    setShowResults(false);
-
-    // Show a toast notification
-    toast.success("Prompt loaded from Visual Convergence");
-
-    // Log the handoff for debugging
-    log.info("Applied convergence handoff", {
-      promptLength: convergenceHandoff.prompt.length,
-      lockedDimensionsCount: convergenceHandoff.lockedDimensions.length,
-      cameraMotion: convergenceHandoff.cameraMotion,
-      hasSubjectMotion: Boolean(convergenceHandoff.subjectMotion),
-    });
-  }, [
-    convergenceHandoff,
-    setInputPrompt,
-    setCameraMotion,
-    setSubjectMotion,
-    setDisplayedPromptSilently,
-    setShowResults,
-    toast,
   ]);
 
   useEditorShotPromptBinding({
@@ -1026,14 +920,7 @@ function PromptOptimizerContent({
 /**
  * Outer component with auth state management
  */
-interface PromptOptimizerWorkspaceProps {
-  /** Handoff data from Visual Convergence for prompt pre-fill (Requirement 17.2) */
-  convergenceHandoff?: ConvergenceHandoff | null;
-}
-
-function PromptOptimizerWorkspace({
-  convergenceHandoff,
-}: PromptOptimizerWorkspaceProps): React.ReactElement {
+function PromptOptimizerWorkspace(): React.ReactElement {
   const [isAuthResolved, setIsAuthResolved] = React.useState(false);
   const user = useAuthUser({
     onChange: () => {
@@ -1045,11 +932,7 @@ function PromptOptimizerWorkspace({
   return (
     <WorkspaceSessionProvider {...(sessionId ? { sessionId } : {})}>
       <PromptStateProvider user={user}>
-        <PromptOptimizerContent
-          user={user}
-          isAuthResolved={isAuthResolved}
-          convergenceHandoff={convergenceHandoff}
-        />
+        <PromptOptimizerContent user={user} isAuthResolved={isAuthResolved} />
       </PromptStateProvider>
     </WorkspaceSessionProvider>
   );
