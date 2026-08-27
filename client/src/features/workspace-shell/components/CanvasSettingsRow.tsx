@@ -252,7 +252,6 @@ export function CanvasSettingsRow({
 
   const { aspectRatioOptions, durationOptions, schema } =
     useCapabilitiesClamping({
-      activeTab: "video",
       selectedModel: domain.selectedModel,
       videoTier: domain.videoTier,
       renderModelId,

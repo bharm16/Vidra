@@ -24,7 +24,6 @@ function makeProps(
 ): PromptEditorSurfaceProps {
   return {
     editorRef: createRef<HTMLDivElement>(),
-    prompt: "",
     onTextSelection: noop,
     onHighlightClick: noop,
     onHighlightMouseDown: noop,

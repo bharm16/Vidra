@@ -29,8 +29,6 @@ Element.prototype.scrollIntoView = Element.prototype.scrollIntoView ?? vi.fn();
 vi.mock("../../hooks/useCapabilitiesClamping", () => ({
   useCapabilitiesClamping: () => ({
     schema: null,
-    aspectRatioInfo: null,
-    durationInfo: null,
     aspectRatioOptions: ["16:9", "9:16", "1:1"],
     durationOptions: [5, 10],
   }),

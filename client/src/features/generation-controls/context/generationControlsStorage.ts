@@ -76,34 +76,7 @@ export const loadSubjectMotion = (): string => {
   }
 };
 
-export const persistCameraMotion = (value: CameraPath | null): void => {
-  if (typeof window === "undefined") return;
-  try {
-    if (!value) {
-      window.localStorage.removeItem(STORAGE_KEYS.cameraMotion);
-      return;
-    }
-    window.localStorage.setItem(
-      STORAGE_KEYS.cameraMotion,
-      JSON.stringify(value),
-    );
-  } catch {
-    // ignore
-  }
-};
 
-export const persistSubjectMotion = (value: string): void => {
-  if (typeof window === "undefined") return;
-  try {
-    if (!value) {
-      window.localStorage.removeItem(STORAGE_KEYS.subjectMotion);
-      return;
-    }
-    window.localStorage.setItem(STORAGE_KEYS.subjectMotion, value);
-  } catch {
-    // ignore
-  }
-};
 
 export const loadActiveTab = (): "video" | "image" => {
   if (typeof window === "undefined") return "video";
@@ -117,14 +90,6 @@ export const loadActiveTab = (): "video" | "image" => {
   }
 };
 
-export const persistActiveTab = (value: "video" | "image"): void => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEYS.activeTab, value);
-  } catch {
-    // ignore
-  }
-};
 
 export const loadImageSubTab = (): "references" | "styles" => {
   if (typeof window === "undefined") return "references";
@@ -138,14 +103,6 @@ export const loadImageSubTab = (): "references" | "styles" => {
   }
 };
 
-export const persistImageSubTab = (value: "references" | "styles"): void => {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEYS.imageSubTab, value);
-  } catch {
-    // ignore
-  }
-};
 
 const KeyframeTileSchema = z.object({
   id: z.string(),
@@ -171,15 +128,3 @@ export const loadKeyframes = (): KeyframeTile[] => {
   }
 };
 
-export const persistKeyframes = (value: KeyframeTile[]): void => {
-  if (typeof window === "undefined") return;
-  try {
-    if (!value.length) {
-      window.localStorage.removeItem(STORAGE_KEYS.keyframes);
-      return;
-    }
-    window.localStorage.setItem(STORAGE_KEYS.keyframes, JSON.stringify(value));
-  } catch {
-    // ignore
-  }
-};

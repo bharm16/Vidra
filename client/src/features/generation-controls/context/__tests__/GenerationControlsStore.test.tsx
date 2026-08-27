@@ -115,7 +115,7 @@ describe("GenerationControlsStore", () => {
     expect(result.current.state.domain.startFrame).toBeNull();
   });
 
-  it("clears extend mode when setting start or end frame", () => {
+  it("clears extend mode when setting the start frame", () => {
     const initialState = buildInitialState({
       domain: {
         extendVideo: {
@@ -138,24 +138,6 @@ describe("GenerationControlsStore", () => {
       result.current.actions.setStartFrame({
         id: "start-frame",
         url: "https://example.com/start.png",
-        source: "upload",
-      });
-    });
-
-    expect(result.current.state.domain.extendVideo).toBeNull();
-
-    act(() => {
-      result.current.actions.setExtendVideo({
-        url: "https://example.com/video-2.mp4",
-        source: "generation",
-        generationId: "gen-2",
-      });
-    });
-
-    act(() => {
-      result.current.actions.setEndFrame({
-        id: "end-frame",
-        url: "https://example.com/end.png",
         source: "upload",
       });
     });
@@ -206,65 +188,6 @@ describe("GenerationControlsStore", () => {
     expect(result.current.state.domain.subjectMotion).toBe("");
   });
 
-  it("adds, updates, removes, and clears video references with max limit", () => {
-    const { result } = renderHook(
-      () => ({
-        state: useGenerationControlsStoreState(),
-        actions: useGenerationControlsStoreActions(),
-      }),
-      { wrapper: buildWrapper() },
-    );
-
-    act(() => {
-      result.current.actions.addVideoReference({
-        url: "https://example.com/reference-1.png",
-        referenceType: "asset",
-        source: "upload",
-      });
-      result.current.actions.addVideoReference({
-        url: "https://example.com/reference-2.png",
-        referenceType: "asset",
-        source: "upload",
-      });
-      result.current.actions.addVideoReference({
-        url: "https://example.com/reference-3.png",
-        referenceType: "asset",
-        source: "upload",
-      });
-      result.current.actions.addVideoReference({
-        url: "https://example.com/reference-4.png",
-        referenceType: "asset",
-        source: "upload",
-      });
-    });
-
-    expect(result.current.state.domain.videoReferenceImages).toHaveLength(3);
-
-    const referenceId = result.current.state.domain.videoReferenceImages[0]?.id;
-    if (!referenceId) {
-      throw new Error("Expected a reference id");
-    }
-
-    act(() => {
-      result.current.actions.updateVideoReferenceType(referenceId, "style");
-    });
-    expect(
-      result.current.state.domain.videoReferenceImages.find(
-        (item) => item.id === referenceId,
-      )?.referenceType,
-    ).toBe("style");
-
-    act(() => {
-      result.current.actions.removeVideoReference(referenceId);
-    });
-    expect(result.current.state.domain.videoReferenceImages).toHaveLength(2);
-
-    act(() => {
-      result.current.actions.clearVideoReferences();
-    });
-    expect(result.current.state.domain.videoReferenceImages).toHaveLength(0);
-  });
-
   it("resets motion only when start frame identity changes", () => {
     const initialState = buildInitialState({
       domain: {
@@ -311,38 +234,6 @@ describe("GenerationControlsStore", () => {
     expect(result.current.state.domain.subjectMotion).toBe("");
   });
 
-  it("does not change start frame when a keyframe is removed", () => {
-    const initialState = buildInitialState({
-      domain: {
-        startFrame: {
-          id: "start-frame",
-          url: "https://example.com/start.png",
-          source: "upload",
-        },
-        keyframes: [
-          { id: "kf-1", url: "https://example.com/1.png", source: "upload" },
-          { id: "kf-2", url: "https://example.com/2.png", source: "upload" },
-        ],
-      },
-    });
-
-    const { result } = renderHook(
-      () => ({
-        state: useGenerationControlsStoreState(),
-        actions: useGenerationControlsStoreActions(),
-      }),
-      { wrapper: buildWrapper(initialState) },
-    );
-
-    act(() => {
-      result.current.actions.removeKeyframe("kf-1");
-    });
-
-    expect(result.current.state.domain.startFrame?.url).toBe(
-      "https://example.com/start.png",
-    );
-  });
-
   it("returns same state reference on no-op updates", () => {
     const { result } = renderHook(
       () => ({
@@ -354,7 +245,9 @@ describe("GenerationControlsStore", () => {
 
     const previousState = result.current.state;
     act(() => {
-      result.current.actions.setActiveTab("video");
+      result.current.actions.setSubjectMotion(
+        result.current.state.domain.subjectMotion,
+      );
     });
 
     expect(result.current.state).toBe(previousState);

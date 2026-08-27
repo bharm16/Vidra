@@ -138,7 +138,6 @@ export function CanvasWorkspace({
     recommendationAgeMs,
   } = useModelSelectionRecommendation({
     prompt,
-    activeTab: "video",
     keyframesCount: domain.startFrame ? 1 : 0,
     durationSeconds,
     selectedModel: domain.selectedModel,
@@ -480,7 +479,7 @@ export function CanvasWorkspace({
     ],
   );
 
-  const surfaceProps: PromptEditorSurfaceProps = { ...editing, prompt };
+  const surfaceProps: PromptEditorSurfaceProps = editing;
 
   const recommendationPromptId = modelRecommendation?.promptId;
   const hasGenerations = galleryEntries.length > 0;

@@ -16,7 +16,6 @@ import type {
 
 interface UseModelSelectionRecommendationOptions {
   prompt: string;
-  activeTab: "image" | "video";
   keyframesCount: number;
   durationSeconds: number;
   selectedModel: string;
@@ -27,8 +26,6 @@ interface UseModelSelectionRecommendationOptions {
 interface UseModelSelectionRecommendationResult {
   recommendationMode: "i2v" | "t2v";
   modelRecommendation: ModelRecommendation | null;
-  isRecommendationLoading: boolean;
-  recommendationError: string | null;
   recommendedModelId: string | undefined;
   efficientModelId: string | undefined;
   renderModelOptions: Array<{ id: string; label: string }>;
@@ -66,7 +63,6 @@ const buildRecommendationSpans = (
 
 export function useModelSelectionRecommendation({
   prompt,
-  activeTab,
   keyframesCount,
   durationSeconds,
   selectedModel,
@@ -91,16 +87,11 @@ export function useModelSelectionRecommendation({
       // ADR-0002: model-intelligence is premature — v1 hardcodes the model,
       // so recommendation calls stay off the canvas hot path.
       FEATURES.MODEL_INTELLIGENCE_UI &&
-      activeTab === "video" &&
       trimmedPromptLength >= MIN_PROMPT_LENGTH_FOR_RECOMMENDATION,
-    [activeTab, trimmedPromptLength],
+    [trimmedPromptLength],
   );
 
-  const {
-    recommendation: modelRecommendation,
-    isLoading: isRecommendationLoading,
-    error: recommendationError,
-  } = useModelRecommendation(prompt, {
+  const { recommendation: modelRecommendation } = useModelRecommendation(prompt, {
     mode: recommendationMode,
     enabled: shouldLoadRecommendations,
     ...(typeof durationSeconds === "number" ? { durationSeconds } : {}),
@@ -156,8 +147,6 @@ export function useModelSelectionRecommendation({
   return {
     recommendationMode,
     modelRecommendation,
-    isRecommendationLoading,
-    recommendationError,
     recommendedModelId,
     efficientModelId,
     renderModelOptions,

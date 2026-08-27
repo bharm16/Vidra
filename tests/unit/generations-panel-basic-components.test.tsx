@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import type React from "react";
 
-import { GenerationBadge } from "@features/generations/components/GenerationBadge";
 import { VersionDivider } from "@features/generations/components/VersionDivider";
 import { FaceMatchIndicator } from "@features/generations/components/KeyframeStep/FaceMatchIndicator";
 import { VideoThumbnail } from "@features/generations/components/VideoThumbnail";
@@ -25,32 +24,6 @@ vi.mock("@promptstudio/system/components/ui", () => ({
   DotsThree: () => <span>dots</span>,
   WarningCircle: () => <span>warn</span>,
 }));
-
-describe("GenerationBadge", () => {
-  describe("error handling", () => {
-    it("falls back to muted styling when status is undefined for drafts", () => {
-      render(<GenerationBadge tier="draft" />);
-      const badge = screen.getByText("Draft");
-      expect(badge.className).toContain("bg-black/40");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("renders the render label for non-draft tiers", () => {
-      render(<GenerationBadge tier="render" />);
-      expect(screen.getByText("Render")).toBeInTheDocument();
-    });
-  });
-
-  describe("core behavior", () => {
-    it("uses success styling for completed status", () => {
-      render(<GenerationBadge tier="render" />);
-      const badge = screen.getByText("Render");
-      const dot = badge.querySelector("span");
-      expect(dot?.className ?? "").not.toContain("bg-surface-2");
-    });
-  });
-});
 
 describe("VersionDivider", () => {
   describe("error handling", () => {
