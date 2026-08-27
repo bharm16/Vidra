@@ -1,9 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 
-PROJECT_ID="your-project-id"
-ENVIRONMENT="dev"
-BUCKET_NAME="promptcanvas-media-${ENVIRONMENT}"
-SERVICE_ACCOUNT="promptcanvas-storage-${ENVIRONMENT}"
+PROJECT_ID="${1:?usage: setup-gcs.sh <gcp-project-id> [environment]}"
+ENVIRONMENT="${2:-dev}"
+BUCKET_NAME="vidra-media-${ENVIRONMENT}"
+SERVICE_ACCOUNT="vidra-storage-${ENVIRONMENT}"
 
 # 1. Create bucket
 gcloud storage buckets create "gs://${BUCKET_NAME}" \
@@ -58,7 +59,7 @@ rm lifecycle.json
 
 # 5. Create service account
 gcloud iam service-accounts create "${SERVICE_ACCOUNT}" \
-  --display-name="PromptCanvas Storage Service Account" \
+  --display-name="Vidra Storage Service Account" \
   --project="${PROJECT_ID}"
 
 # 6. Grant permissions

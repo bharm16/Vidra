@@ -1,4 +1,5 @@
 import { resolveTakePosterUrl } from "@/features/workspace-shell/utils/takePosterUrl";
+import { wordsNodeId } from "./buildSpaceNodes";
 import type { Generation } from "@features/generations/types";
 import {
   readAncestorGenerationId,
@@ -84,7 +85,7 @@ export function deriveSpaceNodesFromVersions(
           pictureId:
             readAncestorGenerationId(gen) ??
             firstPictureId ??
-            `words-${version.versionId}`,
+            wordsNodeId(version.versionId),
           status,
           ...(mediaUrl ? { mediaUrl } : {}),
           ...(archived ? { archived: true } : {}),
