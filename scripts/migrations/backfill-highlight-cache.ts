@@ -3,7 +3,7 @@
 /**
  * Firestore Highlight Cache Backfill Migration
  *
- * This script generates and saves highlight cache data for existing prompt documents
+ * Generates and saves highlight cache data for existing prompt documents
  * that don't have highlightCache populated.
  *
  * Usage:
@@ -12,15 +12,16 @@
  * Options:
  *   --dry-run              Preview changes without writing to Firestore
  *   --userId=USER_ID       Process only prompts for a specific user
- *   --batch-size=N         Number of documents to process in parallel (default: 5)
  *   --limit=N              Maximum number of documents to process (for testing)
+ *
+ * Requires Firebase credentials (see firebase-admin-init.ts) plus the LLM
+ * provider key the span-labeling route resolves to (GROQ_API_KEY /
+ * GEMINI_API_KEY / OPENAI_API_KEY — same env contract as the synthetic
+ * harness).
  *
  * Examples:
  *   # Dry run to see what would be updated
  *   tsx --tsconfig server/tsconfig.json scripts/migrations/backfill-highlight-cache.ts --dry-run
- *
- *   # Process all prompts
- *   tsx --tsconfig server/tsconfig.json scripts/migrations/backfill-highlight-cache.ts
  *
  *   # Process prompts for specific user
  *   tsx --tsconfig server/tsconfig.json scripts/migrations/backfill-highlight-cache.ts --userId=abc123
@@ -32,22 +33,33 @@
 import { initializeFirebaseAdmin, admin } from "./firebase-admin-init.js";
 import { labelSpans } from "../../server/src/llm/span-labeling/SpanLabelingService.js";
 import { hashString } from "./hashString.js";
+import { createSyntheticAIService } from "../synthetic/utils/aiService.js";
 
-// Parse command line arguments
+// labelSpans requires an AIService since the DI refactor — this script
+// crashed on its first document for as long as it was tsconfig-excluded
+// (the exclusion hid the TS2554 that would have said so). The synthetic
+// factory mirrors the production DI wiring from env vars.
+const aiService = createSyntheticAIService();
+
 const args = process.argv.slice(2);
+
+function argValue(prefix: string): string | undefined {
+  return args.find((arg) => arg.startsWith(prefix))?.split("=")[1];
+}
+
 const options = {
   dryRun: args.includes("--dry-run"),
-  userId: args.find((arg) => arg.startsWith("--userId="))?.split("=")[1],
-  batchSize:
-    parseInt(
-      args.find((arg) => arg.startsWith("--batch-size="))?.split("=")[1],
-    ) || 5,
-  limit:
-    parseInt(args.find((arg) => arg.startsWith("--limit="))?.split("=")[1]) ||
-    null,
+  userId: argValue("--userId="),
+  limit: Number.parseInt(argValue("--limit=") ?? "", 10) || null,
 };
 
-// Statistics tracking
+interface FailedDoc {
+  id: string;
+  mode: string | undefined;
+  error: string;
+  charCount: number;
+}
+
 const stats = {
   total: 0,
   processed: 0,
@@ -55,69 +67,84 @@ const stats = {
   skipped: 0,
   errors: 0,
   alreadyHasCache: 0,
-  failedDocs: [], // Track failed documents with details
-  startTime: null,
+  failedDocs: [] as FailedDoc[],
+  startTime: 0,
   totalProcessingTime: 0,
 };
 
-/**
- * Generate highlight cache for a prompt text
- */
-async function generateHighlightCache(text) {
-  const result = await labelSpans({
-    text,
-    maxSpans: 60,
-    minConfidence: 0.5,
-    policy: { nonTechnicalWordLimit: 6, allowOverlap: false },
-    templateVersion: "v1",
-  });
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
-  const signature = hashString(text);
+async function generateHighlightCache(text: string): Promise<{
+  spans: unknown[];
+  meta: unknown;
+  signature: string;
+  timestamp: FirebaseFirestore.FieldValue;
+}> {
+  const result = await labelSpans(
+    {
+      text,
+      maxSpans: 60,
+      minConfidence: 0.5,
+      policy: { nonTechnicalWordLimit: 6, allowOverlap: false },
+      templateVersion: "v1",
+    },
+    aiService,
+  );
 
   return {
     spans: result.spans || [],
     meta: result.meta || null,
-    signature,
+    signature: hashString(text),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   };
 }
 
-/**
- * Process a single document
- */
-async function processDocument(doc, db) {
+interface ProcessResult {
+  status: "updated" | "skipped" | "error";
+  reason?: string;
+  error?: string;
+  spansCount?: number;
+  signature?: string;
+  mode: string | undefined;
+  charCount: number;
+  processingTime: number;
+}
+
+async function processDocument(
+  doc: FirebaseFirestore.QueryDocumentSnapshot,
+  db: FirebaseFirestore.Firestore,
+): Promise<ProcessResult> {
   const startTime = Date.now();
   const docId = doc.id;
   const data = doc.data();
+  const mode = typeof data.mode === "string" ? data.mode : undefined;
 
-  // Skip if already has highlightCache
   if (data.highlightCache) {
     stats.alreadyHasCache++;
     stats.skipped++;
     return {
       status: "skipped",
       reason: "already-has-cache",
-      mode: data.mode,
+      mode,
       charCount: 0,
       processingTime: 0,
     };
   }
 
-  // Skip if no output text
   const promptText = data.output || data.optimizedPrompt || data.prompt;
   if (!promptText || typeof promptText !== "string" || !promptText.trim()) {
     stats.skipped++;
     return {
       status: "skipped",
       reason: "no-prompt-text",
-      mode: data.mode,
+      mode,
       charCount: 0,
       processingTime: 0,
     };
   }
 
   try {
-    // Generate highlight cache
     const highlightCache = await generateHighlightCache(promptText);
 
     const versionEntry = {
@@ -127,7 +154,6 @@ async function processDocument(doc, db) {
       timestamp: new Date().toISOString(),
     };
 
-    // Update document
     if (!options.dryRun) {
       await db
         .collection("prompts")
@@ -146,7 +172,7 @@ async function processDocument(doc, db) {
       status: "updated",
       spansCount: highlightCache.spans.length,
       signature: highlightCache.signature,
-      mode: data.mode,
+      mode,
       charCount: promptText.length,
       processingTime,
     };
@@ -155,58 +181,35 @@ async function processDocument(doc, db) {
     stats.errors++;
     stats.failedDocs.push({
       id: docId,
-      mode: data.mode,
-      error: error.message,
+      mode,
+      error: errorMessage(error),
       charCount: promptText.length,
     });
 
     return {
       status: "error",
-      error: error.message,
-      mode: data.mode,
+      error: errorMessage(error),
+      mode,
       charCount: promptText.length,
       processingTime,
     };
   }
 }
 
-/**
- * Process documents in batches
- */
-async function processBatch(docs, db) {
-  const batchPromises = [];
-
-  for (let i = 0; i < docs.length; i += options.batchSize) {
-    const batch = docs.slice(i, i + options.batchSize);
-    const batchResults = await Promise.all(
-      batch.map((doc) => processDocument(doc, db)),
-    );
-
-    batchPromises.push(...batchResults);
-  }
-
-  return batchPromises;
-}
-
-/**
- * Main migration function
- */
-async function runMigration() {
+async function runMigration(): Promise<void> {
   console.log("\n🔧 Firestore Highlight Cache Backfill Migration\n");
   console.log("Configuration:");
   console.log(
     `  Dry Run: ${options.dryRun ? "✓ YES (no changes will be made)" : "✗ NO (will update Firestore)"}`,
   );
   console.log(`  User Filter: ${options.userId || "ALL USERS"}`);
-  console.log(`  Batch Size: ${options.batchSize}`);
   console.log(`  Limit: ${options.limit || "NONE"}`);
   console.log("");
 
   const db = initializeFirebaseAdmin();
 
   try {
-    // Build query
-    let query = db.collection("prompts");
+    let query: FirebaseFirestore.Query = db.collection("prompts");
 
     if (options.userId) {
       query = query.where("userId", "==", options.userId);
@@ -216,7 +219,6 @@ async function runMigration() {
       query = query.limit(options.limit);
     }
 
-    // Fetch documents
     console.log("📥 Fetching documents from Firestore...");
     const snapshot = await query.get();
 
@@ -228,20 +230,16 @@ async function runMigration() {
     stats.total = snapshot.size;
     console.log(`✓ Found ${stats.total} document(s)\n`);
 
-    // Process documents
     console.log("🔄 Processing documents...\n");
     const docs = snapshot.docs;
     stats.startTime = Date.now();
 
     for (let i = 0; i < docs.length; i++) {
-      const doc = docs[i];
-      const data = doc.data();
-
+      const doc = docs[i]!;
       const progress = Math.round(((i + 1) / stats.total) * 100);
       const result = await processDocument(doc, db);
       stats.processed++;
 
-      // Calculate statistics
       const elapsedMinutes = (Date.now() - stats.startTime) / 1000 / 60;
       const docsPerMinute = stats.processed / elapsedMinutes;
       const remainingDocs = stats.total - stats.processed;
@@ -259,8 +257,6 @@ async function runMigration() {
             `  Speed: ${docsPerMinute.toFixed(1)} docs/min | ETA: ${estimatedMinutesRemaining.toFixed(1)} min\n`,
           );
         }
-      } else if (result.status === "skipped") {
-        // Silent skip
       } else if (result.status === "error") {
         console.log(
           `[${i + 1}/${stats.total}] (${progress}%) ${doc.id.slice(0, 8)} (${result.mode || "unknown"}, ${result.charCount} chars)`,
@@ -269,7 +265,6 @@ async function runMigration() {
       }
     }
 
-    // Print summary
     const totalTime = (Date.now() - stats.startTime) / 1000 / 60;
     const avgTimePerDoc =
       stats.updated > 0 ? stats.totalProcessingTime / stats.updated : 0;
@@ -295,12 +290,11 @@ async function runMigration() {
     console.log(`Average time per document:    ${avgTimePerDoc.toFixed(1)}s`);
     console.log("=".repeat(60));
 
-    // Show failed documents if any
     if (stats.failedDocs.length > 0) {
       console.log("\n❌ Failed Documents:");
-      stats.failedDocs.forEach((doc) => {
+      stats.failedDocs.forEach((failed) => {
         console.log(
-          `  - ${doc.id.slice(0, 8)} (${doc.mode || "unknown"}): ${doc.error}`,
+          `  - ${failed.id.slice(0, 8)} (${failed.mode || "unknown"}): ${failed.error}`,
         );
       });
       console.log("");
@@ -316,15 +310,13 @@ async function runMigration() {
     }
   } catch (error) {
     console.error("\n❌ Migration failed:", error);
-    console.error(error.stack);
     process.exit(1);
   }
 }
 
-// Run migration
 runMigration()
   .then(() => process.exit(0))
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error("\n❌ Unexpected error:", error);
     process.exit(1);
   });

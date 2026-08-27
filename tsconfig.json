@@ -92,8 +92,6 @@
     // golden-set-relaxed-f1.ts. Triage: fix or delete each, then remove from
     // this list.
     "scripts/get-highlight-stats.ts",
-    "scripts/migrations/backfill-highlight-cache.ts",
-    "scripts/migrations/force-highlight-rerender.ts",
     "scripts/evaluation/span-labeling-evaluation.ts"
   ]
 }

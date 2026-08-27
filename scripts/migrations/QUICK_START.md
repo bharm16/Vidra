@@ -87,7 +87,6 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.
 
 # Custom batch size
 tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.ts \
-  --batch-size=20 \
   --mode=regenerate
 ```
 
