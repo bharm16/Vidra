@@ -57,12 +57,6 @@ const FLAG_DEFS = {
     description:
       "Model recommendation calls and dropdown hints on the canvas. Premature per ADR-0002: v1 hardcodes the best model.",
   } satisfies ClientFlagDef<boolean>,
-  SPACE_LINEAGE: {
-    envName: "VITE_FEATURE_SPACE_LINEAGE",
-    default: true,
-    description:
-      "Renders the workspace's takes as the space — the lineage network (ADR-0012/0013). DEFAULT ON: the space replaces the shots grid for multi-generation sessions (persisted lineage that survives reload, live-node camera, take-restore, leaf-only removal, node context menu with Animate/Download/Reword/Remove). The first-frame (FrameStage) and empty states still use the prior layout, kept until the M6 deletion pass. Set VITE_FEATURE_SPACE_LINEAGE=false to fall back to the shots grid.",
-  } satisfies ClientFlagDef<boolean>,
 } as const;
 
 function resolveBoolFlag(envName: string, fallback: boolean): boolean {
@@ -102,10 +96,6 @@ export const FEATURES = {
   MODEL_INTELLIGENCE_UI: resolveBoolFlag(
     FLAG_DEFS.MODEL_INTELLIGENCE_UI.envName,
     FLAG_DEFS.MODEL_INTELLIGENCE_UI.default,
-  ),
-  SPACE_LINEAGE: resolveBoolFlag(
-    FLAG_DEFS.SPACE_LINEAGE.envName,
-    FLAG_DEFS.SPACE_LINEAGE.default,
   ),
 } as const;
 

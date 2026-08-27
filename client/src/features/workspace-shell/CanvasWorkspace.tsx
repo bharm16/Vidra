@@ -45,11 +45,8 @@ import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
 import { computeWorkspaceArtifacts } from "./utils/computeWorkspaceArtifacts";
 import { groupShots } from "./utils/groupShots";
 import { resolveTakePosterUrl } from "./utils/takePosterUrl";
-import { useFeaturedTile } from "./hooks/useFeaturedTile";
 import { useWorkspaceKeyboardShortcuts } from "./hooks/useWorkspaceKeyboardShortcuts";
 import { useAnchorDraft } from "./hooks/useAnchorDraft";
-import { ShotRow } from "./components/ShotRow";
-import { ShotDivider } from "./components/ShotDivider";
 import { TileStateAnnouncer } from "./components/TileStateAnnouncer";
 import { FEATURES } from "@/config/features.config";
 import {
@@ -260,12 +257,6 @@ export function CanvasWorkspace({
     () => groupShots(shotInputGenerations),
     [shotInputGenerations],
   );
-  const featuredTile = useFeaturedTile({
-    shots,
-    heroGeneration: heroGeneration ?? null,
-    currentPrompt: prompt,
-  });
-
   useEffect(() => {
     if (!viewingId) return;
     if (generationLookup.has(viewingId)) return;
@@ -275,21 +266,6 @@ export function CanvasWorkspace({
   const handleSelectGeneration = useCallback((generationId: string): void => {
     setViewingId(generationId);
   }, []);
-
-  const handleRetryTile = useCallback(
-    (generationId: string): void => {
-      const target = shots
-        .flatMap((shot) => shot.tiles)
-        .find((tile) => tile.id === generationId);
-      if (target) generationsRuntime.handleRetry(target);
-    },
-    [shots, generationsRuntime],
-  );
-
-  // Pinned per render — stable enough for relative-time labels in this view
-  // (timestamps update on the next orchestrator render, which happens on any
-  // shot/tile change). Lifted here so ShotRow + formatRelative can be pure.
-  const renderedAt = Date.now();
 
   const handleReuse = useCallback(
     (generationId: string): void => {
@@ -358,8 +334,8 @@ export function CanvasWorkspace({
       </div>
     ) : null;
 
-  // The space (M5, ADR-0012/0013) — the session's takes as a lineage network,
-  // behind FEATURES.SPACE_LINEAGE. Read from the PERSISTED versions so the
+  // The space (M5, ADR-0012/0013) — the session's takes as a lineage network.
+  // Read from the PERSISTED versions so the
   // space survives reload and shows the full reword chain (each version's
   // synced generations become picture/clip nodes). Deliberately NOT gated on
   // an empty runtime the way the gallery is: on reload the runtime starts
@@ -568,26 +544,6 @@ export function CanvasWorkspace({
     </div>
   ) : null;
 
-  // Continue Scene seeds the next render's start frame from the visible
-  // poster of the source generation. Memoized so CanvasPromptBar's
-  // listener-effect dep doesn't fire on every parent rerender.
-  const handleContinueScene = useCallback(
-    (fromGenerationId: string) => {
-      const allTiles = shots.flatMap((shot) => shot.tiles);
-      const target = allTiles.find((tile) => tile.id === fromGenerationId);
-      if (!target) return;
-      const frameUrl = resolveTakePosterUrl(target);
-      if (!frameUrl) return;
-      storeActions.setStartFrame({
-        id: `continue-scene-${target.id}`,
-        url: frameUrl,
-        source: "generation",
-        ...(target.prompt.trim() ? { sourcePrompt: target.prompt.trim() } : {}),
-      });
-    },
-    [shots, storeActions],
-  );
-
   return (
     <div className="text-foreground flex h-full overflow-hidden">
       {/* The nav rail is chrome for every workspace moment — hiding it on the
@@ -650,9 +606,10 @@ export function CanvasWorkspace({
               /* Pre-render beats: the first frame (or its pending/failed state)
                owns the canvas — see CONTEXT.md, "First frame". */
               <FrameStage startFrame={domain.startFrame} prompt={prompt} />
-            ) : FEATURES.SPACE_LINEAGE ? (
-              // The space (M5, ADR-0012/0013): the session's takes as a lineage
-              // network. Off by default; replaces the shots grid when enabled.
+            ) : (
+              // The space (M5, ADR-0012/0013): the session's takes as a
+              // lineage network. The shots-grid fallback was removed in the
+              // M6 deletion pass (2026-08-27).
               <CanvasViewport
                 liveNodeId={heroGeneration?.id ?? null}
                 onBackgroundClick={blurWords}
@@ -665,31 +622,12 @@ export function CanvasWorkspace({
                   renderNodeMenu={renderSpaceNodeMenu}
                 />
               </CanvasViewport>
-            ) : (
-              <div className="mx-auto flex max-w-[1280px] flex-col gap-6">
-                {shots.map((shot, idx) => (
-                  <React.Fragment key={shot.id}>
-                    <ShotRow
-                      shot={shot}
-                      now={renderedAt}
-                      layout={idx === 0 ? "featured" : "compact"}
-                      featuredTileId={
-                        idx === 0 ? (featuredTile?.id ?? null) : null
-                      }
-                      onSelectTile={handleSelectGeneration}
-                      onRetryTile={handleRetryTile}
-                    />
-                    {idx < shots.length - 1 && <ShotDivider />}
-                  </React.Fragment>
-                ))}
-              </div>
             )}
 
             <CanvasPromptBar
               surfaceProps={surfaceProps}
               chromeSlot={chromeSlot}
               yourWordsSlot={yourWordsSlot}
-              onContinueScene={handleContinueScene}
               isPreWork={isPreWork}
               footerSlot={starterPillsSlot}
               collapsed={!isPreWork && !wordsFocused}
