@@ -135,6 +135,9 @@ describe("respond — off-contract error codes are a compile error", () => {
       QUEUE_TIMEOUT: true,
       SESSION_EXPIRED: true,
       VIDEO_PROVIDER_TIMEOUT: true,
+      SHARE_CLIP_NOT_FOUND: true,
+      SHARE_NO_MEDIA: true,
+      VIDEO_MODEL_UNAVAILABLE: true,
     };
 
     for (const code of Object.keys(declared)) {

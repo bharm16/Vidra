@@ -1,4 +1,4 @@
-import { AppError } from "@server/types/common";
+import { VideoModelUnavailableError } from "../errors/VideoModelUnavailableError";
 import { resolveGenerationModelSelection } from "@config/videoModelRegistry";
 import type { StoredVideoAsset, VideoAssetStore } from "../storage";
 import type { VideoGenerationOptions, VideoGenerationResult } from "../types";
@@ -61,9 +61,8 @@ export async function generateVideoWorkflow(
     log,
   );
   if (!availability.available) {
-    throw new AppError(
+    throw new VideoModelUnavailableError(
       availability.message || "Requested video model is not available",
-      "VIDEO_MODEL_UNAVAILABLE",
       availability.statusCode || 424,
       {
         model: modelSelection || "auto",
