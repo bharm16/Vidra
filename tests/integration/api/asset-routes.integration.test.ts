@@ -6,29 +6,8 @@ import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createAssetRoutes } from "@routes/asset.routes";
 
 import { useTestApiKey } from "../helpers/apiRouteHarness";
+import { PNG_BYTES } from "../helpers/imageFixtures";
 
-// A real PNG signature + IHDR. The routes validate uploads by magic bytes
-// (validateImageBuffer -> fileTypeFromBuffer), so arbitrary text is rejected
-// as "expected image, got unknown" and surfaces as a 500. Matches the fixture
-// in tests/unit/validate-file-type.test.ts.
-const PNG_BYTES = Buffer.from([
-  0x89,
-  0x50,
-  0x4e,
-  0x47,
-  0x0d,
-  0x0a,
-  0x1a,
-  0x0a, // PNG signature
-  0x00,
-  0x00,
-  0x00,
-  0x0d,
-  0x49,
-  0x48,
-  0x44,
-  0x52, // IHDR chunk
-]);
 
 const TEST_API_KEY = "integration-asset-key";
 const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
