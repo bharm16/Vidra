@@ -1,8 +1,6 @@
-process.env.NODE_ENV = "test";
-process.env.GCS_BUCKET_NAME =
-  process.env.GCS_BUCKET_NAME || "prompt-builder-test-bucket";
-process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE =
-  process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE || "soft";
+import { applyTestEnvDefaults } from "./testSetupShared.js";
+
+applyTestEnvDefaults();
 
 // Default the firebase-integration gate ON. Billing/credit tests still
 // also require FIRESTORE_EMULATOR_HOST (which CI sets). Defaulting only
