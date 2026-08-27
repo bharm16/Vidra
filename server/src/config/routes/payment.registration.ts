@@ -14,23 +14,21 @@ import type { PaymentRouteServices } from "@routes/payment/types";
 import type { PaymentConsistencyStore } from "@services/payment/PaymentConsistencyStore";
 import { resolveOptionalService } from "./resolve-utils.ts";
 
-export function registerPaymentRoutes(
-  app: Application,
+/**
+ * The one resolver for PaymentRouteServices — shared with app.ts's raw-body
+ * webhook mount, which used to rebuild this by hand with a bare (throwing)
+ * resolve of paymentConsistencyStore while this path degraded gracefully.
+ */
+export function resolvePaymentRouteServices(
   container: DIContainer,
-): void {
-  const userCreditService = container.resolve("userCreditService");
-
+): PaymentRouteServices {
   const paymentConsistencyStore =
     resolveOptionalService<PaymentConsistencyStore | null>(
       container,
       "paymentConsistencyStore",
       "payment",
     );
-  const firestoreCircuitExecutor = container.resolve(
-    "firestoreCircuitExecutor",
-  );
-
-  const paymentRouteServices: PaymentRouteServices = {
+  return {
     paymentService:
       container.resolve<PaymentRouteServices["paymentService"]>(
         "paymentService",
@@ -41,10 +39,25 @@ export function registerPaymentRoutes(
     billingProfileStore: container.resolve<
       PaymentRouteServices["billingProfileStore"]
     >("billingProfileStore"),
-    userCreditService,
+    userCreditService:
+      container.resolve<PaymentRouteServices["userCreditService"]>(
+        "userCreditService",
+      ),
     ...(paymentConsistencyStore ? { paymentConsistencyStore } : {}),
-    firestoreCircuitExecutor,
+    firestoreCircuitExecutor: container.resolve<
+      NonNullable<PaymentRouteServices["firestoreCircuitExecutor"]>
+    >("firestoreCircuitExecutor"),
   };
+}
+
+export function registerPaymentRoutes(
+  app: Application,
+  container: DIContainer,
+): void {
+  const paymentRouteServices = resolvePaymentRouteServices(container);
+  // Resolved separately: the starter-credits middleware needs the concrete
+  // service's ensureStarterGrant, which the narrower route-facing port omits.
+  const userCreditService = container.resolve("userCreditService");
 
   const starterCreditsMiddleware =
     createStarterCreditsMiddleware(userCreditService);
