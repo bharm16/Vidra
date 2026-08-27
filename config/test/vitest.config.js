@@ -168,22 +168,6 @@ const aliases = [
     replacement: path.resolve(__dirname, "../../client/src/hooks"),
   },
   {
-    find: /^@styles\/(.*)/,
-    replacement: path.resolve(__dirname, "../../client/src/styles/$1"),
-  },
-  {
-    find: "@styles",
-    replacement: path.resolve(__dirname, "../../client/src/styles"),
-  },
-  {
-    find: /^@schemas\/(.*)/,
-    replacement: path.resolve(__dirname, "../../client/src/schemas/$1"),
-  },
-  {
-    find: "@schemas",
-    replacement: path.resolve(__dirname, "../../client/src/schemas"),
-  },
-  {
     find: /^@repositories\/(.*)/,
     replacement: path.resolve(__dirname, "../../client/src/repositories/$1"),
   },

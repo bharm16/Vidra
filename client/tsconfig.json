@@ -13,8 +13,6 @@
       "@utils/*": ["src/utils/*"],
       "@config/*": ["src/config/*"],
       "@services/*": ["src/services/*"],
-      "@styles/*": ["src/styles/*"],
-      "@schemas/*": ["src/schemas/*"],
       "@repositories/*": ["src/repositories/*"],
       "@shared/*": ["../shared/*"],
       "#shared/*": ["../shared/*"],

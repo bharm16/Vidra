@@ -53,8 +53,6 @@
       "@utils/*": ["client/src/utils/*", "server/src/utils/*"],
       "@config/*": ["client/src/config/*", "server/src/config/*"],
       "@services/*": ["server/src/services/*"],
-      "@styles/*": ["client/src/styles/*"],
-      "@schemas/*": ["client/src/schemas/*"],
       "@repositories/*": ["client/src/repositories/*"],
       "@infrastructure/*": ["server/src/infrastructure/*"],
       "@interfaces/*": ["server/src/interfaces/*"],
