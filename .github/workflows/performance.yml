@@ -1,13 +1,10 @@
 name: Performance Testing
 
+# Dispatch-only since 2026-08-27: with no deployed environment and the
+# Firebase/GCS secrets unset, the push/PR/cron triggers failed on every run
+# and load-tested nothing (same rationale as synthetic-harness.yml's parked
+# cron). Re-add push/schedule triggers at launch, once the secrets exist.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    # Run performance tests daily at 3 AM UTC
-    - cron: "0 3 * * *"
   workflow_dispatch:
 
 jobs:

@@ -12,8 +12,7 @@ jobs:
     # The secrets context is not available inside an `if:` expression, so
     # `if: ${{ secrets.GCP_SA_KEY != '' }}` below failed the whole workflow at
     # startup — every run ended in 0s with no steps executed. Hoisting the key
-    # into env lets the step gate on `env.`, which is the shape security-scan.yml
-    # already uses successfully.
+    # into env lets the step gate on `env.` instead.
     env:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
