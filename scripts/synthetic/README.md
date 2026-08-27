@@ -35,11 +35,11 @@ If a run lands materially below this, check that `POSTHOG_API_KEY` is set and th
 
 Each surface routes its primary LLM call through `server/src/config/modelConfig.ts`, which already honors env vars per operation:
 
-| Surface       | Provider env var    | Model env var    | Default                        |
-| ------------- | ------------------- | ---------------- | ------------------------------ |
-| suggestions   | `ENHANCE_PROVIDER`  | `ENHANCE_MODEL`  | `qwen` / `qwen/qwen3-32b`      |
-| optimize      | `OPTIMIZE_PROVIDER` | `OPTIMIZE_MODEL` | `openai` / `gpt-4o-2024-08-06` |
-| span-labeling | `SPAN_PROVIDER`     | `SPAN_MODEL`     | `gemini` / `gemini-2.5-flash`  |
+| Surface       | Provider env var    | Model env var    | Default                                                                |
+| ------------- | ------------------- | ---------------- | ---------------------------------------------------------------------- |
+| suggestions   | `ENHANCE_PROVIDER`  | `ENHANCE_MODEL`  | `qwen` / `DEFAULT_QWEN_MODEL` (see `server/src/config/modelConfig.ts`) |
+| optimize      | `OPTIMIZE_PROVIDER` | `OPTIMIZE_MODEL` | `openai` / `gpt-4o-2024-08-06`                                         |
+| span-labeling | `SPAN_PROVIDER`     | `SPAN_MODEL`     | `gemini` / `gemini-2.5-flash`                                          |
 
 Override per run, e.g. to test Gemini on suggestions:
 

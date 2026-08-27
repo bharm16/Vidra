@@ -75,13 +75,13 @@ describe("buildChildEnv", () => {
     const base = { POSTHOG_API_KEY: "secret", FOO: "bar" };
     const presetEnv = {
       ENHANCE_PROVIDER: "qwen",
-      ENHANCE_MODEL: "qwen/qwen3-32b",
+      ENHANCE_MODEL: "example/model-id",
     };
     const merged = buildChildEnv(base, presetEnv);
     expect(merged.POSTHOG_API_KEY).toBe("secret");
     expect(merged.FOO).toBe("bar");
     expect(merged.ENHANCE_PROVIDER).toBe("qwen");
-    expect(merged.ENHANCE_MODEL).toBe("qwen/qwen3-32b");
+    expect(merged.ENHANCE_MODEL).toBe("example/model-id");
   });
 
   it("preset env wins over conflicting base env", () => {
