@@ -71,24 +71,6 @@ export const AUTH_COLORS = {
 export const authAlpha = (color: string, percent: number): string =>
   `color-mix(in srgb, ${color} ${percent}%, transparent)`;
 
-/** Input className shared across all auth forms */
-export const AUTH_INPUT_CLASS =
-  "mt-1 w-full rounded-lg px-3.5 py-2.5 text-ui text-white outline-none transition";
-
-/** Input inline style (colors that need exact hex values) */
-export const AUTH_INPUT_STYLE: React.CSSProperties = {
-  background: AUTH_COLORS.inputBg,
-  border: `1px solid ${AUTH_COLORS.inputBorder}`,
-  color: AUTH_COLORS.text,
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
-};
-
-/** Input inline style on focus — apply via onFocus handler or CSS */
-export const AUTH_INPUT_FOCUS_STYLE: React.CSSProperties = {
-  border: `1px solid ${AUTH_COLORS.inputBorderFocus}`,
-  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.02), 0 0 0 2px ${AUTH_COLORS.focusRing}`,
-};
-
 /** Primary CTA button className */
 export const AUTH_CTA_CLASS =
   "h-9 w-full gap-2 rounded-lg px-3.5 text-ui font-semibold transition";
@@ -98,19 +80,6 @@ export const AUTH_CTA_STYLE: React.CSSProperties = {
   background: AUTH_COLORS.accent,
   color: AUTH_COLORS.bg,
 };
-
-/** Secondary/outline button className */
-export const AUTH_SECONDARY_BTN_CLASS =
-  "h-9 w-full gap-2 rounded-lg px-3.5 text-ui font-medium text-white transition";
-
-/** Secondary button inline style */
-export const AUTH_SECONDARY_BTN_STYLE: React.CSSProperties = {
-  background: AUTH_COLORS.card,
-  border: `1px solid ${AUTH_COLORS.cardBorder}`,
-};
-
-/** Label className */
-export const AUTH_LABEL_CLASS = "text-meta font-semibold tracking-[0.2em]";
 
 /** Info card style — matches workspace panel card */
 export const AUTH_CARD_STYLE: React.CSSProperties = {
@@ -133,8 +102,3 @@ export const AUTH_SUCCESS_STYLE: React.CSSProperties = {
   borderRadius: "8px",
 };
 
-/** Divider style */
-export const AUTH_DIVIDER_STYLE: React.CSSProperties = {
-  height: "1px",
-  background: AUTH_COLORS.divider,
-};
