@@ -1,10 +1,12 @@
 import express from "express";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createSessionRoutes } from "@routes/sessions.routes";
 import { SessionAccessDeniedError } from "@services/sessions/SessionService";
+
+import { useTestApiKey } from "../helpers/apiRouteHarness";
 
 const TEST_API_KEY = "integration-sessions-key";
 const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
@@ -95,20 +97,7 @@ function createApp(options: { continuityEnabled?: boolean } = {}) {
 }
 
 describe("Sessions Routes (integration)", () => {
-  let previousAllowedApiKeys: string | undefined;
-
-  beforeEach(() => {
-    previousAllowedApiKeys = process.env.ALLOWED_API_KEYS;
-    process.env.ALLOWED_API_KEYS = TEST_API_KEY;
-  });
-
-  afterEach(() => {
-    if (previousAllowedApiKeys === undefined) {
-      delete process.env.ALLOWED_API_KEYS;
-      return;
-    }
-    process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
-  });
+  useTestApiKey(TEST_API_KEY);
 
   it("POST /api/sessions creates a session when payload is valid", async () => {
     const { app, sessionService } = createApp();

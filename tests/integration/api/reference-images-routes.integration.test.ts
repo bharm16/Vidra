@@ -1,9 +1,11 @@
 import express from "express";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createReferenceImagesRoutes } from "@routes/reference-images.routes";
+
+import { useTestApiKey } from "../helpers/apiRouteHarness";
 
 // A real PNG signature + IHDR. The routes validate uploads by magic bytes
 // (validateImageBuffer -> fileTypeFromBuffer), so arbitrary text is rejected
@@ -64,20 +66,7 @@ function createApp() {
 }
 
 describe("Reference Images Routes (integration)", () => {
-  let previousAllowedApiKeys: string | undefined;
-
-  beforeEach(() => {
-    previousAllowedApiKeys = process.env.ALLOWED_API_KEYS;
-    process.env.ALLOWED_API_KEYS = TEST_API_KEY;
-  });
-
-  afterEach(() => {
-    if (previousAllowedApiKeys === undefined) {
-      delete process.env.ALLOWED_API_KEYS;
-      return;
-    }
-    process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
-  });
+  useTestApiKey(TEST_API_KEY);
 
   it("lists reference images for authenticated user", async () => {
     const { app, referenceImageService } = createApp();
