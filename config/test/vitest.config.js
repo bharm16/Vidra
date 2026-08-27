@@ -96,14 +96,6 @@ const aliases = [
     replacement: path.resolve(__dirname, "../../server/src/llm"),
   },
   {
-    find: /^@api\/(.*)/,
-    replacement: path.resolve(__dirname, "../../server/src/api/$1"),
-  },
-  {
-    find: "@api",
-    replacement: path.resolve(__dirname, "../../server/src/api"),
-  },
-  {
     find: /^@middleware\/(.*)/,
     replacement: path.resolve(__dirname, "../../server/src/middleware/$1"),
   },
@@ -182,14 +174,6 @@ const aliases = [
   {
     find: "@styles",
     replacement: path.resolve(__dirname, "../../client/src/styles"),
-  },
-  {
-    find: /^@lib\/(.*)/,
-    replacement: path.resolve(__dirname, "../../client/src/lib/$1"),
-  },
-  {
-    find: "@lib",
-    replacement: path.resolve(__dirname, "../../client/src/lib"),
   },
   {
     find: /^@schemas\/(.*)/,

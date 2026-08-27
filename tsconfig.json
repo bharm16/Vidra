@@ -57,7 +57,6 @@
       "@schemas/*": ["client/src/schemas/*"],
       "@repositories/*": ["client/src/repositories/*"],
       "@infrastructure/*": ["server/src/infrastructure/*"],
-      "@api/*": ["server/src/api/*"],
       "@interfaces/*": ["server/src/interfaces/*"],
       "@llm/*": ["server/src/llm/*"],
       "@middleware/*": ["server/src/middleware/*"],

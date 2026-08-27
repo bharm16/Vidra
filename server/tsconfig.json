@@ -14,7 +14,6 @@
     "paths": {
       "@infrastructure/*": ["src/infrastructure/*"],
       "@services/*": ["src/services/*"],
-      "@api/*": ["src/api/*"],
       "@types/*": ["src/types/*"],
       "@interfaces/*": ["src/interfaces/*"],
       "@utils/*": ["src/utils/*"],
