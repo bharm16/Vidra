@@ -111,7 +111,6 @@
     --duration-medium: 200ms; /* toggles, popovers    */
     --duration-slow: 300ms; /* layout, drawers      */
     --duration-slower: 450ms; /* scroll reveals       */
-
     --ease-standard: cubic-bezier(0.4, 0, 0.2, 1); /* in-place changes */
     --ease-decelerate: cubic-bezier(0, 0, 0.2, 1); /* entering view    */
     --ease-accelerate: cubic-bezier(0.4, 0, 1, 1); /* leaving view     */
@@ -132,17 +131,17 @@
     --border-hairline: 0.5px;
     --border-thin: 1px;
     --shadow-none: none;
-    --shadow-sm: 0 1px 2px 0 oklch(20% 0 0 / 0.08); /* tint w/ ink, not black */
-    --shadow-md: 0 4px 12px -2px oklch(20% 0 0 / 0.1);
+    --shadow-sm: 0 1px 2px 0 oklch(20% 0 0deg / 0.08); /* tint w/ ink, not black */
+    --shadow-md: 0 4px 12px -2px oklch(20% 0 0deg / 0.1);
     /* Floating panels cast black, not ink — a 10% ink shadow on a dark
        surface is invisible. */
-    --shadow-popover: 0 8px 24px -4px oklch(0% 0 0 / 0.5);
+    --shadow-popover: 0 8px 24px -4px oklch(0% 0 0deg / 0.5);
     --blur-glass: blur(8px); /* overlay bars   */
     --blur-ambient: blur(40px); /* atmosphere     */
 
     /* ---------- FOCUS ---------- */
     --focus-ring-width: 3px;
-    --focus-ring-color: oklch(55.6% 0 0 / 0.5);
+    --focus-ring-color: oklch(55.6% 0 0deg / 0.5);
     --focus-ring-offset: 0px;
 
     /* ---------- LAYOUT ----------
@@ -171,25 +170,25 @@
     /* ============ SEMANTIC COLOR — LIGHT ============
      Near-monochrome. Every surface has a paired foreground.
      oklch so hover states are lightness shifts, no hue drift. */
-    --background: oklch(99.2% 0.002 90); /* warm off-white, not #fff */
-    --foreground: oklch(24% 0.004 250);
-    --card: oklch(100% 0 0);
+    --background: oklch(99.2% 0.002 90deg); /* warm off-white, not #fff */
+    --foreground: oklch(24% 0.004 250deg);
+    --card: oklch(100% 0 0deg);
     --card-foreground: var(--foreground);
     /* A popover must be lighter than what it covers — on dark UI elevation
      comes from a lighter surface plus a hairline, never from a shadow. */
-    --popover: oklch(100% 0 0);
+    --popover: oklch(100% 0 0deg);
     --popover-foreground: var(--foreground);
-    --primary: oklch(20% 0.004 250);
-    --primary-foreground: oklch(99% 0 0);
-    --secondary: oklch(96.5% 0.002 90);
+    --primary: oklch(20% 0.004 250deg);
+    --primary-foreground: oklch(99% 0 0deg);
+    --secondary: oklch(96.5% 0.002 90deg);
     --secondary-foreground: var(--foreground);
-    --muted: oklch(96.5% 0.002 90);
-    --muted-foreground: oklch(55% 0.004 250);
-    --accent: oklch(55% 0.19 255); /* the ONE hue, used sparingly */
-    --accent-foreground: oklch(99% 0 0);
-    --destructive: oklch(58% 0.21 27);
+    --muted: oklch(96.5% 0.002 90deg);
+    --muted-foreground: oklch(55% 0.004 250deg);
+    --accent: oklch(55% 0.19 255deg); /* the ONE hue, used sparingly */
+    --accent-foreground: oklch(99% 0 0deg);
+    --destructive: oklch(58% 0.21 27deg);
     --border: var(--hairline);
-    --input: oklch(24% 0.004 250 / 0.14);
+    --input: oklch(24% 0.004 250deg / 0.14);
     --ring: var(--focus-ring-color);
 
     /* ============ VIDRA EXTENSIONS ============
@@ -198,9 +197,9 @@
      system above — no new hand-painted hex. Light values. */
     --surface-1: var(--chrome);
     --surface-2: var(--chrome);
-    --faint-foreground: oklch(65% 0.004 250); /* below muted       */
-    --ghost-foreground: oklch(72% 0.004 250); /* placeholder       */
-    --border-strong: oklch(24% 0.004 250 / 0.18);
+    --faint-foreground: oklch(65% 0.004 250deg); /* below muted       */
+    --ghost-foreground: oklch(72% 0.004 250deg); /* placeholder       */
+    --border-strong: oklch(24% 0.004 250deg / 0.18);
 
     /* ===== THE CANONICAL SURFACE NAMES =====
      One namespace. Everything below aliases to these; nothing else may
@@ -215,22 +214,22 @@
     --chrome: var(--card); /* rail, panel, toolbars */
     --float: var(--card); /* popovers — above chrome */
     --recess: var(--muted); /* wells — below the floor */
-    --raise: oklch(24% 0.004 250 / 0.07); /* raised over chrome */
-    --hairline: oklch(24% 0.004 250 / 0.12); /* the ONLY border value */
+    --raise: oklch(24% 0.004 250deg / 0.07); /* raised over chrome */
+    --hairline: oklch(24% 0.004 250deg / 0.12); /* the ONLY border value */
     --fg: var(--foreground);
-    --fg-muted: oklch(45% 0.004 250); /* labels, empty states */
-    --fg-dim: oklch(62% 0.004 250); /* placeholder text ONLY */
+    --fg-muted: oklch(45% 0.004 250deg); /* labels, empty states */
+    --fg-dim: oklch(62% 0.004 250deg); /* placeholder text ONLY */
     --on-primary: var(--background); /* foreground on a --fg fill */
 
     /* Interaction overlays — one resting fill, one hover step, one active
      step. Every control tints with these; nothing invents its own alpha.
      --fill is what replaces a control's border: a chip reads as a chip
      because it is filled, not because it is outlined. */
-    --fill: oklch(24% 0.004 250 / 0.05);
+    --fill: oklch(24% 0.004 250deg / 0.05);
     --hover: var(--raise);
-    --active: oklch(24% 0.004 250 / 0.1);
-    --success: oklch(56% 0.14 160); /* render-state green */
-    --warning: oklch(66% 0.13 80); /* render-state amber */
+    --active: oklch(24% 0.004 250deg / 0.1);
+    --success: oklch(56% 0.14 160deg); /* render-state green */
+    --warning: oklch(66% 0.13 80deg); /* render-state amber */
 
     /* Status badge tints — Badge/Alert variants. Derived at the
      reference site, so they track the themed source colors. */
@@ -260,7 +259,7 @@
     --badge-info-text: var(--accent);
 
     /* Accent companion — logo/live gradient end. */
-    --accent-2: color-mix(in oklch, var(--accent) 55%, oklch(98% 0 0));
+    --accent-2: color-mix(in oklch, var(--accent) 55%, oklch(98% 0 0deg));
 
     /* Accent glow — active thumbnails / focus-glow affordances. */
     --glow-accent:
@@ -281,57 +280,56 @@
   .dark {
     /* One floor: --background IS --canvas. A rail on the canvas value
        otherwise sat lighter than every non-canvas page in the app. */
-    --background: oklch(22% 0 0);
-    --foreground: oklch(98.5% 0 0);
+    --background: oklch(22% 0 0deg);
+    --foreground: oklch(98.5% 0 0deg);
     --card: var(--chrome);
-    --card-foreground: oklch(98.5% 0 0);
+    --card-foreground: oklch(98.5% 0 0deg);
     --popover: var(--float);
-    --popover-foreground: oklch(98.5% 0 0);
-    --primary: oklch(100% 0 0);
-    --primary-foreground: oklch(0% 0 0);
-    --secondary: oklch(26.9% 0 0);
-    --secondary-foreground: oklch(98.5% 0 0);
-    --muted: oklch(26.9% 0 0);
-    --muted-foreground: oklch(70% 0 0);
-    --accent: oklch(65% 0.17 255);
-    --accent-foreground: oklch(14.5% 0 0);
-    --destructive: oklch(65% 0.19 27);
+    --popover-foreground: oklch(98.5% 0 0deg);
+    --primary: oklch(100% 0 0deg);
+    --primary-foreground: oklch(0% 0 0deg);
+    --secondary: oklch(26.9% 0 0deg);
+    --secondary-foreground: oklch(98.5% 0 0deg);
+    --muted: oklch(26.9% 0 0deg);
+    --muted-foreground: oklch(70% 0 0deg);
+    --accent: oklch(65% 0.17 255deg);
+    --accent-foreground: oklch(14.5% 0 0deg);
+    --destructive: oklch(65% 0.19 27deg);
     --border: var(--hairline);
-    --input: oklch(100% 0 0 / 0.15);
-    --ring: oklch(100% 0 0 / 0.3);
+    --input: oklch(100% 0 0deg / 0.15);
+    --ring: oklch(100% 0 0deg / 0.3);
 
     /* Vidra extensions — dark values. */
     --surface-1: var(--chrome);
     --surface-2: var(--chrome);
-    --faint-foreground: oklch(60% 0 0);
-    --ghost-foreground: oklch(48% 0 0);
-    --border-strong: oklch(100% 0 0 / 0.16);
+    --faint-foreground: oklch(60% 0 0deg);
+    --ghost-foreground: oklch(48% 0 0deg);
+    --border-strong: oklch(100% 0 0deg / 0.16);
     /* The canvas-app ladder, measured against Recraft: #1b1b1b board,
        #292929 chrome. The previous 18.5/25.5 rendered #131313/#232323 —
        the right shape, about eight levels too dark. */
     --canvas: var(--background);
-    --chrome: oklch(27.9% 0 0);
+    --chrome: oklch(27.9% 0 0deg);
     /* A popover must be lighter than what it covers, and popovers cover
        chrome — so the ladder needs a third step, not a reused second one. */
-    --float: oklch(32% 0 0);
+    --float: oklch(32% 0 0deg);
     /* And a fourth, going the other way: a well is recessed BELOW the floor,
        which is what a segmented track or a sort control sits in. 15.5%
        rendered #0c0c0c — a 15-level drop, deeper than chrome's 14-level rise,
        so the well shouted louder than the content sitting on it. OKLCH L is a
        cube-root scale: #121212 is 18.2%, not 15.5%. */
-    --recess: oklch(18.2% 0 0);
-    --raise: oklch(100% 0 0 / 0.07);
-    --hairline: oklch(100% 0 0 / 0.12);
-    --fg: oklch(98.5% 0 0);
-    --fg-muted: oklch(100% 0 0 / 0.6);
-    --fg-dim: oklch(100% 0 0 / 0.4);
+    --recess: oklch(18.2% 0 0deg);
+    --raise: oklch(100% 0 0deg / 0.07);
+    --hairline: oklch(100% 0 0deg / 0.12);
+    --fg: oklch(98.5% 0 0deg);
+    --fg-muted: oklch(100% 0 0deg / 0.6);
+    --fg-dim: oklch(100% 0 0deg / 0.4);
     --on-primary: var(--background);
-
-    --fill: oklch(100% 0 0 / 0.05);
+    --fill: oklch(100% 0 0deg / 0.05);
     --hover: var(--raise);
-    --active: oklch(100% 0 0 / 0.1);
-    --success: oklch(76% 0.13 165);
-    --warning: oklch(82% 0.12 85);
+    --active: oklch(100% 0 0deg / 0.1);
+    --success: oklch(76% 0.13 165deg);
+    --warning: oklch(82% 0.12 85deg);
   }
 
   @media (prefers-reduced-motion: reduce) {

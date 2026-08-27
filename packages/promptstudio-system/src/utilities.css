@@ -22,7 +22,7 @@
 
   /* ===== EDGE LIT ===== */
   .ps-edge-lit {
-    box-shadow: inset 0 1px 0 oklch(100% 0 0 / 0.06);
+    box-shadow: inset 0 1px 0 oklch(100% 0 0deg / 0.06);
   }
 
   /* ===== SCROLLBAR ===== */
@@ -264,7 +264,7 @@
   font-weight: var(--weight-ui-active);
 }
 .ps-btn--primary:hover:not(:disabled) {
-  background: oklch(92% 0 0);
+  background: oklch(92% 0 0deg);
   color: var(--background);
 }
 .ps-btn--primary:disabled {
