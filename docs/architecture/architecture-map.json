@@ -4,12 +4,9 @@
     "tagline": "Interactive editing canvas for AI video prompts with semantic span labeling, click-to-enhance suggestions, and fast previews.",
     "stage": "pre-launch (zero users)",
     "sourceOfTruth": [
-      "CLAUDE.md",
-      "client/CLAUDE.md",
-      "server/CLAUDE.md",
       "server/src/config/feature-flags.ts",
-      "server/src/config/services.config.ts",
-      "server/src/routes/api.routes.ts",
+      "server/src/config/services/",
+      "server/src/routes/ + server/src/config/routes/ (via extractRoutes)",
       "package.json"
     ]
   },

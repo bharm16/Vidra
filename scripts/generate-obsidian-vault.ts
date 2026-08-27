@@ -15,8 +15,8 @@
  * on first run only — an existing .obsidian config is never overwritten.
  *
  * docs/graph/ and docs/.obsidian/ are gitignored: everything here is
- * regenerable. Refresh the map first if services changed:
- *   npm run architecture:map:write && npm run obsidian:vault
+ * regenerable. The map is built in-memory from source on every run, so no
+ * prior architecture:map:write is needed.
  *
  * Usage:
  *   npx tsx scripts/generate-obsidian-vault.ts
@@ -26,12 +26,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { buildArchitectureMap } from "./generate-architecture-map.ts";
+
 const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
 const DOCS_DIR = path.join(REPO_ROOT, "docs");
-const MAP_PATH = path.join(DOCS_DIR, "architecture", "architecture-map.json");
 const GRAPH_DIR = path.join(DOCS_DIR, "graph");
 const OBSIDIAN_DIR = path.join(DOCS_DIR, ".obsidian");
 
@@ -232,7 +233,7 @@ function generateHomeNote(domains: Map<string, string[]>): void {
     "regenerate after service changes with:",
     "",
     "```bash",
-    "npm run architecture:map:write && npm run obsidian:vault",
+    "npm run obsidian:vault",
     "```",
     "",
     "The hand-written half of the vault lives in `vault/` and is not generated:",
@@ -301,7 +302,11 @@ function seedObsidianConfig(): boolean {
 }
 
 function main(): void {
-  const map = JSON.parse(fs.readFileSync(MAP_PATH, "utf8")) as ArchitectureMap;
+  // Build the map in-memory rather than reading architecture-map.json:
+  // the pre-commit hook runs this generator without an architecture:map:write
+  // first, so reading the file meant the vault silently lagged one commit
+  // behind whenever services/routes/flags changed.
+  const map = buildArchitectureMap() as unknown as ArchitectureMap;
 
   fs.rmSync(GRAPH_DIR, { recursive: true, force: true });
   const { serviceCount, domains } = generateServiceNotes(map);
