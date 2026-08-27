@@ -9,6 +9,11 @@
  * No I/O, no Firestore, no Node APIs — just deterministic transforms.
  */
 import { z } from "zod";
+
+import {
+  SessionContinuityModeSchema,
+  SessionShotStatusSchema,
+} from "#shared/schemas/session.schemas";
 import type {
   ContinuitySession,
   ContinuityShot,
@@ -20,17 +25,11 @@ const StoredShotSchema = z
     sessionId: z.string(),
     sequenceIndex: z.number(),
     userPrompt: z.string(),
-    continuityMode: z.enum(["frame-bridge", "style-match", "native", "none"]),
+    continuityMode: SessionContinuityModeSchema,
     styleStrength: z.number(),
     styleReferenceId: z.string().nullable(),
     modelId: z.string(),
-    status: z.enum([
-      "draft",
-      "generating-keyframe",
-      "generating-video",
-      "completed",
-      "failed",
-    ]),
+    status: SessionShotStatusSchema,
     createdAt: z.number(),
   })
   .passthrough();
