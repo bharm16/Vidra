@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { ZodError } from "zod";
 
-import { CustomSuggestionsResponseSchema } from "@components/SuggestionsPanel/api/schemas";
+import { CustomSuggestionsResponseSchema } from "@features/prompt-optimizer/api/customSuggestionsSchema";
 
 describe("CustomSuggestionsResponseSchema", () => {
   it("parses valid response", () => {

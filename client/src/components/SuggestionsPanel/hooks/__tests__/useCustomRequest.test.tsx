@@ -13,12 +13,12 @@ import {
 import { renderHook, act, waitFor } from "@testing-library/react";
 
 import { useCustomRequest } from "@components/SuggestionsPanel/hooks/useCustomRequest";
-import { fetchCustomSuggestions } from "@components/SuggestionsPanel/api/customSuggestionsApi";
+import { fetchCustomSuggestions } from "@features/prompt-optimizer/api/customSuggestionsApi";
 import { CancellationError } from "@features/prompt-optimizer/utils/signalUtils";
 import type { SuggestionItem } from "@components/SuggestionsPanel/hooks/types";
 import { logger } from "@/services/LoggingService";
 
-vi.mock("@components/SuggestionsPanel/api/customSuggestionsApi", () => ({
+vi.mock("@features/prompt-optimizer/api/customSuggestionsApi", () => ({
   fetchCustomSuggestions: vi.fn(),
   customSuggestionsApi: {
     fetchCustomSuggestions: vi.fn(),

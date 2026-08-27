@@ -13,7 +13,7 @@ import {
 } from "vitest";
 import { ZodError } from "zod";
 
-import { fetchCustomSuggestions } from "@components/SuggestionsPanel/api/customSuggestionsApi";
+import { fetchCustomSuggestions } from "@features/prompt-optimizer/api/customSuggestionsApi";
 import { CancellationError } from "@features/prompt-optimizer/utils/signalUtils";
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 

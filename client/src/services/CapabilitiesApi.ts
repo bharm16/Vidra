@@ -70,15 +70,6 @@ const CapabilitiesSchemaSchema = z.object({
   unknown_fields: z.array(z.string()).optional(),
 });
 
-const ProvidersResponseSchema = z.object({
-  providers: z.array(z.string()),
-});
-
-const ModelsResponseSchema = z.object({
-  provider: z.string(),
-  models: z.array(z.string()),
-});
-
 const VideoAvailabilityModelSchema = z.object({
   id: z.string(),
   available: z.boolean(),
@@ -99,7 +90,6 @@ const CapabilitiesRegistrySchema = z.record(
   z.record(z.string(), CapabilitiesSchemaSchema),
 );
 
-type ModelsResponse = z.infer<typeof ModelsResponseSchema>;
 type VideoAvailabilityResponse = z.infer<
   typeof VideoAvailabilityResponseSchema
 >;
@@ -231,21 +221,6 @@ export class CapabilitiesApi {
       ),
     );
     return normalizeCapabilitiesSchema(parsed.data);
-  }
-
-  async listProviders(): Promise<string[]> {
-    const parsed = ApiSuccessResponseSchema(ProvidersResponseSchema).parse(
-      await this.client.get("/providers"),
-    );
-    return parsed.data.providers;
-  }
-
-  async listModels(provider: string): Promise<ModelsResponse> {
-    const encodedProvider = encodeURIComponent(provider);
-    const parsed = ApiSuccessResponseSchema(ModelsResponseSchema).parse(
-      await this.client.get(`/models?provider=${encodedProvider}`),
-    );
-    return parsed.data;
   }
 
   // Coalesces concurrent callers (useModelRegistry + useCapabilityRegistry mount
