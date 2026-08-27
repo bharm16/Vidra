@@ -105,7 +105,6 @@ export function useRealtimeSketch(
           type: "result",
           requestId: frame.requestId,
           imageUrl: image.url,
-          inferenceSeconds: parsed.data.timings?.inference ?? null,
           at,
         });
       })

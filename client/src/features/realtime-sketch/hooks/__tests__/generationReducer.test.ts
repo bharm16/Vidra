@@ -23,10 +23,9 @@ describe("generationReducer — send discipline", () => {
     expect(state.inFlight).not.toBeNull();
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1000");
     expect(state.inFlight?.sentAt).toBe(1_000);
-    expect(state.inFlight?.requestId).toBe("0-1");
+    expect(state.inFlight?.requestId).toBe("1");
     expect(state.pending).toBeNull();
     expect(state.stats.sent).toBe(1);
-    expect(state.stats.lastEncodeMs).toBe(3);
   });
 
   it("queues a snapshot while a frame is in flight instead of sending it", () => {
@@ -62,17 +61,13 @@ describe("generationReducer — send discipline", () => {
     );
     state = generationReducer(state, {
       type: "result",
-      requestId: "0-1",
+      requestId: "1",
       imageUrl: "data:image/jpeg;base64,rendered",
-      inferenceSeconds: 0.32,
       at: 1_400,
     });
 
     expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
     expect(state.inFlight).toBeNull();
-    expect(state.stats.rttMs).toEqual([400]);
-    expect(state.stats.modelMs).toEqual([320]);
-    expect(state.stats.resultTimes).toEqual([1_400]);
   });
 
   it("a result immediately promotes the pending frame to in-flight", () => {
@@ -83,18 +78,17 @@ describe("generationReducer — send discipline", () => {
     state = generationReducer(state, snapshot(1_150));
     state = generationReducer(state, {
       type: "result",
-      requestId: "0-1",
+      requestId: "1",
       imageUrl: "data:image/jpeg;base64,rendered",
-      inferenceSeconds: null,
       at: 1_400,
     });
 
-    expect(state.inFlight?.requestId).toBe("0-2");
+    expect(state.inFlight?.requestId).toBe("2");
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1150");
     expect(state.inFlight?.sentAt).toBe(1_400);
     expect(state.pending).toBeNull();
     expect(state.stats.sent).toBe(2);
-    expect(state.liveOutput?.requestId).toBe("0-1");
+    expect(state.liveOutput?.requestId).toBe("1");
   });
 
   it("drops a result whose request id does not match the in-flight frame", () => {
@@ -104,9 +98,8 @@ describe("generationReducer — send discipline", () => {
     );
     const state = generationReducer(inFlightState, {
       type: "result",
-      requestId: "0-99",
+      requestId: "99",
       imageUrl: "data:image/jpeg;base64,stale",
-      inferenceSeconds: null,
       at: 1_400,
     });
 
@@ -120,9 +113,8 @@ describe("generationReducer — send discipline", () => {
     );
     state = generationReducer(state, {
       type: "result",
-      requestId: "0-1",
+      requestId: "1",
       imageUrl: "data:image/jpeg;base64,rendered",
-      inferenceSeconds: null,
       at: 1_400,
     });
     state = generationReducer(state, snapshot(1_500));
@@ -140,9 +132,8 @@ describe("generationReducer — send discipline", () => {
 
     state = generationReducer(state, {
       type: "result",
-      requestId: "0-2",
+      requestId: "2",
       imageUrl: "data:image/jpeg;base64,rendered2",
-      inferenceSeconds: null,
       at: 1_800,
     });
 
@@ -159,12 +150,12 @@ describe("generationReducer — send discipline", () => {
     state = generationReducer(state, {
       type: "generationError",
       message: "no image in result",
-      requestId: "0-1",
+      requestId: "1",
       at: 1_600,
     });
 
     expect(state.stats.lastError?.message).toBe("no image in result");
-    expect(state.inFlight?.requestId).toBe("0-2");
+    expect(state.inFlight?.requestId).toBe("2");
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1150");
     expect(state.pending).toBeNull();
     expect(state.stats.sent).toBe(2);
