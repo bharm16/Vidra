@@ -128,10 +128,21 @@ async function generateHighlightCache(text: string): Promise<{
 /**
  * Process a single document
  */
+interface ProcessResult {
+  status: "regenerated" | "cleared" | "skipped" | "error";
+  reason?: string;
+  error?: string;
+  spansCount?: number;
+  signature?: string | null;
+  mode: string | undefined;
+  charCount: number;
+  processingTime: number;
+}
+
 async function processDocument(
   doc: FirebaseFirestore.QueryDocumentSnapshot,
   db: FirebaseFirestore.Firestore,
-) {
+): Promise<ProcessResult> {
   const startTime = Date.now();
   const docId = doc.id;
   const data = doc.data();
@@ -234,7 +245,7 @@ async function processDocument(
 /**
  * Main migration function
  */
-async function runMigration() {
+async function runMigration(): Promise<void> {
   console.log("\n🔧 Force Highlight Rerender Migration\n");
   console.log("Configuration:");
   console.log(`  Mode: ${options.mode.toUpperCase()}`);
