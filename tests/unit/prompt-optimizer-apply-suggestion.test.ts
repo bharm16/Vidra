@@ -1,11 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { applySuggestionToPrompt } from "@features/prompt-optimizer/utils/applySuggestion";
-import { relocateQuote } from "@utils/textQuoteRelocator";
-
-vi.mock("@utils/textQuoteRelocator", () => ({
-  relocateQuote: vi.fn(),
-}));
+// relocateQuote is a pure, deterministic util with its own suite — the tests
+// below drive it with real inputs instead of mocking an internal seam.
 
 vi.mock("@/services/LoggingService", () => ({
   logger: {
@@ -13,7 +10,6 @@ vi.mock("@/services/LoggingService", () => ({
   },
 }));
 
-const mockRelocateQuote = vi.mocked(relocateQuote);
 
 describe("applySuggestionToPrompt", () => {
   it("returns null when prompt or suggestion is empty", () => {
@@ -26,8 +22,6 @@ describe("applySuggestionToPrompt", () => {
   });
 
   it("applies suggestion using relocated match", () => {
-    mockRelocateQuote.mockReturnValue({ start: 6, end: 11, exact: true });
-
     const result = applySuggestionToPrompt({
       prompt: "Hello world",
       suggestionText: "there",
@@ -45,20 +39,16 @@ describe("applySuggestionToPrompt", () => {
   });
 
   it("returns null when relocation fails", () => {
-    mockRelocateQuote.mockReturnValue(null);
-
     const result = applySuggestionToPrompt({
       prompt: "Hello world",
       suggestionText: "there",
-      highlight: "world",
+      highlight: "zebra",
     });
 
     expect(result).toEqual({ updatedPrompt: null });
   });
 
   it("returns null when suggestion does not change prompt", () => {
-    mockRelocateQuote.mockReturnValue({ start: 0, end: 5, exact: true });
-
     const result = applySuggestionToPrompt({
       prompt: "Hello",
       suggestionText: "Hello",
