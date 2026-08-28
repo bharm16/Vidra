@@ -3,12 +3,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import type { ButtonHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { PromptImprovementForm } from "@/PromptImprovementForm/PromptImprovementForm";
-import { useQuestionGeneration } from "@/PromptImprovementForm/hooks/useQuestionGeneration";
-import type { Question } from "@/PromptImprovementForm/types";
-
-vi.mock("@/PromptImprovementForm/hooks/useQuestionGeneration", () => ({
-  useQuestionGeneration: vi.fn(),
-}));
 
 vi.mock("@promptstudio/system/components/ui/button", () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
@@ -22,83 +16,28 @@ vi.mock("@promptstudio/system/components/ui/textarea", () => ({
   ),
 }));
 
+// Questions are derived synchronously from generateFallbackQuestions — the
+// real generator runs here. For the prompt "Draft" it classifies as a
+// "write"-type prompt with the general example sets.
 describe("PromptImprovementForm", () => {
-  const mockUseQuestionGeneration = vi.mocked(useQuestionGeneration);
-
-  const questions: Question[] = [
-    {
-      id: 1,
-      title: "Focus areas",
-      description: "Describe focus",
-      field: "specificAspects",
-      examples: ["Example focus"],
-    },
-    {
-      id: 2,
-      title: "Background",
-      description: "Describe background",
-      field: "backgroundLevel",
-      examples: ["Beginner"],
-    },
-    {
-      id: 3,
-      title: "Use case",
-      description: "Describe use",
-      field: "intendedUse",
-      examples: ["Internal memo"],
-    },
-  ];
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("error handling", () => {
-    it("shows loading state messaging while questions are generated", () => {
-      mockUseQuestionGeneration.mockReturnValue({
-        questions: [],
-        isLoading: true,
-        error: null,
-      });
+  it("renders context questions synchronously, with no loading state", () => {
+    render(
+      <PromptImprovementForm onComplete={vi.fn()} initialPrompt="Draft" />,
+    );
 
-      render(
-        <PromptImprovementForm onComplete={vi.fn()} initialPrompt="Draft" />,
-      );
-
-      expect(
-        screen.getByText("Generating context-aware questions..."),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Analyzing your prompt...")).toBeInTheDocument();
-    });
-
-    it("shows fallback message when question generation fails", () => {
-      mockUseQuestionGeneration.mockReturnValue({
-        questions: [],
-        isLoading: false,
-        error: "Failed",
-      });
-
-      render(
-        <PromptImprovementForm onComplete={vi.fn()} initialPrompt="Draft" />,
-      );
-
-      expect(
-        screen.getByText("Failed to generate custom questions"),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("Using fallback questions instead"),
-      ).toBeInTheDocument();
-    });
+    expect(
+      screen.getByText("What elements should the content include?"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Who is the target audience?")).toBeInTheDocument();
+    expect(screen.getByText("Where will this be used?")).toBeInTheDocument();
   });
 
   describe("edge cases", () => {
     it("disables submission when no answers are provided", () => {
-      mockUseQuestionGeneration.mockReturnValue({
-        questions: [],
-        isLoading: false,
-        error: null,
-      });
-
       render(
         <PromptImprovementForm onComplete={vi.fn()} initialPrompt="Draft" />,
       );
@@ -111,11 +50,6 @@ describe("PromptImprovementForm", () => {
 
     it("allows skipping context and sends empty answers", () => {
       const onComplete = vi.fn();
-      mockUseQuestionGeneration.mockReturnValue({
-        questions,
-        isLoading: false,
-        error: null,
-      });
 
       render(
         <PromptImprovementForm onComplete={onComplete} initialPrompt="Draft" />,
@@ -138,25 +72,24 @@ describe("PromptImprovementForm", () => {
   describe("core behavior", () => {
     it("builds an enhanced prompt when answers are provided", () => {
       const onComplete = vi.fn();
-      mockUseQuestionGeneration.mockReturnValue({
-        questions,
-        isLoading: false,
-        error: null,
-      });
 
       render(
         <PromptImprovementForm onComplete={onComplete} initialPrompt="Draft" />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: "Example focus" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Focus on practical application" }),
+      );
       fireEvent.click(
         screen.getByRole("button", { name: "Optimize with Context" }),
       );
 
       expect(onComplete).toHaveBeenCalledWith(
-        expect.stringContaining("Specific Focus: Example focus"),
+        expect.stringContaining(
+          "Specific Focus: Focus on practical application",
+        ),
         {
-          specificAspects: "Example focus",
+          specificAspects: "Focus on practical application",
           backgroundLevel: "",
           intendedUse: "",
         },

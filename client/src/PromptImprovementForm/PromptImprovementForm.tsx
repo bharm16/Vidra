@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
   Plus,
-  Loader2,
 } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Textarea } from "@promptstudio/system/components/ui/textarea";
 
 import type { FormData, PromptImprovementFormProps, Question } from "./types";
 
-import { useQuestionGeneration } from "./hooks/useQuestionGeneration";
-import { buildEnhancedPrompt } from "./utils/questionGeneration";
+import {
+  buildEnhancedPrompt,
+  generateFallbackQuestions,
+} from "./utils/questionGeneration";
 
 export const PromptImprovementForm = ({
   onComplete,
@@ -24,7 +25,10 @@ export const PromptImprovementForm = ({
     intendedUse: "",
   });
 
-  const { questions, isLoading, error } = useQuestionGeneration(initialPrompt);
+  const questions = useMemo(
+    () => generateFallbackQuestions(initialPrompt),
+    [initialPrompt],
+  );
 
   const toggleSection = (id: number): void => {
     setExpandedSection(expandedSection === id ? null : id);
@@ -52,30 +56,12 @@ export const PromptImprovementForm = ({
       <div className="border-b-2 border-gray-800 p-6">
         <h2 className="mb-2 text-2xl font-bold">Improve Your Prompt</h2>
         <p className="text-gray-600">
-          {isLoading
-            ? "Generating context-aware questions..."
-            : "Answer these questions to get better results!"}
+          Answer these questions to get better results!
         </p>
       </div>
 
       <div className="space-y-4 p-6">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="mb-4 h-8 w-8 animate-spin text-blue-600" />
-            <p className="text-gray-600">Analyzing your prompt...</p>
-          </div>
-        ) : error ? (
-          <div className="py-8 text-center">
-            <p className="mb-4 text-red-600">
-              Failed to generate custom questions
-            </p>
-            <p className="text-sm text-gray-500">
-              Using fallback questions instead
-            </p>
-          </div>
-        ) : null}
-
-        {!isLoading && questions.length > 0 && (
+        {questions.length > 0 && (
           <>
             {questions.map((question: Question) => (
               <div
@@ -146,38 +132,36 @@ export const PromptImprovementForm = ({
           </>
         )}
 
-        {!isLoading && (
-          <div className="pt-4">
-            <Button
-              onClick={handleSubmit}
-              disabled={!isComplete}
-              variant="ghost"
-              className={`w-full rounded-lg px-6 py-3 font-semibold transition-colors ${
-                isComplete
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "cursor-not-allowed bg-gray-200 text-gray-400"
-              }`}
-            >
-              {isComplete
-                ? "Optimize with Context"
-                : "Answer at least one question to continue"}
-            </Button>
+        <div className="pt-4">
+          <Button
+            onClick={handleSubmit}
+            disabled={!isComplete}
+            variant="ghost"
+            className={`w-full rounded-lg px-6 py-3 font-semibold transition-colors ${
+              isComplete
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "cursor-not-allowed bg-gray-200 text-gray-400"
+            }`}
+          >
+            {isComplete
+              ? "Optimize with Context"
+              : "Answer at least one question to continue"}
+          </Button>
 
-            <Button
-              onClick={() =>
-                onComplete(initialPrompt, {
-                  specificAspects: "",
-                  backgroundLevel: "",
-                  intendedUse: "",
-                })
-              }
-              variant="ghost"
-              className="mt-2 w-full py-2 text-sm text-gray-600 hover:text-gray-800"
-            >
-              Skip and optimize without context
-            </Button>
-          </div>
-        )}
+          <Button
+            onClick={() =>
+              onComplete(initialPrompt, {
+                specificAspects: "",
+                backgroundLevel: "",
+                intendedUse: "",
+              })
+            }
+            variant="ghost"
+            className="mt-2 w-full py-2 text-sm text-gray-600 hover:text-gray-800"
+          >
+            Skip and optimize without context
+          </Button>
+        </div>
       </div>
     </div>
   );
