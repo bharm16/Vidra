@@ -8,6 +8,15 @@
 import type { CompletionOptions, OpenAiMessage } from "./types.ts";
 import type { MessageContent } from "@interfaces/IAIClient";
 
+// The bookend closer appended on very long prompts. A previous
+// extractCriticalInstructions helper claimed to excerpt the system prompt's
+// format rules here, but its six regex literals were all double-escaped
+// (\\s matches a literal backslash + "s"), so every request since it was
+// written received exactly this constant. Deleting the helper and keeping
+// the constant is the behavior-preserving form of that discovery.
+const BOOKEND_REMINDER =
+  "Remember to follow the format constraints defined in the system message.";
+
 export class OpenAiMessageBuilder {
   buildMessages(
     systemPrompt: string,
@@ -35,16 +44,9 @@ export class OpenAiMessageBuilder {
         0,
       );
       if (totalTokens > 30000) {
-        const systemMsg = messages.find((m) => m.role === "system");
-        const systemText = systemMsg
-          ? this.stringifyContent(systemMsg.content)
-          : "";
-        const criticalInstructions = systemText
-          ? this.extractCriticalInstructions(systemText)
-          : "Remember to follow the format constraints defined in the system message.";
         messages.push({
           role: "user",
-          content: `Based on the context above, perform the requested task. ${criticalInstructions}`,
+          content: `Based on the context above, perform the requested task. ${BOOKEND_REMINDER}`,
         });
       }
     }
@@ -70,11 +72,9 @@ export class OpenAiMessageBuilder {
     if (options.enableBookending) {
       const totalTokens = this.estimateTokens(systemPrompt + userMessage);
       if (totalTokens > 30000) {
-        const criticalInstructions =
-          this.extractCriticalInstructions(systemPrompt);
         messages.push({
           role: "user",
-          content: `Based on the context above, perform the requested task. ${criticalInstructions}`,
+          content: `Based on the context above, perform the requested task. ${BOOKEND_REMINDER}`,
         });
       }
     }
@@ -122,36 +122,5 @@ export class OpenAiMessageBuilder {
     }
 
     return "";
-  }
-
-  private extractCriticalInstructions(systemPrompt: string): string {
-    const criticalPatterns = [
-      /respond\\s+only\\s+with\\s+valid\\s+json/i,
-      /output\\s+only\\s+valid\\s+json/i,
-      /no\\s+markdown/i,
-      /follow\\s+the\\s+format\\s+constraints/i,
-      /required\\s+fields/i,
-      /validation\\s+requirements/i,
-    ];
-
-    const matches: string[] = [];
-    for (const pattern of criticalPatterns) {
-      const match = systemPrompt.match(pattern);
-      if (match) {
-        const index = systemPrompt.indexOf(match[0]);
-        const start = Math.max(0, index - 50);
-        const end = Math.min(systemPrompt.length, index + match[0].length + 50);
-        matches.push(systemPrompt.substring(start, end).trim());
-      }
-    }
-
-    if (matches.length > 0) {
-      const firstMatch = matches[0];
-      if (firstMatch) {
-        return firstMatch;
-      }
-    }
-
-    return "Remember to follow the format constraints defined in the system message.";
   }
 }
