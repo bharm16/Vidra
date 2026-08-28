@@ -1,7 +1,10 @@
 import { logger } from "@infrastructure/Logger";
 import type { PreviewRoutesServices } from "@routes/types";
 import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
-import { processVideoJob } from "@services/video-generation/jobs/processVideoJob";
+import {
+  processVideoJob,
+  type JobSessionAppendPort,
+} from "@services/video-generation/jobs/processVideoJob";
 
 interface InlineVideoProcessorParams {
   jobId: string;
@@ -12,6 +15,12 @@ interface InlineVideoProcessorParams {
   >;
   userCreditService: NonNullable<PreviewRoutesServices["userCreditService"]>;
   storageService?: NonNullable<PreviewRoutesServices["storageService"]> | null;
+  /**
+   * Session append port. Without it, processVideoJob never persists the
+   * completed clip (and its storagePath) onto the session version — which is
+   * what ShareService.mint and the space's picture→clip edge read.
+   */
+  sessionService?: JobSessionAppendPort | null;
 }
 
 // Default kept in sync with VIDEO_JOB_LEASE_SECONDS in server/src/config/env.ts
@@ -37,6 +46,7 @@ export function scheduleInlineVideoProcessing({
   videoGenerationService,
   userCreditService,
   storageService,
+  sessionService,
 }: InlineVideoProcessorParams): void {
   const leaseMs = getVideoJobLeaseMs();
   const workerId = `inline-preview-${requestId || Date.now()}`;
@@ -63,6 +73,7 @@ export function scheduleInlineVideoProcessing({
         videoGenerationService: videoGenerationService as never,
         storageService: storageService ?? null,
         userCreditService,
+        ...(sessionService ? { sessionService } : {}),
         workerId,
         leaseMs,
         dlqSource: "inline-terminal",

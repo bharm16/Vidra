@@ -30,6 +30,7 @@ export const createVideoGenerateHandler =
     faceSwapService,
     assetService,
     requestIdempotencyService,
+    sessionService,
   }: VideoGenerateServices) =>
   async (req: Request, res: Response): Promise<Response | void> => {
     if (!videoGenerationService || !videoJobStore) {
@@ -326,6 +327,7 @@ export const createVideoGenerateHandler =
         faceSwapService,
         assetService,
         storageService,
+        sessionService,
       },
       idempotencyRecordId,
       requestIdempotencyService,

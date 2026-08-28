@@ -143,6 +143,9 @@ describe("scheduleInlineVideoProcessing", () => {
     requestId?: string;
     claimResult?: VideoJobRecord | null;
     storage?: typeof storageService | null;
+    sessionService?: {
+      appendGenerationToVersion: ReturnType<typeof vi.fn>;
+    } | null;
   }): Promise<void> {
     if (overrides?.claimResult !== undefined) {
       jobStore.claimJob.mockResolvedValue(overrides.claimResult);
@@ -161,6 +164,10 @@ describe("scheduleInlineVideoProcessing", () => {
         overrides?.storage !== undefined
           ? (overrides.storage as never)
           : (storageService as never),
+      sessionService:
+        overrides?.sessionService !== undefined
+          ? (overrides.sessionService as never)
+          : null,
     });
 
     // Advance past the 300ms setTimeout
@@ -202,6 +209,33 @@ describe("scheduleInlineVideoProcessing", () => {
 
     expect(generateVideo).not.toHaveBeenCalled();
     expect(jobStore.markCompleted).not.toHaveBeenCalled();
+  });
+
+  it("regression: appends the completed clip (with storagePath) to the session when the job carries lineage", async () => {
+    // Share depends on this: ShareService.mint requires generation.storagePath,
+    // whose only writer is processVideoJob's session append — which only runs
+    // when the inline path forwards sessionService.
+    const appendGenerationToVersion = vi.fn().mockResolvedValue(undefined);
+    jobStore.claimJob.mockResolvedValue(
+      createClaimedJob({
+        sessionId: "session-1",
+        promptVersionId: "version-1",
+      }),
+    );
+
+    await invokeProcessor({
+      sessionService: { appendGenerationToVersion },
+    });
+
+    expect(appendGenerationToVersion).toHaveBeenCalledWith(
+      "user-1",
+      "session-1",
+      "version-1",
+      expect.objectContaining({
+        id: "job-1",
+        storagePath: FAKE_STORAGE_RESULT.storagePath,
+      }),
+    );
   });
 
   // ── Heartbeat Tests ──────────────────────────────────────────────

@@ -14,6 +14,7 @@ export type VideoGenerateServices = Pick<
   | "faceSwapService"
   | "assetService"
   | "requestIdempotencyService"
+  | "sessionService"
 >;
 
 export interface VideoErrorPayload {

@@ -47,6 +47,7 @@ export interface VideoGenerateIntakeArgs {
     faceSwapService: VideoGenerateServices["faceSwapService"];
     assetService: VideoGenerateServices["assetService"];
     storageService: VideoGenerateServices["storageService"];
+    sessionService: VideoGenerateServices["sessionService"];
   };
   idempotencyRecordId: string | null;
   requestIdempotencyService: VideoGenerateServices["requestIdempotencyService"];
@@ -89,6 +90,7 @@ export async function runVideoGenerateIntake(
       faceSwapService,
       assetService,
       storageService,
+      sessionService,
     },
     idempotencyRecordId,
     requestIdempotencyService,
@@ -354,6 +356,7 @@ export async function runVideoGenerateIntake(
       videoGenerationService,
       userCreditService,
       storageService: storageService ?? null,
+      sessionService: sessionService ?? null,
     });
 
     // No `typeof === "function"` guard: `userCreditService` is a
