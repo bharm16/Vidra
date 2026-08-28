@@ -107,7 +107,7 @@ export async function runOptimization({
   }
   actions.bumpOptimizationResultVersion();
 
-  // The frozen quality-feedback stack never speaks in the creator loop
+  // Suggestion-quality judging never speaks in the creator loop
   // (ADR-0008, decision 3) — not even in dev. calculateQualityScore is a
   // text-optimizer heuristic (section headers, "Goal", "Return Format")
   // that video prompts can never satisfy, so the old dev-only toast fired

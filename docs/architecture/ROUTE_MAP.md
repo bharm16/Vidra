@@ -104,13 +104,9 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/studio/projects/:projectId/turns`                      | `server/src/routes/studio.routes.ts`                           |
 | POST   | `/api/studio/projects/:projectId/turns`                      | `server/src/routes/studio.routes.ts`                           |
 | GET    | `/api/studio/projects/:projectId/turns/:turnId`              | `server/src/routes/studio.routes.ts`                           |
-| POST   | `/api/suggestions/evaluate`                                  | `server/src/routes/suggestions/router.ts`                      |
-| POST   | `/api/suggestions/evaluate/compare`                          | `server/src/routes/suggestions/router.ts`                      |
-| POST   | `/api/suggestions/evaluate/single`                           | `server/src/routes/suggestions/router.ts`                      |
-| GET    | `/api/suggestions/rubrics`                                   | `server/src/routes/suggestions/router.ts`                      |
 | GET    | `/debug-sentry`                                              | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health`                                                    | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/live`                                               | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                              | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **105**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **101**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

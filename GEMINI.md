@@ -29,7 +29,7 @@ These terms have specific meanings in this codebase. Do not conflate them.
 | Term                          | Meaning                                                                                                     | Server Path                                                                      | Route                              |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------- |
 | **Span labeling**             | ML categorization of prompt phrases into taxonomy categories (subject, camera, lighting…) for UI highlights | `server/src/llm/span-labeling/`                                                  | `/llm/label-spans`                 |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                | `server/src/services/enhancement/`                                               | `/api/suggestions`, `/api/enhance` |
+| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                | `server/src/services/enhancement/`                                               | `/api/enhance` |
 | **Optimization**              | Two-stage prompt rewriting pipeline (Groq fast draft → OpenAI refinement)                                   | `server/src/services/prompt-optimization/`                                       | `/api/optimize` (buffered)         |
 | **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences (frame-bridge, style-match)                         | `server/src/services/continuity/`                                                | `/api/continuity`                  |
 | **Convergence**               | Motion and visual convergence pipeline (iterative refinement toward target)                                 | `server/src/services/convergence/`                                               | `/api/motion`                      |
@@ -81,7 +81,7 @@ Legacy `*_DISABLED` env var names still work but emit a deprecation warning at s
 | Route                                   | Server Route File                         | Client API/Service                                  |
 | --------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
 | `POST /api/optimize`                    | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
-| `POST /api/enhance`, `/api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
+| `POST /api/enhance` | `enhancement.routes.ts` | `services/EnhancementApi.ts`                        |
 | `POST /api/llm/label-spans`             | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
 | `/api/preview/*`                        | `preview.routes.ts`                       | `features/preview/api/`                             |
 | `/api/payment/*`                        | `payment.routes.ts`                       | `api/billingApi.ts`                                 |

@@ -10,51 +10,6 @@ vi.mock("@config/routes.config", () => ({
   configureRoutes: vi.fn(),
 }));
 
-vi.mock("@services/quality-feedback/services/LLMJudgeService", () => ({
-  LLMJudgeService: class {
-    async evaluateSuggestions() {
-      return {
-        overallScore: 87,
-        rubricScores: {},
-        feedback: [],
-        strengths: [],
-        weaknesses: [],
-        detailedNotes: "ok",
-        metadata: { rubricUsed: "test" },
-      };
-    }
-
-    async evaluateSingleSuggestion() {
-      return {
-        overallScore: 91,
-        rubricScores: {},
-        feedback: [],
-        strengths: [],
-        weaknesses: [],
-        detailedNotes: "single",
-        metadata: { rubricUsed: "test" },
-      };
-    }
-
-    async compareSuggestionSets() {
-      return {
-        setA: {
-          overallScore: 80,
-          rubricScores: {},
-          metadata: { rubricUsed: "test" },
-        },
-        setB: {
-          overallScore: 70,
-          rubricScores: {},
-          metadata: { rubricUsed: "test" },
-        },
-        winner: "A",
-        scoreDifference: 10,
-        criteriaComparison: {},
-      };
-    }
-  },
-}));
 
 import * as middlewareConfig from "@config/middleware.config";
 import * as routesConfig from "@config/routes.config";
@@ -62,9 +17,6 @@ import { createApp } from "@server/app";
 import { startServer } from "@server/server";
 import { createHealthRoutes } from "@routes/health.routes";
 import { createAPIRoutes } from "@routes/api.routes";
-import { createSuggestionsRoute } from "@routes/suggestions";
-import type { AIModelService } from "@services/ai-model/AIModelService";
-import { LLMJudgeService } from "@services/quality-feedback/services/LLMJudgeService";
 import {
   isSocketPermissionError,
   runSupertestOrSkip,
@@ -390,99 +342,3 @@ describe("api.routes", () => {
   });
 });
 
-describe("suggestions.routes", () => {
-  it("validates suggestion evaluation payloads", async () => {
-    const app = express();
-    app.use(express.json());
-    const aiService = {} as AIModelService;
-    const llmJudgeService = new LLMJudgeService(aiService);
-    app.use(createSuggestionsRoute({ llmJudgeService }));
-
-    const invalid = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/evaluate")
-        .send({
-          suggestions: [],
-          context: { highlightedText: "test" },
-        }),
-    );
-    if (!invalid) return;
-
-    expect(invalid.status).toBe(400);
-    expect(invalid.body.success).toBe(false);
-    expect(invalid.body.details).toContain("suggestions");
-  });
-
-  it("returns evaluation results for valid requests", async () => {
-    const app = express();
-    app.use(express.json());
-    const aiService = {} as AIModelService;
-    const llmJudgeService = new LLMJudgeService(aiService);
-    app.use(createSuggestionsRoute({ llmJudgeService }));
-
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/evaluate")
-        .send({
-          suggestions: [{ text: "Better phrasing" }],
-          context: { highlightedText: "Original text", isVideoPrompt: true },
-        }),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(200);
-    expect(response.body.data.evaluation.overallScore).toBe(87);
-    expect(typeof response.body.data.responseTime).toBe("number");
-  });
-
-  it("supports single and compare evaluation endpoints", async () => {
-    const app = express();
-    app.use(express.json());
-    const aiService = {} as AIModelService;
-    const llmJudgeService = new LLMJudgeService(aiService);
-    app.use(createSuggestionsRoute({ llmJudgeService }));
-
-    const single = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/evaluate/single")
-        .send({
-          suggestion: "One option",
-          context: { highlightedText: "Original text" },
-        }),
-    );
-    if (!single) return;
-
-    expect(single.status).toBe(200);
-    expect(single.body.data.evaluation.overallScore).toBe(91);
-
-    const compare = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/evaluate/compare")
-        .send({
-          setA: [{ text: "Option A" }],
-          setB: [{ text: "Option B" }],
-          context: { highlightedText: "Original text" },
-        }),
-    );
-    if (!compare) return;
-
-    expect(compare.status).toBe(200);
-    expect(compare.body.data.comparison.winner).toBe("A");
-  });
-
-  it("exposes rubric definitions", async () => {
-    const app = express();
-    const aiService = {} as AIModelService;
-    const llmJudgeService = new LLMJudgeService(aiService);
-    app.use(createSuggestionsRoute({ llmJudgeService }));
-
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/rubrics"),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(200);
-    expect(response.body.data.rubrics).toHaveProperty("video");
-    expect(response.body.data.rubrics).toHaveProperty("general");
-  });
-});

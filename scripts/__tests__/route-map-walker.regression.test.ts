@@ -44,16 +44,6 @@ describe("route-map walker (regression)", () => {
     expect(contested).toEqual([]);
   });
 
-  it("still follows a router factory that delegates to another factory", () => {
-    // server/src/routes/suggestions.ts returns createSuggestionsRouter(handlers)
-    // rather than registering routes itself. A walker that only inlines calls
-    // taking the router as their first argument drops these entirely.
-    const paths = routes.map((r) => `${r.method} ${r.fullPath}`);
-
-    expect(paths).toContain("GET /api/suggestions/rubrics");
-    expect(paths).toContain("POST /api/suggestions/evaluate");
-  });
-
   it("mounts each sub-router only under its own prefix", () => {
     const paths = routes.map((r) => `${r.method} ${r.fullPath}`);
 

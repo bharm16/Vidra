@@ -22,7 +22,6 @@ const REQUIRED_TOKENS = [
   "enhancementService",
   "sceneDetectionService",
   "promptCoherenceService",
-  "llmJudgeService",
   "userCreditService",
   "sessionService",
   "storageService",

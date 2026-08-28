@@ -28,7 +28,7 @@ These terms have specific meanings in this codebase. Do not conflate them.
 | Term                          | Meaning                                                          | Service Path                                               | Route                              |
 | ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------- |
 | **Span labeling**             | ML categorization of prompt phrases into taxonomy categories     | `llm/span-labeling/`                                       | `/api/llm/label-spans`             |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span        | `services/enhancement/`                                    | `/api/suggestions`, `/api/enhance` |
+| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span        | `services/enhancement/`                                    | `/api/enhance` |
 | **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement) | `services/prompt-optimization/`                            | `/api/optimize` (buffered)         |
 | **Continuity**                | Shot-to-shot visual consistency (frame-bridge, style-match)      | `services/continuity/`                                     | `/api/continuity`                  |
 | **Convergence**               | Motion/visual convergence pipeline                               | `services/convergence/`                                    | `/api/motion`                      |
@@ -83,7 +83,7 @@ Server route files map to client-side API files. Reference this when adding/modi
 | Route                                   | Server Route File                         | Client API/Service                                  |
 | --------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
 | `POST /api/optimize`                    | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
-| `POST /api/enhance`, `/api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
+| `POST /api/enhance` | `enhancement.routes.ts` | `services/EnhancementApi.ts`                        |
 | `POST /api/llm/label-spans`             | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
 | `/api/preview/*`                        | `preview.routes.ts`                       | `features/preview/api/`                             |
 | `/api/payment/*`                        | `payment.routes.ts`                       | `api/billingApi.ts`                                 |

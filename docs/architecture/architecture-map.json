@@ -509,26 +509,6 @@
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
-      "method": "POST",
-      "fullPath": "/api/suggestions/evaluate",
-      "sourceFile": "server/src/routes/suggestions/router.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/suggestions/evaluate/compare",
-      "sourceFile": "server/src/routes/suggestions/router.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/suggestions/evaluate/single",
-      "sourceFile": "server/src/routes/suggestions/router.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/suggestions/rubrics",
-      "sourceFile": "server/src/routes/suggestions/router.ts"
-    },
-    {
       "method": "GET",
       "fullPath": "/debug-sentry",
       "sourceFile": "server/src/routes/health.routes.ts"
@@ -1120,11 +1100,6 @@
       "from": "llmCallTelemetryService",
       "to": "postHogClient",
       "file": "observability.services.ts"
-    },
-    {
-      "from": "llmJudgeService",
-      "to": "aiService",
-      "file": "core.services.ts"
     },
     {
       "from": "lumaVideoProvider",

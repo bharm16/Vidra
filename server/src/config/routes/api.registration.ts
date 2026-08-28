@@ -13,7 +13,6 @@ import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
-import { createSuggestionsRoute } from "@routes/suggestions";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
 import { createStudioRouter } from "@routes/studio.routes";
@@ -25,7 +24,6 @@ import {
 import { resolveFalApiKey } from "@utils/falApiKey";
 import type { ShareService } from "@services/share/ShareService";
 import type { StorageRoutesService } from "@routes/storage.routes";
-import type { LLMJudgeService } from "@services/quality-feedback/services/LLMJudgeService";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
 import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
@@ -138,12 +136,6 @@ export function registerApiRoutes(
     ),
   );
   app.use("/api/llm/label-spans", apiAuthMiddleware, labelSpansRoute);
-
-  // Suggestions evaluation (LLM-as-a-Judge)
-  const suggestionsRoute = createSuggestionsRoute({
-    llmJudgeService: container.resolve<LLMJudgeService>("llmJudgeService"),
-  });
-  app.use("/api/suggestions", apiAuthMiddleware, suggestionsRoute);
 
   // Authed mint of a public share for one owned clip (ADR-0010 site-scope D8).
   app.use("/api/share", apiAuthMiddleware, createShareRouter(shareService));

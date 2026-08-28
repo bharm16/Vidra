@@ -40,7 +40,6 @@ import type { PaymentConsistencyStore } from "@services/payment/PaymentConsisten
 import type { WebhookReconciliationWorker } from "@services/payment/WebhookReconciliationWorker";
 import type { BillingProfileRepairWorker } from "@services/payment/BillingProfileRepairWorker";
 import type { SessionService } from "@services/sessions/SessionService";
-import type { LLMJudgeService } from "@services/quality-feedback/services/LLMJudgeService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
 import type { ServiceConfig } from "@config/services/service-config.types";
 import type { Bucket } from "@google-cloud/storage";
@@ -69,7 +68,6 @@ export interface ServiceRegistry {
 
   // Prompt
   promptOptimizationService: PromptOptimizationService;
-  llmJudgeService: LLMJudgeService;
 
   // Generation (nullable — resolves to null when provider creds are absent)
   imageGenerationService: ImageGenerationService | null;
