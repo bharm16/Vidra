@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { logger } from "@infrastructure/Logger";
+import { isApiKeyUid } from "@utils/apiKeyUser";
 
 const DEFAULT_STARTER_CREDITS = 25;
 const STARTER_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -20,8 +21,7 @@ const parseStarterCredits = (): number => {
   return Math.trunc(raw);
 };
 
-const shouldSkipUser = (userId: string): boolean =>
-  userId.startsWith("api-key:");
+const shouldSkipUser = (userId: string): boolean => isApiKeyUid(userId);
 
 export function __resetStarterCreditsCacheForTests(): void {
   cache.clear();

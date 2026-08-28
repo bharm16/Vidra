@@ -1,4 +1,5 @@
 import { logger } from "@infrastructure/Logger";
+import { isApiKeyUid } from "@utils/apiKeyUser";
 import { getVideoCost } from "@config/modelCosts";
 import { VIDEO_MODELS } from "@config/modelConfig";
 import {
@@ -81,7 +82,7 @@ const isUserIdEligibleForCredits = (
   userId: string | null | undefined,
 ): boolean => {
   if (!userId) return false;
-  if (userId.startsWith("api-key:")) return false;
+  if (isApiKeyUid(userId)) return false;
   return true;
 };
 

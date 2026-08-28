@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { getAuth } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
+import { API_KEY_UID_PREFIX } from "@utils/apiKeyUser";
 
 /**
  * API Key Authentication Middleware
@@ -115,7 +116,7 @@ export async function apiAuthMiddleware(
     });
 
     req.apiKey = apiKeyCandidate;
-    req.user = { uid: `api-key:${apiKeyCandidate}` };
+    req.user = { uid: `${API_KEY_UID_PREFIX}${apiKeyCandidate}` };
     next();
     return;
   }

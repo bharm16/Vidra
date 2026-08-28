@@ -1,5 +1,6 @@
 import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
+import { isApiKeyUid } from "@utils/apiKeyUser";
 import {
   FirestoreCircuitExecutor,
   getFirestoreCircuitExecutor,
@@ -60,10 +61,6 @@ export class UserCreditService {
     firestoreCircuitExecutor: FirestoreCircuitExecutor = getFirestoreCircuitExecutor(),
   ) {
     this.firestoreCircuitExecutor = firestoreCircuitExecutor;
-  }
-
-  private isApiKeyUser(userId: string): boolean {
-    return userId.startsWith("api-key:");
   }
 
   private sanitizeHistoryLimit(limit: number): number {
@@ -399,7 +396,7 @@ export class UserCreditService {
     userId: string,
     starterCredits: number,
   ): Promise<boolean> {
-    if (this.isApiKeyUser(userId)) {
+    if (isApiKeyUid(userId)) {
       return false;
     }
 
