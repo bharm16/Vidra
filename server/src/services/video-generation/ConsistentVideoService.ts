@@ -1,216 +1,34 @@
-import type {
-  VideoGenerationOptions,
-  VideoGenerationResult,
-} from "@services/video-generation/types";
-import { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
-import type { ResolvedPrompt } from "@shared/types/asset";
+import type { VideoGenerationOptions } from "@services/video-generation/types";
 import type KeyframeGenerationService from "./KeyframeGenerationService";
 import type { KeyframeResult } from "./KeyframeGenerationService";
 import AssetService from "@services/asset/AssetService";
 import { logger } from "@infrastructure/Logger";
 
-export interface ConsistentVideoRequest {
-  userId: string;
-  prompt: string;
-  videoModel?: string;
-  aspectRatio?: VideoGenerationOptions["aspectRatio"];
-  duration?: number;
-  onProgress?: (update: { stage: string; message: string }) => void;
-}
-
+/**
+ * Keyframe-only consistent generation. The full consistent-video pipeline
+ * (prompt → keyframe → video) was removed with its dead /video and
+ * /from-keyframe routes; /generate/consistent/keyframe is the surviving
+ * surface.
+ */
 export class ConsistentVideoService {
   private readonly keyframeService: KeyframeGenerationService;
   private readonly assetService: AssetService;
-  private readonly videoGenerationService: VideoGenerationService;
   private readonly log = logger.child({ service: "ConsistentVideoService" });
 
   constructor(
     options: {
       keyframeService?: KeyframeGenerationService;
       assetService?: AssetService;
-      videoGenerationService?: VideoGenerationService;
     } = {},
   ) {
     if (!options.keyframeService) {
       throw new Error("KeyframeGenerationService is required");
-    }
-    if (!options.videoGenerationService) {
-      throw new Error("VideoGenerationService is required");
     }
     if (!options.assetService) {
       throw new Error("AssetService is required");
     }
     this.keyframeService = options.keyframeService;
     this.assetService = options.assetService;
-    this.videoGenerationService = options.videoGenerationService;
-  }
-
-  async generateConsistentVideo({
-    userId,
-    prompt,
-    videoModel = "luma",
-    aspectRatio = "16:9",
-    duration = 5,
-    onProgress,
-  }: ConsistentVideoRequest): Promise<{
-    keyframe?: KeyframeResult;
-    video: VideoGenerationResult;
-    resolved: ResolvedPrompt;
-    validation?: { isValid: boolean; confidence: number | null };
-    character?: { id: string; name: string; trigger: string };
-  }> {
-    const operation = "generateConsistentVideo";
-    const startTime = performance.now();
-    this.log.debug("Starting operation.", {
-      operation,
-      userId,
-      promptLength: prompt.length,
-      videoModel,
-      aspectRatio,
-      duration,
-    });
-
-    try {
-      onProgress?.({ stage: "resolve", message: "Resolving assets..." });
-      const resolved = await this.assetService.resolvePrompt(userId, prompt);
-
-      if (!resolved.requiresKeyframe || resolved.characters.length === 0) {
-        onProgress?.({ stage: "video", message: "Generating video..." });
-        const video = await this.generateVideoFromPrompt({
-          prompt: resolved.expandedText,
-          model: videoModel,
-          aspectRatio,
-          duration,
-        });
-        this.log.info("Operation completed.", {
-          operation,
-          userId,
-          duration: Math.round(performance.now() - startTime),
-          usedKeyframe: false,
-          videoModel,
-        });
-        return { video, resolved };
-      }
-
-      const primaryCharacter = resolved.characters[0]!;
-      const characterData = await this.assetService.getAssetForGeneration(
-        userId,
-        primaryCharacter.id,
-      );
-
-      onProgress?.({
-        stage: "keyframe",
-        message: `Generating keyframe with ${characterData.name}...`,
-      });
-
-      const keyframe = await this.keyframeService.generateKeyframe({
-        prompt: resolved.expandedText,
-        character: {
-          primaryImageUrl: characterData.primaryImageUrl,
-          negativePrompt: characterData.negativePrompt,
-          faceEmbedding: characterData.faceEmbedding,
-        },
-        aspectRatio: this.resolveKeyframeAspectRatio(aspectRatio),
-      });
-
-      const validation = await this.keyframeService.validateKeyframeFace(
-        keyframe.imageUrl,
-        primaryCharacter,
-      );
-
-      onProgress?.({ stage: "video", message: "Generating video..." });
-      const video = await this.generateVideoFromKeyframe({
-        keyframeUrl: keyframe.imageUrl,
-        prompt: resolved.expandedText,
-        model: videoModel,
-        aspectRatio,
-        duration,
-      });
-
-      this.log.info("Operation completed.", {
-        operation,
-        userId,
-        duration: Math.round(performance.now() - startTime),
-        usedKeyframe: true,
-        videoModel,
-        validationConfidence: validation.confidence,
-      });
-
-      return {
-        keyframe,
-        video,
-        resolved,
-        validation,
-        character: {
-          id: characterData.id,
-          name: characterData.name,
-          trigger: characterData.trigger,
-        },
-      };
-    } catch (error) {
-      const errorObj =
-        error instanceof Error ? error : new Error(String(error));
-      this.log.error("Operation failed.", errorObj, {
-        operation,
-        userId,
-        duration: Math.round(performance.now() - startTime),
-        videoModel,
-      });
-      throw error;
-    }
-  }
-
-  async generateVideoFromKeyframe({
-    keyframeUrl,
-    prompt,
-    model,
-    aspectRatio,
-    duration,
-  }: {
-    keyframeUrl: string;
-    prompt: string;
-    model: string;
-    aspectRatio?: VideoGenerationOptions["aspectRatio"];
-    duration?: number;
-  }): Promise<VideoGenerationResult> {
-    return this.buildAndGenerate(
-      prompt,
-      model,
-      aspectRatio,
-      duration,
-      keyframeUrl,
-    );
-  }
-
-  async generateVideoFromPrompt({
-    prompt,
-    model,
-    aspectRatio,
-    duration,
-  }: {
-    prompt: string;
-    model: string;
-    aspectRatio?: VideoGenerationOptions["aspectRatio"];
-    duration?: number;
-  }): Promise<VideoGenerationResult> {
-    return this.buildAndGenerate(prompt, model, aspectRatio, duration);
-  }
-
-  private buildAndGenerate(
-    prompt: string,
-    model: string,
-    aspectRatio?: VideoGenerationOptions["aspectRatio"],
-    duration?: number,
-    startImage?: string,
-  ): Promise<VideoGenerationResult> {
-    const seconds = this.resolveSeconds(duration);
-    const options: VideoGenerationOptions = {
-      model,
-      ...(startImage ? { startImage } : {}),
-      ...(aspectRatio ? { aspectRatio } : {}),
-      ...(seconds ? { seconds } : {}),
-    };
-    return this.videoGenerationService.generateVideo(prompt, options);
   }
 
   async generateKeyframeOnly({
@@ -255,39 +73,6 @@ export class ConsistentVideoService {
       aspectRatio: keyframeAspectRatio,
       count,
     });
-  }
-
-  async generateVideoFromApprovedKeyframe({
-    keyframeUrl,
-    prompt,
-    model = "luma",
-    aspectRatio,
-    duration = 5,
-  }: {
-    keyframeUrl: string;
-    prompt: string;
-    model?: string;
-    aspectRatio?: VideoGenerationOptions["aspectRatio"];
-    duration?: number;
-  }): Promise<VideoGenerationResult> {
-    return await this.generateVideoFromKeyframe({
-      keyframeUrl,
-      prompt,
-      model,
-      aspectRatio,
-      duration,
-    });
-  }
-
-  private resolveSeconds(
-    duration?: number,
-  ): VideoGenerationOptions["seconds"] | undefined {
-    if (!duration) return undefined;
-    const normalized = Math.round(duration);
-    if (normalized === 4 || normalized === 8 || normalized === 12) {
-      return String(normalized) as VideoGenerationOptions["seconds"];
-    }
-    return undefined;
   }
 
   private resolveKeyframeAspectRatio(

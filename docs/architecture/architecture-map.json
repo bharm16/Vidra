@@ -130,17 +130,7 @@
     },
     {
       "method": "POST",
-      "fullPath": "/api/generate/consistent/from-keyframe",
-      "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "POST",
       "fullPath": "/api/generate/consistent/keyframe",
-      "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/generate/consistent/video",
       "sourceFile": "server/src/routes/consistentGeneration.routes.ts"
     },
     {
@@ -834,11 +824,6 @@
     {
       "from": "consistentVideoService",
       "to": "keyframeGenerationService",
-      "file": "video-generation.services.ts"
-    },
-    {
-      "from": "consistentVideoService",
-      "to": "videoGenerationService",
       "file": "video-generation.services.ts"
     },
     {

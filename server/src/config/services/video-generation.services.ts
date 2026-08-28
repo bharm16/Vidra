@@ -209,17 +209,11 @@ export function registerVideoGenerationServices(container: DIContainer): void {
   container.register(
     "consistentVideoService",
     (
-      videoGenerationService: VideoGenerationService | null,
       assetService: AssetService | null,
       keyframeGenerationService: KeyframeGenerationService | null,
     ) => {
-      if (
-        !videoGenerationService ||
-        !assetService ||
-        !keyframeGenerationService
-      ) {
+      if (!assetService || !keyframeGenerationService) {
         logger.warn("Consistent video service disabled", {
-          videoGenerationServiceAvailable: Boolean(videoGenerationService),
           assetServiceAvailable: Boolean(assetService),
           keyframeGenerationServiceAvailable: Boolean(
             keyframeGenerationService,
@@ -229,12 +223,11 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       }
 
       return new ConsistentVideoService({
-        videoGenerationService,
         assetService,
         keyframeService: keyframeGenerationService,
       });
     },
-    ["videoGenerationService", "assetService", "keyframeGenerationService"],
+    ["assetService", "keyframeGenerationService"],
   );
 
   container.register(
