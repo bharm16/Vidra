@@ -83,9 +83,14 @@ describe("ImageObservationService", () => {
 
   it("returns cached result and skips AI execution on cache hit", async () => {
     const { ai, executeMock } = createAIStub();
+    // Map-backed stub of the CacheService seam — the service's only cache.
+    const store = new Map<string, unknown>();
     const service = new ImageObservationService(ai, {
-      get: vi.fn(),
-      set: vi.fn(),
+      get: vi.fn(async (key: string) => store.get(key) ?? null),
+      set: vi.fn(async (key: string, value: unknown) => {
+        store.set(key, value);
+        return true;
+      }),
     } as never);
     const request = {
       image: "https://example.com/cached-image.jpg",

@@ -11,7 +11,6 @@ import { sha256Hex } from "@utils/hash";
 import { promises as fs } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { ObservationCache } from "./cache/ObservationCache";
 import {
   SHOT_TYPES,
   CAMERA_ANGLES,
@@ -149,15 +148,38 @@ const DEFAULT_SYSTEM_PROMPT = [
   "Be precise. Only describe what you clearly see.",
 ].join("\n");
 
+const OBSERVATION_CACHE_NAMESPACE = "image-observation";
+const OBSERVATION_CACHE_TTL_SECONDS = 86400;
+
 export class ImageObservationService {
   private static cachedPrompt: string | null = null;
   private readonly ai: AIService;
-  private readonly cache: ObservationCache;
+  private readonly cacheService: Pick<CacheService, "get" | "set">;
   private readonly log = logger.child({ service: "ImageObservationService" });
 
   constructor(aiService: AIService, cacheService: CacheService) {
     this.ai = aiService;
-    this.cache = new ObservationCache(cacheService);
+    this.cacheService = cacheService;
+  }
+
+  // CacheService is NodeCache-backed (in-process, cannot throw on get/set);
+  // a previous ObservationCache wrapper layered a second in-memory Map and
+  // unreachable "Redis unavailable" handlers over it — deleted (audit run 4).
+  private async readCache(imageHash: string): Promise<ImageObservation | null> {
+    return await this.cacheService.get<ImageObservation>(
+      `${OBSERVATION_CACHE_NAMESPACE}:${imageHash}`,
+    );
+  }
+
+  private async writeCache(
+    imageHash: string,
+    observation: ImageObservation,
+  ): Promise<void> {
+    await this.cacheService.set(
+      `${OBSERVATION_CACHE_NAMESPACE}:${imageHash}`,
+      observation,
+      { ttl: OBSERVATION_CACHE_TTL_SECONDS },
+    );
   }
 
   /**
@@ -170,7 +192,7 @@ export class ImageObservationService {
     const imageHash = this.hashImage(request.image);
 
     if (!request.skipCache) {
-      const cached = await this.cache.get(imageHash);
+      const cached = await this.readCache(imageHash);
       if (cached) {
         return {
           success: true,
@@ -187,7 +209,7 @@ export class ImageObservationService {
         request.sourcePrompt,
         imageHash,
       );
-      await this.cache.set(imageHash, observation);
+      await this.writeCache(imageHash, observation);
       return {
         success: true,
         observation,
@@ -202,7 +224,7 @@ export class ImageObservationService {
         request.image,
         imageHash,
       );
-      await this.cache.set(imageHash, observation);
+      await this.writeCache(imageHash, observation);
       return {
         success: true,
         observation,
