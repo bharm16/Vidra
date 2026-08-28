@@ -15,6 +15,11 @@ import type {
   CreateShotInput,
   UpdateShotInput,
 } from "@/features/continuity/types";
+// FROZEN EDGE (ADR-0002): continuityApi is the wire client of the frozen
+// continuity stack, imported unconditionally into this live context. Every
+// call site below is unreachable today — each entry point is gated upstream
+// on CONTINUITY_UI / SEQUENCE_EDITOR_UI — but a new ungated call here would
+// silently wake frozen server surface. Gate any new consumer on the flags.
 import { continuityApi } from "@/features/continuity/api/continuityApi";
 import { apiClient } from "@/services/ApiClient";
 import { logger } from "@/services/LoggingService";

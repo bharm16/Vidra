@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { apiClient } from "@/services/ApiClient";
+import { apiRequest } from "@/services/apiRequest";
 import {
   CreateShareResponseSchema,
   type CreateShareRequest,
@@ -10,12 +9,10 @@ import {
  * the server verifies ownership and returns an opaque shareId; the caller
  * builds the /share/:shareId URL.
  */
-const EnvelopeSchema = z.object({
-  success: z.literal(true),
-  data: CreateShareResponseSchema,
-});
-
 export async function createShare(req: CreateShareRequest): Promise<string> {
-  const payload = (await apiClient.post("/share", req)) as unknown;
-  return EnvelopeSchema.parse(payload).data.shareId;
+  const data = await apiRequest("/share", CreateShareResponseSchema, {
+    method: "POST",
+    body: req,
+  });
+  return data.shareId;
 }
