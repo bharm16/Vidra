@@ -70,11 +70,6 @@ export class AuthGateController {
     return this.pending !== null;
   }
 
-  /** The active request, or null when the gate is closed. */
-  activeRequest(): AuthGateRequest | null {
-    return this.pending?.request ?? null;
-  }
-
   /**
    * Report that authentication succeeded. Resolves the pending request with
    * `"authenticated"` and closes the gate. No-op when nothing is pending.

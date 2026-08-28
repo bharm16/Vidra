@@ -101,9 +101,10 @@ export class PromptRepository {
   }
 
   /**
-   * Get a single prompt by UUID
+   * Get a single prompt by UUID. Private: callers resolve prompts through
+   * getById, which routes uuid-shaped ids here.
    */
-  async getByUuid(uuid: string): Promise<PromptHistoryEntry | null> {
+  private async getByUuid(uuid: string): Promise<PromptHistoryEntry | null> {
     try {
       const response = await apiClient.get(
         `/sessions/by-prompt/${encodeURIComponent(uuid)}`,

@@ -10,7 +10,6 @@ describe("AuthGateController", () => {
     void controller.requestAuth({ reason: "pre-go" });
 
     expect(controller.isPending()).toBe(true);
-    expect(controller.activeRequest()).toEqual({ reason: "pre-go" });
     expect(listener).toHaveBeenCalledWith({ reason: "pre-go" });
   });
 
@@ -24,7 +23,6 @@ describe("AuthGateController", () => {
 
     await expect(pending).resolves.toBe("authenticated");
     expect(controller.isPending()).toBe(false);
-    expect(controller.activeRequest()).toBeNull();
     // Last emit closes the gate (null).
     expect(listener).toHaveBeenLastCalledWith(null);
   });
@@ -51,7 +49,7 @@ describe("AuthGateController", () => {
     const openCalls = listener.mock.calls.filter(([arg]) => arg !== null);
     expect(openCalls).toHaveLength(1);
     // The first (already-open) reason wins.
-    expect(controller.activeRequest()).toEqual({ reason: "pre-go" });
+    expect(openCalls[0]?.[0]).toEqual({ reason: "pre-go" });
 
     controller.resolveAuthenticated();
 

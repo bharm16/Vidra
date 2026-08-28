@@ -76,12 +76,3 @@ export function getPromptRepositoryForUser(
 ): PromptRepository | LocalStoragePromptRepository {
   return isAuthenticated ? getPromptRepository() : getLocalPromptRepository();
 }
-
-/**
- * Reset all repository instances (useful for testing)
- */
-export function resetRepositories(): void {
-  authRepository = null;
-  promptRepository = null;
-  localPromptRepository = null;
-}

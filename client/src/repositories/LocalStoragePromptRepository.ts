@@ -201,7 +201,9 @@ export class LocalStoragePromptRepository {
   }
 
   /**
-   * Get prompt by UUID from localStorage
+   * Get prompt by UUID from localStorage. Test oracle only — production
+   * callers resolve prompts through getById/getUserPrompts (the API adapter's
+   * getByUuid is private).
    */
   async getByUuid(uuid: string): Promise<PromptHistoryEntry | null> {
     try {

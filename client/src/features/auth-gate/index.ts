@@ -5,5 +5,4 @@ export {
   AuthGateController,
   type AuthGateReason,
   type AuthGateRequest,
-  type AuthGateOutcome,
 } from "./authGateController";
