@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import { respond } from "@middleware/respond";
 import { formatValidationDetails } from "@utils/apiResponseHelpers";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { RouteCreditService } from "@services/credits/ports";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type {
   ContinuitySession,
@@ -163,7 +163,7 @@ export async function reserveShotGenerationCredits(
   session: ContinuitySession,
   req: Request,
   res: Response,
-  userCreditService?: UserCreditService | null,
+  userCreditService?: RouteCreditService | null,
 ): Promise<ShotGenerationReservation | null> {
   if (!userCreditService) {
     respond.fail(res, req, 503, {
@@ -245,7 +245,7 @@ export async function reserveShotGenerationCredits(
 
 export async function settleSuccessfulShotGeneration(
   session: ContinuitySession,
-  userCreditService: UserCreditService,
+  userCreditService: RouteCreditService,
   reservation: ShotGenerationReservation,
   result: ContinuityShot,
 ): Promise<void> {
@@ -284,7 +284,7 @@ export async function settleSuccessfulShotGeneration(
 
 export async function settleExceptionalShotGeneration(
   session: ContinuitySession,
-  userCreditService: UserCreditService,
+  userCreditService: RouteCreditService,
   reservation: ShotGenerationReservation,
 ): Promise<void> {
   await refundWithGuard({
@@ -377,7 +377,7 @@ export async function handleGenerateShot(
   session: ContinuitySession,
   req: Request,
   res: Response,
-  userCreditService?: UserCreditService | null,
+  userCreditService?: RouteCreditService | null,
 ): Promise<void> {
   const reservation = await reserveShotGenerationCredits(
     session,

@@ -5,7 +5,7 @@ import type {
   ContinuitySession,
   ContinuityShot,
 } from "@services/continuity/types";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { RouteCreditService } from "@services/credits/ports";
 import type { ShotGenerationObserver } from "@services/continuity/ShotGenerationProgress";
 import {
   reserveShotGenerationCredits,
@@ -40,7 +40,7 @@ export async function handleGenerateShotStream(
   session: ContinuitySession,
   req: Request,
   res: Response,
-  userCreditService?: UserCreditService | null,
+  userCreditService?: RouteCreditService | null,
 ): Promise<void> {
   const reservation = await reserveShotGenerationCredits(
     session,

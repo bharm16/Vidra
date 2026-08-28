@@ -1,12 +1,12 @@
 import { sha256Hex } from "@utils/hash";
 import { logger } from "@infrastructure/Logger";
 import { sleep } from "@utils/sleep";
-import type { UserCreditService } from "./UserCreditService";
+import type { CreditRefunder } from "./ports";
 import type { RefundFailureStore } from "./RefundFailureStore";
 import { getRefundFailureStore } from "./RefundFailureStore";
 
 export interface RefundGuardParams {
-  userCreditService: UserCreditService;
+  userCreditService: CreditRefunder;
   userId: string;
   amount: number;
   refundKey: string;

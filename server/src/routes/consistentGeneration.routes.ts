@@ -6,7 +6,7 @@ import { requireCreatorId } from "@middleware/intake";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { RouteCreditService } from "@services/credits/ports";
 
 const KEYFRAME_COST = 2;
 
@@ -27,7 +27,7 @@ function getStatusCode(error: unknown): number {
 
 export function createConsistentGenerationRoutes(
   consistentVideoService: ConsistentVideoService,
-  userCreditService?: UserCreditService | null,
+  userCreditService?: RouteCreditService | null,
 ): Router {
   const router = express.Router();
 

@@ -1,5 +1,5 @@
 import { logger } from "@infrastructure/Logger";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { CreditRefunder } from "@services/credits/ports";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import {
   classifyError,
@@ -91,7 +91,7 @@ export interface ProcessVideoJobDeps {
   jobStore: JobProcessingStore;
   videoGenerationService: JobGenerationService;
   storageService: JobStorageService | null;
-  userCreditService: UserCreditService;
+  userCreditService: CreditRefunder;
   /** Worker ID used for heartbeats and logging. */
   workerId: string;
   /** Lease duration in ms — heartbeat fires at leaseMs / 3. */

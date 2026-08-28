@@ -4,6 +4,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildRefundKey } from "@services/credits/refundGuard";
 import { createImageGenerateHandler } from "@routes/preview/handlers/imageGenerate";
 import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import type { RouteCreditService } from "@services/credits/ports";
+
+/** RouteCreditService stub — no `as never`: the routes seam is a structural port. */
+function stubCreditService(
+  overrides: Partial<RouteCreditService> = {},
+): RouteCreditService {
+  return {
+    reserveCredits: vi.fn(async () => true),
+    refundCredits: vi.fn(async () => true),
+    getBalance: vi.fn(async () => 0),
+    checkAndReserveInTransaction: vi.fn(async () => ({ ok: true as const })),
+    ...overrides,
+  };
+}
 
 const createApp = (
   handler: express.RequestHandler,
@@ -48,10 +62,10 @@ describe("imageGenerate refunds", () => {
       imageGenerationService: {
         generatePreview: generatePreviewMock,
       } as never,
-      userCreditService: {
+      userCreditService: stubCreditService({
         reserveCredits: reserveCreditsMock,
         refundCredits: refundCreditsMock,
-      } as never,
+      }),
       assetService: null as never,
     });
 
@@ -79,10 +93,10 @@ describe("imageGenerate refunds", () => {
       imageGenerationService: {
         generatePreview: generatePreviewMock,
       } as never,
-      userCreditService: {
+      userCreditService: stubCreditService({
         reserveCredits: reserveCreditsMock,
         refundCredits: refundCreditsMock,
-      } as never,
+      }),
       assetService: null as never,
     });
     const app = createApp(handler, "req-img-insufficient-1");
@@ -321,7 +335,7 @@ describe("imageGenerate refunds", () => {
       imageGenerationService: {
         generatePreview: generatePreviewMock,
       } as never,
-      userCreditService: null as never,
+      userCreditService: null,
       assetService: null as never,
     });
 
@@ -354,10 +368,10 @@ describe("imageGenerate refunds", () => {
           throw generationError;
         }),
       } as never,
-      userCreditService: {
+      userCreditService: stubCreditService({
         reserveCredits: reserveCreditsMock,
         refundCredits: refundCreditsMock,
-      } as never,
+      }),
       assetService: null as never,
     });
 

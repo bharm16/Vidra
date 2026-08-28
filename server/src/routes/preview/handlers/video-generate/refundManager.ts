@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { RouteCreditService } from "@services/credits/ports";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import type { RefundManager } from "./types";
 
 interface CreateVideoRefundManagerArgs {
-  userCreditService: UserCreditService;
+  userCreditService: RouteCreditService;
   userId: string;
   requestId?: string | undefined;
   cleanedPrompt: string;

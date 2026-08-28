@@ -359,10 +359,10 @@ export async function runVideoGenerateIntake(
       sessionService: sessionService ?? null,
     });
 
-    // No `typeof === "function"` guard: `userCreditService` is a
-    // `UserCreditService` class instance (DI-resolved), and the route's
-    // null-checks gate this branch — so `getBalance` is statically
-    // guaranteed to exist.
+    // No `typeof === "function"` guard: `userCreditService` satisfies the
+    // RouteCreditService port (DI resolves the concrete UserCreditService),
+    // and the route's null-checks gate this branch — so `getBalance` is
+    // statically guaranteed to exist.
     let remainingCredits: number | null = null;
     try {
       remainingCredits = await userCreditService.getBalance(userId);

@@ -31,7 +31,7 @@ import type { OptimizeServices } from "./optimize/types";
 import type { ReferenceImageStorePort } from "@services/asset/reference-images/ports/ReferenceImageStorePort";
 import type { AssetService } from "@services/asset/AssetService";
 import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { RouteCreditService } from "@services/credits/ports";
 import type { ImageObservationService } from "@services/image-observation";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
@@ -41,7 +41,7 @@ interface ApiServices extends OptimizeServices, EnhancementServices {
   storageService: StorageRoutesService;
   assetService?: AssetService;
   consistentVideoService?: ConsistentVideoService;
-  userCreditService?: UserCreditService;
+  userCreditService?: RouteCreditService;
   referenceImageRepository?: ReferenceImageStorePort | null;
   imageObservationService?: ImageObservationService | null;
   continuitySessionService?: ContinuitySessionService | null;

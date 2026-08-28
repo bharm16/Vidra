@@ -22,7 +22,7 @@ import type {
 } from "@services/sessions/types";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { CreateSessionRequest as ContinuityCreateSessionRequest } from "@services/continuity/types";
-import type { UserCreditService } from "@services/credits/UserCreditService";
+import type { RouteCreditService } from "@services/credits/ports";
 import { SessionGenerationRecordSchema } from "@shared/schemas/session.schemas";
 import type { SessionDto } from "@shared/types/session";
 import type { ApiResponse } from "@shared/types/api";
@@ -281,7 +281,7 @@ function toSessionVersionsUpdate(
 export function createSessionRoutes(
   sessionService: SessionService,
   continuityService: ContinuitySessionService | null = null,
-  userCreditService?: UserCreditService | null,
+  userCreditService?: RouteCreditService | null,
 ): Router {
   const router = express.Router();
 
