@@ -1,15 +1,8 @@
 import React from "react";
 import { expect, afterEach, vi } from "vitest";
-import fc from "fast-check";
+import { applySharedTestSetup } from "./testSetupShared.js";
 
-import {
-  FAST_CHECK_SEED,
-  applyTestEnvDefaults,
-  stubGlobalFetch,
-} from "./testSetupShared.js";
-
-applyTestEnvDefaults();
-fc.configureGlobal({ seed: FAST_CHECK_SEED });
+applySharedTestSetup({ stubFetch: true });
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
@@ -71,10 +64,8 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 
-// Default fetch stub — tests that indirectly touch adapters (e.g.
-// GeminiAdapter) must not crash on an undefined response. Individual tests
-// still override `global.fetch` as needed.
-stubGlobalFetch();
+// The default fetch stub comes from applySharedTestSetup above; individual
+// tests still override `global.fetch` as needed.
 
 // Mock Firebase.
 //

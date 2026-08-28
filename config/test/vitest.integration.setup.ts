@@ -1,6 +1,8 @@
-import { applyTestEnvDefaults } from "./testSetupShared.js";
+import { applySharedTestSetup } from "./testSetupShared.js";
 
-applyTestEnvDefaults();
+// Integration previously ran UNSEEDED (the copy-paste preamble here had
+// dropped the fc seed) — the shared setup closes that gap.
+applySharedTestSetup();
 
 // Default the firebase-integration gate ON. Billing/credit tests still
 // also require FIRESTORE_EMULATOR_HOST (which CI sets). Defaulting only

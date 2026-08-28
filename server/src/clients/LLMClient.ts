@@ -1,3 +1,7 @@
+// Runtime is opossum 5 with @types/opossum 8 — DefinitelyTyped never
+// published v5 types. Verified 2026-08-27: our whole surface (constructor,
+// fire, on, opened, halfOpen, stats) is identical across 5–8, so the types
+// are accurate for what we call. Revisit only if adopting a v6+ API.
 import CircuitBreaker from "opossum";
 import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import { logger } from "@infrastructure/Logger";

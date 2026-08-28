@@ -6,8 +6,20 @@
  * unseeded. One owner now.
  */
 import { vi } from "vitest";
+import fc from "fast-check";
 
-/** Test-environment env defaults. Call first in every setup file. */
+/**
+ * The one entry point: env defaults + the fast-check seed, plus the fetch
+ * stub where a project wants it. Every setup file calls this once, so
+ * rotating the seed or adding an env default is a one-file change.
+ */
+export function applySharedTestSetup({ stubFetch = false } = {}) {
+  applyTestEnvDefaults();
+  fc.configureGlobal({ seed: FAST_CHECK_SEED });
+  if (stubFetch) stubGlobalFetch();
+}
+
+/** Test-environment env defaults. */
 export function applyTestEnvDefaults() {
   process.env.NODE_ENV = "test";
   process.env.GCS_BUCKET_NAME =
