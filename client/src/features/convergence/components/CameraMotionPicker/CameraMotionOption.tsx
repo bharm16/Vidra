@@ -33,33 +33,9 @@ import { FrameAnimator } from "../shared/FrameAnimator";
 // Constants
 // ============================================================================
 
-/**
- * Text descriptions for camera motions used in fallback mode
- * When depth estimation fails, these descriptions help users understand each motion
- */
-export const CAMERA_MOTION_DESCRIPTIONS: Record<string, string> = {
-  static: "Camera remains fixed. Best for dialogue or contemplative scenes.",
-  pan_left: "Camera rotates left while staying in place. Reveals new elements.",
-  pan_right:
-    "Camera rotates right while staying in place. Reveals new elements.",
-  tilt_up: "Camera tilts upward. Reveals height or creates awe.",
-  tilt_down: "Camera tilts downward. Creates introspection or reveals ground.",
-  dutch_left: "Camera rolls left for tilted horizon. Adds tension or unease.",
-  dutch_right: "Camera rolls right for tilted horizon. Adds tension or unease.",
-  push_in: "Camera moves toward subject. Creates intimacy or tension.",
-  pull_back:
-    "Camera moves away from subject. Reveals context or creates distance.",
-  track_left: "Camera slides left. Follows action or reveals scene laterally.",
-  track_right:
-    "Camera slides right. Follows action or reveals scene laterally.",
-  pedestal_up: "Camera rises vertically. Reveals overhead perspective.",
-  pedestal_down: "Camera lowers vertically. Grounds the viewer.",
-  crane_up: "Camera rises with subtle tilt. Creates grandeur.",
-  crane_down: "Camera descends with subtle tilt. Creates intimacy.",
-  arc_left: "Camera orbits left around subject. Dynamic perspective shift.",
-  arc_right: "Camera orbits right around subject. Dynamic perspective shift.",
-  reveal: "Combined push and pan. Builds anticipation for dramatic reveal.",
-};
+// Descriptions are part of the shared camera-motion contract.
+export { CAMERA_MOTION_DESCRIPTIONS } from "@shared/cameraMotion";
+import { CAMERA_MOTION_DESCRIPTIONS } from "@shared/cameraMotion";
 
 // ============================================================================
 // Types
