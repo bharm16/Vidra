@@ -4,10 +4,10 @@ import {
   expect,
   vi,
   beforeEach,
-  type MockedFunction,
 } from "vitest";
 import { ReplicateFluxSchnellProvider } from "../ReplicateFluxSchnellProvider";
 import type { ImagePreviewRequest } from "../types";
+import { createReplicateMockKit } from "../../../__tests__/replicateTestKit";
 
 type PredictionStatus =
   | "starting"
@@ -34,33 +34,15 @@ type CreatePredictionRequest = {
   };
 };
 
-let createPredictionMock: MockedFunction<
-  (params: CreatePredictionRequest) => Promise<ReplicatePrediction>
->;
-let getPredictionMock: MockedFunction<
-  (id: string) => Promise<ReplicatePrediction>
->;
-let replicateInstance: {
-  predictions: {
-    create: typeof createPredictionMock;
-    get: typeof getPredictionMock;
-  };
-};
+const kit = createReplicateMockKit<ReplicatePrediction, CreatePredictionRequest>();
 
 vi.mock("replicate", () => ({
-  default: vi.fn(() => replicateInstance),
+  default: vi.fn(() => kit.instance),
 }));
 
 describe("ReplicateFluxSchnellProvider", () => {
   beforeEach(() => {
-    createPredictionMock = vi.fn();
-    getPredictionMock = vi.fn();
-    replicateInstance = {
-      predictions: {
-        create: createPredictionMock,
-        get: getPredictionMock,
-      },
-    };
+    kit.reset();
     vi.clearAllMocks();
   });
 
@@ -96,7 +78,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
       });
-      createPredictionMock.mockRejectedValueOnce(
+      kit.createPredictionMock.mockRejectedValueOnce(
         new Error('402 {"detail": "Out of credits"}'),
       );
 
@@ -115,7 +97,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
       });
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: null,
@@ -140,7 +122,7 @@ describe("ReplicateFluxSchnellProvider", () => {
         "sleep",
       );
       sleepSpy.mockResolvedValue(undefined);
-      createPredictionMock.mockRejectedValue(
+      kit.createPredictionMock.mockRejectedValue(
         new Error('429 {"detail":"Slow down","retry_after":0}'),
       );
 
@@ -169,12 +151,12 @@ describe("ReplicateFluxSchnellProvider", () => {
         );
         sleepSpy.mockResolvedValue(undefined);
 
-        createPredictionMock.mockResolvedValueOnce({
+        kit.createPredictionMock.mockResolvedValueOnce({
           id: "pred-1",
           status: "processing",
           output: null,
         });
-        getPredictionMock.mockResolvedValueOnce({
+        kit.getPredictionMock.mockResolvedValueOnce({
           id: "pred-1",
           status,
           output: null,
@@ -200,7 +182,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
       });
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: "https://images.example.com/output.webp",
@@ -214,7 +196,7 @@ describe("ReplicateFluxSchnellProvider", () => {
 
       await provider.generatePreview(request);
 
-      const call = createPredictionMock.mock
+      const call = kit.createPredictionMock.mock
         .calls[0]?.[0] as CreatePredictionRequest;
       expect(call.input.aspect_ratio).toBe("16:9");
     });
@@ -223,7 +205,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
       });
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: "https://images.example.com/output.webp",
@@ -235,7 +217,7 @@ describe("ReplicateFluxSchnellProvider", () => {
         aspectRatio: " 21:9 ",
       });
 
-      const call = createPredictionMock.mock
+      const call = kit.createPredictionMock.mock
         .calls[0]?.[0] as CreatePredictionRequest;
       expect(call.input.aspect_ratio).toBe("21:9");
     });
@@ -245,7 +227,7 @@ describe("ReplicateFluxSchnellProvider", () => {
         apiToken: "token",
       });
 
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: "https://images.example.com/output.webp",
@@ -258,7 +240,7 @@ describe("ReplicateFluxSchnellProvider", () => {
 
       await provider.generatePreview(request);
 
-      const call = createPredictionMock.mock
+      const call = kit.createPredictionMock.mock
         .calls[0]?.[0] as CreatePredictionRequest;
       expect(call.input.prompt).toBe("Cinematic shot of a skyline.");
     });
@@ -274,7 +256,7 @@ describe("ReplicateFluxSchnellProvider", () => {
         )
         .mockResolvedValue(undefined);
 
-      createPredictionMock
+      kit.createPredictionMock
         .mockRejectedValueOnce(new Error('429 {"retry_after": 1}'))
         .mockResolvedValueOnce({
           id: "pred-2",
@@ -288,7 +270,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       });
 
       expect(result.imageUrl).toBe("https://images.example.com/output.webp");
-      expect(createPredictionMock).toHaveBeenCalledTimes(2);
+      expect(kit.createPredictionMock).toHaveBeenCalledTimes(2);
       expect(sleepSpy).toHaveBeenCalledWith(1000);
     });
   });
@@ -298,7 +280,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
       });
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: ["not-a-url", "https://images.example.com/preview.webp"],
@@ -320,7 +302,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       const provider = new ReplicateFluxSchnellProvider({
         apiToken: "token",
       });
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: "https://images.example.com/output.webp",
@@ -345,7 +327,7 @@ describe("ReplicateFluxSchnellProvider", () => {
       // what the old Gemini transformer would have rewritten — reaches Replicate
       // unchanged (after preview-section stripping, which this prompt has none of).
       const provider = new ReplicateFluxSchnellProvider({ apiToken: "token" });
-      createPredictionMock.mockResolvedValueOnce({
+      kit.createPredictionMock.mockResolvedValueOnce({
         id: "pred-1",
         status: "succeeded",
         output: "https://images.example.com/output.webp",
@@ -357,7 +339,7 @@ describe("ReplicateFluxSchnellProvider", () => {
         userId: "user-1",
       });
 
-      const call = createPredictionMock.mock
+      const call = kit.createPredictionMock.mock
         .calls[0]?.[0] as CreatePredictionRequest;
       expect(call.input.prompt).toBe(videoShapedPrompt);
     });

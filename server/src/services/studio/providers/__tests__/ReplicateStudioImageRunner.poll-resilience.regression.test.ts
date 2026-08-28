@@ -5,13 +5,17 @@ import {
   vi,
   beforeEach,
   afterEach,
-  type MockedFunction,
 } from "vitest";
 import * as fc from "fast-check";
 import {
   ReplicateStudioImageRunner,
   type StudioImageCall,
 } from "../ReplicateStudioImageRunner";
+import {
+  createReplicateMockKit,
+  stubProviderSleep,
+  transientPollError,
+} from "../../../__tests__/replicateTestKit";
 
 /**
  * Regression: a transient Replicate poll failure killed an in-flight studio
@@ -42,24 +46,13 @@ type ReplicatePrediction = {
   error?: string | null;
 };
 
-let createPredictionMock: MockedFunction<
-  (params: {
-    model: string;
-    input: Record<string, unknown>;
-  }) => Promise<ReplicatePrediction>
->;
-let getPredictionMock: MockedFunction<
-  (id: string) => Promise<ReplicatePrediction>
->;
-let replicateInstance: {
-  predictions: {
-    create: typeof createPredictionMock;
-    get: typeof getPredictionMock;
-  };
-};
+const kit = createReplicateMockKit<
+  ReplicatePrediction,
+  { model: string; input: Record<string, unknown> }
+>();
 
 vi.mock("replicate", () => ({
-  default: vi.fn(() => replicateInstance),
+  default: vi.fn(() => kit.instance),
 }));
 
 const IMAGE_URL = "https://images.example.com/output.webp";
@@ -71,33 +64,10 @@ const baseCall = (): StudioImageCall => ({
   timeoutMs: 60_000,
 });
 
-const transientPollError = () =>
-  new Error(
-    'Request to https://api.replicate.com/v1/predictions/p1 failed with status 500 Internal Server Error: {"detail":"Internal server error","status":500}',
-  );
-
-const stubSleep = (runner: ReplicateStudioImageRunner): void => {
-  vi.spyOn(
-    runner as unknown as { sleep: (ms: number) => Promise<void> },
-    "sleep",
-  ).mockImplementation(async (ms: number) => {
-    // Fake timers are active: march the clock forward so the poll deadline
-    // is real without the test waiting.
-    vi.setSystemTime(Date.now() + ms);
-  });
-};
-
 describe("regression: transient poll failures never fail an in-flight studio call", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    createPredictionMock = vi.fn();
-    getPredictionMock = vi.fn();
-    replicateInstance = {
-      predictions: {
-        create: createPredictionMock,
-        get: getPredictionMock,
-      },
-    };
+    kit.reset();
   });
 
   afterEach(() => {
@@ -111,34 +81,27 @@ describe("regression: transient poll failures never fail an in-flight studio cal
         fc.integer({ min: 0, max: 3 }),
         fc.integer({ min: 1, max: 3 }),
         async (healthyPollsBefore, failureBurst) => {
-          createPredictionMock = vi.fn();
-          getPredictionMock = vi.fn();
-          replicateInstance = {
-            predictions: {
-              create: createPredictionMock,
-              get: getPredictionMock,
-            },
-          };
+          kit.reset();
 
           const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-          stubSleep(runner);
+          stubProviderSleep(runner);
 
-          createPredictionMock.mockResolvedValueOnce({
+          kit.createPredictionMock.mockResolvedValueOnce({
             id: "pred-1",
             status: "processing",
             output: null,
           });
           for (let i = 0; i < healthyPollsBefore; i += 1) {
-            getPredictionMock.mockResolvedValueOnce({
+            kit.getPredictionMock.mockResolvedValueOnce({
               id: "pred-1",
               status: "processing",
               output: null,
             });
           }
           for (let i = 0; i < failureBurst; i += 1) {
-            getPredictionMock.mockRejectedValueOnce(transientPollError());
+            kit.getPredictionMock.mockRejectedValueOnce(transientPollError());
           }
-          getPredictionMock.mockResolvedValue({
+          kit.getPredictionMock.mockResolvedValue({
             id: "pred-1",
             status: "succeeded",
             output: IMAGE_URL,
@@ -155,30 +118,30 @@ describe("regression: transient poll failures never fail an in-flight studio cal
 
   it("still fails at the deadline when every poll fails — transient tolerance is not infinite retry", async () => {
     const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-    stubSleep(runner);
+    stubProviderSleep(runner);
 
-    createPredictionMock.mockResolvedValueOnce({
+    kit.createPredictionMock.mockResolvedValueOnce({
       id: "pred-1",
       status: "processing",
       output: null,
     });
-    getPredictionMock.mockRejectedValue(transientPollError());
+    kit.getPredictionMock.mockRejectedValue(transientPollError());
 
     await expect(runner.run(baseCall())).rejects.toThrow(/timed out|failed/i);
 
-    expect(getPredictionMock.mock.calls.length).toBeGreaterThan(1);
+    expect(kit.getPredictionMock.mock.calls.length).toBeGreaterThan(1);
   });
 
   it("a terminal prediction status still ends the call immediately", async () => {
     const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-    stubSleep(runner);
+    stubProviderSleep(runner);
 
-    createPredictionMock.mockResolvedValueOnce({
+    kit.createPredictionMock.mockResolvedValueOnce({
       id: "pred-1",
       status: "processing",
       output: null,
     });
-    getPredictionMock
+    kit.getPredictionMock
       .mockRejectedValueOnce(transientPollError())
       .mockResolvedValueOnce({
         id: "pred-1",
@@ -191,6 +154,6 @@ describe("regression: transient poll failures never fail an in-flight studio cal
       "Image call failed: GPU crashed",
     );
 
-    expect(getPredictionMock).toHaveBeenCalledTimes(2);
+    expect(kit.getPredictionMock).toHaveBeenCalledTimes(2);
   });
 });

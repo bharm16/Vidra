@@ -4,13 +4,13 @@ import {
   expect,
   vi,
   beforeEach,
-  type MockedFunction,
 } from "vitest";
 import {
   ReplicateStudioImageRunner,
   StudioCallError,
   type StudioImageCall,
 } from "../ReplicateStudioImageRunner";
+import { createReplicateMockKit } from "../../../__tests__/replicateTestKit";
 
 type PredictionStatus =
   | "starting"
@@ -26,24 +26,13 @@ type ReplicatePrediction = {
   error?: string | null;
 };
 
-let createPredictionMock: MockedFunction<
-  (params: {
-    model: string;
-    input: Record<string, unknown>;
-  }) => Promise<ReplicatePrediction>
->;
-let getPredictionMock: MockedFunction<
-  (id: string) => Promise<ReplicatePrediction>
->;
-let replicateInstance: {
-  predictions: {
-    create: typeof createPredictionMock;
-    get: typeof getPredictionMock;
-  };
-};
+const kit = createReplicateMockKit<
+  ReplicatePrediction,
+  { model: string; input: Record<string, unknown> }
+>();
 
 vi.mock("replicate", () => ({
-  default: vi.fn(() => replicateInstance),
+  default: vi.fn(() => kit.instance),
 }));
 
 const baseCall = (): StudioImageCall => ({
@@ -55,14 +44,7 @@ const baseCall = (): StudioImageCall => ({
 
 describe("ReplicateStudioImageRunner", () => {
   beforeEach(() => {
-    createPredictionMock = vi.fn();
-    getPredictionMock = vi.fn();
-    replicateInstance = {
-      predictions: {
-        create: createPredictionMock,
-        get: getPredictionMock,
-      },
-    };
+    kit.reset();
     vi.clearAllMocks();
   });
 
@@ -75,7 +57,7 @@ describe("ReplicateStudioImageRunner", () => {
 
   it("returns the image URL when the prediction succeeds immediately", async () => {
     const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-    createPredictionMock.mockResolvedValue({
+    kit.createPredictionMock.mockResolvedValue({
       id: "p1",
       status: "succeeded",
       output: "https://replicate.delivery/out.webp",
@@ -83,7 +65,7 @@ describe("ReplicateStudioImageRunner", () => {
 
     const result = await runner.run(baseCall());
     expect(result.imageUrl).toBe("https://replicate.delivery/out.webp");
-    expect(createPredictionMock).toHaveBeenCalledWith({
+    expect(kit.createPredictionMock).toHaveBeenCalledWith({
       model: "recraft-ai/recraft-v4.1",
       input: { prompt: "a logo", aspect_ratio: "1:1" },
     });
@@ -95,12 +77,12 @@ describe("ReplicateStudioImageRunner", () => {
       runner as unknown as { sleep: (ms: number) => Promise<void> },
       "sleep",
     ).mockResolvedValue(undefined);
-    createPredictionMock.mockResolvedValue({
+    kit.createPredictionMock.mockResolvedValue({
       id: "p2",
       status: "processing",
       output: null,
     });
-    getPredictionMock
+    kit.getPredictionMock
       .mockResolvedValueOnce({ id: "p2", status: "processing", output: null })
       .mockResolvedValueOnce({
         id: "p2",
@@ -110,12 +92,12 @@ describe("ReplicateStudioImageRunner", () => {
 
     const result = await runner.run(baseCall());
     expect(result.imageUrl).toBe("https://replicate.delivery/out2.webp");
-    expect(getPredictionMock).toHaveBeenCalledTimes(2);
+    expect(kit.getPredictionMock).toHaveBeenCalledTimes(2);
   });
 
   it("fails the call when the prediction reports failed", async () => {
     const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-    createPredictionMock.mockResolvedValue({
+    kit.createPredictionMock.mockResolvedValue({
       id: "p3",
       status: "failed",
       output: null,
@@ -130,7 +112,7 @@ describe("ReplicateStudioImageRunner", () => {
 
   it("maps 402 provider errors so the chat can surface them (never silent)", async () => {
     const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-    createPredictionMock.mockRejectedValue(
+    kit.createPredictionMock.mockRejectedValue(
       new Error('402 {"detail": "Insufficient credit"}'),
     );
 
@@ -148,7 +130,7 @@ describe("ReplicateStudioImageRunner", () => {
         "sleep",
       )
       .mockResolvedValue(undefined);
-    createPredictionMock.mockRejectedValue(
+    kit.createPredictionMock.mockRejectedValue(
       new Error('429 {"detail": "Slow down", "retry_after": 0}'),
     );
 
@@ -157,7 +139,7 @@ describe("ReplicateStudioImageRunner", () => {
       statusCode: 429,
     });
     // 1 initial + 2 retries
-    expect(createPredictionMock).toHaveBeenCalledTimes(3);
+    expect(kit.createPredictionMock).toHaveBeenCalledTimes(3);
     expect(sleepSpy).toHaveBeenCalled();
   });
 
@@ -167,12 +149,12 @@ describe("ReplicateStudioImageRunner", () => {
       runner as unknown as { sleep: (ms: number) => Promise<void> },
       "sleep",
     ).mockResolvedValue(undefined);
-    createPredictionMock.mockResolvedValue({
+    kit.createPredictionMock.mockResolvedValue({
       id: "p4",
       status: "processing",
       output: null,
     });
-    getPredictionMock.mockResolvedValue({
+    kit.getPredictionMock.mockResolvedValue({
       id: "p4",
       status: "processing",
       output: null,
@@ -186,7 +168,7 @@ describe("ReplicateStudioImageRunner", () => {
 
   it("wraps unknown failures as StudioCallError with status 500", async () => {
     const runner = new ReplicateStudioImageRunner({ apiToken: "token" });
-    createPredictionMock.mockRejectedValue(new Error("boom"));
+    kit.createPredictionMock.mockRejectedValue(new Error("boom"));
 
     const error = await runner.run(baseCall()).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(StudioCallError);
