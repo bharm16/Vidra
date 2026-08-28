@@ -45,10 +45,14 @@ describe("EnhancementService telemetry trace lifecycle (regression)", () => {
       countWords: vi.fn(
         (text: string) => text.trim().split(/\s+/).filter(Boolean).length,
       ),
-      detectVideoPhraseRole: vi.fn(() => null),
-      getVideoReplacementConstraints: vi.fn(() => null),
-      detectTargetModel: vi.fn(() => null),
-      detectPromptSection: vi.fn(() => null),
+      detectVideoContext: vi.fn(() => ({
+        isVideoPrompt: true,
+        modelTarget: null,
+        promptSection: null,
+        highlightWordCount: 2,
+        phraseRole: null,
+        videoConstraints: null,
+      })),
       getCategoryFocusGuidance: vi.fn(() => []),
     } as unknown as VideoService;
 

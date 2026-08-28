@@ -4,7 +4,6 @@ import type { CacheService } from "@services/cache/CacheService";
 import { sha256Hex } from "@utils/hash";
 import { TemperatureOptimizer } from "@utils/TemperatureOptimizer";
 import { EnhancementMetricsService } from "./services/EnhancementMetricsService";
-import { VideoContextDetectionService } from "./services/VideoContextDetectionService";
 import { detectPlaceholder } from "./services/placeholderDetection";
 import { CacheKeyFactory } from "./utils/CacheKeyFactory";
 import { PROMPT_MODES } from "./constants";
@@ -57,7 +56,6 @@ interface EnhancementCoreServices {
 
 interface EnhancementPipelineServices {
   metricsLogger: EnhancementMetricsService;
-  videoContextDetection: VideoContextDetectionService;
   enhancementV2: EnhancementV2Engine;
   spanContextBuilder: SpanContextBuilder;
 }
@@ -106,9 +104,6 @@ export class EnhancementService {
 
     this.pipeline = {
       metricsLogger: new EnhancementMetricsService(),
-      videoContextDetection: new VideoContextDetectionService(
-        videoPromptService,
-      ),
       enhancementV2: new EnhancementV2Engine({
         aiService,
         videoPromptService,
@@ -179,16 +174,15 @@ export class EnhancementService {
 
       currentStage = "video_context";
       const videoContextStart = performance.now();
-      const videoContext =
-        this.pipeline.videoContextDetection.detectVideoContext({
-          fullPrompt,
-          highlightedText,
-          contextBefore,
-          contextAfter,
-          highlightedCategory: highlightedCategory ?? null,
-          highlightedCategoryConfidence: highlightedCategoryConfidence ?? null,
-          metrics,
-        });
+      const videoContext = this.core.videoPromptService.detectVideoContext({
+        fullPrompt,
+        highlightedText,
+        contextBefore,
+        contextAfter,
+        highlightedCategory: highlightedCategory ?? null,
+        highlightedCategoryConfidence: highlightedCategoryConfidence ?? null,
+        metrics,
+      });
       t.recordStage("video_context", performance.now() - videoContextStart);
 
       isVideoPrompt = videoContext.isVideoPrompt;

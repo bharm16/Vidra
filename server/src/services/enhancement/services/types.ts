@@ -413,28 +413,27 @@ export type EnhancementResult =
 export interface VideoService {
   isVideoPrompt(fullPrompt: string): boolean;
   countWords(text: string): number;
-  detectVideoPhraseRole(
-    highlightedText: string,
-    contextBefore: string,
-    contextAfter: string,
-    highlightedCategory?: string | null | undefined,
-  ): string | null;
-  getVideoReplacementConstraints(
-    details?: {
-      highlightWordCount?: number | undefined;
-      phraseRole?: string | null | undefined;
-      highlightedText?: string | undefined;
-      highlightedCategory?: string | null | undefined;
-      highlightedCategoryConfidence?: number | null | undefined;
-    },
-    options?: { forceMode?: string | undefined },
-  ): VideoConstraints;
-  detectTargetModel(fullPrompt: string): string | null;
-  detectPromptSection(
-    highlightedText: string,
-    fullPrompt: string,
-    contextBefore: string,
-  ): string | null;
+  /**
+   * One-pass video-context detection for a highlighted span. The sequencing
+   * (detection gates role/constraints/model/section) lives behind this seam;
+   * the granular predicates are private to the implementation.
+   */
+  detectVideoContext(params: {
+    fullPrompt: string;
+    highlightedText: string;
+    contextBefore: string;
+    contextAfter: string;
+    highlightedCategory: string | null;
+    highlightedCategoryConfidence: number | null | undefined;
+    metrics: { modelDetection?: number; sectionDetection?: number };
+  }): {
+    isVideoPrompt: boolean;
+    modelTarget: string | null;
+    promptSection: string | null;
+    highlightWordCount: number;
+    phraseRole: string | null;
+    videoConstraints: VideoConstraints | null;
+  };
   getCategoryFocusGuidance(
     phraseRole: string | null | undefined,
     categoryHint: string | null | undefined,

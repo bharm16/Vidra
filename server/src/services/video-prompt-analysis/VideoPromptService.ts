@@ -33,6 +33,26 @@ export interface VideoPromptServiceDeps {
   videoPromptLlmGateway?: VideoPromptLlmGateway | null;
 }
 
+export interface VideoContextDetectionParams {
+  fullPrompt: string;
+  highlightedText: string;
+  contextBefore: string;
+  contextAfter: string;
+  highlightedCategory: string | null;
+  highlightedCategoryConfidence: number | null | undefined;
+  /** Timing sink — written in place (structural slice of the caller's metrics). */
+  metrics: { modelDetection?: number; sectionDetection?: number };
+}
+
+export interface VideoContextDetectionResult {
+  isVideoPrompt: boolean;
+  modelTarget: string | null;
+  promptSection: string | null;
+  highlightWordCount: number;
+  phraseRole: string | null;
+  videoConstraints: ConstraintConfig | null;
+}
+
 /**
  * VideoPromptService - Main Orchestrator
  *
@@ -102,9 +122,75 @@ export class VideoPromptService {
   }
 
   /**
+   * Detect video context and extract video-specific information for a
+   * highlighted span in one pass: detection gates role analysis, constraint
+   * generation, model detection, and section detection. This sequencing is
+   * the video-context concept — callers consume the result, not the
+   * individual predicates (which are private).
+   */
+  detectVideoContext(
+    params: VideoContextDetectionParams,
+  ): VideoContextDetectionResult {
+    const isVideoPrompt = this.isVideoPrompt(params.fullPrompt);
+    const highlightWordCount = this.countWords(params.highlightedText);
+    const phraseRole = isVideoPrompt
+      ? this.detectVideoPhraseRole(
+          params.highlightedText,
+          params.contextBefore,
+          params.contextAfter,
+          params.highlightedCategory,
+        )
+      : null;
+    const videoConstraints = isVideoPrompt
+      ? this.getVideoReplacementConstraints({
+          highlightWordCount,
+          phraseRole,
+          highlightedText: params.highlightedText,
+          highlightedCategory: params.highlightedCategory,
+          highlightedCategoryConfidence:
+            params.highlightedCategoryConfidence ?? null,
+        })
+      : null;
+
+    let modelTarget: string | null = null;
+    let promptSection: string | null = null;
+
+    if (isVideoPrompt) {
+      const modelStart = Date.now();
+      modelTarget = this.detectTargetModel(params.fullPrompt);
+      params.metrics.modelDetection = Date.now() - modelStart;
+
+      const sectionStart = Date.now();
+      promptSection = this.detectPromptSection(
+        params.highlightedText,
+        params.fullPrompt,
+        params.contextBefore,
+      );
+      params.metrics.sectionDetection = Date.now() - sectionStart;
+    }
+
+    this.log.debug("Model and section detection", {
+      isVideoPrompt,
+      modelTarget: modelTarget || "none detected",
+      promptSection: promptSection || "main_prompt",
+      modelDetectionTime: params.metrics.modelDetection,
+      sectionDetectionTime: params.metrics.sectionDetection,
+    });
+
+    return {
+      isVideoPrompt,
+      modelTarget,
+      promptSection,
+      highlightWordCount,
+      phraseRole,
+      videoConstraints,
+    };
+  }
+
+  /**
    * Detect the likely role of a highlighted phrase within a video prompt
    */
-  detectVideoPhraseRole(
+  private detectVideoPhraseRole(
     highlightedText: string | null | undefined,
     contextBefore: string | null | undefined,
     contextAfter: string | null | undefined,
@@ -121,7 +207,7 @@ export class VideoPromptService {
   /**
    * Resolve video replacement constraints based on highlight context
    */
-  getVideoReplacementConstraints(
+  private getVideoReplacementConstraints(
     details: ConstraintDetails = {},
     options: ConstraintOptions = {},
   ): ConstraintConfig {
@@ -154,7 +240,9 @@ export class VideoPromptService {
   /**
    * Detect which AI video model is being targeted
    */
-  detectTargetModel(fullPrompt: string | null | undefined): string | null {
+  private detectTargetModel(
+    fullPrompt: string | null | undefined,
+  ): string | null {
     const detected = this.modelDetector.detectTargetModel(fullPrompt);
     return detected ? resolvePromptModelId(detected) : null;
   }
@@ -162,7 +250,7 @@ export class VideoPromptService {
   /**
    * Detect which section of the prompt template is being edited
    */
-  detectPromptSection(
+  private detectPromptSection(
     highlightedText: string | null | undefined,
     fullPrompt: string | null | undefined,
     contextBefore: string = "",
