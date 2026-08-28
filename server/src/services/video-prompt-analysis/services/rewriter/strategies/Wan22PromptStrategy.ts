@@ -6,7 +6,7 @@ export const wan22PromptStrategy: ModelPromptStrategy = {
   output: { format: "text" },
   buildPrompt: (context) => `${buildBaseHeader(context)}
 INSTRUCTIONS for Wan 2.2:
-1. Use the structure: Subject + Scene + Motion. Target 35-55 words (never exceed 55).
+1. Use the structure: Subject + Scene + Motion.
 2. Spend most of your word budget on VISIBLE DETAILS: materials, textures, colors, body positions, facial expressions, clothing, surface qualities.
 3. Describe the subject's appearance and action precisely — clothes, posture, gesture, expression.
 4. Include at least 2-3 specific environmental details (objects, surfaces, atmospheric conditions).

@@ -1,3 +1,4 @@
+import { getPromptModelConstraints } from "@shared/videoModels";
 import type { RewriteConstraints } from "../../../strategies/types";
 import type { PromptBuildContext } from "./types";
 
@@ -37,6 +38,14 @@ export const buildBaseHeader = ({
 }: PromptBuildContext): string => {
   const irJson = JSON.stringify(ir, null, 2);
   const constraintBlock = formatConstraintBlock(constraints);
+  // Word budgets are per-model contract data (shared/videoModels
+  // PROMPT_MODEL_CONSTRAINTS) — the same numbers the deterministic
+  // strategies enforce post-hoc. Strategies must not restate them as
+  // literals; two of six had already drifted when this line was added.
+  const wordLimits = getPromptModelConstraints(modelId)?.wordLimits;
+  const budgetLine = wordLimits
+    ? `WORD BUDGET: target ${wordLimits.min}-${wordLimits.max} words; never exceed ${wordLimits.max}.\n\n`
+    : "";
 
   return `You are a professional video prompt engineer. Your goal is to rewrite the original user intent into an optimized prompt for the ${modelId} video generation model.
 
@@ -48,7 +57,7 @@ OUTPUT FORMAT RULES (apply to every model strategy):
 - DO NOT prefix the prompt with a colon-list of tech specs (e.g. "Static tripod, eye-level, 100mm at: ..." or "Wide shot, 24fps, 35mm at f/4: ..."). Same truncation hazard, just at the beginning instead of the end. If you must mention specs early, fold them into the first sentence as a clause, NOT a list with a trailing colon.
 - End the prompt with a complete sentence terminated by punctuation. No trailing commas, no half-finished parenthetical lists, no orphaned prepositions like "...at" or "...with".
 
-Video Prompt IR:
+${budgetLine}Video Prompt IR:
 \`\`\`json
 ${irJson}
 \`\`\`

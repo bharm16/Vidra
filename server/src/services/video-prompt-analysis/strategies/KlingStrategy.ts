@@ -448,8 +448,11 @@ export class KlingStrategy extends BaseStrategy {
     } else {
       const compactSource = this.cleanWhitespace(sourcePrompt);
       const words = compactSource.split(/\s+/).filter(Boolean);
+      const maxWords = MODEL_CONSTRAINTS.wordLimits.max;
       prompt =
-        words.length > 80 ? `${words.slice(0, 80).join(" ")}.` : compactSource;
+        words.length > maxWords
+          ? `${words.slice(0, maxWords).join(" ")}.`
+          : compactSource;
       changes.push("Kept concise source prose for Kling prompt fidelity");
     }
 
