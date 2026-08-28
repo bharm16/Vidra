@@ -3,10 +3,11 @@ import { jsonResponse } from "./helpers/responses";
 import { mockSessionRoutes } from "./helpers/mockRoutes";
 import { injectAuthUser } from "./helpers/auth";
 
-// FIXME(e2e): Same root cause as video-generation.spec.ts — the preview
-// storyboard button (CanvasSettingsRow.tsx:432) is gated on showPreviewButton,
-// which the mocked /api/optimize response doesn't drive on. Pre-existing
-// failure on main for 5+ runs.
+// FIXME(e2e): the preview storyboard button (CanvasSettingsRow.tsx, the
+// showPreviewButton render gate) only appears once generations exist —
+// CanvasWorkspace passes showPreviewButton={hasGenerations} — which the
+// mocked /api/optimize response doesn't drive on. Pre-existing failure on
+// main for 5+ runs.
 test.fixme(
   "workspace smoke: optimize, preview, and session persistence flow",
   async ({ page }) => {

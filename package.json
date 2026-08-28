@@ -174,8 +174,6 @@
     "test:e2e": "bash scripts/test-e2e-if-present.sh",
     "test:e2e:ui": "playwright test --ui --config config/test/playwright.config.js",
     "test:e2e:debug": "playwright test --debug --config config/test/playwright.config.js",
-    "test:e2e:latency": "playwright test tests/e2e/text-to-highlights-latency.spec.js --config config/test/playwright.config.js",
-    "test:e2e:latency:ui": "playwright test tests/e2e/text-to-highlights-latency.spec.js --ui --config config/test/playwright.config.js",
     "test:replay": "vitest run --config config/test/vitest.integration.config.js tests/integration/replay-mode.integration.test.ts",
     "test:regression": "vitest run --config config/test/vitest.unit.config.js regression",
     "test:regression:list": "bash scripts/audit-regression-tests.sh",
