@@ -10,7 +10,7 @@ import {
   StudioCallError,
   type StudioImageCall,
 } from "../ReplicateStudioImageRunner";
-import { createReplicateMockKit } from "../../../__tests__/replicateTestKit";
+import { createReplicateMockKit } from "@services/__tests__/replicateTestKit";
 
 type PredictionStatus =
   | "starting"

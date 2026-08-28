@@ -15,7 +15,7 @@ import {
   createReplicateMockKit,
   stubProviderSleep,
   transientPollError,
-} from "../../../__tests__/replicateTestKit";
+} from "@services/__tests__/replicateTestKit";
 
 /**
  * Regression: a transient Replicate poll failure killed an in-flight studio

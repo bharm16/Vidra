@@ -7,7 +7,7 @@ import {
 } from "vitest";
 import { ReplicateFluxKontextFastProvider } from "../ReplicateFluxKontextFastProvider";
 import type { ImagePreviewRequest } from "../types";
-import { createReplicateMockKit } from "../../../__tests__/replicateTestKit";
+import { createReplicateMockKit } from "@services/__tests__/replicateTestKit";
 
 type PredictionStatus =
   | "starting"
