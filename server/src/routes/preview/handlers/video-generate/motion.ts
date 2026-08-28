@@ -1,7 +1,4 @@
-import {
-  CAMERA_MOTION_DESCRIPTIONS,
-  CAMERA_PATHS,
-} from "@services/convergence/constants";
+import { describeCameraMotion, CAMERA_PATHS } from "#shared/cameraMotion";
 import { CAMERA_MOTION_KEY, SUBJECT_MOTION_KEY } from "./constants";
 
 export interface MotionContext {
@@ -22,7 +19,7 @@ const toTitleCaseFromId = (value: string): string =>
   value.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
 const resolveCameraMotionText = (cameraMotionId: string): string => {
-  const description = CAMERA_MOTION_DESCRIPTIONS[cameraMotionId];
+  const description = describeCameraMotion(cameraMotionId);
   if (description) {
     return description;
   }

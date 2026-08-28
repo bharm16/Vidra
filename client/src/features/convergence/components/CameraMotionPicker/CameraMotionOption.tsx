@@ -33,9 +33,7 @@ import { FrameAnimator } from "../shared/FrameAnimator";
 // Constants
 // ============================================================================
 
-// Descriptions are part of the shared camera-motion contract.
-export { CAMERA_MOTION_DESCRIPTIONS } from "@shared/cameraMotion";
-import { CAMERA_MOTION_DESCRIPTIONS } from "@shared/cameraMotion";
+import { describeCameraMotion } from "@shared/cameraMotion";
 
 // ============================================================================
 // Types
@@ -646,7 +644,7 @@ export const CameraMotionOption: React.FC<CameraMotionOptionProps> = ({
                 {cameraPath.label}
               </div>
               <div className="text-sm text-muted line-clamp-3">
-                {CAMERA_MOTION_DESCRIPTIONS[cameraPath.id] ||
+                {describeCameraMotion(cameraPath.id) ||
                   "Camera motion preview"}
               </div>
             </div>

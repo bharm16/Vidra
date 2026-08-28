@@ -78,7 +78,7 @@ const NO_ROTATION = { pitch: 0, yaw: 0, roll: 0 };
  * - Arc: Camera orbits around the subject
  * - Reveal: Combined push and pan
  */
-export const CAMERA_PATHS: CameraPath[] = [
+export const CAMERA_PATHS = [
   // STATIC (1)
   {
     id: "static",
@@ -300,7 +300,10 @@ export const CAMERA_PATHS: CameraPath[] = [
     },
     duration: 3,
   },
-];
+] as const satisfies readonly CameraPath[];
+
+/** The closed set of camera-path ids — typo'd lookups fail to compile. */
+export type CameraPathId = (typeof CAMERA_PATHS)[number]["id"];
 
 // ============================================================================
 // Camera Motion Descriptions (Task 1.8)
@@ -310,7 +313,7 @@ export const CAMERA_PATHS: CameraPath[] = [
  * Text descriptions for camera motions used in fallback mode
  * When depth estimation fails, these descriptions help users understand each motion
  */
-export const CAMERA_MOTION_DESCRIPTIONS: Record<string, string> = {
+export const CAMERA_MOTION_DESCRIPTIONS: Record<CameraPathId, string> = {
   static: "Camera remains fixed. Best for dialogue or contemplative scenes.",
   pan_left: "Camera rotates left while staying in place. Reveals new elements.",
   pan_right:
@@ -333,3 +336,14 @@ export const CAMERA_MOTION_DESCRIPTIONS: Record<string, string> = {
   arc_right: "Camera orbits right around subject. Dynamic perspective shift.",
   reveal: "Combined push and pan. Builds anticipation for dramatic reveal.",
 };
+
+/**
+ * Safe lookup for runtime ids (wire values, persisted state). The record
+ * itself stays keyed by CameraPathId so the catalogue is compile-checked;
+ * this is the one sanctioned string-indexed door.
+ */
+export function describeCameraMotion(id: string): string | undefined {
+  return (CAMERA_MOTION_DESCRIPTIONS as Record<string, string | undefined>)[
+    id
+  ];
+}

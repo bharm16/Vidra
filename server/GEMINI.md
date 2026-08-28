@@ -25,16 +25,16 @@
 
 These terms have specific meanings in this codebase. Do not conflate them.
 
-| Term                          | Meaning                                                          | Service Path                                               | Route                              |
-| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories     | `llm/span-labeling/`                                       | `/api/llm/label-spans`             |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span        | `services/enhancement/`                                    | `/api/enhance` |
-| **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement) | `services/prompt-optimization/`                            | `/api/optimize` (buffered)         |
-| **Continuity**                | Shot-to-shot visual consistency (frame-bridge, style-match)      | `services/continuity/`                                     | `/api/continuity`                  |
-| **Convergence**               | Motion/visual convergence pipeline                               | `services/convergence/`                                    | `/api/motion`                      |
-| **Model Intelligence**        | AI-powered model recommendation                                  | `services/model-intelligence/`                             | `/api/model-intelligence`          |
-| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation        | `services/image-generation/`, `services/video-generation/` | `/api/preview`                     |
-| **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway            | `services/video-generation/`                               | `/api/preview` (shared routes)     |
+| Term                          | Meaning                                                          | Service Path                                               | Route                          |
+| ----------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------ |
+| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories     | `llm/span-labeling/`                                       | `/api/llm/label-spans`         |
+| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span        | `services/enhancement/`                                    | `/api/enhance`                 |
+| **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement) | `services/prompt-optimization/`                            | `/api/optimize` (buffered)     |
+| **Continuity**                | Shot-to-shot visual consistency (frame-bridge, style-match)      | `services/continuity/`                                     | — (under `/api/sessions/*`)    |
+| **Convergence**               | Motion/visual convergence pipeline                               | `services/convergence/`                                    | `/api/motion`                  |
+| **Model Intelligence**        | AI-powered model recommendation                                  | `services/model-intelligence/`                             | `/api/model-intelligence`      |
+| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation        | `services/image-generation/`, `services/video-generation/` | `/api/preview`                 |
+| **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway            | `services/video-generation/`                               | `/api/preview` (shared routes) |
 
 **Service imports:** Use canonical domain paths — `services/enhancement/EnhancementService.ts`. Domain directories are the only source.
 
@@ -80,22 +80,21 @@ Legacy `*_DISABLED` env var names still work but emit a deprecation warning at s
 
 Server route files map to client-side API files. Reference this when adding/modifying routes to ensure the client is updated.
 
-| Route                                   | Server Route File                         | Client API/Service                                  |
-| --------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
-| `POST /api/optimize`                    | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
-| `POST /api/enhance` | `enhancement.routes.ts` | `services/EnhancementApi.ts`                        |
-| `POST /api/llm/label-spans`             | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
-| `/api/preview/*`                        | `preview.routes.ts`                       | `features/preview/api/`                             |
-| `/api/payment/*`                        | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
-| `/api/motion/*`                         | `motion.routes.ts`                        | `api/motionApi.ts`                                  |
-| `/api/storage/*`                        | `storage.routes.ts`                       | `api/storageApi.ts`                                 |
-| `/api/capabilities`                     | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
-| `/api/continuity/*`                     | `continuity.routes.ts`                    | `features/continuity/api/`                          |
-| `/api/model-intelligence/*`             | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
-| `/api/sessions/*`                       | `sessions.routes.ts`                      | (uses ApiClient directly)                           |
-| `/api/assets/*`                         | `asset.routes.ts`                         | `features/assets/`                                  |
-| `/api/reference-images/*`               | `reference-images.routes.ts`              | `features/reference-images/`                        |
-| `/health`                               | `health.routes.ts`                        | (not called from client)                            |
+| Route                       | Server Route File              | Client API/Service                                  |
+| --------------------------- | ------------------------------ | --------------------------------------------------- |
+| `POST /api/optimize`        | `optimize.routes.ts`           | `services/PromptOptimizationApi.ts`                 |
+| `POST /api/enhance`         | `enhancement.routes.ts`        | `services/EnhancementApi.ts`                        |
+| `POST /api/llm/label-spans` | `labelSpansRoute.ts`           | `features/span-highlighting/api/spanLabelingApi.ts` |
+| `/api/preview/*`            | `preview.routes.ts`            | `features/preview/api/`                             |
+| `/api/payment/*`            | `payment.routes.ts`            | `api/billingApi.ts`                                 |
+| `/api/motion/*`             | `motion.routes.ts`             | `api/motionApi.ts`                                  |
+| `/api/storage/*`            | `storage.routes.ts`            | `api/storageApi.ts`                                 |
+| `/api/capabilities`         | `capabilities.routes.ts`       | `services/CapabilitiesApi.ts`                       |
+| `/api/model-intelligence/*` | `model-intelligence.routes.ts` | `features/model-intelligence/api/`                  |
+| `/api/sessions/*`           | `sessions.routes.ts`           | (uses ApiClient directly)                           |
+| `/api/assets/*`             | `asset.routes.ts`              | `features/assets/`                                  |
+| `/api/reference-images/*`   | `reference-images.routes.ts`   | `features/reference-images/`                        |
+| `/health`                   | `health.routes.ts`             | (not called from client)                            |
 
 ## Architecture pattern
 

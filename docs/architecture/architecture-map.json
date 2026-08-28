@@ -260,11 +260,6 @@
     },
     {
       "method": "GET",
-      "fullPath": "/api/preview/video/availability",
-      "sourceFile": "server/src/routes/preview.routes.ts"
-    },
-    {
-      "method": "GET",
       "fullPath": "/api/preview/video/content/:contentId",
       "sourceFile": "server/src/routes/preview.routes.ts"
     },

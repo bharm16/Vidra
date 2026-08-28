@@ -11,7 +11,6 @@ import { asyncHandler } from "@middleware/asyncHandler";
 import type { PreviewRoutesServices } from "./types";
 import { createImageGenerateHandler } from "./preview/handlers/imageGenerate";
 import { createImageStoryboardGenerateHandler } from "./preview/handlers/imageStoryboardGenerate";
-import { createVideoAvailabilityHandler } from "./preview/handlers/videoAvailability";
 import { createVideoGenerateHandler } from "./preview/handlers/videoGenerate";
 import { createVideoJobsHandler } from "./preview/handlers/videoJobs";
 import { createVideoContentHandler } from "./preview/handlers/videoContent";
@@ -52,8 +51,6 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   const imageGenerateHandler = createImageGenerateHandler(resolvedServices);
   const imageStoryboardGenerateHandler =
     createImageStoryboardGenerateHandler(resolvedServices);
-  const videoAvailabilityHandler =
-    createVideoAvailabilityHandler(resolvedServices);
   const videoGenerateHandler = createVideoGenerateHandler(resolvedServices);
   const videoJobsHandler = createVideoJobsHandler(resolvedServices);
   const videoContentHandler = createVideoContentHandler(resolvedServices);
@@ -81,7 +78,6 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   router.post("/image/view-batch", asyncHandler(imageAssetViewBatchHandler));
   router.get("/video/view", asyncHandler(videoAssetViewHandler));
   router.get("/media/view", asyncHandler(mediaReferenceViewHandler));
-  router.get("/video/availability", asyncHandler(videoAvailabilityHandler));
   router.post("/face-swap", asyncHandler(faceSwapPreviewHandler));
   router.post("/video/generate", asyncHandler(videoGenerateHandler));
   router.get("/video/jobs/:jobId", asyncHandler(videoJobsHandler));

@@ -15,8 +15,8 @@ When sources disagree, this is the order of authority:
 3. Hand-curated tables in:
    - `CLAUDE.md` § "Route → Service → Client API Map"
    - `GEMINI.md` § "Route → Service → Client API Map"
-   - `server/CLAUDE.md`
    - `server/GEMINI.md` § "Route → Client API Map"
+     (`server/CLAUDE.md` carries route conventions only — no table)
 4. Client-side API/schema files: `client/src/api/`, `client/src/services/`, `client/src/features/<x>/api/`
 
 If (3) or (4) disagrees with (1), (3)/(4) is wrong.

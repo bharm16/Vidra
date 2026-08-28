@@ -143,16 +143,8 @@ describe("Preview Routes (integration)", () => {
     expect(userCreditService.reserveCredits).not.toHaveBeenCalled();
   });
 
-  it("returns video availability snapshots and enforces auth middleware", async () => {
-    const { app, videoGenerationService } = createApp();
-
-    const availabilityResponse = await request(app)
-      .get("/api/preview/video/availability")
-      .set("x-api-key", TEST_API_KEY);
-
-    expect(availabilityResponse.status).toBe(200);
-    expect(availabilityResponse.body.success).toBe(true);
-    expect(videoGenerationService.getAvailabilitySnapshot).toHaveBeenCalled();
+  it("enforces auth middleware", async () => {
+    const { app } = createApp();
 
     const noAuthResponse = await request(app)
       .post("/api/preview/generate")

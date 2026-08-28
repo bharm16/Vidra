@@ -13,9 +13,9 @@ export {
 
 export {
   CameraMotionOption,
-  CAMERA_MOTION_DESCRIPTIONS,
   type CameraMotionOptionProps,
 } from "./CameraMotionOption";
+export { CAMERA_MOTION_DESCRIPTIONS } from "@shared/cameraMotion";
 
 export {
   CameraMotionErrorBoundary,
