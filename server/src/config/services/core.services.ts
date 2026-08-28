@@ -17,6 +17,7 @@ import {
   resolveSignedUrlTtlMs,
 } from "./env-utils.ts";
 import { resolveAllFlags } from "../feature-flags.ts";
+import { DEFAULT_VIDEO_JOB_LEASE_SECONDS } from "../env.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerCoreServices(container: DIContainer): void {
@@ -214,13 +215,12 @@ export function registerCoreServices(container: DIContainer): void {
         // Lease must exceed heartbeatInterval × MAX_HEARTBEAT_FAILURES
         // (20s × 3 = 60s). At the prior 60s default, the heartbeat-failure
         // window equaled the lease — leaving zero margin between "this worker
-        // is unhealthy" and "another worker may claim the lease." 90s gives
-        // a 30s margin so the unhealthy state can be detected before the
-        // lease expires. Keep this in sync with VIDEO_JOB_LEASE_SECONDS in
-        // env.ts and the fallback in routes/preview/inlineProcessor.ts.
+        // is unhealthy" and "another worker may claim the lease." The shared
+        // default (env.ts) gives a 30s margin so the unhealthy state can be
+        // detected before the lease expires.
         leaseSeconds: resolvePositiveNumber(
           process.env.VIDEO_JOB_LEASE_SECONDS,
-          90,
+          DEFAULT_VIDEO_JOB_LEASE_SECONDS,
           1,
         ),
         maxConcurrent: resolvePositiveNumber(

@@ -184,12 +184,27 @@ const videoGenerationSchema = z.object({
   IMAGE_PREVIEW_PROVIDER_ORDER: optionalString(),
 });
 
+/**
+ * Single home for the lease default — read by this schema, the DI worker
+ * config, and the inline processor. Must be > VIDEO_JOB_HEARTBEAT_INTERVAL_MS
+ * × MAX_HEARTBEAT_FAILURES (20s × 3 = 60s); 90s leaves a 30s safety margin so
+ * a 60s heartbeat-failure window doesn't exactly equal the lease
+ * (phantom-takeover risk).
+ */
+export const DEFAULT_VIDEO_JOB_LEASE_SECONDS = 90;
+
 const videoJobSchema = z.object({
   VIDEO_JOB_MAX_ATTEMPTS: coercePositiveInt(3),
-  // Must be > VIDEO_JOB_HEARTBEAT_INTERVAL_MS × MAX_HEARTBEAT_FAILURES
-  // (20s × 3 = 60s). 90s leaves a 30s safety margin so a 60s heartbeat-failure
-  // window doesn't exactly equal the lease (phantom-takeover risk).
-  VIDEO_JOB_LEASE_SECONDS: coercePositiveInt(90),
+  VIDEO_JOB_LEASE_SECONDS: coercePositiveInt(DEFAULT_VIDEO_JOB_LEASE_SECONDS),
+  /**
+   * Gate on POST /preview/video/generate: "required" rejects requests without
+   * an Idempotency-Key header; "soft" lets them through ungated. The browser
+   * client always sends the header, so "required" is safe as the default —
+   * but non-browser callers hit a 428-style rejection unless this is "soft".
+   */
+  VIDEO_GENERATE_IDEMPOTENCY_MODE: z
+    .enum(["required", "soft"])
+    .default("required"),
   VIDEO_JOB_HEARTBEAT_INTERVAL_MS: coercePositiveInt(20000),
   VIDEO_JOB_STALE_QUEUE_SECONDS: coercePositiveInt(300),
   VIDEO_JOB_STALE_QUEUE_MINUTES: z.coerce.number().int().positive().optional(),

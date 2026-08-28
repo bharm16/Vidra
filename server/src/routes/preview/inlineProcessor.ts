@@ -1,4 +1,5 @@
 import { logger } from "@infrastructure/Logger";
+import { DEFAULT_VIDEO_JOB_LEASE_SECONDS } from "@config/env";
 import type { PreviewRoutesServices } from "@routes/types";
 import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
 import {
@@ -22,10 +23,6 @@ interface InlineVideoProcessorParams {
    */
   sessionService?: JobSessionAppendPort | null;
 }
-
-// Default kept in sync with VIDEO_JOB_LEASE_SECONDS in server/src/config/env.ts
-// and core.services.ts. If any of those change, update all three.
-const DEFAULT_VIDEO_JOB_LEASE_SECONDS = 90;
 
 function getVideoJobLeaseMs(): number {
   const leaseSeconds = Number.parseInt(
