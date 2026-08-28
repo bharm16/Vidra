@@ -219,11 +219,6 @@ const videoJobSchema = z.object({
   VIDEO_GENERATE_IDEMPOTENCY_PENDING_TTL_MS: coercePositiveInt(360000),
   VIDEO_GENERATE_IDEMPOTENCY_REPLAY_TTL_MS: coercePositiveInt(86400000),
   VIDEO_WORKER_SHUTDOWN_DRAIN_SECONDS: coercePositiveInt(45),
-  VIDEO_WORKER_HEARTBEAT_MAX_AGE_MS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
   VIDEO_CONTENT_TOKEN_SECRET: optionalString(),
   VIDEO_CONTENT_TOKEN_SECRET_PREVIOUS: optionalString(),
   VIDEO_CONTENT_TOKEN_TTL_SECONDS: coercePositiveInt(3600),

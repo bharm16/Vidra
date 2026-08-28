@@ -31,13 +31,13 @@ export interface StripeWebhookEventRecord {
  * `schemaVersion: 1` (or `undefined` for legacy records) is valid. Throws on
  * any other value so old pods do not silently mis-parse a future shape.
  */
-export const StripeWebhookEventSchemaVersionSchema = z.literal(1).optional();
+const StripeWebhookEventSchemaVersionSchema = z.literal(1).optional();
 
 /**
  * Validate that a raw record's `schemaVersion` is supported. Throws (Zod
  * error) on unknown future versions. Returns the parsed value.
  */
-export function parseStripeWebhookEventSchemaVersion(
+function parseStripeWebhookEventSchemaVersion(
   value: unknown,
 ): 1 | undefined {
   return StripeWebhookEventSchemaVersionSchema.parse(value);
