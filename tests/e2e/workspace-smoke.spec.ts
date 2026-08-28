@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { jsonResponse } from "./helpers/responses";
+import { mockSessionRoutes } from "./helpers/mockRoutes";
 import { injectAuthUser } from "./helpers/auth";
 
 // FIXME(e2e): Same root cause as video-generation.spec.ts — the preview
@@ -66,69 +67,14 @@ test.fixme(
       );
     });
 
-    await page.route("**/api/sessions**", async (route) => {
-      const request = route.request();
-      const url = new URL(request.url());
-      const pathname = url.pathname;
-      const method = request.method();
-
-      if (method === "GET" && pathname.endsWith("/api/sessions")) {
-        await route.fulfill(jsonResponse({ success: true, data: [] }));
-        return;
-      }
-
-      if (method === "POST" && pathname.endsWith("/api/sessions")) {
+    await mockSessionRoutes(page, {
+      sessionId: "session_e2e_1",
+      promptUuid: "prompt_e2e_1",
+      createInput: "Initial prompt",
+      loadedInput: "Loaded prompt",
+      onMutation: () => {
         sessionMutationCalls += 1;
-        await route.fulfill(
-          jsonResponse({
-            success: true,
-            data: {
-              id: "session_e2e_1",
-              prompt: { uuid: "prompt_e2e_1", input: "Initial prompt" },
-            },
-          }),
-        );
-        return;
-      }
-
-      if (method === "GET" && pathname.includes("/api/sessions/by-prompt/")) {
-        await route.fulfill(
-          jsonResponse(
-            {
-              success: true,
-              data: { id: "session_e2e_1" },
-            },
-            200,
-          ),
-        );
-        return;
-      }
-
-      if (
-        method === "GET" &&
-        pathname.includes("/api/sessions/session_e2e_1")
-      ) {
-        await route.fulfill(
-          jsonResponse({
-            success: true,
-            data: {
-              id: "session_e2e_1",
-              prompt: { uuid: "prompt_e2e_1", input: "Loaded prompt" },
-            },
-          }),
-        );
-        return;
-      }
-
-      if (method === "PATCH") {
-        sessionMutationCalls += 1;
-        await route.fulfill(
-          jsonResponse({ success: true, data: { id: "session_e2e_1" } }),
-        );
-        return;
-      }
-
-      await route.fulfill(jsonResponse({ success: true }));
+      },
     });
 
     await page.goto("/");
