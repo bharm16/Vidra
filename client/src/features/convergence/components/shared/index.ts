@@ -1,46 +1,16 @@
 /**
- * Shared Components for Visual Convergence Feature
- *
- * This module exports reusable UI components used across the convergence flow.
+ * Shared components for the camera-motion picker — the surviving convergence
+ * surface. The wizard-era components were deleted with the wizard.
  */
 
-// Loading state components
-export { ImageSkeleton, type ImageSkeletonProps } from "./ImageSkeleton";
-
-// Image selection components
-export { ImageOption, type ImageOptionProps } from "./ImageOption";
-export { ImageGrid, type ImageGridProps } from "./ImageGrid";
-
-// Credit display components
 export {
   StepCreditBadge,
   type StepCreditBadgeProps,
-  getStepCost,
+  type StepCreditBadgeStep,
 } from "./StepCreditBadge";
-export {
-  EstimatedCostBadge,
-  type EstimatedCostBadgeProps,
-} from "./EstimatedCostBadge";
-
-// Action components
-export {
-  RegenerateButton,
-  type RegenerateButtonProps,
-} from "./RegenerateButton";
 export { BackButton, type BackButtonProps } from "./BackButton";
-
-// Animation components
 export {
   FrameAnimator,
   useFrameAnimator,
   type FrameAnimatorProps,
 } from "./FrameAnimator";
-
-// Error display components
-export { ErrorDisplay, type ErrorDisplayProps } from "./ErrorDisplay";
-
-// Network status components
-export {
-  NetworkStatusBanner,
-  type NetworkStatusBannerProps,
-} from "./NetworkStatusBanner";

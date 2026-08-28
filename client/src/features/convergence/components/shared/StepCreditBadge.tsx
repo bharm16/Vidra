@@ -10,25 +10,21 @@
 import React from "react";
 import { Coins } from "@promptstudio/system/components/ui";
 import { cn } from "@/utils/cn";
-import type { ConvergenceStep } from "@/features/convergence/types";
 
 /**
- * Credit costs for convergence operations
- * Matches CONVERGENCE_COSTS from the backend
+ * Credit costs for the motion steps — the only convergence steps that still
+ * render. The wizard steps died with the wizard.
  */
-const STEP_COSTS: Partial<Record<ConvergenceStep, number>> = {
-  direction: 4, // 4 images × 1 credit each
-  mood: 4,
-  framing: 4,
-  lighting: 4,
-  final_frame: 2,
+const STEP_COSTS = {
   camera_motion: 1, // Depth estimation
   subject_motion: 5, // Wan 2.2 preview
-};
+} as const;
+
+export type StepCreditBadgeStep = keyof typeof STEP_COSTS;
 
 export interface StepCreditBadgeProps {
-  /** Current step in the convergence flow */
-  step: ConvergenceStep;
+  /** Current step in the motion flow */
+  step: StepCreditBadgeStep;
   /** Override the default cost for the step */
   cost?: number;
   /** Size variant */
@@ -42,7 +38,7 @@ export interface StepCreditBadgeProps {
 /**
  * Get the credit cost for a given step
  */
-export function getStepCost(step: ConvergenceStep): number {
+function getStepCost(step: StepCreditBadgeStep): number {
   return STEP_COSTS[step] ?? 0;
 }
 
