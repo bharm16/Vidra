@@ -11,6 +11,7 @@ import {
 } from "react-router-dom";
 import { AppShell } from "@components/navigation/AppShell";
 import { RequireAuth } from "@components/navigation/RequireAuth";
+import { SessionPathRedirect } from "@components/navigation/SessionPathRedirect";
 import {
   ErrorBoundary,
   FeatureErrorBoundary,
@@ -329,15 +330,15 @@ function AppRoutes(): React.ReactElement {
       <Route path="/session/:sessionId" element={<WorkspaceRoute />} />
       <Route
         path="/session/:sessionId/studio"
-        element={<Navigate to="/session/:sessionId" replace />}
+        element={<SessionPathRedirect />}
       />
       <Route
         path="/session/:sessionId/create"
-        element={<Navigate to="/session/:sessionId" replace />}
+        element={<SessionPathRedirect />}
       />
       <Route
         path="/session/:sessionId/continuity"
-        element={<Navigate to="/session/:sessionId" replace />}
+        element={<SessionPathRedirect />}
       />
       <Route
         path="/session/new/continuity"
@@ -348,10 +349,7 @@ function AppRoutes(): React.ReactElement {
           the AssetsPage component is kept for un-parking if @-assets return. */}
       <Route path="/assets" element={<Navigate to="/" replace />} />
       <Route path="/continuity" element={<Navigate to="/" replace />} />
-      <Route
-        path="/continuity/:sessionId"
-        element={<Navigate to="/session/:sessionId" replace />}
-      />
+      <Route path="/continuity/:sessionId" element={<SessionPathRedirect />} />
       <Route path="/consistent" element={<Navigate to="/" replace />} />
       <Route path="/prompt/:uuid" element={<PromptRedirect />} />
 
