@@ -25,7 +25,6 @@ import { createAssetRoutes } from "./asset.routes";
 import { createConsistentGenerationRoutes } from "./consistentGeneration.routes";
 import { createReferenceImagesRoutes } from "./reference-images.routes";
 import { createImageObservationRoutes } from "./image-observation.routes";
-import { createContinuityRoutes } from "./continuity.routes";
 import { createSessionRoutes } from "./sessions.routes";
 import { createModelIntelligenceRoutes } from "./model-intelligence.routes";
 import type { OptimizeServices } from "./optimize/types";
@@ -124,13 +123,6 @@ export function createAPIRoutes(services: ApiServices): Router {
     );
   }
 
-  if (continuitySessionService) {
-    router.use(
-      "/continuity",
-      createContinuityRoutes(continuitySessionService, userCreditService),
-    );
-  }
-
   if (sessionService) {
     router.use(
       "/sessions",
@@ -143,12 +135,7 @@ export function createAPIRoutes(services: ApiServices): Router {
   }
 
   if (modelIntelligenceService) {
-    router.use(
-      "/",
-      createModelIntelligenceRoutes(
-        modelIntelligenceService,
-          ),
-    );
+    router.use("/", createModelIntelligenceRoutes(modelIntelligenceService));
   }
 
   // Capabilities registry routes (schema-driven UI)

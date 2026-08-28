@@ -68,11 +68,6 @@ describe("Runtime flag matrix contracts (integration)", () => {
       expect(sessionsRoute.body.success).toBe(false);
       expect(sessionsRoute.body.error).toBe("Invalid request");
 
-      const continuityRoute = await request(app)
-        .get("/api/continuity/sessions")
-        .set("x-api-key", TEST_API_KEY);
-      expect(continuityRoute.status).toBe(404);
-
       const sessionsContinuitySubroute = await request(app)
         .get("/api/sessions/session-1/shots/shot-1/status")
         .set("x-api-key", TEST_API_KEY);

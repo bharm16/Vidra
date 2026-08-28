@@ -94,61 +94,6 @@
       "sourceFile": "server/src/routes/capabilities.routes.ts"
     },
     {
-      "method": "GET",
-      "fullPath": "/api/continuity/sessions",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/continuity/sessions",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "GET",
-      "fullPath": "/api/continuity/sessions/:sessionId",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/continuity/sessions/:sessionId/scene-proxy",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/continuity/sessions/:sessionId/settings",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/continuity/sessions/:sessionId/shots",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "PATCH",
-      "fullPath": "/api/continuity/sessions/:sessionId/shots/:shotId",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/continuity/sessions/:sessionId/shots/:shotId/generate",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "POST",
-      "fullPath": "/api/continuity/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/continuity/sessions/:sessionId/shots/:shotId/style-reference",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
-      "method": "PUT",
-      "fullPath": "/api/continuity/sessions/:sessionId/style-reference",
-      "sourceFile": "server/src/routes/continuity.routes.ts"
-    },
-    {
       "method": "POST",
       "fullPath": "/api/enhancement/custom-suggestions",
       "sourceFile": "server/src/routes/enhancement/customSuggestionsRoute.ts"
