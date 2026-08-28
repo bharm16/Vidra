@@ -87,8 +87,9 @@
     "build",
     // TODO: Re-enable type checking for these files. They were excluded when
     // `scripts/**/*` was first added to `include` because each had 13+ existing
-    // type errors. The migration scripts are one-shot and have already run;
-    // the legacy span-labeling-evaluation files are superseded by
+    // type errors. (The excluded migration scripts were triaged 2026-08-27:
+    // the two live ones were fixed and re-included, the spent one-shots
+    // deleted.) The legacy span-labeling-evaluation file is superseded by
     // golden-set-relaxed-f1.ts. Triage: fix or delete each, then remove from
     // this list.
     "scripts/get-highlight-stats.ts",
