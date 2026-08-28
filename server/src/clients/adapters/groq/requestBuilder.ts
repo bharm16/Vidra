@@ -1,5 +1,6 @@
 import { calculateMaxTokens } from "./contextBudget";
 import { isDeclaredGroqModel, supportsLogprobs } from "./modelCapabilities";
+import { normalizeOpenAiSchema } from "../openai/normalizeSchema";
 import type { LlamaCompletionOptions } from "./types";
 import { hashString } from "@utils/hash";
 
@@ -122,13 +123,16 @@ export function buildGroqPayload({
   let injectedJsonInstruction = false;
 
   if (options.schema) {
+    // Groq's json_schema mode is OpenAI-compatible; the previous inline
+    // unwrap skipped normalization and shipped $schema/$id to the provider.
+    const normalized = normalizeOpenAiSchema(
+      options.schema as Record<string, unknown>,
+    );
     payload.response_format = {
       type: "json_schema",
       json_schema: {
-        name:
-          (options.schema as { name?: string }).name || "structured_response",
-        schema:
-          (options.schema as { schema?: unknown }).schema || options.schema,
+        name: normalized.name,
+        schema: normalized.schema,
       },
     };
   } else if (options.responseFormat?.type === "json_schema") {

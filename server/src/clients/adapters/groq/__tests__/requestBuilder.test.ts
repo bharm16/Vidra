@@ -5,10 +5,7 @@
  * builder, and these tests pin that they agree.
  */
 import { describe, expect, it } from "vitest";
-import {
-  buildGroqPayload,
-  takeUndeclaredGroqModels,
-} from "../requestBuilder";
+import { buildGroqPayload, takeUndeclaredGroqModels } from "../requestBuilder";
 import { supportsLogprobs } from "../modelCapabilities";
 
 const DEFAULT_MODEL = "llama-3.1-8b-instant";
@@ -88,9 +85,14 @@ describe("buildGroqPayload", () => {
     const payload = build({
       schema: { name: "spans", schema: { type: "object" } },
     });
+    // The schema is normalized like the OpenAI adapter's: wrapper unwrapped,
+    // metadata keys stripped, strict-mode additionalProperties stamped.
     expect(payload.response_format).toEqual({
       type: "json_schema",
-      json_schema: { name: "spans", schema: { type: "object" } },
+      json_schema: {
+        name: "spans",
+        schema: { type: "object", additionalProperties: false },
+      },
     });
   });
 
