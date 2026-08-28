@@ -33,6 +33,15 @@ import { cn } from "@/utils/cn";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { authGateController, runWhenAuthenticated } from "@features/auth-gate";
 
+export interface RecommendationContext {
+  model?: ModelRecommendation | null | undefined;
+  recommendedModelId?: string | undefined;
+  efficientModelId?: string | undefined;
+  promptId?: string | undefined;
+  mode?: "t2v" | "i2v" | undefined;
+  ageMs?: number | null | undefined;
+}
+
 interface CanvasSettingsRowProps {
   prompt: string;
   renderModelId: string;
@@ -41,12 +50,10 @@ interface CanvasSettingsRowProps {
    *  inner dropdown wants a mutable array, so the type matches its contract
    *  rather than over-tightening to readonly here. */
   renderModelOptions: Array<{ id: string; label: string }>;
-  modelRecommendation?: ModelRecommendation | null | undefined;
-  recommendedModelId?: string | undefined;
-  efficientModelId?: string | undefined;
-  recommendationPromptId?: string | undefined;
-  recommendationMode?: "t2v" | "i2v" | undefined;
-  recommendationAgeMs?: number | null | undefined;
+  /** Model-intelligence context, bundled: these six always travel together
+   *  (from useModelSelectionRecommendation) and previously arrived as six
+   *  separate props. */
+  recommendation?: RecommendationContext | undefined;
   onModelChange: (modelId: string) => void;
   /** Whether to show the storyboard-preview eye button. Hidden in the empty
    *  moment so the chip row matches the screenshot's clean 5-chip layout. */
@@ -179,12 +186,7 @@ export function CanvasSettingsRow({
   prompt,
   renderModelId,
   renderModelOptions,
-  modelRecommendation,
-  recommendedModelId,
-  efficientModelId,
-  recommendationPromptId,
-  recommendationMode,
-  recommendationAgeMs,
+  recommendation,
   onModelChange,
   showPreviewButton = true,
   variant = "docked",
@@ -308,28 +310,24 @@ export function CanvasSettingsRow({
       // Flag gating lives inside trackModelRecommendationEvent (ADR-0002).
       void trackModelRecommendationEvent({
         event: "generation_started",
-        ...(recommendationPromptId
+        ...(recommendation?.promptId
           ? {
-              recommendationId: recommendationPromptId,
-              promptId: recommendationPromptId,
+              recommendationId: recommendation.promptId,
+              promptId: recommendation.promptId,
             }
           : {}),
-        ...(recommendedModelId ? { recommendedModelId } : {}),
+        ...(recommendation?.recommendedModelId
+          ? { recommendedModelId: recommendation.recommendedModelId }
+          : {}),
         selectedModelId,
-        ...(recommendationMode ? { mode: recommendationMode } : {}),
+        ...(recommendation?.mode ? { mode: recommendation.mode } : {}),
         durationSeconds: duration,
-        ...(typeof recommendationAgeMs === "number"
-          ? { timeSinceRecommendationMs: recommendationAgeMs }
+        ...(typeof recommendation?.ageMs === "number"
+          ? { timeSinceRecommendationMs: recommendation.ageMs }
           : {}),
       });
     },
-    [
-      duration,
-      recommendationAgeMs,
-      recommendationMode,
-      recommendationPromptId,
-      recommendedModelId,
-    ],
+    [duration, recommendation],
   );
 
   const runGenerate = useCallback(() => {
@@ -498,9 +496,13 @@ export function CanvasSettingsRow({
             renderModelOptions={renderModelOptions}
             renderModelId={renderModelId}
             onModelChange={onModelChange}
-            modelRecommendation={modelRecommendation ?? null}
-            {...(recommendedModelId ? { recommendedModelId } : {})}
-            {...(efficientModelId ? { efficientModelId } : {})}
+            modelRecommendation={recommendation?.model ?? null}
+            {...(recommendation?.recommendedModelId
+              ? { recommendedModelId: recommendation.recommendedModelId }
+              : {})}
+            {...(recommendation?.efficientModelId
+              ? { efficientModelId: recommendation.efficientModelId }
+              : {})}
             triggerAriaLabel="Video model"
             triggerPrefixIcon={<ModelGlyph />}
             triggerLabelHidden

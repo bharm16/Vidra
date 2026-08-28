@@ -481,7 +481,23 @@ export function CanvasWorkspace({
 
   const surfaceProps: PromptEditorSurfaceProps = editing;
 
-  const recommendationPromptId = modelRecommendation?.promptId;
+  const recommendationContext = useMemo(
+    () => ({
+      model: modelRecommendation,
+      recommendedModelId,
+      efficientModelId,
+      promptId: modelRecommendation?.promptId,
+      mode: recommendationMode,
+      ageMs: recommendationAgeMs,
+    }),
+    [
+      efficientModelId,
+      modelRecommendation,
+      recommendationAgeMs,
+      recommendationMode,
+      recommendedModelId,
+    ],
+  );
   const hasGenerations = galleryEntries.length > 0;
 
   const chromeSlot = useMemo(
@@ -494,14 +510,7 @@ export function CanvasWorkspace({
           prompt={prompt}
           renderModelId={renderModelId}
           renderModelOptions={renderModelOptions}
-          modelRecommendation={modelRecommendation}
-          {...(recommendedModelId ? { recommendedModelId } : {})}
-          {...(efficientModelId ? { efficientModelId } : {})}
-          {...(recommendationPromptId ? { recommendationPromptId } : {})}
-          {...(recommendationMode ? { recommendationMode } : {})}
-          {...(typeof recommendationAgeMs === "number"
-            ? { recommendationAgeMs }
-            : {})}
+          recommendation={recommendationContext}
           onModelChange={handleModelChange}
           showPreviewButton={hasGenerations}
         />
@@ -511,12 +520,7 @@ export function CanvasWorkspace({
       prompt,
       renderModelId,
       renderModelOptions,
-      modelRecommendation,
-      recommendedModelId,
-      efficientModelId,
-      recommendationPromptId,
-      recommendationMode,
-      recommendationAgeMs,
+      recommendationContext,
       handleModelChange,
       hasGenerations,
       isPreWork,
