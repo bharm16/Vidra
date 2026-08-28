@@ -317,7 +317,6 @@ export default [
       "client/src/features/assets/components/AssetCard.tsx",
       "client/src/features/assets/components/AssetTypeSelector.tsx",
       "client/src/features/assets/components/TriggerAutocomplete.tsx",
-      "client/src/features/assets/components/TriggerChip.tsx",
       "client/src/features/preview/components/VisualPreview.tsx",
       "client/src/features/prompt-optimizer/PromptCanvas/components/PromptCanvasSuggestionsPanel.tsx",
       "client/src/features/prompt-optimizer/components/AssetsSidebar/AssetThumbnail.tsx",
