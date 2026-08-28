@@ -68,7 +68,7 @@ describe("regression: pre-accept generation failures", () => {
     expect(dispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: "UPDATE_GENERATION" }),
     );
-    expect(onInsufficientCredits).toHaveBeenCalledWith(28, "WAN 2.2 preview");
+    expect(onInsufficientCredits).toHaveBeenCalledWith(28, "Wan 2.2 preview");
     expect(result.current.isSubmitting).toBe(false);
   });
 

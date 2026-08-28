@@ -233,3 +233,31 @@ export function declaredPricingKeys(): readonly string[] {
     ...UNCLAIMED_GENERATION_MODELS.map((variant) => variant.pricingKey),
   ];
 }
+
+/**
+ * Display labels for the model ids the client shows creators.
+ *
+ * One owner for the human-facing spelling: the two client catalogs
+ * (ToolSidebar modelConfig, generations generationConfig) each carried
+ * their own copies, and the pair had already drifted ("Wan 2.2" vs
+ * "WAN 2.2"). Keys cover both canonical prompt ids and the
+ * generation-variant ids the catalogs key by.
+ */
+export const MODEL_DISPLAY_LABELS: Record<string, string> = {
+  "wan-2.2": "Wan 2.2",
+  "wan-2.5": "Wan 2.5",
+  "sora-2": "Sora 2",
+  "kling-2.1": "Kling",
+  "kling-v2-1-master": "Kling",
+  "google/veo-3": "Veo",
+  "veo-3": "Veo",
+  "luma-ray3": "Luma",
+  "flux-kontext": "Kontext",
+  "replicate-flux-kontext-fast": "Kontext",
+  "runway-gen45": "Runway Gen-4.5",
+};
+
+/** The display label for a model id, falling back to the id itself. */
+export function modelDisplayLabel(id: string): string {
+  return MODEL_DISPLAY_LABELS[id] ?? id;
+}
