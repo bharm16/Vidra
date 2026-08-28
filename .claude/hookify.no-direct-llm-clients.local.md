@@ -2,7 +2,7 @@
 name: no-direct-llm-clients
 enabled: true
 event: file
-pattern: (claudeClient|groqClient|geminiClient)\.(chat|complete|generate|create)
+pattern: (groqClient|geminiClient|openAIClient|openaiClient)\.(chat|complete|generate|create)
 action: warn
 ---
 

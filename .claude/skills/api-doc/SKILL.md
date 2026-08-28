@@ -1,74 +1,73 @@
 ---
 name: api-doc
-description: Regenerate the OpenAPI spec from route definitions and validate route coverage against the documented route table in CLAUDE.md.
+description: Audit route coverage — the live OpenAPI spec (dev /api-docs route) vs ROUTE_MAP.md vs the documented route table in CLAUDE.md.
 disable-model-invocation: true
 ---
 
 ## API Documentation Workflow
 
-### Step 1: Regenerate OpenAPI Spec
+The committed spec artifact and its generator were deleted 2026-08-27 (zero
+consumers; commit `89b42e9d`). The spec is now built fresh at request time by
+`server/src/openapi/devRoute.ts` from `server/src/openapi/spec.ts`, served at
+`GET /api-docs` when `NODE_ENV !== "production"`.
 
-Run the spec generator:
+### Step 1: Get the live spec
 
-```bash
-npx tsx scripts/generate-openapi.ts
-```
-
-If this fails, investigate the error — likely a missing import or type issue in `server/src/openapi/spec.ts`.
-
-### Step 2: Validate Route Coverage
-
-Compare the generated spec against the route table documented in `CLAUDE.md` (under "Route -> Service -> Client API Map").
-
-For each route in the CLAUDE.md table, verify:
-
-1. The route exists in the generated OpenAPI spec
-2. The HTTP method matches
-3. The route path matches
-
-For each route in the OpenAPI spec, verify:
-
-1. It is documented in the CLAUDE.md table
-2. It has a corresponding client API file listed
-
-### Step 3: Check for Undocumented Routes
-
-Scan all route registration files for routes not in the spec:
+If the dev server is running (port 3001):
 
 ```bash
-grep -rn 'router\.\(get\|post\|put\|patch\|delete\)' server/src/routes/ --include='*.ts'
+curl -s http://localhost:3001/api-docs > /tmp/openapi.json
 ```
 
-Cross-reference against the OpenAPI spec output. Flag any routes that exist in code but are missing from the spec.
+If no server is running, do NOT start one just for this — read
+`server/src/openapi/spec.ts` directly; it is the source the route serves.
+
+### Step 2: Regenerate the route map (the deterministic ground truth)
+
+```bash
+npm run routemap:generate
+```
+
+`docs/architecture/ROUTE_MAP.md` is the walker-generated inventory of every
+mounted route. `npm run routemap:check` fails when it is stale.
+
+### Step 3: Cross-check three sources
+
+Compare, and report divergence between:
+
+1. `docs/architecture/ROUTE_MAP.md` (ground truth — walker output)
+2. The OpenAPI spec (`/api-docs` output or `spec.ts`)
+3. The `CLAUDE.md` "Route → Service → Client API Map" table (curated, active
+   surfaces only — it deliberately omits internal/frozen routes)
 
 ### Step 4: Report
 
 ```
 ## API Documentation Report
 
-### Spec Generation: PASS/FAIL
-
 ### Coverage Summary
-- Routes in CLAUDE.md table: N
+- Routes in ROUTE_MAP.md: N
 - Routes in OpenAPI spec: N
-- Routes in code: N
+- Rows in CLAUDE.md table: N
 
-### Missing from OpenAPI spec
-[List routes found in code but not in spec]
+### In code but missing from the spec
+[...]
 
-### Missing from CLAUDE.md
-[List routes found in spec but not in the documentation table]
+### In the spec but not mounted (stale spec.ts entries)
+[...]
 
-### Undocumented Client APIs
-[List routes that have no client API file listed]
+### CLAUDE.md table drift
+[Active-surface routes missing from, or stale in, the curated table]
 ```
 
-### Step 5: Update CLAUDE.md (If Gaps Found)
+### Step 5: Update CLAUDE.md (if gaps found)
 
-If new routes were found that are missing from the CLAUDE.md route table, update the table to include them. Follow the existing format:
+The CLAUDE.md table is curated — add missing ACTIVE-surface rows, correct
+stale ones, and follow the existing format:
 
 ```
 | Route | Server Route File | Client API/Service |
 ```
 
-Do NOT remove existing entries — only add missing ones.
+Edit the table atomically via Bash (the formatter hook corrupts markdown
+tables on partial Edit-tool row changes).

@@ -41,8 +41,8 @@ describe("GitHub workflow startup validity", () => {
   it("never reads the secrets context from an `if:` expression", () => {
     // GitHub does not expose `secrets` to `if:`, at job or step level. A
     // workflow that reads it there is rejected outright. The supported shape is
-    // to bind the secret to `env:` and compare against `env.NAME`, which is what
-    // security-scan.yml does.
+    // to bind the secret to `env:` and compare against `env.NAME`, which is
+    // what test.yml's `if: env.OPENAI_API_KEY != ''` steps do.
     const offenders: string[] = [];
 
     for (const file of workflowFiles()) {

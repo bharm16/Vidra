@@ -6,14 +6,13 @@ disable-model-invocation: true
 
 # Route Map Sync
 
-This codebase has FOUR places that document HTTP routes:
+This codebase has THREE places that document HTTP routes:
 
 1. `docs/architecture/ROUTE_MAP.md` — auto-generated, source of truth for the agent context layer
 2. `CLAUDE.md` § "Route → Service → Client API Map" — hand-curated table
-3. `AGENTS.md` § "References" — points to ROUTE_MAP.md
-4. `GEMINI.md` and `server/GEMINI.md` and `server/CLAUDE.md` — additional curated tables
+3. `AGENTS.md` § "References" (points to ROUTE_MAP.md) plus the curated tables in `GEMINI.md` and `server/GEMINI.md` (`server/CLAUDE.md` carries route _conventions_, not a table)
 
-When a route is added, renamed, or removed, all four can drift. This skill enforces consistency.
+When a route is added, renamed, or removed, all of these can drift. This skill enforces consistency. For a deep multi-file audit, dispatch the `route-contract-auditor` subagent (`.claude/agents/route-contract-auditor.md`).
 
 ## When to invoke
 
