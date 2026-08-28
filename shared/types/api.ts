@@ -39,7 +39,14 @@ export type ApiErrorCode =
   | "QUEUE_FULL"
   | "QUEUE_TIMEOUT"
   | "SESSION_EXPIRED"
-  | "VIDEO_PROVIDER_TIMEOUT";
+  | "VIDEO_PROVIDER_TIMEOUT"
+  // Same story as the operational codes above: these three were emitted via
+  // the legacy AppError class (ShareService, generateVideo workflow), which
+  // bypassed the DomainError arm's declare-your-code discipline. Declared
+  // 2026-08-27 when those sites moved onto DomainError subclasses.
+  | "SHARE_CLIP_NOT_FOUND"
+  | "SHARE_NO_MEDIA"
+  | "VIDEO_MODEL_UNAVAILABLE";
 
 /** All valid error code values, usable at runtime for validation. */
 export const API_ERROR_CODES = [
@@ -60,6 +67,9 @@ export const API_ERROR_CODES = [
   "QUEUE_TIMEOUT",
   "SESSION_EXPIRED",
   "VIDEO_PROVIDER_TIMEOUT",
+  "SHARE_CLIP_NOT_FOUND",
+  "SHARE_NO_MEDIA",
+  "VIDEO_MODEL_UNAVAILABLE",
 ] as const satisfies readonly ApiErrorCode[];
 
 // ---------------------------------------------------------------------------

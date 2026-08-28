@@ -3,7 +3,6 @@ import {
   AUTH_ROUTES,
   WORKSPACE_ROUTE_PREFIXES,
   WORKSPACE_ROUTES_EXACT,
-  NAV_ITEMS,
 } from "../constants";
 
 describe("AppShell constants", () => {
@@ -41,19 +40,4 @@ describe("AppShell constants", () => {
     });
   });
 
-  describe("core behavior", () => {
-    it("parks every marketing link out of the top nav (gallery landing nav is wordmark + auth action only)", () => {
-      const topNavItems = NAV_ITEMS.filter((item) => item.showInTopNav);
-      const sidebarItems = NAV_ITEMS.filter((item) => item.showInSidebar);
-
-      expect(topNavItems).toHaveLength(0);
-      expect(sidebarItems.length).toBeGreaterThan(0);
-    });
-
-    it("defines the Assets route navigation item", () => {
-      const assetsItem = NAV_ITEMS.find((item) => item.to === "/assets");
-      expect(assetsItem?.label).toBe("Assets");
-      expect(assetsItem?.showInSidebar).toBe(true);
-    });
-  });
 });

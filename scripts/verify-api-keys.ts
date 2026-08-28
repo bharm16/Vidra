@@ -11,6 +11,8 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
+import { resolveFalApiKey } from "../server/src/utils/falApiKey.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -285,6 +287,154 @@ async function testResponseTimes() {
   }
 }
 
+
+/**
+ * Test Gemini API Key (GEMINI_API_KEY, falling back to GOOGLE_API_KEY —
+ * the same resolution order as server/src/config/env.ts).
+ */
+async function testGeminiKey(): Promise<boolean> {
+  log.header("Testing Gemini API Key...");
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    log.error("Neither GEMINI_API_KEY nor GOOGLE_API_KEY is set in .env");
+    return false;
+  }
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}&pageSize=1`,
+    );
+    if (response.ok) {
+      log.success("Gemini API key is valid");
+      return true;
+    }
+    log.error("Gemini API key rejected", { status: response.status });
+    return false;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to test Gemini API key", { error: errorMessage });
+    return false;
+  }
+}
+
+/**
+ * Test Replicate API token (image generation: Flux Schnell/Kontext, studio).
+ */
+async function testReplicateToken(): Promise<boolean> {
+  log.header("Testing Replicate API Token...");
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) {
+    log.error("REPLICATE_API_TOKEN is not set in .env");
+    return false;
+  }
+  try {
+    const response = await fetch("https://api.replicate.com/v1/account", {
+      headers: { Authorization: `Token ${token}` },
+    });
+    if (response.ok) {
+      const account = (await response.json()) as { username?: string };
+      log.success("Replicate token is valid", {
+        username: account.username ?? "unknown",
+      });
+      return true;
+    }
+    log.error("Replicate token rejected", { status: response.status });
+    return false;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to test Replicate token", { error: errorMessage });
+    return false;
+  }
+}
+
+/**
+ * Test fal key AND account standing. fal signals an exhausted balance as a
+ * 403 "User is locked. Reason: Exhausted balance." on every call — a lockout
+ * that once cost a day of debugging because it looked like a silent editor
+ * (see fal-i2i relay history). A cheap status probe distinguishes bad key
+ * (401) from locked account (403) from healthy (any other response).
+ */
+async function testFalKey(): Promise<boolean> {
+  log.header("Testing fal Key + balance...");
+  // resolveFalApiKey handles the `${FAL_KEY_ID}:${FAL_KEY_SECRET}` template
+  // form dotenv leaves unexpanded (the server has the same guard).
+  const key = resolveFalApiKey();
+  if (!key) {
+    log.error("FAL_KEY (or FAL_KEY_ID/FAL_KEY_SECRET) is not set in .env");
+    return false;
+  }
+  try {
+    const response = await fetch(
+      "https://queue.fal.run/fal-ai/z-image/requests/00000000-0000-0000-0000-000000000000/status",
+      { headers: { Authorization: `Key ${key}` } },
+    );
+    if (response.status === 401) {
+      log.error("fal key rejected (401)");
+      return false;
+    }
+    const body = await response.text();
+    if (response.status === 403 && body.includes("Exhausted balance")) {
+      log.error(
+        "fal key is VALID but the account balance is EXHAUSTED — the live editor will silently fail",
+      );
+      return false;
+    }
+    log.success("fal key accepted and account is in good standing", {
+      probeStatus: response.status,
+    });
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to test fal key", { error: errorMessage });
+    return false;
+  }
+}
+
+/**
+ * Test Luma API key (LUMA_API_KEY, falling back to LUMAAI_API_KEY).
+ */
+async function testLumaKey(): Promise<boolean> {
+  log.header("Testing Luma API Key...");
+  const apiKey = process.env.LUMA_API_KEY || process.env.LUMAAI_API_KEY;
+  if (!apiKey) {
+    log.error("Neither LUMA_API_KEY nor LUMAAI_API_KEY is set in .env");
+    return false;
+  }
+  try {
+    const response = await fetch(
+      "https://api.lumalabs.ai/dream-machine/v1/generations?limit=1",
+      { headers: { Authorization: `Bearer ${apiKey}` } },
+    );
+    if (response.ok) {
+      log.success("Luma API key is valid");
+      return true;
+    }
+    log.error("Luma API key rejected", { status: response.status });
+    return false;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to test Luma API key", { error: errorMessage });
+    return false;
+  }
+}
+
+/**
+ * Kling authenticates with per-request signed JWTs built from the key —
+ * there is no cheap validity probe, so this is a presence check only.
+ */
+function testKlingKeyPresence(): boolean {
+  log.header("Checking Kling API Key (presence only)...");
+  if (!process.env.KLING_API_KEY) {
+    log.warning(
+      "KLING_API_KEY is not set — Kling renders will fail if selected",
+    );
+    return false;
+  }
+  log.info(
+    "KLING_API_KEY is present (validity is proven on first render — Kling uses signed JWTs)",
+  );
+  return true;
+}
+
 /**
  * Main function
  */
@@ -295,30 +445,36 @@ async function main() {
 ╚════════════════════════════════════════╝
 ${colors.reset}`);
 
-  const openAIValid = await testOpenAIKey();
-  const groqValid = await testGroqKey();
+  const results: Array<[string, boolean]> = [
+    ["OpenAI", await testOpenAIKey()],
+    ["Groq", await testGroqKey()],
+    ["Gemini", await testGeminiKey()],
+    ["Replicate", await testReplicateToken()],
+    ["fal", await testFalKey()],
+    ["Luma", await testLumaKey()],
+    ["Kling (presence)", testKlingKeyPresence()],
+  ];
 
   await testResponseTimes();
 
   log.header("Summary");
-
-  if (openAIValid && groqValid) {
-    log.success("All API keys are valid and working! ✨");
+  const failed = results.filter(([, ok]) => !ok).map(([name]) => name);
+  if (failed.length === 0) {
+    log.success("All provider credentials are valid and working! ✨");
+  } else {
+    log.warning(`Providers with missing/invalid credentials: ${failed.join(", ")}`);
     log.info(
-      "Prompt optimization can use both OpenAI and Groq-backed services.",
+      "Surfaces routed to those providers will fail — the LLM failover chain covers OpenAI/Groq/Gemini, but image (Replicate), the live editor (fal), and renders (Luma/Kling) have no fallback.",
     );
-  } else if (openAIValid && !groqValid) {
-    log.warning("OpenAI key is valid but Groq key is missing or invalid.");
-    log.info(
-      "The app will work, but Groq-backed prompt optimization features will be unavailable.",
-    );
-  } else if (!openAIValid) {
-    log.error("OpenAI API key is invalid - the application will not function!");
-    log.info("Please update OPENAI_API_KEY in your .env file.");
   }
 
   console.log("");
-  process.exit(openAIValid ? 0 : 1);
+  // Exit code keys on the text-model spine (OpenAI or a failover provider):
+  // without any of those, the authoring loop cannot run at all.
+  const spineOk = results
+    .filter(([name]) => ["OpenAI", "Groq", "Gemini"].includes(name))
+    .some(([, ok]) => ok);
+  process.exit(spineOk ? 0 : 1);
 }
 
 // Run the script

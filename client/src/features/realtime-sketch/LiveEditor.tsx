@@ -15,7 +15,6 @@ import {
   DEFAULT_INK,
   SNAPSHOT_SIZE,
 } from "./config/constants";
-import { median, updatesPerSecond } from "./hooks/hudMath";
 import { useRealtimeSketch } from "./hooks/useRealtimeSketch";
 import type { SendSketchFrame } from "./api/falI2i";
 import "./live-editor.css";
@@ -92,10 +91,6 @@ export function LiveEditor({
     console.debug("[realtime-sketch]", {
       sent: stats.sent,
       skipped: stats.skipped,
-      lastRttMs: stats.rttMs.at(-1) ?? null,
-      medianRttMs: median(stats.rttMs),
-      medianModelMs: median(stats.modelMs),
-      updatesPerSecond: updatesPerSecond(stats.resultTimes),
       lastError: stats.lastError,
     });
   }, [stats]);

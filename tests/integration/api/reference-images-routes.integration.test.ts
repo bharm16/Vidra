@@ -1,32 +1,13 @@
 import express from "express";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createReferenceImagesRoutes } from "@routes/reference-images.routes";
 
-// A real PNG signature + IHDR. The routes validate uploads by magic bytes
-// (validateImageBuffer -> fileTypeFromBuffer), so arbitrary text is rejected
-// as "expected image, got unknown" and surfaces as a 500. Matches the fixture
-// in tests/unit/validate-file-type.test.ts.
-const PNG_BYTES = Buffer.from([
-  0x89,
-  0x50,
-  0x4e,
-  0x47,
-  0x0d,
-  0x0a,
-  0x1a,
-  0x0a, // PNG signature
-  0x00,
-  0x00,
-  0x00,
-  0x0d,
-  0x49,
-  0x48,
-  0x44,
-  0x52, // IHDR chunk
-]);
+import { useTestApiKey } from "../helpers/apiRouteHarness";
+import { PNG_BYTES } from "../helpers/imageFixtures";
+
 
 const TEST_API_KEY = "integration-reference-images-key";
 const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
@@ -64,20 +45,7 @@ function createApp() {
 }
 
 describe("Reference Images Routes (integration)", () => {
-  let previousAllowedApiKeys: string | undefined;
-
-  beforeEach(() => {
-    previousAllowedApiKeys = process.env.ALLOWED_API_KEYS;
-    process.env.ALLOWED_API_KEYS = TEST_API_KEY;
-  });
-
-  afterEach(() => {
-    if (previousAllowedApiKeys === undefined) {
-      delete process.env.ALLOWED_API_KEYS;
-      return;
-    }
-    process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
-  });
+  useTestApiKey(TEST_API_KEY);
 
   it("lists reference images for authenticated user", async () => {
     const { app, referenceImageService } = createApp();

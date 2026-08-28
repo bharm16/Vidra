@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-import { computeCostUsd } from "./pricing.js";
+import { calculateLLMCost } from "../../server/src/config/llmCosts.js";
 import {
   dimensionKeysFor,
   type AnyDimensions,
@@ -101,7 +101,7 @@ export async function runJudge(args: JudgeInput): Promise<JudgeOutput> {
     reasoning,
     tokensIn,
     tokensOut,
-    costUsd: computeCostUsd(JUDGE_MODEL, tokensIn, tokensOut),
+    costUsd: calculateLLMCost(JUDGE_MODEL, tokensIn, tokensOut),
   };
 }
 

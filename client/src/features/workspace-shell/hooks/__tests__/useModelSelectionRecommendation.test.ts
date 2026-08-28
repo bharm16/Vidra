@@ -24,7 +24,6 @@ describe("useModelSelectionRecommendation", () => {
     const { result } = renderHook(() =>
       useModelSelectionRecommendation({
         prompt: "A dramatic cinematic shot with storm clouds and lightning",
-        activeTab: "video",
         keyframesCount: 0,
         durationSeconds: 5,
         selectedModel: VIDEO_DRAFT_MODEL.id,
@@ -39,7 +38,6 @@ describe("useModelSelectionRecommendation", () => {
     const { result } = renderHook(() =>
       useModelSelectionRecommendation({
         prompt: "A cinematic wildlife tracking shot through a foggy forest",
-        activeTab: "video",
         keyframesCount: 0,
         durationSeconds: 5,
         selectedModel: "",
@@ -70,7 +68,6 @@ describe("useModelSelectionRecommendation", () => {
     const { result } = renderHook(() =>
       useModelSelectionRecommendation({
         prompt: "Neon city at night with reflective rain",
-        activeTab: "video",
         keyframesCount: 0,
         durationSeconds: 5,
         selectedModel: "",

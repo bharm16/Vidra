@@ -578,13 +578,13 @@ describe("TypeScript Configuration - Property Tests", () => {
       }
 
       // Check for client aliases
+      // @styles/@schemas/@lib were removed 2026-08-27 with their target
+      // directories (client/src/styles, client/src/schemas never existed
+      // for @lib) — the audit's dead-alias sweep.
       const clientAliases = [
         "@components",
         "@features",
         "@hooks",
-        "@styles",
-        "@lib",
-        "@schemas",
         "@repositories",
       ];
 

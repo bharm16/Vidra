@@ -62,11 +62,11 @@ describe("generationReducer — trailing-frame retry discipline", () => {
     state = generationReducer(state, {
       type: "generationError",
       message: "frame failed (500): relay hiccup",
-      requestId: "0-1",
+      requestId: "1",
       at: 1_600,
     });
 
-    expect(state.inFlight?.requestId).toBe("0-2");
+    expect(state.inFlight?.requestId).toBe("2");
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1000");
     expect(state.inFlight?.sentAt).toBe(1_600);
     expect(state.stats.sent).toBe(2);
@@ -83,13 +83,13 @@ describe("generationReducer — trailing-frame retry discipline", () => {
     state = generationReducer(state, {
       type: "generationError",
       message: "frame failed (500): relay hiccup",
-      requestId: "0-1",
+      requestId: "1",
       at: 1_600,
     });
     state = generationReducer(state, {
       type: "generationError",
       message: "frame failed (500): relay hiccup",
-      requestId: "0-2",
+      requestId: "2",
       at: 2_200,
     });
 
@@ -108,24 +108,24 @@ describe("generationReducer — trailing-frame retry discipline", () => {
     state = generationReducer(state, {
       type: "generationError",
       message: "boom",
-      requestId: "0-1",
+      requestId: "1",
       at: 1_600,
     });
     state = generationReducer(state, {
       type: "generationError",
       message: "boom",
-      requestId: "0-2",
+      requestId: "2",
       at: 2_200,
     });
     state = generationReducer(state, snapshot(3_000));
     state = generationReducer(state, {
       type: "generationError",
       message: "boom",
-      requestId: "0-3",
+      requestId: "3",
       at: 3_600,
     });
 
-    expect(state.inFlight?.requestId).toBe("0-4");
+    expect(state.inFlight?.requestId).toBe("4");
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame3000");
   });
 
@@ -138,7 +138,7 @@ describe("generationReducer — trailing-frame retry discipline", () => {
     state = generationReducer(state, {
       type: "generationError",
       message: "boom",
-      requestId: "0-1",
+      requestId: "1",
       at: 1_600,
     });
 

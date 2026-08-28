@@ -53,7 +53,6 @@ export default defineConfig(({ mode }) => ({
       "@components": path.resolve(__dirname, "../../client/src/components"),
       "@features": path.resolve(__dirname, "../../client/src/features"),
       "@hooks": path.resolve(__dirname, "../../client/src/hooks"),
-      "@api": path.resolve(__dirname, "../../client/src/api"),
       "@services": path.resolve(__dirname, "../../client/src/services"),
       "@repositories": path.resolve(__dirname, "../../client/src/repositories"),
       "@types": path.resolve(__dirname, "../../client/src/types"),

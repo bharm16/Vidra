@@ -173,9 +173,10 @@ render, spends from the $50 cap) → one friendly participant.
 
 ### 2026-06-10 — full-loop dry-run (both arms, real render): PASS
 
-Driver: `scripts/research/expansion-study-driver.ts` (the protocol's fixed
-script — expansion → first frame → motion → Luma render; first motion idea
-always taken). Idea: "my golden retriever catching a frisbee at the park."
+Driver: `scripts/research/expansion-study-driver.ts` (expansion → first
+frame → motion → Luma render; first motion idea always taken). Deleted
+2026-08-27 with the cancelled study — recover from git history if the study
+revives. Idea: "my golden retriever catching a frisbee at the park."
 Both arms completed and produced stored clips. Spend: ~$1–2; cap intact.
 
 - **Session timing:** ~2 min machine time per arm (render ≈ 95 s dominates) —

@@ -1,8 +1,14 @@
 [
   {
     "origin": ["http://localhost:5173", "https://vidra.app"],
-    "method": ["GET", "HEAD"],
-    "responseHeader": ["Content-Type", "Content-Length", "Content-Range"],
+    "method": ["GET", "HEAD", "PUT"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "Content-Range",
+      "x-goog-if-generation-match",
+      "x-goog-content-length-range"
+    ],
     "maxAgeSeconds": 3600
   }
 ]

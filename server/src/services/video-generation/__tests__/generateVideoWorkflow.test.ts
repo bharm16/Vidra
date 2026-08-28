@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { AppError } from "@server/types/common";
+import { VideoModelUnavailableError } from "../errors/VideoModelUnavailableError";
 import { generateVideoWorkflow } from "../workflows/generateVideo";
 import {
   VIDEO_PROVIDER_CREDENTIALS,
@@ -214,7 +214,7 @@ describe("generateVideoWorkflow", () => {
     expect(result.seed).toBe(1234);
   });
 
-  it("returns structured AppError details for unsupported model selection", async () => {
+  it("returns structured VideoModelUnavailableError details for unsupported model selection", async () => {
     const providers = createProviderMap({
       replicate: true,
       openai: true,
@@ -233,7 +233,7 @@ describe("generateVideoWorkflow", () => {
         assetStore,
         log,
       ),
-    ).rejects.toBeInstanceOf(AppError);
+    ).rejects.toBeInstanceOf(VideoModelUnavailableError);
 
     await expect(
       generateVideoWorkflow(

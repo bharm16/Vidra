@@ -123,7 +123,6 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.
 # Option 2: Pre-warm cache (optional, run during off-peak)
 tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.ts \
   --mode=regenerate \
-  --batch-size=20 \
   2>&1 | tee logs/highlight-regen-$(date +%Y%m%d).log
 ```
 
@@ -186,7 +185,6 @@ firebase firestore:query prompts \
 
 **Solutions**:
 
-- Reduce `--batch-size` (default: 10)
 - Run during off-peak hours
 - Use `--mode=clear` instead for faster execution
 - Consider processing in batches with `--limit`

@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { fetchCustomSuggestions } from "../api/customSuggestionsApi";
+import { fetchCustomSuggestions } from "@features/prompt-optimizer/api/customSuggestionsApi";
 import { logger } from "@/services/LoggingService";
 import { SuggestionRequestManager } from "@features/prompt-optimizer/utils/SuggestionRequestManager";
 import { CancellationError } from "@features/prompt-optimizer/utils/signalUtils";

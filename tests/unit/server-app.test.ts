@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Trimmed 2026-08-27 to the behaviors only this suite covers: loud boot
+// failure, the worker-role depth-warmup skip, and the raw-body-before-json
+// webhook ordering (a documented Stripe invariant the bootstrap integration
+// test does not pin). The old collaborator-list case ("createApp called
+// these mocks with these args") punished refactors without guarding
+// behavior — the bootstrap integration test boots the real thing.
 const {
   useMock,
-  setMock,
-  appInstance,
   expressMock,
   configureMiddlewareMock,
   configureRoutesMock,
@@ -12,16 +16,13 @@ const {
   getRuntimeFlagsMock,
 } = vi.hoisted(() => {
   const useMock = vi.fn();
-  const setMock = vi.fn();
   const appInstance = {
     use: useMock,
-    set: setMock,
+    set: vi.fn(),
   };
 
   return {
     useMock,
-    setMock,
-    appInstance,
     expressMock: vi.fn(() => appInstance),
     configureMiddlewareMock: vi.fn(),
     configureRoutesMock: vi.fn(),
@@ -56,15 +57,6 @@ vi.mock("@server/config/feature-flags.ts", () => ({
 }));
 
 import { createApp } from "@server/app";
-
-const PAYMENT_TOKENS = new Set([
-  "paymentService",
-  "stripeWebhookEventStore",
-  "billingProfileStore",
-  "userCreditService",
-  "paymentConsistencyStore",
-  "firestoreCircuitExecutor",
-]);
 
 function buildContainer(): { resolve: ReturnType<typeof vi.fn> } {
   return {
@@ -115,27 +107,4 @@ describe("createApp", () => {
     });
   });
 
-  describe("core behavior", () => {
-    it("sets trust proxy and wires routes with services resolved from the container", () => {
-      const container = buildContainer();
-
-      const app = createApp(container as never);
-
-      expect(app).toBe(appInstance);
-      expect(setMock).toHaveBeenCalledWith("trust proxy", 1);
-      expect(configureMiddlewareMock).toHaveBeenCalledWith(appInstance, {
-        logger: { token: "logger" },
-        redisClient: { token: "redisClient" },
-      });
-      expect(configureRoutesMock).toHaveBeenCalledWith(appInstance, container);
-      expect(initializeDepthWarmerMock).toHaveBeenCalledTimes(1);
-
-      const resolvedTokens = container.resolve.mock.calls.map(
-        ([token]) => token,
-      );
-      for (const token of PAYMENT_TOKENS) {
-        expect(resolvedTokens).toContain(token);
-      }
-    });
-  });
 });

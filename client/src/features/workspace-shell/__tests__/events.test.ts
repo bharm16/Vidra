@@ -3,8 +3,6 @@ import {
   PROMPT_FOCUS_INTENT,
   addPromptFocusIntentListener,
   dispatchPromptFocusIntent,
-  addContinueSceneListener,
-  dispatchContinueScene,
 } from "../events";
 
 describe("CanvasWorkspace events", () => {
@@ -24,32 +22,5 @@ describe("CanvasWorkspace events", () => {
     remove();
     dispatchPromptFocusIntent({ source: "tool-rail" });
     expect(listener).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("CONTINUE_SCENE", () => {
-  it("dispatches the event with the fromGenerationId payload", () => {
-    const handler = vi.fn();
-    const unsubscribe = addContinueSceneListener(handler);
-
-    dispatchContinueScene({ fromGenerationId: "gen-42" });
-
-    expect(handler).toHaveBeenCalledTimes(1);
-    const event = handler.mock.calls[0]?.[0] as CustomEvent<{
-      fromGenerationId: string;
-    }>;
-    expect(event.detail.fromGenerationId).toBe("gen-42");
-
-    unsubscribe();
-  });
-
-  it("stops delivering events after unsubscribe", () => {
-    const handler = vi.fn();
-    const unsubscribe = addContinueSceneListener(handler);
-    unsubscribe();
-
-    dispatchContinueScene({ fromGenerationId: "gen-99" });
-
-    expect(handler).not.toHaveBeenCalled();
   });
 });

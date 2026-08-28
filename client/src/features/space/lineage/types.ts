@@ -31,6 +31,6 @@ export interface SpaceNode extends LineageNode {
   label?: string;
   /** A ready still, or a clip poster, shown inside the node. */
   mediaUrl?: string;
-  /** Lifecycle state — drives the waiting / kept / failed treatments. */
-  status?: "forming" | "ready" | "kept" | "failed";
+  /** Lifecycle state — drives the waiting / failed treatments. */
+  status?: "forming" | "ready" | "failed";
 }

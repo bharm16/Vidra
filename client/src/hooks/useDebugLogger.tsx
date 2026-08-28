@@ -221,23 +221,4 @@ function summarize(value: unknown): unknown {
   return value;
 }
 
-/**
- * HOC version for class components or wrapping
- */
-export function withDebugLogging<P extends object>(
-  Component: React.ComponentType<P>,
-  componentName?: string,
-): React.FC<P> {
-  const displayName =
-    componentName || Component.displayName || Component.name || "Component";
-
-  const WrappedComponent: React.FC<P> = (props) => {
-    useDebugLogger(displayName, props as Record<string, unknown>);
-    return <Component {...props} />;
-  };
-
-  WrappedComponent.displayName = `withDebugLogging(${displayName})`;
-  return WrappedComponent;
-}
-
 export default useDebugLogger;

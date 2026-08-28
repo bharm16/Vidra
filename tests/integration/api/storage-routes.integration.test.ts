@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { storageServiceMock } = vi.hoisted(() => {
   const storageServiceMock = {
@@ -23,6 +23,8 @@ const { storageServiceMock } = vi.hoisted(() => {
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createStorageRoutes } from "@routes/storage.routes";
 
+import { useTestApiKey } from "../helpers/apiRouteHarness";
+
 const TEST_API_KEY = "integration-storage-key";
 const TEST_USER_ID = `api-key:${TEST_API_KEY}`;
 
@@ -38,11 +40,9 @@ function createApp() {
 }
 
 describe("Storage Routes (integration)", () => {
-  let previousAllowedApiKeys: string | undefined;
+  useTestApiKey(TEST_API_KEY);
 
   beforeEach(() => {
-    previousAllowedApiKeys = process.env.ALLOWED_API_KEYS;
-    process.env.ALLOWED_API_KEYS = TEST_API_KEY;
     vi.clearAllMocks();
 
     storageServiceMock.getUploadUrl.mockResolvedValue({
@@ -88,14 +88,6 @@ describe("Storage Routes (integration)", () => {
       deleted: ["users/u/previews/images/abc.webp"],
       failed: [],
     });
-  });
-
-  afterEach(() => {
-    if (previousAllowedApiKeys === undefined) {
-      delete process.env.ALLOWED_API_KEYS;
-      return;
-    }
-    process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
   });
 
   it("supports upload, save-from-url, confirm-upload, view/download URL operations", async () => {

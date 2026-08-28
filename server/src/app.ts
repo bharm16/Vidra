@@ -19,33 +19,7 @@ import { configureMiddleware } from "./config/middleware.config.ts";
 import { configureRoutes } from "./config/routes.config.ts";
 import { getRuntimeFlags } from "./config/feature-flags.ts";
 import { createWebhookRoutes } from "./routes/payment.routes.ts";
-
-function resolvePaymentRouteServices(
-  container: DIContainer,
-): PaymentRouteServices {
-  return {
-    paymentService:
-      container.resolve<PaymentRouteServices["paymentService"]>(
-        "paymentService",
-      ),
-    webhookEventStore: container.resolve<
-      PaymentRouteServices["webhookEventStore"]
-    >("stripeWebhookEventStore"),
-    billingProfileStore: container.resolve<
-      PaymentRouteServices["billingProfileStore"]
-    >("billingProfileStore"),
-    userCreditService:
-      container.resolve<PaymentRouteServices["userCreditService"]>(
-        "userCreditService",
-      ),
-    paymentConsistencyStore: container.resolve<PaymentConsistencyStore>(
-      "paymentConsistencyStore",
-    ),
-    firestoreCircuitExecutor: container.resolve<
-      NonNullable<PaymentRouteServices["firestoreCircuitExecutor"]>
-    >("firestoreCircuitExecutor"),
-  };
-}
+import { resolvePaymentRouteServices } from "./config/routes/payment.registration.ts";
 
 /**
  * Create and configure the Express application

@@ -4,6 +4,11 @@ import { renderHook } from "@testing-library/react";
 
 import { ToastProvider, useToast } from "@components/Toast";
 
+// The client setup file stubs @components/Toast globally; this suite
+// exercises the real module (mocking only the design-system hook beneath
+// it), so opt back out of the global stub.
+vi.unmock("@components/Toast");
+
 const { toastSpy } = vi.hoisted(() => ({
   toastSpy: vi.fn(),
 }));

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AppShell } from "../AppShell";
 import { useCreditBalance } from "@/contexts/CreditBalanceContext";
-import type { IconComponent, NavItemsByVariant } from "../types";
 
 const unsubscribeMock = vi.fn();
 const onAuthStateChangedMock = vi.fn(() => unsubscribeMock);
@@ -25,33 +24,10 @@ vi.mock("@/hooks/useUserCreditBalance", () => ({
 }));
 
 vi.mock("../variants/TopNavbar", () => ({
-  TopNavbar: (props: any) => (
-    <div data-testid="top-navbar" data-items={props.navItems.length} />
-  ),
+  TopNavbar: () => <div data-testid="top-navbar" />,
 }));
 
 describe("AppShell", () => {
-  const navItems: NavItemsByVariant = {
-    topNav: [
-      {
-        to: "/pricing",
-        label: "Pricing",
-        icon: (() => null) as unknown as IconComponent,
-        showInTopNav: true,
-        showInSidebar: true,
-      },
-    ],
-    sidebar: [
-      {
-        to: "/assets",
-        label: "Assets",
-        icon: (() => null) as unknown as IconComponent,
-        showInTopNav: false,
-        showInSidebar: true,
-      },
-    ],
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     useUserCreditBalanceMock.mockReturnValue({
@@ -61,7 +37,6 @@ describe("AppShell", () => {
     });
     useNavigationConfigMock.mockReturnValue({
       variant: "sidebar",
-      navItems,
       currentPath: "/assets",
     });
   });
@@ -86,7 +61,6 @@ describe("AppShell", () => {
     it("renders children without shell for auth routes", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "none",
-        navItems,
         currentPath: "/signin",
       });
 
@@ -98,10 +72,9 @@ describe("AppShell", () => {
   });
 
   describe("core behavior", () => {
-    it("renders top navigation variant with nav items", () => {
+    it("renders the top navigation variant", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "topnav",
-        navItems,
         currentPath: "/pricing",
       });
 
@@ -114,7 +87,6 @@ describe("AppShell", () => {
     it("renders workspace content in the sidebar variant (no tool rail — ADR-0010 D7)", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "sidebar",
-        navItems,
         currentPath: "/assets",
       });
 
@@ -130,7 +102,6 @@ describe("AppShell", () => {
     it("provides credit context to workspace children in the sidebar variant", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "sidebar",
-        navItems,
         currentPath: "/assets",
       });
 

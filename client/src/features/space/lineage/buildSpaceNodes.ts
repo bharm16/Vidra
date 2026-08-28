@@ -28,7 +28,10 @@ export interface LineageInput {
   }>;
 }
 
-const wordsNodeId = (versionId: string): string => `words-${versionId}`;
+/** The words-node id convention. Exported so derivers never restate the
+ * format — a hand-built `words-…` string that drifts from this breaks the
+ * clip→words fallback edge silently. */
+export const wordsNodeId = (versionId: string): string => `words-${versionId}`;
 
 export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
   const nodes: SpaceNode[] = [];

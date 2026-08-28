@@ -1,26 +1,15 @@
 import express from "express";
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createImageObservationRoutes } from "@routes/image-observation.routes";
+
+import { useTestApiKey } from "../helpers/apiRouteHarness";
 
 const TEST_API_KEY = "integration-image-observation-key";
 
 describe("Image Observation Routes (integration)", () => {
-  let previousAllowedApiKeys: string | undefined;
-
-  beforeEach(() => {
-    previousAllowedApiKeys = process.env.ALLOWED_API_KEYS;
-    process.env.ALLOWED_API_KEYS = TEST_API_KEY;
-  });
-
-  afterEach(() => {
-    if (previousAllowedApiKeys === undefined) {
-      delete process.env.ALLOWED_API_KEYS;
-      return;
-    }
-    process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
-  });
+  useTestApiKey(TEST_API_KEY);
 
   function createApp() {
     const imageObservationService = {

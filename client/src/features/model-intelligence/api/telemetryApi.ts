@@ -23,9 +23,22 @@ export async function trackModelRecommendationEvent(
   event: ModelRecommendationEvent,
 ): Promise<void> {
   // ADR-0002: model-intelligence is frozen — no telemetry traffic while off.
+  // This is the single guard: call sites must not re-check the flag.
   if (!FEATURES.MODEL_INTELLIGENCE_UI) return;
   try {
-    await apiClient.post("/model-intelligence/track", event);
+    // Normalize timing here so call sites don't each restate the clamp
+    // (they used to, and the two copies had started to drift).
+    const payload =
+      typeof event.timeSinceRecommendationMs === "number"
+        ? {
+            ...event,
+            timeSinceRecommendationMs: Math.max(
+              0,
+              Math.round(event.timeSinceRecommendationMs),
+            ),
+          }
+        : event;
+    await apiClient.post("/model-intelligence/track", payload);
   } catch (error) {
     log.debug("Model intelligence telemetry failed", {
       event: event.event,

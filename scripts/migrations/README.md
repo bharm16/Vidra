@@ -4,19 +4,12 @@ This directory contains migration scripts for updating Firestore data structures
 
 ## Script Catalog
 
-| Script                                   | Type               | Purpose                                                                        |
-| ---------------------------------------- | ------------------ | ------------------------------------------------------------------------------ |
-| `backfill-highlight-cache.ts`            | Backfill           | Generate `highlightCache` for prompts that lack it                             |
-| `force-highlight-rerender.ts`            | Reusable utility   | Invalidate or regenerate `highlightCache` after algorithm/model changes        |
-| `normalize-taxonomy-ids.ts`              | One-time migration | Rewrite legacy span IDs in stored `highlightCache` to the V3 taxonomy          |
-| `unify-sessions.ts`                      | One-time migration | Consolidate legacy prompt + `continuity_sessions` docs into unified `sessions` |
-| `migrate-dev-api-key-identities.ts`      | One-time migration | Rewrite `dev-api-key:*` → `api-key:*` identity prefixes (Firestore + GCS)      |
-| `cleanup-dev-api-key-objects.ts`         | Cleanup (paired)   | Delete legacy `dev-api-key:*` GCS objects after migration soak                 |
-| `inventory-preview-image-references.ts`  | Read-only audit    | Inventory preview-image references across session collections                  |
-| `migrate-preview-image-ownership.ts`     | One-time migration | Backfill owner-scoped preview-image GCS objects                                |
-| `migrate-image-assets-to-user-scoped.ts` | One-time migration | Move flat `image-previews/{id}` to `image-previews/{userId}/{id}`              |
+| Script                        | Type             | Purpose                                                                 |
+| ----------------------------- | ---------------- | ----------------------------------------------------------------------- |
+| `backfill-highlight-cache.ts` | Backfill         | Generate `highlightCache` for prompts that lack it                      |
+| `force-highlight-rerender.ts` | Reusable utility | Invalidate or regenerate `highlightCache` after algorithm/model changes |
 
-**Status policy:** every entry above is "verify with the team before running." Production-state of one-time migrations is not tracked in this repository — the team that owns the deploy pipeline knows what has shipped.
+**Status policy:** the seven already-run one-time migrations were deleted 2026-08-27 (git history is the archive — recover a script from there if a migration ever needs re-running). The two scripts above are the live operator tools; both are type-checked by the root tsconfig and smoke-tested against the Firestore emulator.
 
 **Helper module:** `firebase-admin-init.ts` is the shared Firebase Admin initialiser. Migration scripts import it; do not run it directly.
 
@@ -78,7 +71,7 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.
 **Custom batch size:**
 
 ```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.ts --batch-size=20 --mode=regenerate
+
 ```
 
 #### Modes
@@ -234,7 +227,7 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/backfill-highlight-cache.
 **Custom batch size:**
 
 ```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/backfill-highlight-cache.ts --batch-size=10
+
 ```
 
 #### What It Does
@@ -307,132 +300,6 @@ Errors:                       0
 
 ---
 
-### 3. Taxonomy Normalization (`normalize-taxonomy-ids.ts`)
-
-One-time migration that rewrites legacy span category and role IDs in stored `highlightCache` to the V3 taxonomy, removing the need for runtime legacy mapping. Shipped alongside the V3 taxonomy in December 2025.
-
-**Status:** Verify with team before re-running — likely already applied in production.
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/normalize-taxonomy-ids.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/normalize-taxonomy-ids.ts
-```
-
-Supports `--userId=USER_ID`, `--limit=N`, `--batch-size=N`. See script header for details.
-
----
-
-### 4. Unify Sessions (`unify-sessions.ts`)
-
-One-time migration that consolidates legacy prompt documents and `continuity_sessions` into the unified `sessions` collection. Shipped with the unified session model in February 2026.
-
-**Status:** Verify with team before re-running.
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/unify-sessions.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/unify-sessions.ts
-```
-
-Supports `--userId=USER_ID`, `--limit=N`, `--batch-size=N` (default 50).
-
----
-
-### 5. Migrate Dev-API-Key Identities (`migrate-dev-api-key-identities.ts`)
-
-One-time migration that rewrites `dev-api-key:*` identity prefixes to `api-key:*` across both Firestore and GCS. Pair with `cleanup-dev-api-key-objects.ts` (entry 6) for the post-soak cleanup.
-
-**Status:** Verify with team before re-running.
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-dev-api-key-identities.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-dev-api-key-identities.ts --apply
-```
-
-Aborts in dry-run when planned changes exceed `--threshold=N` (default 100).
-
----
-
-### 6. Cleanup Dev-API-Key Objects (`cleanup-dev-api-key-objects.ts`)
-
-Follow-up cleanup that deletes legacy `dev-api-key:*` GCS objects after the identity migration (entry 5) has soaked. Defaults to a 7-day minimum age before delete.
-
-**Status:** Run _after_ `migrate-dev-api-key-identities.ts` has soaked in production.
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/cleanup-dev-api-key-objects.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/cleanup-dev-api-key-objects.ts --apply
-```
-
-Configurable via `--min-age-days=N` (default 7).
-
----
-
-### 7. Inventory Preview Image References (`inventory-preview-image-references.ts`)
-
-Read-only audit script that inventories preview-image references across the `sessions` and `continuity_sessions` Firestore collections. Used as a diagnostic for the preview-image ownership migration (entry 8).
-
-**Status:** Read-only — safe to run any time. Has no `--apply` mode.
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/inventory-preview-image-references.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/inventory-preview-image-references.ts --dry-run --userId=<uid>
-tsx --tsconfig server/tsconfig.json scripts/migrations/inventory-preview-image-references.ts --dry-run --limit=100
-```
-
----
-
-### 8. Migrate Preview Image Ownership (`migrate-preview-image-ownership.ts`)
-
-One-time backfill that moves preview-image GCS objects under owner-scoped paths. Shipped alongside the preview-image ownership feature in February 2026.
-
-**Status:** Verify with team before re-running.
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-preview-image-ownership.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-preview-image-ownership.ts --apply
-```
-
-Supports `--userId=<uid>` and `--limit=N` for scoped runs.
-
----
-
-### 9. Migrate Image Assets to User-Scoped Paths (`migrate-image-assets-to-user-scoped.ts`)
-
-One-time migration that moves legacy flat `image-previews/{assetId}` GCS objects into `image-previews/{userId}/{assetId}` paths. Most recent migration script (April 2026).
-
-**Background:** A code change introduced userId-scoped storage paths for image previews. The application currently checks both paths via fallback; this migration moves assets to the new canonical path so the fallback can eventually be removed.
-
-**Status:** Verify with team before running. Application path-fallback is still active.
-
-**Strategy:**
-
-1. Scan all Firestore session documents to build an `assetId → userId` map
-2. List all GCS objects at the flat prefix (`image-previews/{uuid}`)
-3. For each flat object, look up the owner `userId` and copy to the new path
-4. Optionally delete the original flat object (`--delete-originals`)
-
-**Usage:**
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-image-assets-to-user-scoped.ts --dry-run
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-image-assets-to-user-scoped.ts --apply
-tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-image-assets-to-user-scoped.ts --apply --delete-originals
-```
-
----
-
 ## Best Practices
 
 1. **Always run with `--dry-run` first** to preview changes
@@ -452,8 +319,6 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/migrate-image-assets-to-u
 **Solution**: Your service account needs Firestore read/write permissions. Check IAM roles in Firebase Console.
 
 ### Rate limiting / quota errors
-
-**Solution**: Reduce `--batch-size` or add delays between batches
 
 ### "labelSpans is not a function"
 

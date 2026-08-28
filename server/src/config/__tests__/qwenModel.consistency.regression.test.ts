@@ -52,8 +52,12 @@ describe("Qwen model id consistency (regression)", () => {
     );
   });
 
-  it("the retired model id survives nowhere in server source as a literal", async () => {
+  it("the retired model id survives nowhere in server source or scripts as a literal", async () => {
     const serverSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+    // scripts/ is walked too: the synthetic harness carried the retired id
+    // for a month after the server purge because this guard only saw
+    // server/src (2026-08-27 audit finding A1).
+    const scriptsDir = join(serverSrc, "..", "..", "scripts");
     const offenders: string[] = [];
     const walk = async (dir: string): Promise<void> => {
       for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -76,6 +80,7 @@ describe("Qwen model id consistency (regression)", () => {
       }
     };
     await walk(serverSrc);
+    await walk(scriptsDir);
     expect(offenders).toEqual([]);
     // Reads every source file under server/src one at a time — ~350ms alone, but
     // it is the only server test whose cost scales with the codebase, and the

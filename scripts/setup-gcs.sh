@@ -1,9 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 
-PROJECT_ID="your-project-id"
-ENVIRONMENT="dev"
-BUCKET_NAME="promptcanvas-media-${ENVIRONMENT}"
-SERVICE_ACCOUNT="promptcanvas-storage-${ENVIRONMENT}"
+PROJECT_ID="${1:?usage: setup-gcs.sh <gcp-project-id> [environment]}"
+ENVIRONMENT="${2:-dev}"
+BUCKET_NAME="vidra-media-${ENVIRONMENT}"
+SERVICE_ACCOUNT="vidra-storage-${ENVIRONMENT}"
 
 # 1. Create bucket
 gcloud storage buckets create "gs://${BUCKET_NAME}" \
@@ -18,20 +19,12 @@ gcloud storage buckets update "gs://${BUCKET_NAME}" \
   --enable-autoclass
 
 # 3. Set CORS — browsers load signed GCS URLs directly (GET) and upload
-#    studio reference images via signed PUT (S-12 attach flow)
-cat > cors.json << EOF_CORS
-[
-  {
-    "origin": ["http://localhost:5173", "https://vidra.app"],
-    "method": ["GET", "HEAD", "PUT"],
-    "responseHeader": ["Content-Type", "Content-Length", "Content-Range", "x-goog-if-generation-match", "x-goog-content-length-range"],
-    "maxAgeSeconds": 3600
-  }
-]
-EOF_CORS
-
-gcloud storage buckets update "gs://${BUCKET_NAME}" --cors-file=cors.json
-rm cors.json
+#    studio reference images via signed PUT (S-12 attach flow).
+#    config/gcs-cors.json is the single committed record of the bucket
+#    policy; this used to be an inline heredoc that had already drifted
+#    ahead of a stale copy of that file.
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+gcloud storage buckets update "gs://${BUCKET_NAME}" --cors-file="${REPO_ROOT}/config/gcs-cors.json"
 
 # 4. Set lifecycle rules
 cat > lifecycle.json << EOF_LIFECYCLE
@@ -58,7 +51,7 @@ rm lifecycle.json
 
 # 5. Create service account
 gcloud iam service-accounts create "${SERVICE_ACCOUNT}" \
-  --display-name="PromptCanvas Storage Service Account" \
+  --display-name="Vidra Storage Service Account" \
   --project="${PROJECT_ID}"
 
 # 6. Grant permissions

@@ -4,13 +4,11 @@ import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpa
 import { PromptEditorSurface } from "./PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "./PromptEditorSurface";
 import { AnchorSheet } from "./AnchorSheet";
-import { addContinueSceneListener } from "../events";
 import "./composer.css";
 
 export interface CanvasPromptBarProps {
   surfaceProps: PromptEditorSurfaceProps;
   /** Called when a featured tile dispatches CONTINUE_SCENE. */
-  onContinueScene?: (fromGenerationId: string) => void;
   /** Settings row below the editor (chip set + Make-it pill). */
   chromeSlot?: React.ReactNode;
   /** "Your words" restore control — renders above the editor post-expansion. */
@@ -45,20 +43,12 @@ export interface CanvasPromptBarProps {
  */
 export function CanvasPromptBar({
   surfaceProps,
-  onContinueScene,
   chromeSlot = null,
   yourWordsSlot = null,
   isPreWork = false,
   footerSlot = null,
   collapsed = false,
 }: CanvasPromptBarProps): React.ReactElement {
-  useEffect(() => {
-    if (!onContinueScene) return;
-    return addContinueSceneListener((event) => {
-      onContinueScene(event.detail.fromGenerationId);
-    });
-  }, [onContinueScene]);
-
   const { selectedSpanId } = useSelectedSpan();
   const isExpanded = Boolean(selectedSpanId);
 

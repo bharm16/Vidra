@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { AppError } from "@server/types/common";
+import { ShareError } from "../ShareError";
 import type { SessionRecord } from "@server/domain/session/types";
 import { ShareService } from "../ShareService";
 import type {
@@ -108,9 +108,13 @@ describe("ShareService", () => {
       ),
       urls,
     );
-    await expect(svc.mint("owner", REQ)).rejects.toMatchObject({
-      statusCode: 404,
-    });
+    const err = await svc.mint("owner", REQ).then(
+      () => null,
+      (e: unknown) => e as ShareError,
+    );
+    expect(err).toBeInstanceOf(ShareError);
+    expect(err?.code).toBe("SHARE_CLIP_NOT_FOUND");
+    expect(err?.getHttpStatus()).toBe(404);
     expect(store.records.size).toBe(0);
   });
 
@@ -120,7 +124,7 @@ describe("ShareService", () => {
       readerFor(sessionWith({ id: "other", storagePath: "x" })),
       urls,
     );
-    await expect(svc.mint("owner", REQ)).rejects.toBeInstanceOf(AppError);
+    await expect(svc.mint("owner", REQ)).rejects.toBeInstanceOf(ShareError);
   });
 
   it("rejects a clip with no storage path (unshareable media) with a 400", async () => {
@@ -129,9 +133,13 @@ describe("ShareService", () => {
       readerFor(sessionWith({ id: "g1", prompt: "no media" })),
       urls,
     );
-    await expect(svc.mint("owner", REQ)).rejects.toMatchObject({
-      statusCode: 400,
-    });
+    const err = await svc.mint("owner", REQ).then(
+      () => null,
+      (e: unknown) => e as ShareError,
+    );
+    expect(err).toBeInstanceOf(ShareError);
+    expect(err?.code).toBe("SHARE_NO_MEDIA");
+    expect(err?.getHttpStatus()).toBe(400);
   });
 
   it("falls back to the version's words when the generation has no prompt", async () => {

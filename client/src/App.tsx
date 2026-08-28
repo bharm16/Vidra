@@ -16,7 +16,6 @@ import {
   FeatureErrorBoundary,
 } from "./components/ErrorBoundary/";
 import { ToastProvider } from "./components/Toast";
-import { AppShellProvider } from "./contexts/AppShellContext";
 import { LoadingDots } from "./components/LoadingDots";
 import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import { AuthGateDialog } from "@features/auth-gate";
@@ -371,18 +370,16 @@ function App(): React.ReactElement {
       message="The application encountered an unexpected error. Please refresh the page to continue."
     >
       <ToastProvider>
-        <AppShellProvider>
-          <Router>
-            <RouteTracker />
-            <Suspense fallback={<RouteFallback />}>
-              <AppRoutes />
-            </Suspense>
-            {/* Global auth gate: the single sign-in dialog opened by the 401
+        <Router>
+          <RouteTracker />
+          <Suspense fallback={<RouteFallback />}>
+            <AppRoutes />
+          </Suspense>
+          {/* Global auth gate: the single sign-in dialog opened by the 401
                 handler and the pre-Go check. Overlays whatever page is
                 mounted so the user's draft stays visible behind it. */}
-            <AuthGateDialog />
-          </Router>
-        </AppShellProvider>
+          <AuthGateDialog />
+        </Router>
       </ToastProvider>
     </ErrorBoundary>
   );

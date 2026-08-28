@@ -33,11 +33,8 @@ type GenerationControlsAction =
   | { type: "mergeGenerationParams"; value: CapabilityValues }
   | { type: "setVideoTier"; value: VideoTier }
   | { type: "setStartFrame"; value: KeyframeTile | null }
-  | { type: "setEndFrame"; value: KeyframeTile | null }
   | { type: "clearStartFrame" }
   | { type: "clearEndFrame" }
-  | { type: "addVideoReference"; value: Omit<VideoReferenceImage, "id"> }
-  | { type: "removeVideoReference"; value: string }
   | {
       type: "updateVideoReferenceType";
       value: { id: string; referenceType: "asset" | "style" };
@@ -47,12 +44,9 @@ type GenerationControlsAction =
   | { type: "clearExtendVideo" }
   | { type: "setKeyframes"; value: KeyframeTile[] | null | undefined }
   | { type: "addKeyframe"; value: Omit<KeyframeTile, "id"> }
-  | { type: "removeKeyframe"; value: string }
   | { type: "clearKeyframes" }
   | { type: "setCameraMotion"; value: CameraPath | null }
   | { type: "setSubjectMotion"; value: string }
-  | { type: "setActiveTab"; value: GenerationControlsTab }
-  | { type: "setImageSubTab"; value: ImageSubTab }
   | { type: "resetState"; value: GenerationControlsState };
 
 export interface GenerationControlsActions {
@@ -61,11 +55,8 @@ export interface GenerationControlsActions {
   mergeGenerationParams: (params: CapabilityValues) => void;
   setVideoTier: (tier: VideoTier) => void;
   setStartFrame: (tile: KeyframeTile | null) => void;
-  setEndFrame: (tile: KeyframeTile | null) => void;
   clearStartFrame: () => void;
   clearEndFrame: () => void;
-  addVideoReference: (ref: Omit<VideoReferenceImage, "id">) => void;
-  removeVideoReference: (id: string) => void;
   updateVideoReferenceType: (
     id: string,
     referenceType: "asset" | "style",
@@ -75,12 +66,9 @@ export interface GenerationControlsActions {
   clearExtendVideo: () => void;
   setKeyframes: (tiles: KeyframeTile[] | null | undefined) => void;
   addKeyframe: (tile: Omit<KeyframeTile, "id">) => void;
-  removeKeyframe: (id: string) => void;
   clearKeyframes: () => void;
   setCameraMotion: (cameraPath: CameraPath | null) => void;
   setSubjectMotion: (motion: string) => void;
-  setActiveTab: (tab: GenerationControlsTab) => void;
-  setImageSubTab: (subTab: ImageSubTab) => void;
   resetState: (state: GenerationControlsState) => void;
 }
 
@@ -271,19 +259,6 @@ const reducer = (
         },
       };
     }
-    case "setEndFrame": {
-      const nextEndFrame = action.value;
-      if (areKeyframeTilesEqual(state.domain.endFrame, nextEndFrame))
-        return state;
-      return {
-        ...state,
-        domain: {
-          ...state.domain,
-          endFrame: nextEndFrame,
-          ...(nextEndFrame ? { extendVideo: null } : {}),
-        },
-      };
-    }
     case "clearStartFrame": {
       if (!state.domain.startFrame) return state;
       const motion = reconcileMotionAfterStartFrame(state, null);
@@ -303,34 +278,6 @@ const reducer = (
         domain: {
           ...state.domain,
           endFrame: null,
-        },
-      };
-    }
-    case "addVideoReference": {
-      if (state.domain.videoReferenceImages.length >= MAX_VIDEO_REFERENCES)
-        return state;
-      return {
-        ...state,
-        domain: {
-          ...state.domain,
-          videoReferenceImages: [
-            ...state.domain.videoReferenceImages,
-            { id: createKeyframeId(), ...action.value },
-          ],
-        },
-      };
-    }
-    case "removeVideoReference": {
-      const next = state.domain.videoReferenceImages.filter(
-        (reference) => reference.id !== action.value,
-      );
-      if (next.length === state.domain.videoReferenceImages.length)
-        return state;
-      return {
-        ...state,
-        domain: {
-          ...state.domain,
-          videoReferenceImages: next,
         },
       };
     }
@@ -426,19 +373,6 @@ const reducer = (
         },
       };
     }
-    case "removeKeyframe": {
-      const nextKeyframes = state.domain.keyframes.filter(
-        (tile) => tile.id !== action.value,
-      );
-      if (nextKeyframes.length === state.domain.keyframes.length) return state;
-      return {
-        ...state,
-        domain: {
-          ...state.domain,
-          keyframes: nextKeyframes,
-        },
-      };
-    }
     case "clearKeyframes": {
       if (state.domain.keyframes.length === 0) return state;
       return {
@@ -460,18 +394,6 @@ const reducer = (
       return {
         ...state,
         domain: { ...state.domain, subjectMotion: action.value },
-      };
-    case "setActiveTab":
-      if (state.ui.activeTab === action.value) return state;
-      return {
-        ...state,
-        ui: { ...state.ui, activeTab: action.value },
-      };
-    case "setImageSubTab":
-      if (state.ui.imageSubTab === action.value) return state;
-      return {
-        ...state,
-        ui: { ...state.ui, imageSubTab: action.value },
       };
     case "resetState":
       return action.value;
@@ -532,13 +454,8 @@ export function GenerationControlsStoreProvider({
         dispatch({ type: "mergeGenerationParams", value }),
       setVideoTier: (value) => dispatch({ type: "setVideoTier", value }),
       setStartFrame: (value) => dispatch({ type: "setStartFrame", value }),
-      setEndFrame: (value) => dispatch({ type: "setEndFrame", value }),
       clearStartFrame: () => dispatch({ type: "clearStartFrame" }),
       clearEndFrame: () => dispatch({ type: "clearEndFrame" }),
-      addVideoReference: (value) =>
-        dispatch({ type: "addVideoReference", value }),
-      removeVideoReference: (value) =>
-        dispatch({ type: "removeVideoReference", value }),
       updateVideoReferenceType: (id, referenceType) =>
         dispatch({
           type: "updateVideoReferenceType",
@@ -549,13 +466,10 @@ export function GenerationControlsStoreProvider({
       clearExtendVideo: () => dispatch({ type: "clearExtendVideo" }),
       setKeyframes: (value) => dispatch({ type: "setKeyframes", value }),
       addKeyframe: (value) => dispatch({ type: "addKeyframe", value }),
-      removeKeyframe: (value) => dispatch({ type: "removeKeyframe", value }),
       clearKeyframes: () => dispatch({ type: "clearKeyframes" }),
       setCameraMotion: (value) => dispatch({ type: "setCameraMotion", value }),
       setSubjectMotion: (value) =>
         dispatch({ type: "setSubjectMotion", value }),
-      setActiveTab: (value) => dispatch({ type: "setActiveTab", value }),
-      setImageSubTab: (value) => dispatch({ type: "setImageSubTab", value }),
       resetState: (value) => dispatch({ type: "resetState", value }),
     }),
     [],

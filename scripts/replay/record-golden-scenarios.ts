@@ -11,7 +11,7 @@
  * Usage (from the repo root — required env is asserted below):
  *
  *   REPLAY_MODE=record NODE_ENV=test \
- *   SPAN_PROVIDER=qwen SPAN_MODEL=qwen/qwen3-32b \
+ *   SPAN_PROVIDER=qwen SPAN_MODEL=qwen/qwen3.6-27b \
  *   API_KEY=replay-golden-key \
  *   npx tsx --tsconfig server/tsconfig.json scripts/replay/record-golden-scenarios.ts
  *

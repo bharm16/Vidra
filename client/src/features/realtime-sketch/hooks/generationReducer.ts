@@ -25,16 +25,8 @@ export interface PendingFrame {
 export interface GenerationStats {
   sent: number;
   skipped: number;
-  /** Round-trip times of completed frames, newest last (window of 20). */
-  rttMs: number[];
-  /** Model inference times reported by fal, newest last (window of 20). */
-  modelMs: number[];
-  /** Arrival timestamps of results, newest last (11 kept = 10 gaps). */
-  resultTimes: number[];
   /** Sticky: set on failure, cleared by the next successful frame. */
   lastError: { message: string; at: number } | null;
-  /** Encode cost of the most recent snapshot (canvas → JPEG → base64). */
-  lastEncodeMs: number | null;
 }
 
 export interface LiveOutput {
@@ -43,12 +35,8 @@ export interface LiveOutput {
   at: number;
 }
 
-export type ConnectionStatus = "connecting" | "live" | "reconnecting" | "error";
-
 export interface GenerationState {
-  epoch: number;
   requestCounter: number;
-  connection: ConnectionStatus;
   inFlight: InFlightFrame | null;
   pending: PendingFrame | null;
   liveOutput: LiveOutput | null;
@@ -61,7 +49,6 @@ export type GenerationAction =
       type: "result";
       requestId: string;
       imageUrl: string;
-      inferenceSeconds: number | null;
       at: number;
     }
   | {
@@ -72,29 +59,16 @@ export type GenerationAction =
       requestId?: string;
     };
 
-const RTT_WINDOW = 20;
-const RESULT_TIMES_WINDOW = 11;
-
-function pushWindow(values: number[], value: number, cap: number): number[] {
-  return [...values, value].slice(-cap);
-}
-
 export function createInitialGenerationState(): GenerationState {
   return {
-    epoch: 0,
     requestCounter: 0,
-    connection: "connecting",
     inFlight: null,
     pending: null,
     liveOutput: null,
     stats: {
       sent: 0,
       skipped: 0,
-      rttMs: [],
-      modelMs: [],
-      resultTimes: [],
       lastError: null,
-      lastEncodeMs: null,
     },
   };
 }
@@ -116,7 +90,6 @@ export function generationReducer(
           stats: {
             ...state.stats,
             skipped: state.stats.skipped + (state.pending !== null ? 1 : 0),
-            lastEncodeMs: action.encodeMs,
           },
         };
       }
@@ -125,7 +98,7 @@ export function generationReducer(
         ...state,
         requestCounter,
         inFlight: {
-          requestId: `${state.epoch}-${requestCounter}`,
+          requestId: String(requestCounter),
           dataUri: action.dataUri,
           sentAt: action.at,
           encodeMs: action.encodeMs,
@@ -133,7 +106,6 @@ export function generationReducer(
         stats: {
           ...state.stats,
           sent: state.stats.sent + 1,
-          lastEncodeMs: action.encodeMs,
         },
       };
     }
@@ -146,24 +118,6 @@ export function generationReducer(
       }
       const stats: GenerationStats = {
         ...state.stats,
-        rttMs: pushWindow(
-          state.stats.rttMs,
-          action.at - state.inFlight.sentAt,
-          RTT_WINDOW,
-        ),
-        modelMs:
-          action.inferenceSeconds === null
-            ? state.stats.modelMs
-            : pushWindow(
-                state.stats.modelMs,
-                Math.round(action.inferenceSeconds * 1000),
-                RTT_WINDOW,
-              ),
-        resultTimes: pushWindow(
-          state.stats.resultTimes,
-          action.at,
-          RESULT_TIMES_WINDOW,
-        ),
         lastError: null,
       };
       if (state.pending === null) {
@@ -183,7 +137,7 @@ export function generationReducer(
         ...state,
         requestCounter,
         inFlight: {
-          requestId: `${state.epoch}-${requestCounter}`,
+          requestId: String(requestCounter),
           dataUri: state.pending.dataUri,
           sentAt: action.at,
           encodeMs: state.pending.encodeMs,
@@ -219,7 +173,7 @@ export function generationReducer(
           ...state,
           requestCounter,
           inFlight: {
-            requestId: `${state.epoch}-${requestCounter}`,
+            requestId: String(requestCounter),
             dataUri: failed.dataUri,
             sentAt: action.at,
             encodeMs: failed.encodeMs,
@@ -233,7 +187,7 @@ export function generationReducer(
         ...state,
         requestCounter,
         inFlight: {
-          requestId: `${state.epoch}-${requestCounter}`,
+          requestId: String(requestCounter),
           dataUri: state.pending.dataUri,
           sentAt: action.at,
           encodeMs: state.pending.encodeMs,

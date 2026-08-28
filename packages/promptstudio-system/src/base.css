@@ -79,7 +79,7 @@
 /* Selection was the browser's default blue — the only unbranded colour in
    the product. */
 ::selection {
-  background: oklch(100% 0 0 / 0.18);
+  background: oklch(100% 0 0deg / 0.18);
   color: var(--fg);
 }
 
@@ -88,7 +88,7 @@
    inset without a second element. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: oklch(100% 0 0 / 0.18) transparent;
+  scrollbar-color: oklch(100% 0 0deg / 0.18) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -101,13 +101,13 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(100% 0 0 / 0.18);
+  background: oklch(100% 0 0deg / 0.18);
   border-radius: var(--radius-full);
   border: 3px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(100% 0 0 / 0.28);
+  background: oklch(100% 0 0deg / 0.28);
   background-clip: content-box;
 }

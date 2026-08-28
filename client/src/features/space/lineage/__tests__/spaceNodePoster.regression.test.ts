@@ -7,7 +7,7 @@ import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
  *
  * The gallery learned this rule once, but three other surfaces recomputed
  * "the still for this take" as `thumbnailUrl ?? mediaUrls[0]` without it. The
- * space is the default-on path (FEATURES.SPACE_LINEAGE) and renders a node's
+ * space is the only takes surface (M6 deletion pass) and renders a node's
  * `mediaUrl` straight into an <img src>, so a clip with no poster showed a
  * broken tile; Continue Scene fed the same expression to setStartFrame, so a
  * clip could be seeded as a *first frame* (covered at that seam by

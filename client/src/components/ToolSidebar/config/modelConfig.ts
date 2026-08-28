@@ -1,4 +1,5 @@
 import type { DraftModel } from "@components/ToolSidebar/types";
+import { modelDisplayLabel } from "@shared/modelIdentity";
 import {
   getDefaultGenerationDurationSeconds,
   getGenerationCreditCost,
@@ -13,12 +14,12 @@ const DRAFT_MODEL_OPTIONS: Record<
 > = {
   "wan-2.2": {
     id: "wan-2.2",
-    label: "Wan 2.2",
+    label: modelDisplayLabel("wan-2.2"),
     creditsPerSecond: getGenerationCreditsPerSecond("wan-2.2") ?? 3.5,
   },
   "wan-2.5": {
     id: "wan-2.5",
-    label: "Wan 2.5",
+    label: modelDisplayLabel("wan-2.5"),
     creditsPerSecond: getGenerationCreditsPerSecond("wan-2.5") ?? 3.5,
   },
 };
@@ -33,29 +34,29 @@ export const VIDEO_DRAFT_MODELS = Object.values(DRAFT_MODEL_OPTIONS);
 export const VIDEO_RENDER_MODELS = [
   {
     id: "sora-2",
-    label: "Sora 2",
+    label: modelDisplayLabel("sora-2"),
     creditsPerSecond: getGenerationCreditsPerSecond("sora-2") ?? 6,
   },
   {
     id: "kling-v2-1-master",
-    label: "Kling",
+    label: modelDisplayLabel("kling-v2-1-master"),
     creditsPerSecond: getGenerationCreditsPerSecond("kling-v2-1-master") ?? 5,
   },
   {
     id: "google/veo-3",
-    label: "Veo",
+    label: modelDisplayLabel("google/veo-3"),
     creditsPerSecond: getGenerationCreditsPerSecond("google/veo-3") ?? 24,
   },
   {
     id: "luma-ray3",
-    label: "Luma",
+    label: modelDisplayLabel("luma-ray3"),
     creditsPerSecond: getGenerationCreditsPerSecond("luma-ray3") ?? 7,
   },
 ];
 
 export const IMAGE_MODEL = {
   id: "replicate-flux-kontext-fast",
-  label: "Kontext",
+  label: modelDisplayLabel("replicate-flux-kontext-fast"),
   cost: 1,
 };
 

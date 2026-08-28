@@ -51,16 +51,12 @@ export interface PromptEditorWiring {
 }
 
 export interface PromptEditorSurfaceProps extends PromptEditorWiring {
-  prompt: string;
   /** Visual variant — "empty" mirrors today's centered hero text styling; "active" mirrors the docked variant. */
   variant?: "empty" | "active";
 }
 
 export function PromptEditorSurface({
   editorRef,
-  // `prompt` is part of the public surface for parity with future composer wrappers,
-  // but the editor body itself is uncontrolled (managed via editorRef contenteditable).
-  prompt: _prompt,
   variant = "active",
   onTextSelection,
   onHighlightClick,
@@ -112,7 +108,6 @@ export function PromptEditorSurface({
   const placeholderText = isEmptyLayout
     ? "Describe your idea…"
     : "Describe your shot…";
-  const [, setIsFocused] = useState(false);
   const [isSuggestionTrayCollapsed, setIsSuggestionTrayCollapsed] =
     useState(false);
   const [isDebugCopied, setIsDebugCopied] = useState(false);
@@ -210,11 +205,7 @@ export function PromptEditorSurface({
           onCopyEvent={onCopyEvent}
           onInput={onInput}
           onKeyDown={onEditorKeyDown}
-          onBlur={(event) => {
-            setIsFocused(false);
-            onEditorBlur(event);
-          }}
-          onFocus={() => setIsFocused(true)}
+          onBlur={onEditorBlur}
         />
         {shouldRenderAutocomplete ? (
           <TriggerAutocomplete

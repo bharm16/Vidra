@@ -35,7 +35,6 @@ function makeSurfaceProps(
 ): PromptEditorSurfaceProps {
   return {
     editorRef: createRef<HTMLDivElement>(),
-    prompt: "",
     onTextSelection: noop,
     onHighlightClick: noop,
     onHighlightMouseDown: noop,
@@ -75,7 +74,6 @@ const SURFACE_VARIANTS: ReadonlyArray<{
   span?: Partial<SelectedSpanContextValue>;
 }> = [
   {}, // empty editor
-  { surface: { prompt: "a dancer in a sunlit studio" } }, // filled
   { surface: { autocompleteOpen: true } }, // autocomplete dropped down
   { span: { isInlineLoading: true } }, // inline suggestions fetching
   { span: { isInlineError: true, inlineErrorMessage: "boom" } }, // error surfaced

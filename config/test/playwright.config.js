@@ -24,11 +24,20 @@ export default defineConfig({
     // open: "never" — stops Playwright from running `open --wait-apps`
     // on the report URL, which blocks the parent shell on macOS until
     // someone closes the browser tab. We always have the JSON report.
-    ["html", { outputFolder: "playwright-report", open: "never" }],
-    ["json", { outputFile: "playwright-report/results.json" }],
-    ["junit", { outputFile: "playwright-report/results.xml" }],
+    //
+    // Paths are relative to THIS file's directory (config/test/), so the
+    // ../../ anchors output at the repo root — where .gitignore and the CI
+    // upload-artifact steps (e2e.yml, golden-path.yml) expect it. When the
+    // config moved into config/test/ the bare paths silently started
+    // writing here instead, and every CI failure shipped zero artifacts.
+    ["html", { outputFolder: "../../playwright-report", open: "never" }],
+    ["json", { outputFile: "../../playwright-report/results.json" }],
+    ["junit", { outputFile: "../../playwright-report/results.xml" }],
     ["list"],
   ],
+
+  // Traces/videos/screenshots — same root-anchoring as the reporters.
+  outputDir: "../../test-results",
 
   // Test timeout settings
   timeout: 30000,

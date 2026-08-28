@@ -1,23 +1,8 @@
 import React from "react";
 import { expect, afterEach, vi } from "vitest";
-import fc from "fast-check";
-// Ensure all tests run with test environment semantics
-process.env.NODE_ENV = "test";
+import { applySharedTestSetup } from "./testSetupShared.js";
 
-// Deterministic property-based tests. ~180 `fc.assert` call sites across the
-// repo ran unseeded, so every CI run drew fresh inputs and any latent
-// counterexample surfaced as an intermittent failure rather than a
-// reproducible one — three different property tests flaked in three
-// consecutive CI runs on 2026-08-07. A fixed seed turns the suite into a
-// reproducible regression set. Files that pass their own `seed` in fc.assert
-// options still win. Rotate this deliberately, and fix what the new seed
-// finds, rather than rediscovering counterexamples at random.
-fc.configureGlobal({ seed: 20260807 });
-
-process.env.GCS_BUCKET_NAME =
-  process.env.GCS_BUCKET_NAME || "prompt-builder-test-bucket";
-process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE =
-  process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE || "soft";
+applySharedTestSetup({ stubFetch: true });
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
@@ -79,22 +64,8 @@ Object.defineProperty(globalThis, "localStorage", {
   configurable: true,
 });
 
-// Mock fetch
-// Provide a safe default fetch mock so tests that indirectly touch adapters
-// (e.g. GeminiAdapter) don't crash with "Cannot read properties of undefined (reading 'ok')".
-// Individual tests can still override `global.fetch` as needed.
-global.fetch = vi.fn().mockResolvedValue({
-  ok: true,
-  status: 200,
-  statusText: "OK",
-  json: async () => ({
-    candidates: [{ content: { parts: [{ text: "stub" }] } }],
-  }),
-  text: async () =>
-    JSON.stringify({
-      candidates: [{ content: { parts: [{ text: "stub" }] } }],
-    }),
-});
+// The default fetch stub comes from applySharedTestSetup above; individual
+// tests still override `global.fetch` as needed.
 
 // Mock Firebase.
 //
@@ -139,9 +110,21 @@ vi.mock("@/config/firebase", () => {
   };
 });
 
-// Mock Toast context for components
-vi.mock("./src/components/Toast.jsx", () => ({
-  useToast: vi.fn(() => ({
+// Mock Toast context for components.
+//
+// Previously this mocked "./src/components/Toast.jsx" — a path with no file
+// behind it since the module became client/src/components/Toast.tsx (the
+// same silent-no-op bug as the firebase mock above), so 18 test files
+// re-declared the mock locally. Those local mocks still win where they
+// exist (they carry per-test spies); this is the default for everyone
+// else. tests/unit/toast.test.tsx exercises the real module and opts out
+// via vi.unmock.
+vi.mock("@components/Toast", () => {
+  // One stable instance, same reason as the firebase stub above: the real
+  // useToast returns memoized references, and consumers put them in effect
+  // dependency arrays — a fresh object per call re-fires those effects on
+  // every render.
+  const toastApi = {
     // Generic API
     showToast: vi.fn(),
     hideToast: vi.fn(),
@@ -151,10 +134,13 @@ vi.mock("./src/components/Toast.jsx", () => ({
     info: vi.fn(),
     warning: vi.fn(),
     error: vi.fn(),
-  })),
-  ToastProvider: ({ children }) => children,
-  default: () => null,
-}));
+  };
+  return {
+    useToast: vi.fn(() => toastApi),
+    ToastProvider: ({ children }) => children,
+    default: () => null,
+  };
+});
 
 // Mock PromptStudio UI primitives used in components
 vi.mock("@promptstudio/system/components/ui/button", () => ({

@@ -1,4 +1,5 @@
 import type { GenerationMediaType, GenerationTier } from "../types";
+import { modelDisplayLabel } from "@shared/modelIdentity";
 import {
   DEFAULT_GENERATION_DURATION_SECONDS,
   getGenerationCreditCost,
@@ -25,21 +26,21 @@ const DEFAULT_VIDEO_DURATION_SECONDS = DEFAULT_GENERATION_DURATION_SECONDS;
 
 export const DRAFT_MODELS: Record<string, ModelConfig> = {
   "flux-kontext": {
-    label: "Kontext",
+    label: modelDisplayLabel("flux-kontext"),
     credits: 4,
     eta: "20s",
     mediaType: "image-sequence",
     frameCount: 4,
   },
   "wan-2.2": {
-    label: "WAN 2.2",
+    label: modelDisplayLabel("wan-2.2"),
     creditsPerSecond: getGenerationCreditsPerSecond("wan-2.2") ?? 3.5,
     credits: getGenerationCreditCost("wan-2.2", DEFAULT_VIDEO_DURATION_SECONDS),
     eta: "45s",
     mediaType: "video",
   },
   "wan-2.5": {
-    label: "WAN 2.5",
+    label: modelDisplayLabel("wan-2.5"),
     creditsPerSecond: getGenerationCreditsPerSecond("wan-2.5") ?? 3.5,
     credits: getGenerationCreditCost("wan-2.5", DEFAULT_VIDEO_DURATION_SECONDS),
     eta: "45s",
@@ -53,14 +54,14 @@ export const DRAFT_MODELS: Record<string, ModelConfig> = {
  */
 export const RENDER_MODELS: Record<string, ModelConfig> = {
   "sora-2": {
-    label: "Sora 2",
+    label: modelDisplayLabel("sora-2"),
     creditsPerSecond: getGenerationCreditsPerSecond("sora-2") ?? 6,
     credits: getGenerationCreditCost("sora-2", DEFAULT_VIDEO_DURATION_SECONDS),
     eta: "2-4m",
     mediaType: "video",
   },
   "kling-v2-1-master": {
-    label: "Kling",
+    label: modelDisplayLabel("kling-v2-1-master"),
     creditsPerSecond: getGenerationCreditsPerSecond("kling-v2-1-master") ?? 5,
     credits: getGenerationCreditCost(
       "kling-v2-1-master",
@@ -70,7 +71,7 @@ export const RENDER_MODELS: Record<string, ModelConfig> = {
     mediaType: "video",
   },
   "google/veo-3": {
-    label: "Veo",
+    label: modelDisplayLabel("google/veo-3"),
     creditsPerSecond: getGenerationCreditsPerSecond("google/veo-3") ?? 24,
     credits: getGenerationCreditCost(
       "google/veo-3",
@@ -80,7 +81,7 @@ export const RENDER_MODELS: Record<string, ModelConfig> = {
     mediaType: "video",
   },
   "luma-ray3": {
-    label: "Luma",
+    label: modelDisplayLabel("luma-ray3"),
     creditsPerSecond: getGenerationCreditsPerSecond("luma-ray3") ?? 7,
     credits: getGenerationCreditCost(
       "luma-ray3",

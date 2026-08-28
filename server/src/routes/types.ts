@@ -2,7 +2,6 @@
  * Types for route factories
  */
 
-import type { Router } from "express";
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import type { StoryboardPreviewService } from "@services/image-generation/storyboard/StoryboardPreviewService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
@@ -98,4 +97,3 @@ export interface PreviewRoutesServices {
 /**
  * Route factory return type
  */
-export type RouteFactory = () => Router;

@@ -20,7 +20,6 @@ import type { VideoTier } from "@features/generation-controls";
 const log = logger.child("useCapabilitiesClamping");
 
 interface UseCapabilitiesClampingOptions {
-  activeTab: GenerationControlsTab;
   selectedModel: string;
   videoTier: VideoTier;
   renderModelId: string;
@@ -33,14 +32,11 @@ interface UseCapabilitiesClampingOptions {
 
 interface UseCapabilitiesClampingResult {
   schema: CapabilitiesSchema | null;
-  aspectRatioInfo: FieldInfo | null;
-  durationInfo: FieldInfo | null;
   aspectRatioOptions: string[];
   durationOptions: number[];
 }
 
 export function useCapabilitiesClamping({
-  activeTab,
   selectedModel,
   videoTier,
   renderModelId,
@@ -58,12 +54,10 @@ export function useCapabilitiesClamping({
     setVideoTier(expectedTier);
   }, [selectedModel, setVideoTier, videoTier]);
 
-  const capabilitiesModelId = useMemo(() => {
-    if (activeTab === "video") {
-      return videoTier === "draft" ? VIDEO_DRAFT_MODEL.id : renderModelId;
-    }
-    return renderModelId;
-  }, [activeTab, renderModelId, videoTier]);
+  const capabilitiesModelId = useMemo(
+    () => (videoTier === "draft" ? VIDEO_DRAFT_MODEL.id : renderModelId),
+    [renderModelId, videoTier],
+  );
 
   const { schema } = useCapabilities(capabilitiesModelId);
 
@@ -128,8 +122,6 @@ export function useCapabilitiesClamping({
 
   return {
     schema,
-    aspectRatioInfo,
-    durationInfo,
     aspectRatioOptions,
     durationOptions,
   };

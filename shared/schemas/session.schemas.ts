@@ -132,6 +132,13 @@ export const SessionPromptSchema = z.object({
 });
 
 export const SessionGenerationModeSchema = z.enum(["continuity", "standard"]);
+export const SessionShotStatusSchema = z.enum([
+  "draft",
+  "generating-keyframe",
+  "generating-video",
+  "completed",
+  "failed",
+]);
 export const SessionContinuityModeSchema = z.enum([
   "frame-bridge",
   "style-match",
@@ -213,13 +220,7 @@ export const SessionContinuityShotSchema = z.object({
   identityScore: z.number().optional(),
   qualityScore: z.number().optional(),
   retryCount: z.number().optional(),
-  status: z.enum([
-    "draft",
-    "generating-keyframe",
-    "generating-video",
-    "completed",
-    "failed",
-  ]),
+  status: SessionShotStatusSchema,
   error: z.string().optional(),
   createdAt: z.string(),
   generatedAt: z.string().optional(),

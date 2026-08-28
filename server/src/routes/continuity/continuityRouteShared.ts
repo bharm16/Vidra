@@ -12,7 +12,7 @@ import type {
 import { CreditCostCalculator } from "@services/continuity/CreditCostCalculator";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
-import { type RequestWithUser } from "@middleware/intake";
+import type { RequestWithUser } from "@middleware/intake";
 import {
   CreateSceneProxySchema,
   CreateShotSchema,
@@ -23,16 +23,6 @@ import {
   UpdateStyleReferenceSchema,
 } from "@server/schemas/continuity.schemas";
 
-export { type RequestWithUser };
-export {
-  CreateSceneProxySchema,
-  CreateShotSchema,
-  PreviewSceneProxySchema,
-  UpdatePrimaryStyleReferenceSchema,
-  UpdateSessionSettingsSchema,
-  UpdateShotSchema,
-  UpdateStyleReferenceSchema,
-};
 export const ContinuitySessionInputSchema = z
   .object({
     name: z.string().min(1),

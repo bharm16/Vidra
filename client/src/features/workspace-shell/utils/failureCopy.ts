@@ -5,7 +5,7 @@ import type { FailureKind } from "./deriveWorkspaceStage";
  *
  * One copy per {@link FailureKind}: what failed, the verb to try again, and
  * whether to reassure that nothing was charged (the paid generation stages —
- * picture / motion / clip — vs. the free writing and labeling passes). Rendered
+ * picture / motion / clip — vs. the free writing pass). Rendered
  * from the derived `{stage, failure}` flag, never a parallel error machine.
  */
 export interface FailureCopy {
@@ -17,11 +17,6 @@ export interface FailureCopy {
 const COPY: Record<FailureKind, FailureCopy> = {
   writing: {
     message: "Couldn’t expand that idea.",
-    retryLabel: "Try again",
-    notCharged: false,
-  },
-  labeling: {
-    message: "Couldn’t highlight the phrases.",
     retryLabel: "Try again",
     notCharged: false,
   },

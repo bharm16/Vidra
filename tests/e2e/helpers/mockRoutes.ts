@@ -8,8 +8,36 @@
 import type { Page } from "@playwright/test";
 import { jsonResponse } from "./responses";
 
-/** Mock the sessions API with empty defaults. */
-export async function mockSessionRoutes(page: Page): Promise<void> {
+export interface MockSessionRoutesOptions {
+  /** Session id echoed by create/by-prompt/by-id/PATCH. */
+  sessionId?: string;
+  /** Prompt uuid carried on the session's prompt. */
+  promptUuid?: string;
+  /** Prompt input returned from POST /api/sessions (the created draft). */
+  createInput?: string;
+  /** Prompt input returned from GET /api/sessions/:id (the loaded session). */
+  loadedInput?: string;
+  /** Invoked on every mutation (POST/PATCH) — lets specs count writes. */
+  onMutation?: () => void;
+}
+
+/**
+ * Mock the sessions API. Defaults give an empty, freshly-created session;
+ * options cover the variations specs used to hand-roll (workspace-smoke
+ * carried a byte-level copy of this cascade differing only in ids, prompt
+ * text, and a mutation counter).
+ */
+export async function mockSessionRoutes(
+  page: Page,
+  {
+    sessionId = "session_e2e",
+    promptUuid = "prompt_e2e",
+    createInput = "",
+    loadedInput,
+    onMutation,
+  }: MockSessionRoutesOptions = {},
+): Promise<void> {
+  const loaded = loadedInput ?? createInput;
   await page.route("**/api/sessions**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -22,12 +50,13 @@ export async function mockSessionRoutes(page: Page): Promise<void> {
     }
 
     if (method === "POST" && pathname.endsWith("/api/sessions")) {
+      onMutation?.();
       await route.fulfill(
         jsonResponse({
           success: true,
           data: {
-            id: "session_e2e",
-            prompt: { uuid: "prompt_e2e", input: "" },
+            id: sessionId,
+            prompt: { uuid: promptUuid, input: createInput },
           },
         }),
       );
@@ -36,18 +65,18 @@ export async function mockSessionRoutes(page: Page): Promise<void> {
 
     if (method === "GET" && pathname.includes("/api/sessions/by-prompt/")) {
       await route.fulfill(
-        jsonResponse({ success: true, data: { id: "session_e2e" } }),
+        jsonResponse({ success: true, data: { id: sessionId } }),
       );
       return;
     }
 
-    if (method === "GET" && pathname.includes("/api/sessions/session_e2e")) {
+    if (method === "GET" && pathname.includes(`/api/sessions/${sessionId}`)) {
       await route.fulfill(
         jsonResponse({
           success: true,
           data: {
-            id: "session_e2e",
-            prompt: { uuid: "prompt_e2e", input: "" },
+            id: sessionId,
+            prompt: { uuid: promptUuid, input: loaded },
           },
         }),
       );
@@ -55,8 +84,9 @@ export async function mockSessionRoutes(page: Page): Promise<void> {
     }
 
     if (method === "PATCH") {
+      onMutation?.();
       await route.fulfill(
-        jsonResponse({ success: true, data: { id: "session_e2e" } }),
+        jsonResponse({ success: true, data: { id: sessionId } }),
       );
       return;
     }

@@ -1,8 +1,8 @@
-process.env.NODE_ENV = "test";
-process.env.GCS_BUCKET_NAME =
-  process.env.GCS_BUCKET_NAME || "prompt-builder-test-bucket";
-process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE =
-  process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE || "soft";
+import { applySharedTestSetup } from "./testSetupShared.js";
+
+// Integration previously ran UNSEEDED (the copy-paste preamble here had
+// dropped the fc seed) — the shared setup closes that gap.
+applySharedTestSetup();
 
 // Default the firebase-integration gate ON. Billing/credit tests still
 // also require FIRESTORE_EMULATOR_HOST (which CI sets). Defaulting only

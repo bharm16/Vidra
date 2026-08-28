@@ -25,7 +25,6 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { getFlagEnvNames } from "../server/src/config/feature-flags.ts";
 import { extractRoutes, REPO_ROOT } from "./lib/route-map-walker.ts";
@@ -65,13 +64,14 @@ export function buildArchitectureMap(): ArchitectureMap {
       tagline:
         "Interactive editing canvas for AI video prompts with semantic span labeling, click-to-enhance suggestions, and fast previews.",
       stage: "pre-launch (zero users)",
+      // Only the inputs buildArchitectureMap actually reads — the CI
+      // freshness gate can only detect drift in these. (CLAUDE.md and
+      // services.config.ts used to be listed here decoratively, which made
+      // the gate's comment overpromise.)
       sourceOfTruth: [
-        "CLAUDE.md",
-        "client/CLAUDE.md",
-        "server/CLAUDE.md",
         "server/src/config/feature-flags.ts",
-        "server/src/config/services.config.ts",
-        "server/src/routes/api.routes.ts",
+        "server/src/config/services/",
+        "server/src/routes/ + server/src/config/routes/ (via extractRoutes)",
         "package.json",
       ],
     },

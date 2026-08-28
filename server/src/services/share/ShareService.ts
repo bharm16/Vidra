@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { AppError } from "@server/types/common";
+import { ShareError } from "./ShareError";
 import type { SessionPromptVersionEntry } from "@shared/types/session";
 import type {
   CreateShareRequest,
@@ -35,7 +35,7 @@ export class ShareService {
     // Owner-scoped. A missing session and a non-owner are indistinguishable
     // to the caller — both 404 — so a share cannot probe for others' sessions.
     if (!session || session.userId !== userId) {
-      throw new AppError("Clip not found", "SHARE_CLIP_NOT_FOUND", 404);
+      throw new ShareError("SHARE_CLIP_NOT_FOUND", "Clip not found");
     }
 
     // A generation lives in exactly one version — find it across all of them
@@ -59,16 +59,15 @@ export class ShareService {
       }
     }
     if (!generation) {
-      throw new AppError("Clip not found", "SHARE_CLIP_NOT_FOUND", 404);
+      throw new ShareError("SHARE_CLIP_NOT_FOUND", "Clip not found");
     }
 
     const storagePath =
       typeof generation.storagePath === "string" ? generation.storagePath : "";
     if (!storagePath) {
-      throw new AppError(
-        "This clip has no shareable media yet",
+      throw new ShareError(
         "SHARE_NO_MEDIA",
-        400,
+        "This clip has no shareable media yet",
       );
     }
 

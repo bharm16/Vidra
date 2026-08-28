@@ -52,27 +52,6 @@ npm run highlight-stats:watch
 - **B**: 400-600ms (Acceptable)
 - **C**: >600ms (Needs optimization)
 
-### 3. Browser Console Stats (`browser-highlight-stats.js`)
-
-A browser console script for viewing performance stats directly in the browser.
-
-**Usage:**
-
-1. Open your app in the browser
-2. Open DevTools Console (F12)
-3. Copy and paste the entire contents of `browser-highlight-stats.js`
-4. Press Enter to run
-
-**Pro Tip**: Save as a bookmarklet for quick access:
-
-```javascript
-javascript: (function () {
-  /* paste minified script here */
-})();
-```
-
-## Performance Monitoring Best Practices
-
 ### Getting Accurate Measurements
 
 1. **Warm up the cache**: Navigate through a few prompts before measuring
@@ -142,42 +121,5 @@ npm run sync:capabilities
 **Notes:**
 
 - Uses `.env` in the repo root for API keys (OPENAI_API_KEY, LUMA_API_KEY/LUMAAI_API_KEY, FAL_KEY, GEMINI_API_KEY/GOOGLE_API_KEY).
-- OpenAI metadata pulls from the documented OpenAPI spec (aligned with https://platform.openai.com/docs/guides/video-generation); override with `OPENAI_OPENAPI_URL` if needed.
-- Luma metadata defaults to the public docs OpenAPI (no key required). Override with `LUMA_DOCS_URL` if needed.
-- Luma SDK fallback reads `video.ts` from the official `lumaai-node` repo; override with `LUMA_SDK_VIDEO_TS_URL` if needed.
-- Optional Luma models endpoint override: `LUMA_MODELS_ENDPOINT` (relative or absolute URL). Used only if docs sync fails, and requires a Luma API key.
 - Optional override: `npm run sync:capabilities -- --env-file=/path/to/.env`.
 - Falls back to manual defaults when provider metadata is unavailable.
-
-## 5. Raw Prompt Collection (`collect-raw-prompts.ts`)
-
-Exports the raw user prompts (“un-optimized” input) from Firestore plus an optional
-localStorage JSON export so you can audit or reprocess every input. The script
-automatically loads credentials from `.env` in the repo root (or use `--env-file`
-to point at another file) so you just need to keep your Firebase vars there.
-
-```bash
-tsx --tsconfig server/tsconfig.json scripts/collect-raw-prompts.ts \
-  --output=reports/raw-prompts.json \
-  --format=json \
-  --limit=2000 \
-  --local-file=~/Downloads/promptHistory-export.json
-```
-
-| Option                | Description                                                                     |
-| --------------------- | ------------------------------------------------------------------------------- | -------------------------------- |
-| `--userId=<id>`       | Restrict to a single user for auditing.                                         |
-| `--limit=<n>`         | Stop after `<n>` Firestore documents (default: unlimited).                      |
-| `--batch-size=<n>`    | Firestore page size (default: 500).                                             |
-| `--output=<path>`     | File to write (creates directories as needed). Default: `raw-prompts.json`.     |
-| `--format=json        | csv`                                                                            | Output format (default: `json`). |
-| `--local-file=<path>` | Optional path to a `promptHistory` export from localStorage (JSON array).       |
-| `--env-file=<path>`   | Optional `.env` file containing Firebase credentials; defaults to project root. |
-
-The script prints a quick summary and saves every raw prompt with metadata like
-`userId`, `mode`, and `timestamp`. CSV outputs escape quotes so you can open them in
-spreadsheet apps. Fill your `.env` with the usual Firebase keys (e.g.,
-`FIREBASE_SERVICE_ACCOUNT_PATH`, `VITE_FIREBASE_PROJECT_ID`, etc.) to let the admin
-client connect.
-
-> The file name includes a timestamp suffix (e.g., `raw-prompts-20240801_153002.json`).

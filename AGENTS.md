@@ -172,8 +172,8 @@ npm run test:all
 
 ```bash
 npm run eval:span
-npm run eval:suggestions
-npm run eval:optimization
+npm run eval:span:fast
+npm run eval:prompts:generate
 npm run eval:regression
 npm run quality:gate
 ```

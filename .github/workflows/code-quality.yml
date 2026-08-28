@@ -3,18 +3,11 @@ name: Code Quality Checks
 on: [pull_request]
 
 jobs:
-  check-file-size:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Check for large files
-        run: |
-          find src client/src -type f \( -name "*.js" -o -name "*.jsx" \) -exec wc -l {} + | \
-          awk '$1 > 500 {print "Large file: " $2 " (" $1 " lines)"; exit 1}'
-
-          echo "All files under 500 lines"
-
+  # A check-file-size job used to live here. It was a permanent no-op (it
+  # globbed *.js/*.jsx in a 100%-TS codebase, rooted partly at a `src/`
+  # that doesn't exist) — and a line-count ceiling contradicts the repo's
+  # own rule against splitting files on length alone, so it was deleted
+  # rather than rewritten (2026-08-27 audit A11).
   check-generated-docs:
     runs-on: ubuntu-latest
     steps:
@@ -34,3 +27,11 @@ jobs:
 
       - name: Verify feature-flag table is up to date
         run: npm run flagdocs:check
+
+      # 12 cross-table invariants (aliases ↔ canonical ids ↔ pricing ↔
+      # capability registry ↔ ModelConfig clients). Written to catch the
+      # llm_judge_general→anthropic no-adapter bug, but until 2026-08-27 it
+      # only ran when a human typed `npm run verify:drift` — the one drift
+      # gate of four with no automated caller.
+      - name: Verify shared catalogs are consistent
+        run: npm run catalogs:check

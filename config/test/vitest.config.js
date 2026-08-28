@@ -96,14 +96,6 @@ const aliases = [
     replacement: path.resolve(__dirname, "../../server/src/llm"),
   },
   {
-    find: /^@api\/(.*)/,
-    replacement: path.resolve(__dirname, "../../server/src/api/$1"),
-  },
-  {
-    find: "@api",
-    replacement: path.resolve(__dirname, "../../server/src/api"),
-  },
-  {
     find: /^@middleware\/(.*)/,
     replacement: path.resolve(__dirname, "../../server/src/middleware/$1"),
   },
@@ -174,30 +166,6 @@ const aliases = [
   {
     find: "@hooks",
     replacement: path.resolve(__dirname, "../../client/src/hooks"),
-  },
-  {
-    find: /^@styles\/(.*)/,
-    replacement: path.resolve(__dirname, "../../client/src/styles/$1"),
-  },
-  {
-    find: "@styles",
-    replacement: path.resolve(__dirname, "../../client/src/styles"),
-  },
-  {
-    find: /^@lib\/(.*)/,
-    replacement: path.resolve(__dirname, "../../client/src/lib/$1"),
-  },
-  {
-    find: "@lib",
-    replacement: path.resolve(__dirname, "../../client/src/lib"),
-  },
-  {
-    find: /^@schemas\/(.*)/,
-    replacement: path.resolve(__dirname, "../../client/src/schemas/$1"),
-  },
-  {
-    find: "@schemas",
-    replacement: path.resolve(__dirname, "../../client/src/schemas"),
   },
   {
     find: /^@repositories\/(.*)/,
@@ -289,7 +257,6 @@ const coverageExclude = [
   "**/*.config.{js,ts}",
   "vite.config.js",
   "vitest.config.js",
-  "vitest.workspace.js",
   "vitest.setup.js",
   "vitest.setup.client.js",
   "vitest.setup.server.js",

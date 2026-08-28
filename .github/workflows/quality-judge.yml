@@ -6,8 +6,12 @@ name: Quality Judge (LLM scoring of live events)
 # docs/superpowers/specs/2026-05-12-llm-judge-framework-design.md.
 
 on:
-  schedule:
-    - cron: "0 8 * * *" # 08:00 UTC daily (one hour after span-labeling-eval)
+  # DISABLED CRON (2026-08-27): the PostHog measurement program is frozen by
+  # ADR-0002 and Vidra has zero users, so a daily judge run scores synthetic
+  # traffic at LLM cost for no reader — the same posture synthetic-harness.yml
+  # already took. Re-enable the schedule when the measurement program thaws:
+  #   schedule:
+  #     - cron: "0 8 * * *" # 08:00 UTC daily (one hour after span-labeling-eval)
   workflow_dispatch:
     inputs:
       surface:

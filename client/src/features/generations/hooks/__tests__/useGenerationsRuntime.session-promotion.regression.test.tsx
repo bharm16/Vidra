@@ -148,7 +148,7 @@ vi.mock("@/features/prompt-optimizer/hooks/useCapabilities", () => ({
     },
     isLoading: false,
     error: null,
-    target: { provider: "generic", model: "wan-2.2", label: "WAN 2.2" },
+    target: { provider: "generic", model: "wan-2.2", label: "Wan 2.2" },
   }),
 }));
 

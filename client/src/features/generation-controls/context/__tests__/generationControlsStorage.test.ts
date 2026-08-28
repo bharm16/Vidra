@@ -5,10 +5,15 @@ import {
   loadCameraMotion,
   loadKeyframes,
   loadSubjectMotion,
-  persistCameraMotion,
-  persistKeyframes,
-  persistSubjectMotion,
 } from "../generationControlsStorage";
+
+// The persist* writers were deleted 2026-08-27 — legacy keys are no longer
+// written, only migrated on load for one release (see the note in
+// generationControlsStoreStorage.ts). These tests seed the legacy keys
+// directly, the way a returning browser would present them.
+const seed = (key: string, value: unknown): void => {
+  localStorage.setItem(key, JSON.stringify(value));
+};
 
 const SAMPLE_CAMERA_MOTION: CameraPath = {
   id: "pan_left",
@@ -30,8 +35,8 @@ beforeEach(() => {
 });
 
 describe("generationControlsStorage", () => {
-  it("persists and loads camera motion", () => {
-    persistCameraMotion(SAMPLE_CAMERA_MOTION);
+  it("loads camera motion from the legacy key", () => {
+    seed("generation-controls:cameraMotion", SAMPLE_CAMERA_MOTION);
     expect(loadCameraMotion()).toEqual(SAMPLE_CAMERA_MOTION);
   });
 
@@ -46,25 +51,9 @@ describe("generationControlsStorage", () => {
     expect(loadCameraMotion()).toBeNull();
   });
 
-  it("clears camera motion when persisted null", () => {
-    persistCameraMotion(SAMPLE_CAMERA_MOTION);
-    persistCameraMotion(null);
-    expect(loadCameraMotion()).toBeNull();
-    expect(localStorage.getItem("generation-controls:cameraMotion")).toBeNull();
-  });
-
-  it("persists and loads subject motion", () => {
-    persistSubjectMotion("Walks forward");
+  it("loads subject motion from the legacy key", () => {
+    localStorage.setItem("generation-controls:subjectMotion", "Walks forward");
     expect(loadSubjectMotion()).toBe("Walks forward");
-  });
-
-  it("clears subject motion when empty", () => {
-    persistSubjectMotion("Spin");
-    persistSubjectMotion("");
-    expect(loadSubjectMotion()).toBe("");
-    expect(
-      localStorage.getItem("generation-controls:subjectMotion"),
-    ).toBeNull();
   });
 
   describe("keyframes", () => {
@@ -83,8 +72,8 @@ describe("generationControlsStorage", () => {
       },
     ];
 
-    it("persists and loads keyframes", () => {
-      persistKeyframes(SAMPLE_KEYFRAMES);
+    it("loads keyframes from the legacy key", () => {
+      seed("generation-controls:keyframes", SAMPLE_KEYFRAMES);
       expect(loadKeyframes()).toEqual(SAMPLE_KEYFRAMES);
     });
 
@@ -99,15 +88,8 @@ describe("generationControlsStorage", () => {
       expect(loadKeyframes()).toEqual([]);
     });
 
-    it("clears keyframes when persisted empty array", () => {
-      persistKeyframes(SAMPLE_KEYFRAMES);
-      persistKeyframes([]);
-      expect(loadKeyframes()).toEqual([]);
-      expect(localStorage.getItem("generation-controls:keyframes")).toBeNull();
-    });
-
     it("loads single keyframe", () => {
-      persistKeyframes(SAMPLE_KEYFRAMES.slice(0, 1));
+      seed("generation-controls:keyframes", SAMPLE_KEYFRAMES.slice(0, 1));
       const loaded = loadKeyframes();
       expect(loaded).toHaveLength(1);
       expect(loaded[0]?.id).toBe("kf-1");

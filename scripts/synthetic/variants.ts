@@ -11,6 +11,8 @@
  * § 2.1 for the design rationale.
  */
 
+import { DEFAULT_QWEN_MODEL } from "../../server/src/config/modelConfig.js";
+
 export const SURFACES = ["suggestions", "optimize", "span-labeling"] as const;
 export type Surface = (typeof SURFACES)[number];
 
@@ -48,8 +50,8 @@ export const VARIANTS: VariantPreset[] = [
   {
     name: "qwen",
     surface: "suggestions",
-    env: { ENHANCE_PROVIDER: "qwen", ENHANCE_MODEL: "qwen/qwen3-32b" },
-    description: "Qwen 3 32B via Groq (current prod default)",
+    env: { ENHANCE_PROVIDER: "qwen", ENHANCE_MODEL: DEFAULT_QWEN_MODEL },
+    description: "Qwen via Groq (current prod default)",
   },
   {
     name: "gemini",
@@ -74,9 +76,8 @@ export const VARIANTS: VariantPreset[] = [
     // behavior, ~39.7% emission rate) to measure the lift.
     name: "qwen-with-imperative",
     surface: "suggestions",
-    env: { ENHANCE_PROVIDER: "qwen", ENHANCE_MODEL: "qwen/qwen3-32b" },
-    description:
-      "Qwen 3 32B (post-Sub-project-B2 imperative + one-shot prompt)",
+    env: { ENHANCE_PROVIDER: "qwen", ENHANCE_MODEL: DEFAULT_QWEN_MODEL },
+    description: "Qwen (post-Sub-project-B2 imperative + one-shot prompt)",
   },
 
   // -- optimize --
@@ -98,8 +99,8 @@ export const VARIANTS: VariantPreset[] = [
   {
     name: "qwen",
     surface: "optimize",
-    env: { OPTIMIZE_PROVIDER: "qwen", OPTIMIZE_MODEL: "qwen/qwen3-32b" },
-    description: "Qwen 3 32B for optimize",
+    env: { OPTIMIZE_PROVIDER: "qwen", OPTIMIZE_MODEL: DEFAULT_QWEN_MODEL },
+    description: "Qwen for optimize",
   },
   {
     // Sub-project C (2026-05-22): same env as `openai`, distinct tag.

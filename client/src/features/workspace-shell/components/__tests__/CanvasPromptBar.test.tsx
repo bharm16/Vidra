@@ -32,7 +32,6 @@ const noop = () => {};
 function makeSurfaceProps(): PromptEditorSurfaceProps {
   return {
     editorRef: createRef<HTMLDivElement>(),
-    prompt: "",
     onTextSelection: noop,
     onHighlightClick: noop,
     onHighlightMouseDown: noop,
@@ -134,7 +133,6 @@ describe("CanvasPromptBar", () => {
     const empty = makeSurfaceProps();
     const filled: PromptEditorSurfaceProps = {
       ...makeSurfaceProps(),
-      prompt: "a dancer in a sunlit studio",
       autocompleteOpen: true,
     };
     const { container, rerender } = render(

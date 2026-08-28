@@ -11,9 +11,6 @@ type AuthShellProps = {
    * 'page' — wider container for account/billing pages that need more room
    */
   variant?: "auth" | "page";
-  /** Legacy props — accepted for backward compatibility, ignored in rendering */
-  eyebrow?: string;
-  subtitle?: string;
 };
 
 /**

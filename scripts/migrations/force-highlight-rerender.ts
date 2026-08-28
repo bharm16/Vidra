@@ -49,20 +49,27 @@
 import { initializeFirebaseAdmin, admin } from "./firebase-admin-init.js";
 import { labelSpans } from "../../server/src/llm/span-labeling/SpanLabelingService.js";
 import { hashString } from "./hashString.js";
+import { createSyntheticAIService } from "../synthetic/utils/aiService.js";
+
+// labelSpans requires an AIService since the DI refactor — regenerate mode
+// crashed on its first document while this file was tsconfig-excluded (the
+// exclusion hid the TS2554). The synthetic factory mirrors prod DI wiring.
+const aiService = createSyntheticAIService();
+
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+function argValue(prefix: string): string | undefined {
+  return args.find((arg) => arg.startsWith(prefix))?.split("=")[1];
+}
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const options = {
   dryRun: args.includes("--dry-run"),
-  userId: args.find((arg) => arg.startsWith("--userId="))?.split("=")[1],
-  batchSize:
-    parseInt(
-      args.find((arg) => arg.startsWith("--batch-size="))?.split("=")[1],
-    ) || 10,
-  limit:
-    parseInt(args.find((arg) => arg.startsWith("--limit="))?.split("=")[1]) ||
-    null,
-  mode: args.find((arg) => arg.startsWith("--mode="))?.split("=")[1] || "clear",
+  userId: argValue("--userId="),
+  limit: Number.parseInt(argValue("--limit=") ?? "", 10) || null,
+  mode: argValue("--mode=") || "clear",
 };
 
 // Validate mode
@@ -80,29 +87,40 @@ const stats = {
   skipped: 0,
   errors: 0,
   noCache: 0,
-  failedDocs: [],
-  startTime: null,
+  failedDocs: [] as Array<{
+    id: string;
+    mode: string | undefined;
+    error: string;
+    charCount: number;
+  }>,
+  startTime: 0,
   totalProcessingTime: 0,
 };
 
 /**
  * Generate new highlight cache for a prompt text
  */
-async function generateHighlightCache(text) {
-  const result = await labelSpans({
-    text,
-    maxSpans: 60,
-    minConfidence: 0.5,
-    policy: { nonTechnicalWordLimit: 6, allowOverlap: false },
-    templateVersion: "v1",
-  });
-
-  const signature = hashString(text);
+async function generateHighlightCache(text: string): Promise<{
+  spans: unknown[];
+  meta: unknown;
+  signature: string;
+  timestamp: FirebaseFirestore.FieldValue;
+}> {
+  const result = await labelSpans(
+    {
+      text,
+      maxSpans: 60,
+      minConfidence: 0.5,
+      policy: { nonTechnicalWordLimit: 6, allowOverlap: false },
+      templateVersion: "v1",
+    },
+    aiService,
+  );
 
   return {
     spans: result.spans || [],
     meta: result.meta || null,
-    signature,
+    signature: hashString(text),
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   };
 }
@@ -110,10 +128,25 @@ async function generateHighlightCache(text) {
 /**
  * Process a single document
  */
-async function processDocument(doc, db) {
+interface ProcessResult {
+  status: "regenerated" | "cleared" | "skipped" | "error";
+  reason?: string;
+  error?: string;
+  spansCount?: number;
+  signature?: string | null;
+  mode: string | undefined;
+  charCount: number;
+  processingTime: number;
+}
+
+async function processDocument(
+  doc: FirebaseFirestore.QueryDocumentSnapshot,
+  db: FirebaseFirestore.Firestore,
+): Promise<ProcessResult> {
   const startTime = Date.now();
   const docId = doc.id;
   const data = doc.data();
+  const docMode = typeof data.mode === "string" ? data.mode : undefined;
 
   // Skip if no existing highlightCache
   if (!data.highlightCache) {
@@ -122,7 +155,7 @@ async function processDocument(doc, db) {
     return {
       status: "skipped",
       reason: "no-cache",
-      mode: data.mode,
+      mode: docMode,
       charCount: 0,
       processingTime: 0,
     };
@@ -137,7 +170,7 @@ async function processDocument(doc, db) {
       return {
         status: "skipped",
         reason: "no-prompt-text",
-        mode: data.mode,
+        mode: docMode,
         charCount: 0,
         processingTime: 0,
       };
@@ -145,13 +178,13 @@ async function processDocument(doc, db) {
   }
 
   try {
-    const updatePayload = {};
+    const updatePayload: Record<string, unknown> = {};
     let newSpansCount = 0;
-    let newSignature = null;
+    let newSignature: string | null = null;
 
     if (options.mode === "regenerate") {
       // Generate new highlights
-      const highlightCache = await generateHighlightCache(promptText);
+      const highlightCache = await generateHighlightCache(promptText as string);
       updatePayload.highlightCache = highlightCache;
       newSpansCount = highlightCache.spans.length;
       newSignature = highlightCache.signature;
@@ -185,7 +218,7 @@ async function processDocument(doc, db) {
       status: options.mode === "regenerate" ? "regenerated" : "cleared",
       spansCount: newSpansCount,
       signature: newSignature,
-      mode: data.mode,
+      mode: docMode,
       charCount: promptText?.length || 0,
       processingTime,
     };
@@ -194,15 +227,15 @@ async function processDocument(doc, db) {
     stats.errors++;
     stats.failedDocs.push({
       id: docId,
-      mode: data.mode,
-      error: error.message,
+      mode: docMode,
+      error: errorMessage(error),
       charCount: promptText?.length || 0,
     });
 
     return {
       status: "error",
-      error: error.message,
-      mode: data.mode,
+      error: errorMessage(error),
+      mode: docMode,
       charCount: promptText?.length || 0,
       processingTime,
     };
@@ -212,7 +245,7 @@ async function processDocument(doc, db) {
 /**
  * Main migration function
  */
-async function runMigration() {
+async function runMigration(): Promise<void> {
   console.log("\n🔧 Force Highlight Rerender Migration\n");
   console.log("Configuration:");
   console.log(`  Mode: ${options.mode.toUpperCase()}`);
@@ -220,7 +253,6 @@ async function runMigration() {
     `  Dry Run: ${options.dryRun ? "✓ YES (no changes will be made)" : "✗ NO (will update Firestore)"}`,
   );
   console.log(`  User Filter: ${options.userId || "ALL USERS"}`);
-  console.log(`  Batch Size: ${options.batchSize}`);
   console.log(`  Limit: ${options.limit || "NONE"}`);
   console.log("");
 
@@ -239,7 +271,7 @@ async function runMigration() {
 
   try {
     // Build query
-    let query = db.collection("prompts");
+    let query: FirebaseFirestore.Query = db.collection("prompts");
 
     if (options.userId) {
       query = query.where("userId", "==", options.userId);
@@ -267,7 +299,7 @@ async function runMigration() {
     stats.startTime = Date.now();
 
     for (let i = 0; i < docs.length; i++) {
-      const doc = docs[i];
+      const doc = docs[i]!;
 
       const progress = Math.round(((i + 1) / stats.total) * 100);
       const result = await processDocument(doc, db);
@@ -373,7 +405,6 @@ async function runMigration() {
     }
   } catch (error) {
     console.error("\n❌ Migration failed:", error);
-    console.error(error.stack);
     process.exit(1);
   }
 }

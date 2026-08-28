@@ -23,8 +23,6 @@ vi.mock("../../hooks/useCapabilitiesClamping", () => ({
         extend_video: { type: "bool", default: true },
       },
     },
-    aspectRatioInfo: null,
-    durationInfo: null,
     aspectRatioOptions: ["16:9", "9:16"],
     durationOptions: [5, 10],
   }),

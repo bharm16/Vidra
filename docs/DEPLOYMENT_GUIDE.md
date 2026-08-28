@@ -139,15 +139,12 @@ Runs on every push and PR:
 - Frontend build
 - Coverage reporting to Codecov
 
-#### 2. Security Scanning (`security-scan.yml`)
+#### 2. Security Scanning
 
-Runs on push/PR and daily schedule:
-
-- Dependency scanning (npm audit, Snyk)
-- Secret scanning (TruffleHog, Gitleaks)
-- Container scanning (Trivy, Grype)
-- SAST (CodeQL, ESLint Security)
-- License compliance (FOSSA)
+`security-scan.yml` was deleted 2026-08-27 (pre-launch, zero users, and its
+FOSSA/Snyk secrets were never set — every run failed). Recover it from git
+history as part of launch preparation; `npm audit` covers dependency
+advisories in the meantime.
 
 #### 3. Build & Push (`build-and-push.yml`)
 

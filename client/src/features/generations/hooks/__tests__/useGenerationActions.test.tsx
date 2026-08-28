@@ -87,7 +87,7 @@ describe("useGenerationActions insufficient credits handling", () => {
     // SET_GENERATIONS. A 402 rejection must not grow the set.
     expect(getAction(dispatch, "SET_GENERATIONS")).toBeUndefined();
     expect(getAction(dispatch, "UPDATE_GENERATION")).toBeUndefined();
-    expect(onInsufficientCredits).toHaveBeenCalledWith(28, "WAN 2.2 preview");
+    expect(onInsufficientCredits).toHaveBeenCalledWith(28, "Wan 2.2 preview");
   });
 
   it("does not create a storyboard generation before a 402 rejection and reports insufficient credits", async () => {

@@ -35,7 +35,7 @@ loop's oracle must never pass something that would fail at commit time.
 | all (offline) | `npm run verify:all`   | free · offline                                        | = tier 1 + tier 2; the full pre-handoff gate                                                                                       |
 
 `verify:drift` only checks that generated docs match code. If it fails, run the matching
-writer (`routemap:write`, `flagdocs:generate`, `architecture:map:write`), review the
+writer (`routemap:generate`, `flagdocs:generate`, `architecture:map:write`), review the
 regenerated artifact, then re-run the check.
 
 `verify:eval` runs the relaxed-F1 golden-set gate. A drop is a real regression in label
