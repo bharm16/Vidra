@@ -123,4 +123,3 @@ npm run sync:capabilities
 - Uses `.env` in the repo root for API keys (OPENAI_API_KEY, LUMA_API_KEY/LUMAAI_API_KEY, FAL_KEY, GEMINI_API_KEY/GOOGLE_API_KEY).
 - Optional override: `npm run sync:capabilities -- --env-file=/path/to/.env`.
 - Falls back to manual defaults when provider metadata is unavailable.
-

@@ -4,10 +4,10 @@ This directory contains migration scripts for updating Firestore data structures
 
 ## Script Catalog
 
-| Script                                   | Type               | Purpose                                                                        |
-| ---------------------------------------- | ------------------ | ------------------------------------------------------------------------------ |
-| `backfill-highlight-cache.ts`            | Backfill           | Generate `highlightCache` for prompts that lack it                             |
-| `force-highlight-rerender.ts`            | Reusable utility   | Invalidate or regenerate `highlightCache` after algorithm/model changes        |
+| Script                        | Type             | Purpose                                                                 |
+| ----------------------------- | ---------------- | ----------------------------------------------------------------------- |
+| `backfill-highlight-cache.ts` | Backfill         | Generate `highlightCache` for prompts that lack it                      |
+| `force-highlight-rerender.ts` | Reusable utility | Invalidate or regenerate `highlightCache` after algorithm/model changes |
 
 **Status policy:** the seven already-run one-time migrations were deleted 2026-08-27 (git history is the archive — recover a script from there if a migration ever needs re-running). The two scripts above are the live operator tools; both are type-checked by the root tsconfig and smoke-tested against the Firestore emulator.
 
@@ -71,6 +71,7 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/force-highlight-rerender.
 **Custom batch size:**
 
 ```bash
+
 ```
 
 #### Modes
@@ -226,6 +227,7 @@ tsx --tsconfig server/tsconfig.json scripts/migrations/backfill-highlight-cache.
 **Custom batch size:**
 
 ```bash
+
 ```
 
 #### What It Does
@@ -317,7 +319,6 @@ Errors:                       0
 **Solution**: Your service account needs Firestore read/write permissions. Check IAM roles in Firebase Console.
 
 ### Rate limiting / quota errors
-
 
 ### "labelSpans is not a function"
 
