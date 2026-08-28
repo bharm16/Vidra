@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import type { SessionContinuityMode } from "@shared/types/session";
 import { cn } from "@/utils/cn";
-import { StrengthSlider } from "@/features/continuity/components/StyleReferencePanel/StrengthSlider";
+import { StrengthSlider } from "@/features/continuity/components/StrengthSlider";
 
 interface ContinuityIntentPickerProps {
   mode: SessionContinuityMode;

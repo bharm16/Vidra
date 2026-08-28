@@ -70,29 +70,6 @@ const CapabilitiesSchemaSchema = z.object({
   unknown_fields: z.array(z.string()).optional(),
 });
 
-const VideoAvailabilityModelSchema = z.object({
-  id: z.string(),
-  available: z.boolean(),
-  supportsImageInput: z.boolean().optional(),
-  supportsI2V: z.boolean().optional(),
-  planTier: z.string().optional(),
-  entitled: z.boolean().optional(),
-});
-
-const VideoAvailabilityResponseSchema = z.object({
-  availableModels: z.array(z.string()),
-  availableCapabilityModels: z.array(z.string()).optional(),
-  models: z.array(VideoAvailabilityModelSchema).optional(),
-});
-
-const CapabilitiesRegistrySchema = z.record(
-  z.string(),
-  z.record(z.string(), CapabilitiesSchemaSchema),
-);
-
-type VideoAvailabilityResponse = z.infer<
-  typeof VideoAvailabilityResponseSchema
->;
 type ParsedCapabilityCondition = z.infer<typeof CapabilityConditionSchema>;
 type ParsedCapabilityValueRule = z.infer<typeof CapabilityValueRuleSchema>;
 type ParsedCapabilityFieldConstraints = z.infer<
@@ -202,11 +179,7 @@ const normalizeCapabilitiesSchema = (
   };
 };
 
-type RegistryResponse = Record<string, Record<string, CapabilitiesSchema>>;
-
 export class CapabilitiesApi {
-  private registryInFlight: Promise<RegistryResponse> | null = null;
-
   constructor(private readonly client: ApiClient) {}
 
   async getCapabilities(
@@ -221,43 +194,6 @@ export class CapabilitiesApi {
       ),
     );
     return normalizeCapabilitiesSchema(parsed.data);
-  }
-
-  // Coalesces concurrent callers (useModelRegistry + useCapabilityRegistry mount
-  // simultaneously in ShotEditor) onto a single network request. The promise is
-  // cleared after settle so a subsequent mount refetches.
-  async getRegistry(): Promise<RegistryResponse> {
-    if (this.registryInFlight) {
-      return this.registryInFlight;
-    }
-    const request = (async (): Promise<RegistryResponse> => {
-      const parsed = ApiSuccessResponseSchema(CapabilitiesRegistrySchema).parse(
-        await this.client.get("/registry"),
-      ).data;
-      return Object.fromEntries(
-        Object.entries(parsed).map(([provider, models]) => [
-          provider,
-          Object.fromEntries(
-            Object.entries(models).map(([modelId, capability]) => [
-              modelId,
-              normalizeCapabilitiesSchema(capability),
-            ]),
-          ),
-        ]),
-      );
-    })();
-    this.registryInFlight = request;
-    try {
-      return await request;
-    } finally {
-      this.registryInFlight = null;
-    }
-  }
-
-  async getVideoAvailability(): Promise<VideoAvailabilityResponse> {
-    return VideoAvailabilityResponseSchema.parse(
-      await this.client.get("/preview/video/availability"),
-    );
   }
 }
 

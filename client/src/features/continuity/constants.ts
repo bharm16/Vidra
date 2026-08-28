@@ -1,2 +1,0 @@
-export const STYLE_KEYFRAME_CREDIT_COST = 2;
-export const IDENTITY_KEYFRAME_CREDIT_COST = 2;
