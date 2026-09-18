@@ -117,7 +117,7 @@ vi.mock("@infrastructure/firebaseAdmin", () => ({
           createQuery([{ field, operator, value }]),
       };
     },
-    runTransaction: async (fn: (tx: unknown) => Promise<void>) => {
+    runTransaction: async (fn: (tx: unknown) => Promise<unknown>) => {
       const tx = {
         get: (docRef: ReturnType<typeof createDocRef>) => docRef.get(),
         set: (
@@ -126,7 +126,9 @@ vi.mock("@infrastructure/firebaseAdmin", () => ({
           options?: { merge?: boolean },
         ) => docRef.set(data, options),
       };
-      await fn(tx);
+      // Real Firestore resolves runTransaction to the callback's return value;
+      // `mutate` and `createIfAbsent` depend on it (only `save` returns void).
+      return fn(tx);
     },
   }),
 }));
@@ -259,5 +261,28 @@ describe("SessionStore", () => {
     await store.delete("delete-me");
 
     expect(mocks.records.has("delete-me")).toBe(false);
+  });
+
+  it("createIfAbsent creates when the id is free and returns the existing row untouched when it is taken", async () => {
+    const store = new SessionStore();
+    const first = buildRecord({
+      id: "det-1",
+      name: "Original",
+      promptUuid: "p-det",
+    });
+
+    const created = await store.createIfAbsent(first);
+    expect(created.created).toBe(true);
+    expect(mocks.records.get("det-1")?.name).toBe("Original");
+
+    // A second create at the SAME deterministic id — a re-press or a race — does
+    // not overwrite; it reports the row already there, so the first press's root
+    // words-version (and the take filed under it) is never clobbered.
+    const again = await store.createIfAbsent(
+      buildRecord({ id: "det-1", name: "Rival", promptUuid: "p-det" }),
+    );
+    expect(again.created).toBe(false);
+    expect(again.session.name).toBe("Original");
+    expect(mocks.records.get("det-1")?.name).toBe("Original");
   });
 });
