@@ -6,6 +6,7 @@ import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createFalI2iRouter } from "../fal-i2i.routes";
+import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import {
   closeLoopbackServers,
   listenOnLoopback,
@@ -26,8 +27,35 @@ function appWith(
 ): express.Express {
   const app = express();
   app.use(express.json({ limit: "2mb" }));
+  app.use(attachCreator);
   app.use("/api/fal", router);
   return app;
+}
+
+/**
+ * `apiAuthMiddleware` is mounted in front of the relay in production; these
+ * tests mount the router alone, so the creator identity it attaches is
+ * stubbed here at the same seam.
+ */
+function attachCreator(
+  req: express.Request,
+  _res: express.Response,
+  next: express.NextFunction,
+): void {
+  (req as express.Request & { user?: { uid: string } }).user = {
+    uid: "creator-1",
+  };
+  next();
+}
+
+/** A budget with room to spare — these cases are about the relay, not the cap. */
+function openBudget(): SketchBudgetService {
+  return new SketchBudgetService({
+    store: { reserve: async () => undefined },
+    dailyCapCents: 500,
+    frameCostMillicents: 1,
+    now: () => new Date("2026-09-17T12:00:00.000Z"),
+  });
 }
 
 const validFrame = {
@@ -66,7 +94,13 @@ describe("POST /api/fal/i2i upstream lifecycle (regression)", () => {
   it("aborts the upstream fal call when the client disconnects mid-frame", async () => {
     const { fetchFn, state } = hangingUpstream();
     const server = await listenOnLoopback(
-      appWith(createFalI2iRouter({ falKey: "key-123", fetchFn })),
+      appWith(
+        createFalI2iRouter({
+          falKey: "key-123",
+          fetchFn,
+          budget: openBudget(),
+        }),
+      ),
     );
     const { port } = server.address() as AddressInfo;
 
@@ -98,6 +132,7 @@ describe("POST /api/fal/i2i upstream lifecycle (regression)", () => {
         createFalI2iRouter({
           falKey: "key-123",
           fetchFn,
+          budget: openBudget(),
           upstreamTimeoutMs: 40,
         }),
       ),

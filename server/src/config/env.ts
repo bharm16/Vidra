@@ -337,6 +337,20 @@ const studioSchema = z.object({
   STUDIO_DAILY_SPEND_CAP_CENTS: coercePositiveInt(500),
 });
 
+const sketchRelaySchema = z.object({
+  // The realtime sketch relay's only economic control (issue #84): estimated
+  // spend admitted per creator per UTC day, in cents — same shape and same
+  // reset boundary as STUDIO_DAILY_SPEND_CAP_CENTS above. A malformed value
+  // fails boot instead of silently falling back.
+  SKETCH_DAILY_SPEND_CAP_CENTS: coercePositiveInt(500),
+  // Estimated cost of ONE dispatched sketch frame, in millicents (1 cent =
+  // 1000). Sub-cent because a frame costs far less than a cent: rounding it
+  // up to 1¢ would shrink the day's real allowance several-fold. The default
+  // is a deliberate overestimate — it reserves more than a frame costs, never
+  // less — and must be confirmed against fal's invoice before launch.
+  SKETCH_FRAME_COST_MILLICENTS: coercePositiveInt(300),
+});
+
 const convergenceSchema = z.object({
   DEPTH_ESTIMATION_WARMUP_RETRY_TIMEOUT_MS: coercePositiveInt(20_000),
   // DEPTH_WARMUP_ON_STARTUP is a registered flag — validated by the derived
@@ -410,6 +424,7 @@ const envSchema = serverSchema
   .merge(startupSchema)
   .merge(capabilitiesSchema)
   .merge(studioSchema)
+  .merge(sketchRelaySchema)
   .merge(convergenceSchema)
   .merge(enhancementSchema)
   .merge(spanLabelingSchema)
