@@ -1124,4 +1124,296 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       expect(mediaStore.calls).toHaveLength(1);
     });
   });
+
+  /**
+   * Issue #128 — an interrupted acceptance resumes as the SAME take.
+   *
+   * Admission today runs claim → store → mint identity → attach → record the
+   * completed response. The completion snapshot is now written BEFORE the
+   * append too, with the attachment still `pending`, so it is the durable resume
+   * record: identity and media survive each step, and a crash re-attaches THIS
+   * take rather than storing new bytes and minting a second one. The idempotency
+   * record is the authoritative owner of the attachment state — a replay reads
+   * the CURRENT outcome, not the attempt that first settled it.
+   *
+   * These are user-data / identity paths, so every failure-injection case is a
+   * mandatory negative path. The seam is the idempotency store: the fake below
+   * models the concrete `RequestIdempotencyService` (pending / completed /
+   * failed, a pending lock that expires, `replay` once a snapshot exists) and
+   * can inject a crash at a chosen completion write — `before` loses the write,
+   * `after` persists it and then the process dies. No internal module is mocked;
+   * the real `SessionService` runs over the in-memory store double, so "exactly
+   * one take" is asserted against the real upsert-by-id append.
+   */
+  describe("resumption after an interrupted acceptance (issue #128)", () => {
+    interface ResumeCrash {
+      /** 1-based index of the completion write (`markCompleted`) to fail. */
+      call: number;
+      /** `before` loses the write; `after` persists it, then the worker dies. */
+      mode: "before" | "after";
+    }
+
+    type ResumableIdempotency = AdmissionIdempotencyPort & {
+      clock: { now: number };
+      /** The body of the single persisted snapshot, for identity assertions. */
+      peekBody(): Record<string, unknown> | undefined;
+    };
+
+    function createResumableIdempotency(
+      opts: { crash?: ResumeCrash; pendingLockTtlMs?: number } = {},
+    ): ResumableIdempotency {
+      const ttl = opts.pendingLockTtlMs ?? 6 * 60 * 1000;
+      const clock = { now: 1_000_000 };
+      const records = new Map<
+        string,
+        {
+          payloadHash: string;
+          status: "pending" | "completed" | "failed";
+          lockExpiresAtMs: number;
+          snapshot?: { statusCode: number; body: Record<string, unknown> };
+        }
+      >();
+      let markCompletedCalls = 0;
+      return {
+        clock,
+        peekBody: () => [...records.values()][0]?.snapshot?.body,
+        claimRequest: async ({ userId, route, key, payload }) => {
+          const recordId = `${userId}|${route}|${key}`;
+          const payloadHash = JSON.stringify(payload);
+          const existing = records.get(recordId);
+          if (!existing) {
+            records.set(recordId, {
+              payloadHash,
+              status: "pending",
+              lockExpiresAtMs: clock.now + ttl,
+            });
+            return { state: "claimed", recordId };
+          }
+          if (existing.payloadHash !== payloadHash) {
+            return { state: "conflict", recordId };
+          }
+          if (existing.status === "completed" && existing.snapshot) {
+            return { state: "replay", recordId, snapshot: existing.snapshot };
+          }
+          if (
+            existing.status === "pending" &&
+            existing.lockExpiresAtMs > clock.now
+          ) {
+            return { state: "in_progress", recordId };
+          }
+          // An expired pending claim (or a failed one) is re-claimed fresh by
+          // the concrete service — a RESTART. Nothing reaches here once a resume
+          // snapshot exists, because that flips the record to `completed` above.
+          records.set(recordId, {
+            payloadHash,
+            status: "pending",
+            lockExpiresAtMs: clock.now + ttl,
+          });
+          return { state: "claimed", recordId };
+        },
+        markCompleted: async ({ recordId, snapshot }) => {
+          markCompletedCalls += 1;
+          const failing = opts.crash?.call === markCompletedCalls;
+          if (failing && opts.crash?.mode === "before") {
+            throw new Error("crash: completion write never landed");
+          }
+          const existing = records.get(recordId);
+          if (existing) {
+            records.set(recordId, {
+              ...existing,
+              status: "completed",
+              snapshot,
+              lockExpiresAtMs: clock.now,
+            });
+          }
+          if (failing && opts.crash?.mode === "after") {
+            throw new Error(
+              "crash: process died just after the completion write",
+            );
+          }
+        },
+        markFailed: async (recordId) => {
+          const existing = records.get(recordId);
+          if (existing) {
+            records.set(recordId, {
+              ...existing,
+              status: "failed",
+              lockExpiresAtMs: clock.now - 1,
+            });
+          }
+        },
+      };
+    }
+
+    function setupResumable(
+      idempotency: ResumableIdempotency,
+      store = createSessionStore(),
+    ): {
+      store: ReturnType<typeof createSessionStore>;
+      mediaStore: ReturnType<typeof createMediaStore>;
+      idempotency: ResumableIdempotency;
+      deps: AdmitPictureTakeDependencies;
+    } {
+      const mediaStore = createMediaStore();
+      const sessionService = new SessionService(store as never);
+      return {
+        store,
+        mediaStore,
+        idempotency,
+        deps: { sessionService, mediaStore, idempotency },
+      };
+    }
+
+    it("resumes after a crash following media storage: reuses the stored asset and mints no second take", async () => {
+      // The bytes land and the pending take is checkpointed; then the worker
+      // dies before the append.
+      const idempotency = createResumableIdempotency({
+        crash: { call: 1, mode: "after" },
+      });
+      const { store, mediaStore, deps } = setupResumable(idempotency);
+
+      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow(
+        "completion write",
+      );
+      expect(mediaStore.calls).toHaveLength(1);
+
+      // The worker restarts; the client retries the same admission.
+      const resumed = await admitPictureTake(deps, uploadRequest());
+
+      expect(resumed.state).toBe("admitted");
+      if (resumed.state !== "admitted") return;
+      expect(resumed.replayed).toBe(true);
+      expect(resumed.take.attachment.state).toBe("attached");
+      // No second store, exactly one take, under the SAME identity.
+      expect(mediaStore.calls).toHaveLength(1);
+      const takes = takesIn(store, "v1");
+      expect(takes).toHaveLength(1);
+      expect((takes[0] as { id?: string }).id).toBe(resumed.take.generationId);
+    });
+
+    it("resumes to the SAME take identity established before the append", async () => {
+      const idempotency = createResumableIdempotency({
+        crash: { call: 1, mode: "after" },
+      });
+      const { mediaStore, deps } = setupResumable(idempotency);
+
+      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow();
+      // The identity was persisted with the pending checkpoint, before the
+      // append — so the resume reuses it rather than minting a second one.
+      const persisted = idempotency.peekBody() as
+        | { generationId?: string }
+        | undefined;
+      expect(typeof persisted?.generationId).toBe("string");
+
+      const resumed = await admitPictureTake(deps, uploadRequest());
+
+      expect(resumed.state).toBe("admitted");
+      if (resumed.state !== "admitted") return;
+      expect(resumed.take.generationId).toBe(persisted?.generationId);
+      expect(mediaStore.calls).toHaveLength(1);
+    });
+
+    it("a failed completion write after a successful append never creates a second take", async () => {
+      // The append LANDS in the session; the completion write is then lost and
+      // the process dies. This is the case the ticket names explicitly.
+      const idempotency = createResumableIdempotency({
+        crash: { call: 2, mode: "before" },
+      });
+      const { store, mediaStore, deps } = setupResumable(idempotency);
+
+      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow(
+        "completion write",
+      );
+      // The take reached its session before the crash.
+      expect(takesIn(store, "v1")).toHaveLength(1);
+
+      const resumed = await admitPictureTake(deps, uploadRequest());
+
+      expect(resumed.state).toBe("admitted");
+      if (resumed.state !== "admitted") return;
+      expect(resumed.replayed).toBe(true);
+      expect(resumed.take.attachment.state).toBe("attached");
+      // The de-duplicating append leaves ONE take; nothing was re-stored.
+      expect(takesIn(store, "v1")).toHaveLength(1);
+      expect(mediaStore.calls).toHaveLength(1);
+    });
+
+    it("resumes after a crash following the completion write by replaying the finished take", async () => {
+      // Store, append and completion write all land; THEN the process dies
+      // before the response is returned.
+      const idempotency = createResumableIdempotency({
+        crash: { call: 2, mode: "after" },
+      });
+      const { store, mediaStore, deps } = setupResumable(idempotency);
+
+      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow();
+      expect(takesIn(store, "v1")).toHaveLength(1);
+
+      const resumed = await admitPictureTake(deps, uploadRequest());
+
+      expect(resumed.state).toBe("admitted");
+      if (resumed.state !== "admitted") return;
+      expect(resumed.replayed).toBe(true);
+      expect(resumed.take.attachment.state).toBe("attached");
+      expect(takesIn(store, "v1")).toHaveLength(1);
+      expect(mediaStore.calls).toHaveLength(1);
+    });
+
+    it("an expired pending claim resumes rather than restarting the admission", async () => {
+      const idempotency = createResumableIdempotency({
+        crash: { call: 1, mode: "after" },
+      });
+      const { store, mediaStore, deps } = setupResumable(idempotency);
+
+      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow();
+      expect(mediaStore.calls).toHaveLength(1);
+
+      // Long past the six-minute pending lock. Before this ticket the reclaim
+      // was a fresh `claimed` — a restart that re-stored the bytes and minted a
+      // second take. The persisted resume snapshot makes it a replay instead;
+      // the only window that can still re-store is a crash BEFORE this
+      // checkpoint, the ambiguous external outcome the ticket declines to
+      // promise away.
+      idempotency.clock.now += 7 * 60 * 1000;
+
+      const resumed = await admitPictureTake(deps, uploadRequest());
+
+      expect(resumed.state).toBe("admitted");
+      if (resumed.state !== "admitted") return;
+      expect(resumed.replayed).toBe(true);
+      expect(mediaStore.calls).toHaveLength(1);
+      expect(takesIn(store, "v1")).toHaveLength(1);
+    });
+
+    it("a receipt replayed after a later successful attachment repair reports attached, not the stale failure", async () => {
+      const idempotency = createResumableIdempotency();
+      const store = createSessionStore();
+      // The first append fails; the store recovers for the retry.
+      store.mutate.mockRejectedValueOnce(new Error("firestore unavailable"));
+      const { mediaStore, deps } = setupResumable(idempotency, store);
+
+      const first = await admitPictureTake(deps, uploadRequest());
+      expect(first.state).toBe("admitted");
+      if (first.state !== "admitted") return;
+      // Made but not saved (ADR-0022 decision 6).
+      expect(first.take.attachment.state).toBe("failed");
+
+      // The repair: the same admission, retried once the store is healthy,
+      // re-attaches the SAME record and settles the authoritative outcome.
+      const repaired = await admitPictureTake(deps, uploadRequest());
+      expect(repaired.state).toBe("admitted");
+      if (repaired.state !== "admitted") return;
+      expect(repaired.take.attachment.state).toBe("attached");
+
+      // A later receipt replay reads the CURRENT outcome, not the stale failure.
+      const receipt = await admitPictureTake(deps, uploadRequest());
+      expect(receipt.state).toBe("admitted");
+      if (receipt.state !== "admitted") return;
+      expect(receipt.replayed).toBe(true);
+      expect(receipt.take.attachment.state).toBe("attached");
+
+      expect(takesIn(store, "v1")).toHaveLength(1);
+      expect(mediaStore.calls).toHaveLength(1);
+    });
+  });
 });
