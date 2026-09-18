@@ -514,6 +514,11 @@
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/studio/projects/from-session-picture",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/debug-sentry",
       "sourceFile": "server/src/routes/health.routes.ts"

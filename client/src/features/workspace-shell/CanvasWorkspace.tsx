@@ -74,6 +74,7 @@ import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpa
 import { resolveWordsForNode } from "@/features/space/lineage/resolveWordsForNode";
 import { nonLeafIds, isRemovableLeaf } from "@/features/space/lineage/leaf";
 import { createShare } from "@/features/share/api/createShare";
+import { createStudioProjectFromSessionPicture } from "@/features/studio/api/studioApi";
 import { useToast } from "@components/Toast";
 import type { SpaceNode } from "@/features/space/lineage/types";
 import { archiveGeneration } from "@/features/space/api/spaceApi";
@@ -105,6 +106,13 @@ interface CanvasWorkspaceProps {
     generationId: string,
     isFavorite: boolean,
   ) => void;
+  /**
+   * Take the creator to a studio project (ADR-0022 decision 4). Supplied by
+   * the route layer, which owns navigation — the workspace knows which project
+   * to open, not how to get there. Absent means the studio bridge is not
+   * wired, and "Refine in the studio" is not offered.
+   */
+  onOpenStudioProject?: (projectId: string) => void;
 }
 
 export function CanvasWorkspace({
@@ -112,6 +120,7 @@ export function CanvasWorkspace({
   editing,
   onReuseGeneration,
   onToggleGenerationFavorite,
+  onOpenStudioProject,
 }: CanvasWorkspaceProps): React.ReactElement {
   const storeActions = useGenerationControlsStoreActions();
   const { domain } = useGenerationControlsStoreState();
@@ -545,6 +554,25 @@ export function CanvasWorkspace({
     [session?.id, toast],
   );
 
+  // Refine in the studio (ADR-0022 decision 4): birth a studio project from
+  // this picture and go there. The session picture is not touched — the
+  // project works on its own durable copy, and records the session,
+  // words-version and take identity it was born from. node.id is the take
+  // identity; the server reads the words-version out of the session.
+  const handleRefineSpaceNode = useCallback(
+    (node: SpaceNode): void => {
+      const sessionId = session?.id;
+      if (!sessionId || !onOpenStudioProject) return;
+      void createStudioProjectFromSessionPicture({
+        sessionId,
+        generationId: node.id,
+      })
+        .then((project) => onOpenStudioProject(project.id))
+        .catch(() => toast.error("Couldn't open this picture in the studio"));
+    },
+    [session?.id, onOpenStudioProject, toast],
+  );
+
   const renderSpaceNodeMenu = useCallback(
     (node: SpaceNode): React.ReactNode => (
       <SpaceNodeMenu
@@ -553,6 +581,9 @@ export function CanvasWorkspace({
         onReword={(target) => restoreTakeWords(target.id)}
         onRemove={handleRemoveSpaceNode}
         onAnimate={handleAnimateSpaceNode}
+        {...(onOpenStudioProject && session?.id
+          ? { onRefine: handleRefineSpaceNode }
+          : {})}
         onDownload={handleDownloadSpaceNode}
         onShare={handleShareSpaceNode}
         onView={(target) => viewSpaceNode(target.id)}
@@ -564,6 +595,9 @@ export function CanvasWorkspace({
       viewSpaceNode,
       handleRemoveSpaceNode,
       handleAnimateSpaceNode,
+      handleRefineSpaceNode,
+      onOpenStudioProject,
+      session?.id,
       handleDownloadSpaceNode,
       handleShareSpaceNode,
     ],

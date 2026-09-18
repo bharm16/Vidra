@@ -2,6 +2,9 @@
  * Studio routes (ADR-0019). Mounted at /api/studio behind apiAuthMiddleware.
  *
  * POST   /projects                    create a project
+ * POST   /projects/from-session-picture
+ *                                     "Refine in the studio" — a project born
+ *                                     from a session picture (ADR-0022 D4)
  * GET    /projects                    list the caller's projects
  * GET    /projects/:projectId         fetch one project
  * PATCH  /projects/:projectId         rename / pin model / set selection
@@ -18,10 +21,21 @@ import { z } from "zod";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { requireCreatorId, requireBody } from "@middleware/intake";
 import type { StudioService } from "@services/studio/StudioService";
+import type { SessionPictureLookup } from "@services/sessions/sessionPictureLookup";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
 const CreateProjectSchema = z.object({
   title: z.string().max(120).optional(),
+});
+
+/**
+ * ADR-0022 decision 4. The creator names the session and the take; the
+ * words-version is read from the session, never accepted from the wire — the
+ * session is the only thing that knows which version a take is filed under.
+ */
+const CreateFromSessionPictureSchema = z.object({
+  sessionId: z.string().min(1).max(200),
+  generationId: z.string().min(1).max(200),
 });
 
 const PatchProjectSchema = z
@@ -58,7 +72,15 @@ function routeParam(req: Request, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
-export function createStudioRouter(studioService: StudioService): Router {
+export function createStudioRouter(
+  studioService: StudioService,
+  /**
+   * The session-side read behind "Refine in the studio". Injected here rather
+   * than into StudioService: the studio never reads a session, so the
+   * cross-domain join lives at the route layer where it belongs.
+   */
+  sessionPictures: SessionPictureLookup,
+): Router {
   const router = express.Router();
 
   router.get(
@@ -85,6 +107,45 @@ export function createStudioRouter(studioService: StudioService): Router {
     }),
   );
 
+  // "Refine in the studio" (ADR-0022 decision 4). Declared before
+  // /projects/:projectId so the literal segment is never read as an id.
+  // Invoking twice for the same take returns the same project — the studio
+  // service derives the project's identity from the take, so a double-click
+  // and a retry after a lost response are the same request.
+  router.post(
+    "/projects/from-session-picture",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
+      if (!userId) return;
+      const parsed = requireBody(CreateFromSessionPictureSchema, req, res);
+      if (!parsed.ok) return;
+
+      const picture = await sessionPictures.findOwnedSessionPicture(
+        userId,
+        parsed.value.sessionId,
+        parsed.value.generationId,
+      );
+      // A foreign session, a missing one, and a take this session does not
+      // hold all read the same: absence. Matching the studio's own posture
+      // keeps the endpoint from answering "whose is this?".
+      if (!picture) {
+        res
+          .status(404)
+          .json({ success: false, error: "Session picture not found" });
+        return;
+      }
+
+      const project = await studioService.createProjectFromSessionPicture(
+        userId,
+        { sessionId: parsed.value.sessionId, ...picture },
+      );
+      res.status(201).json({
+        success: true,
+        data: await studioService.getProjectView(userId, project.id),
+      });
+    }),
+  );
+
   router.get(
     "/projects",
     asyncHandler(async (req: Request, res: Response) => {
@@ -100,7 +161,9 @@ export function createStudioRouter(studioService: StudioService): Router {
     asyncHandler(async (req: Request, res: Response) => {
       const userId = requireCreatorId(req, res);
       if (!userId) return;
-      const project = await studioService.getProject(
+      // The view, not the raw record: a bridged project's picture is signed
+      // per read, so reopening resolves it however long ago it was bridged.
+      const project = await studioService.getProjectView(
         userId,
         routeParam(req, "projectId"),
       );

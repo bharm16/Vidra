@@ -4,6 +4,7 @@
  */
 
 import { z } from "zod";
+import { StudioProjectOriginSchema } from "@shared/schemas/studio.schemas";
 
 export const StudioModelSlugSchema = z.enum([
   "recraft-v4.1",
@@ -49,6 +50,18 @@ export const StudioProjectSchema = z.object({
    * all arrive without one, and the card falls back to its placeholder.
    */
   coverUrl: z.string().optional(),
+  /**
+   * ADR-0022 decision 4: the session picture this project was born from,
+   * captured at invocation. Optional — most projects start in the studio and
+   * have no origin at all.
+   */
+  origin: StudioProjectOriginSchema.optional(),
+  /**
+   * A freshly signed URL for the bridged picture, minted per read from the
+   * project's own copy. Optional for the same reasons `coverUrl` is: no
+   * origin, or a signing that failed.
+   */
+  originImageUrl: z.string().optional(),
   createdAtMs: z.number(),
   updatedAtMs: z.number(),
 });
