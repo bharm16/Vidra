@@ -211,6 +211,35 @@ describe("useFirstFrameAdmission (issue #86)", () => {
     expect(admissionKeyOfCall(1)).toBe("admission-key-1");
   });
 
+  it("mints a fresh key for a DIFFERENT file after a failure, so a new selection is a new acceptance", async () => {
+    uploadPreviewImage
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(admittedResponse);
+    const { hook, onError } = setup({
+      sessionId: "session-1",
+      promptVersionId: "v1",
+    });
+
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(FILE);
+    });
+    expect(onError).toHaveBeenCalledWith("network");
+
+    // The creator picks a DIFFERENT file and retries. It must not reuse the
+    // key retained for the first file — the server (issue #114) fingerprints
+    // the bytes and would reject the reused key as a conflict. A new selection
+    // is a new acceptance.
+    const OTHER = new File(["a-different-picture"], "other.png", {
+      type: "image/png",
+    });
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(OTHER);
+    });
+
+    expect(admissionKeyOfCall(0)).toBe("admission-key-1");
+    expect(admissionKeyOfCall(1)).toBe("admission-key-2");
+  });
+
   it("mints a fresh key for the next upload once an admission settles", async () => {
     uploadPreviewImage.mockResolvedValue(admittedResponse);
     const { hook } = setup({ sessionId: "session-1", promptVersionId: "v1" });

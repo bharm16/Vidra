@@ -48,6 +48,17 @@ export interface UseFirstFrameAdmissionResult {
   uploadFirstFrame: (file: File) => Promise<void>;
 }
 
+/**
+ * A cheap, stable identity for the picked file — enough to tell a retry of the
+ * SAME file from a genuinely new selection without reading its bytes. Reading
+ * the bytes (the media digest the server fingerprints on) is the client half
+ * of issue #114 tracked as #129; this hook only needs to stop a different file
+ * reusing the retained key.
+ */
+function fileSignature(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
 export function useFirstFrameAdmission({
   resolvePersistenceTarget,
   setStartFrame,
@@ -61,8 +72,17 @@ export function useFirstFrameAdmission({
    * a second take, which is the whole failure the key exists to prevent; a key
    * that never cleared would turn the creator's NEXT upload into a replay of
    * this one.
+   *
+   * Tied to the file it was minted for: a retry of the SAME file after a lost
+   * response keeps the key and re-admits the same take, but picking a DIFFERENT
+   * file mints a fresh key. Without the tie the new file would reuse the
+   * retained key and the server (issue #114) would reject it as a conflict —
+   * a new selection is a new acceptance, not a collision with the old one.
    */
-  const admissionKeyRef = useRef<string | null>(null);
+  const admissionAttemptRef = useRef<{
+    key: string;
+    fileSignature: string;
+  } | null>(null);
 
   const uploadFirstFrame = useCallback(
     async (file: File): Promise<void> => {
@@ -95,8 +115,14 @@ export function useFirstFrameAdmission({
         return;
       }
 
-      admissionKeyRef.current ??= createAdmissionKey();
-      const admissionKey = admissionKeyRef.current;
+      const signature = fileSignature(file);
+      const retained = admissionAttemptRef.current;
+      const attempt =
+        retained && retained.fileSignature === signature
+          ? retained
+          : { key: createAdmissionKey(), fileSignature: signature };
+      admissionAttemptRef.current = attempt;
+      const admissionKey = attempt.key;
 
       try {
         const response = await uploadPreviewImage(
@@ -116,7 +142,7 @@ export function useFirstFrameAdmission({
             response.error || response.message || "Failed to upload image",
           );
         }
-        admissionKeyRef.current = null;
+        admissionAttemptRef.current = null;
 
         const imageUrl = response.data.viewUrl || response.data.imageUrl;
         if (!imageUrl) throw new Error("Upload did not return an image URL");

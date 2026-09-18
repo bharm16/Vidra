@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   admitPictureTake,
@@ -110,7 +111,9 @@ function createMediaStore(): AdmissionMediaStore & {
  * the three states admission depends on: a first `claimed`, a `replay` once a
  * snapshot exists, and an `in_progress` while a claim is still open.
  */
-function createIdempotency(): AdmissionIdempotencyPort {
+function createIdempotency(): AdmissionIdempotencyPort & {
+  payloads: unknown[];
+} {
   const records = new Map<
     string,
     {
@@ -119,8 +122,11 @@ function createIdempotency(): AdmissionIdempotencyPort {
       snapshot?: { statusCode: number; body: Record<string, unknown> };
     }
   >();
+  const payloads: unknown[] = [];
   return {
+    payloads,
     claimRequest: async ({ userId, route, key, payload }) => {
+      payloads.push(payload);
       const recordId = `${userId}|${route}|${key}`;
       const payloadHash = JSON.stringify(payload);
       const existing = records.get(recordId);
@@ -183,17 +189,20 @@ function takesIn(
 function setup(store = createSessionStore()): {
   store: ReturnType<typeof createSessionStore>;
   mediaStore: ReturnType<typeof createMediaStore>;
+  idempotency: ReturnType<typeof createIdempotency>;
   deps: AdmitPictureTakeDependencies;
 } {
   const mediaStore = createMediaStore();
+  const idempotency = createIdempotency();
   const sessionService = new SessionService(store as never);
   return {
     store,
     mediaStore,
+    idempotency,
     deps: {
       sessionService,
       mediaStore,
-      idempotency: createIdempotency(),
+      idempotency,
     },
   };
 }
@@ -468,5 +477,241 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
 
     expect(reused.state).toBe("conflict");
     expect(mediaStore.calls).toHaveLength(1);
+  });
+
+  /**
+   * Issue #114 — the acceptance is identified by its key AND its immutable
+   * acceptance payload. The key alone used to be enough to replay, so a
+   * different file (or a changed provenance, source tuple or display ancestor)
+   * retried under a retained key replayed the earlier take. Each field is a
+   * conflict dimension in its own right; the media digest is the load-bearing
+   * one. These are ownership / user-data paths, so each is a negative path.
+   */
+  describe("acceptance identity (issue #114)", () => {
+    it("treats the same key with a DIFFERENT FILE as a conflict, not a replay", async () => {
+      const { deps, mediaStore } = setup();
+
+      await admitPictureTake(deps, uploadRequest());
+      const reused = await admitPictureTake(
+        deps,
+        uploadRequest({
+          media: {
+            buffer: Buffer.from("a-different-picture"),
+            contentType: "image/png",
+          },
+        }),
+      );
+
+      expect(reused.state).toBe("conflict");
+      // Rejected before the bytes were stored: the first admission's media is
+      // the only thing in the store.
+      expect(mediaStore.calls).toHaveLength(1);
+    });
+
+    it("treats the same key with CHANGED PRODUCTION PROVENANCE as a conflict", async () => {
+      const { deps } = setup();
+
+      await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "sketchpad",
+          productionProvenance: {
+            state: "known",
+            instruction: "a runner",
+            model: "z-image",
+            sketch: { seed: 1, strength: 0.5, steps: 4 },
+          },
+        }),
+      );
+      // Same bytes, same destination, same key — but the picture was made with
+      // a different seed, which is a different production fact.
+      const reused = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "sketchpad",
+          productionProvenance: {
+            state: "known",
+            instruction: "a runner",
+            model: "z-image",
+            sketch: { seed: 2, strength: 0.5, steps: 4 },
+          },
+        }),
+      );
+
+      expect(reused.state).toBe("conflict");
+    });
+
+    it("treats the same key with a CHANGED SOURCE TUPLE as a conflict, even when the display ancestor is unchanged", async () => {
+      const { deps } = setup();
+
+      await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          productionProvenance: {
+            state: "known",
+            instruction: "remove the chair",
+            model: "flux-kontext",
+          },
+          sourceInputs: [{ kind: "take", generationId: "gen-A" }],
+          displayAncestorGenerationId: "gen-A",
+        }),
+      );
+      const reused = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          productionProvenance: {
+            state: "known",
+            instruction: "remove the chair",
+            model: "flux-kontext",
+          },
+          // A second contributing take joined the tuple; the drawn ancestor is
+          // still gen-A, so this isolates the source tuple from the ancestor.
+          sourceInputs: [
+            { kind: "take", generationId: "gen-A" },
+            { kind: "take", generationId: "gen-B" },
+          ],
+          displayAncestorGenerationId: "gen-A",
+        }),
+      );
+
+      expect(reused.state).toBe("conflict");
+    });
+
+    it("treats the same key with a DIFFERENT DISPLAY ANCESTOR as a conflict, even when the source tuple is unchanged", async () => {
+      const { deps } = setup();
+
+      await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          productionProvenance: {
+            state: "known",
+            instruction: "remove the chair",
+            model: "flux-kontext",
+          },
+          sourceInputs: [
+            { kind: "take", generationId: "gen-A" },
+            { kind: "take", generationId: "gen-B" },
+          ],
+          displayAncestorGenerationId: "gen-A",
+        }),
+      );
+      const reused = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          productionProvenance: {
+            state: "known",
+            instruction: "remove the chair",
+            model: "flux-kontext",
+          },
+          // Same two inputs, but the creator drew the OTHER one as the ancestor.
+          sourceInputs: [
+            { kind: "take", generationId: "gen-A" },
+            { kind: "take", generationId: "gen-B" },
+          ],
+          displayAncestorGenerationId: "gen-B",
+        }),
+      );
+
+      expect(reused.state).toBe("conflict");
+    });
+
+    it("fingerprints the media by its bytes, never a signed URL, so a reminted URL cannot change the acceptance", async () => {
+      const { deps, idempotency } = setup();
+
+      const request = uploadRequest({
+        origin: "sketchpad",
+        productionProvenance: {
+          state: "known",
+          instruction: "a runner",
+          model: "z-image",
+          sketch: { seed: 7, strength: 0.6, steps: 4 },
+        },
+        sourceInputs: [
+          {
+            kind: "sketch",
+            assetId: "snap-1",
+            storagePath: "image-previews/creator-1/snap-1",
+          },
+        ],
+      });
+      const result = await admitPictureTake(deps, request);
+      expect(result.state).toBe("admitted");
+
+      // The payload the acceptance was claimed under, captured before any byte
+      // was stored.
+      const payload = idempotency.payloads[0] as Record<string, unknown>;
+
+      // The bytes ARE the identity…
+      expect(payload.mediaDigest).toBe(
+        createHash("sha256").update(request.media.buffer).digest("hex"),
+      );
+      // …and nothing that lives an hour is. The asset store minted a
+      // `?sig=live` URL; it is nowhere in what identifies the acceptance.
+      const serialized = JSON.stringify(payload);
+      expect(serialized).not.toContain("http");
+      expect(serialized).not.toContain("sig=");
+      expect(serialized).not.toContain("storage.example.com");
+    });
+
+    it("replays a retry whose source input was re-stored under a new handle, because identity is the take it points at, not the blob", async () => {
+      const { deps, mediaStore } = setup();
+
+      const first = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "sketchpad",
+          sourceInputs: [
+            { kind: "sketch", assetId: "snap-1", storagePath: "p/snap-1" },
+          ],
+        }),
+      );
+      // The live-editor accept re-stores its sketch snapshot on every press, so
+      // a retry of the SAME acceptance arrives carrying a fresh handle. Same
+      // bytes, same key, same relationships — a replay, never a conflict.
+      const retry = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "sketchpad",
+          sourceInputs: [
+            { kind: "sketch", assetId: "snap-2", storagePath: "p/snap-2" },
+          ],
+        }),
+      );
+
+      expect(first.state).toBe("admitted");
+      expect(retry.state).toBe("admitted");
+      if (first.state !== "admitted" || retry.state !== "admitted") return;
+      expect(retry.replayed).toBe(true);
+      expect(retry.take.generationId).toBe(first.take.generationId);
+      expect(mediaStore.calls).toHaveLength(1);
+    });
+
+    it("a deliberate new acceptance under a NEW KEY is a new take, not a replay of the first", async () => {
+      const { store, deps, mediaStore } = setup();
+
+      // Same bytes, same destination — but a genuinely new selection, which the
+      // creator's side gives a fresh key. Identity is key AND payload, so a new
+      // key is a new acceptance even when nothing else moved.
+      const first = await admitPictureTake(
+        deps,
+        uploadRequest({ idempotencyKey: "key-1" }),
+      );
+      const second = await admitPictureTake(
+        deps,
+        uploadRequest({ idempotencyKey: "key-2" }),
+      );
+
+      expect(first.state).toBe("admitted");
+      expect(second.state).toBe("admitted");
+      if (first.state !== "admitted" || second.state !== "admitted") return;
+      expect(second.replayed).toBe(false);
+      expect(second.take.generationId).not.toBe(first.take.generationId);
+      expect(takesIn(store, "v1")).toHaveLength(2);
+      expect(mediaStore.calls).toHaveLength(2);
+    });
   });
 });
