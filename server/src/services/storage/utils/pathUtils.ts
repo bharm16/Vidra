@@ -7,12 +7,14 @@ import type { StorageType } from "../config/storageConfig";
 
 const DEFAULT_EXTENSIONS: Record<StorageType, string> = {
   "preview-image": "webp",
+  "preview-vector": "svg",
   "preview-video": "mp4",
   generation: "mp4",
 };
 
 const TYPE_SEGMENTS: Record<StorageType, string> = {
   "preview-image": "previews/images",
+  "preview-vector": "previews/vectors",
   "preview-video": "previews/videos",
   generation: "generations",
 };
@@ -72,6 +74,7 @@ export function validatePathOwnership(path: string, userId: string): boolean {
 
 export function getTypeFromPath(path: string): StorageType | null {
   if (path.includes("/previews/images/")) return "preview-image";
+  if (path.includes("/previews/vectors/")) return "preview-vector";
   if (path.includes("/previews/videos/")) return "preview-video";
   if (path.includes("/generations/")) return "generation";
   return null;

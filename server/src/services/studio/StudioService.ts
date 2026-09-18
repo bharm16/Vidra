@@ -76,7 +76,9 @@ export interface StudioImageStorage {
   saveFromUrl(
     userId: string,
     sourceUrl: string,
-    type: "preview-image",
+    // "preview-vector" is the SVG lane (issue #118); raster stays
+    // "preview-image". The runner decides which from the producing model.
+    type: "preview-image" | "preview-vector",
     metadata?: Record<string, unknown>,
   ): Promise<{ storagePath: string }>;
   getViewUrl(
@@ -402,7 +404,10 @@ export class StudioService {
     capabilities: readonly string[];
     latencyHintSeconds: number;
   }> {
-    return this.registry.listModels().map((entry) => ({
+    // offerableModels, not listModels: a model whose output the studio cannot
+    // store is never presented in the picker (issue #118). Auto routing still
+    // sees the full roster; only what the creator is OFFERED is gated.
+    return this.registry.offerableModels().map((entry) => ({
       slug: entry.slug,
       displayName: entry.displayName,
       capabilities: entry.capabilities,
@@ -1349,10 +1354,16 @@ export class StudioService {
     }
 
     try {
+      // A vector producer's bytes go to the SVG lane, which accepts
+      // image/svg+xml and is served as an attachment; raster stays
+      // preview-image (issue #118).
+      const storageType = this.registry.producesVector(options.producedBy)
+        ? "preview-vector"
+        : "preview-image";
       const saved = await this.storage.saveFromUrl(
         turn.userId,
         result.imageUrl,
-        "preview-image",
+        storageType,
         {
           studioProjectId: project.id,
           studioTurnId: turn.id,

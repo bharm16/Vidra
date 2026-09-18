@@ -13,6 +13,7 @@ import {
 import {
   STORAGE_CONFIG,
   STORAGE_TYPES,
+  isScriptExecutableStorageType,
   resolveStorageTypeKey,
   type StorageType,
 } from "./config/storageConfig";
@@ -32,6 +33,8 @@ function normalizeContentType(value: string): string {
 function resolveExtension(contentType: string): string {
   const normalized = normalizeContentType(contentType);
   if (normalized === "image/jpeg") return "jpg";
+  // Without this the subtype "svg+xml" would leak into the object name.
+  if (normalized === "image/svg+xml") return "svg";
   if (normalized === "video/quicktime") return "mov";
   const parts = normalized.split("/");
   return parts[1] || "bin";
@@ -325,11 +328,24 @@ export class StorageService {
       );
     }
 
+    // Script-executable content (SVG) is served as an attachment so a direct
+    // open downloads it rather than rendering it inline — the XSS defense for
+    // user-supplied vectors (issue #118). Raster stays inline; `<img>` display
+    // works either way since a subresource load ignores Content-Disposition.
+    const disposition = isScriptExecutableStorageType(
+      getTypeFromPath(storagePath),
+    )
+      ? "attachment"
+      : "inline";
+
     return this.withTiming(
       "getViewUrl",
-      { userId, storagePath },
+      { userId, storagePath, disposition },
       async () => {
-        const result = await this.signedUrlService.getViewUrl(storagePath);
+        const result = await this.signedUrlService.getViewUrl(
+          storagePath,
+          disposition,
+        );
         return {
           ...result,
           storagePath,

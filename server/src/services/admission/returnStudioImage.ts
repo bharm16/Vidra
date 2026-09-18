@@ -4,7 +4,11 @@ import {
   fetchRemoteMedia,
   type OwnedPictureResolver,
 } from "@services/owned-media";
-import { STORAGE_CONFIG } from "@services/storage/config/storageConfig";
+import {
+  STORAGE_CONFIG,
+  STORAGE_TYPES,
+} from "@services/storage/config/storageConfig";
+import { getTypeFromPath } from "@services/storage/utils/pathUtils";
 import {
   SessionAccessDeniedError,
   SessionNotFoundError,
@@ -328,6 +332,27 @@ export async function returnStudioImage(
 
   const produced = await studio.findProducedImage(userId, projectId, imageId);
   if (!produced) return { state: "not-found" };
+
+  // A vector (SVG) result cannot be armed as a first frame: the frame and clip
+  // pipeline downstream is raster-only, which ARMABLE_CONTENT_TYPES already
+  // encodes. Refuse it HERE — before resolving a destination or reading bytes —
+  // with a message that names the reason, rather than letting the raster gate
+  // below reject it as a bare content-type mismatch (issue #118). The vector
+  // itself is untouched: it stays stored, viewable and downloadable in the
+  // studio; only the animate bridge declines it.
+  if (
+    getTypeFromPath(produced.image.storagePath) === STORAGE_TYPES.PREVIEW_VECTOR
+  ) {
+    log.info("Return refused: a vector cannot be armed as a first frame", {
+      userId,
+      projectId,
+      imageId,
+    });
+    return {
+      state: "unusable-media",
+      reason: "this is a vector (SVG) image and cannot be animated here yet",
+    };
+  }
 
   const destination = await resolveDestination(
     produced,
