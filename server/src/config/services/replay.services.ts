@@ -1,15 +1,23 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { CassetteStore } from "@server/replay/CassetteStore";
+import {
+  createSketchRelayFetch,
+  type SketchRelayFetch,
+} from "@server/replay/RecordReplaySketchRelay";
 import { resolveAllFlags } from "../feature-flags.ts";
 
 /**
  * Record/replay wiring (REPLAY_MODE flag, Debug category).
  *
  * Registers the shared cassette store consumed by the aiService seam
- * (llm.services.ts) and the image preview provider seam
- * (image-generation.services.ts). Resolves to null when REPLAY_MODE=off so
- * both seams stay on their live code paths.
+ * (llm.services.ts), the image preview provider seam
+ * (image-generation.services.ts) and the studio image seam
+ * (studio.services.ts), plus the sketch relay's own seam — the relay calls its
+ * injected fetch directly rather than going through a provider adapter, so it
+ * is the one boundary that needs its substitute handed to it. Everything here
+ * resolves to null when REPLAY_MODE=off, and every seam stays on its live code
+ * path.
  */
 export function registerReplayServices(container: DIContainer): void {
   container.register(
@@ -33,5 +41,19 @@ export function registerReplayServices(container: DIContainer): void {
       return store;
     },
     [],
+  );
+
+  container.register(
+    "sketchRelayFetch",
+    (replayCassetteStore: CassetteStore | null): SketchRelayFetch | null => {
+      if (!replayCassetteStore) return null;
+      const { flags } = resolveAllFlags(process.env);
+      if (flags.replayMode === "off") return null;
+      return createSketchRelayFetch({
+        mode: flags.replayMode,
+        store: replayCassetteStore,
+      });
+    },
+    ["replayCassetteStore"],
   );
 }

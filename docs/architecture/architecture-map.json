@@ -1367,6 +1367,11 @@
       "file": "core.services.ts"
     },
     {
+      "from": "sketchRelayFetch",
+      "to": "replayCassetteStore",
+      "file": "replay.services.ts"
+    },
+    {
       "from": "soraVideoProvider",
       "to": "config",
       "file": "video-generation.services.ts"
@@ -1454,6 +1459,11 @@
     {
       "from": "studioService",
       "to": "storageService",
+      "file": "studio.services.ts"
+    },
+    {
+      "from": "studioService",
+      "to": "studioProjectStore",
       "file": "studio.services.ts"
     },
     {

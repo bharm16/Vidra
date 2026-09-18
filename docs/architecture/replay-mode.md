@@ -15,12 +15,19 @@ at each place the authoring loop leaves the process:
 | aiService boundary             | `server/src/replay/RecordReplayAiService.ts`            | label-spans, suggestions, optimize, motion ideas, and any nested LLM call (`video_prompt_rewrite`, `image_observation`) |
 | Image preview provider adapter | `server/src/replay/RecordReplayImagePreviewProvider.ts` | first-frame preview (Replicate Flux Schnell)                                                                            |
 | Studio image runner            | `server/src/replay/RecordReplayStudioImageRunner.ts`    | Studio's generate/edit/transform image runs (Replicate)                                                                 |
+| Sketch relay upstream          | `server/src/replay/RecordReplaySketchRelay.ts`          | the live editor's frame relay to fal — the one boundary that is not a provider adapter (issue #90)                      |
 
 Each seam is an adapter satisfying the same port as the live provider it
 wraps, so it substitutes by registration rather than by inheritance —
 `StudioImageRunner` for the studio runner, `ImagePreviewProvider` for
 preview. Adding a member to one of those ports is a three-file change (port,
 live adapter, replay adapter); the compiler enforces it.
+
+The sketch relay is the exception that proves the rule: it holds `FAL_KEY` and
+calls its injected `fetch` directly rather than going through a provider
+adapter, so its seam substitutes at that injection point (`fetchFn`, wired in
+`api.registration.ts`) instead of at a token. That is why it was the last live
+hole in `REPLAY_MODE=replay`.
 
 - **record** — calls pass through to the live providers; each request/response
   pair is captured into a cassette fixture, contract-validated at capture time.
@@ -30,9 +37,10 @@ live adapter, replay adapter); the compiler enforces it.
   `ReplayContractViolationError`. Nothing degrades silently.
 
 Wiring lives in `server/src/config/services/replay.services.ts` (cassette
-store), `llm.services.ts` (aiService seam), `image-generation.services.ts`
-(preview seam), and `studio.services.ts` (studio image seam). When
-`REPLAY_MODE=off` every seam resolves to the untouched live class.
+store and the sketch relay's `fetchFn`), `llm.services.ts` (aiService seam),
+`image-generation.services.ts` (preview seam), and `studio.services.ts` (studio
+image seam). When `REPLAY_MODE=off` every seam resolves to the untouched live
+class and the relay keeps the global `fetch` it defaults to.
 
 ## Fixtures
 
@@ -66,21 +74,29 @@ replay integration suite handles them as follows:
 - **Span-labeling provider**: `span_labeling` defaults to Gemini (GCP).
   Recording uses the active non-Gemini provider via `SPAN_PROVIDER=qwen`
   (Groq-hosted), which the config already supports.
-- **First-frame preview persistence** (GCS via `imageAssetStore`/
-  `storageService`), **credits** (Firestore `userCreditService`), and
-  **idempotency** (Firestore `requestIdempotencyService`): documented as the
-  remaining GCP-dependent calls on the preview route; the replay suite's
-  approach to each is finalized with the suite itself (next increment).
+- **Media persistence** (GCS via `imageAssetStore`/`storageService`) and
+  **idempotency** (Firestore `requestIdempotencyService`): answered by the
+  cross-mode walkthrough, which registers deterministic in-memory adapters at
+  those exact tokens — see
+  [cross-mode-golden-path.md](cross-mode-golden-path.md) for the full table.
+  The Idea Box suite still exercises first-frame preview at the provider seam
+  only, which is why its cassette covers the provider call and not the route.
+- **Credits** (Firestore `userCreditService`): deliberately untouched. ADR-0022
+  decision 6 keeps generation economics frozen, so no gate exercises them; the
+  cross-mode walkthrough injects a refund witness and asserts it is never
+  called, which is the opposite of coverage and is the point.
 - **Telemetry** (`llmCallTelemetryService`, Firestore-backed): only injected
   in record mode; replay mode runs without it.
 
 ## Running
 
-Replay suite (offline, no credentials needed — this is the per-change gate):
+The replay gate (offline, no credentials needed — this is the per-change
+gate). It runs the Idea Box golden path, the cross-mode walkthrough
+([cross-mode-golden-path.md](cross-mode-golden-path.md)) and the outbound
+guard's own test:
 
 ```bash
-PORT=0 npx vitest run tests/integration/replay-mode.integration.test.ts \
-  --config config/test/vitest.integration.config.js
+npm run test:replay
 ```
 
 Re-record the golden scenario pack (live provider calls; needs OpenAI/Groq/

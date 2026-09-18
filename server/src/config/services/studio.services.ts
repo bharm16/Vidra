@@ -11,6 +11,7 @@ import type {
   StudioImageRunner,
 } from "@services/studio/providers/types";
 import { FirestoreStudioProjectStore } from "@services/studio/storage/FirestoreStudioProjectStore";
+import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
 import {
   StudioService,
   type StudioImageStorage,
@@ -44,6 +45,16 @@ function throughReplaySeam(
 }
 
 export function registerStudioServices(container: DIContainer): void {
+  // Its own token for the same reason `sessionStore` is one: it is the
+  // studio's process-external persistence boundary, and a boundary that is
+  // only reachable through the service that owns it cannot be given a
+  // deterministic adapter (issue #90).
+  container.register(
+    "studioProjectStore",
+    () => new FirestoreStudioProjectStore(),
+    [],
+  );
+
   container.register(
     "studioService",
     (
@@ -51,6 +62,7 @@ export function registerStudioServices(container: DIContainer): void {
       storageService: StudioImageStorage | null,
       aiService: StudioAIService | null,
       replayCassetteStore: CassetteStore | null,
+      studioProjectStore: StudioProjectStore,
     ) => {
       const { flags } = resolveAllFlags(process.env);
       if (!flags.studio) {
@@ -73,7 +85,7 @@ export function registerStudioServices(container: DIContainer): void {
       }
 
       return new StudioService({
-        store: new FirestoreStudioProjectStore(),
+        store: studioProjectStore,
         registry: new StudioModelRegistry(),
         runner: throughReplaySeam(
           new ReplicateStudioImageRunner({ apiToken }),
@@ -86,6 +98,12 @@ export function registerStudioServices(container: DIContainer): void {
         dailyCapCents: config.studio.dailyCapCents,
       });
     },
-    ["config", "storageService", "aiService", "replayCassetteStore"],
+    [
+      "config",
+      "storageService",
+      "aiService",
+      "replayCassetteStore",
+      "studioProjectStore",
+    ],
   );
 }
