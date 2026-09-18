@@ -330,7 +330,7 @@ import { promptSchema } from "@config/schemas/promptSchemas";
 
 describe("promptSchema", () => {
   // ✅ Test that the schema accepts the shape your routes actually send
-  it("accepts a valid optimize-stream request body", () => {
+  it("accepts a valid optimize request body", () => {
     const body = {
       prompt: "A woman walks along a beach at golden hour",
       mode: "video",
@@ -574,32 +574,29 @@ describe("Optimize Route (full-stack)", () => {
     app = createApp(container);
   }, 30_000);
 
-  it("returns 400 for empty prompt", async () => {
+  it("returns 400 for an empty body", async () => {
     const res = await request(app)
-      .post("/api/optimize-stream")
+      .post("/api/llm/label-spans/stream")
       .set("x-api-key", process.env.ALLOWED_API_KEYS || "test-key")
-      .send({ prompt: "", mode: "video" });
+      .send({});
 
     expect(res.status).toBe(400);
   });
 
-  it("returns SSE stream with expected event sequence for valid prompt", async () => {
+  it("streams newline-delimited JSON for a valid prompt", async () => {
     const res = await request(app)
-      .post("/api/optimize-stream")
+      .post("/api/llm/label-spans/stream")
       .set("x-api-key", process.env.ALLOWED_API_KEYS || "test-key")
-      .send({
-        prompt: "A woman walks along a beach at golden hour",
-        mode: "video",
-      });
+      .send({ text: "A woman walks along a beach at golden hour" });
 
     expect(res.status).toBe(200);
-    expect(res.headers["content-type"]).toContain("text/event-stream");
+    expect(res.headers["content-type"]).toContain("application/x-ndjson");
   });
 
   it("rejects unauthenticated requests", async () => {
     const res = await request(app)
-      .post("/api/optimize-stream")
-      .send({ prompt: "A cat", mode: "video" });
+      .post("/api/llm/label-spans/stream")
+      .send({ text: "A cat" });
 
     expect(res.status).toBe(401);
   });
@@ -910,7 +907,7 @@ Integration tests that start servers, open connections, or create files **must**
 
 #### Anti-Pattern 5: Testing Through the UI When You Mean to Test the API
 
-If you're testing whether the `/api/optimize-stream` endpoint returns the right SSE events, don't spin up Playwright and navigate a browser. Use `supertest` against the real Express app. Save E2E tests for things that require a browser (DOM rendering, navigation, user flows).
+If you're testing whether the `/api/llm/label-spans/stream` endpoint frames its spans as newline-delimited JSON, don't spin up Playwright and navigate a browser. Use `supertest` against the real Express app. Save E2E tests for things that require a browser (DOM rendering, navigation, user flows).
 
 ---
 
@@ -1041,141 +1038,73 @@ You don't need to rename or move them. But when you encounter a bug that these t
 > Per the root `CLAUDE.md` Test Policy, **frozen domains carry no tests** — treat
 > those subsections as historical context, not as a mandate to add coverage.
 
-### Testing SSE / Streaming Endpoints
+### Testing Streaming Endpoints (NDJSON and SSE)
 
-Your `/api/optimize-stream` endpoint uses `createSseChannel` to send events. Test the handler by mocking `req`/`res` and asserting the SSE event sequence.
+This codebase streams two different ways, and they are tested differently.
 
-**Shared SSE helpers** live in `tests/unit/test-helpers/`. SSE response mocking and event parsing are used across multiple streaming endpoint tests, so they are extracted into shared utilities rather than duplicated per test file. If you need to test any SSE endpoint, import from there first.
+| Surface                | Route                                                         | Format                          | Status            |
+| ---------------------- | ------------------------------------------------------------- | ------------------------------- | ----------------- |
+| Span labeling          | `POST /api/llm/label-spans/stream`                            | NDJSON (`application/x-ndjson`) | Active loop       |
+| Continuity shot render | `POST /api/sessions/:sessionId/shots/:shotId/generate-stream` | SSE (`createSseChannel`)        | Frozen (ADR-0002) |
+
+The active-loop surface is **NDJSON, not SSE**: `streamingHandler` sets
+`Content-Type: application/x-ndjson` and writes one JSON object per line
+(`JSON.stringify(span) + "\n"`). There are no `event:` / `data:` prefixes to parse,
+so an SSE parser will silently find nothing.
+
+**Shared SSE helpers** live in `tests/unit/test-helpers/sse.ts`
+(`createMockSseResponse`, `createMockSseRequest`, `parseSseEvents`). They apply to
+the SSE surface above. Import from there rather than re-deriving them per test.
+
+#### The route seam (preferred)
+
+Drive the real router with supertest and assert the wire format. This is what
+`tests/unit/label-spans-route.seam.test.ts` does.
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createOptimizeStreamHandler } from "@routes/optimize/handlers/optimizeStream";
-import type { Request, Response } from "express";
+import request from "supertest";
+import { describe, it, expect } from "vitest";
 
-function createMockSseResponse() {
-  const chunks: string[] = [];
-  const res = {
-    setHeader: vi.fn(),
-    write: vi.fn((chunk: string) => {
-      chunks.push(chunk);
-      return true;
-    }),
-    flushHeaders: vi.fn(),
-    end: vi.fn(),
-    on: vi.fn(),
-    writableEnded: false,
-    writable: true,
-  } as unknown as Response;
-  return { res, chunks };
-}
-
-function createMockRequest(body: Record<string, unknown>): Request {
-  return {
-    body,
-    id: "test-req-1",
-    on: vi.fn(),
-    headers: {},
-  } as unknown as Request;
-}
-
-function parseSseEvents(
-  chunks: string[],
-): Array<{ event: string; data: unknown }> {
-  const events: Array<{ event: string; data: unknown }> = [];
-  let currentEvent = "";
-  for (const chunk of chunks) {
-    if (chunk.startsWith("event: ")) {
-      currentEvent = chunk.replace("event: ", "").trim();
-    } else if (chunk.startsWith("data: ")) {
-      try {
-        events.push({
-          event: currentEvent,
-          data: JSON.parse(chunk.replace("data: ", "")),
-        });
-      } catch {
-        events.push({
-          event: currentEvent,
-          data: chunk.replace("data: ", "").trim(),
-        });
-      }
-    }
-  }
-  return events;
-}
-
-describe("optimize-stream handler", () => {
-  let mockService: { optimizeStream: ReturnType<typeof vi.fn> };
-
-  beforeEach(() => {
-    mockService = { optimizeStream: vi.fn() };
+describe("POST /api/llm/label-spans/stream", () => {
+  it("rejects a body with no text", async () => {
+    await request(app).post("/api/llm/label-spans/stream").send({}).expect(400);
   });
 
-  it("returns 400 for invalid request body", async () => {
-    const { res } = createMockSseResponse();
-    const req = createMockRequest({ prompt: "" }); // too short
-    const handler = createOptimizeStreamHandler(mockService as any);
+  it("streams one JSON span per line", async () => {
+    const res = await request(app)
+      .post("/api/llm/label-spans/stream")
+      .send({ text: "A woman walks along a beach at golden hour" })
+      .expect(200);
 
-    await handler(req, res);
+    expect(res.headers["content-type"]).toContain("application/x-ndjson");
 
-    // Should respond with JSON error, not start SSE
-    expect(res.write).not.toHaveBeenCalledWith(
-      expect.stringContaining("event:"),
-    );
-  });
+    // Every non-empty line is a complete JSON object. A trailing newline is
+    // expected, so filter before parsing rather than trimming the whole body.
+    const spans = res.text
+      .split("\n")
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line));
 
-  it("emits draft → spans → refined → done event sequence", async () => {
-    const { res, chunks } = createMockSseResponse();
-    const req = createMockRequest({
-      prompt: "A woman walks along a beach at golden hour",
-      mode: "video",
-    });
-
-    mockService.optimizeStream.mockImplementation(
-      async (_params, callbacks) => {
-        callbacks.onDraft({ text: "Draft result" });
-        callbacks.onSpans({
-          spans: [{ text: "woman", category: "subject.identity" }],
-        });
-        callbacks.onRefined({ text: "Refined result" });
-        callbacks.onDone();
-      },
-    );
-
-    const handler = createOptimizeStreamHandler(mockService as any);
-    await handler(req, res);
-
-    const events = parseSseEvents(chunks);
-    const eventTypes = events.map((e) => e.event);
-    expect(eventTypes).toEqual(
-      expect.arrayContaining(["draft", "spans", "refined", "done"]),
-    );
-  });
-
-  it("handles client disconnect mid-stream without crashing", async () => {
-    const { res } = createMockSseResponse();
-    const req = createMockRequest({
-      prompt: "A woman walks along a beach",
-      mode: "video",
-    });
-
-    // Simulate client disconnect
-    let closeHandler: () => void;
-    (res.on as ReturnType<typeof vi.fn>).mockImplementation(
-      (event, handler) => {
-        if (event === "close") closeHandler = handler;
-      },
-    );
-
-    mockService.optimizeStream.mockImplementation(async () => {
-      closeHandler!(); // Client disconnects mid-processing
-      // Service should not throw
-    });
-
-    const handler = createOptimizeStreamHandler(mockService as any);
-    await expect(handler(req, res)).resolves.not.toThrow();
+    expect(spans.length).toBeGreaterThan(0);
+    expect(spans[0]).toHaveProperty("category");
   });
 });
 ```
+
+#### What is worth asserting
+
+- **The content type.** It is the one thing a consumer branches on, and it is the
+  thing that silently changes when someone swaps a stream implementation.
+- **That each line parses independently.** That is the whole contract of NDJSON:
+  a consumer must be able to act on line one without waiting for the last.
+- **A client disconnecting mid-stream.** `streamingHandler` checks
+  `clientClosed || res.writableEnded || res.destroyed` between writes and stops.
+  A stream that keeps writing to a dead socket is a leak, and the failure mode is
+  real — see `server/src/middleware/requestCoalescing.ts`, where an unhandled
+  rejection on client disconnect took the API server down.
+
+Do not assert the number of spans or their exact text: that is the model's output,
+not your contract. Assert the shape and the framing.
 
 ### Testing Credit & Billing Flows
 

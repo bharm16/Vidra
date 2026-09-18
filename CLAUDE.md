@@ -176,8 +176,8 @@ Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/c
 | `POST /api/enhancement/*`   | `enhancement.routes.ts`        | `api/enhancementSuggestionsApi.ts`, `features/prompt-optimizer/api/` |
 | `POST /api/llm/label-spans` | `labelSpansRoute.ts`           | `features/span-highlighting/api/spanLabelingApi.ts`                  |
 | `/api/preview/*`            | `preview.routes.ts`            | `features/preview/api/`                                              |
-| `/api/payment/*`            | `payment.routes.ts`            | `api/billingApi.ts`                                                  |
-| `/api/motion/*`             | `motion.routes.ts`             | `api/motionApi.ts`                                                   |
+| `/api/payment/*`            | `payment.routes.ts`            | `features/billing/api/billingApi.ts`                                 |
+| `/api/motion/*`             | `motion.routes.ts`             | `features/convergence/api/motionApi.ts`                              |
 | `/api/storage/*`            | `storage.routes.ts`            | `api/storageApi.ts`                                                  |
 | `/api/capabilities`         | `capabilities.routes.ts`       | `services/CapabilitiesApi.ts`                                        |
 | `/api/model-intelligence/*` | `model-intelligence.routes.ts` | `features/model-intelligence/api/`                                   |
