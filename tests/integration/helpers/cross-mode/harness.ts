@@ -7,6 +7,7 @@ import type {
 } from "@services/sketch-budget/storage/SketchBudgetStore";
 import { SketchAllowanceExceededError } from "@services/sketch-budget/storage/SketchBudgetStore";
 import {
+  contentAddressedObjectId,
   ControlledVideoProvider,
   InMemoryIdempotencyService,
   InMemoryImageAssetStore,
@@ -153,7 +154,12 @@ export async function startCrossModeHarness(): Promise<CrossModeHarness> {
   const videoProvider = new ControlledVideoProvider(CROSS_MODE_CLIP);
   const refunds = new RefundWitness();
   const studioProjects = new InMemoryStudioProjectStore();
-  const storage = new InMemoryStorageService(objects);
+  // Deterministic, order-independent object ids: a studio turn's request key
+  // embeds its project images' storage paths, and those images are stored in
+  // parallel — so a content-addressed id is what keeps the cassette
+  // reproducible across runs (see `ObjectIdMint`). The default fresh ids are
+  // what the storage-adapter conformance suite (#138) checks instead.
+  const storage = new InMemoryStorageService(objects, contentAddressedObjectId);
   const images = new InMemoryImageAssetStore(objects);
   const config = container.resolve<{
     fal: { sketchDailyCapCents: number; sketchFrameCostMillicents: number };

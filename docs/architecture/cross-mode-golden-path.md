@@ -142,6 +142,28 @@ attachment and each turn's produced images to fixed ids
 ids' _values_ — the return leg compares them to the project's own
 `origin.bridgedImageId` — so this changes identity, not behavior.
 
+### Storage paths are content-addressed for the same reason
+
+A studio turn's request key also embeds the storage paths of the project's
+images, and those images are stored in parallel (`StudioService`'s
+`Promise.allSettled`). A fresh random path per save would differ every run and
+miss the cassette, exactly as an unpinned id would — so the harness injects
+`contentAddressedObjectId` into `InMemoryStorageService`, a deterministic,
+order-independent id. The walkthrough never stores the same bytes twice, so
+nothing is actually deduplicated; like the pinned ids, this is identity, not
+behavior.
+
+By default that double mints fresh ids, exactly as production does — the
+content-addressed id is a wiring choice for this one harness. The
+storage-adapter conformance suite
+(`tests/integration/storage-adapter-conformance.integration.test.ts`, issue
+#138) holds every store — the production `GcsImageAssetStore`, `StorageService`
+and `LocalImageAssetStore`, and these two doubles — to that production contract:
+fresh-id identity, owner-scoped namespaces, reported URL expiry, serialization
+round trips, write conflicts and failure semantics. Correcting
+`InMemoryImageAssetStore` to it (fresh ids, a reported expiry) is what keeps the
+image store from hiding the class of bug #109 first found.
+
 ## What each proof asserts, and what breaks it
 
 Each case below was **mutation-checked**: the implementation was broken, the
