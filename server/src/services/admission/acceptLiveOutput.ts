@@ -16,6 +16,7 @@ import {
   type AdmissionMediaStore,
   type AdmissionSessionPort,
 } from "./admitPictureTake";
+import type { OwnedPictureResolver } from "@services/owned-media";
 
 /**
  * "Use this": the door out of the Live editor — ADR-0022 decision 5, issue #87.
@@ -87,6 +88,12 @@ export interface AcceptLiveOutputDependencies {
   sessionService: AcceptLiveOutputSessionPort;
   mediaStore: AdmissionMediaStore;
   idempotency: AdmissionIdempotencyPort;
+  /**
+   * Issue #125: forwarded to the admission boundary so a repeated acceptance
+   * (replay) answers with a freshly minted `imageUrl` and the same identity.
+   * Optional — without it a replay keeps its stored URL, the prior behavior.
+   */
+  resolver?: OwnedPictureResolver | undefined;
 }
 
 export interface AcceptLiveOutputRequest {
@@ -202,7 +209,7 @@ export async function acceptLiveOutput(
   deps: AcceptLiveOutputDependencies,
   request: AcceptLiveOutputRequest,
 ): Promise<AcceptLiveOutputResult> {
-  const { sessionService, mediaStore, idempotency } = deps;
+  const { sessionService, mediaStore, idempotency, resolver } = deps;
   const { accepted, userId } = request;
 
   let picture: DecodedMedia;
@@ -325,7 +332,7 @@ export async function acceptLiveOutput(
   let admitted;
   try {
     admitted = await admitPictureTake(
-      { sessionService, mediaStore, idempotency },
+      { sessionService, mediaStore, idempotency, resolver },
       {
         userId,
         sessionId,

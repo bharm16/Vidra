@@ -1,6 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
 import { logger } from "@infrastructure/Logger";
-import { fetchRemoteMedia } from "@services/owned-media";
+import {
+  fetchRemoteMedia,
+  type OwnedPictureResolver,
+} from "@services/owned-media";
 import { STORAGE_CONFIG } from "@services/storage/config/storageConfig";
 import {
   SessionAccessDeniedError,
@@ -119,6 +122,12 @@ export interface ReturnStudioImageDependencies {
   sessionService: ReturnStudioImageSessionPort;
   mediaStore: AdmissionMediaStore;
   idempotency: AdmissionIdempotencyPort;
+  /**
+   * Issue #125: forwarded to the admission boundary so a repeated "Use this in
+   * the session" (replay) answers with a freshly minted `imageUrl` and the same
+   * identity. Optional — without it a replay keeps its stored URL.
+   */
+  resolver?: OwnedPictureResolver | undefined;
 }
 
 export interface ReturnStudioImageRequest {
@@ -314,7 +323,7 @@ export async function returnStudioImage(
   deps: ReturnStudioImageDependencies,
   request: ReturnStudioImageRequest,
 ): Promise<ReturnStudioImageResult> {
-  const { studio, sessionService, mediaStore, idempotency } = deps;
+  const { studio, sessionService, mediaStore, idempotency, resolver } = deps;
   const { userId, projectId, imageId } = request;
 
   const produced = await studio.findProducedImage(userId, projectId, imageId);
@@ -425,7 +434,7 @@ export async function returnStudioImage(
   let admitted;
   try {
     admitted = await admitPictureTake(
-      { sessionService, mediaStore, idempotency },
+      { sessionService, mediaStore, idempotency, resolver },
       {
         userId,
         sessionId,

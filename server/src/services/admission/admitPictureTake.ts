@@ -12,6 +12,7 @@ import type {
   TakeProductionProvenance,
   TakeSourceInput,
 } from "@shared/types/session";
+import type { OwnedPictureResolver } from "@services/owned-media";
 
 /**
  * The one boundary through which a picture the session's own words did NOT
@@ -148,6 +149,15 @@ export interface AdmitPictureTakeDependencies {
   sessionService: AdmissionSessionPort;
   mediaStore: AdmissionMediaStore;
   idempotency: AdmissionIdempotencyPort;
+  /**
+   * Issue #125: the owner-checked resolver used to re-mint a REPLAYED take's
+   * `imageUrl` from its durable handle. Optional: without it a replay returns
+   * the URL frozen at first admission (the prior behavior), which expires ~1h
+   * later. With it, a repeated acceptance answers with a fresh URL and the
+   * same identity. Never used on a first admission — that URL is already fresh
+   * from the store — and never to re-store or re-run anything.
+   */
+  resolver?: OwnedPictureResolver | undefined;
 }
 
 export interface AdmitPictureTakeRequest {
@@ -226,6 +236,41 @@ function readAdmittedTake(body: Record<string, unknown>): AdmittedPictureTake {
 }
 
 /**
+ * Issue #125: freshen a replayed take's `imageUrl` from its durable handle.
+ *
+ * The identity (generation id, asset id, storage path) is left exactly as the
+ * snapshot recorded it; only the signed URL is re-minted, and only through the
+ * owner-checked resolver, which rebuilds the object's path from the caller's
+ * uid. Without a resolver, or when it refuses (the object is gone or not the
+ * caller's), the snapshot's own URL flows through — a repeated acceptance never
+ * fails for want of a fresh signature. The take record inside the snapshot is
+ * left untouched: it carries the same immutable handle and its own refreshable
+ * URLs, and it is not what the acceptance callers read back.
+ */
+async function remintReplayedImageUrl(
+  take: AdmittedPictureTake,
+  userId: string,
+  resolver: OwnedPictureResolver | undefined,
+): Promise<AdmittedPictureTake> {
+  if (!resolver) return take;
+  const resolved = await resolver.resolveOwnedPicture(userId, {
+    storagePath: take.storagePath,
+    assetId: take.assetId,
+  });
+  if (!resolved) {
+    log.warn(
+      "Admission replay kept its stored URL: media could not be reminted",
+      {
+        generationId: take.generationId,
+        sessionId: take.sessionId,
+      },
+    );
+    return take;
+  }
+  return { ...take, imageUrl: resolved.viewUrl };
+}
+
+/**
  * ADR-0022 decision 3: the display ancestor is a recorded CHOICE among the
  * source inputs. A caller that names one it did not record as an input is
  * drawing a relationship nothing performed — the exact failure the positional
@@ -246,7 +291,7 @@ export async function admitPictureTake(
   deps: AdmitPictureTakeDependencies,
   request: AdmitPictureTakeRequest,
 ): Promise<AdmitPictureTakeResult> {
-  const { sessionService, mediaStore, idempotency } = deps;
+  const { sessionService, mediaStore, idempotency, resolver } = deps;
 
   const displayAncestor = request.displayAncestorGenerationId;
   if (
@@ -300,11 +345,16 @@ export async function admitPictureTake(
   });
 
   if (claim.state === "replay") {
-    return {
-      state: "admitted",
-      take: readAdmittedTake(claim.snapshot.body),
-      replayed: true,
-    };
+    // Same take, fresh URL (issue #125). The snapshot holds the take's durable
+    // handle (asset id + storage path); the signed `imageUrl` it also holds was
+    // minted at first admission and has likely expired. Re-mint through the
+    // owner-checked resolver — identity unchanged, only the ephemeral URL moves.
+    const take = await remintReplayedImageUrl(
+      readAdmittedTake(claim.snapshot.body),
+      request.userId,
+      resolver,
+    );
+    return { state: "admitted", take, replayed: true };
   }
   if (claim.state === "in_progress") return { state: "in_progress" };
   if (claim.state === "conflict") return { state: "conflict" };

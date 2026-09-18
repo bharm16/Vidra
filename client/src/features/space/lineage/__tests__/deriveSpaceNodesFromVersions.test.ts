@@ -568,6 +568,59 @@ describe("deriveSpaceNodesFromVersions", () => {
     expect(resolveWordsForNode("cross", nodes)).toBe("W2 words");
   });
 
+  // Issue #125: the durable media handle travels from the persisted record
+  // onto the space node, read once through normalizePersistedGenerations.
+  it("carries a picture take's durable handle and expiry onto the node", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "a lighthouse at dusk",
+        generations: [
+          {
+            id: "gen-pic-1",
+            mediaType: "image",
+            status: "completed",
+            thumbnailUrl: "https://img/pic1.webp",
+            storagePath: "image-previews/owner/gen-pic-1",
+            mediaAssetIds: ["asset-1"],
+            viewUrlExpiresAt: "2026-09-18T12:00:00.000Z",
+          },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "gen-pic-1")).toMatchObject({
+      kind: "picture",
+      mediaUrl: "https://img/pic1.webp",
+      storagePath: "image-previews/owner/gen-pic-1",
+      assetId: "asset-1",
+      viewUrlExpiresAt: "2026-09-18T12:00:00.000Z",
+    });
+  });
+
+  // Negative path: a record with no durable handle is never given a fabricated
+  // one — an unrecoverable picture reads as such, not as a namespace guess.
+  it("never fabricates a durable handle for a picture that records none", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        generations: [
+          {
+            id: "gen-pic-1",
+            mediaType: "image",
+            status: "completed",
+            thumbnailUrl: "https://img/pic1.webp",
+          },
+        ],
+      }),
+    ]);
+
+    const pic = nodes.find((n) => n.id === "gen-pic-1")!;
+    expect(pic).not.toHaveProperty("storagePath");
+    expect(pic).not.toHaveProperty("assetId");
+    expect(pic).not.toHaveProperty("viewUrlExpiresAt");
+  });
+
   it("falls back to the enclosing version when a take's own words-version is absent", () => {
     // No `promptVersionId` on the record (a legacy take): the take is filed
     // under the version it is listed in, and restore keeps working.

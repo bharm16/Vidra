@@ -4,6 +4,9 @@ import type { Generation } from "@features/generations/types";
 import {
   readAncestorGenerationId,
   readArchived,
+  readMediaAssetId,
+  readStoragePath,
+  readViewUrlExpiresAt,
 } from "@features/generations/utils/serverOwnedRecordFields";
 import { buildSpaceNodes, type LineageInput } from "./buildSpaceNodes";
 import type { SpaceNode } from "./types";
@@ -107,6 +110,13 @@ export function deriveSpaceNodesFromVersions(
         // inside the picture column; when it does not — a generated picture,
         // an admitted upload — it roots at its words-version as before.
         const pictureAncestorId = readAncestorGenerationId(gen);
+        // Issue #125: the durable media handle, carried onto the node beside
+        // the URL. Read straight off the record — never fabricated when a take
+        // records none (a picture with neither handle is simply unrecoverable
+        // once its URL dies, which is the honest state, not a namespace guess).
+        const storagePath = readStoragePath(gen);
+        const assetId = readMediaAssetId(gen);
+        const viewUrlExpiresAt = readViewUrlExpiresAt(gen);
         pictures.push({
           id: gen.id,
           versionId: version.versionId,
@@ -117,6 +127,9 @@ export function deriveSpaceNodesFromVersions(
           ...(pictureAncestorId
             ? { ancestorPictureId: pictureAncestorId }
             : {}),
+          ...(storagePath ? { storagePath } : {}),
+          ...(assetId ? { assetId } : {}),
+          ...(viewUrlExpiresAt ? { viewUrlExpiresAt } : {}),
         });
       } else if (gen.mediaType === "video") {
         const ancestorId = readAncestorGenerationId(gen);

@@ -36,6 +36,7 @@ import type { ImageObservationService } from "@services/image-observation";
 import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
 import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
 import type { SessionService } from "@services/sessions/SessionService";
+import type { SessionDto } from "@shared/types/session";
 
 interface ApiServices extends OptimizeServices, EnhancementServices {
   storageService: StorageRoutesService;
@@ -47,6 +48,12 @@ interface ApiServices extends OptimizeServices, EnhancementServices {
   continuitySessionService?: ContinuitySessionService | null;
   modelIntelligenceService?: ModelIntelligenceService | null;
   sessionService?: SessionService | null;
+  /**
+   * Issue #125: freshen a single session's picture view URLs on read from
+   * owner-checked durable handles. Bound at registration; the sessions router
+   * stays decoupled from the resolver.
+   */
+  remintSessionPictures?: ((dto: SessionDto) => Promise<SessionDto>) | null;
 }
 
 /**
@@ -73,6 +80,7 @@ export function createAPIRoutes(services: ApiServices): Router {
     modelIntelligenceService,
     sessionService,
     storageService,
+    remintSessionPictures,
   } = services;
 
   // Mount optimization routes at root level (preserves /api/optimize paths)
@@ -130,6 +138,7 @@ export function createAPIRoutes(services: ApiServices): Router {
         sessionService,
         continuitySessionService ?? null,
         userCreditService,
+        remintSessionPictures ?? undefined,
       ),
     );
   }

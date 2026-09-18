@@ -39,6 +39,7 @@ import {
   StudioUseInSessionRequestSchema,
   type StudioTurnSubmission,
 } from "@shared/schemas/studio.schemas";
+import type { OwnedPictureResolver } from "@services/owned-media";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
 const CreateProjectSchema = z.object({
@@ -108,6 +109,12 @@ export interface StudioReturnDeps {
   sessionService: ReturnStudioImageSessionPort | null | undefined;
   mediaStore: AdmissionMediaStore | null | undefined;
   idempotency: AdmissionIdempotencyPort | null | undefined;
+  /**
+   * Issue #125: re-mints a replayed return's `imageUrl` from its durable
+   * handle. Independently optional — the return works without it, a replay
+   * just keeps its stored (expiring) URL.
+   */
+  resolver?: OwnedPictureResolver | null | undefined;
 }
 
 export function createStudioRouter(
@@ -349,7 +356,7 @@ export function createStudioRouter(
       const parsed = requireBody(StudioUseInSessionRequestSchema, req, res);
       if (!parsed.ok) return;
 
-      const { sessionService, mediaStore, idempotency } = returnDeps;
+      const { sessionService, mediaStore, idempotency, resolver } = returnDeps;
       if (!sessionService || !mediaStore || !idempotency) {
         res.status(503).json({
           success: false,
@@ -360,7 +367,13 @@ export function createStudioRouter(
       }
 
       const result = await returnStudioImage(
-        { studio: studioService, sessionService, mediaStore, idempotency },
+        {
+          studio: studioService,
+          sessionService,
+          mediaStore,
+          idempotency,
+          ...(resolver ? { resolver } : {}),
+        },
         {
           userId,
           projectId: routeParam(req, "projectId"),

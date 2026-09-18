@@ -9,6 +9,7 @@ import {
 } from "../admitPictureTake";
 import { SessionService } from "@services/sessions/SessionService";
 import type { SessionRecord } from "@services/sessions/types";
+import type { OwnedPictureResolver } from "@services/owned-media";
 
 /**
  * The shared admission boundary — ADR-0022 decisions 1, 2, 3 (issue #86).
@@ -290,6 +291,74 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
     expect(retry.replayed).toBe(true);
     expect(mediaStore.calls).toHaveLength(1);
     expect(takesIn(store, "v1")).toHaveLength(1);
+  });
+
+  /**
+   * Issue #125: a repeated acceptance returns the SAME take with a FRESH URL.
+   * The snapshot's `imageUrl` was minted at first admission and expires ~1h
+   * later; the durable handle it also holds is what the replay re-mints from,
+   * through the owner-checked resolver. A refusal never fails the acceptance.
+   */
+  describe("replay re-mints the view URL from the durable handle (#125)", () => {
+    const freshResolver: OwnedPictureResolver = {
+      resolveOwnedPicture: async (_userId, handle) => ({
+        storagePath: handle.storagePath ?? "image-previews/creator-1/asset-1",
+        viewUrl: "https://storage.example.com/reminted?sig=fresh",
+      }),
+    };
+
+    it("returns a fresh imageUrl with the same identity on replay", async () => {
+      const { deps, mediaStore, store } = setup();
+      const withResolver = { ...deps, resolver: freshResolver };
+
+      const first = await admitPictureTake(withResolver, uploadRequest());
+      const retry = await admitPictureTake(withResolver, uploadRequest());
+      expect(first.state).toBe("admitted");
+      expect(retry.state).toBe("admitted");
+      if (first.state !== "admitted" || retry.state !== "admitted") return;
+
+      expect(retry.replayed).toBe(true);
+      // Fresh URL…
+      expect(retry.take.imageUrl).toBe(
+        "https://storage.example.com/reminted?sig=fresh",
+      );
+      expect(retry.take.imageUrl).not.toBe(first.take.imageUrl);
+      // …same identity.
+      expect(retry.take.generationId).toBe(first.take.generationId);
+      expect(retry.take.assetId).toBe(first.take.assetId);
+      expect(retry.take.storagePath).toBe(first.take.storagePath);
+      // Never re-stored, never a second take.
+      expect(mediaStore.calls).toHaveLength(1);
+      expect(takesIn(store, "v1")).toHaveLength(1);
+    });
+
+    // Negative path: the object is gone or not the caller's. The stored URL
+    // flows through — a repeated acceptance never fails for want of a signature.
+    it("keeps the stored URL when the resolver refuses on replay", async () => {
+      const refusing: OwnedPictureResolver = {
+        resolveOwnedPicture: async () => null,
+      };
+      const { deps } = setup();
+      const withResolver = { ...deps, resolver: refusing };
+
+      const first = await admitPictureTake(withResolver, uploadRequest());
+      const retry = await admitPictureTake(withResolver, uploadRequest());
+      if (first.state !== "admitted" || retry.state !== "admitted") return;
+
+      expect(retry.replayed).toBe(true);
+      expect(retry.take.imageUrl).toBe(first.take.imageUrl);
+      expect(retry.take.generationId).toBe(first.take.generationId);
+    });
+
+    it("keeps the frozen URL when no resolver is wired (prior behavior)", async () => {
+      const { deps } = setup();
+      const first = await admitPictureTake(deps, uploadRequest());
+      const retry = await admitPictureTake(deps, uploadRequest());
+      if (first.state !== "admitted" || retry.state !== "admitted") return;
+
+      expect(retry.replayed).toBe(true);
+      expect(retry.take.imageUrl).toBe(first.take.imageUrl);
+    });
   });
 
   it("a lost response followed by a retry produces one take, not two", async () => {

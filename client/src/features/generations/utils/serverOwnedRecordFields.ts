@@ -23,6 +23,14 @@ import type { Generation } from "../types";
  * whole records, so a field absent from this list is dropped the first time a
  * local record wins — the wire would validate it and the client would still
  * lose it.
+ *
+ * The durable media handles (`storagePath`, `mediaAssetIds`, issue #125) are
+ * here for that same reason. They are the server-owned, immutable identity of
+ * the take's media (server side, `SERVER_OWNED_TAKE_FACTS`); a merge that
+ * dropped them would strand the space node without the handle it needs to
+ * re-arm or re-mint an expired URL. The ephemeral signed URLs (`mediaUrls`,
+ * `thumbnailUrl`, `viewUrlExpiresAt`) are deliberately NOT here — they expire,
+ * the server re-mints them on read, and the freshest one always wins.
  */
 export const SERVER_OWNED_RECORD_FIELDS = [
   "ancestorGenerationId",
@@ -30,6 +38,8 @@ export const SERVER_OWNED_RECORD_FIELDS = [
   "origin",
   "productionProvenance",
   "sourceInputs",
+  "storagePath",
+  "mediaAssetIds",
 ] as const;
 
 const asBag = (gen: Generation): Record<string, unknown> =>
@@ -67,6 +77,40 @@ export function readProductionProvenance(
 export function readSourceInputs(gen: Generation): TakeSourceInput[] {
   const value = asBag(gen).sourceInputs;
   return Array.isArray(value) ? (value as TakeSourceInput[]) : [];
+}
+
+/**
+ * Issue #125: the take's durable storage path, when it records one. Read off
+ * the bag because the runtime `Generation` never declared it — an admitted
+ * take carries it outright, a generated take often does too.
+ */
+export function readStoragePath(gen: Generation): string | undefined {
+  const value = asBag(gen).storagePath;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/**
+ * Issue #125: the take's durable asset id — the first of `mediaAssetIds`. The
+ * one asset id the owner-checked resolver needs when there is no storage path.
+ */
+export function readMediaAssetId(gen: Generation): string | undefined {
+  const value = asBag(gen).mediaAssetIds;
+  if (!Array.isArray(value)) return undefined;
+  const first = value.find(
+    (candidate): candidate is string =>
+      typeof candidate === "string" && candidate.length > 0,
+  );
+  return first;
+}
+
+/**
+ * Issue #125: when the server last minted this take's view URL expires. Stamped
+ * by the read-path re-mint; a bag field the runtime `Generation` never
+ * declared. A hint for the refresh loop, never an identity fact.
+ */
+export function readViewUrlExpiresAt(gen: Generation): string | undefined {
+  const value = asBag(gen).viewUrlExpiresAt;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 /**
