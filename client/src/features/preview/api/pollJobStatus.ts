@@ -1,10 +1,18 @@
 import { getVideoPreviewStatus } from "./previewApi";
 import type { VideoJobStatus } from "./previewApi";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 
 const POLL_INTERVAL_ACTIVE_MS = 2_000;
 const POLL_INTERVAL_EXTENDED_MS = 8_000;
 const ACTIVE_PHASE_MS = 6 * 60 * 1_000;
 const DEFAULT_MAX_WAIT_MS = 20 * 60 * 1_000;
+/**
+ * How long to keep polling for the attachment AFTER the render itself is done.
+ * Rendering is minutes; attaching is one write, so a minute is already
+ * generous. Past it the clip is reported as it actually is — made, not yet
+ * saved — rather than held behind a spinner for the render-sized timeout.
+ */
+const ATTACHMENT_WAIT_MS = 60 * 1_000;
 
 export interface PollJobStatusOptions {
   /** Maximum time (ms) to wait before giving up. Defaults to 20 minutes. */
@@ -23,6 +31,13 @@ export interface PollJobResult {
   assetId?: string | undefined;
   /** The i2v start frame — the clip's natural poster image. */
   startImageUrl?: string | undefined;
+  /**
+   * Whether the clip reached its session (ADR-0022 decision 6). Absent when
+   * the job named no session. `failed` — or a `pending` that outlived the
+   * budget above — is a clip that was made but not saved: real media, no node
+   * in the space until it is attached.
+   */
+  attachment?: TakeAttachment | undefined;
 }
 
 /**
@@ -31,6 +46,13 @@ export interface PollJobResult {
  * - Extended phase (after 6 min): polls every 8s
  *
  * Returns the completed result or throws on failure/timeout.
+ *
+ * ADR-0022 decision 6: "completed" is the render's answer, not the job's. A
+ * clip whose session write has not resolved would otherwise be adopted as a
+ * take the session never received — a node that vanishes on the next refresh.
+ * So the job is terminal here only once its attachment resolves, or once the
+ * attachment budget runs out, and the unresolved state travels back with the
+ * result instead of being inferred from its absence.
  */
 export async function pollJobStatus(
   jobId: string,
@@ -39,6 +61,8 @@ export async function pollJobStatus(
 ): Promise<PollJobResult | null> {
   const maxWaitMs = options?.maxWaitMs ?? DEFAULT_MAX_WAIT_MS;
   const startTime = Date.now();
+  /** When the render finished — the clock the attachment budget runs on. */
+  let renderedAt: number | null = null;
 
   while (true) {
     if (signal.aborted) return null;
@@ -68,23 +92,33 @@ export async function pollJobStatus(
     }
 
     if (status.status === "completed" && status.videoUrl) {
-      return {
-        videoUrl: status.videoUrl,
-        ...(status.storagePath !== undefined
-          ? { storagePath: status.storagePath }
-          : {}),
-        ...(status.viewUrl !== undefined ? { viewUrl: status.viewUrl } : {}),
-        ...(status.viewUrlExpiresAt !== undefined
-          ? { viewUrlExpiresAt: status.viewUrlExpiresAt }
-          : {}),
-        ...(status.assetId !== undefined ? { assetId: status.assetId } : {}),
-        ...(status.startImageUrl !== undefined
-          ? { startImageUrl: status.startImageUrl }
-          : {}),
-      };
+      if (renderedAt === null) renderedAt = Date.now();
+      const attachmentPending = status.attachment?.state === "pending";
+      const withinAttachmentBudget =
+        Date.now() - renderedAt < ATTACHMENT_WAIT_MS;
+
+      if (!attachmentPending || !withinAttachmentBudget) {
+        return {
+          videoUrl: status.videoUrl,
+          ...(status.storagePath !== undefined
+            ? { storagePath: status.storagePath }
+            : {}),
+          ...(status.viewUrl !== undefined ? { viewUrl: status.viewUrl } : {}),
+          ...(status.viewUrlExpiresAt !== undefined
+            ? { viewUrlExpiresAt: status.viewUrlExpiresAt }
+            : {}),
+          ...(status.assetId !== undefined ? { assetId: status.assetId } : {}),
+          ...(status.startImageUrl !== undefined
+            ? { startImageUrl: status.startImageUrl }
+            : {}),
+          ...(status.attachment !== undefined
+            ? { attachment: status.attachment }
+            : {}),
+        };
+      }
     }
 
-    if (status.status === "completed") {
+    if (status.status === "completed" && !status.videoUrl) {
       throw new Error("Video generation completed but no URL was returned");
     }
 

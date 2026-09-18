@@ -1,3 +1,4 @@
+import type { TakeAttachmentState } from "@shared/schemas/attachment.schemas";
 import type { VideoGenerationOptions, VideoGenerationResult } from "../types";
 
 export const VIDEO_JOB_STATUSES = [
@@ -92,6 +93,28 @@ export interface VideoJobRecord {
    * Populated by `requeueForRetry` after a transient failure to implement backoff.
    */
   nextRetryAtMs?: number;
+  /**
+   * ADR-0022 decision 6: whether the completed clip has reached its session.
+   * A second fact, tracked beside the generation outcome and never mixed into
+   * it — a `failed` attachment sits on a job that completed successfully.
+   * Present only on jobs that name a session.
+   */
+  attachment?: VideoJobAttachment;
+}
+
+/**
+ * The attachment debt a completed job carries, durable so that a worker restart
+ * can settle it. `record` is what is owed — it is built once, at completion, so
+ * every retry re-sends the same take rather than minting a second one.
+ */
+export interface VideoJobAttachment {
+  state: TakeAttachmentState;
+  generationId: string;
+  sessionId: string;
+  promptVersionId: string;
+  record?: Record<string, unknown>;
+  reason?: string;
+  updatedAtMs: number;
 }
 
 export const DLQ_STATUSES = [

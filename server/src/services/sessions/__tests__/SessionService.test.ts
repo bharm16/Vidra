@@ -87,6 +87,27 @@ describe("SessionService", () => {
   const sessionStore = {
     save: vi.fn(),
     get: vi.fn(),
+    /**
+     * The store's transactional read-modify-write. The double models its
+     * contract — the mutator runs against the current document and its result
+     * is the write — so assertions on `save` below keep meaning "this verb
+     * wrote". What the real transaction adds is serialisation under
+     * contention, which the concurrency suite models with its own store.
+     */
+    mutate: vi.fn(
+      async (
+        sessionId: string,
+        mutator: (current: SessionRecord) => SessionRecord,
+      ): Promise<SessionRecord | null> => {
+        const current = (await sessionStore.get(
+          sessionId,
+        )) as SessionRecord | null;
+        if (!current) return null;
+        const next = mutator(current);
+        await sessionStore.save(next);
+        return next;
+      },
+    ),
     findByPromptUuid: vi.fn(),
     findByUser: vi.fn(),
     delete: vi.fn(),
@@ -536,6 +557,142 @@ describe("SessionService", () => {
       expect((generations[0] as { mediaUrls: string[] }).mediaUrls).toEqual([
         "https://new.png",
       ]);
+    });
+  });
+
+  describe("concurrent writers keep every take (ADR-0022 decision 6)", () => {
+    /**
+     * A store double that models the two things the real store does and
+     * nothing else: `save` replaces the document wholesale (Firestore merges
+     * at the top level, so an incoming `prompt` replaces the stored one,
+     * `versions` array and all), and `mutate` runs its read-modify-write
+     * atomically against the current document.
+     *
+     * Read-then-save was never safe here, and the transaction around it did
+     * not help: the payload was built from a snapshot taken BEFORE the
+     * transaction opened, so the transaction only chose create-vs-merge. With
+     * `save` as the only writer, the two appends below interleave their reads
+     * and the later write erases the earlier take. Serialising the whole
+     * read-modify-write is the fix, and it is what this double exercises.
+     */
+    const createConcurrentStore = (initial: SessionRecord) => {
+      let doc: SessionRecord = structuredClone(initial);
+      let tail: Promise<unknown> = Promise.resolve();
+
+      return {
+        get: vi.fn(
+          async (sessionId: string): Promise<SessionRecord | null> =>
+            doc.id === sessionId ? structuredClone(doc) : null,
+        ),
+        save: vi.fn(async (record: SessionRecord): Promise<void> => {
+          doc = structuredClone(record);
+        }),
+        mutate: vi.fn(
+          async (
+            sessionId: string,
+            mutator: (current: SessionRecord) => SessionRecord,
+          ): Promise<SessionRecord | null> => {
+            const run = tail.then(async () => {
+              if (doc.id !== sessionId) return null;
+              const next = mutator(structuredClone(doc));
+              doc = structuredClone(next);
+              return structuredClone(next);
+            });
+            tail = run.catch(() => undefined);
+            return run;
+          },
+        ),
+        findByPromptUuid: vi.fn(async () => null),
+        delete: vi.fn(async () => undefined),
+        current: (): SessionRecord => structuredClone(doc),
+      };
+    };
+
+    const seeded = (): SessionRecord =>
+      buildRecord({
+        prompt: {
+          input: "raw",
+          output: "optimized",
+          versions: [
+            {
+              versionId: "v-1",
+              signature: "sig",
+              prompt: "optimized",
+              timestamp: "2026-09-17T00:00:00.000Z",
+              generations: [],
+            },
+          ],
+        },
+      });
+
+    const take = (id: string): Record<string, unknown> => ({
+      id,
+      mediaType: "image",
+      status: "completed",
+      prompt: "astronaut on mars",
+      promptVersionId: "v-1",
+      mediaUrls: [`https://example.com/${id}.png`],
+    });
+
+    const idsIn = (store: ReturnType<typeof createConcurrentStore>): string[] =>
+      (store.current().prompt?.versions?.[0]?.generations ?? []).map(
+        (generation) => (generation as { id: string }).id,
+      );
+
+    it("keeps both takes when two different appends run concurrently", async () => {
+      const store = createConcurrentStore(seeded());
+      const service = new SessionService(store as never);
+
+      await Promise.all([
+        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-a")),
+        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-b")),
+      ]);
+
+      expect(idsIn(store).sort()).toEqual(["pic-a", "pic-b"]);
+    });
+
+    it("creates no duplicate when the same append is repeated concurrently", async () => {
+      const store = createConcurrentStore(seeded());
+      const service = new SessionService(store as never);
+
+      await Promise.all([
+        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-a")),
+        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-a")),
+      ]);
+
+      expect(idsIn(store)).toEqual(["pic-a"]);
+    });
+
+    it("a stale client versions update cannot erase a server-attached take", async () => {
+      const store = createConcurrentStore(seeded());
+      const service = new SessionService(store as never);
+
+      // The client PATCHes its ENTIRE versions array, built from a read taken
+      // before the server attached anything. Whichever of these lands second
+      // used to win outright.
+      const staleVersions = [
+        {
+          versionId: "v-1",
+          signature: "sig",
+          prompt: "optimized",
+          timestamp: "2026-09-17T00:00:00.000Z",
+          generations: [take("client-take")],
+        },
+      ];
+
+      await Promise.all([
+        service.updateVersionsForUser("user-1", "session-1", {
+          versions: staleVersions as never,
+        }),
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("server-take"),
+        ),
+      ]);
+
+      expect(idsIn(store).sort()).toEqual(["client-take", "server-take"]);
     });
   });
 

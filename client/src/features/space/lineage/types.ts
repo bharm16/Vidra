@@ -17,6 +17,19 @@ export interface LineageNode {
   ancestorId: string | null;
   /** A removed leaf persists but is excluded from the render (ADR-0012). */
   archived?: boolean;
+  /**
+   * ADR-0022 decision 3: this take has no persisted picture ancestor, so it
+   * hangs from its words-version instead. The edge means "we know which words
+   * this belongs to" — NOT "these words were its complete production
+   * ancestry". Recorded rather than guessed: sibling order is not evidence,
+   * and an edge the creator never performed is worse than an absent one.
+   */
+  pictureAncestryUnknown?: boolean;
+  /**
+   * ADR-0022 decision 6: the media exists, and the session does not have it.
+   * Drawn as "made but not saved" with a retry, never as a settled node.
+   */
+  unattached?: boolean;
 }
 
 export interface PositionedNode extends LineageNode {

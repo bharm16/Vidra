@@ -13,6 +13,7 @@ import { createImageGenerateHandler } from "./preview/handlers/imageGenerate";
 import { createImageStoryboardGenerateHandler } from "./preview/handlers/imageStoryboardGenerate";
 import { createVideoGenerateHandler } from "./preview/handlers/videoGenerate";
 import { createVideoJobsHandler } from "./preview/handlers/videoJobs";
+import { createVideoJobAttachHandler } from "./preview/handlers/videoJobAttach";
 import { createVideoContentHandler } from "./preview/handlers/videoContent";
 import { createImageContentHandler } from "./preview/handlers/imageContent";
 import { createImageUploadHandler } from "./preview/handlers/imageUpload";
@@ -53,6 +54,8 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
     createImageStoryboardGenerateHandler(resolvedServices);
   const videoGenerateHandler = createVideoGenerateHandler(resolvedServices);
   const videoJobsHandler = createVideoJobsHandler(resolvedServices);
+  const videoJobAttachHandler =
+    createVideoJobAttachHandler(resolvedServices);
   const videoContentHandler = createVideoContentHandler(resolvedServices);
   const imageContentHandler = createImageContentHandler();
   const imageUploadHandler = createImageUploadHandler(resolvedServices);
@@ -81,6 +84,12 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   router.post("/face-swap", asyncHandler(faceSwapPreviewHandler));
   router.post("/video/generate", asyncHandler(videoGenerateHandler));
   router.get("/video/jobs/:jobId", asyncHandler(videoJobsHandler));
+  // ADR-0022 decision 6: the creator's retry for a clip that was made but
+  // not saved. Attachment only — never a re-render.
+  router.post(
+    "/video/jobs/:jobId/attach",
+    asyncHandler(videoJobAttachHandler),
+  );
   router.get("/video/content/:contentId", asyncHandler(videoContentHandler));
   router.get("/image/content/:contentId", asyncHandler(imageContentHandler));
 

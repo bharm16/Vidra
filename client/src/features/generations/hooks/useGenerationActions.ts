@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Generation, GenerationParams } from "../types";
+import { settleClipAttachment } from "../api/takeAttachment";
+import type { TakeAttachmentState } from "@shared/schemas/attachment.schemas";
 import type { DraftModel } from "@features/generation-controls";
 import type { GenerationsAction } from "./useGenerationsState";
 import {
@@ -1057,6 +1059,7 @@ export function useGenerationActions(
         let videoStoragePath: string | null = response.storagePath ?? null;
         let videoPosterUrl: string | null = response.startImageUrl ?? null;
         let videoAssetId: string | null = response.assetId ?? null;
+        let clipAttachment: TakeAttachmentState | undefined;
         if (response.success && response.videoUrl) {
           generationAccepted = true;
           acceptGeneration(
@@ -1114,10 +1117,20 @@ export function useGenerationActions(
           videoStoragePath = jobResult?.storagePath ?? videoStoragePath;
           videoAssetId = jobResult?.assetId ?? videoAssetId;
           videoPosterUrl = jobResult?.startImageUrl ?? videoPosterUrl;
+          // ADR-0022 decision 6: the render's outcome and the take's
+          // attachment are two facts. An unresolved attachment gets one
+          // server-side retry — which re-sends the record the job already
+          // holds, so it cannot rerun the render or touch credits — and only
+          // then is the clip reported as made but not saved.
+          clipAttachment = await settleClipAttachment(
+            response.jobId,
+            jobResult?.attachment,
+          );
           log.debug(`${dispatchNoun} job completed`, {
             generationId: takeId,
             jobId: response.jobId,
             hasVideoUrl: Boolean(videoUrl),
+            attachment: clipAttachment ?? null,
           });
         }
 
@@ -1160,6 +1173,7 @@ export function useGenerationActions(
             serverJobStatus: "completed",
             ...(posterUrl ? { thumbnailUrl: posterUrl } : {}),
             ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
+            ...(clipAttachment === "failed" ? { attachment: "failed" } : {}),
           });
         }
       } catch (error) {

@@ -31,6 +31,7 @@ import { VideoWorkerHeartbeatStore } from "@services/video-generation/jobs/Video
 import { VideoJobHandler } from "@services/video-generation/jobs/VideoJobHandler";
 import type { SessionService } from "@services/sessions/SessionService";
 import { VideoJobWorker } from "@services/video-generation/jobs/VideoJobWorker";
+import { resumePendingAttachments } from "@services/video-generation/jobs/resumePendingAttachments";
 import { createVideoJobSweeper } from "@services/video-generation/jobs/VideoJobSweeper";
 import { createVideoJobReconciler } from "@services/video-generation/jobs/VideoJobReconciler";
 import { ProviderCircuitManager } from "@services/video-generation/jobs/ProviderCircuitManager";
@@ -303,6 +304,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       providerCircuitManager: ProviderCircuitManager,
       videoWorkerHeartbeatStore: VideoWorkerHeartbeatStore,
       config: ServiceConfig,
+      sessionService: SessionService | null,
     ) => {
       if (!videoJobHandler) {
         return null;
@@ -310,6 +312,18 @@ export function registerVideoGenerationServices(container: DIContainer): void {
 
       const wc = config.videoJobs.worker;
       return new VideoJobWorker(videoJobStore, videoJobHandler, {
+        // ADR-0022 decision 6: a restarting worker settles the clip
+        // attachments its predecessor died owing.
+        ...(sessionService
+          ? {
+              resumePendingAttachments: async (): Promise<void> => {
+                await resumePendingAttachments({
+                  jobStore: videoJobStore,
+                  sessionService,
+                });
+              },
+            }
+          : {}),
         pollIntervalMs: wc.pollIntervalMs,
         leaseMs: wc.leaseSeconds * 1000,
         maxConcurrent: wc.maxConcurrent,
@@ -332,6 +346,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       "providerCircuitManager",
       "videoWorkerHeartbeatStore",
       "config",
+      "sessionService",
     ],
   );
 

@@ -8,9 +8,12 @@ import {
 } from "./classifyError";
 import { HeartbeatManager } from "./HeartbeatManager";
 import { RetryPolicy } from "@server/utils/RetryPolicy";
-import type { VideoJobError, VideoJobRecord } from "./types";
+import type { VideoJobAttachment, VideoJobError, VideoJobRecord } from "./types";
 import type { VideoGenerationResult } from "../types";
-import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
+import {
+  attachCompletedJobToSession,
+  jobOwesAttachment,
+} from "./attachJobToSession";
 
 // ────────────────────────────────────────────────────────────────
 // Dependency interfaces — kept minimal so both worker and inline
@@ -49,6 +52,16 @@ export interface JobProcessingStore {
       inputMode?: string | undefined;
     },
   ): Promise<boolean | void>;
+  /**
+   * ADR-0022 decision 6: records whether the completed clip reached its
+   * session. Optional so a store that predates the attachment boundary still
+   * satisfies this port; the attachment then runs without a durable trace and
+   * simply cannot be resumed.
+   */
+  setAttachment?(
+    jobId: string,
+    attachment: VideoJobAttachment,
+  ): Promise<boolean | void>;
 }
 
 export interface JobGenerationService {
@@ -76,7 +89,8 @@ export interface JobStorageService {
 /**
  * ISSUE-12: narrow port for the session append primitive. Avoids importing
  * the full SessionService class here so this module stays testable with a
- * plain stub.
+ * plain stub. Structurally identical to (and satisfied by the same objects as)
+ * `SessionAppendPort` in @services/sessions/attachTakeToSession.
  */
 export interface JobSessionAppendPort {
   appendGenerationToVersion(
@@ -126,7 +140,7 @@ export interface ProcessVideoJobDeps {
   };
   /**
    * ISSUE-12: optional session-append port. When set and the job carries
-   * sessionId + promptVersionId, the pipeline appends the completed
+   * sessionId + promptVersionId, the pipeline attaches the completed
    * generation to the session version after markCompleted succeeds —
    * making the video generation server-authoritative without the client
    * having to re-fetch the session.
@@ -335,58 +349,23 @@ export async function processVideoJob(
       assetId: result.assetId,
     });
 
-    // ISSUE-12: server-authoritative generation record. When the job carries
-    // sessionId + promptVersionId (threaded through from the preview handler)
-    // and the session service is available, append the completed generation
-    // to the session's named version. Soft-fails — the job is already
-    // markCompleted, credits are accounted for, media is in GCS, so a
-    // persist failure here is logged but not retried or refunded. Subsequent
-    // session refetches will surface the missing record via the existing
-    // reconciliation paths.
-    if (job.sessionId && job.promptVersionId && sessionService) {
-      try {
-        await sessionService.appendGenerationToVersion(
-          job.userId,
-          job.sessionId,
-          job.promptVersionId,
-          // A clip's take identity is its job id — the record is written under
-          // the id the client will adopt (CONTEXT.md → Take identity).
-          buildCompletedTakeRecord({
-            id: job.id,
-            model: job.request.options?.model ?? null,
-            mediaType: "video",
-            prompt: job.request.prompt,
-            promptVersionId: job.promptVersionId,
-            mediaUrls: [result.videoUrl],
-            ...(result.assetId ? { mediaAssetIds: [result.assetId] } : {}),
-            ...(resultWithStorage.storagePath
-              ? { storagePath: resultWithStorage.storagePath }
-              : {}),
-            // ADR-0013: name the source picture (or null = root) so the space
-            // draws the picture→clip edge from real lineage.
-            ancestorGenerationId: job.sourceGenerationId ?? null,
-          }),
-        );
-        log.info(`${logPrefix} generation persisted to session`, {
-          jobId: job.id,
-          userId: job.userId,
-          sessionId: job.sessionId,
-          promptVersionId: job.promptVersionId,
-        });
-      } catch (persistError) {
-        log.error(
-          `${logPrefix} session persist failed; video is durable but generation record missing`,
-          persistError instanceof Error
-            ? persistError
-            : new Error(String(persistError)),
-          {
-            jobId: job.id,
-            userId: job.userId,
-            sessionId: job.sessionId,
-            promptVersionId: job.promptVersionId,
-          },
-        );
-      }
+    // ISSUE-12 / ADR-0022 decision 6: the completed clip is attached to its
+    // session as a SEPARATE tracked fact. The job's generation outcome is
+    // already settled above — markCompleted succeeded, credits are accounted
+    // for, the media is in durable storage — so nothing below may reopen it.
+    // A failed attachment is recorded as failed-and-retryable on the job and
+    // surfaced to the creator as "made but not saved"; it never refunds, never
+    // requeues, and never re-runs the provider.
+    if (jobOwesAttachment(job) && sessionService) {
+      await attachCompletedJobToSession({
+        // markCompleted stamped the durable copy onto the result; the record
+        // the session is owed is built from that, not from the provider URL.
+        job: { ...job, result: resultWithStorage },
+        jobStore,
+        sessionService,
+        log,
+        logPrefix,
+      });
     }
 
     if (onProviderSuccess && job.provider && job.provider !== "unknown") {

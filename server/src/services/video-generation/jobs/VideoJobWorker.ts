@@ -34,6 +34,13 @@ interface VideoJobWorkerOptions {
       metadata?: Record<string, unknown>,
     ) => void;
   };
+  /**
+   * ADR-0022 decision 6: settle the clip attachments a previous worker died
+   * holding. Runs once at start, never blocks the poll loop, and never touches
+   * a job's generation outcome. Injected rather than imported so the worker
+   * keeps no knowledge of the session domain.
+   */
+  resumePendingAttachments?: () => Promise<void>;
 }
 
 interface ActiveJobContext {
@@ -58,6 +65,9 @@ export class VideoJobWorker {
   private readonly providerIds: string[];
   private readonly workerHeartbeatStore: VideoJobWorkerOptions["workerHeartbeatStore"];
   private readonly metrics?: VideoJobWorkerOptions["metrics"];
+  private readonly resumePendingAttachments:
+    | VideoJobWorkerOptions["resumePendingAttachments"]
+    | undefined;
   private readonly log: ReturnType<typeof logger.child>;
   private timer: NodeJS.Timeout | null = null;
   private workerHeartbeatTimer: NodeJS.Timeout | null = null;
@@ -108,6 +118,7 @@ export class VideoJobWorker {
     ];
     this.workerHeartbeatStore = options.workerHeartbeatStore;
     this.metrics = options.metrics;
+    this.resumePendingAttachments = options.resumePendingAttachments;
 
     // Validate heartbeat interval is meaningfully shorter than the lease period.
     // If heartbeatIntervalMs * MAX_HEARTBEAT_FAILURES >= leaseMs, the heartbeat
@@ -150,6 +161,15 @@ export class VideoJobWorker {
         this.reportWorkerHeartbeat();
       }, this.heartbeatIntervalMs);
       this.workerHeartbeatTimer.unref?.();
+    }
+    if (this.resumePendingAttachments) {
+      // Fire-and-forget: a clip that is durable but unfiled is a real debt, but
+      // settling it must never delay or fail the worker's own startup.
+      void this.resumePendingAttachments().catch((error: unknown) => {
+        this.log.warn("Failed to resume pending clip attachments", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
     }
     // Jitter the first tick so K replica pods restarting simultaneously
     // (rolling deploy) don't all hit Firestore at t=0 — avoids thundering herd.

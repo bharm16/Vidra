@@ -55,13 +55,27 @@ const ownedRecord = (): SessionRecord => ({
 });
 
 function createStore() {
-  return {
+  const store = {
     get: vi.fn().mockResolvedValue(ownedRecord()),
     save: vi.fn(async (record: SessionRecord) => record),
+    // The transactional write. Modelled as "the mutator's result is the
+    // write", so an ownership throw inside the mutator still means nothing
+    // was written — and the `save` assertions below keep biting.
+    mutate: vi.fn(
+      async (
+        _sessionId: string,
+        mutator: (current: SessionRecord) => SessionRecord,
+      ): Promise<SessionRecord> => {
+        const next = mutator(ownedRecord());
+        await store.save(next);
+        return next;
+      },
+    ),
     delete: vi.fn().mockResolvedValue(undefined),
     findByPromptUuid: vi.fn().mockResolvedValue(null),
     list: vi.fn().mockResolvedValue([]),
   };
+  return store;
 }
 
 /**

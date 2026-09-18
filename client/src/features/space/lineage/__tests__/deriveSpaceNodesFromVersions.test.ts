@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SessionPromptVersionEntry } from "@shared/types/session";
+import type { Generation } from "@features/generations/types";
 import { normalizePersistedGenerations } from "@features/generations/utils/normalizePersistedGeneration";
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
 import { computeLineageLayout } from "../computeLineageLayout";
@@ -99,22 +100,126 @@ describe("deriveSpaceNodesFromVersions", () => {
     expect(clip).toMatchObject({ kind: "clip", ancestorId: "gen-pic-1" });
   });
 
-  it("falls back to the first picture when a clip has no persisted source", () => {
+  it("never attaches a clip to a sibling picture by position", () => {
     const nodes = lineageOf([
       version({
         versionId: "v-1",
         generations: [
           { id: "gen-pic-1", mediaType: "image", status: "completed" },
+          { id: "gen-pic-2", mediaType: "image", status: "completed" },
           { id: "gen-clip-1", mediaType: "video", status: "completed" },
         ],
       }),
     ]);
 
-    // Clip source threading is not wired yet; the clip still connects to
-    // something renderable rather than dangling.
+    // ADR-0022 decision 3: a clip with no PERSISTED picture ancestor hangs
+    // from its words-version, and says so. Array order is not evidence — the
+    // old fallback drew an edge to whichever picture happened to be listed
+    // first, which the space then rendered as a relationship the creator
+    // performed. A guessed edge is worse than an absent one.
     expect(nodes.find((n) => n.id === "gen-clip-1")).toMatchObject({
-      ancestorId: "gen-pic-1",
+      ancestorId: "words-v-1",
+      pictureAncestryUnknown: true,
     });
+  });
+
+  it("files a clip under its words without claiming those words were its full ancestry", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "a dancer at dusk",
+        generations: [
+          { id: "gen-clip-1", mediaType: "video", status: "completed" },
+        ],
+      }),
+    ]);
+
+    // "We know which words this clip belongs to" — not "these words were its
+    // complete production ancestry". The flag is what keeps the second
+    // reading off the screen.
+    expect(nodes.find((n) => n.id === "gen-clip-1")).toMatchObject({
+      kind: "clip",
+      ancestorId: "words-v-1",
+      pictureAncestryUnknown: true,
+    });
+  });
+
+  it("marks nothing unknown when the clip's ancestor is persisted", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        generations: [
+          { id: "gen-pic-1", mediaType: "image", status: "completed" },
+          {
+            id: "gen-clip-1",
+            mediaType: "video",
+            status: "completed",
+            ancestorGenerationId: "gen-pic-1",
+          },
+        ],
+      }),
+    ]);
+
+    expect(
+      nodes.find((n) => n.id === "gen-clip-1"),
+    ).not.toHaveProperty("pictureAncestryUnknown");
+  });
+
+  it("draws a clip whose session write did not resolve as made-but-not-saved", () => {
+    // A LIVE take, straight from the generation run — not a persisted record.
+    // Only the run knows the attachment failed; the session cannot, because
+    // the take never reached it.
+    const nodes = deriveSpaceNodesFromVersions([
+      {
+        versionId: "v-1",
+        prompt: "a dancer at dusk",
+        generations: [
+          {
+            id: "gen-clip-1",
+            model: "wan-2.2",
+            tier: "draft",
+            mediaType: "video",
+            status: "completed",
+            prompt: "a dancer at dusk",
+            mediaUrls: ["https://cdn.example.com/clip.mp4"],
+            thumbnailUrl: "https://img/last.webp",
+            createdAt: 0,
+            attachment: "failed",
+          } as unknown as Generation,
+        ],
+      },
+    ]);
+
+    // ADR-0022 decision 6: real media, no row in the session. Drawn as such
+    // rather than as a settled node that vanishes on the next refresh.
+    expect(nodes.find((n) => n.id === "gen-clip-1")).toMatchObject({
+      kind: "clip",
+      unattached: true,
+    });
+  });
+
+  it("carries no unattached marker off a record read back from the session", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        generations: [
+          {
+            id: "gen-clip-1",
+            mediaType: "video",
+            status: "completed",
+            ancestorGenerationId: "gen-pic-1",
+            // A stale marker that somehow reached storage. The record came OUT
+            // of the session, so it IS in the session — the reader drops it and
+            // "not saved" cannot outlive the save.
+            attachment: "failed",
+          },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "gen-clip-1")).not.toHaveProperty(
+      "unattached",
+    );
   });
 
   it("marks archived generations so the layout excludes them (leaf removal)", () => {
