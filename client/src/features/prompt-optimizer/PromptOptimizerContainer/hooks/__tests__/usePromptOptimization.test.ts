@@ -85,6 +85,33 @@ describe("usePromptOptimization", () => {
     });
   });
 
+  // Reoptimize (model-format switch / force-generic) forwards OptimizationOptions
+  // through its own typed entry point. This guards the refactor that removed the
+  // `unknown`-context + cast-based option extraction: options must land in the
+  // options slot, and must never leak into the context slot.
+  it("routes reoptimize options to optimize without leaking into the context slot", async () => {
+    const { params, mocks } = buildBaseParams();
+    const { result } = renderHook(() => usePromptOptimization(params));
+
+    await act(async () => {
+      await result.current.handleReoptimize("Original shot prompt", {
+        forceGenericTarget: true,
+      });
+    });
+
+    expect(mocks.optimize).toHaveBeenCalledTimes(1);
+    // The prompt goes out with a null context (no improvement context set, and
+    // options never occupy the context slot), no target model (forceGenericTarget
+    // in video mode compiles to the generic), and the options in the options slot.
+    expect(mocks.optimize).toHaveBeenCalledWith(
+      "Original shot prompt",
+      null,
+      null,
+      undefined,
+      expect.objectContaining({ forceGenericTarget: true }),
+    );
+  });
+
   it("keeps sequence optimization in-place when preserveSessionView is enabled", async () => {
     const { params, mocks } = buildBaseParams();
     const { result } = renderHook(() => usePromptOptimization(params));
