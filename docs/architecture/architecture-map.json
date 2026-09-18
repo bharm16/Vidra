@@ -1337,6 +1337,11 @@
       "file": "storage.services.ts"
     },
     {
+      "from": "sketchBudgetService",
+      "to": "config",
+      "file": "core.services.ts"
+    },
+    {
       "from": "soraVideoProvider",
       "to": "config",
       "file": "video-generation.services.ts"
