@@ -374,12 +374,29 @@ describe("POST /api/studio/projects/:projectId/images/:imageId/use-in-session", 
     });
   });
 
-  it("starts a new session only when the creator says so", async () => {
+  it("asks for confirmed words (409) when starting a new session, without offering an edit's instruction (issue #131)", async () => {
     const { app } = harness({ withoutSession: true });
 
     const res = await supertest(app)
       .post(PATH)
       .send({ onMissingOriginSession: "new-session" });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({
+      success: false,
+      reason: "needs-confirmed-words",
+    });
+    // The producing text of an edit is an instruction, never offered as words.
+    expect(res.body.suggestion).toBeUndefined();
+  });
+
+  it("starts a new session with the creator's confirmed words", async () => {
+    const { app } = harness({ withoutSession: true });
+
+    const res = await supertest(app).post(PATH).send({
+      onMissingOriginSession: "new-session",
+      confirmedWords: "a lighthouse in warm light",
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.data.createdSession).toBe(true);

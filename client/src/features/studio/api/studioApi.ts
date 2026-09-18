@@ -330,9 +330,27 @@ const MissingOriginSessionSchema = z.object({
   error: z.string(),
 });
 
+/**
+ * The other 409 that is a question, not an error (issue #131). A session this
+ * return would mint needs its associated words confirmed by the creator —
+ * never the edit instruction or transform label. `suggestion` prefills the
+ * field when a from-scratch generate's prompt exists; it is absent for an edit
+ * or transform, where the creator's own words are required.
+ */
+const NeedsConfirmedWordsSchema = z.object({
+  reason: z.literal("needs-confirmed-words"),
+  suggestion: z.string().optional(),
+  error: z.string(),
+});
+
 export type UseInSessionOutcome =
   | { state: "returned"; result: StudioUseInSessionResult }
   | { state: "origin-session-missing"; sessionId: string; message: string }
+  | {
+      state: "needs-confirmed-words";
+      suggestion?: string;
+      message: string;
+    }
   | { state: "error"; message: string };
 
 /**
@@ -346,17 +364,20 @@ export type UseInSessionOutcome =
 export async function returnStudioImageToSession(
   projectId: string,
   imageId: string,
-  options?: { onMissingOriginSession?: "new-session" },
+  options?: { onMissingOriginSession?: "new-session"; confirmedWords?: string },
 ): Promise<UseInSessionOutcome> {
   const response = await apiClient.rawRequest(
     `/studio/projects/${projectId}/images/${imageId}/use-in-session`,
     {
       method: "POST",
-      body: JSON.stringify(
-        options?.onMissingOriginSession
+      body: JSON.stringify({
+        ...(options?.onMissingOriginSession
           ? { onMissingOriginSession: options.onMissingOriginSession }
-          : {},
-      ),
+          : {}),
+        ...(options?.confirmedWords
+          ? { confirmedWords: options.confirmedWords }
+          : {}),
+      }),
     },
   );
 
@@ -378,6 +399,17 @@ export async function returnStudioImageToSession(
       state: "origin-session-missing",
       sessionId: choice.data.sessionId,
       message: choice.data.error,
+    };
+  }
+
+  const needsWords = NeedsConfirmedWordsSchema.safeParse(body);
+  if (needsWords.success) {
+    return {
+      state: "needs-confirmed-words",
+      ...(needsWords.data.suggestion !== undefined
+        ? { suggestion: needsWords.data.suggestion }
+        : {}),
+      message: needsWords.data.error,
     };
   }
 

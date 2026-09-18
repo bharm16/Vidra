@@ -25,6 +25,14 @@
  *  - **production provenance** (ADR-0022 decision 2, including the sketch
  *    `seed`/`strength`/`steps` and the studio turn ids it carries) — the
  *    recorded fact of what produced the media.
+ *  - **associated words** — the creator-confirmed words a newly minted session
+ *    is filed under (ADR-0022 decision 2, issue #131). Present only when a
+ *    caller sets them, which today is the studio return that mints a session
+ *    around a standalone image: changing the confirmed description before a
+ *    retry must be a DIFFERENT acceptance, never a replay that silently keeps
+ *    the first words. A caller that files a take under a session's existing
+ *    words omits it — the `sessionId`/`promptVersionId` already pin that
+ *    identity — so their fingerprint is unchanged.
  *  - **contributing source inputs**, projected to their STABLE identity only:
  *    a `take` by its `generationId`, every other kind by its `kind` alone. The
  *    durable storage handles (`assetId`, `storagePath`) are deliberately
@@ -72,6 +80,13 @@ export interface AdmissionAcceptanceFingerprintInput {
   productionProvenance: TakeProductionProvenance;
   sourceInputs?: readonly TakeSourceInput[] | undefined;
   displayAncestorGenerationId: string | null;
+  /**
+   * The creator-confirmed associated words for a session this acceptance mints
+   * (issue #131). Omitted when the take is filed under a session's own words —
+   * the destination already pins that identity — so callers that do not set it
+   * fingerprint exactly as before.
+   */
+  associatedWordsText?: string | undefined;
 }
 
 export interface AdmissionAcceptanceFingerprint {
@@ -82,6 +97,7 @@ export interface AdmissionAcceptanceFingerprint {
   productionProvenance: TakeProductionProvenance;
   sourceInputs: AdmissionSourceInputIdentity[];
   displayAncestorGenerationId: string | null;
+  associatedWordsText?: string;
 }
 
 function projectSourceInput(
@@ -108,5 +124,10 @@ export function buildAdmissionAcceptanceFingerprint(
     productionProvenance: input.productionProvenance,
     sourceInputs: (input.sourceInputs ?? []).map(projectSourceInput),
     displayAncestorGenerationId: input.displayAncestorGenerationId,
+    // Placed last and only when set, so an admission that omits it serializes
+    // byte-for-byte as it did before this field existed.
+    ...(input.associatedWordsText !== undefined
+      ? { associatedWordsText: input.associatedWordsText }
+      : {}),
   };
 }

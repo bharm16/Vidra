@@ -193,6 +193,18 @@ export interface StudioProducedImage {
   /** Minted per read, never persisted: a one-hour URL is not a record. */
   viewUrl: string;
   /**
+   * The action of the producing turn's decision (ADR-0022 decision 2, issue
+   * #131). It is the authoritative answer — the same total switch
+   * `readTurnSourceImages` trusts — to whether this image's `sourcePrompt` is a
+   * standalone description (`generate`) or an instruction / operation label
+   * (`edit` / `transform`). The return bridge reads it to decide whether a
+   * newly minted session's associated words can be PREFILLED from the prompt or
+   * must be typed by the creator; it is never derived from inspecting the
+   * prompt text or from `sourceImages` alone, which a corrupted edit record can
+   * leave empty.
+   */
+  producingAction: StudioDecision["action"];
+  /**
    * What the producing turn ACTUALLY consumed — empty for a generate, which
    * has no image inputs at all. This, not the project's origin, is what
    * decides whether the returning picture has a picture ancestor.
@@ -659,6 +671,7 @@ export class StudioService {
       turnId: turn.id,
       image: call.image,
       viewUrl,
+      producingAction: turn.decision.action,
       sourceImages: readTurnSourceImages(turn),
       ...(project.origin ? { origin: project.origin } : {}),
     };

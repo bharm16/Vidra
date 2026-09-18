@@ -687,7 +687,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     expect(returned.ancestorGenerationId).toBe(SOURCE.generationId);
   });
 
-  it("starts a new session, with the producing prompt as its words, for a project with no origin session", async () => {
+  it("asks for confirmed words before minting a session, prefilled from a generate's prompt, and files the take under the CONFIRMED words (issue #131)", async () => {
     const project = await fixture.studio.createProject(OWNER, "Standalone");
     const { imageIds } = await runTurn(
       fixture.studio,
@@ -697,10 +697,27 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
       generateDecision("a paper crane on a windowsill"),
     );
 
+    // First press: a new session is owed, so its associated words must be
+    // confirmed. A from-scratch generate's prompt IS a standalone description,
+    // so it prefills the suggestion — but nothing is minted or stored yet.
+    const asked = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+    expect(asked.state).toBe("needs-confirmed-words");
+    if (asked.state !== "needs-confirmed-words") return;
+    expect(asked.suggestion).toBe("a paper crane on a windowsill");
+    expect(fixture.sessions.sessions.size).toBe(0);
+    expect(fixture.mediaStore.calls).toHaveLength(0);
+
+    // The creator edits the suggestion and confirms; the CONFIRMED words — not
+    // the producing prompt — become the session's words.
     const result = await returnStudioImage(fixture.deps, {
       userId: OWNER,
       projectId: project.id,
       imageId: imageIds[0]!,
+      confirmedWords: "a paper crane on a marble windowsill",
     });
 
     expect(result.state).toBe("returned");
@@ -709,11 +726,174 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
 
     const session = fixture.sessions.sessions.get(result.result.sessionId)!;
     expect(session.userId).toBe(OWNER);
+    expect(session.name).toBe("a paper crane on a marble windowsill");
     const versions = session.prompt?.versions ?? [];
     expect(versions).toHaveLength(1);
     expect(versions[0]!.versionId).toBe(result.result.promptVersionId);
-    expect(versions[0]!.prompt).toBe("a paper crane on a windowsill");
+    expect(versions[0]!.prompt).toBe("a paper crane on a marble windowsill");
     expect(takesOf(session, result.result.promptVersionId)).toHaveLength(1);
+  });
+
+  it("asks for confirmed words for an edited image WITHOUT offering the instruction, and keeps the instruction as production provenance (issue #131, ADR-0022 decision 2)", async () => {
+    // A standalone project, then an EDIT — its producing text is an
+    // instruction ("remove the chair"), which must never be restored as words.
+    const project = await fixture.studio.createProject(OWNER, "Standalone");
+    const seeded = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "a chair in a room",
+      generateDecision("a red chair in a sunlit room"),
+    );
+    const edited = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "remove the chair",
+      editDecision("remove the chair", [seeded.imageIds[0]!]),
+    );
+
+    const asked = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: edited.imageIds[0]!,
+    });
+    expect(asked.state).toBe("needs-confirmed-words");
+    if (asked.state !== "needs-confirmed-words") return;
+    // The instruction is NEVER offered as the words.
+    expect(asked.suggestion).toBeUndefined();
+    expect(fixture.sessions.sessions.size).toBe(0);
+
+    // The creator supplies their own words; the instruction becomes provenance.
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: edited.imageIds[0]!,
+      confirmedWords: "an empty sunlit room",
+    });
+    expect(result.state).toBe("returned");
+    if (result.state !== "returned") return;
+
+    const session = fixture.sessions.sessions.get(result.result.sessionId)!;
+    expect(session.prompt?.versions?.[0]!.prompt).toBe("an empty sunlit room");
+    const returned = takesOf(session, result.result.promptVersionId).find(
+      (take) => take.id === result.result.generationId,
+    )!;
+    const record = SessionGenerationRecordSchema.parse(returned);
+    // The take's own words are the confirmed words...
+    expect(record.prompt).toBe("an empty sunlit room");
+    // ...and the instruction lives ONLY as production provenance, never words.
+    expect(record.productionProvenance).toMatchObject({
+      state: "known",
+      instruction: "remove the chair",
+    });
+  });
+
+  it("requires the creator's words for a transform, whose producing text is an operation label, offering no suggestion (issue #131)", async () => {
+    const project = await fixture.studio.createProject(OWNER, "Standalone");
+    const seeded = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "a fox logo",
+      generateDecision("a minimalist fox logo"),
+    );
+    const transformed = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "remove the background",
+      transformDecision("remove_background", seeded.imageIds[0]!),
+    );
+
+    const asked = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: transformed.imageIds[0]!,
+    });
+    expect(asked.state).toBe("needs-confirmed-words");
+    if (asked.state !== "needs-confirmed-words") return;
+    expect(asked.suggestion).toBeUndefined();
+    expect(fixture.sessions.sessions.size).toBe(0);
+  });
+
+  it("requires the creator's words for a multi-input composition, never picking one source's prompt (issue #131, rule 2)", async () => {
+    const project = await fixture.studio.createProject(OWNER, "Standalone");
+    const seeded = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "two plates",
+      generateDecision("a reference plate"),
+    );
+    const composed = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "combine them",
+      editDecision("combine them", [seeded.imageIds[0]!, seeded.imageIds[1]!]),
+    );
+
+    const asked = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: composed.imageIds[0]!,
+    });
+    expect(asked.state).toBe("needs-confirmed-words");
+    if (asked.state !== "needs-confirmed-words") return;
+    // No unique original prompt is picked from the several inputs.
+    expect(asked.suggestion).toBeUndefined();
+  });
+
+  it("treats changed confirmed words as a distinct acceptance, never a silent replay of the first words (issue #131, #114)", async () => {
+    const project = await fixture.studio.createProject(OWNER, "Standalone");
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "a paper crane",
+      generateDecision("a paper crane on a windowsill"),
+    );
+
+    const first = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+      confirmedWords: "a paper crane on a windowsill",
+    });
+    expect(first.state).toBe("returned");
+    if (first.state !== "returned") return;
+
+    // The SAME confirmed words replay the one take — a genuine retry is safe.
+    const replay = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+      confirmedWords: "a paper crane on a windowsill",
+    });
+    expect(replay.state).toBe("returned");
+    if (replay.state !== "returned") return;
+    expect(replay.result.generationId).toBe(first.result.generationId);
+
+    // DIFFERENT confirmed words are a different acceptance: the changed
+    // description is part of the acceptance identity (#114), so the second
+    // press is refused as a conflict rather than silently replaying the first.
+    const changed = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+      confirmedWords: "a paper crane on a marble windowsill",
+    });
+    expect(changed.state).toBe("conflict");
+
+    // One take, one stored picture — the changed press committed nothing.
+    const session = [...fixture.sessions.sessions.values()][0]!;
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    expect(versionId).toBeDefined();
+    expect(
+      takesOf(session, versionId!).filter((take) => take.origin === "studio"),
+    ).toHaveLength(1);
+    expect(fixture.mediaStore.calls).toHaveLength(1);
   });
 
   it("refuses with a recoverable error when the origin session is gone, and never silently recreates it", async () => {
@@ -741,12 +921,29 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     expect(fixture.sessions.sessions.size).toBe(0);
     expect(fixture.mediaStore.calls).toHaveLength(0);
 
-    // The creator's explicit answer starts one.
+    // Choosing a new session mints one, so its words must be confirmed too
+    // (issue #131). This was an EDIT of the bridged picture, so no description
+    // is offered — the creator's words are required.
+    const asked = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+      onMissingOriginSession: "new-session",
+    });
+    expect(asked.state).toBe("needs-confirmed-words");
+    if (asked.state !== "needs-confirmed-words") return;
+    expect(asked.suggestion).toBeUndefined();
+    // Still nothing created behind the creator's back.
+    expect(fixture.sessions.sessions.size).toBe(0);
+
+    // The creator's explicit answer — both the new-session choice and the
+    // words — starts one.
     const chosen = await returnStudioImage(fixture.deps, {
       userId: OWNER,
       projectId: project.id,
       imageId: imageIds[0]!,
       onMissingOriginSession: "new-session",
+      confirmedWords: "a warmly lit study",
     });
 
     expect(chosen.state).toBe("returned");
@@ -755,6 +952,9 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     expect(chosen.result.sessionId).not.toBe(SOURCE.sessionId);
     // The bridged picture is not a take of THIS session, so no refine edge.
     expect(chosen.result.ancestorGenerationId).toBeNull();
+    // The new session carries the confirmed words, not the edit instruction.
+    const created = fixture.sessions.sessions.get(chosen.result.sessionId)!;
+    expect(created.prompt?.versions?.[0]!.prompt).toBe("a warmly lit study");
   });
 
   it("is idempotent: pressing twice yields one take, and leaves the source take and the project untouched", async () => {
@@ -1006,11 +1206,14 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     const barrier = createBarrier(2);
     fixture.sessions.setCreateIfAbsentGate(() => barrier.wait());
 
+    // Both presses carry the SAME confirmed words, so they are the same
+    // acceptance and converge on one session (issue #131 + #130).
     const press = () =>
       returnStudioImage(fixture.deps, {
         userId: OWNER,
         projectId: project.id,
         imageId: imageIds[0]!,
+        confirmedWords: "a paper crane on a windowsill",
       });
     const [first, second] = await Promise.all([press(), press()]);
 
@@ -1047,6 +1250,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
       userId: OWNER,
       projectId: project.id,
       imageId: imageIds[0]!,
+      confirmedWords: "a paper crane on a windowsill",
     });
 
     expect(result.state).toBe("unavailable");
@@ -1069,6 +1273,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
       userId: OWNER,
       projectId: project.id,
       imageId: imageIds[0]!,
+      confirmedWords: "a paper crane on a windowsill",
     });
 
     expect(retry.state).toBe("returned");

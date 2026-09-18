@@ -74,6 +74,7 @@ export interface UseStudioProjectReturn {
    */
   returnImageToSession: (options?: {
     onMissingOriginSession?: "new-session";
+    confirmedWords?: string;
   }) => Promise<UseInSessionOutcome>;
 }
 
@@ -362,6 +363,7 @@ export function useStudioProject(
   const returnImageToSession = useCallback(
     async (options?: {
       onMissingOriginSession?: "new-session";
+      confirmedWords?: string;
     }): Promise<UseInSessionOutcome> => {
       const projectId = projectIdRef.current;
       const imageId = selectedImageIdRef.current;

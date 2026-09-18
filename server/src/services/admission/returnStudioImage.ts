@@ -146,6 +146,17 @@ export interface ReturnStudioImageRequest {
    * exactly the silent recreation ADR-0022 decision 4 forbids.
    */
   onMissingOriginSession?: "refuse" | "new-session" | undefined;
+  /**
+   * The creator-confirmed associated words for a session this return mints
+   * (ADR-0022 decision 2, issue #131). Read only when a new session is owed —
+   * a return into an existing origin session files the take under that
+   * session's own words and ignores this. Never the edit instruction or
+   * transform label: those become production provenance, and confirming them as
+   * a session's words is the fabrication decision 2 forbids. Absent (or blank)
+   * on the first press of a standalone return, which is answered with
+   * `needs-confirmed-words` rather than a guess.
+   */
+  confirmedWords?: string | undefined;
 }
 
 export type ReturnStudioImageResult =
@@ -159,6 +170,15 @@ export type ReturnStudioImageResult =
    * to start a new session instead. Never resolved by guessing.
    */
   | { state: "origin-session-missing"; sessionId: string }
+  /**
+   * A new session is owed but its associated words have not been confirmed
+   * (ADR-0022 decision 2, issue #131). Recoverable: the creator confirms the
+   * words and re-presses. `suggestion` is offered ONLY when the image has a
+   * standalone description to prefill — a from-scratch generate's prompt — and
+   * is absent for an edit or a transform, whose producing text is an
+   * instruction, not a description. Nothing has been minted or stored.
+   */
+  | { state: "needs-confirmed-words"; suggestion?: string | undefined }
   /** The stored image is not media a first frame can be armed from. */
   | { state: "unusable-media"; reason: string }
   /** Storage or the session store could not answer. Nothing was left behind. */
@@ -200,6 +220,41 @@ const MAX_IMAGE_BYTES = STORAGE_CONFIG.maxFileSize.previewImage;
  */
 const returnKey = (projectId: string, imageId: string): string =>
   `studio-return:${projectId}:${imageId}`;
+
+/**
+ * The creator's confirmed words, or undefined when none usable was supplied.
+ * Blank or whitespace-only input is not a confirmation — it is answered with a
+ * fresh request for words, never treated as "the creator chose empty words".
+ */
+function normalizeConfirmedWords(
+  value: string | undefined,
+): string | undefined {
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/**
+ * The editable words offered as a prefill when a new session needs its
+ * associated words (ADR-0022 decision 2, issue #131), or undefined when there
+ * is nothing honest to offer.
+ *
+ * Only a from-scratch `generate` produced a standalone description of its
+ * image, so only a generate's `sourcePrompt` prefills the field. An `edit` or a
+ * `transform` produced its image through an instruction or an operation label —
+ * production provenance, not a description of the result — and a multi-input
+ * composition has no unique original prompt to pick from, so both return
+ * nothing and the creator's words are required (rule 2). The classification is
+ * the producing turn's ACTION, never the prompt text or `sourceImages` alone,
+ * so a corrupted edit record can never leak its instruction as a suggestion.
+ */
+function suggestedAssociatedWords(
+  produced: StudioProducedImage,
+): string | undefined {
+  if (produced.producingAction !== "generate") return undefined;
+  const prompt = produced.image.sourcePrompt.trim();
+  return prompt.length > 0 ? prompt : undefined;
+}
 
 /** The root words-node of a session born from a returned picture: one only. */
 function buildRootPrompt(
@@ -363,10 +418,37 @@ export async function returnStudioImage(
   if (!("kind" in destination)) return destination;
 
   // The exact prompt or instruction that produced THIS image — production
-  // provenance (decision 2), never the session's words. It is also the words
-  // of a session minted around it, where there is no other direction to file
-  // the picture under.
+  // provenance (decision 2), never the session's words. For a minted session
+  // the words come from the creator (below), not from here: an edit's
+  // instruction or a transform's label restored as associated words is exactly
+  // the fabrication decision 2 forbids.
   const instruction = produced.image.sourcePrompt;
+
+  // Where the take lands, plus — when a session is owed — the creator-confirmed
+  // words it will be filed under (issue #131). Decided before any byte is read,
+  // so a request for confirmation leaves nothing behind, exactly like a missing
+  // origin session. A return into an existing origin session needs no
+  // confirmation: the take is filed under that session's own words.
+  let plan:
+    | { kind: "existing"; sessionId: string; promptVersionId: string }
+    | { kind: "mint"; confirmedWords: string };
+  if (destination.kind === "existing") {
+    plan = {
+      kind: "existing",
+      sessionId: destination.sessionId,
+      promptVersionId: destination.promptVersionId,
+    };
+  } else {
+    const confirmedWords = normalizeConfirmedWords(request.confirmedWords);
+    if (confirmedWords === undefined) {
+      const suggestion = suggestedAssociatedWords(produced);
+      return {
+        state: "needs-confirmed-words",
+        ...(suggestion !== undefined ? { suggestion } : {}),
+      };
+    }
+    plan = { kind: "mint", confirmedWords };
+  }
 
   let media: { buffer: Buffer; contentType: string };
   try {
@@ -393,9 +475,9 @@ export async function returnStudioImage(
   let sessionId: string;
   let promptVersionId: string;
   let mintedSessionId: string | undefined;
-  if (destination.kind === "existing") {
-    sessionId = destination.sessionId;
-    promptVersionId = destination.promptVersionId;
+  if (plan.kind === "existing") {
+    sessionId = plan.sessionId;
+    promptVersionId = plan.promptVersionId;
   } else {
     const promptUuid = returnKey(projectId, imageId);
     let ensured;
@@ -403,8 +485,9 @@ export async function returnStudioImage(
       ensured = await ensureAcceptanceSession(sessionService, {
         userId,
         promptUuid,
-        name: instruction,
-        root: buildRootPrompt(instruction, promptUuid),
+        // The creator's confirmed words — never the producing instruction.
+        name: plan.confirmedWords,
+        root: buildRootPrompt(plan.confirmedWords, promptUuid),
       });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
@@ -439,9 +522,8 @@ export async function returnStudioImage(
         origin: "studio",
         media,
         // Decision 2: the instruction and the model that ran, plus which
-        // studio turn and image they ran in. The words the take is FILED
-        // under stay the destination version's own text — the boundary reads
-        // them from the session, and this request deliberately names none.
+        // studio turn and image they ran in — recorded as production
+        // provenance, kept distinct from the words the take is filed under.
         productionProvenance: {
           state: "known",
           instruction,
@@ -456,6 +538,14 @@ export async function returnStudioImage(
         displayAncestorGenerationId,
         idempotencyKey: returnKey(projectId, imageId),
         model: produced.image.model,
+        // The associated words. For a minted session they are the creator's
+        // confirmed words, passed so they enter the take record AND the
+        // acceptance identity (issue #131) — a changed confirmation is a
+        // different acceptance, never a silent replay. For an existing origin
+        // session none is passed: the boundary reads that session's own words.
+        ...(plan.kind === "mint"
+          ? { associatedWordsText: plan.confirmedWords }
+          : {}),
       },
     );
   } catch (error) {
@@ -508,7 +598,11 @@ export async function returnStudioImage(
           assetId: take.assetId,
           storagePath: take.storagePath,
           generationId: take.generationId,
-          sourcePrompt: instruction,
+          // The frame's words: the creator's confirmed words for a session this
+          // return minted, the producing instruction for a refine into an
+          // existing origin session (unchanged there).
+          sourcePrompt:
+            plan.kind === "mint" ? plan.confirmedWords : instruction,
         },
       ],
     });
@@ -530,7 +624,7 @@ export async function returnStudioImage(
       ancestorGenerationId: displayAncestorGenerationId,
       // Stated from the destination decision rather than from what happened,
       // so a replay of this return answers identically.
-      createdSession: destination.kind === "mint",
+      createdSession: plan.kind === "mint",
     },
   };
 }
