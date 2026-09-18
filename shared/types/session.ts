@@ -33,6 +33,7 @@ import type {
   SessionSeedInfoSchema,
   SessionStatusSchema,
   SessionStyleReferenceSchema,
+  SketchProductionSettingsSchema,
   TakeOriginSchema,
   TakeProductionProvenanceSchema,
   TakeSourceInputKindSchema,
@@ -70,6 +71,11 @@ export type TakeSourceInput = z.infer<typeof TakeSourceInputSchema>;
 /** ADR-0022 decision 2: what actually produced the media, or an honest unknown. */
 export type TakeProductionProvenance = z.infer<
   typeof TakeProductionProvenanceSchema
+>;
+
+/** ADR-0022 decision 5: the settings one accepted live output was made with. */
+export type SketchProductionSettings = z.infer<
+  typeof SketchProductionSettingsSchema
 >;
 
 /**

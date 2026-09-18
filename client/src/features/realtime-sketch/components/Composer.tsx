@@ -3,6 +3,8 @@ import React from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
 
 import { effectiveSteps, snapStrength } from "../config/constants";
+import type { LiveOutput } from "../hooks/generationReducer";
+import type { AcceptanceStatus } from "../hooks/useAcceptLiveOutput";
 import type { SketchSettings } from "../hooks/useRealtimeSketch";
 
 /**
@@ -11,13 +13,21 @@ import type { SketchSettings } from "../hooks/useRealtimeSketch";
  * Strength opens a popover slider snapped to the 1/steps grid — the only
  * stops the model distinguishes. Step count is fixed (see DEFAULT_STEPS):
  * the one alternative on offer had no working strength at all.
+ *
+ * It also holds "Use this" (ADR-0022 decision 5) — deliberately the component
+ * that DISPLAYS the picture, so what is accepted is provably what is shown.
+ * It hands `liveOutput` straight back rather than describing it, because a
+ * description assembled here would be assembled from live settings.
  */
 
 interface ComposerProps {
   settings: SketchSettings;
   updateSettings: (patch: Partial<SketchSettings>) => void;
   rerollSeed: () => void;
-  modeThumbUrl: string | null;
+  /** The picture on screen — the mode chip's thumbnail and what Use this accepts. */
+  liveOutput: LiveOutput | null;
+  onUseThis: (output: LiveOutput) => void;
+  acceptance: AcceptanceStatus;
   strengthPopoverOpen: boolean;
   onToggleStrengthPopover: () => void;
 }
@@ -26,7 +36,9 @@ export function Composer({
   settings,
   updateSettings,
   rerollSeed,
-  modeThumbUrl,
+  liveOutput,
+  onUseThis,
+  acceptance,
   strengthPopoverOpen,
   onToggleStrengthPopover,
 }: ComposerProps): React.ReactElement {
@@ -61,12 +73,12 @@ export function Composer({
           className="le-chip le-chip-mode"
           title="Mode"
         >
-          {modeThumbUrl === null ? (
+          {liveOutput === null ? (
             <span className="le-chip-thumb-empty" />
           ) : (
             <img
               className="le-chip-thumb"
-              src={modeThumbUrl}
+              src={liveOutput.imageUrl}
               alt="Latest frame"
             />
           )}
@@ -152,7 +164,24 @@ export function Composer({
           </svg>
           Seed
         </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          className="le-chip le-chip-accept"
+          disabled={liveOutput === null || acceptance.state === "accepting"}
+          onClick={() => {
+            if (liveOutput !== null) onUseThis(liveOutput);
+          }}
+        >
+          {acceptance.state === "accepting" ? "Accepting…" : "Use this"}
+        </Button>
       </div>
+      {acceptance.state === "failed" ? (
+        <div className="le-accept-error" data-testid="live-editor-accept-error">
+          {acceptance.message}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   DEFAULT_INK,
   SNAPSHOT_SIZE,
 } from "./config/constants";
+import { useAcceptLiveOutput } from "./hooks/useAcceptLiveOutput";
 import { useRealtimeSketch } from "./hooks/useRealtimeSketch";
 import type { SendSketchFrame } from "./api/falI2i";
 import "./live-editor.css";
@@ -44,6 +45,9 @@ export function LiveEditor({
   sendFrameFn,
 }: LiveEditorProps): React.ReactElement {
   const sketch = useRealtimeSketch(sendFrameFn ? { sendFrameFn } : undefined);
+  // The one door out of this plane (ADR-0022 decision 5). It exports; it
+  // never makes this editor remember anything — ADR-0017 stands.
+  const acceptance = useAcceptLiveOutput();
   const [tool, setTool] = useState<SketchTool>("select");
   const [ink, setInk] = useState<string>(DEFAULT_INK);
   const [brushSize, setBrushSize] = useState<number>(DEFAULT_BRUSH_SIZE);
@@ -175,7 +179,9 @@ export function LiveEditor({
             settings={sketch.settings}
             updateSettings={sketch.updateSettings}
             rerollSeed={sketch.rerollSeed}
-            modeThumbUrl={sketch.state.liveOutput?.imageUrl ?? null}
+            liveOutput={sketch.state.liveOutput}
+            onUseThis={acceptance.accept}
+            acceptance={acceptance.status}
             strengthPopoverOpen={openPopover === "strength"}
             onToggleStrengthPopover={() =>
               setOpenPopover((open) =>

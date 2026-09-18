@@ -2,6 +2,15 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Composer } from "../Composer";
+import type { LiveOutput } from "../../hooks/generationReducer";
+
+const liveOutput = (): LiveOutput => ({
+  imageUrl: "data:image/png;base64,thumb",
+  requestId: "3",
+  at: 1_700,
+  sketchDataUri: "data:image/jpeg;base64,drawing",
+  inputs: { prompt: "a lamp", strength: 0.625, steps: 8, seed: 42 },
+});
 
 function renderComposer(
   overrides: Partial<Parameters<typeof Composer>[0]> = {},
@@ -10,7 +19,9 @@ function renderComposer(
     settings: { prompt: "a lamp", strength: 0.625, steps: 8, seed: 42 },
     updateSettings: vi.fn(),
     rerollSeed: vi.fn(),
-    modeThumbUrl: null,
+    liveOutput: null,
+    onUseThis: vi.fn(),
+    acceptance: { state: "idle" },
     strengthPopoverOpen: false,
     onToggleStrengthPopover: vi.fn(),
     ...overrides,
@@ -55,11 +66,30 @@ describe("Composer", () => {
   });
 
   it("the mode chip shows the live frame thumbnail when one exists", () => {
-    renderComposer({ modeThumbUrl: "data:image/png;base64,thumb" });
+    renderComposer({ liveOutput: liveOutput() });
 
     expect(screen.getByRole("img", { name: "Latest frame" })).toHaveAttribute(
       "src",
       "data:image/png;base64,thumb",
+    );
+  });
+
+  it("Use this hands back the very output it is displaying, and is dead without one", () => {
+    const shown = liveOutput();
+    const props = renderComposer({ liveOutput: shown });
+
+    fireEvent.click(screen.getByRole("button", { name: "Use this" }));
+
+    expect(props.onUseThis).toHaveBeenCalledWith(shown);
+  });
+
+  it("names the refusal when an acceptance failed", () => {
+    renderComposer({
+      acceptance: { state: "failed", message: "Nothing was saved." },
+    });
+
+    expect(screen.getByTestId("live-editor-accept-error")).toHaveTextContent(
+      "Nothing was saved.",
     );
   });
 });

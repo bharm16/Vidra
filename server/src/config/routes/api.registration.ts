@@ -15,9 +15,14 @@ import { createAPIRoutes } from "@routes/api.routes";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
+import { createSketchAcceptRouter } from "@routes/sketch-accept.routes";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
 import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import type {
+  AdmissionIdempotencyPort,
+  AdmissionMediaStore,
+} from "@services/admission/admitPictureTake";
 import type { SessionService } from "@services/sessions/SessionService";
 import {
   createShareRouter,
@@ -153,6 +158,32 @@ export function registerApiRoutes(
     createFalI2iRouter({
       falKey: resolveFalApiKey() ?? undefined,
       budget: container.resolve("sketchBudgetService"),
+    }),
+  );
+
+  // The Live editor's accept door (ADR-0022 decision 5, issue #87): the
+  // picture on screen becomes a picture take in a session born around it.
+  // Its dependencies are optional at the container level, so the router
+  // answers 503 rather than disappearing when storage or sessions are down.
+  app.use(
+    "/api/sketch",
+    apiAuthMiddleware,
+    createSketchAcceptRouter({
+      sessionService: resolveOptionalService<SessionService | null>(
+        container,
+        "sessionService",
+        "sketch-accept",
+      ),
+      mediaStore: resolveOptionalService<AdmissionMediaStore | null>(
+        container,
+        "imageAssetStore",
+        "sketch-accept",
+      ),
+      idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
+        container,
+        "requestIdempotencyService",
+        "sketch-accept",
+      ),
     }),
   );
 

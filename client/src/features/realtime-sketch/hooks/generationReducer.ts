@@ -1,3 +1,5 @@
+import type { SketchProductionInputs } from "@shared/schemas/sketch.schemas";
+
 /**
  * Pure state machine for the realtime sketch's generation loop
  * (spec: docs/superpowers/specs/2026-07-09-realtime-sketch-spike-design.md).
@@ -29,10 +31,23 @@ export interface GenerationStats {
   lastError: { message: string; at: number } | null;
 }
 
+/**
+ * The picture on screen, and everything "Use this" needs to say what made it
+ * (ADR-0022 decision 5, issue #87).
+ *
+ * The drawing and the inputs travel WITH the image rather than being read off
+ * the sketchpad and the settings later, because by then both have moved on.
+ * The reducer assembles the three together from the frame it just matched, so
+ * they cannot be torn apart or mismatched.
+ */
 export interface LiveOutput {
   imageUrl: string;
   requestId: string;
   at: number;
+  /** The exact drawing this picture was made from. */
+  sketchDataUri: string;
+  /** The exact settings its frame was dispatched with. */
+  inputs: SketchProductionInputs;
 }
 
 /**
@@ -62,6 +77,12 @@ export type GenerationAction =
       requestId: string;
       imageUrl: string;
       at: number;
+      /**
+       * Read at dispatch by the sender and carried back here: settings are
+       * live state, so the reducer must be TOLD what this frame was sent
+       * with rather than sampling whatever is current when it lands.
+       */
+      inputs: SketchProductionInputs;
     }
   | {
       type: "generationError";
@@ -155,15 +176,18 @@ export function generationReducer(
         ...state.stats,
         lastError: null,
       };
+      const liveOutput: LiveOutput = {
+        imageUrl: action.imageUrl,
+        requestId: action.requestId,
+        at: action.at,
+        sketchDataUri: state.inFlight.dataUri,
+        inputs: action.inputs,
+      };
       if (state.pending === null) {
         return {
           ...state,
           inFlight: null,
-          liveOutput: {
-            imageUrl: action.imageUrl,
-            requestId: action.requestId,
-            at: action.at,
-          },
+          liveOutput,
           stats,
         };
       }
@@ -178,11 +202,7 @@ export function generationReducer(
           encodeMs: state.pending.encodeMs,
         },
         pending: null,
-        liveOutput: {
-          imageUrl: action.imageUrl,
-          requestId: action.requestId,
-          at: action.at,
-        },
+        liveOutput,
         stats: { ...stats, sent: stats.sent + 1 },
       };
     }
