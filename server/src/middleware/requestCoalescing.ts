@@ -412,6 +412,16 @@ export class RequestCoalescingMiddleware {
         },
       );
 
+      // A rejection with no waiter is normal, not an error: the leader rejects
+      // this promise when the client disconnects before the handler wrote
+      // anything, and no second request need ever have joined the window. With
+      // no handler attached that became an unhandled rejection, which the
+      // classifier treats as fatal — so a browser navigating away killed the
+      // API server. Marking it handled here does not swallow anything: a real
+      // waiter attaches its own handler at `await pendingEntry.promise` and
+      // still sees the rejection.
+      requestPromise.catch(() => undefined);
+
       this.evictOldestIfAtCapacity();
       this.pendingRequests.set(requestKey, {
         promise: requestPromise,

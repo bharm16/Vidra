@@ -258,6 +258,76 @@ describe("RequestCoalescingMiddleware", () => {
     expect(res2.end).toHaveBeenCalled();
   });
 
+  /**
+   * The leader's shared promise is rejected when the client disconnects before
+   * the handler wrote anything. If no second request joined the coalescing
+   * window, nothing is awaiting that promise — so the rejection had no handler
+   * and surfaced as an unhandled rejection, which the classifier calls fatal and
+   * the process exits on.
+   *
+   * That is how a browser navigating away took down the API server mid-E2E on
+   * 2026-09-18: one "Coalesced request closed before completion: /" followed by
+   * 255 ECONNREFUSED lines as Vite proxied to a dead server.
+   */
+  it("does not raise an unhandled rejection when a client disconnects with no waiter", async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown): void => {
+      unhandled.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+
+    try {
+      const middleware = service.middleware({ keyScope: "/api/optimize" });
+      const req = createRequest();
+      const res = createResponse();
+      await middleware(req, res, vi.fn() as unknown as NextFunction);
+
+      // The browser goes away before anything was written, and no second
+      // request ever joined the window. createResponse() already leaves
+      // writableEnded false, which is what makes this a mid-flight close.
+      res.emit?.("close");
+
+      // Node reports unhandled rejections on a later turn.
+      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
+  /**
+   * The counterpart to the test above: marking the leader's promise handled
+   * must not swallow the failure for someone who is actually waiting on it.
+   */
+  it("still delivers the leader's failure to a coalesced waiter", async () => {
+    const middleware = service.middleware({ keyScope: "/api/optimize" });
+
+    const leaderReq = createRequest();
+    const leaderRes = createResponse();
+    await middleware(leaderReq, leaderRes, vi.fn() as unknown as NextFunction);
+
+    const waiterReq = createRequest({ id: "req-2" });
+    const waiterRes = createResponse();
+    const waiterNext = vi.fn();
+    const waiting = middleware(
+      waiterReq,
+      waiterRes,
+      waiterNext as unknown as NextFunction,
+    );
+
+    leaderRes.emit?.("close");
+    await waiting;
+
+    expect(waiterNext).toHaveBeenCalledTimes(1);
+    const [forwarded] = waiterNext.mock.calls[0] as [Error];
+    expect(forwarded).toBeInstanceOf(Error);
+    expect(forwarded.message).toContain(
+      "Coalesced request closed before completion",
+    );
+  });
+
   it("generates deterministic keys using hashed credentials and canonical body", () => {
     const reqA = createRequest({
       headers: { authorization: "Bearer secret-token-abcdef" },
