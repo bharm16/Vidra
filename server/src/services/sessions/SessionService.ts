@@ -51,7 +51,17 @@ export class SessionService {
     private videoJobCascade?: VideoJobCascade,
   ) {}
 
-  private async requireOwnedSession(
+  /**
+   * The ownership check every write on this service runs first, and — since
+   * ADR-0022 — the one the admission boundary runs BEFORE it stores anything.
+   *
+   * Public so admission can refuse a foreign destination without side effects.
+   * It is a read that throws, not a write: `appendGenerationToVersion` still
+   * re-checks ownership inside its own transaction, so publishing this widens
+   * nothing. It stays the single spelling of the rule — a caller that compares
+   * `session.userId` itself is a second copy of it, and second copies rot.
+   */
+  async requireOwnedSession(
     userId: string,
     sessionId: string,
   ): Promise<SessionRecord> {

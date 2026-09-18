@@ -18,6 +18,13 @@ export interface LineageInput {
     status?: SpaceNode["status"];
     mediaUrl?: string;
     archived?: boolean;
+    /**
+     * ADR-0022 decision 3: the picture this one was refined from, when one was
+     * RECORDED. Absent means the picture roots at its words-version — which is
+     * the truth for a generated picture and for an upload alike, not a
+     * fallback. The caller decides; nothing here reads sibling order.
+     */
+    ancestorPictureId?: string;
   }>;
   clips: Array<{
     id: string;
@@ -56,7 +63,7 @@ export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
     nodes.push({
       id: picture.id,
       kind: "picture",
-      ancestorId: wordsNodeId(picture.versionId),
+      ancestorId: picture.ancestorPictureId ?? wordsNodeId(picture.versionId),
       ...(picture.status ? { status: picture.status } : {}),
       ...(picture.mediaUrl ? { mediaUrl: picture.mediaUrl } : {}),
       ...(picture.archived ? { archived: true } : {}),
@@ -71,9 +78,7 @@ export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
       ...(clip.status ? { status: clip.status } : {}),
       ...(clip.mediaUrl ? { mediaUrl: clip.mediaUrl } : {}),
       ...(clip.archived ? { archived: true } : {}),
-      ...(clip.pictureAncestryUnknown
-        ? { pictureAncestryUnknown: true }
-        : {}),
+      ...(clip.pictureAncestryUnknown ? { pictureAncestryUnknown: true } : {}),
       ...(clip.unattached ? { unattached: true } : {}),
     });
   }

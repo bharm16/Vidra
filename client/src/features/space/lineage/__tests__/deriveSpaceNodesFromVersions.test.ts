@@ -160,9 +160,9 @@ describe("deriveSpaceNodesFromVersions", () => {
       }),
     ]);
 
-    expect(
-      nodes.find((n) => n.id === "gen-clip-1"),
-    ).not.toHaveProperty("pictureAncestryUnknown");
+    expect(nodes.find((n) => n.id === "gen-clip-1")).not.toHaveProperty(
+      "pictureAncestryUnknown",
+    );
   });
 
   it("draws a clip whose session write did not resolve as made-but-not-saved", () => {
@@ -219,6 +219,92 @@ describe("deriveSpaceNodesFromVersions", () => {
 
     expect(nodes.find((n) => n.id === "gen-clip-1")).not.toHaveProperty(
       "unattached",
+    );
+  });
+
+  // ADR-0022 decision 3 — the refine edge. Nothing in #86 produces one (an
+  // upload has no picture ancestor); the plumbing exists so #88/#89 record a
+  // relationship rather than inventing a second way to draw it.
+  it("hangs a picture that names a picture ancestor from that picture", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        generations: [
+          { id: "gen-pic-1", mediaType: "image", status: "completed" },
+          {
+            id: "gen-pic-2",
+            mediaType: "image",
+            status: "completed",
+            ancestorGenerationId: "gen-pic-1",
+            origin: "studio",
+          },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "gen-pic-2")).toMatchObject({
+      kind: "picture",
+      ancestorId: "gen-pic-1",
+    });
+  });
+
+  it("keeps an admitted upload rooted at the words-version it was admitted under", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "a runner on a rain-slicked street",
+        generations: [
+          {
+            id: "gen-upload-1",
+            mediaType: "image",
+            status: "completed",
+            origin: "upload",
+            productionProvenance: { state: "unknown" },
+            sourceInputs: [{ kind: "upload", assetId: "asset-1" }],
+            ancestorGenerationId: null,
+            thumbnailUrl: "https://img/uploaded.webp",
+          },
+        ],
+      }),
+    ]);
+
+    // An upload has no picture ancestor and earns no refine edge: it hangs
+    // from its associated words, which is the truth, not a fallback.
+    expect(nodes.find((n) => n.id === "gen-upload-1")).toMatchObject({
+      kind: "picture",
+      ancestorId: "words-v-1",
+      mediaUrl: "https://img/uploaded.webp",
+    });
+  });
+
+  it("links a clip to an uploaded picture the same way it links to a generated one", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        generations: [
+          {
+            id: "gen-upload-1",
+            mediaType: "image",
+            status: "completed",
+            origin: "upload",
+            ancestorGenerationId: null,
+          },
+          {
+            id: "gen-clip-1",
+            mediaType: "video",
+            status: "completed",
+            ancestorGenerationId: "gen-upload-1",
+          },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "gen-clip-1")).toMatchObject({
+      kind: "clip",
+      ancestorId: "gen-upload-1",
+    });
+    expect(nodes.find((n) => n.id === "gen-clip-1")).not.toHaveProperty(
+      "pictureAncestryUnknown",
     );
   });
 

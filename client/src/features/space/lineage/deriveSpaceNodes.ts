@@ -34,10 +34,13 @@ export interface VersionLineageInput {
 /**
  * Adapt the session's PERSISTED versions into the space's lineage nodes
  * (ADR-0013). It reads the durable `versions` array, so the space survives
- * reload and shows the full reword chain. A picture roots at its version; a
- * clip links to its persisted source picture (`ancestorGenerationId`), and
- * when none was recorded it hangs from the words node with its picture
- * ancestry marked explicitly unknown (ADR-0022 decision 3). Pure and total.
+ * reload and shows the full reword chain. `ancestorGenerationId` is the
+ * DISPLAY ANCESTOR (ADR-0022 decision 3) and is read the same way for both
+ * media types: a clip links to its source picture (a `move` edge), a picture
+ * to the picture it was refined from (a `refine` edge, inside the picture
+ * column). When none was recorded a picture roots at its words-version, and a
+ * clip hangs from the words node with its picture ancestry marked explicitly
+ * unknown. Pure and total.
  *
  * The clip's fallback used to be "whichever picture this version lists first",
  * which drew a relationship nobody performed and which the space rendered
@@ -78,12 +81,20 @@ export function deriveSpaceNodesFromVersions(
       const archived = readArchived(gen);
 
       if (gen.mediaType === "image") {
+        // ADR-0022 decision 3: a picture may name a picture as its display
+        // ancestor (a studio refinement). When it does, the edge is drawn
+        // inside the picture column; when it does not — a generated picture,
+        // an admitted upload — it roots at its words-version as before.
+        const pictureAncestorId = readAncestorGenerationId(gen);
         pictures.push({
           id: gen.id,
           versionId: version.versionId,
           status,
           ...(mediaUrl ? { mediaUrl } : {}),
           ...(archived ? { archived: true } : {}),
+          ...(pictureAncestorId
+            ? { ancestorPictureId: pictureAncestorId }
+            : {}),
         });
       } else if (gen.mediaType === "video") {
         const ancestorId = readAncestorGenerationId(gen);

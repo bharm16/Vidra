@@ -71,25 +71,92 @@ export const SessionPromptVersionVideoSchema = z.object({
 });
 
 /**
+ * Where a take entered the session from — ADR-0022 decision 1.
+ *
+ * Closed on purpose, and validated at the wire rather than deduced from which
+ * other fields happen to be populated. An unrecognized origin must be a parse
+ * error: rendered instead, it would be a plausible lie about the one question
+ * admission exists to answer. A clip's origin is always `generated`.
+ */
+export const TAKE_ORIGINS = [
+  "generated",
+  "upload",
+  "sketchpad",
+  "studio",
+] as const;
+export const TakeOriginSchema = z.enum(TAKE_ORIGINS);
+
+/**
+ * What kind of thing contributed to a take — ADR-0022 decision 3.
+ *
+ * One entry per contributing input; a take may have several. `take` is the
+ * only kind that can also be the display ancestor, because it is the only kind
+ * that is itself a node in this session's space.
+ */
+export const TAKE_SOURCE_INPUT_KINDS = [
+  "take",
+  "upload",
+  "sketch",
+  "studio-image",
+] as const;
+export const TakeSourceInputKindSchema = z.enum(TAKE_SOURCE_INPUT_KINDS);
+
+export const TakeSourceInputSchema = z.object({
+  kind: TakeSourceInputKindSchema,
+  /** Set iff `kind === "take"` — the contributing take's identity. */
+  generationId: z.string().optional(),
+  /** Durable handles to the contributing media, so the input outlives a URL. */
+  assetId: z.string().optional(),
+  storagePath: z.string().optional(),
+});
+
+/**
+ * What actually produced the media — ADR-0022 decision 2.
+ *
+ * Distinct from the take's associated words (`prompt` / `promptVersionId`),
+ * which are the direction restored into the input when the take is selected.
+ * They frequently coincide and are never the same field: restoring "remove the
+ * chair" into the input would be nonsense, and inventing a shot description for
+ * an upload would be a fabrication. `unknown` is a recorded answer, not a gap.
+ *
+ * Extending the `known` variant (a live output's seed/strength/steps, say) is
+ * an additive member here — the union is the place that grows, not a free-form
+ * bag beside it.
+ */
+export const TakeProductionProvenanceSchema = z.discriminatedUnion("state", [
+  z.object({ state: z.literal("unknown") }),
+  z.object({
+    state: z.literal("known"),
+    /** The prompt or edit instruction that produced this media. */
+    instruction: z.string(),
+    model: z.string().nullable().optional(),
+  }),
+]);
+
+/**
  * A generation record persisted under a version — a picture or a clip, and a
  * node in the space (ADR-0013). Historically an untyped bag, and the schema
  * treated it as one (`z.record(z.string(), z.unknown())`), so the two lineage
  * fields the space actually reads were validated nowhere: a record carrying
  * `ancestorGenerationId: 42` parsed clean and rendered as a root.
  *
- * The three fields the lineage depends on are now declared. The object stays
- * loose so the rest of the bag (tier, status, urls, …) still rides along
- * untouched — this is a schema addition, not a narrowing.
+ * The fields the lineage and the admission contract depend on are declared.
+ * The object stays loose so the rest of the bag (tier, status, urls, …) still
+ * rides along untouched — this is a schema addition, not a narrowing.
  */
 export const SessionGenerationRecordSchema = z
   .object({
     /** Stable generation id (randomUUID / job id at persist time). */
     id: z.string().optional(),
     /**
-     * The generation this one descends from (ADR-0013). `null`/absent = root:
-     * a picture roots at its words-version (that edge is structural — the
-     * picture lives in the version's `generations`). A clip names its source
-     * picture's generation id here, yielding the picture→clip edge.
+     * The generation this one descends from (ADR-0013), and — ADR-0022
+     * decision 3 — the take's DISPLAY ANCESTOR: the single relationship the
+     * space draws, chosen from `sourceInputs` rather than guessed from sibling
+     * order. `null`/absent = no take ancestor: the take hangs from its
+     * words-version (that edge is structural — the record lives in that
+     * version's `generations`). A clip names its source picture here, yielding
+     * the picture→clip `move` edge; a refined picture names the picture it was
+     * refined from, yielding the `refine` edge inside the picture column.
      */
     ancestorGenerationId: z.string().nullable().optional(),
     /**
@@ -97,6 +164,16 @@ export const SessionGenerationRecordSchema = z
      * history but are excluded from the rendered space.
      */
     archived: z.boolean().optional(),
+    /** ADR-0022 decision 1. Absent on records written before the contract. */
+    origin: TakeOriginSchema.optional(),
+    /** ADR-0022 decision 2. */
+    productionProvenance: TakeProductionProvenanceSchema.optional(),
+    /**
+     * ADR-0022 decision 3: every contributing input, in full. The display
+     * ancestor above is one of these (or absent); the rest are recorded but
+     * not drawn.
+     */
+    sourceInputs: z.array(TakeSourceInputSchema).optional(),
   })
   .passthrough();
 

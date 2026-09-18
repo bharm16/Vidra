@@ -1,3 +1,8 @@
+import type {
+  TakeOrigin,
+  TakeProductionProvenance,
+  TakeSourceInput,
+} from "@shared/types/session";
 import type { Generation } from "../types";
 
 /**
@@ -10,12 +15,21 @@ import type { Generation } from "../types";
  * Reading them anywhere means reaching past `Generation`, so the reach happens
  * here once instead of at each site.
  *
- * `ancestorGenerationId` is the picture→clip edge (ADR-0013); `archived` is the
- * soft-removal flag the space honours.
+ * `ancestorGenerationId` is the display ancestor — the picture→clip `move`
+ * edge and the picture→picture `refine` edge (ADR-0013, ADR-0022 decision 3);
+ * `archived` is the soft-removal flag the space honours. The admission trio
+ * (`origin`, `productionProvenance`, `sourceInputs`, ADR-0022 decisions 1-3)
+ * is here for a sharper reason than convenience: the client's merges pick
+ * whole records, so a field absent from this list is dropped the first time a
+ * local record wins — the wire would validate it and the client would still
+ * lose it.
  */
 export const SERVER_OWNED_RECORD_FIELDS = [
   "ancestorGenerationId",
   "archived",
+  "origin",
+  "productionProvenance",
+  "sourceInputs",
 ] as const;
 
 const asBag = (gen: Generation): Record<string, unknown> =>
@@ -28,6 +42,31 @@ export function readAncestorGenerationId(gen: Generation): string | null {
 
 export function readArchived(gen: Generation): boolean {
   return asBag(gen).archived === true;
+}
+
+/**
+ * ADR-0022 decision 1. `undefined` for a take written before the contract —
+ * read as "not recorded", never defaulted to `generated`, because inferring an
+ * origin is exactly what the closed set exists to prevent.
+ */
+export function readTakeOrigin(gen: Generation): TakeOrigin | undefined {
+  const value = asBag(gen).origin;
+  return typeof value === "string" ? (value as TakeOrigin) : undefined;
+}
+
+/** ADR-0022 decision 2. Never conflated with the take's associated words. */
+export function readProductionProvenance(
+  gen: Generation,
+): TakeProductionProvenance | undefined {
+  const value = asBag(gen).productionProvenance;
+  if (typeof value !== "object" || value === null) return undefined;
+  return value as TakeProductionProvenance;
+}
+
+/** ADR-0022 decision 3: every contributing input, not just the drawn one. */
+export function readSourceInputs(gen: Generation): TakeSourceInput[] {
+  const value = asBag(gen).sourceInputs;
+  return Array.isArray(value) ? (value as TakeSourceInput[]) : [];
 }
 
 /**

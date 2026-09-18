@@ -41,6 +41,7 @@ import type { WebhookReconciliationWorker } from "@services/payment/WebhookRecon
 import type { BillingProfileRepairWorker } from "@services/payment/BillingProfileRepairWorker";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
+import type { ImageAssetStore } from "@services/image-generation/storage";
 import type { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import type { ServiceConfig } from "@config/services/service-config.types";
 import type { Bucket } from "@google-cloud/storage";
@@ -96,6 +97,14 @@ export interface ServiceRegistry {
   videoAssetRetentionService: VideoAssetRetentionService | null;
   webhookReconciliationWorker: WebhookReconciliationWorker | null;
   billingProfileRepairWorker: BillingProfileRepairWorker | null;
+
+  // Storage
+  //
+  // The creator-owned image asset store. Typed here because the preview routes
+  // became its first consumer outside the image-generation domain (ADR-0022:
+  // it is where an admitted picture's bytes become durable), and an untyped
+  // resolve would infer whatever the call site asked for.
+  imageAssetStore: ImageAssetStore;
 
   // Session
   sessionService: SessionService;

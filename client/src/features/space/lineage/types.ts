@@ -1,14 +1,20 @@
 /**
- * The lineage model behind "the space" (ADR-0012 / ADR-0013).
+ * The lineage model behind "the space" (ADR-0012 / ADR-0013 / ADR-0022).
  *
- * Each take is a node in three fixed generations — words → pictures → clips.
+ * Each take is a node in one of three columns — words, pictures, clips. The
+ * columns are MEDIA TYPES, not generations (ADR-0022 decision 3): a picture
+ * may descend from another picture, so the picture column has internal depth.
  * The edge SET is persisted as an immediate-ancestor reference; the edge KIND
  * and the LAYOUT are derived, never stored.
  */
 export type LineageNodeKind = "words" | "picture" | "clip";
 
-/** The verb that made the edge — derived from the two endpoints, never stored. */
-export type EdgeKind = "spine" | "roll" | "reword" | "move";
+/**
+ * The verb that made the edge — derived from the two endpoints, never stored.
+ * `refine` is the picture → picture relationship ADR-0022 decision 3 allows,
+ * drawn inside the picture column.
+ */
+export type EdgeKind = "spine" | "roll" | "reword" | "move" | "refine";
 
 export interface LineageNode {
   id: string;

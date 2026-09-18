@@ -54,6 +54,7 @@ import {
   usePromptCoherence,
   useAssetManagement,
   useEditorShotPromptBinding,
+  useFirstFrameAdmission,
 } from "./hooks";
 import { useI2VContext } from "../hooks/useI2VContext";
 import {
@@ -486,29 +487,6 @@ function PromptOptimizerContent({
     [addKeyframe, toast, uploadSidebarImage],
   );
 
-  const handleStartFrameUpload = useCallback(
-    async (file: File): Promise<void> => {
-      try {
-        const uploaded = await uploadSidebarImage(file);
-        if (!uploaded) return;
-        setStartFrame({
-          id: `start-frame-upload-${Date.now()}`,
-          url: uploaded.url,
-          source: "upload",
-          ...(uploaded.storagePath
-            ? { storagePath: uploaded.storagePath }
-            : {}),
-          ...(uploaded.viewUrlExpiresAt
-            ? { viewUrlExpiresAt: uploaded.viewUrlExpiresAt }
-            : {}),
-        });
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Upload failed");
-      }
-    },
-    [setStartFrame, toast, uploadSidebarImage],
-  );
-
   const clearResultsView = useCallback((): void => {
     if (promptOptimizer.displayedPrompt?.trim()) {
       setDisplayedPromptSilently("");
@@ -560,6 +538,17 @@ function PromptOptimizerContent({
       ...resolveVersionTarget(),
     };
   }, [promptIdentityRef, resolveVersionTarget, sessionId]);
+
+  // Uploading a FIRST FRAME inside a session admits it as a picture take
+  // (ADR-0022 decision 1, issue #86). Lives below `resolvePersistenceTarget`
+  // because it resolves the destination once, before the request.
+  const { uploadFirstFrame: handleStartFrameUpload } = useFirstFrameAdmission({
+    resolvePersistenceTarget,
+    setStartFrame,
+    uploadOutsideSession: uploadSidebarImage,
+    onError: toast.error,
+    onInvalidFile: toast.warning,
+  });
 
   // Idea Box: on empty canvas (no start frame), optimization continues into
   // first-frame generation; setting the frame flips the workspace to I2V.
