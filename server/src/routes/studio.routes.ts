@@ -14,6 +14,10 @@
  *                                     (async: image
  *                                     calls settle in the background)
  * GET    /projects/:projectId/turns/:turnId   poll a turn
+ * POST   /projects/:projectId/images/:imageId/use-in-session
+ *                                     "Use this in the session" — a studio
+ *                                     image returns as a picture take
+ *                                     (ADR-0022 D4)
  */
 
 import express, { type Request, type Response, type Router } from "express";
@@ -22,6 +26,15 @@ import { asyncHandler } from "@middleware/asyncHandler";
 import { requireCreatorId, requireBody } from "@middleware/intake";
 import type { StudioService } from "@services/studio/StudioService";
 import type { SessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import {
+  returnStudioImage,
+  type ReturnStudioImageSessionPort,
+} from "@services/admission/returnStudioImage";
+import type {
+  AdmissionIdempotencyPort,
+  AdmissionMediaStore,
+} from "@services/admission/admitPictureTake";
+import { StudioUseInSessionRequestSchema } from "@shared/schemas/studio.schemas";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
 const CreateProjectSchema = z.object({
@@ -72,6 +85,21 @@ function routeParam(req: Request, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
+/**
+ * The session-side dependencies of "Use this in the session" (ADR-0022
+ * decision 4). Injected at the route layer for the same reason the outbound
+ * read is: the studio never learns what a session is.
+ *
+ * All three nullable together. Without them the return door is unavailable,
+ * and saying so with a 503 beats an unmounted route's 404 — a creator who
+ * pressed the button deserves the reason, not a missing page.
+ */
+export interface StudioReturnDeps {
+  sessionService: ReturnStudioImageSessionPort | null | undefined;
+  mediaStore: AdmissionMediaStore | null | undefined;
+  idempotency: AdmissionIdempotencyPort | null | undefined;
+}
+
 export function createStudioRouter(
   studioService: StudioService,
   /**
@@ -80,6 +108,8 @@ export function createStudioRouter(
    * cross-domain join lives at the route layer where it belongs.
    */
   sessionPictures: SessionPictureLookup,
+  /** The return leg's session-side dependencies (ADR-0022 decision 4). */
+  returnDeps: StudioReturnDeps,
 ): Router {
   const router = express.Router();
 
@@ -285,6 +315,95 @@ export function createStudioRouter(
         routeParam(req, "projectId"),
       );
       res.json({ success: true, data: turns });
+    }),
+  );
+
+  // "Use this in the session" (ADR-0022 decision 4). The creator names only
+  // the project and the image; the destination is the project's own origin,
+  // because the project already knows which session it came from and a
+  // client-supplied one would be a second copy free to disagree.
+  router.post(
+    "/projects/:projectId/images/:imageId/use-in-session",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
+      if (!userId) return;
+      const parsed = requireBody(StudioUseInSessionRequestSchema, req, res);
+      if (!parsed.ok) return;
+
+      const { sessionService, mediaStore, idempotency } = returnDeps;
+      if (!sessionService || !mediaStore || !idempotency) {
+        res.status(503).json({
+          success: false,
+          error:
+            "Couldn’t use this picture — sessions are unavailable right now. Nothing was saved.",
+        });
+        return;
+      }
+
+      const result = await returnStudioImage(
+        { studio: studioService, sessionService, mediaStore, idempotency },
+        {
+          userId,
+          projectId: routeParam(req, "projectId"),
+          imageId: routeParam(req, "imageId"),
+          ...(parsed.value.onMissingOriginSession
+            ? { onMissingOriginSession: parsed.value.onMissingOriginSession }
+            : {}),
+        },
+      );
+
+      switch (result.state) {
+        case "returned":
+          res.status(201).json({ success: true, data: result.result });
+          return;
+        case "not-found":
+          res
+            .status(404)
+            .json({ success: false, error: "That picture is not available." });
+          return;
+        case "refused":
+          // Absence, like every other studio refusal: a session id must never
+          // become an existence oracle.
+          res
+            .status(404)
+            .json({ success: false, error: "That session is not available." });
+          return;
+        case "origin-session-missing":
+          // `reason` is the discriminator, not the status code — the client
+          // turns this one into the creator's choice rather than an error.
+          res.status(409).json({
+            success: false,
+            reason: "origin-session-missing",
+            sessionId: result.sessionId,
+            error:
+              "The session this project came from is gone. Start a new session with this picture instead?",
+          });
+          return;
+        case "unusable-media":
+          res.status(422).json({
+            success: false,
+            error: `Couldn’t use that image as a first frame — ${result.reason}. A first frame must be a PNG, JPEG or WebP picture.`,
+          });
+          return;
+        case "unavailable":
+          res.status(503).json({
+            success: false,
+            error: `Couldn’t use this picture — ${result.reason}. Nothing was saved.`,
+          });
+          return;
+        case "in_progress":
+          res.status(409).json({
+            success: false,
+            error: "This picture is already being added.",
+          });
+          return;
+        case "conflict":
+          res.status(409).json({
+            success: false,
+            error: "That picture was already returned somewhere else.",
+          });
+          return;
+      }
     }),
   );
 

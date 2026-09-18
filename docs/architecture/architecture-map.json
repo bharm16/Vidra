@@ -504,6 +504,11 @@
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/studio/projects/:projectId/images/:imageId/use-in-session",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/api/studio/projects/:projectId/turns",
       "sourceFile": "server/src/routes/studio.routes.ts"

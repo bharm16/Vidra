@@ -26,7 +26,9 @@ import type {
   StudioImageRunner,
 } from "./providers/types";
 import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
+import { readTurnSourceImages } from "./turnSourceImages";
 import type { StudioProjectStore } from "./storage/StudioProjectStore";
+import type { StudioProjectOrigin } from "@shared/schemas/studio.schemas";
 import type {
   StudioAttachment,
   StudioCallRecord,
@@ -36,6 +38,7 @@ import type {
   StudioModelSlug,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnSourceImage,
 } from "./types";
 
 export class StudioNotFoundError extends Error {
@@ -117,6 +120,29 @@ export function studioProjectIdForSessionPicture(
     )
     .digest("hex")
     .slice(0, 32);
+}
+
+/**
+ * One studio image together with everything the return bridge needs about it
+ * (ADR-0022 decision 4): which turn made it, what that turn ran on, and the
+ * session the project was born from. Plain data, no session vocabulary — the
+ * studio still does not know what a session is.
+ */
+export interface StudioProducedImage {
+  projectId: string;
+  /** The turn whose succeeded call produced this image. */
+  turnId: string;
+  image: StudioImageRecord;
+  /** Minted per read, never persisted: a one-hour URL is not a record. */
+  viewUrl: string;
+  /**
+   * What the producing turn ACTUALLY consumed — empty for a generate, which
+   * has no image inputs at all. This, not the project's origin, is what
+   * decides whether the returning picture has a picture ancestor.
+   */
+  sourceImages: readonly StudioTurnSourceImage[];
+  /** Present only when the project was born from a session picture. */
+  origin?: StudioProjectOrigin | undefined;
 }
 
 /** Wire shape for turn polling: images decorated with fresh signed URLs. */
@@ -409,6 +435,51 @@ export class StudioService {
       });
       return project;
     }
+  }
+
+  /**
+   * What produced one of this project's images — the studio-side read behind
+   * "Use this in the session" (ADR-0022 decision 4, issue #89).
+   *
+   * It answers three things the return bridge cannot work out for itself: the
+   * turn that made the image, what that turn ACTUALLY consumed, and where the
+   * project came from. Ownership reads as absence, as everywhere else here.
+   *
+   * Only images the studio PRODUCED are addressable. An attachment — the
+   * bridged session picture included — has no producing turn, so it answers
+   * `null`: sending the session its own picture back is not a refinement, and
+   * a bridge that allowed it would mint a second take of the same media.
+   *
+   * It writes nothing and knows nothing about sessions. The session half of
+   * the bridge lives in `returnStudioImage`, one layer up, exactly as the
+   * outbound half's session read lives outside this service.
+   */
+  async findProducedImage(
+    userId: string,
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioProducedImage | null> {
+    const project = await this.getProject(userId, projectId);
+    const turns = await this.store.listTurns(projectId);
+
+    for (const turn of turns) {
+      for (const call of turn.calls) {
+        if (call.status !== "succeeded" || call.image?.id !== imageId) continue;
+        const { viewUrl } = await this.storage.getViewUrl(
+          userId,
+          call.image.storagePath,
+        );
+        return {
+          projectId,
+          turnId: turn.id,
+          image: call.image,
+          viewUrl,
+          sourceImages: readTurnSourceImages(turn),
+          ...(project.origin ? { origin: project.origin } : {}),
+        };
+      }
+    }
+    return null;
   }
 
   /**
@@ -780,6 +851,7 @@ export class StudioService {
       callCount: 1,
       reservedCents: model.costCentsPerCall,
       attachmentIds,
+      sourceImages: sources,
     });
 
     const { completion } = await this.ledger.reserve(
@@ -837,6 +909,7 @@ export class StudioService {
       callCount: 1,
       reservedCents: utility.costCentsPerCall,
       attachmentIds,
+      sourceImages: [source],
     });
 
     const { completion } = await this.ledger.reserve(
@@ -875,6 +948,8 @@ export class StudioService {
       callCount: number;
       reservedCents: number;
       attachmentIds?: readonly string[];
+      /** ADR-0022 decision 4: what this turn actually runs on. */
+      sourceImages?: readonly StudioTurnSourceImage[];
     },
   ): StudioTurnRecord {
     const nowMs = this.now().getTime();
@@ -890,6 +965,13 @@ export class StudioService {
         : {}),
       ...(options.attachmentIds && options.attachmentIds.length > 0
         ? { attachmentIds: [...options.attachmentIds] }
+        : {}),
+      // Written at dispatch, alongside the decision that named the ids, so
+      // the record says what ran rather than what was asked for. Omitted
+      // entirely when nothing was consumed — an empty array persisted on
+      // every generate would be noise the read has to re-interpret.
+      ...(options.sourceImages && options.sourceImages.length > 0
+        ? { sourceImages: options.sourceImages.map((image) => ({ ...image })) }
         : {}),
       calls: Array.from({ length: options.callCount }, (_, index) => ({
         index,

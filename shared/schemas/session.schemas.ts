@@ -133,6 +133,23 @@ export const SketchProductionSettingsSchema = z.object({
   steps: z.number().int().min(1),
 });
 
+/**
+ * ADR-0022 decision 4: which studio turn made this picture.
+ *
+ * Three ids, no media: the bytes travel as a source input like every other
+ * durable handle. What this adds is the answer to "where in the studio did
+ * this come from" — the project the creator can reopen, the turn whose
+ * instruction is the provenance above it, and the image inside that turn.
+ * Recorded because the returning take is one of several a single project can
+ * produce, and only the turn separates an edit of the bridged picture from an
+ * unrelated generation beside it.
+ */
+export const StudioProductionRefSchema = z.object({
+  projectId: z.string(),
+  turnId: z.string(),
+  imageId: z.string(),
+});
+
 export const TakeProductionProvenanceSchema = z.discriminatedUnion("state", [
   z.object({ state: z.literal("unknown") }),
   z.object({
@@ -147,6 +164,13 @@ export const TakeProductionProvenanceSchema = z.discriminatedUnion("state", [
      * where a durable media handle belongs.
      */
     sketch: SketchProductionSettingsSchema.optional(),
+    /**
+     * ADR-0022 decision 4: the studio turn and image that produced this
+     * picture. Additive in the same place and for the same reason as
+     * `sketch` — a mode's own production facts belong inside the `known`
+     * variant, never in a free-form bag beside it.
+     */
+    studio: StudioProductionRefSchema.optional(),
   }),
 ]);
 

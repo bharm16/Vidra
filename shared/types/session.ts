@@ -34,6 +34,7 @@ import type {
   SessionStatusSchema,
   SessionStyleReferenceSchema,
   SketchProductionSettingsSchema,
+  StudioProductionRefSchema,
   TakeOriginSchema,
   TakeProductionProvenanceSchema,
   TakeSourceInputKindSchema,
@@ -77,6 +78,9 @@ export type TakeProductionProvenance = z.infer<
 export type SketchProductionSettings = z.infer<
   typeof SketchProductionSettingsSchema
 >;
+
+/** ADR-0022 decision 4: the studio turn and image a returned picture came from. */
+export type StudioProductionRef = z.infer<typeof StudioProductionRefSchema>;
 
 /**
  * A generation record persisted under a version — a picture or a clip, and a

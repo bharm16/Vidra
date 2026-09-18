@@ -207,6 +207,27 @@ export function registerApiRoutes(
         createSessionPictureLookup(
           container.resolve<SessionService>("sessionService"),
         ),
+        // ADR-0022 decision 4, return leg: "Use this in the session" admits a
+        // studio image through the same boundary as an upload. Resolved
+        // optionally for the same reason the sketch door's are — the route
+        // answers 503 rather than vanishing when they are absent.
+        {
+          sessionService: resolveOptionalService<SessionService | null>(
+            container,
+            "sessionService",
+            "studio-return",
+          ),
+          mediaStore: resolveOptionalService<AdmissionMediaStore | null>(
+            container,
+            "imageAssetStore",
+            "studio-return",
+          ),
+          idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
+            container,
+            "requestIdempotencyService",
+            "studio-return",
+          ),
+        },
       ),
     );
   }

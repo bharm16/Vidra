@@ -77,6 +77,45 @@ describe("UploadService", () => {
     }
   });
 
+  /**
+   * The fence the studio's return bridge (#89, ADR-0022 decision 4) rests on.
+   *
+   * The studio roster offers vector models (`recraft-v4.1-svg`) and `svg` is a
+   * legal generate capability, but `preview-image` storage accepts only webp,
+   * png and jpeg — so an SVG result never becomes a stored image record and
+   * can never be bridged back into a session. The bridge refuses vectors with
+   * an explanation instead of rasterizing them, and that refusal is only
+   * honest while this stays true. If this test ever has to change, the bridge
+   * needs a decision, not a passing suite.
+   */
+  it("refuses an SVG as a preview image before a byte is written", async () => {
+    const { service, mockFile } = buildService();
+    const originalFetch = globalThis.fetch;
+
+    (globalThis as typeof globalThis & { fetch: typeof fetch }).fetch = vi
+      .fn()
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "content-type": "image/svg+xml" }),
+        body: null,
+      });
+
+    try {
+      await expect(
+        service.uploadFromUrl(
+          "https://replicate.delivery/vector.svg",
+          "user123",
+          "preview-image",
+        ),
+      ).rejects.toThrow("Invalid content type: image/svg+xml");
+      expect(mockFile.save).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it("rejects confirmUpload for non-owned path", async () => {
     const { service } = buildService();
     await expect(

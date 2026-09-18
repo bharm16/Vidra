@@ -7,6 +7,10 @@ import { apiClient } from "@/services/ApiClient";
 import { storageApi } from "@/api/storageApi";
 import { z } from "zod";
 import {
+  StudioUseInSessionResultSchema,
+  type StudioUseInSessionResult,
+} from "@shared/schemas/studio.schemas";
+import {
   RunTurnResponseSchema,
   StudioAttachmentSchema,
   StudioModelInfoSchema,
@@ -299,6 +303,77 @@ export async function listStudioTurns(
   projectId: string,
 ): Promise<StudioTurn[]> {
   return request(`/projects/${projectId}/turns`, z.array(StudioTurnSchema));
+}
+
+/**
+ * The 409 that is not an error — ADR-0022 decision 4.
+ *
+ * `reason` is the discriminator, not the status code: the same status also
+ * carries "already being added", and the two must never be confused. A gone
+ * origin session is a question for the creator, so it is parsed into an
+ * outcome rather than thrown as a failure.
+ */
+const MissingOriginSessionSchema = z.object({
+  reason: z.literal("origin-session-missing"),
+  sessionId: z.string(),
+  error: z.string(),
+});
+
+export type UseInSessionOutcome =
+  | { state: "returned"; result: StudioUseInSessionResult }
+  | { state: "origin-session-missing"; sessionId: string; message: string }
+  | { state: "error"; message: string };
+
+/**
+ * "Use this in the session" (ADR-0022 decision 4): a studio image returns to a
+ * session as a picture take, armed as its first frame.
+ *
+ * The destination is never sent — the project's own origin is what decides it.
+ * Pressing twice for the same image yields one take, so a retry after a lost
+ * response is safe without a client-held key.
+ */
+export async function returnStudioImageToSession(
+  projectId: string,
+  imageId: string,
+  options?: { onMissingOriginSession?: "new-session" },
+): Promise<UseInSessionOutcome> {
+  const response = await apiClient.rawRequest(
+    `/studio/projects/${projectId}/images/${imageId}/use-in-session`,
+    {
+      method: "POST",
+      body: JSON.stringify(
+        options?.onMissingOriginSession
+          ? { onMissingOriginSession: options.onMissingOriginSession }
+          : {},
+      ),
+    },
+  );
+
+  const body: unknown = await response.json().catch(() => null);
+
+  if (response.ok) {
+    const parsed = z
+      .object({ success: z.literal(true), data: StudioUseInSessionResultSchema })
+      .parse(body);
+    return { state: "returned", result: parsed.data };
+  }
+
+  const choice = MissingOriginSessionSchema.safeParse(body);
+  if (choice.success) {
+    return {
+      state: "origin-session-missing",
+      sessionId: choice.data.sessionId,
+      message: choice.data.error,
+    };
+  }
+
+  const detail =
+    body !== null &&
+    typeof body === "object" &&
+    typeof (body as Record<string, unknown>).error === "string"
+      ? ((body as Record<string, unknown>).error as string)
+      : `Studio request failed (${response.status})`;
+  return { state: "error", message: detail };
 }
 
 export async function getStudioModels(): Promise<StudioModelInfo[]> {

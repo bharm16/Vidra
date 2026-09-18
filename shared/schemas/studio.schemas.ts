@@ -46,3 +46,54 @@ export const StudioProjectOriginSchema = z.object({
 });
 
 export type StudioProjectOrigin = z.infer<typeof StudioProjectOriginSchema>;
+
+/**
+ * "Use this in the session" — the return leg of the same bridge (#89).
+ *
+ * The creator names only the project and the image; every other fact is read
+ * from records the server already holds. The destination in particular is
+ * never accepted from the wire: it is the project's own origin, and a client
+ * that could name a session would be a second, disagreeing copy of where the
+ * picture belongs.
+ */
+
+/**
+ * What to do when the project's origin session is gone.
+ *
+ * `refuse` — the default, and what an unprompted press means — reports the
+ * loss and stops. A silently recreated session would answer "where did this
+ * go?" with a place the creator never worked in, and the ADR forbids exactly
+ * that. `new-session` is the creator's answer to the refusal, sent on the
+ * second press; the choice is theirs, so it travels rather than being
+ * inferred.
+ */
+export const STUDIO_MISSING_ORIGIN_SESSION_CHOICES = [
+  "refuse",
+  "new-session",
+] as const;
+
+export const StudioUseInSessionRequestSchema = z.object({
+  onMissingOriginSession: z
+    .enum(STUDIO_MISSING_ORIGIN_SESSION_CHOICES)
+    .optional(),
+});
+
+export const StudioUseInSessionResultSchema = z.object({
+  sessionId: z.string(),
+  promptVersionId: z.string(),
+  /** The admitted take's identity — what a clip names as its ancestor. */
+  generationId: z.string(),
+  imageUrl: z.string(),
+  /**
+   * ADR-0022 decision 3: the one picture ancestor the space draws, or `null`
+   * when the producing turn consumed no take of this session. `null` is an
+   * answer — "this picture has no picture ancestor" — not a missing field.
+   */
+  ancestorGenerationId: z.string().nullable(),
+  /** True when the project had no origin session and this press started one. */
+  createdSession: z.boolean(),
+});
+
+export type StudioUseInSessionResult = z.infer<
+  typeof StudioUseInSessionResultSchema
+>;

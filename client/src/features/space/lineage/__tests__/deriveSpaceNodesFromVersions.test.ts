@@ -3,6 +3,7 @@ import type { SessionPromptVersionEntry } from "@shared/types/session";
 import type { Generation } from "@features/generations/types";
 import { normalizePersistedGenerations } from "@features/generations/utils/normalizePersistedGeneration";
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
+import { deriveEdgeKind } from "../deriveEdgeKind";
 import { computeLineageLayout } from "../computeLineageLayout";
 
 const version = (
@@ -246,6 +247,57 @@ describe("deriveSpaceNodesFromVersions", () => {
       kind: "picture",
       ancestorId: "gen-pic-1",
     });
+  });
+
+  // ADR-0022 decision 4, issue #89: a refresh renders the returned picture
+  // from server records alone. The record below is exactly what the studio's
+  // return bridge writes — nothing here is reconstructed client-side.
+  it("draws a refine edge for a studio take returned onto the picture it was refined from", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "a brass desk lamp on an oak table",
+        generations: [
+          {
+            id: "take-1",
+            mediaType: "image",
+            status: "completed",
+            origin: "generated",
+            ancestorGenerationId: null,
+          },
+          {
+            id: "take-2",
+            mediaType: "image",
+            status: "completed",
+            origin: "studio",
+            productionProvenance: {
+              state: "known",
+              instruction: "warm the light",
+              model: "nano-banana-2",
+              studio: {
+                projectId: "project-1",
+                turnId: "turn-1",
+                imageId: "img-1",
+              },
+            },
+            sourceInputs: [
+              { kind: "take", generationId: "take-1", storagePath: "p/take-1" },
+              { kind: "studio-image", storagePath: "p/returned" },
+            ],
+            ancestorGenerationId: "take-1",
+            thumbnailUrl: "https://img/returned.png",
+          },
+        ],
+      }),
+    ]);
+
+    const returned = nodes.find((node) => node.id === "take-2")!;
+    expect(returned).toMatchObject({ kind: "picture", ancestorId: "take-1" });
+    // Inside the picture column, not a second roll off the words-version.
+    expect(deriveEdgeKind(returned, nodes)).toBe("refine");
+    expect(deriveEdgeKind(nodes.find((n) => n.id === "take-1")!, nodes)).toBe(
+      "spine",
+    );
   });
 
   it("keeps an admitted upload rooted at the words-version it was admitted under", () => {

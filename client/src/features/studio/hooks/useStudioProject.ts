@@ -20,6 +20,8 @@ import {
   runStudioTurn,
   updateStudioProject,
   uploadStudioAttachment,
+  returnStudioImageToSession,
+  type UseInSessionOutcome,
 } from "../api/studioApi";
 import type { StudioProject, StudioTurn } from "../api/schemas";
 import {
@@ -60,6 +62,19 @@ export interface UseStudioProjectReturn {
   /** S-12: upload + stage a reference image on the composer. */
   attachFile: (file: File) => Promise<void>;
   removeAttachment: (attachmentId: string) => void;
+  /**
+   * "Use this in the session" (ADR-0022 decision 4): send the selected image
+   * back to the session as a picture take, armed as its first frame.
+   *
+   * The outcome is RETURNED rather than dispatched, because one of its three
+   * shapes is a question for the creator — a gone origin session offers them
+   * the choice of starting a new one — and a question does not belong in the
+   * error band. Only the flat failure is dispatched, where every other
+   * request failure already lands.
+   */
+  returnImageToSession: (options?: {
+    onMissingOriginSession?: "new-session";
+  }) => Promise<UseInSessionOutcome>;
 }
 
 function describeError(error: unknown): string {
@@ -314,6 +329,40 @@ export function useStudioProject(
     dispatch({ type: "attachmentUnstaged", attachmentId });
   }, []);
 
+  // Reads the selection through a ref for the same reason the project id is
+  // read that way: the press and the response are separated by a round trip,
+  // and the image that was chosen is the one that must travel.
+  const selectedImageIdRef = useRef<string | null>(null);
+  selectedImageIdRef.current = state.selectedImageId;
+
+  const returnImageToSession = useCallback(
+    async (options?: {
+      onMissingOriginSession?: "new-session";
+    }): Promise<UseInSessionOutcome> => {
+      const projectId = projectIdRef.current;
+      const imageId = selectedImageIdRef.current;
+      if (!projectId || !imageId) {
+        return { state: "error", message: "Select an image first" };
+      }
+      try {
+        const outcome = await returnStudioImageToSession(
+          projectId,
+          imageId,
+          options,
+        );
+        if (outcome.state === "error") {
+          dispatch({ type: "requestFailed", error: outcome.message });
+        }
+        return outcome;
+      } catch (error) {
+        const message = describeError(error);
+        dispatch({ type: "requestFailed", error: message });
+        return { state: "error", message };
+      }
+    },
+    [],
+  );
+
   return {
     state,
     dispatch,
@@ -323,5 +372,6 @@ export function useStudioProject(
     selectImage,
     attachFile,
     removeAttachment,
+    returnImageToSession,
   };
 }

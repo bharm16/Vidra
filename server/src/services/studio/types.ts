@@ -101,6 +101,17 @@ export interface StudioImageRecord {
   model: StudioModelSlug | StudioUtilityOperation;
 }
 
+/**
+ * One stored image a turn actually consumed, as `resolveSourceImages`
+ * resolved it — ADR-0022 decision 4. Structurally the part of
+ * `StudioImageRecord` / `StudioAttachment` both kinds of source share, which
+ * is why one shape covers a generated image and an uploaded reference alike.
+ */
+export interface StudioTurnSourceImage {
+  id: string;
+  storagePath: string;
+}
+
 export type StudioTurnStatus = "running" | "complete" | "partial" | "failed";
 
 /** Per-call slot in a turn: index-stable so the UI can render failures in place. */
@@ -126,6 +137,18 @@ export interface StudioTurnRecord {
   resolvedModel?: StudioModelSlug | undefined;
   /** Attachment ids the user sent WITH this message (S-12). */
   attachmentIds?: string[] | undefined;
+  /**
+   * The stored images this turn actually consumed, resolved from
+   * `decision.sourceImageIds` / `sourceImageId` at dispatch and kept
+   * (ADR-0022 decision 4). Distinct from `attachmentIds`, which records what
+   * the creator sent WITH the message rather than what the edit ran on, and
+   * from the decision's ids, which are what the LLM asked for.
+   *
+   * Absent on generate and conversational turns, which consume no image.
+   * `readTurnSourceImages` is the validated read — never reach for this field
+   * directly.
+   */
+  sourceImages?: StudioTurnSourceImage[] | undefined;
   calls: StudioCallRecord[];
   reservedCents: number;
   refundedCents: number;

@@ -13,6 +13,7 @@ import {
   STUDIO_ORIGIN_GROUP_ID,
 } from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
+import { UseInSessionAction } from "./components/UseInSessionAction";
 import { useStudioProject } from "./hooks/useStudioProject";
 import { isTurnInFlight } from "./hooks/studioReducer";
 import "./studio.css";
@@ -91,7 +92,14 @@ export function StudioPage(): React.ReactElement {
       <div className="st-frame min-w-0 flex-1">
         <div className="st-topbar">
           <span className="st-topbar-label">Studio</span>
-          <div className="st-topbar-right" />
+          {/* ADR-0022 decision 4: the return door. It lives in the topbar's
+              right zone because it acts on the project's selection, not on a
+              cell — a control nested inside a plane cell would be a button
+              inside a button. */}
+          <UseInSessionAction
+            selectedImageId={state.selectedImageId}
+            onUse={studio.returnImageToSession}
+          />
         </div>
 
         <div className="st-body">

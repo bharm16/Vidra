@@ -151,6 +151,9 @@ function harness(options?: { sessionOwner?: string; caller?: string }) {
     createStudioRouter(
       studioService,
       createSessionPictureLookup(sessionService),
+      // The return leg (#89) is exercised in its own suite; this one is about
+      // the outbound bridge, so its door is simply not wired here.
+      { sessionService: null, mediaStore: null, idempotency: null },
     ),
   );
 
