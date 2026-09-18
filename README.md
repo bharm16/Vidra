@@ -310,7 +310,7 @@ Content-Type: application/json
 **Get suggestions for a span:**
 
 ```bash
-POST /api/enhance
+POST /api/enhancement/suggestions
 Content-Type: application/json
 
 {
