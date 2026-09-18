@@ -18,16 +18,16 @@
 
 These terms have specific meanings in this codebase. Do not conflate them.
 
-| Term                          | Meaning                                                                        | Client Feature/Service              | Server Route                       |
-| ----------------------------- | ------------------------------------------------------------------------------ | ----------------------------------- | ---------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories for UI highlights | `features/span-highlighting/`       | `/api/llm/label-spans`             |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)   | `services/EnhancementApi.ts`        | `/api/suggestions`, `/api/enhance` |
-| **Optimization**              | Two-stage prompt rewriting (Groq fast draft → OpenAI refinement)               | `services/PromptOptimizationApi.ts` | `/api/optimize-stream` (SSE)       |
-| **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                        | `features/continuity/`              | `/api/continuity`                  |
-| **Convergence**               | Motion/visual convergence pipeline                                             | `features/convergence/`             | `/api/motion`                      |
-| **Model Intelligence**        | AI-powered model recommendation based on prompt analysis                       | `features/model-intelligence/`      | `/api/model-intelligence`          |
-| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation before final render  | `features/preview/`                 | `/api/preview`                     |
-| **Generation**                | Final video render via Sora, Veo, Kling, Luma, Runway                          | (shared with preview)               | `/api/preview` (shared routes)     |
+| Term                          | Meaning                                                                                                                                                                                                                                                                                                                                       | Client Feature/Service              | Server Route                                             |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
+| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories for UI highlights                                                                                                                                                                                                                                                                | `features/span-highlighting/`       | `/api/llm/label-spans`                                   |
+| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                                                                                                                                                                                                                                                  | `services/EnhancementApi.ts`        | `/api/suggestions`, `/api/enhance`                       |
+| **Optimization**              | Structured prompt rewriting over one buffered request: an LLM pass emits a cached structured artifact, rendered to a generic prompt and gated by a deterministic intent-lock check plus a prompt lint. A `targetModel` compiles that artifact into the model's own prose; `/api/optimize-compile` recompiles from the returned `artifactKey`. | `services/PromptOptimizationApi.ts` | `/api/optimize` (buffered JSON), `/api/optimize-compile` |
+| **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                                                                                                                                                                                                                                                                                       | `features/continuity/`              | `/api/continuity`                                        |
+| **Convergence**               | Motion/visual convergence pipeline                                                                                                                                                                                                                                                                                                            | `features/convergence/`             | `/api/motion`                                            |
+| **Model Intelligence**        | AI-powered model recommendation based on prompt analysis                                                                                                                                                                                                                                                                                      | `features/model-intelligence/`      | `/api/model-intelligence`                                |
+| **Preview**                   | Image (Flux Schnell) and video (Wan 2.2) draft generation before final render                                                                                                                                                                                                                                                                 | `features/preview/`                 | `/api/preview`                                           |
+| **Generation**                | Final video render via Sora, Veo, Kling, Luma and Wan — the identities that carry a generation adapter in `shared/modelIdentity.ts`. Runway Gen-4.5 is a prompt target only: it has `generation: []`, so Vidra compiles prompts for it but never dispatches to it.                                                                            | (shared with preview)               | `/api/preview` (shared routes)                           |
 
 ## Service Architecture (Server Context)
 
@@ -58,21 +58,21 @@ Know this when debugging API responses or adding new client→server integration
 
 Use this to find the correct client file for a given backend route. Do not create duplicate API clients.
 
-| Route                                   | Server Route File                         | Client API/Service                                  |
-| --------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
-| `POST /api/optimize-stream`             | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
-| `POST /api/enhance`, `/api/suggestions` | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
-| `POST /api/llm/label-spans`             | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
-| `/api/preview/*`                        | `preview.routes.ts`                       | `features/preview/api/`                             |
-| `/api/payment/*`                        | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
-| `/api/motion/*`                         | `motion.routes.ts`                        | `api/motionApi.ts`                                  |
-| `/api/storage/*`                        | `storage.routes.ts`                       | `api/storageApi.ts`                                 |
-| `/api/capabilities`                     | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
-| `/api/continuity/*`                     | `continuity.routes.ts`                    | `features/continuity/api/`                          |
-| `/api/model-intelligence/*`             | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
-| `/api/sessions/*`                       | `sessions.routes.ts`                      | (uses ApiClient directly)                           |
-| `/api/assets/*`                         | `asset.routes.ts`                         | `features/assets/`                                  |
-| `/api/reference-images/*`               | `reference-images.routes.ts`              | `features/reference-images/`                        |
+| Route                                         | Server Route File                         | Client API/Service                                  |
+| --------------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| `POST /api/optimize`, `/api/optimize-compile` | `optimize.routes.ts`                      | `services/PromptOptimizationApi.ts`                 |
+| `POST /api/enhance`, `/api/suggestions`       | `enhancement.routes.ts`, `suggestions.ts` | `services/EnhancementApi.ts`                        |
+| `POST /api/llm/label-spans`                   | `labelSpansRoute.ts`                      | `features/span-highlighting/api/spanLabelingApi.ts` |
+| `/api/preview/*`                              | `preview.routes.ts`                       | `features/preview/api/`                             |
+| `/api/payment/*`                              | `payment.routes.ts`                       | `api/billingApi.ts`                                 |
+| `/api/motion/*`                               | `motion.routes.ts`                        | `api/motionApi.ts`                                  |
+| `/api/storage/*`                              | `storage.routes.ts`                       | `api/storageApi.ts`                                 |
+| `/api/capabilities`                           | `capabilities.routes.ts`                  | `services/CapabilitiesApi.ts`                       |
+| `/api/continuity/*`                           | `continuity.routes.ts`                    | `features/continuity/api/`                          |
+| `/api/model-intelligence/*`                   | `model-intelligence.routes.ts`            | `features/model-intelligence/api/`                  |
+| `/api/sessions/*`                             | `sessions.routes.ts`                      | (uses ApiClient directly)                           |
+| `/api/assets/*`                               | `asset.routes.ts`                         | `features/assets/`                                  |
+| `/api/reference-images/*`                     | `reference-images.routes.ts`              | `features/reference-images/`                        |
 
 API placement rules:
 

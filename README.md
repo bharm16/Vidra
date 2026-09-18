@@ -39,7 +39,7 @@ Vidra lets you preview your video with fast, inexpensive models before committin
 3. **Refine** → Click any highlighted phrase for AI-powered alternatives
 4. **Generate** → Final video with Sora, Veo, Kling, or Luma
 
-**Result:** 5 preview iterations + 1 final generation beats 5 blind generation attempts. Same output, 70% fewer credits.
+**Result:** you judge framing, lighting and mood from a still — and can rewrite any phrase in place — before anything renders as video. The still is rendered from the same structured artifact the video prompt is compiled from, so the frame you approve reflects the prompt the video model receives.
 
 ---
 
@@ -100,20 +100,21 @@ Moved to `docs/QUICKSTART.md`.
 
 ## Key Features
 
-| Feature                                | What It Does                                                                                                                          |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Semantic Labeling**                  | 30+ categories tuned for video (subject, camera, lighting, action, style...)                                                          |
-| **Click-to-Enhance**                   | Click any highlight → get context-aware alternatives → one-click replace                                                              |
-| **Direct Video Generation**            | Generate actual videos using OpenAI Sora 2, Google Veo 3, Runway Gen-45, Luma Ray 3, and Kling                                        |
-| **Visual Preview**                     | Auto-generates preview images using Flux Schnell as you type (debounced)                                                              |
-| **Two-Stage Speed**                    | Sub-300ms draft (Groq) + background refinement (OpenAI)                                                                               |
-| **Consistency Tracking**               | Suggestions respect your edit history to maintain coherence                                                                           |
-| **Integrated Asset System**            | Create and reuse **characters, styles, locations, and objects** directly inside the prompt optimizer for consistent production output |
-| **`@trigger` Prompt Assembly**         | Reference assets via `@trigger` tokens with UX support (autocomplete/detection) so prompt building becomes reusable “building blocks” |
-| **Reference Image Library**            | Upload/manage reference images (standalone + asset-attached) to support identity + visual continuity                                  |
-| **Keyframe / Image-to-Video Workflow** | Use a start frame/keyframe (from uploads, library, or assets) to guide generation instead of text-only video                          |
-| **Face-Consistent Keyframes (PuLID)**  | Higher-quality face identity preservation for character consistency (with fallback behavior when not configured)                      |
-| **Consistent Generation Workflow**     | Supports “generate keyframe → approve → generate video” for multi-shot/series production patterns                                     |
+| Feature                                | What It Does                                                                                                                                                                                                    |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Semantic Labeling**                  | 30+ categories tuned for video (subject, camera, lighting, action, style...)                                                                                                                                    |
+| **Click-to-Enhance**                   | Click any highlight → get context-aware alternatives → one-click replace                                                                                                                                        |
+| **Direct Video Generation**            | Generate actual videos using OpenAI Sora 2, Google Veo 3, Kling, Luma Ray 3, and Wan — the identities that carry a generation adapter in `shared/modelIdentity.ts`                                              |
+| **Runway as a Prompt Target**          | Vidra writes and compiles prompts for Runway Gen-4.5 (`RunwayStrategy`, `/api/optimize-compile`). Runway has no generation adapter (`generation: []`), so nothing dispatches to it                              |
+| **Visual Preview**                     | Auto-generates preview images using Flux Schnell as you type (debounced)                                                                                                                                        |
+| **Structured Optimization**            | One LLM pass emits a cached structured artifact, rendered to a prompt and gated by a deterministic intent-lock check and a prompt lint; naming a target model compiles that artifact into the model's own prose |
+| **Consistency Tracking**               | Suggestions respect your edit history to maintain coherence                                                                                                                                                     |
+| **Integrated Asset System**            | Create and reuse **characters, styles, locations, and objects** directly inside the prompt optimizer for consistent production output                                                                           |
+| **`@trigger` Prompt Assembly**         | Reference assets via `@trigger` tokens with UX support (autocomplete/detection) so prompt building becomes reusable “building blocks”                                                                           |
+| **Reference Image Library**            | Upload/manage reference images (standalone + asset-attached) to support identity + visual continuity                                                                                                            |
+| **Keyframe / Image-to-Video Workflow** | Use a start frame/keyframe (from uploads, library, or assets) to guide generation instead of text-only video                                                                                                    |
+| **Face-Consistent Keyframes (PuLID)**  | Higher-quality face identity preservation for character consistency (with fallback behavior when not configured)                                                                                                |
+| **Consistent Generation Workflow**     | Supports “generate keyframe → approve → generate video” for multi-shot/series production patterns                                                                                                               |
 
 ---
 
@@ -171,7 +172,7 @@ Preview and generation requests require authentication; anonymous users can’t 
 
 ## Why This Exists
 
-AI video models (Sora, Runway, Veo3) are sensitive to prompt quality. The difference between:
+AI video models are sensitive to prompt quality, and each one wants its own dialect. Vidra compiles a prompt per model — including for Runway Gen-4.5, which it writes for but never calls. The difference between:
 
 ❌ `"person on beach"`  
 ✅ `"Wide shot: woman in her 30s walks barefoot along pristine beach at golden hour, lateral tracking shot, warm backlight..."`
@@ -186,14 +187,19 @@ AI video models (Sora, Runway, Veo3) are sensitive to prompt quality. The differ
 
 ## Supported Ecosystem
 
-Vidra is designed to be the all-in-one studio for the AI video ecosystem. It optimizes prompts AND directly generates video with:
+Vidra is designed to be the all-in-one studio for the AI video ecosystem.
+
+**Optimizes prompts AND generates video with** (each has a generation adapter under `server/src/services/video-generation/providers/`):
 
 - **OpenAI Sora 2** (Physics simulation & continuity)
 - **Google Veo 3** (Cinematic lighting & atmosphere)
-- **Runway Gen-45** (Stylized visuals & VFX)
 - **Kling 2.6** (Character performance)
 - **Luma Ray 3** (Morphing & transitions)
 - **Wan 2.2** (High-fidelity previews)
+
+**Optimizes prompts for, without generating:**
+
+- **Runway Gen-4.5** (Stylized visuals & VFX) — a prompt target. `RunwayStrategy` describes and compiles for it, and the capability registry prices and constrains it, but `shared/modelIdentity.ts` records `generation: []`: no adapter can invoke Runway, so you take the compiled prompt to Runway yourself.
 
 ---
 
@@ -216,8 +222,9 @@ Vidra is designed to be the all-in-one studio for the AI video ecosystem. It opt
 
 **Production Ready Features:**
 
-- ✅ Advanced Text Optimization Engine (Two-Stage Pipeline)
-- ✅ Direct Video Generation (Sora 2, Veo 3, Luma Ray 3, Runway Gen-45)
+- ✅ Structured Optimization Engine (cached artifact → intent lock → prompt lint, with optional per-model compilation)
+- ✅ Direct Video Generation (Sora 2, Veo 3, Kling v2.1, Luma Ray 3, Wan 2.2/2.5)
+- ✅ Prompt compilation for Runway Gen-4.5 (prompt target only — no generation adapter)
 - ✅ Video Preview Generation (Wan 2.2)
 - ✅ Image Preview Generation (Flux Schnell)
 - ✅ Concept Builder & Improvement Wizards
@@ -274,18 +281,30 @@ prompt-builder/
 
 ## API
 
-**Optimize with streaming:**
+**Optimize a prompt** (single buffered JSON response):
 
 ```bash
-POST /api/optimize-stream
+POST /api/optimize
 Content-Type: application/json
 
 {
   "prompt": "person walking on beach",
-  "mode": "video"
+  "mode": "video",
+  "targetModel": "kling-2.1"  // optional — compiles for that model
 }
 
-# Returns SSE stream: draft → spans → refined → done
+# Returns:
+{
+  "success": true,
+  "data": {
+    "prompt": "...",          // the finished prompt
+    "optimizedPrompt": "...", // same value, legacy field name
+    "previewPrompt": "...",   // short still-frame composition of the same slots
+    "genericPrompt": "...",   // the prompt before any model-specific compile
+    "artifactKey": "...",     // recompile for another model via POST /api/optimize-compile
+    "compilation": { "status": "..." }
+  }
+}
 ```
 
 **Get suggestions for a span:**
@@ -362,10 +381,11 @@ npm run arch:check  # Architecture gates (cycles + forbidden imports)
 
 **In active development.** Core features working:
 
-- ✅ Two-stage optimization
+- ✅ Structured optimization (cached artifact + intent lock + prompt lint)
 - ✅ Semantic span labeling (30+ categories)
 - ✅ Click-to-enhance suggestions
-- ✅ Direct Video Generation (Sora 2, Veo 3, Luma Ray 3, Runway Gen-45)
+- ✅ Direct Video Generation (Sora 2, Veo 3, Kling v2.1, Luma Ray 3, Wan 2.2/2.5)
+- ✅ Prompt compilation for Runway Gen-4.5 (prompt target only — no generation adapter)
 - ✅ Video Preview Generation (Wan 2.2)
 - ✅ Image Preview Generation (Flux Schnell)
 - ✅ Multi-provider LLM support
