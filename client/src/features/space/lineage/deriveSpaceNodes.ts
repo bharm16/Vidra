@@ -31,6 +31,13 @@ function mapStatus(status: string): SpaceNode["status"] {
 export interface VersionLineageInput {
   versionId: string;
   prompt: string;
+  /**
+   * ADR-0013 / issue #116: the PERSISTED reword parent — the words-version
+   * this one was reworded from. The reword edge is drawn from this recorded
+   * fact, never from array order. Absent = the root or a legacy version, which
+   * draws no reword edge (an explicit unknown, not a chain).
+   */
+  rewordedFromVersionId?: string | undefined;
   generations?: ReadonlyArray<Generation> | undefined;
 }
 
@@ -57,26 +64,42 @@ export interface VersionLineageInput {
  * exactly like a real one. Derived ancestry is out; recorded ancestry, or an
  * honest gap.
  *
- * NOT fixed here, and deliberately: the REWORD edge between words-versions is
- * still derived from array order below. That is the open ADR-0013 M4 gap —
- * out of scope for take ancestry, noted so the next reader does not mistake
- * it for the same bug.
+ * The REWORD edge between words-versions is persisted the same way (issue
+ * #116, closing the ADR-0013 M4 gap): each words-version carries the version
+ * it was reworded FROM in `rewordedFromVersionId`, so a reword of an OLDER
+ * version branches off that older version and neither reordering nor
+ * concurrent creation can move the edge. Array position is no longer read. A
+ * version with no recorded parent — the root, or a legacy entry written
+ * before the field existed — draws no reword edge rather than being chained to
+ * the preceding array entry: an honest unknown, not a fabricated line.
  */
 export function deriveSpaceNodesFromVersions(
   versions: ReadonlyArray<VersionLineageInput>,
 ): SpaceNode[] {
-  const words: LineageInput["words"] = versions.map((version, index) => ({
-    versionId: version.versionId,
-    label: version.prompt,
-    ...(index > 0 ? { rewordedFrom: versions[index - 1]!.versionId } : {}),
-  }));
+  // The set of words-versions that exist in this session, so neither a reword
+  // edge nor a take's own words-version can ever point at a words node that
+  // does not get built.
+  const versionIds = new Set(versions.map((v) => v.versionId));
+
+  const words: LineageInput["words"] = versions.map((version) => {
+    // ADR-0013 / issue #116: the reword edge comes from the PERSISTED parent,
+    // never array order. A parent that names this same version, or one absent
+    // from this session, draws no edge rather than a wrong one.
+    const rewordedFrom =
+      version.rewordedFromVersionId &&
+      version.rewordedFromVersionId !== version.versionId &&
+      versionIds.has(version.rewordedFromVersionId)
+        ? version.rewordedFromVersionId
+        : undefined;
+    return {
+      versionId: version.versionId,
+      label: version.prompt,
+      ...(rewordedFrom ? { rewordedFrom } : {}),
+    };
+  });
 
   const pictures: LineageInput["pictures"] = [];
   const clips: LineageInput["clips"] = [];
-
-  // The set of words-versions that exist in this session, so a take's own
-  // words-version can only ever point at a words node that gets built.
-  const versionIds = new Set(versions.map((v) => v.versionId));
 
   for (const version of versions) {
     const generations = version.generations ?? [];

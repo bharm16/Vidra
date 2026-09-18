@@ -352,5 +352,6 @@ this ADR lands and is re-checked against the accepted decisions before it become
 
 Open and deliberately **not** decided here: subject motion still has no UI writer and is
 left alone; the reword edge between words-versions is still order-derived (an ADR-0013 M4
-gap, noted not fixed); and a session-launched live editor that returns to its originating
-session exists only as an optional destination in the bridge contract, with no surface.
+gap, noted not fixed — subsequently closed by #116, which persists the reword parent); and
+a session-launched live editor that returns to its originating session exists only as an
+optional destination in the bridge contract, with no surface.

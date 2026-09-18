@@ -56,6 +56,14 @@ export interface PromptVersionVideo {
 
 export interface PromptVersionEntry {
   versionId: string;
+  /**
+   * ADR-0013: the words-version this one was reworded FROM — the persisted
+   * reword parent (issue #116). Stamped at creation with the version the
+   * creator reworded from (the active version), so the space draws the reword
+   * edge from this recorded fact rather than from array order. Absent on the
+   * root and on legacy versions, which read as an explicit unknown.
+   */
+  rewordedFromVersionId?: string;
   label?: string;
   signature: string;
   prompt: string;

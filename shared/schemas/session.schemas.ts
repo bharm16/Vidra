@@ -220,6 +220,16 @@ export const SessionGenerationRecordSchema = z
 
 export const SessionPromptVersionEntrySchema = z.object({
   versionId: z.string(),
+  /**
+   * ADR-0013: the words-version this one was reworded FROM — the persisted
+   * reword parent, and the single source of the space's reword edge. A reword
+   * of an OLDER version records that older version here, so the edge is drawn
+   * from the recorded fact and never from this array's order (issue #116,
+   * closing the ADR-0013 M4 gap). Absent on the session's first words-version
+   * (the root) and on legacy versions written before this field existed —
+   * those read as an explicit unknown, never chained to the preceding entry.
+   */
+  rewordedFromVersionId: z.string().optional(),
   label: z.string().optional(),
   signature: z.string(),
   prompt: z.string(),
