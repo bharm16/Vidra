@@ -63,10 +63,9 @@ jobs:
           ALLOWED_API_KEYS: dev-key-12345
         run: npm run test:unit
 
-      - name: Coverage (if configured)
-        run: |
-          if npm run | grep -q "test:coverage"; then
-            npm run test:coverage;
-          else
-            echo "No coverage script configured";
-          fi
+      # No coverage step here on purpose. test:coverage runs the SAME suite as
+      # test:unit with instrumentation, so running both doubled this job's wall
+      # clock for no extra signal — the same finding that collapsed the two runs
+      # in test.yml. Nothing consumed the artifact here either: the real
+      # coverage run lives in test.yml, which uploads to Codecov and archives
+      # the report.
