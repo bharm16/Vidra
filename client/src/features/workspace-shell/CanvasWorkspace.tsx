@@ -78,6 +78,7 @@ import { createStudioProjectFromSessionPicture } from "@/features/studio/api/stu
 import { useToast } from "@components/Toast";
 import type { SpaceNode } from "@/features/space/lineage/types";
 import { archiveGeneration } from "@/features/space/api/spaceApi";
+import { ApiError } from "@/services/http/ApiError";
 import type {
   PromptEditorWiring,
   PromptEditorSurfaceProps,
@@ -502,11 +503,20 @@ export function CanvasWorkspace({
       if (!sessionId) return;
       void archiveGeneration(sessionId, node.id)
         .then(() => setLocallyArchivedIds((prev) => new Set(prev).add(node.id)))
-        .catch(() => {
-          /* leaf conflict or network — the node stays */
+        .catch((error: unknown) => {
+          // The node stays put — locallyArchivedIds is only added to on
+          // success — and, like the neighbouring share and studio actions,
+          // the creator is told rather than left guessing. A 409 is the
+          // leaf-only rule (a child attached since the menu opened); anything
+          // else is a conflict or the network.
+          toast.error(
+            error instanceof ApiError && error.status === 409
+              ? "Only a childless node can be removed"
+              : "Couldn't remove this node",
+          );
         });
     },
-    [session?.id],
+    [session?.id, toast],
   );
 
   // Animate (RULINGS §5): set a picture as the start frame, arming the video

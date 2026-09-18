@@ -24,10 +24,27 @@ const makeSession = (
 describe("SessionService.createPromptSession", () => {
   it("updates an existing session when prompt UUID already exists", async () => {
     const existing = makeSession();
+    const save = vi.fn().mockResolvedValue(undefined);
+    const get = vi.fn().mockResolvedValue(existing);
+    // updateSession now runs through the store's transactional mutate path
+    // (issue #113); the double models it as read → mutate → write so the
+    // save assertion below still means "this update wrote".
     const store = {
-      save: vi.fn().mockResolvedValue(undefined),
-      get: vi.fn().mockResolvedValue(existing),
+      save,
+      get,
       findByPromptUuid: vi.fn().mockResolvedValue(existing),
+      mutate: vi.fn(
+        async (
+          sessionId: string,
+          mutator: (current: SessionRecord) => SessionRecord,
+        ) => {
+          const current = (await get(sessionId)) as SessionRecord | null;
+          if (!current) return null;
+          const next = mutator(current);
+          await save(next);
+          return next;
+        },
+      ),
     } as unknown as ConstructorParameters<typeof SessionService>[0];
 
     const service = new SessionService(store);

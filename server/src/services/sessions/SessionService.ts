@@ -152,77 +152,93 @@ export class SessionService {
     return sessions;
   }
 
+  /**
+   * The general session update — and, through `updatePrompt`/`updateOutput`,
+   * the prompt-update and output-update paths, which is how the handoffs arm
+   * the first frame (via `keyframes`).
+   *
+   * The change is expressed as a mutator over the transaction's OWN snapshot
+   * (ADR-0022 decision 6), so a take appended or a rename that landed between
+   * the request arriving and this write is rebuilt on rather than clobbered.
+   * The read-then-`save` path this replaced built its whole `prompt` from a
+   * snapshot taken before the transaction, so a merge wrote back a `versions`
+   * array that never saw the concurrent append. The mutator is pure and
+   * re-runnable: the immutability warning counts ride out in closure variables
+   * and are logged only once the transaction commits — logging is a side
+   * effect Firestore must not repeat on contention.
+   */
   private async updateSession(
     sessionId: string,
     updates: SessionUpdateRequest,
   ): Promise<SessionRecord> {
-    const current = await this.sessionStore.get(sessionId);
-    if (!current) {
+    let keyframeWarnings = 0;
+    let versionWarnings = 0;
+
+    const next = await this.sessionStore.mutate(sessionId, (current) => {
+      let mergedPrompt = updates.prompt
+        ? {
+            ...(current.prompt ?? { input: "", output: "" }),
+            ...updates.prompt,
+          }
+        : current.prompt;
+
+      if (updates.prompt && mergedPrompt) {
+        if (updates.prompt.keyframes !== undefined) {
+          const enforcedKeyframes = enforceImmutableKeyframes(
+            current.prompt?.keyframes ?? null,
+            mergedPrompt.keyframes ?? null,
+          );
+          keyframeWarnings = enforcedKeyframes.warnings.length;
+          mergedPrompt = {
+            ...mergedPrompt,
+            keyframes: enforcedKeyframes.keyframes ?? null,
+          };
+        }
+        if (updates.prompt.versions !== undefined) {
+          const enforcedVersions = enforceImmutableVersions(
+            current.prompt?.versions ?? null,
+            mergedPrompt.versions ?? null,
+          );
+          versionWarnings = enforcedVersions.warnings.length;
+          const nextVersions = enforcedVersions.versions ?? undefined;
+          mergedPrompt = {
+            ...mergedPrompt,
+            ...(nextVersions !== undefined ? { versions: nextVersions } : {}),
+          };
+        }
+      }
+
+      return {
+        ...current,
+        ...(updates.name !== undefined ? { name: updates.name } : {}),
+        ...(updates.description !== undefined
+          ? { description: updates.description }
+          : {}),
+        ...(updates.status ? { status: updates.status } : {}),
+        ...(mergedPrompt ? { prompt: mergedPrompt } : {}),
+        ...(mergedPrompt?.uuid ? { promptUuid: mergedPrompt.uuid } : {}),
+        updatedAt: new Date(),
+      };
+    });
+
+    if (!next) {
       throw new Error(`Session not found: ${sessionId}`);
     }
-
-    let mergedPrompt = updates.prompt
-      ? {
-          ...(current.prompt ?? { input: "", output: "" }),
-          ...updates.prompt,
-        }
-      : current.prompt;
-
-    if (updates.prompt && mergedPrompt) {
-      if (updates.prompt.keyframes !== undefined) {
-        const enforcedKeyframes = enforceImmutableKeyframes(
-          current.prompt?.keyframes ?? null,
-          mergedPrompt.keyframes ?? null,
-        );
-        if (enforcedKeyframes.warnings.length) {
-          this.log.warn(
-            "Preserved immutable keyframe references during session update",
-            {
-              sessionId,
-              warningCount: enforcedKeyframes.warnings.length,
-            },
-          );
-        }
-        mergedPrompt = {
-          ...mergedPrompt,
-          keyframes: enforcedKeyframes.keyframes ?? null,
-        };
-      }
-      if (updates.prompt.versions !== undefined) {
-        const enforcedVersions = enforceImmutableVersions(
-          current.prompt?.versions ?? null,
-          mergedPrompt.versions ?? null,
-        );
-        if (enforcedVersions.warnings.length) {
-          this.log.warn(
-            "Corrected server-owned take facts during session update",
-            {
-              sessionId,
-              warningCount: enforcedVersions.warnings.length,
-            },
-          );
-        }
-        const nextVersions = enforcedVersions.versions ?? undefined;
-        mergedPrompt = {
-          ...mergedPrompt,
-          ...(nextVersions !== undefined ? { versions: nextVersions } : {}),
-        };
-      }
+    if (keyframeWarnings) {
+      this.log.warn(
+        "Preserved immutable keyframe references during session update",
+        {
+          sessionId,
+          warningCount: keyframeWarnings,
+        },
+      );
     }
-
-    const next: SessionRecord = {
-      ...current,
-      ...(updates.name !== undefined ? { name: updates.name } : {}),
-      ...(updates.description !== undefined
-        ? { description: updates.description }
-        : {}),
-      ...(updates.status ? { status: updates.status } : {}),
-      ...(mergedPrompt ? { prompt: mergedPrompt } : {}),
-      ...(mergedPrompt?.uuid ? { promptUuid: mergedPrompt.uuid } : {}),
-      updatedAt: new Date(),
-    };
-
-    await this.sessionStore.save(next);
+    if (versionWarnings) {
+      this.log.warn("Corrected server-owned take facts during session update", {
+        sessionId,
+        warningCount: versionWarnings,
+      });
+    }
     return next;
   }
 
@@ -266,45 +282,52 @@ export class SessionService {
     return this.updatePrompt(sessionId, updates);
   }
 
+  /**
+   * The highlight-cache write, plus the optional highlight version entry.
+   * Rebuilt from the transaction's current snapshot (ADR-0022 decision 6): the
+   * entry is pushed onto whatever versions exist at commit time, so a take
+   * appended concurrently is kept rather than erased by a versions array read
+   * before this write opened its transaction.
+   */
   private async updateHighlights(
     sessionId: string,
     updates: SessionHighlightUpdate,
   ): Promise<SessionRecord> {
-    const current = await this.sessionStore.get(sessionId);
-    if (!current) throw new Error(`Session not found: ${sessionId}`);
-    const prompt = current.prompt ?? { input: "", output: "" };
-    const nextVersions = Array.isArray(prompt.versions)
-      ? [...prompt.versions]
-      : [];
-    if (updates.versionEntry) {
-      const timestamp =
-        updates.versionEntry.timestamp ?? new Date().toISOString();
-      const basePromptText =
-        (typeof prompt.output === "string" && prompt.output.trim().length > 0
-          ? prompt.output
-          : prompt.input) || "";
-      const nextEntry: SessionPromptVersionEntry = {
-        versionId: generateId("highlight"),
-        signature: "highlight-update",
-        prompt: basePromptText,
-        timestamp,
+    const next = await this.sessionStore.mutate(sessionId, (current) => {
+      const prompt = current.prompt ?? { input: "", output: "" };
+      const nextVersions = Array.isArray(prompt.versions)
+        ? [...prompt.versions]
+        : [];
+      if (updates.versionEntry) {
+        const timestamp =
+          updates.versionEntry.timestamp ?? new Date().toISOString();
+        const basePromptText =
+          (typeof prompt.output === "string" && prompt.output.trim().length > 0
+            ? prompt.output
+            : prompt.input) || "";
+        const nextEntry: SessionPromptVersionEntry = {
+          versionId: generateId("highlight"),
+          signature: "highlight-update",
+          prompt: basePromptText,
+          timestamp,
+        };
+        nextVersions.push({
+          ...nextEntry,
+        });
+      }
+      return {
+        ...current,
+        prompt: {
+          ...prompt,
+          ...(updates.highlightCache !== undefined
+            ? { highlightCache: updates.highlightCache }
+            : {}),
+          ...(updates.versionEntry ? { versions: nextVersions } : {}),
+        },
+        updatedAt: new Date(),
       };
-      nextVersions.push({
-        ...nextEntry,
-      });
-    }
-    const next = {
-      ...current,
-      prompt: {
-        ...prompt,
-        ...(updates.highlightCache !== undefined
-          ? { highlightCache: updates.highlightCache }
-          : {}),
-        ...(updates.versionEntry ? { versions: nextVersions } : {}),
-      },
-      updatedAt: new Date(),
-    };
-    await this.sessionStore.save(next);
+    });
+    if (!next) throw new Error(`Session not found: ${sessionId}`);
     return next;
   }
 
@@ -508,41 +531,57 @@ export class SessionService {
     sessionId: string,
     generationId: string,
   ): Promise<SessionRecord> {
-    const current = await this.requireOwnedSession(userId, sessionId);
-    const prompt = current.prompt ?? { input: "", output: "" };
-    const versions = Array.isArray(prompt.versions) ? prompt.versions : [];
+    // Ownership + existence first, for the 404/403 semantics (mirrors
+    // appendGenerationToVersion). The leaf check and the archive then run
+    // inside the transaction, against the snapshot the write commits over
+    // (ADR-0022 decision 6): a child attached concurrently is seen by the leaf
+    // rule, and a take appended concurrently survives the archive rather than
+    // being erased by a versions array read before this ran.
+    await this.requireOwnedSession(userId, sessionId);
 
-    const hasLiveChild = versions.some((version) =>
-      (version.generations ?? []).some(
-        (gen) =>
-          gen.archived !== true && gen.ancestorGenerationId === generationId,
-      ),
-    );
-    if (hasLiveChild) {
-      throw new GenerationNotRemovableError(generationId);
-    }
+    const next = await this.sessionStore.mutate(sessionId, (current) => {
+      // Ownership is the condition of the write, re-checked against the
+      // transaction's snapshot rather than a read that preceded it.
+      if (current.userId !== userId) {
+        throw new SessionAccessDeniedError(sessionId, userId, current.userId);
+      }
 
-    let found = false;
-    const nextVersions = versions.map((version) => {
-      const generations = version.generations;
-      if (!Array.isArray(generations)) return version;
-      const idx = generations.findIndex((gen) => gen.id === generationId);
-      if (idx < 0) return version;
-      found = true;
-      const nextGenerations = [...generations];
-      nextGenerations[idx] = { ...generations[idx], archived: true };
-      return { ...version, generations: nextGenerations };
+      const prompt = current.prompt ?? { input: "", output: "" };
+      const versions = Array.isArray(prompt.versions) ? prompt.versions : [];
+
+      const hasLiveChild = versions.some((version) =>
+        (version.generations ?? []).some(
+          (gen) =>
+            gen.archived !== true && gen.ancestorGenerationId === generationId,
+        ),
+      );
+      if (hasLiveChild) {
+        throw new GenerationNotRemovableError(generationId);
+      }
+
+      let found = false;
+      const nextVersions = versions.map((version) => {
+        const generations = version.generations;
+        if (!Array.isArray(generations)) return version;
+        const idx = generations.findIndex((gen) => gen.id === generationId);
+        if (idx < 0) return version;
+        found = true;
+        const nextGenerations = [...generations];
+        nextGenerations[idx] = { ...generations[idx], archived: true };
+        return { ...version, generations: nextGenerations };
+      });
+      if (!found) {
+        throw new GenerationNotFoundError(generationId);
+      }
+
+      return {
+        ...current,
+        prompt: { ...prompt, versions: nextVersions },
+        updatedAt: new Date(),
+      };
     });
-    if (!found) {
-      throw new GenerationNotFoundError(generationId);
-    }
 
-    const next: SessionRecord = {
-      ...current,
-      prompt: { ...prompt, versions: nextVersions },
-      updatedAt: new Date(),
-    };
-    await this.sessionStore.save(next);
+    if (!next) throw new SessionNotFoundError(sessionId);
     return next;
   }
 
