@@ -72,6 +72,29 @@ describe("buildAdmissionAcceptanceFingerprint (issue #114)", () => {
     expect(stringify(other)).not.toBe(stringify(baseInput()));
   });
 
+  it("moves when the confirmed associated words change, so a changed confirmation is a distinct acceptance (issue #131)", () => {
+    // The words the creator confirmed for a session this acceptance mints are
+    // part of its identity: a re-press with different words must NOT replay the
+    // first — it must be recognised as a different acceptance.
+    const alpha = { ...baseInput(), associatedWordsText: "a paper crane" };
+    const beta = { ...baseInput(), associatedWordsText: "an origami swan" };
+    expect(stringify(alpha)).not.toBe(stringify(beta));
+    // The same confirmed words fingerprint identically — a genuine retry is a
+    // replay, not a conflict.
+    expect(stringify(alpha)).toBe(stringify({ ...alpha }));
+    // Setting words at all moves it off the words-less admission.
+    expect(stringify(alpha)).not.toBe(stringify(baseInput()));
+  });
+
+  it("omits the associated words when a caller files under a session's own words, fingerprinting exactly as before the field existed", () => {
+    // An admission that does not confirm words (an upload, a return into an
+    // existing origin session) carries no such field, so its serialization is
+    // byte-for-byte what it was before issue #131.
+    const fingerprint = buildAdmissionAcceptanceFingerprint(baseInput());
+    expect("associatedWordsText" in fingerprint).toBe(false);
+    expect(stringify(baseInput())).not.toContain("associatedWordsText");
+  });
+
   it("moves when a take joins the source tuple, and when the display ancestor changes", () => {
     const added = baseInput();
     added.sourceInputs = [

@@ -381,6 +381,9 @@ export function createStudioRouter(
           ...(parsed.value.onMissingOriginSession
             ? { onMissingOriginSession: parsed.value.onMissingOriginSession }
             : {}),
+          ...(parsed.value.confirmedWords
+            ? { confirmedWords: parsed.value.confirmedWords }
+            : {}),
         },
       );
 
@@ -409,6 +412,22 @@ export function createStudioRouter(
             sessionId: result.sessionId,
             error:
               "The session this project came from is gone. Start a new session with this picture instead?",
+          });
+          return;
+        case "needs-confirmed-words":
+          // Also a question, not an error (issue #131): a new session's words
+          // are the creator's to confirm, never the edit instruction or
+          // transform label. `reason` discriminates it from the other 409s;
+          // `suggestion` is a from-scratch generate's prompt when one exists,
+          // absent otherwise so the creator supplies their own words.
+          res.status(409).json({
+            success: false,
+            reason: "needs-confirmed-words",
+            ...(result.suggestion !== undefined
+              ? { suggestion: result.suggestion }
+              : {}),
+            error:
+              "Name the session this picture starts — the words it should restore. The instruction that produced it is kept separately.",
           });
           return;
         case "unusable-media":

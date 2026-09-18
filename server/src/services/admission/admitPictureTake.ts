@@ -516,8 +516,10 @@ export async function admitPictureTake(
     // wrong replay. It is built over the digest of the media bytes — so a
     // different file retried under a retained key conflicts rather than
     // replaying — plus the destination, origin, provenance, contributing
-    // inputs and display ancestor (issue #114). The digest is computed here,
-    // before the bytes are stored, so no transient signed URL can enter it.
+    // inputs, display ancestor, and, when a caller confirms them for a session
+    // it mints, the associated words (issues #114, #131). The digest is
+    // computed here, before the bytes are stored, so no transient signed URL
+    // can enter it.
     payload: buildAdmissionAcceptanceFingerprint({
       sessionId: request.sessionId,
       promptVersionId: request.promptVersionId,
@@ -528,6 +530,10 @@ export async function admitPictureTake(
       productionProvenance: request.productionProvenance,
       sourceInputs: request.sourceInputs,
       displayAncestorGenerationId: request.displayAncestorGenerationId,
+      // Only the callers that override the associated words (the studio return
+      // that mints a session — issue #131) move the fingerprint; one that files
+      // under a session's own words omits it and fingerprints as before.
+      associatedWordsText: request.associatedWordsText,
     }),
   });
 

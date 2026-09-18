@@ -76,6 +76,19 @@ export const StudioUseInSessionRequestSchema = z.object({
   onMissingOriginSession: z
     .enum(STUDIO_MISSING_ORIGIN_SESSION_CHOICES)
     .optional(),
+  /**
+   * The creator-confirmed associated words for a session this return mints
+   * (ADR-0022 decision 2, issue #131). Required only when a new session is
+   * created — a return into the project's existing origin session ignores it,
+   * because the take is filed under that session's own words. It is NEVER the
+   * edit instruction or the transform operation label that produced the image:
+   * those are recorded separately as production provenance, and restoring an
+   * instruction as a session's words is the exact fabrication decision 2
+   * forbids. When the server mints a session and no confirmed words are
+   * supplied, it asks for them (offering a from-scratch generate's prompt as an
+   * editable suggestion) rather than inventing any.
+   */
+  confirmedWords: z.string().min(1).max(4000).optional(),
 });
 
 export const StudioUseInSessionResultSchema = z.object({
