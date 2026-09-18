@@ -209,6 +209,24 @@ export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
   >;
 }
 
+/**
+ * A media copy a losing concurrent bridge left behind (#127). Two simultaneous
+ * "Refine in the studio" presses both copy the picture before either claims the
+ * project id; the loser's copy is durable bytes no project references. This
+ * names it — the storage path to reap, and the winning project it must never be
+ * confused with — so the cleanup stack (#137) can reap it. The winner's own
+ * copy is authoritative and is never named here.
+ */
+export interface OrphanedBridgeCopy {
+  /** The abandoned object under the creator's prefix — the copy to reap. */
+  storagePath: string;
+  /** The project that won the id claim; its copy is the one that survives. */
+  projectId: string;
+  userId: string;
+  sessionId: string;
+  generationId: string;
+}
+
 export interface StudioServiceDeps {
   store: StudioProjectStore;
   registry: StudioModelRegistry;
@@ -223,6 +241,13 @@ export interface StudioServiceDeps {
   maxTurnsPerProject?: number;
   now?: () => Date;
   idFactory?: () => string;
+  /**
+   * Where a losing concurrent bridge reports the copy it orphaned (#127). The
+   * default records it for the cleanup stack (#137) to reap; #137 replaces
+   * this with the actual reaper. This seam only IDENTIFIES the orphan — it
+   * never deletes, and deletion is deliberately out of scope until #137.
+   */
+  reportOrphanedBridgeCopy?: (copy: OrphanedBridgeCopy) => void;
 }
 
 export interface RunTurnResult {
@@ -317,6 +342,7 @@ export class StudioService {
   private readonly maxTurnsPerProject: number;
   private readonly now: () => Date;
   private readonly idFactory: () => string;
+  private readonly reportOrphanedBridgeCopy: (copy: OrphanedBridgeCopy) => void;
   private readonly log = logger.child({ service: "StudioService" });
 
   constructor(deps: StudioServiceDeps) {
@@ -328,6 +354,13 @@ export class StudioService {
     this.maxTurnsPerProject = deps.maxTurnsPerProject ?? MAX_TURNS_PER_PROJECT;
     this.now = deps.now ?? (() => new Date());
     this.idFactory = deps.idFactory ?? (() => randomUUID());
+    this.reportOrphanedBridgeCopy =
+      deps.reportOrphanedBridgeCopy ??
+      ((copy) =>
+        this.log.warn(
+          "Studio bridge lost the id claim; copy orphaned for cleanup (#137)",
+          { ...copy },
+        ));
     this.ledger = new StudioSpendLedger({
       store: deps.store,
       dailyCapCents: deps.dailyCapCents,
@@ -376,9 +409,10 @@ export class StudioService {
    *
    * The sequence, and why it is in this order:
    *
-   *  1. **Identity first.** The project id is derived from the take, so a
-   *     second invocation finds the first project instead of minting a rival.
-   *     Checked before anything is copied — a retry re-stores no bytes.
+   *  1. **Identity first.** The project id is derived from the take. A press
+   *     that arrives after the first completed finds the project and returns
+   *     it — a retry re-stores no bytes. The read alone does NOT settle two
+   *     SIMULTANEOUS presses: both can pass it before either writes (step 5).
    *  2. **Ownership.** A defense-in-depth check that the source path is the
    *     creator's, in EITHER store (issue #109) — the same predicate the
    *     session-side resolver already applied when it minted `source.viewUrl`.
@@ -391,6 +425,13 @@ export class StudioService {
    *     first image and made the selection, so an edit turn sources it exactly
    *     as it sources an uploaded reference; the origin is stamped with the
    *     session, words-version and take identity AS OF this moment.
+   *  5. **Claim, atomically (#127).** The project is written with a
+   *     create-if-absent claim, not an overwrite. Two simultaneous presses
+   *     both reach here with their own copies; exactly one claim wins. The
+   *     loser copied bytes it will never own, so it names that copy for cleanup
+   *     (#137 reaps it — this never deletes) and returns the WINNER as it
+   *     stands now, including any edits and selection made since. The winner's
+   *     project is never rewritten, so a later press cannot roll it back.
    *
    * It writes nothing back to the session — the source take and its paired
    * words are untouched, by having no way to reach them.
@@ -465,13 +506,35 @@ export class StudioService {
       updatedAtMs: nowMs,
     };
 
-    await this.store.createProject(project);
-    this.log.info("Studio project born from a session picture", {
+    const claimed = await this.store.createProject(project);
+    if (claimed) {
+      this.log.info("Studio project born from a session picture", {
+        projectId,
+        sessionId: source.sessionId,
+        generationId: source.generationId,
+      });
+      return project;
+    }
+
+    // A simultaneous press claimed the id between our read (step 1) and this
+    // write. Our copy is now bytes no project references — name it for cleanup
+    // (#137), never delete it, and never touch the winner.
+    this.reportOrphanedBridgeCopy({
+      storagePath: copied.storagePath,
       projectId,
+      userId,
       sessionId: source.sessionId,
       generationId: source.generationId,
     });
-    return project;
+
+    // Return the winner AS IT STANDS NOW — reopened, not our rejected draft —
+    // so any edit or selection it made since is preserved. The claim proved
+    // the document exists; a null read here would be a store fault.
+    const winner = await this.store.getProject(projectId);
+    if (!winner || winner.userId !== userId) {
+      throw new StudioNotFoundError("Studio project");
+    }
+    return winner;
   }
 
   async getProject(

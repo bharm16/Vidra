@@ -441,9 +441,10 @@ export class InMemoryStudioProjectStore implements StudioProjectStore {
   private readonly turns = new Map<string, StudioTurnRecord>();
   private readonly reserved = new Map<string, number>();
 
-  createProject(record: StudioProjectRecord): Promise<void> {
+  createProject(record: StudioProjectRecord): Promise<boolean> {
+    if (this.projects.has(record.id)) return Promise.resolve(false);
     this.projects.set(record.id, structuredClone(record));
-    return Promise.resolve();
+    return Promise.resolve(true);
   }
 
   getProject(projectId: string): Promise<StudioProjectRecord | null> {

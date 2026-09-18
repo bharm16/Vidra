@@ -9,7 +9,17 @@ import type { StudioProjectRecord, StudioTurnRecord } from "../types";
  * production adapter; the tests' in-memory stand-ins are the test adapter.
  */
 export interface StudioProjectStore {
-  createProject(record: StudioProjectRecord): Promise<void>;
+  /**
+   * Atomically claim a NEW project document. Returns `true` when this call
+   * created it, `false` when a document with that id already existed and
+   * nothing was written — the create-if-absent contract two concurrent "Refine
+   * in the studio" presses race on (#127). The two presses derive the same
+   * project id (`studioProjectIdForSessionPicture`), so an unconditional
+   * overwrite here would let the later press replace the winner's project —
+   * and any edits or selection it had made since; the atomic claim is what
+   * serialises them, and the loser reads the winner back rather than writing.
+   */
+  createProject(record: StudioProjectRecord): Promise<boolean>;
   getProject(projectId: string): Promise<StudioProjectRecord | null>;
   /**
    * A user's projects, most-recently-updated first, capped at `limitCount`.

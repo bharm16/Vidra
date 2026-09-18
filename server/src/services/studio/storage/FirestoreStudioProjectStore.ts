@@ -72,6 +72,24 @@ export function studioUsageDayKey(at: Date): string {
 /** Under Firestore's 500-writes-per-batch limit with headroom. */
 const DELETE_BATCH_SIZE = 400;
 
+/**
+ * Firestore's gRPC ALREADY_EXISTS status code. `DocumentReference.create()`
+ * rejects with it when the document is already present — the signal that a
+ * concurrent claim won the id (#127). The Admin SDK surfaces the raw gRPC
+ * code, so this is a number rather than a named enum the SDK does not export.
+ */
+const FIRESTORE_ALREADY_EXISTS = 6;
+
+/** Whether a rejected `create()` failed because the document already existed. */
+function isAlreadyExistsError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === FIRESTORE_ALREADY_EXISTS
+  );
+}
+
 export class FirestoreStudioProjectStore implements StudioProjectStore {
   private readonly db = getFirestore();
   private readonly projects = this.db.collection("studio_projects");
@@ -81,8 +99,21 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
     return this.projects.doc(projectId).collection("turns");
   }
 
-  async createProject(record: StudioProjectRecord): Promise<void> {
-    await this.projects.doc(record.id).set(this.stripUndefined(record));
+  /**
+   * Atomically claim the project's document. `create()` (not `set()`) is what
+   * makes this create-if-absent: it fails with ALREADY_EXISTS rather than
+   * overwriting, so a second concurrent "Refine in the studio" press cannot
+   * replace the winner's project (#127). A lost claim answers `false`; every
+   * other failure propagates.
+   */
+  async createProject(record: StudioProjectRecord): Promise<boolean> {
+    try {
+      await this.projects.doc(record.id).create(this.stripUndefined(record));
+      return true;
+    } catch (error) {
+      if (isAlreadyExistsError(error)) return false;
+      throw error;
+    }
   }
 
   async getProject(projectId: string): Promise<StudioProjectRecord | null> {
