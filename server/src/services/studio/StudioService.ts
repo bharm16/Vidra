@@ -16,6 +16,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
 import { validatePathOwnership } from "@services/storage/utils/pathUtils";
+import { isOwnedPicturePath } from "@services/owned-media";
 import type { StudioModelRegistry } from "./StudioModelRegistry";
 import type {
   StudioThinkingHooks,
@@ -93,6 +94,13 @@ export interface SessionPictureSource {
   generationId: string;
   /** A durable path in the creator's own store — never a signed URL. */
   storagePath: string;
+  /**
+   * A fresh read URL for that path, resolved by the session-side lookup through
+   * the shared owner-checked resolver (issue #109). The studio copies the bytes
+   * from this URL rather than re-resolving which store holds them — it has no
+   * way to reach the source stores itself.
+   */
+  viewUrl: string;
   assetId?: string | undefined;
 }
 
@@ -111,15 +119,17 @@ export function studioProjectIdForSessionPicture(
   sessionId: string,
   generationId: string,
 ): string {
-  return createHash("sha256")
-    // JSON-encoded rather than concatenated: the parts are opaque ids, and
-    // a separator one of them could contain would let two different takes
-    // hash to one project.
-    .update(
-      JSON.stringify(["studio-from-take", userId, sessionId, generationId]),
-    )
-    .digest("hex")
-    .slice(0, 32);
+  return (
+    createHash("sha256")
+      // JSON-encoded rather than concatenated: the parts are opaque ids, and
+      // a separator one of them could contain would let two different takes
+      // hash to one project.
+      .update(
+        JSON.stringify(["studio-from-take", userId, sessionId, generationId]),
+      )
+      .digest("hex")
+      .slice(0, 32)
+  );
 }
 
 /**
@@ -296,12 +306,14 @@ export class StudioService {
    *  1. **Identity first.** The project id is derived from the take, so a
    *     second invocation finds the first project instead of minting a rival.
    *     Checked before anything is copied — a retry re-stores no bytes.
-   *  2. **Ownership.** The same anchored `users/<uid>/` rule attachments use,
-   *     applied before the path is signed or read.
+   *  2. **Ownership.** A defense-in-depth check that the source path is the
+   *     creator's, in EITHER store (issue #109) — the same predicate the
+   *     session-side resolver already applied when it minted `source.viewUrl`.
    *  3. **A copy the project owns.** The bytes land in a NEW object under the
-   *     creator's prefix, tagged with where they came from. Referencing the
-   *     session's object instead would tie the project's media to a record the
-   *     session is free to change; a signed URL would tie it to one hour.
+   *     creator's prefix, copied from the URL the resolver minted, tagged with
+   *     where they came from. Referencing the session's object instead would
+   *     tie the project's media to a record the session is free to change; a
+   *     signed URL would tie it to one hour.
    *  4. **Selected, and recorded.** The copy is registered as the project's
    *     first image and made the selection, so an edit turn sources it exactly
    *     as it sources an uploaded reference; the origin is stamped with the
@@ -329,7 +341,7 @@ export class StudioService {
       return existing;
     }
 
-    if (!validatePathOwnership(source.storagePath, userId)) {
+    if (!isOwnedPicturePath(userId, source.storagePath)) {
       const error = new Error("storagePath is not yours") as Error & {
         statusCode: number;
       };
@@ -337,14 +349,11 @@ export class StudioService {
       throw error;
     }
 
-    // Signed only to move the bytes; nothing downstream keeps this URL.
-    const { viewUrl } = await this.storage.getViewUrl(
-      userId,
-      source.storagePath,
-    );
+    // The source URL was minted by the resolver (both stores); the studio just
+    // copies the bytes into an object it owns. Nothing downstream keeps the URL.
     const copied = await this.storage.saveFromUrl(
       userId,
-      viewUrl,
+      source.viewUrl,
       "preview-image",
       {
         studioProjectId: projectId,
