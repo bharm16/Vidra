@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { ownerSegment } from "@services/owned-media";
 import type {
   ImageAssetStore,
   StoredImageAsset,
@@ -106,11 +107,28 @@ export class InMemoryObjectStore {
   };
 }
 
+/**
+ * The image-asset store's base path. Production's `GcsImageAssetStore` writes
+ * every object at `<base>/<owner>/<assetId>` with this default base — NOT the
+ * `users/<uid>/…` namespace the user-scoped store uses. This double emits that
+ * SAME production shape on purpose (issue #109): an earlier version manufactured
+ * `users/<uid>/…` paths here, which made the studio bridge's real-path
+ * namespace mismatch invisible offline. Keeping the double production-shaped is
+ * what lets the cross-mode walkthrough catch that class of bug and any future
+ * one; the broader storage-conformance suite is #138.
+ */
+const IMAGE_PREVIEWS_BASE_PATH = "image-previews";
+
 /** `ImageAssetStore` over the in-memory object store. */
 export class InMemoryImageAssetStore implements ImageAssetStore {
   private barrier: { size: number; waiting: Array<() => void> } | null = null;
 
   constructor(private readonly objects: InMemoryObjectStore) {}
+
+  /** Mirrors `GcsImageAssetStore.objectPath`: `<base>/<owner>/<assetId>`. */
+  private objectPath(userId: string, assetId: string): string {
+    return `${IMAGE_PREVIEWS_BASE_PATH}/${ownerSegment(userId)}/${assetId}`;
+  }
 
   /**
    * Hold the next `count` writers here and release them together.
@@ -144,7 +162,7 @@ export class InMemoryImageAssetStore implements ImageAssetStore {
   ): Promise<StoredImageAsset> {
     await this.arrive();
     const id = objectId(buffer, `${userId}|image`);
-    const storagePath = `users/${userId}/previews/images/${id}`;
+    const storagePath = this.objectPath(userId, id);
     this.objects.put(storagePath, { buffer, contentType });
     return {
       id,
@@ -178,7 +196,7 @@ export class InMemoryImageAssetStore implements ImageAssetStore {
   }
 
   getPublicUrl(assetId: string, userId: string): Promise<string | null> {
-    const storagePath = `users/${userId}/previews/images/${assetId}`;
+    const storagePath = this.objectPath(userId, assetId);
     return Promise.resolve(
       this.objects.get(storagePath) ? this.objects.urlFor(storagePath) : null,
     );
@@ -186,8 +204,7 @@ export class InMemoryImageAssetStore implements ImageAssetStore {
 
   exists(assetId: string, userId: string): Promise<boolean> {
     return Promise.resolve(
-      this.objects.get(`users/${userId}/previews/images/${assetId}`) !==
-        undefined,
+      this.objects.get(this.objectPath(userId, assetId)) !== undefined,
     );
   }
 

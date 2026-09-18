@@ -20,6 +20,11 @@ import type { SketchRelayFetch } from "@server/replay/RecordReplaySketchRelay";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
 import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import {
+  createOwnedPictureResolver,
+  type ImagePreviewAssetReader,
+  type UserScopedMediaReader,
+} from "@services/owned-media";
 import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
@@ -214,9 +219,18 @@ export function registerApiRoutes(
         studioService,
         // ADR-0022 decision 4: the studio bridge's session-side read. The
         // join lives here, at the route layer — StudioService never learns
-        // what a session is.
+        // what a session is. Issue #109: the picture's media is resolved
+        // through one owner-checked resolver that understands both the
+        // image-asset store and the user-scoped store, so a real picture is
+        // never refused for living under the wrong namespace.
         createSessionPictureLookup(
           container.resolve<SessionService>("sessionService"),
+          createOwnedPictureResolver({
+            imageAssets:
+              container.resolve<ImagePreviewAssetReader>("imageAssetStore"),
+            userStorage:
+              container.resolve<UserScopedMediaReader>("storageService"),
+          }),
         ),
         // ADR-0022 decision 4, return leg: "Use this in the session" admits a
         // studio image through the same boundary as an upload. Resolved

@@ -17,22 +17,60 @@ import type {
 import { SessionService } from "@services/sessions/SessionService";
 import type { SessionStore } from "@services/sessions/SessionStore";
 import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import { createOwnedPictureResolver } from "@services/owned-media";
 import type { SessionRecord } from "@server/domain/session/types";
 
 /**
  * "Refine in the studio", end to end at the wire (issue #88, ADR-0022
- * decision 4).
+ * decision 4; ownership across both stores fixed in issue #109).
  *
  * Only process-external boundaries are faked: the two Firestore stores
- * (through their ports) and the GCS storage port. The route, the session
- * lookup, SessionService's ownership rule and StudioService are all real, so
- * what these tests assert about ownership and about leaving the session alone
- * is asserted about the code that actually runs.
+ * (through their ports) and the two GCS storage ports — the user-scoped store
+ * and the image-asset store. The route, the session lookup, the shared
+ * owner-checked resolver, SessionService's ownership rule and StudioService are
+ * all real, so what these tests assert about ownership, about every picture
+ * origin, and about leaving the session alone is asserted about the code that
+ * actually runs.
  */
 
 const NOW_MS = new Date("2026-09-17T12:00:00Z").getTime();
 
-function sessionFixture(userId: string): SessionRecord {
+/** How a session records the picture the creator wants to refine. */
+interface TakeShape {
+  origin: string;
+  mediaAssetIds: string[];
+  /** Present for every origin except `generated`, which carries only a basename. */
+  storagePath?: string;
+}
+
+/** A generated take: an asset basename in the user-scoped store, no path. */
+const GENERATED_TAKE: TakeShape = {
+  origin: "generated",
+  mediaAssetIds: ["1758100000000-abcdef01.webp"],
+};
+
+/** An admitted take: the production image store's `image-previews/` path. */
+function admittedTake(origin: string, assetId: string): TakeShape {
+  return {
+    origin,
+    storagePath: `image-previews/user-1/${assetId}`,
+    mediaAssetIds: [assetId],
+  };
+}
+
+function sessionFixture(userId: string, take: TakeShape): SessionRecord {
+  const generation: Record<string, unknown> = {
+    id: "take-1",
+    mediaType: "image",
+    status: "completed",
+    prompt: "a lighthouse at dusk, wide shot",
+    promptVersionId: "v1",
+    mediaUrls: ["https://signed.example.com/expiring.webp?exp=1h"],
+    mediaAssetIds: take.mediaAssetIds,
+    ancestorGenerationId: null,
+    origin: take.origin,
+    ...(take.storagePath ? { storagePath: take.storagePath } : {}),
+  };
   return {
     id: "session-1",
     userId,
@@ -48,23 +86,11 @@ function sessionFixture(userId: string): SessionRecord {
           signature: "sig-1",
           prompt: "a lighthouse at dusk, wide shot",
           timestamp: "2026-09-17T11:00:00Z",
-          generations: [
-            {
-              id: "take-1",
-              mediaType: "image",
-              status: "completed",
-              prompt: "a lighthouse at dusk, wide shot",
-              promptVersionId: "v1",
-              mediaUrls: ["https://signed.example.com/expiring.webp?exp=1h"],
-              mediaAssetIds: ["1758100000000-abcdef01.webp"],
-              ancestorGenerationId: null,
-              origin: "generated",
-            },
-          ],
+          generations: [generation],
         },
       ],
     },
-  };
+  } as SessionRecord;
 }
 
 class FakeStudioStore implements StudioProjectStore {
@@ -99,8 +125,15 @@ class FakeStudioStore implements StudioProjectStore {
   async deleteProject(): Promise<void> {}
 }
 
-function harness(options?: { sessionOwner?: string; caller?: string }) {
-  const session = sessionFixture(options?.sessionOwner ?? "user-1");
+function harness(options?: {
+  sessionOwner?: string;
+  caller?: string;
+  take?: TakeShape;
+}) {
+  const session = sessionFixture(
+    options?.sessionOwner ?? "user-1",
+    options?.take ?? GENERATED_TAKE,
+  );
   const sessionStore = {
     get: vi
       .fn()
@@ -114,18 +147,38 @@ function harness(options?: { sessionOwner?: string; caller?: string }) {
 
   const studioStore = new FakeStudioStore();
   let copies = 0;
+  // The user-scoped store (StorageService's surface): the studio's copy, plus
+  // the two reads the resolver needs for a user-scoped source.
   const storage = {
     saveFromUrl: vi.fn().mockImplementation(async () => ({
       storagePath: `users/user-1/previews/images/copy-${++copies}.webp`,
     })),
-    getViewUrl: vi.fn().mockImplementation((_userId: string, path: string) =>
+    getViewUrl: vi.fn((_userId: string, path: string) =>
       Promise.resolve({
         viewUrl: `https://signed.example.com/${path}?exp=1h`,
         expiresAt: "2026-09-17T13:00:00Z",
         storagePath: path,
       }),
     ),
+    getPreviewImageViewUrl: vi.fn((userId: string, basename: string) =>
+      Promise.resolve(
+        `https://signed.example.com/users/${userId}/previews/images/${basename}?exp=1h`,
+      ),
+    ),
   };
+  // The image-asset store (ImageAssetStore's surface): owner-scoped reads for a
+  // picture that lives under `image-previews/`.
+  const imageAssets = {
+    getPublicUrl: vi.fn((assetId: string, userId: string) =>
+      Promise.resolve(
+        `https://signed.example.com/image-previews/${userId}/${assetId}?exp=1h`,
+      ),
+    ),
+  };
+  const resolver = createOwnedPictureResolver({
+    imageAssets,
+    userStorage: storage,
+  });
 
   let idCounter = 0;
   const studioService = new StudioService({
@@ -150,14 +203,14 @@ function harness(options?: { sessionOwner?: string; caller?: string }) {
     },
     createStudioRouter(
       studioService,
-      createSessionPictureLookup(sessionService),
+      createSessionPictureLookup(sessionService, resolver),
       // The return leg (#89) is exercised in its own suite; this one is about
       // the outbound bridge, so its door is simply not wired here.
       { sessionService: null, mediaStore: null, idempotency: null },
     ),
   );
 
-  return { app, session, studioStore, storage, sessionStore };
+  return { app, session, studioStore, storage, imageAssets, sessionStore };
 }
 
 const BODY = { sessionId: "session-1", generationId: "take-1" };
@@ -182,6 +235,87 @@ describe("POST /api/studio/projects/from-session-picture", () => {
     expect(project.selectedImageId).toBe(origin.bridgedImageId);
     // The picture is resolvable right away, from the project's own copy.
     expect(project.originImageUrl).toContain("copy-1.webp");
+  });
+
+  // ADR-0022 decision 4 / issue #109: every picture origin bridges, whether it
+  // lives in the user-scoped store (generated) or the production image store
+  // (upload, sketchpad, studio) — the two storage shapes the resolver spans.
+  it.each([
+    ["generated", GENERATED_TAKE],
+    ["upload", admittedTake("upload", "upload-1f2e3d4c5b6a")],
+    ["sketchpad", admittedTake("sketchpad", "sketch-9a8b7c6d5e4f")],
+    ["studio", admittedTake("studio", "studio-0011223344ff")],
+  ] as const)(
+    "opens a project with the correct bridged attachment for a %s picture",
+    async (_origin, take) => {
+      const { app } = harness({ take });
+
+      const res = await supertest(app)
+        .post("/api/studio/projects/from-session-picture")
+        .send(BODY);
+
+      expect(res.status).toBe(201);
+      const project = res.body.data;
+      const origin = StudioProjectOriginSchema.parse(project.origin);
+      // The bridged attachment is selected and resolvable from the project's
+      // own copy — the same outcome regardless of which store the source is in.
+      expect(project.selectedImageId).toBe(origin.bridgedImageId);
+      expect(project.attachments).toHaveLength(1);
+      expect(project.attachments[0].id).toBe(origin.bridgedImageId);
+      expect(project.originImageUrl).toContain("copy-1.webp");
+      // The durable source handle is recorded: an admitted take's own
+      // `image-previews/` path, or — for a generated take that carried only a
+      // basename — the user-scoped path the resolver reconstructed for it.
+      const expectedSourcePath =
+        take.storagePath ??
+        `users/user-1/previews/images/${take.mediaAssetIds[0]}`;
+      expect(origin.sourceInput.storagePath).toBe(expectedSourcePath);
+      expect(origin.sourceInput.assetId).toBe(take.mediaAssetIds[0]);
+    },
+  );
+
+  it("succeeds for a picture stored under the production image store's path", async () => {
+    // The regression the ticket names: a real, admitted picture whose path is
+    // `image-previews/<owner>/<assetId>` — which the old `users/<uid>/` bridge
+    // check rejected.
+    const { app, imageAssets } = harness({
+      take: admittedTake("upload", "1f2e3d4c5b6a"),
+    });
+
+    const res = await supertest(app)
+      .post("/api/studio/projects/from-session-picture")
+      .send(BODY);
+
+    expect(res.status).toBe(201);
+    // Ownership was proven and the URL minted through the image-asset store,
+    // keyed by the asset id — never by rewriting the path into `users/`.
+    expect(imageAssets.getPublicUrl).toHaveBeenCalledWith(
+      "1f2e3d4c5b6a",
+      "user-1",
+    );
+    expect(res.body.data.origin.sourceInput.storagePath).toBe(
+      "image-previews/user-1/1f2e3d4c5b6a",
+    );
+  });
+
+  it("refuses a picture whose stored path belongs to another creator", async () => {
+    // The negative path: the session is the caller's, but the take's recorded
+    // path is anchored to a different owner. Ownership is not loosened to admit
+    // it — the resolver refuses, and refusal reads as absence.
+    const { app, studioStore } = harness({
+      take: {
+        origin: "upload",
+        storagePath: "image-previews/someone-else/1f2e3d4c5b6a",
+        mediaAssetIds: ["1f2e3d4c5b6a"],
+      },
+    });
+
+    const res = await supertest(app)
+      .post("/api/studio/projects/from-session-picture")
+      .send(BODY);
+
+    expect(res.status).toBe(404);
+    expect(studioStore.projects.size).toBe(0);
   });
 
   it("leaves the source take and its words exactly as they were", async () => {

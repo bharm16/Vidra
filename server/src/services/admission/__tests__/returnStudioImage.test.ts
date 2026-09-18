@@ -47,6 +47,8 @@ const SOURCE = {
   promptVersionId: "v1",
   generationId: "take-1",
   storagePath: "users/user-1/previews/images/1758100000000-abcdef01.webp",
+  // Minted by the session-side resolver (issue #109); the bridge copies from it.
+  viewUrl: "https://signed.example.com/source-picture?exp=1h",
   assetId: "1758100000000-abcdef01.webp",
 };
 

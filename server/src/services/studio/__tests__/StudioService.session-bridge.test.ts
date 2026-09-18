@@ -91,12 +91,17 @@ class FakeStore implements StudioProjectStore {
 
 const NOW_MS = new Date("2026-09-17T12:00:00Z").getTime();
 
-/** The take as the session records it: a path the session owns, not a URL. */
+/**
+ * The take as the session-side lookup resolved it (issue #109): a path the
+ * session owns, plus the read URL the shared resolver already minted for it.
+ * The studio copies from that URL — it never re-resolves the source store.
+ */
 const SOURCE: SessionPictureSource = {
   sessionId: "session-1",
   promptVersionId: "v1",
   generationId: "take-1",
   storagePath: "users/user-1/previews/images/1758100000000-abcdef01.webp",
+  viewUrl: "https://signed.example.com/source-picture?exp=1h",
   assetId: "1758100000000-abcdef01.webp",
 };
 
@@ -197,15 +202,12 @@ describe("StudioService.createProjectFromSessionPicture", () => {
       SOURCE,
     );
 
-    // A fresh URL is minted server-side purely to move the bytes...
-    expect(storage.getViewUrl).toHaveBeenCalledWith(
-      "user-1",
-      SOURCE.storagePath,
-    );
-    // ...into an object this project owns, tagged with where it came from.
+    // The source URL is the one the resolver already minted — the studio does
+    // not re-resolve which store holds the source (issue #109) — copied into an
+    // object this project owns, tagged with where it came from.
     expect(storage.saveFromUrl).toHaveBeenCalledWith(
       "user-1",
-      `https://signed.example.com/${SOURCE.storagePath}?exp=1h`,
+      SOURCE.viewUrl,
       "preview-image",
       expect.objectContaining({
         studioProjectId: project.id,
@@ -309,6 +311,24 @@ describe("StudioService.createProjectFromSessionPicture", () => {
       service.createProjectFromSessionPicture("user-1", {
         ...SOURCE,
         storagePath: "users/xuser-1y/previews/images/foreign.webp",
+      }),
+    ).rejects.toMatchObject({ statusCode: 400 });
+
+    expect(store.projects.size).toBe(0);
+    expect(storage.saveFromUrl).not.toHaveBeenCalled();
+  });
+
+  it("refuses an image-previews path owned by another creator, and stores nothing", async () => {
+    // The production image store's namespace, anchored to a DIFFERENT owner
+    // (issue #109): the both-store ownership check must refuse it just as it
+    // refuses a foreign `users/` path — the owner segment is not the caller's.
+    const { service, store, storage } = makeService();
+
+    await expect(
+      service.createProjectFromSessionPicture("user-1", {
+        ...SOURCE,
+        storagePath: "image-previews/someone-else/1f2e3d4c5b6a",
+        assetId: "1f2e3d4c5b6a",
       }),
     ).rejects.toMatchObject({ statusCode: 400 });
 

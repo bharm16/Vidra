@@ -1,5 +1,5 @@
 import { logger } from "@infrastructure/Logger";
-import { storagePathForBasename } from "@services/storage/utils/pathUtils";
+import type { OwnedPictureResolver } from "@services/owned-media";
 import type { SessionRecord } from "@server/domain/session/types";
 import {
   SessionAccessDeniedError,
@@ -10,14 +10,19 @@ import {
  * The read behind "Refine in the studio" — ADR-0022 decision 4, issue #88.
  *
  * Given a creator, a session, and a take identity, it answers where that
- * picture lives: the words-version it is filed under, and a DURABLE handle to
- * its media. Nothing here writes: opening the studio must leave the source
- * take and its paired words exactly as they were.
+ * picture lives: the words-version it is filed under, and a DURABLE, owner-
+ * verified handle to its media. Nothing here writes: opening the studio must
+ * leave the source take and its paired words exactly as they were.
  *
  * Why the words-version is resolved here rather than sent by the caller: a
  * take lives in exactly one version's `generations`, and the session record is
  * the only thing that knows which. A client-supplied version would be a second
  * copy of that fact, free to disagree with the first.
+ *
+ * The media handle is resolved through the shared `OwnedPictureResolver`, which
+ * understands both stores (issue #109) — the generated take's user-scoped
+ * basename and the admitted take's `image-previews/` path alike — so this read
+ * never assumes a namespace and never returns a handle the creator does not own.
  */
 
 const log = logger.child({ service: "sessionPictureLookup" });
@@ -28,10 +33,16 @@ export interface SessionPicture {
   /** The take identity — `node.id` in the space. */
   generationId: string;
   /**
-   * A path, never a URL. The record's `mediaUrls` are signed and expire in an
-   * hour (`signedUrlPolicy`); the path is what outlives the moment.
+   * A path, never a URL — the object's actual stored path, owner-verified. The
+   * record's `mediaUrls` are signed and expire in an hour (`signedUrlPolicy`);
+   * the path is what outlives the moment.
    */
   storagePath: string;
+  /**
+   * A freshly minted read URL for the same object, so the caller can copy the
+   * bytes without re-resolving which store holds them.
+   */
+  viewUrl: string;
   /** The asset basename session records carry, when the take has one. */
   assetId?: string | undefined;
 }
@@ -67,16 +78,16 @@ function readString(
 }
 
 /**
- * The take's durable handle. An admitted take records `storagePath` outright;
- * a generated one records only the asset basename, which is exactly what
- * `storagePathForBasename` exists to rebuild — from the OWNER's uid, so a
- * rebuilt path can never address another creator's object.
+ * The take's durable handle, straight from the record: an admitted take records
+ * `storagePath` outright; a generated one records only the asset basename. Both
+ * kinds are handed to the resolver, which picks the store and proves ownership
+ * from the OWNER's uid — a rebuilt path can never address another creator's
+ * object.
  */
-function resolveStoragePath(
-  record: Record<string, unknown>,
-  userId: string,
-): { storagePath: string; assetId?: string | undefined } | null {
-  const recorded = readString(record, "storagePath");
+function readHandle(record: Record<string, unknown>): {
+  storagePath?: string | undefined;
+  assetId?: string | undefined;
+} {
   const assetIds = record.mediaAssetIds;
   const assetId = Array.isArray(assetIds)
     ? assetIds.find(
@@ -84,21 +95,15 @@ function resolveStoragePath(
           typeof candidate === "string" && candidate.length > 0,
       )
     : undefined;
-
-  if (recorded) {
-    return { storagePath: recorded, ...(assetId ? { assetId } : {}) };
-  }
-  if (assetId) {
-    return {
-      storagePath: storagePathForBasename(userId, "preview-image", assetId),
-      assetId,
-    };
-  }
-  return null;
+  return {
+    storagePath: readString(record, "storagePath"),
+    assetId,
+  };
 }
 
 export function createSessionPictureLookup(
   sessionService: OwnedSessionReader,
+  resolver: OwnedPictureResolver,
 ): SessionPictureLookup {
   return {
     async findOwnedSessionPicture(
@@ -133,9 +138,13 @@ export function createSessionPictureLookup(
           // Pictures only. A clip is moved from, never refined.
           if (record.mediaType !== "image") return null;
 
-          const media = resolveStoragePath(record, session.userId);
-          if (!media) {
-            log.warn("Studio bridge refused: take has no durable media", {
+          const handle = readHandle(record);
+          const resolved = await resolver.resolveOwnedPicture(
+            session.userId,
+            handle,
+          );
+          if (!resolved) {
+            log.warn("Studio bridge refused: take has no owned durable media", {
               sessionId,
               generationId,
             });
@@ -144,7 +153,9 @@ export function createSessionPictureLookup(
           return {
             promptVersionId: version.versionId,
             generationId,
-            ...media,
+            storagePath: resolved.storagePath,
+            viewUrl: resolved.viewUrl,
+            ...(handle.assetId ? { assetId: handle.assetId } : {}),
           };
         }
       }

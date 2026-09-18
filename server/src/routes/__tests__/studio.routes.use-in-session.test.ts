@@ -247,7 +247,11 @@ function harness(options?: {
     },
     createStudioRouter(
       studioService,
-      createSessionPictureLookup(sessionService),
+      // This suite exercises only the return leg; the outbound bridge's
+      // resolver is never reached, so a stub that resolves nothing suffices.
+      createSessionPictureLookup(sessionService, {
+        resolveOwnedPicture: () => Promise.resolve(null),
+      }),
       wired
         ? {
             sessionService,
