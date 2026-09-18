@@ -32,6 +32,14 @@ const ClipAttachResponseSchema = z
   })
   .passthrough();
 
+const OwedPictureAttachmentsResponseSchema = z
+  .object({
+    success: z.boolean(),
+    error: z.string().optional(),
+    data: z.object({ attachments: z.array(TakeAttachmentSchema) }).optional(),
+  })
+  .passthrough();
+
 /**
  * Re-send the picture record the failed attachment handed back, under the same
  * take identity. The record is the server's own — the client only holds it
@@ -55,6 +63,49 @@ export async function retryPictureAttachment(
   if (!response.success) {
     throw new Error(response.error ?? "Could not save this picture");
   }
+}
+
+/**
+ * Every quick-picture take this creator's session is still owed — the
+ * generated-picture side of ADR-0022 decision 6, issue #133. A generated take
+ * is not admitted, so a lost response used to strand it with no server-side
+ * memory; this is how a reloaded client rediscovers those made-but-not-saved
+ * pictures so it can surface them and offer a retry.
+ */
+export async function fetchOwedPictureAttachments(
+  sessionId: string,
+): Promise<TakeAttachment[]> {
+  const payload = (await apiClient.get(
+    `/preview/pictures/owed-attachments?sessionId=${encodeURIComponent(sessionId)}`,
+  )) as unknown;
+
+  const response = OwedPictureAttachmentsResponseSchema.parse(payload);
+  if (!response.success) {
+    throw new Error(response.error ?? "Could not load unsaved pictures");
+  }
+  return response.data?.attachments ?? [];
+}
+
+/**
+ * Ask the server to re-attach one owed quick-picture take by identity. Nothing
+ * about the picture travels on this request: the server's owed ledger holds the
+ * record its session is owed, so this cannot rerun a generation, re-store media,
+ * or reach a credit surface. A destination that was deleted comes back as a
+ * truthful `failed` attachment, not a false success.
+ */
+export async function retryOwedPictureAttachment(
+  generationId: string,
+): Promise<TakeAttachment | undefined> {
+  const payload = (await apiClient.post(
+    `/preview/pictures/owed-attachments/${encodeURIComponent(generationId)}/retry`,
+    {},
+  )) as unknown;
+
+  const response = ClipAttachResponseSchema.parse(payload);
+  if (!response.success) {
+    throw new Error(response.error ?? "Could not save this picture");
+  }
+  return response.attachment;
 }
 
 /**

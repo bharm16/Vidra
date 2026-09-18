@@ -15,6 +15,7 @@ import type { AssetService } from "@services/asset/AssetService";
 import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { AdmissionMediaStore } from "@services/admission/admitPictureTake";
+import type { OwedTakeAttachmentStore } from "@services/sessions/attachTakeWithOwedTracking";
 
 export interface PreviewStorageService {
   saveFromUrl: (
@@ -100,6 +101,13 @@ export interface PreviewRoutesServices {
    * signed URL expires, which is what keeps an admitted take readable.
    */
   imageAssetStore?: AdmissionMediaStore | null;
+  /**
+   * The durable ledger of quick-picture takes whose session write is still owed
+   * (ADR-0022 decision 6, issue #133). Backs the made-but-not-saved recovery for
+   * generated pictures — discovery and by-id retry — the way `videoJobStore`
+   * backs the clip half.
+   */
+  owedTakeAttachmentStore?: OwedTakeAttachmentStore | null;
 }
 
 /**

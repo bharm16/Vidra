@@ -9,7 +9,9 @@ import type { FaceEmbeddingService } from "@services/asset/FaceEmbeddingService"
 import { FirestoreReferenceImageStore } from "@services/asset/reference-images/storage/FirestoreReferenceImageStore";
 import { SessionService } from "@services/sessions/SessionService";
 import { SessionStore } from "@services/sessions/SessionStore";
+import { FirestoreOwedTakeAttachmentStore } from "@services/sessions/OwedTakeAttachmentStore";
 import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
+import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import type { ServiceConfig } from "./service-config.types.ts";
 
@@ -30,6 +32,17 @@ export function registerSessionServices(container: DIContainer): void {
           videoJobStore.cancelJobsForSession(sessionId),
       }),
     ["sessionStore", "videoJobStore"],
+  );
+
+  // ADR-0022 decision 6 (issue #133): the durable ledger of quick-picture takes
+  // whose session write is still owed. A generated take has no idempotency
+  // snapshot to resume from, so its made-but-not-saved debt lives here until a
+  // reloaded client discovers and repairs it.
+  container.register(
+    "owedTakeAttachmentStore",
+    (firestoreCircuitExecutor: FirestoreCircuitExecutor) =>
+      new FirestoreOwedTakeAttachmentStore(firestoreCircuitExecutor),
+    ["firestoreCircuitExecutor"],
   );
 
   container.register(

@@ -53,6 +53,8 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/preview/image/view`                                        | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/image/view-batch`                                  | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/media/view`                                        | `server/src/routes/preview.routes.ts`                          |
+| GET    | `/api/preview/pictures/owed-attachments`                         | `server/src/routes/preview.routes.ts`                          |
+| POST   | `/api/preview/pictures/owed-attachments/:generationId/retry`     | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/upload`                                            | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/content/:contentId`                          | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/video/generate`                                    | `server/src/routes/preview.routes.ts`                          |
@@ -113,4 +115,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                                   | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                  | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **105**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **107**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

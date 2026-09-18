@@ -15,7 +15,7 @@ import type {
 import { IMAGE_PREVIEW_SPEED_MODES } from "@shared/schemas/preview.schemas";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
-import { attachTakeToSession } from "@services/sessions/attachTakeToSession";
+import { attachTakeWithOwedTracking } from "@services/sessions/attachTakeWithOwedTracking";
 import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 
 type ImageGenerateServices = Pick<
@@ -26,6 +26,7 @@ type ImageGenerateServices = Pick<
   | "storageService"
   | "requestIdempotencyService"
   | "sessionService"
+  | "owedTakeAttachmentStore"
 >;
 
 const IMAGE_PREVIEW_CREDIT_COST = 1;
@@ -46,6 +47,7 @@ export const createImageGenerateHandler =
     storageService,
     requestIdempotencyService,
     sessionService,
+    owedTakeAttachmentStore,
   }: ImageGenerateServices) =>
   async (req: Request, res: Response): Promise<Response | void> => {
     if (!imageGenerationService) {
@@ -398,6 +400,12 @@ export const createImageGenerateHandler =
       // but not saved — the media URLs are still returned, the creator is not
       // refunded and nothing is regenerated, and the take identity minted below
       // rides back out so a retry attaches this same take.
+      //
+      // Issue #133: a generated take is not admitted, so it has no idempotency
+      // snapshot to resume from. `attachTakeWithOwedTracking` writes a durable
+      // `pending` checkpoint BEFORE the append and settles it after, so a lost
+      // response leaves a debt a reloaded client can discover and repair with no
+      // regeneration — the quick-picture mirror of the clip worker's resume.
       const finalImageUrl = storageResult?.viewUrl ?? result.imageUrl;
       let attachment: TakeAttachment | null = null;
       if (
@@ -429,12 +437,16 @@ export const createImageGenerateHandler =
             // version's generations).
             ancestorGenerationId: null,
           });
-          attachment = await attachTakeToSession({
+          attachment = await attachTakeWithOwedTracking({
+            store: owedTakeAttachmentStore ?? undefined,
             sessionService,
-            userId,
-            sessionId,
-            promptVersionId,
-            record: generationRecord,
+            input: {
+              userId,
+              generationId,
+              sessionId,
+              promptVersionId,
+              record: generationRecord,
+            },
             logLabel: "Quick picture",
           });
         } catch (buildError) {
