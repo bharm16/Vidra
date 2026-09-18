@@ -12,9 +12,11 @@ import { StudioModelRegistry } from "@services/studio/StudioModelRegistry";
 import { StudioCapExceededError } from "@services/studio/storage/FirestoreStudioProjectStore";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
 import type {
+  StudioCallRecord,
   StudioDecision,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnStatus,
 } from "@services/studio/types";
 import type { AdmissionIdempotencyPort } from "../admitPictureTake";
 import { attachCompletedJobToSession } from "@services/video-generation/jobs/attachJobToSession";
@@ -127,13 +129,37 @@ class FakeStudioStore implements StudioProjectStore {
     this.turns.set(turn.id, { ...turn });
   }
   async refundCents(): Promise<void> {}
-  async finalizeTurn(
+  // This fixture RUNS real generate/edit turns to produce the images the
+  // return leg reads, so settlement must actually finalize the turn (#126).
+  async checkpointCall(
     _projectId: string,
     turnId: string,
-    patch: Partial<StudioTurnRecord>,
+    call: StudioCallRecord,
+    updatedAtMs: number,
   ): Promise<void> {
     const current = this.turns.get(turnId);
-    if (current) this.turns.set(turnId, { ...current, ...patch });
+    if (!current || current.status !== "running") return;
+    const calls = [...current.calls];
+    calls[call.index] = call;
+    this.turns.set(turnId, { ...current, calls, updatedAtMs });
+  }
+  async settleTurn(params: {
+    turnId: string;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    refundCents: number;
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const current = this.turns.get(params.turnId);
+    if (!current || current.status !== "running") return { applied: false };
+    this.turns.set(params.turnId, {
+      ...current,
+      status: params.status,
+      calls: [...params.calls],
+      refundedCents: params.refundCents,
+      updatedAtMs: params.updatedAtMs,
+    });
+    return { applied: true };
   }
   async deleteProject(projectId: string): Promise<void> {
     this.projects.delete(projectId);

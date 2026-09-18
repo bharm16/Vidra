@@ -1,4 +1,9 @@
-import type { StudioProjectRecord, StudioTurnRecord } from "../types";
+import type {
+  StudioCallRecord,
+  StudioProjectRecord,
+  StudioTurnRecord,
+  StudioTurnStatus,
+} from "../types";
 
 /**
  * The persistence surface StudioService and StudioSpendLedger consume.
@@ -67,14 +72,43 @@ export interface StudioProjectStore {
     capCents: number;
   }): Promise<void>;
   saveTurn(turn: StudioTurnRecord): Promise<void>;
-  refundCents(userId: string, day: string, cents: number): Promise<void>;
-  finalizeTurn(
+  /**
+   * Persist ONE call's outcome into a still-running turn (#126). Merges the
+   * single call at its index and keeps the turn `running`: it is a checkpoint
+   * of durable per-call progress, not a settlement. This is what lets a
+   * restart recover a batch's already-finished siblings from the turn's own
+   * records instead of losing them with the process that produced them. A
+   * no-op once the turn is terminal, so a checkpoint that lands after recovery
+   * has settled the turn can never resurrect it.
+   */
+  checkpointCall(
     projectId: string,
     turnId: string,
-    patch: Pick<
-      StudioTurnRecord,
-      "status" | "calls" | "refundedCents" | "updatedAtMs"
-    >,
+    call: StudioCallRecord,
+    updatedAtMs: number,
   ): Promise<void>;
+  /**
+   * Terminal settlement as ONE idempotent, atomic unit (#126): release the
+   * turn's unspent reserved cents to the day's counter and write its terminal
+   * record together, both guarded by the turn's own `running` → terminal
+   * transition. Replaying it — an in-process retry, the crash-path settle, or
+   * a restart recovery reading the same records — finds a turn that is no
+   * longer `running` and applies nothing, so the refund and the finalization
+   * can never double-apply or disagree. `refundCents` is the cents to release
+   * (0 releases nothing); `day` is the usage day the reservation was made
+   * against, derived from the turn rather than "now" so a cross-process
+   * recovery credits the SAME counter the reservation debited. Returns whether
+   * THIS call performed the settlement (`applied: false` = already settled).
+   */
+  settleTurn(params: {
+    projectId: string;
+    turnId: string;
+    userId: string;
+    day: string;
+    refundCents: number;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }>;
   deleteProject(projectId: string): Promise<void>;
 }

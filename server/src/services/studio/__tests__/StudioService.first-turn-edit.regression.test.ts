@@ -5,9 +5,11 @@ import { StudioPolicyEngine, StudioPolicyError } from "../StudioPolicyEngine";
 import { StudioCapExceededError } from "../storage/FirestoreStudioProjectStore";
 import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type {
+  StudioCallRecord,
   StudioDecision,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnStatus,
 } from "../types";
 import type { ResolvedExecution } from "@services/ai-model/types";
 
@@ -129,14 +131,45 @@ class FakeStore implements StudioProjectStore {
   async saveTurn(turn: StudioTurnRecord): Promise<void> {
     this.turns.set(turn.id, { ...turn });
   }
-  async refundCents(): Promise<void> {}
-  async finalizeTurn(
+  async checkpointCall(
     _projectId: string,
     turnId: string,
-    patch: Partial<StudioTurnRecord>,
+    call: StudioCallRecord,
+    updatedAtMs: number,
   ): Promise<void> {
     const current = this.turns.get(turnId);
-    if (current) this.turns.set(turnId, { ...current, ...patch });
+    if (!current || current.status !== "running") return;
+    const calls = [...current.calls];
+    calls[call.index] = call;
+    this.turns.set(turnId, { ...current, calls, updatedAtMs });
+  }
+  async settleTurn(params: {
+    projectId: string;
+    turnId: string;
+    userId: string;
+    day: string;
+    refundCents: number;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const current = this.turns.get(params.turnId);
+    if (!current || current.status !== "running") return { applied: false };
+    if (params.refundCents > 0) {
+      const key = `${params.userId}_${params.day}`;
+      this.reserved.set(
+        key,
+        Math.max(0, (this.reserved.get(key) ?? 0) - params.refundCents),
+      );
+    }
+    this.turns.set(params.turnId, {
+      ...current,
+      status: params.status,
+      calls: [...params.calls],
+      refundedCents: params.refundCents,
+      updatedAtMs: params.updatedAtMs,
+    });
+    return { applied: true };
   }
   async deleteProject(projectId: string): Promise<void> {
     this.projects.delete(projectId);

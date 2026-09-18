@@ -3,7 +3,12 @@ import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import { StudioPolicyEngine } from "../StudioPolicyEngine";
 import type { StudioProjectStore } from "../storage/StudioProjectStore";
-import type { StudioDecision, StudioTurnRecord } from "../types";
+import type {
+  StudioCallRecord,
+  StudioDecision,
+  StudioTurnRecord,
+  StudioTurnStatus,
+} from "../types";
 import type { ResolvedExecution } from "@services/ai-model/types";
 
 /** Routing answer for the port stub; Studio does not vary provider by test. */
@@ -77,13 +82,36 @@ class FakeStore {
 
   async refundCents(): Promise<void> {}
 
-  async finalizeTurn(
+  async checkpointCall(
     _projectId: string,
     turnId: string,
-    patch: Partial<StudioTurnRecord>,
+    call: StudioCallRecord,
+    updatedAtMs: number,
   ): Promise<void> {
     const current = this.turns.get(turnId);
-    if (current) this.turns.set(turnId, { ...current, ...patch });
+    if (!current || current.status !== "running") return;
+    const calls = [...current.calls];
+    calls[call.index] = call;
+    this.turns.set(turnId, { ...current, calls, updatedAtMs });
+  }
+
+  async settleTurn(params: {
+    turnId: string;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    refundCents: number;
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const current = this.turns.get(params.turnId);
+    if (!current || current.status !== "running") return { applied: false };
+    this.turns.set(params.turnId, {
+      ...current,
+      status: params.status,
+      calls: [...params.calls],
+      refundedCents: params.refundCents,
+      updatedAtMs: params.updatedAtMs,
+    });
+    return { applied: true };
   }
 
   async saveTurn(turn: StudioTurnRecord): Promise<void> {

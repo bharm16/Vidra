@@ -10,9 +10,11 @@ import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type { StudioImageRunner } from "../providers/types";
 import type { StudioTurnContext } from "../StudioPolicyEngine";
 import type {
+  StudioCallRecord,
   StudioDecision,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnStatus,
 } from "../types";
 
 /**
@@ -117,6 +119,54 @@ class FakeStore implements StudioProjectStore {
 
   async saveTurn(turn: StudioTurnRecord): Promise<void> {
     this.turns.set(turn.id, { ...turn });
+  }
+
+  async checkpointCall(
+    _projectId: string,
+    turnId: string,
+    call: StudioCallRecord,
+    updatedAtMs: number,
+  ): Promise<void> {
+    const current = this.turns.get(turnId);
+    if (!current || current.status !== "running") return;
+    const calls = [...current.calls];
+    calls[call.index] = call;
+    this.turns.set(turnId, { ...current, calls, updatedAtMs });
+  }
+
+  async settleTurn(params: {
+    projectId: string;
+    turnId: string;
+    userId: string;
+    day: string;
+    refundCents: number;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const current = this.turns.get(params.turnId);
+    // Idempotency guard mirrors Firestore: only a still-running turn settles.
+    if (!current || current.status !== "running") return { applied: false };
+    if (params.refundCents > 0) {
+      this.refunds.push({
+        userId: params.userId,
+        day: params.day,
+        cents: params.refundCents,
+      });
+      const key = `${params.userId}_${params.day}`;
+      this.reserved.set(
+        key,
+        Math.max(0, (this.reserved.get(key) ?? 0) - params.refundCents),
+      );
+    }
+    this.turns.set(params.turnId, {
+      ...current,
+      status: params.status,
+      calls: [...params.calls],
+      refundedCents: params.refundCents,
+      updatedAtMs: params.updatedAtMs,
+    });
+    return { applied: true };
   }
 
   async deleteProject(projectId: string): Promise<void> {

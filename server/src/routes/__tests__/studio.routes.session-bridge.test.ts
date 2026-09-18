@@ -127,6 +127,12 @@ class FakeStudioStore implements StudioProjectStore {
   async saveTurn(): Promise<void> {}
   async refundCents(): Promise<void> {}
   async finalizeTurn(): Promise<void> {}
+  // Never runs a spend-bearing turn (create-from-session-picture only), so
+  // these are inert; present to satisfy the store port (#126).
+  async checkpointCall(): Promise<void> {}
+  async settleTurn(): Promise<{ applied: boolean }> {
+    return { applied: false };
+  }
   async deleteProject(): Promise<void> {}
 }
 

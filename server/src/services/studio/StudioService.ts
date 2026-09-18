@@ -242,6 +242,13 @@ export interface StudioServiceDeps {
   now?: () => Date;
   idFactory?: () => string;
   /**
+   * How long a `running` turn must sit untouched before a read treats it as
+   * interrupted and settles it from its records (#126). Defaults to
+   * INTERRUPTED_TURN_GRACE_MS; injected small in tests to exercise recovery
+   * without waiting out the real window.
+   */
+  interruptedTurnGraceMs?: number;
+  /**
    * Where a losing concurrent bridge reports the copy it orphaned (#127). The
    * default records it for the cleanup stack (#137) to reap; #137 replaces
    * this with the actual reaper. This seam only IDENTIFIES the orphan — it
@@ -286,6 +293,19 @@ const TITLE_MAX_CHARS = 60;
  * without standing up hundreds of turns.
  */
 const MAX_TURNS_PER_PROJECT = 500;
+
+/**
+ * How long a `running` turn must go untouched before a read presumes the
+ * process that was running it is gone and settles it from its records (#126).
+ *
+ * Set well above the longest a turn can run: a per-call provider budget tops
+ * out at the registry's MAX_TIMEOUT_MS (180s) and a batch's calls run in
+ * parallel, and every completed call checkpoints — bumping the turn's
+ * `updatedAtMs`. So a live, slow batch keeps itself fresh and is never
+ * recovered out from under the process producing it; only a turn no live
+ * process could still be touching crosses this line.
+ */
+const INTERRUPTED_TURN_GRACE_MS = 10 * 60 * 1000;
 
 /** Every stored image id across a project's turns (succeeded calls only). */
 function imageIdsOf(turns: readonly StudioTurnRecord[]): Set<string> {
@@ -340,6 +360,7 @@ export class StudioService {
   private readonly policy: StudioTurnPolicy;
   private readonly ledger: StudioSpendLedger;
   private readonly maxTurnsPerProject: number;
+  private readonly interruptedTurnGraceMs: number;
   private readonly now: () => Date;
   private readonly idFactory: () => string;
   private readonly reportOrphanedBridgeCopy: (copy: OrphanedBridgeCopy) => void;
@@ -352,6 +373,8 @@ export class StudioService {
     this.storage = deps.storage;
     this.policy = deps.policy;
     this.maxTurnsPerProject = deps.maxTurnsPerProject ?? MAX_TURNS_PER_PROJECT;
+    this.interruptedTurnGraceMs =
+      deps.interruptedTurnGraceMs ?? INTERRUPTED_TURN_GRACE_MS;
     this.now = deps.now ?? (() => new Date());
     this.idFactory = deps.idFactory ?? (() => randomUUID());
     this.reportOrphanedBridgeCopy =
@@ -824,7 +847,7 @@ export class StudioService {
     turnId: string,
   ): Promise<StudioTurnView> {
     const turn = await this.getTurn(userId, projectId, turnId);
-    return this.decorateTurn(userId, turn);
+    return this.decorateTurn(userId, await this.reconcileIfInterrupted(turn));
   }
 
   /**
@@ -842,7 +865,52 @@ export class StudioService {
       projectId,
       this.maxTurnsPerProject,
     );
-    return Promise.all(turns.map((turn) => this.decorateTurn(userId, turn)));
+    // Reopening a project is one of the moments an interrupted turn is
+    // observed: settle any left `running` by a dead process before decorating,
+    // so the thread shows a terminal turn rather than one that polls forever.
+    const reconciled = await Promise.all(
+      turns.map((turn) => this.reconcileIfInterrupted(turn)),
+    );
+    return Promise.all(
+      reconciled.map((turn) => this.decorateTurn(userId, turn)),
+    );
+  }
+
+  /**
+   * Recover a turn a process death left stranded at `status: "running"` (#126).
+   * The in-process `finally` that settles a crashed turn only runs while the
+   * process lives; a process that DIED runs no `finally`, so its turn sits
+   * `running` — reserved cents held, the client polling with no terminal
+   * condition. A read is where that turn is next observed, so a read is where
+   * it is reconciled: once it has gone untouched past the grace window (a live
+   * batch keeps itself fresh by checkpointing), settle it from its own records
+   * — keeping the siblings that succeeded and releasing only the unspent cents.
+   *
+   * Best-effort: a settlement fault leaves the turn as-is (logged) to be
+   * retried on the next read, never failing the poll. Idempotent at the store,
+   * so a concurrent in-process settle and this recovery cannot double-refund.
+   */
+  private async reconcileIfInterrupted(
+    turn: StudioTurnRecord,
+  ): Promise<StudioTurnRecord> {
+    if (turn.status !== "running") return turn;
+    if (this.now().getTime() - turn.updatedAtMs < this.interruptedTurnGraceMs) {
+      return turn;
+    }
+    try {
+      await this.ledger.recoverTurn(turn);
+      return (await this.store.getTurn(turn.projectId, turn.id)) ?? turn;
+    } catch (error) {
+      this.log.warn(
+        "Studio interrupted-turn recovery failed; will retry on next read",
+        {
+          projectId: turn.projectId,
+          turnId: turn.id,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      return turn;
+    }
   }
 
   private async decorateTurn(
@@ -1245,8 +1313,108 @@ export class StudioService {
   }
 
   /**
-   * Run one image call, report its outcome to the reservation (which
-   * refunds and finalizes), then bump the project's timestamp.
+   * Run one image call and resolve its outcome as a call record, keeping the
+   * provider-spend distinction that the settlement policy turns on (#126):
+   *
+   *  - The PROVIDER fails → a failed call with no `providerSpent`. No billable
+   *    work happened, so the call's reserved cents are released on settle.
+   *  - The provider SUCCEEDS but STORING the image fails → a failed call marked
+   *    `providerSpent`. This is the ambiguous outcome: it is NOT "the provider
+   *    spent nothing." The studio has no usable image (studio-state: failed),
+   *    but the allowance was consumed (allowance: not released) — two related
+   *    but different decisions, both recorded on the one call.
+   *
+   * Never rejects — every path returns a call record — so a sibling's failure
+   * can never abort a batch (the caller no longer needs allSettled).
+   */
+  private async runImageCall(
+    project: StudioProjectRecord,
+    turn: StudioTurnRecord,
+    options: {
+      producedBy: StudioImageRecord["model"];
+      sourcePrompt: string;
+      index: number;
+      run: () => Promise<StudioImageCallResult>;
+    },
+  ): Promise<StudioCallRecord> {
+    let result: StudioImageCallResult;
+    try {
+      result = await options.run();
+    } catch (error) {
+      return {
+        index: options.index,
+        status: "failed",
+        error: error instanceof Error ? error.message : "Image call failed",
+      };
+    }
+
+    try {
+      const saved = await this.storage.saveFromUrl(
+        turn.userId,
+        result.imageUrl,
+        "preview-image",
+        {
+          studioProjectId: project.id,
+          studioTurnId: turn.id,
+          model: options.producedBy,
+        },
+      );
+      return {
+        index: options.index,
+        status: "succeeded",
+        image: {
+          id: this.idFactory(),
+          storagePath: saved.storagePath,
+          sourcePrompt: options.sourcePrompt,
+          model: options.producedBy,
+        },
+      };
+    } catch (error) {
+      return {
+        index: options.index,
+        status: "failed",
+        providerSpent: true,
+        error: `The image was generated but could not be saved: ${
+          error instanceof Error ? error.message : "storage failed"
+        }`,
+      };
+    }
+  }
+
+  /**
+   * Durable per-call checkpoint (#126): persist one call's outcome the moment
+   * it is known, so a process death mid-batch leaves finished siblings in the
+   * turn's own records for recovery to keep. Best-effort — the final settle is
+   * the authoritative terminal write, so a checkpoint hiccup must never drop a
+   * produced image from it.
+   */
+  private async checkpoint(
+    turn: StudioTurnRecord,
+    call: StudioCallRecord,
+  ): Promise<void> {
+    try {
+      await this.store.checkpointCall(
+        turn.projectId,
+        turn.id,
+        call,
+        this.now().getTime(),
+      );
+    } catch (error) {
+      this.log.warn(
+        "Studio per-call checkpoint failed (final settle remains authoritative)",
+        {
+          projectId: turn.projectId,
+          turnId: turn.id,
+          index: call.index,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+    }
+  }
+
+  /**
+   * Run one image call, checkpoint its outcome, report it to the reservation
+   * (which releases and finalizes), then bump the project's timestamp.
    */
   private async settleSingleCallTurn(
     project: StudioProjectRecord,
@@ -1258,36 +1426,13 @@ export class StudioService {
       run: () => Promise<StudioImageCallResult>;
     },
   ): Promise<void> {
-    let call: StudioCallRecord;
-    try {
-      const result = await options.run();
-      const saved = await this.storage.saveFromUrl(
-        turn.userId,
-        result.imageUrl,
-        "preview-image",
-        {
-          studioProjectId: project.id,
-          studioTurnId: turn.id,
-          model: options.producedBy,
-        },
-      );
-      call = {
-        index: 0,
-        status: "succeeded",
-        image: {
-          id: this.idFactory(),
-          storagePath: saved.storagePath,
-          sourcePrompt: options.sourcePrompt,
-          model: options.producedBy,
-        },
-      };
-    } catch (error) {
-      call = {
-        index: 0,
-        status: "failed",
-        error: error instanceof Error ? error.message : "Image call failed",
-      };
-    }
+    const call = await this.runImageCall(project, turn, {
+      producedBy: options.producedBy,
+      sourcePrompt: options.sourcePrompt,
+      index: 0,
+      run: options.run,
+    });
+    await this.checkpoint(turn, call);
 
     await reservation.settle([call]);
     await this.store.updateProject(project.id, {
@@ -1341,55 +1486,33 @@ export class StudioService {
     const model = this.registry.getModel(turn.resolvedModel);
     const timeoutMs = this.registry.timeoutMsFor(model.slug);
 
-    const settled = await Promise.allSettled(
-      decision.variants.map((variant) =>
-        this.runner
-          .run({
-            model: model.replicateId,
-            input: this.registry.buildGenerateInput(
-              model.slug,
-              variant,
-              decision.aspectRatio,
-            ),
-            userId: turn.userId,
-            timeoutMs,
-          })
-          .then(async (result: StudioImageCallResult) => {
-            const saved = await this.storage.saveFromUrl(
-              turn.userId,
-              result.imageUrl,
-              "preview-image",
-              {
-                studioProjectId: project.id,
-                studioTurnId: turn.id,
-                model: model.slug,
-              },
-            );
-            return { saved, variant };
-          }),
-      ),
-    );
-
-    const calls: StudioCallRecord[] = settled.map((outcome, index) => {
-      if (outcome.status === "fulfilled") {
-        return {
+    // Each call runs, then checkpoints its own outcome durably BEFORE the batch
+    // finishes (#126), so a process death mid-batch leaves the siblings that
+    // already succeeded in the turn's records for recovery to keep. Results are
+    // index-aligned to the variants (`runImageCall` never rejects), so a failed
+    // call renders in place regardless of completion order.
+    const calls: StudioCallRecord[] = await Promise.all(
+      decision.variants.map(async (variant, index) => {
+        const call = await this.runImageCall(project, turn, {
+          producedBy: model.slug,
+          sourcePrompt: variant,
           index,
-          status: "succeeded" as const,
-          image: {
-            id: this.idFactory(),
-            storagePath: outcome.value.saved.storagePath,
-            sourcePrompt: outcome.value.variant,
-            model: model.slug,
-          },
-        };
-      }
-      const reason = outcome.reason as Error;
-      return {
-        index,
-        status: "failed" as const,
-        error: reason?.message ?? "Image call failed",
-      };
-    });
+          run: () =>
+            this.runner.run({
+              model: model.replicateId,
+              input: this.registry.buildGenerateInput(
+                model.slug,
+                variant,
+                decision.aspectRatio,
+              ),
+              userId: turn.userId,
+              timeoutMs,
+            }),
+        });
+        await this.checkpoint(turn, call);
+        return call;
+      }),
+    );
 
     await reservation.settle(calls);
 

@@ -420,54 +420,190 @@ describe("FirestoreStudioProjectStore", () => {
     });
   });
 
-  describe("refundCents", () => {
-    it("returns refunded cents to the counter", async () => {
-      await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });
-      await store.refundCents("user-1", DAY, 4);
-      expect(await store.getReservedCents("user-1", DAY)).toBe(12);
-    });
+  describe("settleTurn (atomic, idempotent — #126)", () => {
+    const partialCalls: StudioTurnRecord["calls"] = [
+      {
+        index: 0,
+        status: "succeeded",
+        image: {
+          id: "img-1",
+          storagePath: "users/user-1/previews/images/x.webp",
+          sourcePrompt: "v1",
+          model: "recraft-v4.1",
+        },
+      },
+      { index: 1, status: "failed", error: "timed out" },
+    ];
 
-    it("floors at zero", async () => {
-      await store.refundCents("user-1", DAY, 50);
-      expect(await store.getReservedCents("user-1", DAY)).toBe(0);
-    });
-
-    it("ignores non-positive refunds", async () => {
-      await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });
-      await store.refundCents("user-1", DAY, 0);
-      expect(await store.getReservedCents("user-1", DAY)).toBe(16);
-    });
-  });
-
-  describe("finalizeTurn", () => {
-    it("applies the terminal patch in one write", async () => {
+    it("releases the unspent cents and finalizes the turn in ONE write", async () => {
       await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });
 
-      await store.finalizeTurn("project-1", "turn-1", {
+      const result = await store.settleTurn({
+        projectId: "project-1",
+        turnId: "turn-1",
+        userId: "user-1",
+        day: DAY,
+        refundCents: 4,
         status: "partial",
-        calls: [
-          {
-            index: 0,
-            status: "succeeded",
-            image: {
-              id: "img-1",
-              storagePath: "users/user-1/previews/images/x.webp",
-              sourcePrompt: "v1",
-              model: "recraft-v4.1",
-            },
-          },
-          { index: 1, status: "failed", error: "timed out" },
-        ],
-        refundedCents: 4,
+        calls: partialCalls,
         updatedAtMs: 2000,
       });
 
+      expect(result.applied).toBe(true);
+      // 16 reserved − 4 released, in the same transaction as the turn write.
+      expect(await store.getReservedCents("user-1", DAY)).toBe(12);
       const turn = await store.getTurn("project-1", "turn-1");
       expect(turn?.status).toBe("partial");
       expect(turn?.calls).toHaveLength(2);
       expect(turn?.refundedCents).toBe(4);
       // Untouched fields survive the merge.
       expect(turn?.userMessage).toBe("a logo for Vidra");
+    });
+
+    it("is idempotent: a replayed settlement refunds and finalizes exactly ONCE", async () => {
+      await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });
+      const settle = () =>
+        store.settleTurn({
+          projectId: "project-1",
+          turnId: "turn-1",
+          userId: "user-1",
+          day: DAY,
+          refundCents: 16,
+          status: "failed",
+          calls: [0, 1, 2, 3].map((index) => ({
+            index,
+            status: "failed" as const,
+            error: "interrupted",
+          })),
+          updatedAtMs: 2000,
+        });
+
+      const first = await settle();
+      const second = await settle();
+
+      // The turn's running→terminal transition is the guard: the second
+      // application finds it terminal and writes nothing.
+      expect(first.applied).toBe(true);
+      expect(second.applied).toBe(false);
+      // Released exactly once — a second full refund cannot drive the counter
+      // negative or double-credit the day.
+      expect(await store.getReservedCents("user-1", DAY)).toBe(0);
+      const turn = await store.getTurn("project-1", "turn-1");
+      expect(turn?.status).toBe("failed");
+      expect(turn?.refundedCents).toBe(16);
+    });
+
+    it("releases nothing when refundCents is zero (a fully successful turn)", async () => {
+      await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });
+      await store.settleTurn({
+        projectId: "project-1",
+        turnId: "turn-1",
+        userId: "user-1",
+        day: DAY,
+        refundCents: 0,
+        status: "complete",
+        calls: [partialCalls[0] as StudioTurnRecord["calls"][number]],
+        updatedAtMs: 2000,
+      });
+      expect(await store.getReservedCents("user-1", DAY)).toBe(16);
+    });
+
+    it("no-ops on a turn that does not exist", async () => {
+      const result = await store.settleTurn({
+        projectId: "project-1",
+        turnId: "ghost",
+        userId: "user-1",
+        day: DAY,
+        refundCents: 4,
+        status: "failed",
+        calls: [],
+        updatedAtMs: 2000,
+      });
+      expect(result.applied).toBe(false);
+    });
+  });
+
+  describe("checkpointCall (durable per-call progress — #126)", () => {
+    const runningTurn = () =>
+      makeTurn({
+        calls: [0, 1, 2, 3].map((index) => ({
+          index,
+          status: "running" as const,
+        })),
+      });
+
+    it("merges one call's outcome, keeps the turn running, and indexes its image", async () => {
+      await store.reserveTurn({
+        turn: runningTurn(),
+        day: DAY,
+        capCents: 100,
+      });
+
+      await store.checkpointCall(
+        "project-1",
+        "turn-1",
+        {
+          index: 2,
+          status: "succeeded",
+          image: {
+            id: "img-2",
+            storagePath: "users/user-1/previews/images/2.webp",
+            sourcePrompt: "v3",
+            model: "recraft-v4.1",
+          },
+        },
+        1500,
+      );
+
+      const turn = await store.getTurn("project-1", "turn-1");
+      // A checkpoint is progress, not settlement: the turn is still running.
+      expect(turn?.status).toBe("running");
+      expect(turn?.calls[2]?.status).toBe("succeeded");
+      expect(turn?.calls[2]?.image?.id).toBe("img-2");
+      // Sibling slots are untouched by the single-call merge.
+      expect(turn?.calls[0]?.status).toBe("running");
+      // The produced-image index tracks the checkpointed success immediately,
+      // so identity retrieval works even mid-batch.
+      const raw = mocks.records.get("studio_projects/project-1/turns/turn-1");
+      expect(raw?.imageIds).toEqual(["img-2"]);
+    });
+
+    it("no-ops once the turn is terminal, so a late checkpoint cannot resurrect it", async () => {
+      await store.reserveTurn({ turn: runningTurn(), day: DAY, capCents: 100 });
+      await store.settleTurn({
+        projectId: "project-1",
+        turnId: "turn-1",
+        userId: "user-1",
+        day: DAY,
+        refundCents: 16,
+        status: "failed",
+        calls: [0, 1, 2, 3].map((index) => ({
+          index,
+          status: "failed" as const,
+          error: "interrupted",
+        })),
+        updatedAtMs: 2000,
+      });
+
+      await store.checkpointCall(
+        "project-1",
+        "turn-1",
+        {
+          index: 0,
+          status: "succeeded",
+          image: {
+            id: "too-late",
+            storagePath: "users/user-1/previews/images/late.webp",
+            sourcePrompt: "v1",
+            model: "recraft-v4.1",
+          },
+        },
+        3000,
+      );
+
+      const turn = await store.getTurn("project-1", "turn-1");
+      expect(turn?.status).toBe("failed");
+      expect(turn?.calls[0]?.status).toBe("failed");
     });
   });
 
@@ -577,7 +713,12 @@ describe("FirestoreStudioProjectStore", () => {
   describe("produced-image index", () => {
     it("persists imageIds for the query but never returns them on reads", async () => {
       await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 500 });
-      await store.finalizeTurn("project-1", "turn-1", {
+      await store.settleTurn({
+        projectId: "project-1",
+        turnId: "turn-1",
+        userId: "user-1",
+        day: DAY,
+        refundCents: 0,
         status: "complete",
         calls: [
           {
@@ -591,7 +732,6 @@ describe("FirestoreStudioProjectStore", () => {
             },
           },
         ],
-        refundedCents: 0,
         updatedAtMs: 2000,
       });
 
