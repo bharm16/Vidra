@@ -42,6 +42,13 @@ export interface VersionLineageInput {
  * clip hangs from the words node with its picture ancestry marked explicitly
  * unknown. Pure and total.
  *
+ * Separately from that display ancestor, every take is stamped with its
+ * ASSOCIATED words-version (ADR-0022 decision 2) — the words restored into the
+ * input on selection or arming. That is the take's OWN `promptVersionId`, not
+ * the words its display ancestor descends from: a clip made from a picture of
+ * an older words-version restores its own version, never the picture's. The
+ * two are different relationships, so restore never walks the ancestor chain.
+ *
  * The clip's fallback used to be "whichever picture this version lists first",
  * which drew a relationship nobody performed and which the space rendered
  * exactly like a real one. Derived ancestry is out; recorded ancestry, or an
@@ -64,10 +71,24 @@ export function deriveSpaceNodesFromVersions(
   const pictures: LineageInput["pictures"] = [];
   const clips: LineageInput["clips"] = [];
 
+  // The set of words-versions that exist in this session, so a take's own
+  // words-version can only ever point at a words node that gets built.
+  const versionIds = new Set(versions.map((v) => v.versionId));
+
   for (const version of versions) {
     const generations = version.generations ?? [];
 
     for (const gen of generations) {
+      // ADR-0022 decision 2 (issue #111): the take's ASSOCIATED words-version —
+      // the words restored on selection or arming — is the version the take is
+      // filed under (`promptVersionId`), NOT the enclosing version array it is
+      // listed in and NOT its display ancestor's words. Fall back to the
+      // enclosing version when the record names no own version, or names one
+      // this session no longer holds.
+      const wordsVersionId =
+        gen.promptVersionId && versionIds.has(gen.promptVersionId)
+          ? gen.promptVersionId
+          : version.versionId;
       // A clip's still is never its own video URL — the space renders mediaUrl
       // into an <img>, so resolveTakePosterUrl is the single place that rule
       // lives.
@@ -89,6 +110,7 @@ export function deriveSpaceNodesFromVersions(
         pictures.push({
           id: gen.id,
           versionId: version.versionId,
+          wordsVersionId,
           status,
           ...(mediaUrl ? { mediaUrl } : {}),
           ...(archived ? { archived: true } : {}),
@@ -101,6 +123,7 @@ export function deriveSpaceNodesFromVersions(
         clips.push({
           id: gen.id,
           pictureId: ancestorId ?? wordsNodeId(version.versionId),
+          wordsVersionId,
           status,
           ...(mediaUrl ? { mediaUrl } : {}),
           ...(archived ? { archived: true } : {}),

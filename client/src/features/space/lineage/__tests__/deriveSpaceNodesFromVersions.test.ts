@@ -5,6 +5,7 @@ import { normalizePersistedGenerations } from "@features/generations/utils/norma
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
 import { deriveEdgeKind } from "../deriveEdgeKind";
 import { computeLineageLayout } from "../computeLineageLayout";
+import { resolveWordsForNode } from "../resolveWordsForNode";
 
 const version = (
   over: Partial<SessionPromptVersionEntry> & { versionId: string },
@@ -58,6 +59,9 @@ describe("deriveSpaceNodesFromVersions", () => {
         id: "gen-pic-1",
         kind: "picture",
         ancestorId: "words-v-1",
+        // The associated words-version the take is filed under (ADR-0022
+        // decision 2) — carried explicitly, distinct from the display ancestor.
+        wordsVersionId: "v-1",
         status: "ready",
         mediaUrl: "https://img/pic1.webp",
       },
@@ -414,5 +418,170 @@ describe("deriveSpaceNodesFromVersions", () => {
       kind: "clip",
       status: "ready",
     });
+  });
+
+  // ADR-0022 decision 2 (issue #111): a take's associated words-version — the
+  // words restored on selection or arming — is what the take is FILED UNDER,
+  // never what its display ancestor descends from. The full production path
+  // (normalize → derive → resolve) proves it end to end.
+  it("stamps each take with its own associated words-version", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "words one",
+        generations: [
+          { id: "pic-1", mediaType: "image", status: "completed" },
+          {
+            id: "clip-1",
+            mediaType: "video",
+            status: "completed",
+            ancestorGenerationId: "pic-1",
+          },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "pic-1")).toMatchObject({
+      wordsVersionId: "v-1",
+    });
+    expect(nodes.find((n) => n.id === "clip-1")).toMatchObject({
+      wordsVersionId: "v-1",
+    });
+    // A words node is the words-version, not a take filed under one.
+    expect(nodes.find((n) => n.id === "words-v-1")).not.toHaveProperty(
+      "wordsVersionId",
+    );
+  });
+
+  it("restores a clip's OWN words-version, not its source picture's (P1/W1/W2/C2)", () => {
+    // P1 belongs to W1. The creator changes the motion into W2 and makes clip
+    // C2 from P1. C2's display ancestor is P1 (a `move` edge, drawn unchanged),
+    // but C2 is filed under W2 — so selecting C2 must restore W2's words, not
+    // the W1 words the old display-ancestor walk returned.
+    const nodes = lineageOf([
+      version({
+        versionId: "v-w1",
+        prompt: "a harbor at dawn, slow push in",
+        generations: [
+          {
+            id: "P1",
+            mediaType: "image",
+            status: "completed",
+            promptVersionId: "v-w1",
+          },
+        ],
+      }),
+      version({
+        versionId: "v-w2",
+        prompt: "a harbor at dawn, orbit left",
+        generations: [
+          {
+            id: "C2",
+            mediaType: "video",
+            status: "completed",
+            promptVersionId: "v-w2",
+            ancestorGenerationId: "P1",
+          },
+        ],
+      }),
+    ]);
+
+    const c2 = nodes.find((n) => n.id === "C2")!;
+    // Display ancestor unchanged: the space still draws C2 → P1.
+    expect(c2).toMatchObject({ kind: "clip", ancestorId: "P1" });
+    expect(deriveEdgeKind(c2, nodes)).toBe("move");
+    // But its words are its own version's, not P1's.
+    expect(c2.wordsVersionId).toBe("v-w2");
+    expect(resolveWordsForNode("C2", nodes)).toBe(
+      "a harbor at dawn, orbit left",
+    );
+    // And P1 still restores W1 — the older words are not lost.
+    expect(resolveWordsForNode("P1", nodes)).toBe(
+      "a harbor at dawn, slow push in",
+    );
+  });
+
+  it("restores a refined picture's OWN words-version, not its ancestor picture's", () => {
+    // A studio refinement of P1 that belongs to a later words-version: the
+    // refine edge draws P2 → P1, but P2's words are W2's.
+    const nodes = lineageOf([
+      version({
+        versionId: "v-w1",
+        prompt: "a brass lamp on oak",
+        generations: [
+          {
+            id: "P1",
+            mediaType: "image",
+            status: "completed",
+            origin: "generated",
+            promptVersionId: "v-w1",
+          },
+        ],
+      }),
+      version({
+        versionId: "v-w2",
+        prompt: "a brass lamp on oak, warmer light",
+        generations: [
+          {
+            id: "P2",
+            mediaType: "image",
+            status: "completed",
+            origin: "studio",
+            promptVersionId: "v-w2",
+            ancestorGenerationId: "P1",
+          },
+        ],
+      }),
+    ]);
+
+    const p2 = nodes.find((n) => n.id === "P2")!;
+    expect(p2).toMatchObject({ kind: "picture", ancestorId: "P1" });
+    expect(deriveEdgeKind(p2, nodes)).toBe("refine");
+    expect(p2.wordsVersionId).toBe("v-w2");
+    expect(resolveWordsForNode("P2", nodes)).toBe(
+      "a brass lamp on oak, warmer light",
+    );
+  });
+
+  it("files a take under its own words-version, not the enclosing version it is listed under", () => {
+    // A take can be listed under a version array that is not its own
+    // words-version (the timeline's mismatch handling defends against exactly
+    // this). The associated words-version is the take's own `promptVersionId`
+    // when that is a real version — not the array it happens to sit in.
+    const nodes = lineageOf([
+      version({
+        versionId: "v-w1",
+        prompt: "W1 words",
+        generations: [
+          {
+            id: "cross",
+            mediaType: "image",
+            status: "completed",
+            promptVersionId: "v-w2",
+          },
+        ],
+      }),
+      version({ versionId: "v-w2", prompt: "W2 words" }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "cross")?.wordsVersionId).toBe("v-w2");
+    expect(resolveWordsForNode("cross", nodes)).toBe("W2 words");
+  });
+
+  it("falls back to the enclosing version when a take's own words-version is absent", () => {
+    // No `promptVersionId` on the record (a legacy take): the take is filed
+    // under the version it is listed in, and restore keeps working.
+    const nodes = lineageOf([
+      version({
+        versionId: "v-1",
+        prompt: "the only words",
+        generations: [
+          { id: "legacy", mediaType: "image", status: "completed" },
+        ],
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "legacy")?.wordsVersionId).toBe("v-1");
+    expect(resolveWordsForNode("legacy", nodes)).toBe("the only words");
   });
 });

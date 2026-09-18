@@ -14,7 +14,18 @@ export interface LineageInput {
   }>;
   pictures: Array<{
     id: string;
+    /**
+     * The enclosing version this picture is listed under — the words-node it
+     * hangs from for DRAWING when it has no picture ancestor. Distinct from
+     * `wordsVersionId`, which is what restore reads.
+     */
     versionId: string;
+    /**
+     * ADR-0022 decision 2: the words-version this take is FILED UNDER — its
+     * associated words, the restore target. Defaults to `versionId` when the
+     * caller does not distinguish them (the common same-version case).
+     */
+    wordsVersionId?: string;
     status?: SpaceNode["status"];
     mediaUrl?: string;
     archived?: boolean;
@@ -34,6 +45,12 @@ export interface LineageInput {
      * `pictureAncestryUnknown`.
      */
     pictureId: string;
+    /**
+     * ADR-0022 decision 2: the words-version this take is FILED UNDER — its
+     * associated words, the restore target. A clip's source picture may belong
+     * to an older words-version, so this is never derived from `pictureId`.
+     */
+    wordsVersionId?: string;
     status?: SpaceNode["status"];
     mediaUrl?: string;
     archived?: boolean;
@@ -64,6 +81,9 @@ export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
       id: picture.id,
       kind: "picture",
       ancestorId: picture.ancestorPictureId ?? wordsNodeId(picture.versionId),
+      // Associated words (restore) is a separate relationship from the display
+      // ancestor above; it defaults to the enclosing version when undistinguished.
+      wordsVersionId: picture.wordsVersionId ?? picture.versionId,
       ...(picture.status ? { status: picture.status } : {}),
       ...(picture.mediaUrl ? { mediaUrl: picture.mediaUrl } : {}),
       ...(picture.archived ? { archived: true } : {}),
@@ -75,6 +95,7 @@ export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
       id: clip.id,
       kind: "clip",
       ancestorId: clip.pictureId,
+      ...(clip.wordsVersionId ? { wordsVersionId: clip.wordsVersionId } : {}),
       ...(clip.status ? { status: clip.status } : {}),
       ...(clip.mediaUrl ? { mediaUrl: clip.mediaUrl } : {}),
       ...(clip.archived ? { archived: true } : {}),
