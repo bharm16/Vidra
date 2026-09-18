@@ -60,6 +60,7 @@ interface MockJobStore {
   enqueueDeadLetter: ReturnType<typeof vi.fn>;
   renewLease: ReturnType<typeof vi.fn>;
   setProviderResult: ReturnType<typeof vi.fn>;
+  setAttachment: ReturnType<typeof vi.fn>;
 }
 
 const createMockJobStore = (): MockJobStore => ({
@@ -70,6 +71,7 @@ const createMockJobStore = (): MockJobStore => ({
   enqueueDeadLetter: vi.fn().mockResolvedValue(undefined),
   renewLease: vi.fn().mockResolvedValue(true),
   setProviderResult: vi.fn().mockResolvedValue(true),
+  setAttachment: vi.fn().mockResolvedValue(true),
 });
 
 const createClaimedJob = (
@@ -236,6 +238,110 @@ describe("scheduleInlineVideoProcessing", () => {
         storagePath: FAKE_STORAGE_RESULT.storagePath,
       }),
     );
+  });
+
+  // ── Session attachment (ADR-0022 decision 6) ─────────────────────
+  //
+  // The opposite of the durable-copy policy pinned next door in
+  // inlineProcessor.durable-copy.regression.test.ts: that step must fail the
+  // job and refund, because without it the creator loses the clip. This one
+  // must NOT, because by the time it runs the clip is already durable and
+  // already paid for. Attachment is a second, separately tracked fact.
+
+  const withLineage = (): void => {
+    jobStore.claimJob.mockResolvedValue(
+      createClaimedJob({ sessionId: "session-1", promptVersionId: "version-1" }),
+    );
+  };
+
+  const attachmentStates = (): string[] =>
+    jobStore.setAttachment.mock.calls.map(
+      (call) => (call[1] as { state: string }).state,
+    );
+
+  it("persists the attachment as pending before attempting it, then as attached", async () => {
+    // The pending marker is the crash-recovery checkpoint: a worker that dies
+    // between markCompleted and the append leaves a job that still says the
+    // session is owed a take.
+    withLineage();
+    const appendGenerationToVersion = vi.fn().mockResolvedValue(undefined);
+
+    await invokeProcessor({ sessionService: { appendGenerationToVersion } });
+
+    expect(attachmentStates()).toEqual(["pending", "attached"]);
+    const [jobId, pending] = jobStore.setAttachment.mock.calls[0]!;
+    expect(jobId).toBe("job-1");
+    expect(pending).toMatchObject({
+      state: "pending",
+      generationId: "job-1",
+      sessionId: "session-1",
+      promptVersionId: "version-1",
+    });
+    // What is owed rides with the marker, so a resume re-sends the same record
+    // rather than rebuilding one.
+    expect((pending as { record: Record<string, unknown> }).record).toMatchObject(
+      { id: "job-1", mediaType: "video" },
+    );
+  });
+
+  it("regression: a failing session write leaves the clip completed, records a failed attachment, and never refunds", async () => {
+    withLineage();
+    const appendGenerationToVersion = vi
+      .fn()
+      .mockRejectedValue(new Error("firestore unavailable"));
+
+    await invokeProcessor({ sessionService: { appendGenerationToVersion } });
+
+    // The generation outcome is untouched: no reopened job, no DLQ, no refund.
+    expect(jobStore.markCompleted).toHaveBeenCalled();
+    expect(jobStore.markFailed).not.toHaveBeenCalled();
+    expect(jobStore.requeueForRetry).not.toHaveBeenCalled();
+    expect(jobStore.enqueueDeadLetter).not.toHaveBeenCalled();
+    expect(mocks.refundWithGuard).not.toHaveBeenCalled();
+
+    // The attachment is a tracked fact, not a swallowed log line.
+    expect(attachmentStates().at(-1)).toBe("failed");
+    const failed = jobStore.setAttachment.mock.calls.at(-1)![1] as {
+      reason: string;
+      record: Record<string, unknown>;
+    };
+    expect(failed.reason).toContain("firestore unavailable");
+    expect(failed.record).toMatchObject({ id: "job-1" });
+  });
+
+  it("retries a transient session write rather than surfacing it as not-saved", async () => {
+    withLineage();
+    const appendGenerationToVersion = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("firestore temporary error"))
+      .mockResolvedValueOnce(undefined);
+
+    await invokeProcessor({ sessionService: { appendGenerationToVersion } });
+
+    expect(appendGenerationToVersion).toHaveBeenCalledTimes(2);
+    expect(attachmentStates().at(-1)).toBe("attached");
+    expect(mocks.refundWithGuard).not.toHaveBeenCalled();
+  });
+
+  it("never regenerates: an attachment attempt drives the provider exactly once", async () => {
+    withLineage();
+    const appendGenerationToVersion = vi
+      .fn()
+      .mockRejectedValue(new Error("firestore unavailable"));
+
+    await invokeProcessor({ sessionService: { appendGenerationToVersion } });
+
+    expect(generateVideo).toHaveBeenCalledTimes(1);
+    expect(storageService.saveFromUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it("records no attachment at all for a job with no session to attach to", async () => {
+    const appendGenerationToVersion = vi.fn().mockResolvedValue(undefined);
+
+    await invokeProcessor({ sessionService: { appendGenerationToVersion } });
+
+    expect(appendGenerationToVersion).not.toHaveBeenCalled();
+    expect(jobStore.setAttachment).not.toHaveBeenCalled();
   });
 
   // ── Heartbeat Tests ──────────────────────────────────────────────

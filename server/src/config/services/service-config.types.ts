@@ -29,6 +29,10 @@ export interface ServiceConfig {
   };
   fal: {
     apiKey: string | undefined;
+    /** Daily per-creator sketch-relay admission cap in estimated cents (issue #84). */
+    sketchDailyCapCents: number;
+    /** Estimated cost of one dispatched sketch frame, in millicents (1 cent = 1000). */
+    sketchFrameCostMillicents: number;
   };
   redis: {
     defaultTTL: number;

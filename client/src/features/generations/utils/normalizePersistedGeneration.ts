@@ -64,8 +64,14 @@ export function normalizePersistedGeneration(
   return {
     // Deliberate passthrough: the contract keeps this bag open, so fields the
     // UI reads opportunistically (thumbnailUrl, isFavorite, storagePath,
-    // ancestorGenerationId, generationSettings, …) must survive. Every field
-    // the wire cannot guarantee is overridden below.
+    // ancestorGenerationId, generationSettings, …) must survive. That now
+    // includes the ADR-0022 admission trio — origin, productionProvenance,
+    // sourceInputs — which the wire DOES validate, so they ride through
+    // untouched rather than being re-derived here; re-deriving an origin is
+    // precisely what the closed set exists to prevent. Reading them goes
+    // through serverOwnedRecordFields, which also keeps them alive across the
+    // client's whole-record merges. Every field the wire cannot guarantee is
+    // overridden below.
     ...(bag as unknown as Generation),
     id,
     model,
@@ -86,6 +92,10 @@ export function normalizePersistedGeneration(
     mediaUrls: toStringArray(bag.mediaUrls),
     createdAt: toEpochMs(bag.createdAt) ?? completedAt ?? 0,
     completedAt,
+    // ADR-0022 decision 6: this record came OUT of a session, so it is in that
+    // session — whatever a stale marker in the bag claims. Dropping it here is
+    // what keeps "made but not saved" from surviving the save.
+    attachment: undefined,
   };
 }
 

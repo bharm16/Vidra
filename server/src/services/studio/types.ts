@@ -6,6 +6,8 @@
  * Plan: docs/superpowers/plans/2026-07-24-the-studio-conversational-image-workspace.md
  */
 
+import type { StudioProjectOrigin } from "@shared/schemas/studio.schemas";
+
 export const STUDIO_MODEL_SLUGS = [
   "recraft-v4.1",
   "recraft-v4.1-svg",
@@ -99,6 +101,17 @@ export interface StudioImageRecord {
   model: StudioModelSlug | StudioUtilityOperation;
 }
 
+/**
+ * One stored image a turn actually consumed, as `resolveSourceImages`
+ * resolved it — ADR-0022 decision 4. Structurally the part of
+ * `StudioImageRecord` / `StudioAttachment` both kinds of source share, which
+ * is why one shape covers a generated image and an uploaded reference alike.
+ */
+export interface StudioTurnSourceImage {
+  id: string;
+  storagePath: string;
+}
+
 export type StudioTurnStatus = "running" | "complete" | "partial" | "failed";
 
 /** Per-call slot in a turn: index-stable so the UI can render failures in place. */
@@ -124,6 +137,18 @@ export interface StudioTurnRecord {
   resolvedModel?: StudioModelSlug | undefined;
   /** Attachment ids the user sent WITH this message (S-12). */
   attachmentIds?: string[] | undefined;
+  /**
+   * The stored images this turn actually consumed, resolved from
+   * `decision.sourceImageIds` / `sourceImageId` at dispatch and kept
+   * (ADR-0022 decision 4). Distinct from `attachmentIds`, which records what
+   * the creator sent WITH the message rather than what the edit ran on, and
+   * from the decision's ids, which are what the LLM asked for.
+   *
+   * Absent on generate and conversational turns, which consume no image.
+   * `readTurnSourceImages` is the validated read — never reach for this field
+   * directly.
+   */
+  sourceImages?: StudioTurnSourceImage[] | undefined;
   calls: StudioCallRecord[];
   reservedCents: number;
   refundedCents: number;
@@ -143,6 +168,14 @@ export interface StudioProjectRecord {
   pinnedModel?: StudioModelSlug | null | undefined;
   /** User-uploaded reference images (S-12), capped small. */
   attachments?: StudioAttachment[] | undefined;
+  /**
+   * Where this project came from, when it was born from a session picture
+   * (ADR-0022 decision 4). Absent on projects started in the studio itself —
+   * most of them, and that is the point: the bridge is optional, not a fold.
+   * Immutable once written: it is what the creator invoked on, not a live link
+   * to whatever the session says now.
+   */
+  origin?: StudioProjectOrigin | undefined;
   /**
    * The most recent image the project produced, denormalized off the turns
    * subcollection so the project index can show a cover without reading one

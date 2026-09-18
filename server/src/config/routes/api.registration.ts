@@ -15,8 +15,16 @@ import { createAPIRoutes } from "@routes/api.routes";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
+import { createSketchAcceptRouter } from "@routes/sketch-accept.routes";
+import type { SketchRelayFetch } from "@server/replay/RecordReplaySketchRelay";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
+import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import type {
+  AdmissionIdempotencyPort,
+  AdmissionMediaStore,
+} from "@services/admission/admitPictureTake";
+import type { SessionService } from "@services/sessions/SessionService";
 import {
   createShareRouter,
   createPublicClipRouter,
@@ -143,10 +151,51 @@ export function registerApiRoutes(
   // Realtime-sketch spike (ADR-0016 as amended): relays sketch frames to the
   // one approved fal i2i model over HTTP sync — fal retired realtime-WS i2i,
   // so all frame traffic flows through the server again.
+  // Frames are admitted against the creator's shared daily budget before
+  // dispatch (issue #84) — the relay is fail-closed without it.
+  // REPLAY_MODE also reaches the relay's upstream call, which is the one
+  // boundary that cannot be substituted by registration: the relay holds
+  // FAL_KEY and calls its injected fetch directly. Null unless replay/record
+  // is active, in which case the relay keeps the global fetch it defaults to.
+  const sketchRelayFetch = resolveOptionalService<SketchRelayFetch | null>(
+    container,
+    "sketchRelayFetch",
+    "fal-i2i",
+  );
   app.use(
     "/api/fal",
     apiAuthMiddleware,
-    createFalI2iRouter({ falKey: resolveFalApiKey() ?? undefined }),
+    createFalI2iRouter({
+      falKey: resolveFalApiKey() ?? undefined,
+      budget: container.resolve("sketchBudgetService"),
+      ...(sketchRelayFetch ? { fetchFn: sketchRelayFetch } : {}),
+    }),
+  );
+
+  // The Live editor's accept door (ADR-0022 decision 5, issue #87): the
+  // picture on screen becomes a picture take in a session born around it.
+  // Its dependencies are optional at the container level, so the router
+  // answers 503 rather than disappearing when storage or sessions are down.
+  app.use(
+    "/api/sketch",
+    apiAuthMiddleware,
+    createSketchAcceptRouter({
+      sessionService: resolveOptionalService<SessionService | null>(
+        container,
+        "sessionService",
+        "sketch-accept",
+      ),
+      mediaStore: resolveOptionalService<AdmissionMediaStore | null>(
+        container,
+        "imageAssetStore",
+        "sketch-accept",
+      ),
+      idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
+        container,
+        "requestIdempotencyService",
+        "sketch-accept",
+      ),
+    }),
   );
 
   // Studio conversational image workspace (ADR-0019). Null when the
@@ -161,7 +210,36 @@ export function registerApiRoutes(
     app.use(
       "/api/studio",
       apiAuthMiddleware,
-      createStudioRouter(studioService),
+      createStudioRouter(
+        studioService,
+        // ADR-0022 decision 4: the studio bridge's session-side read. The
+        // join lives here, at the route layer — StudioService never learns
+        // what a session is.
+        createSessionPictureLookup(
+          container.resolve<SessionService>("sessionService"),
+        ),
+        // ADR-0022 decision 4, return leg: "Use this in the session" admits a
+        // studio image through the same boundary as an upload. Resolved
+        // optionally for the same reason the sketch door's are — the route
+        // answers 503 rather than vanishing when they are absent.
+        {
+          sessionService: resolveOptionalService<SessionService | null>(
+            container,
+            "sessionService",
+            "studio-return",
+          ),
+          mediaStore: resolveOptionalService<AdmissionMediaStore | null>(
+            container,
+            "imageAssetStore",
+            "studio-return",
+          ),
+          idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
+            container,
+            "requestIdempotencyService",
+            "studio-return",
+          ),
+        },
+      ),
     );
   }
 }

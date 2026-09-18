@@ -51,7 +51,17 @@ export class SessionService {
     private videoJobCascade?: VideoJobCascade,
   ) {}
 
-  private async requireOwnedSession(
+  /**
+   * The ownership check every write on this service runs first, and — since
+   * ADR-0022 — the one the admission boundary runs BEFORE it stores anything.
+   *
+   * Public so admission can refuse a foreign destination without side effects.
+   * It is a read that throws, not a write: `appendGenerationToVersion` still
+   * re-checks ownership inside its own transaction, so publishing this widens
+   * nothing. It stays the single spelling of the rule — a caller that compares
+   * `session.userId` itself is a second copy of it, and second copies rot.
+   */
+  async requireOwnedSession(
     userId: string,
     sessionId: string,
   ): Promise<SessionRecord> {
@@ -314,39 +324,51 @@ export class SessionService {
     return this.updateSessionForUser(userId, sessionId, { prompt: updates });
   }
 
+  /**
+   * The client's whole-array versions write.
+   *
+   * ADR-0022 decision 6: this is the second writer of `version.generations`,
+   * and it runs inside the store's transaction for the same reason the append
+   * below does. `enforceImmutableVersions` already unions a stored take the
+   * incoming array omits — but only against whatever the read saw, so reading
+   * outside the transaction let a take that attached in between be erased by a
+   * payload the client built before it existed.
+   */
   private async updateVersions(
     sessionId: string,
     updates: SessionVersionsUpdate,
   ): Promise<SessionRecord> {
-    const current = await this.sessionStore.get(sessionId);
-    if (!current) throw new Error(`Session not found: ${sessionId}`);
-    const prompt = current.prompt ?? { input: "", output: "" };
-    let nextVersions = updates.versions;
-    if (updates.versions !== undefined) {
-      const enforced = enforceImmutableVersions(
-        prompt.versions ?? null,
-        updates.versions ?? null,
-      );
-      nextVersions = enforced.versions ?? undefined;
-      if (enforced.warnings.length) {
-        this.log.warn(
-          "Preserved immutable media references during session version update",
-          {
-            sessionId,
-            warningCount: enforced.warnings.length,
-          },
+    let warningCount = 0;
+    const next = await this.sessionStore.mutate(sessionId, (current) => {
+      const prompt = current.prompt ?? { input: "", output: "" };
+      let nextVersions = updates.versions;
+      if (updates.versions !== undefined) {
+        const enforced = enforceImmutableVersions(
+          prompt.versions ?? null,
+          updates.versions ?? null,
         );
+        nextVersions = enforced.versions ?? undefined;
+        warningCount = enforced.warnings.length;
       }
+      return {
+        ...current,
+        prompt: {
+          ...prompt,
+          ...(nextVersions !== undefined ? { versions: nextVersions } : {}),
+        },
+        updatedAt: new Date(),
+      };
+    });
+    if (!next) throw new Error(`Session not found: ${sessionId}`);
+    if (warningCount) {
+      this.log.warn(
+        "Preserved immutable media references during session version update",
+        {
+          sessionId,
+          warningCount,
+        },
+      );
     }
-    const next = {
-      ...current,
-      prompt: {
-        ...prompt,
-        ...(nextVersions !== undefined ? { versions: nextVersions } : {}),
-      },
-      updatedAt: new Date(),
-    };
-    await this.sessionStore.save(next);
     return next;
   }
 
@@ -360,21 +382,23 @@ export class SessionService {
   }
 
   /**
-   * Atomically append a generation record to a specific prompt version's
-   * generations array. This is the single-writer path for
-   * "server-authoritative generation persistence" — preview handlers call this
-   * after successfully generating media so the generation is durable before
-   * the client re-fetches the session.
+   * Attach a completed take to a specific prompt version's generations array.
+   * This is the server-authoritative path — the quick-picture handler and the
+   * video worker call it so the take is durable before the client re-fetches
+   * the session (ADR-0022 decision 6).
    *
    * If the target version does not exist yet, it is created in place with the
    * provided promptVersionId so the append is still durable. This handles the
    * draft-to-persisted transition where the client may POST with a version id
    * that only just materialized.
    *
-   * NOTE: read-modify-write is not transactionally atomic across concurrent
-   * calls in the current store. For human-paced UI flows the race window is
-   * negligible; migrating to a transaction when Firestore backs the store is
-   * a follow-up.
+   * The guarantee, which used to be a documented gap: the read-modify-write
+   * runs inside the store's transaction, against that transaction's own
+   * snapshot. Two appends for two different takes therefore both survive — the
+   * loser of the race re-runs against the winner's result rather than writing
+   * back an array that never saw it. Repeating one append is still a no-op,
+   * because the upsert below is keyed by take identity. The mutator is pure so
+   * Firestore may re-run it on contention.
    */
   async appendGenerationToVersion(
     userId: string,
@@ -382,14 +406,11 @@ export class SessionService {
     promptVersionId: string,
     generation: Record<string, unknown>,
   ): Promise<SessionRecord> {
-    const current = await this.requireOwnedSession(userId, sessionId);
-    const prompt = current.prompt ?? { input: "", output: "" };
-    const versions = Array.isArray(prompt.versions) ? [...prompt.versions] : [];
+    await this.requireOwnedSession(userId, sessionId);
 
-    // Idempotent by generation id — a worker retry after a flaky
-    // markCompleted could call us twice for the same job. Upsert by id
-    // rather than appending blindly so we don't leave duplicates in the
-    // session's generations array.
+    // Idempotent by generation id — a worker retry or a resumed attachment
+    // calls us twice for the same take. Upsert by id rather than appending
+    // blindly so we don't leave duplicates in the session's generations array.
     const incomingId = typeof generation.id === "string" ? generation.id : null;
 
     const upsertGenerations = (
@@ -408,33 +429,47 @@ export class SessionService {
       return [...current, generation];
     };
 
-    const idx = versions.findIndex((v) => v.versionId === promptVersionId);
-    if (idx >= 0) {
-      const existing = versions[idx]!;
-      versions[idx] = {
-        ...existing,
-        generations: upsertGenerations(existing.generations),
-      };
-    } else {
-      const basePromptText =
-        (typeof prompt.output === "string" && prompt.output.trim().length > 0
-          ? prompt.output
-          : prompt.input) || "";
-      versions.push({
-        versionId: promptVersionId,
-        signature: "server-append",
-        prompt: basePromptText,
-        timestamp: new Date().toISOString(),
-        generations: upsertGenerations(undefined),
-      });
-    }
+    const next = await this.sessionStore.mutate(sessionId, (current) => {
+      // Re-checked against the transaction's snapshot: ownership is the
+      // condition of the write, not of a read that preceded it.
+      if (current.userId !== userId) {
+        throw new SessionAccessDeniedError(sessionId, userId, current.userId);
+      }
 
-    const next: SessionRecord = {
-      ...current,
-      prompt: { ...prompt, versions },
-      updatedAt: new Date(),
-    };
-    await this.sessionStore.save(next);
+      const prompt = current.prompt ?? { input: "", output: "" };
+      const versions = Array.isArray(prompt.versions)
+        ? [...prompt.versions]
+        : [];
+
+      const idx = versions.findIndex((v) => v.versionId === promptVersionId);
+      if (idx >= 0) {
+        const existing = versions[idx]!;
+        versions[idx] = {
+          ...existing,
+          generations: upsertGenerations(existing.generations),
+        };
+      } else {
+        const basePromptText =
+          (typeof prompt.output === "string" && prompt.output.trim().length > 0
+            ? prompt.output
+            : prompt.input) || "";
+        versions.push({
+          versionId: promptVersionId,
+          signature: "server-append",
+          prompt: basePromptText,
+          timestamp: new Date().toISOString(),
+          generations: upsertGenerations(undefined),
+        });
+      }
+
+      return {
+        ...current,
+        prompt: { ...prompt, versions },
+        updatedAt: new Date(),
+      };
+    });
+
+    if (!next) throw new SessionNotFoundError(sessionId);
     return next;
   }
 

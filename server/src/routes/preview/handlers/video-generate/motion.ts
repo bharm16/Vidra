@@ -61,27 +61,6 @@ export const resolveMotionContext = (
   };
 };
 
-export const appendMotionGuidance = (
-  basePrompt: string,
-  motion: MotionContext,
-): string => {
-  const guidanceLines: string[] = [];
-
-  if (motion.cameraMotionText) {
-    guidanceLines.push(`Camera motion: ${motion.cameraMotionText}`);
-  }
-  if (motion.subjectMotion) {
-    guidanceLines.push(`Subject motion: ${motion.subjectMotion}`);
-  }
-
-  if (guidanceLines.length === 0) {
-    return basePrompt;
-  }
-
-  const trimmedPrompt = basePrompt.trim();
-  return `${trimmedPrompt}\n\n${guidanceLines.join("\n")}`;
-};
-
 export const extractMotionMeta = (params: unknown) => {
   const record =
     params && typeof params === "object"

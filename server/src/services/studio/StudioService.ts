@@ -13,7 +13,7 @@
  * negotiate) are terminal immediately — no reservation, no image calls.
  */
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
 import { validatePathOwnership } from "@services/storage/utils/pathUtils";
 import type { StudioModelRegistry } from "./StudioModelRegistry";
@@ -26,7 +26,9 @@ import type {
   StudioImageRunner,
 } from "./providers/types";
 import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
+import { readTurnSourceImages } from "./turnSourceImages";
 import type { StudioProjectStore } from "./storage/StudioProjectStore";
+import type { StudioProjectOrigin } from "@shared/schemas/studio.schemas";
 import type {
   StudioAttachment,
   StudioCallRecord,
@@ -36,6 +38,7 @@ import type {
   StudioModelSlug,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnSourceImage,
 } from "./types";
 
 export class StudioNotFoundError extends Error {
@@ -69,6 +72,77 @@ export interface StudioImageStorage {
  */
 export interface StudioProjectView extends StudioProjectRecord {
   coverUrl?: string | undefined;
+  /**
+   * A freshly signed URL for the bridged session picture (ADR-0022 decision
+   * 4), minted per read from the project's OWN copy — never persisted, because
+   * a one-hour URL on a durable record is a lie waiting to be read.
+   */
+  originImageUrl?: string | undefined;
+}
+
+/**
+ * The session picture a creator invoked "Refine in the studio" on, as the
+ * session resolved it (`sessionPictureLookup`). Plain data on purpose: the
+ * studio never reads a session, so a bridge cannot become a coupling.
+ */
+export interface SessionPictureSource {
+  sessionId: string;
+  /** The words-version the take is filed under (ADR-0022 decision 2). */
+  promptVersionId: string;
+  /** The take identity. */
+  generationId: string;
+  /** A durable path in the creator's own store — never a signed URL. */
+  storagePath: string;
+  assetId?: string | undefined;
+}
+
+/**
+ * One project per creator + session + take, enforced by the project's own
+ * identity rather than by a lookup that two concurrent clicks could both miss.
+ * A double-click, or a retry after a lost response, addresses the same
+ * document: the second invocation finds the first and returns it.
+ *
+ * Deriving the id is what makes this true without a Firestore composite index
+ * on a nested origin field, and without borrowing the request-idempotency
+ * service, which ADR-0022 decision 6 keeps frozen outside the admission key.
+ */
+export function studioProjectIdForSessionPicture(
+  userId: string,
+  sessionId: string,
+  generationId: string,
+): string {
+  return createHash("sha256")
+    // JSON-encoded rather than concatenated: the parts are opaque ids, and
+    // a separator one of them could contain would let two different takes
+    // hash to one project.
+    .update(
+      JSON.stringify(["studio-from-take", userId, sessionId, generationId]),
+    )
+    .digest("hex")
+    .slice(0, 32);
+}
+
+/**
+ * One studio image together with everything the return bridge needs about it
+ * (ADR-0022 decision 4): which turn made it, what that turn ran on, and the
+ * session the project was born from. Plain data, no session vocabulary — the
+ * studio still does not know what a session is.
+ */
+export interface StudioProducedImage {
+  projectId: string;
+  /** The turn whose succeeded call produced this image. */
+  turnId: string;
+  image: StudioImageRecord;
+  /** Minted per read, never persisted: a one-hour URL is not a record. */
+  viewUrl: string;
+  /**
+   * What the producing turn ACTUALLY consumed — empty for a generate, which
+   * has no image inputs at all. This, not the project's origin, is what
+   * decides whether the returning picture has a picture ancestor.
+   */
+  sourceImages: readonly StudioTurnSourceImage[];
+  /** Present only when the project was born from a session picture. */
+  origin?: StudioProjectOrigin | undefined;
 }
 
 /** Wire shape for turn polling: images decorated with fresh signed URLs. */
@@ -209,6 +283,111 @@ export class StudioService {
     return project;
   }
 
+  /**
+   * "Refine in the studio" (ADR-0022 decision 4): a project born from a
+   * session picture, opened with that picture selected.
+   *
+   * The sequence, and why it is in this order:
+   *
+   *  1. **Identity first.** The project id is derived from the take, so a
+   *     second invocation finds the first project instead of minting a rival.
+   *     Checked before anything is copied — a retry re-stores no bytes.
+   *  2. **Ownership.** The same anchored `users/<uid>/` rule attachments use,
+   *     applied before the path is signed or read.
+   *  3. **A copy the project owns.** The bytes land in a NEW object under the
+   *     creator's prefix, tagged with where they came from. Referencing the
+   *     session's object instead would tie the project's media to a record the
+   *     session is free to change; a signed URL would tie it to one hour.
+   *  4. **Selected, and recorded.** The copy is registered as the project's
+   *     first image and made the selection, so an edit turn sources it exactly
+   *     as it sources an uploaded reference; the origin is stamped with the
+   *     session, words-version and take identity AS OF this moment.
+   *
+   * It writes nothing back to the session — the source take and its paired
+   * words are untouched, by having no way to reach them.
+   */
+  async createProjectFromSessionPicture(
+    userId: string,
+    source: SessionPictureSource,
+    title?: string,
+  ): Promise<StudioProjectRecord> {
+    const projectId = studioProjectIdForSessionPicture(
+      userId,
+      source.sessionId,
+      source.generationId,
+    );
+
+    const existing = await this.store.getProject(projectId);
+    if (existing) {
+      if (existing.userId !== userId) {
+        throw new StudioNotFoundError("Studio project");
+      }
+      return existing;
+    }
+
+    if (!validatePathOwnership(source.storagePath, userId)) {
+      const error = new Error("storagePath is not yours") as Error & {
+        statusCode: number;
+      };
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Signed only to move the bytes; nothing downstream keeps this URL.
+    const { viewUrl } = await this.storage.getViewUrl(
+      userId,
+      source.storagePath,
+    );
+    const copied = await this.storage.saveFromUrl(
+      userId,
+      viewUrl,
+      "preview-image",
+      {
+        studioProjectId: projectId,
+        originSessionId: source.sessionId,
+        originGenerationId: source.generationId,
+      },
+    );
+
+    const nowMs = this.now().getTime();
+    const bridged: StudioAttachment = {
+      id: `att-${this.idFactory()}`,
+      storagePath: copied.storagePath,
+      filename: "Session picture",
+      createdAtMs: nowMs,
+    };
+
+    const project: StudioProjectRecord = {
+      id: projectId,
+      userId,
+      title: title?.trim() || "Untitled",
+      attachments: [bridged],
+      selectedImageId: bridged.id,
+      origin: {
+        sessionId: source.sessionId,
+        promptVersionId: source.promptVersionId,
+        sourceInput: {
+          kind: "take",
+          generationId: source.generationId,
+          storagePath: source.storagePath,
+          ...(source.assetId ? { assetId: source.assetId } : {}),
+        },
+        bridgedImageId: bridged.id,
+        capturedAtMs: nowMs,
+      },
+      createdAtMs: nowMs,
+      updatedAtMs: nowMs,
+    };
+
+    await this.store.createProject(project);
+    this.log.info("Studio project born from a session picture", {
+      projectId,
+      sessionId: source.sessionId,
+      generationId: source.generationId,
+    });
+    return project;
+  }
+
   async getProject(
     userId: string,
     projectId: string,
@@ -219,6 +398,88 @@ export class StudioService {
       throw new StudioNotFoundError("Studio project");
     }
     return project;
+  }
+
+  /**
+   * The project as the workspace opens it: the record, plus a freshly signed
+   * URL for a bridged session picture. The URL is minted per read from the
+   * project's own copy, which is why reopening still shows the picture long
+   * after the hour the admitting URL lived, and after the originating session
+   * has moved on. A minting failure degrades to a project without the URL
+   * (logged) — the same policy `decorateTurn` and the index's covers use.
+   */
+  async getProjectView(
+    userId: string,
+    projectId: string,
+  ): Promise<StudioProjectView> {
+    const project = await this.getProject(userId, projectId);
+    const bridgedImageId = project.origin?.bridgedImageId;
+    if (!bridgedImageId) return project;
+
+    const bridged = (project.attachments ?? []).find(
+      (attachment) => attachment.id === bridgedImageId,
+    );
+    if (!bridged) return project;
+
+    try {
+      const { viewUrl } = await this.storage.getViewUrl(
+        userId,
+        bridged.storagePath,
+      );
+      return { ...project, originImageUrl: viewUrl };
+    } catch (error) {
+      this.log.warn("Failed to mint bridged picture view URL", {
+        projectId,
+        storagePath: bridged.storagePath,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return project;
+    }
+  }
+
+  /**
+   * What produced one of this project's images — the studio-side read behind
+   * "Use this in the session" (ADR-0022 decision 4, issue #89).
+   *
+   * It answers three things the return bridge cannot work out for itself: the
+   * turn that made the image, what that turn ACTUALLY consumed, and where the
+   * project came from. Ownership reads as absence, as everywhere else here.
+   *
+   * Only images the studio PRODUCED are addressable. An attachment — the
+   * bridged session picture included — has no producing turn, so it answers
+   * `null`: sending the session its own picture back is not a refinement, and
+   * a bridge that allowed it would mint a second take of the same media.
+   *
+   * It writes nothing and knows nothing about sessions. The session half of
+   * the bridge lives in `returnStudioImage`, one layer up, exactly as the
+   * outbound half's session read lives outside this service.
+   */
+  async findProducedImage(
+    userId: string,
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioProducedImage | null> {
+    const project = await this.getProject(userId, projectId);
+    const turns = await this.store.listTurns(projectId);
+
+    for (const turn of turns) {
+      for (const call of turn.calls) {
+        if (call.status !== "succeeded" || call.image?.id !== imageId) continue;
+        const { viewUrl } = await this.storage.getViewUrl(
+          userId,
+          call.image.storagePath,
+        );
+        return {
+          projectId,
+          turnId: turn.id,
+          image: call.image,
+          viewUrl,
+          sourceImages: readTurnSourceImages(turn),
+          ...(project.origin ? { origin: project.origin } : {}),
+        };
+      }
+    }
+    return null;
   }
 
   /**
@@ -590,6 +851,7 @@ export class StudioService {
       callCount: 1,
       reservedCents: model.costCentsPerCall,
       attachmentIds,
+      sourceImages: sources,
     });
 
     const { completion } = await this.ledger.reserve(
@@ -647,6 +909,7 @@ export class StudioService {
       callCount: 1,
       reservedCents: utility.costCentsPerCall,
       attachmentIds,
+      sourceImages: [source],
     });
 
     const { completion } = await this.ledger.reserve(
@@ -685,6 +948,8 @@ export class StudioService {
       callCount: number;
       reservedCents: number;
       attachmentIds?: readonly string[];
+      /** ADR-0022 decision 4: what this turn actually runs on. */
+      sourceImages?: readonly StudioTurnSourceImage[];
     },
   ): StudioTurnRecord {
     const nowMs = this.now().getTime();
@@ -700,6 +965,13 @@ export class StudioService {
         : {}),
       ...(options.attachmentIds && options.attachmentIds.length > 0
         ? { attachmentIds: [...options.attachmentIds] }
+        : {}),
+      // Written at dispatch, alongside the decision that named the ids, so
+      // the record says what ran rather than what was asked for. Omitted
+      // entirely when nothing was consumed — an empty array persisted on
+      // every generate would be noise the read has to re-interpret.
+      ...(options.sourceImages && options.sourceImages.length > 0
+        ? { sourceImages: options.sourceImages.map((image) => ({ ...image })) }
         : {}),
       calls: Array.from({ length: options.callCount }, (_, index) => ({
         index,

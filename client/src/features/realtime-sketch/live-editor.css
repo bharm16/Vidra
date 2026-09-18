@@ -408,3 +408,32 @@
   background: rgba(255, 255, 255, 0.14);
   display: block;
 }
+
+/* "Use this" — the one action on this surface that leaves the plane, so it is
+   the one chip that reads as filled rather than as another setting. */
+.le-chip-accept {
+  margin-left: auto;
+  background: #f2f3f6;
+  color: #16181d;
+}
+
+.le-chip-accept:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+.le-chip-accept:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(242, 243, 246, 0.45);
+  cursor: default;
+}
+
+/* A refused acceptance names itself here rather than in the output panel: the
+   picture is fine, it is the saving that failed. */
+.le-accept-error {
+  margin-top: 0.625rem;
+  font:
+    400 12px var(--font-sans),
+    system-ui,
+    sans-serif;
+  color: #ffb4a8;
+}

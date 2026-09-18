@@ -1,13 +1,16 @@
 import { useCallback, useReducer, useRef } from "react";
 import { generatePreview } from "@/features/preview/api/previewApi";
+import { retryPictureAttachment } from "@/features/generations/api/takeAttachment";
 import type { KeyframeTile } from "@/features/generation-controls/types";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { IdeaBoxStage } from "../types";
 import { IDEA_BOX_ASPECT_RATIO } from "../config/constants";
 
 type IdeaBoxAction =
   | { type: "FRAMING" }
-  | { type: "READY" }
+  | { type: "READY"; unattachedTake: TakeAttachment | null }
   | { type: "FAILED"; message: string }
+  | { type: "ATTACHED" }
   | { type: "RESET" };
 
 /**
@@ -19,11 +22,19 @@ type IdeaBoxAction =
 interface IdeaBoxState {
   stage: IdeaBoxStage;
   consecutiveFailures: number;
+  /**
+   * ADR-0022 decision 6: the frame was made, and its session write was not.
+   * Kept beside the stage rather than inside it — the frame is READY and the
+   * gate still belongs on screen; "not saved" is a second fact about the same
+   * picture, not a different stage of it.
+   */
+  unattachedTake: TakeAttachment | null;
 }
 
 const INITIAL_STATE: IdeaBoxState = {
   stage: { kind: "idle" },
   consecutiveFailures: 0,
+  unattachedTake: null,
 };
 
 function ideaBoxReducer(
@@ -35,18 +46,30 @@ function ideaBoxReducer(
       return {
         stage: { kind: "framing" },
         consecutiveFailures: state.consecutiveFailures,
+        unattachedTake: null,
       };
     case "READY":
-      return { stage: { kind: "ready" }, consecutiveFailures: 0 };
+      return {
+        stage: { kind: "ready" },
+        consecutiveFailures: 0,
+        unattachedTake: action.unattachedTake,
+      };
     case "FAILED": {
       const consecutiveFailures = state.consecutiveFailures + 1;
       return {
         stage: { kind: "failed", message: action.message, consecutiveFailures },
         consecutiveFailures,
+        unattachedTake: null,
       };
     }
+    case "ATTACHED":
+      return { ...state, unattachedTake: null };
     case "RESET":
-      return { stage: { kind: "idle" }, consecutiveFailures: 0 };
+      return {
+        stage: { kind: "idle" },
+        consecutiveFailures: 0,
+        unattachedTake: state.unattachedTake,
+      };
   }
 }
 
@@ -97,6 +120,14 @@ export interface UseIdeaBoxResult {
   regenerateFrame: (prompt: string) => Promise<void>;
   /** The gate's accept path: dismisses the gate prompt (stage back to idle). */
   acceptFrame: () => void;
+  /**
+   * The frame that was made but not saved (ADR-0022 decision 6), or null. It
+   * carries the take identity and the record, so retrying re-attaches THIS
+   * picture rather than painting another one.
+   */
+  unattachedTake: TakeAttachment | null;
+  /** Re-attach the unsaved frame. Never regenerates and never re-charges. */
+  retryAttachment: () => Promise<void>;
 }
 
 export function useIdeaBox({
@@ -106,6 +137,9 @@ export function useIdeaBox({
 }: UseIdeaBoxParams): UseIdeaBoxResult {
   const [state, dispatch] = useReducer(ideaBoxReducer, INITIAL_STATE);
   const runIdRef = useRef(0);
+  // Read through a ref so the retry callback stays stable across renders —
+  // it is handed to a context whose consumers re-render on identity change.
+  const unattachedRef = useRef<TakeAttachment | null>(null);
 
   const runFrameGeneration = useCallback(
     async (rawPrompt: string): Promise<void> => {
@@ -150,7 +184,15 @@ export function useIdeaBox({
           // links the clip to its source picture in the space.
           ...(data.generationId ? { generationId: data.generationId } : {}),
         });
-        dispatch({ type: "READY" });
+        // The picture is on screen either way; what differs is whether the
+        // session has it. Reporting that plainly is the whole point of the
+        // explicit state — an absent generationId used to mean both "no
+        // session was named" and "the session write failed".
+        dispatch({
+          type: "READY",
+          unattachedTake:
+            data.attachment?.state === "failed" ? data.attachment : null,
+        });
       } catch (error) {
         if (runIdRef.current !== runId) return;
         dispatch({
@@ -175,10 +217,21 @@ export function useIdeaBox({
     dispatch({ type: "RESET" });
   }, []);
 
+  const retryAttachment = useCallback(async (): Promise<void> => {
+    const pending = unattachedRef.current;
+    if (!pending) return;
+    await retryPictureAttachment(pending);
+    dispatch({ type: "ATTACHED" });
+  }, []);
+
+  unattachedRef.current = state.unattachedTake;
+
   return {
     stage: state.stage,
     continueAfterOptimization,
     regenerateFrame: runFrameGeneration,
     acceptFrame,
+    unattachedTake: state.unattachedTake,
+    retryAttachment,
   };
 }

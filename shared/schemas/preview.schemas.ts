@@ -7,6 +7,7 @@
  */
 import { z } from "zod";
 import { ApiErrorCodeSchema } from "./api.schemas.js";
+import { TakeAttachmentSchema } from "./attachment.schemas.js";
 import type { ApiErrorCode } from "../types/api.js";
 
 /**
@@ -94,8 +95,14 @@ export const GeneratePreviewResponseSchema = previewEnvelope(
     metadata: PreviewMetadataSchema,
     // Present when the picture was persisted as a session generation record
     // (client supplied sessionId + promptVersionId) — so it can be a node in
-    // the space (ADR-0013 / M5 D4). Absent for anonymous quick pictures.
+    // the space (ADR-0013 / M5 D4). Absent for anonymous quick pictures, and
+    // absent when the attachment below failed: the key has always meant "this
+    // take is in the session", so it never rides on an unattached take.
     generationId: z.string().optional(),
+    // The second fact (ADR-0022 decision 6). Present whenever a session was
+    // named, whatever the outcome; absent for an anonymous quick picture,
+    // which has no session to attach to.
+    attachment: TakeAttachmentSchema.optional(),
   }),
 );
 
@@ -107,6 +114,15 @@ export const UploadPreviewImageResponseSchema = previewEnvelope(
     viewUrlExpiresAt: z.string().optional(),
     sizeBytes: z.number().optional(),
     contentType: z.string().optional(),
+    // ADR-0022 decision 1: present only when the upload named a destination
+    // session and words-version — i.e. when it was ADMITTED as a first-frame
+    // take rather than stored as a reference image. `generationId` is the
+    // server-assigned take identity, and it appears only once the take is
+    // actually in its session; `attachment` carries the other case.
+    generationId: z.string().optional(),
+    promptVersionId: z.string().optional(),
+    assetId: z.string().optional(),
+    attachment: TakeAttachmentSchema.optional(),
   }),
 );
 
@@ -225,6 +241,10 @@ export const VideoJobStatusResponseSchema = z
     suggestedPollIntervalMs: z.number().optional(),
     creditsReserved: z.number().optional(),
     creditsDeducted: z.number().optional(),
+    // ADR-0022 decision 6: a completed render is not a finished job from the
+    // client's side until its take has reached the session. Present only when
+    // the job carries a session to attach to.
+    attachment: TakeAttachmentSchema.optional(),
     error: z.string().optional(),
     message: z.string().optional(),
   })

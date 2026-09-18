@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
 
 import { cn } from "@/utils/cn";
+import { UnattachedTakeBadge } from "./UnattachedTakeBadge";
 import { CANVAS_FOCUS_ATTR } from "@/components/canvas/CanvasViewport";
 import { computeLineageLayout } from "../lineage/computeLineageLayout";
 import { rewriteGcsUrlToProxy } from "@/services/media/MediaUrlResolver";
@@ -27,6 +28,7 @@ const EDGE_STROKE: Record<EdgeKind, string> = {
   roll: "#d3a44e", // a re-roll sibling (motion gold)
   reword: "#8b8baa", // a reworded words-version
   move: "#6b8a6b", // picture → clip
+  refine: "#7d8fb3", // picture → picture, inside the picture column (ADR-0022)
 };
 
 /** The mono caption under each take. */
@@ -224,6 +226,9 @@ export function TheSpace({
                     style={{ height: h }}
                   >
                     <SpaceNodeBody node={node} />
+                    {node.unattached ? (
+                      <UnattachedTakeBadge takeId={node.id} />
+                    ) : null}
                     {isLive ? (
                       <span className="text-meta absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 font-medium text-white">
                         <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />

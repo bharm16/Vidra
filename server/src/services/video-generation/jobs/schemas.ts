@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { TakeAttachmentStateSchema } from "@shared/schemas/attachment.schemas";
+import { SessionGenerationRecordSchema } from "@shared/schemas/session.schemas";
 import {
   VIDEO_JOB_ERROR_CATEGORIES,
   VIDEO_JOB_ERROR_STAGES,
@@ -73,6 +75,17 @@ export const VideoJobErrorSchema = z.object({
   attempt: z.number().int().positive().optional(),
 });
 
+/** ADR-0022 decision 6: the durable attachment debt on a completed job. */
+export const VideoJobAttachmentSchema = z.object({
+  state: TakeAttachmentStateSchema,
+  generationId: z.string(),
+  sessionId: z.string(),
+  promptVersionId: z.string(),
+  record: SessionGenerationRecordSchema.optional(),
+  reason: z.string().optional(),
+  updatedAtMs: z.number(),
+});
+
 export const VideoJobRecordSchema = z.object({
   /**
    * Forward-compatibility marker. Optional today (legacy records lack it),
@@ -104,4 +117,5 @@ export const VideoJobRecordSchema = z.object({
   releasedAtMs: z.number().optional(),
   releaseReason: z.string().optional(),
   nextRetryAtMs: z.number().optional(),
+  attachment: VideoJobAttachmentSchema.optional(),
 });

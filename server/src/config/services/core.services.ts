@@ -9,6 +9,8 @@ import { FaceEmbeddingService } from "@services/asset/FaceEmbeddingService";
 import { AIModelService } from "@services/ai-model/index";
 import type { CacheService } from "@services/cache/CacheService";
 import { ImageObservationService } from "@services/image-observation";
+import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
+import { FirestoreSketchBudgetStore } from "@services/sketch-budget/storage/FirestoreSketchBudgetStore";
 import { resolveFalApiKey } from "@utils/falApiKey";
 import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
 import {
@@ -65,6 +67,19 @@ export function registerCoreServices(container: DIContainer): void {
     },
     fal: {
       apiKey: resolveFalApiKey() || undefined,
+      // Boot-validated by env.ts (sketchRelaySchema). Same reset boundary and
+      // same default as the studio's cap — a creator's two daily allowances
+      // roll over together at UTC midnight.
+      sketchDailyCapCents: resolvePositiveNumber(
+        process.env.SKETCH_DAILY_SPEND_CAP_CENTS,
+        500,
+        1,
+      ),
+      sketchFrameCostMillicents: resolvePositiveNumber(
+        process.env.SKETCH_FRAME_COST_MILLICENTS,
+        300,
+        1,
+      ),
     },
     redis: {
       defaultTTL: 3600,
@@ -559,5 +574,20 @@ export function registerCoreServices(container: DIContainer): void {
     (aiService: AIModelService, cacheService: CacheService) =>
       new ImageObservationService(aiService, cacheService),
     ["aiService", "cacheService"],
+  );
+
+  // Sketch relay admission budget (issue #84) — a Firestore-backed daily
+  // counter with no domain of its own, so it registers here rather than
+  // pulling a registration file into existence for one service.
+  container.register(
+    "sketchBudgetService",
+    (config: ServiceConfig) =>
+      new SketchBudgetService({
+        store: new FirestoreSketchBudgetStore(),
+        dailyCapCents: config.fal.sketchDailyCapCents,
+        frameCostMillicents: config.fal.sketchFrameCostMillicents,
+        now: () => new Date(),
+      }),
+    ["config"],
   );
 }

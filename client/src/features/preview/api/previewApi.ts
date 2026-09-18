@@ -320,10 +320,39 @@ export async function getImageAssetViewUrlBatch(
   return MediaViewUrlBatchResponseSchema.parse(payload);
 }
 
+/**
+ * ADR-0022 decision 1: naming a destination session, a words-version and an
+ * admission key turns an upload into an ADMISSION — the file becomes a picture
+ * take with origin `upload` under those exact words. Omit them and the upload
+ * stays a reference image, which is what every non-first-frame caller wants.
+ *
+ * All three travel together because the server refuses a partial trio: a
+ * destination with no words-version cannot say what the take's associated
+ * words are, and neither survives a retry without the key.
+ */
+export interface AdmitUploadOptions {
+  sessionId: string;
+  promptVersionId: string;
+  /**
+   * Stable for the lifetime of ONE admission attempt, including its retries.
+   * The caller mints it and holds it — minting per request would make a retry
+   * a second take, which is the whole failure the key exists to prevent.
+   */
+  admissionKey: string;
+}
+
+export function createAdmissionKey(): string {
+  return generateIdempotencyKey();
+}
+
 export async function uploadPreviewImage(
   file: File,
   metadata: Record<string, unknown> = {},
-  options: { source?: string; label?: string } = {},
+  options: {
+    source?: string;
+    label?: string;
+    admit?: AdmitUploadOptions | undefined;
+  } = {},
 ): Promise<UploadPreviewImageResponse> {
   const authHeaders = await buildFirebaseAuthHeaders();
   const formData = new FormData();
@@ -336,6 +365,11 @@ export async function uploadPreviewImage(
   }
   if (options.label) {
     formData.append("label", options.label);
+  }
+  if (options.admit) {
+    formData.append("sessionId", options.admit.sessionId);
+    formData.append("promptVersionId", options.admit.promptVersionId);
+    formData.append("admissionKey", options.admit.admissionKey);
   }
 
   const response = await fetch(`${API_CONFIG.baseURL}/preview/upload`, {

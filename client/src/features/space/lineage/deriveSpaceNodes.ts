@@ -34,11 +34,23 @@ export interface VersionLineageInput {
 /**
  * Adapt the session's PERSISTED versions into the space's lineage nodes
  * (ADR-0013). It reads the durable `versions` array, so the space survives
- * reload and shows the full reword chain. Reword edges follow version order —
- * each version is reworded from the previous; a picture roots at its version;
- * a clip links to its
- * persisted source picture (`ancestorGenerationId`), falling back to the first
- * picture in the same version, then the words node. Pure and total.
+ * reload and shows the full reword chain. `ancestorGenerationId` is the
+ * DISPLAY ANCESTOR (ADR-0022 decision 3) and is read the same way for both
+ * media types: a clip links to its source picture (a `move` edge), a picture
+ * to the picture it was refined from (a `refine` edge, inside the picture
+ * column). When none was recorded a picture roots at its words-version, and a
+ * clip hangs from the words node with its picture ancestry marked explicitly
+ * unknown. Pure and total.
+ *
+ * The clip's fallback used to be "whichever picture this version lists first",
+ * which drew a relationship nobody performed and which the space rendered
+ * exactly like a real one. Derived ancestry is out; recorded ancestry, or an
+ * honest gap.
+ *
+ * NOT fixed here, and deliberately: the REWORD edge between words-versions is
+ * still derived from array order below. That is the open ADR-0013 M4 gap —
+ * out of scope for take ancestry, noted so the next reader does not mistake
+ * it for the same bug.
  */
 export function deriveSpaceNodesFromVersions(
   versions: ReadonlyArray<VersionLineageInput>,
@@ -54,9 +66,6 @@ export function deriveSpaceNodesFromVersions(
 
   for (const version of versions) {
     const generations = version.generations ?? [];
-    const firstPictureId = generations.find(
-      (gen) => gen.mediaType === "image",
-    )?.id;
 
     for (const gen of generations) {
       // A clip's still is never its own video URL — the space renders mediaUrl
@@ -72,23 +81,36 @@ export function deriveSpaceNodesFromVersions(
       const archived = readArchived(gen);
 
       if (gen.mediaType === "image") {
+        // ADR-0022 decision 3: a picture may name a picture as its display
+        // ancestor (a studio refinement). When it does, the edge is drawn
+        // inside the picture column; when it does not — a generated picture,
+        // an admitted upload — it roots at its words-version as before.
+        const pictureAncestorId = readAncestorGenerationId(gen);
         pictures.push({
           id: gen.id,
           versionId: version.versionId,
           status,
           ...(mediaUrl ? { mediaUrl } : {}),
           ...(archived ? { archived: true } : {}),
+          ...(pictureAncestorId
+            ? { ancestorPictureId: pictureAncestorId }
+            : {}),
         });
       } else if (gen.mediaType === "video") {
+        const ancestorId = readAncestorGenerationId(gen);
         clips.push({
           id: gen.id,
-          pictureId:
-            readAncestorGenerationId(gen) ??
-            firstPictureId ??
-            wordsNodeId(version.versionId),
+          pictureId: ancestorId ?? wordsNodeId(version.versionId),
           status,
           ...(mediaUrl ? { mediaUrl } : {}),
           ...(archived ? { archived: true } : {}),
+          ...(ancestorId ? {} : { pictureAncestryUnknown: true }),
+          // ADR-0022 decision 6: a clip whose session write did not resolve is
+          // drawn as made-but-not-saved rather than as a settled node that
+          // disappears on the next refresh. Only clips carry this here — an
+          // unattached first frame is surfaced on the frame stage, where the
+          // creator is already looking at it.
+          ...(gen.attachment === "failed" ? { unattached: true } : {}),
         });
       }
       // "image-sequence" (storyboards) is deliberately not a node: the space

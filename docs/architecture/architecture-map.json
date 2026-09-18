@@ -274,6 +274,11 @@
       "sourceFile": "server/src/routes/preview.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/preview/video/jobs/:jobId/attach",
+      "sourceFile": "server/src/routes/preview.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/api/preview/video/view",
       "sourceFile": "server/src/routes/preview.routes.ts"
@@ -389,6 +394,11 @@
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/versions/:versionId/generations",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/api/sessions/by-prompt/:uuid",
       "sourceFile": "server/src/routes/sessions.routes.ts"
@@ -402,6 +412,11 @@
       "method": "POST",
       "fullPath": "/api/share",
       "sourceFile": "server/src/routes/share.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sketch/accept",
+      "sourceFile": "server/src/routes/sketch-accept.routes.ts"
     },
     {
       "method": "DELETE",
@@ -489,6 +504,11 @@
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/studio/projects/:projectId/images/:imageId/use-in-session",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/api/studio/projects/:projectId/turns",
       "sourceFile": "server/src/routes/studio.routes.ts"
@@ -501,6 +521,11 @@
     {
       "method": "GET",
       "fullPath": "/api/studio/projects/:projectId/turns/:turnId",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/studio/projects/from-session-picture",
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
@@ -1337,6 +1362,16 @@
       "file": "storage.services.ts"
     },
     {
+      "from": "sketchBudgetService",
+      "to": "config",
+      "file": "core.services.ts"
+    },
+    {
+      "from": "sketchRelayFetch",
+      "to": "replayCassetteStore",
+      "file": "replay.services.ts"
+    },
+    {
       "from": "soraVideoProvider",
       "to": "config",
       "file": "video-generation.services.ts"
@@ -1424,6 +1459,11 @@
     {
       "from": "studioService",
       "to": "storageService",
+      "file": "studio.services.ts"
+    },
+    {
+      "from": "studioService",
+      "to": "studioProjectStore",
       "file": "studio.services.ts"
     },
     {
@@ -1574,6 +1614,11 @@
     {
       "from": "videoJobWorker",
       "to": "providerCircuitManager",
+      "file": "video-generation.services.ts"
+    },
+    {
+      "from": "videoJobWorker",
+      "to": "sessionService",
       "file": "video-generation.services.ts"
     },
     {

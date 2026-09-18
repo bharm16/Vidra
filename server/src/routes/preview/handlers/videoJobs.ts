@@ -146,6 +146,33 @@ export const createVideoJobsHandler =
       }
     }
 
+    // ADR-0022 decision 6: the attachment is a second fact, reported beside the
+    // generation outcome. The client treats the job as terminal only once this
+    // resolves, so a clip can never render as a node the session never got.
+    // `record` rides along while unresolved — it is what a retry re-sends.
+    if (!job.attachment && job.status === "completed" && job.sessionId && job.promptVersionId) {
+      // The window between markCompleted and the pending checkpoint. The take
+      // is owed and unresolved, which is exactly what `pending` means — saying
+      // nothing here would let the client call the job terminal a beat early.
+      response.attachment = {
+        state: "pending",
+        generationId: job.id,
+        sessionId: job.sessionId,
+        promptVersionId: job.promptVersionId,
+      };
+    } else if (job.attachment) {
+      response.attachment = {
+        state: job.attachment.state,
+        generationId: job.attachment.generationId,
+        sessionId: job.attachment.sessionId,
+        promptVersionId: job.attachment.promptVersionId,
+        ...(job.attachment.reason ? { reason: job.attachment.reason } : {}),
+        ...(job.attachment.state !== "attached" && job.attachment.record
+          ? { record: job.attachment.record }
+          : {}),
+      };
+    }
+
     if (job.status === "failed") {
       response.error = job.error?.message || "Video generation failed";
       if (job.error?.code) {

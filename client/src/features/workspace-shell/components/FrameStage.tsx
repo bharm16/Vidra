@@ -99,9 +99,10 @@ export function FrameStage({
   startFrame,
   prompt,
 }: FrameStageProps): React.ReactElement | null {
-  const { ideaBoxStage, isExpanding, hasExpandedPrompt } =
+  const { ideaBoxStage, isExpanding, hasExpandedPrompt, unattachedFrameTake } =
     usePromptResultsData();
-  const { onIdeaBoxAccept, onIdeaBoxRegenerate } = usePromptResultsActions();
+  const { onIdeaBoxAccept, onIdeaBoxRegenerate, onRetryFrameAttachment } =
+    usePromptResultsActions();
 
   const stageKind = ideaBoxStage?.kind ?? "idle";
   const quotedIdea = prompt.trim() ? `“${prompt.trim()}”` : undefined;
@@ -162,6 +163,25 @@ export function FrameStage({
             alt="Your first frame"
             className="absolute inset-0 h-full w-full object-cover"
           />
+          {/* ADR-0022 decision 6: the frame is real and paid for; what failed
+              was filing it. Said plainly, on the frame, with the one action
+              that fixes it — never mistaken for a failed generation. */}
+          {unattachedFrameTake ? (
+            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-md border border-tool-rail-border bg-tool-surface-deep/90 px-2.5 py-1.5">
+              <span className="text-meta text-tool-text-subdued">
+                Made, but not saved
+              </span>
+              {onRetryFrameAttachment ? (
+                <button
+                  type="button"
+                  className="text-meta text-foreground underline underline-offset-2 hover:opacity-80"
+                  onClick={() => void onRetryFrameAttachment()}
+                >
+                  Save it
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {isGate ? (
           <div className="flex flex-col items-center gap-2">

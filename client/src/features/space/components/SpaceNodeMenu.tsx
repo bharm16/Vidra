@@ -17,6 +17,12 @@ export interface SpaceNodeMenuProps {
   onRemove: (node: SpaceNode) => void;
   /** Animate a picture into a clip (arms the video loop from this frame). */
   onAnimate?: (node: SpaceNode) => void;
+  /**
+   * Open a picture in the studio — births a project from this take and takes
+   * the creator there (ADR-0022 decision 4). The session picture is untouched;
+   * the studio works on its own copy.
+   */
+  onRefine?: (node: SpaceNode) => void;
   /** Download a clip's media. */
   onDownload?: (node: SpaceNode) => void;
   /** Share a clip publicly — mints a /share link (ADR-0010 D8). */
@@ -30,8 +36,8 @@ export interface SpaceNodeMenuProps {
 
 /**
  * A space node's context menu (RULINGS §5), adapting to node kind: a picture
- * offers Animate, a clip offers Download, all takes offer Reword, and a
- * childless leaf offers Remove (server-enforced), and a clip offers Share —
+ * offers Animate and Refine in the studio, a clip offers Download, all takes
+ * offer Reword, and a childless leaf offers Remove (server-enforced), and a clip offers Share —
  * mints a public /share link (ADR-0010 D8). The remaining RULINGS actions
  * (Re-roll / New clip) route through flows wired separately.
  */
@@ -41,11 +47,13 @@ export function SpaceNodeMenu({
   onReword,
   onRemove,
   onAnimate,
+  onRefine,
   onDownload,
   onShare,
   onView,
 }: SpaceNodeMenuProps): React.ReactElement {
   const showAnimate = node.kind === "picture" && Boolean(onAnimate);
+  const showRefine = node.kind === "picture" && Boolean(onRefine);
   const showDownload = node.kind === "clip" && Boolean(onDownload);
   const showShare = node.kind === "clip" && Boolean(onShare);
   const showView = node.kind !== "words" && Boolean(onView);
@@ -78,6 +86,14 @@ export function SpaceNodeMenu({
             data-testid={`space-node-animate-${node.id}`}
           >
             Animate
+          </DropdownMenuItem>
+        ) : null}
+        {showRefine ? (
+          <DropdownMenuItem
+            onSelect={() => onRefine?.(node)}
+            data-testid={`space-node-refine-${node.id}`}
+          >
+            Refine in the studio
           </DropdownMenuItem>
         ) : null}
         {showDownload ? (

@@ -54,6 +54,50 @@ export class SessionStore {
     });
   }
 
+  /**
+   * Read-modify-write inside one transaction — ADR-0022 decision 6.
+   *
+   * `save` above cannot express a concurrent append. Its payload is built by
+   * the caller BEFORE the transaction opens, so the transaction's `get` only
+   * chooses create-vs-merge; and because a merge replaces `prompt` wholesale,
+   * a writer that read the session a moment ago writes back a `versions` array
+   * that never saw whatever landed in between. Two appends race and the later
+   * write erases the earlier take.
+   *
+   * Here the mutator runs against the transaction's OWN snapshot, so Firestore's
+   * contention retry re-runs it against fresh data and both writers survive. The
+   * mutator must therefore be pure and re-runnable: no I/O, no side effects.
+   * Returns null when the session does not exist.
+   */
+  async mutate(
+    sessionId: string,
+    mutator: (current: SessionRecord) => SessionRecord,
+  ): Promise<SessionRecord | null> {
+    const docRef = this.collection.doc(sessionId);
+
+    return this.db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) {
+        return null;
+      }
+
+      const next = mutator(
+        this.fromStored(sessionId, snapshot.data() as StoredSession),
+      );
+
+      transaction.set(
+        docRef,
+        {
+          ...this.toStored(next),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      return next;
+    });
+  }
+
   saveInTransaction(
     transaction: FirebaseFirestore.Transaction,
     session: SessionRecord,

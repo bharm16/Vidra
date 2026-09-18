@@ -1,3 +1,5 @@
+import type { SketchProductionInputs } from "@shared/schemas/sketch.schemas";
+
 /**
  * Pure state machine for the realtime sketch's generation loop
  * (spec: docs/superpowers/specs/2026-07-09-realtime-sketch-spike-design.md).
@@ -29,10 +31,34 @@ export interface GenerationStats {
   lastError: { message: string; at: number } | null;
 }
 
+/**
+ * The picture on screen, and everything "Use this" needs to say what made it
+ * (ADR-0022 decision 5, issue #87).
+ *
+ * The drawing and the inputs travel WITH the image rather than being read off
+ * the sketchpad and the settings later, because by then both have moved on.
+ * The reducer assembles the three together from the frame it just matched, so
+ * they cannot be torn apart or mismatched.
+ */
 export interface LiveOutput {
   imageUrl: string;
   requestId: string;
   at: number;
+  /** The exact drawing this picture was made from. */
+  sketchDataUri: string;
+  /** The exact settings its frame was dispatched with. */
+  inputs: SketchProductionInputs;
+}
+
+/**
+ * The loop is stopped, not failing: the creator's daily sketch allowance is
+ * spent (issue #84). Sending resumes on its own at `resumeAtMs` — the relay's
+ * UTC reset — so a creator who waits out the boundary is not stuck behind a
+ * reload.
+ */
+export interface GenerationHalt {
+  message: string;
+  resumeAtMs: number;
 }
 
 export interface GenerationState {
@@ -40,6 +66,7 @@ export interface GenerationState {
   inFlight: InFlightFrame | null;
   pending: PendingFrame | null;
   liveOutput: LiveOutput | null;
+  halted: GenerationHalt | null;
   stats: GenerationStats;
 }
 
@@ -50,6 +77,12 @@ export type GenerationAction =
       requestId: string;
       imageUrl: string;
       at: number;
+      /**
+       * Read at dispatch by the sender and carried back here: settings are
+       * live state, so the reducer must be TOLD what this frame was sent
+       * with rather than sampling whatever is current when it lands.
+       */
+      inputs: SketchProductionInputs;
     }
   | {
       type: "generationError";
@@ -57,6 +90,12 @@ export type GenerationAction =
       at: number;
       /** When the error is attributable to a specific sent frame. */
       requestId?: string;
+    }
+  | {
+      type: "allowanceReached";
+      message: string;
+      resumeAtMs: number;
+      at: number;
     };
 
 export function createInitialGenerationState(): GenerationState {
@@ -65,6 +104,7 @@ export function createInitialGenerationState(): GenerationState {
     inFlight: null,
     pending: null,
     liveOutput: null,
+    halted: null,
     stats: {
       sent: 0,
       skipped: 0,
@@ -79,6 +119,22 @@ export function generationReducer(
 ): GenerationState {
   switch (action.type) {
     case "snapshot": {
+      if (state.halted !== null) {
+        // Nothing is sent while the allowance is spent. The boundary itself
+        // is the resume trigger: the first stroke after it starts the loop
+        // again, with no reload and no retry storm in between.
+        if (action.at < state.halted.resumeAtMs) {
+          return state;
+        }
+        return generationReducer(
+          {
+            ...state,
+            halted: null,
+            stats: { ...state.stats, lastError: null },
+          },
+          action,
+        );
+      }
       if (state.inFlight !== null) {
         return {
           ...state,
@@ -120,15 +176,18 @@ export function generationReducer(
         ...state.stats,
         lastError: null,
       };
+      const liveOutput: LiveOutput = {
+        imageUrl: action.imageUrl,
+        requestId: action.requestId,
+        at: action.at,
+        sketchDataUri: state.inFlight.dataUri,
+        inputs: action.inputs,
+      };
       if (state.pending === null) {
         return {
           ...state,
           inFlight: null,
-          liveOutput: {
-            imageUrl: action.imageUrl,
-            requestId: action.requestId,
-            at: action.at,
-          },
+          liveOutput,
           stats,
         };
       }
@@ -143,12 +202,23 @@ export function generationReducer(
           encodeMs: state.pending.encodeMs,
         },
         pending: null,
-        liveOutput: {
-          imageUrl: action.imageUrl,
-          requestId: action.requestId,
-          at: action.at,
-        },
+        liveOutput,
         stats: { ...stats, sent: stats.sent + 1 },
+      };
+    }
+    case "allowanceReached": {
+      // A refusal is not a failure to retry: the in-flight frame and the
+      // trailing pending frame are both dropped, because every attempt would
+      // be refused until the reset.
+      return {
+        ...state,
+        inFlight: null,
+        pending: null,
+        halted: { message: action.message, resumeAtMs: action.resumeAtMs },
+        stats: {
+          ...state.stats,
+          lastError: { message: action.message, at: action.at },
+        },
       };
     }
     case "generationError": {

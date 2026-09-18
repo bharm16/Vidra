@@ -23,20 +23,38 @@ import {
 /** The focus key while the plane is empty — the greeting is the camera target. */
 export const STUDIO_EMPTY_FOCUS_ID = "studio-empty";
 
+/**
+ * The group key for a bridged session picture (ADR-0022 decision 4). It is not
+ * a turn — nothing in the studio produced it — so it gets its own key rather
+ * than borrowing one and claiming a turn that never ran.
+ */
+export const STUDIO_ORIGIN_GROUP_ID = "studio-origin";
+
 interface StudioPlaneProps {
   turns: StudioTurn[];
   selectedImageId: string | null;
   onSelectImage: (imageId: string) => void;
+  /**
+   * The session picture this project was born from, first on the plane and
+   * ahead of every turn — it is what the project is about, and it is the
+   * project's selection when the workspace opens.
+   */
+  originImage?: { id: string; viewUrl: string; label: string } | undefined;
 }
 
 export function StudioPlane({
   turns,
   selectedImageId,
   onSelectImage,
+  originImage,
 }: StudioPlaneProps): React.ReactElement {
   const viewUrlByImageId = new Map<string, string>();
   const promptByImageId = new Map<string, string>();
-  const groups = turns
+  if (originImage) {
+    viewUrlByImageId.set(originImage.id, originImage.viewUrl);
+    promptByImageId.set(originImage.id, originImage.label);
+  }
+  const turnGroups = turns
     .map((turn) => ({
       turnId: turn.id,
       imageIds: turn.calls.flatMap((call) => {
@@ -49,9 +67,17 @@ export function StudioPlane({
       }),
     }))
     .filter((group) => group.imageIds.length > 0);
+  const groups = originImage
+    ? [
+        { turnId: STUDIO_ORIGIN_GROUP_ID, imageIds: [originImage.id] },
+        ...turnGroups,
+      ]
+    : turnGroups;
 
   const items = computeStudioLayout(groups);
-  const liveTurnId = groups.at(-1)?.turnId ?? null;
+  // "Live" is where the work got to, which is never the picture it started
+  // from: the origin group only takes the mark when nothing has run yet.
+  const liveTurnId = turnGroups.at(-1)?.turnId ?? groups.at(-1)?.turnId ?? null;
 
   return (
     <div className="st-plane" data-testid="studio-plane">

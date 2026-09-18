@@ -24,6 +24,11 @@ export const REPLAY_SURFACES = [
   "optimize-compile",
   "first-frame-preview",
   "studio-turn",
+  /**
+   * The cross-mode walkthrough (issue #90): one cassette holding every
+   * provider response the sketch → studio → session → clip loop consumes.
+   */
+  "cross-mode",
 ] as const;
 
 export const ReplaySurfaceSchema = z.enum(REPLAY_SURFACES);
@@ -41,6 +46,7 @@ export const REPLAY_CONTRACT_NAMES = [
   "optimize-text",
   "image-preview-result",
   "studio-image-result",
+  "sketch-frame-result",
   "llm-text",
 ] as const;
 
@@ -103,6 +109,18 @@ export const StudioImageResultReplayPayloadSchema = z
   })
   .passthrough();
 
+/**
+ * Mirrors the fal i2i sync response the sketch relay mirrors verbatim, and is
+ * deliberately the same shape the client's own anti-corruption schema reads
+ * (`client/src/features/realtime-sketch/api/schemas.ts`): a frame with no
+ * usable image is malformed, never a blank live output.
+ */
+export const SketchFrameResultReplayPayloadSchema = z
+  .object({
+    images: z.array(z.object({ url: z.string().min(1) }).passthrough()).min(1),
+  })
+  .passthrough();
+
 /** Default contract for operations without a dedicated payload schema. */
 export const LlmTextReplayPayloadSchema = z.string().min(1);
 
@@ -140,6 +158,10 @@ export const REPLAY_CONTRACTS: Record<ReplayContractName, ReplayContract> = {
     encoding: "object",
     schema: StudioImageResultReplayPayloadSchema,
   },
+  "sketch-frame-result": {
+    encoding: "object",
+    schema: SketchFrameResultReplayPayloadSchema,
+  },
   "llm-text": { encoding: "text", schema: LlmTextReplayPayloadSchema },
 };
 
@@ -174,6 +196,25 @@ export type ReplayStudioImageRequest = z.infer<
   typeof ReplayStudioImageRequestSchema
 >;
 
+/**
+ * One sketch frame as dispatched to the fal relay's upstream.
+ *
+ * The drawing travels as a multi-hundred-kilobyte data URI, so the recorded
+ * request carries its DIGEST rather than its bytes: a different drawing still
+ * hashes to a different key, and a cassette stays a file a human can read.
+ */
+const ReplaySketchFrameRequestSchema = z.object({
+  endpoint: z.string().min(1),
+  prompt: z.string().min(1),
+  imageDigest: z.string().min(1),
+  strength: z.number(),
+  steps: z.number().int(),
+  seed: z.number().int(),
+});
+export type ReplaySketchFrameRequest = z.infer<
+  typeof ReplaySketchFrameRequestSchema
+>;
+
 /** Recorded AIResponse (text + provider metadata, structure-preserving). */
 const RecordedAiResponseSchema = z
   .object({
@@ -203,6 +244,13 @@ export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
     contract: ReplayContractNameSchema,
     request: ReplayStudioImageRequestSchema,
     response: StudioImageResultReplayPayloadSchema,
+  }),
+  z.object({
+    seam: z.literal("sketch-frame"),
+    key: z.string().min(1),
+    contract: ReplayContractNameSchema,
+    request: ReplaySketchFrameRequestSchema,
+    response: SketchFrameResultReplayPayloadSchema,
   }),
 ]);
 

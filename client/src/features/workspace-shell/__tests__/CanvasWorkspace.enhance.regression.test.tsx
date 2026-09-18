@@ -50,6 +50,7 @@ vi.mock("@features/generation-controls", () => ({
 
 vi.mock("@/features/prompt-optimizer/context/PromptStateContext", () => ({
   useOptionalPromptHighlights: () => null,
+  useOptionalPromptServices: () => null,
 }));
 
 // CanvasSettingsRow consumes GenerationControlsContext for its Preview /

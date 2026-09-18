@@ -15,6 +15,7 @@ import {
   DEFAULT_INK,
   SNAPSHOT_SIZE,
 } from "./config/constants";
+import { useAcceptLiveOutput } from "./hooks/useAcceptLiveOutput";
 import { useRealtimeSketch } from "./hooks/useRealtimeSketch";
 import type { SendSketchFrame } from "./api/falI2i";
 import "./live-editor.css";
@@ -44,6 +45,9 @@ export function LiveEditor({
   sendFrameFn,
 }: LiveEditorProps): React.ReactElement {
   const sketch = useRealtimeSketch(sendFrameFn ? { sendFrameFn } : undefined);
+  // The one door out of this plane (ADR-0022 decision 5). It exports; it
+  // never makes this editor remember anything — ADR-0017 stands.
+  const acceptance = useAcceptLiveOutput();
   const [tool, setTool] = useState<SketchTool>("select");
   const [ink, setInk] = useState<string>(DEFAULT_INK);
   const [brushSize, setBrushSize] = useState<number>(DEFAULT_BRUSH_SIZE);
@@ -84,6 +88,7 @@ export function LiveEditor({
   // error — a creator whose frames are failing is told in the editor.
   const stats = sketch.state.stats;
   const lastError = stats.lastError;
+  const halted = sketch.state.halted;
   useEffect(() => {
     if (stats.sent === 0 && stats.lastError === null) {
       return;
@@ -140,7 +145,9 @@ export function LiveEditor({
                   data-testid="live-editor-error"
                 >
                   <span className="le-error-title">
-                    Frames aren&rsquo;t rendering
+                    {halted !== null
+                      ? "Daily sketch allowance reached"
+                      : "Frames aren’t rendering"}
                   </span>
                   <span className="le-error-detail">{lastError.message}</span>
                 </div>
@@ -172,7 +179,9 @@ export function LiveEditor({
             settings={sketch.settings}
             updateSettings={sketch.updateSettings}
             rerollSeed={sketch.rerollSeed}
-            modeThumbUrl={sketch.state.liveOutput?.imageUrl ?? null}
+            liveOutput={sketch.state.liveOutput}
+            onUseThis={acceptance.accept}
+            acceptance={acceptance.status}
             strengthPopoverOpen={openPopover === "strength"}
             onToggleStrengthPopover={() =>
               setOpenPopover((open) =>

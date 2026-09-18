@@ -7,8 +7,13 @@ import { CanvasViewport } from "@/components/canvas/CanvasViewport";
 import { NavRail } from "@components/navigation/NavRail";
 
 import { StudioComposer } from "./components/StudioComposer";
-import { StudioPlane, STUDIO_EMPTY_FOCUS_ID } from "./components/StudioPlane";
+import {
+  StudioPlane,
+  STUDIO_EMPTY_FOCUS_ID,
+  STUDIO_ORIGIN_GROUP_ID,
+} from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
+import { UseInSessionAction } from "./components/UseInSessionAction";
 import { useStudioProject } from "./hooks/useStudioProject";
 import { isTurnInFlight } from "./hooks/studioReducer";
 import "./studio.css";
@@ -52,13 +57,29 @@ export function StudioPage(): React.ReactElement {
   const { state } = studio;
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
 
+  // A project born from a session picture (ADR-0022 decision 4) opens on that
+  // picture: it is the project's subject and its selection, so it has to be on
+  // the plane or the selection is invisible. Both halves are required — the
+  // durable record says WHICH image, the per-read URL is how it renders.
+  const origin = state.project?.origin;
+  const originImageUrl = state.project?.originImageUrl;
+  const originImage =
+    origin && originImageUrl
+      ? {
+          id: origin.bridgedImageId,
+          viewUrl: originImageUrl,
+          label: "The picture you brought from the session",
+        }
+      : undefined;
+
   // The newest group is the camera target; recenter as new groups land.
   const liveTurnId =
     [...state.turns]
       .reverse()
       .find((turn) =>
         turn.calls.some((call) => call.status === "succeeded" && call.image),
-      )?.id ?? STUDIO_EMPTY_FOCUS_ID;
+      )?.id ??
+    (originImage ? STUDIO_ORIGIN_GROUP_ID : STUDIO_EMPTY_FOCUS_ID);
 
   // One source of "a turn is in flight" for both bands — the thread's pills
   // and the composer must agree, or the pills stay clickable through the
@@ -71,7 +92,14 @@ export function StudioPage(): React.ReactElement {
       <div className="st-frame min-w-0 flex-1">
         <div className="st-topbar">
           <span className="st-topbar-label">Studio</span>
-          <div className="st-topbar-right" />
+          {/* ADR-0022 decision 4: the return door. It lives in the topbar's
+              right zone because it acts on the project's selection, not on a
+              cell — a control nested inside a plane cell would be a button
+              inside a button. */}
+          <UseInSessionAction
+            selectedImageId={state.selectedImageId}
+            onUse={studio.returnImageToSession}
+          />
         </div>
 
         <div className="st-body">
@@ -163,6 +191,7 @@ export function StudioPage(): React.ReactElement {
               <StudioPlane
                 turns={state.turns}
                 selectedImageId={state.selectedImageId}
+                originImage={originImage}
                 onSelectImage={(imageId) =>
                   studio.selectImage(
                     state.selectedImageId === imageId ? null : imageId,

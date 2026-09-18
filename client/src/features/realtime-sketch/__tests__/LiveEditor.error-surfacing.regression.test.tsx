@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import LiveEditor from "../LiveEditor";
-import type { SendSketchFrame } from "../api/falI2i";
+import { SketchFrameRefused, type SendSketchFrame } from "../api/falI2i";
 
 vi.mock("@hooks/useAuthUser", () => ({
   useAuthUser: () => null,
@@ -104,5 +104,54 @@ describe("regression: the live editor surfaces relay failures", () => {
 
     expect(screen.getByText(/Draw on the sketchpad/)).toBeInTheDocument();
     expect(screen.queryByTestId("live-editor-error")).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * The relay caps each creator's daily sketch spend (issue #84). A refusal is
+ * not the same product event as a failing relay: the editor must name the
+ * allowance and stop sending, rather than reporting frames that "aren't
+ * rendering" and retrying into a wall.
+ */
+describe("the live editor pauses on a spent daily allowance", () => {
+  beforeEach(stubCanvas);
+
+  it("names the allowance and stops sending frames", async () => {
+    const calls: number[] = [];
+    const refusingRelay: SendSketchFrame = () => {
+      calls.push(Date.now());
+      return Promise.reject(
+        new SketchFrameRefused({
+          reason: "daily-allowance-reached",
+          detail:
+            "Daily sketch allowance reached. Sketching resumes at the next UTC midnight.",
+          resetAtMs: Date.now() + 60 * 60 * 1000,
+        }),
+      );
+    };
+
+    render(
+      <MemoryRouter>
+        <LiveEditor sendFrameFn={refusingRelay} />
+      </MemoryRouter>,
+    );
+
+    selectBrush();
+    drawStroke();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("live-editor-error")).toHaveTextContent(
+        "Daily sketch allowance reached",
+      );
+    });
+    expect(screen.getByTestId("live-editor-error")).toHaveTextContent(
+      "next UTC midnight",
+    );
+    expect(calls).toHaveLength(1);
+
+    // More drawing produces no more frames — the pause is real, not cosmetic.
+    drawStroke();
+    drawStroke();
+    expect(calls).toHaveLength(1);
   });
 });

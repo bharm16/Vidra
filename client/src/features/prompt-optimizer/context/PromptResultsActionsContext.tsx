@@ -17,6 +17,7 @@ import type { SuggestionsData } from "@/features/prompt-optimizer/PromptCanvas/t
 import type { OptimizationOptions } from "@/features/prompt-optimizer/types";
 import type { I2VContext } from "@/features/prompt-optimizer/types/i2v";
 import type { IdeaBoxStage } from "@/features/idea-box";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { User } from "./types";
 import { useAutoSave } from "@/features/prompt-optimizer/PromptOptimizerContainer/hooks/useAutoSave";
 import { useGenerationControlsContext } from "@/features/prompt-optimizer/context/GenerationControlsContext";
@@ -43,6 +44,11 @@ interface PromptResultsActionsOnly {
   /** Idea Box gate — reject: regenerate the frame from the current prompt. */
   onIdeaBoxRegenerate?: (() => Promise<void> | void) | undefined;
   /**
+   * ADR-0022 decision 6 — re-attach a frame that was made but not saved. It
+   * re-sends the same take; it never paints a new frame and never re-charges.
+   */
+  onRetryFrameAttachment?: (() => Promise<void>) | undefined;
+  /**
    * Idea Box — run the expansion loop from the current prompt (optimize; the
    * chain then auto-generates a first frame). The canvas generate action
    * routes here when no start frame exists.
@@ -64,6 +70,11 @@ interface PromptResultsDataOnly {
   i2vContext?: I2VContext | null | undefined;
   /** Idea Box — stage of the expand→frame chain (idle when inactive). */
   ideaBoxStage?: IdeaBoxStage | undefined;
+  /**
+   * ADR-0022 decision 6 — the frame on screen was made but its session write
+   * failed. A second fact about a READY frame, never a stage of its own.
+   */
+  unattachedFrameTake?: TakeAttachment | null | undefined;
   /** True while the expansion (optimize) round-trip is in flight — the beat
    *  BEFORE ideaBoxStage flips to "framing". Drives the canvas FrameStage. */
   isExpanding?: boolean | undefined;
@@ -141,11 +152,13 @@ export function PromptResultsActionsProvider({
   suggestionsData,
   i2vContext,
   ideaBoxStage,
+  unattachedFrameTake,
   isExpanding,
   hasExpandedPrompt,
   writingFailed,
   onIdeaBoxAccept,
   onIdeaBoxRegenerate,
+  onRetryFrameAttachment,
   onIdeaBoxExpand,
   onComposerFill,
 }: PromptResultsActionsProviderProps): React.ReactElement {
@@ -191,6 +204,7 @@ export function PromptResultsActionsProvider({
       stablePromptContext,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
+      onRetryFrameAttachment,
       onIdeaBoxExpand,
       onComposerFill,
     }),
@@ -206,6 +220,7 @@ export function PromptResultsActionsProvider({
       stablePromptContext,
       onIdeaBoxAccept,
       onIdeaBoxRegenerate,
+      onRetryFrameAttachment,
       onIdeaBoxExpand,
       onComposerFill,
     ],
@@ -217,6 +232,7 @@ export function PromptResultsActionsProvider({
       suggestionsData,
       i2vContext,
       ideaBoxStage,
+      unattachedFrameTake,
       isExpanding,
       hasExpandedPrompt,
       writingFailed,
@@ -225,6 +241,7 @@ export function PromptResultsActionsProvider({
       suggestionsData,
       i2vContext,
       ideaBoxStage,
+      unattachedFrameTake,
       isExpanding,
       hasExpandedPrompt,
       writingFailed,

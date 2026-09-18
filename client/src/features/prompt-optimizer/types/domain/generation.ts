@@ -49,6 +49,15 @@ export interface Generation {
   isFavorite?: boolean | undefined;
   generationSettings?: GenerationSettingsSnapshot | null | undefined;
   error?: string | null | undefined;
+  /**
+   * ADR-0022 decision 6 — whether this take reached its session. Runtime-only
+   * and deliberately so: a record READ BACK from a session is in that session
+   * by definition, so `normalizePersistedGeneration` drops any marker it finds
+   * and the "not saved" state cannot outlive the truth it describes.
+   *
+   * Only ever `"failed"` here — an attachment that resolved needs no marker.
+   */
+  attachment?: "failed" | undefined;
 }
 
 export interface GenerationParams {

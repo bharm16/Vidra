@@ -347,3 +347,44 @@ export function describeCameraMotion(id: string): string | undefined {
     id
   ];
 }
+
+// ============================================================================
+// Camera Direction (ADR-0022 decision 7)
+// ============================================================================
+
+/**
+ * The camera direction each path writes into the creator's words.
+ *
+ * Distinct from CAMERA_MOTION_DESCRIPTIONS above, which explains a move to
+ * someone choosing between them ("Reveals new elements"). These are the words
+ * themselves — prose the creator reads, edits, and generates from. ADR-0010's
+ * truth contract: the text you can see is the only thing that runs.
+ */
+export const CAMERA_MOTION_DIRECTION: Record<CameraPathId, string> = {
+  static: "The camera holds still.",
+  pan_left: "The camera pans left.",
+  pan_right: "The camera pans right.",
+  tilt_up: "The camera tilts up.",
+  tilt_down: "The camera tilts down.",
+  dutch_left: "The camera rolls left into a dutch angle.",
+  dutch_right: "The camera rolls right into a dutch angle.",
+  push_in: "The camera pushes in.",
+  pull_back: "The camera pulls back.",
+  track_left: "The camera tracks left.",
+  track_right: "The camera tracks right.",
+  pedestal_up: "The camera rises straight up.",
+  pedestal_down: "The camera lowers straight down.",
+  crane_up: "The camera cranes up, tilting down as it rises.",
+  crane_down: "The camera cranes down, tilting up as it descends.",
+  arc_left: "The camera arcs left around the subject.",
+  arc_right: "The camera arcs right around the subject.",
+  reveal: "The camera pushes in and pans to reveal the scene.",
+};
+
+/**
+ * Safe lookup for runtime ids (persisted state, wire values) — the same
+ * sanctioned string-indexed door as describeCameraMotion.
+ */
+export function cameraMotionDirection(id: string): string | undefined {
+  return (CAMERA_MOTION_DIRECTION as Record<string, string | undefined>)[id];
+}
