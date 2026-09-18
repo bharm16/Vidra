@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type {
   ReplayAiModelRequest,
   ReplayImagePreviewRequest,
+  ReplaySketchFrameRequest,
   ReplayStudioImageRequest,
 } from "@shared/schemas/replay.schemas";
 
@@ -26,6 +27,15 @@ export function stableStringify(value: unknown): string {
 
 function sha256(input: string): string {
   return createHash("sha256").update(input, "utf8").digest("hex");
+}
+
+/**
+ * Digest of one sketch frame's drawing. Exported because the recorded request
+ * carries the digest, not the bytes, so the seam and anything authoring a
+ * fixture must agree on how it is taken.
+ */
+export function sketchImageDigest(imageUrl: string): string {
+  return sha256(imageUrl);
 }
 
 /**
@@ -60,4 +70,15 @@ export function studioImageRequestKey(
   request: ReplayStudioImageRequest,
 ): string {
   return `studio-image:${sha256(stableStringify(request))}`;
+}
+
+/**
+ * Cassette key for one sketch relay frame. Every field the creator can change
+ * is in it — the drawing (by digest), the words, and the three settings — so
+ * a different frame can never replay another frame's picture.
+ */
+export function sketchFrameRequestKey(
+  request: ReplaySketchFrameRequest,
+): string {
+  return `sketch-frame:${sha256(stableStringify(request))}`;
 }

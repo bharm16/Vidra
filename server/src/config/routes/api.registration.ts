@@ -16,6 +16,7 @@ import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
 import { createSketchAcceptRouter } from "@routes/sketch-accept.routes";
+import type { SketchRelayFetch } from "@server/replay/RecordReplaySketchRelay";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
 import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
@@ -152,12 +153,22 @@ export function registerApiRoutes(
   // so all frame traffic flows through the server again.
   // Frames are admitted against the creator's shared daily budget before
   // dispatch (issue #84) — the relay is fail-closed without it.
+  // REPLAY_MODE also reaches the relay's upstream call, which is the one
+  // boundary that cannot be substituted by registration: the relay holds
+  // FAL_KEY and calls its injected fetch directly. Null unless replay/record
+  // is active, in which case the relay keeps the global fetch it defaults to.
+  const sketchRelayFetch = resolveOptionalService<SketchRelayFetch | null>(
+    container,
+    "sketchRelayFetch",
+    "fal-i2i",
+  );
   app.use(
     "/api/fal",
     apiAuthMiddleware,
     createFalI2iRouter({
       falKey: resolveFalApiKey() ?? undefined,
       budget: container.resolve("sketchBudgetService"),
+      ...(sketchRelayFetch ? { fetchFn: sketchRelayFetch } : {}),
     }),
   );
 

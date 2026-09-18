@@ -273,7 +273,7 @@ Before EVERY commit, run all five checks in order:
 2. `npx eslint --config config/lint/eslint.config.js . --quiet` — must have 0 errors
 3. `npm run arch:check` — no circular imports, no forbidden cross-layer imports (~12s)
 4. `npm run test:unit` — must pass all shards
-5. `npm run test:replay` — golden-path replay suite (offline, ~5s) must pass
+5. `npm run test:replay` — replay gate: the Idea Box golden path, the cross-mode walkthrough, and the outbound guard's own test (offline, ~6s) must pass
 
 `npm run verify` runs all five concurrently (they are independent; wall-clock cost is the unit suite) and fails if any gate fails. `npm run verify:seq` is the sequential fallback.
 
@@ -292,7 +292,8 @@ installer also removes obsolete project-managed hooks without touching custom ho
 
 ### Test Policy
 
-- **The replay golden path is the merge gate.** `npm run test:replay` runs the full authoring loop offline against recorded fixtures (see `docs/architecture/replay-mode.md`). If it is red, the product is broken no matter how green the unit suite is.
+- **The replay gate is the merge gate.** `npm run test:replay` runs two offline walkthroughs against contract-validated fixtures: the Idea Box golden path (the full authoring loop — see `docs/architecture/replay-mode.md`) and the cross-mode golden path (sketch → Use this → studio → back to the session → camera words → clip → refresh — see `docs/architecture/cross-mode-golden-path.md`), plus the test of the outbound guard that keeps both offline. If any is red, the product is broken no matter how green the unit suite is.
+- **The replay gate cannot tell you a provider is up.** It proves wiring and recovery against recorded and controlled boundaries; current provider availability and output quality are the live-provider smoke test's job (specified in `docs/architecture/cross-mode-golden-path.md`, nightly, never a merge gate) and the evals'.
 - **Frozen domains carry no tests.** Stacks frozen by ADR-0002 run zero tests in any gate; their suites were removed 2026-07-25. Git history is the archive — if a frozen stack revives, its tests revive with it.
 - **Tests die with their code.** Deleting, freezing, or replacing a module deletes its tests in the same commit.
 - **Behavior changes use the smallest useful test seam.** Add or strengthen a test when it materially protects observable behavior. Authentication, authorization, payment, and user-data changes require a negative-path test. Do not auto-load an additional TDD or debugging workflow merely because a change is a bugfix.
