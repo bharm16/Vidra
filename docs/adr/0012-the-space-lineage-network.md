@@ -2,6 +2,8 @@
 
 **Status:** accepted (2026-07-05) · amends [ADR-0010](0010-one-visible-text-one-loop-subscription-at-keep.md) · clarified by [ADR-0013](0013-space-lineage-is-persisted-not-derived.md) (lineage is persisted, not derived)
 
+> **Amended by [ADR-0022](0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)** — the three columns are media types, not an ancestry-depth limit: a picture may refine another picture, drawn inside the picture column.
+
 A 2026-07-05 design exploration (empty-state wireframe review → lineage brainstorm)
 resolved that the flat takes strip was a lossy projection of structure the product
 already keeps: every take is a generation record permanently paired with the words that

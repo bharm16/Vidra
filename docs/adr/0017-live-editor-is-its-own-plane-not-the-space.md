@@ -2,6 +2,8 @@
 
 **Status:** accepted (2026-07-09) · spec: [2026-07-09-live-editor-surface-design.md](../superpowers/specs/2026-07-09-live-editor-surface-design.md) · relates to [ADR-0012](0012-the-space-lineage-network.md)
 
+> **Amended by [ADR-0022](0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)** — one door out of the plane: a creator can accept the shown live output into a session as a picture take. The live editor itself still keeps nothing.
+
 The realtime sketch outgrew its hidden spike route: the owner wants it reachable from
 the rail (directly under Library, as "Live editor") and living on an infinite
 pannable/zoomable plane like the workspace viewport. The obvious alternative was to

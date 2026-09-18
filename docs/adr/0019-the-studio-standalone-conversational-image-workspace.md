@@ -2,6 +2,8 @@
 
 **Status:** Accepted 2026-07-24; **amended same day** (decision 5 reversed by owner — see the amendment note). Widens ADR-0002's deliverable statement; upholds ADR-0012's spatial rule after the revisit ADR-0017 mandated; leaves ADR-0010's page anatomy untouched.
 
+> **Amended by [ADR-0022](0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)** — the first-frame bridge follow-up is discharged, in both directions; decisions 2 and 3 (images are the deliverable, projects stay their own records) stand.
+
 ## Context
 
 Dogfooding Recraft's AI chat to design Vidra's own logo showed the experience is two independent tiers: an orchestrator LLM that runs the conversation (clarifying questions, follow-up suggestions, rejection diagnosis, prompt writing) and image models that render and edit. Vidra already owns the seam for each (`aiService` is the only LLM routing layer; `ImagePreviewProvider` is the image-engine port). The goal is a faithful copy of that product loop as a standalone surface.
