@@ -59,20 +59,30 @@ function isDirectChild(parentPath: string, key: string): boolean {
 
 function makeQuery(
   collectionPath: string,
-  filters: Array<[string, unknown]>,
+  filters: Array<[string, string, unknown]>,
   order?: { field: string; direction: string },
   limitCount?: number,
 ): FakeQuery {
   return {
-    where: (field, _op, value) =>
+    where: (field, op, value) =>
       makeQuery(
         collectionPath,
-        [...filters, [field, value]],
+        [...filters, [field, op, value]],
         order,
         limitCount,
       ),
-    orderBy: (field, direction = "asc") =>
-      makeQuery(collectionPath, filters, { field, direction }, limitCount),
+    orderBy: (field, direction = "asc") => {
+      // Track query-level orderBy too (not only collection-level), so a
+      // where(...).orderBy(...) chain — what listProjects now does — is visible
+      // to the "orders server-side" assertion.
+      mocks.orderByPaths.push(collectionPath);
+      return makeQuery(
+        collectionPath,
+        filters,
+        { field, direction },
+        limitCount,
+      );
+    },
     limit: (n) => makeQuery(collectionPath, filters, order, n),
     get: async () => {
       let rows = [...mocks.records.entries()]
@@ -82,7 +92,12 @@ function makeQuery(
           value,
         }))
         .filter(({ value }) =>
-          filters.every(([field, expected]) => value[field] === expected),
+          filters.every(([field, op, expected]) =>
+            op === "array-contains"
+              ? Array.isArray(value[field]) &&
+                (value[field] as unknown[]).includes(expected)
+              : value[field] === expected,
+          ),
         );
       if (order) {
         const { field, direction } = order;
@@ -127,7 +142,7 @@ function makeDocRef(path: string): FakeDocRef {
 function makeCollectionRef(path: string): FakeCollectionRef {
   return {
     doc: (id) => makeDocRef(`${path}/${id}`),
-    where: (field, _op, value) => makeQuery(path, [[field, value]]),
+    where: (field, op, value) => makeQuery(path, [[field, op, value]]),
     orderBy: (field, direction = "asc") => {
       mocks.orderByPaths.push(path);
       return makeQuery(path, [], { field, direction });
@@ -457,6 +472,120 @@ describe("FirestoreStudioProjectStore", () => {
     it("returns an empty list for a project with no turns", async () => {
       expect(await store.listTurns("empty-project")).toEqual([]);
     });
+
+    it("pages explicitly: honors the caller's limit, oldest-first (#121)", async () => {
+      for (let i = 1; i <= 5; i++) {
+        await store.saveTurn(makeTurn({ id: `turn-${i}`, createdAtMs: i }));
+      }
+      const page = await store.listTurns("project-1", 3);
+      expect(page.map((turn) => turn.id)).toEqual([
+        "turn-1",
+        "turn-2",
+        "turn-3",
+      ]);
+    });
+  });
+
+  describe("findTurnByProducedImageId (identity retrieval, #121)", () => {
+    const producedTurn = (
+      id: string,
+      createdAtMs: number,
+      imageId: string,
+    ): StudioTurnRecord =>
+      makeTurn({
+        id,
+        createdAtMs,
+        status: "complete",
+        calls: [
+          {
+            index: 0,
+            status: "succeeded",
+            image: {
+              id: imageId,
+              storagePath: `users/user-1/previews/images/${imageId}.webp`,
+              sourcePrompt: "v1",
+              model: "recraft-v4.1",
+            },
+          },
+        ],
+      });
+
+    it("finds a produced image BEYOND the 200-turn listTurns window", async () => {
+      // 200 image-less turns, then one late turn that produced the target.
+      for (let i = 1; i <= 200; i++) {
+        await store.saveTurn(
+          makeTurn({ id: `turn-${i}`, createdAtMs: i, calls: [] }),
+        );
+      }
+      await store.saveTurn(producedTurn("turn-late", 201, "img-late"));
+
+      // The default history page (200, oldest-first) cannot reach it — the
+      // exact window the old page-walking lookup was trapped inside.
+      const page = await store.listTurns("project-1");
+      expect(page).toHaveLength(200);
+      expect(page.some((turn) => turn.id === "turn-late")).toBe(false);
+
+      // Identity lookup reaches it regardless of the window.
+      const found = await store.findTurnByProducedImageId(
+        "project-1",
+        "img-late",
+      );
+      expect(found?.id).toBe("turn-late");
+    });
+
+    it("returns null for an unknown id and for a non-produced id", async () => {
+      await store.saveTurn(producedTurn("turn-1", 1, "img-1"));
+      expect(
+        await store.findTurnByProducedImageId("project-1", "img-1"),
+      ).not.toBeNull();
+      expect(
+        await store.findTurnByProducedImageId("project-1", "unknown"),
+      ).toBeNull();
+      // An attachment id never enters a call, so it is not a produced image.
+      expect(
+        await store.findTurnByProducedImageId("project-1", "att-1"),
+      ).toBeNull();
+    });
+
+    it("scopes the lookup to the named project", async () => {
+      await store.saveTurn(producedTurn("turn-1", 1, "img-1"));
+      expect(
+        await store.findTurnByProducedImageId("other-project", "img-1"),
+      ).toBeNull();
+    });
+  });
+
+  describe("produced-image index", () => {
+    it("persists imageIds for the query but never returns them on reads", async () => {
+      await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 500 });
+      await store.finalizeTurn("project-1", "turn-1", {
+        status: "complete",
+        calls: [
+          {
+            index: 0,
+            status: "succeeded",
+            image: {
+              id: "img-1",
+              storagePath: "users/user-1/previews/images/x.webp",
+              sourcePrompt: "v1",
+              model: "recraft-v4.1",
+            },
+          },
+        ],
+        refundedCents: 0,
+        updatedAtMs: 2000,
+      });
+
+      // The raw doc carries the denormalized index the finder queries...
+      const raw = mocks.records.get("studio_projects/project-1/turns/turn-1");
+      expect(raw?.imageIds).toEqual(["img-1"]);
+
+      // ...but the domain record handed back to consumers never does.
+      const turn = await store.getTurn("project-1", "turn-1");
+      expect(turn && "imageIds" in turn).toBe(false);
+      const [listed] = await store.listTurns("project-1");
+      expect(listed && "imageIds" in listed).toBe(false);
+    });
   });
 
   describe("projects", () => {
@@ -489,16 +618,32 @@ describe("FirestoreStudioProjectStore", () => {
       expect(Object.keys(raw ?? {})).not.toContain("pinnedModel");
     });
 
-    it("regression: listProjects never uses orderBy — the userId==+orderBy shape demands a composite Firestore index (FAILED_PRECONDITION, live 2026-07-24)", async () => {
-      await store.createProject({
-        id: "p1",
-        userId: "user-1",
-        title: "A",
-        createdAtMs: 1,
-        updatedAtMs: 1,
-      });
-      await store.listProjects("user-1");
-      expect(mocks.orderByPaths).not.toContain("studio_projects");
+    it("orders newest-first IN THE QUERY so the newest project is never dropped beyond the fetch window (#121)", async () => {
+      // Reverses the 2026-07-24 equality-only workaround. That fetch capped at
+      // 500 BEFORE an in-memory recency sort, so with more than a page of
+      // projects the newest could fall outside the arbitrary window and vanish
+      // from the index. Ordering server-side needs the composite index on
+      // (userId, updatedAtMs) now declared in firestore.indexes.json — the same
+      // dependency `sessions` already takes for findByUser.
+      for (let i = 1; i <= 510; i++) {
+        // Ascending updatedAtMs, so the newest project is the LAST one written
+        // — exactly the one the old arbitrary-500 window dropped.
+        await store.createProject({
+          id: `p-${i}`,
+          userId: "user-1",
+          title: `P${i}`,
+          createdAtMs: i,
+          updatedAtMs: i,
+        });
+      }
+
+      const projects = await store.listProjects("user-1");
+
+      // Ordering is applied in the query, not in memory after an arbitrary cut.
+      expect(mocks.orderByPaths).toContain("studio_projects");
+      // The newest (510th written) survives; the page is the newest N.
+      expect(projects[0]?.id).toBe("p-510");
+      expect(projects).toHaveLength(50);
     });
 
     it("lists a user's projects newest-first", async () => {

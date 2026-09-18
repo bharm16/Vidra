@@ -35,12 +35,16 @@ const STUB_EXECUTION: ResolvedExecution = {
   viaFallback: false,
 };
 
-/** The take as the session records it: a path the creator owns, not a URL. */
+/**
+ * The take as the session-side lookup resolved it (issue #109): a path the
+ * session owns, plus the read URL the shared resolver already minted for it.
+ */
 const SOURCE: SessionPictureSource = {
   sessionId: "session-1",
   promptVersionId: "v1",
   generationId: "take-1",
   storagePath: "users/user-1/previews/images/1758100000000-abcdef01.webp",
+  viewUrl: "https://signed.example.com/source-picture?exp=1h",
   assetId: "1758100000000-abcdef01.webp",
 };
 
@@ -88,6 +92,20 @@ class FakeStore implements StudioProjectStore {
     turnId: string,
   ): Promise<StudioTurnRecord | null> {
     return this.turns.get(turnId) ?? null;
+  }
+  async findTurnByProducedImageId(
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioTurnRecord | null> {
+    return (
+      [...this.turns.values()].find(
+        (turn) =>
+          turn.projectId === projectId &&
+          turn.calls.some(
+            (call) => call.status === "succeeded" && call.image?.id === imageId,
+          ),
+      ) ?? null
+    );
   }
   async reserveTurn(params: {
     turn: StudioTurnRecord;

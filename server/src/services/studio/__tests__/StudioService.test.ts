@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { StudioService, StudioNotFoundError } from "../StudioService";
+import {
+  StudioService,
+  StudioNotFoundError,
+  StudioProjectFullError,
+} from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import { StudioCapExceededError } from "../storage/FirestoreStudioProjectStore";
 import type { StudioProjectStore } from "../storage/StudioProjectStore";
@@ -47,6 +51,23 @@ class FakeStore implements StudioProjectStore {
     turnId: string,
   ): Promise<StudioTurnRecord | null> {
     return this.turns.get(turnId) ?? null;
+  }
+
+  // Identity lookup, unbounded by any page — the whole point of #121: the
+  // service must find a produced image without walking a history window.
+  async findTurnByProducedImageId(
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioTurnRecord | null> {
+    return (
+      [...this.turns.values()].find(
+        (turn) =>
+          turn.projectId === projectId &&
+          turn.calls.some(
+            (call) => call.status === "succeeded" && call.image?.id === imageId,
+          ),
+      ) ?? null
+    );
   }
 
   async listTurns(projectId: string): Promise<StudioTurnRecord[]> {
@@ -130,6 +151,7 @@ const DAY_MS = new Date("2026-07-24T12:00:00Z").getTime();
 function makeService(overrides?: {
   runner?: Partial<StudioImageRunner>;
   capCents?: number;
+  maxTurnsPerProject?: number;
   decide?: (context: StudioTurnContext) => Promise<StudioDecision>;
 }) {
   const store = new FakeStore();
@@ -171,6 +193,9 @@ function makeService(overrides?: {
     storage,
     policy: { decideTurn },
     dailyCapCents: overrides?.capCents ?? 500,
+    ...(overrides?.maxTurnsPerProject !== undefined
+      ? { maxTurnsPerProject: overrides.maxTurnsPerProject }
+      : {}),
     now: () => new Date(DAY_MS),
     idFactory: () => `id-${++idCounter}`,
   });
@@ -784,6 +809,142 @@ describe("StudioService", () => {
       await service.runTurn("user-1", project.id, "a logo");
 
       expect(decideTurn.mock.calls[0]?.[0]?.pinnedModel).toBeNull();
+    });
+  });
+
+  describe("findProducedImage (identity retrieval, #121)", () => {
+    it("returns a produced image by identity without walking the history page", async () => {
+      const { service, store } = makeService();
+      store.projects.set("project-1", {
+        id: "project-1",
+        userId: "user-1",
+        title: "Logo",
+        createdAtMs: DAY_MS,
+        updatedAtMs: DAY_MS,
+      });
+      // 220 turns — well past the old 200-turn read window. The target image
+      // is in the last one, where a page-walking lookup could not reach it.
+      for (let i = 1; i <= 220; i++) {
+        store.turns.set(`turn-${i}`, {
+          id: `turn-${i}`,
+          projectId: "project-1",
+          userId: "user-1",
+          status: "complete",
+          userMessage: `m${i}`,
+          decision: {
+            action: "edit",
+            instruction: `m${i}`,
+            sourceImageIds: [],
+            suggestions: ["a", "b", "c"],
+          },
+          calls:
+            i === 220
+              ? [
+                  {
+                    index: 0,
+                    status: "succeeded",
+                    image: {
+                      id: "img-220",
+                      storagePath: "users/user-1/previews/images/img-220.webp",
+                      sourcePrompt: `m${i}`,
+                      model: "recraft-v4.1",
+                    },
+                  },
+                ]
+              : [],
+          reservedCents: 0,
+          refundedCents: 0,
+          createdAtMs: DAY_MS + i,
+          updatedAtMs: DAY_MS + i,
+        });
+      }
+
+      const listTurnsSpy = vi.spyOn(store, "listTurns");
+      const produced = await service.findProducedImage(
+        "user-1",
+        "project-1",
+        "img-220",
+      );
+
+      expect(produced?.image.id).toBe("img-220");
+      expect(produced?.turnId).toBe("turn-220");
+      // Retrieval is by identity — it never pages the history (#121).
+      expect(listTurnsSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns null for an image the project never produced", async () => {
+      const { service, store } = makeService();
+      store.projects.set("project-1", {
+        id: "project-1",
+        userId: "user-1",
+        title: "Logo",
+        createdAtMs: DAY_MS,
+        updatedAtMs: DAY_MS,
+      });
+
+      expect(
+        await service.findProducedImage("user-1", "project-1", "nope"),
+      ).toBeNull();
+    });
+  });
+
+  describe("turn limit (#121)", () => {
+    it("refuses a turn once the project is at its cap — before any spend", async () => {
+      const { service, store, runner, decideTurn } = makeService({
+        maxTurnsPerProject: 2,
+      });
+      store.projects.set("project-1", {
+        id: "project-1",
+        userId: "user-1",
+        title: "Logo",
+        createdAtMs: DAY_MS,
+        updatedAtMs: DAY_MS,
+      });
+      for (let i = 1; i <= 2; i++) {
+        store.turns.set(`turn-${i}`, {
+          id: `turn-${i}`,
+          projectId: "project-1",
+          userId: "user-1",
+          status: "complete",
+          userMessage: `m${i}`,
+          decision: { action: "diagnose", question: "?", quickPicks: [] },
+          calls: [],
+          reservedCents: 0,
+          refundedCents: 0,
+          createdAtMs: DAY_MS + i,
+          updatedAtMs: DAY_MS + i,
+        });
+      }
+
+      const rejection = await service
+        .runTurn("user-1", "project-1", "make another logo")
+        .then(
+          () => null,
+          (error: unknown) => error,
+        );
+
+      // A clear, actionable refusal with a 4xx the route surfaces as JSON.
+      expect(rejection).toBeInstanceOf(StudioProjectFullError);
+      expect((rejection as StudioProjectFullError).statusCode).toBe(409);
+      expect((rejection as Error).message).toContain("limit of 2 turns");
+
+      // Refused BEFORE the policy LLM call and any image generation: no spend.
+      expect(decideTurn).not.toHaveBeenCalled();
+      expect(runner.run).not.toHaveBeenCalled();
+      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(0);
+    });
+
+    it("allows turns up to the cap, then refuses the next", async () => {
+      const { service, store } = makeService({ maxTurnsPerProject: 2 });
+      const project = await service.createProject("user-1");
+
+      await service.runTurn("user-1", project.id, "logo one");
+      await service.runTurn("user-1", project.id, "logo two");
+      expect((await store.listTurns(project.id)).length).toBe(2);
+
+      await expect(
+        service.runTurn("user-1", project.id, "logo three"),
+      ).rejects.toBeInstanceOf(StudioProjectFullError);
     });
   });
 });

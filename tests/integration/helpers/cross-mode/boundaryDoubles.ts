@@ -492,6 +492,20 @@ export class InMemoryStudioProjectStore implements StudioProjectStore {
     );
   }
 
+  findTurnByProducedImageId(
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioTurnRecord | null> {
+    const found = [...this.turns.values()].find(
+      (turn) =>
+        turn.projectId === projectId &&
+        turn.calls.some(
+          (call) => call.status === "succeeded" && call.image?.id === imageId,
+        ),
+    );
+    return Promise.resolve(found ? structuredClone(found) : null);
+  }
+
   reserveTurn({
     turn,
     day,

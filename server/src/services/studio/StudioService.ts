@@ -51,6 +51,23 @@ export class StudioNotFoundError extends Error {
   }
 }
 
+/**
+ * A project has reached its turn limit (#121). Thrown at the creation boundary
+ * BEFORE the policy LLM call or any image spend, so a turn the interface could
+ * not later page back to is refused rather than silently truncated. 409: the
+ * request is well-formed, but the project's state cannot accept more work.
+ */
+export class StudioProjectFullError extends Error {
+  public readonly statusCode = 409;
+
+  constructor(public readonly limit: number) {
+    super(
+      `This project has reached its limit of ${limit} turns. Start a new project to keep going.`,
+    );
+    this.name = "StudioProjectFullError";
+  }
+}
+
 /** Narrow storage port (structurally satisfied by StorageService). */
 export interface StudioImageStorage {
   saveFromUrl(
@@ -171,6 +188,11 @@ export interface StudioServiceDeps {
   storage: StudioImageStorage;
   policy: StudioTurnPolicy;
   dailyCapCents: number;
+  /**
+   * Max turns per project before creation is refused (#121). Defaults to
+   * MAX_TURNS_PER_PROJECT; injected small in tests to exercise the boundary.
+   */
+  maxTurnsPerProject?: number;
   now?: () => Date;
   idFactory?: () => string;
 }
@@ -190,6 +212,17 @@ const GENERATE_BATCH_SIZE = 4;
 /** S-12: user-uploaded reference images per project. */
 const MAX_ATTACHMENTS = 12;
 const TITLE_MAX_CHARS = 60;
+
+/**
+ * The beta cap on turns per project (#121). A deliberate, enforced limit —
+ * `runTurn` refuses a turn past it BEFORE any spend — rather than the silent
+ * truncation the store's default page size used to impose. Chosen well above
+ * the old 200-turn read window so a project can grow past it and still be
+ * fully retrievable, and used as the whole-thread read window so the fetched
+ * history is always complete. Injectable so tests exercise the boundary
+ * without standing up hundreds of turns.
+ */
+const MAX_TURNS_PER_PROJECT = 500;
 
 /** Every stored image id across a project's turns (succeeded calls only). */
 function imageIdsOf(turns: readonly StudioTurnRecord[]): Set<string> {
@@ -243,6 +276,7 @@ export class StudioService {
   private readonly storage: StudioImageStorage;
   private readonly policy: StudioTurnPolicy;
   private readonly ledger: StudioSpendLedger;
+  private readonly maxTurnsPerProject: number;
   private readonly now: () => Date;
   private readonly idFactory: () => string;
   private readonly log = logger.child({ service: "StudioService" });
@@ -253,6 +287,7 @@ export class StudioService {
     this.runner = deps.runner;
     this.storage = deps.storage;
     this.policy = deps.policy;
+    this.maxTurnsPerProject = deps.maxTurnsPerProject ?? MAX_TURNS_PER_PROJECT;
     this.now = deps.now ?? (() => new Date());
     this.idFactory = deps.idFactory ?? (() => randomUUID());
     this.ledger = new StudioSpendLedger({
@@ -473,26 +508,31 @@ export class StudioService {
     imageId: string,
   ): Promise<StudioProducedImage | null> {
     const project = await this.getProject(userId, projectId);
-    const turns = await this.store.listTurns(projectId);
+    // BY IDENTITY, never by walking a history page (#121): the producing turn
+    // is fetched directly, so an image made past any list window is still
+    // returned. Ownership is proven by getProject above; the lookup is scoped
+    // to that project.
+    const turn = await this.store.findTurnByProducedImageId(projectId, imageId);
+    if (!turn) return null;
 
-    for (const turn of turns) {
-      for (const call of turn.calls) {
-        if (call.status !== "succeeded" || call.image?.id !== imageId) continue;
-        const { viewUrl } = await this.storage.getViewUrl(
-          userId,
-          call.image.storagePath,
-        );
-        return {
-          projectId,
-          turnId: turn.id,
-          image: call.image,
-          viewUrl,
-          sourceImages: readTurnSourceImages(turn),
-          ...(project.origin ? { origin: project.origin } : {}),
-        };
-      }
-    }
-    return null;
+    const call = turn.calls.find(
+      (candidate) =>
+        candidate.status === "succeeded" && candidate.image?.id === imageId,
+    );
+    if (!call?.image) return null;
+
+    const { viewUrl } = await this.storage.getViewUrl(
+      userId,
+      call.image.storagePath,
+    );
+    return {
+      projectId,
+      turnId: turn.id,
+      image: call.image,
+      viewUrl,
+      sourceImages: readTurnSourceImages(turn),
+      ...(project.origin ? { origin: project.origin } : {}),
+    };
   }
 
   /**
@@ -588,7 +628,9 @@ export class StudioService {
   private async collectProjectImageIds(
     projectId: string,
   ): Promise<Set<string>> {
-    const ids = imageIdsOf(await this.store.listTurns(projectId));
+    const ids = imageIdsOf(
+      await this.store.listTurns(projectId, this.maxTurnsPerProject),
+    );
     const project = await this.store.getProject(projectId);
     for (const attachment of project?.attachments ?? []) {
       ids.add(attachment.id);
@@ -693,7 +735,12 @@ export class StudioService {
     projectId: string,
   ): Promise<StudioTurnView[]> {
     await this.getProject(userId, projectId);
-    const turns = await this.store.listTurns(projectId);
+    // The whole thread within the enforced window (#121): creation is capped
+    // at the same bound, so this fetch is complete, not silently truncated.
+    const turns = await this.store.listTurns(
+      projectId,
+      this.maxTurnsPerProject,
+    );
     return Promise.all(turns.map((turn) => this.decorateTurn(userId, turn)));
   }
 
@@ -747,7 +794,18 @@ export class StudioService {
       throw error;
     }
 
-    const history = await this.store.listTurns(projectId);
+    // Read the whole thread within the enforced window, then refuse a turn
+    // that would exceed it BEFORE the policy LLM call or any image spend
+    // (#121). Refusing here — the first thing after loading history — is what
+    // makes the cap a pre-work guard rather than a silent truncation: no paid
+    // work is done for a turn the interface could not later page back to.
+    const history = await this.store.listTurns(
+      projectId,
+      this.maxTurnsPerProject,
+    );
+    if (history.length >= this.maxTurnsPerProject) {
+      throw new StudioProjectFullError(this.maxTurnsPerProject);
+    }
     const projectImageIds = imageIdsOf(history);
     const attachments = project.attachments ?? [];
     for (const attachment of attachments) {
