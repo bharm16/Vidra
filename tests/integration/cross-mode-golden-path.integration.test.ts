@@ -195,9 +195,12 @@ describe("Cross-mode golden path (integration)", () => {
   });
 
   it("the studio's first turn asks rather than guessing", async () => {
-    // Not scene-setting: the first turn of a project cannot edit, so this is
-    // what makes the refining turn below a follow-up. It is also the studio's
-    // own behavior 1, replayed here rather than re-proved.
+    // Behavior 1: a deliberately vague opening ("make this better") clarifies
+    // rather than guessing. edit/transform ARE available on this first turn —
+    // the bridged picture is a valid source (ADR-0022 decision 4, issue #110) —
+    // so clarify here is behavior 1's own choice, not a limit of the first
+    // turn. The first-turn edit rule itself is proved in
+    // StudioService.first-turn-edit.regression.test.ts.
     const turn = await runStudioTurn(CROSS_MODE_STUDIO_OPENING_MESSAGE);
     expect(turn.decision.action).toBe("clarify");
     expect(turn.calls).toHaveLength(0);

@@ -195,32 +195,36 @@ function imageIdsOf(turns: readonly StudioTurnRecord[]): Set<string> {
 }
 
 /**
- * Actions this service can execute at M3. edit/transform join at M4 (their
- * execution paths land there); until then the policy engine rejects them
- * with a corrective retry, exactly like a schema violation.
+ * The actions the policy engine may choose this turn, derived from what the
+ * project actually holds — never from how long the conversation is
+ * (ADR-0022 decision 4, issue #110).
  *
- * clarify is FIRST-MESSAGE-ONLY (behavior 1: follow-ups never re-trigger
- * clarifying questions — regression caught live 2026-07-24): once any turn
- * exists, it is removed from the allowed set, so a proposed re-clarify is
- * structurally rejected rather than merely discouraged in the prompt.
- *
- * edit/transform need stored images, which can only exist after a prior
- * turn — they are follow-up actions by construction.
+ * - `generate`, `diagnose`, and `negotiate` are always available.
+ * - `clarify` is FIRST-MESSAGE-ONLY (behavior 1: follow-ups never re-trigger
+ *   clarifying questions — regression caught live 2026-07-24). It keys off
+ *   conversation length because that is literally what "first message" means,
+ *   not because of anything about images: once any turn exists it drops out of
+ *   the allowed set, so a proposed re-clarify is structurally rejected rather
+ *   than merely discouraged in the prompt.
+ * - `edit`/`transform` are available exactly when the project already holds a
+ *   source image to work on — a bridged session picture, an uploaded
+ *   attachment, the selected image, or an image a prior turn produced. That is
+ *   a fact about images, NOT about turn count: a project bridged from a
+ *   session picture and a project with an uploaded attachment both hold an
+ *   editable image before any turn exists, and the system-prompt template
+ *   already tells the model to prefer an edit sourcing those attachments.
  */
-const FIRST_TURN_ACTIONS = [
-  "clarify",
-  "generate",
-  "diagnose",
-  "negotiate",
-] as const satisfies readonly StudioDecision["action"][];
-
-const FOLLOW_UP_ACTIONS = [
-  "generate",
-  "edit",
-  "transform",
-  "diagnose",
-  "negotiate",
-] as const satisfies readonly StudioDecision["action"][];
+function allowedActionsFor(state: {
+  hasPriorTurns: boolean;
+  hasSourceImages: boolean;
+}): readonly StudioDecision["action"][] {
+  const actions: StudioDecision["action"][] = [];
+  if (!state.hasPriorTurns) actions.push("clarify");
+  actions.push("generate");
+  if (state.hasSourceImages) actions.push("edit", "transform");
+  actions.push("diagnose", "negotiate");
+  return actions;
+}
 
 export class StudioService {
   private readonly store: StudioProjectStore;
@@ -758,8 +762,10 @@ export class StudioService {
         projectImageIds,
         attachments,
         messageAttachmentIds,
-        allowedActions:
-          history.length === 0 ? FIRST_TURN_ACTIONS : FOLLOW_UP_ACTIONS,
+        allowedActions: allowedActionsFor({
+          hasPriorTurns: history.length > 0,
+          hasSourceImages: projectImageIds.size > 0,
+        }),
       },
       hooks,
     );
