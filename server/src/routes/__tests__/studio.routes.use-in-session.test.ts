@@ -56,7 +56,24 @@ function sessionFixture(userId: string): SessionRecord {
           signature: "sig-1",
           prompt: "a lighthouse at dusk, wide shot",
           timestamp: "2026-09-17T11:00:00Z",
-          generations: [],
+          // The picture the project was bridged FROM is a live take in this
+          // session — which is exactly why admission (issue #122) can draw a
+          // refine edge to it. The route test used to leave this empty and lean
+          // on the boundary accepting an ancestor that was not a node here.
+          generations: [
+            {
+              id: "take-1",
+              mediaType: "image",
+              status: "completed",
+              prompt: "a lighthouse at dusk, wide shot",
+              promptVersionId: "v1",
+              mediaUrls: ["https://storage.example.com/take-1"],
+              mediaAssetIds: ["take-1.webp"],
+              storagePath: "users/user-1/previews/images/take-1.webp",
+              ancestorGenerationId: null,
+              origin: "generated",
+            },
+          ],
         },
       ],
     },
