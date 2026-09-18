@@ -186,6 +186,57 @@ function takesIn(
   return version?.generations ?? [];
 }
 
+/**
+ * A completed picture take as it sits in a version's `generations` — the shape
+ * a display ancestor must resolve to (issue #122). `mediaType` and `archived`
+ * are what the boundary reads to prove "live picture take".
+ */
+function pictureTakeRecord(
+  id: string,
+  opts: { mediaType?: string; archived?: boolean } = {},
+) {
+  return {
+    id,
+    mediaType: opts.mediaType ?? "image",
+    status: "completed" as const,
+    prompt: "a runner on a rain-slicked street",
+    promptVersionId: "v2",
+    mediaUrls: [`https://storage.example.com/${id}`],
+    ancestorGenerationId: null,
+    origin: "generated" as const,
+    ...(opts.archived ? { archived: true as const } : {}),
+  };
+}
+
+type SeededTake = ReturnType<typeof pictureTakeRecord>;
+
+/**
+ * The base session with the given takes already filed under v2 — the live
+ * nodes a display ancestor can point at. Seeded into v2 on purpose: a take
+ * admitted into v1 then stays the only entry in v1's generations, and the
+ * display-ancestor read searches every version, so v2 is where it finds one.
+ */
+function sessionWith(generations: SeededTake[]): SessionRecord {
+  const base = sessionRecord();
+  const versions = (base.prompt?.versions ?? []).map((version) =>
+    version.versionId === "v2" ? { ...version, generations } : version,
+  );
+  return { ...base, prompt: { ...base.prompt!, versions } };
+}
+
+/** Flip `archived` on the take with this id, wherever it is filed. */
+function archiveGenerationIn(record: SessionRecord, id: string): SessionRecord {
+  const versions = (record.prompt?.versions ?? []).map((version) => ({
+    ...version,
+    generations: (version.generations ?? []).map((generation) =>
+      (generation as { id?: string }).id === id
+        ? { ...generation, archived: true }
+        : generation,
+    ),
+  }));
+  return { ...record, prompt: { ...record.prompt!, versions } };
+}
+
 function setup(store = createSessionStore()): {
   store: ReturnType<typeof createSessionStore>;
   mediaStore: ReturnType<typeof createMediaStore>;
@@ -389,7 +440,13 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
   });
 
   it("records every source input and exposes exactly one of them as the display ancestor", async () => {
-    const { store, deps } = setup();
+    // The display ancestor is a live picture take already in the session
+    // (issue #122): the space can only draw an edge to a node that is here.
+    const { store, deps } = setup(
+      createSessionStore(
+        sessionWith([pictureTakeRecord("gen-source-picture")]),
+      ),
+    );
 
     const result = await admitPictureTake(
       deps,
@@ -542,7 +599,13 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
     });
 
     it("treats the same key with a CHANGED SOURCE TUPLE as a conflict, even when the display ancestor is unchanged", async () => {
-      const { deps } = setup();
+      // Both drawn ancestors are live pictures in the session (issue #122); the
+      // conflict is on the source tuple, not the ancestor's validity.
+      const { deps } = setup(
+        createSessionStore(
+          sessionWith([pictureTakeRecord("gen-A"), pictureTakeRecord("gen-B")]),
+        ),
+      );
 
       await admitPictureTake(
         deps,
@@ -580,7 +643,13 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
     });
 
     it("treats the same key with a DIFFERENT DISPLAY ANCESTOR as a conflict, even when the source tuple is unchanged", async () => {
-      const { deps } = setup();
+      // gen-A and gen-B are both live pictures in the session (issue #122), so
+      // either is a valid ancestor and the conflict is purely on which was drawn.
+      const { deps } = setup(
+        createSessionStore(
+          sessionWith([pictureTakeRecord("gen-A"), pictureTakeRecord("gen-B")]),
+        ),
+      );
 
       await admitPictureTake(
         deps,
@@ -712,6 +781,278 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       expect(second.take.generationId).not.toBe(first.take.generationId);
       expect(takesIn(store, "v1")).toHaveLength(2);
       expect(mediaStore.calls).toHaveLength(2);
+    });
+  });
+
+  /**
+   * Issue #122 — the boundary PROVES every relationship it records. The display
+   * ancestor is the one edge the space draws (ADR-0022 decision 3), so it must
+   * be a live, non-archived PICTURE take that is genuinely a node in THIS
+   * destination; the words-version it is filed under must already exist (never
+   * auto-created from current text); and non-display source inputs are validated
+   * for kind without being forced to be session nodes. Every rejection here is
+   * an ownership / user-data negative path.
+   *
+   * These run on the INITIAL admission only. Replaying an already successful
+   * acceptance returns its original take unchanged even after a source it named
+   * is archived — the last test pins exactly that.
+   */
+  describe("relationship validation (issue #122)", () => {
+    it("accepts a display ancestor that is a live picture take in the destination session", async () => {
+      const { store, deps } = setup(
+        createSessionStore(sessionWith([pictureTakeRecord("gen-parent")])),
+      );
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          productionProvenance: {
+            state: "known",
+            instruction: "warm the light",
+            model: "flux-kontext",
+          },
+          sourceInputs: [{ kind: "take", generationId: "gen-parent" }],
+          displayAncestorGenerationId: "gen-parent",
+        }),
+      );
+
+      expect(result.state).toBe("admitted");
+      if (result.state !== "admitted") return;
+      const record = takesIn(store, "v1")[0] as Record<string, unknown>;
+      // The refine edge the space draws: this picture's ancestor is that one.
+      expect(record.ancestorGenerationId).toBe("gen-parent");
+    });
+
+    it("refuses a display ancestor that is not a node in this session, storing nothing", async () => {
+      // The base session holds no takes, so the named ancestor is a phantom
+      // here — the same refusal a take that is a node in ANOTHER session's
+      // space earns, because this reads only the destination.
+      const { store, mediaStore, deps } = setup();
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          sourceInputs: [{ kind: "take", generationId: "gen-nowhere" }],
+          displayAncestorGenerationId: "gen-nowhere",
+        }),
+      );
+
+      expect(result.state).toBe("refused");
+      expect(mediaStore.calls).toHaveLength(0);
+      expect(store.mutate).not.toHaveBeenCalled();
+    });
+
+    it("refuses a display ancestor that is a take of ANOTHER session, never crossing the edge", async () => {
+      // A real, live picture — but a node in a DIFFERENT session the creator
+      // also owns. A take is a node in exactly one space, so an edge to it from
+      // here is one the space cannot draw. The boundary reads only the
+      // destination, so the ancestor is simply absent from it.
+      const destination = sessionRecord(); // session-1, no takes of its own
+      const other: SessionRecord = {
+        ...sessionWith([pictureTakeRecord("gen-in-other")]),
+        id: "session-2",
+      };
+      const sessions = new Map<string, SessionRecord>([
+        [destination.id, destination],
+        [other.id, other],
+      ]);
+      const store = {
+        get: vi.fn(async (id: string) => sessions.get(id) ?? null),
+        save: vi.fn(),
+        mutate: vi.fn(),
+        delete: vi.fn(),
+        findByPromptUuid: vi.fn(async () => null),
+      };
+      const { deps, mediaStore } = setup(
+        store as unknown as ReturnType<typeof createSessionStore>,
+      );
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          sourceInputs: [{ kind: "take", generationId: "gen-in-other" }],
+          displayAncestorGenerationId: "gen-in-other",
+        }),
+      );
+
+      expect(result.state).toBe("refused");
+      expect(mediaStore.calls).toHaveLength(0);
+      expect(store.mutate).not.toHaveBeenCalled();
+    });
+
+    it("refuses a display ancestor that is archived", async () => {
+      const { mediaStore, deps } = setup(
+        createSessionStore(
+          sessionWith([pictureTakeRecord("gen-gone", { archived: true })]),
+        ),
+      );
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          sourceInputs: [{ kind: "take", generationId: "gen-gone" }],
+          displayAncestorGenerationId: "gen-gone",
+        }),
+      );
+
+      expect(result.state).toBe("refused");
+      if (result.state !== "refused") return;
+      expect(result.reason).toContain("archived");
+      expect(mediaStore.calls).toHaveLength(0);
+    });
+
+    it("refuses a display ancestor that is a clip, not a picture", async () => {
+      const { mediaStore, deps } = setup(
+        createSessionStore(
+          sessionWith([pictureTakeRecord("gen-clip", { mediaType: "video" })]),
+        ),
+      );
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          sourceInputs: [{ kind: "take", generationId: "gen-clip" }],
+          displayAncestorGenerationId: "gen-clip",
+        }),
+      );
+
+      expect(result.state).toBe("refused");
+      if (result.state !== "refused") return;
+      expect(result.reason).toContain("not a picture");
+      expect(mediaStore.calls).toHaveLength(0);
+    });
+
+    it("cannot draw a self-link or a cycle: an ancestor id no live picture holds is refused, and the take's own id is minted only after this passes", async () => {
+      // A self-link would need the take to name its own id — but that id is
+      // minted only AFTER this check (step 5). So the only shape a self-link or
+      // cycle can take is an ancestor that is not an existing live picture,
+      // which is refused like any other phantom.
+      const { mediaStore, deps } = setup();
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "studio",
+          sourceInputs: [{ kind: "take", generationId: "itself" }],
+          displayAncestorGenerationId: "itself",
+        }),
+      );
+
+      expect(result.state).toBe("refused");
+      expect(mediaStore.calls).toHaveLength(0);
+    });
+
+    it("refuses a destination words-version that does not exist, and never creates one from current text", async () => {
+      const { store, mediaStore, deps } = setup();
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({ promptVersionId: "v-phantom" }),
+      );
+
+      expect(result.state).toBe("refused");
+      if (result.state !== "refused") return;
+      expect(result.reason).toContain("v-phantom");
+      // Nothing stored, nothing written — and above all, the phantom version
+      // was NOT conjured into being from the session's current text.
+      expect(mediaStore.calls).toHaveLength(0);
+      expect(store.mutate).not.toHaveBeenCalled();
+      const versionIds = (store.current().prompt?.versions ?? []).map(
+        (version) => version.versionId,
+      );
+      expect(versionIds).toEqual(["v1", "v2"]);
+    });
+
+    it("validates upload, sketch and studio-image inputs for kind without requiring session membership", async () => {
+      const { store, deps } = setup();
+
+      // None of these references is a node in the session, and none needs to
+      // be: they are recorded provenance, not the one drawn edge.
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "upload",
+          sourceInputs: [
+            { kind: "sketch", assetId: "snap-x", storagePath: "p/snap-x" },
+            { kind: "studio-image", storagePath: "p/studio-x" },
+          ],
+          displayAncestorGenerationId: null,
+        }),
+      );
+
+      expect(result.state).toBe("admitted");
+      if (result.state !== "admitted") return;
+      const record = takesIn(store, "v1")[0] as {
+        sourceInputs: Array<{ kind: string }>;
+      };
+      // Both provided inputs are recorded, plus the appended upload media.
+      expect(record.sourceInputs.map((input) => input.kind)).toEqual([
+        "sketch",
+        "studio-image",
+        "upload",
+      ]);
+    });
+
+    it("refuses a media source input that carries no durable handle", async () => {
+      const { mediaStore, deps } = setup();
+
+      const result = await admitPictureTake(
+        deps,
+        uploadRequest({
+          origin: "upload",
+          // A studio-image reference with neither an assetId nor a storagePath
+          // points at no owned bytes — a mislabelled reference, refused.
+          sourceInputs: [{ kind: "studio-image" }],
+          displayAncestorGenerationId: null,
+        }),
+      );
+
+      expect(result.state).toBe("refused");
+      if (result.state !== "refused") return;
+      expect(result.reason).toContain("durable media handle");
+      expect(mediaStore.calls).toHaveLength(0);
+    });
+
+    it("replays a successful acceptance unchanged even after its display ancestor was archived", async () => {
+      const store = createSessionStore(
+        sessionWith([pictureTakeRecord("gen-parent")]),
+      );
+      const { mediaStore, deps } = setup(store);
+
+      const request = uploadRequest({
+        origin: "studio",
+        productionProvenance: {
+          state: "known",
+          instruction: "warm the light",
+          model: "flux-kontext",
+        },
+        sourceInputs: [{ kind: "take", generationId: "gen-parent" }],
+        displayAncestorGenerationId: "gen-parent",
+      });
+
+      const first = await admitPictureTake(deps, request);
+      expect(first.state).toBe("admitted");
+      if (first.state !== "admitted") return;
+
+      // The source picture is archived AFTER the acceptance succeeded. Initial
+      // validation is over; a replay must not re-run it and make the accepted
+      // take vanish or rewrite its history.
+      await store.save(archiveGenerationIn(store.current(), "gen-parent"));
+
+      const replay = await admitPictureTake(deps, request);
+
+      expect(replay.state).toBe("admitted");
+      if (replay.state !== "admitted") return;
+      expect(replay.replayed).toBe(true);
+      expect(replay.take.generationId).toBe(first.take.generationId);
+      // The original edge stands, unchanged, and nothing was stored twice.
+      expect(replay.take.record.ancestorGenerationId).toBe("gen-parent");
+      expect(mediaStore.calls).toHaveLength(1);
     });
   });
 });

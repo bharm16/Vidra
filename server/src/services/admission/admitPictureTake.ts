@@ -33,11 +33,22 @@ import type {
  *     SAME take, and a double-fire must not mint a second one. The claim is
  *     what makes both true, and it is taken before the media is stored so the
  *     stored bytes are never orphaned by a replay.
- *  3. **Durable media.** The bytes land in the creator's own asset store, so
+ *  3. **Relationship validation — on a fresh claim only.** Every relationship
+ *     this take will RECORD is proven against the owned session read in step 1
+ *     (issue #122, ADR-0022 decision 3): the words-version it is filed under
+ *     already exists — never auto-created from the session's current text — and
+ *     the display ancestor is a LIVE, non-archived PICTURE take that is
+ *     genuinely a node in THIS session, not a phantom id, a clip, or a take
+ *     from another session's space. Run after the claim on purpose: replaying
+ *     an already successful acceptance returns its original take even after a
+ *     source it named was later archived, so initial validation is never
+ *     re-litigated on the way back out. A failure marks the claim failed and
+ *     refuses, before a single byte is stored.
+ *  4. **Durable media.** The bytes land in the creator's own asset store, so
  *     the take outlives the browser tab that admitted it and the signed URL it
  *     was admitted with. Admission never generates: nothing here calls a
  *     provider, and a retry re-stores nothing.
- *  4. **Identity, then record, then attach.** The take id is minted before the
+ *  5. **Identity, then record, then attach.** The take id is minted before the
  *     append can fail, and attachment reports rather than throws
  *     (`attachTakeToSession`) — a failed attach is "made but not saved", with
  *     the record riding back out for the creator's retry.
@@ -129,15 +140,25 @@ export interface AdmissionSessionPort extends SessionAppendPort {
   ): Promise<{
     userId: string;
     /**
-     * Read for one reason: the admitting version's own text, which is the
-     * take's associated words. A caller cannot supply it — it belongs to the
-     * session, and reading it from the record the ownership check already
-     * fetched is cheaper and truer than asking three callers to pass it.
+     * Read for two reasons, both from the record the ownership check already
+     * fetched — no caller supplies either, because both belong to the session:
+     *
+     *  - the admitting version's own text, which is the take's ASSOCIATED
+     *    words (ADR-0022 decision 2); and
+     *  - the takes already filed under each version (`generations`), which is
+     *    how admission PROVES a display ancestor is a live picture take that is
+     *    genuinely a node in this destination (issue #122). The entries are
+     *    read defensively as opaque records — admission only needs each take's
+     *    id, media type and archive flag, never its full shape.
      */
     prompt?:
       | {
           versions?:
-            | ReadonlyArray<{ versionId: string; prompt: string }>
+            | ReadonlyArray<{
+                versionId: string;
+                prompt: string;
+                generations?: ReadonlyArray<unknown> | undefined;
+              }>
             | undefined;
         }
       | undefined;
@@ -242,6 +263,163 @@ export class DisplayAncestorNotASourceInputError extends Error {
   }
 }
 
+type AdmissionSessionRead = Awaited<
+  ReturnType<AdmissionSessionPort["requireOwnedSession"]>
+>;
+
+/** Narrow one opaque generation entry to a readable record, or skip it. */
+function asGenerationRecord(
+  value: unknown,
+): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+/**
+ * ADR-0022 decision 3 / issue #122: a source input must be well formed for the
+ * KIND it declares. `take` names a node by id — it is the only kind that is
+ * itself a node in this session's space, and so the only kind eligible to be
+ * the display ancestor. Every other kind is owner-authorized MEDIA, carried by
+ * a durable handle (its bytes were stored under this creator at the call site,
+ * and the boundary's own appended media is stored under `userId` too) and never
+ * a bare generation id. A media input wearing a take's id — or a take with none
+ * — is a mislabelled reference the space would later read as a relationship
+ * nobody performed, so it is refused before anything is stored.
+ *
+ * This is the whole of admission's rule for NON-display source inputs: they are
+ * recorded provenance, not drawn edges, so they are checked for kind and shape
+ * and are deliberately NOT held to the display ancestor's live/in-session rule
+ * (they need not be nodes in this session at all). Archiving one later cannot
+ * disturb the admitted take, because provenance is a recorded fact rather than
+ * a live relationship the space keeps re-reading.
+ */
+function checkSourceInputKinds(
+  sourceInputs: readonly TakeSourceInput[],
+): { ok: true } | { ok: false; reason: string } {
+  for (const input of sourceInputs) {
+    const generationId =
+      typeof input.generationId === "string" && input.generationId.length > 0
+        ? input.generationId
+        : undefined;
+    if (input.kind === "take") {
+      if (!generationId) {
+        return {
+          ok: false,
+          reason: "a take source input carries no generation id",
+        };
+      }
+      continue;
+    }
+    const hasHandle =
+      (typeof input.assetId === "string" && input.assetId.length > 0) ||
+      (typeof input.storagePath === "string" && input.storagePath.length > 0);
+    if (!hasHandle) {
+      return {
+        ok: false,
+        reason: `a ${input.kind} source input carries no durable media handle`,
+      };
+    }
+    if (generationId) {
+      return {
+        ok: false,
+        reason: `a ${input.kind} source input must not carry a take generation id`,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Issue #122: the display ancestor — the ONE relationship the space draws
+ * (ADR-0022 decision 3) — must be a live picture take that is genuinely a node
+ * in THIS destination session. This single read rejects every way the drawn
+ * edge could be a lie:
+ *
+ *  - a phantom id, or a take that lives in ANOTHER session's space: not found
+ *    here, because a take is a node in exactly one session and this reads only
+ *    this one;
+ *  - a clip: a `move` edge is drawn from a picture and `refine` never reaches
+ *    one, so a non-`image` node is refused (the same picture test
+ *    `sessionPictureLookup` applies);
+ *  - an archived take: gone from the rendered space, so an edge to it would
+ *    point at nothing the creator can see.
+ *
+ * A self-link or a cycle cannot be expressed here and so needs no separate
+ * check: the take being admitted has no id until step 5 mints one AFTER this
+ * runs, so a caller cannot name it as its own ancestor, and it has no
+ * descendants yet for an ancestor to descend from. The only relationship a
+ * caller can draw is to a picture that already exists — which is what this
+ * proves.
+ */
+function checkDisplayAncestorIsLivePicture(
+  session: AdmissionSessionRead,
+  displayAncestorGenerationId: string,
+): { ok: true } | { ok: false; reason: string } {
+  for (const version of session.prompt?.versions ?? []) {
+    for (const entry of version.generations ?? []) {
+      const record = asGenerationRecord(entry);
+      if (!record || record.id !== displayAncestorGenerationId) continue;
+      if (record.archived === true) {
+        return {
+          ok: false,
+          reason: `display ancestor ${displayAncestorGenerationId} is archived`,
+        };
+      }
+      if (record.mediaType !== "image") {
+        return {
+          ok: false,
+          reason: `display ancestor ${displayAncestorGenerationId} is not a picture take`,
+        };
+      }
+      return { ok: true };
+    }
+  }
+  return {
+    ok: false,
+    reason: `display ancestor ${displayAncestorGenerationId} is not a live picture take in the destination session`,
+  };
+}
+
+/**
+ * Prove every relationship the take will record, against the owned session read
+ * before the claim (issue #122). Pure and total: it reads, never writes, so the
+ * caller decides what a failure means — a side-effect-free `refused`.
+ */
+function validateAdmissionRelationships(
+  session: AdmissionSessionRead,
+  request: AdmitPictureTakeRequest,
+): { ok: true } | { ok: false; reason: string } {
+  // The words-version must already exist. A missing one is REJECTED, never
+  // created from the session's current text: a take filed under words nobody
+  // authored is a fabricated association (ADR-0022 decision 2). The generic
+  // `appendGenerationToVersion` still upserts a version for the generating
+  // writers' draft-to-persisted transition; admission refuses BEFORE it can
+  // reach that branch, which is the explicit choice issue #122 asks of this
+  // boundary — the branch stays for its own writers, closed to admission.
+  const versionExists = (session.prompt?.versions ?? []).some(
+    (version) => version.versionId === request.promptVersionId,
+  );
+  if (!versionExists) {
+    return {
+      ok: false,
+      reason: `destination words-version ${request.promptVersionId} does not exist in the session`,
+    };
+  }
+
+  const kinds = checkSourceInputKinds(request.sourceInputs ?? []);
+  if (!kinds.ok) return kinds;
+
+  if (request.displayAncestorGenerationId !== null) {
+    return checkDisplayAncestorIsLivePicture(
+      session,
+      request.displayAncestorGenerationId,
+    );
+  }
+
+  return { ok: true };
+}
+
 export async function admitPictureTake(
   deps: AdmitPictureTakeDependencies,
   request: AdmitPictureTakeRequest,
@@ -310,6 +488,24 @@ export async function admitPictureTake(
   if (claim.state === "conflict") return { state: "conflict" };
 
   const recordId = claim.recordId;
+
+  // Issue #122: the claim says this is a fresh acceptance, not a replay, so now
+  // — and only now — prove the relationships this take will record against the
+  // session read in step 1. A replay already returned above, which is what
+  // keeps an archived source from ever rewriting a settled acceptance. A
+  // failure refuses before any byte is stored, and marks the claim failed so a
+  // corrected retry (un-archived source, real version) can re-claim.
+  const relationships = validateAdmissionRelationships(session, request);
+  if (!relationships.ok) {
+    await idempotency.markFailed(recordId, relationships.reason);
+    log.warn("Admission refused: a recorded relationship is not valid", {
+      userId: request.userId,
+      sessionId: request.sessionId,
+      origin: request.origin,
+      reason: relationships.reason,
+    });
+    return { state: "refused", reason: relationships.reason };
+  }
 
   let stored: StoredAdmissionAsset;
   try {
