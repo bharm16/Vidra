@@ -3,6 +3,7 @@ import { StudioProjectOriginSchema } from "@shared/schemas/studio.schemas";
 import {
   StudioService,
   studioProjectIdForSessionPicture,
+  type OrphanedBridgeCopy,
   type SessionPictureSource,
 } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
@@ -28,8 +29,10 @@ class FakeStore implements StudioProjectStore {
   turns = new Map<string, StudioTurnRecord>();
   reserved = new Map<string, number>();
 
-  async createProject(record: StudioProjectRecord): Promise<void> {
+  async createProject(record: StudioProjectRecord): Promise<boolean> {
+    if (this.projects.has(record.id)) return false;
     this.projects.set(record.id, { ...record });
+    return true;
   }
   async getProject(projectId: string): Promise<StudioProjectRecord | null> {
     return this.projects.get(projectId) ?? null;
@@ -154,6 +157,11 @@ function makeService(overrides?: {
       overrides?.decide ?? (async () => ({ action: "diagnose" })),
     );
 
+  // The seam a losing concurrent bridge reports its orphaned copy through
+  // (#127). Injected so the test asserts identification at a real boundary
+  // rather than spying the shared logger.
+  const reportOrphanedBridgeCopy = vi.fn<(copy: OrphanedBridgeCopy) => void>();
+
   const service = new StudioService({
     store,
     registry: new StudioModelRegistry(),
@@ -163,9 +171,17 @@ function makeService(overrides?: {
     dailyCapCents: 500,
     now: () => new Date(NOW_MS),
     idFactory: () => `id-${++idCounter}`,
+    reportOrphanedBridgeCopy,
   });
 
-  return { service, store, storage, runner, decideTurn };
+  return {
+    service,
+    store,
+    storage,
+    runner,
+    decideTurn,
+    reportOrphanedBridgeCopy,
+  };
 }
 
 describe("StudioService.createProjectFromSessionPicture", () => {
@@ -285,6 +301,103 @@ describe("StudioService.createProjectFromSessionPicture", () => {
     expect(storage.saveFromUrl).toHaveBeenCalledTimes(1);
     expect(second.attachments).toHaveLength(1);
     expect(second.origin?.capturedAtMs).toBe(first.origin?.capturedAtMs);
+  });
+
+  it("admits one project and one bridged attachment for two SIMULTANEOUS presses", async () => {
+    const { service, store, storage, reportOrphanedBridgeCopy } = makeService();
+
+    // A real barrier, not a sequential stand-in: saveFromUrl parks each press
+    // until BOTH have entered it. saveFromUrl runs only AFTER step 1's
+    // existence read, so both presses have already seen "no project" by the
+    // time either claims the id — the true race the getProject fast-path
+    // cannot absorb.
+    let arrived = 0;
+    let releaseBarrier!: () => void;
+    const bothArrived = new Promise<void>((resolve) => {
+      releaseBarrier = resolve;
+    });
+    let copyCounter = 0;
+    storage.saveFromUrl.mockImplementation(async () => {
+      arrived += 1;
+      if (arrived === 2) releaseBarrier();
+      await bothArrived;
+      return {
+        storagePath: `users/user-1/previews/images/copy-${++copyCounter}.webp`,
+      };
+    });
+
+    const [first, second] = await Promise.all([
+      service.createProjectFromSessionPicture("user-1", SOURCE),
+      service.createProjectFromSessionPicture("user-1", SOURCE),
+    ]);
+
+    // Both presses copied bytes — the race genuinely happened; neither took the
+    // fast path.
+    expect(storage.saveFromUrl).toHaveBeenCalledTimes(2);
+
+    // Exactly ONE project, with exactly ONE bridged attachment as its selection.
+    const projectId = studioProjectIdForSessionPicture(
+      "user-1",
+      "session-1",
+      "take-1",
+    );
+    expect(store.projects.size).toBe(1);
+    const winner = store.projects.get(projectId);
+    expect(winner?.attachments).toHaveLength(1);
+    expect(winner?.selectedImageId).toBe(winner?.attachments?.[0]?.id);
+    expect(winner?.origin?.bridgedImageId).toBe(winner?.attachments?.[0]?.id);
+
+    // Both callers observe that one winner — the loser re-read it rather than
+    // returning its own rejected draft (same id AND same single attachment).
+    expect(first.id).toBe(second.id);
+    expect(first.id).toBe(projectId);
+    expect(first.attachments?.[0]?.id).toBe(winner?.attachments?.[0]?.id);
+    expect(second.attachments?.[0]?.id).toBe(winner?.attachments?.[0]?.id);
+
+    // The loser's copy is identified for cleanup (#137), exactly once, naming
+    // the copy the winner does NOT reference. Nothing is deleted here.
+    expect(reportOrphanedBridgeCopy).toHaveBeenCalledTimes(1);
+    const orphan = reportOrphanedBridgeCopy.mock.calls[0]?.[0];
+    const winnerPath = winner?.attachments?.[0]?.storagePath;
+    expect(orphan?.storagePath).not.toBe(winnerPath);
+    expect([
+      "users/user-1/previews/images/copy-1.webp",
+      "users/user-1/previews/images/copy-2.webp",
+    ]).toContain(orphan?.storagePath);
+    expect(orphan?.projectId).toBe(projectId);
+  });
+
+  it("a second press returns the project UNCHANGED, including edits and selection made since", async () => {
+    const { service, store, storage, reportOrphanedBridgeCopy } = makeService();
+
+    const first = await service.createProjectFromSessionPicture(
+      "user-1",
+      SOURCE,
+    );
+
+    // The creator keeps working: renames the project and moves the selection
+    // to a later attachment — exactly the edit and selection a second press
+    // must not roll back.
+    await store.updateProject(first.id, {
+      title: "My refined shot",
+      selectedImageId: "att-later-upload",
+      updatedAtMs: NOW_MS + 5000,
+    });
+
+    const secondPress = await service.createProjectFromSessionPicture(
+      "user-1",
+      SOURCE,
+    );
+
+    expect(secondPress.id).toBe(first.id);
+    expect(secondPress.title).toBe("My refined shot");
+    expect(secondPress.selectedImageId).toBe("att-later-upload");
+    expect(secondPress.updatedAtMs).toBe(NOW_MS + 5000);
+    // No rival project, no second copy, and nothing orphaned — the fast path
+    // never reaches the claim.
+    expect(store.projects.size).toBe(1);
+    expect(storage.saveFromUrl).toHaveBeenCalledTimes(1);
+    expect(reportOrphanedBridgeCopy).not.toHaveBeenCalled();
   });
 
   it("gives a different take its own project", async () => {

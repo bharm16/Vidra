@@ -17,9 +17,22 @@ type FakeDocRef = {
   path: string;
   get: () => Promise<{ exists: boolean; data: () => StoreRecord | undefined }>;
   set: (data: StoreRecord, options?: { merge?: boolean }) => Promise<void>;
+  create: (data: StoreRecord) => Promise<void>;
   delete: () => Promise<void>;
   collection: (name: string) => FakeCollectionRef;
 };
+
+/**
+ * Firestore's ALREADY_EXISTS gRPC error, as `DocumentReference.create()`
+ * rejects with it — a numeric `code` of 6, the exact shape the store's
+ * `isAlreadyExistsError` guard matches (#127).
+ */
+class FakeAlreadyExistsError extends Error {
+  public readonly code = 6;
+  constructor(path: string) {
+    super(`ALREADY_EXISTS: document ${path} already exists`);
+  }
+}
 
 type FakeCollectionRef = {
   doc: (id: string) => FakeDocRef;
@@ -132,6 +145,12 @@ function makeDocRef(path: string): FakeDocRef {
       };
     },
     set: async (data, options) => applySet(path, data, options),
+    // Atomic create-if-absent: rejects with ALREADY_EXISTS rather than
+    // overwriting, exactly as Firestore's create() does (#127).
+    create: async (data) => {
+      if (mocks.records.has(path)) throw new FakeAlreadyExistsError(path);
+      mocks.records.set(path, { ...data });
+    },
     delete: async () => {
       mocks.records.delete(path);
     },
@@ -601,6 +620,30 @@ describe("FirestoreStudioProjectStore", () => {
       const project = await store.getProject("project-1");
       expect(project?.title).toBe("Logo for Vidra");
       expect(await store.getProject("missing")).toBeNull();
+    });
+
+    it("claims a free id (returns true) and refuses to overwrite a taken one (returns false), writing nothing (#127)", async () => {
+      const winner = {
+        id: "project-1",
+        userId: "user-1",
+        title: "Winner",
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      };
+
+      expect(await store.createProject(winner)).toBe(true);
+
+      // A second create with the SAME id (a losing concurrent bridge) is
+      // refused atomically — no overwrite, so the winner's title survives.
+      const loser = {
+        id: "project-1",
+        userId: "user-1",
+        title: "Loser would clobber this",
+        createdAtMs: 2,
+        updatedAtMs: 2,
+      };
+      expect(await store.createProject(loser)).toBe(false);
+      expect((await store.getProject("project-1"))?.title).toBe("Winner");
     });
 
     it("omits undefined optional fields instead of writing them", async () => {

@@ -132,8 +132,10 @@ class FakeStudioStore implements StudioProjectStore {
   projects = new Map<string, StudioProjectRecord>();
   turns = new Map<string, StudioTurnRecord>();
 
-  async createProject(record: StudioProjectRecord): Promise<void> {
+  async createProject(record: StudioProjectRecord): Promise<boolean> {
+    if (this.projects.has(record.id)) return false;
     this.projects.set(record.id, record);
+    return true;
   }
   async getProject(projectId: string): Promise<StudioProjectRecord | null> {
     return this.projects.get(projectId) ?? null;
