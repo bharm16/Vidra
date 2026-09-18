@@ -614,7 +614,7 @@ function PromptOptimizerContent({
   // A failed expansion (optimize produced no result) surfaces as a "writing"
   // failure on the canvas instead of a silently dead composer (M4).
   const [writingFailed, setWritingFailed] = useState(false);
-  const { handleOptimize } = usePromptOptimization({
+  const { handleOptimize, handleReoptimize } = usePromptOptimization({
     promptOptimizer,
     promptHistory,
     promptContext,
@@ -839,7 +839,7 @@ function PromptOptimizerContent({
             setOutputSaveState={setOutputSaveState}
             setOutputLastSavedAt={setOutputLastSavedAt}
             user={user}
-            onReoptimize={handleOptimize}
+            onReoptimize={handleReoptimize}
             onFetchSuggestions={fetchEnhancementSuggestions}
             onSuggestionClick={handleSuggestionClick}
             onHighlightsPersist={handleHighlightsPersist}

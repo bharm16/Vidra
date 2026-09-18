@@ -59,27 +59,8 @@ const resolveOptimizationStartImageUrl = async (
   return resolved.url ?? url;
 };
 
-const OPTIMIZATION_OPTION_KEYS: ReadonlyArray<keyof OptimizationOptions> = [
-  "compileOnly",
-  "compilePrompt",
-  "targetModel",
-  "forceGenericTarget",
-  "createVersion",
-  "preserveSessionView",
-];
-
-const extractOptimizationOptions = (
-  value: unknown,
-): OptimizationOptions | null => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  const candidate = value as Record<string, unknown>;
-  const hasOptionKey = OPTIMIZATION_OPTION_KEYS.some((key) =>
-    Object.prototype.hasOwnProperty.call(candidate, key),
-  );
-  return hasOptionKey ? (candidate as OptimizationOptions) : null;
-};
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 interface PromptOptimizer {
   inputPrompt: string;
@@ -153,12 +134,23 @@ export interface UsePromptOptimizationParams {
 }
 
 export interface UsePromptOptimizationReturn {
+  /**
+   * Optimize the current (or given) prompt. The improvement flow passes its
+   * enhancement context here; direct callers (Idea Box, keyboard) pass nothing
+   * and fall back to the stored improvement context.
+   */
   handleOptimize: (
     promptToOptimize?: string,
-    // TODO: This parameter is typed as `unknown` because callers pass different shapes
-    // (Record<string, unknown> | null from improvement flow, OptimizationOptions from reoptimize).
-    // A future refactor should split this into separate methods.
-    context?: unknown,
+    context?: Record<string, unknown> | null,
+    options?: OptimizationOptions,
+  ) => Promise<void>;
+  /**
+   * Reoptimize entry point (model-format switch, force-generic compile). It
+   * carries only OptimizationOptions and never an improvement context, so it is
+   * typed separately instead of overloading handleOptimize's second parameter.
+   */
+  handleReoptimize: (
+    promptToOptimize?: string,
     options?: OptimizationOptions,
   ) => Promise<void>;
 }
@@ -207,19 +199,9 @@ export function usePromptOptimization({
   const handleOptimize = useCallback(
     async (
       promptToOptimize?: string,
-      context?: unknown,
+      context?: Record<string, unknown> | null,
       options?: OptimizationOptions,
     ): Promise<void> => {
-      let normalizedOptions = options;
-      let normalizedContext = context;
-      if (!normalizedOptions) {
-        const extractedOptions = extractOptimizationOptions(normalizedContext);
-        if (extractedOptions) {
-          normalizedOptions = extractedOptions;
-          normalizedContext = undefined;
-        }
-      }
-
       // I2V mode: there is no text-rewrite step. Image anchors visuals; user's prompt
       // goes to the model verbatim. Bypass the optimize call entirely.
       if (typeof startImageUrl === "string" && startImageUrl.length > 0) {
@@ -230,11 +212,9 @@ export function usePromptOptimization({
       }
 
       const prompt = promptToOptimize || inputPrompt;
-      const ctx =
-        (normalizedContext as Record<string, unknown> | null | undefined) ||
-        improvementContext;
-      const optimizationContext =
-        (ctx as Record<string, unknown> | null | undefined) ?? null;
+      const optimizationContext: Record<string, unknown> | null =
+        context ??
+        (isPlainRecord(improvementContext) ? improvementContext : null);
 
       // Serialize prompt context
       const serializedContext = promptContext
@@ -253,18 +233,17 @@ export function usePromptOptimization({
           }
         : null;
 
-      const isCompileOnly = normalizedOptions?.compileOnly === true;
+      const isCompileOnly = options?.compileOnly === true;
       const compilePrompt =
-        normalizedOptions?.compilePrompt ||
+        options?.compilePrompt ||
         (typeof genericOptimizedPrompt === "string"
           ? genericOptimizedPrompt
           : null);
       const overrideTargetModel =
-        typeof normalizedOptions?.targetModel === "string" &&
-        normalizedOptions.targetModel.trim()
-          ? normalizedOptions.targetModel.trim()
+        typeof options?.targetModel === "string" && options.targetModel.trim()
+          ? options.targetModel.trim()
           : undefined;
-      const forceGenericTarget = normalizedOptions?.forceGenericTarget === true;
+      const forceGenericTarget = options?.forceGenericTarget === true;
       const effectiveTargetModel =
         selectedMode === "video"
           ? isCompileOnly
@@ -275,8 +254,8 @@ export function usePromptOptimization({
           : undefined;
       const resolvedCompilePrompt = (compilePrompt || prompt).trim();
 
-      const resolvedStartImageUrl = normalizedOptions?.startImage
-        ? normalizedOptions.startImage
+      const resolvedStartImageUrl = options?.startImage
+        ? options.startImage
         : await resolveOptimizationStartImageUrl(
             startImageUrl ?? null,
             startFrame?.storagePath ?? null,
@@ -284,17 +263,13 @@ export function usePromptOptimization({
           );
 
       const effectiveOptions: OptimizationOptions = {
-        ...(normalizedOptions ?? {}),
-        ...(normalizedOptions?.startImage
+        ...(options ?? {}),
+        ...(options?.startImage
           ? {}
           : resolvedStartImageUrl
             ? { startImage: resolvedStartImageUrl }
             : {}),
-        ...(normalizedOptions?.sourcePrompt
-          ? {}
-          : sourcePrompt
-            ? { sourcePrompt }
-            : {}),
+        ...(options?.sourcePrompt ? {} : sourcePrompt ? { sourcePrompt } : {}),
       };
 
       const result = isCompileOnly
@@ -319,8 +294,7 @@ export function usePromptOptimization({
           );
 
       if (result) {
-        const preserveSessionView =
-          normalizedOptions?.preserveSessionView === true;
+        const preserveSessionView = options?.preserveSessionView === true;
         if (preserveSessionView) {
           if (typeof setInputPrompt === "function") {
             setInputPrompt(result.optimized);
@@ -369,7 +343,7 @@ export function usePromptOptimization({
           });
         }
 
-        if (saveResult?.uuid && normalizedOptions?.createVersion) {
+        if (saveResult?.uuid && options?.createVersion) {
           const promptText = result.optimized.trim();
           if (promptText) {
             const uuidForVersions = saveResult.uuid;
@@ -443,5 +417,11 @@ export function usePromptOptimization({
     ],
   );
 
-  return { handleOptimize };
+  const handleReoptimize = useCallback(
+    (promptToOptimize?: string, options?: OptimizationOptions): Promise<void> =>
+      handleOptimize(promptToOptimize, null, options),
+    [handleOptimize],
+  );
+
+  return { handleOptimize, handleReoptimize };
 }

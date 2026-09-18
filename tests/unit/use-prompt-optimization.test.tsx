@@ -442,7 +442,7 @@ describe("usePromptOptimization", () => {
     );
   });
 
-  it("accepts optimization options passed as the second argument", async () => {
+  it("routes reoptimize options through handleReoptimize to compile", async () => {
     const promptOptimizer = createPromptOptimizer({
       inputPrompt: "Original",
       genericOptimizedPrompt: "Generic compile prompt",
@@ -490,8 +490,11 @@ describe("usePromptOptimization", () => {
       }),
     );
 
+    // Reoptimize carries only OptimizationOptions (never a context), so its
+    // options travel through handleReoptimize rather than handleOptimize's
+    // second (context) argument. The stored improvement context is still used.
     await act(async () => {
-      await result.current.handleOptimize(undefined, {
+      await result.current.handleReoptimize(undefined, {
         compileOnly: true,
         targetModel: "runway-gen45",
       });

@@ -24,13 +24,16 @@ const colors = {
   dim: "\x1b[2m",
 };
 
-function formatDuration(ms) {
+function formatDuration(ms: number): string {
   if (ms < 1) return `${(ms * 1000).toFixed(2)}μs`;
   if (ms < 100) return `${ms.toFixed(2)}ms`;
   return `${ms.toFixed(0)}ms`;
 }
 
-function getColorForDuration(ms, thresholds = { good: 50, warning: 200 }) {
+function getColorForDuration(
+  ms: number,
+  thresholds = { good: 50, warning: 200 },
+): string {
   if (ms <= thresholds.good) return colors.green;
   if (ms <= thresholds.warning) return colors.yellow;
   return colors.red;
@@ -115,6 +118,7 @@ async function extractHighlightStats() {
           startTime: m.startTime,
         })),
         marks: allMarks.map((m) => m.name),
+        cacheHitRate: 0,
       };
 
       // Add cache hit rate
@@ -316,7 +320,7 @@ async function extractHighlightStats() {
   } catch (error) {
     console.error(
       `${colors.red}Error extracting metrics:${colors.reset}`,
-      error.message,
+      error instanceof Error ? error.message : String(error),
     );
     console.log(`\n${colors.yellow}Make sure:${colors.reset}`);
     console.log(`  1. The app is running on http://localhost:5173`);

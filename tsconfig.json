@@ -85,14 +85,17 @@
     "node_modules",
     "dist",
     "build",
-    // TODO: Re-enable type checking for these files. They were excluded when
-    // `scripts/**/*` was first added to `include` because each had 13+ existing
-    // type errors. (The excluded migration scripts were triaged 2026-08-27:
-    // the two live ones were fixed and re-included, the spent one-shots
-    // deleted.) The legacy span-labeling-evaluation file is superseded by
-    // golden-set-relaxed-f1.ts. Triage: fix or delete each, then remove from
-    // this list.
-    "scripts/get-highlight-stats.ts",
+    // scripts/evaluation/span-labeling-evaluation.ts — EXCLUDED, dated 2026-09-18 (#117).
+    // The LLM-as-judge span-labeling eval is FROZEN tooling: its only CI path is
+    // the `quality-gate` job in .github/workflows/test.yml (FROZEN 2026-08-07 —
+    // "does not run, does not gate merges"), and the related quality-judge.yml has
+    // its cron disabled — both parked with the PostHog measurement program
+    // (ADR-0002, zero users). Operationally it is superseded by the deterministic
+    // relaxed-F1 golden-set gate (scripts/evaluation/golden-set-relaxed-f1.ts). It
+    // carries 32 pre-existing type errors under this config; fixing them means
+    // reworking frozen tooling for no live reader, which #117 explicitly declines.
+    // UN-FREEZE: when the measurement program thaws (re-enable the test.yml
+    // quality-gate / quality-judge.yml cron), fix its types and remove this entry.
     "scripts/evaluation/span-labeling-evaluation.ts"
   ]
 }
