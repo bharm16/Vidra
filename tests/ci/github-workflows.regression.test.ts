@@ -38,6 +38,39 @@ describe("GitHub workflow startup validity", () => {
     expect(workflowFiles().length).toBeGreaterThan(0);
   });
 
+  /**
+   * Gating `pull_request` on a base branch silently exempts every PR that is
+   * not based on that branch. The #81-#90 stack merged on 2026-09-17 with two
+   * checks per PR instead of fourteen: ci/test/e2e/build-and-push all carried
+   * `pull_request: branches: [main, ...]`, so a PR based on a ticket branch ran
+   * none of them. GitHub only retargets a stacked PR's base to main when the
+   * base branch is DELETED after merging, so the exemption never lifted on its
+   * own. `push:` keeps its branch filter; `pull_request:` must not have one.
+   */
+  it("never filters `pull_request` by base branch", () => {
+    const offenders: string[] = [];
+
+    for (const file of workflowFiles()) {
+      const lines = readWorkflow(file).split("\n");
+      const prIndex = lines.findIndex(
+        (line) => line.trimStart().startsWith("pull_request:") && indentOf(line) > 0,
+      );
+      if (prIndex === -1) continue;
+
+      const prIndent = indentOf(lines[prIndex] as string);
+      for (let i = prIndex + 1; i < lines.length; i += 1) {
+        const line = lines[i] as string;
+        if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
+        if (indentOf(line) <= prIndent) break;
+        if (line.trimStart().startsWith("branches:")) {
+          offenders.push(`${file}: ${line.trim()}`);
+        }
+      }
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
   it("never reads the secrets context from an `if:` expression", () => {
     // GitHub does not expose `secrets` to `if:`, at job or step level. A
     // workflow that reads it there is rejected outright. The supported shape is
