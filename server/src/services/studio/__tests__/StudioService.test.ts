@@ -753,8 +753,10 @@ describe("StudioService", () => {
       expect(context?.projectImageIds.size).toBe(4);
       expect(context?.pinnedModel?.slug).toBe("recraft-v4.1-pro");
       expect(context?.selectedImageId).toBeNull();
-      // Follow-up turns lose clarify (behavior 1 — first-message-only)
-      // and gain edit/transform (M4 — stored images now exist).
+      // Follow-up turns lose clarify (behavior 1 — first-message-only) and,
+      // now that a generate has stored images, gain edit/transform. The
+      // trigger is the presence of source images, not the turn count
+      // (ADR-0022 decision 4, issue #110).
       expect(context?.allowedActions).toEqual([
         "generate",
         "edit",
@@ -762,12 +764,14 @@ describe("StudioService", () => {
         "diagnose",
         "negotiate",
       ]);
-      expect(decideTurn.mock.calls[0]?.[0]?.allowedActions).toContain(
+      // The very first turn of a FRESH project holds no source image, so
+      // edit/transform are unavailable — clarify is (it is the first message).
+      expect(decideTurn.mock.calls[0]?.[0]?.allowedActions).toEqual([
         "clarify",
-      );
-      expect(decideTurn.mock.calls[0]?.[0]?.allowedActions).not.toContain(
-        "edit",
-      );
+        "generate",
+        "diagnose",
+        "negotiate",
+      ]);
     });
 
     it("passes a null pin (Auto) when the stored pin no longer resolves", async () => {

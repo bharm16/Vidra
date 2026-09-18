@@ -152,13 +152,14 @@ export const CROSS_MODE_ACCEPT_KEY = "cross-mode-accept-1";
 /**
  * The creator's three messages in the studio, in order.
  *
- * The first turn of a project cannot edit — `edit` and `transform` need images
- * that only a prior turn can have produced, so the studio's first-turn action
- * set excludes them. The walkthrough therefore opens with a vague message the
- * studio answers by asking, then refines the bridged picture, then generates
- * something unrelated: the third message is ADR-0022 decision 4's
- * discriminating case (an unrelated generation in an origin-linked project
- * comes back with NO picture ancestor).
+ * The walkthrough opens with a deliberately vague message ("make this better")
+ * the studio answers by asking (behavior 1) rather than guessing. edit and
+ * transform ARE available on this first turn — the bridged picture is a valid
+ * source (ADR-0022 decision 4, issue #110) — so the clarify is behavior 1's
+ * own choice, not a limit of the first turn. It then refines the bridged
+ * picture, then generates something unrelated: the third message is ADR-0022
+ * decision 4's discriminating case (an unrelated generation in an
+ * origin-linked project comes back with NO picture ancestor).
  */
 export const CROSS_MODE_STUDIO_OPENING_MESSAGE = "make this better";
 

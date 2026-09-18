@@ -341,6 +341,12 @@ describe("StudioService.createProjectFromSessionPicture", () => {
 
     // The bridged picture is offerable as a source, and is what ran.
     expect(decideTurn.mock.calls[0]?.[0]?.projectImageIds).toContain(bridgedId);
+    // ...and edit/transform are available on the FIRST turn — no preliminary
+    // generation needed — because the project already holds that source image
+    // before any turn exists (ADR-0022 decision 4, issue #110).
+    const firstTurnActions = decideTurn.mock.calls[0]?.[0]?.allowedActions;
+    expect(firstTurnActions).toContain("edit");
+    expect(firstTurnActions).toContain("transform");
     expect(runner.run).toHaveBeenCalledWith(
       expect.objectContaining({
         input: expect.objectContaining({
