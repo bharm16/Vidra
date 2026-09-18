@@ -17,6 +17,20 @@ import { safeUrlHost } from "@/utils/url";
 const log = logger.child("CameraMotionModal");
 const OPERATION = "cameraMotionModal";
 
+/**
+ * Camera words already in the input that a choice would have to overwrite.
+ * ADR-0022 D7 writes the choice into the creator's words; overwriting words
+ * they wrote — or locked — without saying so is the silent behavior the
+ * decision forbids, so the picker surfaces the conflict instead.
+ */
+export interface CameraMotionConflict {
+  kind: "locked" | "existing-camera-span";
+  /** The words in the way, quoted back to the creator. */
+  text: string;
+  /** Present only where an explicit overwrite is allowed — never for a lock. */
+  onReplace?: (() => void) | undefined;
+}
+
 export interface CameraMotionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +39,7 @@ export interface CameraMotionModalProps {
   imageAssetId?: string | null;
   onSelect: (cameraPath: CameraPath) => void;
   initialSelection?: CameraPath | null;
+  conflict?: CameraMotionConflict | null;
 }
 
 export function CameraMotionModal({
@@ -35,6 +50,7 @@ export function CameraMotionModal({
   imageAssetId = null,
   onSelect,
   initialSelection = null,
+  conflict = null,
 }: CameraMotionModalProps): React.ReactElement | null {
   const { state, actions } = useCameraMotion();
   const { estimateDepth, reset } = actions;
@@ -220,28 +236,53 @@ export function CameraMotionModal({
     >
       <div
         className={cn(
-          "relative z-10 w-full max-w-5xl max-h-[90vh] overflow-auto",
-          "bg-tool-panel-inner rounded-xl border border-tool-border-dark shadow-2xl mx-4",
+          "relative z-10 max-h-[90vh] w-full max-w-5xl overflow-auto",
+          "bg-tool-panel-inner border-tool-border-dark mx-4 rounded-xl border shadow-2xl",
         )}
       >
-        <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-tool-panel-inner border-b border-tool-border-dark">
+        <div className="bg-tool-panel-inner border-tool-border-dark sticky top-0 z-20 flex items-center justify-between border-b px-6 py-4">
           <h2 className="text-lg font-semibold text-white">
             Choose Camera Motion
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-ghost hover:text-white hover:bg-surface-1"
+            className="text-ghost hover:bg-surface-1 rounded-lg p-2 hover:text-white"
             aria-label="Close camera motion modal"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="p-6">
+          {conflict ? (
+            <div
+              className="mb-4 rounded-lg border border-[color:var(--badge-warning-border)] bg-[color:var(--badge-warning-bg)] p-3"
+              data-testid="camera-motion-conflict"
+            >
+              <p className="text-sm text-[color:var(--badge-warning-text)]">
+                {conflict.kind === "locked"
+                  ? "Your words already direct the camera, and that phrase is locked:"
+                  : "Your words already direct the camera:"}{" "}
+                <strong>“{conflict.text}”</strong>{" "}
+                {conflict.kind === "locked"
+                  ? "Unlock it to let a camera move change it."
+                  : "Choosing a move would replace it."}
+              </p>
+              {conflict.onReplace ? (
+                <button
+                  type="button"
+                  className="text-meta mt-2 rounded-md border border-[color:var(--badge-warning-border)] px-3 py-1.5 text-[color:var(--badge-warning-text)] transition-colors hover:bg-[color:var(--badge-warning-bg)]"
+                  onClick={conflict.onReplace}
+                >
+                  Replace those words
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {state.isEstimatingDepth ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-accent-runway mb-4" />
+              <Loader2 className="text-accent-runway mb-4 h-8 w-8 animate-spin" />
               <p className="text-ghost">Analyzing image depth...</p>
             </div>
           ) : (

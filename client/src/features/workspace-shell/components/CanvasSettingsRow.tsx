@@ -55,6 +55,13 @@ interface CanvasSettingsRowProps {
    *  separate props. */
   recommendation?: RecommendationContext | undefined;
   onModelChange: (modelId: string) => void;
+  /**
+   * Opens the camera-motion picker. Summoned by the armed first frame
+   * (ADR-0022 D7): the control is absent with no frame, so the picker is a
+   * setting the frame brings with it rather than a resident of the row
+   * (ADR-0009/ADR-0010's anatomy is untouched).
+   */
+  onOpenCameraMotion?: (() => void) | undefined;
   /** Whether to show the storyboard-preview eye button. Hidden in the empty
    *  moment so the chip row matches the screenshot's clean 5-chip layout. */
   showPreviewButton?: boolean;
@@ -139,6 +146,26 @@ function ModelGlyph(): React.ReactElement {
   );
 }
 
+function CameraMotionGlyph(): React.ReactElement {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2.5" y="7.5" width="12" height="9" rx="1.8" />
+      <path d="M14.5 11.2l5-2.6v6.8l-5-2.6z" />
+      <path d="M5.5 20h9" />
+    </svg>
+  );
+}
+
 function PreviewGlyph(): React.ReactElement {
   return (
     <svg
@@ -188,6 +215,7 @@ export function CanvasSettingsRow({
   renderModelOptions,
   recommendation,
   onModelChange,
+  onOpenCameraMotion,
   showPreviewButton = true,
   variant = "docked",
 }: CanvasSettingsRowProps): React.ReactElement {
@@ -509,6 +537,26 @@ export function CanvasSettingsRow({
             triggerClassName={ICON_TRIGGER_CLASS}
           />
         )}
+
+        {/* Camera motion — summoned by the armed first frame, gone without
+            one (ADR-0022 D7). Not part of the handoff's resident control set:
+            it appears with the frame and leaves with it. */}
+        {!isSheet && hasStartFrame && onOpenCameraMotion ? (
+          <button
+            type="button"
+            data-testid="canvas-camera-motion-button"
+            className={ICON_TRIGGER_CLASS}
+            onClick={onOpenCameraMotion}
+            aria-label={
+              domain.cameraMotion
+                ? `Camera motion: ${domain.cameraMotion.label}`
+                : "Camera motion"
+            }
+            title="Camera motion"
+          >
+            <CameraMotionGlyph />
+          </button>
+        ) : null}
 
         {/* Preview — the 4th icon of the control cluster per the composer
             handoff (aspect · duration · model · preview). Hidden pre-content

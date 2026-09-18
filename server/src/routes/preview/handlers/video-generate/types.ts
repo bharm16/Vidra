@@ -92,7 +92,6 @@ export interface PreprocessingResult {
 
 export interface VideoRequestPlan {
   normalizedParams: Record<string, unknown> | null;
-  promptWithMotion: string;
   motionContext: MotionContext;
   normalizedMotionMeta: {
     hasCameraMotion: boolean;
@@ -100,10 +99,6 @@ export interface VideoRequestPlan {
     hasSubjectMotion: boolean;
     subjectMotionLength: number;
   };
-  promptLengthBeforeMotion: number;
-  promptLengthAfterMotion: number;
-  motionGuidanceAppended: boolean;
-  disablePromptExtend: boolean;
   options: VideoGenerationOptions;
   videoCost: number;
 }

@@ -39,7 +39,7 @@ import type {
 } from "@/features/convergence/types";
 import { CameraMotionOption } from "./CameraMotionOption";
 import { CameraMotionErrorBoundary } from "./CameraMotionErrorBoundary";
-import { BackButton, StepCreditBadge } from "../shared";
+import { BackButton } from "../shared";
 const log = logger.child("CameraMotionPicker");
 
 // ============================================================================
@@ -277,37 +277,48 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
 
   return (
     <div
-      className={cn("flex flex-col w-full max-w-4xl mx-auto px-4", className)}
+      className={cn("mx-auto flex w-full max-w-4xl flex-col px-4", className)}
     >
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Title with icon */}
         <div className="flex items-center gap-3">
           <div
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10"
+            className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg"
             aria-hidden="true"
           >
-            <Video className="w-5 h-5 text-primary" />
+            <Video className="text-primary h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground">
+            <h2 className="text-foreground text-xl font-semibold">
               Choose Camera Motion
             </h2>
-            <p className="text-sm text-muted">
+            <p className="text-muted text-sm">
               {fallbackMode
                 ? "Select how the camera moves in your video"
                 : "Hover to preview camera movements"}
             </p>
           </div>
         </div>
-
-        {/* Step Credit Badge */}
-        <StepCreditBadge step="camera_motion" size="md" showLabel={true} />
       </div>
+
+      {/* Illustrative in every case (ADR-0022 D7). The label does NOT vary
+          with depth success: a successful estimate must never read as a
+          guarantee of the generated trajectory, and a label that appears only
+          on the fallback teaches the creator that its absence is a promise.
+          If you are tempted to hide this when depth succeeds, that is the
+          failure this line exists to prevent. */}
+      <p
+        className="text-muted mb-4 text-sm"
+        data-testid="camera-motion-illustrative"
+      >
+        These previews are illustrative — they show the path, not the clip the
+        model will make.
+      </p>
 
       {/* Fallback mode notice */}
       {fallbackMode && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+        <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
           <p className="text-sm text-amber-600 dark:text-amber-400">
             <strong>Note:</strong> Camera motion previews are unavailable.
             Please select based on the descriptions below.
@@ -315,7 +326,7 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
         </div>
       )}
 
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
         {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
           <button
             key={key}
@@ -325,7 +336,7 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
             }
             aria-pressed={selectedCategory === key}
             className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+              "whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
               selectedCategory === key
                 ? "bg-primary text-primary-foreground"
                 : "bg-surface-2 text-muted hover:text-foreground",
@@ -334,7 +345,7 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
             <span>{label}</span>
             <span
               className={cn(
-                "ml-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-meta",
+                "text-meta ml-2 inline-flex items-center justify-center rounded-full px-2 py-0.5",
                 selectedCategory === key
                   ? "bg-primary-foreground/15 text-primary-foreground"
                   : "bg-raise text-muted",
@@ -350,7 +361,7 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
       {/* Responsive grid: 2 columns on mobile, 3-4 columns on desktop */}
       <div
         className={cn(
-          "grid gap-4 mb-6",
+          "mb-6 grid gap-4",
           filteredPaths.length <= 6
             ? "grid-cols-2 md:grid-cols-3"
             : "grid-cols-2 md:grid-cols-4",
@@ -360,11 +371,11 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
         aria-activedescendant={activeOptionId}
       >
         {filteredPaths.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-surface-2/50 p-6 text-center">
-            <div className="text-sm font-medium text-foreground mb-2">
+          <div className="border-border bg-surface-2/50 col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+            <div className="text-foreground mb-2 text-sm font-medium">
               No motions in this category
             </div>
-            <div className="text-xs text-muted">
+            <div className="text-muted text-xs">
               Try another category to explore more options.
             </div>
           </div>
@@ -402,17 +413,17 @@ export const CameraMotionPicker: React.FC<CameraMotionPickerProps> = ({
 
       {/* Keyboard Navigation Hint (Task 23.7) */}
       {!isLoading && (
-        <p className="text-xs text-muted text-center mt-4">
+        <p className="text-muted mt-4 text-center text-xs">
           Use{" "}
-          <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-xs font-mono">
+          <kbd className="bg-surface-2 rounded px-1.5 py-0.5 font-mono text-xs">
             Arrow keys
           </kbd>{" "}
           to navigate,{" "}
-          <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-xs font-mono">
+          <kbd className="bg-surface-2 rounded px-1.5 py-0.5 font-mono text-xs">
             Enter
           </kbd>{" "}
           to select,{" "}
-          <kbd className="px-1.5 py-0.5 bg-surface-2 rounded text-xs font-mono">
+          <kbd className="bg-surface-2 rounded px-1.5 py-0.5 font-mono text-xs">
             Escape
           </kbd>{" "}
           to go back

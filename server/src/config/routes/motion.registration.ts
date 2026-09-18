@@ -27,13 +27,6 @@ export function registerMotionRoutes(
   app: Application,
   container: DIContainer,
 ): void {
-  // ADR-0002 froze convergence, but ENABLE_CONVERGENCE gated only the
-  // continuity services — /api/motion stayed mounted with the flag off.
-  if (!getRuntimeFlags().enableConvergence) {
-    logger.info("Motion routes not mounted: ENABLE_CONVERGENCE is off");
-    return;
-  }
-
   const convergenceStorageService =
     resolveOptionalService<GCSStorageService | null>(
       container,
@@ -41,7 +34,23 @@ export function registerMotionRoutes(
       "convergence-storage",
     );
 
-  if (convergenceStorageService) {
+  // ADR-0022 decision 7 thaws exactly one route: POST /api/motion/depth, the
+  // depth estimate behind the illustrative camera preview. Everything else
+  // under the convergence umbrella — including the media proxy below — stays
+  // behind ENABLE_CONVERGENCE, which keeps its description and its default.
+  // A single route moved out from under a frozen mount, never a frozen stack
+  // switched on: flipping the umbrella would thaw the whole pipeline by
+  // accident, which is the exact failure the decision exists to prevent.
+  const convergenceEnabled = getRuntimeFlags().enableConvergence;
+  if (!convergenceEnabled) {
+    logger.info(
+      "Convergence media routes not mounted: ENABLE_CONVERGENCE is off. The depth route stays reachable (ADR-0022 D7).",
+    );
+  } else if (!convergenceStorageService) {
+    logger.warn(
+      "Convergence media routes disabled: storage service unavailable",
+    );
+  } else {
     const gcsBucket = container.resolve<Bucket>("gcsBucket");
     const signedUrlLedger =
       container.resolve<SignedUrlLedger>("signedUrlLedger");
@@ -51,10 +60,6 @@ export function registerMotionRoutes(
       signedUrlLedger,
     );
     app.use("/api/motion/media", motionMediaRoutes);
-  } else {
-    logger.warn(
-      "Convergence media routes disabled: storage service unavailable",
-    );
   }
 
   const motionRoutes = createMotionRoutes({

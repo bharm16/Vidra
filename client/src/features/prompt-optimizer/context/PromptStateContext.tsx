@@ -93,6 +93,11 @@ export function usePromptServices(): PromptServicesState {
   return context;
 }
 
+/** Tolerant variant — null outside the provider, like the highlight hook. */
+export function useOptionalPromptServices(): PromptServicesState | null {
+  return useContext(PromptServicesContext);
+}
+
 export function usePromptActions(): PromptActionsState {
   const context = useContext(PromptActionsContext);
   if (!context) {

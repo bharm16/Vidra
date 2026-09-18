@@ -164,18 +164,12 @@ export const buildVideoRequestPlan = (
     normalizedParams,
     generationParams,
   );
-  const isI2VRequest = Boolean(resolvedStartImage || inputReference);
-  const disablePromptExtend =
-    isI2VRequest && Boolean(motionContext.cameraMotionId);
   // Truth (ADR-0010): the queued prompt is the creator's text verbatim — motion
-  // params are no longer spliced in. The side-channel plumbing (client params,
-  // store fields, SubjectMotionInput) is removed in M6; here we sever the splice.
-  const promptWithMotion = cleanedPrompt;
+  // params are no longer spliced in. ADR-0022 D7 removed the last side channel
+  // too: a camera id used to flip promptExtend off for image-to-video, so the
+  // same visible words ran differently depending on a click the request never
+  // named. The camera choice now lands in the words; nothing is implied here.
   const normalizedMotionMeta = extractMotionMeta(normalizedParams);
-  const promptLengthBeforeMotion = cleanedPrompt.trim().length;
-  const promptLengthAfterMotion = promptWithMotion.trim().length;
-  const motionGuidanceAppended =
-    promptLengthAfterMotion > promptLengthBeforeMotion;
 
   const options: VideoGenerationOptions = {};
   const resolvedAspectRatio = paramAspectRatio || aspectRatio;
@@ -226,21 +220,13 @@ export const buildVideoRequestPlan = (
   if (typeof numFrames === "number") {
     options.numFrames = numFrames;
   }
-  if (disablePromptExtend) {
-    options.promptExtend = false;
-  }
 
   return {
     ok: true,
     value: {
       normalizedParams,
-      promptWithMotion,
       motionContext,
       normalizedMotionMeta,
-      promptLengthBeforeMotion,
-      promptLengthAfterMotion,
-      motionGuidanceAppended,
-      disablePromptExtend,
       options,
       videoCost,
     },

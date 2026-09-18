@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DIContainer } from "@infrastructure/DIContainer";
 import { getRuntimeFlags } from "../feature-flags";
@@ -21,7 +21,14 @@ import { registerMotionRoutes } from "../routes/motion.registration";
  *     mounted unconditionally, so the flag did not mean what it said.
  *
  * Invariant: an operator who sets no convergence env vars pays nothing for the
- * frozen stack — no warmup armed, no motion surface mounted.
+ * frozen stack — no warmup armed, no convergence surface mounted.
+ *
+ * ADR-0022 decision 7 carves out exactly one exception, and it is deliberate:
+ * POST /api/motion/depth backs the illustrative camera preview, which is
+ * motion authoring for the ACTIVE loop, so it is reachable with the umbrella
+ * off. It is one route moved out from under a frozen mount, not the frozen
+ * stack switched on — the media proxy and every convergence service stay
+ * behind the flag, and the flag's default is untouched.
  */
 
 const CONVERGENCE_ENV = [
@@ -99,7 +106,35 @@ describe("regression: frozen convergence costs an unconfigured boot nothing", ()
     expect(config.convergence.depth.falWarmupEnabled).toBe(true);
   });
 
-  it("does not mount /api/motion when ENABLE_CONVERGENCE is off", async () => {
+  it("mounts the depth route and nothing else when ENABLE_CONVERGENCE is off", () => {
+    // Asserted on the mounts rather than on status codes: both the depth
+    // route and the media proxy sit behind apiAuthMiddleware, so an
+    // unauthenticated probe answers 401 either way and could not tell a
+    // missing mount from a guarded one.
+    snapshot = clearConvergenceEnv();
+    process.env.ENABLE_CONVERGENCE = "false";
+    expect(getRuntimeFlags().enableConvergence).toBe(false);
+
+    const app = express();
+    const mountedPaths: string[] = [];
+    const use = app.use.bind(app) as (...args: never[]) => unknown;
+    vi.spyOn(app, "use").mockImplementation(((...args: never[]) => {
+      const [first] = args;
+      if (typeof first === "string") mountedPaths.push(first);
+      use(...args);
+      return app;
+    }) as typeof app.use);
+
+    registerMotionRoutes(app, new DIContainer());
+
+    expect(mountedPaths).toEqual(["/api/motion"]);
+  });
+
+  it("keeps the depth route reachable with ENABLE_CONVERGENCE off", async () => {
+    // ADR-0022 decision 7: the depth estimate behind the illustrative camera
+    // preview is motion authoring for the active loop, so it moves out from
+    // under the frozen mount. One route, not the stack. 401 (not 404) is the
+    // proof it is mounted: the request reached apiAuthMiddleware.
     snapshot = clearConvergenceEnv();
     process.env.ENABLE_CONVERGENCE = "false";
     expect(getRuntimeFlags().enableConvergence).toBe(false);
@@ -108,7 +143,7 @@ describe("regression: frozen convergence costs an unconfigured boot nothing", ()
     registerMotionRoutes(app, new DIContainer());
 
     const response = await request(app).post("/api/motion/depth").send({});
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(401);
   });
 
   it("mounts /api/motion when ENABLE_CONVERGENCE is on", async () => {
@@ -120,6 +155,6 @@ describe("regression: frozen convergence costs an unconfigured boot nothing", ()
     registerMotionRoutes(app, new DIContainer());
 
     const response = await request(app).post("/api/motion/depth").send({});
-    expect(response.status).not.toBe(404);
+    expect(response.status).toBe(401);
   });
 });

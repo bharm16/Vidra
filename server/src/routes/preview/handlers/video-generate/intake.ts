@@ -233,31 +233,13 @@ export async function runVideoGenerateIntake(
     resolvedCameraMotionId: plan.motionContext.cameraMotionId,
     resolvedCameraMotionText: plan.motionContext.cameraMotionText,
     resolvedSubjectMotionLength: plan.motionContext.subjectMotion?.length ?? 0,
-    disablePromptExtend: plan.disablePromptExtend,
-    motionGuidanceAppended: plan.motionGuidanceAppended,
-    promptLengthBeforeMotion: plan.promptLengthBeforeMotion,
-    promptLengthAfterMotion: plan.promptLengthAfterMotion,
   });
-
-  if (plan.disablePromptExtend) {
-    log.info("Disabling Wan prompt_extend for I2V camera motion", {
-      operation: "configureWanPromptExtend",
-      requestId,
-      userId,
-      cameraMotionId: plan.motionContext.cameraMotionId,
-      hasStartImage: Boolean(resolvedStartImage),
-      hasInputReference: Boolean(inputReference),
-    });
-  }
 
   log.debug("Queueing operation.", {
     operation,
     requestId,
     userId,
-    promptLength: plan.promptWithMotion.length,
-    promptLengthBeforeMotion: plan.promptLengthBeforeMotion,
-    promptLengthAfterMotion: plan.promptLengthAfterMotion,
-    motionGuidanceAppended: plan.motionGuidanceAppended,
+    promptLength: cleanedPrompt.length,
     promptWasStripped,
     aspectRatio,
     model,
@@ -274,7 +256,6 @@ export async function runVideoGenerateIntake(
     cameraMotionId: plan.motionContext.cameraMotionId,
     hasSubjectMotion: Boolean(plan.motionContext.subjectMotion),
     subjectMotionLength: plan.motionContext.subjectMotion?.length ?? 0,
-    promptExtend: plan.options.promptExtend ?? null,
   });
 
   try {
@@ -290,7 +271,7 @@ export async function runVideoGenerateIntake(
           ? { sourceGenerationId: requestedSourceGenerationId }
           : {}),
         request: {
-          prompt: plan.promptWithMotion,
+          prompt: cleanedPrompt,
           options: plan.options,
         },
         creditsReserved: plan.videoCost,
@@ -344,9 +325,6 @@ export async function runVideoGenerateIntake(
       cameraMotionId: plan.motionContext.cameraMotionId,
       hasSubjectMotion: Boolean(plan.motionContext.subjectMotion),
       subjectMotionLength: plan.motionContext.subjectMotion?.length ?? 0,
-      promptLengthBeforeMotion: plan.promptLengthBeforeMotion,
-      promptLengthAfterMotion: plan.promptLengthAfterMotion,
-      motionGuidanceAppended: plan.motionGuidanceAppended,
     });
 
     scheduleInlineVideoProcessing({
