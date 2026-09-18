@@ -35,11 +35,23 @@ export interface LiveOutput {
   at: number;
 }
 
+/**
+ * The loop is stopped, not failing: the creator's daily sketch allowance is
+ * spent (issue #84). Sending resumes on its own at `resumeAtMs` — the relay's
+ * UTC reset — so a creator who waits out the boundary is not stuck behind a
+ * reload.
+ */
+export interface GenerationHalt {
+  message: string;
+  resumeAtMs: number;
+}
+
 export interface GenerationState {
   requestCounter: number;
   inFlight: InFlightFrame | null;
   pending: PendingFrame | null;
   liveOutput: LiveOutput | null;
+  halted: GenerationHalt | null;
   stats: GenerationStats;
 }
 
@@ -57,6 +69,12 @@ export type GenerationAction =
       at: number;
       /** When the error is attributable to a specific sent frame. */
       requestId?: string;
+    }
+  | {
+      type: "allowanceReached";
+      message: string;
+      resumeAtMs: number;
+      at: number;
     };
 
 export function createInitialGenerationState(): GenerationState {
@@ -65,6 +83,7 @@ export function createInitialGenerationState(): GenerationState {
     inFlight: null,
     pending: null,
     liveOutput: null,
+    halted: null,
     stats: {
       sent: 0,
       skipped: 0,
@@ -79,6 +98,22 @@ export function generationReducer(
 ): GenerationState {
   switch (action.type) {
     case "snapshot": {
+      if (state.halted !== null) {
+        // Nothing is sent while the allowance is spent. The boundary itself
+        // is the resume trigger: the first stroke after it starts the loop
+        // again, with no reload and no retry storm in between.
+        if (action.at < state.halted.resumeAtMs) {
+          return state;
+        }
+        return generationReducer(
+          {
+            ...state,
+            halted: null,
+            stats: { ...state.stats, lastError: null },
+          },
+          action,
+        );
+      }
       if (state.inFlight !== null) {
         return {
           ...state,
@@ -149,6 +184,21 @@ export function generationReducer(
           at: action.at,
         },
         stats: { ...stats, sent: stats.sent + 1 },
+      };
+    }
+    case "allowanceReached": {
+      // A refusal is not a failure to retry: the in-flight frame and the
+      // trailing pending frame are both dropped, because every attempt would
+      // be refused until the reset.
+      return {
+        ...state,
+        inFlight: null,
+        pending: null,
+        halted: { message: action.message, resumeAtMs: action.resumeAtMs },
+        stats: {
+          ...state.stats,
+          lastError: { message: action.message, at: action.at },
+        },
       };
     }
     case "generationError": {

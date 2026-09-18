@@ -84,6 +84,7 @@ export function LiveEditor({
   // error — a creator whose frames are failing is told in the editor.
   const stats = sketch.state.stats;
   const lastError = stats.lastError;
+  const halted = sketch.state.halted;
   useEffect(() => {
     if (stats.sent === 0 && stats.lastError === null) {
       return;
@@ -140,7 +141,9 @@ export function LiveEditor({
                   data-testid="live-editor-error"
                 >
                   <span className="le-error-title">
-                    Frames aren&rsquo;t rendering
+                    {halted !== null
+                      ? "Daily sketch allowance reached"
+                      : "Frames aren’t rendering"}
                   </span>
                   <span className="le-error-detail">{lastError.message}</span>
                 </div>

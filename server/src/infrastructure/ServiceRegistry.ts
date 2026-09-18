@@ -41,6 +41,7 @@ import type { WebhookReconciliationWorker } from "@services/payment/WebhookRecon
 import type { BillingProfileRepairWorker } from "@services/payment/BillingProfileRepairWorker";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
+import type { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import type { ServiceConfig } from "@config/services/service-config.types";
 import type { Bucket } from "@google-cloud/storage";
 
@@ -98,4 +99,7 @@ export interface ServiceRegistry {
 
   // Session
   sessionService: SessionService;
+
+  // Sketch relay admission budget (issue #84)
+  sketchBudgetService: SketchBudgetService;
 }

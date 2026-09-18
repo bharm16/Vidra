@@ -114,6 +114,29 @@ describe("parseEnv", () => {
     ).toThrow();
   });
 
+  it("defaults and validates the sketch relay's daily cap and frame cost", () => {
+    // Dollar-denominated like the studio's cap, and reset on the same UTC
+    // calendar day; the frame cost is millicents because a sketch frame
+    // costs well under a cent.
+    expect(parseEnv(minimalEnv()).SKETCH_DAILY_SPEND_CAP_CENTS).toBe(500);
+    expect(parseEnv(minimalEnv()).SKETCH_FRAME_COST_MILLICENTS).toBe(300);
+    expect(
+      parseEnv(minimalEnv({ SKETCH_DAILY_SPEND_CAP_CENTS: "250" }))
+        .SKETCH_DAILY_SPEND_CAP_CENTS,
+    ).toBe(250);
+    expect(
+      parseEnv(minimalEnv({ SKETCH_FRAME_COST_MILLICENTS: "120" }))
+        .SKETCH_FRAME_COST_MILLICENTS,
+    ).toBe(120);
+    // Malformed values fail boot rather than silently uncapping the relay.
+    expect(() =>
+      parseEnv(minimalEnv({ SKETCH_DAILY_SPEND_CAP_CENTS: "two dollars" })),
+    ).toThrow();
+    expect(() =>
+      parseEnv(minimalEnv({ SKETCH_FRAME_COST_MILLICENTS: "0" })),
+    ).toThrow();
+  });
+
   it("passes through unknown env vars without error", () => {
     const result = parseEnv(
       minimalEnv({

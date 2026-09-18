@@ -1,3 +1,8 @@
+import {
+  SketchFrameRefusalSchema,
+  type SketchFrameRefusal,
+} from "@shared/schemas/sketch.schemas";
+
 import { buildFirebaseAuthHeaders } from "@/services/http/firebaseAuth";
 import { FAL_I2I_PATH } from "../config/constants";
 
@@ -44,6 +49,35 @@ function explainFailure(status: number, body: string): string {
   return `frame failed (${status}): ${detail}`;
 }
 
+/**
+ * The relay refused this frame before dispatching it (issue #84) — a spent
+ * daily allowance or a budget it could not read. Carried as its own error type
+ * so the generation loop can pause on the first and retry the second, which a
+ * message string alone could never tell apart.
+ */
+export class SketchFrameRefused extends Error {
+  constructor(public readonly refusal: SketchFrameRefusal) {
+    super(refusal.detail);
+    this.name = "SketchFrameRefused";
+  }
+}
+
+/**
+ * An admission refusal is recognised by its `reason`, never by its status:
+ * the relay's burst lane answers 429 too, and that one IS an ordinary
+ * transient failure.
+ */
+function readRefusal(body: string): SketchFrameRefusal | undefined {
+  let payload: unknown;
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    return undefined;
+  }
+  const parsed = SketchFrameRefusalSchema.safeParse(payload);
+  return parsed.success ? parsed.data : undefined;
+}
+
 export const sendSketchFrame: SendSketchFrame = async (payload, signal) => {
   const response = await fetch(FAL_I2I_PATH, {
     method: "POST",
@@ -55,7 +89,12 @@ export const sendSketchFrame: SendSketchFrame = async (payload, signal) => {
     signal,
   });
   if (!response.ok) {
-    throw new Error(explainFailure(response.status, await response.text()));
+    const body = await response.text();
+    const refusal = readRefusal(body);
+    if (refusal !== undefined) {
+      throw new SketchFrameRefused(refusal);
+    }
+    throw new Error(explainFailure(response.status, body));
   }
   return response.json() as Promise<unknown>;
 };

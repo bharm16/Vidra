@@ -143,10 +143,15 @@ export function registerApiRoutes(
   // Realtime-sketch spike (ADR-0016 as amended): relays sketch frames to the
   // one approved fal i2i model over HTTP sync — fal retired realtime-WS i2i,
   // so all frame traffic flows through the server again.
+  // Frames are admitted against the creator's shared daily budget before
+  // dispatch (issue #84) — the relay is fail-closed without it.
   app.use(
     "/api/fal",
     apiAuthMiddleware,
-    createFalI2iRouter({ falKey: resolveFalApiKey() ?? undefined }),
+    createFalI2iRouter({
+      falKey: resolveFalApiKey() ?? undefined,
+      budget: container.resolve("sketchBudgetService"),
+    }),
   );
 
   // Studio conversational image workspace (ADR-0019). Null when the

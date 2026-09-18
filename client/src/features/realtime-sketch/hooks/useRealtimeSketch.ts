@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
-import { sendSketchFrame, type SendSketchFrame } from "../api/falI2i";
+import {
+  sendSketchFrame,
+  SketchFrameRefused,
+  type SendSketchFrame,
+} from "../api/falI2i";
 import { FalI2iResultSchema } from "../api/schemas";
 import {
   DEFAULT_PROMPT,
@@ -113,6 +117,20 @@ export function useRealtimeSketch(
         // Aborts are already handled (watchdog dispatched) or intentional
         // (unmount) — only real failures surface here.
         if (controller.signal.aborted) {
+          return;
+        }
+        // A spent daily allowance is not a failure to retry: retrying is what
+        // the relay just refused. Halt the loop until the relay's own reset.
+        if (
+          error instanceof SketchFrameRefused &&
+          error.refusal.reason === "daily-allowance-reached"
+        ) {
+          dispatch({
+            type: "allowanceReached",
+            message: error.refusal.detail,
+            resumeAtMs: error.refusal.resetAtMs,
+            at: Date.now(),
+          });
           return;
         }
         dispatch({

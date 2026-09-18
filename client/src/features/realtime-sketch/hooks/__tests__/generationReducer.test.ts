@@ -161,3 +161,74 @@ describe("generationReducer — send discipline", () => {
     expect(state.stats.sent).toBe(2);
   });
 });
+
+/**
+ * The relay bounds each creator's daily sketch spend and refuses frames once
+ * the allowance is gone (issue #84). A refusal is the one failure the loop
+ * must NOT retry: every attempt would be refused, and the retry would be a
+ * request the relay has to answer for nothing.
+ */
+describe("generationReducer — daily allowance halt", () => {
+  const RESUME_AT = Date.UTC(2026, 8, 18);
+  const halt = (at: number) =>
+    ({
+      type: "allowanceReached",
+      message: "Daily sketch allowance reached.",
+      resumeAtMs: RESUME_AT,
+      at,
+    }) as const;
+
+  it("drops the in-flight and pending frames instead of retrying them", () => {
+    let state = generationReducer(
+      createInitialGenerationState(),
+      snapshot(1_000),
+    );
+    state = generationReducer(state, snapshot(1_150));
+    expect(state.inFlight).not.toBeNull();
+    expect(state.pending).not.toBeNull();
+
+    state = generationReducer(state, halt(1_200));
+
+    expect(state.inFlight).toBeNull();
+    expect(state.pending).toBeNull();
+    expect(state.halted).toEqual({
+      message: "Daily sketch allowance reached.",
+      resumeAtMs: RESUME_AT,
+    });
+    expect(state.stats.lastError?.message).toBe(
+      "Daily sketch allowance reached.",
+    );
+  });
+
+  it("sends nothing while the allowance is spent", () => {
+    let state = generationReducer(
+      createInitialGenerationState(),
+      snapshot(1_000),
+    );
+    state = generationReducer(state, halt(1_200));
+    const sentBefore = state.stats.sent;
+
+    state = generationReducer(state, snapshot(1_400));
+    state = generationReducer(state, snapshot(1_600));
+
+    expect(state.inFlight).toBeNull();
+    expect(state.pending).toBeNull();
+    expect(state.stats.sent).toBe(sentBefore);
+  });
+
+  it("resumes on the first snapshot at or after the reset boundary", () => {
+    let state = generationReducer(
+      createInitialGenerationState(),
+      snapshot(1_000),
+    );
+    state = generationReducer(state, halt(1_200));
+
+    state = generationReducer(state, snapshot(RESUME_AT));
+
+    expect(state.halted).toBeNull();
+    expect(state.inFlight?.sentAt).toBe(RESUME_AT);
+    // The allowance message goes with the halt — it is stale the moment the
+    // loop is sending again.
+    expect(state.stats.lastError).toBeNull();
+  });
+});
