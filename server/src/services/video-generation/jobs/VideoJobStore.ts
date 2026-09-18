@@ -7,6 +7,7 @@ import {
 } from "@services/firestore/FirestoreCircuitExecutor";
 import type {
   DlqEntry,
+  VideoJobAttachment,
   VideoJobError,
   VideoJobRecord,
   VideoJobRequest,
@@ -724,6 +725,83 @@ export class VideoJobStore {
       );
       return false;
     }
+  }
+
+  /**
+   * ADR-0022 decision 6: record whether the completed clip has reached its
+   * session. Deliberately not gated on worker id or job status the way
+   * `setProviderResult` is — by the time this runs the job is completed and its
+   * lease is released, and a resumed attachment is written by a different
+   * worker than the one that generated the clip.
+   */
+  async setAttachment(
+    jobId: string,
+    attachment: VideoJobAttachment,
+  ): Promise<boolean> {
+    // Firestore rejects an update carrying `undefined`, so the optional halves
+    // are spread in only when present.
+    const payload: Record<string, unknown> = {
+      state: attachment.state,
+      generationId: attachment.generationId,
+      sessionId: attachment.sessionId,
+      promptVersionId: attachment.promptVersionId,
+      updatedAtMs: attachment.updatedAtMs,
+      ...(attachment.record ? { record: attachment.record } : {}),
+      ...(attachment.reason ? { reason: attachment.reason } : {}),
+    };
+
+    try {
+      return await this.withTiming(
+        "setAttachment",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const now = Date.now();
+            transaction.update(docRef, {
+              attachment: payload,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (error) {
+      logger.error("Failed to set attachment state on video job", error as Error, {
+        jobId,
+        state: attachment.state,
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Jobs whose session is still owed a take. Equality-only, so it needs no
+   * composite index. `pending` is crash residue — a worker died between
+   * `markCompleted` and the append — and is what a restarting worker settles;
+   * a `failed` attachment is already surfaced to its creator with a retry, so
+   * it is deliberately NOT swept here.
+   */
+  async findPendingAttachments(
+    limitCount: number = 50,
+  ): Promise<VideoJobRecord[]> {
+    const snapshot = await this.withTiming(
+      "findPendingAttachments",
+      "read",
+      async () =>
+        await this.collection
+          .where("attachment.state", "==", "pending")
+          .limit(limitCount)
+          .get(),
+    );
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => this.parseJob(doc.id, doc.data()));
   }
 
   async markCompleted(

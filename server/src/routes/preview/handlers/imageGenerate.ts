@@ -15,6 +15,8 @@ import type {
 import { IMAGE_PREVIEW_SPEED_MODES } from "@shared/schemas/preview.schemas";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
+import { attachTakeToSession } from "@services/sessions/attachTakeToSession";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 
 type ImageGenerateServices = Pick<
   PreviewRoutesServices,
@@ -388,12 +390,16 @@ export const createImageGenerateHandler =
       }
 
       // M5 / D4 (ADR-0013): when the client supplies sessionId + promptVersionId,
-      // persist the picture as a session generation record so it can be a node
-      // in the space. Mirrors the storyboard + video-job persistence path. Soft
-      // fail: a persist error never voids the already-produced (and charged)
-      // image — the media URLs are still returned.
+      // the picture becomes a session generation record so it can be a node in
+      // the space.
+      //
+      // ADR-0022 decision 6: the attachment is a SECOND fact, reported beside
+      // the media rather than swallowed. A failure here leaves the picture made
+      // but not saved — the media URLs are still returned, the creator is not
+      // refunded and nothing is regenerated, and the take identity minted below
+      // rides back out so a retry attaches this same take.
       const finalImageUrl = storageResult?.viewUrl ?? result.imageUrl;
-      let persistedGenerationId: string | null = null;
+      let attachment: TakeAttachment | null = null;
       if (
         typeof sessionId === "string" &&
         sessionId.length > 0 &&
@@ -401,15 +407,14 @@ export const createImageGenerateHandler =
         promptVersionId.length > 0 &&
         sessionService
       ) {
+        // Minted before anything can fail: the take's name is not the append's
+        // to lose.
         const generationId = randomUUID();
         const mediaAssetId = storageResult?.storagePath
           ? (storageResult.storagePath.split("/").filter(Boolean).pop() ??
             storageResult.storagePath)
           : null;
         try {
-          // Built inside the soft-fail guard: the builder validates its output
-          // against the record schema, and a persist-side throw — validation
-          // included — must never void the already-charged generation.
           const generationRecord = buildCompletedTakeRecord({
             id: generationId,
             model: result.metadata.model,
@@ -424,27 +429,33 @@ export const createImageGenerateHandler =
             // version's generations).
             ancestorGenerationId: null,
           });
-          await sessionService.appendGenerationToVersion(
+          attachment = await attachTakeToSession({
+            sessionService,
             userId,
             sessionId,
             promptVersionId,
-            generationRecord,
-          );
-          persistedGenerationId = generationId;
-          logger.info("Quick picture persisted to session", {
-            userId,
-            sessionId,
-            promptVersionId,
-            generationId,
+            record: generationRecord,
+            logLabel: "Quick picture",
           });
-        } catch (persistError) {
+        } catch (buildError) {
+          // The builder validates against the record schema; a validation throw
+          // is an unattached take like any other, not a voided generation.
+          const reason =
+            buildError instanceof Error
+              ? buildError.message
+              : String(buildError);
           logger.error(
-            "Quick picture session persist failed; returning media without session write",
-            persistError instanceof Error
-              ? persistError
-              : new Error(String(persistError)),
-            { userId, sessionId, promptVersionId },
+            "Quick picture take record could not be built; picture is unattached",
+            buildError instanceof Error ? buildError : new Error(reason),
+            { userId, sessionId, promptVersionId, generationId },
           );
+          attachment = {
+            state: "failed",
+            generationId,
+            sessionId,
+            promptVersionId,
+            reason,
+          };
         }
       }
 
@@ -459,9 +470,12 @@ export const createImageGenerateHandler =
               sizeBytes: storageResult.sizeBytes,
             }
           : result),
-        ...(persistedGenerationId
-          ? { generationId: persistedGenerationId }
+        // `generationId` has always meant "this take is in the session", so it
+        // appears only when the attachment actually succeeded.
+        ...(attachment?.state === "attached"
+          ? { generationId: attachment.generationId }
           : {}),
+        ...(attachment ? { attachment } : {}),
       };
 
       const responseBody = {

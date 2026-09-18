@@ -116,6 +116,22 @@ const UpdateVersionsSchema = z
   })
   .strip();
 
+/**
+ * The attachment-retry body — ADR-0022 decision 6 ("its retry").
+ *
+ * The creator hands back the exact record the failed attachment returned to
+ * them, so the retry writes the same media under the same take identity
+ * instead of asking the client to rebuild a record it does not own. It is held
+ * to the same contract as the versions PATCH above, which already lets this
+ * user write take records into this session — the retry is a strictly narrower
+ * door onto the same write, not a new one.
+ */
+const AttachTakeSchema = z
+  .object({
+    generation: SessionGenerationRecordSchema,
+  })
+  .strip();
+
 function handleSessionMutationError(error: unknown, res: Response): boolean {
   if (error instanceof SessionAccessDeniedError) {
     res.status(403).json({
@@ -517,6 +533,40 @@ export function createSessionRoutes(
           userId,
           sessionId,
           generationId,
+        );
+        res.json({
+          success: true,
+          data: sessionService.toDto(session),
+        } satisfies ApiResponse<SessionDto>);
+      } catch (error) {
+        if (handleSessionMutationError(error, res)) return;
+        throw error;
+      }
+    }),
+  );
+
+  // ADR-0022 decision 6: attach a take that was made but not saved. Idempotent
+  // by take identity — a retry of an attachment that actually landed is a
+  // no-op, never a second copy of the same picture. It reruns no generation
+  // and touches no credit surface: the media it names already exists and was
+  // already paid for.
+  router.post(
+    "/:sessionId/versions/:versionId/generations",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
+      if (!userId) return;
+      const sessionId = requireRouteParam(req, res, "sessionId");
+      if (!sessionId) return;
+      const versionId = requireRouteParam(req, res, "versionId");
+      if (!versionId) return;
+      const parsed = requireBody(AttachTakeSchema, req, res);
+      if (!parsed.ok) return;
+      try {
+        const session = await sessionService.appendGenerationToVersion(
+          userId,
+          sessionId,
+          versionId,
+          parsed.value.generation,
         );
         res.json({
           success: true,

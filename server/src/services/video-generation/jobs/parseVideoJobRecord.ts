@@ -100,6 +100,21 @@ export function parseVideoJobRecord(
   if (typeof parsed.nextRetryAtMs === "number") {
     base.nextRetryAtMs = parsed.nextRetryAtMs;
   }
+  if (parsed.attachment) {
+    base.attachment = {
+      state: parsed.attachment.state,
+      generationId: parsed.attachment.generationId,
+      sessionId: parsed.attachment.sessionId,
+      promptVersionId: parsed.attachment.promptVersionId,
+      ...(parsed.attachment.record
+        ? { record: parsed.attachment.record as Record<string, unknown> }
+        : {}),
+      ...(parsed.attachment.reason !== undefined
+        ? { reason: parsed.attachment.reason }
+        : {}),
+      updatedAtMs: parsed.attachment.updatedAtMs,
+    };
+  }
 
   return base;
 }

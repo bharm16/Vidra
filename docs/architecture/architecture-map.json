@@ -274,6 +274,11 @@
       "sourceFile": "server/src/routes/preview.routes.ts"
     },
     {
+      "method": "POST",
+      "fullPath": "/api/preview/video/jobs/:jobId/attach",
+      "sourceFile": "server/src/routes/preview.routes.ts"
+    },
+    {
       "method": "GET",
       "fullPath": "/api/preview/video/view",
       "sourceFile": "server/src/routes/preview.routes.ts"
@@ -386,6 +391,11 @@
     {
       "method": "PUT",
       "fullPath": "/api/sessions/:sessionId/style-reference",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/versions/:versionId/generations",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },
     {
@@ -1579,6 +1589,11 @@
     {
       "from": "videoJobWorker",
       "to": "providerCircuitManager",
+      "file": "video-generation.services.ts"
+    },
+    {
+      "from": "videoJobWorker",
+      "to": "sessionService",
       "file": "video-generation.services.ts"
     },
     {

@@ -86,6 +86,10 @@ export function normalizePersistedGeneration(
     mediaUrls: toStringArray(bag.mediaUrls),
     createdAt: toEpochMs(bag.createdAt) ?? completedAt ?? 0,
     completedAt,
+    // ADR-0022 decision 6: this record came OUT of a session, so it is in that
+    // session — whatever a stale marker in the bag claims. Dropping it here is
+    // what keeps "made but not saved" from surviving the save.
+    attachment: undefined,
   };
 }
 

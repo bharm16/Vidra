@@ -21,10 +21,17 @@ export interface LineageInput {
   }>;
   clips: Array<{
     id: string;
+    /**
+     * The clip's immediate ancestor: its source picture, or — when no picture
+     * ancestor was ever recorded — its words-node, paired with
+     * `pictureAncestryUnknown`.
+     */
     pictureId: string;
     status?: SpaceNode["status"];
     mediaUrl?: string;
     archived?: boolean;
+    pictureAncestryUnknown?: boolean;
+    unattached?: boolean;
   }>;
 }
 
@@ -64,6 +71,10 @@ export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
       ...(clip.status ? { status: clip.status } : {}),
       ...(clip.mediaUrl ? { mediaUrl: clip.mediaUrl } : {}),
       ...(clip.archived ? { archived: true } : {}),
+      ...(clip.pictureAncestryUnknown
+        ? { pictureAncestryUnknown: true }
+        : {}),
+      ...(clip.unattached ? { unattached: true } : {}),
     });
   }
 

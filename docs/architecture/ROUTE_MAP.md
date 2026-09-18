@@ -57,6 +57,7 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/preview/video/content/:contentId`                      | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/video/generate`                                | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/jobs/:jobId`                             | `server/src/routes/preview.routes.ts`                          |
+| POST   | `/api/preview/video/jobs/:jobId/attach`                      | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/view`                                    | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/providers`                                             | `server/src/routes/capabilities.routes.ts`                     |
 | GET    | `/api/public/share/:shareId`                                 | `server/src/routes/share.routes.ts`                            |
@@ -80,6 +81,7 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/sessions/:sessionId/shots/:shotId/status`              | `server/src/routes/sessions.routes.ts`                         |
 | PUT    | `/api/sessions/:sessionId/shots/:shotId/style-reference`     | `server/src/routes/sessions.routes.ts`                         |
 | PUT    | `/api/sessions/:sessionId/style-reference`                   | `server/src/routes/sessions.routes.ts`                         |
+| POST   | `/api/sessions/:sessionId/versions/:versionId/generations`   | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/by-prompt/:uuid`                              | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/continuity`                                   | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/share`                                                 | `server/src/routes/share.routes.ts`                            |
@@ -108,4 +110,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                               | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                              | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **100**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **102**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

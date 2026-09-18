@@ -380,4 +380,110 @@ describe("waitForVideoJob", () => {
       expect(callIndex).toBe(3);
     });
   });
+
+  describe("session attachment terminality (ADR-0022 decision 6)", () => {
+    it("keeps polling while the clip's attachment is still pending", async () => {
+      vi.mocked(getVideoPreviewStatus)
+        .mockResolvedValueOnce(
+          mockStatusResponse({
+            status: "completed",
+            videoUrl: "https://cdn.example.com/clip.mp4",
+            attachment: {
+              state: "pending",
+              generationId: "job-123",
+              sessionId: "session-1",
+              promptVersionId: "v-1",
+            },
+          }),
+        )
+        .mockResolvedValue(
+          mockStatusResponse({
+            status: "completed",
+            videoUrl: "https://cdn.example.com/clip.mp4",
+            attachment: {
+              state: "attached",
+              generationId: "job-123",
+              sessionId: "session-1",
+              promptVersionId: "v-1",
+            },
+          }),
+        );
+
+      const [result] = await Promise.all([
+        waitForVideoJob("job-123", abortController.signal),
+        vi.advanceTimersByTimeAsync(5_000),
+      ]);
+
+      // "completed" is the render's answer, not the job's: a take the session
+      // never received would render as a node that vanishes on refresh.
+      expect(getVideoPreviewStatus).toHaveBeenCalledTimes(2);
+      expect(result?.attachment?.state).toBe("attached");
+    });
+
+    it("resolves a failed attachment as made-but-not-saved rather than throwing", async () => {
+      vi.mocked(getVideoPreviewStatus).mockResolvedValue(
+        mockStatusResponse({
+          status: "completed",
+          videoUrl: "https://cdn.example.com/clip.mp4",
+          attachment: {
+            state: "failed",
+            generationId: "job-123",
+            sessionId: "session-1",
+            promptVersionId: "v-1",
+            reason: "firestore unavailable",
+          },
+        }),
+      );
+
+      const [result] = await Promise.all([
+        waitForVideoJob("job-123", abortController.signal),
+        vi.advanceTimersByTimeAsync(0),
+      ]);
+
+      // The clip is real and the creator paid for it — a failed attachment is
+      // not a failed generation.
+      expect(result?.videoUrl).toBe("https://cdn.example.com/clip.mp4");
+      expect(result?.attachment?.state).toBe("failed");
+    });
+
+    it("stops waiting on an attachment that never resolves, and says so", async () => {
+      vi.mocked(getVideoPreviewStatus).mockResolvedValue(
+        mockStatusResponse({
+          status: "completed",
+          videoUrl: "https://cdn.example.com/clip.mp4",
+          attachment: {
+            state: "pending",
+            generationId: "job-123",
+            sessionId: "session-1",
+            promptVersionId: "v-1",
+          },
+        }),
+      );
+
+      const [result] = await Promise.all([
+        waitForVideoJob("job-123", abortController.signal),
+        vi.advanceTimersByTimeAsync(90_000),
+      ]);
+
+      // Bounded by the attachment budget, not by the render-sized timeout.
+      expect(result?.attachment?.state).toBe("pending");
+    });
+
+    it("is terminal on completion when the job names no session", async () => {
+      vi.mocked(getVideoPreviewStatus).mockResolvedValue(
+        mockStatusResponse({
+          status: "completed",
+          videoUrl: "https://cdn.example.com/clip.mp4",
+        }),
+      );
+
+      const [result] = await Promise.all([
+        waitForVideoJob("job-123", abortController.signal),
+        vi.advanceTimersByTimeAsync(0),
+      ]);
+
+      expect(getVideoPreviewStatus).toHaveBeenCalledTimes(1);
+      expect(result?.attachment).toBeUndefined();
+    });
+  });
 });
