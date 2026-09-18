@@ -62,6 +62,22 @@ export async function createStudioProject(
   });
 }
 
+/**
+ * "Refine in the studio" (ADR-0022 decision 4): birth a project from a session
+ * picture. The server reads the take out of the session — which is where the
+ * words-version lives — so the creator names only the session and the take.
+ * Invoking twice for the same take returns the same project.
+ */
+export async function createStudioProjectFromSessionPicture(input: {
+  sessionId: string;
+  generationId: string;
+}): Promise<StudioProject> {
+  return request("/projects/from-session-picture", StudioProjectSchema, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 export async function listStudioProjects(): Promise<StudioProject[]> {
   return request("/projects", z.array(StudioProjectSchema));
 }

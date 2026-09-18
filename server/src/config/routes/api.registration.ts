@@ -17,6 +17,8 @@ import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
+import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import type { SessionService } from "@services/sessions/SessionService";
 import {
   createShareRouter,
   createPublicClipRouter,
@@ -166,7 +168,15 @@ export function registerApiRoutes(
     app.use(
       "/api/studio",
       apiAuthMiddleware,
-      createStudioRouter(studioService),
+      createStudioRouter(
+        studioService,
+        // ADR-0022 decision 4: the studio bridge's session-side read. The
+        // join lives here, at the route layer — StudioService never learns
+        // what a session is.
+        createSessionPictureLookup(
+          container.resolve<SessionService>("sessionService"),
+        ),
+      ),
     );
   }
 }

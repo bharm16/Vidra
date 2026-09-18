@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { CollapsibleDrawer } from "@components/CollapsibleDrawer";
 import { FEATURES } from "@/config/features.config";
 import { cn } from "@/utils/cn";
@@ -43,6 +44,14 @@ export function PromptCanvasView({
   editorSection,
 }: PromptCanvasViewProps): React.ReactElement {
   const coherence = useCoherence();
+  const navigate = useNavigate();
+  // The route layer owns navigation; the workspace only decides WHICH studio
+  // project to open (ADR-0022 decision 4). Passing it down keeps the workspace
+  // free of a router dependency it otherwise has no use for.
+  const openStudioProject = useCallback(
+    (projectId: string) => navigate(`/studio/${projectId}`),
+    [navigate],
+  );
   if (FEATURES.CANVAS_FIRST_LAYOUT) {
     return (
       <>
@@ -50,6 +59,7 @@ export function PromptCanvasView({
           generationsPanelProps={generationsPanelProps}
           onReuseGeneration={onReuseGeneration}
           onToggleGenerationFavorite={onToggleGenerationFavorite}
+          onOpenStudioProject={openStudioProject}
           editing={editing}
         />
         {/*

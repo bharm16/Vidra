@@ -6,6 +6,8 @@
  * Plan: docs/superpowers/plans/2026-07-24-the-studio-conversational-image-workspace.md
  */
 
+import type { StudioProjectOrigin } from "@shared/schemas/studio.schemas";
+
 export const STUDIO_MODEL_SLUGS = [
   "recraft-v4.1",
   "recraft-v4.1-svg",
@@ -143,6 +145,14 @@ export interface StudioProjectRecord {
   pinnedModel?: StudioModelSlug | null | undefined;
   /** User-uploaded reference images (S-12), capped small. */
   attachments?: StudioAttachment[] | undefined;
+  /**
+   * Where this project came from, when it was born from a session picture
+   * (ADR-0022 decision 4). Absent on projects started in the studio itself —
+   * most of them, and that is the point: the bridge is optional, not a fold.
+   * Immutable once written: it is what the creator invoked on, not a live link
+   * to whatever the session says now.
+   */
+  origin?: StudioProjectOrigin | undefined;
   /**
    * The most recent image the project produced, denormalized off the turns
    * subcollection so the project index can show a cover without reading one
