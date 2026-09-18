@@ -8,6 +8,7 @@ import {
   GenerationNotRemovableError,
   SessionAccessDeniedError,
   SessionNotFoundError,
+  TakeFactsConflictError,
   type SessionService,
 } from "@services/sessions/SessionService";
 import type {
@@ -160,6 +161,16 @@ function handleSessionMutationError(error: unknown, res: Response): boolean {
     res.status(409).json({
       success: false,
       error: "Only a childless node can be removed",
+    } satisfies ApiResponse<never>);
+    return true;
+  }
+  if (error instanceof TakeFactsConflictError) {
+    // 409: the request is well-formed but conflicts with an established take —
+    // the attachment retry carried altered provenance/identity for a take the
+    // server already owns (ADR-0022 decision 6, issue #112).
+    res.status(409).json({
+      success: false,
+      error: "This take is already saved with different details",
     } satisfies ApiResponse<never>);
     return true;
   }

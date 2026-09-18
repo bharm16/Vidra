@@ -34,6 +34,7 @@ import { SessionStore } from "./SessionStore";
 import {
   enforceImmutableKeyframes,
   enforceImmutableVersions,
+  reconcileGenerationRecord,
 } from "@utils/immutableMedia";
 
 /**
@@ -194,7 +195,7 @@ export class SessionService {
         );
         if (enforcedVersions.warnings.length) {
           this.log.warn(
-            "Preserved immutable media references during session update",
+            "Corrected server-owned take facts during session update",
             {
               sessionId,
               warningCount: enforcedVersions.warnings.length,
@@ -362,7 +363,7 @@ export class SessionService {
     if (!next) throw new Error(`Session not found: ${sessionId}`);
     if (warningCount) {
       this.log.warn(
-        "Preserved immutable media references during session version update",
+        "Corrected server-owned take facts during session version update",
         {
           sessionId,
           warningCount,
@@ -422,8 +423,28 @@ export class SessionService {
         (g) => typeof g.id === "string" && g.id === incomingId,
       );
       if (existingIdx >= 0) {
+        // This is the attachment-retry door (ADR-0022 decision 6): the take is
+        // already established under this identity, so the incoming record must
+        // re-state it, not rewrite it. `reconcileGenerationRecord` keeps every
+        // server-owned fact; a record that alters one — its provenance, its
+        // ancestry, its archive state, its durable media — is a stale or
+        // tampered claim about an established take, not a faithful retry, and
+        // is rejected. Faithfully re-sending the take's own record leaves it
+        // unchanged (idempotent). This also forecloses resurrecting an archived
+        // take through a stale save: `archived` is server-owned, so it never
+        // flips back here.
+        const { record, conflicts } = reconcileGenerationRecord(
+          current[existingIdx],
+          generation,
+        );
+        if (conflicts.length > 0) {
+          throw new TakeFactsConflictError(
+            incomingId,
+            conflicts.map((conflict) => conflict.field),
+          );
+        }
         const next = [...current];
-        next[existingIdx] = { ...current[existingIdx], ...generation };
+        next[existingIdx] = record;
         return next;
       }
       return [...current, generation];
@@ -724,5 +745,25 @@ export class GenerationNotRemovableError extends Error {
   constructor(readonly generationId: string) {
     super(`Generation has descendants and cannot be removed: ${generationId}`);
     this.name = "GenerationNotRemovableError";
+  }
+}
+
+/**
+ * An attachment retry named an already-established take but carried a
+ * server-owned fact that differs from the stored one — altered provenance, a
+ * different display ancestor, a flipped archive state, or foreign media under
+ * an existing identity (ADR-0022 decision 6, issue #112). A faithful retry
+ * re-sends the take's own record; a conflicting claim is refused rather than
+ * allowed to overwrite the take. `fields` names the facts that disagreed.
+ */
+export class TakeFactsConflictError extends Error {
+  constructor(
+    readonly generationId: string,
+    readonly fields: string[],
+  ) {
+    super(
+      `Attachment retry conflicts with the established take ${generationId} on: ${fields.join(", ")}`,
+    );
+    this.name = "TakeFactsConflictError";
   }
 }

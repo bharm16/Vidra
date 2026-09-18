@@ -6,6 +6,7 @@ import type {
 import {
   enforceImmutableKeyframes,
   enforceImmutableVersions,
+  reconcileGenerationRecord,
 } from "@utils/immutableMedia";
 
 describe("server immutable media utils", () => {
@@ -165,5 +166,150 @@ describe("server immutable media utils", () => {
     expect(Object.prototype.hasOwnProperty.call(merged ?? {}, "preview")).toBe(
       false,
     );
+  });
+
+  // A whole-array versions write must never clear history: versions and takes
+  // only accumulate (issue #112).
+  it("preserves stored versions when the incoming array is empty", () => {
+    const existing: SessionPromptVersionEntry[] = [
+      {
+        versionId: "v1",
+        signature: "sig",
+        prompt: "p",
+        timestamp: "now",
+        generations: [{ id: "g1", mediaUrls: ["https://x/y.png"] } as never],
+      },
+    ];
+
+    const result = enforceImmutableVersions(existing, []);
+
+    expect(result.versions).toEqual(existing);
+    expect(result.warnings.length).toBeGreaterThan(0);
+  });
+
+  it("leaves an empty array empty when there is nothing stored to preserve", () => {
+    const result = enforceImmutableVersions([], []);
+    expect(result.versions).toEqual([]);
+    expect(result.warnings).toHaveLength(0);
+  });
+});
+
+describe("reconcileGenerationRecord — the server-owned take facts (issue #112)", () => {
+  const storedTake = (): Record<string, unknown> => ({
+    id: "gen-1",
+    mediaType: "image",
+    prompt: "an astronaut on mars",
+    status: "completed",
+    completedAt: "2026-09-17T00:00:00.000Z",
+    mediaUrls: ["https://signed.example.com/old.webp?token=old"],
+    thumbnailUrl: "https://signed.example.com/old-thumb.webp?token=old",
+    mediaAssetIds: ["users/u1/gen/orig.webp"],
+    storagePath: "users/u1/gen/orig.webp",
+    ancestorGenerationId: "pic-0",
+    archived: true,
+    origin: "upload",
+    productionProvenance: { state: "unknown" },
+    sourceInputs: [
+      { kind: "upload", assetId: "a1", storagePath: "users/u1/gen/orig.webp" },
+    ],
+  });
+
+  it.each([
+    "origin",
+    "productionProvenance",
+    "sourceInputs",
+    "ancestorGenerationId",
+    "archived",
+    "status",
+    "completedAt",
+    "storagePath",
+    "mediaAssetIds",
+  ])("preserves %s when a stale incoming record omits it", (field) => {
+    const existing = storedTake();
+    const incoming = storedTake();
+    delete incoming[field];
+
+    const { record, conflicts } = reconcileGenerationRecord(existing, incoming);
+
+    expect(record[field]).toEqual(existing[field]);
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("refreshes the signed URLs while keeping the durable identifiers", () => {
+    const existing = storedTake();
+    const incoming = {
+      ...storedTake(),
+      mediaUrls: ["https://signed.example.com/new.webp?token=new"],
+      thumbnailUrl: "https://signed.example.com/new-thumb.webp?token=new",
+    };
+
+    const { record, conflicts } = reconcileGenerationRecord(existing, incoming);
+
+    expect(record.mediaUrls).toEqual([
+      "https://signed.example.com/new.webp?token=new",
+    ]);
+    expect(record.thumbnailUrl).toBe(
+      "https://signed.example.com/new-thumb.webp?token=new",
+    );
+    expect(record.storagePath).toBe("users/u1/gen/orig.webp");
+    expect(record.mediaAssetIds).toEqual(["users/u1/gen/orig.webp"]);
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it.each([
+    ["origin", "generated"],
+    ["ancestorGenerationId", "pic-tampered"],
+    ["archived", false],
+    ["storagePath", "users/attacker/gen/evil.webp"],
+    [
+      "productionProvenance",
+      { state: "known", instruction: "made up", model: null },
+    ],
+    ["mediaAssetIds", ["users/attacker/gen/evil.webp"]],
+  ] as const)(
+    "reports a conflict and keeps the stored value when incoming alters %s",
+    (field, altered) => {
+      const existing = storedTake();
+      const incoming = { ...storedTake(), [field]: altered };
+
+      const { record, conflicts } = reconcileGenerationRecord(
+        existing,
+        incoming,
+      );
+
+      expect(record[field]).toEqual(existing[field]);
+      expect(conflicts.map((conflict) => conflict.field)).toContain(field);
+    },
+  );
+
+  it("never invents a fact a legacy stored take lacks", () => {
+    const existing = {
+      id: "gen-legacy",
+      mediaType: "image",
+      prompt: "old",
+      status: "completed",
+      mediaUrls: ["https://x/y.png"],
+    };
+    const incoming = {
+      ...existing,
+      origin: "generated",
+      productionProvenance: { state: "unknown" },
+    };
+
+    const { record, conflicts } = reconcileGenerationRecord(existing, incoming);
+
+    expect("origin" in record).toBe(false);
+    expect("productionProvenance" in record).toBe(false);
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("returns the incoming record unchanged when no stored take matches", () => {
+    const incoming = storedTake();
+    const { record, conflicts } = reconcileGenerationRecord(
+      undefined,
+      incoming,
+    );
+    expect(record).toBe(incoming);
+    expect(conflicts).toHaveLength(0);
   });
 });

@@ -10,6 +10,7 @@ import {
   SessionAccessDeniedError,
   SessionNotFoundError,
   SessionService,
+  TakeFactsConflictError,
 } from "../SessionService";
 
 const buildRecord = (
@@ -328,7 +329,9 @@ describe("SessionService", () => {
     expect(updated.prompt?.versions?.[0]?.firstFrame?.storagePath).toBe(
       "users/user-1/previews/images/original.webp",
     );
-    expect(updated.prompt?.versions?.[0]?.firstFrame?.assetId).toBe("asset-old");
+    expect(updated.prompt?.versions?.[0]?.firstFrame?.assetId).toBe(
+      "asset-old",
+    );
   });
 
   it("maps continuity sessions to DTO with ISO date fields", () => {
@@ -644,8 +647,18 @@ describe("SessionService", () => {
       const service = new SessionService(store as never);
 
       await Promise.all([
-        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-a")),
-        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-b")),
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-b"),
+        ),
       ]);
 
       expect(idsIn(store).sort()).toEqual(["pic-a", "pic-b"]);
@@ -656,8 +669,18 @@ describe("SessionService", () => {
       const service = new SessionService(store as never);
 
       await Promise.all([
-        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-a")),
-        service.appendGenerationToVersion("user-1", "session-1", "v-1", take("pic-a")),
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
       ]);
 
       expect(idsIn(store)).toEqual(["pic-a"]);
@@ -799,6 +822,303 @@ describe("SessionService", () => {
       expect(saved.prompt?.versions?.[0]?.generations?.[0]).toMatchObject({
         id: "pic-1",
         archived: true,
+      });
+    });
+  });
+
+  describe("server-owned take facts are immutable across client doors (issue #112)", () => {
+    const storedTake = (): Record<string, unknown> => ({
+      id: "take-1",
+      mediaType: "image",
+      prompt: "an astronaut on mars",
+      status: "completed",
+      completedAt: "2026-09-17T00:00:00.000Z",
+      mediaUrls: ["https://signed.example.com/old.webp?token=old"],
+      mediaAssetIds: ["users/user-1/gen/orig.webp"],
+      storagePath: "users/user-1/gen/orig.webp",
+      ancestorGenerationId: "pic-0",
+      origin: "upload",
+      productionProvenance: { state: "unknown" },
+      sourceInputs: [
+        {
+          kind: "upload",
+          assetId: "a1",
+          storagePath: "users/user-1/gen/orig.webp",
+        },
+      ],
+    });
+
+    const withTake = (generation: Record<string, unknown>): SessionRecord =>
+      buildRecord({
+        prompt: {
+          input: "in",
+          output: "out",
+          versions: [
+            {
+              versionId: "v-1",
+              signature: "sig",
+              prompt: "p",
+              timestamp: "2026-09-17T00:00:00.000Z",
+              generations: [generation],
+            },
+          ],
+        },
+      });
+
+    const savedGeneration = (): Record<string, unknown> => {
+      const saved = sessionStore.save.mock.calls[0]![0] as SessionRecord;
+      return (saved.prompt?.versions?.[0]?.generations?.[0] ?? {}) as Record<
+        string,
+        unknown
+      >;
+    };
+
+    // AC 1 — a stale versions PATCH that omits a server-owned fact leaves it
+    // intact, one field at a time.
+    it.each([
+      "origin",
+      "productionProvenance",
+      "sourceInputs",
+      "ancestorGenerationId",
+      "archived",
+    ])(
+      "a stale versions PATCH that omits %s leaves it intact",
+      async (field) => {
+        const stored = { ...storedTake(), archived: true } as Record<
+          string,
+          unknown
+        >;
+        sessionStore.get.mockResolvedValue(withTake(stored));
+        const stale = { ...storedTake(), archived: true } as Record<
+          string,
+          unknown
+        >;
+        delete stale[field];
+
+        const service = new SessionService(sessionStore as never);
+        await service.updateVersionsForUser("user-1", "session-1", {
+          versions: [
+            {
+              versionId: "v-1",
+              signature: "sig",
+              prompt: "p",
+              timestamp: "2026-09-17T00:01:00.000Z",
+              generations: [stale],
+            },
+          ] as never,
+        });
+
+        expect(savedGeneration()[field]).toEqual(stored[field]);
+      },
+    );
+
+    // AC 2 — an empty versions array does not clear history.
+    it("a versions PATCH with an empty array does not clear history", async () => {
+      sessionStore.get.mockResolvedValue(withTake(storedTake()));
+
+      const service = new SessionService(sessionStore as never);
+      const updated = await service.updateVersionsForUser(
+        "user-1",
+        "session-1",
+        { versions: [] },
+      );
+
+      expect(updated.prompt?.versions).toHaveLength(1);
+      expect(updated.prompt?.versions?.[0]?.versionId).toBe("v-1");
+      expect(updated.prompt?.versions?.[0]?.generations?.[0]).toMatchObject({
+        id: "take-1",
+      });
+    });
+
+    // AC 3 — a general session update cannot alter a server-owned take fact.
+    it("a general session update cannot alter a server-owned take fact", async () => {
+      sessionStore.get.mockResolvedValue(withTake(storedTake()));
+
+      const service = new SessionService(sessionStore as never);
+      await service.updateSessionForUser("user-1", "session-1", {
+        prompt: {
+          versions: [
+            {
+              versionId: "v-1",
+              signature: "sig",
+              prompt: "p",
+              timestamp: "2026-09-17T00:01:00.000Z",
+              generations: [
+                {
+                  ...storedTake(),
+                  origin: "generated",
+                  productionProvenance: {
+                    state: "known",
+                    instruction: "hijack",
+                    model: null,
+                  },
+                },
+              ],
+            },
+          ],
+        } as never,
+      });
+
+      const gen = savedGeneration();
+      expect(gen.origin).toBe("upload");
+      expect(gen.productionProvenance).toEqual({ state: "unknown" });
+    });
+
+    // AC 3 — a first-frame arming update touches only what it owns.
+    it("a first-frame arming update touches only what it owns", async () => {
+      const stored = storedTake();
+      sessionStore.get.mockResolvedValue(withTake(stored));
+
+      const service = new SessionService(sessionStore as never);
+      await service.updateVersionsForUser("user-1", "session-1", {
+        versions: [
+          {
+            versionId: "v-1",
+            signature: "sig",
+            prompt: "p",
+            timestamp: "2026-09-17T00:01:00.000Z",
+            firstFrame: {
+              generatedAt: "2026-09-17T00:02:00.000Z",
+              imageUrl: "https://signed.example.com/frame.webp?token=new",
+              storagePath: "users/user-1/frames/v1.webp",
+              assetId: "frame-asset",
+            },
+            // The client re-sends the take alongside the newly armed frame, with
+            // a refreshed signed url.
+            generations: [
+              {
+                ...stored,
+                mediaUrls: [
+                  "https://signed.example.com/refreshed.webp?token=new",
+                ],
+              },
+            ],
+          },
+        ] as never,
+      });
+
+      const saved = sessionStore.save.mock.calls[0]![0] as SessionRecord;
+      expect(saved.prompt?.versions?.[0]?.firstFrame?.storagePath).toBe(
+        "users/user-1/frames/v1.webp",
+      );
+      const gen = saved.prompt?.versions?.[0]?.generations?.[0] as Record<
+        string,
+        unknown
+      >;
+      expect(gen.storagePath).toBe("users/user-1/gen/orig.webp");
+      expect(gen.mediaAssetIds).toEqual(["users/user-1/gen/orig.webp"]);
+      expect(gen.origin).toBe("upload");
+    });
+
+    // AC 3 (the bug fix) — a stale save cannot resurrect an archived take.
+    it("a stale versions PATCH cannot resurrect an archived take", async () => {
+      const archived = { ...storedTake(), archived: true };
+      sessionStore.get.mockResolvedValue(withTake(archived));
+
+      // The client read the take before it was archived, so its payload omits
+      // the flag entirely.
+      const stale = { ...storedTake() } as Record<string, unknown>;
+      delete stale.archived;
+
+      const service = new SessionService(sessionStore as never);
+      await service.updateVersionsForUser("user-1", "session-1", {
+        versions: [
+          {
+            versionId: "v-1",
+            signature: "sig",
+            prompt: "p",
+            timestamp: "2026-09-17T00:01:00.000Z",
+            generations: [stale],
+          },
+        ] as never,
+      });
+
+      expect(savedGeneration().archived).toBe(true);
+    });
+
+    // AC 5 — a legacy record with missing facts round-trips unchanged.
+    it("a legacy record with missing facts round-trips unchanged and reads as unknown", async () => {
+      const legacy = {
+        id: "legacy-1",
+        mediaType: "image",
+        prompt: "old",
+        status: "completed",
+        mediaUrls: ["https://x/y.png"],
+      };
+      sessionStore.get.mockResolvedValue(withTake(legacy));
+
+      const service = new SessionService(sessionStore as never);
+      await service.updateVersionsForUser("user-1", "session-1", {
+        versions: [
+          {
+            versionId: "v-1",
+            signature: "sig",
+            prompt: "p",
+            timestamp: "2026-09-17T00:01:00.000Z",
+            generations: [{ ...legacy }],
+          },
+        ] as never,
+      });
+
+      const gen = savedGeneration();
+      expect("origin" in gen).toBe(false);
+      expect("productionProvenance" in gen).toBe(false);
+      expect(gen).toEqual(legacy);
+    });
+
+    // AC 4 — the attachment-retry door validates identity and provenance.
+    describe("attachment retry (ADR-0022 decision 6)", () => {
+      it("rejects a retry that alters an established take's provenance", async () => {
+        sessionStore.get.mockResolvedValue(withTake(storedTake()));
+
+        const service = new SessionService(sessionStore as never);
+        await expect(
+          service.appendGenerationToVersion("user-1", "session-1", "v-1", {
+            ...storedTake(),
+            origin: "generated",
+            productionProvenance: {
+              state: "known",
+              instruction: "forged",
+              model: null,
+            },
+          }),
+        ).rejects.toBeInstanceOf(TakeFactsConflictError);
+        expect(sessionStore.save).not.toHaveBeenCalled();
+      });
+
+      it("rejects a retry that writes foreign media under an established identity", async () => {
+        sessionStore.get.mockResolvedValue(withTake(storedTake()));
+
+        const service = new SessionService(sessionStore as never);
+        await expect(
+          service.appendGenerationToVersion("user-1", "session-1", "v-1", {
+            ...storedTake(),
+            mediaAssetIds: ["users/attacker/gen/evil.webp"],
+            storagePath: "users/attacker/gen/evil.webp",
+          }),
+        ).rejects.toBeInstanceOf(TakeFactsConflictError);
+        expect(sessionStore.save).not.toHaveBeenCalled();
+      });
+
+      it("accepts a retry that faithfully re-sends the established take's record", async () => {
+        sessionStore.get.mockResolvedValue(withTake(storedTake()));
+
+        const service = new SessionService(sessionStore as never);
+        const updated = await service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          storedTake(),
+        );
+
+        const generations = updated.prompt?.versions?.[0]?.generations ?? [];
+        expect(generations).toHaveLength(1);
+        expect((generations[0] as Record<string, unknown>).origin).toBe(
+          "upload",
+        );
+        expect(
+          (generations[0] as Record<string, unknown>).productionProvenance,
+        ).toEqual({ state: "unknown" });
       });
     });
   });
