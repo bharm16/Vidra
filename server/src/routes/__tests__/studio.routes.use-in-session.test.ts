@@ -196,6 +196,12 @@ class FakeStudioStore implements StudioProjectStore {
   async saveTurn(): Promise<void> {}
   async refundCents(): Promise<void> {}
   async finalizeTurn(): Promise<void> {}
+  // The return leg reads produced images by identity; it never settles a turn,
+  // so these are inert stubs present to satisfy the store port (#126).
+  async checkpointCall(): Promise<void> {}
+  async settleTurn(): Promise<{ applied: boolean }> {
+    return { applied: false };
+  }
   async deleteProject(projectId: string): Promise<void> {
     this.projects.delete(projectId);
   }

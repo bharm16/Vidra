@@ -2,7 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { StudioProjectStore } from "../storage/StudioProjectStore";
-import type { StudioDecision, StudioTurnRecord } from "../types";
+import type {
+  StudioCallRecord,
+  StudioDecision,
+  StudioTurnRecord,
+  StudioTurnStatus,
+} from "../types";
 
 /**
  * Regression (found live 2026-07-24, M3 verification): the LLM omitted the
@@ -49,14 +54,35 @@ function makeService(decision: StudioDecision) {
     reserveTurn: async (params: { turn: StudioTurnRecord }) => {
       turns.set(params.turn.id, { ...params.turn });
     },
-    refundCents: async () => {},
-    finalizeTurn: async (
+    checkpointCall: async (
       _p: string,
       id: string,
-      patch: Partial<StudioTurnRecord>,
+      call: StudioCallRecord,
+      updatedAtMs: number,
     ) => {
       const current = turns.get(id);
-      if (current) turns.set(id, { ...current, ...patch });
+      if (!current || current.status !== "running") return;
+      const calls = [...current.calls];
+      calls[call.index] = call;
+      turns.set(id, { ...current, calls, updatedAtMs });
+    },
+    settleTurn: async (params: {
+      turnId: string;
+      status: StudioTurnStatus;
+      calls: readonly StudioCallRecord[];
+      refundCents: number;
+      updatedAtMs: number;
+    }) => {
+      const current = turns.get(params.turnId);
+      if (!current || current.status !== "running") return { applied: false };
+      turns.set(params.turnId, {
+        ...current,
+        status: params.status,
+        calls: [...params.calls],
+        refundedCents: params.refundCents,
+        updatedAtMs: params.updatedAtMs,
+      });
+      return { applied: true };
     },
     saveTurn: async (turn: StudioTurnRecord) => {
       turns.set(turn.id, { ...turn });

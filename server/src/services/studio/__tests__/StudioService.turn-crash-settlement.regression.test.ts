@@ -4,9 +4,11 @@ import { StudioSpendLedger } from "../StudioSpendLedger";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import type { StudioProjectStore } from "../storage/StudioProjectStore";
 import type {
+  StudioCallRecord,
   StudioDecision,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnStatus,
 } from "../types";
 
 /**
@@ -18,8 +20,11 @@ import type {
  * stayed `status: "running"` — which the client polls every second with no
  * terminal condition.
  *
- * Invariant: however a turn's work ends, no cents stay reserved for a turn
- * that produced nothing, and the turn reaches a terminal status.
+ * Invariant: however a turn's work ends WHILE THE PROCESS LIVES, no cents stay
+ * reserved for a turn that produced nothing, and the turn reaches a terminal
+ * status — settled from the turn's own records so any sibling that already
+ * checkpointed a success is kept (#126). Process DEATH is covered by the
+ * turn-recovery regression; this pins the in-process `finally`.
  */
 
 const DAY = "2026-07-24";
@@ -75,22 +80,50 @@ class FakeStore {
     this.turns.set(params.turn.id, { ...params.turn });
   }
 
-  async refundCents(userId: string, day: string, cents: number): Promise<void> {
-    const key = `${userId}_${day}`;
-    this.reserved.set(key, Math.max(0, (this.reserved.get(key) ?? 0) - cents));
+  async checkpointCall(
+    _projectId: string,
+    turnId: string,
+    call: StudioCallRecord,
+    updatedAtMs: number,
+  ): Promise<void> {
+    const current = this.turns.get(turnId);
+    if (!current || current.status !== "running") return;
+    const calls = [...current.calls];
+    calls[call.index] = call;
+    this.turns.set(turnId, { ...current, calls, updatedAtMs });
+  }
+
+  async settleTurn(params: {
+    projectId: string;
+    turnId: string;
+    userId: string;
+    day: string;
+    refundCents: number;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const current = this.turns.get(params.turnId);
+    if (!current || current.status !== "running") return { applied: false };
+    if (params.refundCents > 0) {
+      const key = `${params.userId}_${params.day}`;
+      this.reserved.set(
+        key,
+        Math.max(0, (this.reserved.get(key) ?? 0) - params.refundCents),
+      );
+    }
+    this.turns.set(params.turnId, {
+      ...current,
+      status: params.status,
+      calls: [...params.calls],
+      refundedCents: params.refundCents,
+      updatedAtMs: params.updatedAtMs,
+    });
+    return { applied: true };
   }
 
   async getReservedCents(userId: string, day: string): Promise<number> {
     return this.reserved.get(`${userId}_${day}`) ?? 0;
-  }
-
-  async finalizeTurn(
-    _projectId: string,
-    turnId: string,
-    patch: Partial<StudioTurnRecord>,
-  ): Promise<void> {
-    const current = this.turns.get(turnId);
-    if (current) this.turns.set(turnId, { ...current, ...patch });
   }
 
   async saveTurn(turn: StudioTurnRecord): Promise<void> {
@@ -168,8 +201,10 @@ describe("regression: a crashed turn never strands reserved cents", () => {
       calls: [0, 1, 2, 3].map((index) => ({ index, status: "running" })),
       reservedCents: 16,
       refundedCents: 0,
-      createdAtMs: 1,
-      updatedAtMs: 1,
+      // The reservation day is derived from the turn's own creation instant,
+      // so this must sit on the settlement day the assertions read.
+      createdAtMs: NOW.getTime(),
+      updatedAtMs: NOW.getTime(),
     };
 
     const { completion } = await ledger.reserve(turn, async () => {

@@ -6,8 +6,10 @@ import type {
 } from "@services/image-generation/storage";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
 import type {
+  StudioCallRecord,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnStatus,
 } from "@services/studio/types";
 import { StudioCapExceededError } from "@services/studio/storage/FirestoreStudioProjectStore";
 import type { SessionRecord } from "@server/domain/session/types";
@@ -533,28 +535,57 @@ export class InMemoryStudioProjectStore implements StudioProjectStore {
     return Promise.resolve();
   }
 
-  refundCents(userId: string, day: string, cents: number): Promise<void> {
-    const usageKey = `${userId}_${day}`;
-    this.reserved.set(
-      usageKey,
-      Math.max(0, (this.reserved.get(usageKey) ?? 0) - cents),
-    );
+  checkpointCall(
+    projectId: string,
+    turnId: string,
+    call: StudioCallRecord,
+    updatedAtMs: number,
+  ): Promise<void> {
+    const current = this.turns.get(turnId);
+    if (!current || current.projectId !== projectId) return Promise.resolve();
+    if (current.status !== "running") return Promise.resolve();
+    const calls = [...current.calls];
+    calls[call.index] = call;
+    this.turns.set(turnId, structuredClone({ ...current, calls, updatedAtMs }));
     return Promise.resolve();
   }
 
-  finalizeTurn(
-    projectId: string,
-    turnId: string,
-    patch: Pick<
-      StudioTurnRecord,
-      "status" | "calls" | "refundedCents" | "updatedAtMs"
-    >,
-  ): Promise<void> {
-    const current = this.turns.get(turnId);
-    if (current && current.projectId === projectId) {
-      this.turns.set(turnId, structuredClone({ ...current, ...patch }));
+  settleTurn(params: {
+    projectId: string;
+    turnId: string;
+    userId: string;
+    day: string;
+    refundCents: number;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const current = this.turns.get(params.turnId);
+    if (!current || current.projectId !== params.projectId) {
+      return Promise.resolve({ applied: false });
     }
-    return Promise.resolve();
+    // Idempotency guard mirrors Firestore: a replay finds a terminal turn and
+    // no-ops, so refund and finalization apply exactly once.
+    if (current.status !== "running")
+      return Promise.resolve({ applied: false });
+    if (params.refundCents > 0) {
+      const usageKey = `${params.userId}_${params.day}`;
+      this.reserved.set(
+        usageKey,
+        Math.max(0, (this.reserved.get(usageKey) ?? 0) - params.refundCents),
+      );
+    }
+    this.turns.set(
+      params.turnId,
+      structuredClone({
+        ...current,
+        status: params.status,
+        calls: [...params.calls],
+        refundedCents: params.refundCents,
+        updatedAtMs: params.updatedAtMs,
+      }),
+    );
+    return Promise.resolve({ applied: true });
   }
 
   /**

@@ -120,6 +120,19 @@ export interface StudioCallRecord {
   status: "running" | "succeeded" | "failed";
   image?: StudioImageRecord;
   error?: string;
+  /**
+   * Recorded on a FAILED call when the provider produced output but the studio
+   * could not store it (#126, ADR-0022 decision 8 allowance accounting). It
+   * separates the two decisions a failed call forces apart: the studio-state
+   * decision is `status: "failed"` — there is no usable image for this slot
+   * either way — but the allowance decision differs. A provider that already
+   * did billable work did NOT "spend nothing", so its reserved cents are NOT
+   * released. Absent on a plain provider failure (nothing billable ran, so the
+   * cents ARE released) and never set on a succeeded call, whose spend its
+   * image already implies. Omitted rather than written `false` so Firestore
+   * never sees an undefined field.
+   */
+  providerSpent?: boolean;
 }
 
 export interface StudioTurnRecord {

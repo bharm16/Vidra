@@ -21,6 +21,7 @@ import type {
   StudioCallRecord,
   StudioProjectRecord,
   StudioTurnRecord,
+  StudioTurnStatus,
 } from "../types";
 import type { StudioProjectStore } from "./StudioProjectStore";
 
@@ -241,31 +242,6 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
       .set(this.toStoredTurn(turn));
   }
 
-  /**
-   * Return refunded cents to the day's counter (failed calls never consume
-   * cap). Floors at zero so refunds can never go negative.
-   */
-  async refundCents(userId: string, day: string, cents: number): Promise<void> {
-    if (cents <= 0) return;
-    const usageRef = this.usage.doc(`${userId}_${day}`);
-
-    await this.db.runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(usageRef);
-      const reservedCents = snapshot.exists
-        ? ((snapshot.data() as StoredUsage).reservedCents ?? 0)
-        : 0;
-      transaction.set(
-        usageRef,
-        {
-          userId,
-          day,
-          reservedCents: Math.max(0, reservedCents - cents),
-        },
-        { merge: true },
-      );
-    });
-  }
-
   async getReservedCents(userId: string, day: string): Promise<number> {
     const snapshot = await this.usage.doc(`${userId}_${day}`).get();
     if (!snapshot.exists) return 0;
@@ -273,29 +249,111 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
   }
 
   /**
-   * Single terminal write after every call settles — no per-call write races.
-   * (Progressive per-call updates are an M2 polish option.)
+   * Durable per-call progress (#126): merge one call's outcome into a
+   * still-running turn without settling it. Read-modify-write inside a
+   * transaction so parallel batch calls checkpointing at once cannot clobber
+   * one another (Firestore retries the loser against the committed array), and
+   * so a checkpoint that races a settlement sees the turn's real status. The
+   * produced-image index is recomputed from the merged calls, keeping it
+   * consistent with `calls` even mid-batch. A no-op once the turn is terminal
+   * — a late checkpoint must not revive a turn recovery already settled.
    */
-  async finalizeTurn(
+  async checkpointCall(
     projectId: string,
     turnId: string,
-    patch: Pick<
-      StudioTurnRecord,
-      "status" | "calls" | "refundedCents" | "updatedAtMs"
-    >,
+    call: StudioCallRecord,
+    updatedAtMs: number,
   ): Promise<void> {
-    // The settle path is the only writer of succeeded images, so it is where
-    // the produced-image index is (re)computed. Merge-written alongside the
-    // terminal `calls` it is derived from, so the two never disagree (#121).
-    await this.turnsOf(projectId)
-      .doc(turnId)
-      .set(
+    const turnRef = this.turnsOf(projectId).doc(turnId);
+    await this.db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(turnRef);
+      if (!snapshot.exists) return;
+      const stored = this.fromStoredTurn(snapshot.data() ?? {});
+      if (stored.status !== "running") return;
+      const calls = [...stored.calls];
+      calls[call.index] = call;
+      transaction.set(
+        turnRef,
         this.stripUndefined({
-          ...patch,
-          imageIds: producedImageIds(patch.calls),
+          calls,
+          updatedAtMs,
+          imageIds: producedImageIds(calls),
         }),
         { merge: true },
       );
+    });
+  }
+
+  /**
+   * Refund and finalization as ONE idempotent atomic unit (#126). The usage
+   * counter debit and the terminal turn write commit together in a single
+   * transaction, both gated by the turn's `running` → terminal transition:
+   * the transaction reads the turn first and, if it is already terminal,
+   * writes nothing and reports `applied: false`. A replayed settlement (an
+   * in-process retry, the crash `finally`, or a restart recovery reading the
+   * same records) therefore produces exactly one refund and one finalization,
+   * and the two can never disagree because they are the same commit.
+   *
+   * The settle path is the only writer of succeeded images, so it is where the
+   * produced-image index is (re)computed — merge-written alongside the terminal
+   * `calls` it is derived from, so the two never disagree (#121).
+   */
+  async settleTurn(params: {
+    projectId: string;
+    turnId: string;
+    userId: string;
+    day: string;
+    refundCents: number;
+    status: StudioTurnStatus;
+    calls: readonly StudioCallRecord[];
+    updatedAtMs: number;
+  }): Promise<{ applied: boolean }> {
+    const { projectId, turnId, userId, day, refundCents, status, calls } =
+      params;
+    const turnRef = this.turnsOf(projectId).doc(turnId);
+    const usageRef = this.usage.doc(`${userId}_${day}`);
+
+    return this.db.runTransaction(async (transaction) => {
+      const turnSnapshot = await transaction.get(turnRef);
+      if (!turnSnapshot.exists) return { applied: false };
+      const stored = turnSnapshot.data() as StudioTurnRecord;
+      // Idempotency guard: only a still-running turn is settled. A replay finds
+      // it terminal and no-ops, so no cents are released twice.
+      if (stored.status !== "running") return { applied: false };
+
+      // Every read BEFORE any write (Firestore transaction rule).
+      let reservedCents = 0;
+      if (refundCents > 0) {
+        const usageSnapshot = await transaction.get(usageRef);
+        reservedCents = usageSnapshot.exists
+          ? ((usageSnapshot.data() as StoredUsage).reservedCents ?? 0)
+          : 0;
+      }
+
+      if (refundCents > 0) {
+        transaction.set(
+          usageRef,
+          {
+            userId,
+            day,
+            reservedCents: Math.max(0, reservedCents - refundCents),
+          },
+          { merge: true },
+        );
+      }
+      transaction.set(
+        turnRef,
+        this.stripUndefined({
+          status,
+          calls: [...calls],
+          refundedCents: refundCents,
+          updatedAtMs: params.updatedAtMs,
+          imageIds: producedImageIds(calls),
+        }),
+        { merge: true },
+      );
+      return { applied: true };
+    });
   }
 
   /**
