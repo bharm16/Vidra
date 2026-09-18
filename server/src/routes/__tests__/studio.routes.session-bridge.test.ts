@@ -118,6 +118,9 @@ class FakeStudioStore implements StudioProjectStore {
   async getTurn(): Promise<StudioTurnRecord | null> {
     return null;
   }
+  async findTurnByProducedImageId(): Promise<StudioTurnRecord | null> {
+    return null;
+  }
   async reserveTurn(): Promise<void> {}
   async saveTurn(): Promise<void> {}
   async refundCents(): Promise<void> {}

@@ -17,8 +17,31 @@
  */
 
 import { getFirestore } from "@infrastructure/firebaseAdmin";
-import type { StudioProjectRecord, StudioTurnRecord } from "../types";
+import type {
+  StudioCallRecord,
+  StudioProjectRecord,
+  StudioTurnRecord,
+} from "../types";
 import type { StudioProjectStore } from "./StudioProjectStore";
+
+/**
+ * The ids of every image a turn's succeeded calls produced. Persisted as a
+ * top-level array on the turn doc purely as a query index: Firestore cannot
+ * filter on `calls[].image.id` (a sub-property of an object array), so
+ * `findTurnByProducedImageId` reaches an image BY IDENTITY through an
+ * `array-contains` on this field instead of walking a history page (#121).
+ *
+ * Derived, never authoritative — `calls` remains the source of truth, and
+ * `fromStoredTurn` strips this field on the way out so it never reaches the
+ * domain record or the wire.
+ */
+function producedImageIds(calls: readonly StudioCallRecord[]): string[] {
+  const ids: string[] = [];
+  for (const call of calls) {
+    if (call.status === "succeeded" && call.image) ids.push(call.image.id);
+  }
+  return ids;
+}
 
 export class StudioCapExceededError extends Error {
   public readonly statusCode = 429;
@@ -72,19 +95,20 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
     userId: string,
     limitCount = 50,
   ): Promise<StudioProjectRecord[]> {
-    // Equality-only query on purpose: adding orderBy(updatedAtMs) would
-    // require a composite Firestore index (hit live 2026-07-24). A user's
-    // project count is small, so sort in memory instead of taking an
-    // infra dependency.
+    // Ordered server-side by updatedAtMs so the newest project is never
+    // dropped when a user has more than one page of them (#121). The earlier
+    // equality-only fetch capped at 500 BEFORE an in-memory recency sort, so
+    // the newest could fall outside that arbitrary window and vanish from the
+    // index. Ordering in the query needs a composite index on
+    // (userId, updatedAtMs) — declared in firestore.indexes.json, the same
+    // dependency the `sessions` collection already takes for `findByUser`.
     const snapshot = await this.projects
       .where("userId", "==", userId)
-      .limit(500)
+      .orderBy("updatedAtMs", "desc")
+      .limit(limitCount)
       .get();
     if (snapshot.empty) return [];
-    return snapshot.docs
-      .map((doc) => doc.data() as StudioProjectRecord)
-      .sort((a, b) => b.updatedAtMs - a.updatedAtMs)
-      .slice(0, limitCount);
+    return snapshot.docs.map((doc) => doc.data() as StudioProjectRecord);
   }
 
   async updateProject(
@@ -105,7 +129,7 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
       .limit(limitCount)
       .get();
     if (snapshot.empty) return [];
-    return snapshot.docs.map((doc) => doc.data() as StudioTurnRecord);
+    return snapshot.docs.map((doc) => this.fromStoredTurn(doc.data()));
   }
 
   async getTurn(
@@ -114,7 +138,26 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
   ): Promise<StudioTurnRecord | null> {
     const snapshot = await this.turnsOf(projectId).doc(turnId).get();
     if (!snapshot.exists) return null;
-    return snapshot.data() as StudioTurnRecord;
+    return this.fromStoredTurn(snapshot.data() ?? {});
+  }
+
+  /**
+   * The turn that produced `imageId`, by identity — an `array-contains` on the
+   * denormalized `imageIds` index, so retrieval never depends on where the
+   * turn falls in the project's history (#121). Firestore serves this with an
+   * automatic single-field index; no composite index is required.
+   */
+  async findTurnByProducedImageId(
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioTurnRecord | null> {
+    const snapshot = await this.turnsOf(projectId)
+      .where("imageIds", "array-contains", imageId)
+      .limit(1)
+      .get();
+    if (snapshot.empty) return null;
+    const doc = snapshot.docs[0];
+    return doc ? this.fromStoredTurn(doc.data()) : null;
   }
 
   /**
@@ -151,7 +194,7 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
         reservedCents: reservedCents + turn.reservedCents,
       };
       transaction.set(usageRef, usagePayload);
-      transaction.set(turnRef, this.stripUndefined(turn));
+      transaction.set(turnRef, this.toStoredTurn(turn));
     });
   }
 
@@ -164,7 +207,7 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
   async saveTurn(turn: StudioTurnRecord): Promise<void> {
     await this.turnsOf(turn.projectId)
       .doc(turn.id)
-      .set(this.stripUndefined(turn));
+      .set(this.toStoredTurn(turn));
   }
 
   /**
@@ -210,9 +253,18 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
       "status" | "calls" | "refundedCents" | "updatedAtMs"
     >,
   ): Promise<void> {
+    // The settle path is the only writer of succeeded images, so it is where
+    // the produced-image index is (re)computed. Merge-written alongside the
+    // terminal `calls` it is derived from, so the two never disagree (#121).
     await this.turnsOf(projectId)
       .doc(turnId)
-      .set(this.stripUndefined(patch), { merge: true });
+      .set(
+        this.stripUndefined({
+          ...patch,
+          imageIds: producedImageIds(patch.calls),
+        }),
+        { merge: true },
+      );
   }
 
   /**
@@ -245,5 +297,26 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
         ([, v]) => v !== undefined,
       ),
     ) as T;
+  }
+
+  /** A turn plus its derived produced-image index, undefined fields dropped. */
+  private toStoredTurn(turn: StudioTurnRecord): Record<string, unknown> {
+    return this.stripUndefined({
+      ...turn,
+      imageIds: producedImageIds(turn.calls),
+    });
+  }
+
+  /**
+   * The domain turn, with the persistence-only `imageIds` index removed. The
+   * index is a query aid, not part of the record's contract, so no consumer —
+   * the service, the turn view, the wire — ever sees it.
+   */
+  private fromStoredTurn(data: Record<string, unknown>): StudioTurnRecord {
+    const turn = { ...data } as unknown as StudioTurnRecord & {
+      imageIds?: string[];
+    };
+    delete turn.imageIds;
+    return turn;
   }
 }

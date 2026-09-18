@@ -159,6 +159,20 @@ class FakeStudioStore implements StudioProjectStore {
   ): Promise<StudioTurnRecord | null> {
     return this.turns.get(turnId) ?? null;
   }
+  async findTurnByProducedImageId(
+    projectId: string,
+    imageId: string,
+  ): Promise<StudioTurnRecord | null> {
+    return (
+      [...this.turns.values()].find(
+        (turn) =>
+          turn.projectId === projectId &&
+          turn.calls.some(
+            (call) => call.status === "succeeded" && call.image?.id === imageId,
+          ),
+      ) ?? null
+    );
+  }
   async reserveTurn(): Promise<void> {}
   async saveTurn(): Promise<void> {}
   async refundCents(): Promise<void> {}
