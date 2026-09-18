@@ -33,7 +33,8 @@ import type { OwnedPictureResolver } from "@services/owned-media";
  *  2. **Idempotency claim.** A retry after a lost response must return the
  *     SAME take, and a double-fire must not mint a second one. The claim is
  *     what makes both true, and it is taken before the media is stored so the
- *     stored bytes are never orphaned by a replay.
+ *     stored bytes are never orphaned by a replay. A replay whose attachment is
+ *     still owed is RESUMED, not merely returned (step 5).
  *  3. **Relationship validation — on a fresh claim only.** Every relationship
  *     this take will RECORD is proven against the owned session read in step 1
  *     (issue #122, ADR-0022 decision 3): the words-version it is filed under
@@ -49,10 +50,18 @@ import type { OwnedPictureResolver } from "@services/owned-media";
  *     the take outlives the browser tab that admitted it and the signed URL it
  *     was admitted with. Admission never generates: nothing here calls a
  *     provider, and a retry re-stores nothing.
- *  5. **Identity, then record, then attach.** The take id is minted before the
- *     append can fail, and attachment reports rather than throws
- *     (`attachTakeToSession`) — a failed attach is "made but not saved", with
- *     the record riding back out for the creator's retry.
+ *  5. **Identity and durable resume record, then attach.** The take id is
+ *     minted BEFORE the side effects that could otherwise duplicate it, and the
+ *     completion snapshot is written once with the attachment still `pending` —
+ *     carrying that id, the durable media handle, and the record — BEFORE the
+ *     append is attempted (issue #128). That snapshot is the authoritative
+ *     resume record: a crash after it re-attaches THIS take from the persisted
+ *     record rather than storing new bytes or minting a second take, exactly as
+ *     the clip half does (`attachCompletedJobToSession`). Attachment reports
+ *     rather than throws (`attachTakeToSession`) — a failed attach is "made but
+ *     not saved", and the snapshot is rewritten with the resolved outcome, so a
+ *     replay always reads the CURRENT attachment state, never a stale failure a
+ *     later repair has since fixed (ADR-0022 decision 6).
  *
  * Deliberately NOT here: HTTP. The boundary returns a result; each caller's
  * route decides status codes. That is what lets three different routes reuse
@@ -523,16 +532,19 @@ export async function admitPictureTake(
   });
 
   if (claim.state === "replay") {
-    // Same take, fresh URL (issue #125). The snapshot holds the take's durable
-    // handle (asset id + storage path); the signed `imageUrl` it also holds was
-    // minted at first admission and has likely expired. Re-mint through the
-    // owner-checked resolver — identity unchanged, only the ephemeral URL moves.
-    const take = await remintReplayedImageUrl(
-      readAdmittedTake(claim.snapshot.body),
-      request.userId,
+    // Issues #125 and #128, merged. A replay is never a bare snapshot echo.
+    // The resume path decides what the settled snapshot means: an acceptance
+    // whose append was interrupted is re-attached — same take, never re-stored,
+    // never a re-minted identity (#128) — and the take's `imageUrl`, likely
+    // expired since first admission, is re-minted from its durable handle
+    // through the owner-checked resolver (#125), leaving its identity untouched.
+    return await resumeAdmittedTake(
+      { sessionService, idempotency },
+      request,
+      claim.recordId,
+      claim.snapshot,
       resolver,
     );
-    return { state: "admitted", take, replayed: true };
   }
   if (claim.state === "in_progress") return { state: "in_progress" };
   if (claim.state === "conflict") return { state: "conflict" };
@@ -557,6 +569,11 @@ export async function admitPictureTake(
     return { state: "refused", reason: relationships.reason };
   }
 
+  // Established BEFORE the side effects that could otherwise duplicate it
+  // (issue #128): the take's name is not the append's to lose, is persisted at
+  // the checkpoint below, and is reused by every resume rather than re-minted.
+  const generationId = randomUUID();
+
   let stored: StoredAdmissionAsset;
   try {
     stored = await mediaStore.storeFromBuffer(
@@ -569,10 +586,6 @@ export async function admitPictureTake(
     await idempotency.markFailed(recordId, reason);
     throw error;
   }
-
-  // Minted before anything else can fail: the take's name is not the append's
-  // to lose, and a retry re-attaches THIS take rather than minting a second.
-  const generationId = randomUUID();
 
   const sourceInputs: TakeSourceInput[] = [
     ...(request.sourceInputs ?? []),
@@ -611,16 +624,15 @@ export async function admitPictureTake(
     throw error;
   }
 
-  const attachment = await attachTakeToSession({
-    sessionService,
-    userId: request.userId,
-    sessionId: request.sessionId,
-    promptVersionId: request.promptVersionId,
-    record,
-    logLabel: `Admitted picture (${request.origin})`,
-  });
-
-  const take: AdmittedPictureTake = {
+  // The durable resume record (issue #128, ADR-0022 decision 6): the completion
+  // snapshot itself, written NOW — with the attachment still `pending` and
+  // carrying the id, the durable media handle, and the record — BEFORE the
+  // append is attempted. The idempotency record is the authoritative owner of
+  // this attachment state. A crash after this point resumes THIS take (same
+  // identity, same media, re-attached) instead of storing new bytes and minting
+  // a second one, mirroring the clip half (`attachCompletedJobToSession`),
+  // which likewise checkpoints before its append.
+  const pending: AdmittedPictureTake = {
     generationId,
     sessionId: request.sessionId,
     promptVersionId: request.promptVersionId,
@@ -629,13 +641,44 @@ export async function admitPictureTake(
     assetId: stored.id,
     storagePath: stored.storagePath,
     record,
-    attachment,
+    attachment: {
+      state: "pending",
+      generationId,
+      sessionId: request.sessionId,
+      promptVersionId: request.promptVersionId,
+      record,
+    },
   };
+  await persistAdmissionSnapshot(idempotency, recordId, pending);
 
-  // Completed even when the attachment failed: the take exists, its media is
-  // durable, and its identity is settled. A retry of the ADMISSION must return
-  // this same take rather than store the bytes again — re-attaching it is a
-  // different verb, and the failed attachment carries the record for it.
+  const take = await attachAndComplete(
+    { sessionService, idempotency },
+    request,
+    recordId,
+    pending,
+  );
+
+  return { state: "admitted", take, replayed: false };
+}
+
+/** The reads and writes the attach-and-resume steps need. */
+interface AdmissionAttachDeps {
+  sessionService: AdmissionSessionPort;
+  idempotency: AdmissionIdempotencyPort;
+}
+
+/**
+ * Write the completion snapshot — the authoritative resume record. Reused for
+ * every write of it: the pre-append `pending` checkpoint and each resolved
+ * outcome after it. `markCompleted` settles the idempotency record, so a later
+ * claim `replay`s this exact snapshot; the attachment state inside it, not the
+ * record's status, is what says whether the take still owes its session a write.
+ */
+async function persistAdmissionSnapshot(
+  idempotency: AdmissionIdempotencyPort,
+  recordId: string,
+  take: AdmittedPictureTake,
+): Promise<void> {
   await idempotency.markCompleted({
     recordId,
     snapshot: {
@@ -643,6 +686,67 @@ export async function admitPictureTake(
       body: take as unknown as Record<string, unknown>,
     },
   });
+}
 
-  return { state: "admitted", take, replayed: false };
+/**
+ * Attach the take's already-built record and rewrite the snapshot with the
+ * outcome. Never a generation retry (ADR-0022 decision 6): it re-sends the SAME
+ * record under the SAME identity to the de-duplicating session append, so a
+ * resumed or repaired attach writes one take rather than a second, and reruns
+ * no generation and no refund. Attachment reports rather than throws, so a
+ * failure comes back as a `failed` snapshot the next replay can resume, not an
+ * exception that strands the take.
+ */
+async function attachAndComplete(
+  deps: AdmissionAttachDeps,
+  request: AdmitPictureTakeRequest,
+  recordId: string,
+  base: AdmittedPictureTake,
+): Promise<AdmittedPictureTake> {
+  const attachment = await attachTakeToSession({
+    sessionService: deps.sessionService,
+    userId: request.userId,
+    sessionId: request.sessionId,
+    promptVersionId: request.promptVersionId,
+    record: base.record,
+    logLabel: `Admitted picture (${request.origin})`,
+  });
+  const take: AdmittedPictureTake = { ...base, attachment };
+  await persistAdmissionSnapshot(deps.idempotency, recordId, take);
+  return take;
+}
+
+/**
+ * Resume (or replay) an acceptance the claim reported as already settled
+ * (issue #128), then freshen its signed URL (issue #125).
+ *
+ * An `attached` snapshot is the finished take, returned as-is: the ordinary
+ * replay, which deliberately re-runs NO relationship validation, so a source
+ * archived after the fact never rewrites a settled acceptance. An unresolved
+ * snapshot (`pending` or `failed`) is a take whose identity and media are
+ * durable but whose append was interrupted or has not yet landed; it is
+ * re-attached from the persisted record — never re-stored, never re-minted —
+ * and the snapshot is rewritten with the fresh outcome. This is what makes a
+ * receipt fetched after a later successful repair report `attached` rather than
+ * the stale failure that first settled the record.
+ *
+ * Either way the returned take's `imageUrl` — minted at first admission and
+ * likely expired — is re-minted from its durable handle through the
+ * owner-checked resolver (#125); identity is left exactly as the snapshot
+ * recorded it, and the persisted snapshot keeps its own frozen handle.
+ */
+async function resumeAdmittedTake(
+  deps: AdmissionAttachDeps,
+  request: AdmitPictureTakeRequest,
+  recordId: string,
+  snapshot: { statusCode: number; body: Record<string, unknown> },
+  resolver: OwnedPictureResolver | undefined,
+): Promise<AdmitPictureTakeResult> {
+  const take = readAdmittedTake(snapshot.body);
+  const settled =
+    take.attachment.state === "attached"
+      ? take
+      : await attachAndComplete(deps, request, recordId, take);
+  const fresh = await remintReplayedImageUrl(settled, request.userId, resolver);
+  return { state: "admitted", take: fresh, replayed: true };
 }
