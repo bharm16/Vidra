@@ -14,6 +14,7 @@ import type { FaceSwapService } from "@services/video-generation/FaceSwapService
 import type { AssetService } from "@services/asset/AssetService";
 import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
 import type { SessionService } from "@services/sessions/SessionService";
+import type { AdmissionMediaStore } from "@services/admission/admitPictureTake";
 
 export interface PreviewStorageService {
   saveFromUrl: (
@@ -92,6 +93,13 @@ export interface PreviewRoutesServices {
   assetService?: AssetService | null;
   requestIdempotencyService?: RequestIdempotencyService | null;
   sessionService?: SessionService | null;
+  /**
+   * The creator-owned image asset store (ADR-0022): where an admitted picture's
+   * bytes become durable. Distinct from `storageService` above — this one
+   * returns an asset id that `/api/preview/image/view` can re-resolve after the
+   * signed URL expires, which is what keeps an admitted take readable.
+   */
+  imageAssetStore?: AdmissionMediaStore | null;
 }
 
 /**

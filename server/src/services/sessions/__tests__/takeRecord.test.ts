@@ -68,6 +68,49 @@ describe("buildCompletedTakeRecord", () => {
     expect(record.thumbnailUrl).toBeNull();
   });
 
+  // ADR-0022 decisions 1 and 2. The defaults exist so the three generating
+  // writers cannot record a lie by omission: every record carries an origin
+  // and a provenance, and for a generation they are exactly the prompt and
+  // model that ran.
+  it("stamps a generating writer's record as generated, with its prompt as the provenance", () => {
+    const record = buildCompletedTakeRecord(base);
+    expect(record.origin).toBe("generated");
+    expect(record.productionProvenance).toEqual({
+      state: "known",
+      instruction: "a dancer in the rain",
+      model: "flux-schnell",
+    });
+    // Nothing contributed but the words, so there is no input list to write.
+    expect("sourceInputs" in record).toBe(false);
+  });
+
+  it("lets an admitted take name its own origin, provenance and source inputs", () => {
+    const record = buildCompletedTakeRecord({
+      ...base,
+      model: null,
+      prompt: "",
+      origin: "upload",
+      // An upload does not invent a production fact.
+      productionProvenance: { state: "unknown" },
+      sourceInputs: [{ kind: "upload", assetId: "asset-1" }],
+    });
+
+    expect(record.origin).toBe("upload");
+    expect(record.productionProvenance).toEqual({ state: "unknown" });
+    expect(record.sourceInputs).toEqual([
+      { kind: "upload", assetId: "asset-1" },
+    ]);
+  });
+
+  it("refuses an origin outside the closed set", () => {
+    expect(() =>
+      buildCompletedTakeRecord({
+        ...base,
+        origin: "screenshot" as never,
+      }),
+    ).toThrow();
+  });
+
   it("refuses a record its own wire contract would reject", () => {
     expect(() =>
       buildCompletedTakeRecord({

@@ -114,6 +114,15 @@ export const UploadPreviewImageResponseSchema = previewEnvelope(
     viewUrlExpiresAt: z.string().optional(),
     sizeBytes: z.number().optional(),
     contentType: z.string().optional(),
+    // ADR-0022 decision 1: present only when the upload named a destination
+    // session and words-version — i.e. when it was ADMITTED as a first-frame
+    // take rather than stored as a reference image. `generationId` is the
+    // server-assigned take identity, and it appears only once the take is
+    // actually in its session; `attachment` carries the other case.
+    generationId: z.string().optional(),
+    promptVersionId: z.string().optional(),
+    assetId: z.string().optional(),
+    attachment: TakeAttachmentSchema.optional(),
   }),
 );
 

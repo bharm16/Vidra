@@ -33,6 +33,10 @@ import type {
   SessionSeedInfoSchema,
   SessionStatusSchema,
   SessionStyleReferenceSchema,
+  TakeOriginSchema,
+  TakeProductionProvenanceSchema,
+  TakeSourceInputKindSchema,
+  TakeSourceInputSchema,
 } from "../schemas/session.schemas.js";
 
 export type SessionStatus = z.infer<typeof SessionStatusSchema>;
@@ -55,12 +59,26 @@ export type SessionPromptVersionVideo = z.infer<
   typeof SessionPromptVersionVideoSchema
 >;
 
+/** ADR-0022 decision 1: where a take entered the session from. */
+export type TakeOrigin = z.infer<typeof TakeOriginSchema>;
+
+/** ADR-0022 decision 3: what kind of thing contributed to a take. */
+export type TakeSourceInputKind = z.infer<typeof TakeSourceInputKindSchema>;
+
+export type TakeSourceInput = z.infer<typeof TakeSourceInputSchema>;
+
+/** ADR-0022 decision 2: what actually produced the media, or an honest unknown. */
+export type TakeProductionProvenance = z.infer<
+  typeof TakeProductionProvenanceSchema
+>;
+
 /**
  * A generation record persisted under a version — a picture or a clip, and a
  * node in the space (ADR-0013). The record stays open (index signature) so
  * existing writers/readers that treat it as a loose bag still type-check;
- * `id`, `ancestorGenerationId` and `archived` are the declared, validated
- * fields the space reads.
+ * `id`, `ancestorGenerationId`, `archived`, and the ADR-0022 admission trio
+ * (`origin`, `productionProvenance`, `sourceInputs`) are the declared,
+ * validated fields.
  */
 export type SessionGenerationRecord = z.infer<
   typeof SessionGenerationRecordSchema

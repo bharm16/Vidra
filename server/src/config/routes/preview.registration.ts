@@ -35,6 +35,7 @@ export function registerPreviewRoutes(
     assetService: container.resolve("assetService"),
     requestIdempotencyService: container.resolve("requestIdempotencyService"),
     sessionService: container.resolve("sessionService"),
+    imageAssetStore: container.resolve("imageAssetStore"),
   });
 
   const starterCreditsMiddleware =

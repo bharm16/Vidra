@@ -36,6 +36,42 @@ describe("buildSpaceNodes", () => {
     expect(v2.ancestorId).toBe(v1.id);
   });
 
+  // ADR-0022 decision 3: a picture may descend from another picture. The
+  // ancestor is a recorded choice the caller supplies, never a positional
+  // guess made here.
+  it("hangs a refined picture from its source picture, not from the words-version", () => {
+    const nodes = buildSpaceNodes({
+      words: [{ versionId: "v1", label: "a cat on a couch" }],
+      pictures: [
+        { id: "pic1", versionId: "v1", status: "ready" },
+        {
+          id: "pic2",
+          versionId: "v1",
+          status: "ready",
+          ancestorPictureId: "pic1",
+        },
+      ],
+      clips: [],
+    });
+
+    expect(nodes.find((n) => n.id === "pic1")).toMatchObject({
+      ancestorId: "words-v1",
+    });
+    expect(nodes.find((n) => n.id === "pic2")).toMatchObject({
+      kind: "picture",
+      ancestorId: "pic1",
+    });
+  });
+
+  it("still roots a picture at its words-version when no picture ancestor was recorded", () => {
+    const nodes = buildSpaceNodes({
+      words: [{ versionId: "v1", label: "x" }],
+      pictures: [{ id: "pic1", versionId: "v1", status: "ready" }],
+      clips: [],
+    });
+    expect(nodes.find((n) => n.id === "pic1")?.ancestorId).toBe("words-v1");
+  });
+
   it("carries the archived flag through so the render can skip it", () => {
     const nodes = buildSpaceNodes({
       words: [{ versionId: "v1", label: "x" }],

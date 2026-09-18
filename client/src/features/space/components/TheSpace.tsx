@@ -28,6 +28,7 @@ const EDGE_STROKE: Record<EdgeKind, string> = {
   roll: "#d3a44e", // a re-roll sibling (motion gold)
   reword: "#8b8baa", // a reworded words-version
   move: "#6b8a6b", // picture → clip
+  refine: "#7d8fb3", // picture → picture, inside the picture column (ADR-0022)
 };
 
 /** The mono caption under each take. */

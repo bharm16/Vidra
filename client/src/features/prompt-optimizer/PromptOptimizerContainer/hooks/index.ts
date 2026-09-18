@@ -17,3 +17,5 @@ export { usePromptCoherence } from "./usePromptCoherence";
 export { useAutoSave } from "./useAutoSave";
 export { useAssetManagement } from "./useAssetManagement";
 export { useEditorShotPromptBinding } from "./useEditorShotPromptBinding";
+
+export { useFirstFrameAdmission } from "./useFirstFrameAdmission";
