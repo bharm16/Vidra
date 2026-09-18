@@ -123,6 +123,16 @@ export const TakeSourceInputSchema = z.object({
  * an additive member here — the union is the place that grows, not a free-form
  * bag beside it.
  */
+export const SketchProductionSettingsSchema = z.object({
+  /**
+   * The seed the image was actually made with. The relay reports the seed it
+   * used; the requested one is recorded only when it does not (issue #87).
+   */
+  seed: z.number().int(),
+  strength: z.number().min(0).max(1),
+  steps: z.number().int().min(1),
+});
+
 export const TakeProductionProvenanceSchema = z.discriminatedUnion("state", [
   z.object({ state: z.literal("unknown") }),
   z.object({
@@ -130,6 +140,13 @@ export const TakeProductionProvenanceSchema = z.discriminatedUnion("state", [
     /** The prompt or edit instruction that produced this media. */
     instruction: z.string(),
     model: z.string().nullable().optional(),
+    /**
+     * ADR-0022 decision 5: the settings an accepted live output was made
+     * with. Closed and additive, exactly as this union's note anticipated —
+     * the drawing that went in is a `sketch` source input, because that is
+     * where a durable media handle belongs.
+     */
+    sketch: SketchProductionSettingsSchema.optional(),
   }),
 ]);
 

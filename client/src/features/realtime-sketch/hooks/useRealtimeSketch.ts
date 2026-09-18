@@ -110,6 +110,20 @@ export function useRealtimeSketch(
           requestId: frame.requestId,
           imageUrl: image.url,
           at,
+          // The tuple "Use this" records, captured here because HERE is the
+          // only place that knows it: `current` is what this frame was sent
+          // with, and by the time the answer arrives the creator may have
+          // changed every one of these (ADR-0022 decision 5, issue #87).
+          inputs: {
+            prompt: current.prompt,
+            strength: current.strength,
+            steps: current.steps,
+            // The relay reports the seed it actually used. That is the
+            // reproducible fact; the requested seed is only a request, and
+            // recording it when the provider chose another would be the
+            // fabrication decision 2 forbids.
+            seed: parsed.data.seed ?? current.seed,
+          },
         });
       })
       .catch((error: unknown) => {

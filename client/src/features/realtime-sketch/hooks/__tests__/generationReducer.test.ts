@@ -13,6 +13,20 @@ const snapshot = (at: number, dataUri = `data:image/jpeg;base64,frame${at}`) =>
     at,
   }) as const;
 
+/**
+ * A result carries the inputs its frame was DISPATCHED with (ADR-0022
+ * decision 5): the sender reads them at send time, because settings are live
+ * state and have moved on by the time the answer lands.
+ */
+const result = (requestId: string, imageUrl: string, at: number) =>
+  ({
+    type: "result",
+    requestId,
+    imageUrl,
+    at,
+    inputs: { prompt: "a lamp", strength: 0.875, steps: 8, seed: 42 },
+  }) as const;
+
 describe("generationReducer — send discipline", () => {
   it("sends the first snapshot immediately: it becomes the in-flight frame", () => {
     const state = generationReducer(
@@ -59,12 +73,10 @@ describe("generationReducer — send discipline", () => {
       createInitialGenerationState(),
       snapshot(1_000),
     );
-    state = generationReducer(state, {
-      type: "result",
-      requestId: "1",
-      imageUrl: "data:image/jpeg;base64,rendered",
-      at: 1_400,
-    });
+    state = generationReducer(
+      state,
+      result("1", "data:image/jpeg;base64,rendered", 1_400),
+    );
 
     expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
     expect(state.inFlight).toBeNull();
@@ -76,12 +88,10 @@ describe("generationReducer — send discipline", () => {
       snapshot(1_000),
     );
     state = generationReducer(state, snapshot(1_150));
-    state = generationReducer(state, {
-      type: "result",
-      requestId: "1",
-      imageUrl: "data:image/jpeg;base64,rendered",
-      at: 1_400,
-    });
+    state = generationReducer(
+      state,
+      result("1", "data:image/jpeg;base64,rendered", 1_400),
+    );
 
     expect(state.inFlight?.requestId).toBe("2");
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1150");
@@ -96,12 +106,10 @@ describe("generationReducer — send discipline", () => {
       createInitialGenerationState(),
       snapshot(1_000),
     );
-    const state = generationReducer(inFlightState, {
-      type: "result",
-      requestId: "99",
-      imageUrl: "data:image/jpeg;base64,stale",
-      at: 1_400,
-    });
+    const state = generationReducer(
+      inFlightState,
+      result("99", "data:image/jpeg;base64,stale", 1_400),
+    );
 
     expect(state).toEqual(inFlightState);
   });
@@ -111,12 +119,10 @@ describe("generationReducer — send discipline", () => {
       createInitialGenerationState(),
       snapshot(1_000),
     );
-    state = generationReducer(state, {
-      type: "result",
-      requestId: "1",
-      imageUrl: "data:image/jpeg;base64,rendered",
-      at: 1_400,
-    });
+    state = generationReducer(
+      state,
+      result("1", "data:image/jpeg;base64,rendered", 1_400),
+    );
     state = generationReducer(state, snapshot(1_500));
     state = generationReducer(state, {
       type: "generationError",
@@ -130,12 +136,10 @@ describe("generationReducer — send discipline", () => {
     });
     expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered");
 
-    state = generationReducer(state, {
-      type: "result",
-      requestId: "2",
-      imageUrl: "data:image/jpeg;base64,rendered2",
-      at: 1_800,
-    });
+    state = generationReducer(
+      state,
+      result("2", "data:image/jpeg;base64,rendered2", 1_800),
+    );
 
     expect(state.stats.lastError).toBeNull();
     expect(state.liveOutput?.imageUrl).toBe("data:image/jpeg;base64,rendered2");
