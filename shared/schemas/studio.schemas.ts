@@ -97,3 +97,34 @@ export const StudioUseInSessionResultSchema = z.object({
 export type StudioUseInSessionResult = z.infer<
   typeof StudioUseInSessionResultSchema
 >;
+
+/**
+ * The identity and captured context a turn submission carries on the wire —
+ * issue #115.
+ *
+ * `submissionId` is a per-submission idempotency token: two requests that
+ * carry the same one converge on ONE turn (a lost response, the auth
+ * transport re-sending a POST after sign-in, or a reload all re-send the same
+ * body, so they resolve to the turn the first created rather than a second
+ * paid decision). It is per-submission, not per-text: two DELIBERATE
+ * submissions of the same words mint two ids and stay two turns.
+ *
+ * `selectedImageId` and `pinnedModel` are the effective selection and pin AS
+ * THE CREATOR SAW THEM at submit time. They travel with the submission so the
+ * turn is decided against them and NOT against a later selection or pin change
+ * made in another tab between submit and decision. `null` is an explicit
+ * "no selection" / "Auto" captured at submit time — distinct from the field
+ * being absent, which lets a non-studio caller fall back to the project's
+ * persisted values. The pin is a lenient string, never the slug enum: a stale
+ * pin reverts to Auto at resolution and never rejects the turn.
+ *
+ * Deliberately NOT here: the message text or attachment ids. The message is
+ * the turn's own field; attachment ids are already captured on the wire.
+ */
+export const StudioTurnSubmissionSchema = z.object({
+  submissionId: z.string().min(1).max(200),
+  selectedImageId: z.string().min(1).nullable().optional(),
+  pinnedModel: z.string().min(1).nullable().optional(),
+});
+
+export type StudioTurnSubmission = z.infer<typeof StudioTurnSubmissionSchema>;

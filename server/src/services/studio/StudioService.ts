@@ -29,7 +29,10 @@ import type {
 import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
 import { readTurnSourceImages } from "./turnSourceImages";
 import type { StudioProjectStore } from "./storage/StudioProjectStore";
-import type { StudioProjectOrigin } from "@shared/schemas/studio.schemas";
+import type {
+  StudioProjectOrigin,
+  StudioTurnSubmission,
+} from "@shared/schemas/studio.schemas";
 import type {
   StudioAttachment,
   StudioCallRecord,
@@ -150,6 +153,31 @@ export function studioProjectIdForSessionPicture(
 }
 
 /**
+ * One turn per (project, submission), enforced by the turn's own derived id
+ * rather than a scan a concurrent retry could miss — issue #115, the same
+ * technique `studioProjectIdForSessionPicture` uses one level up.
+ *
+ * The submission identity is a client→server idempotency value: a lost
+ * response, the auth transport re-sending the POST after sign-in, or a reload
+ * all re-send the same body, so they derive the same turn id and the second
+ * arrival finds the first turn instead of running a second paid decision. It
+ * is deliberately NOT folded into the LLM request, so it cannot shift a replay
+ * cassette key.
+ *
+ * A direct document read (not a `listTurns` scan) keeps the lookup correct
+ * however many turns the project already holds.
+ */
+export function studioTurnIdForSubmission(
+  projectId: string,
+  submissionId: string,
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify(["studio-turn", projectId, submissionId]))
+    .digest("hex")
+    .slice(0, 32);
+}
+
+/**
  * One studio image together with everything the return bridge needs about it
  * (ADR-0022 decision 4): which turn made it, what that turn ran on, and the
  * session the project was born from. Plain data, no session vocabulary — the
@@ -205,6 +233,16 @@ export interface RunTurnResult {
    * finalized. Routes ignore this (fire-and-forget); tests await it.
    */
   completion: Promise<void>;
+}
+
+/**
+ * The identity a spend-bearing or conversational turn is created under
+ * (issue #115): the derived turn id every writer persists it as, plus the
+ * submission id it came from (absent on the pre-#115, no-submission path).
+ */
+interface StudioTurnIdentity {
+  turnId: string;
+  submissionId?: string | undefined;
 }
 
 const GENERATE_BATCH_SIZE = 4;
@@ -783,6 +821,7 @@ export class StudioService {
     userMessage: string,
     hooks?: StudioThinkingHooks,
     attachmentIds?: readonly string[],
+    submission?: StudioTurnSubmission,
   ): Promise<RunTurnResult> {
     const project = await this.getProject(userId, projectId);
     const message = userMessage.trim();
@@ -794,11 +833,38 @@ export class StudioService {
       throw error;
     }
 
+    // Idempotent submission identity (#115). A submission that carries a stable
+    // id derives a stable turn id; a retry that re-sends the same body finds
+    // the turn the first request created and returns it, so the paid decision
+    // and its reservation never run a second time. Without a submission (a
+    // non-studio caller) each request is its own turn, exactly as before.
+    //
+    // This runs BEFORE the project-full guard below: a retry must resolve to
+    // the turn it already created even once the project has filled up, since
+    // returning an existing turn adds none.
+    const submissionId = submission?.submissionId;
+    const turnId = submissionId
+      ? studioTurnIdForSubmission(projectId, submissionId)
+      : this.idFactory();
+
+    if (submissionId) {
+      const existing = await this.store.getTurn(projectId, turnId);
+      if (existing) {
+        return {
+          turnId: existing.id,
+          decision: existing.decision,
+          completion: Promise.resolve(),
+        };
+      }
+    }
+
+    const identity: StudioTurnIdentity = { turnId, submissionId };
+
     // Read the whole thread within the enforced window, then refuse a turn
     // that would exceed it BEFORE the policy LLM call or any image spend
-    // (#121). Refusing here — the first thing after loading history — is what
-    // makes the cap a pre-work guard rather than a silent truncation: no paid
-    // work is done for a turn the interface could not later page back to.
+    // (#121). Refusing here makes the cap a pre-work guard rather than a silent
+    // truncation: no paid work is done for a turn the interface could not later
+    // page back to.
     const history = await this.store.listTurns(
       projectId,
       this.maxTurnsPerProject,
@@ -815,8 +881,26 @@ export class StudioService {
       attachments.some((attachment) => attachment.id === id),
     );
 
+    // Effective selection and pin: the values the submission captured at submit
+    // time when it carries them, else the project's persisted values. A change
+    // made in another tab between submit and decision lands on the project
+    // record, but this turn is decided against what the creator saw when they
+    // pressed send (#115). A captured `null` is an explicit "none"/"Auto" and
+    // overrides a persisted value — which is why absence (undefined), not null,
+    // is what falls back. This is the defined order for concurrent messages and
+    // pin/selection changes within one project: the turn resolves against its
+    // own submission, and a later pin/selection change governs the NEXT one.
+    const effectiveSelectedImageId =
+      submission && submission.selectedImageId !== undefined
+        ? submission.selectedImageId
+        : (project.selectedImageId ?? null);
+    const effectivePinnedModel =
+      submission && submission.pinnedModel !== undefined
+        ? submission.pinnedModel
+        : project.pinnedModel;
+
     // Pin wins when it resolves; stale pins revert to Auto (cheapest capable).
-    const pinned = this.registry.resolvePin(project.pinnedModel);
+    const pinned = this.registry.resolvePin(effectivePinnedModel);
 
     const decision = await this.policy.decideTurn(
       {
@@ -825,7 +909,7 @@ export class StudioService {
         pinnedModel: pinned,
         roster: this.registry.listModels(),
         history,
-        selectedImageId: project.selectedImageId ?? null,
+        selectedImageId: effectiveSelectedImageId,
         projectImageIds,
         attachments,
         messageAttachmentIds,
@@ -841,6 +925,7 @@ export class StudioService {
       case "generate":
         return this.startGenerateTurn(
           project,
+          identity,
           message,
           decision,
           pinned,
@@ -849,6 +934,7 @@ export class StudioService {
       case "edit":
         return this.startEditTurn(
           project,
+          identity,
           history,
           message,
           decision,
@@ -858,6 +944,7 @@ export class StudioService {
       case "transform":
         return this.startTransformTurn(
           project,
+          identity,
           history,
           message,
           decision,
@@ -866,6 +953,7 @@ export class StudioService {
       default:
         return this.saveConversationalTurn(
           project,
+          identity,
           message,
           decision,
           messageAttachmentIds,
@@ -875,6 +963,7 @@ export class StudioService {
 
   private async startGenerateTurn(
     project: StudioProjectRecord,
+    identity: StudioTurnIdentity,
     message: string,
     decision: Extract<StudioDecision, { action: "generate" }>,
     pinned: StudioModelEntry | null,
@@ -882,7 +971,7 @@ export class StudioService {
   ): Promise<RunTurnResult> {
     const model = pinned ?? this.registry.cheapestCapable(decision.capability);
 
-    const turn = this.buildRunningTurn(project, message, decision, {
+    const turn = this.buildRunningTurn(project, identity, message, decision, {
       resolvedModel: model.slug,
       callCount: GENERATE_BATCH_SIZE,
       reservedCents: model.costCentsPerCall * GENERATE_BATCH_SIZE,
@@ -902,6 +991,7 @@ export class StudioService {
    */
   private async startEditTurn(
     project: StudioProjectRecord,
+    identity: StudioTurnIdentity,
     history: StudioTurnRecord[],
     message: string,
     decision: Extract<StudioDecision, { action: "edit" }>,
@@ -919,7 +1009,7 @@ export class StudioService {
       decision.sourceImageIds,
     );
 
-    const turn = this.buildRunningTurn(project, message, decision, {
+    const turn = this.buildRunningTurn(project, identity, message, decision, {
       resolvedModel: model.slug,
       callCount: 1,
       reservedCents: model.costCentsPerCall,
@@ -963,6 +1053,7 @@ export class StudioService {
   /** Transform: a prompt-less utility over one stored image (S-30). */
   private async startTransformTurn(
     project: StudioProjectRecord,
+    identity: StudioTurnIdentity,
     history: StudioTurnRecord[],
     message: string,
     decision: Extract<StudioDecision, { action: "transform" }>,
@@ -978,7 +1069,7 @@ export class StudioService {
       throw new Error("Transform source image not found");
     }
 
-    const turn = this.buildRunningTurn(project, message, decision, {
+    const turn = this.buildRunningTurn(project, identity, message, decision, {
       callCount: 1,
       reservedCents: utility.costCentsPerCall,
       attachmentIds,
@@ -1014,6 +1105,7 @@ export class StudioService {
   /** Shared turn-record scaffold for spend-bearing turns. */
   private buildRunningTurn(
     project: StudioProjectRecord,
+    identity: StudioTurnIdentity,
     message: string,
     decision: StudioDecision,
     options: {
@@ -1027,11 +1119,12 @@ export class StudioService {
   ): StudioTurnRecord {
     const nowMs = this.now().getTime();
     return {
-      id: this.idFactory(),
+      id: identity.turnId,
       projectId: project.id,
       userId: project.userId,
       status: "running",
       userMessage: message,
+      ...(identity.submissionId ? { submissionId: identity.submissionId } : {}),
       decision,
       ...(options.resolvedModel
         ? { resolvedModel: options.resolvedModel }
@@ -1147,17 +1240,19 @@ export class StudioService {
    */
   private async saveConversationalTurn(
     project: StudioProjectRecord,
+    identity: StudioTurnIdentity,
     message: string,
     decision: StudioDecision,
     attachmentIds: readonly string[],
   ): Promise<RunTurnResult> {
     const nowMs = this.now().getTime();
     const turn: StudioTurnRecord = {
-      id: this.idFactory(),
+      id: identity.turnId,
       projectId: project.id,
       userId: project.userId,
       status: "complete",
       userMessage: message,
+      ...(identity.submissionId ? { submissionId: identity.submissionId } : {}),
       decision,
       ...(attachmentIds.length > 0
         ? { attachmentIds: [...attachmentIds] }

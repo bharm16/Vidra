@@ -128,6 +128,13 @@ export interface StudioTurnRecord {
   userId: string;
   status: StudioTurnStatus;
   userMessage: string;
+  /**
+   * The submission identity that created this turn (issue #115). The turn's
+   * `id` is derived from it, so a retry carrying the same identity re-addresses
+   * this exact document instead of a second paid decision. Absent on turns
+   * created by a caller that supplied no submission (the pre-#115 path).
+   */
+  submissionId?: string | undefined;
   /** The validated decision that ran. */
   decision: StudioDecision;
   /**
