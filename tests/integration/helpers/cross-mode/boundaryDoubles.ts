@@ -1,5 +1,7 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { ownerSegment } from "@services/owned-media";
+import { validatePathOwnership } from "@services/storage/utils/pathUtils";
+import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
 import type {
   ImageAssetStore,
   StoredImageAsset,
@@ -52,15 +54,6 @@ const OBJECT_STORE_ORIGIN = `https://${OBJECT_STORE_HOST}`;
 export interface StoredObject {
   buffer: Buffer;
   contentType: string;
-}
-
-/** A deterministic, content-addressed name, so a re-store is recognisable. */
-function objectId(buffer: Buffer, salt: string): string {
-  return createHash("sha256")
-    .update(salt)
-    .update(buffer)
-    .digest("hex")
-    .slice(0, 24);
 }
 
 /**
@@ -117,7 +110,10 @@ export class InMemoryObjectStore {
  * `users/<uid>/…` paths here, which made the studio bridge's real-path
  * namespace mismatch invisible offline. Keeping the double production-shaped is
  * what lets the cross-mode walkthrough catch that class of bug and any future
- * one; the broader storage-conformance suite is #138.
+ * one. The broader storage-adapter conformance suite (issue #138) now holds
+ * every store — this double included — to that production shape, along with
+ * production's fresh-id identity and reported URL expiry:
+ * `tests/integration/storage-adapter-conformance.integration.test.ts`.
  */
 const IMAGE_PREVIEWS_BASE_PATH = "image-previews";
 
@@ -163,7 +159,11 @@ export class InMemoryImageAssetStore implements ImageAssetStore {
     userId: string,
   ): Promise<StoredImageAsset> {
     await this.arrive();
-    const id = objectId(buffer, `${userId}|image`);
+    // A fresh id per store, exactly like `GcsImageAssetStore` (`uuidv4()`):
+    // production NEVER content-addresses, so storing the same bytes twice must
+    // mint two distinct objects. The conformance suite (#138) enforces this;
+    // reintroducing a content hash here would be caught by its identity case.
+    const id = randomUUID();
     const storagePath = this.objectPath(userId, id);
     this.objects.put(storagePath, { buffer, contentType });
     return {
@@ -173,6 +173,11 @@ export class InMemoryImageAssetStore implements ImageAssetStore {
       contentType,
       createdAt: Date.now(),
       sizeBytes: buffer.byteLength,
+      // Production returns the moment the signed read URL dies (from the
+      // minter's TTL). The double's routed URL does not actually expire, but it
+      // reports the same bounded expiry, so code that must refresh a persisted
+      // URL cannot look correct here while breaking in production.
+      expiresAt: Date.now() + SIGNED_URL_TTL_MS.view,
     };
   }
 
@@ -216,6 +221,35 @@ export class InMemoryImageAssetStore implements ImageAssetStore {
 }
 
 /**
+ * How the storage double names a stored object.
+ *
+ * Production (`generateStoragePath`) mints a fresh id per save, and the default
+ * here does the same (`randomUUID`) — which is the identity the conformance
+ * suite (#138) holds this double to. The cross-mode harness injects
+ * `contentAddressedObjectId` instead — NOT to deduplicate (the walkthrough
+ * never saves the same bytes twice), but so a re-recorded studio walkthrough is
+ * reproducible: a studio turn's request key embeds the storage paths of the
+ * project's images, those images are stored in PARALLEL
+ * (`StudioService`'s `Promise.allSettled`), and only a content-addressed id is
+ * stable across runs regardless of the order the parallel saves land. This is
+ * the same determinism device as the harness's studio-id pinning, chosen at the
+ * wiring rather than baked into the double.
+ */
+export type ObjectIdMint = (
+  buffer: Buffer,
+  userId: string,
+  type: string,
+) => string;
+
+/** Deterministic, order-independent object ids for the cross-mode cassette. */
+export const contentAddressedObjectId: ObjectIdMint = (buffer, userId, type) =>
+  createHash("sha256")
+    .update(`${userId}|${type}`)
+    .update(buffer)
+    .digest("hex")
+    .slice(0, 24);
+
+/**
  * The `storageService` surface the walkthrough reaches: the studio's image
  * copy (`saveFromUrl` + `getViewUrl`) and the clip's durable copy.
  */
@@ -227,7 +261,11 @@ export class InMemoryStorageService {
    */
   readonly failSaveFor = new Set<string>();
 
-  constructor(private readonly objects: InMemoryObjectStore) {}
+  constructor(
+    private readonly objects: InMemoryObjectStore,
+    /** Defaults to production-faithful fresh ids; see `ObjectIdMint`. */
+    private readonly mintObjectId: ObjectIdMint = () => randomUUID(),
+  ) {}
 
   saveFromUrl(
     userId: string,
@@ -246,24 +284,38 @@ export class InMemoryStorageService {
       );
     }
     const source = this.read(sourceUrl);
-    const id = objectId(source.buffer, `${userId}|${type}`);
+    // The id strategy is injected: production-faithful fresh ids by default
+    // (what the conformance suite checks), deterministic content-addressed ids
+    // under the cross-mode harness (what the cassette needs). See `ObjectIdMint`.
+    const id = this.mintObjectId(source.buffer, userId, type);
     const storagePath = `users/${userId}/${type}/${id}`;
     this.objects.put(storagePath, source);
     return Promise.resolve({
       storagePath,
       viewUrl: this.objects.urlFor(storagePath),
-      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      expiresAt: new Date(Date.now() + SIGNED_URL_TTL_MS.view).toISOString(),
       sizeBytes: source.buffer.byteLength,
     });
   }
 
   getViewUrl(
-    _userId: string,
+    userId: string,
     storagePath: string,
   ): Promise<{ viewUrl: string; expiresAt: string; storagePath: string }> {
+    // Production's `StorageService.getViewUrl` refuses a path the caller does
+    // not own (`validatePathOwnership`, the same anchored `users/<uid>/` rule).
+    // The double must not be more permissive — a stand-in that signs any path
+    // for anyone would hide a broken ownership check (#138).
+    if (!validatePathOwnership(storagePath, userId)) {
+      return Promise.reject(
+        new Error(
+          "Unauthorized - cannot access files belonging to other users",
+        ),
+      );
+    }
     return Promise.resolve({
       viewUrl: this.objects.urlFor(storagePath),
-      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      expiresAt: new Date(Date.now() + SIGNED_URL_TTL_MS.view).toISOString(),
       storagePath,
     });
   }
