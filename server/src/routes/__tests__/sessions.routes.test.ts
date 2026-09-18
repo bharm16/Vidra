@@ -6,6 +6,7 @@ import {
   GenerationNotRemovableError,
   SessionAccessDeniedError,
   SessionService,
+  TakeFactsConflictError,
 } from "@services/sessions/SessionService";
 import type { SessionRecord } from "@services/sessions/types";
 
@@ -81,6 +82,7 @@ const buildServices = () => {
     updateHighlightsForUser: vi.fn(),
     updateOutputForUser: vi.fn(),
     updateVersionsForUser: vi.fn(),
+    appendGenerationToVersion: vi.fn(),
     updateSession: vi.fn(),
     deleteSession: vi.fn(),
     updatePrompt: vi.fn(),
@@ -341,6 +343,66 @@ describe("sessions.routes", () => {
       "user-1",
       "session-1",
       "pic-1",
+    );
+  });
+
+  it("returns 409 when an attachment retry conflicts with an established take", async () => {
+    const { sessionService, continuityService } = buildServices();
+    sessionService.appendGenerationToVersion.mockRejectedValueOnce(
+      new TakeFactsConflictError("take-1", ["productionProvenance"]),
+    );
+    const app = createApp(sessionService, continuityService);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/versions/v-1/generations")
+        .set("x-user-id", "user-1")
+        .send({
+          generation: {
+            id: "take-1",
+            origin: "generated",
+            productionProvenance: { state: "known", instruction: "forged" },
+          },
+        }),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      success: false,
+      error: "This take is already saved with different details",
+    });
+  });
+
+  it("attaches a take via the generations route on a faithful retry", async () => {
+    const { sessionService, continuityService } = buildServices();
+    sessionService.appendGenerationToVersion.mockResolvedValueOnce({
+      id: "session-1",
+      userId: "user-1",
+      status: "active",
+    });
+    const app = createApp(sessionService, continuityService);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/versions/v-1/generations")
+        .set("x-user-id", "user-1")
+        .send({
+          generation: {
+            id: "take-1",
+            origin: "upload",
+            productionProvenance: { state: "unknown" },
+          },
+        }),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(200);
+    expect(sessionService.appendGenerationToVersion).toHaveBeenCalledWith(
+      "user-1",
+      "session-1",
+      "v-1",
+      expect.objectContaining({ id: "take-1" }),
     );
   });
 

@@ -19,8 +19,10 @@ export type ImmutableMediaWarning = {
   versionId?: string;
   generationId?: string;
   keyframeId?: string;
-  previous?: string | string[] | null;
-  incoming?: string | string[] | null;
+  // A server-owned fact is any JSON value (a string url, a list of asset ids, a
+  // provenance object, a boolean flag), so the before/after ride as `unknown`.
+  previous?: unknown;
+  incoming?: unknown;
 };
 
 type GenerationRecord = Record<string, unknown>;
@@ -170,46 +172,225 @@ const mergeVideo = (
   return next;
 };
 
+/**
+ * The take facts the server owns — ADR-0022 (decisions 1-3, 6) and issue #112.
+ *
+ * Once a take exists in a session, none of these can be changed through any
+ * client-writable door: the versions PATCH, the general session update, or the
+ * attachment retry. A client write may still ADD a new take, refresh a signed
+ * URL, or edit the version envelope's own fields; it may never rewrite the
+ * identity, origin, provenance, ancestry, archive state, durable media handles,
+ * or completion of a take already recorded.
+ *
+ * `id` is the merge key — a take is matched by it and never renamed through it,
+ * so it is named here for the contract but reconciled as the key, not a field.
+ *
+ * Deliberately NOT server-owned: the ephemeral signed URLs (`mediaUrls`,
+ * `thumbnailUrl`, and the version-level `imageUrl`/`videoUrl`/
+ * `viewUrlExpiresAt`). They expire and the client refreshes them, so they flow
+ * through. The DURABLE handles (`mediaAssetIds`, `storagePath`, and the
+ * version-level `assetId`/`storagePath`) are what identifies the media and are
+ * immutable.
+ *
+ * The client mirrors the non-media subset in
+ * `client/src/features/generations/utils/serverOwnedRecordFields.ts`
+ * (`SERVER_OWNED_RECORD_FIELDS`) as a defensive re-apply; the server is the
+ * enforcement boundary, so this list is authoritative.
+ */
+export const SERVER_OWNED_TAKE_FACTS = [
+  "id",
+  "origin",
+  "productionProvenance",
+  "sourceInputs",
+  "ancestorGenerationId",
+  "archived",
+  "status",
+  "completedAt",
+  "mediaAssetIds",
+  "storagePath",
+] as const;
+
+/**
+ * The provenance and lifecycle facts, preserved from the stored take whether it
+ * records them or NOT. A legacy take that never recorded an origin keeps
+ * reading `unknown` — a client cannot add one to make the old record pass
+ * (issue #112 rule d: never invent an origin or provenance). The durable media
+ * identifiers (`mediaAssetIds`, `storagePath`) are handled separately because
+ * a first late binding onto a take that lacked them is legitimate, while
+ * inventing an origin never is.
+ */
+const PROVENANCE_FACT_KEYS = [
+  "origin",
+  "productionProvenance",
+  "sourceInputs",
+  "ancestorGenerationId",
+  "archived",
+  "status",
+  "completedAt",
+] as const;
+
+/**
+ * Structural equality for take-fact values. Order-independent over object keys
+ * so a client that re-serialised a provenance object it read is not reported as
+ * having changed it. Plain JSON data only — the facts are never functions,
+ * Dates, or class instances by the time they are persisted.
+ */
+const deepEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  if (a === null || b === null) return a === b;
+  if (typeof a !== "object" || typeof b !== "object") return false;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false;
+    }
+    return a.every((value, index) => deepEqual(value, b[index]));
+  }
+  const aObj = a as Record<string, unknown>;
+  const bObj = b as Record<string, unknown>;
+  const aKeys = Object.keys(aObj);
+  const bKeys = Object.keys(bObj);
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(bObj, key) &&
+      deepEqual(aObj[key], bObj[key]),
+  );
+};
+
+export interface GenerationReconciliation {
+  record: GenerationRecord;
+  /**
+   * Each server-owned fact the incoming record tried to change to a DIFFERENT,
+   * present value. Empty when the incoming record faithfully re-states (or
+   * simply omits) the stored take's facts. A write door decides what a conflict
+   * means: the versions PATCH and general update treat it as a silent
+   * correction (a stale save is routine), the attachment retry as a rejection
+   * (its whole job is to re-send the take's own record).
+   */
+  conflicts: ImmutableMediaWarning[];
+}
+
+/**
+ * Reconcile an incoming take record against the one already stored under the
+ * same identity — the single spelling of the server-owned-facts rule (issue
+ * #112), shared by every client-writable door.
+ *
+ * The result keeps the stored take's every server-owned fact and lets the
+ * mutable ones (refreshable URLs, caption, anything unmodelled) come from the
+ * incoming record. When no stored take exists (a first attach, a brand-new
+ * take), the incoming record stands — the caller is introducing the take, not
+ * rewriting one.
+ */
+export function reconcileGenerationRecord(
+  existing: GenerationRecord | undefined,
+  incoming: GenerationRecord,
+  versionId?: string,
+): GenerationReconciliation {
+  if (!existing) return { record: incoming, conflicts: [] };
+
+  const conflicts: ImmutableMediaWarning[] = [];
+  const generationId = isNonEmptyString((incoming as { id?: unknown }).id)
+    ? (incoming.id as string)
+    : isNonEmptyString((existing as { id?: unknown }).id)
+      ? (existing.id as string)
+      : undefined;
+  const context = (
+    field: string,
+  ): Omit<ImmutableMediaWarning, "previous" | "incoming"> => ({
+    scope: "generation",
+    field,
+    ...(versionId ? { versionId } : {}),
+    ...(generationId ? { generationId } : {}),
+  });
+
+  // Existing-only fields survive; incoming updates the mutable ones. The
+  // server-owned facts below then overwrite whatever this base holds for them.
+  const record: GenerationRecord = { ...existing, ...incoming };
+
+  // Refreshable URLs flow through (already taken from incoming in the base);
+  // only fill them back in when the incoming record dropped them entirely.
+  const existingUrls = normalizeStringList(existing.mediaUrls);
+  const incomingUrls = normalizeStringList(incoming.mediaUrls);
+  if (existingUrls.length && !incomingUrls.length) {
+    record.mediaUrls = existingUrls;
+  }
+  if (
+    !isNonEmptyString(incoming.thumbnailUrl) &&
+    isNonEmptyString(existing.thumbnailUrl)
+  ) {
+    record.thumbnailUrl = existing.thumbnailUrl;
+  }
+
+  // Durable media identifier — a list of asset ids.
+  const existingIds = normalizeStringList(existing.mediaAssetIds);
+  const incomingIds = normalizeStringList(incoming.mediaAssetIds);
+  if (existingIds.length) {
+    if (incomingIds.length && !listsEqual(existingIds, incomingIds)) {
+      conflicts.push({
+        ...context("mediaAssetIds"),
+        previous: existingIds,
+        incoming: incomingIds,
+      });
+    }
+    record.mediaAssetIds = existingIds;
+  }
+
+  // Durable media identifier — the storage path. Never handled before this
+  // change, so a client record could silently rewrite it.
+  if (isNonEmptyString(existing.storagePath)) {
+    if (
+      isNonEmptyString(incoming.storagePath) &&
+      incoming.storagePath !== existing.storagePath
+    ) {
+      conflicts.push({
+        ...context("storagePath"),
+        previous: existing.storagePath,
+        incoming: incoming.storagePath,
+      });
+    }
+    record.storagePath = existing.storagePath;
+  }
+
+  // Provenance and lifecycle facts: the stored take wins whether it records the
+  // fact or not.
+  for (const key of PROVENANCE_FACT_KEYS) {
+    const storedValue = (existing as Record<string, unknown>)[key];
+    const incomingValue = (incoming as Record<string, unknown>)[key];
+    if (storedValue !== undefined) {
+      if (
+        incomingValue !== undefined &&
+        !deepEqual(storedValue, incomingValue)
+      ) {
+        conflicts.push({
+          ...context(key),
+          previous: storedValue,
+          incoming: incomingValue,
+        });
+      }
+      (record as Record<string, unknown>)[key] = storedValue;
+    } else if (incomingValue !== undefined) {
+      // The stored take never recorded this fact; the client does not get to
+      // add it (issue #112 rule d). Drop it rather than invent one.
+      delete (record as Record<string, unknown>)[key];
+    }
+  }
+
+  return { record, conflicts };
+}
+
 const mergeGeneration = (
   existing: GenerationRecord | undefined,
   incoming: GenerationRecord,
   versionId: string,
   warnings: ImmutableMediaWarning[],
 ): GenerationRecord => {
-  if (!existing) return incoming;
-
-  const next: GenerationRecord = { ...incoming };
-  const existingUrls = normalizeStringList(existing.mediaUrls);
-  const incomingUrls = normalizeStringList(incoming.mediaUrls);
-  if (existingUrls.length && !incomingUrls.length) {
-    next.mediaUrls = existingUrls;
-  }
-
-  if (
-    !isNonEmptyString(incoming.thumbnailUrl) &&
-    isNonEmptyString(existing.thumbnailUrl)
-  ) {
-    next.thumbnailUrl = existing.thumbnailUrl;
-  }
-
-  const existingIds = normalizeStringList(existing.mediaAssetIds);
-  const incomingIds = normalizeStringList(incoming.mediaAssetIds);
-  if (existingIds.length) {
-    if (!incomingIds.length || !listsEqual(existingIds, incomingIds)) {
-      const warning: ImmutableMediaWarning = {
-        scope: "generation",
-        field: "mediaAssetIds",
-        versionId,
-        previous: existingIds,
-        incoming: incomingIds.length ? incomingIds : null,
-        ...(isNonEmptyString(incoming.id) ? { generationId: incoming.id } : {}),
-      };
-      warnings.push(warning);
-      next.mediaAssetIds = existingIds;
-    }
-  }
-
-  return next;
+  const { record, conflicts } = reconcileGenerationRecord(
+    existing,
+    incoming,
+    versionId,
+  );
+  warnings.push(...conflicts);
+  return record;
 };
 
 const mergeGenerations = (
@@ -279,11 +460,30 @@ export function enforceImmutableVersions(
   warnings: ImmutableMediaWarning[];
 } {
   const warnings: ImmutableMediaWarning[] = [];
-  if (!Array.isArray(incoming) || incoming.length === 0) {
+  if (!Array.isArray(incoming)) {
+    // Not an array means "not updating versions" — leave whatever was passed.
     return { versions: incoming, warnings };
   }
 
   const existingList = Array.isArray(existing) ? existing : [];
+
+  if (incoming.length === 0) {
+    // History only accumulates: words-versions and takes are never removed by a
+    // whole-array write (archival is its own leaf-only action). An empty array
+    // is a stale or racing client payload built before any version existed —
+    // honouring it would erase the session's history. Preserve what is stored.
+    if (existingList.length === 0) {
+      return { versions: incoming, warnings };
+    }
+    warnings.push({
+      scope: "version",
+      field: "versions.clearedByEmptyArray",
+      previous: existingList.map((version) => version.versionId),
+      incoming: null,
+    });
+    return { versions: existingList, warnings };
+  }
+
   if (!existingList.length) {
     return { versions: incoming, warnings };
   }
