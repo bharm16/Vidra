@@ -8,12 +8,20 @@ import React, {
 } from "react";
 import { VIDEO_DRAFT_MODEL } from "@/components/ToolSidebar/config/modelConfig";
 import type { CameraPath } from "@/features/convergence/types";
+import { cameraMotionDirection } from "@shared/cameraMotion";
+import {
+  writeCameraDirection,
+  type CameraDirectionConflict,
+} from "./utils/cameraDirection";
 import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
 import { resolveDurationSeconds } from "@features/generation-controls/resolveGenerationParams";
-import { useOptionalPromptHighlights } from "@/features/prompt-optimizer/context/PromptStateContext";
+import {
+  useOptionalPromptHighlights,
+  useOptionalPromptServices,
+} from "@/features/prompt-optimizer/context/PromptStateContext";
 import {
   useRegisterPersistenceTarget,
   type PersistenceTarget,
@@ -48,7 +56,6 @@ import { resolveTakePosterUrl } from "./utils/takePosterUrl";
 import { useWorkspaceKeyboardShortcuts } from "./hooks/useWorkspaceKeyboardShortcuts";
 import { useAnchorDraft } from "./hooks/useAnchorDraft";
 import { TileStateAnnouncer } from "./components/TileStateAnnouncer";
-import { FEATURES } from "@/config/features.config";
 import {
   usePromptResultsActions,
   usePromptResultsData,
@@ -83,6 +90,13 @@ const CameraMotionModal = lazy(() =>
   })),
 );
 
+/** The blocked choice, held so "Replace those words" can re-run it. */
+interface CameraDirectionConflictState {
+  kind: CameraDirectionConflict;
+  text: string;
+  cameraPath: CameraPath;
+}
+
 interface CanvasWorkspaceProps {
   generationsPanelProps: GenerationsPanelProps;
   editing: PromptEditorWiring;
@@ -102,6 +116,7 @@ export function CanvasWorkspace({
   const storeActions = useGenerationControlsStoreActions();
   const { domain } = useGenerationControlsStoreState();
   const promptHighlights = useOptionalPromptHighlights();
+  const promptServices = useOptionalPromptServices();
   const { session, hasActiveContinuityShot, currentShot, updateShot } =
     useWorkspaceSession();
   const toast = useToast();
@@ -120,6 +135,15 @@ export function CanvasWorkspace({
   useRegisterPersistenceTarget(resolvePersistenceTarget);
   useWorkspaceKeyboardShortcuts();
   const [showCameraMotionModal, setShowCameraMotionModal] = useState(false);
+  const [cameraConflict, setCameraConflict] =
+    useState<CameraDirectionConflictState | null>(null);
+  // The prompt as it stood when a camera direction was written. The
+  // words-version is minted once the write has landed in the editor, because
+  // onCreateVersionIfNeeded reads the displayed prompt from its own state:
+  // called in the same tick it would version the previous text.
+  const [promptBeforeCameraWrite, setPromptBeforeCameraWrite] = useState<
+    string | null
+  >(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
 
   const prompt = generationsPanelProps.prompt;
@@ -275,19 +299,85 @@ export function CanvasWorkspace({
     },
     [generationLookup, onReuseGeneration],
   );
-  const handleCameraMotionSelect = useCallback(
-    (cameraPath: CameraPath): void => {
+  // The direction this workspace last wrote, derived from the stored choice
+  // rather than kept as a second copy — it is the replace target, so a
+  // different path swaps those words instead of adding a contradiction.
+  const previousCameraDirection = domain.cameraMotion
+    ? cameraMotionDirection(domain.cameraMotion.id)
+    : undefined;
+
+  // ADR-0022 D7: the choice becomes words. It rides onComposerFill — the
+  // editor's real change path — so the previous words land on the undo stack
+  // and the creator can take them back; the silent setter would not.
+  const applyCameraMotion = useCallback(
+    (cameraPath: CameraPath, replaceExistingCameraSpan: boolean): void => {
+      const direction = cameraMotionDirection(cameraPath.id);
+      // An id with no words of its own would make the choice a hidden
+      // parameter. Better to do nothing than to send something unreadable.
+      if (!direction || !onComposerFill) return;
+
+      const write = writeCameraDirection({
+        prompt,
+        direction,
+        ...(previousCameraDirection
+          ? { previousDirection: previousCameraDirection }
+          : {}),
+        spans: promptHighlights?.latestHighlightRef.current?.spans ?? [],
+        lockedSpans: promptServices?.promptOptimizer.lockedSpans ?? [],
+        replaceExistingCameraSpan,
+      });
+
+      if (write.outcome === "conflict") {
+        setCameraConflict({
+          kind: write.conflict,
+          text: write.conflictText,
+          cameraPath,
+        });
+        return;
+      }
+
+      setCameraConflict(null);
+      setPromptBeforeCameraWrite(prompt);
+      onComposerFill(write.prompt);
       storeActions.setCameraMotion(cameraPath);
       setShowCameraMotionModal(false);
     },
-    [storeActions],
+    [
+      onComposerFill,
+      previousCameraDirection,
+      prompt,
+      promptHighlights,
+      promptServices,
+      storeActions,
+    ],
   );
 
-  // Opens the camera-motion modal from the start-frame popover. Guarded on
-  // domain.startFrame so the modal mount (which dereferences startFrame.url)
-  // never sees a null start frame.
+  const handleCameraMotionSelect = useCallback(
+    (cameraPath: CameraPath): void => applyCameraMotion(cameraPath, false),
+    [applyCameraMotion],
+  );
+
+  const handleReplaceConflictingCameraWords = useCallback((): void => {
+    if (!cameraConflict) return;
+    applyCameraMotion(cameraConflict.cameraPath, true);
+  }, [applyCameraMotion, cameraConflict]);
+
+  // Mint (or reuse) the words-version once the written direction has landed.
+  // Signature-gated upstream: a write that leaves the text identical creates
+  // no version, and takes already made keep the words they were made from.
+  useEffect(() => {
+    if (promptBeforeCameraWrite === null) return;
+    if (prompt === promptBeforeCameraWrite) return;
+    setPromptBeforeCameraWrite(null);
+    onCreateVersionIfNeeded();
+  }, [onCreateVersionIfNeeded, prompt, promptBeforeCameraWrite]);
+
+  // Opens the camera-motion picker from the armed first frame's controls
+  // (ADR-0022 D7). Guarded on domain.startFrame so the modal mount (which
+  // dereferences startFrame.url) never sees a null start frame.
   const handleOpenMotion = useCallback((): void => {
     if (!domain.startFrame) return;
+    setCameraConflict(null);
     setShowCameraMotionModal(true);
   }, [domain.startFrame]);
 
@@ -512,6 +602,7 @@ export function CanvasWorkspace({
           renderModelOptions={renderModelOptions}
           recommendation={recommendationContext}
           onModelChange={handleModelChange}
+          onOpenCameraMotion={handleOpenMotion}
           showPreviewButton={hasGenerations}
         />
       </div>
@@ -522,6 +613,7 @@ export function CanvasWorkspace({
       renderModelOptions,
       recommendationContext,
       handleModelChange,
+      handleOpenMotion,
       hasGenerations,
       isPreWork,
     ],
@@ -649,7 +741,10 @@ export function CanvasWorkspace({
           />
         ) : null}
 
-        {FEATURES.CONVERGENCE_UI && domain.startFrame ? (
+        {/* The armed first frame is the whole gate (ADR-0022 D7): the picker
+            no longer reads the umbrella convergence flag, which keeps its
+            frozen default — flipping it would thaw the whole stack. */}
+        {domain.startFrame ? (
           <Suspense fallback={null}>
             <CameraMotionModal
               isOpen={showCameraMotionModal}
@@ -659,6 +754,20 @@ export function CanvasWorkspace({
               imageAssetId={domain.startFrame.assetId ?? null}
               initialSelection={domain.cameraMotion}
               onSelect={handleCameraMotionSelect}
+              conflict={
+                cameraConflict
+                  ? {
+                      kind: cameraConflict.kind,
+                      text: cameraConflict.text,
+                      // A lock is the creator's explicit "do not touch" —
+                      // it gets no override, only camera words they merely
+                      // wrote do.
+                      ...(cameraConflict.kind === "existing-camera-span"
+                        ? { onReplace: handleReplaceConflictingCameraWords }
+                        : {}),
+                    }
+                  : null
+              }
             />
           </Suspense>
         ) : null}

@@ -62,6 +62,7 @@ vi.mock("@features/generation-controls", () => ({
 
 vi.mock("@/features/prompt-optimizer/context/PromptStateContext", () => ({
   useOptionalPromptHighlights: () => null,
+  useOptionalPromptServices: () => null,
 }));
 
 vi.mock("@/features/prompt-optimizer/context/WorkspaceSessionContext", () => ({

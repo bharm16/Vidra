@@ -568,6 +568,8 @@ function PromptOptimizerContent({
     continueAfterOptimization,
     regenerateFrame,
     acceptFrame,
+    unattachedTake: unattachedFrameTake,
+    retryAttachment: retryFrameAttachment,
   } = useIdeaBox({
     startImageUrl: i2vContext.startImageUrl,
     setStartFrame,
@@ -858,6 +860,7 @@ function PromptOptimizerContent({
             suggestionsData={suggestionsData}
             i2vContext={i2vContext}
             ideaBoxStage={ideaBoxStage}
+            unattachedFrameTake={unattachedFrameTake}
             isExpanding={promptOptimizer.isProcessing}
             writingFailed={writingFailed}
             hasExpandedPrompt={
@@ -865,6 +868,7 @@ function PromptOptimizerContent({
             }
             onIdeaBoxAccept={acceptFrame}
             onIdeaBoxRegenerate={handleIdeaBoxRegenerate}
+            onRetryFrameAttachment={retryFrameAttachment}
             onIdeaBoxExpand={handleIdeaBoxExpand}
             onComposerFill={handleComposerFill}
           >
