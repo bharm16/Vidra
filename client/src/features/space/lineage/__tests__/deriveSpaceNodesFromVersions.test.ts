@@ -26,6 +26,11 @@ const lineageOf = (versions: ReturnType<typeof version>[]) =>
     versions.map((v) => ({
       versionId: v.versionId,
       prompt: v.prompt,
+      // The PERSISTED reword parent travels the same path as every other
+      // version field — carried, never derived from this array's order.
+      ...(v.rewordedFromVersionId
+        ? { rewordedFromVersionId: v.rewordedFromVersionId }
+        : {}),
       generations: normalizePersistedGenerations(v.generations),
     })),
   );
@@ -68,21 +73,149 @@ describe("deriveSpaceNodesFromVersions", () => {
     ]);
   });
 
-  it("chains reword edges across versions in array order (survives reload)", () => {
+  it("draws the reword chain from each version's recorded parent (survives reload)", () => {
     const nodes = lineageOf([
       version({ versionId: "v-1", prompt: "first wording" }),
-      version({ versionId: "v-2", prompt: "second wording" }),
-      version({ versionId: "v-3", prompt: "third wording" }),
+      version({
+        versionId: "v-2",
+        prompt: "second wording",
+        rewordedFromVersionId: "v-1",
+      }),
+      version({
+        versionId: "v-3",
+        prompt: "third wording",
+        rewordedFromVersionId: "v-2",
+      }),
     ]);
 
     const words = nodes.filter((n) => n.kind === "words");
-    // Each version is reworded from the previous — a linear spine up the words
-    // column. This is the multi-version branch the live adapter couldn't show.
+    // A linear spine up the words column — but drawn edge-for-edge from each
+    // version's PERSISTED parent, not from the array's order (issue #116).
+    // This is the multi-version chain the live adapter couldn't show.
     expect(words.map((n) => ({ id: n.id, ancestorId: n.ancestorId }))).toEqual([
       { id: "words-v-1", ancestorId: null },
       { id: "words-v-2", ancestorId: "words-v-1" },
       { id: "words-v-3", ancestorId: "words-v-2" },
     ]);
+  });
+
+  // Issue #116 (ADR-0013 M4): a reword records the version it came from, so a
+  // reword of an OLDER version branches off that older version rather than the
+  // immediately-preceding array entry.
+  it("branches off the OLDER version a reword recorded as its parent", () => {
+    const nodes = lineageOf([
+      version({ versionId: "v-1", prompt: "first" }),
+      version({
+        versionId: "v-2",
+        prompt: "second",
+        rewordedFromVersionId: "v-1",
+      }),
+      // Reworded from the OLDER v-1, NOT the immediately-preceding v-2.
+      version({
+        versionId: "v-3",
+        prompt: "third",
+        rewordedFromVersionId: "v-1",
+      }),
+    ]);
+
+    const words = nodes.filter((n) => n.kind === "words");
+    expect(words.map((n) => ({ id: n.id, ancestorId: n.ancestorId }))).toEqual([
+      { id: "words-v-1", ancestorId: null },
+      { id: "words-v-2", ancestorId: "words-v-1" },
+      // The branch: v-3 hangs off v-1, not v-2.
+      { id: "words-v-3", ancestorId: "words-v-1" },
+    ]);
+    // And the branch is a genuine reword edge.
+    expect(
+      deriveEdgeKind(nodes.find((n) => n.id === "words-v-3")!, nodes),
+    ).toBe("reword");
+  });
+
+  // Issue #116: two versions created concurrently each carry their own
+  // recorded parent, and array order — which concurrent writes race to
+  // determine — cannot move either edge.
+  it("keeps each version's recorded parent regardless of array order", () => {
+    // v-1 root; v-2 reworded from v-1. Then two versions are created
+    // concurrently: v-3a from v-2 and v-3b from v-1.
+    const branched = [
+      version({ versionId: "v-1", prompt: "first" }),
+      version({
+        versionId: "v-2",
+        prompt: "second",
+        rewordedFromVersionId: "v-1",
+      }),
+      version({
+        versionId: "v-3a",
+        prompt: "branch a",
+        rewordedFromVersionId: "v-2",
+      }),
+      version({
+        versionId: "v-3b",
+        prompt: "branch b",
+        rewordedFromVersionId: "v-1",
+      }),
+    ];
+
+    const ancestryOf = (versions: ReturnType<typeof version>[]) =>
+      Object.fromEntries(
+        lineageOf(versions)
+          .filter((n) => n.kind === "words")
+          .map((n) => [n.id, n.ancestorId]),
+      );
+
+    const expected = {
+      "words-v-1": null,
+      "words-v-2": "words-v-1",
+      "words-v-3a": "words-v-2",
+      "words-v-3b": "words-v-1",
+    };
+
+    // Two correct parents…
+    expect(ancestryOf(branched)).toEqual(expected);
+    // …and reversing the array (a different concurrent-write outcome) yields
+    // the identical ancestry — order is not evidence.
+    expect(ancestryOf([...branched].reverse())).toEqual(expected);
+  });
+
+  // Issue #116: a session written before the field existed carries no recorded
+  // parent on any entry. The old derivation chained each to the previous array
+  // entry; now each reads as an explicit unknown (no reword edge) rather than a
+  // fabricated linear history.
+  it("renders legacy versions with no recorded parent as unknown, never chained", () => {
+    const nodes = lineageOf([
+      version({ versionId: "v-1", prompt: "first" }),
+      version({ versionId: "v-2", prompt: "second" }),
+      version({ versionId: "v-3", prompt: "third" }),
+    ]);
+
+    const words = nodes.filter((n) => n.kind === "words");
+    expect(words.map((n) => ({ id: n.id, ancestorId: n.ancestorId }))).toEqual([
+      { id: "words-v-1", ancestorId: null },
+      { id: "words-v-2", ancestorId: null },
+      { id: "words-v-3", ancestorId: null },
+    ]);
+    // Explicitly NOT chained to the preceding entry.
+    expect(nodes.find((n) => n.id === "words-v-2")!.ancestorId).not.toBe(
+      "words-v-1",
+    );
+    expect(nodes.find((n) => n.id === "words-v-3")!.ancestorId).not.toBe(
+      "words-v-2",
+    );
+  });
+
+  // Issue #116: a parent that names a version this session no longer holds is a
+  // dangling reference — it draws no edge rather than a wrong one, the same
+  // discipline the take's own words-version already applies.
+  it("ignores a reword parent that names a version absent from the session", () => {
+    const nodes = lineageOf([
+      version({
+        versionId: "v-2",
+        prompt: "second",
+        rewordedFromVersionId: "v-gone",
+      }),
+    ]);
+
+    expect(nodes.find((n) => n.id === "words-v-2")!.ancestorId).toBeNull();
   });
 
   it("links a clip to its persisted source picture via ancestorGenerationId", () => {

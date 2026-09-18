@@ -379,6 +379,12 @@ export function useVersionManagement({
       signature,
       prompt: promptText,
       timestamp: new Date().toISOString(),
+      // Issue #116: record the version this reword came from (the active
+      // version) so the space draws the true parent, not array order. Absent
+      // when there is no active version to rework from (the root).
+      ...(activeVersion?.versionId
+        ? { rewordedFromVersionId: activeVersion.versionId }
+        : {}),
       ...(latestHighlightRef.current
         ? { highlights: latestHighlightRef.current }
         : {}),
@@ -392,6 +398,7 @@ export function useVersionManagement({
     setActiveVersionId(nextVersion.versionId);
     resetVersionEdits();
   }, [
+    activeVersion?.versionId,
     ensureDraftEntry,
     currentVersions,
     inputPrompt,
@@ -448,6 +455,12 @@ export function useVersionManagement({
       signature,
       prompt: promptText,
       timestamp: new Date().toISOString(),
+      // Issue #116: record the version this reword came from (the active
+      // version) so the space draws the true parent, not array order. This
+      // branch only runs when versions already exist, so a parent resolves.
+      ...(activeVersion?.versionId
+        ? { rewordedFromVersionId: activeVersion.versionId }
+        : {}),
       ...(latestHighlightRef.current
         ? { highlights: latestHighlightRef.current }
         : {}),

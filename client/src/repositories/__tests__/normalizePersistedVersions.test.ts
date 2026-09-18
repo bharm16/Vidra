@@ -77,6 +77,16 @@ describe("normalizePersistedVersions", () => {
     });
   });
 
+  // Issue #116: the persisted reword parent is carried through untouched, so
+  // it reaches the space's derivation on reload the same way every other
+  // version field does — this boundary normalizes, it does not project.
+  it("carries the persisted reword parent through to the domain shape", () => {
+    const [result] = normalizePersistedVersions([
+      { ...version, versionId: "v2", rewordedFromVersionId: "v1" },
+    ]);
+    expect(result?.rewordedFromVersionId).toBe("v1");
+  });
+
   it("returns an empty array for a non-array", () => {
     expect(normalizePersistedVersions(undefined)).toEqual([]);
   });
