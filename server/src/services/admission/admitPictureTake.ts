@@ -1,5 +1,6 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
+import { buildAdmissionAcceptanceFingerprint } from "@shared/utils/admissionFingerprint";
 import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
 import {
   attachTakeToSession,
@@ -279,15 +280,23 @@ export async function admitPictureTake(
     route: ADMISSION_ROUTE,
     key: request.idempotencyKey,
     // The key alone does not make two different admissions the same request;
-    // the payload hash is what turns a reused key into a conflict instead of a
-    // wrong replay. The media bytes are deliberately out of it — they are the
-    // large, and the destination is the identifying, part.
-    payload: {
+    // this fingerprint is what turns a reused key into a conflict instead of a
+    // wrong replay. It is built over the digest of the media bytes — so a
+    // different file retried under a retained key conflicts rather than
+    // replaying — plus the destination, origin, provenance, contributing
+    // inputs and display ancestor (issue #114). The digest is computed here,
+    // before the bytes are stored, so no transient signed URL can enter it.
+    payload: buildAdmissionAcceptanceFingerprint({
       sessionId: request.sessionId,
       promptVersionId: request.promptVersionId,
       origin: request.origin,
+      mediaDigest: createHash("sha256")
+        .update(request.media.buffer)
+        .digest("hex"),
+      productionProvenance: request.productionProvenance,
+      sourceInputs: request.sourceInputs,
       displayAncestorGenerationId: request.displayAncestorGenerationId,
-    },
+    }),
   });
 
   if (claim.state === "replay") {
