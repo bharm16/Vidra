@@ -94,7 +94,7 @@ The workspace is exactly the space, the input, and the next-step button. Before 
 
 ### Take
 
-One generated result — a picture or a clip — permanently paired with the exact text that produced it. Every take is a node in the space; selecting it makes it live — the camera moves to it and its paired words return to the input. Nothing is displaced or lost by moving between takes, so no separate browse/restore step exists. Resolved 2026-07-04 (ADR-0010); selection semantics revised 2026-07-05 with the space (ADR-0012). Avoid synonyms: generation, tile, shot, variant.
+One result inside a session — a picture or a clip — carrying its [Origin](#origin), its [Production provenance](#production-provenance) where that is known, and its [Associated words](#associated-words). A picture take is either generated from the session's words or admitted from an upload, the [Sketchpad](#sketchpad), or [The studio](#the-studio); a clip is always generated. The two texts often coincide and are never presented as identical: provenance is what actually produced the take (unknown for an upload, an edit instruction for a studio edit), the associated words are the direction that returns to [The input](#the-input) when the take is selected. Every take is a node in the space; selecting it makes it live — the camera moves to it and its associated words return to the input. Nothing is displaced or lost by moving between takes, so no separate browse/restore step exists. Resolved 2026-07-04 (ADR-0010); selection semantics revised 2026-07-05 with the space (ADR-0012); origin and the production-provenance-versus-associated-words split revised 2026-09-17 with [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md). Avoid synonyms: generation, tile, shot, variant.
 
 ### Keep
 
@@ -110,7 +110,7 @@ The drawing surface of the realtime sketch: where the creator lays rough strokes
 
 ### Live output
 
-The continuously updating generated image produced from the sketchpad and the prompt, and the pane that shows it. Ephemeral by definition — nothing is kept or paired durably, so a live output is not a Take. It is the only ephemeral generated image in the product: everything the CLAUDE.md-glossary Generation produces is persisted and becomes a node. Resolved 2026-07-09 during realtime-sketch grilling; the contrast term was "Preview" until that was retired 2026-08-10. Avoid synonyms: preview, preview pane, render pane, result.
+The continuously updating generated image produced from the sketchpad and the prompt, and the pane that shows it. Ephemeral by definition — the [Live editor](#live-editor) keeps nothing, so a live output is not a [Take](#take). One exception: the creator can accept the shown live output into a session, where it becomes a picture take with [Origin](#origin) `sketchpad` and the snapshot, prompt, seed, strength, and steps of that exact output as its [Production provenance](#production-provenance) ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)) — the action is "Use this" or "accept", never [Keep](#keep). Acceptance is a one-way export at the creator's press: the live editor still holds no lineage and no takes ([ADR-0017](docs/adr/0017-live-editor-is-its-own-plane-not-the-space.md) stands). Until accepted, it is the only ephemeral generated image in the product: everything the CLAUDE.md-glossary Generation produces is persisted and becomes a node. Resolved 2026-07-09 during realtime-sketch grilling; the contrast term was "Preview" until that was retired 2026-08-10; the accept exception revised 2026-09-17 with ADR-0022. Avoid synonyms: preview, preview pane, render pane, result.
 
 ### Realtime sketch
 
@@ -126,7 +126,7 @@ The sketchpad's drawing surface, which **is** the generation frame — same shap
 
 ### The studio
 
-The chat-driven image workspace on its own rail surface: a creator commissions finished images through conversation — a brief, at most a couple of clarifying questions, batches of variations, and follow-up moves. The images are the deliverable in their own right — the studio is not a first-frame factory and feeds nothing downstream. Governed by [ADR-0019](docs/adr/0019-the-studio-standalone-conversational-image-workspace.md). Resolved 2026-07-24 during studio grilling. Avoid synonyms: AI chat, image chat, design workspace, chat canvas.
+The chat-driven image workspace on its own rail surface: a creator commissions finished images through conversation — a brief, at most a couple of clarifying questions, batches of variations, and follow-up moves. The images are the deliverable in their own right — the studio is not a first-frame factory. Two optional handoffs connect it to a session in both directions: a session picture can open a studio project that records where it came from, and a studio image can be sent back to a session as a picture [Take](#take). Both are creator-invoked, one image at a time, and neither makes the studio a supplier — a [Studio project](#studio-project) stays its own record and never lives inside a session. Governed by [ADR-0019](docs/adr/0019-the-studio-standalone-conversational-image-workspace.md) and [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md). Resolved 2026-07-24 during studio grilling; the downstream rule revised 2026-09-17 with ADR-0022. Avoid synonyms: AI chat, image chat, design workspace, chat canvas.
 
 ### Studio project
 
@@ -143,6 +143,22 @@ What the shared plane centers on: every element tagged with the live id, centere
 ### Take identity
 
 The one id a [Take](#take) is known by: the id the server assigned when it persisted the take. The client's optimistic id is provisional — it is replaced by the server's on persist, so a later session refetch matches the take already on screen instead of duplicating it, and a lineage edge (ADR-0013) always names an id that exists. A take's identity is not its job id: the job is the work that produced the take, and it ends; the take does not. Resolved 2026-08-10 during the generation audit, generalizing the rule the picture path already followed. Avoid synonyms: generation id, job id, local id.
+
+### Origin
+
+Where a [Take](#take) entered its session from: generated (from the session's own words), upload, sketchpad, or studio. A closed set, recorded on the take at admission and validated at the wire — never inferred afterwards from which other fields happen to be filled in, and never widened by a caller inventing a value. Origin names the door a take came through; [Production provenance](#production-provenance) names the inputs that made it. Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 1). Avoid synonyms: source, type, kind, provenance.
+
+### Production provenance
+
+What actually produced a [Take](#take): the prompt or edit instruction plus the source inputs it consumed, recorded when known and recorded as unknown when it is not. An upload has unknown provenance rather than an invented one; a studio edit's provenance is its edit instruction ("remove the chair"), not a shot description; an accepted [Live output](#live-output)'s provenance is the snapshot, prompt, seed, strength, and steps of the output that was on screen, not the sketchpad's state at the click. Never restored into [The input](#the-input) — that is [Associated words](#associated-words). Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 2). Avoid synonyms: paired words, the take's prompt, lineage, origin.
+
+### Associated words
+
+The words-version a [Take](#take) is filed under — the direction restored into [The input](#the-input) when the take is selected, and the [Words node](#words-node) the take hangs from in the space. Every take has one, including an admitted picture, whose associated words are the version the admission named rather than a description of the image. May coincide with [Production provenance](#production-provenance); never presented as the same thing. Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 2). Avoid synonyms: paired words, the take's prompt, caption, provenance.
+
+### Refine edge
+
+[The space](#the-space)'s edge between two pictures: the later picture was produced by editing the earlier one (a studio edit today). Drawn inside the picture column — the space's three columns are media types, not an ancestry-depth limit. Derived from its endpoints like every other edge kind and never stored (ADR-0013): picture → picture is always a refine edge. A take with several source inputs records all of them and exposes one display ancestor for drawing; a take with no source input in this session has no display ancestor, hangs from its words node, and reads as picture-ancestry-unknown rather than being attached to whichever sibling is listed first. Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 3, amending [ADR-0012](docs/adr/0012-the-space-lineage-network.md)). Avoid synonyms: edit edge, derived-from, branch, version link.
 
 <!-- New terms go here, following the format above. -->
 

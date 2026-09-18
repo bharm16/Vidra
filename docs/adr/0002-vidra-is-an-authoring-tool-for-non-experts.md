@@ -10,6 +10,8 @@ for code, but frozen stacks carry **zero tests in any gate**. Their test
 suites (~1,000 tests) were removed from the repo; git history is the archive,
 and a revived stack revives its tests with it.
 
+> **Amended by [ADR-0022](0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)** — two narrow exceptions to this freeze and no more: the worker-to-session attachment boundary (decision 6) and the illustrative camera-motion preview as active-loop motion authoring (decision 7).
+
 Vidra had grown to 23 server service domains and 14 client features with **no
 canonical product definition** — the root `CONTEXT.md` and `docs/agents/domain.md`
 both pointed at a product description that had never been written. The code had
