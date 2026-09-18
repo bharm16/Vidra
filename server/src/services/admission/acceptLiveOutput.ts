@@ -16,6 +16,11 @@ import {
   type AdmissionMediaStore,
   type AdmissionSessionPort,
 } from "./admitPictureTake";
+import {
+  discardMintedSessionIfUncommitted,
+  ensureAcceptanceSession,
+  type AcceptanceSessionRead,
+} from "./acceptanceSessionOwnership";
 import type { OwnedPictureResolver } from "@services/owned-media";
 
 /**
@@ -44,14 +49,20 @@ import type { OwnedPictureResolver } from "@services/owned-media";
  *    must be durable before the record that names it is built — and, being the
  *    first write, it is also where "persistence is unavailable" surfaces,
  *    while there is still nothing to clean up.
- * 4. **Resolve or mint the session** (mint only when no destination was
- *    named, and only when this acceptance has not already minted one).
+ * 4. **Resolve or mint the session** (mint only when no destination was named).
+ *    The mint is one atomic create-if-absent on a deterministic id, so two
+ *    presses of the same output converge on one session rather than each
+ *    minting its own (issue #130). Only the press that actually created the
+ *    session may later compensate for it.
  * 5. **Admit through the shared boundary**, which owns ownership, idempotency,
  *    the picture's bytes and the take record.
- * 6. **Undo step 4 if step 5 did not produce a take.** A session created
- *    before a failed admission is the half-created state the ticket forbids;
- *    it is the caller's to remove, and only ever a session this call minted —
- *    a destination the creator already had is never touched.
+ * 6. **Discard the minted session ONLY if it is still uncommitted.** A session
+ *    minted before a failed admission is removed — but only when it holds no
+ *    take and no concurrent same-key admission is attaching into it. A
+ *    completion write that fails after the take has already attached surfaces
+ *    here as a thrown admission; the session is kept, because the take is
+ *    durable and resumable and deleting it would destroy committed work
+ *    (issue #130). A destination the creator already had is never touched.
  * 7. **Arm the first frame.** Last, because it needs the take identity step 5
  *    mints, and non-fatal: the take is durable and in its session by then, and
  *    destroying a real picture to punish a missing arm would be the wrong
@@ -59,23 +70,16 @@ import type { OwnedPictureResolver } from "@services/owned-media";
  */
 
 export interface AcceptLiveOutputSessionPort extends AdmissionSessionPort {
-  getSessionByPromptUuid(
+  /**
+   * Mint the session for this acceptance, or return the one an earlier press
+   * minted — one atomic step keyed on a deterministic id, so racing presses of
+   * the same output converge on one session (issue #130).
+   */
+  createPromptSessionAtomically(
     userId: string,
-    promptUuid: string,
-  ): Promise<{
-    id: string;
-    prompt?:
-      | {
-          versions?:
-            | ReadonlyArray<{ versionId: string; prompt: string }>
-            | undefined;
-        }
-      | undefined;
-  } | null>;
-  createPromptSession(
-    userId: string,
+    sessionId: string,
     request: { name?: string; prompt: SessionPrompt },
-  ): Promise<{ id: string }>;
+  ): Promise<{ created: boolean; session: AcceptanceSessionRead }>;
   updatePromptForUser(
     userId: string,
     sessionId: string,
@@ -275,37 +279,14 @@ export async function acceptLiveOutput(
     promptVersionId = accepted.destination.promptVersionId;
   } else {
     const promptUuid = acceptancePromptUuid(accepted.idempotencyKey);
+    let ensured;
     try {
-      const already = await sessionService.getSessionByPromptUuid(
+      ensured = await ensureAcceptanceSession(sessionService, {
         userId,
         promptUuid,
-      );
-      if (already) {
-        // A re-press of the same acceptance. Reuse its session and its root
-        // words-version so the admission below replays its take rather than
-        // conflicting on a second destination.
-        const root = already.prompt?.versions?.[0];
-        if (!root) {
-          // This session was minted by this bridge and always had a root. If
-          // it does not now, guessing an id would silently write a take under
-          // a words-version nobody authored — say so instead.
-          return {
-            state: "unavailable",
-            reason: `session ${already.id} has no root words-version`,
-          };
-        }
-        sessionId = already.id;
-        promptVersionId = root.versionId;
-      } else {
-        const root = buildRootPrompt(accepted.inputs.prompt, promptUuid);
-        const session = await sessionService.createPromptSession(userId, {
-          name: accepted.inputs.prompt,
-          prompt: root.prompt,
-        });
-        sessionId = session.id;
-        mintedSessionId = session.id;
-        promptVersionId = root.versionId;
-      }
+        name: accepted.inputs.prompt,
+        root: buildRootPrompt(accepted.inputs.prompt, promptUuid),
+      });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       log.warn("Acceptance refused: the session could not be created", {
@@ -314,20 +295,13 @@ export async function acceptLiveOutput(
       });
       return { state: "unavailable", reason };
     }
-  }
-
-  const undoMintedSession = async (): Promise<void> => {
-    if (!mintedSessionId) return;
-    try {
-      await sessionService.deleteSessionForUser(userId, mintedSessionId);
-    } catch (error) {
-      log.error(
-        "Acceptance failed and its new session could not be removed",
-        error instanceof Error ? error : new Error(String(error)),
-        { userId, sessionId: mintedSessionId },
-      );
+    if (!ensured.ok) {
+      return { state: "unavailable", reason: ensured.reason };
     }
-  };
+    sessionId = ensured.sessionId;
+    promptVersionId = ensured.promptVersionId;
+    mintedSessionId = ensured.mintedSessionId;
+  }
 
   let admitted;
   try {
@@ -369,7 +343,15 @@ export async function acceptLiveOutput(
       },
     );
   } catch (error) {
-    await undoMintedSession();
+    // A throw here is indistinguishable, by its error alone, between a failure
+    // before any commit and a completion write that failed AFTER the take
+    // attached. The compensation re-reads the session and only removes it while
+    // it is still uncommitted, so committed work is never deleted (issue #130).
+    await discardMintedSessionIfUncommitted(sessionService, {
+      userId,
+      mintedSessionId,
+      concurrentClaimOwner: false,
+    });
     const reason = error instanceof Error ? error.message : String(error);
     log.warn("Acceptance failed while admitting the picture", {
       userId,
@@ -380,7 +362,15 @@ export async function acceptLiveOutput(
   }
 
   if (admitted.state !== "admitted") {
-    await undoMintedSession();
+    // `in_progress`/`conflict` mean another same-key admission holds the claim
+    // and may be attaching into this very session, so it is not this attempt's
+    // to remove.
+    await discardMintedSessionIfUncommitted(sessionService, {
+      userId,
+      mintedSessionId,
+      concurrentClaimOwner:
+        admitted.state === "in_progress" || admitted.state === "conflict",
+    });
     return admitted.state === "refused"
       ? { state: "refused", reason: admitted.reason }
       : { state: admitted.state };

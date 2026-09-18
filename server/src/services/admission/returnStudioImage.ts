@@ -23,6 +23,11 @@ import {
   type AdmissionMediaStore,
   type AdmissionSessionPort,
 } from "./admitPictureTake";
+import {
+  discardMintedSessionIfUncommitted,
+  ensureAcceptanceSession,
+  type AcceptanceSessionRead,
+} from "./acceptanceSessionOwnership";
 
 /**
  * "Use this in the session": the studio's return door — ADR-0022 decisions 2,
@@ -61,12 +66,14 @@ import {
  * 3. **Read the bytes.** The one gate on what can be armed: a first frame must
  *    be storable raster media, and a failure here happens while there is still
  *    nothing to clean up.
- * 4. **Mint the session, if one is owed.** Last write before admission, and
- *    keyed so a second press lands on the first press's session.
+ * 4. **Mint the session, if one is owed.** Last write before admission — one
+ *    atomic create-if-absent on a deterministic id, so a second press lands on
+ *    the first press's session rather than minting a rival (issue #130).
  * 5. **Admit through the shared boundary**, which owns ownership, idempotency,
  *    the picture's bytes and the take record.
- * 6. **Undo step 4 if step 5 produced no take** — only ever a session this
- *    call minted.
+ * 6. **Discard the minted session ONLY if it is still uncommitted** — never one
+ *    that gained a take because a completion write failed after the attach, and
+ *    only ever a session this call minted (issue #130).
  * 7. **Arm the first frame.** Last, because it needs the take identity, and
  *    non-fatal: by then the picture is durable and in its session, and a
  *    failed arm costs a click rather than a picture.
@@ -87,28 +94,21 @@ export interface ReturnStudioImageStudioPort {
 }
 
 /**
- * The session capabilities this bridge needs beyond admission's own: looking
- * up the session a re-press already minted, minting one, removing it when the
- * admission it was minted for did not happen, and arming the first frame.
+ * The session capabilities this bridge needs beyond admission's own: minting
+ * the session atomically (which also returns the one a re-press already minted),
+ * removing it when it is still uncommitted, and arming the first frame.
  */
 export interface ReturnStudioImageSessionPort extends AdmissionSessionPort {
-  getSessionByPromptUuid(
+  /**
+   * Mint the session for this return, or return the one an earlier press
+   * minted — one atomic step keyed on a deterministic id, so racing presses of
+   * the same image converge on one session (issue #130).
+   */
+  createPromptSessionAtomically(
     userId: string,
-    promptUuid: string,
-  ): Promise<{
-    id: string;
-    prompt?:
-      | {
-          versions?:
-            | ReadonlyArray<{ versionId: string; prompt: string }>
-            | undefined;
-        }
-      | undefined;
-  } | null>;
-  createPromptSession(
-    userId: string,
+    sessionId: string,
     request: { name?: string; prompt: SessionPrompt },
-  ): Promise<{ id: string }>;
+  ): Promise<{ created: boolean; session: AcceptanceSessionRead }>;
   updatePromptForUser(
     userId: string,
     sessionId: string,
@@ -373,35 +373,14 @@ export async function returnStudioImage(
     promptVersionId = destination.promptVersionId;
   } else {
     const promptUuid = returnKey(projectId, imageId);
+    let ensured;
     try {
-      const already = await sessionService.getSessionByPromptUuid(
+      ensured = await ensureAcceptanceSession(sessionService, {
         userId,
         promptUuid,
-      );
-      const root = already?.prompt?.versions?.[0];
-      if (already && root) {
-        // A re-press. Reuse its session and root words-version so the
-        // admission below replays its take rather than conflicting on a
-        // second destination.
-        sessionId = already.id;
-        promptVersionId = root.versionId;
-      } else if (already) {
-        // Minted by this bridge and always given a root. If it has none now,
-        // guessing an id would file a take under words nobody authored.
-        return {
-          state: "unavailable",
-          reason: `session ${already.id} has no root words-version`,
-        };
-      } else {
-        const built = buildRootPrompt(instruction, promptUuid);
-        const created = await sessionService.createPromptSession(userId, {
-          name: instruction,
-          prompt: built.prompt,
-        });
-        sessionId = created.id;
-        mintedSessionId = created.id;
-        promptVersionId = built.versionId;
-      }
+        name: instruction,
+        root: buildRootPrompt(instruction, promptUuid),
+      });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       log.warn("Return failed: the session could not be created", {
@@ -411,20 +390,13 @@ export async function returnStudioImage(
       });
       return { state: "unavailable", reason };
     }
-  }
-
-  const undoMintedSession = async (): Promise<void> => {
-    if (!mintedSessionId) return;
-    try {
-      await sessionService.deleteSessionForUser(userId, mintedSessionId);
-    } catch (error) {
-      log.error(
-        "Return failed and its new session could not be removed",
-        error instanceof Error ? error : new Error(String(error)),
-        { userId, sessionId: mintedSessionId },
-      );
+    if (!ensured.ok) {
+      return { state: "unavailable", reason: ensured.reason };
     }
-  };
+    sessionId = ensured.sessionId;
+    promptVersionId = ensured.promptVersionId;
+    mintedSessionId = ensured.mintedSessionId;
+  }
 
   const { sourceInputs, displayAncestorGenerationId } = buildSourceInputs(
     produced,
@@ -462,7 +434,15 @@ export async function returnStudioImage(
       },
     );
   } catch (error) {
-    await undoMintedSession();
+    // A throw here cannot, by its error alone, distinguish a failure before any
+    // commit from a completion write that failed after the take attached. The
+    // compensation re-reads the session and removes it only while it is still
+    // uncommitted, so committed work is never deleted (issue #130).
+    await discardMintedSessionIfUncommitted(sessionService, {
+      userId,
+      mintedSessionId,
+      concurrentClaimOwner: false,
+    });
     const reason = error instanceof Error ? error.message : String(error);
     log.warn("Return failed while admitting the picture", {
       userId,
@@ -474,7 +454,15 @@ export async function returnStudioImage(
   }
 
   if (admitted.state !== "admitted") {
-    await undoMintedSession();
+    // `in_progress`/`conflict` mean another same-key admission holds the claim
+    // and may be attaching into this very session, so it is not this attempt's
+    // to remove.
+    await discardMintedSessionIfUncommitted(sessionService, {
+      userId,
+      mintedSessionId,
+      concurrentClaimOwner:
+        admitted.state === "in_progress" || admitted.state === "conflict",
+    });
     return admitted.state === "refused"
       ? { state: "refused", reason: admitted.reason }
       : { state: admitted.state };

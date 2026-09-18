@@ -248,6 +248,14 @@ function harness(options?: {
       sessions.delete(id);
     }),
     findByPromptUuid: vi.fn(async () => null),
+    // The atomic mint the studio-return bridge uses when it starts a new
+    // session (issue #130): create-if-absent on the deterministic id.
+    createIfAbsent: vi.fn(async (next: SessionRecord) => {
+      const existing = sessions.get(next.id);
+      if (existing) return { created: false, session: existing };
+      sessions.set(next.id, next);
+      return { created: true, session: next };
+    }),
   };
   const sessionService = new SessionService(
     sessionStore as unknown as SessionStore,

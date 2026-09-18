@@ -75,12 +75,33 @@ function request(
 /** Stands in for Firestore, across every session this suite creates. */
 function createSessionStore() {
   const sessions = new Map<string, SessionRecord>();
+  // A hook the concurrency test installs to park both presses at the create
+  // step; unset, `createIfAbsent` is a plain atomic upsert.
+  let createIfAbsentGate: (() => Promise<void>) | undefined;
   return {
     sessions,
+    setCreateIfAbsentGate: (gate: (() => Promise<void>) | undefined) => {
+      createIfAbsentGate = gate;
+    },
     get: vi.fn(async (id: string) => sessions.get(id) ?? null),
     save: vi.fn(async (next: SessionRecord) => {
       sessions.set(next.id, next);
     }),
+    // Firestore's transactional create-if-absent on the doc id, modelled as an
+    // atomic compare-and-set: the existence check and the write share one
+    // synchronous section, so two presses racing the SAME deterministic id — as
+    // the barrier test forces — yield one create and one read, never two rows.
+    createIfAbsent: vi.fn(
+      async (
+        session: SessionRecord,
+      ): Promise<{ created: boolean; session: SessionRecord }> => {
+        if (createIfAbsentGate) await createIfAbsentGate();
+        const existing = sessions.get(session.id);
+        if (existing) return { created: false, session: existing };
+        sessions.set(session.id, session);
+        return { created: true, session };
+      },
+    ),
     mutate: vi.fn(
       async (
         sessionId: string,
@@ -149,8 +170,15 @@ function createMediaStore(): MediaStoreDouble {
   };
 }
 
+type IdempotencyDouble = AdmissionIdempotencyPort & {
+  /** Make `markCompleted` throw from its Nth call on (0-based). Call 0 is the
+   * pre-append `pending` snapshot; call 1 is the completion rewrite AFTER the
+   * take has attached — the window issue #130's safety criterion turns on. */
+  failMarkCompletedFrom: (callIndex: number) => void;
+};
+
 /** Stands in for the Firestore-backed `RequestIdempotencyService`. */
-function createIdempotency(): AdmissionIdempotencyPort {
+function createIdempotency(): IdempotencyDouble {
   const records = new Map<
     string,
     {
@@ -159,7 +187,12 @@ function createIdempotency(): AdmissionIdempotencyPort {
       snapshot?: { statusCode: number; body: Record<string, unknown> };
     }
   >();
+  let markCompletedCalls = 0;
+  let failMarkCompletedFrom = Number.POSITIVE_INFINITY;
   return {
+    failMarkCompletedFrom: (callIndex: number) => {
+      failMarkCompletedFrom = callIndex;
+    },
     claimRequest: async ({ userId, route, key, payload }) => {
       const recordId = `${userId}|${route}|${key}`;
       const payloadHash = JSON.stringify(payload);
@@ -181,6 +214,9 @@ function createIdempotency(): AdmissionIdempotencyPort {
       return { state: "claimed", recordId };
     },
     markCompleted: async ({ recordId, snapshot }) => {
+      if (markCompletedCalls++ >= failMarkCompletedFrom) {
+        throw new Error("idempotency completion write failed");
+      }
       const existing = records.get(recordId);
       if (!existing) return;
       records.set(recordId, { ...existing, status: "completed", snapshot });
@@ -196,17 +232,40 @@ function createIdempotency(): AdmissionIdempotencyPort {
 function setup(): {
   store: ReturnType<typeof createSessionStore>;
   mediaStore: MediaStoreDouble;
+  idempotency: IdempotencyDouble;
   deps: AcceptLiveOutputDependencies;
 } {
   const store = createSessionStore();
   const mediaStore = createMediaStore();
+  const idempotency = createIdempotency();
   return {
     store,
     mediaStore,
+    idempotency,
     deps: {
       sessionService: new SessionService(store as never),
       mediaStore,
-      idempotency: createIdempotency(),
+      idempotency,
+    },
+  };
+}
+
+/**
+ * A latch that releases every waiter once `parties` of them have arrived — the
+ * barrier the concurrency test uses to hold both presses at the create step
+ * until both are there, so the create is exercised under true contention.
+ */
+function createBarrier(parties: number): { wait: () => Promise<void> } {
+  let arrived = 0;
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  return {
+    wait: async () => {
+      arrived += 1;
+      if (arrived >= parties) release();
+      await gate;
     },
   };
 }
@@ -346,6 +405,42 @@ describe("acceptLiveOutput (ADR-0022 decision 5, issue #87)", () => {
     expect(pictureStores).toHaveLength(1);
   });
 
+  it("creates one session and one take when two presses of the same output race at the create step", async () => {
+    const { deps, store, mediaStore } = fixture;
+
+    // Hold both presses at the atomic create until both have arrived, so it is
+    // exercised under true contention — the window a find-then-create left open
+    // to mint two sessions for one output.
+    const barrier = createBarrier(2);
+    store.setCreateIfAbsentGate(() => barrier.wait());
+
+    const [first, second] = await Promise.all([
+      acceptLiveOutput(deps, request()),
+      acceptLiveOutput(deps, request()),
+    ]);
+
+    // Exactly one session, holding exactly one take — never two rows for one
+    // output, and never a session the loser's compensation deleted.
+    expect(store.sessions.size).toBe(1);
+    const session = onlySession(store);
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    expect(versionId).toBeDefined();
+    expect(takesOf(session, versionId!)).toHaveLength(1);
+
+    // The picture is stored once — the loser replays or backs off, never mints
+    // a rival take.
+    expect(
+      mediaStore.calls.filter((call) => call.contentType === "image/webp"),
+    ).toHaveLength(1);
+
+    // One press is told it succeeded; the other is at worst told to retry,
+    // never handed a hard failure.
+    expect([first.state, second.state]).toContain("accepted");
+    for (const state of [first.state, second.state]) {
+      expect(["accepted", "in_progress"]).toContain(state);
+    }
+  });
+
   it("admits into the destination's session and words-version when one is given, minting no session", async () => {
     const { deps, store } = fixture;
     const existing: SessionRecord = {
@@ -444,17 +539,56 @@ describe("acceptLiveOutput (ADR-0022 decision 5, issue #87)", () => {
     expect(store.sessions.size).toBe(0);
   });
 
-  it("removes the session it had just minted when the admission behind it fails", async () => {
+  it("removes the session it had just minted when the admission fails before any take is committed", async () => {
     const { deps, store, mediaStore } = fixture;
     // The snapshot lands, the session is born, and the store dies before the
-    // accepted picture is durable — the one window a session can outlive its
-    // take. Nothing may survive it.
+    // accepted picture is durable — a failure BEFORE any commit. The empty
+    // session this attempt minted, and only that one, is cleaned up.
     mediaStore.failFrom(1);
 
     const result = await acceptLiveOutput(deps, request());
 
     expect(result.state).toBe("unavailable");
     expect(store.sessions.size).toBe(0);
+  });
+
+  it("keeps the session AND its take when the completion write fails after the take has attached", async () => {
+    const { deps, store, mediaStore, idempotency } = fixture;
+    // Let the pre-append `pending` snapshot land (call 0), then fail the
+    // completion rewrite (call 1) — the write that runs AFTER the take is
+    // already in its session. Compensation must never delete committed work to
+    // punish a failed response-record (issue #130, ADR-0022 decision 6).
+    idempotency.failMarkCompletedFrom(1);
+
+    const result = await acceptLiveOutput(deps, request());
+
+    // The caller learns the acceptance did not settle cleanly...
+    expect(result.state).toBe("unavailable");
+
+    // ...yet the session it minted, and the take that attached, are intact.
+    expect(store.sessions.size).toBe(1);
+    const session = onlySession(store);
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    const takes = takesOf(session, versionId!);
+    expect(takes).toHaveLength(1);
+    expect(takes[0]!.origin).toBe("sketchpad");
+    const attachedTakeId = takes[0]!.id;
+
+    // The picture is durable and was never rolled back: one webp store.
+    expect(
+      mediaStore.calls.filter((call) => call.contentType === "image/webp"),
+    ).toHaveLength(1);
+
+    // And it is resumable: once storage recovers, a retry replays the SAME
+    // take rather than minting a second — one session, one take throughout.
+    idempotency.failMarkCompletedFrom(Number.POSITIVE_INFINITY);
+    const retry = await acceptLiveOutput(deps, request());
+
+    expect(retry.state).toBe("accepted");
+    if (retry.state !== "accepted") return;
+    expect(retry.result.generationId).toBe(attachedTakeId);
+    expect(store.sessions.size).toBe(1);
+    expect(takesOf(onlySession(store), versionId!)).toHaveLength(1);
   });
 
   it("rejects media it cannot read as an image, before any side effect", async () => {

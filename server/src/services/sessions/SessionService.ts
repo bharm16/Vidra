@@ -120,6 +120,41 @@ export class SessionService {
     return session;
   }
 
+  /**
+   * Create a session at a caller-supplied deterministic id, or return the one
+   * already there — the atomic mint the acceptance bridges own (issue #130,
+   * ADR-0022 decision 6).
+   *
+   * Unlike {@link createPromptSession}, this neither generates the id nor
+   * queries `promptUuid` before writing: the caller derived the id from the
+   * output being accepted, and the single atomic create-if-absent on that id is
+   * the whole uniqueness guarantee — a find-then-create leaves a window in which
+   * two racing presses each mint a session for one output. `created` tells the
+   * caller whether this attempt is the one that owns the new session, which is
+   * what lets compensation later remove only a session it actually minted.
+   */
+  async createPromptSessionAtomically(
+    userId: string,
+    sessionId: string,
+    request: SessionCreateRequest,
+  ): Promise<{ created: boolean; session: SessionRecord }> {
+    const now = new Date();
+    const prompt = request.prompt ? { ...request.prompt } : undefined;
+    const session: SessionRecord = {
+      id: sessionId,
+      userId,
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+      ...(request.name !== undefined ? { name: request.name } : {}),
+      ...(prompt ? { prompt } : {}),
+      ...(prompt?.uuid ? { promptUuid: prompt.uuid } : {}),
+      hasContinuity: false,
+    };
+
+    return this.sessionStore.createIfAbsent(session);
+  }
+
   async getSession(sessionId: string): Promise<SessionRecord | null> {
     return this.sessionStore.get(sessionId);
   }

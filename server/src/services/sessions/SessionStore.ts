@@ -55,6 +55,48 @@ export class SessionStore {
   }
 
   /**
+   * Create the session at its given id, or report it already exists — one
+   * atomic step (issue #130, ADR-0022 decision 6).
+   *
+   * The acceptance bridges derive this id deterministically from the output
+   * being accepted, so two racing presses — a retry, a second tab, a true
+   * concurrent double-fire — target the SAME document. The transaction's `get`
+   * locks it: the first press creates, every other press reads back the winner,
+   * and no query-then-create window can mint a rival session for one output.
+   *
+   * `save` cannot stand in for this: it merges when the doc exists, so a second
+   * press would overwrite the root words-version the first press's take is filed
+   * under. Here an existing doc is returned untouched, so the caller can tell a
+   * mint it owns from a session that was already there.
+   */
+  async createIfAbsent(
+    session: SessionRecord,
+  ): Promise<{ created: boolean; session: SessionRecord }> {
+    const docRef = this.collection.doc(session.id);
+
+    return this.db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(docRef);
+      if (snapshot.exists) {
+        return {
+          created: false,
+          session: this.fromStored(
+            session.id,
+            snapshot.data() as StoredSession,
+          ),
+        };
+      }
+
+      transaction.set(docRef, {
+        ...this.toStored(session),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return { created: true, session };
+    });
+  }
+
+  /**
    * Read-modify-write inside one transaction — ADR-0022 decision 6.
    *
    * `save` above cannot express a concurrent append. Its payload is built by

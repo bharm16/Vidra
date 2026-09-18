@@ -322,6 +322,29 @@ export class InMemorySessionStore {
     return Promise.resolve();
   }
 
+  /**
+   * The atomic create-if-absent the acceptance bridges mint through (issue
+   * #130). Existence check and write share one synchronous section, mirroring
+   * the real store's transaction: a second create at the same id reports the
+   * existing row untouched rather than overwriting it.
+   */
+  createIfAbsent(
+    session: SessionRecord,
+  ): Promise<{ created: boolean; session: SessionRecord }> {
+    const existing = this.sessions.get(session.id);
+    if (existing) {
+      return Promise.resolve({
+        created: false,
+        session: structuredClone(existing),
+      });
+    }
+    this.sessions.set(session.id, structuredClone(session));
+    return Promise.resolve({
+      created: true,
+      session: structuredClone(session),
+    });
+  }
+
   async mutate(
     sessionId: string,
     mutator: (current: SessionRecord) => SessionRecord,

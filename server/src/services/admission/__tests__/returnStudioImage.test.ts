@@ -171,12 +171,30 @@ class FakeStudioStore implements StudioProjectStore {
 /** Stands in for Firestore. */
 function createSessionStore() {
   const sessions = new Map<string, SessionRecord>();
+  let createIfAbsentGate: (() => Promise<void>) | undefined;
   return {
     sessions,
+    setCreateIfAbsentGate: (gate: (() => Promise<void>) | undefined) => {
+      createIfAbsentGate = gate;
+    },
     get: vi.fn(async (id: string) => sessions.get(id) ?? null),
     save: vi.fn(async (next: SessionRecord) => {
       sessions.set(next.id, next);
     }),
+    // Firestore's transactional create-if-absent, modelled as an atomic
+    // compare-and-set: existence check and write share one synchronous section,
+    // so two presses racing the same deterministic id yield one create.
+    createIfAbsent: vi.fn(
+      async (
+        session: SessionRecord,
+      ): Promise<{ created: boolean; session: SessionRecord }> => {
+        if (createIfAbsentGate) await createIfAbsentGate();
+        const existing = sessions.get(session.id);
+        if (existing) return { created: false, session: existing };
+        sessions.set(session.id, session);
+        return { created: true, session };
+      },
+    ),
     mutate: vi.fn(
       async (
         sessionId: string,
@@ -223,8 +241,15 @@ function createMediaStore() {
   };
 }
 
+type IdempotencyDouble = AdmissionIdempotencyPort & {
+  /** Make `markCompleted` throw from its Nth call on (0-based). Call 0 is the
+   * pre-append `pending` snapshot; call 1 is the completion rewrite AFTER the
+   * take has attached — the window issue #130's safety criterion turns on. */
+  failMarkCompletedFrom: (callIndex: number) => void;
+};
+
 /** Stands in for the Firestore-backed `RequestIdempotencyService`. */
-function createIdempotency(): AdmissionIdempotencyPort {
+function createIdempotency(): IdempotencyDouble {
   const records = new Map<
     string,
     {
@@ -233,7 +258,12 @@ function createIdempotency(): AdmissionIdempotencyPort {
       snapshot?: { statusCode: number; body: Record<string, unknown> };
     }
   >();
+  let markCompletedCalls = 0;
+  let failMarkCompletedFrom = Number.POSITIVE_INFINITY;
   return {
+    failMarkCompletedFrom: (callIndex: number) => {
+      failMarkCompletedFrom = callIndex;
+    },
     claimRequest: async ({ userId, route, key, payload }) => {
       const recordId = `${userId}|${route}|${key}`;
       const payloadHash = JSON.stringify(payload);
@@ -255,6 +285,9 @@ function createIdempotency(): AdmissionIdempotencyPort {
       return { state: "claimed", recordId };
     },
     markCompleted: async ({ recordId, snapshot }) => {
+      if (markCompletedCalls++ >= failMarkCompletedFrom) {
+        throw new Error("idempotency completion write failed");
+      }
       const existing = records.get(recordId);
       if (existing) {
         records.set(recordId, { ...existing, status: "completed", snapshot });
@@ -276,15 +309,34 @@ interface Harness {
   sessions: ReturnType<typeof createSessionStore>;
   sessionService: SessionService;
   mediaStore: ReturnType<typeof createMediaStore>;
+  idempotency: IdempotencyDouble;
   decide: ReturnType<typeof vi.fn>;
   /** Content type the bridge's byte read will report. */
   setStoredMedia: (contentType: string) => void;
+}
+
+/** Releases every waiter once `parties` of them have arrived — the barrier the
+ * concurrency test uses to hold both presses at the create step together. */
+function createBarrier(parties: number): { wait: () => Promise<void> } {
+  let arrived = 0;
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  return {
+    wait: async () => {
+      arrived += 1;
+      if (arrived >= parties) release();
+      await gate;
+    },
+  };
 }
 
 function setup(): Harness {
   const studioStore = new FakeStudioStore();
   const sessions = createSessionStore();
   const mediaStore = createMediaStore();
+  const idempotency = createIdempotency();
   const sessionService = new SessionService(sessions as never);
 
   let idCounter = 0;
@@ -329,13 +381,14 @@ function setup(): Harness {
       studio,
       sessionService,
       mediaStore,
-      idempotency: createIdempotency(),
+      idempotency,
     },
     studio,
     studioStore,
     sessions,
     sessionService,
     mediaStore,
+    idempotency,
     decide,
     setStoredMedia: (contentType: string) => {
       storedContentType = contentType;
@@ -871,5 +924,93 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     });
 
     expect(result.state).toBe("not-found");
+  });
+
+  it("creates one session and one take when two presses of the same image race at the create step", async () => {
+    // A standalone project mints a session on return — the path where two
+    // presses could each mint their own before issue #130.
+    const project = await fixture.studio.createProject(OWNER, "Standalone");
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "a paper crane",
+      generateDecision("a paper crane on a windowsill"),
+    );
+
+    const barrier = createBarrier(2);
+    fixture.sessions.setCreateIfAbsentGate(() => barrier.wait());
+
+    const press = () =>
+      returnStudioImage(fixture.deps, {
+        userId: OWNER,
+        projectId: project.id,
+        imageId: imageIds[0]!,
+      });
+    const [first, second] = await Promise.all([press(), press()]);
+
+    // One session, one take — never two rows for one image.
+    expect(fixture.sessions.sessions.size).toBe(1);
+    const session = [...fixture.sessions.sessions.values()][0]!;
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    expect(versionId).toBeDefined();
+    expect(takesOf(session, versionId!)).toHaveLength(1);
+    // The picture is stored once — the loser replays or backs off.
+    expect(fixture.mediaStore.calls).toHaveLength(1);
+    expect([first.state, second.state]).toContain("returned");
+    for (const state of [first.state, second.state]) {
+      expect(["returned", "in_progress"]).toContain(state);
+    }
+  });
+
+  it("keeps the minted session AND its take when the completion write fails after the take has attached", async () => {
+    const project = await fixture.studio.createProject(OWNER, "Standalone");
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "a paper crane",
+      generateDecision("a paper crane on a windowsill"),
+    );
+
+    // Land the pending snapshot (call 0), fail the completion rewrite (call 1)
+    // — the write that runs AFTER the take is already in its session.
+    // Compensation must never delete committed work (issue #130).
+    fixture.idempotency.failMarkCompletedFrom(1);
+
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(result.state).toBe("unavailable");
+
+    // The session this return minted, and the take that attached, survive.
+    expect(fixture.sessions.sessions.size).toBe(1);
+    const session = [...fixture.sessions.sessions.values()][0]!;
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    const takes = takesOf(session, versionId!);
+    expect(takes).toHaveLength(1);
+    expect(takes[0]!.origin).toBe("studio");
+    const attachedTakeId = takes[0]!.id;
+
+    // The picture is durable: one store, never rolled back.
+    expect(fixture.mediaStore.calls).toHaveLength(1);
+
+    // Resumable: a retry once the store recovers replays the SAME take.
+    fixture.idempotency.failMarkCompletedFrom(Number.POSITIVE_INFINITY);
+    const retry = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(retry.state).toBe("returned");
+    if (retry.state !== "returned") return;
+    expect(retry.result.generationId).toBe(attachedTakeId);
+    expect(fixture.sessions.sessions.size).toBe(1);
+    const after = [...fixture.sessions.sessions.values()][0]!;
+    expect(takesOf(after, versionId!)).toHaveLength(1);
   });
 });
