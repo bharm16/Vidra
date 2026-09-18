@@ -642,6 +642,37 @@ describe("SessionService", () => {
         (generation) => (generation as { id: string }).id,
       );
 
+    const generationsById = (
+      store: ReturnType<typeof createConcurrentStore>,
+    ): Map<string, Record<string, unknown>> =>
+      new Map(
+        (store.current().prompt?.versions?.[0]?.generations ?? []).map(
+          (generation) => [
+            (generation as { id: string }).id,
+            generation as Record<string, unknown>,
+          ],
+        ),
+      );
+
+    // Seed with one already-persisted leaf take, so a concurrent writer has a
+    // take to race against (a rename to preserve, a node to archive).
+    const seededWithLeaf = (id: string): SessionRecord =>
+      buildRecord({
+        prompt: {
+          input: "raw",
+          output: "optimized",
+          versions: [
+            {
+              versionId: "v-1",
+              signature: "sig",
+              prompt: "optimized",
+              timestamp: "2026-09-17T00:00:00.000Z",
+              generations: [take(id) as never],
+            },
+          ],
+        },
+      });
+
     it("keeps both takes when two different appends run concurrently", async () => {
       const store = createConcurrentStore(seeded());
       const service = new SessionService(store as never);
@@ -716,6 +747,103 @@ describe("SessionService", () => {
       ]);
 
       expect(idsIn(store).sort()).toEqual(["client-take", "server-take"]);
+    });
+
+    it("keeps a concurrently appended take when a rename lands", async () => {
+      const store = createConcurrentStore(seeded());
+      const service = new SessionService(store as never);
+
+      await Promise.all([
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
+        service.updateSessionForUser("user-1", "session-1", {
+          name: "Renamed while a take was landing",
+        }),
+      ]);
+
+      expect(idsIn(store)).toEqual(["pic-a"]);
+      expect(store.current().name).toBe("Renamed while a take was landing");
+      // Both writers took the transactional path; neither built its payload
+      // from a prior read and wrote it back through the clobbering save.
+      expect(store.save).not.toHaveBeenCalled();
+    });
+
+    it("keeps a concurrently appended take when a highlights update lands", async () => {
+      const store = createConcurrentStore(seeded());
+      const service = new SessionService(store as never);
+
+      await Promise.all([
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
+        service.updateHighlightsForUser("user-1", "session-1", {
+          highlightCache: { spans: [{ start: 0, end: 4 }] },
+        }),
+      ]);
+
+      expect(idsIn(store)).toEqual(["pic-a"]);
+      expect(store.current().prompt?.highlightCache).toEqual({
+        spans: [{ start: 0, end: 4 }],
+      });
+      expect(store.save).not.toHaveBeenCalled();
+    });
+
+    it("keeps a concurrently appended take when the first frame is armed", async () => {
+      const store = createConcurrentStore(seeded());
+      const service = new SessionService(store as never);
+
+      // First-frame arming is a prompt update (it sets the version's keyframe);
+      // it used to build its whole prompt from a read taken before the append.
+      const keyframe = {
+        id: "kf-1",
+        url: "https://example.com/frame.png",
+        storagePath: "users/user-1/frames/kf-1.webp",
+        assetId: "kf-asset",
+      };
+
+      await Promise.all([
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
+        service.updatePromptForUser("user-1", "session-1", {
+          keyframes: [keyframe],
+        }),
+      ]);
+
+      expect(idsIn(store)).toEqual(["pic-a"]);
+      expect(store.current().prompt?.keyframes).toEqual([keyframe]);
+      expect(store.save).not.toHaveBeenCalled();
+    });
+
+    it("keeps a concurrently appended take when another take is archived", async () => {
+      const store = createConcurrentStore(seededWithLeaf("pic-0"));
+      const service = new SessionService(store as never);
+
+      await Promise.all([
+        service.appendGenerationToVersion(
+          "user-1",
+          "session-1",
+          "v-1",
+          take("pic-a"),
+        ),
+        service.archiveGeneration("user-1", "session-1", "pic-0"),
+      ]);
+
+      const byId = generationsById(store);
+      expect(byId.has("pic-a")).toBe(true);
+      expect(byId.get("pic-a")?.archived).toBeUndefined();
+      expect(byId.get("pic-0")?.archived).toBe(true);
+      expect(store.save).not.toHaveBeenCalled();
     });
   });
 
