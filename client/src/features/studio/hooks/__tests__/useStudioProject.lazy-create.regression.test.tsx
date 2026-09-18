@@ -106,6 +106,13 @@ describe("regression: bootstrap never creates a project; first send creates exac
     expect(runStudioTurn).toHaveBeenCalledWith(
       "p-lazy",
       "make me a logo",
+      // The submission identity + captured selection/pin (#115). A freshly
+      // created project holds neither, so both are an explicit null.
+      expect.objectContaining({
+        submissionId: expect.any(String),
+        selectedImageId: null,
+        pinnedModel: null,
+      }),
       expect.objectContaining({ onThinkingDelta: expect.any(Function) }),
       [],
     );

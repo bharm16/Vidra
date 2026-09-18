@@ -34,7 +34,11 @@ import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
-import { StudioUseInSessionRequestSchema } from "@shared/schemas/studio.schemas";
+import {
+  StudioTurnSubmissionSchema,
+  StudioUseInSessionRequestSchema,
+  type StudioTurnSubmission,
+} from "@shared/schemas/studio.schemas";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
 const CreateProjectSchema = z.object({
@@ -73,11 +77,17 @@ const AddAttachmentSchema = z.object({
   filename: z.string().min(1).max(200),
 });
 
-const RunTurnSchema = z.object({
-  message: z.string().min(1).max(4000),
-  /** S-12: attachment ids sent with this message. */
-  attachmentIds: z.array(z.string().min(1)).max(14).optional(),
-});
+const RunTurnSchema = z
+  .object({
+    message: z.string().min(1).max(4000),
+    /** S-12: attachment ids sent with this message. */
+    attachmentIds: z.array(z.string().min(1)).max(14).optional(),
+  })
+  // The submission identity and captured selection/pin (#115). All optional
+  // here so a non-studio caller can still run a turn; the studio client always
+  // sends them, and the service converges retries only when submissionId is
+  // present.
+  .merge(StudioTurnSubmissionSchema.partial());
 
 /** Matched route segments are always non-empty strings; "" never occurs. */
 function routeParam(req: Request, name: string): string {
@@ -271,6 +281,14 @@ export function createStudioRouter(
         res.write(`${JSON.stringify(event)}\n`);
       };
 
+      // The submission is assembled from the wire body only when it carries an
+      // identity (#115). Absent it, the turn runs unconverged, as before.
+      const { submissionId, selectedImageId, pinnedModel } = parsed.value;
+      const submission: StudioTurnSubmission | undefined =
+        submissionId !== undefined
+          ? { submissionId, selectedImageId, pinnedModel }
+          : undefined;
+
       try {
         const { turnId, decision } = await studioService.runTurn(
           userId,
@@ -281,6 +299,7 @@ export function createStudioRouter(
             onThinkingDelta: (delta) => writeEvent({ type: "thinking", delta }),
           },
           parsed.value.attachmentIds,
+          submission,
         );
         writeEvent({ type: "accepted", turnId, decision });
         res.end();

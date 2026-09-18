@@ -8,6 +8,7 @@ import { storageApi } from "@/api/storageApi";
 import { z } from "zod";
 import {
   StudioUseInSessionResultSchema,
+  type StudioTurnSubmission,
   type StudioUseInSessionResult,
 } from "@shared/schemas/studio.schemas";
 import {
@@ -204,18 +205,28 @@ export async function uploadStudioAttachment(
 export async function runStudioTurn(
   projectId: string,
   message: string,
+  submission: StudioTurnSubmission,
   hooks?: RunTurnStreamHooks,
   attachmentIds?: readonly string[],
 ): Promise<RunTurnResponse> {
   // Streams NDJSON, so it opts out of the shared client's request timeout
   // (stream: true) — otherwise the timeout signal would abort the turn
   // mid-stream. Auth + telemetry-source headers still come from the seam.
+  //
+  // The submission identity and captured selection/pin ride in this body (#115).
+  // They are built once here, so the auth transport's single POST re-send after
+  // a 401 sign-in re-sends the SAME identity and converges on one turn rather
+  // than a second paid decision. `null` is an explicit "no selection"/"Auto"
+  // captured at submit time, so a change in another tab cannot alter this turn.
   const response = await apiClient.rawRequest(
     `/studio/projects/${projectId}/turns`,
     {
       method: "POST",
       body: JSON.stringify({
         message,
+        submissionId: submission.submissionId,
+        selectedImageId: submission.selectedImageId ?? null,
+        pinnedModel: submission.pinnedModel ?? null,
         ...(attachmentIds && attachmentIds.length > 0
           ? { attachmentIds: [...attachmentIds] }
           : {}),
@@ -353,7 +364,10 @@ export async function returnStudioImageToSession(
 
   if (response.ok) {
     const parsed = z
-      .object({ success: z.literal(true), data: StudioUseInSessionResultSchema })
+      .object({
+        success: z.literal(true),
+        data: StudioUseInSessionResultSchema,
+      })
       .parse(body);
     return { state: "returned", result: parsed.data };
   }

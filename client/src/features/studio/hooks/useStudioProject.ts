@@ -81,6 +81,19 @@ function describeError(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong";
 }
 
+/**
+ * A fresh submission identity per deliberate send (#115). Stable within one
+ * send — the api layer bakes it into the request body once, so the auth
+ * transport's single re-send after a 401 sign-in carries the same one and
+ * converges on one turn. A manual re-click is a NEW submission by design.
+ */
+function mintSubmissionId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `sub-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function useStudioProject(
   /** The project named by the route; null on /studio/new. */
   routeProjectId: string | null,
@@ -108,6 +121,16 @@ export function useStudioProject(
   // two clicks in the same tick cannot both start a turn.
   const turnInFlightRef = useRef(false);
   turnInFlightRef.current = isTurnInFlight(state);
+  // The selection and pin the submission captures at submit time, read through
+  // refs for the same reason projectIdRef is: the press and the POST are
+  // separated by a round trip (and possibly a sign-in), so what travels must be
+  // what the creator saw when they pressed send — not whatever a re-render or
+  // another tab left on the record (#115). returnImageToSession reads the
+  // selection ref too.
+  const selectedImageIdRef = useRef<string | null>(null);
+  selectedImageIdRef.current = state.selectedImageId;
+  const pinnedModelRef = useRef<string | null>(null);
+  pinnedModelRef.current = state.project?.pinnedModel ?? null;
 
   /**
    * Every async settle is addressed to the project it was issued for. A
@@ -229,8 +252,14 @@ export function useStudioProject(
       // a turn streams, and a second turn would orphan the first one's poll.
       if (!trimmed || turnInFlightRef.current) return;
       turnInFlightRef.current = true;
-      // The staged attachments ride this message (S-12); messageSent clears
-      // the composer chips, so capture the ids first.
+      // Capture the whole submission at submit time (#115): a fresh identity,
+      // and the selection/pin the creator saw. messageSent clears the composer
+      // chips, so the attachment ids are captured here too, alongside them.
+      const submission = {
+        submissionId: mintSubmissionId(),
+        selectedImageId: selectedImageIdRef.current,
+        pinnedModel: pinnedModelRef.current,
+      };
       const attachmentIds = pendingAttachmentIdsRef.current;
       dispatch({ type: "messageSent", message: trimmed });
       try {
@@ -247,6 +276,7 @@ export function useStudioProject(
         const { turnId } = await runStudioTurn(
           projectId,
           trimmed,
+          submission,
           {
             // Realtime thinking: deltas render as the LLM emits them.
             onThinkingStart: () => dispatch({ type: "thinkingStreamStarted" }),
@@ -328,12 +358,6 @@ export function useStudioProject(
   const removeAttachment = useCallback((attachmentId: string) => {
     dispatch({ type: "attachmentUnstaged", attachmentId });
   }, []);
-
-  // Reads the selection through a ref for the same reason the project id is
-  // read that way: the press and the response are separated by a round trip,
-  // and the image that was chosen is the one that must travel.
-  const selectedImageIdRef = useRef<string | null>(null);
-  selectedImageIdRef.current = state.selectedImageId;
 
   const returnImageToSession = useCallback(
     async (options?: {
