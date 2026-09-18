@@ -9,6 +9,7 @@ import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
+import type { OwnedPictureResolver } from "@services/owned-media";
 import { SketchAcceptRequestSchema } from "@shared/schemas/sketch.schemas";
 import { FAL_I2I_MODEL_ENDPOINT } from "./fal-i2i.routes";
 
@@ -34,6 +35,12 @@ interface SketchAcceptRouterDeps {
   sessionService: AcceptLiveOutputSessionPort | null | undefined;
   mediaStore: AdmissionMediaStore | null | undefined;
   idempotency: AdmissionIdempotencyPort | null | undefined;
+  /**
+   * Issue #125: re-mints a replayed acceptance's `imageUrl` from its durable
+   * handle. Independently optional — acceptance still works without it, a
+   * replay just keeps its stored (expiring) URL.
+   */
+  resolver?: OwnedPictureResolver | null | undefined;
 }
 
 export function createSketchAcceptRouter(deps: SketchAcceptRouterDeps): Router {
@@ -53,7 +60,7 @@ export function createSketchAcceptRouter(deps: SketchAcceptRouterDeps): Router {
         return;
       }
 
-      const { sessionService, mediaStore, idempotency } = deps;
+      const { sessionService, mediaStore, idempotency, resolver } = deps;
       if (!sessionService || !mediaStore || !idempotency) {
         res.status(503).json({
           success: false,
@@ -64,7 +71,12 @@ export function createSketchAcceptRouter(deps: SketchAcceptRouterDeps): Router {
       }
 
       const result = await acceptLiveOutput(
-        { sessionService, mediaStore, idempotency },
+        {
+          sessionService,
+          mediaStore,
+          idempotency,
+          ...(resolver ? { resolver } : {}),
+        },
         {
           userId: creatorId,
           accepted: parsed.data,

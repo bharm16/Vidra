@@ -309,8 +309,27 @@ export function createSessionRoutes(
   sessionService: SessionService,
   continuityService: ContinuitySessionService | null = null,
   userCreditService?: RouteCreditService | null,
+  /**
+   * Issue #125: freshen a single session's picture view URLs on read, minting
+   * from owner-checked durable handles (see `remintSessionPictureUrls`). Bound
+   * at registration so the route never learns the resolver. Optional: when
+   * absent (or storage down), the DTO's stored URLs flow through unchanged and
+   * the client recovers from the handles it carries.
+   */
+  remintSessionPictures?:
+    | ((dto: SessionDto) => Promise<SessionDto>)
+    | undefined,
 ): Router {
   const router = express.Router();
+
+  /**
+   * Freshen a single-session read when a reminter is wired; otherwise pass the
+   * DTO through. Isolated so the two single-session reads share one spelling.
+   */
+  const toFreshDto = async (session: SessionRecord): Promise<SessionDto> => {
+    const dto = sessionService.toDto(session);
+    return remintSessionPictures ? await remintSessionPictures(dto) : dto;
+  };
 
   /**
    * Register a session mutation: PATCH a body, get the updated session DTO.
@@ -444,7 +463,7 @@ export function createSessionRoutes(
       }
       res.json({
         success: true,
-        data: sessionService.toDto(session),
+        data: await toFreshDto(session),
       } satisfies ApiResponse<SessionDto>);
     }),
   );
@@ -477,7 +496,7 @@ export function createSessionRoutes(
       }
       res.json({
         success: true,
-        data: sessionService.toDto(session),
+        data: await toFreshDto(session),
       } satisfies ApiResponse<SessionDto>);
     }),
   );

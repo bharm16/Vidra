@@ -6,8 +6,10 @@ import {
   SERVER_OWNED_RECORD_FIELDS,
   preserveServerOwnedFields,
   readAncestorGenerationId,
+  readMediaAssetId,
   readProductionProvenance,
   readSourceInputs,
+  readStoragePath,
   readTakeOrigin,
 } from "../serverOwnedRecordFields";
 
@@ -132,22 +134,27 @@ describe("take admission fields survive the client (ADR-0022 decisions 1-3)", ()
     expect(readTakeOrigin(legacy)).toBeUndefined();
   });
 
-  it("names every admission field as server-owned, so a merge cannot drop it", () => {
+  it("names every admission field AND durable handle as server-owned, so a merge cannot drop it", () => {
+    // The admission trio (decisions 1-3) plus the durable media handles
+    // (issue #125): both are server-owned identity a whole-record merge must
+    // not strand. The ephemeral URLs are deliberately absent — they refresh.
     expect([...SERVER_OWNED_RECORD_FIELDS]).toEqual([
       "ancestorGenerationId",
       "archived",
       "origin",
       "productionProvenance",
       "sourceInputs",
+      "storagePath",
+      "mediaAssetIds",
     ]);
   });
 
-  it("restores the admission fields after a merge that picks a runtime record without them", () => {
+  it("restores the admission fields AND the durable handle after a merge that picks a runtime record without them", () => {
     const persisted = normalizePersistedGeneration(
       admittedUpload,
     ) as Generation;
     // The runtime object the client would otherwise write back: same take, no
-    // memory of how it was admitted.
+    // memory of how it was admitted, and — the #125 hazard — no durable handle.
     const incoming = {
       id: "gen-upload-1",
       model: "unknown",
@@ -169,5 +176,9 @@ describe("take admission fields survive the client (ADR-0022 decisions 1-3)", ()
     expect(readTakeOrigin(merged)).toBe("upload");
     expect(readProductionProvenance(merged)).toEqual({ state: "unknown" });
     expect(readSourceInputs(merged)).toHaveLength(1);
+    // Issue #125: the durable handle survives the merge, so the space node
+    // keeps what it needs to re-arm or re-mint an expired URL.
+    expect(readStoragePath(merged)).toBe("image-previews/user-1/asset-1");
+    expect(readMediaAssetId(merged)).toBe("asset-1");
   });
 });

@@ -20,9 +20,12 @@ import type { SketchRelayFetch } from "@server/replay/RecordReplaySketchRelay";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
 import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
+import { remintSessionPictureUrls } from "@services/sessions/remintSessionPictureUrls";
+import type { SessionDto } from "@shared/types/session";
 import {
   createOwnedPictureResolver,
   type ImagePreviewAssetReader,
+  type OwnedPictureResolver,
   type UserScopedMediaReader,
 } from "@services/owned-media";
 import type {
@@ -101,6 +104,37 @@ export function registerApiRoutes(
   const shareService = container.resolve<ShareService>("shareService");
   app.use("/api/public/share", createPublicClipRouter(shareService));
 
+  // Issue #109 / #125: the ONE owner-checked resolver that understands both
+  // the image-asset store and the user-scoped store. Built once here and shared
+  // by every surface that re-mints a picture from a durable handle — the
+  // session read (#125), the studio-refine bridge (#88), and the admission
+  // replay (#125). Null when either store is absent; each consumer then
+  // degrades to the stored URL, which the client can still recover from its
+  // durable handle.
+  const ownedPictureResolverImageAssets =
+    resolveOptionalService<ImagePreviewAssetReader | null>(
+      container,
+      "imageAssetStore",
+      "owned-picture-resolver",
+    );
+  const ownedPictureResolverUserStorage =
+    resolveOptionalService<UserScopedMediaReader | null>(
+      container,
+      "storageService",
+      "owned-picture-resolver",
+    );
+  const ownedPictureResolver: OwnedPictureResolver | null =
+    ownedPictureResolverImageAssets && ownedPictureResolverUserStorage
+      ? createOwnedPictureResolver({
+          imageAssets: ownedPictureResolverImageAssets,
+          userStorage: ownedPictureResolverUserStorage,
+        })
+      : null;
+  const remintSessionPictures = ownedPictureResolver
+    ? (dto: SessionDto): Promise<SessionDto> =>
+        remintSessionPictureUrls(dto, { resolver: ownedPictureResolver })
+    : null;
+
   // Main API routes
   const apiRoutes = createAPIRoutes({
     promptOptimizationService: container.resolve("promptOptimizationService"),
@@ -123,6 +157,7 @@ export function registerApiRoutes(
     continuitySessionService,
     sessionService: container.resolve("sessionService"),
     modelIntelligenceService,
+    remintSessionPictures,
   });
 
   app.use(
@@ -200,6 +235,9 @@ export function registerApiRoutes(
         "requestIdempotencyService",
         "sketch-accept",
       ),
+      // Issue #125: a repeated acceptance re-mints its URL from the durable
+      // handle rather than replaying the expired one.
+      resolver: ownedPictureResolver,
     }),
   );
 
@@ -252,6 +290,9 @@ export function registerApiRoutes(
             "requestIdempotencyService",
             "studio-return",
           ),
+          // Issue #125: a repeated "Use this in the session" re-mints its URL
+          // from the durable handle rather than replaying the expired one.
+          resolver: ownedPictureResolver,
         },
       ),
     );

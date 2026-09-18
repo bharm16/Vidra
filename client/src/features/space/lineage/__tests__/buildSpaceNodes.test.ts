@@ -122,4 +122,41 @@ describe("buildSpaceNodes", () => {
     });
     expect(nodes.find((n) => n.id === "pic1")?.wordsVersionId).toBe("v1");
   });
+
+  // Issue #125: the durable media handle rides onto the picture node beside the
+  // URL, so an expired URL stays recoverable.
+  it("carries a picture's durable handle and view-URL expiry onto the node", () => {
+    const nodes = buildSpaceNodes({
+      words: [{ versionId: "v1", label: "x" }],
+      pictures: [
+        {
+          id: "pic1",
+          versionId: "v1",
+          mediaUrl: "https://signed/pic1?exp",
+          storagePath: "image-previews/owner/pic1",
+          assetId: "asset-pic1",
+          viewUrlExpiresAt: "2026-09-18T12:00:00.000Z",
+        },
+      ],
+      clips: [],
+    });
+    expect(nodes.find((n) => n.id === "pic1")).toMatchObject({
+      mediaUrl: "https://signed/pic1?exp",
+      storagePath: "image-previews/owner/pic1",
+      assetId: "asset-pic1",
+      viewUrlExpiresAt: "2026-09-18T12:00:00.000Z",
+    });
+  });
+
+  it("omits durable-handle fields for a picture that records none", () => {
+    const nodes = buildSpaceNodes({
+      words: [{ versionId: "v1", label: "x" }],
+      pictures: [{ id: "pic1", versionId: "v1" }],
+      clips: [],
+    });
+    const pic = nodes.find((n) => n.id === "pic1")!;
+    expect(pic).not.toHaveProperty("storagePath");
+    expect(pic).not.toHaveProperty("assetId");
+    expect(pic).not.toHaveProperty("viewUrlExpiresAt");
+  });
 });

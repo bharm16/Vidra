@@ -72,6 +72,7 @@ import { CanvasViewport } from "@/components/canvas/CanvasViewport";
 import { SpaceNodeMenu } from "@/features/space/components/SpaceNodeMenu";
 import { deriveSpaceNodesFromVersions } from "@/features/space/lineage/deriveSpaceNodes";
 import { resolveWordsForNode } from "@/features/space/lineage/resolveWordsForNode";
+import { buildAnimateStartFrame } from "./utils/animateStartFrame";
 import { nonLeafIds, isRemovableLeaf } from "@/features/space/lineage/leaf";
 import { createShare } from "@/features/share/api/createShare";
 import { createStudioProjectFromSessionPicture } from "@/features/studio/api/studioApi";
@@ -524,15 +525,12 @@ export function CanvasWorkspace({
   // so the resulting clip names this picture as its source.
   const handleAnimateSpaceNode = useCallback(
     (node: SpaceNode): void => {
-      if (!node.mediaUrl) return;
       const words = resolveWordsForNode(node.id, spaceNodes);
-      storeActions.setStartFrame({
-        id: `space-animate-${node.id}`,
-        url: node.mediaUrl,
-        source: "generation",
-        generationId: node.id,
-        ...(words ? { sourcePrompt: words } : {}),
-      });
+      // Issue #125: arm the durable handle, not just the URL, so an expired
+      // node still animates. `null` means there was nothing to arm.
+      const startFrame = buildAnimateStartFrame(node, words);
+      if (!startFrame) return;
+      storeActions.setStartFrame(startFrame);
     },
     [spaceNodes, storeActions],
   );

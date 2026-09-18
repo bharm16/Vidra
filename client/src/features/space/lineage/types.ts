@@ -46,6 +46,21 @@ export interface LineageNode {
    * Drawn as "made but not saved" with a retry, never as a settled node.
    */
   unattached?: boolean;
+  /**
+   * Issue #125: the take's DURABLE media handle — its storage path and asset
+   * id — plus the expiry of the signed view URL the node currently renders
+   * (`mediaUrl`). Carried alongside the URL for the same reason ADR-0022 keeps
+   * a take's `sourceInputs` handles: a signed URL dies in an hour, the handle
+   * outlives it. An expired or missing `mediaUrl` is then recoverable rather
+   * than an apparently-missing picture — Animate re-arms from the handle, and
+   * the client's keyframe-refresh loop re-mints a fresh URL from it. These are
+   * the reminted-on-read facts (server re-mints the URL and stamps a fresh
+   * `viewUrlExpiresAt`), never a client-invented namespace. Absent on words
+   * nodes, which carry no media.
+   */
+  storagePath?: string;
+  assetId?: string;
+  viewUrlExpiresAt?: string;
 }
 
 export interface PositionedNode extends LineageNode {

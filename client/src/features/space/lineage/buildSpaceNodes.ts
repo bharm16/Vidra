@@ -36,6 +36,14 @@ export interface LineageInput {
      * fallback. The caller decides; nothing here reads sibling order.
      */
     ancestorPictureId?: string;
+    /**
+     * Issue #125: the picture's durable media handle and its view URL's
+     * expiry, carried onto the node so an expired `mediaUrl` stays
+     * recoverable. Passed through verbatim — never derived from `mediaUrl`.
+     */
+    storagePath?: string;
+    assetId?: string;
+    viewUrlExpiresAt?: string;
   }>;
   clips: Array<{
     id: string;
@@ -87,6 +95,12 @@ export function buildSpaceNodes(input: LineageInput): SpaceNode[] {
       ...(picture.status ? { status: picture.status } : {}),
       ...(picture.mediaUrl ? { mediaUrl: picture.mediaUrl } : {}),
       ...(picture.archived ? { archived: true } : {}),
+      // Issue #125: the durable handle rides beside the URL, only when present.
+      ...(picture.storagePath ? { storagePath: picture.storagePath } : {}),
+      ...(picture.assetId ? { assetId: picture.assetId } : {}),
+      ...(picture.viewUrlExpiresAt
+        ? { viewUrlExpiresAt: picture.viewUrlExpiresAt }
+        : {}),
     });
   }
 
