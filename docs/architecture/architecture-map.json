@@ -254,6 +254,16 @@
       "sourceFile": "server/src/routes/preview.routes.ts"
     },
     {
+      "method": "GET",
+      "fullPath": "/api/preview/pictures/owed-attachments",
+      "sourceFile": "server/src/routes/preview.routes.ts"
+    },
+    {
+      "method": "POST",
+      "fullPath": "/api/preview/pictures/owed-attachments/:generationId/retry",
+      "sourceFile": "server/src/routes/preview.routes.ts"
+    },
+    {
       "method": "POST",
       "fullPath": "/api/preview/upload",
       "sourceFile": "server/src/routes/preview.routes.ts"
@@ -1170,6 +1180,11 @@
       "from": "optimizeTelemetryService",
       "to": "postHogClient",
       "file": "observability.services.ts"
+    },
+    {
+      "from": "owedTakeAttachmentStore",
+      "to": "firestoreCircuitExecutor",
+      "file": "session.services.ts"
     },
     {
       "from": "paymentConsistencyStore",

@@ -41,6 +41,7 @@ const uploadPreviewImage =
 const validatePreviewImageFile =
   vi.fn<(file: File) => { valid: true } | { valid: false; error: string }>();
 const createAdmissionKey = vi.fn<() => string>();
+const retryPictureAttachment = vi.fn<(attachment: unknown) => Promise<void>>();
 
 // The factory is hoisted above these declarations, so it must reach them at
 // CALL time rather than closing over them at definition time.
@@ -52,6 +53,13 @@ vi.mock("@/features/preview/api/previewApi", () => ({
   ) => uploadPreviewImage(file, metadata, options),
   validatePreviewImageFile: (file: File) => validatePreviewImageFile(file),
   createAdmissionKey: () => createAdmissionKey(),
+}));
+
+// The other wire boundary this hook now reaches: the shared attachment-retry
+// contract (ADR-0022 decision 6, issue #133).
+vi.mock("@/features/generations/api/takeAttachment", () => ({
+  retryPictureAttachment: (attachment: unknown) =>
+    retryPictureAttachment(attachment),
 }));
 
 const FILE = new File(["bytes"], "frame.png", { type: "image/png" });
@@ -107,6 +115,8 @@ describe("useFirstFrameAdmission (issue #86)", () => {
     uploadPreviewImage.mockReset();
     validatePreviewImageFile.mockReset();
     createAdmissionKey.mockReset();
+    retryPictureAttachment.mockReset();
+    retryPictureAttachment.mockResolvedValue(undefined);
     validatePreviewImageFile.mockReturnValue({ valid: true } as const);
     let keySeq = 0;
     createAdmissionKey.mockImplementation(() => {
@@ -160,22 +170,30 @@ describe("useFirstFrameAdmission (issue #86)", () => {
     });
   });
 
-  it("arms the frame without an identity when the take was made but not saved", async () => {
-    uploadPreviewImage.mockResolvedValue({
-      success: true,
-      data: {
-        imageUrl: "https://storage.example.com/asset-1",
-        viewUrl: "https://storage.example.com/asset-1",
-        assetId: "asset-1",
-        attachment: {
-          state: "failed",
-          generationId: "gen-upload-1",
-          sessionId: "session-1",
-          promptVersionId: "v1",
-          reason: "firestore unavailable",
-        },
+  // ADR-0022 decision 6 / issue #133 — a made-but-not-saved upload. The server
+  // returns 2xx with `attachment.state === "failed"`: the picture is durable,
+  // its session row is owed. The old hook cleared its key and armed the frame as
+  // if nothing were wrong; now it surfaces the take so the frame stage can say
+  // so, with a retry, and it never arms an identity for a node that is not there.
+  const failedUploadResponse = {
+    success: true as const,
+    data: {
+      imageUrl: "https://storage.example.com/asset-1",
+      viewUrl: "https://storage.example.com/asset-1",
+      assetId: "asset-1",
+      attachment: {
+        state: "failed" as const,
+        generationId: "gen-upload-1",
+        sessionId: "session-1",
+        promptVersionId: "v1",
+        reason: "firestore unavailable",
+        record: { id: "gen-upload-1", mediaType: "image", status: "completed" },
       },
-    });
+    },
+  };
+
+  it("surfaces made-but-not-saved and does not present the take as attached", async () => {
+    uploadPreviewImage.mockResolvedValue(failedUploadResponse);
     const { hook, setStartFrame } = setup({
       sessionId: "session-1",
       promptVersionId: "v1",
@@ -188,6 +206,51 @@ describe("useFirstFrameAdmission (issue #86)", () => {
     // The picture is on screen; the session does not have it. Naming it as a
     // clip's ancestor would persist an edge to a take that is not there.
     expect(setStartFrame.mock.calls[0]![0]).not.toHaveProperty("generationId");
+    // The made-but-not-saved take is exposed so the frame stage can offer a
+    // retry — not silently swallowed as the old hook did.
+    expect(hook.result.current.unattachedTake).toMatchObject({
+      state: "failed",
+      generationId: "gen-upload-1",
+    });
+  });
+
+  it("retry re-attaches the SAME take and clears the made-but-not-saved state", async () => {
+    uploadPreviewImage.mockResolvedValue(failedUploadResponse);
+    const { hook } = setup({ sessionId: "session-1", promptVersionId: "v1" });
+
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(FILE);
+    });
+    expect(hook.result.current.unattachedTake).not.toBeNull();
+
+    await act(async () => {
+      await hook.result.current.retryAttachment();
+    });
+
+    // The retry re-sends the SAME take's record — never a re-upload.
+    expect(retryPictureAttachment).toHaveBeenCalledTimes(1);
+    expect(retryPictureAttachment.mock.calls[0]![0]).toMatchObject({
+      generationId: "gen-upload-1",
+      record: { id: "gen-upload-1" },
+    });
+    // Settled — the made-but-not-saved surface goes away.
+    expect(hook.result.current.unattachedTake).toBeNull();
+  });
+
+  it("keeps the admission key after a failed attachment, so re-picking re-admits the same take", async () => {
+    uploadPreviewImage.mockResolvedValue(failedUploadResponse);
+    const { hook } = setup({ sessionId: "session-1", promptVersionId: "v1" });
+
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(FILE);
+    });
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(FILE);
+    });
+
+    // A failed attachment is not a settled admission: the second attempt on the
+    // same file reuses the retained key rather than minting a fresh one.
+    expect(admissionKeyOfCall(1)).toBe("admission-key-1");
   });
 
   it("reuses the admission key after a failure, so a retry re-admits the same take", async () => {

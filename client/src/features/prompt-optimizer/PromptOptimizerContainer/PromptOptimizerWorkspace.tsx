@@ -542,7 +542,11 @@ function PromptOptimizerContent({
   // Uploading a FIRST FRAME inside a session admits it as a picture take
   // (ADR-0022 decision 1, issue #86). Lives below `resolvePersistenceTarget`
   // because it resolves the destination once, before the request.
-  const { uploadFirstFrame: handleStartFrameUpload } = useFirstFrameAdmission({
+  const {
+    uploadFirstFrame: handleStartFrameUpload,
+    unattachedTake: unattachedUploadTake,
+    retryAttachment: retryUploadAttachment,
+  } = useFirstFrameAdmission({
     resolvePersistenceTarget,
     setStartFrame,
     uploadOutsideSession: uploadSidebarImage,
@@ -557,13 +561,21 @@ function PromptOptimizerContent({
     continueAfterOptimization,
     regenerateFrame,
     acceptFrame,
-    unattachedTake: unattachedFrameTake,
-    retryAttachment: retryFrameAttachment,
+    unattachedTake: unattachedIdeaBoxTake,
+    retryAttachment: retryIdeaBoxAttachment,
   } = useIdeaBox({
     startImageUrl: i2vContext.startImageUrl,
     setStartFrame,
     resolvePersistenceTarget,
   });
+
+  // A frame is armed from EITHER an idea-box generation OR an upload, never
+  // both at once (ADR-0022 decision 6): the made-but-not-saved surface shows
+  // whichever take is owed, with the retry that re-attaches that same take.
+  const unattachedFrameTake = unattachedUploadTake ?? unattachedIdeaBoxTake;
+  const retryFrameAttachment = unattachedUploadTake
+    ? retryUploadAttachment
+    : retryIdeaBoxAttachment;
 
   const handleOptimizationApplied = useCallback(
     async (optimizedPrompt: string): Promise<void> => {

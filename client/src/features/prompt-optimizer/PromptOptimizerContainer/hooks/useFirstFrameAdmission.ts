@@ -1,11 +1,13 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   createAdmissionKey,
   uploadPreviewImage,
   validatePreviewImageFile,
 } from "@/features/preview/api/previewApi";
+import { retryPictureAttachment } from "@/features/generations/api/takeAttachment";
 import type { KeyframeTile } from "@/features/generation-controls/types";
 import type { PersistenceTarget } from "@/features/idea-box";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 
 /**
  * Uploading a FIRST FRAME inside a session admits it as a picture take —
@@ -46,6 +48,15 @@ export interface UseFirstFrameAdmissionParams {
 
 export interface UseFirstFrameAdmissionResult {
   uploadFirstFrame: (file: File) => Promise<void>;
+  /**
+   * The admitted frame that was made but not saved (ADR-0022 decision 6), or
+   * null. The picture is on screen; its session does not have it. Surfaced so
+   * the frame stage can say so plainly, with a retry — never presented as a
+   * settled take a clip could name as ancestor.
+   */
+  unattachedTake: TakeAttachment | null;
+  /** Re-attach the made-but-not-saved frame — the SAME take, no re-upload. */
+  retryAttachment: () => Promise<void>;
 }
 
 /**
@@ -83,6 +94,19 @@ export function useFirstFrameAdmission({
     key: string;
     fileSignature: string;
   } | null>(null);
+
+  /**
+   * The made-but-not-saved take, if the last admission's attachment failed
+   * (ADR-0022 decision 6). The server returns `attachment.state === "failed"`
+   * with 2xx: the picture is durable and paid for, only its session row is
+   * owed. A ref mirrors it so `retryAttachment` reads the latest without
+   * re-subscribing.
+   */
+  const [unattachedTake, setUnattachedTake] = useState<TakeAttachment | null>(
+    null,
+  );
+  const unattachedTakeRef = useRef<TakeAttachment | null>(null);
+  unattachedTakeRef.current = unattachedTake;
 
   const uploadFirstFrame = useCallback(
     async (file: File): Promise<void> => {
@@ -142,10 +166,25 @@ export function useFirstFrameAdmission({
             response.error || response.message || "Failed to upload image",
           );
         }
-        admissionAttemptRef.current = null;
 
         const imageUrl = response.data.viewUrl || response.data.imageUrl;
         if (!imageUrl) throw new Error("Upload did not return an image URL");
+
+        // The second fact, read at last (ADR-0022 decision 6, issue #133): the
+        // media is durable, but did the take reach its session? A `failed`
+        // attachment is made-but-not-saved — keep the key so re-picking the
+        // same file re-admits the SAME take, surface the take for a retry, and
+        // do NOT arm an identity a clip could name for a node that is not there.
+        const attachment = response.data.attachment ?? null;
+        const madeButNotSaved = attachment?.state === "failed";
+        if (madeButNotSaved) {
+          setUnattachedTake(attachment);
+        } else {
+          // Settled — the take is in its session (or this was a reference
+          // upload with no attachment fact). A fresh upload is a fresh key.
+          admissionAttemptRef.current = null;
+          setUnattachedTake(null);
+        }
 
         setStartFrame({
           id: `start-frame-upload-${Date.now()}`,
@@ -179,5 +218,26 @@ export function useFirstFrameAdmission({
     ],
   );
 
-  return { uploadFirstFrame };
+  /**
+   * Re-attach the made-but-not-saved frame — the creator's side of ADR-0022
+   * decision 6. It re-sends the SAME record under the SAME take identity to the
+   * de-duplicating session append (never a re-upload, never a re-render). On
+   * success the debt is settled and the key released; a failure — a destination
+   * that was deleted, say — is surfaced truthfully and left retryable.
+   */
+  const retryAttachment = useCallback(async (): Promise<void> => {
+    const pending = unattachedTakeRef.current;
+    if (!pending) return;
+    try {
+      await retryPictureAttachment(pending);
+      setUnattachedTake(null);
+      admissionAttemptRef.current = null;
+    } catch (error) {
+      onError(
+        error instanceof Error ? error.message : "Could not save this picture",
+      );
+    }
+  }, [onError]);
+
+  return { uploadFirstFrame, unattachedTake, retryAttachment };
 }
