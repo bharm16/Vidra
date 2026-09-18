@@ -5,8 +5,13 @@ on:
     branches: [main, develop]
     tags:
       - "v*.*.*"
+  # No `branches:` filter on purpose. Gating pull_request on a base branch
+  # means a PR based on any other branch — every PR in a stack but the
+  # bottom one — runs none of this, and GitHub only retargets a stacked
+  # PR's base to main when the base branch is DELETED after merging. The
+  # #81-#90 stack merged with two checks per PR instead of fourteen
+  # because of this. `push:` keeps its branch filter; pull_request does not.
   pull_request:
-    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -54,7 +59,13 @@ jobs:
         with:
           context: .
           file: infrastructure/docker/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          # A PR only validates the Dockerfile (push is false below), so it
+          # builds the native arch alone. Cross-building arm64 under QEMU
+          # cost ~7 extra minutes per PR and crashed npm ci with SIGILL
+          # ("qemu: uncaught target signal 4", exit 132) on 2026-09-17 while
+          # the amd64 build of the same layer succeeded. Pushes and tags,
+          # which publish the image, still build both.
+          platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

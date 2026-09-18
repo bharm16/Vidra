@@ -3,8 +3,13 @@ name: Test Suite
 on:
   push:
     branches: [main, develop]
+  # No `branches:` filter on purpose. Gating pull_request on a base branch
+  # means a PR based on any other branch — every PR in a stack but the
+  # bottom one — runs none of this, and GitHub only retargets a stacked
+  # PR's base to main when the base branch is DELETED after merging. The
+  # #81-#90 stack merged with two checks per PR instead of fourteen
+  # because of this. `push:` keeps its branch filter; pull_request does not.
   pull_request:
-    branches: [main, develop]
   schedule:
     - cron: "0 5 * * *"
 
