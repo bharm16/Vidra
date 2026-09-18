@@ -12,6 +12,7 @@
  * than needed, never less) and MUST be confirmed before launch — M1 exit gate.
  */
 
+import { canStoreVector } from "@services/storage/config/storageConfig";
 import type {
   StudioCapability,
   StudioModelEntry,
@@ -159,6 +160,21 @@ const TIMEOUT_MULTIPLIER = 3;
 const MIN_TIMEOUT_MS = 60_000;
 const MAX_TIMEOUT_MS = 180_000;
 
+/** A model produces vector (SVG) output rather than raster. */
+function producesVectorOutput(entry: StudioModelEntry): boolean {
+  return entry.capabilities.includes("svg");
+}
+
+export interface StudioModelRegistryOptions {
+  /**
+   * Whether the studio can persist vector (SVG) output. Defaults to the
+   * storage domain's own answer (`canStoreVector`), so the picker never
+   * presents a model whose output storage would reject (issue #118).
+   * Injectable so the gate is testable without touching storage config.
+   */
+  vectorStorageAvailable?: boolean;
+}
+
 export class StudioModelRegistry {
   private readonly bySlug = new Map<StudioModelSlug, StudioModelEntry>(
     MODELS.map((entry) => [entry.slug, entry]),
@@ -169,8 +185,42 @@ export class StudioModelRegistry {
     StudioUtilityEntry
   >(UTILITIES.map((entry) => [entry.operation, entry]));
 
+  private readonly vectorStorageAvailable: boolean;
+
+  constructor(options: StudioModelRegistryOptions = {}) {
+    this.vectorStorageAvailable =
+      options.vectorStorageAvailable ?? canStoreVector();
+  }
+
   listModels(): readonly StudioModelEntry[] {
     return MODELS;
+  }
+
+  /**
+   * The models the picker may present — the whole roster, minus any whose
+   * output the studio cannot store. Until vector storage landed this excluded
+   * the Vector tiers so the picker never advertised an output that failed at
+   * storage (issue #118, ADR-0019 §5). Distinct from `listModels`, which is
+   * the internal routing roster; gating only the public roster keeps Auto
+   * routing and pin resolution unchanged.
+   */
+  offerableModels(): readonly StudioModelEntry[] {
+    if (this.vectorStorageAvailable) return MODELS;
+    return MODELS.filter((entry) => !producesVectorOutput(entry));
+  }
+
+  /**
+   * Whether a producer (a model slug or a utility operation) emits vector
+   * (SVG) output — the signal the studio uses to route the result into the
+   * vector storage lane (issue #118). Only the `vectorize` utility and the
+   * SVG-capable models produce vectors; everything else is raster.
+   */
+  producesVector(
+    producedBy: StudioModelSlug | StudioUtilityOperation,
+  ): boolean {
+    const model = this.bySlug.get(producedBy as StudioModelSlug);
+    if (model) return producesVectorOutput(model);
+    return producedBy === "vectorize";
   }
 
   getModel(slug: StudioModelSlug): StudioModelEntry {

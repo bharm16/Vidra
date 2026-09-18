@@ -299,9 +299,21 @@ function setup(): Harness {
   };
 
   const storage = {
-    saveFromUrl: vi.fn(async () => ({
-      storagePath: `users/${OWNER}/previews/images/studio-${++copyCounter}.png`,
-    })),
+    // Honors the storage type the studio chose, so a vector producer lands a
+    // real `.svg` path under the vector lane and a raster producer a `.png`
+    // (issue #118). The bridge's own vector guard keys off exactly this path.
+    saveFromUrl: vi.fn(
+      async (
+        _userId: string,
+        _sourceUrl: string,
+        type: "preview-image" | "preview-vector",
+      ) => ({
+        storagePath:
+          type === "preview-vector"
+            ? `users/${OWNER}/previews/vectors/vector-${++copyCounter}.svg`
+            : `users/${OWNER}/previews/images/studio-${++copyCounter}.png`,
+      }),
+    ),
     getViewUrl: vi.fn(async (_userId: string, path: string) => ({
       viewUrl: `https://signed.example.com/${path}?exp=1h`,
       expiresAt: "2026-09-17T13:00:00Z",
@@ -450,6 +462,17 @@ const generateDecision = (basePrompt: string): StudioDecision => ({
   basePrompt,
   variants: [basePrompt, basePrompt, basePrompt, basePrompt],
   capability: "general",
+  suggestions: ["a", "b", "c"],
+});
+
+/** A prompt-less utility turn (S-30) — `vectorize` produces SVG output. */
+const transformDecision = (
+  operation: "remove_background" | "vectorize",
+  sourceImageId: string,
+): StudioDecision => ({
+  action: "transform",
+  operation,
+  sourceImageId,
   suggestions: ["a", "b", "c"],
 });
 
@@ -825,6 +848,48 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     if (result.state !== "unusable-media") return;
     expect(result.reason).toContain("image/svg+xml");
     expect(fixture.mediaStore.calls).toHaveLength(0);
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    expect(
+      takesOf(session, SOURCE.promptVersionId).filter(
+        (take) => take.origin === "studio",
+      ),
+    ).toHaveLength(0);
+  });
+
+  /**
+   * Issue #118, first-frame path: the chosen bridge behavior for a stored
+   * vector is a clear refusal (the ADR permits refuse OR rasterize; refuse is
+   * the shipped path). Distinct from the test above — that one exercises the
+   * content-type gate on a raster-lane object; this exercises the realistic
+   * shape, a vector persisted in its own lane, caught by the bridge's own
+   * vector guard BEFORE any destination is resolved or byte is read. Nothing
+   * is minted or stored, and the reason names the format rather than a MIME
+   * string.
+   */
+  it("refuses a stored vector as a first frame with a clear message, minting and storing nothing", async () => {
+    const project = await bridgedProject();
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "make it a vector",
+      transformDecision("vectorize", project.origin!.bridgedImageId),
+    );
+
+    const sessionsBefore = fixture.sessions.sessions.size;
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(result.state).toBe("unusable-media");
+    if (result.state !== "unusable-media") return;
+    expect(result.reason).toContain("vector");
+    expect(result.reason).toContain("cannot be animated here yet");
+    // Refused before any write: no admission, no minted session, no bytes.
+    expect(fixture.mediaStore.calls).toHaveLength(0);
+    expect(fixture.sessions.sessions.size).toBe(sessionsBefore);
     const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
     expect(
       takesOf(session, SOURCE.promptVersionId).filter(

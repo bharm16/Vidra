@@ -261,6 +261,63 @@ describe("StorageService", () => {
     ).rejects.toThrow("upstream failed");
   });
 
+  // Issue #118: the vector lane, and the XSS-safe way it is served.
+  describe("vector (SVG) storage and serving", () => {
+    it("accepts image/svg+xml under the vector lane and names a .svg object", async () => {
+      const { service } = buildStorageService();
+      const result = await service.getUploadUrl(
+        "user123",
+        "preview-vector",
+        "image/svg+xml",
+      );
+      expect(result.storagePath).toContain("users/user123/previews/vectors/");
+      expect(result.storagePath.endsWith(".svg")).toBe(true);
+    });
+
+    it("keeps the vector lane SVG-only — a raster mime is rejected", async () => {
+      const { service } = buildStorageService();
+      await expect(
+        service.getUploadUrl("user123", "preview-vector", "image/png"),
+      ).rejects.toThrow("Invalid content type");
+    });
+
+    it("keeps the raster preview-image lane raster-only — SVG still rejected", async () => {
+      // preview-image must stay raster: the first-frame ARMABLE gate derives
+      // from it, so widening it would let a vector be armed as a frame (#118).
+      const { service } = buildStorageService();
+      await expect(
+        service.getUploadUrl("user123", "preview-image", "image/svg+xml"),
+      ).rejects.toThrow("Invalid content type");
+    });
+
+    it("serves a stored vector as an attachment so it cannot execute script inline", async () => {
+      // SECURITY (#118): a signed view URL for an SVG carries
+      // Content-Disposition: attachment, so a direct open downloads rather
+      // than renders — the only way an SVG's <script>/onload could run.
+      const { service, mockSignedUrlService } = buildStorageService();
+      await service.getViewUrl(
+        "user123",
+        "users/user123/previews/vectors/1758100000000-abcdef01.svg",
+      );
+      expect(mockSignedUrlService.getViewUrl).toHaveBeenCalledWith(
+        "users/user123/previews/vectors/1758100000000-abcdef01.svg",
+        "attachment",
+      );
+    });
+
+    it("serves raster images inline, unchanged", async () => {
+      const { service, mockSignedUrlService } = buildStorageService();
+      await service.getViewUrl(
+        "user123",
+        "users/user123/previews/images/1758100000000-abcdef01.webp",
+      );
+      expect(mockSignedUrlService.getViewUrl).toHaveBeenCalledWith(
+        "users/user123/previews/images/1758100000000-abcdef01.webp",
+        "inline",
+      );
+    });
+  });
+
   it("savePreviewImage fixes the preview-image type and png mime behind the verb", async () => {
     const { service } = buildStorageService();
     const saveSpy = vi.spyOn(service, "uploadBuffer").mockResolvedValue({

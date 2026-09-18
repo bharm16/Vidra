@@ -317,6 +317,52 @@ describe("StudioService", () => {
     });
   });
 
+  // Issue #118: a vector result must reach the SVG storage lane, or it fails
+  // at storage and settles as a failed call with no image record.
+  describe("runTurn — vector output storage lane", () => {
+    const svgGenerate = (message: string): StudioDecision => ({
+      action: "generate",
+      basePrompt: message,
+      variants: [message, message, message, message],
+      capability: "svg",
+      suggestions: ["a", "b", "c"],
+    });
+
+    it("stores an SVG generation under the vector lane, never preview-image", async () => {
+      const { service, storage } = makeService({
+        decide: async (context) => svgGenerate(context.userMessage),
+      });
+      const project = await service.createProject("user-1");
+
+      const result = await service.runTurn(
+        "user-1",
+        project.id,
+        "a flat fox logo",
+      );
+      await result.completion;
+
+      expect(storage.saveFromUrl).toHaveBeenCalled();
+      for (const call of storage.saveFromUrl.mock.calls) {
+        // args: [userId, sourceUrl, type, metadata]
+        expect(call[2]).toBe("preview-vector");
+      }
+    });
+
+    it("keeps raster generations on preview-image", async () => {
+      // Default policy is a design generate → recraft-v4.1 (raster).
+      const { service, storage } = makeService();
+      const project = await service.createProject("user-1");
+
+      const result = await service.runTurn("user-1", project.id, "a logo");
+      await result.completion;
+
+      expect(storage.saveFromUrl).toHaveBeenCalled();
+      for (const call of storage.saveFromUrl.mock.calls) {
+        expect(call[2]).toBe("preview-image");
+      }
+    });
+  });
+
   describe("runTurn — model resolution", () => {
     it("uses the pinned model when it resolves", async () => {
       const { service, store } = makeService();

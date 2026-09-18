@@ -78,15 +78,15 @@ describe("UploadService", () => {
   });
 
   /**
-   * The fence the studio's return bridge (#89, ADR-0022 decision 4) rests on.
+   * `preview-image` is the RASTER lane, and it stays raster-only by design.
    *
-   * The studio roster offers vector models (`recraft-v4.1-svg`) and `svg` is a
-   * legal generate capability, but `preview-image` storage accepts only webp,
-   * png and jpeg — so an SVG result never becomes a stored image record and
-   * can never be bridged back into a session. The bridge refuses vectors with
-   * an explanation instead of rasterizing them, and that refusal is only
-   * honest while this stays true. If this test ever has to change, the bridge
-   * needs a decision, not a passing suite.
+   * Vectors are storable now — they live in their own `preview-vector` lane
+   * (issue #118) — but they must never enter `preview-image`, because the
+   * first-frame ARMABLE gate (returnStudioImage) derives from exactly this
+   * type's content list. Widening it to accept SVG would silently make a
+   * vector armable as a first frame, which the frame/clip pipeline cannot
+   * animate. If this assertion ever has to change, the bridge needs a
+   * decision, not a passing suite.
    */
   it("refuses an SVG as a preview image before a byte is written", async () => {
     const { service, mockFile } = buildService();

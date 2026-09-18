@@ -24,6 +24,8 @@ function normalizeContentType(value: string): string {
 function resolveExtension(contentType: string): string {
   const normalized = normalizeContentType(contentType);
   if (normalized === "image/jpeg") return "jpg";
+  // Without this the subtype "svg+xml" would leak into the object name.
+  if (normalized === "image/svg+xml") return "svg";
   if (normalized === "video/quicktime") return "mov";
   const parts = normalized.split("/");
   return parts[1] || "bin";

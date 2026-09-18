@@ -14,6 +14,7 @@ import {
 } from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
 import { UseInSessionAction } from "./components/UseInSessionAction";
+import { DownloadSelectedImage } from "./components/DownloadSelectedImage";
 import { useStudioProject } from "./hooks/useStudioProject";
 import { isTurnInFlight } from "./hooks/studioReducer";
 import "./studio.css";
@@ -78,8 +79,7 @@ export function StudioPage(): React.ReactElement {
       .reverse()
       .find((turn) =>
         turn.calls.some((call) => call.status === "succeeded" && call.image),
-      )?.id ??
-    (originImage ? STUDIO_ORIGIN_GROUP_ID : STUDIO_EMPTY_FOCUS_ID);
+      )?.id ?? (originImage ? STUDIO_ORIGIN_GROUP_ID : STUDIO_EMPTY_FOCUS_ID);
 
   // One source of "a turn is in flight" for both bands — the thread's pills
   // and the composer must agree, or the pills stay clickable through the
@@ -92,14 +92,21 @@ export function StudioPage(): React.ReactElement {
       <div className="st-frame min-w-0 flex-1">
         <div className="st-topbar">
           <span className="st-topbar-label">Studio</span>
-          {/* ADR-0022 decision 4: the return door. It lives in the topbar's
-              right zone because it acts on the project's selection, not on a
-              cell — a control nested inside a plane cell would be a button
-              inside a button. */}
-          <UseInSessionAction
-            selectedImageId={state.selectedImageId}
-            onUse={studio.returnImageToSession}
-          />
+          {/* Selection-scoped actions, right-anchored as a group. Both act on
+              the project's selection, not on a cell — a control nested inside a
+              plane cell would be a button inside a button. Download SVG appears
+              only when the selection is a vector (issue #118); the return door
+              is ADR-0022 decision 4. */}
+          <div className="ml-auto flex items-center gap-3">
+            <DownloadSelectedImage
+              turns={state.turns}
+              selectedImageId={state.selectedImageId}
+            />
+            <UseInSessionAction
+              selectedImageId={state.selectedImageId}
+              onUse={studio.returnImageToSession}
+            />
+          </div>
         </div>
 
         <div className="st-body">

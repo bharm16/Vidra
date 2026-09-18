@@ -153,4 +153,61 @@ describe("StudioModelRegistry", () => {
       );
     });
   });
+
+  // Issue #118: "no vector model is offered while its output cannot be stored."
+  describe("vector output offerability gate", () => {
+    it("offers the whole roster — Vector tiers included — when SVGs can be stored", () => {
+      const enabled = new StudioModelRegistry({ vectorStorageAvailable: true });
+      const slugs = enabled.offerableModels().map((entry) => entry.slug);
+      expect(slugs).toContain("recraft-v4.1-svg");
+      expect(slugs).toContain("recraft-v4.1-pro-svg");
+      expect(enabled.offerableModels()).toHaveLength(
+        enabled.listModels().length,
+      );
+    });
+
+    it("withholds every vector model when SVG output cannot be stored", () => {
+      const disabled = new StudioModelRegistry({
+        vectorStorageAvailable: false,
+      });
+      const offered = disabled.offerableModels();
+      expect(offered.some((entry) => entry.capabilities.includes("svg"))).toBe(
+        false,
+      );
+      // Only the unstorable format is withheld — raster tiers still show.
+      expect(offered.map((entry) => entry.slug)).toContain("recraft-v4.1");
+      // listModels is unchanged: internal Auto routing still sees the roster.
+      expect(
+        disabled
+          .listModels()
+          .some((entry) => entry.capabilities.includes("svg")),
+      ).toBe(true);
+    });
+
+    it("offers vector models by default, because storage now keeps SVGs", () => {
+      // The no-arg default reads the storage domain's own answer
+      // (canStoreVector). This pins the delivered state of #118: the vector
+      // lane exists, so the Vector tiers ARE presented.
+      const asShipped = new StudioModelRegistry();
+      expect(
+        asShipped
+          .offerableModels()
+          .some((entry) => entry.capabilities.includes("svg")),
+      ).toBe(true);
+    });
+  });
+
+  describe("producesVector (which lane a result is stored in)", () => {
+    it("is true for the SVG-capable models and the vectorize utility", () => {
+      expect(registry.producesVector("recraft-v4.1-svg")).toBe(true);
+      expect(registry.producesVector("recraft-v4.1-pro-svg")).toBe(true);
+      expect(registry.producesVector("vectorize")).toBe(true);
+    });
+
+    it("is false for raster models and the raster utility", () => {
+      expect(registry.producesVector("recraft-v4.1")).toBe(false);
+      expect(registry.producesVector("nano-banana-2")).toBe(false);
+      expect(registry.producesVector("remove_background")).toBe(false);
+    });
+  });
 });

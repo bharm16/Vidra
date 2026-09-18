@@ -73,6 +73,7 @@ export class RetentionService {
 
     let prefix = `users/${userId}/`;
     if (type === "preview-image") prefix += "previews/images/";
+    else if (type === "preview-vector") prefix += "previews/vectors/";
     else if (type === "preview-video") prefix += "previews/videos/";
     else if (type === "generation") prefix += "generations/";
 
@@ -121,6 +122,7 @@ export class RetentionService {
 
     const byType: Record<string, number> = {
       "preview-image": 0,
+      "preview-vector": 0,
       "preview-video": 0,
       generation: 0,
     };
