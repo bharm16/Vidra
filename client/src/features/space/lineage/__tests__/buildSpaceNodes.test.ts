@@ -82,4 +82,44 @@ describe("buildSpaceNodes", () => {
     });
     expect(nodes.find((n) => n.id === "pic1")?.archived).toBe(true);
   });
+
+  // ADR-0022 decision 2 (issue #111): each take carries the words-version it is
+  // filed under explicitly, so restore never has to walk the display ancestor.
+  it("stamps each take's associated words-version, keeping it distinct from the display ancestor", () => {
+    const nodes = buildSpaceNodes({
+      words: [
+        { versionId: "w1", label: "first" },
+        { versionId: "w2", label: "second", rewordedFrom: "w1" },
+      ],
+      pictures: [
+        // Refined from a W1 picture but filed under W2: ancestor draws the
+        // refine edge, wordsVersionId carries the restore target.
+        {
+          id: "pic2",
+          versionId: "w1",
+          ancestorPictureId: "pic1",
+          wordsVersionId: "w2",
+        },
+      ],
+      clips: [{ id: "clip2", pictureId: "pic1", wordsVersionId: "w2" }],
+    });
+
+    expect(nodes.find((n) => n.id === "pic2")).toMatchObject({
+      ancestorId: "pic1",
+      wordsVersionId: "w2",
+    });
+    expect(nodes.find((n) => n.id === "clip2")).toMatchObject({
+      ancestorId: "pic1",
+      wordsVersionId: "w2",
+    });
+  });
+
+  it("defaults a picture's associated words-version to its enclosing version when none is supplied", () => {
+    const nodes = buildSpaceNodes({
+      words: [{ versionId: "v1", label: "x" }],
+      pictures: [{ id: "pic1", versionId: "v1" }],
+      clips: [],
+    });
+    expect(nodes.find((n) => n.id === "pic1")?.wordsVersionId).toBe("v1");
+  });
 });

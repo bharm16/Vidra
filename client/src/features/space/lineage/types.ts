@@ -21,6 +21,16 @@ export interface LineageNode {
   kind: LineageNodeKind;
   /** Immediate ancestor (ADR-0013); null for the root words-node. */
   ancestorId: string | null;
+  /**
+   * ADR-0022 decision 2: the words-version this TAKE is filed under — its
+   * associated words, restored into the input on selection or arming. Carried
+   * explicitly because it is a DIFFERENT relationship from `ancestorId`: the
+   * display ancestor is what the space draws (a clip's source picture, a
+   * refined picture's origin), and a clip made from a picture of an older
+   * words-version must restore its own words, not the picture's. Absent on
+   * words nodes, which ARE the words-version rather than a take filed under one.
+   */
+  wordsVersionId?: string;
   /** A removed leaf persists but is excluded from the render (ADR-0012). */
   archived?: boolean;
   /**
