@@ -47,9 +47,15 @@ class and the relay keeps the global `fetch` it defaults to.
 `server/src/replay/fixtures/<surface>/<scenario>.json`, one cassette per
 surface + scenario, `formatVersion` stamped. Entries are keyed by a sha256 of
 the stable-stringified semantic request (operation + prompts — not model or
-temperature, which vary by env). See
-`shared/schemas/replay.schemas.ts` for the envelope and per-surface payload
-contracts.
+temperature, which vary by env). Each entry recorded from a live provider
+also carries **capture provenance** (issue #139): the effective operation,
+provider and model — read from the code's overridable configuration at
+capture time, never hard-coded in tooling — the relevant parameters, and the
+capture run. Entries authored by hand for deliberate failure cases are
+labelled `origin: "synthetic"` and are never presented as live evidence; the
+cross-mode recorder keeps them across re-records and drops stale unlabelled
+ones loudly. See `shared/schemas/replay.schemas.ts` for the envelope and
+per-surface payload contracts.
 
 ## Contract validation and drift
 
@@ -115,6 +121,17 @@ Gotcha: `ModelConfig` snapshots env at module load — recording sets
 `SPAN_PROVIDER=qwen` before boot, and the suite mirrors it via dynamic
 imports after env setup. A prompt-template or provider-default change makes
 replay miss loudly; re-record to resolve.
+
+Re-record the cross-mode pack (the walkthrough's own recorder, with a stated
+spend and a call budget — see
+[cross-mode-golden-path.md](cross-mode-golden-path.md) for the gates and the
+spend statement):
+
+```bash
+REPLAY_MODE=record NODE_ENV=test \
+OPENAI_API_KEY=… REPLICATE_API_TOKEN=… FAL_KEY=… \
+npx tsx --tsconfig tsconfig.json scripts/replay/record-cross-mode.ts
+```
 
 Follow-up for the main checkout (worktrees must not run servers or e2e):
 

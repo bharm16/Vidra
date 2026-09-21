@@ -1,10 +1,11 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CassetteStore } from "@server/replay/CassetteStore";
 import { ReplayCassetteMissError, ReplayError } from "@server/replay/errors";
 import { RecordReplayStudioImageRunner } from "@server/replay/RecordReplayStudioImageRunner";
+import type { MediaFetcher } from "@server/replay/replayableMedia";
 import type {
   LiveStudioImageRunner,
   StudioImageCall,
@@ -38,17 +39,31 @@ const CALL: StudioImageCall = {
   timeoutMs: 30_000,
 };
 
-const RESULT: StudioImageCallResult = {
+const LIVE_RESULT: StudioImageCallResult = {
   imageUrl: "https://replicate.delivery/fox.webp",
   durationMs: 1234,
 };
+/** The captured form of LIVE_RESULT's bytes: inlined, so replay needs no network. */
+const CAPTURED_RESULT: StudioImageCallResult = {
+  imageUrl: "data:image/webp;base64,AQID",
+  durationMs: 1234,
+};
+
+function fakeImageFetcher(): MediaFetcher {
+  return vi.fn(async (): Promise<Response> => {
+    return new Response(new Uint8Array([1, 2, 3]), {
+      status: 200,
+      headers: { "content-type": "image/webp" },
+    });
+  });
+}
 
 function fakeRunner(
   overrides: Partial<LiveStudioImageRunner> = {},
 ): LiveStudioImageRunner {
   return {
     isAvailable: () => true,
-    run: vi.fn(async (): Promise<StudioImageCallResult> => RESULT),
+    run: vi.fn(async (): Promise<StudioImageCallResult> => LIVE_RESULT),
     ...overrides,
   };
 }
@@ -57,6 +72,7 @@ describe("RecordReplayStudioImageRunner", () => {
   it("records through the live runner, then replays with zero network", async () => {
     const dir = makeTempDir();
     const inner = fakeRunner();
+    const fetchImage = fakeImageFetcher();
 
     const recordStore = new CassetteStore({ fixturesDir: dir });
     recordStore.beginScenario("studio-turn", "studio-image-roundtrip");
@@ -64,9 +80,13 @@ describe("RecordReplayStudioImageRunner", () => {
       mode: "record",
       store: recordStore,
       inner,
+      fetchImage,
     });
 
-    await expect(recorder.run(CALL)).resolves.toEqual(RESULT);
+    // Record mode hands the caller the CAPTURED form: the produced image's
+    // bytes inlined as a data URI, which is also what the storage doubles
+    // decode on replay.
+    await expect(recorder.run(CALL)).resolves.toEqual(CAPTURED_RESULT);
     expect(inner.run).toHaveBeenCalledTimes(1);
     recordStore.flush();
 
@@ -84,8 +104,48 @@ describe("RecordReplayStudioImageRunner", () => {
       inner: replayInner,
     });
 
-    await expect(replayer.run(CALL)).resolves.toEqual(RESULT);
+    await expect(replayer.run(CALL)).resolves.toEqual(CAPTURED_RESULT);
     expect(replayInner.run).not.toHaveBeenCalled();
+  });
+
+  it("stamps capture provenance read from the call, not a constant roster", async () => {
+    const dir = makeTempDir();
+    const recordStore = new CassetteStore({ fixturesDir: dir });
+    recordStore.beginScenario("studio-turn", "studio-image-provenance");
+    await new RecordReplayStudioImageRunner({
+      mode: "record",
+      store: recordStore,
+      inner: fakeRunner(),
+      fetchImage: fakeImageFetcher(),
+    }).run(CALL);
+    recordStore.flush();
+
+    const cassette = JSON.parse(
+      readFileSync(join(dir, "studio-turn", "studio-image-provenance.json"), "utf8"),
+    ) as { entries: Array<{ provenance?: Record<string, unknown> }> };
+    const provenance = cassette.entries[0]?.provenance;
+    expect(provenance).toMatchObject({
+      operation: "studio_image_run",
+      provider: "replicate",
+      model: CALL.model,
+      origin: "live",
+      parameters: { timeoutMs: CALL.timeoutMs },
+    });
+  });
+
+  it("fails the recording when the produced image cannot be inlined", async () => {
+    const dir = makeTempDir();
+    const recordStore = new CassetteStore({ fixturesDir: dir });
+    recordStore.beginScenario("studio-turn", "studio-image-dead-cdn");
+    const recorder = new RecordReplayStudioImageRunner({
+      mode: "record",
+      store: recordStore,
+      inner: fakeRunner(),
+      fetchImage: async () => new Response("gone", { status: 404 }),
+    });
+
+    // A capture that cannot replay offline must abort the run, not be written.
+    await expect(recorder.run(CALL)).rejects.toThrow(ReplayError);
   });
 
   it("keys the recording on model + input, so a changed input misses loudly", async () => {
@@ -96,6 +156,7 @@ describe("RecordReplayStudioImageRunner", () => {
       mode: "record",
       store: recordStore,
       inner: fakeRunner(),
+      fetchImage: fakeImageFetcher(),
     }).run(CALL);
     recordStore.flush();
 
@@ -122,6 +183,7 @@ describe("RecordReplayStudioImageRunner", () => {
       mode: "record",
       store: recordStore,
       inner: fakeRunner(),
+      fetchImage: fakeImageFetcher(),
     }).run(CALL);
     recordStore.flush();
 
@@ -135,7 +197,7 @@ describe("RecordReplayStudioImageRunner", () => {
 
     await expect(
       replayer.run({ ...CALL, userId: "someone-else", timeoutMs: 5_000 }),
-    ).resolves.toEqual(RESULT);
+    ).resolves.toEqual(CAPTURED_RESULT);
   });
 
   it("refuses to record against an unavailable live runner", () => {

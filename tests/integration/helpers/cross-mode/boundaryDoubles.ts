@@ -260,12 +260,30 @@ export class InMemoryStorageService {
    * two would prove nothing about a failure.
    */
   readonly failSaveFor = new Set<string>();
+  /** Refusals left in `failNextSaves`, decremented per save. */
+  private failNextSavesRemaining = 0;
 
   constructor(
     private readonly objects: InMemoryObjectStore,
     /** Defaults to production-faithful fresh ids; see `ObjectIdMint`. */
     private readonly mintObjectId: ObjectIdMint = () => randomUUID(),
   ) {}
+
+  /**
+   * Refuse the next `count` saves, whichever URLs they carry. The pack's
+   * recorded responses are provider bytes, so a re-recorded pack cannot name
+   * a sibling by its URL the way `failSaveFor` does with the authored one —
+   * aiming at the next save instead keeps the one-failed-sibling case
+   * pack-agnostic.
+   */
+  failNextSaves(count: number): void {
+    this.failNextSavesRemaining = count;
+  }
+
+  clearFailedSaves(): void {
+    this.failNextSavesRemaining = 0;
+    this.failSaveFor.clear();
+  }
 
   saveFromUrl(
     userId: string,
@@ -278,6 +296,12 @@ export class InMemoryStorageService {
     expiresAt: string;
     sizeBytes: number;
   }> {
+    if (this.failNextSavesRemaining > 0) {
+      this.failNextSavesRemaining -= 1;
+      return Promise.reject(
+        new Error("storage is unavailable for this object"),
+      );
+    }
     if (this.failSaveFor.has(sourceUrl)) {
       return Promise.reject(
         new Error("storage is unavailable for this object"),

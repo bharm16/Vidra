@@ -1,5 +1,7 @@
 import type { Server } from "node:http";
 import type { DIContainer } from "@infrastructure/DIContainer";
+import type { CassetteStore } from "@server/replay/CassetteStore";
+import type { ReplayMode } from "@server/replay/ReplaySeam";
 import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import type {
   SketchBudgetStore,
@@ -21,23 +23,31 @@ import {
 } from "./boundaryDoubles";
 import { installOutboundGuard, type OutboundGuard } from "./outboundGuard";
 import { CROSS_MODE_CLIP } from "@scripts/replay/goldenScenarios";
+import type { SessionService } from "@services/sessions/SessionService";
+import type { VideoJobRecord } from "@services/video-generation/jobs/types";
 
 /**
- * Boots the REAL app for the cross-mode walkthrough, offline.
+ * Boots the REAL app for the cross-mode walkthrough — offline by default, or
+ * live-recording with `{ replayMode: "record" }` (issue #139's recorder).
  *
  * Two mechanisms, and the difference matters:
  *
  *  - **Recorded** boundaries are served by the replay seams already in the
  *    product (`REPLAY_MODE=replay`): the LLM router, the image preview
  *    provider, the studio image runner, and — new with this walkthrough — the
- *    sketch relay's upstream fetch.
+ *    sketch relay's upstream fetch. In record mode the same seams call through
+ *    to the live providers and capture the responses.
  *  - **Controlled** boundaries are substituted by registration at the same
  *    token production registers its Firestore/GCS adapter at. The services
  *    above them are untouched; that is what makes this a test of the seams
- *    rather than of a parallel implementation.
+ *    rather than of a parallel implementation. They stand in record mode too —
+ *    only the provider boundaries flip.
  *
- * The outbound guard is installed BEFORE the container is built, so a call
- * that escapes either mechanism fails the boot rather than quietly working.
+ * Offline, the outbound guard is installed BEFORE the container is built, so a
+ * call that escapes either mechanism fails the boot rather than quietly
+ * working. In record mode the guard routes the object store and observes
+ * (rather than blocks) every other destination — recording is the one mode
+ * whose point is live provider calls.
  *
  * The full table is `docs/architecture/cross-mode-golden-path.md`.
  */
@@ -96,10 +106,36 @@ export interface CrossModeHarness {
   get(path: string): Promise<ApiResponse>;
   /** The raw text of an NDJSON route, line by line. */
   postNdjson(path: string, body: unknown): Promise<string[]>;
+  /**
+   * Run one seeded job through the real `processVideoJob` with the harness's
+   * controlled video provider and in-memory stores — the clip leg's wiring,
+   * shared by the walkthrough and the recorder (issue #139).
+   */
+  runClipJob(job: VideoJobRecord): Promise<void>;
   close(): Promise<void>;
 }
 
-export async function startCrossModeHarness(): Promise<CrossModeHarness> {
+export interface CrossModeHarnessOptions {
+  /**
+   * `replay` (default) serves the recorded boundaries from cassettes and
+   * blocks every non-loopback call. `record` lets the same boundaries call
+   * the live providers (issue #139's recorder): the operator's credential env
+   * passes through untouched, and the guard routes the object store while
+   * observing — not blocking — everything else.
+   */
+  replayMode?: ReplayMode;
+  /**
+   * Use this store instead of the one the DI factory would build. The
+   * recorder passes a budgeted store so the run can abort once the capture
+   * budget is spent.
+   */
+  store?: CassetteStore;
+}
+
+export async function startCrossModeHarness(
+  { replayMode = "replay", store: injectedStore }: CrossModeHarnessOptions = {},
+): Promise<CrossModeHarness> {
+  const recording = replayMode === "record";
   const envBackup = new Map<string, string | undefined>();
   const setEnv = (key: string, value: string | undefined): void => {
     if (!envBackup.has(key)) envBackup.set(key, process.env[key]);
@@ -109,17 +145,24 @@ export async function startCrossModeHarness(): Promise<CrossModeHarness> {
 
   setEnv("NODE_ENV", "test");
   setEnv("PORT", "0");
-  setEnv("REPLAY_MODE", "replay");
+  setEnv("REPLAY_MODE", replayMode);
   setEnv("ALLOWED_API_KEYS", CROSS_MODE_API_KEY);
   setEnv("API_KEY", undefined);
   setEnv("ENABLE_STUDIO", "true");
-  // Both of these gate a surface into existence, and neither is a live call
-  // under REPLAY_MODE=replay: the studio image runner and the sketch relay's
-  // upstream are both wrapped by seams. The guard, not a missing key, is what
-  // proves nothing reached the network.
-  setEnv("REPLICATE_API_TOKEN", "replay-only-not-a-credential");
-  setEnv("FAL_KEY", "replay-only-not-a-credential");
-  for (const key of LLM_ENV_KEYS) setEnv(key, undefined);
+  if (recording) {
+    // Recording calls the live providers: the operator's keys must be in the
+    // environment already and pass through untouched. The guard, not a
+    // missing key, is what polices egress in replay mode; in record mode the
+    // providers are the point (see the guard options below).
+  } else {
+    // Both of these gate a surface into existence, and neither is a live call
+    // under REPLAY_MODE=replay: the studio image runner and the sketch relay's
+    // upstream are both wrapped by seams. The guard, not a missing key, is
+    // what proves nothing reached the network.
+    setEnv("REPLICATE_API_TOKEN", "replay-only-not-a-credential");
+    setEnv("FAL_KEY", "replay-only-not-a-credential");
+    for (const key of LLM_ENV_KEYS) setEnv(key, undefined);
+  }
   // Google's application-default credential discovery pings the GCE metadata
   // server when it finds no credentials. Nothing here needs GCP — every
   // Firestore/GCS adapter below is substituted — so the discovery is turned
@@ -136,6 +179,7 @@ export async function startCrossModeHarness(): Promise<CrossModeHarness> {
   });
   const guard = installOutboundGuard({
     routes: { [OBJECT_STORE_HOST]: objects.serve },
+    ...(recording ? { allowEgress: true } : {}),
   });
 
   // Dynamic imports: ModelConfig and friends snapshot env at module load, so
@@ -173,6 +217,10 @@ export async function startCrossModeHarness(): Promise<CrossModeHarness> {
   container.registerValue("requestIdempotencyService", idempotency);
   container.registerValue("videoJobStore", jobs);
   container.registerValue("studioProjectStore", studioProjects);
+  if (injectedStore) {
+    // The recorder's budgeted store, before anything resolves the token.
+    container.registerValue("replayCassetteStore", injectedStore);
+  }
   container.registerValue(
     "sketchBudgetService",
     new SketchBudgetService({
@@ -246,6 +294,21 @@ export async function startCrossModeHarness(): Promise<CrossModeHarness> {
       });
       const text = await response.text();
       return text.split("\n").filter((line) => line.length > 0);
+    },
+    async runClipJob(job: VideoJobRecord): Promise<void> {
+      const { processVideoJob } = await import(
+        "@services/video-generation/jobs/processVideoJob"
+      );
+      await processVideoJob(job, {
+        jobStore: jobs,
+        videoGenerationService: videoProvider,
+        storageService: container.resolve("storageService"),
+        userCreditService: refunds,
+        sessionService: container.resolve<SessionService>("sessionService"),
+        workerId: "cross-mode-worker",
+        leaseMs: 60_000,
+        heartbeat: { start: () => undefined, stop: () => undefined },
+      });
     },
     async close(): Promise<void> {
       await new Promise<void>((resolve) => server.close(() => resolve()));

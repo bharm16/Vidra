@@ -42,11 +42,22 @@ export type OutboundRoute = (
 export interface OutboundGuardOptions {
   /** hostname → the adapter that answers for it, instead of the network. */
   routes?: Readonly<Record<string, OutboundRoute>>;
+  /**
+   * Observe instead of block: non-routed destinations reach the real network
+   * AND are logged to `networkCalls`. This is the RECORDER's posture (issue
+   * #139) — recording is the one mode whose point is live provider calls, so
+   * the guard keeps routing the object store and keeps a full destination
+   * log instead of refusing every egress. The default (blocking) is what the
+   * offline walkthrough relies on and is unchanged.
+   */
+  allowEgress?: boolean;
 }
 
 export interface OutboundGuard {
   /** Every blocked destination, in call order. */
   readonly violations: readonly string[];
+  /** Destinations that went to the real network, in call order. */
+  readonly networkCalls: readonly string[];
   /** Fails with the destinations rather than a bare boolean. */
   assertNoOutboundCalls(): void;
   restore(): void;
@@ -104,8 +115,10 @@ function nodeRequestHost(args: unknown[]): string | null {
 
 export function installOutboundGuard({
   routes = {},
+  allowEgress = false,
 }: OutboundGuardOptions = {}): OutboundGuard {
   const violations: string[] = [];
+  const networkCalls: string[] = [];
   const originalFetch: FetchFn = globalThis.fetch;
   const originalHttpRequest = http.request;
   const originalHttpGet = http.get;
@@ -115,6 +128,10 @@ export function installOutboundGuard({
   const block = (destination: string): never => {
     violations.push(destination);
     throw new OutboundCallBlockedError(destination);
+  };
+
+  const observe = (destination: string): void => {
+    networkCalls.push(destination);
   };
 
   globalThis.fetch = (async (
@@ -130,7 +147,10 @@ export function installOutboundGuard({
     const host = hostOf(url);
     const route = host ? routes[host] : undefined;
     if (route) return route(url, init);
-    if (!isLoopbackHost(host)) block(url);
+    if (!isLoopbackHost(host)) {
+      if (!allowEgress) block(url);
+      observe(url);
+    }
     return originalFetch(input, init);
   }) as FetchFn;
 
@@ -141,7 +161,8 @@ export function installOutboundGuard({
     function guardedRequest(...args: unknown[]): http.ClientRequest {
       const host = nodeRequestHost(args);
       if (!isLoopbackHost(host) && !(host && routes[host])) {
-        block(nodeRequestDestination(args));
+        if (!allowEgress) block(nodeRequestDestination(args));
+        observe(nodeRequestDestination(args));
       }
       return original(...args);
     };
@@ -155,6 +176,7 @@ export function installOutboundGuard({
 
   return {
     violations,
+    networkCalls,
     assertNoOutboundCalls(): void {
       if (violations.length > 0) {
         throw new OutboundCallBlockedError(violations.join(", "));

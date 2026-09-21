@@ -104,33 +104,53 @@ unit run). Canonical inputs live in `scripts/replay/goldenScenarios.ts` —
 **changed there and nowhere else**, so anything replaying or re-recording them
 sends byte-identical bodies.
 
-**These entries are authored, not captured.** Their _requests_ are exactly what
-the code produces — a request that drifts by one character misses loudly with
-the re-record instructions — but their _responses_ are hand-written payloads
+**These entries are authored, not captured — yet.** Their _requests_ are
+exactly what the code produces — a request that drifts by one character
+misses loudly with its key — but their _responses_ are hand-written payloads
 that satisfy the live contracts, because capturing them needs live provider
-keys and spend. The Idea Box pack (`fixtures/<surface>/golden-path.json`) is
-genuinely recorded; this one is not, and that distinction is why the live-smoke
-test below exists. Saying it plainly here is cheaper than letting a future
-reader infer that a green gate means a provider answered.
+keys and spend. The pack's recorder (below) closes that gap; until the owner
+runs it, saying so plainly here is cheaper than letting a future reader
+infer that a green gate means a provider answered.
 
-### Regenerating the cassette
+### Re-recording the cassette
 
-There is no recorder script for this pack, and pretending otherwise would be
-worse than saying so. When a prompt template, a model roster entry or a request
-shape changes, the affected entry misses loudly with its key, and the procedure
-is:
+The pack has its own recorder (issue #139), modelled on the Idea Box and
+studio recorders: it boots this same harness with `REPLAY_MODE=record` — the
+recorded boundaries call the live providers, the controlled ones stay — and
+drives the canonical inputs from `scripts/replay/goldenScenarios.ts`, so the
+captured requests are byte-identical to what the replay suite produces.
+Every capture is contract-validated at capture time and carries **capture
+provenance**: the effective operation, provider and model read from the
+code's overridable configuration at the moment of the call (whatever
+`STUDIO_TURN_PROVIDER` / `STUDIO_TURN_MODEL` resolve to — not the model a
+smoke note once named), the relevant parameters, and the capture run itself.
+Produced images are captured inline as data URIs, because a provider CDN URL
+is not durable — so a live-recorded pack still replays with zero network.
 
-1. Run the walkthrough. The `ReplayCassetteMissError` names the seam, the
-   summary and the exact key.
-2. Author the entry under that key: the request as the code now builds it, and
-   a response that satisfies the contract named in
-   `shared/schemas/replay.schemas.ts`.
-3. Re-run. `tests/unit/replay/contract-drift.test.ts` validates the fixture
-   against the live contracts on every unit run, so a payload that does not
-   satisfy the contract cannot sit in the tree looking green.
+**Stated spend.** One pass costs 1 sketch frame (fal), 4–8 `studio_turn`
+calls, and 6 studio image runs; the clip leg is a controlled provider and
+spends nothing. The command states its ceiling up front and enforces it as a
+call budget: it aborts past its 20th captured response (change only
+deliberately with `--max-live-calls`), and a run below the canonical floor —
+or one where the live model fumbled a behavior the scenario pins — refuses
+to flush anything. Boot itself runs the app's standard startup key
+validation (one small call per configured LLM provider, before any capture
+begins); the guard logs it as egress like everything else.
 
-The nightly live-smoke test below is what keeps step 2 honest: an authored
-response that no real provider would produce is exactly what it catches.
+```bash
+REPLAY_MODE=record NODE_ENV=test \
+OPENAI_API_KEY=… REPLICATE_API_TOKEN=… FAL_KEY=… \
+npx tsx --tsconfig tsconfig.json scripts/replay/record-cross-mode.ts
+```
+
+What a re-record changes in this file's neighbourhood: the walkthrough's own
+test reads the relay's answer from the committed pack (the picture the
+creator accepts is the pack's, not a constant), and the one-failed-sibling
+injection aims at the next save rather than a recorded URL — both so a
+live-recorded pack replays against the offline proof unchanged. Entries the
+run did not re-record are dropped loudly unless they carry
+`origin: "synthetic"`: deliberate failure cases are kept, but they stay
+labelled and are never presented as live evidence.
 
 ### Two ids are pinned
 
@@ -207,6 +227,8 @@ superseded), the same turn's studio edit image (nano-banana-2), and one first
 frame (Flux Schnell). No clip: video is the most expensive leg and ADR-0002
 keeps generation economics frozen. The first turn being an edit is exactly
 what #110 made legal, and the bridge runs the real media resolver #109 built.
+The smoke is also what keeps a hand-written or synthetic response honest: an
+authored answer no real provider would produce is exactly what it catches.
 
 **What it asserts.** Only what a live call can establish and replay cannot:
 each provider answered inside its timeout, and each response satisfies the same

@@ -1,5 +1,6 @@
 import type {
   ReplayCassetteEntry,
+  ReplayCaptureProvenance,
   ReplayContractName,
 } from "@shared/schemas/replay.schemas";
 import type { CassetteStore } from "./CassetteStore";
@@ -39,6 +40,14 @@ interface ReplaySeamCall<S extends ReplaySeamName, TLive> {
    * return value so record mode hands callers the untouched live object.
    */
   toRecorded: (response: TLive) => ReplayRecordedFor<S>;
+  /**
+   * Capture provenance for the entry (issue #139): the effective operation,
+   * provider and model the code resolved for THIS call, the relevant
+   * parameters, and the capture run itself. Attached to the recorded entry in
+   * record mode; never consulted in replay. Built per call, from the live
+   * configuration — never a module-level constant.
+   */
+  provenance?: ReplayCaptureProvenance | undefined;
 }
 
 /**
@@ -92,6 +101,7 @@ export class ReplaySeam<S extends ReplaySeamName> {
     contract,
     live,
     toRecorded,
+    provenance,
   }: ReplaySeamCall<S, TLive>): Promise<TLive | ReplayRecordedFor<S>> {
     const key = this.keyOf(request);
 
@@ -119,6 +129,7 @@ export class ReplaySeam<S extends ReplaySeamName> {
       contract,
       request,
       response: toRecorded(response),
+      ...(provenance ? { provenance } : {}),
     } as ReplayCassetteEntry);
     return response;
   }
