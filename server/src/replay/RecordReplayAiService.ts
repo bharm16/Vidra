@@ -6,10 +6,14 @@ import type {
   RoutedAIResponse,
   StreamParams,
 } from "@services/ai-model/types";
-import type { OperationName } from "@config/modelConfig";
+import { ModelConfig, type OperationName } from "@config/modelConfig";
 import type { LlmProviderCircuitManager } from "@llm/failover/LlmProviderCircuitManager";
 import type { LlmCallTelemetryService } from "@services/observability/LlmCallTelemetryService";
-import type { ReplayAiModelRequest } from "@shared/schemas/replay.schemas";
+import {
+  REPLAY_CASSETTE_FORMAT_VERSION,
+  type ReplayCaptureProvenance,
+  type ReplayAiModelRequest,
+} from "@shared/schemas/replay.schemas";
 import type { CassetteStore } from "./CassetteStore";
 import { contractForOperation } from "./contracts";
 import { aiModelRequestKey } from "./requestKey";
@@ -64,6 +68,9 @@ export class RecordReplayAiService extends AIModelService {
     operation: OperationName,
     params: ExecuteParams,
   ): Promise<RoutedAIResponse> {
+    // One pre-flight read feeds both the provenance stamp and the caller's
+    // executedBy, so the two can never disagree about what ran.
+    const execution = this.resolveExecution(operation);
     const request = this.toRequest(operation, params, false);
     const response = await this.seam.through({
       request,
@@ -75,13 +82,14 @@ export class RecordReplayAiService extends AIModelService {
         text: live.text,
         metadata: (live.metadata ?? {}) as Record<string, unknown>,
       }),
+      provenance: this.provenanceFor(operation, execution, false),
     });
     // A cassette records the response body, not the routing decision. Report
     // the same answer `resolveExecution` gave the caller pre-flight, so a
     // replayed run shapes provider-specific work the way the live run did.
     return {
       ...(response as AIResponse),
-      executedBy: this.resolveExecution(operation),
+      executedBy: execution,
     };
   }
 
@@ -107,6 +115,9 @@ export class RecordReplayAiService extends AIModelService {
       contract: contractForOperation(operation),
       live: async () => super.stream(operation, params),
       toRecorded: (text) => ({ text, metadata: { recordedFrom: "stream" } }),
+      provenance: this.seam.isReplaying
+        ? undefined
+        : this.provenanceFor(operation, this.resolveExecution(operation), true),
     });
 
     if (typeof response === "string") {
@@ -140,6 +151,39 @@ export class RecordReplayAiService extends AIModelService {
       userMessage: params.userMessage ?? null,
       messages: params.messages ?? null,
       stream,
+    };
+  }
+
+  /**
+   * Provenance for one capture (issue #139): the effective provider and model
+   * come from the router's own resolution — env overrides and circuit state
+   * included — and the tuning parameters from the same ModelConfig entry the
+   * dispatch reads. Nothing here is hard-coded or copied from a document.
+   */
+  private provenanceFor(
+    operation: OperationName,
+    execution: { client: string; provider: string; model: string },
+    stream: boolean,
+  ): ReplayCaptureProvenance {
+    const config = ModelConfig[operation];
+    return {
+      operation,
+      provider: execution.provider,
+      model: execution.model,
+      parameters: {
+        client: execution.client,
+        temperature: config.temperature,
+        maxTokens: config.maxTokens,
+        timeout: config.timeout,
+        responseFormat: config.responseFormat ?? null,
+        stream,
+      },
+      origin: "live",
+      capture: {
+        replayMode: "record",
+        recordedAt: new Date().toISOString(),
+        formatVersion: REPLAY_CASSETTE_FORMAT_VERSION,
+      },
     };
   }
 }

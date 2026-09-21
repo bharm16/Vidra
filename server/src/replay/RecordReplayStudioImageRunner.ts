@@ -4,11 +4,16 @@ import type {
   StudioImageCallResult,
   StudioImageRunner,
 } from "@services/studio/providers/types";
-import type { ReplayStudioImageRequest } from "@shared/schemas/replay.schemas";
+import {
+  REPLAY_CASSETTE_FORMAT_VERSION,
+  type ReplayCaptureProvenance,
+  type ReplayStudioImageRequest,
+} from "@shared/schemas/replay.schemas";
 import type { CassetteStore } from "./CassetteStore";
 import { ReplayError } from "./errors";
 import { studioImageRequestKey } from "./requestKey";
 import { ReplaySeam, type ReplayMode } from "./ReplaySeam";
+import { fetchAsDataUri, type MediaFetcher } from "./replayableMedia";
 
 /**
  * Record/replay seam at the studio image runner.
@@ -23,18 +28,23 @@ import { ReplaySeam, type ReplayMode } from "./ReplaySeam";
  */
 export class RecordReplayStudioImageRunner implements StudioImageRunner {
   private readonly seam: ReplaySeam<"studio-image">;
-  private readonly inner: StudioImageRunner;
+  private readonly inner: LiveStudioImageRunner;
+  private readonly fetchImage: MediaFetcher;
 
   constructor({
     mode,
     store,
     inner,
+    fetchImage = fetch,
   }: {
     mode: ReplayMode;
     store: CassetteStore;
     inner: LiveStudioImageRunner;
+    /** Downloads a produced image at capture time. Only used in record mode. */
+    fetchImage?: MediaFetcher;
   }) {
     this.inner = inner;
+    this.fetchImage = fetchImage;
     this.seam = new ReplaySeam({
       seam: "studio-image",
       mode,
@@ -63,8 +73,42 @@ export class RecordReplayStudioImageRunner implements StudioImageRunner {
       summary: `studio image run on model "${call.model}"`,
       scenario: "studio-image",
       contract: "studio-image-result",
-      live: () => this.inner.run(call),
+      live: async () => {
+        const result = await this.inner.run(call);
+        // A live capture must replay offline: the provider answers with a CDN
+        // URL whose bytes are not durable, so the capture inlines them. The
+        // caller (StudioService) saves those same bytes, which also keeps the
+        // walkthrough's content-addressed storage paths consistent between
+        // the record run and every replay of the pack.
+        return {
+          ...result,
+          imageUrl: await fetchAsDataUri(result.imageUrl, this.fetchImage),
+        };
+      },
       toRecorded: (result) => ({ ...result }),
+      provenance: this.seam.isReplaying
+        ? undefined
+        : this.provenanceFor(call),
     });
+  }
+
+  /** Capture provenance: the registry-chosen model and the call's budget. */
+  private provenanceFor(call: StudioImageCall): ReplayCaptureProvenance {
+    return {
+      operation: "studio_image_run",
+      // This seam wraps the Replicate runner by construction — the record
+      // path refuses any other inner (see the constructor above).
+      provider: "replicate",
+      model: call.model,
+      parameters: {
+        timeoutMs: call.timeoutMs,
+      },
+      origin: "live",
+      capture: {
+        replayMode: "record",
+        recordedAt: new Date().toISOString(),
+        formatVersion: REPLAY_CASSETTE_FORMAT_VERSION,
+      },
+    };
   }
 }

@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   CROSS_MODE_ACCEPT_KEY,
@@ -5,8 +8,6 @@ import {
   CROSS_MODE_STUDIO_OPENING_MESSAGE,
   CROSS_MODE_STUDIO_SECOND_EDIT_MESSAGE,
   CROSS_MODE_STUDIO_UNRELATED_MESSAGE,
-  CROSS_MODE_STUDIO_VARIANT_DATA_URIS,
-  CROSS_MODE_LIVE_OUTPUT_DATA_URI,
   CROSS_MODE_PROMPT,
   CROSS_MODE_SKETCH_DATA_URI,
   CROSS_MODE_SKETCH_FRAME,
@@ -62,6 +63,37 @@ interface Walkthrough {
 /** The bridged picture's id, pinned so the studio's prompt is reproducible. */
 const BRIDGED_ATTACHMENT_ID = "att-bridged-session-picture";
 
+/**
+ * The live output the pack's relay entry answers with — the picture the
+ * creator saw and accepts. Read from the pack rather than pinned to the
+ * canonical constant: the authored pack's answer IS that constant, but a
+ * live-recorded pack (#139's recorder) holds the provider's own bytes, and
+ * the walkthrough replays whichever pack is committed.
+ */
+const PACK_PATH = resolve(
+  join(dirname(fileURLToPath(import.meta.url)), "../../server/src/replay/fixtures"),
+  "cross-mode/sketch-to-clip.json",
+);
+
+function packLiveOutput(): string {
+  const pack = JSON.parse(readFileSync(PACK_PATH, "utf8")) as {
+    entries: Array<{
+      seam: string;
+      response: { images?: Array<{ url: string }> };
+    }>;
+  };
+  const relayEntry = pack.entries.find((entry) => entry.seam === "sketch-frame");
+  const url = relayEntry?.response.images?.[0]?.url;
+  if (!url) {
+    throw new Error(
+      `The cross-mode pack at ${PACK_PATH} carries no sketch-frame entry`,
+    );
+  }
+  return url;
+}
+
+const LIVE_OUTPUT = packLiveOutput();
+
 const walkthrough: Walkthrough = {
   sessionId: "",
   promptVersionId: "",
@@ -96,13 +128,13 @@ describe("Cross-mode golden path (integration)", () => {
 
     expect(status).toBe(200);
     const images = json.images as Array<{ url: string }>;
-    expect(images[0]?.url).toBe(CROSS_MODE_LIVE_OUTPUT_DATA_URI);
+    expect(images[0]?.url).toBe(LIVE_OUTPUT);
     harness.guard.assertNoOutboundCalls();
   });
 
   it("Use this admits the shown live output as a sketchpad take in a new session", async () => {
     const { status, json } = await harness.post("/api/sketch/accept", {
-      liveOutputDataUri: CROSS_MODE_LIVE_OUTPUT_DATA_URI,
+      liveOutputDataUri: LIVE_OUTPUT,
       sketchSnapshotDataUri: CROSS_MODE_SKETCH_DATA_URI,
       inputs: CROSS_MODE_SKETCH_INPUTS,
       idempotencyKey: CROSS_MODE_ACCEPT_KEY,
@@ -499,7 +531,7 @@ describe("Cross-mode golden path (integration)", () => {
   it("a retry after a lost response returns the same take, not a second one", async () => {
     const before = await countTakes();
     const { status, json } = await harness.post("/api/sketch/accept", {
-      liveOutputDataUri: CROSS_MODE_LIVE_OUTPUT_DATA_URI,
+      liveOutputDataUri: LIVE_OUTPUT,
       sketchSnapshotDataUri: CROSS_MODE_SKETCH_DATA_URI,
       inputs: CROSS_MODE_SKETCH_INPUTS,
       idempotencyKey: CROSS_MODE_ACCEPT_KEY,
@@ -517,7 +549,7 @@ describe("Cross-mode golden path (integration)", () => {
   it("a double-pressed Use this mints one take, never two", async () => {
     const before = await countTakes();
     const body = {
-      liveOutputDataUri: CROSS_MODE_LIVE_OUTPUT_DATA_URI,
+      liveOutputDataUri: LIVE_OUTPUT,
       sketchSnapshotDataUri: CROSS_MODE_SKETCH_DATA_URI,
       inputs: CROSS_MODE_SKETCH_INPUTS,
       idempotencyKey: "cross-mode-accept-double",
@@ -624,9 +656,10 @@ describe("Cross-mode golden path (integration)", () => {
   it("a studio batch with one failed sibling keeps its successful results", async () => {
     const project = await harness.post("/api/studio/projects", {});
     const projectId = (project.json.data as { id: string }).id;
-    // The fourth variant's copy is refused. Same decision, same four calls —
-    // only the storage of one of them fails.
-    harness.storage.failSaveFor.add(CROSS_MODE_STUDIO_VARIANT_DATA_URIS[3]);
+    // One of the four variants' copies is refused — aimed at the NEXT save
+    // rather than a URL, so the case holds whichever pack (authored or
+    // live-recorded) is committed. Same decision, same four calls.
+    harness.storage.failNextSaves(1);
 
     try {
       const events = await harness.postNdjson(
@@ -659,7 +692,7 @@ describe("Cross-mode golden path (integration)", () => {
       expect(failed).toHaveLength(1);
       expect(succeeded?.every((call) => call.image?.id)).toBe(true);
     } finally {
-      harness.storage.failSaveFor.clear();
+      harness.storage.clearFailedSaves();
     }
     harness.guard.assertNoOutboundCalls();
   });

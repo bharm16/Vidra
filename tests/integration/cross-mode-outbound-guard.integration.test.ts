@@ -109,6 +109,45 @@ describe("Cross-mode outbound guard (integration)", () => {
     installed.restore();
     expect(globalThis.fetch).toBe(fetchBefore);
     expect(http.request).toBe(requestBefore);
-    expect(https.request).toBe(httpsBefore);
+    expect(httpsBefore).toBe(https.request);
+  });
+
+  it("with allowEgress, forwards a non-loopback call instead of blocking it, and logs the destination", async () => {
+    // The recorder's posture (issue #139): recording is the one mode whose
+    // point is live provider calls, so the guard observes rather than refuses.
+    // The destination is a guaranteed-NXDOMAIN host — the assertion is about
+    // WHICH error surfaces: any DNS/connection failure proves the call was
+    // forwarded to the real network stack, where blocking would have thrown
+    // OutboundCallBlockedError synchronously from the guard itself.
+    guard = installOutboundGuard({ allowEgress: true });
+
+    const destination = "https://egress-probe.invalid/v1/models";
+    const failure = await fetch(destination).then(
+      () => null,
+      (error: unknown) => error,
+    );
+    expect(failure).not.toBeNull();
+    expect(failure).not.toBeInstanceOf(OutboundCallBlockedError);
+    expect(guard.networkCalls).toEqual([destination]);
+    expect(guard.violations).toEqual([]);
+  });
+
+  it("with allowEgress, still routes a named host instead of the network", async () => {
+    guard = installOutboundGuard({
+      allowEgress: true,
+      routes: {
+        "objects.example.invalid": () =>
+          Promise.resolve(
+            new Response("stored bytes", {
+              status: 200,
+              headers: { "content-type": "text/plain" },
+            }),
+          ),
+      },
+    });
+
+    const response = await fetch("https://objects.example.invalid/some/object");
+    expect(await response.text()).toBe("stored bytes");
+    expect(guard.networkCalls).toEqual([]);
   });
 });

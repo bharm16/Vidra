@@ -1,9 +1,14 @@
 import { z } from "zod";
-import type { ReplaySketchFrameRequest } from "@shared/schemas/replay.schemas";
+import {
+  REPLAY_CASSETTE_FORMAT_VERSION,
+  type ReplayCaptureProvenance,
+  type ReplaySketchFrameRequest,
+} from "@shared/schemas/replay.schemas";
 import type { CassetteStore } from "./CassetteStore";
 import { ReplayError } from "./errors";
 import { sketchFrameRequestKey, sketchImageDigest } from "./requestKey";
 import { ReplaySeam, type ReplayMode } from "./ReplaySeam";
+import { inlineImageUrls, type MediaFetcher } from "./replayableMedia";
 
 /**
  * Record/replay seam at the sketch relay's upstream call.
@@ -89,11 +94,14 @@ export function createSketchRelayFetch({
   mode,
   store,
   inner = fetch,
+  fetchImage = fetch,
 }: {
   mode: ReplayMode;
   store: CassetteStore;
   /** The live upstream. Only ever called in record mode. */
   inner?: SketchRelayFetch;
+  /** Downloads the produced frame at capture time. Only used in record mode. */
+  fetchImage?: MediaFetcher;
 }): SketchRelayFetch {
   const seam = new ReplaySeam({
     seam: "sketch-frame",
@@ -127,18 +135,66 @@ export function createSketchRelayFetch({
             `Sketch relay upstream answered ${upstream.status} while recording`,
           );
         }
-        return (await upstream.json()) as unknown;
+        const payload = (await upstream.json()) as unknown;
+        // A live capture must replay offline: fal answers with CDN URLs whose
+        // bytes are not durable, so the capture inlines the produced frame
+        // (the same picture, as a data URI). The live editor's accept bridge
+        // consumes exactly this shape.
+        return inlineImageUrls(
+          payload as { images: Array<{ url: string }> },
+          fetchImage,
+        );
       },
       toRecorded: (response) =>
         response as { images: Array<{ url: string }> } & Record<
           string,
           unknown
         >,
+      provenance:
+        mode === "record" ? provenanceForFrame(url, frame) : undefined,
     });
 
     return new Response(JSON.stringify(recorded), {
       status: 200,
       headers: { "content-type": "application/json" },
     });
+  };
+}
+
+/**
+ * Capture provenance for one frame (issue #139): the provider host and the
+ * model endpoint are read off the URL the relay ACTUALLY dispatched — the
+ * code's one-constant model choice (`FAL_I2I_MODEL_ENDPOINT`) as it ran, not
+ * a copy of it.
+ */
+function provenanceForFrame(
+  url: string,
+  frame: { strength: number; steps: number; seed: number },
+): ReplayCaptureProvenance {
+  let host = "unknown";
+  let endpoint = "unknown";
+  try {
+    const parsed = new URL(url);
+    host = parsed.hostname;
+    endpoint = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+  } catch {
+    // The relay only dispatches to the URL it owns; an unparseable one fails
+    // the live call before this matters.
+  }
+  return {
+    operation: "sketch_frame",
+    provider: host,
+    model: endpoint,
+    parameters: {
+      strength: frame.strength,
+      steps: frame.steps,
+      seed: frame.seed,
+    },
+    origin: "live",
+    capture: {
+      replayMode: "record",
+      recordedAt: new Date().toISOString(),
+      formatVersion: REPLAY_CASSETTE_FORMAT_VERSION,
+    },
   };
 }

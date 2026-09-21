@@ -223,6 +223,50 @@ const RecordedAiResponseSchema = z
   })
   .passthrough();
 
+// ─── Capture provenance (issue #139) ─────────────────────────────────
+
+/**
+ * Whether an entry's response was captured from a live provider or authored
+ * by hand. Deliberate failure cases stay in a pack as `synthetic` fixtures —
+ * reviewable data, never presented as live evidence.
+ */
+export const ReplayCaptureOriginSchema = z.enum(["live", "synthetic"]);
+export type ReplayCaptureOrigin = z.infer<typeof ReplayCaptureOriginSchema>;
+
+/**
+ * Where a recorded response came from, stamped by the seam at capture time.
+ *
+ * `operation`, `provider` and `model` are the EFFECTIVE values the code
+ * resolved for this one call (env overrides included), read from the live
+ * configuration — never copied from a document or hard-coded in tooling.
+ * `parameters` carries the tuning that shaped the call; `capture` describes
+ * the recording run itself.
+ */
+export const ReplayCaptureProvenanceSchema = z.object({
+  operation: z.string().min(1),
+  provider: z.string().min(1),
+  model: z.string().min(1),
+  parameters: z.record(z.string(), z.unknown()),
+  origin: ReplayCaptureOriginSchema,
+  capture: z.object({
+    replayMode: z.literal("record"),
+    recordedAt: z.string().min(1),
+    formatVersion: z.number().int(),
+  }),
+});
+
+export type ReplayCaptureProvenance = z.infer<
+  typeof ReplayCaptureProvenanceSchema
+>;
+
+/**
+ * Optional, not required: packs recorded before provenance existed (the Idea
+ * Box pack, the authored cross-mode entries) stay valid. Every entry a seam
+ * captures from a live provider carries it, and the cross-mode recorder
+ * refuses to flush a pack where a captured entry does not.
+ */
+const ProvenanceField = { provenance: ReplayCaptureProvenanceSchema.optional() };
+
 export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
   z.object({
     seam: z.literal("ai-model"),
@@ -230,6 +274,7 @@ export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
     contract: ReplayContractNameSchema,
     request: ReplayAiModelRequestSchema,
     response: RecordedAiResponseSchema,
+    ...ProvenanceField,
   }),
   z.object({
     seam: z.literal("image-preview"),
@@ -237,6 +282,7 @@ export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
     contract: ReplayContractNameSchema,
     request: ReplayImagePreviewRequestSchema,
     response: ImagePreviewResultReplayPayloadSchema,
+    ...ProvenanceField,
   }),
   z.object({
     seam: z.literal("studio-image"),
@@ -244,6 +290,7 @@ export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
     contract: ReplayContractNameSchema,
     request: ReplayStudioImageRequestSchema,
     response: StudioImageResultReplayPayloadSchema,
+    ...ProvenanceField,
   }),
   z.object({
     seam: z.literal("sketch-frame"),
@@ -251,6 +298,7 @@ export const ReplayCassetteEntrySchema = z.discriminatedUnion("seam", [
     contract: ReplayContractNameSchema,
     request: ReplaySketchFrameRequestSchema,
     response: SketchFrameResultReplayPayloadSchema,
+    ...ProvenanceField,
   }),
 ]);
 
