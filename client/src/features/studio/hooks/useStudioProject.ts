@@ -370,23 +370,36 @@ export function useStudioProject(
       if (!projectId || !imageId) {
         return { state: "error", message: "Select an image first" };
       }
+      // The attempt (issue #129): the pressed project and the pressed image,
+      // captured once, before the request. The server treats a re-press of the
+      // same pair as one take — so this object is the whole replay story: the
+      // retry a creator presses after a lost or dropped response carries the
+      // SAME identity, never a second selection.
       try {
         const outcome = await returnStudioImageToSession(
           projectId,
           imageId,
           options,
         );
+        // Late-response discipline: a settle after the creator opened another
+        // project belongs to the project it was pressed under. It is returned
+        // to the caller — who may still be waiting — but never dispatched into
+        // the newly-opened project's error band.
+        if (!isCurrentProject(projectId)) return outcome;
         if (outcome.state === "error") {
           dispatch({ type: "requestFailed", error: outcome.message });
         }
         return outcome;
       } catch (error) {
         const message = describeError(error);
+        if (!isCurrentProject(projectId)) {
+          return { state: "error", message };
+        }
         dispatch({ type: "requestFailed", error: message });
         return { state: "error", message };
       }
     },
-    [],
+    [isCurrentProject],
   );
 
   return {
