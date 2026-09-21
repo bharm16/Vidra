@@ -1,0 +1,117 @@
+# Bounded live-provider smoke (issue #140) — the nightly, live proof that the
+# providers behind the replay cassette still exist, still answer inside their
+# timeouts, and still satisfy the same shared contracts the cassette is held
+# to. Replay proves wiring; only a live call proves a provider is up.
+#
+# Scope (docs/architecture/cross-mode-golden-path.md): one sketch frame
+# (fal z-image turbo i2i), one studio turn whose first action is an edit (the
+# studio_turn LLM + the nano-banana-2 edit image), and one first frame (Flux
+# Schnell). No clip — video is the most expensive leg and ADR-0002 keeps
+# generation economics frozen.
+#
+# NOT A MERGE GATE: no pull_request or push trigger, and nothing in
+# `npm run verify` runs it. A provider outage is not a defect in the change
+# being merged; a red run opens an issue instead of blocking one.
+#
+# Cost safety: the smoke derives a dollar AND request ceiling from the
+# codebase's own bounded parameters (see scripts/ops/live-provider-smoke/
+# ceiling.ts), aborts before the first call that would exceed it, and treats
+# missing secrets as an explicit NON-VERIFICATION — a red job, never a
+# silently green partial run.
+
+name: Live Provider Smoke (nightly)
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # nightly, 06:00 UTC — between the golden-path (04:00) and span-labeling (07:00) crons
+  workflow_dispatch: # manual runs (drills, post-incident provider checks)
+
+# Scheduled runs always fire on the default branch (main); dispatch is the
+# owner's explicit choice. Neither trigger can gate a merge.
+concurrency:
+  group: live-provider-smoke
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write # a red run opens an issue (below)
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the bounded live-provider smoke
+        id: smoke
+        continue-on-error: true
+        env:
+          # The four legs' credentials. The smoke's preflight reports exactly
+          # which are absent and exits NON-VERIFIED (red) — it never
+          # green-skips a missing provider.
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+
+          NODE_ENV: test
+          LIVE_SMOKE_REPORT_PATH: artifacts/live-provider-smoke-report.json
+        run: npm run smoke:live
+
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-provider-smoke-report
+          path: artifacts/live-provider-smoke-report.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Fail the job on a red or non-verified run
+        if: steps.smoke.outcome == 'failure'
+        run: |
+          echo "::error::Live provider smoke did not verify (failed, or non-verified on missing credentials/unknown cost bounds). See the report artifact."
+          exit 1
+
+      - name: Open an issue when the smoke is red
+        if: steps.smoke.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # All user-controllable input captured into env vars to avoid
+          # GitHub Actions template-substitution injection in `run:` blocks.
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          TITLE="Live provider smoke is red (nightly)"
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title \"$TITLE\"" --json number --jq 'length')"
+          body="The bounded live-provider smoke did not verify on main.
+
+          Run: $RUN_URL ($EVENT_NAME)
+          Report artifact: \`live-provider-smoke-report\` on that run.
+
+          Read the job log for the verdict:
+          - \`not-verified\` — CI secrets are missing (the log names exactly which, and which call each blocks). The owner sets the missing secrets; until then this job stays red rather than green-skipping.
+          - \`failed\` — a provider leg aborted (ceiling), errored, or its output failed the shared contract / byte validation.
+
+          This is NOT a merge gate: a provider outage is not a defect in any change being merged (docs/architecture/cross-mode-golden-path.md)."
+
+          if [ "${existing}" -gt 0 ]; then
+            gh issue comment --repo "$GITHUB_REPOSITORY" \
+              --body "$body" \
+              "$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number')"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --label bug \
+              --body "$body"
+          fi
