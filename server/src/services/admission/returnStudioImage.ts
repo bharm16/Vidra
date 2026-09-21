@@ -16,6 +16,7 @@ import {
 import type { StudioProducedImage } from "@services/studio/StudioService";
 import { wordsVersionSignature } from "@shared/utils/wordsVersionSignature";
 import type {
+  SessionGenerationRecord,
   SessionPrompt,
   SessionPromptKeyframe,
   TakeSourceInput,
@@ -50,15 +51,35 @@ import {
  * project's images did. So ancestry is derived from the PRODUCING TURN and
  * that turn's ACTUAL inputs (`StudioProducedImage.sourceImages`, resolved at
  * dispatch and persisted since this ticket), and the test is a single identity
- * comparison: did the turn consume the image the project's origin names as the
- * bridged one? If yes, the returning take's display ancestor is the session
- * take that picture came from, and the space draws a `refine` edge. If no —
- * and a `generate` has no image inputs at all — the take is admitted with no
- * picture ancestor, which is an answer rather than a gap.
+ * comparison: did the turn consume an image that is a TAKE of the destination
+ * session? If yes, the returning take's display ancestor is that take, and the
+ * space draws a `refine` edge. If no — and a `generate` has no image inputs at
+ * all — the take is admitted with no picture ancestor, which is an answer
+ * rather than a gap.
  *
- * Only a DIRECT consumption earns the edge. An edit of an edit consumed a
- * studio image that never entered the session and therefore has no take
- * identity to name; ADR-0022 decision 3 settles that case as "no display
+ * Two kinds of consumed image are takes of the destination session. The first
+ * is the project's bridged picture, whose mapping the ORIGIN record captured
+ * at bridge time. The second (issue #132, the owner-approved generalization of
+ * ADR-0022 decision 4) is an image this return pipeline already admitted
+ * here: its take's production provenance names the producing project, turn
+ * and image identities, and `findTakeAdmittedFromStudioImage` looks that
+ * identity up in the destination session — the session-side twin of the
+ * studio store's identity-based produced-image retrieval (#121). This is the
+ * session-owns decision: the take record is the ONLY place the relationship
+ * "image X became take T in this session" lives, so there is no second
+ * studio-side mapping to disagree with it or to outlive the session it points
+ * at — deleting the destination session deletes the relationship with it, and
+ * nothing can redirect a later return. The mapping WRITE is admission's own
+ * (source inputs and display ancestor ride the take record): interrupted, the
+ * #128 receipt replays to the same take and the resumed attach repairs the
+ * relationship; replayed, the same derivation from the same records answers
+ * identically, so a retry conflicts or resumes but never invents a rival.
+ *
+ * Only a DIRECT consumption earns the edge, and only to a take of THIS
+ * destination session. An edit of an edit consumed studio images that are not
+ * takes here — a bridged picture of another (gone) session, an image never
+ * returned — and those are recorded as ordinary studio-image inputs with no
+ * display ancestor; ADR-0022 decision 3 settles that case as "no display
  * ancestor" rather than reaching further up a chain the session never saw.
  *
  * ## The ordering, and why nothing half-created survives a failure
@@ -119,6 +140,19 @@ export interface ReturnStudioImageSessionPort extends AdmissionSessionPort {
     updates: { keyframes: SessionPromptKeyframe[] },
   ): Promise<unknown>;
   deleteSessionForUser(userId: string, sessionId: string): Promise<void>;
+  /**
+   * The session-side twin of the studio store's produced-image lookup (#121):
+   * the take THIS destination session admitted a studio image as, found by the
+   * provenance identity the take itself carries — or `null` when none is.
+   * Resolution is exact (one identity match) and scoped to the destination, so
+   * an image admitted to a session other than this one, or to one since
+   * deleted, reads as `null` rather than as a cross-session edge.
+   */
+  findTakeAdmittedFromStudioImage(
+    userId: string,
+    sessionId: string,
+    studioImage: { projectId: string; imageId: string },
+  ): Promise<SessionGenerationRecord | null>;
 }
 
 export interface ReturnStudioImageDependencies {
@@ -290,26 +324,42 @@ function buildRootPrompt(
  * ADR-0022 decision 3: every input the producing turn consumed, plus the ONE
  * that is a take of the DESTINATION session.
  *
- * The classifier is an identity comparison against `origin.bridgedImageId` —
- * the project's own record of which of its images is the bridged one. Nothing
- * inspects prompts, filenames or model slugs, and nothing falls back to
- * position: a turn with no matching input has no display ancestor, full stop.
+ * A consumed image is a take of this session in exactly two ways, both identity
+ * comparisons — nothing inspects prompts, filenames or model slugs, and
+ * nothing falls back to position:
  *
- * The destination is part of the test, not an afterthought. A take is a node
- * in exactly one session's space, so when this picture is landing somewhere
- * else — the origin session was deleted and the creator chose a new one — the
- * bridged picture is recorded as an ordinary studio image by its durable path.
- * The fact that it went in is kept; the claim that it is a sibling in this
- * session is not made, because a `refine` edge to a node that is not here
- * would be a relationship the space cannot draw.
+ *  1. **The bridged picture.** The project's `origin` captured its mapping at
+ *     bridge time; it applies only while the destination IS that origin
+ *     session.
+ *  2. **A previously returned image (issue #132).** The take its own return
+ *     admitted here carries the producing project/image identities in its
+ *     provenance, and `findTakeAdmittedFromStudioImage` looks the consumed
+ *     image's identity up in THIS session — the #121 retrieval contract read
+ *     from the session side. An image admitted to a session other than this
+ *     one (or to one since deleted) reads as `null` and is recorded as an
+ *     ordinary studio image: the fact that it went in is kept; the claim that
+ *     it is a sibling in THIS session is not made, because a `refine` edge to
+ *     a node that is not here would be a relationship the space cannot draw.
+ *
+ * The display ancestor is the bridged take when there is one — the origin's
+ * recorded choice keeps precedence; otherwise the first consumed input, in the
+ * turn's own input order, that resolved to a take of this session. A recorded
+ * choice among recorded inputs either way; several resolves and no bridge
+ * cannot guess beyond it.
  */
-function buildSourceInputs(
+async function buildSourceInputs(
   produced: StudioProducedImage,
   destinationSessionId: string,
-): {
+  sessionService: ReturnStudioImageSessionPort,
+  userId: string,
+  /** False when the destination is a session this flow minted: empty by
+   * construction, so there is nothing for the lookup to answer with — and
+   * skipping keeps a replay's derivation identical to the first attempt's. */
+  resolveReturned: boolean,
+): Promise<{
   sourceInputs: TakeSourceInput[];
   displayAncestorGenerationId: string | null;
-} {
+}> {
   const origin = produced.origin;
   const bridgedTake =
     origin &&
@@ -319,11 +369,39 @@ function buildSourceInputs(
       ? origin.sourceInput
       : undefined;
 
+  // Resolved once per distinct consumed image, before the inputs are shaped.
+  const previouslyReturned = new Map<string, TakeSourceInput>();
+  if (resolveReturned) {
+    for (const image of produced.sourceImages) {
+      if (bridgedTake && image.id === origin?.bridgedImageId) continue;
+      if (previouslyReturned.has(image.id)) continue;
+      const take = await sessionService.findTakeAdmittedFromStudioImage(
+        userId,
+        destinationSessionId,
+        { projectId: produced.projectId, imageId: image.id },
+      );
+      if (take?.id) {
+        previouslyReturned.set(image.id, {
+          kind: "take",
+          generationId: take.id,
+          ...(typeof take.storagePath === "string" && take.storagePath
+            ? { storagePath: take.storagePath }
+            : {}),
+        });
+      }
+    }
+  }
+
   let displayAncestorGenerationId: string | null = null;
   const sourceInputs = produced.sourceImages.map<TakeSourceInput>((image) => {
     if (bridgedTake && origin && image.id === origin.bridgedImageId) {
       displayAncestorGenerationId = bridgedTake.generationId ?? null;
       return bridgedTake;
+    }
+    const resolved = previouslyReturned.get(image.id);
+    if (resolved) {
+      displayAncestorGenerationId ??= resolved.generationId ?? null;
+      return resolved;
     }
     // A studio image this session has never seen: recorded in full, but it is
     // not a node in this session's space, so it can never be the ancestor
@@ -506,9 +584,12 @@ export async function returnStudioImage(
     mintedSessionId = ensured.mintedSessionId;
   }
 
-  const { sourceInputs, displayAncestorGenerationId } = buildSourceInputs(
+  const { sourceInputs, displayAncestorGenerationId } = await buildSourceInputs(
     produced,
     sessionId,
+    sessionService,
+    userId,
+    plan.kind === "existing",
   );
 
   let admitted;
