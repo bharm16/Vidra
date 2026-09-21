@@ -5,6 +5,7 @@
 
 import { z } from "zod";
 import { StudioProjectOriginSchema } from "@shared/schemas/studio.schemas";
+import { TakeAttachmentSchema } from "@shared/schemas/attachment.schemas";
 
 export const StudioModelSlugSchema = z.enum([
   "recraft-v4.1",
@@ -169,3 +170,18 @@ export const StudioModelInfoSchema = z.object({
 });
 
 export type StudioModelInfo = z.infer<typeof StudioModelInfoSchema>;
+
+/**
+ * One of the project's pictures whose return to a session was admitted but
+ * never attached (ADR-0022 decision 6, issue #135). The server reads the
+ * truth from the admission receipt; the client adds nothing to it.
+ */
+export const StudioUnresolvedReturnSchema = z.object({
+  /** The studio image whose return is still owed its session row. */
+  imageId: z.string(),
+  attachment: TakeAttachmentSchema,
+});
+
+export type StudioUnresolvedReturn = z.infer<
+  typeof StudioUnresolvedReturnSchema
+>;

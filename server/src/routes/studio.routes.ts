@@ -18,6 +18,9 @@
  *                                     "Use this in the session" — a studio
  *                                     image returns as a picture take
  *                                     (ADR-0022 D4)
+ * GET    /projects/:projectId/unresolved-returns
+ *                                     returns whose attachment is still owed
+ *                                     (ADR-0022 decision 6, issue #135)
  */
 
 import express, { type Request, type Response, type Router } from "express";
@@ -27,6 +30,7 @@ import { requireCreatorId, requireBody } from "@middleware/intake";
 import type { StudioService } from "@services/studio/StudioService";
 import type { SessionPictureLookup } from "@services/sessions/sessionPictureLookup";
 import {
+  readUnresolvedReturnAttachment,
   returnStudioImage,
   type ReturnStudioImageSessionPort,
 } from "@services/admission/returnStudioImage";
@@ -40,6 +44,7 @@ import {
   type StudioTurnSubmission,
 } from "@shared/schemas/studio.schemas";
 import type { OwnedPictureResolver } from "@services/owned-media";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import { STUDIO_MODEL_SLUGS } from "@services/studio/types";
 
 const CreateProjectSchema = z.object({
@@ -455,6 +460,48 @@ export function createStudioRouter(
           });
           return;
       }
+    }),
+  );
+
+  // Recovery after refresh (ADR-0022 decision 6, issue #135): every one of
+  // this project's pictures whose return was admitted but never attached. The
+  // truth is read from server records — the admission receipt (#128) — so a
+  // reloaded workspace finds an unresolved return without holding any client
+  // state. Nothing here resumes or retries: repair stays an explicit press.
+  router.get(
+    "/projects/:projectId/unresolved-returns",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
+      if (!userId) return;
+
+      const { idempotency } = returnDeps;
+      if (!idempotency?.getResponseSnapshot) {
+        res.status(503).json({
+          success: false,
+          error: "Attachment recovery is not available",
+        });
+        return;
+      }
+
+      const projectId = routeParam(req, "projectId");
+      const imageIds = await studioService.listProducedImageIds(
+        userId,
+        projectId,
+      );
+      const returns: Array<{
+        imageId: string;
+        attachment: TakeAttachment;
+      }> = [];
+      for (const imageId of imageIds) {
+        const attachment = await readUnresolvedReturnAttachment(idempotency, {
+          userId,
+          projectId,
+          imageId,
+        });
+        if (attachment) returns.push({ imageId, attachment });
+      }
+
+      res.json({ success: true, data: { returns } });
     }),
   );
 

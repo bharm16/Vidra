@@ -15,6 +15,8 @@ import {
 } from "@services/sessions/SessionService";
 import type { StudioProducedImage } from "@services/studio/StudioService";
 import { wordsVersionSignature } from "@shared/utils/wordsVersionSignature";
+import { TakeAttachmentSchema } from "@shared/schemas/attachment.schemas";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type {
   SessionGenerationRecord,
   SessionPrompt,
@@ -23,6 +25,7 @@ import type {
 } from "@shared/types/session";
 import type { StudioUseInSessionResult } from "@shared/schemas/studio.schemas";
 import {
+  ADMISSION_ROUTE,
   admitPictureTake,
   type AdmissionIdempotencyPort,
   type AdmissionMediaStore,
@@ -251,9 +254,51 @@ const MAX_IMAGE_BYTES = STORAGE_CONFIG.maxFileSize.previewImage;
  * the two facts that make a return the same return — which project, which
  * image — are both already in the request. A second press from another tab
  * therefore replays the first rather than minting a rival take.
+ *
+ * Exported because the return's recovery read (#135) must address the SAME
+ * receipt the return wrote — one derivation, two readers, never a second copy
+ * of the key that could drift.
  */
-const returnKey = (projectId: string, imageId: string): string =>
+export const returnKey = (projectId: string, imageId: string): string =>
   `studio-return:${projectId}:${imageId}`;
+
+/**
+ * The unresolved attachment of one image's return, read from its #128 receipt
+ * — or `null` when there is nothing owed: no receipt (the image was never
+ * returned), an attached one (the session has the take; the session is now the
+ * source of truth for it), or a receipt whose attachment does not validate.
+ *
+ * This is the discovery half of the attachment boundary (ADR-0022 decision 6):
+ * a reloaded studio asks it, per produced image, whether a return it made is
+ * still owed its session row. The receipt is the authoritative record of the
+ * attachment state (#128) — nothing client-side is consulted or persisted. The
+ * attachment is re-validated at this read because the receipt crossed a
+ * persistence boundary; an unreadable one reads as absence, never as a guessed
+ * state.
+ *
+ * Strictly a read: the port's snapshot getter never claims, locks or resumes —
+ * resumption stays the replay's job (a re-press of the same project+image).
+ */
+export async function readUnresolvedReturnAttachment(
+  idempotency: AdmissionIdempotencyPort,
+  input: {
+    userId: string;
+    projectId: string;
+    imageId: string;
+  },
+): Promise<TakeAttachment | null> {
+  const read = idempotency.getResponseSnapshot;
+  if (!read) return null;
+  const snapshot = await read.call(idempotency, {
+    userId: input.userId,
+    route: ADMISSION_ROUTE,
+    key: returnKey(input.projectId, input.imageId),
+  });
+  if (!snapshot) return null;
+  const parsed = TakeAttachmentSchema.safeParse(snapshot.body.attachment);
+  if (!parsed.success) return null;
+  return parsed.data.state === "attached" ? null : parsed.data;
+}
 
 /**
  * The creator's confirmed words, or undefined when none usable was supplied.
@@ -706,6 +751,14 @@ export async function returnStudioImage(
       // Stated from the destination decision rather than from what happened,
       // so a replay of this return answers identically.
       createdSession: plan.kind === "mint",
+      // The attachment fact (ADR-0022 decision 6, issue #135): "the picture
+      // was admitted" and "the take reached its session" are independent, and
+      // this is the only place the second one travels. A `failed` attachment
+      // carries the take's own record, so the studio's retry re-sends THIS
+      // take — no re-upload, no second admission; the de-duplicating append
+      // makes a retry and a replay land on one take either way. Nothing may
+      // read as returned until this says `attached`.
+      attachment: take.attachment,
     },
   };
 }

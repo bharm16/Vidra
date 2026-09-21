@@ -218,15 +218,84 @@ function idempotency(): AdmissionIdempotencyPort {
   };
 }
 
+/**
+ * The Firestore-backed idempotency, modelled: claims track a payload hash and
+ * a settled snapshot, a completed record with the same hash REPLAYS, and the
+ * snapshot is readable without claiming (the recovery read, issue #135).
+ */
+function statefulIdempotency(): AdmissionIdempotencyPort & {
+  /** Overwrite the settled snapshot for one key — seeds receipts for GET. */
+  seedSnapshot: (input: {
+    userId: string;
+    route: string;
+    key: string;
+    snapshot: { statusCode: number; body: Record<string, unknown> };
+  }) => void;
+} {
+  const records = new Map<
+    string,
+    {
+      payloadHash: string;
+      status: "pending" | "completed" | "failed";
+      snapshot?: { statusCode: number; body: Record<string, unknown> };
+    }
+  >();
+  return {
+    seedSnapshot: ({ userId, route, key, snapshot }) => {
+      records.set(`${userId}|${route}|${key}`, {
+        payloadHash: "",
+        status: "completed",
+        snapshot,
+      });
+    },
+    claimRequest: async ({ userId, route, key, payload }) => {
+      const recordId = `${userId}|${route}|${key}`;
+      const payloadHash = JSON.stringify(payload);
+      const existing = records.get(recordId);
+      if (!existing) {
+        records.set(recordId, { payloadHash, status: "pending" });
+        return { state: "claimed", recordId };
+      }
+      if (existing.payloadHash && existing.payloadHash !== payloadHash) {
+        return { state: "conflict", recordId };
+      }
+      if (existing.status === "completed" && existing.snapshot) {
+        return { state: "replay", recordId, snapshot: existing.snapshot };
+      }
+      records.set(recordId, { payloadHash, status: "pending" });
+      return { state: "claimed", recordId };
+    },
+    markCompleted: async ({ recordId, snapshot }) => {
+      const existing = records.get(recordId);
+      records.set(recordId, {
+        payloadHash: existing?.payloadHash ?? "",
+        status: "completed",
+        snapshot,
+      });
+    },
+    markFailed: async (recordId) => {
+      const existing = records.get(recordId);
+      if (existing) records.set(recordId, { ...existing, status: "failed" });
+    },
+    getResponseSnapshot: async ({ userId, route, key }) => {
+      return records.get(`${userId}|${route}|${key}`)?.snapshot ?? null;
+    },
+  };
+}
+
 function harness(options?: {
   sessionOwner?: string;
   withoutSession?: boolean;
   wireReturnDoor?: boolean;
+  /** The first append write throws — the attachment fails, the picture does not. */
+  failFirstAppend?: boolean;
+  idempotency?: AdmissionIdempotencyPort;
 }) {
   const session = sessionFixture(options?.sessionOwner ?? OWNER);
   const sessions = new Map<string, SessionRecord>(
     options?.withoutSession ? [] : [[session.id, session]],
   );
+  let appendWrites = 0;
   const sessionStore = {
     get: vi.fn(async (id: string) => sessions.get(id) ?? null),
     save: vi.fn(async (next: SessionRecord) => {
@@ -237,6 +306,12 @@ function harness(options?: {
         id: string,
         mutator: (record: SessionRecord) => SessionRecord,
       ): Promise<SessionRecord | null> => {
+        if (options?.failFirstAppend) {
+          appendWrites += 1;
+          if (appendWrites === 1) {
+            throw new Error("session write failed");
+          }
+        }
         const current = sessions.get(id);
         if (!current) return null;
         const next = mutator(current);
@@ -313,7 +388,7 @@ function harness(options?: {
                 url: "https://storage.example.com/returned-1",
               }),
             },
-            idempotency: idempotency(),
+            idempotency: options?.idempotency ?? idempotency(),
           }
         : { sessionService: null, mediaStore: null, idempotency: null },
     ),
@@ -348,7 +423,7 @@ describe("POST /api/studio/projects/:projectId/images/:imageId/use-in-session", 
     globalThis.fetch = originalFetch;
   });
 
-  it("returns 201 with the admitted take and its picture ancestor", async () => {
+  it("returns 201 with the admitted take, its picture ancestor, and an attached fact", async () => {
     const { app } = harness();
 
     const res = await supertest(app).post(PATH).send({});
@@ -359,6 +434,67 @@ describe("POST /api/studio/projects/:projectId/images/:imageId/use-in-session", 
     expect(result.promptVersionId).toBe("v1");
     expect(result.ancestorGenerationId).toBe("take-1");
     expect(result.createdSession).toBe(false);
+    // The attachment fact (issue #135): a 201 says the take is in its session
+    // only when the attachment actually resolved.
+    expect(result.attachment?.state).toBe("attached");
+  });
+
+  it("carries the failed attachment with its record, and a retry attaches the SAME take (issue #135)", async () => {
+    const idempotencyDouble = statefulIdempotency();
+    const { app, sessions } = harness({
+      failFirstAppend: true,
+      idempotency: idempotencyDouble,
+    });
+
+    const first = await supertest(app).post(PATH).send({});
+
+    // Still a 201 — the PICTURE was admitted and is durable; what failed is
+    // the session write, and that is exactly what the response now says.
+    expect(first.status).toBe(201);
+    const firstResult = StudioUseInSessionResultSchema.parse(first.body.data);
+    expect(firstResult.attachment?.state).toBe("failed");
+    expect(firstResult.attachment?.reason).toBe("session write failed");
+    expect(firstResult.attachment?.record).toMatchObject({
+      id: firstResult.generationId,
+    });
+    // The session really does not have the take.
+    const sessionAfterFailure = sessions.get("session-1");
+    const versionsAfterFailure =
+      sessionAfterFailure?.prompt?.versions ?? [];
+    expect(
+      versionsAfterFailure
+        .find((version) => version.versionId === "v1")
+        ?.generations?.some(
+          (take) =>
+            typeof take === "object" &&
+            take !== null &&
+            (take as { id?: unknown }).id === firstResult.generationId,
+        ),
+    ).toBe(false);
+
+    // The retry: pressing again is the replay, and the receipt (#128)
+    // RESUMES it — the same identity, the same record, no second admission.
+    const retry = await supertest(app).post(PATH).send({});
+
+    expect(retry.status).toBe(201);
+    const retryResult = StudioUseInSessionResultSchema.parse(retry.body.data);
+    expect(retryResult.attachment?.state).toBe("attached");
+    expect(retryResult.generationId).toBe(firstResult.generationId);
+
+    // Exactly ONE take under that identity — the retry repaired the failed
+    // write instead of minting a second take for the same picture.
+    const session = sessions.get("session-1");
+    const generations =
+      session?.prompt?.versions?.find(
+        (version) => version.versionId === "v1",
+      )?.generations ?? [];
+    const matching = generations.filter(
+      (take) =>
+        typeof take === "object" &&
+        take !== null &&
+        (take as { id?: unknown }).id === firstResult.generationId,
+    );
+    expect(matching).toHaveLength(1);
   });
 
   it("answers a gone origin session with 409 and a reason the client can act on", async () => {
@@ -438,6 +574,108 @@ describe("POST /api/studio/projects/:projectId/images/:imageId/use-in-session", 
     const { app } = harness({ wireReturnDoor: false });
 
     const res = await supertest(app).post(PATH).send({});
+
+    expect(res.status).toBe(503);
+    expect(res.body.success).toBe(false);
+  });
+});
+
+/**
+ * Recovery after refresh (ADR-0022 decision 6, issue #135): the reloaded
+ * workspace asks the server's receipts which of the project's pictures is
+ * still owed its session row. The truth is read, never inferred, and an
+ * attached (or absent) receipt reads as nothing owed.
+ */
+describe("GET /api/studio/projects/:projectId/unresolved-returns", () => {
+  const GET_PATH = `/api/studio/projects/${PROJECT_ID}/unresolved-returns`;
+
+  function admittedReceiptBody(
+    generationId: string,
+    attachmentState: "failed" | "pending" | "attached",
+  ): Record<string, unknown> {
+    return {
+      generationId,
+      sessionId: "session-1",
+      promptVersionId: "v1",
+      origin: "studio",
+      imageUrl: "https://storage.example.com/returned",
+      assetId: "asset-1",
+      storagePath: "users/user-1/previews/images/returned.png",
+      record: { id: generationId, mediaType: "image", origin: "studio" },
+      attachment: {
+        state: attachmentState,
+        generationId,
+        sessionId: "session-1",
+        promptVersionId: "v1",
+        ...(attachmentState === "failed" ? { reason: "session write failed" } : {}),
+        record: { id: generationId, mediaType: "image", origin: "studio" },
+      },
+    };
+  }
+
+  it("lists the project's pictures whose return is still owed its session row", async () => {
+    const idempotencyDouble = statefulIdempotency();
+    idempotencyDouble.seedSnapshot({
+      userId: OWNER,
+      route: "picture-admission",
+      key: `studio-return:${PROJECT_ID}:${IMAGE_ID}`,
+      snapshot: {
+        statusCode: 201,
+        body: admittedReceiptBody("take-owed", "failed"),
+      },
+    });
+    const { app } = harness({ idempotency: idempotencyDouble });
+
+    const res = await supertest(app).get(GET_PATH);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.returns).toEqual([
+      {
+        imageId: IMAGE_ID,
+        attachment: expect.objectContaining({
+          state: "failed",
+          generationId: "take-owed",
+          sessionId: "session-1",
+          promptVersionId: "v1",
+          reason: "session write failed",
+        }),
+      },
+    ]);
+  });
+
+  it("answers nothing for an attached receipt — the session is the source of truth", async () => {
+    const idempotencyDouble = statefulIdempotency();
+    idempotencyDouble.seedSnapshot({
+      userId: OWNER,
+      route: "picture-admission",
+      key: `studio-return:${PROJECT_ID}:${IMAGE_ID}`,
+      snapshot: {
+        statusCode: 201,
+        body: admittedReceiptBody("take-attached", "attached"),
+      },
+    });
+    const { app } = harness({ idempotency: idempotencyDouble });
+
+    const res = await supertest(app).get(GET_PATH);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.returns).toEqual([]);
+  });
+
+  it("answers an empty list for a project with no receipts", async () => {
+    const { app } = harness({ idempotency: statefulIdempotency() });
+
+    const res = await supertest(app).get(GET_PATH);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.returns).toEqual([]);
+  });
+
+  it("says so with a 503 when the idempotency port cannot read receipts", async () => {
+    const { app } = harness();
+
+    const res = await supertest(app).get(GET_PATH);
 
     expect(res.status).toBe(503);
     expect(res.body.success).toBe(false);

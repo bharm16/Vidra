@@ -250,4 +250,44 @@ export class RequestIdempotencyService {
       });
     }
   }
+
+  /**
+   * Read one claim's response snapshot without claiming it. ADR-0022 decision
+   * 6 opens the attachment's persisted state and the client polling that reads
+   * it — this is that read, and nothing more: a plain document get that
+   * touches no claim, lock, TTL or retry semantics, so the frozen resilience
+   * mechanics around it are untouched. A picture return whose attachment is
+   * still owed is found through this receipt (issue #135), the same way a clip
+   * job's attachment is read through its job record.
+   */
+  async getResponseSnapshot(input: {
+    userId: string;
+    route: string;
+    key: string;
+  }): Promise<IdempotencyResponseSnapshot | null> {
+    const recordId = toRecordId(input.userId, input.route, input.key);
+    try {
+      const doc = await this.collection.doc(recordId).get();
+      if (!doc.exists) return null;
+      const data = doc.data() as Partial<IdempotencyRecord> | undefined;
+      const snapshot = data?.responseSnapshot;
+      if (
+        !snapshot ||
+        typeof snapshot !== "object" ||
+        typeof snapshot.statusCode !== "number" ||
+        typeof snapshot.body !== "object" ||
+        snapshot.body === null
+      ) {
+        return null;
+      }
+      return snapshot;
+    } catch (error) {
+      this.log.warn("Failed to read idempotency response snapshot", {
+        route: input.route,
+        key: input.key,
+        error: toErrorMessage(error),
+      });
+      return null;
+    }
+  }
 }

@@ -22,6 +22,7 @@ vi.mock("../../api/studioApi", () => ({
   listStudioProjects: vi.fn(),
   listStudioTurns: vi.fn(),
   runStudioTurn: vi.fn(),
+  fetchUnresolvedStudioReturns: vi.fn(async () => []),
   updateStudioProject: vi.fn(),
 }));
 

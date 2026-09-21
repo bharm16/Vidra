@@ -678,6 +678,28 @@ export class StudioService {
   }
 
   /**
+   * The ids of every picture this project produced, deduplicated — the
+   * enumeration behind the return-recovery read (issue #135). A reloaded
+   * workspace needs to know WHICH of the project's images could carry an
+   * unresolved return receipt; only images the studio PRODUCED are
+   * addressable by the return door, so only those are listed. Ownership reads
+   * as absence, and no URL is minted: this is an id listing, not a view.
+   */
+  async listProducedImageIds(
+    userId: string,
+    projectId: string,
+  ): Promise<string[]> {
+    await this.getProject(userId, projectId);
+    const turns = await this.store.listTurns(projectId);
+    const ids = turns.flatMap((turn) =>
+      turn.calls.flatMap((call) =>
+        call.status === "succeeded" && call.image ? [call.image.id] : [],
+      ),
+    );
+    return [...new Set(ids)];
+  }
+
+  /**
    * The project index's data. Covers are signed concurrently and degrade
    * independently: one unsignable path costs that row its thumbnail, never
    * the whole list (same policy decorateTurn uses for thread images).
