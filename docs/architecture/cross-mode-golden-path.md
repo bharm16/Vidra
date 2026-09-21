@@ -192,7 +192,7 @@ strengthenings are now permanent:
   apart, and the first append finishes in between — a test that proves the
   writes do not overlap.
 
-## Bounded live-provider smoke test — specified, and NOT a merge gate
+## Bounded live-provider smoke test — implemented, and NOT a merge gate
 
 Replay proves wiring and recovery. It cannot establish that a provider is up,
 that its contract still holds, or that its output is any good: a cassette keeps
@@ -200,32 +200,51 @@ answering long after the model behind it has been retired or degraded. Those
 are different questions and they need live calls.
 
 **Scope.** One pass of the cross-mode path against live providers: one sketch
-frame (fal z-image turbo i2i), one studio turn (`studio_turn`, gpt-4o-mini),
-one studio edit image (nano-banana-2), and one first frame (Flux Schnell). No
-clip: video is the most expensive leg and ADR-0002 keeps generation economics
-frozen.
+frame (fal z-image turbo i2i), one studio turn whose first action is an edit
+(the `studio_turn` LLM decision — whatever model `ModelConfig.studio_turn`
+routes to; the original spec text said gpt-4o-mini, which the config has since
+superseded), the same turn's studio edit image (nano-banana-2), and one first
+frame (Flux Schnell). No clip: video is the most expensive leg and ADR-0002
+keeps generation economics frozen. The first turn being an edit is exactly
+what #110 made legal, and the bridge runs the real media resolver #109 built.
 
 **What it asserts.** Only what a live call can establish and replay cannot:
 each provider answered inside its timeout, and each response satisfies the same
-shared contract the cassette is held to. Never output quality — that is the
-LLM-judge and golden-set evals' job — and never the ancestry, identity or
+shared contract the cassette is held to (the shared replay payload schemas,
+plus a magic-byte sniff of the image itself). Never output quality — that is
+the LLM-judge and golden-set evals' job — and never the ancestry, identity or
 attachment rules, which the offline walkthrough already pins exactly.
 
-**Cost ceiling.** **US$0.50 per run**, enforced by the run itself: it counts
-the calls it is allowed to make (4) and aborts on the fifth, and the studio leg
-runs under the existing `SKETCH_DAILY_SPEND_CAP_CENTS` / studio daily cap. A
-run that would exceed the ceiling fails rather than trimming itself, so a
-silent half-run can never read as a pass.
+**Cost ceiling — derived, not counted.** Issue #140 replaced the original
+"4 calls, abort on the fifth" sketch with the rule that actually holds: a
+fixed call count is not proof of a dollar ceiling. The run derives BOTH a
+dollar ceiling and a request ceiling from the codebase's own bounded request
+parameters and conservative cost assumptions, including permitted retries and
+fallbacks (`scripts/ops/live-provider-smoke/ceiling.ts`; today it lands at
+US$0.21 / 5 calls): the relay's own per-frame overestimate
+(`SKETCH_FRAME_COST_MILLICENTS`), `llmCosts` × `studio_turn`'s maxTokens ×
+the policy engine's real re-ask count, the studio roster's verified
+`costCentsPerCall` for the edit default, and a documented conservative
+per-image bound per t2i-capable provider in the configured fallback order —
+summed × a safety factor, rounded up to whole cents. The runner checks every
+reservation BEFORE the call and aborts on the first call that would exceed
+either ceiling; a leg whose bound cannot be derived (an unverified roster
+price, an unpriced fallback provider) is an unknown bound, and the whole run
+becomes non-verification rather than passing on a partially-known ceiling.
 
 **Cadence.** **Nightly**, in CI, on `main` only, beside the existing
-`golden-path.yml` and span-labeling crons — never on a pull request and never
-in `npm run verify`. A red run opens an issue; it does not block a merge,
+`golden-path.yml` and span-labeling crons (`.github/workflows/
+live-provider-smoke.yml`, `npm run smoke:live`) — never on a pull request and
+never in `npm run verify`. A red run opens an issue; it does not block a merge,
 because a provider outage is not a defect in the change being merged.
 
-**Prerequisite.** The live keys are CI secrets (`FAL_KEY`, `OPENAI_API_KEY`,
-`REPLICATE_API_TOKEN`). Several are still missing from GitHub Actions; until
-they are set, this remains specified and unscheduled — which is exactly the
-state it should be in rather than a cron that silently green-skips.
+**Non-verification is not a pass.** Missing credentials or unknown cost
+bounds produce an explicit non-verification result — a red job whose log and
+report name exactly which secrets are absent and which call each blocks. The
+owner sets the missing CI secrets (`FAL_KEY`, `OPENAI_API_KEY` — or whatever
+client `studio_turn` routes to — and `REPLICATE_API_TOKEN`); until they are
+set, the nightly stays red, which is exactly the state it should be in rather
+than a cron that silently green-skips.
 
 ## Running it
 

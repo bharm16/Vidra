@@ -98,8 +98,15 @@ const TEMPLATE_PATH = join(
   "studio-turn-system.md",
 );
 
-/** Total LLM asks per turn: first attempt + one corrective re-ask. */
-const MAX_ATTEMPTS = 2;
+/**
+ * Total LLM asks per turn: first attempt + one corrective re-ask.
+ *
+ * Exported so the live-provider smoke's cost ceiling can bound the studio
+ * leg's permitted LLM calls from the real retry policy instead of a copy
+ * that could drift (issue #140).
+ */
+export const MAX_POLICY_ATTEMPTS = 2;
+const MAX_ATTEMPTS = MAX_POLICY_ATTEMPTS;
 
 /** The full decision-action space, for naming what is NOT available. */
 const ALL_ACTIONS: readonly StudioDecision["action"][] = [
