@@ -103,6 +103,14 @@ export function StudioPage(): React.ReactElement {
               selectedImageId={state.selectedImageId}
             />
             <UseInSessionAction
+              // The return attempt belongs to the project it was pressed under
+              // (issue #129): a response landing after the creator opened
+              // another project must not light up the new project's action
+              // bar. Keying by the route's project remounts the action with
+              // the project, so a late outcome has nowhere to render — and
+              // returning to the project offers the press again, which the
+              // server replays to the same take.
+              key={routeProjectId ?? "new"}
               selectedImageId={state.selectedImageId}
               onUse={studio.returnImageToSession}
             />

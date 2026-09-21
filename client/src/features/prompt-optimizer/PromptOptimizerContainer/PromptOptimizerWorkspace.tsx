@@ -9,7 +9,13 @@
  * - Conditional layout rendering
  */
 
-import React, { useCallback, useMemo, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useKeyboardShortcuts } from "@components/KeyboardShortcuts";
 import { useToast } from "@components/Toast";
@@ -523,21 +529,31 @@ function PromptOptimizerContent({
   // pieces are stable; the version half is blank until the canvas registers.
   const { resolve: resolveVersionTarget, registrarValue } =
     usePersistenceTargetRegistrar();
-  const resolvePersistenceTarget = useCallback<() => PersistenceTarget>(() => {
-    // The route param lags a same-turn promotion (applyOptimizationResult
-    // navigates, but this resolver runs before the re-render); the identity
-    // ref is written synchronously with that promotion, so prefer it.
+  /**
+   * The session the workspace is showing right now — the same effective id the
+   * resolver folds into the target (identity ref first, so a same-turn
+   * promotion is not lost; route param otherwise), read with no side effects.
+   * Issue #129: admission attempts are judged against THIS when their response
+   * lands, so it is a pure getter, not a re-resolution (which would mint
+   * words-versions). The route value is mirrored because the getter must be
+   * fresh even between renders.
+   */
+  const sessionIdRef = useRef(sessionId);
+  sessionIdRef.current = sessionId;
+  const getActiveSessionId = useCallback((): string | null => {
     const liveDocId = promptIdentityRef.current.docId;
     const effectiveSessionId = isRemoteSessionId(liveDocId)
       ? liveDocId
-      : sessionId;
+      : sessionIdRef.current;
+    return isRemoteSessionId(effectiveSessionId) ? effectiveSessionId : null;
+  }, [promptIdentityRef]);
+  const resolvePersistenceTarget = useCallback<() => PersistenceTarget>(() => {
+    const activeSessionId = getActiveSessionId();
     return {
-      ...(isRemoteSessionId(effectiveSessionId)
-        ? { sessionId: effectiveSessionId }
-        : {}),
+      ...(activeSessionId ? { sessionId: activeSessionId } : {}),
       ...resolveVersionTarget(),
     };
-  }, [promptIdentityRef, resolveVersionTarget, sessionId]);
+  }, [getActiveSessionId, resolveVersionTarget]);
 
   // Uploading a FIRST FRAME inside a session admits it as a picture take
   // (ADR-0022 decision 1, issue #86). Lives below `resolvePersistenceTarget`
@@ -548,6 +564,7 @@ function PromptOptimizerContent({
     retryAttachment: retryUploadAttachment,
   } = useFirstFrameAdmission({
     resolvePersistenceTarget,
+    getActiveSessionId,
     setStartFrame,
     uploadOutsideSession: uploadSidebarImage,
     onError: toast.error,
