@@ -100,29 +100,54 @@ export interface UseFirstFrameAdmissionResult {
 }
 
 /**
- * The client file fingerprint (issue #129): a digest of the BYTES, the same
- * fact the server folds into its acceptance fingerprint (issue #114) — not
- * the file's name and timestamps, which two different pictures can share.
- * Environments without WebCrypto, or a file that cannot be read, fall back to
- * the cheap metadata signature: a fingerprint that identifies is worth more
- * than one that stops the upload.
+ * The client file fingerprint (issue #129): a fingerprint of the BYTES — the
+ * same fact the server folds into its acceptance fingerprint (issue #114) —
+ * not the file's name and timestamps, which two different pictures can share.
+ *
+ * Deliberately a pure-JS hash over the bytes, not `crypto.subtle`: this
+ * fingerprint must behave identically in every environment the client runs
+ * and tests in. A CI run caught the exact trap — in the jsdom test realm,
+ * Node 20's webcrypto brand-checks its input and refuses the FileReader's
+ * cross-realm ArrayBuffer, so the subtle path threw, the fallback below
+ * silently kicked in, and a metadata-identical different file reused a
+ * retained key. This hash only decides retry-vs-new-attempt on THIS client:
+ * the server's own SHA-256 over the stored bytes remains the acceptance
+ * authority (issue #114), so even a client-side hash collision can at worst
+ * send a genuinely new acceptance under a retained key and be refused there
+ * as a conflict — it can never replay a take it should not, and never
+ * duplicate one.
+ *
+ * A file whose bytes cannot be read at all falls back to the metadata
+ * signature, with the same safety argument: the worst it can do is let a
+ * metadata-identical different file reuse a retained key, which the same
+ * server-side conflict absorbs.
  */
 async function fileFingerprint(file: File): Promise<string> {
-  const subtle = globalThis.crypto?.subtle;
-  if (!subtle) {
-    return `${file.name}:${file.size}:${file.lastModified}`;
-  }
   try {
     const bytes = await readFileBytes(file);
-    const digest = await subtle.digest("SHA-256", bytes);
-    let hex = "";
-    for (const byte of new Uint8Array(digest)) {
-      hex += byte.toString(16).padStart(2, "0");
-    }
-    return `sha256:${hex}`;
+    return `bytes:fnv1a64:${fnv1a64(bytes)}:${bytes.byteLength}`;
   } catch {
-    return `${file.name}:${file.size}:${file.lastModified}`;
+    return `meta:${file.name}:${file.size}:${file.lastModified}`;
   }
+}
+
+/**
+ * Two independent 32-bit FNV-1a lanes folded into one 64-bit hex string —
+ * enough entropy to tell two picked files apart, cheap enough to run on an
+ * image upload without anyone noticing.
+ */
+function fnv1a64(bytes: ArrayBuffer): string {
+  const view = new Uint8Array(bytes);
+  let laneA = 0x811c9dc5;
+  let laneB = 0x01000193;
+  for (const byte of view) {
+    laneA = Math.imul(laneA ^ byte, 0x01000193) >>> 0;
+    laneB = Math.imul(laneB + byte + 0x9e3779b9, 0x85ebca6b) >>> 0;
+  }
+  return (
+    (laneA >>> 0).toString(16).padStart(8, "0") +
+    (laneB >>> 0).toString(16).padStart(8, "0")
+  );
 }
 
 /** Read a file's bytes, preferring the modern verb, falling back to FileReader. */

@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KeyframeTile } from "@/features/generation-controls/types";
 import type { PersistenceTarget } from "@/features/idea-box";
 import { useFirstFrameAdmission } from "../useFirstFrameAdmission";
@@ -454,6 +454,11 @@ describe("useFirstFrameAdmission (issue #129)", () => {
     });
   });
 
+  afterEach(() => {
+    // The unreadable-file test below stubs a global; never let it leak.
+    vi.unstubAllGlobals();
+  });
+
   it("does not apply a response that lands after the creator switched sessions", async () => {
     const deferred = deferredResponse();
     uploadPreviewImage.mockReturnValue(deferred.promise);
@@ -581,7 +586,10 @@ describe("useFirstFrameAdmission (issue #129)", () => {
   it("produces a new attempt for a different file that metadata cannot tell apart", async () => {
     // Same name, same size, same timestamp: the old metadata signature saw one
     // file here and would replay the retained key. The bytes are the fingerprint
-    // now (issue #129, against the media digest the server hashes — issue #114).
+    // now (issue #129) — the same fact the server hashes into its acceptance
+    // identity (issue #114). The hash is pure JS on purpose: a CI run (Node 20)
+    // caught subtle.digest rejecting jsdom's cross-realm ArrayBuffer, which
+    // silently downgraded every fingerprint to metadata.
     const TWIN_A = new File(["aaaaaaaaaa"], "twin.png", {
       type: "image/png",
       lastModified: 12345,
@@ -609,6 +617,50 @@ describe("useFirstFrameAdmission (issue #129)", () => {
     // A new attempt, not a replay of the failed one.
     expect(admissionKeyOfCall(0)).toBe("admission-key-1");
     expect(admissionKeyOfCall(1)).toBe("admission-key-2");
+  });
+
+  it("still retries the same file when its bytes cannot be read, on the metadata fallback", async () => {
+    // The documented last resort: a file that cannot be read at all falls back
+    // to the metadata signature, so a retry of the SAME file is still
+    // recognised. A metadata-identical DIFFERENT file could then reuse the
+    // retained key — which the server refuses as a #114 conflict rather than
+    // replaying or duplicating anything.
+    class BrokenFileReader {
+      onerror: ((event: unknown) => void) | null = null;
+      onload: ((event: unknown) => void) | null = null;
+      result: ArrayBuffer | null = null;
+      error: Error | null = null;
+      readAsArrayBuffer(): void {
+        this.error = new Error("unreadable");
+        this.onerror?.(this.error);
+      }
+    }
+    vi.stubGlobal("FileReader", BrokenFileReader);
+
+    const UNREADABLE = new File(["aaaa"], "unreadable.png", {
+      type: "image/png",
+      lastModified: 12345,
+    });
+    uploadPreviewImage
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(admittedResponse);
+    const { hook, onError } = setup({
+      target: { sessionId: "session-1", promptVersionId: "v1" },
+    });
+
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(UNREADABLE);
+    });
+    expect(onError).toHaveBeenCalledWith("network");
+
+    // Re-picking the SAME (unreadable) file is still a retry, not a new
+    // acceptance: the fallback fingerprint is stable within an environment.
+    await act(async () => {
+      await hook.result.current.uploadFirstFrame(UNREADABLE);
+    });
+
+    expect(admissionKeyOfCall(0)).toBe("admission-key-1");
+    expect(admissionKeyOfCall(1)).toBe("admission-key-1");
   });
 
   it("drops a late failure after a session switch instead of toasting into the new session", async () => {
