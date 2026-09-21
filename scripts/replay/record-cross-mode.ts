@@ -76,6 +76,14 @@ if (!studioTurnKeyEnv) {
 }
 assertEnv(studioTurnKeyEnv);
 
+// The recorder boots the same app the vitest suites do, outside vitest — so
+// it states the same env defaults the shared test preamble applies
+// (config/test/testSetupShared.js). The operator's environment still wins.
+process.env.GCS_BUCKET_NAME =
+  process.env.GCS_BUCKET_NAME || "prompt-builder-test-bucket";
+process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE =
+  process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE || "soft";
+
 function parseMaxLiveCalls(): number {
   const flagIndex = process.argv.indexOf("--max-live-calls");
   if (flagIndex === -1) return DEFAULT_MAX_LIVE_CALLS;

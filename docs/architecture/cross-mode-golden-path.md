@@ -133,7 +133,9 @@ spends nothing. The command states its ceiling up front and enforces it as a
 call budget: it aborts past its 20th captured response (change only
 deliberately with `--max-live-calls`), and a run below the canonical floor —
 or one where the live model fumbled a behavior the scenario pins — refuses
-to flush anything.
+to flush anything. Boot itself runs the app's standard startup key
+validation (one small call per configured LLM provider, before any capture
+begins); the guard logs it as egress like everything else.
 
 ```bash
 REPLAY_MODE=record NODE_ENV=test \
