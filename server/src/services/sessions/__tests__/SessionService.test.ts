@@ -1250,4 +1250,110 @@ describe("SessionService", () => {
       });
     });
   });
+
+  // Issue #132: the session-side twin of the studio store's identity-based
+  // produced-image lookup (#121). The take's own provenance is the one record
+  // of the relationship; this read is how a return resolves a consumed image
+  // to it — exactly, scoped to this session, never by guessing.
+  describe("findTakeAdmittedFromStudioImage", () => {
+    const studioTake = (overrides: Record<string, unknown> = {}) => ({
+      id: "take-studio-1",
+      mediaType: "image",
+      status: "completed",
+      promptVersionId: "v-1",
+      origin: "studio",
+      productionProvenance: {
+        state: "known",
+        instruction: "warm the light",
+        model: "nano-banana-2",
+        studio: { projectId: "proj-1", turnId: "turn-1", imageId: "img-1" },
+      },
+      ancestorGenerationId: null,
+      ...overrides,
+    });
+
+    const withGenerations = (...generations: unknown[]) => {
+      const record = buildRecord();
+      record.prompt = {
+        input: "p",
+        output: "p",
+        versions: [
+          {
+            versionId: "v-1",
+            signature: "sig",
+            prompt: "p",
+            timestamp: "t",
+            generations: generations as never,
+          },
+        ],
+      };
+      return record;
+    };
+
+    it("finds the take a studio image was admitted as, by provenance identity", async () => {
+      sessionStore.get.mockResolvedValue(
+        withGenerations(
+          { id: "gen-other", mediaType: "image", status: "completed" },
+          studioTake(),
+        ),
+      );
+
+      const service = new SessionService(sessionStore as never);
+      const found = await service.findTakeAdmittedFromStudioImage(
+        "user-1",
+        "session-1",
+        { projectId: "proj-1", imageId: "img-1" },
+      );
+
+      expect(found?.id).toBe("take-studio-1");
+    });
+
+    it("answers null for an image no take of this session names — including a match in a DIFFERENT project", async () => {
+      sessionStore.get.mockResolvedValue(withGenerations(studioTake()));
+
+      const service = new SessionService(sessionStore as never);
+      expect(
+        await service.findTakeAdmittedFromStudioImage(
+          "user-1",
+          "session-1",
+          { projectId: "proj-1", imageId: "img-OTHER" },
+        ),
+      ).toBeNull();
+      expect(
+        await service.findTakeAdmittedFromStudioImage(
+          "user-1",
+          "session-1",
+          { projectId: "proj-OTHER", imageId: "img-1" },
+        ),
+      ).toBeNull();
+    });
+
+    it("reads as unresolved when two takes name the same studio image — never a guess among rivals", async () => {
+      sessionStore.get.mockResolvedValue(
+        withGenerations(studioTake(), studioTake({ id: "take-studio-2" })),
+      );
+
+      const service = new SessionService(sessionStore as never);
+      expect(
+        await service.findTakeAdmittedFromStudioImage(
+          "user-1",
+          "session-1",
+          { projectId: "proj-1", imageId: "img-1" },
+        ),
+      ).toBeNull();
+    });
+
+    it("refuses a session the caller does not own", async () => {
+      const foreign = buildRecord({ userId: "someone-else" });
+      sessionStore.get.mockResolvedValue(foreign);
+
+      const service = new SessionService(sessionStore as never);
+      await expect(
+        service.findTakeAdmittedFromStudioImage("user-1", "session-1", {
+          projectId: "proj-1",
+          imageId: "img-1",
+        }),
+      ).rejects.toBeInstanceOf(SessionAccessDeniedError);
+    });
+  });
 });

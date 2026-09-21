@@ -9,6 +9,7 @@ import type {
   SessionFrameBridge,
   SessionSeedInfo,
   SessionSceneProxy,
+  SessionGenerationRecord,
   SessionPrompt,
   SessionPromptVersionEntry,
 } from "@shared/types/session";
@@ -74,6 +75,74 @@ export class SessionService {
       throw new SessionAccessDeniedError(sessionId, userId, current.userId);
     }
     return current;
+  }
+
+  /**
+   * The one take in this session that a studio image was admitted as, found BY
+   * IDENTITY — or `null` when none is (issue #132, ADR-0022 decision 4).
+   *
+   * This is the session-side twin of the studio store's produced-image lookup
+   * (`findTurnByProducedImageId`, issue #121): retrieval of a known record by
+   * its producing identity, never by walking a history page. Here the identity
+   * is the studio production ref the take's own provenance recorded at
+   * admission (decision 2's `known` variant, decision 4's ids), and the
+   * "whole history" is the one session document — every take of the session is
+   * in it, so the scan is complete by construction and no list window can
+   * silently drop a match.
+   *
+   * This read is also the whole relationship store. A returned take's
+   * provenance is the ONLY record that "studio image X became take T here"
+   * exists — written once by admission, living and dying with the session — so
+   * a return resolves a consumed image against exactly what its destination
+   * holds and a deleted session cannot redirect anything. There is no second,
+   * studio-side mapping to disagree or go stale.
+   *
+   * Ownership is enforced by `requireOwnedSession` (throws on a foreign or
+   * missing session). An archived take still matches: identity is what this
+   * answers, and liveness for the DRAWN edge is admission's separate gate, the
+   * same split the bridged-take path follows. Two takes naming one image would
+   * make the relationship ambiguous, so the answer is `null` (logged) — never
+   * a guess among rivals; through the return door the per-image idempotency
+   * key makes that unreachable, and the log exists for the day a writer
+   * outside that door appears.
+   */
+  async findTakeAdmittedFromStudioImage(
+    userId: string,
+    sessionId: string,
+    studioImage: { projectId: string; imageId: string },
+  ): Promise<SessionGenerationRecord | null> {
+    const session = await this.requireOwnedSession(userId, sessionId);
+    const matches: SessionGenerationRecord[] = [];
+    for (const version of session.prompt?.versions ?? []) {
+      for (const entry of version.generations ?? []) {
+        const studio =
+          entry.productionProvenance?.state === "known"
+            ? entry.productionProvenance.studio
+            : undefined;
+        if (
+          entry.id &&
+          entry.mediaType === "image" &&
+          studio?.projectId === studioImage.projectId &&
+          studio?.imageId === studioImage.imageId
+        ) {
+          matches.push(entry);
+        }
+      }
+    }
+    if (matches.length === 1) return matches[0]!;
+    if (matches.length > 1) {
+      this.log.warn(
+        "Studio image matches more than one take in the session; treating the relationship as unresolved",
+        {
+          userId,
+          sessionId,
+          projectId: studioImage.projectId,
+          imageId: studioImage.imageId,
+          matches: matches.length,
+        },
+      );
+    }
+    return null;
   }
 
   async createPromptSession(

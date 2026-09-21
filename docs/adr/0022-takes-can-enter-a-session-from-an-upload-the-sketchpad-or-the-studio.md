@@ -129,6 +129,33 @@ that turn's actual inputs**, never from the project's origin link alone. An unre
 generation inside an origin-linked project returns with no picture ancestor and gets no
 `refine` edge; only an edit that actually consumed the bridged source picture earns one.
 
+> **Generalized 2026-09-18 (owner-approved; issue #132).** The edge no longer
+> requires the consumed input to be the project's original bridged picture. A
+> turn that consumed an image **already admitted to this destination session**
+> resolves that input to the take it became, so an edit → return → edit again →
+> return chain draws a `refine` edge at every hop instead of breaking after the
+> first — which is where the rule as first written left repeated refinement: the
+> second hop's source had a take identity in the session but was recorded as a
+> plain studio image. **Ownership of the relationship stays with the session
+> take, and the studio keeps no record of it at all.** A returned take's
+> production provenance already carries the producing project, turn and image
+> identities (decision 2), so that record is the one statement of "studio image
+> X became take T in this session": written once by admission, living and dying
+> with the session. The return resolves a consumed image by looking its
+> identity up in the destination session — the session-side twin of the studio
+> store's identity-based produced-image retrieval (#121), never a walk over a
+> history page. A studio-side image→take mapping was considered and rejected:
+> it would be a second copy of the relationship, free to disagree with the take
+> record and able to outlive the session it points at, so deleting a
+> destination session could leave a stale mapping that redirected later returns.
+> With the session as owner there is nothing to invalidate and nothing to
+> reconcile; the mapping write is admission's own, and a replayed or
+> interrupted return repairs the recorded relationship from the admission
+> receipt rather than minting a rival take (decision 6's resume contract). The
+> destination scoping is unchanged: an input is resolved only against the
+> session this return is landing in, so an image admitted to a session that has
+> since been deleted is recorded as the ordinary studio image it now is.
+
 This amends the glossary's **The studio** entry ("the studio is not a first-frame
 factory and feeds nothing downstream") and
 [ADR-0019](0019-the-studio-standalone-conversational-image-workspace.md)'s consequence

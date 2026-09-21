@@ -1283,4 +1283,359 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     const after = [...fixture.sessions.sessions.values()][0]!;
     expect(takesOf(after, versionId!)).toHaveLength(1);
   });
+
+  // ---------------------------------------------------- issue #132: the chain
+  //
+  // A return of an image the session has ALREADY admitted must resolve that
+  // consumed source to the take it became, so edit → return → edit again →
+  // return draws a refine edge per hop. The relationship is owned by the take
+  // record the first return wrote (its provenance names the producing project
+  // and image identities); the lookup is the session-side twin of the #121
+  // identity-based produced-image retrieval.
+
+  /** Hop 1 of the chain: edit the bridged picture, return it into the session. */
+  async function returnEditOfBridgedPicture(projectId: string, bridgedImageId: string) {
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      projectId,
+      "warm the light",
+      editDecision("warm the light", [bridgedImageId]),
+    );
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId,
+      imageId: imageIds[0]!,
+    });
+    expect(result.state).toBe("returned");
+    if (result.state !== "returned") throw new Error("first hop failed");
+    return { producedImageId: imageIds[0]!, returned: result.result };
+  }
+
+  it("continues the refine chain: an edit of an already-returned image resolves to the take it became (edit → return → edit → return draws two refine edges)", async () => {
+    const project = await bridgedProject();
+    const hop1 = await returnEditOfBridgedPicture(
+      project.id,
+      project.origin!.bridgedImageId,
+    );
+
+    // Hop 2: edit the RETURNED image and return that.
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "cool it back down",
+      editDecision("cool it back down", [hop1.producedImageId]),
+    );
+    const hop2 = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(hop2.state).toBe("returned");
+    if (hop2.state !== "returned") return;
+    // The second hop's ancestor is the take the first return created — not
+    // the bridged original, and not nothing.
+    expect(hop2.result.ancestorGenerationId).toBe(hop1.returned.generationId);
+
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    const takes = takesOf(session, SOURCE.promptVersionId);
+    const take1 = takes.find((take) => take.id === hop1.returned.generationId)!;
+    const take2 = takes.find((take) => take.id === hop2.result.generationId)!;
+    // Two refine edges, each landing on the correct take.
+    expect(take1.ancestorGenerationId).toBe(SOURCE.generationId);
+    expect(take2.ancestorGenerationId).toBe(hop1.returned.generationId);
+    const inputs = take2.sourceInputs as Array<{
+      kind: string;
+      generationId?: string;
+      storagePath?: string;
+    }>;
+    // Exactly one take input — the first returned take, named by its own
+    // durable handle from the session record, never re-pointed at studio media.
+    const takeInputs = inputs.filter((input) => input.kind === "take");
+    expect(takeInputs).toEqual([
+      {
+        kind: "take",
+        generationId: hop1.returned.generationId,
+        storagePath: take1.storagePath,
+      },
+    ]);
+  });
+
+  it("records a multi-input edit truthfully: the consumed image that was returned resolves to its take while the rest stay studio images", async () => {
+    const project = await bridgedProject();
+    const hop1 = await returnEditOfBridgedPicture(
+      project.id,
+      project.origin!.bridgedImageId,
+    );
+    const plates = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "two reference plates",
+      generateDecision("a reference plate"),
+    );
+    const combined = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "combine them",
+      editDecision("combine them", [
+        plates.imageIds[0]!,
+        hop1.producedImageId,
+        plates.imageIds[1]!,
+      ]),
+    );
+
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: combined.imageIds[0]!,
+    });
+
+    expect(result.state).toBe("returned");
+    if (result.state !== "returned") return;
+    // The one consumed take is the display ancestor, wherever it sits in the
+    // turn's input order.
+    expect(result.result.ancestorGenerationId).toBe(
+      hop1.returned.generationId,
+    );
+
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    const returned = takesOf(session, SOURCE.promptVersionId).find(
+      (take) => take.id === result.result.generationId,
+    )!;
+    const inputs = returned.sourceInputs as Array<{ kind: string }>;
+    // Three consumed inputs plus the returned picture itself; exactly one is
+    // a take of this session, and it is the display ancestor.
+    expect(inputs).toHaveLength(4);
+    expect(inputs.filter((input) => input.kind === "take")).toHaveLength(1);
+    expect(inputs.filter((input) => input.kind === "studio-image")).toHaveLength(
+      3,
+    );
+    expect(returned.ancestorGenerationId).toBe(hop1.returned.generationId);
+  });
+
+  it("keeps the bridged picture's display-ancestor precedence even when a previously returned image is also consumed", async () => {
+    const project = await bridgedProject();
+    const hop1 = await returnEditOfBridgedPicture(
+      project.id,
+      project.origin!.bridgedImageId,
+    );
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "revisit the original",
+      editDecision("revisit the original", [
+        hop1.producedImageId,
+        project.origin!.bridgedImageId,
+      ]),
+    );
+
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(result.state).toBe("returned");
+    if (result.state !== "returned") return;
+    // Both consumed images are takes of this session, and both are recorded;
+    // the drawn one is the origin's recorded choice, the bridged picture.
+    expect(result.result.ancestorGenerationId).toBe(SOURCE.generationId);
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    const returned = takesOf(session, SOURCE.promptVersionId).find(
+      (take) => take.id === result.result.generationId,
+    )!;
+    const takeInputs = (
+      returned.sourceInputs as Array<{ kind: string; generationId?: string }>
+    ).filter((input) => input.kind === "take");
+    // Recorded in the turn's own input order: the returned image first, the
+    // bridged picture second — regardless of which one is drawn.
+    expect(takeInputs.map((input) => input.generationId)).toEqual([
+      hop1.returned.generationId,
+      SOURCE.generationId,
+    ]);
+  });
+
+  it("still gives an unrelated generation no relationship after other images have been returned to the session", async () => {
+    const project = await bridgedProject();
+    await returnEditOfBridgedPicture(project.id, project.origin!.bridgedImageId);
+
+    // A from-scratch generate consumes no image at all — a returned take
+    // living beside it in the session gives it nothing.
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "a completely different subject",
+      generateDecision("a paper crane on a windowsill"),
+    );
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(result.state).toBe("returned");
+    if (result.state !== "returned") return;
+    expect(result.result.ancestorGenerationId).toBeNull();
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    const returned = takesOf(session, SOURCE.promptVersionId).find(
+      (take) => take.id === result.result.generationId,
+    )!;
+    expect(returned.ancestorGenerationId).toBeNull();
+    expect(
+      (returned.sourceInputs as Array<{ kind: string }>).some(
+        (input) => input.kind === "take",
+      ),
+    ).toBe(false);
+  });
+
+  it("records the truthful relationship when returning an edit of a returned image after the destination session was deleted — no stale mapping redirects it", async () => {
+    const project = await bridgedProject();
+    const hop1 = await returnEditOfBridgedPicture(
+      project.id,
+      project.origin!.bridgedImageId,
+    );
+
+    // The destination dies. Its takes die with it — the relationship lived in
+    // the session record, so there is nothing left to redirect a later return.
+    fixture.sessions.sessions.delete(SOURCE.sessionId);
+
+    const { imageIds, turnId } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "cool it back down",
+      editDecision("cool it back down", [hop1.producedImageId]),
+    );
+    const result = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+      onMissingOriginSession: "new-session",
+      confirmedWords: "a warmly lit study",
+    });
+
+    expect(result.state).toBe("returned");
+    if (result.state !== "returned") return;
+    expect(result.result.createdSession).toBe(true);
+    expect(result.result.sessionId).not.toBe(SOURCE.sessionId);
+    // No ancestor: the consumed image's take went down with the old session.
+    expect(result.result.ancestorGenerationId).toBeNull();
+
+    const created = fixture.sessions.sessions.get(result.result.sessionId)!;
+    const returned = takesOf(created, result.result.promptVersionId).find(
+      (take) => take.id === result.result.generationId,
+    )!;
+    expect(returned.ancestorGenerationId).toBeNull();
+    const inputs = returned.sourceInputs as Array<{
+      kind: string;
+      storagePath?: string;
+    }>;
+    expect(
+      inputs.some((input) => input.kind === "take"),
+    ).toBe(false);
+    // The consumed image is still recorded in full — by its durable studio
+    // path — as an ordinary studio image.
+    const sourceTurn = await fixture.studio.getTurn(OWNER, project.id, turnId);
+    expect(inputs).toContainEqual({
+      kind: "studio-image",
+      storagePath: sourceTurn.sourceImages?.[0]?.storagePath,
+    });
+  });
+
+  it("repairs an interrupted mapping write on replay: the resumed attach lands the same take with its recorded relationship", async () => {
+    const project = await bridgedProject();
+    const hop1 = await returnEditOfBridgedPicture(
+      project.id,
+      project.origin!.bridgedImageId,
+    );
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "cool it back down",
+      editDecision("cool it back down", [hop1.producedImageId]),
+    );
+
+    // Interrupt the mapping write: the admission's session append — the write
+    // that carries the source inputs and display ancestor — fails once. The
+    // media is durable, the receipt records the take as un-attached.
+    const realMutate =
+      fixture.sessions.mutate.getMockImplementation() ??
+      ((): never => {
+        throw new Error("mutate double has no implementation");
+      });
+    let mutateCalls = 0;
+    fixture.sessions.mutate.mockImplementation(
+      async (...args: Parameters<typeof realMutate>) => {
+        mutateCalls += 1;
+        if (mutateCalls === 1) throw new Error("session store write failed");
+        return realMutate(...args);
+      },
+    );
+
+    const interrupted = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+    expect(interrupted.state).toBe("returned");
+    if (interrupted.state !== "returned") return;
+    const sessionAfterInterrupt = fixture.sessions.sessions.get(
+      SOURCE.sessionId,
+    )!;
+    expect(
+      takesOf(sessionAfterInterrupt, SOURCE.promptVersionId).find(
+        (take) => take.id === interrupted.result.generationId,
+      ),
+    ).toBeUndefined();
+
+    // The replay repairs it: the receipt resumes the SAME take and re-attaches
+    // the persisted record — the relationship rides the record, so the edge
+    // arrives with it, and nothing is re-stored or minted twice.
+    fixture.sessions.mutate.mockImplementation(realMutate);
+    const repaired = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+
+    expect(repaired.state).toBe("returned");
+    if (repaired.state !== "returned") return;
+    expect(repaired.result.generationId).toBe(
+      interrupted.result.generationId,
+    );
+
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    const takes = takesOf(session, SOURCE.promptVersionId);
+    const repairedTake = takes.filter(
+      (take) => take.id === repaired.result.generationId,
+    );
+    expect(repairedTake).toHaveLength(1);
+    expect(repairedTake[0]!.ancestorGenerationId).toBe(
+      hop1.returned.generationId,
+    );
+    expect(
+      (
+        repairedTake[0]!.sourceInputs as Array<{
+          kind: string;
+          generationId?: string;
+        }>
+      ).some(
+        (input) =>
+          input.kind === "take" &&
+          input.generationId === hop1.returned.generationId,
+      ),
+    ).toBe(true);
+    // The chain, whole: exactly two returned takes beyond the bridged
+    // original, each the ancestor of the next.
+    expect(
+      takes.filter((take) => take.origin === "studio"),
+    ).toHaveLength(2);
+  });
 });
