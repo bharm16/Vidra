@@ -182,6 +182,7 @@ export function LiveEditor({
             liveOutput={sketch.state.liveOutput}
             onUseThis={acceptance.accept}
             acceptance={acceptance.status}
+            onRetryAttachment={acceptance.retryAttachment}
             strengthPopoverOpen={openPopover === "strength"}
             onToggleStrengthPopover={() =>
               setOpenPopover((open) =>

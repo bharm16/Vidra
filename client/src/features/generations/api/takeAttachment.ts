@@ -87,6 +87,29 @@ export async function fetchOwedPictureAttachments(
 }
 
 /**
+ * Every accepted live output minted into this session whose take is still not
+ * in it — the sketchpad side of recovery (issue #134). The live editor keeps
+ * nothing (ADR-0017), so a reloaded client asks the SESSION, which answers
+ * from the server-side truth: the #128 receipt is the index, the session the
+ * take was minted into decides what is still owed. Each attachment carries
+ * the exact record its retry re-sends through {@link retryPictureAttachment}
+ * — the same take, never a re-accept, never a re-render.
+ */
+export async function fetchUnresolvedSketchAcceptances(
+  sessionId: string,
+): Promise<TakeAttachment[]> {
+  const payload = (await apiClient.get(
+    `/sketch/accept/unresolved?sessionId=${encodeURIComponent(sessionId)}`,
+  )) as unknown;
+
+  const response = OwedPictureAttachmentsResponseSchema.parse(payload);
+  if (!response.success) {
+    throw new Error(response.error ?? "Could not load unsaved pictures");
+  }
+  return response.data?.attachments ?? [];
+}
+
+/**
  * Ask the server to re-attach one owed quick-picture take by identity. Nothing
  * about the picture travels on this request: the server's owed ledger holds the
  * record its session is owed, so this cannot rerun a generation, re-store media,

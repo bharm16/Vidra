@@ -591,6 +591,55 @@ describe("acceptLiveOutput (ADR-0022 decision 5, issue #87)", () => {
     expect(takesOf(onlySession(store), versionId!)).toHaveLength(1);
   });
 
+  it("reports a take that was admitted but not attached as made-but-not-saved, carrying the record a retry re-sends (issue #134)", async () => {
+    const { deps, store, mediaStore } = fixture;
+    // The session append dies exactly once — the attach fails, everything
+    // around it is healthy. The take's media is durable, its identity minted,
+    // and its session does not have it: made-but-not-saved.
+    store.mutate.mockRejectedValueOnce(new Error("firestore unavailable"));
+
+    const result = await acceptLiveOutput(deps, request());
+
+    // The wrapper reports the outcome instead of assuming it: still
+    // `accepted` (the acceptance ran), but its attachment fact says `failed`.
+    expect(result.state).toBe("accepted");
+    if (result.state !== "accepted") return;
+    expect(result.result.attachment.state).toBe("failed");
+    expect(result.result.attachment.reason).toContain("firestore unavailable");
+    // The take identity was already minted before the append was attempted,
+    // and the record that carries it is exactly what a retry re-sends.
+    expect(result.result.attachment.generationId).toBe(
+      result.result.generationId,
+    );
+    expect(result.result.attachment.record?.id).toBe(result.result.generationId);
+    expect(result.result.attachment.sessionId).toBe(result.result.sessionId);
+    expect(result.result.attachment.promptVersionId).toBe(
+      result.result.promptVersionId,
+    );
+    // The media is durable — made, not lost.
+    expect(
+      mediaStore.calls.filter((call) => call.contentType === "image/webp"),
+    ).toHaveLength(1);
+
+    // …and the session does NOT have the take: nothing may read this
+    // response as "the picture is in its session now".
+    const session = onlySession(store);
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    expect(takesOf(session, versionId!)).toHaveLength(0);
+
+    // A re-press replays the receipt and RESUMES the owed attachment: the
+    // SAME take, attached — never a second take, never a re-store.
+    const retry = await acceptLiveOutput(deps, request());
+    expect(retry.state).toBe("accepted");
+    if (retry.state !== "accepted") return;
+    expect(retry.result.attachment.state).toBe("attached");
+    expect(retry.result.generationId).toBe(result.result.generationId);
+    expect(takesOf(onlySession(store), versionId!)).toHaveLength(1);
+    expect(
+      mediaStore.calls.filter((call) => call.contentType === "image/webp"),
+    ).toHaveLength(1);
+  });
+
   it("rejects media it cannot read as an image, before any side effect", async () => {
     const { deps, store, mediaStore } = fixture;
 

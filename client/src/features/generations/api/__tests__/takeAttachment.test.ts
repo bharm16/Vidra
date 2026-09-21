@@ -10,6 +10,7 @@ vi.mock("@/services/ApiClient", () => ({
 
 import {
   fetchOwedPictureAttachments,
+  fetchUnresolvedSketchAcceptances,
   retryOwedPictureAttachment,
 } from "../takeAttachment";
 
@@ -97,5 +98,51 @@ describe("owed quick-picture attachment api (issue #133)", () => {
     await expect(retryOwedPictureAttachment("gen-1")).rejects.toThrow(
       "Access denied",
     );
+  });
+});
+
+/**
+ * The sketchpad side of recovery (issue #134): a reloaded client asks the
+ * SESSION what accepted live outputs are still not saved into it. Same wire
+ * shape as the owed-quick-picture discovery, a different door — the receipts
+ * are admission's, not the owed ledger's.
+ */
+describe("unresolved sketch acceptance api (issue #134)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("asks the session's unresolved acceptances and validates them at the wire", async () => {
+    getMock.mockResolvedValue({
+      success: true,
+      data: {
+        attachments: [
+          {
+            state: "failed",
+            generationId: "take-9",
+            sessionId: "session-1",
+            promptVersionId: "v1",
+            reason: "firestore unavailable",
+            record: { id: "take-9", mediaType: "image", status: "completed" },
+          },
+        ],
+      },
+    });
+
+    const owed = await fetchUnresolvedSketchAcceptances("session-1");
+
+    expect(getMock).toHaveBeenCalledWith(
+      "/sketch/accept/unresolved?sessionId=session-1",
+    );
+    expect(owed).toHaveLength(1);
+    expect(owed[0]).toMatchObject({
+      state: "failed",
+      generationId: "take-9",
+    });
+    // The record rides along — it is exactly what the retry re-sends.
+    expect(owed[0]?.record?.id).toBe("take-9");
+  });
+
+  it("returns an empty list when nothing is unresolved", async () => {
+    getMock.mockResolvedValue({ success: true, data: { attachments: [] } });
+    expect(await fetchUnresolvedSketchAcceptances("session-1")).toEqual([]);
   });
 });
