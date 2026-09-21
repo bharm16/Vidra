@@ -621,3 +621,148 @@ describe("sessions.routes", () => {
     );
   });
 });
+
+describe("sessions.routes — the first-frame arm door (issue #136)", () => {
+  /** Creates the app with an explicit arm binding, like registration does. */
+  const createArmApp = (
+    armFirstFrame:
+      | ((
+          input: { userId: string; sessionId: string; generationId: string },
+        ) => Promise<
+          | { ok: true; frame: Record<string, unknown> }
+          | { ok: false; reason: string }
+        >)
+      | undefined,
+  ) => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+      const userId = req.header("x-user-id");
+      if (userId) {
+        (req as express.Request & { user?: { uid: string } }).user = {
+          uid: userId,
+        };
+      }
+      next();
+    });
+    app.use(
+      "/sessions",
+      createSessionRoutes(
+        { requireCreator: true } as never,
+        null,
+        null,
+        undefined,
+        armFirstFrame,
+      ),
+    );
+    return app;
+  };
+
+  it("arms an attached take through the bound arm and answers the arming fact", async () => {
+    const arm = vi.fn().mockResolvedValue({
+      ok: true,
+      frame: {
+        id: "take-1",
+        generationId: "take-1",
+        url: "https://fresh.example.com/asset-1",
+        storagePath: "image-previews/user-1/asset-1",
+        assetId: "asset-1",
+        source: "generation",
+      },
+    });
+    const app = createArmApp(arm);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/first-frame/arm")
+        .set("x-user-id", "user-1")
+        .send({ generationId: "take-1" }),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      success: true,
+      data: { arming: { state: "armed", generationId: "take-1" } },
+    });
+    // The take rides by identity alone — nothing else travels, because
+    // everything else is already persisted in the session.
+    expect(arm).toHaveBeenCalledWith({
+      userId: "user-1",
+      sessionId: "session-1",
+      generationId: "take-1",
+    });
+  });
+
+  it("answers 409 when the take has not reached its session — the attachment retry owns that debt", async () => {
+    const arm = vi.fn().mockResolvedValue({
+      ok: false,
+      reason: "that picture is not saved in this session yet",
+    });
+    const app = createArmApp(arm);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/first-frame/arm")
+        .set("x-user-id", "user-1")
+        .send({ generationId: "take-1" }),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({
+      success: false,
+      error: "that picture is not saved in this session yet",
+    });
+  });
+
+  it("answers 422 when the arm refuses the record — a frame without a durable handle is not a completed handoff", async () => {
+    const arm = vi.fn().mockResolvedValue({
+      ok: false,
+      reason:
+        "this picture has no durable media handle — a first frame armed with only an expiring URL is not a completed handoff",
+    });
+    const app = createArmApp(arm);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/first-frame/arm")
+        .set("x-user-id", "user-1")
+        .send({ generationId: "take-1" }),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(422);
+    expect(response.body.success).toBe(false);
+  });
+
+  it("answers 503 when no arm is wired rather than pretending the route is missing", async () => {
+    const app = createArmApp(undefined);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/first-frame/arm")
+        .set("x-user-id", "user-1")
+        .send({ generationId: "take-1" }),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(503);
+  });
+
+  it("rejects a body with no take identity", async () => {
+    const arm = vi.fn();
+    const app = createArmApp(arm);
+
+    const response = await runSupertestOrSkip(() =>
+      request(app)
+        .post("/sessions/session-1/first-frame/arm")
+        .set("x-user-id", "user-1")
+        .send({}),
+    );
+    if (!response) return;
+
+    expect(response.status).toBe(400);
+    expect(arm).not.toHaveBeenCalled();
+  });
+});

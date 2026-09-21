@@ -1033,6 +1033,74 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
       url: result.result.imageUrl,
       source: "generation",
     });
+    // Issue #136: the arming fact rides the result — `armed`, beside the
+    // attachment fact it is independent of.
+    expect(result.result.arming).toEqual({
+      state: "armed",
+      generationId: result.result.generationId,
+    });
+  });
+
+  it("reports an arming failure as a failed arming fact while the take stays attached, and a re-press arms the same take (issue #136)", async () => {
+    const project = await bridgedProject();
+    const { imageIds } = await runTurn(
+      fixture.studio,
+      fixture.decide,
+      project.id,
+      "warm the light",
+      editDecision("warm the light", [project.origin!.bridgedImageId]),
+    );
+
+    // Only the arming write dies: the real SessionService sits under a
+    // façade whose keyframe write throws exactly once, AFTER the take has
+    // attached.
+    const inner = fixture.sessionService;
+    let failNextArm = true;
+    const gated = Object.create(inner) as SessionService;
+    gated.updatePromptForUser = async (
+      ...args: Parameters<SessionService["updatePromptForUser"]>
+    ) => {
+      if (failNextArm) {
+        failNextArm = false;
+        throw new Error("keyframe write failed");
+      }
+      return inner.updatePromptForUser(...args);
+    };
+    fixture.deps.sessionService = gated;
+
+    const first = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+    expect(first.state).toBe("returned");
+    if (first.state !== "returned") return;
+
+    // VISIBLE: the take is in its session (attached) and the frame is not
+    // armed (failed) — two facts, both stated.
+    expect(first.result.attachment?.state).toBe("attached");
+    expect(first.result.arming).toEqual({
+      state: "failed",
+      generationId: first.result.generationId,
+      reason: "keyframe write failed",
+    });
+    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    expect(session.prompt?.keyframes).toBeUndefined();
+
+    // A re-press replays to the same take and arms it — no second take.
+    const retry = await returnStudioImage(fixture.deps, {
+      userId: OWNER,
+      projectId: project.id,
+      imageId: imageIds[0]!,
+    });
+    expect(retry.state).toBe("returned");
+    if (retry.state !== "returned") return;
+    expect(retry.result.generationId).toBe(first.result.generationId);
+    expect(retry.result.arming.state).toBe("armed");
+    const after = fixture.sessions.sessions.get(SOURCE.sessionId)!;
+    expect(after.prompt?.keyframes?.[0]?.generationId).toBe(
+      first.result.generationId,
+    );
   });
 
   it("links a clip made from the returned frame to that take", async () => {

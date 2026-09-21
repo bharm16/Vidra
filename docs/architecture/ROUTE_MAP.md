@@ -72,6 +72,7 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/sessions`                                                  | `server/src/routes/sessions.routes.ts`                         |
 | DELETE | `/api/sessions/:sessionId`                                       | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/:sessionId`                                       | `server/src/routes/sessions.routes.ts`                         |
+| POST   | `/api/sessions/:sessionId/first-frame/arm`                       | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/generations/:generationId/archive`     | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/scene-proxy`                           | `server/src/routes/sessions.routes.ts`                         |
 | PUT    | `/api/sessions/:sessionId/settings`                              | `server/src/routes/sessions.routes.ts`                         |
@@ -117,4 +118,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                                   | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                  | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **109**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **110**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

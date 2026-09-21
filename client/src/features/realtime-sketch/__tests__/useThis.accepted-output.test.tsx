@@ -91,6 +91,10 @@ describe("Use this (issue #87)", () => {
                 sessionId: "session-new",
                 promptVersionId: "v-root",
               },
+              arming: {
+                state: "armed",
+                generationId: "take-1",
+              },
             });
         }),
     );
@@ -191,6 +195,10 @@ describe("Use this (issue #87)", () => {
         sessionId: "session-new",
         promptVersionId: "v-root",
       },
+      arming: {
+        state: "armed",
+        generationId: "take-1",
+      },
     });
 
     const { result } = renderLiveEditorHooks(sendFrameFn);
@@ -231,6 +239,10 @@ describe("Use this (issue #87)", () => {
         generationId: "take-1",
         sessionId: "session-new",
         promptVersionId: "v-root",
+      },
+      arming: {
+        state: "armed",
+        generationId: "take-1",
       },
     });
 

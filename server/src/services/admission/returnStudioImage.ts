@@ -36,6 +36,7 @@ import {
   ensureAcceptanceSession,
   type AcceptanceSessionRead,
 } from "./acceptanceSessionOwnership";
+import { armFirstFrame } from "./armFirstFrame";
 
 /**
  * "Use this in the session": the studio's return door — ADR-0022 decisions 2,
@@ -102,15 +103,15 @@ import {
  * 6. **Discard the minted session ONLY if it is still uncommitted** — never one
  *    that gained a take because a completion write failed after the attach, and
  *    only ever a session this call minted (issue #130).
- * 7. **Arm the first frame.** Last, because it needs the take identity, and
- *    non-fatal: by then the picture is durable and in its session, and a
- *    failed arm costs a click rather than a picture.
- *
- * Unlike the live editor's accept (#87), this arms the frame in a destination
- * the creator already had. There, no surface names a destination, so replacing
- * an existing first frame would have been a decision nobody made. Here the
- * destination IS the session the creator bridged out of and pressed "Use this
- * in the session" to return to; arming is the point of the press.
+ * 7. **Arm the first frame.** Last, because it needs the take identity, and a
+ *    separately observable outcome (issue #136): by then the picture is
+ *    durable and in its session, so a failed arm costs a click rather than a
+ *    picture — but the outcome is REPORTED in the result, never swallowed
+ *    into a log, and a failed arm is repairable through the arm door without
+ *    readmission and without a second take. Unlike the live editor's accept
+ *    (#87), this arms the frame in a destination the creator already had:
+ *    the destination IS the session the creator bridged out of and pressed
+ *    "Use this in the session" to return to; arming is the point of the press.
  */
 
 export interface ReturnStudioImageStudioPort {
@@ -711,31 +712,33 @@ export async function returnStudioImage(
 
   const { take } = admitted;
 
-  try {
-    await sessionService.updatePromptForUser(userId, sessionId, {
-      // keyframes[0] is the armed first frame (ADR-0011 D4): hydration
-      // re-arms from the head of the array, and the take identity riding on
-      // it is what lets a clip made from this frame name it as its ancestor.
-      keyframes: [
-        {
-          id: take.generationId,
-          url: take.imageUrl,
-          source: "generation",
-          assetId: take.assetId,
-          storagePath: take.storagePath,
-          generationId: take.generationId,
-          // The frame's words: the creator's confirmed words for a session this
-          // return minted, the producing instruction for a refine into an
-          // existing origin session (unchanged there).
-          sourcePrompt:
-            plan.kind === "mint" ? plan.confirmedWords : instruction,
-        },
-      ],
-    });
-  } catch (error) {
+  // Armed through the one arming module (issue #136), always owed for a
+  // return: the destination is the session the creator bridged out of, and
+  // arming the returned picture as its first frame is the point of the press.
+  // The outcome is reported — `failed` is repairable through the arm door
+  // without readmission and without a second take — never swallowed.
+  const arming = await armFirstFrame(
+    { sessionService, ...(resolver ? { resolver } : {}) },
+    { userId, sessionId, generationId: take.generationId },
+  ).then(
+    (armed): StudioUseInSessionResult["arming"] =>
+      armed.ok
+        ? { state: "armed", generationId: take.generationId }
+        : {
+            state: "failed",
+            generationId: take.generationId,
+            reason: armed.reason,
+          },
+    (error: unknown): StudioUseInSessionResult["arming"] => ({
+      state: "failed",
+      generationId: take.generationId,
+      reason: error instanceof Error ? error.message : String(error),
+    }),
+  );
+  if (arming.state === "failed") {
     log.error(
       "Returned picture was admitted but could not be armed as the first frame",
-      error instanceof Error ? error : new Error(String(error)),
+      new Error(arming.reason ?? "arming failed"),
       { userId, sessionId, generationId: take.generationId },
     );
   }
@@ -759,6 +762,10 @@ export async function returnStudioImage(
       // makes a retry and a replay land on one take either way. Nothing may
       // read as returned until this says `attached`.
       attachment: take.attachment,
+      // Issue #136: the arming outcome, separately observable from the
+      // attachment. Only `armed` says the reopened session will restore this
+      // picture as its first frame.
+      arming,
     },
   };
 }

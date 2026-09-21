@@ -23,6 +23,7 @@ function renderComposer(
     onUseThis: vi.fn(),
     acceptance: { state: "idle" },
     onRetryAttachment: vi.fn(),
+    onRetryArming: vi.fn(),
     strengthPopoverOpen: false,
     onToggleStrengthPopover: vi.fn(),
     ...overrides,

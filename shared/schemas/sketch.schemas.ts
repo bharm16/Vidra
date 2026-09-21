@@ -13,6 +13,7 @@
  */
 import { z } from "zod";
 import { TakeAttachmentSchema } from "./attachment.schemas.js";
+import { FirstFrameArmingSchema } from "./firstFrame.schemas.js";
 
 export const SketchFrameRefusalSchema = z.discriminatedUnion("reason", [
   z.object({
@@ -107,6 +108,16 @@ export const SketchAcceptResultSchema = z.object({
    * missing fact as "attached". `failed` carries the record a retry re-sends.
    */
   attachment: TakeAttachmentSchema,
+  /**
+   * The arming fact (issue #136): the take being in its session and the take
+   * being armed as the session's first frame are two more independent facts.
+   * Required like the attachment fact — a response that cannot say whether
+   * the frame was armed is not a settled acceptance. `failed` is repairable
+   * through the arm door without readmission and without a second take;
+   * `not-owed` says this acceptance named a destination whose first frame is
+   * not this bridge's to replace.
+   */
+  arming: FirstFrameArmingSchema,
 });
 
 export type SketchAcceptResult = z.infer<typeof SketchAcceptResultSchema>;

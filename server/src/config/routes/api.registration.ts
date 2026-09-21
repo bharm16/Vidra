@@ -32,6 +32,7 @@ import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
+import { armFirstFrame } from "@services/admission/armFirstFrame";
 import type { AdmissionReceiptReaderPort } from "@services/admission/unresolvedAcceptances";
 import type { SessionService } from "@services/sessions/SessionService";
 import {
@@ -136,6 +137,27 @@ export function registerApiRoutes(
         remintSessionPictureUrls(dto, { resolver: ownedPictureResolver })
     : null;
 
+  // Issue #136: the arm door's binding — an attached take is armed from its
+  // own persisted record, its URL re-minted from the durable handle (#125)
+  // when the resolver is wired. One session service, one resolver, one
+  // spelling of the arm; the route never learns either.
+  const armFirstFrameBinding = (
+    sessionService: SessionService,
+  ): ((
+    input: { userId: string; sessionId: string; generationId: string },
+  ) => Promise<
+    | { ok: true; frame: Record<string, unknown> }
+    | { ok: false; reason: string }
+  >) =>
+    (input) =>
+      armFirstFrame(
+        {
+          sessionService,
+          ...(ownedPictureResolver ? { resolver: ownedPictureResolver } : {}),
+        },
+        input,
+      );
+
   // Main API routes
   const apiRoutes = createAPIRoutes({
     promptOptimizationService: container.resolve("promptOptimizationService"),
@@ -159,6 +181,9 @@ export function registerApiRoutes(
     sessionService: container.resolve("sessionService"),
     modelIntelligenceService,
     remintSessionPictures,
+    armFirstFrame: armFirstFrameBinding(
+      container.resolve<SessionService>("sessionService"),
+    ),
   });
 
   app.use(

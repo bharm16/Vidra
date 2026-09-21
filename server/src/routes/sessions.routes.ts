@@ -133,6 +133,18 @@ const AttachTakeSchema = z
   })
   .strip();
 
+/**
+ * Issue #136: the body of the arm door. The take is named by the identity
+ * admission minted for it — nothing else travels, because everything else the
+ * arm needs (the record, its durable handle) is already persisted in the
+ * session the take is being armed in.
+ */
+const ArmFirstFrameSchema = z
+  .object({
+    generationId: z.string().min(1),
+  })
+  .strip();
+
 function handleSessionMutationError(error: unknown, res: Response): boolean {
   if (error instanceof SessionAccessDeniedError) {
     res.status(403).json({
@@ -318,6 +330,23 @@ export function createSessionRoutes(
    */
   remintSessionPictures?:
     | ((dto: SessionDto) => Promise<SessionDto>)
+    | undefined,
+  /**
+   * Issue #136: arm an already-attached take as the session's first frame —
+   * the repair door for an attached-but-not-armed handoff. Bound at
+   * registration (see `armFirstFrame`) so the route never learns the resolver
+   * or the admission modules. Optional: when absent the door answers 503,
+   * like every other capability that is not wired.
+   */
+  armFirstFrame?:
+    | ((input: {
+        userId: string;
+        sessionId: string;
+        generationId: string;
+      }) => Promise<
+        | { ok: true; frame: Record<string, unknown> }
+        | { ok: false; reason: string }
+      >)
     | undefined,
 ): Router {
   const router = express.Router();
@@ -616,6 +645,69 @@ export function createSessionRoutes(
     apply: (userId, sessionId, update) =>
       sessionService.updatePromptForUser(userId, sessionId, update),
   });
+
+  // Issue #136: repair an attached-but-not-armed handoff. The take is read
+  // from the session it is already in — never re-admitted, never re-stored,
+  // never a second take — and armed as keyframes[0] with its durable handle,
+  // so a reopened session restores the accepted picture rather than guessing
+  // one. The refusals are the arm's own truthful answers, not errors to
+  // launder: a take that has not reached its session belongs to the
+  // attachment retry (409), and a picture with no durable handle is refused
+  // because a frame armed with only an expiring URL is not a completed
+  // handoff (422).
+  router.post(
+    "/:sessionId/first-frame/arm",
+    asyncHandler(async (req: Request, res: Response) => {
+      const userId = requireCreatorId(req, res);
+      if (!userId) return;
+      const sessionId = requireRouteParam(req, res, "sessionId");
+      if (!sessionId) return;
+      const parsed = requireBody(ArmFirstFrameSchema, req, res);
+      if (!parsed.ok) return;
+      if (!armFirstFrame) {
+        res.status(503).json({
+          success: false,
+          error: "First-frame arming is not available right now.",
+        });
+        return;
+      }
+      try {
+        const result = await armFirstFrame({
+          userId,
+          sessionId,
+          generationId: parsed.value.generationId,
+        });
+        if (result.ok) {
+          res.json({
+            success: true,
+            data: {
+              arming: { state: "armed", generationId: parsed.value.generationId },
+              keyframe: result.frame,
+            },
+          } satisfies ApiResponse<{
+            arming: { state: "armed"; generationId: string };
+            keyframe: Record<string, unknown>;
+          }>);
+          return;
+        }
+        const notAttachedYet = result.reason.includes(
+          "not saved in this session",
+        );
+        res.status(notAttachedYet ? 409 : 422).json({
+          success: false,
+          error: result.reason,
+        } satisfies ApiResponse<never>);
+      } catch (error) {
+        if (handleSessionMutationError(error, res)) return;
+        // The arming write itself could not land (storage unavailable): a
+        // 503 that says the debt remains, not a 500 that implies damage.
+        res.status(503).json({
+          success: false,
+          error: "Couldn’t arm the first frame — try again.",
+        } satisfies ApiResponse<never>);
+      }
+    }),
+  );
 
   registerSessionMutation({
     path: "/:sessionId/highlights",

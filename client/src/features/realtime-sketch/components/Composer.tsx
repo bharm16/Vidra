@@ -30,6 +30,8 @@ interface ComposerProps {
   acceptance: AcceptanceStatus;
   /** Re-attach a made-but-not-saved acceptance (issue #134). */
   onRetryAttachment: () => void;
+  /** Arm a saved-but-unarmed acceptance as the first frame (issue #136). */
+  onRetryArming: () => void;
   strengthPopoverOpen: boolean;
   onToggleStrengthPopover: () => void;
 }
@@ -42,6 +44,7 @@ export function Composer({
   onUseThis,
   acceptance,
   onRetryAttachment,
+  onRetryArming,
   strengthPopoverOpen,
   onToggleStrengthPopover,
 }: ComposerProps): React.ReactElement {
@@ -175,7 +178,8 @@ export function Composer({
           disabled={
             liveOutput === null ||
             acceptance.state === "accepting" ||
-            acceptance.state === "saving"
+            acceptance.state === "saving" ||
+            acceptance.state === "arming"
           }
           onClick={() => {
             if (liveOutput !== null) onUseThis(liveOutput);
@@ -215,6 +219,32 @@ export function Composer({
             </Button>
           ) : null}
           {acceptance.state === "unattached" && acceptance.message ? (
+            <span>{acceptance.message}</span>
+          ) : null}
+        </div>
+      ) : null}
+      {acceptance.state === "unarmed" || acceptance.state === "arming" ? (
+        // Issue #136: saved-but-not-armed, stated just as plainly. The take
+        // IS in its session — the retry arms that same take as the session's
+        // first frame through the arm door, never a re-accept and never a
+        // second take.
+        <div className="le-accept-error" data-testid="live-editor-accept-unarmed">
+          <span>
+            {acceptance.state === "arming"
+              ? "Setting the first frame…"
+              : "Picture saved, but not set as the first frame"}
+          </span>
+          {acceptance.state === "unarmed" ? (
+            <Button
+              type="button"
+              variant="link"
+              className="text-foreground !h-auto p-0 underline underline-offset-2 hover:opacity-80"
+              onClick={onRetryArming}
+            >
+              Set it
+            </Button>
+          ) : null}
+          {acceptance.state === "unarmed" && acceptance.message ? (
             <span>{acceptance.message}</span>
           ) : null}
         </div>

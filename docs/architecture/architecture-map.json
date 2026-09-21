@@ -350,6 +350,11 @@
     },
     {
       "method": "POST",
+      "fullPath": "/api/sessions/:sessionId/first-frame/arm",
+      "sourceFile": "server/src/routes/sessions.routes.ts"
+    },
+    {
+      "method": "POST",
       "fullPath": "/api/sessions/:sessionId/generations/:generationId/archive",
       "sourceFile": "server/src/routes/sessions.routes.ts"
     },

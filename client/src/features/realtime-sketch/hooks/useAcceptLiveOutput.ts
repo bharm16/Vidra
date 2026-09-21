@@ -2,8 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { acceptLiveOutput } from "../api/acceptLiveOutput";
-import { retryPictureAttachment } from "@/features/generations/api/takeAttachment";
+import {
+  retryFirstFrameArming,
+  retryPictureAttachment,
+} from "@/features/generations/api/takeAttachment";
 import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
+import type { FirstFrameArming } from "@shared/schemas/firstFrame.schemas";
 import type { LiveOutput } from "./generationReducer";
 
 /**
@@ -16,14 +20,16 @@ import type { LiveOutput } from "./generationReducer";
  * request is in flight; it changes what the editor displays and nothing about
  * what was accepted.
  *
- * The outcome is reported, never assumed (issue #134): the response's
- * attachment fact decides what the creator is told. `attached` is the only
- * state that moves them into the session; `pending` or `failed` is a picture
- * that was MADE but not SAVED — shown truthfully as such, with a retry that
- * re-attaches the same take through the shared record door (never a re-accept,
- * never a second take). The schema requires the fact, so a response that
- * cannot state its outcome is refused at the wire and lands here as a
- * failure — never silently read as "attached".
+ * The outcome is reported, never assumed (issues #134 and #136): the
+ * response's attachment fact AND its arming fact decide what the creator is
+ * told. `attached` + `armed` is the only combination that moves them into the
+ * session. An unresolved attachment is a picture made but not saved — shown
+ * truthfully as such, with a retry that re-attaches the same take through the
+ * shared record door. An attached take whose arming failed is saved but not
+ * set as the first frame — shown truthfully as such, with a retry that arms
+ * the SAME take through the arm door: no re-accept, no re-admission, no
+ * second take. The schema requires both facts, so a response that cannot
+ * state its outcome is refused at the wire — never silently read as success.
  *
  * The verb is accept, never "Keep" — Keep ends the clip loop (ADR-0010).
  */
@@ -40,6 +46,15 @@ export type AcceptanceStatus =
   | { state: "unattached"; attachment: TakeAttachment; message?: string }
   /** The retry's record-POST is in flight; the same take, nothing else. */
   | { state: "saving"; attachment: TakeAttachment }
+  /**
+   * Saved-but-not-armed (issue #136): the take reached its session, but the
+   * arming write did not land — the reopened session would have no first
+   * frame. `sessionId` and `generationId` address the arm door, which arms
+   * the SAME take from the session's own record.
+   */
+  | { state: "unarmed"; sessionId: string; generationId: string; message?: string }
+  /** The arm door is in flight; the same take, nothing else. */
+  | { state: "arming"; sessionId: string; generationId: string }
   | { state: "failed"; message: string };
 
 export interface UseAcceptLiveOutputReturn {
@@ -47,6 +62,8 @@ export interface UseAcceptLiveOutputReturn {
   accept: (output: LiveOutput) => void;
   /** Re-attach the made-but-not-saved take — the SAME take, no re-accept. */
   retryAttachment: () => void;
+  /** Arm the saved-but-unarmed take as the first frame — the SAME take. */
+  retryArming: () => void;
 }
 
 /**
@@ -109,6 +126,9 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
   editorScopeRef.current ??= mintEditorScope();
   // The current attempt; a newer press supersedes an in-flight one.
   const attemptRef = useRef<AcceptanceAttempt | null>(null);
+  // The arming fact the last unresolved acceptance carried (issue #136): it
+  // decides whether a successful attachment retry must be followed by the arm.
+  const armingRef = useRef<FirstFrameArming | null>(null);
   // The acceptance applies where it was pressed from: the live editor. If the
   // creator has left (the editor unmounted), the acceptance still happened —
   // the take is durable server-side, and its outcome, whatever it is, is the
@@ -145,21 +165,38 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
           // response for a superseded attempt — or one whose editor is gone —
           // is dropped; the take itself is already safe server-side.
           if (!mountedRef.current || attemptRef.current !== attempt) return;
-          // Issue #134: the attachment fact decides what "accepted" means
-          // here. Only `attached` lands the creator in the session; an
-          // unresolved attachment is a picture made but not saved — the
-          // truthful state, with its retry — never a navigation into a
-          // session whose space does not hold the take.
+          // Issues #134 and #136: BOTH facts decide what "accepted" means
+          // here. An unresolved attachment is a picture made but not saved —
+          // the truthful state, with its retry. An attached take whose arming
+          // failed is saved but not the first frame yet — also truthful, with
+          // its own retry through the arm door. Only attached + armed lands
+          // the creator in the session.
           if (result.attachment.state === "attached") {
+            if (result.arming.state === "failed") {
+              apply({
+                state: "unarmed",
+                sessionId: result.sessionId,
+                generationId: result.generationId,
+              });
+              return;
+            }
             apply({ state: "idle" });
+            // The stale fact must not follow a settled acceptance into the
+            // next one.
+            armingRef.current = null;
             // The creator lands in the session their picture now lives in,
             // armed as its first frame and ready for Make it move. The live
             // editor is left running behind them and keeps nothing
-            // (ADR-0017).
+            // (ADR-0017). `not-owed` arming (a named destination) was never
+            // this bridge's to arm, so it lands the same way.
             navigate(`/session/${result.sessionId}`);
             return;
           }
           apply({ state: "unattached", attachment: result.attachment });
+          // Remember what the arming fact said: if the arming was attempted
+          // while the take was not yet saved, the attachment retry below is
+          // what changes that — and the arm must follow it.
+          armingRef.current = result.arming;
         })
         .catch((error: unknown) => {
           if (!mountedRef.current || attemptRef.current !== attempt) return;
@@ -198,6 +235,26 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
           return latest.state === "saving" && latest.attachment === attachment;
         };
         if (!ownsSurface()) return;
+        // Issue #136: an arming that was refused because the take was not
+        // saved yet is now unblocked — the take is in its session. One
+        // best-effort arm before landing, so the reopened session keeps the
+        // promise "armed as its first frame". A failure here must not eat the
+        // attachment success: the debt stays repairable through the arm door,
+        // which is exactly where the creator lands if this failed.
+        if (armingRef.current?.state === "failed") {
+          void retryFirstFrameArming(
+            attachment.sessionId,
+            attachment.generationId,
+          )
+            .catch(() => undefined)
+            .then(() => {
+              if (!ownsSurface()) return;
+              apply({ state: "idle" });
+              if (mountedRef.current)
+                navigate(`/session/${attachment.sessionId}`);
+            });
+          return;
+        }
         apply({ state: "idle" });
         // The take is in its session now — the landing "Use this" always
         // promised. Only a creator still looking at the editor is moved; the
@@ -220,5 +277,48 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
       });
   }, [apply, navigate]);
 
-  return { status, accept, retryAttachment };
+  /**
+   * The creator's side of a saved-but-not-armed outcome (issue #136): arm the
+   * SAME take through the server's arm door, which reads the take's own
+   * persisted record and durable handle from the session it is already in.
+   * Never a re-accept, never a re-admission, never a second take. A failure
+   * keeps the debt and says why — the retry stays usable.
+   */
+  const retryArming = useCallback((): void => {
+    const current = statusRef.current;
+    if (current.state !== "unarmed") return;
+    const { sessionId, generationId } = current;
+    apply({ state: "arming", sessionId, generationId });
+    void retryFirstFrameArming(sessionId, generationId)
+      .then(() => {
+        const latest = statusRef.current;
+        if (
+          latest.state !== "arming" ||
+          latest.generationId !== generationId
+        ) {
+          return;
+        }
+        apply({ state: "idle" });
+        // The frame is armed — the landing "Use this" promised. Only a
+        // creator still looking at the editor is moved (ADR-0017).
+        if (mountedRef.current) navigate(`/session/${sessionId}`);
+      })
+      .catch((error: unknown) => {
+        const latest = statusRef.current;
+        if (latest.state !== "arming" || latest.generationId !== generationId) {
+          return;
+        }
+        apply({
+          state: "unarmed",
+          sessionId,
+          generationId,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Could not set the first frame",
+        });
+      });
+  }, [apply, navigate]);
+
+  return { status, accept, retryAttachment, retryArming };
 }

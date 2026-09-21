@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { TakeSourceInputSchema } from "./session.schemas.js";
 import { TakeAttachmentSchema } from "./attachment.schemas.js";
+import { FirstFrameArmingSchema } from "./firstFrame.schemas.js";
 
 /**
  * Where a studio project came from, captured at the moment the creator
@@ -117,6 +118,15 @@ export const StudioUseInSessionResultSchema = z.object({
    * the same take, no re-upload, no second admission.
    */
   attachment: TakeAttachmentSchema.optional(),
+  /**
+   * The arming fact (issue #136): arming the returned picture as the
+   * session's first frame is the point of the press, and it is a separate
+   * outcome from the attachment — the two writes fail independently. Required
+   * whenever a take was admitted; only `armed` says the reopened session will
+   * restore this picture as its first frame, and `failed` is repairable
+   * through the arm door without readmission and without a second take.
+   */
+  arming: FirstFrameArmingSchema,
 });
 
 export type StudioUseInSessionResult = z.infer<
