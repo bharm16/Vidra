@@ -43,6 +43,7 @@ function renderComposer(
       onUseThis={vi.fn()}
       acceptance={acceptance}
       onRetryAttachment={onRetry}
+      onRetryArming={vi.fn()}
       strengthPopoverOpen={false}
       onToggleStrengthPopover={vi.fn()}
     />,
@@ -112,6 +113,7 @@ describe("the composer shows made-but-not-saved truthfully (issue #134)", () => 
         onUseThis={vi.fn()}
         acceptance={{ state: "accepting" }}
         onRetryAttachment={vi.fn()}
+        onRetryArming={vi.fn()}
         strengthPopoverOpen={false}
         onToggleStrengthPopover={vi.fn()}
       />,

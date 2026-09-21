@@ -5,7 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * client validates it at the wire (ADR-0022 decision 6). `fetch` is this
  * module's own external boundary (same seam the submission-identity test
  * uses): a studio response whose attachment does not validate must be
- * rejected, never guessed into a saved-or-not-saved state.
+ * rejected, never guessed into a saved-or-not-saved state. Issue #136: the
+ * arming fact is required by the same wire — fixtures carry a settled one.
  */
 
 vi.mock("@/services/http/firebaseAuth", () => ({
@@ -34,6 +35,7 @@ const returnedBody = (attachment: unknown): unknown => ({
     ancestorGenerationId: null,
     createdSession: false,
     attachment,
+    arming: { state: "armed", generationId: "take-2" },
   },
 });
 
@@ -67,6 +69,7 @@ describe("regression #135: the attachment outcome is validated at the wire", () 
               reason: "session write failed",
               record: { id: "take-2", mediaType: "image", origin: "studio" },
             },
+            arming: { state: "armed", generationId: "take-2" },
           },
         }),
       ),

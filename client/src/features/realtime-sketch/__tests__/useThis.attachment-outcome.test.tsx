@@ -47,6 +47,13 @@ function output(overrides: Partial<LiveOutput> & { requestId: string }): LiveOut
 
 function resultWith(
   attachment: SketchAcceptResult["attachment"],
+  // Issue #136: the arming fact rides every settled acceptance. Fixtures
+  // that do not name it arm cleanly — these tests are about the attachment
+  // fact, which fails first.
+  arming: SketchAcceptResult["arming"] = {
+    state: "armed",
+    generationId: attachment.generationId,
+  },
 ): SketchAcceptResult {
   return {
     sessionId: attachment.sessionId,
@@ -55,6 +62,7 @@ function resultWith(
     imageUrl: "https://storage.example.com/asset-1",
     createdSession: true,
     attachment,
+    arming,
   };
 }
 

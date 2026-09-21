@@ -27,6 +27,10 @@ function renderAction(
     imageId: string | null,
     attachment: TakeAttachment,
   ) => Promise<{ ok: boolean; message?: string }>,
+  onRetryArming?: (
+    sessionId: string,
+    generationId: string,
+  ) => Promise<{ ok: boolean; message?: string }>,
 ) {
   return render(
     <MemoryRouter>
@@ -34,6 +38,7 @@ function renderAction(
         selectedImageId={selectedImageId}
         onUse={onUse}
         {...(onRetryAttachment ? { onRetryAttachment } : {})}
+        {...(onRetryArming ? { onRetryArming } : {})}
       />
     </MemoryRouter>,
   );
@@ -56,6 +61,7 @@ const returned: UseInSessionOutcome = {
     ancestorGenerationId: "take-1",
     createdSession: false,
     attachment: attached,
+    arming: { state: "armed", generationId: "take-2" },
   },
 };
 
@@ -210,6 +216,37 @@ describe("UseInSessionAction", () => {
       await screen.findByText(/Couldn’t confirm whether it saved/),
     ).toBeInTheDocument();
     expect(screen.queryByText("Added to the session.")).toBeNull();
+  });
+
+  it("shows saved-but-not-set with the arm retry when the arming failed on an attached take, and arms the SAME take (issue #136)", async () => {
+    const onUse = vi.fn().mockResolvedValue({
+      state: "returned",
+      result: {
+        ...returned.result,
+        arming: { state: "failed", generationId: "take-2", reason: "keyframe write failed" },
+      },
+    } satisfies UseInSessionOutcome);
+    const onRetryArming =
+      vi.fn().mockResolvedValue({ ok: true as const });
+    renderAction(onUse, "img-1", undefined, onRetryArming);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Use this in the session" }),
+    );
+
+    // The take IS saved — this band is never a save failure — but the frame
+    // is not armed, and the retry addresses it by identity.
+    expect(
+      await screen.findByText(/Saved, but not set as the session’s first frame/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Added to the session.")).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Set it" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Added to the session.")).toBeInTheDocument(),
+    );
+    expect(onRetryArming).toHaveBeenCalledWith("session-1", "take-2");
   });
 
   it("asks before starting a new session when the origin session is gone", async () => {

@@ -183,6 +183,7 @@ export function LiveEditor({
             onUseThis={acceptance.accept}
             acceptance={acceptance.status}
             onRetryAttachment={acceptance.retryAttachment}
+            onRetryArming={acceptance.retryArming}
             strengthPopoverOpen={openPopover === "strength"}
             onToggleStrengthPopover={() =>
               setOpenPopover((open) =>

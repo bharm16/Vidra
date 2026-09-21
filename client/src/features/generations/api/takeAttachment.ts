@@ -2,10 +2,12 @@ import { z } from "zod";
 import { apiClient } from "@/services/ApiClient";
 import { logger } from "@/services/LoggingService";
 import { TakeAttachmentSchema } from "@shared/schemas/attachment.schemas";
+import { FirstFrameArmingSchema } from "@shared/schemas/firstFrame.schemas";
 import type {
   TakeAttachment,
   TakeAttachmentState,
 } from "@shared/schemas/attachment.schemas";
+import type { FirstFrameArming } from "@shared/schemas/firstFrame.schemas";
 
 /**
  * Retrying an attachment — the creator's side of ADR-0022 decision 6.
@@ -40,6 +42,14 @@ const OwedPictureAttachmentsResponseSchema = z
   })
   .passthrough();
 
+const ArmFirstFrameResponseSchema = z
+  .object({
+    success: z.boolean(),
+    error: z.string().optional(),
+    data: z.object({ arming: FirstFrameArmingSchema }).optional(),
+  })
+  .passthrough();
+
 /**
  * Re-send the picture record the failed attachment handed back, under the same
  * take identity. The record is the server's own — the client only holds it
@@ -63,6 +73,34 @@ export async function retryPictureAttachment(
   if (!response.success) {
     throw new Error(response.error ?? "Could not save this picture");
   }
+}
+
+/**
+ * Arm an already-saved take as its session's first frame — the retry half of
+ * the arming boundary (issue #136). Nothing about the picture travels on this
+ * request: the take is named by the identity admission minted for it, and the
+ * server reads the record and its durable handle from the session the take is
+ * already in. It cannot re-admit, re-store media, or mint a second take. The
+ * server's refusals are the truth and come back as thrown errors carrying its
+ * own sentence: a take that is not saved yet belongs to the attachment retry
+ * first, and a picture with no durable handle is not a completable handoff.
+ */
+export async function retryFirstFrameArming(
+  sessionId: string,
+  generationId: string,
+): Promise<FirstFrameArming> {
+  const payload = (await apiClient.post(
+    `/sessions/${encodeURIComponent(sessionId)}/first-frame/arm`,
+    { generationId },
+  )) as unknown;
+
+  const response = ArmFirstFrameResponseSchema.parse(payload);
+  if (!response.success) {
+    throw new Error(response.error ?? "Could not set the first frame");
+  }
+  return (
+    response.data?.arming ?? { state: "armed", generationId }
+  );
 }
 
 /**

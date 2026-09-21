@@ -21,6 +21,7 @@ import {
   ensureAcceptanceSession,
   type AcceptanceSessionRead,
 } from "./acceptanceSessionOwnership";
+import { armFirstFrame } from "./armFirstFrame";
 import type { OwnedPictureResolver } from "@services/owned-media";
 
 /**
@@ -64,9 +65,12 @@ import type { OwnedPictureResolver } from "@services/owned-media";
  *    durable and resumable and deleting it would destroy committed work
  *    (issue #130). A destination the creator already had is never touched.
  * 7. **Arm the first frame.** Last, because it needs the take identity step 5
- *    mints, and non-fatal: the take is durable and in its session by then, and
- *    destroying a real picture to punish a missing arm would be the wrong
- *    trade (the same reasoning `attachTakeToSession` records one layer down).
+ *    mints, and a separately observable outcome (issue #136): the take is
+ *    durable and in its session by then, so destroying a real picture to
+ *    punish a missing arm would be the wrong trade (the same reasoning
+ *    `attachTakeToSession` records one layer down) — but the outcome is
+ *    REPORTED, never swallowed into a log, and a failed arm is repairable
+ *    through the arm door without readmission and without a second take.
  */
 
 export interface AcceptLiveOutputSessionPort extends AdmissionSessionPort {
@@ -378,37 +382,44 @@ export async function acceptLiveOutput(
 
   const { take } = admitted;
 
-  // Armed last, and only reported through the log: the take is durable and in
-  // its session, so a failed arm costs the creator one click, not a picture.
+  // Armed last (ADR-0011 D4 lives on the write itself — see `armFirstFrame`),
+  // and OWED whenever this acceptance owns the session it landed in: the one
+  // it minted, or the one an earlier press of the SAME acceptance minted. A
+  // re-press therefore arms exactly as a first press does — the retry that
+  // repairs an attached-but-not-armed take never re-admits (the boundary
+  // replays) and never mints a second take (issue #136, retry parity).
   //
-  // Only in a session this bridge minted. A destination the caller named is a
-  // session the creator is already working in, with a first frame of its own;
-  // replacing it is a decision for the surface that names destinations, and
-  // that surface does not exist yet (ADR-0022, "open and deliberately not
-  // decided"). Admitting the take there is the whole of what was asked for.
-  try {
-    if (mintedSessionId) {
-      await sessionService.updatePromptForUser(userId, mintedSessionId, {
-        // keyframes[0] is the armed first frame (ADR-0011 D4): hydration
-        // re-arms from the head of the array, which is what makes the frame a
-        // session fact rather than a memory-only one.
-        keyframes: [
-          {
-            id: take.generationId,
-            url: take.imageUrl,
-            source: "generation",
-            assetId: take.assetId,
-            storagePath: take.storagePath,
-            generationId: take.generationId,
-            sourcePrompt: accepted.inputs.prompt,
-          },
-        ],
-      });
-    }
-  } catch (error) {
+  // A destination the caller named is a session the creator is already working
+  // in, with a first frame of its own; replacing it is a decision for the
+  // surface that names destinations, and that surface does not exist yet
+  // (ADR-0022, "open and deliberately not decided"). Admitting the take there
+  // is the whole of what was asked for, and the arming fact says `not-owed`
+  // rather than pretending.
+  const armingOwed = accepted.destination === undefined;
+  const arming: SketchAcceptResult["arming"] = armingOwed
+    ? await armFirstFrame(
+        { sessionService, ...(resolver ? { resolver } : {}) },
+        { userId, sessionId, generationId: take.generationId },
+      ).then(
+        (armed): SketchAcceptResult["arming"] =>
+          armed.ok
+            ? { state: "armed", generationId: take.generationId }
+            : {
+                state: "failed",
+                generationId: take.generationId,
+                reason: armed.reason,
+              },
+        (error: unknown): SketchAcceptResult["arming"] => ({
+          state: "failed",
+          generationId: take.generationId,
+          reason: error instanceof Error ? error.message : String(error),
+        }),
+      )
+    : { state: "not-owed", generationId: take.generationId };
+  if (arming.state === "failed") {
     log.error(
       "Accepted picture was admitted but could not be armed as the first frame",
-      error instanceof Error ? error : new Error(String(error)),
+      new Error(arming.reason ?? "arming failed"),
       { userId, sessionId, generationId: take.generationId },
     );
   }
@@ -429,6 +440,11 @@ export async function acceptLiveOutput(
       // it, and a `failed` one is made-but-not-saved with the record a retry
       // re-sends — same take, no re-store, no re-render.
       attachment: take.attachment,
+      // Issue #136: the arming outcome is a second, separately observable
+      // fact. Only `armed` says the reopened session will restore this exact
+      // picture as its first frame; `failed` is repairable through the arm
+      // door without readmission and without a second take.
+      arming,
     },
   };
 }

@@ -24,7 +24,10 @@ import {
   returnStudioImageToSession,
   type UseInSessionOutcome,
 } from "../api/studioApi";
-import { retryPictureAttachment } from "@/features/generations/api/takeAttachment";
+import {
+  retryFirstFrameArming,
+  retryPictureAttachment,
+} from "@/features/generations/api/takeAttachment";
 import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { StudioProject, StudioTurn } from "../api/schemas";
 import {
@@ -89,6 +92,16 @@ export interface UseStudioProjectReturn {
   retryReturnAttachment: (
     imageId: string | null,
     attachment: TakeAttachment,
+  ) => Promise<{ ok: boolean; message?: string }>;
+  /**
+   * Arm a returned take as its session's first frame through the arm door
+   * (issue #136): the take is named by the identity admission minted for it,
+   * and the server reads its record and durable handle from the session it is
+   * already in. No re-upload, no re-admission, no second take.
+   */
+  retryReturnArming: (
+    sessionId: string,
+    generationId: string,
   ) => Promise<{ ok: boolean; message?: string }>;
 }
 
@@ -462,6 +475,29 @@ export function useStudioProject(
     [isCurrentProject],
   );
 
+  /**
+   * The arm half of the handoff (issue #136). The take rides by identity —
+   * the server's own record in the session it is already in — so this cannot
+   * re-admit, re-store media, or mint a second take. Late discipline (#129)
+   * is not needed here: the door addresses the session and take by identity,
+   * so a response landing after the creator opened another project still
+   * armed exactly the take it named.
+   */
+  const retryReturnArming = useCallback(
+    async (
+      sessionId: string,
+      generationId: string,
+    ): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await retryFirstFrameArming(sessionId, generationId);
+        return { ok: true };
+      } catch (error) {
+        return { ok: false, message: describeError(error) };
+      }
+    },
+    [],
+  );
+
   return {
     state,
     dispatch,
@@ -473,5 +509,6 @@ export function useStudioProject(
     removeAttachment,
     returnImageToSession,
     retryReturnAttachment,
+    retryReturnArming,
   };
 }

@@ -30,6 +30,10 @@ import type { UseInSessionOutcome } from "../api/studioApi";
  *    take's own record under the same identity — no re-upload, no second
  *    take. A response with no attachment fact at all is an unknown, not a
  *    success, and says so.
+ *  - The arming outcome (issue #136) is a further fact, read separately. Only
+ *    `armed` says the reopened session will restore this picture as its first
+ *    frame; `failed` reads as saved-but-not-set with its own retry through the
+ *    arm door — the SAME take, read from the session's own record.
  */
 
 interface UseInSessionActionProps {
@@ -44,12 +48,21 @@ interface UseInSessionActionProps {
     imageId: string | null,
     attachment: TakeAttachment,
   ) => Promise<{ ok: boolean; message?: string }>;
+  /**
+   * The arm-door retry (issue #136), wired by the hook to the shared arm
+   * contract. Best-effort on the save path; explicit on the unarmed band.
+   */
+  onRetryArming?: (
+    sessionId: string,
+    generationId: string,
+  ) => Promise<{ ok: boolean; message?: string }>;
 }
 
 export function UseInSessionAction({
   selectedImageId,
   onUse,
   onRetryAttachment,
+  onRetryArming,
 }: UseInSessionActionProps): React.ReactElement {
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<UseInSessionOutcome | null>(null);
@@ -91,6 +104,16 @@ export function UseInSessionAction({
     try {
       const result = await onRetryAttachment(pressedImageId, attachment);
       if (result.ok) {
+        // Issue #136: an arming that was refused because the take was not yet
+        // saved is unblocked by this success — one best-effort arm before the
+        // state reads "added", so the reopened session keeps the promise. A
+        // failure leaves the frame unarmed rather than eating the save; the
+        // arm door below stays available.
+        const outcomeArming =
+          outcome?.state === "returned" ? outcome.result.arming : undefined;
+        if (outcomeArming?.state === "failed" && onRetryArming) {
+          await onRetryArming(attachment.sessionId, attachment.generationId);
+        }
         // The take is in its session — the truthful end state, presented
         // exactly like a return that attached the first time.
         setOutcome((current) =>
@@ -100,6 +123,10 @@ export function UseInSessionAction({
                 result: {
                   ...current.result,
                   attachment: { ...attachment, state: "attached" },
+                  arming:
+                    outcomeArming?.state === "failed"
+                      ? { state: "armed", generationId: attachment.generationId }
+                      : current.result.arming,
                 },
               }
             : current,
@@ -112,8 +139,36 @@ export function UseInSessionAction({
     }
   };
 
+  const retryArming = async (sessionId: string, generationId: string): Promise<void> => {
+    if (!onRetryArming) return;
+    setBusy(true);
+    setRetryFailure(null);
+    try {
+      const result = await onRetryArming(sessionId, generationId);
+      if (result.ok) {
+        // The frame is armed — the truthful end state.
+        setOutcome((current) =>
+          current?.state === "returned"
+            ? {
+                ...current,
+                result: {
+                  ...current.result,
+                  arming: { state: "armed", generationId },
+                },
+              }
+            : current,
+        );
+      } else {
+        setRetryFailure(result.message ?? "Could not set the first frame");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (outcome?.state === "returned") {
     const attachment = outcome.result.attachment;
+    const arming = outcome.result.arming;
     if (attachment?.state === "failed") {
       return (
         <div className="st-topbar-right flex items-center gap-2">
@@ -156,6 +211,38 @@ export function UseInSessionAction({
           <span className="st-topbar-label">
             Couldn’t confirm whether it saved.
           </span>
+          <Link
+            className="st-topbar-label underline"
+            to={`/session/${outcome.result.sessionId}`}
+          >
+            Open it
+          </Link>
+        </div>
+      );
+    }
+    // The take is saved; the arming fact is the second truth (issue #136).
+    if (arming?.state === "failed") {
+      return (
+        <div className="st-topbar-right flex items-center gap-2">
+          <span className="st-topbar-label">
+            Saved, but not set as the session’s first frame.
+          </span>
+          {retryFailure ? (
+            <span className="st-topbar-label">{retryFailure}</span>
+          ) : null}
+          <Button
+            variant="ghost"
+            type="button"
+            disabled={busy}
+            onClick={() =>
+              void retryArming(
+                outcome.result.sessionId,
+                arming.generationId,
+              )
+            }
+          >
+            {busy ? "Setting…" : "Set it"}
+          </Button>
           <Link
             className="st-topbar-label underline"
             to={`/session/${outcome.result.sessionId}`}

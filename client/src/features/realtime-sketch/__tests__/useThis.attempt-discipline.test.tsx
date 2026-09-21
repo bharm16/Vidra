@@ -49,12 +49,17 @@ const acceptanceResult: SketchAcceptResult = {
   imageUrl: "https://storage.example.com/asset-1",
   createdSession: true,
   // Issue #134: the response now carries the attachment fact; these fixtures
-  // describe settled acceptances — the take is in its session.
+  // describe settled acceptances — the take is in its session. Issue #136:
+  // the arming fact is settled with it.
   attachment: {
     state: "attached",
     generationId: "take-1",
     sessionId: "session-new",
     promptVersionId: "v-root",
+  },
+  arming: {
+    state: "armed",
+    generationId: "take-1",
   },
 };
 

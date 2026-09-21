@@ -121,6 +121,7 @@ export function StudioPage(): React.ReactElement {
               selectedImageId={state.selectedImageId}
               onUse={studio.returnImageToSession}
               onRetryAttachment={studio.retryReturnAttachment}
+              onRetryArming={studio.retryReturnArming}
             />
           </div>
         </div>

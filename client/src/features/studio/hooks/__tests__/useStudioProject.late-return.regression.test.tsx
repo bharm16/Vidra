@@ -134,6 +134,7 @@ describe("regression #129: a return that settles after a project switch", () => 
           imageUrl: "https://storage.example.com/returned",
           ancestorGenerationId: null,
           createdSession: false,
+          arming: { state: "armed", generationId: "take-1" },
         },
       });
 
@@ -203,6 +204,7 @@ describe("regression #129: a return that settles after a project switch", () => 
           imageUrl: "https://storage.example.com/returned",
           ancestorGenerationId: null,
           createdSession: false,
+          arming: { state: "armed", generationId: "take-1" },
         },
       });
 

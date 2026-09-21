@@ -156,4 +156,51 @@ describe("usePromptLoader", () => {
     });
     expect(params.navigate).toHaveBeenCalledTimes(1);
   });
+
+  it("hands the reopened session's persisted first-frame identity to the keyframe selection unchanged (issue #136)", async () => {
+    // A handoff session, reopened after the URL on the accepted frame has
+    // expired. The persisted keyframes[0] IS the accepted picture's identity
+    // — generationId plus durable handle — and the loader's only job is to
+    // pass it through to the selection step untouched.
+    const persistedKeyframes = [
+      {
+        id: "take-accepted",
+        url: "https://storage.example.com/asset-accepted?sig=expired",
+        source: "generation",
+        assetId: "asset-accepted",
+        storagePath: "image-previews/user-1/asset-accepted",
+        generationId: "take-accepted",
+        sourcePrompt: "an ergonomic desk lamp glowing",
+      },
+    ];
+    mockGetById.mockResolvedValue({
+      id: "session-1",
+      uuid: "uuid-1",
+      input: "an ergonomic desk lamp glowing",
+      output: "an ergonomic desk lamp glowing",
+      keyframes: persistedKeyframes,
+      versions: [
+        {
+          versionId: "v-root",
+          prompt: "an ergonomic desk lamp glowing",
+          timestamp: "2026-09-17T00:00:00.000Z",
+          generations: [{ id: "take-accepted", mediaType: "image" }],
+        },
+      ],
+    });
+    const onLoadKeyframes = vi.fn();
+    const params = buildParams({ sessionId: "session-1" });
+
+    renderHook(() =>
+      usePromptLoader({
+        ...params,
+        user: { uid: "user-1" },
+        onLoadKeyframes,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(onLoadKeyframes).toHaveBeenCalledWith(persistedKeyframes);
+    });
+  });
 });

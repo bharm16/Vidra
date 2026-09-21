@@ -3,6 +3,7 @@ import {
   acceptLiveOutput,
   type AcceptLiveOutputDependencies,
   type AcceptLiveOutputRequest,
+  type AcceptLiveOutputSessionPort,
 } from "../acceptLiveOutput";
 import type { AdmissionIdempotencyPort } from "../admitPictureTake";
 import { SessionService } from "@services/sessions/SessionService";
@@ -638,6 +639,137 @@ describe("acceptLiveOutput (ADR-0022 decision 5, issue #87)", () => {
     expect(
       mediaStore.calls.filter((call) => call.contentType === "image/webp"),
     ).toHaveLength(1);
+  });
+
+  it("reports an arming failure after a successful attach as a failed arming fact, and a re-press arms the SAME take without minting another (issue #136)", async () => {
+    const { deps, store, mediaStore } = fixture;
+    // The take attaches; the arming write — the step after it — dies once.
+    // The real SessionService sits under a façade whose arming write throws
+    // exactly once, so ONLY the arming fails.
+    const inner = deps.sessionService;
+    let failNextArm = true;
+    const gated = Object.create(inner) as AcceptLiveOutputSessionPort;
+    gated.updatePromptForUser = async (userId, sessionId, updates) => {
+      if (failNextArm) {
+        failNextArm = false;
+        throw new Error("keyframe write failed");
+      }
+      return inner.updatePromptForUser(userId, sessionId, updates);
+    };
+    deps.sessionService = gated;
+
+    const first = await acceptLiveOutput(deps, request());
+    expect(first.state).toBe("accepted");
+    if (first.state !== "accepted") return;
+
+    // VISIBLE: the attachment fact says the take reached its session, and the
+    // arming fact says the frame did not land. Success no longer hides the
+    // failure behind a log line.
+    expect(first.result.attachment.state).toBe("attached");
+    expect(first.result.arming).toEqual({
+      state: "failed",
+      generationId: first.result.generationId,
+      reason: "keyframe write failed",
+    });
+    const session = onlySession(store);
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    expect(session.prompt?.keyframes).toBeUndefined();
+
+    // REPAIRABLE without readmission and without a second take: a re-press
+    // replays the admission — the SAME take, one store of the media — and
+    // arms it. This invocation did NOT create the session; it arms anyway.
+    const retry = await acceptLiveOutput(deps, request());
+    expect(retry.state).toBe("accepted");
+    if (retry.state !== "accepted") return;
+    expect(retry.result.generationId).toBe(first.result.generationId);
+    expect(retry.result.arming).toEqual({
+      state: "armed",
+      generationId: first.result.generationId,
+    });
+    expect(retry.result.attachment.state).toBe("attached");
+    const after = onlySession(store);
+    expect(after.prompt?.keyframes?.[0]?.generationId).toBe(
+      first.result.generationId,
+    );
+    expect(after.prompt?.keyframes?.[0]?.storagePath).toContain(OWNER);
+    expect(takesOf(after, versionId!)).toHaveLength(1);
+    expect(
+      mediaStore.calls.filter((call) => call.contentType === "image/webp"),
+    ).toHaveLength(1);
+  });
+
+  it("re-arms the same frame when a settled acceptance is re-pressed — the arm never depends on which invocation created the session (issue #136)", async () => {
+    const { deps, store } = fixture;
+
+    const first = await acceptLiveOutput(deps, request());
+    expect(first.state).toBe("accepted");
+    if (first.state !== "accepted") return;
+    expect(first.result.arming.state).toBe("armed");
+
+    const second = await acceptLiveOutput(deps, request());
+    expect(second.state).toBe("accepted");
+    if (second.state !== "accepted") return;
+
+    // The second press reused the first press's session — createdSession is
+    // stated from the request, not from which invocation minted it — and it
+    // armed identically: same take at keyframes[0], one take, one session.
+    expect(second.result.arming).toEqual({
+      state: "armed",
+      generationId: first.result.generationId,
+    });
+    const session = onlySession(store);
+    const versionId = session.prompt?.versions?.[0]?.versionId;
+    expect(session.prompt?.keyframes?.[0]?.generationId).toBe(
+      first.result.generationId,
+    );
+    expect(takesOf(session, versionId!)).toHaveLength(1);
+  });
+
+  it("reports arming as not owed when the acceptance named a destination, whose first frame is not this bridge's to replace (issue #136)", async () => {
+    const { deps, store } = fixture;
+    const existing: SessionRecord = {
+      id: "session-existing",
+      userId: OWNER,
+      status: "active",
+      createdAt: new Date("2026-09-17T00:00:00.000Z"),
+      updatedAt: new Date("2026-09-17T00:00:00.000Z"),
+      hasContinuity: false,
+      prompt: {
+        input: "a runner",
+        output: "a runner on a rain-slicked street",
+        versions: [
+          {
+            versionId: "v7",
+            signature: "sig-7",
+            prompt: "a runner on a rain-slicked street",
+            timestamp: "2026-09-17T00:00:00.000Z",
+          },
+        ],
+      },
+    };
+    store.sessions.set(existing.id, existing);
+
+    const result = await acceptLiveOutput(
+      deps,
+      request({
+        accepted: acceptRequest({
+          destination: {
+            sessionId: "session-existing",
+            promptVersionId: "v7",
+          },
+        }),
+      }),
+    );
+
+    expect(result.state).toBe("accepted");
+    if (result.state !== "accepted") return;
+    expect(result.result.arming).toEqual({
+      state: "not-owed",
+      generationId: result.result.generationId,
+    });
+    expect(
+      store.sessions.get("session-existing")?.prompt?.keyframes,
+    ).toBeUndefined();
   });
 
   it("rejects media it cannot read as an image, before any side effect", async () => {

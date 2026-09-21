@@ -54,6 +54,22 @@ interface ApiServices extends OptimizeServices, EnhancementServices {
    * stays decoupled from the resolver.
    */
   remintSessionPictures?: ((dto: SessionDto) => Promise<SessionDto>) | null;
+  /**
+   * Issue #136: arm an already-attached take as the session's first frame —
+   * the repair door for an attached-but-not-armed handoff. Bound at
+   * registration; the sessions router stays decoupled from the admission
+   * modules and the resolver.
+   */
+  armFirstFrame?:
+    | ((input: {
+        userId: string;
+        sessionId: string;
+        generationId: string;
+      }) => Promise<
+        | { ok: true; frame: Record<string, unknown> }
+        | { ok: false; reason: string }
+      >)
+    | null;
 }
 
 /**
@@ -81,6 +97,7 @@ export function createAPIRoutes(services: ApiServices): Router {
     sessionService,
     storageService,
     remintSessionPictures,
+    armFirstFrame,
   } = services;
 
   // Mount optimization routes at root level (preserves /api/optimize paths)
@@ -139,6 +156,7 @@ export function createAPIRoutes(services: ApiServices): Router {
         continuitySessionService ?? null,
         userCreditService,
         remintSessionPictures ?? undefined,
+        armFirstFrame ?? undefined,
       ),
     );
   }
