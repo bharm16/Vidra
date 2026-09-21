@@ -7,6 +7,7 @@
  */
 import { z } from "zod";
 import { TakeSourceInputSchema } from "./session.schemas.js";
+import { TakeAttachmentSchema } from "./attachment.schemas.js";
 
 /**
  * Where a studio project came from, captured at the moment the creator
@@ -105,6 +106,17 @@ export const StudioUseInSessionResultSchema = z.object({
   ancestorGenerationId: z.string().nullable(),
   /** True when the project had no origin session and this press started one. */
   createdSession: z.boolean(),
+  /**
+   * The attachment fact (ADR-0022 decision 6, issue #135): "the take reached
+   * its session" is a second fact, independent of "the picture was made" —
+   * and the studio may not read the return as returned until it is known.
+   * Present whenever a take was admitted, whatever the outcome; only
+   * `attached` means the session now holds the take, so the client treats
+   * `pending` and `failed` as made-but-not-saved. A `failed` attachment
+   * carries the take's own record, which is exactly what its retry re-sends:
+   * the same take, no re-upload, no second admission.
+   */
+  attachment: TakeAttachmentSchema.optional(),
 });
 
 export type StudioUseInSessionResult = z.infer<

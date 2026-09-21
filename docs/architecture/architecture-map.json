@@ -534,6 +534,11 @@
       "sourceFile": "server/src/routes/studio.routes.ts"
     },
     {
+      "method": "GET",
+      "fullPath": "/api/studio/projects/:projectId/unresolved-returns",
+      "sourceFile": "server/src/routes/studio.routes.ts"
+    },
+    {
       "method": "POST",
       "fullPath": "/api/studio/projects/from-session-picture",
       "sourceFile": "server/src/routes/studio.routes.ts"

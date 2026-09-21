@@ -135,6 +135,21 @@ export interface AdmissionIdempotencyPort {
     snapshot: { statusCode: number; body: Record<string, unknown> };
   }): Promise<void>;
   markFailed(recordId: string, reason: string): Promise<void>;
+  /**
+   * Read one claim's settled snapshot WITHOUT claiming it — the discovery half
+   * of the attachment boundary (ADR-0022 decision 6: the attachment's persisted
+   * state, and the client polling that treats a return as terminal only once
+   * its attachment resolves). A reloaded caller reads this receipt to find a
+   * return whose attachment is still owed. Optional: without it a caller can
+   * still claim, resume and replay — it just cannot discover an unresolved
+   * attachment before pressing again. Strictly a read: no claim, no lock, no
+   * TTL, no retry orchestration.
+   */
+  getResponseSnapshot?(input: {
+    userId: string;
+    route: string;
+    key: string;
+  }): Promise<{ statusCode: number; body: Record<string, unknown> } | null>;
 }
 
 /**
@@ -252,7 +267,12 @@ export type AdmitPictureTakeResult =
   /** The same key was used for different media. */
   | { state: "conflict" };
 
-const ADMISSION_ROUTE = "picture-admission";
+/**
+ * The idempotency route every admission claims under. Exported because the
+ * return-recovery read (#135) must address the receipt a return wrote, under
+ * the same route the return claimed it.
+ */
+export const ADMISSION_ROUTE = "picture-admission";
 
 const log = logger.child({ service: "admitPictureTake" });
 

@@ -24,6 +24,7 @@ vi.mock("@features/studio/api/studioApi", () => ({
   listStudioTurns: vi.fn(),
   registerStudioAttachment: vi.fn(),
   runStudioTurn: vi.fn(),
+  fetchUnresolvedStudioReturns: vi.fn(async () => []),
   updateStudioProject: vi.fn(),
 }));
 

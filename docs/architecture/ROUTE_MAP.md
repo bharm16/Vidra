@@ -109,10 +109,11 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/studio/projects/:projectId/turns`                          | `server/src/routes/studio.routes.ts`                           |
 | POST   | `/api/studio/projects/:projectId/turns`                          | `server/src/routes/studio.routes.ts`                           |
 | GET    | `/api/studio/projects/:projectId/turns/:turnId`                  | `server/src/routes/studio.routes.ts`                           |
+| GET    | `/api/studio/projects/:projectId/unresolved-returns`             | `server/src/routes/studio.routes.ts`                           |
 | POST   | `/api/studio/projects/from-session-picture`                      | `server/src/routes/studio.routes.ts`                           |
 | GET    | `/debug-sentry`                                                  | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health`                                                        | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/live`                                                   | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                  | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **107**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **108**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

@@ -29,6 +29,7 @@ vi.mock("../../api/studioApi", () => ({
   listStudioProjects: vi.fn(async () => []),
   listStudioTurns: vi.fn(async () => []),
   runStudioTurn: vi.fn(),
+  fetchUnresolvedStudioReturns: vi.fn(async () => []),
   updateStudioProject: vi.fn(),
   uploadStudioAttachment: vi.fn(async () => ({
     id: "att-1",

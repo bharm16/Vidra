@@ -29,6 +29,7 @@ vi.mock("@features/studio/api/studioApi", () => ({
   registerStudioAttachment: vi.fn(),
   returnStudioImageToSession: vi.fn(),
   runStudioTurn: vi.fn(),
+  fetchUnresolvedStudioReturns: vi.fn(async () => []),
   updateStudioProject: vi.fn(),
   uploadStudioAttachment: vi.fn(),
 }));

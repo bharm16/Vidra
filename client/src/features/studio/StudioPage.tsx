@@ -14,6 +14,7 @@ import {
 } from "./components/StudioPlane";
 import { StudioThread } from "./components/StudioThread";
 import { UseInSessionAction } from "./components/UseInSessionAction";
+import { UnsavedReturnNotice } from "./components/UnsavedReturnNotice";
 import { DownloadSelectedImage } from "./components/DownloadSelectedImage";
 import { useStudioProject } from "./hooks/useStudioProject";
 import { isTurnInFlight } from "./hooks/studioReducer";
@@ -96,8 +97,14 @@ export function StudioPage(): React.ReactElement {
               the project's selection, not on a cell — a control nested inside a
               plane cell would be a button inside a button. Download SVG appears
               only when the selection is a vector (issue #118); the return door
-              is ADR-0022 decision 4. */}
+              is ADR-0022 decision 4. Unsaved returns are receipts the server
+              still owes (decision 6, issue #135), shown regardless of what is
+              selected so a reload cannot bury them. */}
           <div className="ml-auto flex items-center gap-3">
+            <UnsavedReturnNotice
+              returns={state.unresolvedReturns}
+              onRetry={studio.retryReturnAttachment}
+            />
             <DownloadSelectedImage
               turns={state.turns}
               selectedImageId={state.selectedImageId}
@@ -113,6 +120,7 @@ export function StudioPage(): React.ReactElement {
               key={routeProjectId ?? "new"}
               selectedImageId={state.selectedImageId}
               onUse={studio.returnImageToSession}
+              onRetryAttachment={studio.retryReturnAttachment}
             />
           </div>
         </div>

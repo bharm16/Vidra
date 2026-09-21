@@ -1,5 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {
+  readUnresolvedReturnAttachment,
   returnStudioImage,
   type ReturnStudioImageDependencies,
 } from "../returnStudioImage";
@@ -1637,5 +1638,122 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     expect(
       takes.filter((take) => take.origin === "studio"),
     ).toHaveLength(2);
+  });
+});
+
+/**
+ * The discovery half of the attachment boundary (ADR-0022 decision 6, issue
+ * #135): the recovery read reports a return's unresolved attachment from its
+ * #128 receipt — and reports NOTHING when the receipt is absent, attached
+ * (the session is now the source of truth), or does not validate. Strictly a
+ * read: no claim is taken and no resume is triggered by discovery.
+ */
+describe("readUnresolvedReturnAttachment (issue #135)", () => {
+  const KEY_INPUT = {
+    userId: OWNER,
+    projectId: "project-1",
+    imageId: "img-1",
+  };
+
+  function idempotencyWith(
+    snapshot: { statusCode: number; body: Record<string, unknown> } | null,
+  ): AdmissionIdempotencyPort {
+    return {
+      claimRequest: async () => {
+        throw new Error("discovery must never claim");
+      },
+      markCompleted: async () => {},
+      markFailed: async () => {},
+      getResponseSnapshot: async ({ userId, route, key }) => {
+        expect(route).toBe("picture-admission");
+        expect(userId).toBe(KEY_INPUT.userId);
+        expect(key).toBe(`studio-return:${KEY_INPUT.projectId}:${KEY_INPUT.imageId}`);
+        return snapshot;
+      },
+    };
+  }
+
+  function receiptBody(attachmentState: "failed" | "pending" | "attached") {
+    return {
+      generationId: "take-1",
+      sessionId: "session-1",
+      promptVersionId: "v1",
+      origin: "studio",
+      imageUrl: "https://storage.example.com/take-1",
+      assetId: "asset-1",
+      storagePath: "users/user-1/previews/images/take-1.png",
+      record: { id: "take-1", mediaType: "image", origin: "studio" },
+      attachment: {
+        state: attachmentState,
+        generationId: "take-1",
+        sessionId: "session-1",
+        promptVersionId: "v1",
+        ...(attachmentState === "failed"
+          ? { reason: "session write failed" }
+          : {}),
+        record: { id: "take-1", mediaType: "image", origin: "studio" },
+      },
+    };
+  }
+
+  it("reports the failed attachment a retry is owed", async () => {
+    const attachment = await readUnresolvedReturnAttachment(
+      idempotencyWith({ statusCode: 201, body: receiptBody("failed") }),
+      KEY_INPUT,
+    );
+    expect(attachment).toMatchObject({
+      state: "failed",
+      generationId: "take-1",
+      sessionId: "session-1",
+      promptVersionId: "v1",
+    });
+  });
+
+  it("reports a pending receipt too — the return is still owed", async () => {
+    const attachment = await readUnresolvedReturnAttachment(
+      idempotencyWith({ statusCode: 201, body: receiptBody("pending") }),
+      KEY_INPUT,
+    );
+    expect(attachment?.state).toBe("pending");
+  });
+
+  it("reports nothing when the receipt says attached", async () => {
+    const attachment = await readUnresolvedReturnAttachment(
+      idempotencyWith({ statusCode: 201, body: receiptBody("attached") }),
+      KEY_INPUT,
+    );
+    expect(attachment).toBeNull();
+  });
+
+  it("reports nothing when there is no receipt at all", async () => {
+    const attachment = await readUnresolvedReturnAttachment(
+      idempotencyWith(null),
+      KEY_INPUT,
+    );
+    expect(attachment).toBeNull();
+  });
+
+  it("reports nothing when the receipt's attachment does not validate", async () => {
+    const body = receiptBody("failed") as Record<string, unknown>;
+    body.attachment = { state: "bananas" };
+    const attachment = await readUnresolvedReturnAttachment(
+      idempotencyWith({ statusCode: 201, body }),
+      KEY_INPUT,
+    );
+    expect(attachment).toBeNull();
+  });
+
+  it("reports nothing when the port has no snapshot read", async () => {
+    const attachment = await readUnresolvedReturnAttachment(
+      {
+        claimRequest: async () => {
+          throw new Error("never");
+        },
+        markCompleted: async () => {},
+        markFailed: async () => {},
+      },
+      KEY_INPUT,
+    );
+    expect(attachment).toBeNull();
   });
 });

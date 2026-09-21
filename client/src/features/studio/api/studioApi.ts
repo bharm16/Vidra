@@ -17,11 +17,13 @@ import {
   StudioModelInfoSchema,
   StudioProjectSchema,
   StudioTurnSchema,
+  StudioUnresolvedReturnSchema,
   type RunTurnResponse,
   type StudioAttachment,
   type StudioModelInfo,
   type StudioProject,
   type StudioTurn,
+  type StudioUnresolvedReturn,
 } from "./schemas";
 
 async function request<T extends z.ZodTypeAny>(
@@ -424,4 +426,20 @@ export async function returnStudioImageToSession(
 
 export async function getStudioModels(): Promise<StudioModelInfo[]> {
   return request("/models", z.array(StudioModelInfoSchema));
+}
+
+/**
+ * Recovery after refresh (ADR-0022 decision 6, issue #135): the project's
+ * pictures whose return was admitted but never attached, read from the
+ * server's own receipts. Validated at the wire like every other studio
+ * response — an unresolved return the client cannot parse must not be shown,
+ * and must not be silently shown as saved either.
+ */
+export async function fetchUnresolvedStudioReturns(
+  projectId: string,
+): Promise<StudioUnresolvedReturn[]> {
+  return request(
+    `/projects/${projectId}/unresolved-returns`,
+    z.object({ returns: z.array(StudioUnresolvedReturnSchema) }),
+  ).then((data) => data.returns);
 }

@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import {
   createStudioProject,
+  fetchUnresolvedStudioReturns,
   getStudioModels,
   getStudioProject,
   getStudioTurn,
@@ -23,6 +24,8 @@ import {
   returnStudioImageToSession,
   type UseInSessionOutcome,
 } from "../api/studioApi";
+import { retryPictureAttachment } from "@/features/generations/api/takeAttachment";
+import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { StudioProject, StudioTurn } from "../api/schemas";
 import {
   initialStudioState,
@@ -76,6 +79,17 @@ export interface UseStudioProjectReturn {
     onMissingOriginSession?: "new-session";
     confirmedWords?: string;
   }) => Promise<UseInSessionOutcome>;
+  /**
+   * Retry one made-but-not-saved return (ADR-0022 decision 6, issue #135):
+   * re-send the take's own record under the same identity. No re-upload, no
+   * second admission, no generation — the de-duplicating session append makes
+   * it land on the one take. Resolves ok when the take is in its session; the
+   * unresolved list is then corrected for the project it was retried under.
+   */
+  retryReturnAttachment: (
+    imageId: string | null,
+    attachment: TakeAttachment,
+  ) => Promise<{ ok: boolean; message?: string }>;
 }
 
 function describeError(error: unknown): string {
@@ -166,8 +180,8 @@ export function useStudioProject(
   }, []);
 
   // Open exactly the project the route names. Bootstrap makes no writes at
-  // all — /studio/new stays projectless until the first send creates the
-  // record (StrictMode's double-mounted effect once created two "Untitled"
+  // all — /studio/new stays projectless until the first send creates the record
+  // (StrictMode's double-mounted effect once created two "Untitled"
   // projects here, and an empty one left behind is what buried real work).
   useEffect(() => {
     let cancelled = false;
@@ -193,6 +207,21 @@ export function useStudioProject(
           return;
         }
         dispatch({ type: "requestFailed", error: describeError(error) });
+      }
+      // Recovery after refresh (ADR-0022 decision 6, issue #135): ask the
+      // server's receipts whether a return from THIS project is still owed
+      // its session row. Fired only once the open has settled — a snapshot
+      // that raced the open would be wiped by projectOpened's project-scope
+      // reset — and best-effort: a recovery read that fails must never cost
+      // the workspace its open; it only stays silent (the retry door also
+      // exists on every re-press, which replays to the same take).
+      try {
+        const returns = await fetchUnresolvedStudioReturns(routeProjectId);
+        if (cancelled) return;
+        dispatch({ type: "unresolvedReturnsLoaded", returns });
+      } catch {
+        // No recovery surface is not a workspace failure; nothing is invented
+        // in its place.
       }
     })();
     return () => {
@@ -402,6 +431,37 @@ export function useStudioProject(
     [isCurrentProject],
   );
 
+  /**
+   * The retry half of the attachment boundary (issue #135). The record rides
+   * the attachment — the server's own, never rebuilt client-side — so the
+   * retry cannot attach a take the server did not admit, and a retry of an
+   * attachment that actually landed is a no-op rather than a second copy.
+   * Late discipline (#129): the cleared flag is dispatched only to the
+   * project the retry was pressed under.
+   */
+  const retryReturnAttachment = useCallback(
+    async (
+      imageId: string | null,
+      attachment: TakeAttachment,
+    ): Promise<{ ok: boolean; message?: string }> => {
+      const projectId = projectIdRef.current;
+      try {
+        await retryPictureAttachment(attachment);
+        if (
+          imageId !== null &&
+          projectId &&
+          isCurrentProject(projectId)
+        ) {
+          dispatch({ type: "unresolvedReturnCleared", imageId });
+        }
+        return { ok: true };
+      } catch (error) {
+        return { ok: false, message: describeError(error) };
+      }
+    },
+    [isCurrentProject],
+  );
+
   return {
     state,
     dispatch,
@@ -412,5 +472,6 @@ export function useStudioProject(
     attachFile,
     removeAttachment,
     returnImageToSession,
+    retryReturnAttachment,
   };
 }
