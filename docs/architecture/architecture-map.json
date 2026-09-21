@@ -429,6 +429,11 @@
       "sourceFile": "server/src/routes/sketch-accept.routes.ts"
     },
     {
+      "method": "GET",
+      "fullPath": "/api/sketch/accept/unresolved",
+      "sourceFile": "server/src/routes/sketch-accept.routes.ts"
+    },
+    {
       "method": "DELETE",
       "fullPath": "/api/storage/:path(*)",
       "sourceFile": "server/src/routes/storage.routes.ts"

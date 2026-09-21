@@ -85,6 +85,12 @@ describe("Use this (issue #87)", () => {
               generationId: "take-1",
               imageUrl: "https://storage.example.com/asset-1",
               createdSession: true,
+              attachment: {
+                state: "attached",
+                generationId: "take-1",
+                sessionId: "session-new",
+                promptVersionId: "v-root",
+              },
             });
         }),
     );
@@ -179,6 +185,12 @@ describe("Use this (issue #87)", () => {
       generationId: "take-1",
       imageUrl: "https://storage.example.com/asset-1",
       createdSession: true,
+      attachment: {
+        state: "attached",
+        generationId: "take-1",
+        sessionId: "session-new",
+        promptVersionId: "v-root",
+      },
     });
 
     const { result } = renderLiveEditorHooks(sendFrameFn);
@@ -214,6 +226,12 @@ describe("Use this (issue #87)", () => {
       generationId: "take-1",
       imageUrl: "https://storage.example.com/asset-1",
       createdSession: true,
+      attachment: {
+        state: "attached",
+        generationId: "take-1",
+        sessionId: "session-new",
+        promptVersionId: "v-root",
+      },
     });
 
     const { result } = renderLiveEditorHooks(sendFrameFn);

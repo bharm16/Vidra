@@ -12,6 +12,7 @@
  * lane also answers 429, and the two must never be confused.
  */
 import { z } from "zod";
+import { TakeAttachmentSchema } from "./attachment.schemas.js";
 
 export const SketchFrameRefusalSchema = z.discriminatedUnion("reason", [
   z.object({
@@ -97,6 +98,15 @@ export const SketchAcceptResultSchema = z.object({
   imageUrl: z.string(),
   /** False when the picture was admitted into a destination the caller named. */
   createdSession: z.boolean(),
+  /**
+   * The attachment fact, on the #133 contract (issue #134): the take's media
+   * being durable and the take having reached its session are two independent
+   * facts, and neither stands in for the other. Required — a response that
+   * cannot say which of pending / failed / attached it is, is not a settled
+   * acceptance, and the client refuses it at the wire rather than reading a
+   * missing fact as "attached". `failed` carries the record a retry re-sends.
+   */
+  attachment: TakeAttachmentSchema,
 });
 
 export type SketchAcceptResult = z.infer<typeof SketchAcceptResultSchema>;

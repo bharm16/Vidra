@@ -28,6 +28,8 @@ interface ComposerProps {
   liveOutput: LiveOutput | null;
   onUseThis: (output: LiveOutput) => void;
   acceptance: AcceptanceStatus;
+  /** Re-attach a made-but-not-saved acceptance (issue #134). */
+  onRetryAttachment: () => void;
   strengthPopoverOpen: boolean;
   onToggleStrengthPopover: () => void;
 }
@@ -39,6 +41,7 @@ export function Composer({
   liveOutput,
   onUseThis,
   acceptance,
+  onRetryAttachment,
   strengthPopoverOpen,
   onToggleStrengthPopover,
 }: ComposerProps): React.ReactElement {
@@ -169,7 +172,11 @@ export function Composer({
           type="button"
           variant="ghost"
           className="le-chip le-chip-accept"
-          disabled={liveOutput === null || acceptance.state === "accepting"}
+          disabled={
+            liveOutput === null ||
+            acceptance.state === "accepting" ||
+            acceptance.state === "saving"
+          }
           onClick={() => {
             if (liveOutput !== null) onUseThis(liveOutput);
           }}
@@ -180,6 +187,36 @@ export function Composer({
       {acceptance.state === "failed" ? (
         <div className="le-accept-error" data-testid="live-editor-accept-error">
           {acceptance.message}
+        </div>
+      ) : null}
+      {acceptance.state === "unattached" || acceptance.state === "saving" ? (
+        // Issue #134: made-but-not-saved, stated plainly. The picture was
+        // made — it is still right here on the panel — and its session does
+        // not have it yet. This is never worded as an acceptance failure:
+        // nothing about the render went wrong, and the retry re-sends the
+        // take's own record rather than accepting anything again.
+        <div
+          className="le-accept-error"
+          data-testid="live-editor-accept-unattached"
+        >
+          <span>
+            {acceptance.state === "saving"
+              ? "Saving…"
+              : "Picture made, but not saved yet"}
+          </span>
+          {acceptance.state === "unattached" ? (
+            <Button
+              type="button"
+              variant="link"
+              className="text-foreground !h-auto p-0 underline underline-offset-2 hover:opacity-80"
+              onClick={onRetryAttachment}
+            >
+              Save it
+            </Button>
+          ) : null}
+          {acceptance.state === "unattached" && acceptance.message ? (
+            <span>{acceptance.message}</span>
+          ) : null}
         </div>
       ) : null}
     </div>

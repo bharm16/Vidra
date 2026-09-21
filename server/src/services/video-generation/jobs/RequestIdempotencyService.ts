@@ -290,4 +290,47 @@ export class RequestIdempotencyService {
       return null;
     }
   }
+
+  /**
+   * Every response snapshot this creator's records hold for one route, within
+   * the replay window (issue #134's recovery reader).
+   *
+   * The snapshots are the durable receipts admission settled; recovery reads
+   * them to FIND an unresolved acceptance. Read-only and equality-scoped
+   * (userId + route — index-merge safe), with the TTL applied in memory so no
+   * composite index is owed; records the replay window has retired are simply
+   * not recovery candidates anymore.
+   */
+  async listResponseSnapshots(
+    userId: string,
+    route: string,
+  ): Promise<IdempotencyResponseSnapshot[]> {
+    const now = Date.now();
+    const snapshot = await this.firestoreCircuitExecutor.executeRead(
+      "idempotency.listResponseSnapshots",
+      async () =>
+        await this.collection
+          .where("userId", "==", userId)
+          .where("route", "==", route)
+          .get(),
+    );
+
+    const snapshots: IdempotencyResponseSnapshot[] = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data() as Partial<IdempotencyRecord> | undefined;
+      if (!data?.responseSnapshot) return;
+      const expiresAt = data.expiresAt;
+      if (
+        expiresAt instanceof Date
+          ? expiresAt.getTime() <= now
+          : typeof data.updatedAtMs === "number"
+            ? data.updatedAtMs + this.replayTtlMs <= now
+            : false
+      ) {
+        return;
+      }
+      snapshots.push(data.responseSnapshot);
+    });
+    return snapshots;
+  }
 }

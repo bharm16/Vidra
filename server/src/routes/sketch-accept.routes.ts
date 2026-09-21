@@ -9,6 +9,10 @@ import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
+import {
+  findUnresolvedSketchAcceptances,
+  type AdmissionReceiptReaderPort,
+} from "@services/admission/unresolvedAcceptances";
 import type { OwnedPictureResolver } from "@services/owned-media";
 import { SketchAcceptRequestSchema } from "@shared/schemas/sketch.schemas";
 import { FAL_I2I_MODEL_ENDPOINT } from "./fal-i2i.routes";
@@ -41,6 +45,13 @@ interface SketchAcceptRouterDeps {
    * replay just keeps its stored (expiring) URL.
    */
   resolver?: OwnedPictureResolver | null | undefined;
+  /**
+   * Issue #134: the #128 receipts, so a refreshed client can find an
+   * acceptance whose attachment never resolved. Satisfied by the same
+   * idempotency store as `idempotency`; optional separately because recovery
+   * being unavailable must not take the accept door down with it.
+   */
+  receipts?: AdmissionReceiptReaderPort | null | undefined;
 }
 
 export function createSketchAcceptRouter(deps: SketchAcceptRouterDeps): Router {
@@ -86,7 +97,15 @@ export function createSketchAcceptRouter(deps: SketchAcceptRouterDeps): Router {
 
       switch (result.state) {
         case "accepted":
-          res.status(201).json({ success: true, data: result.result });
+          // Issue #134: nothing is reported as accepted until the outcome is
+          // known. 201 Created is the answer only when the take actually
+          // reached its session; a take that was admitted but not attached is
+          // made-but-not-saved — still a 2xx, because the body IS the creator's
+          // recovery record (the attachment fact a retry re-sends), but not a
+          // 201, because nothing was created in the session the take names.
+          res
+            .status(result.result.attachment.state === "attached" ? 201 : 200)
+            .json({ success: true, data: result.result });
           return;
         case "invalid":
           res.status(400).json({
@@ -117,6 +136,56 @@ export function createSketchAcceptRouter(deps: SketchAcceptRouterDeps): Router {
             error: "That acceptance was already used for another picture.",
           });
           return;
+      }
+    }),
+  );
+
+  // Issue #134: recovery after refresh. The live editor keeps nothing
+  // (ADR-0017), so a creator who lost the acceptance's response finds the
+  // unresolved acceptance where it actually lives — the session the take was
+  // minted into. The #128 receipts are the index; the session is the truth of
+  // what is still owed. Attachment discovery only: never a re-render, never a
+  // re-store, and the repair is #133's record-POST door, not a re-accept.
+  router.get(
+    "/accept/unresolved",
+    asyncHandler(async (req: Request, res: Response) => {
+      const creatorId = requireCreatorId(req, res);
+      if (creatorId === null) return;
+
+      const { sessionService, receipts } = deps;
+      if (!sessionService || !receipts) {
+        res.status(503).json({
+          success: false,
+          error: "Attachment recovery is not available",
+        });
+        return;
+      }
+
+      const rawSessionId = (req.query as { sessionId?: unknown }).sessionId;
+      const sessionId =
+        typeof rawSessionId === "string" && rawSessionId.trim().length > 0
+          ? rawSessionId.trim()
+          : null;
+      if (!sessionId) {
+        res.status(400).json({
+          success: false,
+          error: "sessionId is required",
+        });
+        return;
+      }
+
+      try {
+        const attachments = await findUnresolvedSketchAcceptances(
+          { receipts, sessionService },
+          { userId: creatorId, sessionId },
+        );
+        res.json({ success: true, data: { attachments } });
+      } catch {
+        // A session that is gone, or never was the caller's, has no debts to
+        // show — the same answer the accept door gives a refused destination.
+        res
+          .status(404)
+          .json({ success: false, error: "That session is not available." });
       }
     }),
   );

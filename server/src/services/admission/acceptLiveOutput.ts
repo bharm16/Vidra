@@ -423,6 +423,12 @@ export async function acceptLiveOutput(
       // "Into a session this bridge provided, not one you named" — stated
       // from the request so a replay of this acceptance answers identically.
       createdSession: accepted.destination === undefined,
+      // Issue #134: the wrapper reports the outcome, never assuming it. The
+      // take being durable and the take being in its session are independent
+      // facts (ADR-0022 decision 6); an `attached` result says the session has
+      // it, and a `failed` one is made-but-not-saved with the record a retry
+      // re-sends — same take, no re-store, no re-render.
+      attachment: take.attachment,
     },
   };
 }

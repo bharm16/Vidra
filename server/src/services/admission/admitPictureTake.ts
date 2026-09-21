@@ -268,9 +268,11 @@ export type AdmitPictureTakeResult =
   | { state: "conflict" };
 
 /**
- * The idempotency route every admission claims under. Exported because the
- * return-recovery read (#135) must address the receipt a return wrote, under
- * the same route the return claimed it.
+ * The route name every admission claim goes by in the idempotency store.
+ * Exported because the recovery readers (#134's sketch discovery and #135's
+ * return-recovery read) must address the receipts the boundary wrote under
+ * the SAME route name they were claimed with — a second spelling here would
+ * quietly miss them.
  */
 export const ADMISSION_ROUTE = "picture-admission";
 

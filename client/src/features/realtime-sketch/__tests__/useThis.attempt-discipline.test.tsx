@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { acceptLiveOutput } from "../api/acceptLiveOutput";
 import { useAcceptLiveOutput } from "../hooks/useAcceptLiveOutput";
 import type { LiveOutput } from "../hooks/generationReducer";
+import type { SketchAcceptResult } from "@shared/schemas/sketch.schemas";
 
 /**
  * Issue #129 — the live editor's acceptance needs the same attempt discipline
@@ -41,12 +42,20 @@ function output(overrides: Partial<LiveOutput> & { requestId: string }): LiveOut
   };
 }
 
-const acceptanceResult = {
+const acceptanceResult: SketchAcceptResult = {
   sessionId: "session-new",
   promptVersionId: "v-root",
   generationId: "take-1",
   imageUrl: "https://storage.example.com/asset-1",
   createdSession: true,
+  // Issue #134: the response now carries the attachment fact; these fixtures
+  // describe settled acceptances — the take is in its session.
+  attachment: {
+    state: "attached",
+    generationId: "take-1",
+    sessionId: "session-new",
+    promptVersionId: "v-root",
+  },
 };
 
 /** Records where the router actually is, so tests can see a navigation. */

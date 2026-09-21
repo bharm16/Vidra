@@ -32,6 +32,7 @@ import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
+import type { AdmissionReceiptReaderPort } from "@services/admission/unresolvedAcceptances";
 import type { SessionService } from "@services/sessions/SessionService";
 import {
   createShareRouter,
@@ -231,6 +232,15 @@ export function registerApiRoutes(
         "sketch-accept",
       ),
       idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
+        container,
+        "requestIdempotencyService",
+        "sketch-accept",
+      ),
+      // Issue #134: the same store, read as the #128 receipt ledger, so a
+      // refreshed client can find an acceptance whose attachment never
+      // resolved. Optional separately — recovery being down must not take the
+      // accept door down with it.
+      receipts: resolveOptionalService<AdmissionReceiptReaderPort | null>(
         container,
         "requestIdempotencyService",
         "sketch-accept",
