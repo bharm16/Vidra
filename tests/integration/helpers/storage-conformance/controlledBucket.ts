@@ -1,4 +1,5 @@
 import type { Bucket, Storage } from "@google-cloud/storage";
+import { Writable } from "node:stream";
 
 /**
  * A process-local stand-in for a Google Cloud Storage bucket.
@@ -88,6 +89,28 @@ class ControlledFile {
     return Promise.resolve();
   }
 
+  /**
+   * The SDK's streaming write, piped through by `UploadService.uploadFromUrl`
+   * (the URL intake the studio bridge copies through). Chunks are accumulated
+   * and land exactly as `save` lands them — same precondition, same metadata —
+   * so a streamed write cannot diverge from a buffered one.
+   */
+  createWriteStream(options: SaveOptions = {}): Writable {
+    const chunks: Buffer[] = [];
+    return new Writable({
+      write(chunk: Buffer, _encoding, callback) {
+        chunks.push(Buffer.from(chunk));
+        callback();
+      },
+      final: (callback) => {
+        this.save(Buffer.concat(chunks), options).then(
+          () => callback(),
+          (error: Error) => callback(error),
+        );
+      },
+    });
+  }
+
   exists(): Promise<[boolean]> {
     return Promise.resolve([this.objects.has(this.name)]);
   }
@@ -163,6 +186,21 @@ export class ControlledBucket {
   /** How many distinct objects the bucket holds (the no-clobber probe). */
   get objectCount(): number {
     return this.objects.size;
+  }
+
+  /**
+   * Read an object's bytes and content type back, or `undefined` when absent.
+   *
+   * The conformance suite never needs this (its adapters do the reading);
+   * the real-adapter cross-mode suite uses it to serve the bucket over the
+   * outbound guard's route table, the way a signed-URL GET is served.
+   */
+  read(
+    objectPath: string,
+  ): { buffer: Buffer; contentType: string } | undefined {
+    const object = this.objects.get(objectPath);
+    if (!object) return undefined;
+    return { buffer: Buffer.from(object.buffer), contentType: object.contentType };
   }
 }
 
