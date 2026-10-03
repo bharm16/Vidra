@@ -202,6 +202,145 @@ describe.skipIf(!runAgainstEmulator)(
       await harness?.close();
     });
 
+    it("deleting the source session preserves the studio bridge copy on real adapters (#137)", async () => {
+      const accepted = await harness.post(
+        "/api/sketch/accept",
+        acceptBody(`lifecycle-source-${Date.now()}`),
+      );
+      expect(accepted.status).toBe(201);
+      const { sessionId, generationId } = accepted.json.data as {
+        sessionId: string;
+        generationId: string;
+      };
+      const opened = await harness.post(
+        "/api/studio/projects/from-session-picture",
+        { sessionId, generationId },
+      );
+      expect(opened.status).toBe(201);
+      const project = opened.json.data as {
+        id: string;
+        originImageUrl: string;
+        attachments: Array<{ storagePath: string }>;
+      };
+      const before = await fetch(project.originImageUrl);
+      expect(before.status).toBe(200);
+      const bytes = Buffer.from(await before.arrayBuffer());
+      expect(bytes.length).toBeGreaterThan(0);
+      expect((await harness.delete(`/api/sessions/${sessionId}`)).status).toBe(
+        200,
+      );
+      expect((await harness.get(`/api/sessions/${sessionId}`)).status).toBe(
+        404,
+      );
+      const reopened = await harness.get(`/api/studio/projects/${project.id}`);
+      expect(reopened.status).toBe(200);
+      const surviving = reopened.json.data as typeof project;
+      expect(surviving.attachments[0]?.storagePath).toBe(
+        project.attachments[0]?.storagePath,
+      );
+      const after = await fetch(surviving.originImageUrl);
+      expect(after.status).toBe(200);
+      expect(Buffer.from(await after.arrayBuffer())).toEqual(bytes);
+    });
+
+    it("deleting a producing studio project preserves its accepted session copy on real adapters (#137)", async () => {
+      const accepted = await harness.post(
+        "/api/sketch/accept",
+        acceptBody(`lifecycle-project-${Date.now()}`),
+      );
+      expect(accepted.status).toBe(201);
+      const { sessionId, generationId } = accepted.json.data as {
+        sessionId: string;
+        generationId: string;
+      };
+      const opened = await harness.post(
+        "/api/studio/projects/from-session-picture",
+        { sessionId, generationId },
+      );
+      expect(opened.status).toBe(201);
+      const { id: projectId } = opened.json.data as { id: string };
+      const { STORAGE_TYPES } = await import(
+        "@services/storage/config/storageConfig"
+      );
+      // Fixture provider output enters through the real storage/store boundaries;
+      // no paid provider is invoked and the admission route is untouched.
+      const image = await storageService.uploadBuffer(
+        REAL_ADAPTER_USER_ID,
+        STORAGE_TYPES.PREVIEW_IMAGE,
+        PNG_BYTES,
+        "image/png",
+        { studioProjectId: projectId },
+      );
+      await studioProjectStore.saveTurn({
+        id: `turn-lifecycle-${Date.now()}`,
+        projectId,
+        userId: REAL_ADAPTER_USER_ID,
+        status: "partial",
+        userMessage: "A lighthouse at dawn",
+        decision: {
+          action: "generate",
+          basePrompt: "A lighthouse at dawn",
+          variants: [
+            "A lighthouse at dawn",
+            "A lighthouse at sunrise",
+            "A lighthouse in mist",
+            "A lighthouse at sea",
+          ],
+          capability: "general",
+          suggestions: ["Add mist", "Try sunrise", "Move closer"],
+        },
+        resolvedModel: "nano-banana-2",
+        reservedCents: 0,
+        refundedCents: 0,
+        createdAtMs: Date.now(),
+        updatedAtMs: Date.now(),
+        calls: [
+          {
+            index: 0,
+            status: "succeeded",
+            image: {
+              id: "image-lifecycle",
+              storagePath: image.storagePath,
+              sourcePrompt: "A lighthouse at dawn",
+              model: "nano-banana-2",
+            },
+          },
+          ...[1, 2, 3].map((index) => ({
+            index,
+            status: "failed" as const,
+            error: "No fixture output for this sibling",
+          })),
+        ],
+      });
+      const returned = await harness.post(
+        `/api/studio/projects/${projectId}/images/image-lifecycle/use-in-session`,
+        {},
+      );
+      expect(returned.status).toBe(201);
+      const result = returned.json.data as {
+        generationId: string;
+        imageUrl: string;
+      };
+      const before = await fetch(result.imageUrl);
+      expect(before.status).toBe(200);
+      const bytes = Buffer.from(await before.arrayBuffer());
+      expect(bytes).toEqual(PNG_BYTES);
+      expect(
+        (await harness.delete(`/api/studio/projects/${projectId}`)).status,
+      ).toBe(200);
+      expect(
+        (await harness.get(`/api/studio/projects/${projectId}`)).status,
+      ).toBe(404);
+      const reopened = await harness.get(`/api/sessions/${sessionId}`);
+      expect(reopened.status).toBe(200);
+      expect(takeIdsOf(reopened.json.data as SessionDtoJson)).toContain(
+        result.generationId,
+      );
+      const after = await fetch(result.imageUrl);
+      expect(after.status).toBe(200);
+      expect(Buffer.from(await after.arrayBuffer())).toEqual(bytes);
+    });
+
     // ── Transaction retries ─────────────────────────────────────────────
 
     it("retries contended transactions: five racing appends all survive", async () => {

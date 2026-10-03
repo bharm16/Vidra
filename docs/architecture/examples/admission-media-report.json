@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "vidra-admission-media-report/v1",
+  "capturedAt": "2026-10-03T07:00:00.000Z",
+  "verified": true,
+  "deletionEnabled": false,
+  "missingSources": [],
+  "inFlightRecords": [],
+  "objects": [
+    {
+      "bucket": "synthetic-example",
+      "storagePath": "image-previews/example/unused-snapshot",
+      "generation": "1",
+      "sizeBytes": 12,
+      "kind": "sketch-snapshot",
+      "disposition": "candidate",
+      "references": [],
+      "deletionAllowed": false
+    },
+    {
+      "bucket": "synthetic-example",
+      "storagePath": "users/example/previews/images/winner.webp",
+      "generation": "2",
+      "sizeBytes": 24,
+      "kind": "studio-bridge",
+      "disposition": "referenced",
+      "references": ["studio_projects/winner"],
+      "deletionAllowed": false
+    },
+    {
+      "bucket": "synthetic-example",
+      "storagePath": "users/example/previews/images/loser.webp",
+      "generation": "3",
+      "sizeBytes": 24,
+      "kind": "studio-bridge",
+      "disposition": "candidate",
+      "references": [],
+      "deletionAllowed": false
+    }
+  ]
+}

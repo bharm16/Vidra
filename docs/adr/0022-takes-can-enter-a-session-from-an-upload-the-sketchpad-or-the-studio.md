@@ -382,3 +382,8 @@ left alone; the reword edge between words-versions is still order-derived (an AD
 gap, noted not fixed — subsequently closed by #116, which persists the reword parent); and
 a session-launched live editor that returns to its originating session exists only as an
 optional destination in the bridge contract, with no surface.
+
+Media ownership, inspection rules and the pending retention decision are recorded
+in [Admission media lifecycle](../architecture/admission-media-lifecycle.md)
+(#137). Copy-isolation tests and a dry-run inventory do not authorize deletion;
+the retention window and enabling cleanup remain owner decisions.

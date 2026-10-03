@@ -108,6 +108,7 @@ export interface AdmissionMediaStore {
     buffer: Buffer,
     contentType: string,
     userId: string,
+    metadata?: Readonly<Record<string, string>>,
   ): Promise<StoredAdmissionAsset>;
 }
 

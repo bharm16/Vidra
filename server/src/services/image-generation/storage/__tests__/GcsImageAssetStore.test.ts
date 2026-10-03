@@ -62,6 +62,32 @@ describe("GcsImageAssetStore", () => {
   });
 
   describe("error handling", () => {
+    it("keeps sketch snapshot identification in object metadata for the dry-run inventory", async () => {
+      const store = new GcsImageAssetStore({
+        bucket: bucketMock as never,
+        minter: new SignedUrlMinter(bucketMock as never),
+        basePath: "image-previews",
+        signedUrlTtlMs: 60000,
+        cacheControl: "private, max-age=60",
+      });
+      fileMock.save.mockResolvedValue(undefined);
+      fileMock.getMetadata.mockResolvedValue([{ size: "12" }]);
+      fileMock.getSignedUrl.mockResolvedValue([
+        "https://signed.example.com/snapshot",
+      ]);
+      await store.storeFromBuffer(
+        Buffer.from("snapshot"),
+        "image/png",
+        "creator",
+        { admissionSource: "sketch-snapshot" },
+      );
+      expect(fileMock.save.mock.calls[0]?.[1]).toMatchObject({
+        metadata: {
+          cacheControl: "private, max-age=60",
+          metadata: { admissionSource: "sketch-snapshot" },
+        },
+      });
+    });
     it("throws when fetching the source image fails", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,

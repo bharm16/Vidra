@@ -24,6 +24,7 @@ import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoJobRecord } from "@services/video-generation/jobs/types";
 import {
   CROSS_MODE_USER_ID,
+  CROSS_MODE_API_KEY,
   startCrossModeHarness,
   type ApiResponse,
   type CrossModeHarness,
@@ -71,7 +72,10 @@ const BRIDGED_ATTACHMENT_ID = "att-bridged-session-picture";
  * the walkthrough replays whichever pack is committed.
  */
 const PACK_PATH = resolve(
-  join(dirname(fileURLToPath(import.meta.url)), "../../server/src/replay/fixtures"),
+  join(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../server/src/replay/fixtures",
+  ),
   "cross-mode/sketch-to-clip.json",
 );
 
@@ -82,7 +86,9 @@ function packLiveOutput(): string {
       response: { images?: Array<{ url: string }> };
     }>;
   };
-  const relayEntry = pack.entries.find((entry) => entry.seam === "sketch-frame");
+  const relayEntry = pack.entries.find(
+    (entry) => entry.seam === "sketch-frame",
+  );
   const url = relayEntry?.response.images?.[0]?.url;
   if (!url) {
     throw new Error(
@@ -808,6 +814,89 @@ describe("Cross-mode golden path (integration)", () => {
     const settled = await harness.jobs.getJob(jobId);
     expect(settled?.attachment?.state).toBe("attached");
     harness.guard.assertNoOutboundCalls();
+  });
+
+  it("deleting the studio project preserves its separately accepted session pictures (issue #137)", async () => {
+    const before = await harness.get(`/api/sessions/${walkthrough.sessionId}`);
+    const session = before.json.data as {
+      prompt: {
+        versions: Array<{
+          generations?: Array<{
+            id: string;
+            mediaUrls: string[];
+            storagePath: string;
+          }>;
+        }>;
+      };
+    };
+    const take = session.prompt.versions
+      .flatMap((version) => version.generations ?? [])
+      .find((generation) => generation.id === walkthrough.refinedTakeId);
+    expect(take).toBeDefined();
+    const url = take!.mediaUrls[0]!;
+    const originalBytes = Buffer.from(await (await fetch(url)).arrayBuffer());
+    expect(originalBytes.length).toBeGreaterThan(0);
+    const removed = await fetch(
+      `${harness.baseUrl}/api/studio/projects/${walkthrough.studioProjectId}`,
+      { method: "DELETE", headers: { "x-api-key": CROSS_MODE_API_KEY } },
+    );
+    expect(removed.status).toBe(200);
+    expect(
+      (await harness.get(`/api/studio/projects/${walkthrough.studioProjectId}`))
+        .status,
+    ).toBe(404);
+    const after = await harness.get(`/api/sessions/${walkthrough.sessionId}`);
+    expect(after.status).toBe(200);
+    expect(JSON.stringify(after.json.data)).toContain(
+      walkthrough.refinedTakeId,
+    );
+    const readable = await fetch(url);
+    expect(readable.status).toBe(200);
+    expect(Buffer.from(await readable.arrayBuffer())).toEqual(originalBytes);
+  });
+
+  it("deleting the origin session preserves the studio's independently owned copy (issue #137)", async () => {
+    const accepted = await harness.post("/api/sketch/accept", {
+      liveOutputDataUri: LIVE_OUTPUT,
+      sketchSnapshotDataUri: CROSS_MODE_SKETCH_DATA_URI,
+      inputs: CROSS_MODE_SKETCH_INPUTS,
+      idempotencyKey: "copy-lifecycle-independent-session",
+    });
+    expect(accepted.status).toBe(201);
+    const { sessionId, generationId } = accepted.json.data as {
+      sessionId: string;
+      generationId: string;
+    };
+    const opened = await harness.post(
+      "/api/studio/projects/from-session-picture",
+      { sessionId, generationId },
+    );
+    expect(opened.status).toBe(201);
+    const project = opened.json.data as {
+      id: string;
+      originImageUrl: string;
+      attachments: Array<{ storagePath: string }>;
+    };
+    const picture = project.attachments[0]!;
+    const before = await fetch(project.originImageUrl);
+    expect(before.status).toBe(200);
+    const bytes = Buffer.from(await before.arrayBuffer());
+    expect(bytes.length).toBeGreaterThan(0);
+    const removed = await fetch(
+      `${harness.baseUrl}/api/sessions/${sessionId}`,
+      { method: "DELETE", headers: { "x-api-key": CROSS_MODE_API_KEY } },
+    );
+    expect(removed.status).toBe(200);
+    expect((await harness.get(`/api/sessions/${sessionId}`)).status).toBe(404);
+    const reopened = await harness.get(`/api/studio/projects/${project.id}`);
+    expect(reopened.status).toBe(200);
+    const surviving = (reopened.json.data as typeof project).attachments[0]!;
+    expect(surviving.storagePath).toBe(picture.storagePath);
+    const readable = await fetch(
+      (reopened.json.data as typeof project).originImageUrl,
+    );
+    expect(readable.status).toBe(200);
+    expect(Buffer.from(await readable.arrayBuffer())).toEqual(bytes);
   });
 
   it("nothing left the process for the whole walkthrough", () => {
