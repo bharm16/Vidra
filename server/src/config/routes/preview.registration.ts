@@ -1,3 +1,8 @@
+import {
+  createOwnedPictureResolver,
+  type ImagePreviewAssetReader,
+  type UserScopedMediaReader,
+} from "@services/owned-media";
 /**
  * Preview Route Registration
  *
@@ -36,6 +41,11 @@ export function registerPreviewRoutes(
     requestIdempotencyService: container.resolve("requestIdempotencyService"),
     sessionService: container.resolve("sessionService"),
     imageAssetStore: container.resolve("imageAssetStore"),
+    ownedPictureResolver: createOwnedPictureResolver({
+      imageAssets:
+        container.resolve<ImagePreviewAssetReader>("imageAssetStore"),
+      userStorage: container.resolve<UserScopedMediaReader>("storageService"),
+    }),
     owedTakeAttachmentStore: container.resolve("owedTakeAttachmentStore"),
   });
 

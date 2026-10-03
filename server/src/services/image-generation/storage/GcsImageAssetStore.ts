@@ -102,11 +102,18 @@ export class GcsImageAssetStore implements ImageAssetStore {
     buffer: Buffer,
     contentType: string,
     userId: string,
+    objectMetadata?: Readonly<Record<string, string>>,
   ): Promise<StoredImageAsset> {
     const id = uuidv4();
     const objectPath = this.objectPath(userId, id);
 
-    await this.uploadBuffer(objectPath, buffer, contentType);
+    await this.uploadBuffer(
+      objectPath,
+      buffer,
+      contentType,
+      undefined,
+      objectMetadata,
+    );
 
     const [metadata] = await this.bucket.file(objectPath).getMetadata();
     const { url, expiresAtMs } = await this.minter.mintRead(objectPath, {
@@ -213,6 +220,7 @@ export class GcsImageAssetStore implements ImageAssetStore {
     buffer: Buffer,
     contentType: string,
     sourceUrl?: string,
+    metadata?: Readonly<Record<string, string>>,
   ): Promise<void> {
     const maxRetries = 3;
     let lastError: Error | null = null;
@@ -227,7 +235,14 @@ export class GcsImageAssetStore implements ImageAssetStore {
           contentType,
           metadata: {
             cacheControl: this.cacheControl,
-            ...(sourceUrl ? { metadata: { sourceUrl } } : {}),
+            ...(sourceUrl || metadata
+              ? {
+                  metadata: {
+                    ...metadata,
+                    ...(sourceUrl ? { sourceUrl } : {}),
+                  },
+                }
+              : {}),
           },
           preconditionOpts: { ifGenerationMatch: 0 },
         });

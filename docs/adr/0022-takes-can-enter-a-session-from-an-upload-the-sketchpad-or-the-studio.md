@@ -54,6 +54,28 @@ or deducing origin from which fields are filled in — make "where did this come
 un-assertable, and an unrecognized origin then renders as a plausible lie rather than a
 rejected record. We take the schema churn.
 
+#### Reference before words — issue #119
+
+The owner direction recorded in the 2026-09-18 remaining-work review is now
+implemented: a valid reference uploaded before words is preserved as **pending
+input**, without inventing words or arming a take. A missing session or
+words-version, including a partially resolved destination, never silently takes
+the legacy upload-and-arm path. Ordinary words persistence can carry the
+originating draft reference into its newly saved session; only the creator's
+explicit **Use with these words** action admits it under that session's saved,
+nonempty words-version. Navigation does not perform that association.
+
+The bytes are saved in the creator's existing media store. Browser recovery
+records only a bounded durable handle and any immutable admission attempt,
+scoped to the creator and originating draft/session. Failed association or
+attachment retains that input and retries the same acceptance. No new operation
+collection, provider generation, or retention cleanup is introduced. See
+[Reference-first admission](../architecture/reference-first-admission.md).
+
+**Acceptance status:** direction recorded; implementation and deterministic
+regressions present. Owner sign-off on Decision A and the current browser
+walkthrough remain open.
+
 ### 2. Production provenance and associated words are two things, never one
 
 A take carries two distinct texts.
@@ -380,5 +402,20 @@ this ADR lands and is re-checked against the accepted decisions before it become
 Open and deliberately **not** decided here: subject motion still has no UI writer and is
 left alone; the reword edge between words-versions is still order-derived (an ADR-0013 M4
 gap, noted not fixed — subsequently closed by #116, which persists the reword parent); and
-a session-launched live editor that returns to its originating session exists only as an
-optional destination in the bridge contract, with no surface.
+the **session-launched live-editor surface is deferred for this release** (issue
+#119, Decision B). The live editor stays standalone; its existing accept action
+and optional destination contract remain available. No "work on this in the live
+editor" entry is added, and a future session-launched entry must return to its
+origin rather than mint an unrelated session on destination-resolution failure.
+The owner direction is recorded; owner sign-off on Decision B remains open.
+
+Media ownership, inspection rules and the pending retention decision are recorded
+in [Admission media lifecycle](../architecture/admission-media-lifecycle.md)
+(#137). Copy-isolation tests and a dry-run inventory do not authorize deletion;
+the retention window and enabling cleanup remain owner decisions.
+
+The [Deferred work ledger](../architecture/deferred-work-ledger.md) records the
+scopes still outside this release and the decisions needed to reopen them.
+[Current proof limits](../audits/2026-10-03-docs-consistency.md) distinguish the
+landed contracts and local checks from the open browser, live, quality,
+deployment and owner acceptance gates (#146).

@@ -105,6 +105,7 @@ const createPromptHistory = (
   updateEntryHighlight: vi.fn(),
   updateEntryOutput: vi.fn(),
   updateEntryPersisted,
+  flushVersionWrites: vi.fn(async (): Promise<void> => {}),
   updateEntryVersions: vi.fn(),
 });
 

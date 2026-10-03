@@ -1,3 +1,4 @@
+import type { OwnedPictureResolver } from "@services/owned-media";
 /**
  * Types for route factories
  */
@@ -101,6 +102,7 @@ export interface PreviewRoutesServices {
    * signed URL expires, which is what keeps an admitted take readable.
    */
   imageAssetStore?: AdmissionMediaStore | null;
+  ownedPictureResolver?: OwnedPictureResolver | null;
   /**
    * The durable ledger of quick-picture takes whose session write is still owed
    * (ADR-0022 decision 6, issue #133). Backs the made-but-not-saved recovery for

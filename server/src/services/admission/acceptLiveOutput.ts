@@ -265,6 +265,7 @@ export async function acceptLiveOutput(
       snapshot.buffer,
       snapshot.contentType,
       userId,
+      { admissionSource: "sketch-snapshot" },
     );
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

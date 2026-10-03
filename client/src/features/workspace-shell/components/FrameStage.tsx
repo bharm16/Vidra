@@ -1,3 +1,4 @@
+import { Button } from "@promptstudio/system/components/ui/button";
 import React from "react";
 import { cn } from "@/utils/cn";
 import type { KeyframeTile } from "@/features/generation-controls/types";
@@ -99,10 +100,19 @@ export function FrameStage({
   startFrame,
   prompt,
 }: FrameStageProps): React.ReactElement | null {
-  const { ideaBoxStage, isExpanding, hasExpandedPrompt, unattachedFrameTake } =
-    usePromptResultsData();
-  const { onIdeaBoxAccept, onIdeaBoxRegenerate, onRetryFrameAttachment } =
-    usePromptResultsActions();
+  const {
+    ideaBoxStage,
+    isExpanding,
+    hasExpandedPrompt,
+    unattachedFrameTake,
+    pendingReference,
+  } = usePromptResultsData();
+  const {
+    onIdeaBoxAccept,
+    onIdeaBoxRegenerate,
+    onRetryFrameAttachment,
+    onAdmitPendingReference,
+  } = usePromptResultsActions();
 
   const stageKind = ideaBoxStage?.kind ?? "idle";
   const quotedIdea = prompt.trim() ? `“${prompt.trim()}”` : undefined;
@@ -114,7 +124,63 @@ export function FrameStage({
 
   let body: React.ReactElement | null = null;
 
-  if (isExpanding) {
+  if (pendingReference) {
+    body = (
+      <>
+        <div className="relative mx-auto flex h-[clamp(24px,calc(100dvh-var(--workspace-topbar-h)-360px),240px)] w-full max-w-[720px] items-center justify-center overflow-hidden rounded-xl border border-tool-rail-border">
+          {pendingReference.url ? (
+            <img
+              src={pendingReference.url}
+              alt="Pending reference picture"
+              className="block max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <StageCopy
+              headline={
+                pendingReference.uploading
+                  ? "Uploading your reference…"
+                  : "Your reference is saved"
+              }
+            />
+          )}
+        </div>
+        <StageCopy
+          headline={
+            pendingReference.uploading
+              ? "Uploading your reference…"
+              : pendingReference.attachmentFailed
+                ? "Made, but not saved"
+                : pendingReference.attempted
+                  ? "Reference waiting to be saved"
+                  : "Reference waiting for your words"
+          }
+          detail={
+            pendingReference.uploading
+              ? "Wait for the picture to finish uploading before expanding your words."
+              : pendingReference.attempted
+                ? "Retry saving this picture with its original words."
+                : "Write and expand your words below, then use this picture with them."
+          }
+        />
+        {onAdmitPendingReference && !pendingReference.uploading ? (
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            className={gateButtonClass}
+            disabled={pendingReference.busy}
+            onClick={() => void onAdmitPendingReference()}
+          >
+            {pendingReference.busy
+              ? "Saving…"
+              : pendingReference.attempted
+                ? "Retry saving"
+                : "Use with these words"}
+          </Button>
+        ) : null}
+      </>
+    );
+  } else if (isExpanding) {
     body = (
       <>
         <SkeletonTile />

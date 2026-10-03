@@ -87,9 +87,24 @@ interface UseHistoryPersistenceReturn {
     docId: string | null,
     versions: PromptVersionEntry[],
   ) => void;
+  flushVersionWrites: (
+    uuid: string,
+    docId: string,
+    versionId: string,
+  ) => Promise<void>;
   clearHistory: () => Promise<void>;
   deleteFromHistory: (entryId: string) => Promise<void>;
 }
+
+interface PendingVersionWrite {
+  userId: string | undefined;
+  uuid: string;
+  docId: string | null;
+  versions: PromptVersionEntry[];
+}
+const versionWriteKey = (
+  pending: Pick<PendingVersionWrite, "userId" | "uuid" | "docId">,
+): string => JSON.stringify([pending.userId, pending.uuid, pending.docId]);
 
 const log = logger.child("useHistoryPersistence");
 const MAX_HISTORY_ENTRIES = 100;
@@ -246,15 +261,91 @@ export function useHistoryPersistence({
   const versionWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
-  const pendingVersionWriteRef = useRef<{
-    uuid: string;
-    docId: string | null;
-    versions: PromptVersionEntry[];
-  } | null>(null);
+  const pendingVersionWriteRef = useRef<PendingVersionWrite | null>(null);
+  const versionWritesRef = useRef(
+    new Map<
+      string,
+      { pending: PendingVersionWrite; promise?: Promise<void> }
+    >(),
+  );
   const userRef = useRef(user);
   useEffect(() => {
     userRef.current = user;
   }, [user]);
+
+  // The existing version writer owns its completion promises. Each session's
+  // writes run in call order so a strict flush cannot race an older snapshot.
+  const writeVersions = useCallback(
+    (pending: PendingVersionWrite, requireSuccess = false): Promise<void> => {
+      const key = versionWriteKey(pending);
+      const previous = versionWritesRef.current.get(key)?.promise;
+      const promise = Promise.resolve(previous)
+        .catch(() => undefined)
+        .then(async (): Promise<void> => {
+          if (userRef.current?.uid !== pending.userId)
+            throw new Error("Sign-in changed before saving words");
+          if (requireSuccess)
+            await updateVersions(
+              pending.userId,
+              pending.uuid,
+              pending.docId,
+              pending.versions,
+              { requireSuccess: true },
+            );
+          else
+            await updateVersions(
+              pending.userId,
+              pending.uuid,
+              pending.docId,
+              pending.versions,
+            );
+        });
+      versionWritesRef.current.set(key, { pending, promise });
+      return promise;
+    },
+    [],
+  );
+
+  const flushVersionWrites = useCallback(
+    async (uuid: string, docId: string, versionId: string): Promise<void> => {
+      const userId = userRef.current?.uid;
+      if (
+        !userId ||
+        isLoadingHistoryRef.current ||
+        !initialLoadCompleteRef.current
+      )
+        throw new Error(
+          "Words are still loading; your reference remains pending",
+        );
+      const key = versionWriteKey({ userId, uuid, docId });
+      const queued = pendingVersionWriteRef.current;
+      const known = versionWritesRef.current.get(key)?.pending;
+      const entry = historyRef.current.find(
+        (item) => item.uuid === uuid && item.id === docId,
+      );
+      const pending: PendingVersionWrite | undefined =
+        queued && versionWriteKey(queued) === key
+          ? queued
+          : (known ??
+            (entry
+              ? { userId, uuid, docId, versions: entry.versions ?? [] }
+              : undefined));
+      if (
+        !pending?.versions.some(
+          (version) => version.versionId === versionId && version.prompt.trim(),
+        )
+      )
+        throw new Error("Save associated words before using this reference");
+      if (queued && versionWriteKey(queued) === key) {
+        if (versionWriteTimerRef.current !== null)
+          clearTimeout(versionWriteTimerRef.current);
+        versionWriteTimerRef.current = null;
+        pendingVersionWriteRef.current = null;
+      }
+      await writeVersions(pending, true);
+    },
+    [writeVersions],
+  );
 
   const syncHistoryToLocalStorage = useCallback(
     (entries: PromptHistoryEntry[]): void => {
@@ -330,16 +421,15 @@ export function useHistoryPersistence({
             uuid: pending.uuid,
             versionCount: pending.versions.length,
           });
-          updateVersions(
-            userRef.current?.uid,
-            pending.uuid,
-            pending.docId,
-            pending.versions,
+          void writeVersions(pending).catch((error: unknown) =>
+            log.warn("Failed to flush version write", {
+              error: error instanceof Error ? error.message : String(error),
+            }),
           );
         }
       }
     };
-  }, []);
+  }, [writeVersions]);
 
   const loadHistoryFromFirestore = useCallback(
     async (userId: string) => {
@@ -799,7 +889,19 @@ export function useHistoryPersistence({
       if (versionWriteTimerRef.current !== null) {
         clearTimeout(versionWriteTimerRef.current);
       }
-      pendingVersionWriteRef.current = { uuid, docId, versions: nextVersions };
+      const pending = {
+        userId: userRef.current?.uid,
+        uuid,
+        docId,
+        versions: nextVersions,
+      };
+      pendingVersionWriteRef.current = pending;
+      const key = versionWriteKey(pending);
+      const previousWrite = versionWritesRef.current.get(key);
+      versionWritesRef.current.set(key, {
+        pending,
+        ...(previousWrite?.promise ? { promise: previousWrite.promise } : {}),
+      });
       versionWriteTimerRef.current = setTimeout(() => {
         versionWriteTimerRef.current = null;
         const pending = pendingVersionWriteRef.current;
@@ -832,16 +934,15 @@ export function useHistoryPersistence({
             versionCount: pending.versions.length,
             generationCount: debouncedGenerationCount,
           });
-          updateVersions(
-            userRef.current?.uid,
-            pending.uuid,
-            pending.docId,
-            pending.versions,
+          void writeVersions(pending).catch((error: unknown) =>
+            log.warn("Failed to persist version write", {
+              error: error instanceof Error ? error.message : String(error),
+            }),
           );
         }
       }, 500);
     },
-    [persistLocalDraftEntry, updateEntry],
+    [persistLocalDraftEntry, updateEntry, writeVersions],
   );
 
   // Bug 5 fix: removed history.length from deps (only used for debug log)
@@ -899,6 +1000,7 @@ export function useHistoryPersistence({
     updateEntryHighlight,
     updateEntryOutput,
     updateEntryVersions,
+    flushVersionWrites,
     clearHistory,
     deleteFromHistory,
   };

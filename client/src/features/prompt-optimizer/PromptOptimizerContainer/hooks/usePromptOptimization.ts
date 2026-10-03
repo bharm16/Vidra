@@ -115,6 +115,8 @@ export interface UsePromptOptimizationParams {
   startFrame?: KeyframeTile | null;
   startImageUrl?: string | null;
   sourcePrompt?: string | null;
+  /** Pending-reference upload guards every entry, including keyboard/reoptimize. */
+  isReferenceUploading?: () => boolean;
   currentPromptUuid: string | null;
   setCurrentPromptUuid: (uuid: string) => void;
   setCurrentPromptDocId: (id: string | null) => void;
@@ -170,6 +172,7 @@ export function usePromptOptimization({
   startFrame,
   startImageUrl,
   sourcePrompt,
+  isReferenceUploading,
   currentPromptUuid,
   setCurrentPromptUuid,
   setCurrentPromptDocId,
@@ -202,6 +205,7 @@ export function usePromptOptimization({
       context?: Record<string, unknown> | null,
       options?: OptimizationOptions,
     ): Promise<void> => {
+      if (isReferenceUploading?.()) return;
       // I2V mode: there is no text-rewrite step. Image anchors visuals; user's prompt
       // goes to the model verbatim. Bypass the optimize call entirely.
       if (typeof startImageUrl === "string" && startImageUrl.length > 0) {
@@ -402,6 +406,7 @@ export function usePromptOptimization({
       startFrame?.viewUrlExpiresAt,
       startImageUrl,
       sourcePrompt,
+      isReferenceUploading,
       currentPromptUuid,
       setCurrentPromptUuid,
       setCurrentPromptDocId,

@@ -23,6 +23,27 @@ const build = (
   }).payload;
 
 describe("buildGroqPayload", () => {
+  it("uses bounded reasoning and strict JSON without unsupported logprobs for GPT-OSS", () => {
+    const payload = build({
+      model: "openai/gpt-oss-20b",
+      logprobs: true,
+      schema: { name: "result", schema: { type: "object" } },
+    });
+    expect(payload.model).toBe("openai/gpt-oss-20b");
+    expect(payload.reasoning_effort).toBe("low");
+    expect(payload.logprobs).toBeUndefined();
+    expect(payload.response_format).toMatchObject({
+      json_schema: { strict: true },
+    });
+  });
+  it("does not add a reasoning effort to a caller-selected non-reasoning model", () => {
+    expect(
+      build({ model: "qwen/qwen3.8-27b" }).reasoning_effort,
+    ).toBeUndefined();
+    expect(build({ model: "caller-owned-model" }).model).toBe(
+      "caller-owned-model",
+    );
+  });
   it("builds the same payload for both paths apart from the stream flag", () => {
     const options = { jsonMode: true, temperature: 0.4, seed: 7 };
     const { stream: _omitted, ...streamed } = build(options, true);

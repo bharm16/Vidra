@@ -1,3 +1,5 @@
+import { sanitizeText } from "@/features/span-highlighting/utils/textUtils";
+import { usePendingFirstFrame } from "./hooks/usePendingFirstFrame";
 /**
  * PromptOptimizerWorkspace - Main Orchestrator
  *
@@ -555,6 +557,50 @@ function PromptOptimizerContent({
     };
   }, [getActiveSessionId, resolveVersionTarget]);
 
+  const visibleWords = sanitizeText(
+    showResults ? promptOptimizer.displayedPrompt : promptOptimizer.inputPrompt,
+  );
+  const hasAssociatedWords = useCallback(
+    (): boolean => Boolean(visibleWords.trim()),
+    [visibleWords],
+  );
+  const flushWordsVersionWrites = promptHistory.flushVersionWrites;
+  const waitForVersionPersistence = useCallback(
+    async (
+      destinationSessionId: string,
+      promptVersionId: string,
+    ): Promise<void> => {
+      const uuid = promptIdentityRef.current.uuid;
+      if (!uuid || getActiveSessionId() !== destinationSessionId)
+        throw new Error(
+          "Save words in this session before using the reference",
+        );
+      await flushWordsVersionWrites(
+        uuid,
+        destinationSessionId,
+        promptVersionId,
+      );
+    },
+    [flushWordsVersionWrites, promptIdentityRef, getActiveSessionId],
+  );
+  const {
+    pendingReference,
+    stageReference,
+    isReferenceUploading,
+    beginReferenceSelection,
+    admitReference,
+    bindDraftToSession,
+  } = usePendingFirstFrame({
+    creatorId: user?.uid,
+    activeSessionId: getActiveSessionId(),
+    getActiveSessionId,
+    resolvePersistenceTarget,
+    hasAssociatedWords,
+    waitForVersionPersistence,
+    setStartFrame,
+    onError: toast.error,
+  });
+
   // Uploading a FIRST FRAME inside a session admits it as a picture take
   // (ADR-0022 decision 1, issue #86). Lives below `resolvePersistenceTarget`
   // because it resolves the destination once, before the request.
@@ -566,7 +612,9 @@ function PromptOptimizerContent({
     resolvePersistenceTarget,
     getActiveSessionId,
     setStartFrame,
-    uploadOutsideSession: uploadSidebarImage,
+    stagePendingReference: stageReference,
+    beginReferenceSelection,
+    hasAssociatedWords,
     onError: toast.error,
     onInvalidFile: toast.warning,
   });
@@ -596,10 +644,18 @@ function PromptOptimizerContent({
 
   const handleOptimizationApplied = useCallback(
     async (optimizedPrompt: string): Promise<void> => {
+      // Read the originating pending input before any await allows route
+      // effects to replace the draft context after ordinary persistence.
+      const hasPendingInput = bindDraftToSession();
       await handleSequenceOptimizationApplied(optimizedPrompt);
+      if (hasPendingInput) return;
       await continueAfterOptimization(optimizedPrompt);
     },
-    [handleSequenceOptimizationApplied, continueAfterOptimization],
+    [
+      handleSequenceOptimizationApplied,
+      continueAfterOptimization,
+      bindDraftToSession,
+    ],
   );
 
   const handleIdeaBoxRegenerate = useCallback(async (): Promise<void> => {
@@ -650,10 +706,11 @@ function PromptOptimizerContent({
     selectedMode,
     selectedModel,
     generationParams: optimizationGenerationParams,
-    keyframes: serializedKeyframesSync,
-    startFrame,
-    startImageUrl: i2vContext.startImageUrl,
-    sourcePrompt: i2vContext.startImageSourcePrompt,
+    keyframes: pendingReference ? null : serializedKeyframesSync,
+    startFrame: pendingReference ? null : startFrame,
+    startImageUrl: pendingReference ? null : i2vContext.startImageUrl,
+    sourcePrompt: pendingReference ? null : i2vContext.startImageSourcePrompt,
+    isReferenceUploading,
     currentPromptUuid,
     setCurrentPromptUuid,
     setCurrentPromptDocId,
@@ -672,9 +729,10 @@ function PromptOptimizerContent({
   // frame exists. Optimization's onOptimizationApplied continues the chain
   // (expand -> first frame -> gate).
   const handleIdeaBoxExpand = useCallback(async (): Promise<void> => {
+    if (isReferenceUploading()) return;
     setWritingFailed(false);
-    await handleOptimize();
-  }, [handleOptimize]);
+    await handleOptimize(pendingReference ? visibleWords : undefined);
+  }, [handleOptimize, pendingReference, visibleWords, isReferenceUploading]);
 
   // Fill the composer, never submit — editing stays explicit. The fill rides
   // the editor's real change path (not the silent history-application setter)
@@ -879,6 +937,8 @@ function PromptOptimizerContent({
             i2vContext={i2vContext}
             ideaBoxStage={ideaBoxStage}
             unattachedFrameTake={unattachedFrameTake}
+            pendingReference={pendingReference}
+            onAdmitPendingReference={admitReference}
             isExpanding={promptOptimizer.isProcessing}
             writingFailed={writingFailed}
             hasExpandedPrompt={

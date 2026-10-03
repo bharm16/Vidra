@@ -402,15 +402,20 @@ export function CanvasWorkspace({
   // expanded prompt land on the FrameStage, and the hero cannot flicker when
   // panels like the suggestion tray open or close (CONTEXT.md, "First
   // frame": the frame or its empty/failed state owns the canvas).
-  const { ideaBoxStage, isExpanding, hasExpandedPrompt, writingFailed } =
-    usePromptResultsData();
+  const {
+    ideaBoxStage,
+    isExpanding,
+    hasExpandedPrompt,
+    writingFailed,
+    pendingReference,
+  } = usePromptResultsData();
   const workspaceStage = deriveWorkspaceStage(
     computeWorkspaceArtifacts({
       tiles: shots.flatMap((shot) => shot.tiles),
       ideaBoxStageKind: ideaBoxStage?.kind ?? "idle",
       isExpanding: isExpanding ?? false,
       hasExpandedPrompt: hasExpandedPrompt ?? false,
-      hasStartFrame: Boolean(domain.startFrame),
+      hasStartFrame: Boolean(domain.startFrame || pendingReference),
       writingFailed: writingFailed ?? false,
     }),
   );
@@ -640,6 +645,9 @@ export function CanvasWorkspace({
         <CanvasSettingsRow
           variant={isPreWork ? "sheet" : "docked"}
           prompt={prompt}
+          hasPendingReference={Boolean(pendingReference)}
+          isReferenceUploading={pendingReference?.uploading ?? false}
+          isExpanding={isExpanding ?? false}
           renderModelId={renderModelId}
           renderModelOptions={renderModelOptions}
           recommendation={recommendationContext}
@@ -657,6 +665,8 @@ export function CanvasWorkspace({
       handleModelChange,
       handleOpenMotion,
       hasGenerations,
+      pendingReference,
+      isExpanding,
       isPreWork,
     ],
   );
@@ -739,7 +749,7 @@ export function CanvasWorkspace({
                 failure="writing"
                 onRetry={() => void onIdeaBoxExpand?.()}
               />
-            ) : shots.length === 0 ? (
+            ) : shots.length === 0 || pendingReference ? (
               /* Pre-render beats: the first frame (or its pending/failed state)
                owns the canvas — see CONTEXT.md, "First frame". */
               <FrameStage startFrame={domain.startFrame} prompt={prompt} />

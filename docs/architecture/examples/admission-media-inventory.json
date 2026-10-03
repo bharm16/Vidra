@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "vidra-admission-media-inventory/v1",
+  "complete": true,
+  "capturedAt": "2026-10-03T07:00:00.000Z",
+  "missingSources": [],
+  "documents": [
+    {
+      "path": "studio_projects/winner",
+      "data": {
+        "attachments": [
+          { "storagePath": "users/example/previews/images/winner.webp" }
+        ]
+      }
+    }
+  ],
+  "objects": [
+    {
+      "bucket": "synthetic-example",
+      "storagePath": "image-previews/example/unused-snapshot",
+      "generation": "1",
+      "sizeBytes": 12,
+      "metadata": { "admissionSource": "sketch-snapshot" }
+    },
+    {
+      "bucket": "synthetic-example",
+      "storagePath": "users/example/previews/images/winner.webp",
+      "generation": "2",
+      "sizeBytes": 24,
+      "metadata": {
+        "studioProjectId": "winner",
+        "originSessionId": "session",
+        "originGenerationId": "take"
+      }
+    },
+    {
+      "bucket": "synthetic-example",
+      "storagePath": "users/example/previews/images/loser.webp",
+      "generation": "3",
+      "sizeBytes": 24,
+      "metadata": {
+        "studioProjectId": "winner",
+        "originSessionId": "session",
+        "originGenerationId": "take"
+      }
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import { createVideoJobsHandler } from "./preview/handlers/videoJobs";
 import { createVideoJobAttachHandler } from "./preview/handlers/videoJobAttach";
 import { createVideoContentHandler } from "./preview/handlers/videoContent";
 import { createImageContentHandler } from "./preview/handlers/imageContent";
+import { createPendingReferenceAdmissionHandler } from "./preview/handlers/pendingReferenceAdmission";
 import { createImageUploadHandler } from "./preview/handlers/imageUpload";
 import {
   createOwedPictureAttachmentsHandler,
@@ -83,6 +84,10 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
     "/upload",
     upload.single("file"),
     asyncHandler(imageUploadHandler),
+  );
+  router.post(
+    "/upload/admit-reference",
+    asyncHandler(createPendingReferenceAdmissionHandler(resolvedServices)),
   );
   router.get("/image/view", asyncHandler(imageAssetViewHandler));
   router.post("/image/view-batch", asyncHandler(imageAssetViewBatchHandler));

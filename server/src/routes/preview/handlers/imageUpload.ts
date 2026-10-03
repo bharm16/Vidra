@@ -44,6 +44,7 @@ type ImageUploadServices = Pick<
   | "imageAssetStore"
   | "sessionService"
   | "requestIdempotencyService"
+  | "ownedPictureResolver"
 >;
 
 /**
@@ -98,6 +99,7 @@ export const createImageUploadHandler =
     imageAssetStore,
     sessionService,
     requestIdempotencyService,
+    ownedPictureResolver,
   }: ImageUploadServices) =>
   async (
     req: Request,
@@ -152,6 +154,20 @@ export const createImageUploadHandler =
       (req as Request & { body?: { label?: unknown } }).body?.label,
     );
 
+    // Capture the chooser's authenticated creator in a pending request. If
+    // sign-in changes while client auth headers resolve, refuse before storing
+    // that file under a different creator than the recovery link names.
+    if (
+      source === "pending-first-frame" &&
+      metadata.expectedCreatorId !== userId
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: "Sign-in changed before upload",
+        message: "Choose this reference again from your current account.",
+      });
+    }
+
     const admission = readAdmissionIntent(
       (req as Request & { body?: Record<string, unknown> }).body ?? {},
     );
@@ -199,6 +215,7 @@ export const createImageUploadHandler =
             sessionService,
             mediaStore: imageAssetStore,
             idempotency: requestIdempotencyService,
+            ...(ownedPictureResolver ? { resolver: ownedPictureResolver } : {}),
           },
           {
             userId,

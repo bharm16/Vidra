@@ -98,14 +98,18 @@ const admittedResponse = {
 interface SetupParams {
   target: PersistenceTarget;
   activeSessionId?: string | null;
+  hasWords?: boolean;
 }
 
-function setup({ target, activeSessionId = "session-1" }: SetupParams) {
+function setup({
+  target,
+  activeSessionId = "session-1",
+  hasWords = true,
+}: SetupParams) {
   const setStartFrame = vi.fn<(tile: KeyframeTile) => void>();
-  const uploadOutsideSession = vi.fn(async () => ({
-    url: "https://storage.example.com/legacy.png",
-    storagePath: "generations/user-1/legacy.png",
-  }));
+  const stagePendingReference = vi.fn(
+    async (_file: File, _sessionId: string | null): Promise<void> => {},
+  );
   const onError = vi.fn();
   const onInvalidFile = vi.fn();
   const resolvePersistenceTarget = vi.fn(() => target);
@@ -120,7 +124,13 @@ function setup({ target, activeSessionId = "session-1" }: SetupParams) {
         resolvePersistenceTarget: params.resolvePersistenceTarget,
         getActiveSessionId: params.getActiveSessionId,
         setStartFrame,
-        uploadOutsideSession,
+        hasAssociatedWords: () => hasWords,
+        beginReferenceSelection: () => ({
+          isCurrent: () => true,
+          canRetryOriginal: () => true,
+          finish: () => {},
+        }),
+        stagePendingReference,
         onError,
         onInvalidFile,
       }),
@@ -152,39 +162,39 @@ function setup({ target, activeSessionId = "session-1" }: SetupParams) {
     hook: { ...hook, rerenderWith },
     rerenderWith,
     setStartFrame,
-    uploadOutsideSession,
+    stagePendingReference,
     onError,
     onInvalidFile,
     resolvePersistenceTarget,
   };
 }
 
-  // ADR-0022 decision 6 / issue #133 — a made-but-not-saved upload. The server
+// ADR-0022 decision 6 / issue #133 — a made-but-not-saved upload. The server
 // returns 2xx with `attachment.state === "failed"`: the picture is durable,
-  // its session row is owed. The old hook cleared its key and armed the frame as
-  // if nothing were wrong; now it surfaces the take so the frame stage can say
-  // so, with a retry, and it never arms an identity for a node that is not there.
-  /**
+// its session row is owed. The old hook cleared its key and armed the frame as
+// if nothing were wrong; now it surfaces the take so the frame stage can say
+// so, with a retry, and it never arms an identity for a node that is not there.
+/**
  * ADR-0022 decision 6 / issue #133 — a made-but-not-saved upload. The server
  * returns 2xx with `attachment.state === "failed"`: the picture is durable, its
  * session row is owed — and both describes below need that response.
  */
 const failedUploadResponse = {
-    success: true as const,
-    data: {
-      imageUrl: "https://storage.example.com/asset-1",
-      viewUrl: "https://storage.example.com/asset-1",
-      assetId: "asset-1",
-      attachment: {
-        state: "failed" as const,
-        generationId: "gen-upload-1",
-        sessionId: "session-1",
-        promptVersionId: "v1",
-        reason: "firestore unavailable",
-        record: { id: "gen-upload-1", mediaType: "image", status: "completed" },
-      },
+  success: true as const,
+  data: {
+    imageUrl: "https://storage.example.com/asset-1",
+    viewUrl: "https://storage.example.com/asset-1",
+    assetId: "asset-1",
+    attachment: {
+      state: "failed" as const,
+      generationId: "gen-upload-1",
+      sessionId: "session-1",
+      promptVersionId: "v1",
+      reason: "firestore unavailable",
+      record: { id: "gen-upload-1", mediaType: "image", status: "completed" },
     },
-  };
+  },
+};
 
 describe("useFirstFrameAdmission (issue #86)", () => {
   beforeEach(() => {
@@ -205,7 +215,7 @@ describe("useFirstFrameAdmission (issue #86)", () => {
 
   it("admits the upload into the resolved session and words-version", async () => {
     uploadPreviewImage.mockResolvedValue(admittedResponse);
-    const { hook, uploadOutsideSession } = setup({
+    const { hook } = setup({
       target: { sessionId: "session-1", promptVersionId: "v1" },
     });
 
@@ -213,7 +223,6 @@ describe("useFirstFrameAdmission (issue #86)", () => {
       await hook.result.current.uploadFirstFrame(FILE);
     });
 
-    expect(uploadOutsideSession).not.toHaveBeenCalled();
     expect(uploadPreviewImage).toHaveBeenCalledTimes(1);
     const [file, metadata, options] = uploadPreviewImage.mock.calls[0]!;
     expect(file).toBe(FILE);
@@ -376,22 +385,44 @@ describe("useFirstFrameAdmission (issue #86)", () => {
     expect(admissionKeyOfCall(1)).toBe("admission-key-2");
   });
 
-  it("falls back to the plain upload when no session or words-version resolves", async () => {
-    const { hook, setStartFrame, uploadOutsideSession } = setup({ target: {} });
-
+  it("preserves a wordless reference even if a session/version resolves, without minting words", async () => {
+    const {
+      hook,
+      stagePendingReference,
+      resolvePersistenceTarget,
+      setStartFrame,
+    } = setup({
+      target: { sessionId: "session-1", promptVersionId: "v1" },
+      hasWords: false,
+    });
     await act(async () => {
       await hook.result.current.uploadFirstFrame(FILE);
     });
-
+    expect(stagePendingReference).toHaveBeenCalledWith(FILE, "session-1");
+    expect(resolvePersistenceTarget).not.toHaveBeenCalled();
     expect(uploadPreviewImage).not.toHaveBeenCalled();
-    expect(uploadOutsideSession).toHaveBeenCalledWith(FILE);
-    // Armed, but anonymous: there is no session for it to be a take in.
-    expect(setStartFrame.mock.calls[0]![0]).toMatchObject({
-      url: "https://storage.example.com/legacy.png",
-      source: "upload",
-    });
-    expect(setStartFrame.mock.calls[0]![0]).not.toHaveProperty("generationId");
+    expect(setStartFrame).not.toHaveBeenCalled();
   });
+
+  it.each([
+    [{}, null],
+    [{ sessionId: "session-1" }, "session-1"],
+    [{ promptVersionId: "v1" }, null],
+  ])(
+    "keeps unresolved first-frame input pending without arming it (%j)",
+    async (target, activeSessionId) => {
+      const { hook, stagePendingReference, setStartFrame } = setup({
+        target,
+        activeSessionId,
+      });
+      await act(async () => {
+        await hook.result.current.uploadFirstFrame(FILE);
+      });
+      expect(stagePendingReference).toHaveBeenCalledWith(FILE, activeSessionId);
+      expect(uploadPreviewImage).not.toHaveBeenCalled();
+      expect(setStartFrame).not.toHaveBeenCalled();
+    },
+  );
 
   it("does not admit a session-bound upload whose file is rejected", async () => {
     validatePreviewImageFile.mockReturnValue({

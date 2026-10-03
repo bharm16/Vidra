@@ -58,6 +58,11 @@ const aliases = [
     ),
   },
 
+  {
+    find: /^#tests\/(.*)/,
+    replacement: path.resolve(__dirname, "../../tests/$1"),
+  },
+
   // Shared aliases (used by both client and server) - from both tsconfig.json files
   {
     find: /^@shared\/(.*)/,

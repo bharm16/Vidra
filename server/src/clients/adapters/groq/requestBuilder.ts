@@ -1,5 +1,9 @@
 import { calculateMaxTokens } from "./contextBudget";
-import { isDeclaredGroqModel, supportsLogprobs } from "./modelCapabilities";
+import {
+  groqModelCapabilities,
+  isDeclaredGroqModel,
+  supportsLogprobs,
+} from "./modelCapabilities";
 import { normalizeOpenAiSchema } from "../openai/normalizeSchema";
 import type { LlamaCompletionOptions } from "./types";
 import { hashString } from "@utils/hash";
@@ -63,6 +67,7 @@ export function buildGroqPayload({
   stream,
 }: GroqPayloadInput): GroqPayloadResult {
   const model = options.model || defaultModel;
+  const capabilities = groqModelCapabilities(model);
   const isStructuredOutput = !!(
     options.schema ||
     options.responseFormat ||
@@ -88,6 +93,11 @@ export function buildGroqPayload({
 
   if (stream) {
     payload.stream = true;
+  }
+  // GPT-OSS consumes its completion budget on reasoning too. Keep the fast
+  // lane at low effort; the inherited medium default can leave no JSON tokens.
+  if (capabilities?.reasoningEffort) {
+    payload.reasoning_effort = capabilities.reasoningEffort;
   }
 
   // Same seed + same input = deterministic output, which is what makes a
@@ -132,6 +142,7 @@ export function buildGroqPayload({
       type: "json_schema",
       json_schema: {
         name: normalized.name,
+        ...(capabilities?.strictSchema ? { strict: true } : {}),
         schema: normalized.schema,
       },
     };

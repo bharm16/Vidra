@@ -2,6 +2,17 @@
 
 **Date:** 2026-07-24 · **Status:** planned, not started · **Decision record:** [ADR-0019](../../adr/0019-the-studio-standalone-conversational-image-workspace.md) (as amended same day)
 
+> **Historical plan, annotated 2026-10-03.** The milestones subsequently shipped;
+> [the handoff](2026-07-24-studio-handoff.md) records that historical evidence.
+> [ADR-0022](../../adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)
+> supersedes the no-session-bridge rule below. Current studio turns may edit or
+> transform on the first turn when a bridge/upload already supplies an image
+> (#110); `clarify` alone depends on having no prior turns. The current default
+> `studio_turn` route is OpenAI / `gpt-5.6-luna`, with environment overrides;
+> the mini model and unverified prices below are original planning assumptions.
+> [Current proof limits](../../audits/2026-10-03-docs-consistency.md) and the
+> [deferred ledger](../../architecture/deferred-work-ledger.md) govern release status.
+
 ## Summary
 
 A new page at `/studio` (nav rail entry: **Studio**, under Library). A faithful copy of Recraft's AI-chat workspace:

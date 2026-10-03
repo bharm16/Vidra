@@ -1,3 +1,4 @@
+import type { PendingFirstFrameView } from "../PromptOptimizerContainer/hooks/usePendingFirstFrame";
 import React, {
   createContext,
   useContext,
@@ -54,6 +55,8 @@ interface PromptResultsActionsOnly {
    * routes here when no start frame exists.
    */
   onIdeaBoxExpand?: (() => Promise<void> | void) | undefined;
+  /** Explicitly associate a pending reference with saved words. */
+  onAdmitPendingReference?: (() => Promise<void>) | undefined;
   /**
    * Fill the composer with starter text (first-run example chips). Fill-only:
    * never submits — editing stays explicit.
@@ -70,6 +73,8 @@ interface PromptResultsDataOnly {
   i2vContext?: I2VContext | null | undefined;
   /** Idea Box — stage of the expand→frame chain (idle when inactive). */
   ideaBoxStage?: IdeaBoxStage | undefined;
+  /** Uploaded input that has not been admitted as a take. */
+  pendingReference?: PendingFirstFrameView | null | undefined;
   /**
    * ADR-0022 decision 6 — the frame on screen was made but its session write
    * failed. A second fact about a READY frame, never a stage of its own.
@@ -153,6 +158,7 @@ export function PromptResultsActionsProvider({
   i2vContext,
   ideaBoxStage,
   unattachedFrameTake,
+  pendingReference,
   isExpanding,
   hasExpandedPrompt,
   writingFailed,
@@ -161,6 +167,7 @@ export function PromptResultsActionsProvider({
   onRetryFrameAttachment,
   onIdeaBoxExpand,
   onComposerFill,
+  onAdmitPendingReference,
 }: PromptResultsActionsProviderProps): React.ReactElement {
   // Pause auto-save while a generation is in-flight to prevent prompt edits
   // from overwriting the session identity tied to the active render.
@@ -207,6 +214,7 @@ export function PromptResultsActionsProvider({
       onRetryFrameAttachment,
       onIdeaBoxExpand,
       onComposerFill,
+      onAdmitPendingReference,
     }),
     [
       user,
@@ -223,6 +231,7 @@ export function PromptResultsActionsProvider({
       onRetryFrameAttachment,
       onIdeaBoxExpand,
       onComposerFill,
+      onAdmitPendingReference,
     ],
   );
 
@@ -233,6 +242,7 @@ export function PromptResultsActionsProvider({
       i2vContext,
       ideaBoxStage,
       unattachedFrameTake,
+      pendingReference,
       isExpanding,
       hasExpandedPrompt,
       writingFailed,
@@ -242,6 +252,7 @@ export function PromptResultsActionsProvider({
       i2vContext,
       ideaBoxStage,
       unattachedFrameTake,
+      pendingReference,
       isExpanding,
       hasExpandedPrompt,
       writingFailed,

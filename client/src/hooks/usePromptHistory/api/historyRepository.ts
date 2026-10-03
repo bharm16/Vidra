@@ -364,6 +364,7 @@ export async function updateVersions(
   uuid: string,
   docId: string | null,
   versions: PromptVersionEntry[],
+  options: { requireSuccess?: boolean } = {},
 ): Promise<void> {
   const repository = getPromptRepositoryForUser(!!userId);
 
@@ -371,6 +372,17 @@ export async function updateVersions(
     "updateVersions" in repository &&
     typeof repository.updateVersions === "function"
   ) {
+    // A dependent admission needs proof of this exact session write, without
+    // UUID fallback or swallowed errors. Ordinary history writes keep their
+    // existing best-effort behavior.
+    if (options.requireSuccess) {
+      if (!userId || !isValidSessionId(docId))
+        throw new Error(
+          "An owned session is required to save associated words",
+        );
+      await repository.updateVersions(docId, versions);
+      return;
+    }
     const generationCount = versions.reduce(
       (sum, v) =>
         sum + (Array.isArray(v.generations) ? v.generations.length : 0),
@@ -418,6 +430,8 @@ export async function updateVersions(
       log.error("Failed to persist versions", error as Error, { uuid, docId });
     }
   }
+  if (options.requireSuccess)
+    throw new Error("Version persistence is unavailable");
 }
 
 /**

@@ -29,6 +29,7 @@ export interface ImageAssetStore {
     buffer: Buffer,
     contentType: string,
     userId: string,
+    metadata?: Readonly<Record<string, string>>,
   ): Promise<StoredImageAsset>;
 
   /**

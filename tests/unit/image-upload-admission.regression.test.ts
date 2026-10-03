@@ -1,6 +1,9 @@
+import { asyncHandler } from "@middleware/asyncHandler";
+import { createOwnedPictureResolver } from "@services/owned-media";
+import { createPendingReferenceAdmissionHandler } from "@routes/preview/handlers/pendingReferenceAdmission";
 import express from "express";
 import request from "supertest";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createImageUploadHandler } from "@routes/preview/handlers/imageUpload";
 import { SessionService } from "@services/sessions/SessionService";
 import type { SessionRecord } from "@services/sessions/types";
@@ -141,6 +144,11 @@ function createIdempotency(): AdmissionIdempotencyPort {
       if (!existing) return;
       records.set(recordId, { ...existing, status: "completed", snapshot });
     },
+    getResponseReceipt: async ({ userId, route, key }) => {
+      const recordId = `${userId}|${route}|${key}`;
+      const snapshot = records.get(recordId)?.snapshot;
+      return snapshot ? { recordId, snapshot } : null;
+    },
     markFailed: async (recordId) => {
       const existing = records.get(recordId);
       if (!existing) return;
@@ -151,6 +159,9 @@ function createIdempotency(): AdmissionIdempotencyPort {
 
 function createLegacyStorage() {
   return {
+    getViewUrl: vi.fn(async () => ({
+      viewUrl: "https://storage.googleapis.com/reference.png",
+    })),
     uploadBuffer: vi.fn(async () => ({
       storagePath: "generations/user-1/legacy.png",
       viewUrl: "https://storage.example.com/legacy.png",
@@ -172,12 +183,19 @@ function createHarness(userId: string = OWNER): Harness {
   const store = createSessionStore();
   const mediaStore = createMediaStore();
   const legacyStorage = createLegacyStorage();
-  const handler = createImageUploadHandler({
+  const services = {
     storageService: legacyStorage as never,
     imageAssetStore: mediaStore,
+    ownedPictureResolver: createOwnedPictureResolver({
+      imageAssets: {
+        getPublicUrl: async () => "https://storage.example.com/fresh-take",
+      },
+      userStorage: legacyStorage as never,
+    }),
     sessionService: new SessionService(store as never),
     requestIdempotencyService: createIdempotency() as never,
-  });
+  };
+  const handler = createImageUploadHandler(services);
 
   const app = express();
   app.use((req, _res, next) => {
@@ -197,6 +215,10 @@ function createHarness(userId: string = OWNER): Harness {
   });
   app.use(express.json());
   app.post("/preview/upload", handler);
+  app.post(
+    "/preview/upload/admit-reference",
+    asyncHandler(createPendingReferenceAdmissionHandler(services)),
+  );
 
   return { app, store, mediaStore, legacyStorage };
 }
@@ -339,4 +361,232 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
     expect(harness.store.mutate).not.toHaveBeenCalled();
     expect(harness.legacyStorage.uploadBuffer).toHaveBeenCalledTimes(1);
   });
+});
+
+describe("pending reference admission (issue #119)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const input = {
+    storagePath: "users/user-1/previews/images/reference.png",
+    sessionId: SESSION_ID,
+    promptVersionId: "v1",
+    admissionKey: "reference-1",
+  };
+  it("refuses a sign-in change between file choice and pending upload before storing the file", async () => {
+    const harness = createHarness("other");
+    const result = await request(harness.app)
+      .post("/preview/upload")
+      .send({
+        source: "pending-first-frame",
+        metadata: { expectedCreatorId: OWNER },
+      });
+    expect(result.status).toBe(409);
+    expect(harness.legacyStorage.uploadBuffer).not.toHaveBeenCalled();
+    expect(harness.mediaStore.calls).toBe(0);
+  });
+  it("copies owned reference bytes into one take after explicit words association; retry replays", async () => {
+    const harness = createHarness();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(new Uint8Array(PNG), {
+            headers: { "content-type": "image/png" },
+          }),
+      ),
+    );
+    const first = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    const replay = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    expect(first.status).toBe(201);
+    expect(replay.status).toBe(201);
+    expect(first.body.data.generationId).toBe(replay.body.data.generationId);
+    expect(harness.mediaStore.calls).toBe(1);
+    expect(takesIn(harness, "v1")).toHaveLength(1);
+    expect(takesIn(harness, "v1")[0]).toMatchObject({
+      prompt: "a runner on a rain-slicked street",
+      origin: "upload",
+      productionProvenance: { state: "unknown" },
+    });
+    expect(harness.legacyStorage.uploadBuffer).not.toHaveBeenCalled();
+  });
+  it("resumes a lost-response receipt without the staging image or current words, reminting the take URL", async () => {
+    const harness = createHarness();
+    const fetch = vi.fn(
+      async () =>
+        new Response(new Uint8Array(PNG), {
+          headers: { "content-type": "image/png" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const first = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    expect(first.status).toBe(201);
+    await harness.store.mutate(SESSION_ID, (session) => ({
+      ...session,
+      prompt: { input: "", output: "", versions: [] },
+    }));
+    harness.legacyStorage.getViewUrl.mockRejectedValueOnce(
+      new Error("staging object removed"),
+    );
+    const replay = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    expect(replay.status).toBe(201);
+    expect(replay.body.data.generationId).toBe(first.body.data.generationId);
+    expect(replay.body.data.imageUrl).toBe(
+      "https://storage.example.com/fresh-take",
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(harness.legacyStorage.getViewUrl).toHaveBeenCalledTimes(1);
+    expect(harness.mediaStore.calls).toBe(1);
+  });
+  it("repairs a failed attachment from its receipt with the same take after staging media disappears", async () => {
+    const harness = createHarness();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(new Uint8Array(PNG), {
+            headers: { "content-type": "image/png" },
+          }),
+      ),
+    );
+    harness.store.mutate.mockRejectedValueOnce(
+      new Error("Firestore unavailable"),
+    );
+    const failed = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    expect(failed.status).toBe(201);
+    expect(failed.body.data.attachment.state).toBe("failed");
+    expect(failed.body.data.generationId).toBeUndefined();
+    harness.legacyStorage.getViewUrl.mockRejectedValueOnce(
+      new Error("staging removed"),
+    );
+    const repaired = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    expect(repaired.status).toBe(201);
+    expect(repaired.body.data.attachment.state).toBe("attached");
+    expect(repaired.body.data.generationId).toBe(
+      failed.body.data.attachment.generationId,
+    );
+    expect(harness.mediaStore.calls).toBe(1);
+    expect(harness.legacyStorage.getViewUrl).toHaveBeenCalledTimes(1);
+    expect(takesIn(harness, "v1")).toHaveLength(1);
+  });
+  it("does not treat the admitted copy as the original pending reference under the same key", async () => {
+    const harness = createHarness();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(new Uint8Array(PNG), {
+            headers: { "content-type": "image/png" },
+          }),
+      ),
+    );
+    const first = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send(input);
+    expect(first.status).toBe(201);
+    const differentSource = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send({ ...input, storagePath: first.body.data.storagePath });
+    expect(differentSource.status).toBe(404);
+    expect(harness.mediaStore.calls).toBe(1);
+    expect(harness.legacyStorage.getViewUrl).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    { storagePath: "users/user-1/previews/images/another.png" },
+    { promptVersionId: "v2" },
+    { sessionId: "session-other" },
+  ])(
+    "rejects a receipt reused with different original source/destination (%j)",
+    async (change) => {
+      const harness = createHarness();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(
+          async () =>
+            new Response(new Uint8Array(PNG), {
+              headers: { "content-type": "image/png" },
+            }),
+        ),
+      );
+      expect(
+        (
+          await request(harness.app)
+            .post("/preview/upload/admit-reference")
+            .send(input)
+        ).status,
+      ).toBe(201);
+      const conflict = await request(harness.app)
+        .post("/preview/upload/admit-reference")
+        .send({ ...input, ...change });
+      expect(conflict.status).toBe(409);
+      expect(harness.mediaStore.calls).toBe(1);
+      expect(harness.legacyStorage.getViewUrl).toHaveBeenCalledTimes(1);
+    },
+  );
+  it("rejects another creator's reference before signing, reading or storing it", async () => {
+    const harness = createHarness();
+    const result = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send({
+        ...input,
+        storagePath: "users/other/previews/images/reference.png",
+      });
+    expect(result.status).toBe(404);
+    expect(harness.legacyStorage.getViewUrl).not.toHaveBeenCalled();
+    expect(harness.mediaStore.calls).toBe(0);
+    expect(harness.store.mutate).not.toHaveBeenCalled();
+  });
+  it("rejects another creator's destination even when the reference is owned", async () => {
+    const harness = createHarness("other");
+    const result = await request(harness.app)
+      .post("/preview/upload/admit-reference")
+      .send({
+        ...input,
+        storagePath: "users/other/previews/images/reference.png",
+      });
+    expect(result.status).toBe(404);
+    expect(harness.legacyStorage.getViewUrl).not.toHaveBeenCalled();
+    expect(harness.mediaStore.calls).toBe(0);
+  });
+  it.each([undefined, "missing", "v1"])(
+    "keeps the reference unadmitted when associated words do not resolve (%s)",
+    async (promptVersionId) => {
+      const harness = createHarness();
+      if (promptVersionId === "v1") {
+        await harness.store.mutate(SESSION_ID, (session) => ({
+          ...session,
+          prompt: {
+            input: session.prompt?.input ?? "",
+            output: session.prompt?.output ?? "",
+            ...session.prompt,
+            versions: [
+              {
+                versionId: "v1",
+                signature: "empty",
+                prompt: "  ",
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          },
+        }));
+      }
+      const result = await request(harness.app)
+        .post("/preview/upload/admit-reference")
+        .send({ ...input, promptVersionId });
+      expect(result.status).toBe(promptVersionId ? 409 : 400);
+      expect(harness.legacyStorage.getViewUrl).not.toHaveBeenCalled();
+      expect(harness.mediaStore.calls).toBe(0);
+      expect(takesIn(harness, "v1")).toHaveLength(0);
+    },
+  );
 });

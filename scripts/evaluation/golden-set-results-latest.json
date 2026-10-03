@@ -1,31 +1,32 @@
 {
-  "timestamp": "2026-05-24T04:51:37.570Z",
+  "timestamp": "2026-10-03T08:01:22.648Z",
   "provider": "groq",
+  "model": "qwen/qwen3.8-27b",
   "commit": null,
   "report": {
     "summary": {
-      "relaxedF1": 0.6686217008797655,
-      "precision": 0.6867469879518072,
-      "recall": 0.6514285714285715,
-      "taxonomyAccuracy": 0.8539325842696629
+      "relaxedF1": 0.7247191011235955,
+      "precision": 0.712707182320442,
+      "recall": 0.7371428571428571,
+      "taxonomyAccuracy": 0.862876254180602
     },
     "byCategory": {
       "camera.movement": {
-        "f1": 0.456140350877193,
-        "precision": 0.37142857142857144,
-        "recall": 0.5909090909090909,
+        "f1": 0.5283018867924528,
+        "precision": 0.45161290322580644,
+        "recall": 0.6363636363636364,
         "support": 22
       },
       "subject.identity": {
-        "f1": 0.8712871287128713,
-        "precision": 0.9565217391304348,
-        "recall": 0.8,
+        "f1": 0.9629629629629629,
+        "precision": 0.9811320754716981,
+        "recall": 0.9454545454545454,
         "support": 55
       },
       "action.movement": {
-        "f1": 0.4489795918367347,
+        "f1": 0.43478260869565216,
         "precision": 0.3333333333333333,
-        "recall": 0.6875,
+        "recall": 0.625,
         "support": 16
       },
       "style.aesthetic": {
@@ -35,45 +36,45 @@
         "support": 2
       },
       "lighting.quality": {
-        "f1": 0.6461538461538462,
-        "precision": 0.7,
+        "f1": 0.6666666666666665,
+        "precision": 0.75,
         "recall": 0.6,
         "support": 35
       },
       "lighting.timeOfDay": {
-        "f1": 0.7368421052631579,
-        "precision": 0.875,
-        "recall": 0.6363636363636364,
+        "f1": 0.8571428571428572,
+        "precision": 0.9,
+        "recall": 0.8181818181818182,
         "support": 11
       },
       "shot.type": {
-        "f1": 0.6896551724137931,
-        "precision": 0.5882352941176471,
-        "recall": 0.8333333333333334,
+        "f1": 0.8148148148148148,
+        "precision": 0.7333333333333333,
+        "recall": 0.9166666666666666,
         "support": 12
       },
       "subject.appearance": {
-        "f1": 0.9318181818181819,
-        "precision": 0.9111111111111111,
-        "recall": 0.9534883720930233,
+        "f1": 0.9302325581395349,
+        "precision": 0.9302325581395349,
+        "recall": 0.9302325581395349,
         "support": 43
       },
       "action.state": {
-        "f1": 0.3846153846153846,
-        "precision": 0.45454545454545453,
-        "recall": 0.3333333333333333,
+        "f1": 0.4666666666666667,
+        "precision": 0.4666666666666667,
+        "recall": 0.4666666666666667,
         "support": 15
       },
       "environment.location": {
-        "f1": 0.8055555555555556,
-        "precision": 0.9666666666666667,
-        "recall": 0.6904761904761905,
+        "f1": 0.9156626506024096,
+        "precision": 0.926829268292683,
+        "recall": 0.9047619047619048,
         "support": 42
       },
       "lighting.source": {
-        "f1": 0.7169811320754716,
-        "precision": 0.7307692307692307,
-        "recall": 0.7037037037037037,
+        "f1": 0.7333333333333333,
+        "precision": 0.6666666666666666,
+        "recall": 0.8148148148148148,
         "support": 27
       },
       "action.gesture": {
@@ -83,8 +84,8 @@
         "support": 11
       },
       "environment.context": {
-        "f1": 0.1739130434782609,
-        "precision": 0.13333333333333333,
+        "f1": 0.2,
+        "precision": 0.16666666666666666,
         "recall": 0.25,
         "support": 8
       },
@@ -95,39 +96,39 @@
         "support": 8
       },
       "subject.emotion": {
-        "f1": 1,
-        "precision": 1,
+        "f1": 0.5,
+        "precision": 0.3333333333333333,
         "recall": 1,
         "support": 2
       },
       "environment.weather": {
-        "f1": 0.5714285714285715,
-        "precision": 1,
-        "recall": 0.4,
+        "f1": 0.6,
+        "precision": 0.6,
+        "recall": 0.6,
         "support": 5
       },
       "camera.angle": {
-        "f1": 0,
-        "precision": 0,
-        "recall": 0,
+        "f1": 0.6666666666666666,
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
         "support": 3
       },
       "subject.wardrobe": {
-        "f1": 0.6666666666666666,
-        "precision": 0.8,
-        "recall": 0.5714285714285714,
+        "f1": 0.6,
+        "precision": 1,
+        "recall": 0.42857142857142855,
         "support": 7
       },
       "technical.duration": {
-        "f1": 1,
-        "precision": 1,
+        "f1": 0.8,
+        "precision": 0.6666666666666666,
         "recall": 1,
         "support": 2
       },
       "technical.aspectRatio": {
-        "f1": 0.6666666666666666,
-        "precision": 0.6666666666666666,
-        "recall": 0.6666666666666666,
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
         "support": 3
       },
       "technical.frameRate": {
@@ -137,9 +138,9 @@
         "support": 3
       },
       "audio.score": {
-        "f1": 0.4,
+        "f1": 0.6666666666666666,
         "precision": 1,
-        "recall": 0.25,
+        "recall": 0.5,
         "support": 4
       },
       "style.filmStock": {
@@ -155,9 +156,9 @@
         "support": 4
       },
       "style.colorGrade": {
-        "f1": 0,
-        "precision": 0,
-        "recall": 0,
+        "f1": 0.6666666666666666,
+        "precision": 0.5,
+        "recall": 1,
         "support": 2
       },
       "technical.resolution": {
@@ -167,8 +168,8 @@
         "support": 1
       },
       "camera.focus": {
-        "f1": 0.5,
-        "precision": 0.3333333333333333,
+        "f1": 0.4,
+        "precision": 0.25,
         "recall": 1,
         "support": 1
       },
@@ -183,7 +184,7 @@
   "perPrompt": [
     {
       "promptId": "adv-001",
-      "predictedCount": 2,
+      "predictedCount": 3,
       "groundTruthCount": 3,
       "predicted": [
         {
@@ -193,8 +194,14 @@
           "role": "camera.movement"
         },
         {
-          "text": "bird flies overhead",
+          "text": "bird",
           "start": 40,
+          "end": 44,
+          "role": "subject.identity"
+        },
+        {
+          "text": "flies overhead",
+          "start": 45,
           "end": 59,
           "role": "action.movement"
         }
@@ -223,9 +230,28 @@
     },
     {
       "promptId": "adv-002",
-      "predictedCount": 0,
+      "predictedCount": 3,
       "groundTruthCount": 4,
-      "predicted": [],
+      "predicted": [
+        {
+          "text": "light colors",
+          "start": 21,
+          "end": 33,
+          "role": "style.colorGrade"
+        },
+        {
+          "text": "soft light",
+          "start": 40,
+          "end": 50,
+          "role": "lighting.quality"
+        },
+        {
+          "text": "light of day",
+          "start": 58,
+          "end": 70,
+          "role": "lighting.timeOfDay"
+        }
+      ],
       "groundTruth": [
         {
           "text": "light feeling",
@@ -274,9 +300,9 @@
           "role": "shot.type"
         },
         {
-          "text": "zooming into a close-up",
+          "text": "zooming into",
           "start": 14,
-          "end": 37,
+          "end": 26,
           "role": "camera.movement"
         }
       ],
@@ -404,10 +430,10 @@
       "groundTruthCount": 6,
       "predicted": [
         {
-          "text": "boxer",
-          "start": 8,
+          "text": "tired boxer",
+          "start": 2,
           "end": 13,
-          "role": "subject.identity"
+          "role": "subject.emotion"
         },
         {
           "text": "broken nose",
@@ -443,7 +469,7 @@
           "text": "buzzing",
           "start": 115,
           "end": 122,
-          "role": "audio.soundEffect"
+          "role": "audio.ambient"
         }
       ],
       "groundTruth": [
@@ -488,7 +514,7 @@
     },
     {
       "promptId": "appearance-003",
-      "predictedCount": 5,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -508,6 +534,12 @@
           "start": 57,
           "end": 76,
           "role": "subject.appearance"
+        },
+        {
+          "text": "wanders through",
+          "start": 77,
+          "end": 92,
+          "role": "action.movement"
         },
         {
           "text": "seaside boardwalk",
@@ -601,7 +633,7 @@
           "text": "orange glow from the kiln flickering",
           "start": 102,
           "end": 138,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         }
       ],
       "groundTruth": [
@@ -668,9 +700,9 @@
           "role": "subject.appearance"
         },
         {
-          "text": "hikes along",
+          "text": "hikes",
           "start": 55,
-          "end": 66,
+          "end": 60,
           "role": "action.movement"
         },
         {
@@ -744,9 +776,9 @@
           "role": "subject.appearance"
         },
         {
-          "text": "shimmering sweat",
+          "text": "shimmering sweat on her shoulders",
           "start": 40,
-          "end": 56,
+          "end": 73,
           "role": "subject.appearance"
         },
         {
@@ -838,8 +870,8 @@
           "role": "action.movement"
         },
         {
-          "text": "beside a rocky pier",
-          "start": 71,
+          "text": "rocky pier",
+          "start": 80,
           "end": 90,
           "role": "environment.location"
         },
@@ -908,9 +940,9 @@
           "role": "subject.appearance"
         },
         {
-          "text": "pale ink smudges",
+          "text": "pale ink smudges on her wrist",
           "start": 32,
-          "end": 48,
+          "end": 61,
           "role": "subject.appearance"
         },
         {
@@ -929,7 +961,7 @@
           "text": "warm lamplight",
           "start": 102,
           "end": 116,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         }
       ],
       "groundTruth": [
@@ -1008,9 +1040,9 @@
           "role": "environment.location"
         },
         {
-          "text": "bright noon sun",
-          "start": 100,
-          "end": 115,
+          "text": "noon",
+          "start": 107,
+          "end": 111,
           "role": "lighting.timeOfDay"
         }
       ],
@@ -1214,7 +1246,7 @@
     },
     {
       "promptId": "appearance-012",
-      "predictedCount": 5,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -1240,6 +1272,12 @@
           "start": 64,
           "end": 89,
           "role": "action.movement"
+        },
+        {
+          "text": "shoreline",
+          "start": 80,
+          "end": 89,
+          "role": "environment.location"
         },
         {
           "text": "golden hour",
@@ -1327,7 +1365,7 @@
           "text": "cool blue monitor glow",
           "start": 96,
           "end": 118,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         }
       ],
       "groundTruth": [
@@ -1391,7 +1429,7 @@
           "text": "flushed face",
           "start": 38,
           "end": 50,
-          "role": "subject.appearance"
+          "role": "subject.emotion"
         },
         {
           "text": "pounds a rhythm",
@@ -1442,7 +1480,7 @@
     },
     {
       "promptId": "appearance-015",
-      "predictedCount": 5,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -1470,10 +1508,16 @@
           "role": "action.movement"
         },
         {
-          "text": "wooden barn, dust motes floating in sunbeams",
+          "text": "wooden barn, dust motes floating",
           "start": 70,
-          "end": 114,
+          "end": 102,
           "role": "environment.location"
+        },
+        {
+          "text": "sunbeams",
+          "start": 106,
+          "end": 114,
+          "role": "lighting.source"
         }
       ],
       "groundTruth": [
@@ -1552,8 +1596,8 @@
           "role": "environment.location"
         },
         {
-          "text": "lit by a neon sign",
-          "start": 90,
+          "text": "neon sign",
+          "start": 99,
           "end": 108,
           "role": "lighting.source"
         }
@@ -1764,7 +1808,7 @@
     },
     {
       "promptId": "appearance-019",
-      "predictedCount": 6,
+      "predictedCount": 7,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -1777,19 +1821,25 @@
           "text": "tired, bloodshot eyes",
           "start": 17,
           "end": 38,
-          "role": "subject.appearance"
+          "role": "subject.emotion"
         },
         {
           "text": "creased brow",
           "start": 45,
           "end": 57,
-          "role": "subject.appearance"
+          "role": "subject.emotion"
         },
         {
-          "text": "kneels beside a patient",
+          "text": "kneels",
           "start": 58,
+          "end": 64,
+          "role": "action.state"
+        },
+        {
+          "text": "patient",
+          "start": 74,
           "end": 81,
-          "role": "action.movement"
+          "role": "subject.identity"
         },
         {
           "text": "cramped ambulance",
@@ -1801,7 +1851,7 @@
           "text": "strobing siren reflections",
           "start": 106,
           "end": 132,
-          "role": "lighting.source"
+          "role": "lighting.quality"
         }
       ],
       "groundTruth": [
@@ -1846,7 +1896,7 @@
     },
     {
       "promptId": "appearance-020",
-      "predictedCount": 5,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -1872,6 +1922,12 @@
           "start": 59,
           "end": 81,
           "role": "action.movement"
+        },
+        {
+          "text": "pool",
+          "start": 77,
+          "end": 81,
+          "role": "environment.location"
         },
         {
           "text": "bright stadium lights",
@@ -1932,9 +1988,9 @@
           "role": "subject.identity"
         },
         {
-          "text": "carves down a snowy slope",
+          "text": "carves down",
           "start": 8,
-          "end": 33,
+          "end": 19,
           "role": "action.movement"
         },
         {
@@ -2008,15 +2064,15 @@
           "role": "camera.movement"
         },
         {
-          "text": "steady tracking move",
-          "start": 67,
+          "text": "settles into a steady tracking move",
+          "start": 52,
           "end": 87,
           "role": "camera.movement"
         },
         {
-          "text": "zooms in on the violinist",
+          "text": "zooms",
           "start": 101,
-          "end": 126,
+          "end": 106,
           "role": "camera.movement"
         },
         {
@@ -2062,24 +2118,12 @@
     },
     {
       "promptId": "camera-movement-003",
-      "predictedCount": 4,
+      "predictedCount": 3,
       "groundTruthCount": 3,
       "predicted": [
         {
-          "text": "camera dollies backward",
+          "text": "camera dollies backward while panning left and tilting down",
           "start": 4,
-          "end": 27,
-          "role": "camera.movement"
-        },
-        {
-          "text": "panning left",
-          "start": 34,
-          "end": 46,
-          "role": "camera.movement"
-        },
-        {
-          "text": "tilting down",
-          "start": 51,
           "end": 63,
           "role": "camera.movement"
         },
@@ -2087,7 +2131,13 @@
           "text": "crowded cafeteria",
           "start": 77,
           "end": 94,
-          "role": "environment.context"
+          "role": "environment.location"
+        },
+        {
+          "text": "waiter",
+          "start": 106,
+          "end": 112,
+          "role": "subject.identity"
         }
       ],
       "groundTruth": [
@@ -2114,14 +2164,20 @@
     },
     {
       "promptId": "camera-movement-004",
-      "predictedCount": 6,
+      "predictedCount": 7,
       "groundTruthCount": 5,
       "predicted": [
         {
-          "text": "Drone shot over the coastline",
+          "text": "Drone shot",
           "start": 0,
-          "end": 29,
+          "end": 10,
           "role": "shot.type"
+        },
+        {
+          "text": "coastline",
+          "start": 20,
+          "end": 29,
+          "role": "environment.location"
         },
         {
           "text": "camera descends",
@@ -2190,26 +2246,32 @@
     },
     {
       "promptId": "camera-movement-005",
-      "predictedCount": 3,
+      "predictedCount": 4,
       "groundTruthCount": 3,
       "predicted": [
         {
-          "text": "camera cranes up, rolls slightly",
-          "start": 25,
-          "end": 57,
-          "role": "camera.movement"
+          "text": "behind",
+          "start": 5,
+          "end": 11,
+          "role": "camera.angle"
         },
         {
-          "text": "pulls back",
-          "start": 68,
+          "text": "hiker",
+          "start": 14,
+          "end": 19,
+          "role": "subject.identity"
+        },
+        {
+          "text": "camera cranes up, rolls slightly, and then pulls back",
+          "start": 25,
           "end": 78,
           "role": "camera.movement"
         },
         {
-          "text": "reveal the canyon",
-          "start": 82,
+          "text": "canyon",
+          "start": 93,
           "end": 99,
-          "role": "action.state"
+          "role": "environment.location"
         }
       ],
       "groundTruth": [
@@ -2236,7 +2298,7 @@
     },
     {
       "promptId": "camera-movement-006",
-      "predictedCount": 3,
+      "predictedCount": 5,
       "groundTruthCount": 2,
       "predicted": [
         {
@@ -2244,6 +2306,12 @@
           "start": 4,
           "end": 30,
           "role": "camera.movement"
+        },
+        {
+          "text": "hands",
+          "start": 25,
+          "end": 30,
+          "role": "subject.appearance"
         },
         {
           "text": "slides sideways",
@@ -2256,6 +2324,12 @@
           "start": 57,
           "end": 83,
           "role": "camera.movement"
+        },
+        {
+          "text": "speaker",
+          "start": 76,
+          "end": 83,
+          "role": "subject.identity"
         }
       ],
       "groundTruth": [
@@ -2276,7 +2350,7 @@
     },
     {
       "promptId": "camera-movement-007",
-      "predictedCount": 2,
+      "predictedCount": 4,
       "groundTruthCount": 3,
       "predicted": [
         {
@@ -2286,10 +2360,22 @@
           "role": "camera.movement"
         },
         {
-          "text": "eases into a slow orbit around the dancer",
+          "text": "eases into a slow orbit",
           "start": 35,
-          "end": 76,
+          "end": 58,
           "role": "camera.movement"
+        },
+        {
+          "text": "dancer",
+          "start": 70,
+          "end": 76,
+          "role": "subject.identity"
+        },
+        {
+          "text": "stage",
+          "start": 82,
+          "end": 87,
+          "role": "environment.location"
         }
       ],
       "groundTruth": [
@@ -2316,18 +2402,12 @@
     },
     {
       "promptId": "camera-movement-008",
-      "predictedCount": 4,
+      "predictedCount": 3,
       "groundTruthCount": 3,
       "predicted": [
         {
-          "text": "camera lunges forward, stops abruptly",
+          "text": "camera lunges forward, stops abruptly, and then glides smoothly backward",
           "start": 4,
-          "end": 41,
-          "role": "camera.movement"
-        },
-        {
-          "text": "glides smoothly backward",
-          "start": 52,
           "end": 76,
           "role": "camera.movement"
         },
@@ -2372,28 +2452,28 @@
       "groundTruthCount": 3,
       "predicted": [
         {
-          "text": "camera pans right, tilts up",
+          "text": "camera pans right, tilts up, and zooms in simultaneously",
           "start": 4,
-          "end": 31,
+          "end": 60,
           "role": "camera.movement"
         },
         {
-          "text": "zooms",
-          "start": 37,
-          "end": 42,
-          "role": "camera.movement"
-        },
-        {
-          "text": "locking onto the lighthouse",
+          "text": "locking onto",
           "start": 62,
-          "end": 89,
-          "role": "action.state"
+          "end": 74,
+          "role": "camera.focus"
         },
         {
-          "text": "against the storm",
-          "start": 90,
+          "text": "lighthouse",
+          "start": 79,
+          "end": 89,
+          "role": "subject.identity"
+        },
+        {
+          "text": "storm",
+          "start": 102,
           "end": 107,
-          "role": "environment.context"
+          "role": "environment.weather"
         }
       ],
       "groundTruth": [
@@ -2420,20 +2500,44 @@
     },
     {
       "promptId": "camera-movement-010",
-      "predictedCount": 5,
+      "predictedCount": 10,
       "groundTruthCount": 5,
       "predicted": [
         {
           "text": "Single take",
           "start": 0,
           "end": 11,
-          "role": "shot.type"
+          "role": "technical.duration"
         },
         {
-          "text": "camera drifts through the doorway, circles the table",
+          "text": "kitchen",
+          "start": 17,
+          "end": 24,
+          "role": "environment.location"
+        },
+        {
+          "text": "camera drifts through the doorway",
           "start": 30,
+          "end": 63,
+          "role": "camera.movement"
+        },
+        {
+          "text": "doorway",
+          "start": 56,
+          "end": 63,
+          "role": "environment.context"
+        },
+        {
+          "text": "circles the table",
+          "start": 65,
           "end": 82,
           "role": "camera.movement"
+        },
+        {
+          "text": "table",
+          "start": 77,
+          "end": 82,
+          "role": "environment.context"
         },
         {
           "text": "rises",
@@ -2445,13 +2549,19 @@
           "text": "top-down view",
           "start": 105,
           "end": 118,
-          "role": "shot.type"
+          "role": "camera.angle"
         },
         {
-          "text": "family eats dinner",
+          "text": "family",
           "start": 124,
+          "end": 130,
+          "role": "subject.identity"
+        },
+        {
+          "text": "eats dinner",
+          "start": 131,
           "end": 142,
-          "role": "action.state"
+          "role": "action.movement"
         }
       ],
       "groundTruth": [
@@ -2642,7 +2752,7 @@
     },
     {
       "promptId": "core-003",
-      "predictedCount": 5,
+      "predictedCount": 7,
       "groundTruthCount": 5,
       "predicted": [
         {
@@ -2652,9 +2762,9 @@
           "role": "subject.identity"
         },
         {
-          "text": "running through",
+          "text": "running",
           "start": 17,
-          "end": 32,
+          "end": 24,
           "role": "action.movement"
         },
         {
@@ -2667,13 +2777,25 @@
           "text": "foggy forest",
           "start": 49,
           "end": 61,
-          "role": "environment.location"
+          "role": "environment.weather"
         },
         {
           "text": "dawn",
           "start": 65,
           "end": 69,
           "role": "lighting.timeOfDay"
+        },
+        {
+          "text": "breath visible",
+          "start": 71,
+          "end": 85,
+          "role": "action.state"
+        },
+        {
+          "text": "cold air",
+          "start": 89,
+          "end": 97,
+          "role": "environment.weather"
         }
       ],
       "groundTruth": [
@@ -2731,7 +2853,7 @@
           "text": "holding a vintage compass",
           "start": 26,
           "end": 51,
-          "role": "action.movement"
+          "role": "action.state"
         },
         {
           "text": "warm candlelight",
@@ -2904,7 +3026,7 @@
     },
     {
       "promptId": "edge-002",
-      "predictedCount": 4,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -2926,10 +3048,22 @@
           "role": "environment.location"
         },
         {
+          "text": "cometa",
+          "start": 38,
+          "end": 44,
+          "role": "action.state"
+        },
+        {
           "text": "atardecer",
           "start": 51,
           "end": 60,
           "role": "lighting.timeOfDay"
+        },
+        {
+          "text": "música alegre",
+          "start": 68,
+          "end": 81,
+          "role": "audio.score"
         }
       ],
       "groundTruth": [
@@ -3025,7 +3159,7 @@
     },
     {
       "promptId": "edge-004",
-      "predictedCount": 25,
+      "predictedCount": 24,
       "groundTruthCount": 18,
       "predicted": [
         {
@@ -3035,22 +3169,22 @@
           "role": "subject.identity"
         },
         {
-          "text": "red trench coat",
+          "text": "red trench coat and fedora",
           "start": 14,
-          "end": 29,
-          "role": "subject.wardrobe"
-        },
-        {
-          "text": "fedora",
-          "start": 34,
           "end": 40,
           "role": "subject.wardrobe"
         },
         {
-          "text": "standing in a dusty saloon",
+          "text": "standing",
           "start": 41,
-          "end": 67,
+          "end": 49,
           "role": "action.state"
+        },
+        {
+          "text": "dusty saloon",
+          "start": 55,
+          "end": 67,
+          "role": "environment.location"
         },
         {
           "text": "Wide shot",
@@ -3065,12 +3199,6 @@
           "role": "camera.movement"
         },
         {
-          "text": "full room",
-          "start": 122,
-          "end": 131,
-          "role": "environment.context"
-        },
-        {
           "text": "weathered bar, vintage poker table, faded wallpaper",
           "start": 141,
           "end": 192,
@@ -3083,16 +3211,10 @@
           "role": "environment.context"
         },
         {
-          "text": "crowd of patrons",
+          "text": "crowd of patrons in period clothing",
           "start": 220,
-          "end": 236,
-          "role": "environment.context"
-        },
-        {
-          "text": "period clothing",
-          "start": 240,
           "end": 255,
-          "role": "subject.wardrobe"
+          "role": "environment.context"
         },
         {
           "text": "Warm, amber lighting",
@@ -3105,6 +3227,12 @@
           "start": 287,
           "end": 298,
           "role": "lighting.source"
+        },
+        {
+          "text": "dirty windows",
+          "start": 315,
+          "end": 328,
+          "role": "environment.context"
         },
         {
           "text": "long shadows",
@@ -3149,8 +3277,8 @@
           "role": "style.filmStock"
         },
         {
-          "text": "Aspect ratio 2.39:1",
-          "start": 478,
+          "text": "2.39:1",
+          "start": 491,
           "end": 497,
           "role": "technical.aspectRatio"
         },
@@ -3294,20 +3422,26 @@
     },
     {
       "promptId": "lighting-001",
-      "predictedCount": 6,
+      "predictedCount": 8,
       "groundTruthCount": 7,
       "predicted": [
         {
           "text": "Low-angle shot",
           "start": 0,
           "end": 14,
-          "role": "shot.type"
+          "role": "camera.angle"
         },
         {
           "text": "detective",
           "start": 20,
           "end": 29,
           "role": "subject.identity"
+        },
+        {
+          "text": "office",
+          "start": 36,
+          "end": 42,
+          "role": "environment.location"
         },
         {
           "text": "practical tungsten desk lamp",
@@ -3325,6 +3459,12 @@
           "text": "cool moonlight",
           "start": 107,
           "end": 121,
+          "role": "lighting.source"
+        },
+        {
+          "text": "blinds",
+          "start": 137,
+          "end": 143,
           "role": "lighting.source"
         },
         {
@@ -3382,7 +3522,7 @@
     },
     {
       "promptId": "lighting-002",
-      "predictedCount": 4,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -3398,8 +3538,20 @@
           "role": "subject.identity"
         },
         {
-          "text": "rim-lit by a white follow spot",
+          "text": "stage",
+          "start": 27,
+          "end": 32,
+          "role": "environment.location"
+        },
+        {
+          "text": "rim-lit",
           "start": 34,
+          "end": 41,
+          "role": "lighting.quality"
+        },
+        {
+          "text": "white follow spot",
+          "start": 47,
           "end": 64,
           "role": "lighting.source"
         },
@@ -3471,7 +3623,7 @@
           "text": "his bench",
           "start": 28,
           "end": 37,
-          "role": "environment.context"
+          "role": "environment.location"
         },
         {
           "text": "diffused skylight",
@@ -3544,8 +3696,8 @@
           "role": "environment.location"
         },
         {
-          "text": "illuminated by intermittent neon signs",
-          "start": 42,
+          "text": "intermittent neon signs",
+          "start": 57,
           "end": 80,
           "role": "lighting.source"
         },
@@ -3623,7 +3775,7 @@
           "text": "high-key studio lighting",
           "start": 41,
           "end": 65,
-          "role": "lighting.source"
+          "role": "lighting.quality"
         },
         {
           "text": "glossy specular highlights on the sauce",
@@ -3699,7 +3851,7 @@
           "text": "silhouettes forming sharp edges",
           "start": 87,
           "end": 118,
-          "role": "environment.context"
+          "role": "lighting.quality"
         }
       ],
       "groundTruth": [
@@ -3757,11 +3909,11 @@
           "text": "Rembrandt lighting",
           "start": 12,
           "end": 30,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         },
         {
-          "text": "soft key light",
-          "start": 36,
+          "text": "one soft key light",
+          "start": 32,
           "end": 50,
           "role": "lighting.source"
         },
@@ -3775,7 +3927,7 @@
           "text": "warm skin tones",
           "start": 74,
           "end": 89,
-          "role": "subject.appearance"
+          "role": "style.colorGrade"
         }
       ],
       "groundTruth": [
@@ -3842,8 +3994,8 @@
           "role": "lighting.source"
         },
         {
-          "text": "warm light",
-          "start": 73,
+          "text": "pools of warm light",
+          "start": 64,
           "end": 83,
           "role": "lighting.quality"
         },
@@ -3924,8 +4076,8 @@
           "role": "subject.identity"
         },
         {
-          "text": "lit by a ring light",
-          "start": 28,
+          "text": "ring light",
+          "start": 37,
           "end": 47,
           "role": "lighting.source"
         },
@@ -3997,7 +4149,7 @@
           "text": "sparkles",
           "start": 23,
           "end": 31,
-          "role": "action.movement"
+          "role": "action.state"
         },
         {
           "text": "rotating LED light, prismatic highlights",
@@ -4009,7 +4161,7 @@
           "text": "dancing",
           "start": 81,
           "end": 88,
-          "role": "action.movement"
+          "role": "action.state"
         }
       ],
       "groundTruth": [
@@ -4058,14 +4210,14 @@
           "role": "camera.movement"
         },
         {
-          "text": "wet asphalt, neon reflections",
+          "text": "wet asphalt",
           "start": 18,
-          "end": 47,
-          "role": "environment.context"
+          "end": 29,
+          "role": "environment.location"
         },
         {
-          "text": "light scattering",
-          "start": 60,
+          "text": "neon reflections shimmering, light scattering",
+          "start": 31,
           "end": 76,
           "role": "lighting.quality"
         },
@@ -4112,26 +4264,38 @@
     },
     {
       "promptId": "lighting-012",
-      "predictedCount": 3,
+      "predictedCount": 5,
       "groundTruthCount": 5,
       "predicted": [
         {
-          "text": "Golden hour portrait",
+          "text": "Golden hour",
           "start": 0,
+          "end": 11,
+          "role": "lighting.timeOfDay"
+        },
+        {
+          "text": "portrait",
+          "start": 12,
           "end": 20,
           "role": "shot.type"
+        },
+        {
+          "text": "model",
+          "start": 26,
+          "end": 31,
+          "role": "subject.identity"
         },
         {
           "text": "warm backlight, subtle rim light on hair",
           "start": 33,
           "end": 73,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         },
         {
           "text": "soft bounce fill on the face",
           "start": 79,
           "end": 107,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         }
       ],
       "groundTruth": [
@@ -4252,7 +4416,7 @@
     },
     {
       "promptId": "lighting-014",
-      "predictedCount": 4,
+      "predictedCount": 5,
       "groundTruthCount": 5,
       "predicted": [
         {
@@ -4262,9 +4426,9 @@
           "role": "shot.type"
         },
         {
-          "text": "caustic light patterns",
+          "text": "caustic light patterns ripple",
           "start": 17,
-          "end": 39,
+          "end": 46,
           "role": "lighting.quality"
         },
         {
@@ -4274,10 +4438,16 @@
           "role": "subject.identity"
         },
         {
-          "text": "blue-green color cast, sunbeams piercing the surface",
+          "text": "blue-green color cast",
           "start": 61,
+          "end": 82,
+          "role": "style.colorGrade"
+        },
+        {
+          "text": "sunbeams piercing the surface",
+          "start": 84,
           "end": 113,
-          "role": "lighting.quality"
+          "role": "lighting.source"
         }
       ],
       "groundTruth": [
@@ -4316,7 +4486,7 @@
     },
     {
       "promptId": "lighting-015",
-      "predictedCount": 8,
+      "predictedCount": 7,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -4326,9 +4496,9 @@
           "role": "subject.identity"
         },
         {
-          "text": "prowls through",
+          "text": "prowls",
           "start": 6,
-          "end": 20,
+          "end": 12,
           "role": "action.movement"
         },
         {
@@ -4360,12 +4530,6 @@
           "start": 91,
           "end": 103,
           "role": "lighting.quality"
-        },
-        {
-          "text": "swallow the corners",
-          "start": 104,
-          "end": 123,
-          "role": "environment.context"
         }
       ],
       "groundTruth": [
@@ -4504,9 +4668,16 @@
     },
     {
       "promptId": "pattern-002",
-      "predictedCount": 0,
+      "predictedCount": 1,
       "groundTruthCount": 2,
-      "predicted": [],
+      "predicted": [
+        {
+          "text": "Warm tones",
+          "start": 0,
+          "end": 10,
+          "role": "style.colorGrade"
+        }
+      ],
       "groundTruth": [
         {
           "text": "Warm tones",
@@ -4590,7 +4761,7 @@
           "text": "floats weightlessly",
           "start": 41,
           "end": 60,
-          "role": "action.movement"
+          "role": "action.state"
         },
         {
           "text": "ISS corridor",
@@ -4653,7 +4824,7 @@
     },
     {
       "promptId": "tech-002",
-      "predictedCount": 5,
+      "predictedCount": 6,
       "groundTruthCount": 6,
       "predicted": [
         {
@@ -4669,10 +4840,16 @@
           "role": "subject.identity"
         },
         {
-          "text": "pans vegetables in a hot pan",
+          "text": "pans vegetables",
           "start": 20,
-          "end": 48,
+          "end": 35,
           "role": "action.movement"
+        },
+        {
+          "text": "hot pan",
+          "start": 41,
+          "end": 48,
+          "role": "environment.context"
         },
         {
           "text": "Camera pans left",
@@ -4811,7 +4988,7 @@
     },
     {
       "promptId": "tech-004",
-      "predictedCount": 5,
+      "predictedCount": 6,
       "groundTruthCount": 5,
       "predicted": [
         {
@@ -4836,13 +5013,19 @@
           "text": "subject's face",
           "start": 68,
           "end": 82,
-          "role": "subject.identity"
+          "role": "subject.appearance"
         },
         {
-          "text": "Zoom into close-up",
+          "text": "Zoom",
           "start": 84,
-          "end": 102,
+          "end": 88,
           "role": "camera.movement"
+        },
+        {
+          "text": "close-up",
+          "start": 94,
+          "end": 102,
+          "role": "shot.type"
         }
       ],
       "groundTruth": [
@@ -4885,9 +5068,9 @@
       "groundTruthCount": 4,
       "predicted": [
         {
-          "text": "Rack focus from foreground object to subject",
+          "text": "Rack focus",
           "start": 0,
-          "end": 44,
+          "end": 10,
           "role": "camera.focus"
         },
         {

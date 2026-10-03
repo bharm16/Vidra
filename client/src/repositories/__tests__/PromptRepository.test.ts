@@ -1,3 +1,4 @@
+import { updateVersions as persistHistoryVersions } from "../../hooks/usePromptHistory/api/historyRepository";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockApiClient } = vi.hoisted(() => ({
@@ -344,5 +345,39 @@ describe("PromptRepository", () => {
     await expect(repository.deleteById("")).rejects.toBeInstanceOf(
       PromptRepositoryError,
     );
+  });
+});
+
+describe("strict history version write for reference admission (issue #119)", () => {
+  beforeEach(() => vi.clearAllMocks());
+  const versions = [
+    {
+      versionId: "v1",
+      signature: "s1",
+      prompt: "A city",
+      timestamp: "2026-10-03T00:00:00Z",
+    },
+  ];
+  it("awaits the exact session PATCH without switching to the prompt UUID", async () => {
+    mockApiClient.patch.mockResolvedValueOnce({ success: true });
+    await persistHistoryVersions("creator", uuid, "session_1", versions, {
+      requireSuccess: true,
+    });
+    expect(mockApiClient.patch).toHaveBeenCalledWith(
+      "/sessions/session_1/versions",
+      { versions },
+    );
+    expect(mockApiClient.patch).toHaveBeenCalledTimes(1);
+    expect(mockApiClient.get).not.toHaveBeenCalled();
+  });
+  it("propagates ownership/write refusal without a UUID fallback", async () => {
+    mockApiClient.patch.mockRejectedValueOnce(new Error("Forbidden"));
+    await expect(
+      persistHistoryVersions("creator", uuid, "session_1", versions, {
+        requireSuccess: true,
+      }),
+    ).rejects.toThrow("Failed to update versions");
+    expect(mockApiClient.patch).toHaveBeenCalledTimes(1);
+    expect(mockApiClient.get).not.toHaveBeenCalled();
   });
 });

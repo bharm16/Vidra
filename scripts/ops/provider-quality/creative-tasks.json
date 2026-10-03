@@ -1,0 +1,100 @@
+{
+  "schema": "creative-tasks/v1",
+  "ownerApproval": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewedAt": null,
+    "notes": null
+  },
+  "execution": "Only after an authorized bounded live run; offline fixtures cannot be judged as creative output.",
+  "tasks": [
+    {
+      "id": "cup-and-book",
+      "operation": "generate",
+      "prompt": "A red ceramic cup beside a blue book on a wooden table. Soft morning light, eye-level view, plain cream wall. No text.",
+      "ratios": ["1:1", "16:9", "9:16"],
+      "review": [
+        "Both objects are present and correctly colored",
+        "Requested composition remains legible without unrequested text",
+        "Output dimensions match the requested ratio"
+      ],
+      "paths": "Every offerable studio generator and first-frame text generator, with selected model recorded"
+    },
+    {
+      "id": "recolor-preservation",
+      "operation": "edit",
+      "prompt": "Change only the red cup to green; preserve the blue book, framing, shadows and table.",
+      "source": "The accepted cup-and-book output; record its path and SHA-256",
+      "review": [
+        "Cup becomes green",
+        "Book color, position and shape remain unchanged",
+        "Cup pose, table, framing and shadows remain unchanged",
+        "Record every unwanted change, including a plausible but different repaint"
+      ],
+      "paths": "Every offerable studio editor by pin, Auto default editor, and Kontext first-frame edit"
+    },
+    {
+      "id": "background-removal",
+      "operation": "transform",
+      "prompt": "remove_background",
+      "source": "The accepted cup-and-book output; record its path and SHA-256",
+      "review": [
+        "Intended foreground remains with intact edges",
+        "Background is transparent",
+        "No unrelated foreground details change"
+      ],
+      "paths": "studio remove_background"
+    },
+    {
+      "id": "vector-preservation",
+      "operation": "transform",
+      "prompt": "vectorize",
+      "source": "A simple raster red cup icon with a blue book; record its path and SHA-256",
+      "review": [
+        "Output is valid viewable SVG",
+        "Colors and silhouette preserve source meaning",
+        "No new visual elements appear"
+      ],
+      "paths": "studio vectorize; vector generation should also be judged for cup-and-book"
+    },
+    {
+      "id": "motion-pair",
+      "operation": "motion",
+      "prompt": "A red ceramic cup beside a blue book on a wooden table. Camera slowly pushes in.",
+      "comparisonPrompt": "A red ceramic cup beside a blue book on a wooden table. Camera stays still.",
+      "source": "Same accepted first frame and same seed/settings for both clips where the provider supports them",
+      "review": [
+        "Clips are playable and use the selected first frame",
+        "Push-in visibly approaches the cup compared with the static control",
+        "Cup and book remain coherent without unrequested object motion",
+        "Record exact visible picker motion words and exact submitted provider words",
+        "Durable attachment, reopen and download have #143 evidence"
+      ],
+      "paths": "Every callable final-video model; #143 intake clip proof is required separately"
+    },
+    {
+      "id": "pin-negotiation",
+      "operation": "edit",
+      "prompt": "Change only the red cup to green; preserve everything else.",
+      "source": "Existing cup-and-book attachment; pin a Recraft text-only generator",
+      "review": [
+        "The limitation is explained with explicit choices",
+        "No alternative editor runs silently",
+        "After explicitly changing the pin, the request reaches that editor"
+      ],
+      "paths": "Studio conversation and picker; deterministic routing evidence and owner interaction review are separate"
+    },
+    {
+      "id": "sketch-fidelity",
+      "operation": "sketch",
+      "prompt": "A red ceramic cup beside a blue book on a wooden table.",
+      "source": "Draw a cup left of a book; record exact source sketch and strength/steps/seed",
+      "review": [
+        "Output follows the drawn arrangement",
+        "Colors follow the prompt",
+        "Accepted frame remains identical through the studio bridge"
+      ],
+      "paths": "fal i2i sketch relay and cross-mode bridge"
+    }
+  ]
+}

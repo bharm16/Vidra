@@ -1,172 +1,65 @@
 # Vidra
 
-> **Preview first. Generate once.**
-
-AI video generation platform with a preview workflow that prevents wasted credits.
+A visual direction workspace: start with words, a sketch, or a reference picture;
+refine pictures and visible motion direction while preserving inputs and history.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![React Version](https://img.shields.io/badge/react-18.2.0-blue)](https://reactjs.org/)
 
----
+## The authoring loop
 
-## The Problem
+1. Start a session with words, or explicitly admit a picture with associated words.
+2. Inspect labeled phrases and choose suggestions to refine the visible direction.
+3. Generate a picture, or use a sketch/upload; refine a session picture in the studio
+   and explicitly return a produced image to the session.
+4. Arm a first frame, choose camera motion as visible words, and request a clip.
+5. Reopen the session with its take identities, inputs and relationships preserved.
 
-Video generation is expensive. One Sora generation costs real money. One Veo render burns real credits.
+The workspace contains the space, the input and the next-step button. The space
+has words, picture and clip columns; picture refinements can form deeper chains
+inside the picture column. The studio and live editor have their own surfaces.
+Their bridges are explicit actions, and the live editor remains ephemeral until
+the creator presses **Use this**.
 
-And you won't know if your prompt works until it's done rendering.
+A take is a durable picture or clip. Production provenance records how it was
+made when known; associated words identify the session direction filed with it.
+An upload has unknown production provenance. Draft/render names model tiers,
+not a promise that a draft must become a final. See [the glossary](CONTEXT.md)
+and [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md).
 
-So you generate. Wait. Hate it. Tweak. Generate again. Wait again. Hate it again.
+## Implemented capabilities
 
-By the time you get what you wanted, you've burned through half your credits on bad takes.
+| Capability                                | Current contract                                                                                                                                           |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Semantic labeling and suggestions         | Labeled prompt phrases support click-to-enhance and explicit replacement.                                                                                  |
+| Structured optimization                   | One LLM pass emits a cached artifact; deterministic intent and prompt-lint gates finish it. Model-target compilation uses the same artifact.               |
+| Pictures and clips                        | Provider adapters exist for image generation and Wan, Sora, Veo, Kling and Luma video paths; an adapter is not live quality certification.                 |
+| Studio generation, editing and transforms | Stable model slugs, capability-based Auto routing and explicit negotiation for an incapable pin. A first turn can edit when a source image already exists. |
+| Cross-mode admission                      | Upload, shown live output and produced studio images share admission, ownership, ancestry and resumable attachment contracts.                              |
+| Camera choice                             | The chosen direction becomes visible words; its depth-backed or fallback illustration is always labeled illustrative.                                      |
+| Runway prompt target                      | Prompts compile for Runway Gen-4.5; no generation adapter dispatches to Runway.                                                                            |
 
-## The Solution
+## Operating policy and verification
 
-**Draft cheap. Render perfect.**
+The product has no customer-visible credits. Legacy credit/payment machinery
+remains in the repository, and the existing quick-picture and clip HTTP intake
+still reserves credits. This is an unresolved release constraint: [#120](https://github.com/bharm16/Vidra/issues/120)
+chooses bounded free validation or a paid Keep contract; [#123](https://github.com/bharm16/Vidra/issues/123)
+and [#124](https://github.com/bharm16/Vidra/issues/124) implement that policy.
+No release mode or dollar cap is approved by this document. Old credit plans
+are not the active offer.
 
-Vidra lets you preview your video with fast, inexpensive models before committing to final generation:
-
-| Stage                | Model                      | Credit cost         | Time   | Purpose                          |
-| -------------------- | -------------------------- | ------------------- | ------ | -------------------------------- |
-| **Image Preview**    | Flux Schnell               | 1 credit / image    | 5-10s  | Validate framing, lighting, mood |
-| **Video Preview**    | Wan 2.2                    | 28 credits (8s)     | 30-60s | Test motion, pacing, camera      |
-| **Final Generation** | Sora 2, Veo 3, Kling, Luma | 48-192 credits (8s) | 2-5min | Production-ready output          |
-
-**The workflow:**
-
-1. **Write** → Interactive editor with semantic highlighting
-2. **Preview** → Fast drafts with Flux/Wan to validate direction
-3. **Refine** → Click any highlighted phrase for AI-powered alternatives
-4. **Generate** → Final video with Sora, Veo, Kling, or Luma
-
-**Result:** you judge framing, lighting and mood from a still — and can rewrite any phrase in place — before anything renders as video. The still is rendered from the same structured artifact the video prompt is compiled from, so the frame you approve reflects the prompt the video model receives.
-
----
-
-## What This Is
-
-<!-- TODO: Add GIF showing the click-to-enhance flow -->
-
-**Vidra is NOT another paste-and-optimize tool.**
-
-It's an interactive editing canvas where:
-
-1. You write/paste a prompt
-2. Every phrase gets ML-labeled (subject, camera, lighting, action, style...)
-3. 15+ color-coded highlights appear
-4. **Click ANY highlight** → get 5 AI-generated alternatives
-5. One-click replace → prompt updates
-6. **Visual preview** → See your prompt as an image (auto-generated with Flux Schnell)
-7. Repeat until perfect
-
-**You control every word. The AI assists, you decide.**
-
----
+Offline replay and emulator/controlled-storage checks establish specific
+contracts. They do not establish that the real browser controls and HTTP
+intake complete a live clip, that creative output meets expectations, or that
+the deployed version is accepted. [Current gates and proof limits](docs/audits/2026-10-03-docs-consistency.md)
+remain explicit. Continuity, multi-shot production and broader generation
+economics/resilience remain [deferred](docs/architecture/deferred-work-ledger.md).
 
 ## Quick Start
 
-Moved to `docs/QUICKSTART.md`.
-
----
-
-## The Experience
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  CATEGORIES        INTERACTIVE EDITOR                  SUGGESTIONS     │
-│  ───────────       ──────────────────                  ───────────     │
-│                                                                         │
-│  Subject (3)       "A [woman in her 30s] walks        "woman in her    │
-│  Action (1)         along a [pristine beach] at        30s":           │
-│  Location (2)       [golden hour]..."                                  │
-│  Lighting (2)                                          • elderly man   │
-│  Camera (1)         ↑ Click any highlight              • young dancer  │
-│  Style (1)                                             • shadowy figure│
-│                                                                         │
-│  [15 elements]                                         [Click to apply]│
-│                                                                         │
-│  ────────────────────────────────────────────────────────────────────── │
-│  VISUAL PREVIEW (Flux Schnell)                                         │
-│  [Generated preview image appears here as you type]                    │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-**Left:** Overview of detected elements by category  
-**Center:** Your prompt with clickable highlights  
-**Right:** AI suggestions for selected text  
-**Bottom:** Visual preview generated automatically as you type
-
----
-
-## Key Features
-
-| Feature                                | What It Does                                                                                                                                                                                                    |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Semantic Labeling**                  | 30+ categories tuned for video (subject, camera, lighting, action, style...)                                                                                                                                    |
-| **Click-to-Enhance**                   | Click any highlight → get context-aware alternatives → one-click replace                                                                                                                                        |
-| **Direct Video Generation**            | Generate actual videos using OpenAI Sora 2, Google Veo 3, Kling, Luma Ray 3, and Wan — the identities that carry a generation adapter in `shared/modelIdentity.ts`                                              |
-| **Runway as a Prompt Target**          | Vidra writes and compiles prompts for Runway Gen-4.5 (`RunwayStrategy`, `/api/optimize-compile`). Runway has no generation adapter (`generation: []`), so nothing dispatches to it                              |
-| **Visual Preview**                     | Auto-generates preview images using Flux Schnell as you type (debounced)                                                                                                                                        |
-| **Structured Optimization**            | One LLM pass emits a cached structured artifact, rendered to a prompt and gated by a deterministic intent-lock check and a prompt lint; naming a target model compiles that artifact into the model's own prose |
-| **Consistency Tracking**               | Suggestions respect your edit history to maintain coherence                                                                                                                                                     |
-| **Integrated Asset System**            | Create and reuse **characters, styles, locations, and objects** directly inside the prompt optimizer for consistent production output                                                                           |
-| **`@trigger` Prompt Assembly**         | Reference assets via `@trigger` tokens with UX support (autocomplete/detection) so prompt building becomes reusable “building blocks”                                                                           |
-| **Reference Image Library**            | Upload/manage reference images (standalone + asset-attached) to support identity + visual continuity                                                                                                            |
-| **Keyframe / Image-to-Video Workflow** | Use a start frame/keyframe (from uploads, library, or assets) to guide generation instead of text-only video                                                                                                    |
-| **Face-Consistent Keyframes (PuLID)**  | Higher-quality face identity preservation for character consistency (with fallback behavior when not configured)                                                                                                |
-| **Consistent Generation Workflow**     | Supports “generate keyframe → approve → generate video” for multi-shot/series production patterns                                                                                                               |
-
----
-
-## Billing & Credits
-
-### Plans (monthly)
-
-| Plan     | Price | Credits/month |
-| -------- | ----- | ------------- |
-| Free     | $0    | n/a           |
-| Explorer | $19   | 500           |
-| Creator  | $59   | 1,800         |
-| Agency   | $179  | 6,000         |
-
-**Plan highlights (from the pricing page):**
-
-- Free: Local history, core prompt optimization, upgrade anytime
-- Explorer: Priority generation queue, email support
-- Creator: Faster generations, early feature access
-- Agency: Team-ready workflows, priority support
-
-### Add-on credit packs (one-time)
-
-| Pack         | Credits | Price |
-| ------------ | ------- | ----- |
-| Starter Pack | 300     | $15   |
-| Booster Pack | 600     | $28   |
-| Pro Pack     | 1,200   | $52   |
-| Studio Pack  | 3,000   | $120  |
-
-Stripe setup: map price IDs to credit amounts via `STRIPE_PRICE_CREDITS` (include both subscriptions and packs).
-Credit packs are one-time top-ups applied after checkout completes.
-
-### Generation costs (per-second pricing)
-
-Video credits are charged per second. Default duration is 8 seconds.
-
-| Model      | Credits/sec | 8s Video    |
-| ---------- | ----------- | ----------- |
-| WAN Draft  | 3.5         | 28 credits  |
-| WAN Pro    | 5           | 40 credits  |
-| Sora 2     | 6           | 48 credits  |
-| Sora 2 Pro | 14          | 112 credits |
-| Veo 3      | 24          | 192 credits |
-| Luma Ray-3 | 7           | 56 credits  |
-| Kling v2.1 | 5           | 40 credits  |
-| Minimax    | 4           | 32 credits  |
-
-Image previews: 1 credit per image.
-
-Credits are reserved at request time and refunded automatically if a preview or generation fails.
-Preview and generation requests require authentication; anonymous users can’t consume credits.
+See [local setup](docs/QUICKSTART.md).
 
 ---
 
@@ -187,15 +80,17 @@ AI video models are sensitive to prompt quality, and each one wants its own dial
 
 ## Supported Ecosystem
 
-Vidra is designed to be the all-in-one studio for the AI video ecosystem.
+Provider implementations and prompt targets are enumerated below. Check the
+active registries and configured availability before promising a path; the
+quality task matrix evaluates support independently of registration.
 
 **Optimizes prompts AND generates video with** (each has a generation adapter under `server/src/services/video-generation/providers/`):
 
-- **OpenAI Sora 2** (Physics simulation & continuity)
-- **Google Veo 3** (Cinematic lighting & atmosphere)
-- **Kling 2.6** (Character performance)
-- **Luma Ray 3** (Morphing & transitions)
-- **Wan 2.2** (High-fidelity previews)
+- **OpenAI Sora 2**
+- **Google Veo 3**
+- **Kling**
+- **Luma Ray 3**
+- **Wan**
 
 **Optimizes prompts for, without generating:**
 
@@ -220,17 +115,11 @@ Vidra is designed to be the all-in-one studio for the AI video ecosystem.
 
 ## Current Status
 
-**Production Ready Features:**
-
-- ✅ Structured Optimization Engine (cached artifact → intent lock → prompt lint, with optional per-model compilation)
-- ✅ Direct Video Generation (Sora 2, Veo 3, Kling v2.1, Luma Ray 3, Wan 2.2/2.5)
-- ✅ Prompt compilation for Runway Gen-4.5 (prompt target only — no generation adapter)
-- ✅ Video Preview Generation (Wan 2.2)
-- ✅ Image Preview Generation (Flux Schnell)
-- ✅ Concept Builder & Improvement Wizards
-- ✅ Scene Change & Conflict Detection
-- ✅ Enterprise-grade History & Auto-save
-- ✅ Multi-Format Export (JSON/MD/TXT)
+Implementation and release acceptance are tracked separately. The
+[consistency audit](docs/audits/2026-10-03-docs-consistency.md) records current
+local contracts and the remaining browser, live-provider, quality, owner and
+deployment gates. Historical screenshots, passing offline tests and adapter
+registrations do not substitute for those gates.
 
 ---
 
