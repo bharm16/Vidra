@@ -260,6 +260,21 @@ export class RequestIdempotencyService {
    * still owed is found through this receipt (issue #135), the same way a clip
    * job's attachment is read through its job record.
    */
+  /** The attachment resume door also needs the persisted receipt's identity. */
+  async getResponseReceipt(input: {
+    userId: string;
+    route: string;
+    key: string;
+  }): Promise<{
+    recordId: string;
+    snapshot: IdempotencyResponseSnapshot;
+  } | null> {
+    const snapshot = await this.getResponseSnapshot(input);
+    return snapshot
+      ? { recordId: toRecordId(input.userId, input.route, input.key), snapshot }
+      : null;
+  }
+
   async getResponseSnapshot(input: {
     userId: string;
     route: string;

@@ -1,3 +1,4 @@
+import type { ReferenceSelectionGuard } from "./usePendingFirstFrame";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createAdmissionKey,
@@ -35,8 +36,8 @@ import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
  * is judged against THAT object, never against whatever the workspace shows
  * by then.
  *
- * Outside a session there is nothing to admit into, so the caller's plain
- * upload runs unchanged. Reference images never come through here at all.
+ * Without saved associated words the upload remains pending input (issue #119).
+ * It becomes a take only at the creator's explicit association action.
  */
 
 /** The success branch of the wire response — the only one that carries data. */
@@ -72,16 +73,13 @@ export interface UseFirstFrameAdmissionParams {
    */
   getActiveSessionId: () => string | null;
   setStartFrame: (tile: KeyframeTile) => void;
-  /**
-   * The pre-ADR upload, used when no session or words-version resolves. Passed
-   * in rather than re-implemented: the owner already publishes it to the
-   * sidebar, and two spellings of "upload a file" would drift.
-   */
-  uploadOutsideSession: (file: File) => Promise<{
-    url: string;
-    storagePath?: string;
-    viewUrlExpiresAt?: string;
-  } | null>;
+  /** Preserve unresolved input separately; this never arms a take. */
+  stagePendingReference: (
+    file: File,
+    sessionId: string | null,
+  ) => Promise<void>;
+  hasAssociatedWords: () => boolean;
+  beginReferenceSelection: () => ReferenceSelectionGuard;
   onError: (message: string) => void;
   onInvalidFile: (message: string) => void;
 }
@@ -168,7 +166,9 @@ export function useFirstFrameAdmission({
   resolvePersistenceTarget,
   getActiveSessionId,
   setStartFrame,
-  uploadOutsideSession,
+  stagePendingReference,
+  hasAssociatedWords,
+  beginReferenceSelection,
   onError,
   onInvalidFile,
 }: UseFirstFrameAdmissionParams): UseFirstFrameAdmissionResult {
@@ -277,99 +277,113 @@ export function useFirstFrameAdmission({
 
   const uploadFirstFrame = useCallback(
     async (file: File): Promise<void> => {
-      // The fingerprint first: a RETAINED attempt is recognised by it, and a
-      // retained attempt reuses its own destination and key without resolving
-      // a target anew — re-resolving would mint a words-version in whatever
-      // session the creator is looking at now, which a retry must never do
-      // (issue #129).
-      const fingerprint = await fileFingerprint(file);
-      const retained = attemptRef.current;
-      let attempt: FirstFrameAdmissionAttempt;
-      if (retained && retained.fileFingerprint === fingerprint) {
-        attempt = retained;
-      } else {
-        const target = resolvePersistenceTarget();
-
-        if (!target.sessionId || !target.promptVersionId) {
-          try {
-            const uploaded = await uploadOutsideSession(file);
-            if (!uploaded) return;
-            setStartFrame({
-              id: `start-frame-upload-${Date.now()}`,
-              url: uploaded.url,
-              source: "upload",
-              ...(uploaded.storagePath
-                ? { storagePath: uploaded.storagePath }
-                : {}),
-              ...(uploaded.viewUrlExpiresAt
-                ? { viewUrlExpiresAt: uploaded.viewUrlExpiresAt }
-                : {}),
-            });
-          } catch (error) {
-            onError(error instanceof Error ? error.message : "Upload failed");
-          }
-          return;
-        }
-
-        const validation = validatePreviewImageFile(file);
-        if (!validation.valid) {
-          onInvalidFile(validation.error);
-          return;
-        }
-
-        attempt = {
-          key: createAdmissionKey(),
-          fileFingerprint: fingerprint,
-          sessionId: target.sessionId,
-          promptVersionId: target.promptVersionId,
-        };
-        // A new attempt owns the frame surface: anything an older attempt was
-        // holding for a creator who wandered off is superseded, not applied.
-        stashedResponseRef.current = null;
-        attemptRef.current = attempt;
-      }
-
+      const selection = beginReferenceSelection();
       try {
-        const response = await uploadPreviewImage(
-          file,
-          {},
-          {
-            source: "first-frame",
-            admit: {
-              sessionId: attempt.sessionId,
-              promptVersionId: attempt.promptVersionId,
-              admissionKey: attempt.key,
-            },
-          },
-        );
-        if (!response.success) {
-          throw new Error(
-            response.error || response.message || "Failed to upload image",
-          );
-        }
-
-        const imageUrl = response.data.viewUrl || response.data.imageUrl;
-        if (!imageUrl) throw new Error("Upload did not return an image URL");
-
-        // Late-response discipline (issue #129), judged against the immutable
-        // attempt: superseded (a newer upload, or the component replaced) and
-        // off-session (the creator is looking at another session) responses
-        // are never applied to what is on screen.
-        if (attemptRef.current !== attempt) return;
-        if (getActiveSessionIdRef.current() !== attempt.sessionId) {
-          stashedResponseRef.current = { attempt, response, imageUrl };
+        // Reserve fresh pending input synchronously, before file hashing yields.
+        // The words pipeline can then see the upload guard on the same turn.
+        const newTarget =
+          !attemptRef.current && hasAssociatedWords()
+            ? resolvePersistenceTarget()
+            : undefined;
+        if (
+          !attemptRef.current &&
+          (!newTarget?.sessionId || !newTarget.promptVersionId)
+        ) {
+          await stagePendingReference(file, getActiveSessionIdRef.current());
           return;
         }
+        // The fingerprint first: a RETAINED attempt is recognised by it, and a
+        // retained attempt reuses its own destination and key without resolving
+        // a target anew — re-resolving would mint a words-version in whatever
+        // session the creator is looking at now, which a retry must never do
+        // (issue #129).
+        const fingerprint = await fileFingerprint(file);
+        const retained = attemptRef.current;
+        let attempt: FirstFrameAdmissionAttempt;
+        if (retained && retained.fileFingerprint === fingerprint) {
+          if (!selection.canRetryOriginal()) return;
+          attempt = retained;
+        } else {
+          if (!selection.isCurrent()) return;
+          if (!hasAssociatedWords()) {
+            await stagePendingReference(file, getActiveSessionIdRef.current());
+            return;
+          }
+          const target = newTarget ?? resolvePersistenceTarget();
 
-        applySettledResponse(response, imageUrl);
-      } catch (error) {
-        // The attempt is deliberately NOT cleared here: re-picking the same
-        // file after a lost response re-admits the same take. A late failure
-        // after a session switch is dropped without toasting into a session
-        // the upload never belonged to.
-        if (attemptRef.current !== attempt) return;
-        if (getActiveSessionIdRef.current() !== attempt.sessionId) return;
-        onError(error instanceof Error ? error.message : "Upload failed");
+          if (
+            !target.sessionId ||
+            !target.promptVersionId ||
+            !hasAssociatedWords()
+          ) {
+            // A partially resolved destination is pending, never a reference
+            // silently armed by the anonymous legacy path (issue #119).
+            await stagePendingReference(file, getActiveSessionIdRef.current());
+            return;
+          }
+
+          const validation = validatePreviewImageFile(file);
+          if (!validation.valid) {
+            onInvalidFile(validation.error);
+            return;
+          }
+
+          attempt = {
+            key: createAdmissionKey(),
+            fileFingerprint: fingerprint,
+            sessionId: target.sessionId,
+            promptVersionId: target.promptVersionId,
+          };
+          // A new attempt owns the frame surface: anything an older attempt was
+          // holding for a creator who wandered off is superseded, not applied.
+          stashedResponseRef.current = null;
+          attemptRef.current = attempt;
+        }
+
+        try {
+          const response = await uploadPreviewImage(
+            file,
+            {},
+            {
+              source: "first-frame",
+              admit: {
+                sessionId: attempt.sessionId,
+                promptVersionId: attempt.promptVersionId,
+                admissionKey: attempt.key,
+              },
+            },
+          );
+          if (!response.success) {
+            throw new Error(
+              response.error || response.message || "Failed to upload image",
+            );
+          }
+
+          const imageUrl = response.data.viewUrl || response.data.imageUrl;
+          if (!imageUrl) throw new Error("Upload did not return an image URL");
+
+          // Late-response discipline (issue #129), judged against the immutable
+          // attempt: superseded (a newer upload, or the component replaced) and
+          // off-session (the creator is looking at another session) responses
+          // are never applied to what is on screen.
+          if (attemptRef.current !== attempt) return;
+          if (getActiveSessionIdRef.current() !== attempt.sessionId) {
+            stashedResponseRef.current = { attempt, response, imageUrl };
+            return;
+          }
+
+          applySettledResponse(response, imageUrl);
+        } catch (error) {
+          // The attempt is deliberately NOT cleared here: re-picking the same
+          // file after a lost response re-admits the same take. A late failure
+          // after a session switch is dropped without toasting into a session
+          // the upload never belonged to.
+          if (attemptRef.current !== attempt) return;
+          if (getActiveSessionIdRef.current() !== attempt.sessionId) return;
+          onError(error instanceof Error ? error.message : "Upload failed");
+        }
+      } finally {
+        selection.finish();
       }
     },
     [
@@ -377,8 +391,9 @@ export function useFirstFrameAdmission({
       onError,
       onInvalidFile,
       resolvePersistenceTarget,
-      setStartFrame,
-      uploadOutsideSession,
+      stagePendingReference,
+      hasAssociatedWords,
+      beginReferenceSelection,
     ],
   );
 

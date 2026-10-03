@@ -509,6 +509,150 @@ describe("useHistoryPersistence", () => {
     expect(mockSyncToLocalStorage).toHaveBeenCalled();
   });
 
+  it("flushes only the requested owned version and waits for actual write completion", async () => {
+    vi.useFakeTimers();
+    const versions: PromptVersionEntry[] = [
+      {
+        versionId: "v1",
+        signature: "s1",
+        prompt: "A city",
+        timestamp: "2026-10-03T00:00:00Z",
+      },
+    ];
+    let finish!: () => void;
+    const pendingWrite = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    mockUpdateVersions.mockReturnValueOnce(pendingWrite);
+    const { result } = renderHook(() =>
+      useHistoryPersistence(
+        createHookOptions({ user: { uid: "user-1" }, history: [baseEntry] }),
+      ),
+    );
+    await act(async () => {
+      await result.current.loadHistoryFromLocalStorage();
+    });
+    act(() => {
+      result.current.updateEntryVersions("uuid-1", "doc-1", versions);
+    });
+    let settled = false;
+    let flush: Promise<void>;
+    await act(async () => {
+      flush = result.current
+        .flushVersionWrites("uuid-1", "doc-1", "v1")
+        .then(() => {
+          settled = true;
+        });
+      await Promise.resolve();
+    });
+    expect(mockUpdateVersions).toHaveBeenCalledWith(
+      "user-1",
+      "uuid-1",
+      "doc-1",
+      versions,
+      { requireSuccess: true },
+    );
+    expect(settled).toBe(false);
+    await act(async () => {
+      finish();
+      await flush!;
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(settled).toBe(true);
+    expect(mockUpdateVersions).toHaveBeenCalledTimes(1);
+  });
+  it("waits for an already-running older version write before flushing the selected newer words", async () => {
+    vi.useFakeTimers();
+    const older: PromptVersionEntry[] = [
+      {
+        versionId: "v1",
+        signature: "s1",
+        prompt: "Older words",
+        timestamp: "2026-10-03T00:00:00Z",
+      },
+    ];
+    const newer: PromptVersionEntry[] = [
+      ...older,
+      {
+        versionId: "v2",
+        signature: "s2",
+        prompt: "New words",
+        timestamp: "2026-10-03T00:00:01Z",
+      },
+    ];
+    let finish!: () => void;
+    mockUpdateVersions
+      .mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+      )
+      .mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() =>
+      useHistoryPersistence(
+        createHookOptions({ user: { uid: "user-1" }, history: [baseEntry] }),
+      ),
+    );
+    await act(async () => {
+      await result.current.loadHistoryFromLocalStorage();
+    });
+    act(() => {
+      result.current.updateEntryVersions("uuid-1", "doc-1", older);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(mockUpdateVersions).toHaveBeenCalledTimes(1);
+    act(() => {
+      result.current.updateEntryVersions("uuid-1", "doc-1", newer);
+    });
+    let flush: Promise<void>;
+    act(() => {
+      flush = result.current.flushVersionWrites("uuid-1", "doc-1", "v2");
+    });
+    expect(mockUpdateVersions).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      finish();
+      await flush!;
+    });
+    expect(mockUpdateVersions).toHaveBeenNthCalledWith(
+      2,
+      "user-1",
+      "uuid-1",
+      "doc-1",
+      newer,
+      { requireSuccess: true },
+    );
+  });
+  it("strict version flush refuses a missing version without dispatch and exposes repository failure", async () => {
+    const versions: PromptVersionEntry[] = [
+      {
+        versionId: "v1",
+        signature: "s1",
+        prompt: "A city",
+        timestamp: "2026-10-03T00:00:00Z",
+      },
+    ];
+    const { result } = renderHook(() =>
+      useHistoryPersistence(
+        createHookOptions({ user: { uid: "user-1" }, history: [baseEntry] }),
+      ),
+    );
+    await act(async () => {
+      await result.current.loadHistoryFromLocalStorage();
+    });
+    act(() => {
+      result.current.updateEntryVersions("uuid-1", "doc-1", versions);
+    });
+    await expect(
+      result.current.flushVersionWrites("uuid-1", "doc-1", "missing"),
+    ).rejects.toThrow("Save associated words");
+    expect(mockUpdateVersions).not.toHaveBeenCalled();
+    mockUpdateVersions.mockRejectedValueOnce(new Error("Write refused"));
+    await expect(
+      result.current.flushVersionWrites("uuid-1", "doc-1", "v1"),
+    ).rejects.toThrow("Write refused");
+  });
   it("debounces version writes and persists only latest payload after initial load", async () => {
     vi.useFakeTimers();
     const updateEntry = vi.fn();

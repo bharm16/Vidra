@@ -292,6 +292,17 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
     expect(record.ancestorGenerationId).toBeNull();
   });
 
+  it("refuses an uploaded reference with blank associated words before storing bytes", async () => {
+    const { store, deps, mediaStore } = setup();
+    const result = await admitPictureTake(
+      deps,
+      uploadRequest({ associatedWordsText: "   " }),
+    );
+    expect(result.state).toBe("refused");
+    expect(mediaStore.calls).toHaveLength(0);
+    expect(takesIn(store, "v1")).toHaveLength(0);
+  });
+
   it("files the take under the admitting version's own words, and keeps those separate from its provenance", async () => {
     const { store, deps } = setup();
 

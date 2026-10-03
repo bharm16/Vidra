@@ -146,6 +146,14 @@ export interface AdmissionIdempotencyPort {
    * attachment before pressing again. Strictly a read: no claim, no lock, no
    * TTL, no retry orchestration.
    */
+  getResponseReceipt?(input: {
+    userId: string;
+    route: string;
+    key: string;
+  }): Promise<{
+    recordId: string;
+    snapshot: { statusCode: number; body: Record<string, unknown> };
+  } | null>;
   getResponseSnapshot?(input: {
     userId: string;
     route: string;
@@ -484,6 +492,18 @@ function validateAdmissionRelationships(
     };
   }
 
+  const associatedWords =
+    request.associatedWordsText ??
+    session.prompt?.versions?.find(
+      (version) => version.versionId === request.promptVersionId,
+    )?.prompt;
+  if (request.origin === "upload" && !associatedWords?.trim()) {
+    return {
+      ok: false,
+      reason: "an uploaded reference requires explicit associated words",
+    };
+  }
+
   const kinds = checkSourceInputKinds(request.sourceInputs ?? []);
   if (!kinds.ok) return kinds;
 
@@ -690,6 +710,64 @@ export async function admitPictureTake(
   return { state: "admitted", take, replayed: false };
 }
 
+/**
+ * Pending-upload recovery matches the persisted source and destination before
+ * resuming a receipt. Established acceptance never rereads the staging image
+ * or revalidates associated words; its own media/record already became durable.
+ */
+export async function resumePendingUpload(
+  deps: AdmitPictureTakeDependencies,
+  input: {
+    userId: string;
+    sessionId: string;
+    promptVersionId: string;
+    admissionKey: string;
+    storagePath: string;
+  },
+): Promise<AdmitPictureTakeResult | null> {
+  const receipt = await deps.idempotency.getResponseReceipt?.({
+    userId: input.userId,
+    route: ADMISSION_ROUTE,
+    key: input.admissionKey,
+  });
+  if (!receipt) return null;
+  const take = readAdmittedTake(receipt.snapshot.body);
+  if (
+    take.origin !== "upload" ||
+    take.sessionId !== input.sessionId ||
+    take.promptVersionId !== input.promptVersionId ||
+    take.storagePath === input.storagePath ||
+    !Array.isArray(take.record.sourceInputs) ||
+    !take.record.sourceInputs.some((source: unknown) => {
+      const record = asGenerationRecord(source);
+      return (
+        record?.kind === "upload" && record.storagePath === input.storagePath
+      );
+    })
+  )
+    return { state: "conflict" };
+  try {
+    await deps.sessionService.requireOwnedSession(
+      input.userId,
+      input.sessionId,
+    );
+  } catch {
+    return { state: "refused", reason: "destination session is not available" };
+  }
+  return await resumeAdmittedTake(
+    deps,
+    {
+      userId: input.userId,
+      origin: "upload",
+      sessionId: input.sessionId,
+      promptVersionId: input.promptVersionId,
+    },
+    receipt.recordId,
+    receipt.snapshot,
+    deps.resolver,
+  );
+}
+
 /** The reads and writes the attach-and-resume steps need. */
 interface AdmissionAttachDeps {
   sessionService: AdmissionSessionPort;
@@ -728,7 +806,10 @@ async function persistAdmissionSnapshot(
  */
 async function attachAndComplete(
   deps: AdmissionAttachDeps,
-  request: AdmitPictureTakeRequest,
+  request: Pick<
+    AdmitPictureTakeRequest,
+    "userId" | "origin" | "sessionId" | "promptVersionId"
+  >,
   recordId: string,
   base: AdmittedPictureTake,
 ): Promise<AdmittedPictureTake> {
@@ -766,7 +847,10 @@ async function attachAndComplete(
  */
 async function resumeAdmittedTake(
   deps: AdmissionAttachDeps,
-  request: AdmitPictureTakeRequest,
+  request: Pick<
+    AdmitPictureTakeRequest,
+    "userId" | "origin" | "sessionId" | "promptVersionId"
+  >,
   recordId: string,
   snapshot: { statusCode: number; body: Record<string, unknown> },
   resolver: OwnedPictureResolver | undefined,

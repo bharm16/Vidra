@@ -1,3 +1,5 @@
+import { useSidebarGenerationDomain } from "@/components/ToolSidebar/context";
+import { ReferenceUploadButton } from "./ReferenceUploadButton";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { CaretDown, X } from "@promptstudio/system/components/ui";
 import { FEATURES } from "@/config/features.config";
@@ -44,6 +46,9 @@ export interface RecommendationContext {
 
 interface CanvasSettingsRowProps {
   prompt: string;
+  hasPendingReference?: boolean;
+  isReferenceUploading?: boolean;
+  isExpanding?: boolean;
   renderModelId: string;
   /** Model picker options + recommendation metadata. The picker chip lives
    *  in the chip row now (replaces the floating ModelCornerSelector). The
@@ -211,6 +216,9 @@ const SHEET_MENU_TRIGGER_CLASS =
 
 export function CanvasSettingsRow({
   prompt,
+  hasPendingReference = false,
+  isReferenceUploading = false,
+  isExpanding = false,
   renderModelId,
   renderModelOptions,
   recommendation,
@@ -226,6 +234,7 @@ export function CanvasSettingsRow({
   // logged-out users. We read auth state here and resume the action after a
   // successful login rather than clearing the typed draft.
   const authUser = useAuthUser();
+  const onStartFrameUpload = useSidebarGenerationDomain()?.onStartFrameUpload;
   const { domain } = useGenerationControlsStoreState();
   const storeActions = useGenerationControlsStoreActions();
   // Tolerant: this chrome also mounts outside the prompt-results tree
@@ -362,7 +371,7 @@ export function CanvasSettingsRow({
     // Idea Box: with no start frame, generate means "run the expansion loop"
     // (expand -> first frame -> gate). Render happens on the next press,
     // after the frame gate — never on the first action from a bare prompt.
-    if (!hasStartFrame && onIdeaBoxExpand) {
+    if ((hasPendingReference || !hasStartFrame) && onIdeaBoxExpand) {
       void onIdeaBoxExpand();
       return;
     }
@@ -382,6 +391,7 @@ export function CanvasSettingsRow({
     creditCost,
     hasInsufficientCredits,
     hasStartFrame,
+    hasPendingReference,
     onIdeaBoxExpand,
     onInsufficientCredits,
     operationLabel,
@@ -401,6 +411,22 @@ export function CanvasSettingsRow({
     });
   }, [authUser, runGenerate]);
 
+  const handleReferenceUpload = useCallback(
+    async (file: File): Promise<void> => {
+      let upload: Promise<void> | undefined;
+      await runWhenAuthenticated({
+        isAuthenticated: authUser !== null,
+        reason: "pre-go",
+        authGate: authGateController,
+        action: () => {
+          upload = Promise.resolve(onStartFrameUpload?.(file));
+        },
+      });
+      await upload;
+    },
+    [authUser, onStartFrameUpload],
+  );
+
   const formatDurationLabel = useCallback((v: number) => `${v}s`, []);
 
   return (
@@ -412,9 +438,14 @@ export function CanvasSettingsRow({
       data-testid="canvas-settings-row"
     >
       <div className="flex flex-wrap items-center gap-[6px]">
-        {/* The Anchor sheet shows only the two inline selectors (16:9 · 6s).
-            The docked row is the handoff's exact control set: aspect ·
-            duration · model · preview, then Make it — nothing else. */}
+        {onStartFrameUpload ? (
+          <ReferenceUploadButton
+            onUpload={handleReferenceUpload}
+            disabled={isGenerationBusy || isReferenceUploading || isExpanding}
+          />
+        ) : null}
+        {/* Aspect/duration selectors and summoned reference upload are part
+            of the input. The working row also exposes model and preview. */}
         {isSheet ? null : (
           <>
             {domain.extendVideo ? (
@@ -615,7 +646,7 @@ export function CanvasSettingsRow({
           type="button"
           data-testid="canvas-generate-button"
           onClick={handleGenerate}
-          disabled={generateDisabled}
+          disabled={generateDisabled || isReferenceUploading}
           aria-busy={isGenerationBusy}
           aria-label={
             isGenerationBusy

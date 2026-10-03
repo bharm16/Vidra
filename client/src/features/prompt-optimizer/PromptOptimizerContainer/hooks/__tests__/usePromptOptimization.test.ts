@@ -71,6 +71,32 @@ const buildBaseParams = () => {
 };
 
 describe("usePromptOptimization", () => {
+  it("guards optimization and reoptimization during reference upload, including the image-mode shortcut", async () => {
+    const { params, mocks } = buildBaseParams();
+    let uploading = true;
+    const { result } = renderHook(() =>
+      usePromptOptimization({
+        ...params,
+        startImageUrl: "https://media.example/previous-frame.png",
+        isReferenceUploading: () => uploading,
+      }),
+    );
+    await act(async () => {
+      await result.current.handleOptimize("New words");
+      await result.current.handleReoptimize("New words", {
+        forceGenericTarget: true,
+      });
+    });
+    expect(mocks.optimize).not.toHaveBeenCalled();
+    expect(mocks.setDisplayedPromptSilently).not.toHaveBeenCalled();
+    expect(mocks.saveToHistory).not.toHaveBeenCalled();
+    uploading = false;
+    await act(async () => {
+      await result.current.handleOptimize("New words");
+    });
+    expect(mocks.setDisplayedPromptSilently).toHaveBeenCalledWith("New words");
+  });
+
   it("persists and navigates by default", async () => {
     const { params, mocks } = buildBaseParams();
     const { result } = renderHook(() => usePromptOptimization(params));

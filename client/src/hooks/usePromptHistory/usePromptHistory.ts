@@ -38,6 +38,7 @@ export const usePromptHistory = (user: User | null) => {
     updateEntryHighlight,
     updateEntryOutput,
     updateEntryVersions,
+    flushVersionWrites,
     clearHistory,
     deleteFromHistory,
   } = useHistoryPersistence({
@@ -104,6 +105,7 @@ export const usePromptHistory = (user: User | null) => {
       updateEntryHighlight,
       updateEntryOutput,
       updateEntryVersions,
+      flushVersionWrites,
     }),
     [
       state.history,
@@ -121,6 +123,7 @@ export const usePromptHistory = (user: User | null) => {
       updateEntryHighlight,
       updateEntryOutput,
       updateEntryVersions,
+      flushVersionWrites,
     ],
   );
 };

@@ -110,6 +110,11 @@ export interface PromptHistory {
     docId: string | null,
     updates: UpdatePromptOptions,
   ) => void;
+  flushVersionWrites: (
+    uuid: string,
+    docId: string,
+    versionId: string,
+  ) => Promise<void>;
   updateEntryVersions: (
     uuid: string,
     docId: string | null,

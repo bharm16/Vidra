@@ -1,3 +1,5 @@
+import { SidebarDataContextProvider } from "@/components/ToolSidebar/context";
+import { PromptResultsActionsProvider } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import React, { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
@@ -75,6 +77,9 @@ function renderRow(options: {
   controls: GenerationControlsHandlers | null;
   state?: GenerationControlsState | undefined;
   prompt?: string | undefined;
+  isReferenceUploading?: boolean;
+  isExpanding?: boolean;
+  onReferenceUpload?: (file: File) => void;
 }): void {
   const {
     controls,
@@ -86,18 +91,78 @@ function renderRow(options: {
     <GenerationControlsStoreProvider initialState={state}>
       <GenerationControlsProvider>
         <ControlsBridge controls={controls} />
-        <CanvasSettingsRow
-          prompt={prompt}
-          renderModelId="sora-2"
-          renderModelOptions={[{ id: "sora-2", label: "Sora 2" }]}
-          onModelChange={vi.fn()}
-        />
+        <SidebarDataContextProvider
+          value={{
+            sessions: null,
+            promptInteraction: null,
+            assets: null,
+            generation: options.onReferenceUpload
+              ? {
+                  onStartFrameUpload: options.onReferenceUpload,
+                  onRender: vi.fn(),
+                  onDraft: vi.fn(),
+                  onStoryboard: vi.fn(),
+                }
+              : null,
+          }}
+        >
+          <CanvasSettingsRow
+            prompt={prompt}
+            isReferenceUploading={options.isReferenceUploading ?? false}
+            isExpanding={options.isExpanding ?? false}
+            renderModelId="sora-2"
+            renderModelOptions={[{ id: "sora-2", label: "Sora 2" }]}
+            onModelChange={vi.fn()}
+          />
+        </SidebarDataContextProvider>
       </GenerationControlsProvider>
     </GenerationControlsStoreProvider>,
   );
 }
 
 describe("CanvasSettingsRow", () => {
+  it("blocks reference selection while words expansion is active, including a file-change event", () => {
+    const onReferenceUpload = vi.fn();
+    renderRow({
+      isExpanding: true,
+      onReferenceUpload,
+      controls: {
+        onStoryboard: vi.fn(),
+        onRender: vi.fn(),
+        onDraft: vi.fn(),
+        isGenerating: false,
+        activeDraftModel: null,
+      },
+    });
+    expect(
+      screen.getByRole("button", { name: "Upload reference picture" }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Reference picture file"), {
+      target: {
+        files: [new File(["picture"], "reference.png", { type: "image/png" })],
+      },
+    });
+    expect(onReferenceUpload).not.toHaveBeenCalled();
+  });
+
+  it("disables words expansion while a reference upload is still in flight", () => {
+    const onRender = vi.fn();
+    renderRow({
+      isReferenceUploading: true,
+      controls: {
+        onStoryboard: vi.fn(),
+        onRender,
+        onDraft: vi.fn(),
+        isGenerating: false,
+        activeDraftModel: null,
+      },
+    });
+    const button = screen.getByTestId("canvas-generate-button");
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(onRender).not.toHaveBeenCalled();
+  });
+
   it("uses GenerationControlsContext controls for preview and render actions", () => {
     const onStoryboard = vi.fn();
     const onDraft = vi.fn();
@@ -234,5 +299,71 @@ describe("CanvasSettingsRow", () => {
     expect(screen.getByText("Extending")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Clear extend mode" }));
     expect(screen.queryByText("Extending")).not.toBeInTheDocument();
+  });
+});
+
+// A pending reference is never an armed frame, even when the workspace still
+// retains its previous frame. Exercise the real actions provider so this test
+// observes the public input action rather than mocking the routing decision.
+describe("pending reference words action (issue #119)", () => {
+  it("expands words instead of rendering the older armed frame", async () => {
+    const onExpand = vi.fn(async (): Promise<void> => {});
+    const onRender = vi.fn();
+    const onDraft = vi.fn();
+    const state = buildState({
+      startFrame: {
+        id: "old-frame",
+        url: "https://media.example/old.png",
+        source: "upload",
+        generationId: "old-take",
+      },
+    });
+    render(
+      <GenerationControlsStoreProvider initialState={state}>
+        <GenerationControlsProvider>
+          <ControlsBridge
+            controls={{
+              onRender,
+              onDraft,
+              onStoryboard: vi.fn(),
+              isGenerating: false,
+              activeDraftModel: null,
+            }}
+          />
+          <PromptResultsActionsProvider
+            currentPromptUuid={null}
+            currentPromptDocId={null}
+            displayedPrompt="A city at night"
+            isApplyingHistoryRef={{ current: false }}
+            handleDisplayedPromptChange={vi.fn()}
+            updateEntryOutput={async (): Promise<void> => {}}
+            setOutputSaveState={vi.fn()}
+            setOutputLastSavedAt={vi.fn()}
+            user={null}
+            onReoptimize={async (): Promise<void> => {}}
+            onFetchSuggestions={vi.fn()}
+            onSuggestionClick={vi.fn()}
+            onHighlightsPersist={vi.fn()}
+            onUndo={vi.fn()}
+            onRedo={vi.fn()}
+            stablePromptContext={null}
+            suggestionsData={null}
+            onIdeaBoxExpand={onExpand}
+          >
+            <CanvasSettingsRow
+              hasPendingReference
+              prompt="A city at night"
+              renderModelId="sora-2"
+              renderModelOptions={[{ id: "sora-2", label: "Sora 2" }]}
+              onModelChange={vi.fn()}
+            />
+          </PromptResultsActionsProvider>
+        </GenerationControlsProvider>
+      </GenerationControlsStoreProvider>,
+    );
+    fireEvent.click(screen.getByTestId("canvas-generate-button"));
+    expect(onExpand).toHaveBeenCalledTimes(1);
+    expect(onRender).not.toHaveBeenCalled();
+    expect(onDraft).not.toHaveBeenCalled();
   });
 });
