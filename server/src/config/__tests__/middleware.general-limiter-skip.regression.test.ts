@@ -66,14 +66,23 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
 
     const server = await listenOnLoopback(app);
 
-    // Fire enough API requests to exhaust the old general budget (dev: 500).
+    // Fire enough API requests to exhaust the old general budget (dev: 500,
+    // reduced to 125 by the in-memory fallback).
     // Under the old regime, the next non-API request would get 429.
-    const apiRequests = Array.from({ length: 250 }, (_, i) =>
-      i % 2 === 0
-        ? request(server).get("/api/sessions/list")
-        : request(server).get("/api/payment/status"),
-    );
-    await Promise.all(apiRequests);
+    // This is a counter test, not a socket saturation test. 250 simultaneous
+    // connections reset on macOS before the limiter can see every request.
+    // Keep the same traffic count while bounding transport concurrency.
+    const batchSize = 25;
+    for (let offset = 0; offset < 250; offset += batchSize) {
+      const responses = await Promise.all(
+        Array.from({ length: batchSize }, (_, i) =>
+          (offset + i) % 2 === 0
+            ? request(server).get("/api/sessions/list")
+            : request(server).get("/api/payment/status"),
+        ),
+      );
+      for (const response of responses) expect(response.status).toBe(200);
+    }
 
     // A non-API request must still succeed because the general budget
     // was NOT consumed by the /api/ traffic above.

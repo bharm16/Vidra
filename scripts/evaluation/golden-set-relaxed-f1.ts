@@ -32,9 +32,8 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { AIModelService } from "../../server/src/services/ai-model/AIModelService.js";
-import type { ClientsMap } from "../../server/src/services/ai-model/types.js";
-import { OpenAICompatibleAdapter } from "../../server/src/clients/adapters/OpenAICompatibleAdapter.js";
+import type { AIModelService } from "../../server/src/services/ai-model/AIModelService.js";
+import { createGoldenSetAIService } from "./golden-set-ai-service.js";
 import { labelSpans } from "../../server/src/llm/span-labeling/SpanLabelingService.js";
 import { warmupNlpServices } from "../../server/src/llm/span-labeling/nlp/NlpSpanService.js";
 import { RelaxedF1Evaluator } from "../../server/src/llm/span-labeling/evaluation/RelaxedF1Evaluator.js";
@@ -132,49 +131,6 @@ function parseArgs(argv: string[]): CliOptions {
   }
 
   return opts;
-}
-
-function createAIService(): {
-  service: AIModelService;
-  resolvedProvider: "groq" | "openai";
-} {
-  const clients: ClientsMap = { openai: null };
-
-  if (process.env.GROQ_API_KEY) {
-    clients.groq = new OpenAICompatibleAdapter({
-      apiKey: process.env.GROQ_API_KEY,
-      baseURL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
-      defaultModel: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
-      defaultTimeout: Number(process.env.GROQ_TIMEOUT_MS || 5000),
-      providerName: "groq",
-    });
-  }
-
-  if (process.env.OPENAI_API_KEY) {
-    clients.openai = new OpenAICompatibleAdapter({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-      defaultModel: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      defaultTimeout: Number(process.env.OPENAI_TIMEOUT_MS || 60000),
-      providerName: "openai",
-    });
-  }
-
-  if (!clients.openai && clients.groq) {
-    clients.openai = clients.groq;
-  }
-
-  if (!clients.openai) {
-    throw new Error(
-      "No AI API keys found. Set GROQ_API_KEY or OPENAI_API_KEY before running this script.",
-    );
-  }
-
-  const resolvedProvider: "groq" | "openai" = clients.groq ? "groq" : "openai";
-  return {
-    service: new AIModelService({ clients }),
-    resolvedProvider,
-  };
 }
 
 function loadFixtures(filter: string[] | null): GoldenFixture[] {
@@ -316,24 +272,13 @@ async function main(): Promise<number> {
       `  loaded ${fixtures.length} fixture(s), ${allPrompts.length} prompts`,
     );
 
-    const { service, resolvedProvider } = createAIService();
-    const provider =
-      opts.provider === "auto" ? resolvedProvider : opts.provider;
+    const { service, provider, model } = createGoldenSetAIService(
+      opts.provider,
+      process.env,
+    );
     resolvedProviderForEmit = provider;
     console.log(`  provider: ${provider}`);
-
-    // Force the span labeling pipeline to route through the requested provider.
-    // Without this, SPAN_PROVIDER (or auto-detection from SPAN_MODEL) determines
-    // which client labelSpans() uses — meaning `--provider groq` could silently
-    // measure OpenAI's behavior. Setting SPAN_PROVIDER here closes that gap.
-    //
-    // Also clear SPAN_MODEL: the dev .env may have it set to a model from a
-    // different provider (e.g., SPAN_MODEL=gemini-2.5-flash with SPAN_PROVIDER=
-    // gemini). Inheriting that across provider switch produces 404s when the
-    // requested provider doesn't host the requested model. Falling back to the
-    // provider client's defaultModel is the right behavior for eval reproducibility.
-    process.env.SPAN_PROVIDER = provider;
-    delete process.env.SPAN_MODEL;
+    console.log(`  model: ${model}`);
 
     console.log("\nWarming up NLP services...");
     await warmupNlpServices();
@@ -384,6 +329,7 @@ async function main(): Promise<number> {
         {
           timestamp: new Date().toISOString(),
           provider,
+          model,
           commit: opts.commit ?? null,
           report,
           // Full per-prompt records including predicted and ground-truth
