@@ -6,6 +6,11 @@ period and permission to enable deletion remain an owner decision.
 ADR-0022 decisions 4–6 govern copies and resumable admissions. This document does
 not reopen the frozen retention workers in ADR-0002.
 
+The [consistency audit's namespace table](../audits/2026-10-03-docs-consistency.md#actual-storage-defaults)
+records the current storage defaults. Sketch snapshots use the image-asset store;
+studio bridge copies use general owner-scoped raster storage. A feature name is
+not a bucket prefix, and configured paths must be read from the deployment.
+
 ## Ownership and lifetime
 
 | Object                                                   | Owner of the durable reference                      | Protection                                                                                                                                        |

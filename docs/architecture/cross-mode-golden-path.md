@@ -1,7 +1,9 @@
 # Cross-mode golden path — the deterministic proof of ADR-0022's milestone
 
-Status: **live** — the walkthrough, its boundary adapters and the outbound
-guard all ship, and `npm run test:replay` runs them on every change.
+Status: **implemented offline proof** — the walkthrough, its boundary adapters
+and the outbound guard ship in `npm run test:replay`. Browser controls, real
+generation intake, live output quality and deployed acceptance remain separate
+gates; see the [2026-10-03 consistency audit](../audits/2026-10-03-docs-consistency.md).
 
 ## What it proves
 
@@ -12,7 +14,9 @@ makes a clip, and returns after a refresh to the same session with every input,
 output, and relationship intact._
 
 `tests/integration/cross-mode-golden-path.integration.test.ts` walks exactly
-that, offline, through the real HTTP routes and the real services:
+its persistence and recovery seams offline. It uses real HTTP routes and
+services for admission and the studio, a pure function for camera words, and
+the job processor directly for the clip:
 
 | Step                      | Surface                                                     |
 | ------------------------- | ----------------------------------------------------------- |
@@ -25,7 +29,10 @@ that, offline, through the real HTTP routes and the real services:
 | the refresh               | `GET /api/sessions/:sessionId`                              |
 
 It **composes** capabilities that each ship with their own tests (#83, #85,
-#86, #87, #88, #89). It does not re-prove them; it proves the seams line up.
+#86, #87, #88, #89). It proves these seams line up. It does not operate the
+browser camera picker or call the credit-bearing video HTTP intake. #141 owns
+the actual controls/intake walkthrough, #143 the bounded live clip and both
+depth states, and #124 the unresolved intake operating mode.
 
 ## Boundaries
 
@@ -129,8 +136,8 @@ is not durable — so a live-recorded pack still replays with zero network.
 
 **Stated spend.** One pass costs 1 sketch frame (fal), 4–8 `studio_turn`
 calls, and 6 studio image runs; the clip leg is a controlled provider and
-spends nothing. The command states its ceiling up front and enforces it as a
-call budget: it aborts past its 20th captured response (change only
+spends nothing. The command states its request budget up front and enforces it as a
+response-count limit, not a dollar ceiling: it aborts past its 20th captured response (change only
 deliberately with `--max-live-calls`), and a run below the canonical floor —
 or one where the live model fumbled a behavior the scenario pins — refuses
 to flush anything. Boot itself runs the app's standard startup key
@@ -165,8 +172,8 @@ ids' _values_ — the return leg compares them to the project's own
 ### Storage paths are content-addressed for the same reason
 
 A studio turn's request key also embeds the storage paths of the project's
-images, and those images are stored in parallel (`StudioService`'s
-`Promise.allSettled`). A fresh random path per save would differ every run and
+images, and image calls settle in parallel. `runImageCall` returns a call
+record even when provider or storage work fails. A fresh random path per save would differ every run and
 miss the cassette, exactly as an unpinned id would — so the harness injects
 `contentAddressedObjectId` into `InMemoryStorageService`, a deterministic,
 order-independent id. The walkthrough never stores the same bytes twice, so
@@ -222,9 +229,9 @@ are different questions and they need live calls.
 **Scope.** One pass of the cross-mode path against live providers: one sketch
 frame (fal z-image turbo i2i), one studio turn whose first action is an edit
 (the `studio_turn` LLM decision — whatever model `ModelConfig.studio_turn`
-routes to; the original spec text said gpt-4o-mini, which the config has since
-superseded), the same turn's studio edit image (nano-banana-2), and one first
-frame (Flux Schnell). No clip: video is the most expensive leg and ADR-0002
+routes to; currently OpenAI / `gpt-5.6-luna`, temperature 1, maxTokens
+8000, timeout 60000 ms, unless the environment overrides it), the same turn's
+studio edit image (nano-banana-2), and one first frame (Flux Schnell). No clip: video is the most expensive leg and ADR-0002
 keeps generation economics frozen. The first turn being an edit is exactly
 what #110 made legal, and the bridge runs the real media resolver #109 built.
 The smoke is also what keeps a hand-written or synthetic response honest: an
@@ -242,8 +249,9 @@ attachment rules, which the offline walkthrough already pins exactly.
 fixed call count is not proof of a dollar ceiling. The run derives BOTH a
 dollar ceiling and a request ceiling from the codebase's own bounded request
 parameters and conservative cost assumptions, including permitted retries and
-fallbacks (`scripts/ops/live-provider-smoke/ceiling.ts`; today it lands at
-US$0.21 / 5 calls): the relay's own per-frame overestimate
+fallbacks (`scripts/ops/live-provider-smoke/ceiling.ts`). Read the run
+report for the resolved dollar and request bounds; overrides and model prices
+can change them. The derivation uses: the relay's own per-frame overestimate
 (`SKETCH_FRAME_COST_MILLICENTS`), `llmCosts` × `studio_turn`'s maxTokens ×
 the policy engine's real re-ask count, the studio roster's verified
 `costCentsPerCall` for the edit default, and a documented conservative
@@ -254,11 +262,17 @@ either ceiling; a leg whose bound cannot be derived (an unverified roster
 price, an unpriced fallback provider) is an unknown bound, and the whole run
 becomes non-verification rather than passing on a partially-known ceiling.
 
-**Cadence.** **Nightly**, in CI, on `main` only, beside the existing
+**Cadence.** **Nightly**, in CI on the default branch (`main`), with an
+explicit `workflow_dispatch` for manual runs, beside the existing
 `golden-path.yml` and span-labeling crons (`.github/workflows/
 live-provider-smoke.yml`, `npm run smoke:live`) — never on a pull request and
 never in `npm run verify`. A red run opens an issue; it does not block a merge,
 because a provider outage is not a defect in the change being merged.
+
+**Implemented is not observed.** The runner and its failure tests exist; this
+document does not certify a successful nightly or authorize a fresh paid run.
+A successful report proves provider acceptance and payload validity only.
+Creative output review belongs to #144.
 
 **Non-verification is not a pass.** Missing credentials or unknown cost
 bounds produce an explicit non-verification result — a red job whose log and

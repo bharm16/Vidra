@@ -2,6 +2,12 @@
 
 This directory contains the architectural standards and patterns for the Prompt Builder codebase.
 
+Current cross-mode contracts: [deterministic replay proof](cross-mode-golden-path.md),
+[record/replay mode](replay-mode.md), [media ownership and inspection](admission-media-lifecycle.md),
+and the [deferred-work ledger](deferred-work-ledger.md). The
+[2026-10-03 consistency audit](../audits/2026-10-03-docs-consistency.md) records
+their proof limits and the open release gates.
+
 ## Files
 
 ### 📋 REFACTORING_STANDARD.md

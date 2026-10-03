@@ -1,6 +1,11 @@
 # Async Job Unification — Migration Plan
 
-**Status:** Proposed
+**Status:** Historical proposal — deferred under ADR-0002 and ADR-0022
+decision 8. This is not authorization to introduce a shared scheduler or thaw
+video-job resilience. See the [deferred ledger](deferred-work-ledger.md).
+The transport/durability table below records the proposal's original premise;
+current session attachment and recovery have a narrow exception in ADR-0022
+decision 6.
 **Owner:** backend platform
 **Depends on:** Removal of `VIDEO_JOB_INLINE_ENABLED` (shipped prior to this plan)
 

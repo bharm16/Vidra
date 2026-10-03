@@ -1,5 +1,12 @@
 # Studio — session handoff (2026-07-25, end of session 5 — branch certified)
 
+> **Historical handoff, annotated 2026-10-03.** Branch state, headed-browser
+> observations, costs and test counts below describe the July sessions, not
+> current release acceptance. First-turn edits with existing source images now
+> ship (#110); the session bridges ship under ADR-0022. See the
+> [current proof limits](../../audits/2026-10-03-docs-consistency.md) before treating
+> the historical milestone completion or owner feel-pass as today's release gate.
+
 **Branch:** `feat/studio`, 54 commits ahead of `main`, zero behind (a fast-forward merge). Session 1 built M1 (economic core), session 2 M2 (UI page), session 3 **M3 (conversation LLM) + M4 (editing/refinement)**, session 4 **M5 (hardening) — all five planned milestones COMPLETE and live-verified in headed Chrome** — plus post-M5 streaming thinking (gpt-5.6-luna, NDJSON) and S-12 attach-your-own-image. **Session 5 certified the branch:** all four commit-protocol gates run fresh at `6b098535` on a quiet machine — tsc exit 0 in 15.7s, eslint 0 errors, test:unit 6,822 passed / 0 failed (141s, no flakes), test:replay 6/6. The only commit since certification is this docs-only handoff true-up.
 
 **Read first:** [the plan](2026-07-24-the-studio-conversational-image-workspace.md) (authoritative spec) and [ADR-0019](../../adr/0019-the-studio-standalone-conversational-image-workspace.md) (as amended).

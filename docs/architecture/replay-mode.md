@@ -1,6 +1,6 @@
 # Replay Mode — contract-validated record/replay for the authoring loop
 
-Status: **live** — seams, contracts, flag, drift gate, the golden-path
+Status: **implemented offline proof** — seams, contracts, flag, drift gate, the golden-path
 scenario pack, and the replay integration suite
 (`tests/integration/replay-mode.integration.test.ts`) all ship. The suite
 runs the full authoring loop offline with zero network.
@@ -87,10 +87,13 @@ replay integration suite handles them as follows:
   [cross-mode-golden-path.md](cross-mode-golden-path.md) for the full table.
   The Idea Box suite still exercises first-frame preview at the provider seam
   only, which is why its cassette covers the provider call and not the route.
-- **Credits** (Firestore `userCreditService`): deliberately untouched. ADR-0022
-  decision 6 keeps generation economics frozen, so no gate exercises them; the
-  cross-mode walkthrough injects a refund witness and asserts it is never
-  called, which is the opposite of coverage and is the point.
+- **Credits** (Firestore `userCreditService`): the cross-mode replay does not
+  exercise credit reservations or the video HTTP intake. It injects a refund
+  witness at the job processor and asserts no refund on this controlled path.
+  ADR-0022 decision 6 opens session attachment only; decision 8 keeps credits
+  out of the product. Existing picture/clip HTTP intake still reserves credits;
+  #120/#123/#124 must settle the operating policy and its implementation.
+  A replay pass does not establish that a creator can generate through HTTP.
 - **Telemetry** (`llmCallTelemetryService`, Firestore-backed): only injected
   in record mode; replay mode runs without it.
 
@@ -122,8 +125,8 @@ Gotcha: `ModelConfig` snapshots env at module load — recording sets
 imports after env setup. A prompt-template or provider-default change makes
 replay miss loudly; re-record to resolve.
 
-Re-record the cross-mode pack (the walkthrough's own recorder, with a stated
-spend and a call budget — see
+Re-record the cross-mode pack (live paid calls with a response-count budget,
+which does not establish a dollar ceiling — see
 [cross-mode-golden-path.md](cross-mode-golden-path.md) for the gates and the
 spend statement):
 

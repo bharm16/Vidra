@@ -413,3 +413,9 @@ Media ownership, inspection rules and the pending retention decision are recorde
 in [Admission media lifecycle](../architecture/admission-media-lifecycle.md)
 (#137). Copy-isolation tests and a dry-run inventory do not authorize deletion;
 the retention window and enabling cleanup remain owner decisions.
+
+The [Deferred work ledger](../architecture/deferred-work-ledger.md) records the
+scopes still outside this release and the decisions needed to reopen them.
+[Current proof limits](../audits/2026-10-03-docs-consistency.md) distinguish the
+landed contracts and local checks from the open browser, live, quality,
+deployment and owner acceptance gates (#146).
