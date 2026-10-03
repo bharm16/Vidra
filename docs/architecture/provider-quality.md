@@ -1,164 +1,170 @@
-# Supported provider quality evaluation (#144)
+# Supported provider completion (#144)
 
-The executable harness prepares inspectable request-conformance evidence and a
-creative review matrix. It does **not** establish output quality from canned
-responses. Issue #144 stays open until the owner reviews the task set and actual
-outputs, each supported path has live evidence, and #143 supplies the real HTTP
-clip acceptance evidence.
+The owner narrowed #144 on 2026-10-03 to one successful completion per included
+provider. Creative quality grading, an owner-reviewed task set, and repeated
+model/variant runs are waived. Reports therefore say `quality: "not-evaluated"`.
+This does not waive #143's actual HTTP clip, selected-frame, visible motion,
+attachment, reopening/download and depth-picker workflow evidence.
 
-## Run the offline matrix
+## Recorded live result
+
+All four included provider integrations completed once on 2026-10-03:
+Replicate Wan through the real free HTTP intake and inline worker; Google Veo
+through its production adapter; OpenAI text through `aiService`; and fal through
+its production-resolved existing credential. The
+[durable redacted report](../../scripts/ops/provider-quality/evidence/live-completion-2026-10-03.json)
+records exact submitted parameters, artifacts/digests, elapsed time and the
+controlled-persistence boundary. This is evidence from an uncommitted coordinated
+working tree, not a claim of deployed or commit-level qualification.
+
+Wan produced a fully decoded H.264 clip (624×624, 5.0625 seconds), attached to
+the selected words-version, reopened through HTTP and downloaded with matching
+bytes. The selected first frame was an explicitly controlled 512×512 PNG; its
+owned bytes were verified at the provider transport. Google produced a fully
+decoded H.264 1280×720 four-second clip. OpenAI returned nonempty JSON text on
+one POST. fal produced a decoded 512×512 webp image. No image or clip was scored
+for creative quality. Real browser motion/depth controls and deployed storage
+qualification retain their separate scope.
+
+The initial fal request incorrectly used a literal-template `FAL_KEY` rather
+than the production resolver's existing `FAL_API_KEY`, and returned HTTP 401.
+Its failure, reservation and dispatch remain intact. One root-authorized
+credential-resolution correction ran in a separate attempt ledger and completed;
+Wan, Google and OpenAI were not repeated. The total conservative reservation is
+now **$1.89**, including both fal attempts, within the $2 run allocation and
+shared $10 owner ceiling. Billing has not been reconciled to provider invoices.
+
+## One live completion per included provider
+
+The live runner uses existing credentials (including the canonical
+`resolveFalApiKey` placeholder/alias handling) and an allocation from the owner's
+shared $10 live-test ceiling. Its current plan reserves $1.87: fal $0.02,
+Replicate $0.20, Google $1.60, and OpenAI text $0.05. No other script may treat
+that ceiling as an independent $10 allowance.
 
 ```bash
-LOG_LEVEL=error npx tsx scripts/ops/provider-quality/run.ts --report /tmp/vidra-provider-quality.json
+LOG_LEVEL=fatal npx tsx scripts/ops/provider-quality/complete-live.ts --plan --ledger /tmp/vidra-live-completion-20261003 --allocation-cents 200
+LOG_LEVEL=fatal npx tsx scripts/ops/provider-quality/complete-live.ts --run --ledger /tmp/vidra-live-completion-20261003 --allocation-cents 200
+```
+
+`--plan` writes the immutable allocation and prints safe credential-presence
+metadata, exact bounded configurations and pricing sources. It sends no provider
+request. `--run` spends money. Each provider receives at most one paid POST:
+exclusive durable reservation and dispatch files are written before the network
+call; SDK retries and off-plan requests are refused. Restarting reuses recorded
+results, or reports an earlier ambiguous reservation without resubmitting.
+Never remove these claims to obtain an automatic rerun. The allocation is
+preserved even when a provider call fails, because an ambiguous request may
+still have been billed.
+
+| Provider  | Selected completion                                                                                      | Conservative reservation and source                                                                                                                                                                                                           |
+| --------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| fal       | Z-Image Turbo i2i, one 512×512 source, 8 steps, strength 0.6, webp                                       | $0.02: [official $0.005/MP rate](https://fal.ai/models/fal-ai/z-image/turbo/image-to-image), allowing one output up to 4 MP                                                                                                                   |
+| Replicate | Wan 2.2 i2v fast, 81 frames, 16 fps, one source image                                                    | $0.20: the [official model page](https://replicate.com/wan-video/wan-2.2-i2v-fast) embeds current per-output tiers of $0.05/$0.11 for base 480p/720p and $0.065/$0.145 with interpolation. The test requests no interpolation                 |
+| Google    | Veo 3.1 standard, 4 seconds, 720p, 16:9                                                                  | $1.60: [official standard video/audio price](https://ai.google.dev/gemini-api/docs/pricing#veo-3.1) $0.40/second; [Veo parameters](https://ai.google.dev/gemini-api/docs/veo) allow 4-second 720p output without reference/extension controls |
+| OpenAI    | Configured `aiService` `studio_turn`, `gpt-5.6-luna`, at most 1024 output tokens and a short JSON prompt | $0.05: [official Luna price](https://developers.openai.com/api/docs/models/gpt-5.6-luna) $0.20/$1.20 per million input/output tokens. This proves text completion, not the retired Videos API                                                 |
+
+The report and individual receipts are saved in the ledger directory. Downloaded
+images are decoded; video outputs require an MP4 signature, valid ffprobe video
+stream/duration and successful full ffmpeg decoding. Local output paths, byte
+counts, SHA-256 digests, elapsed time, selected configuration and cost bounds
+are recorded. No visual/creative scores are assigned. Credentials and headers
+are excluded; media data URIs are represented by digests and signed query grants
+are redacted. Reserved cost is a conservative ceiling, not a reconciled invoice.
+
+The provider adapters and `aiService` remain the real ones. Wan additionally
+uses the actual free HTTP intake, authoritative receipt, real
+`VideoGenerationService`, inline worker and session attachment path. Only
+Firestore/GCS boundary responses are controlled; the exact selected owned
+source bytes are inlined at the Replicate transport because the remote provider
+cannot fetch the fixture's `.invalid` host. Google uses local output storage as
+an evidence sink. Neither establishes deployed GCS durability. A successful
+SDK request alone does not establish browser behavior.
+
+## Offline request conformance
+
+```bash
+LOG_LEVEL=error npx tsx scripts/ops/provider-quality/run.ts --report /tmp/vidra-provider-contracts.json
 npx vitest run scripts/ops/provider-quality/__tests__ --config config/test/vitest.config.js
 ```
 
-The harness never forwards a provider request. Real production registries,
-adapters and SDKs run against a fetch transport that accepts only explicitly
-listed fixture requests and refuses everything else. No credential environment
-variables are loaded or consulted for provider dispatch. The sketch route uses
-an ephemeral local socket and controlled creator/persistence boundaries; this
-does not prove deployed authentication. Provider headers are excluded from
-reports.
+The existing offline matrix is deterministic request regression coverage, not
+an expanded live-test requirement. Real production registries/adapters/SDKs
+run against a transport that accepts fixture requests and refuses all other
+outbound requests. Studio routing includes the actual `StudioService`, policy,
+`AIModelService`, LLM client, OpenAI adapter and Replicate SDK over controlled
+external responses. Auto generation, explicit generation/edit pins, and an
+incapable pin's negotiation are exercised without paid calls. The sketch relay
+uses an ephemeral local socket with controlled identity/persistence boundaries.
 
-The JSON records the Git revision, working-tree status, model, configuration,
-assertions, actual HTTP-submitted parameters, and result for every path. The
-working-tree status distinguishes an uncommitted run from commit-specific
-evidence. Source/output fixture URLs are deliberately non-live. Controlled
-output bytes prove neither decoding nor playback.
+Video inventory derives from `VIDEO_MODEL_PROVIDERS` and the shared
+`isReleaseGenerationModelSupported` predicate used by the product. Historical
+excluded IDs are recorded as `not-run`, never submitted to providers or counted
+as release-tested paths. Runway has no generation adapter. Studio inventory
+comes from `offerableModels`; storage-gated entries are included only if offered.
+The JSON records revision, working-tree status, actual submitted request bodies,
+model/configuration and per-path assertions. Offline output bytes establish no
+live availability, decoding or playback claim.
 
-Exit 0 means the offline contract assertions passed and creative quality is
-still pending. Exit 1 means a per-path contract failed; inspect `reason` and
-`diagnosticCode`. Invalid arguments exit 2. A green harness **test suite** means
-the reporting machinery behaves correctly, including correctly reporting a
-known product defect. It does not mean the evaluation report is green.
+Exit 0 means offline assertions passed, with live completion still separate.
+Exit 1 means a path's contract failed; invalid CLI arguments exit 2. A green
+harness test suite proves reporting behavior, including refusals; it cannot
+turn a provider failure into a passing completion.
 
-The implemented matrix currently has 134 rows: 128 contract passes and six
-Luma model-mismatch diagnostics, with no omitted callable provider. Counts may
-change with the canonical roster. These are offline results, not live provider
-qualification.
+The matrix includes all offerable studio generation/edit models and transform
+utilities, both first-frame image adapters, supported Replicate video entries,
+Veo and the fal relay. Studio aspect allowlists and fallback behavior are
+covered. Video cases use representative square/landscape/portrait requests;
+recorded parameters show what an adapter accepts or drops. This is independent
+of the owner's one-completion live scope.
 
-## Coverage and boundaries
+Per-model studio and current video polling budgets are recorded. The focused
+suite drives a real processing studio prediction to its 60-second polling
+deadline using controlled time. The Replicate video adapter currently supplies
+no app-level deadline to `replicate.run`; its offline configuration records
+`timeoutMs: null`. This is not qualification of hung provider creates/downloads
+or a deployed workflow watchdog.
 
-| Surface                     | Executed boundary                                                                                           | Cases and evidence                                                                                                                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Studio generation           | Canonical `StudioModelRegistry` → real `ReplicateStudioImageRunner` → SDK HTTP                              | Every offerable model; every studio aspect ratio plus invalid-ratio fallback; actual endpoint, prompt and pinned resolution/quality fields                                                |
-| Studio edit                 | Same registry/runner/SDK                                                                                    | Every offerable edit-capable model; exact source-image array, instruction, format and price tier                                                                                          |
-| Studio transform            | Same registry/runner/SDK                                                                                    | `remove_background`, `vectorize`; exact utility endpoint and source parameter                                                                                                             |
-| Studio routing/pins         | Real `StudioService`, `StudioPolicyEngine`, `AIModelService`, `LLMClient`, OpenAI adapter and Replicate SDK | Auto generate, pinned Pro generate, Auto standard edit, pinned Lite edit, incapable pin negotiation with zero image calls. Only external LLM/persistence/storage responses are controlled |
-| First-frame image providers | Real Schnell/Kontext adapters → SDK HTTP                                                                    | Explicit provider selection; square, landscape, portrait and invalid-ratio normalization; source, seed, speed and quality fields where accepted                                           |
-| Replicate video             | Canonical generation roster → real video adapter → SDK HTTP                                                 | All Replicate entries, including Wan, Mochi and Minimax; text/image modes; square, landscape, portrait; effective model mapping, frame, seed, size/duration and prompt expansion          |
-| Sora                        | Actual OpenAI SDK multipart boundary                                                                        | Both callable variants; text/image modes and three aspects; exact prompt, duration, normalized size and image-reference object                                                            |
-| Kling                       | Actual HTTP create/status boundary                                                                          | Text/image modes and three aspects; exact prompt, first frame, model, ratio and supported duration                                                                                        |
-| Luma                        | Actual Luma SDK HTTP boundary                                                                               | Text/image modes and three aspects; exact submitted model, prompt, keyframe and ratio; model mismatch reported as failure                                                                 |
-| Veo                         | Actual HTTP create/status/media boundary                                                                    | Text/image modes and three aspects; effective endpoint, exact prompt, inline first frame, seed and duration                                                                               |
-| Sketch                      | Real `/api/fal/i2i` relay → fal HTTP boundary                                                               | Exact prompt, source, strength, steps, seed, synchronous mode and webp output                                                                                                             |
+## Excluded and deferred generation models
 
-Video inventory derives from `VIDEO_MODEL_PROVIDERS`; there is no Runway
-generation adapter, so the recommendation-only Runway model is not a callable
-path. Studio inventory derives from `offerableModels`; storage-gated entries
-are included only when offered. Future adapter/roster changes should extend the
-matrix, and the report must name gaps instead of implying coverage.
+Kling is excluded by the owner. Its historical IDs remain readable. The release
+harness contains no Kling adapter import, request fixture or paid dispatch.
 
-The ordinary registry/adapter cases exercise deterministic request shaping;
-the routing cases additionally execute the real studio decision loop. Neither
-proves that a live LLM will choose a good edit instruction or a live image model
-will preserve the scene. Seed is requested for the video matrix but only
-asserted where the production adapter supports it; reports retain the actual
-submitted body so dropped fields are visible.
+Sora 2 and the Videos API were
+[shut down on September 24, 2026](https://developers.openai.com/api/docs/deprecations).
+The [official Sora model page](https://developers.openai.com/api/docs/models/sora-2)
+also records that the API is unavailable and has no one-to-one replacement.
+Historical Sora IDs remain readable, while current generation and live testing
+exclude them. An OpenAI text result must not be reported as Sora video proof.
 
-Per-model studio budgets and current video polling budgets are recorded. The
-focused suite drives a real processing studio prediction to its 60-second
-polling deadline with controlled time. Existing provider poll-resilience and
-timeout suites remain the broader timing evidence. The Replicate video adapter
-currently supplies no app-level deadline to `replicate.run`; its report records
-`timeoutMs: null`. None of this qualifies a hung provider create/download call
-or deployed workflow watchdog behavior.
+Luma is deferred: canonical `luma-ray3` previously submitted `model: "ray-2"`
+through the installed `lumaai` 1.18.2 client. The first offline matrix diagnosed
+that mismatch; the release now records the exclusion and dispatches no Luma
+request. The installed client targets the legacy Dream Machine endpoint and
+its generation type supports Ray 1.6, Ray 2 and Ray Flash 2.
 
-### Known model mismatch
+The official [migration guide](https://docs.agents.lumalabs.ai/guides/videos/migration/)
+and [model guide](https://docs.agents.lumalabs.ai/guides/model/) require the
+new Agents API, `ray-3.2`, `type: "video"`, `LUMA_AGENTS_API_KEY`, nested video
+controls and `output[].url`. A model-string substitution on the old SDK is not
+a coherent migration. [Ray 3.2 generation](https://docs.agents.lumalabs.ai/guides/videos/generation/)
+accepts 5/10-second clips; start/end anchors require 5 seconds. Its current
+[720p SDR price](https://docs.agents.lumalabs.ai/guides/pricing/) is $0.30 for
+5 seconds and $0.90 for 10 seconds, so existing 4/8-second capabilities and
+linear internal credits do not establish its request/cost contract. Future
+migration must update credentials, validation, capabilities, pricing,
+polling/output parsing and live qualification together.
 
-The canonical `luma-ray3` path submits `model: "ray-2"` through the legacy Luma
-adapter. All six Luma cases capture that actual request and report
-`diagnosticCode: "luma-model-mismatch"`; the evaluation exits 1. The canonical
-name cannot establish that Ray 3 was evaluated when Ray 2 received the request.
+## Historical optional creative tooling
 
-The [legacy JavaScript video documentation](https://docs.lumalabs.ai/docs/javascript-video-generation)
-shows the Ray 2 generation endpoint. The current
-[migration guide](https://docs.agents.lumalabs.ai/guides/videos/migration/) and
-[model guide](https://docs.agents.lumalabs.ai/guides/model/) describe the newer
-API and Ray 3.2. An unqualified model-string swap on the legacy SDK is not a
-demonstrated migration. This batch records the mismatch and changes neither
-the provider adapter nor its baseline/default.
+`creative-tasks.json`, `owner-review.pending.json`, `review.ts` and
+`check-review.ts` remain optional historical tools. They are not current release
+gates and no owner review is required by the narrowed #144 scope. The pending
+template contains no owner-approved evidence and intentionally fails that
+optional schema. If explicitly used later, the checker validates recorded
+completeness only; it cannot authenticate a reviewer or establish live output
+quality from fixture bytes.
 
-## Human creative review
-
-`scripts/ops/provider-quality/creative-tasks.json` contains seven small tasks:
-composition across aspects, recolor preservation, background removal,
-vectorization, push-in versus static motion, incapable-pin negotiation, and
-sketch fidelity. The task set is **prepared, awaiting owner approval**.
-`owner-review.pending.json` has no review evidence and intentionally fails the
-review schema. Do not relabel either as approved on the basis of offline tests.
-
-Run real creative outputs only through the existing authorized smoke/intake
-boundaries and within their spending rules. The harness adds no paid-live mode,
-changes no budget policy, and does not authorize a provider matrix of paid
-generations. The four-leg live smoke (#140) establishes bounded provider
-acceptance, not final-clip quality. The real intake clip, first-frame selection,
-visible motion words, durable attachment, reopen and download remain #143.
-
-For each reviewed task/path, record this `vidra-creative-review/v1` shape:
-
-```json
-{
-  "schema": "vidra-creative-review/v1",
-  "taskSet": "creative-tasks/v1",
-  "ownerApproval": {
-    "reviewer": "actual owner",
-    "reviewedAt": "actual ISO timestamp",
-    "notes": "Task-set approval and any changes"
-  },
-  "results": [
-    {
-      "taskId": "recolor-preservation",
-      "pathId": "studio/edit/nano-banana-2",
-      "model": "google/nano-banana-2",
-      "revision": "40-character tested commit SHA",
-      "configuration": { "resolution": "1K" },
-      "submittedRequestEvidence": "path to captured real provider request",
-      "sourceEvidence": [
-        { "path": "source image", "sha256": "64-character source digest" }
-      ],
-      "outputEvidence": [
-        { "path": "actual output", "sha256": "64-character output digest" }
-      ],
-      "reviewer": "actual reviewer",
-      "reviewedAt": "actual ISO timestamp",
-      "verdict": "acceptable",
-      "observations": "What changed, what stayed intact, and any unwanted differences"
-    }
-  ]
-}
-```
-
-`acceptable`, `unacceptable`, and `inconclusive` are human judgments. Include
-both motion/control clips in output evidence. For preservation tasks, use the
-source hash and record every unintended change, including attractive repaints
-that violate the requested edit. Keep the submitted motion words with the
-provider-request evidence. Preserve negative/inconclusive results.
-
-```bash
-npx tsx scripts/ops/provider-quality/check-review.ts owner-review.json /tmp/vidra-provider-quality.json /tmp/vidra-review-coverage.json
-```
-
-The checker validates schema, rejects duplicate task/path records, requires
-source evidence for applicable tasks, and reports missing or unacceptable rows
-against the current inventory. Invalid aspect-ratio probes are deterministic
-contract cases and are excluded from the creative matrix. An acceptable result
-record exits 0; missing, unacceptable, invalid or pending evidence exits 2.
-The checker verifies recorded completeness only: it cannot authenticate the
-owner, inspect image quality, or prove that the linked artifacts were generated
-live. Those remain explicit review and acceptance obligations.
-
-The harness is scoped to #144. It does not revive frozen analytics, alter the
-Groq golden-set baseline (#106), establish production rollout acceptance (#145),
-or substitute for the all-shells walkthrough (#65).
+This work does not revive frozen analytics or modify Groq golden-set baselines
+(#106). Production release verification (#145) and the all-shells walkthrough
+(#65) retain their separate scope.

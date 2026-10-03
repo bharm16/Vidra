@@ -21,7 +21,11 @@ import {
   OBJECT_STORE_HOST,
   RefundWitness,
 } from "./boundaryDoubles";
-import { installOutboundGuard, type OutboundGuard } from "./outboundGuard";
+import {
+  installOutboundGuard,
+  type OutboundGuard,
+  type OutboundRoute,
+} from "./outboundGuard";
 import { CROSS_MODE_CLIP } from "@scripts/replay/goldenScenarios";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoJobRecord } from "@services/video-generation/jobs/types";
@@ -130,11 +134,27 @@ export interface CrossModeHarnessOptions {
    * budget is spent.
    */
   store?: CassetteStore;
+  /** Additional synthetic upstream transports, still inside the outbound guard. */
+  outboundRoutes?: Readonly<Record<string, OutboundRoute>>;
+  /** Browser proof substitutes provider ports before real services resolve. */
+  configureBoundaries?: (boundaries: {
+    container: DIContainer;
+    objects: InMemoryObjectStore;
+    sessions: InMemorySessionStore;
+    jobs: InMemoryVideoJobStore;
+    studioProjects: InMemoryStudioProjectStore;
+    storage: InMemoryStorageService;
+    images: InMemoryImageAssetStore;
+    idempotency: InMemoryIdempotencyService;
+  }) => void | Promise<void>;
 }
 
-export async function startCrossModeHarness(
-  { replayMode = "replay", store: injectedStore }: CrossModeHarnessOptions = {},
-): Promise<CrossModeHarness> {
+export async function startCrossModeHarness({
+  replayMode = "replay",
+  store: injectedStore,
+  configureBoundaries,
+  outboundRoutes = {},
+}: CrossModeHarnessOptions = {}): Promise<CrossModeHarness> {
   const recording = replayMode === "record";
   const envBackup = new Map<string, string | undefined>();
   const setEnv = (key: string, value: string | undefined): void => {
@@ -178,7 +198,7 @@ export async function startCrossModeHarness(
     contentType: "video/mp4",
   });
   const guard = installOutboundGuard({
-    routes: { [OBJECT_STORE_HOST]: objects.serve },
+    routes: { ...outboundRoutes, [OBJECT_STORE_HOST]: objects.serve },
     ...(recording ? { allowEgress: true } : {}),
   });
 
@@ -231,6 +251,16 @@ export async function startCrossModeHarness(
     }),
   );
 
+  await configureBoundaries?.({
+    container,
+    objects,
+    sessions,
+    jobs,
+    studioProjects,
+    storage,
+    images,
+    idempotency,
+  });
   await initializeServices(container);
   const app = createApp(container);
   const server: Server = await startServer(app, container);

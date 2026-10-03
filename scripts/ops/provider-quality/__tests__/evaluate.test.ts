@@ -9,32 +9,40 @@ describe("provider quality offline harness", () => {
     const originalFetch = globalThis.fetch;
     const report = await evaluateProviderContracts("fixture-revision");
     expect(globalThis.fetch).toBe(originalFetch);
-    expect(report.verdict).toBe("contract-failed");
+    expect(report.verdict).toBe("contract-passed-live-pending");
     const failures = report.paths.filter((path) => path.contract === "failed");
-    expect(failures).toHaveLength(6);
-    expect(
-      failures.every((path) => path.diagnosticCode === "luma-model-mismatch"),
-    ).toBe(true);
-    expect(
-      failures.every(
-        (path) =>
-          path.configuration.requestedModel === "luma-ray3" &&
-          path.reason?.includes("model mismatch"),
-      ),
-    ).toBe(true);
+    expect(failures).toEqual([]);
     expect(
       report.paths.filter((path) => path.contract === "passed").length,
     ).toBeGreaterThan(60);
     expect(
       report.paths.every(
         (path) =>
-          path.live === "not-verified" &&
-          path.quality === "awaiting-owner-review",
+          path.live === "not-verified" && path.quality === "not-evaluated",
       ),
     ).toBe(true);
-    expect(report.paths.filter((path) => path.contract === "not-run")).toEqual(
-      [],
-    );
+    const excluded = report.paths.filter((path) => path.contract === "not-run");
+    expect(excluded.map((path) => path.model).sort()).toEqual([
+      "kling-v2-1-master",
+      "luma-ray3",
+      "sora-2",
+      "sora-2-pro",
+    ]);
+    expect(
+      excluded.every(
+        (path) =>
+          path.configuration.releaseSupport === "excluded" &&
+          path.submitted.length === 0,
+      ),
+    ).toBe(true);
+    expect(
+      report.paths
+        .flatMap((path) => path.submitted)
+        .every(
+          (request) =>
+            request.model !== "kling-v2-1-master" && request.model !== "ray-2",
+        ),
+    ).toBe(true);
     const edit = report.paths.find(
       (path) => path.id === "studio/edit/nano-banana-2",
     );

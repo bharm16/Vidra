@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { ownerSegment } from "@services/owned-media";
+import { ownerSegment, resolveOwnedMediaPath } from "@services/owned-media";
 import { validatePathOwnership } from "@services/storage/utils/pathUtils";
 import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
 import type {
@@ -344,6 +344,15 @@ export class InMemoryStorageService {
     });
   }
 
+  getOwnedMediaViewUrl(
+    userId: string,
+    reference: string,
+  ): Promise<{ viewUrl: string; expiresAt: string; storagePath: string }> {
+    const path =
+      resolveOwnedMediaPath(userId, reference.trim()) ?? reference.trim();
+    return this.getViewUrl(userId, path);
+  }
+
   /**
    * The provider hands back either a data URI (the sketch relay's sync mode)
    * or a URL into this store (a recorded provider result). Anything else is a
@@ -471,6 +480,8 @@ export class InMemorySessionStore {
 }
 
 interface IdempotencyRecord {
+  userId: string;
+  route: string;
   payloadHash: string;
   status: "pending" | "completed" | "failed";
   snapshot?: { statusCode: number; body: Record<string, unknown> };
@@ -497,7 +508,12 @@ export class InMemoryIdempotencyService {
       .digest("hex");
     const existing = this.records.get(recordId);
     if (!existing) {
-      this.records.set(recordId, { payloadHash, status: "pending" });
+      this.records.set(recordId, {
+        userId: input.userId,
+        route: input.route,
+        payloadHash,
+        status: "pending",
+      });
       return Promise.resolve({ state: "claimed", recordId });
     }
     if (existing.payloadHash !== payloadHash) {
@@ -507,24 +523,30 @@ export class InMemoryIdempotencyService {
       return Promise.resolve({
         state: "replay",
         recordId,
-        snapshot: existing.snapshot,
+        snapshot: structuredClone(existing.snapshot),
       });
     }
     if (existing.status === "pending") {
       return Promise.resolve({ state: "in_progress", recordId });
     }
-    this.records.set(recordId, { payloadHash, status: "pending" });
+    this.records.set(recordId, {
+      userId: input.userId,
+      route: input.route,
+      payloadHash,
+      status: "pending",
+    });
     return Promise.resolve({ state: "claimed", recordId });
   }
 
   markCompleted(input: {
     recordId: string;
+    jobId?: string;
     snapshot: { statusCode: number; body: Record<string, unknown> };
   }): Promise<void> {
     const existing = this.records.get(input.recordId);
     if (existing) {
       existing.status = "completed";
-      existing.snapshot = input.snapshot;
+      existing.snapshot = structuredClone(input.snapshot);
     }
     return Promise.resolve();
   }
@@ -533,6 +555,38 @@ export class InMemoryIdempotencyService {
     const existing = this.records.get(recordId);
     if (existing) existing.status = "failed";
     return Promise.resolve();
+  }
+
+  getResponseSnapshot(input: {
+    userId: string;
+    route: string;
+    key: string;
+  }): Promise<{ statusCode: number; body: Record<string, unknown> } | null> {
+    const id = createHash("sha256")
+      .update(`${input.userId}|${input.route}|${input.key}`)
+      .digest("hex");
+    const record = this.records.get(id);
+    return Promise.resolve(
+      record?.status === "completed" && record.snapshot
+        ? structuredClone(record.snapshot)
+        : null,
+    );
+  }
+
+  listResponseSnapshots(
+    userId: string,
+    route: string,
+  ): Promise<Array<{ statusCode: number; body: Record<string, unknown> }>> {
+    return Promise.resolve(
+      [...this.records.values()].flatMap((record) =>
+        record.userId === userId &&
+        record.route === route &&
+        record.status === "completed" &&
+        record.snapshot
+          ? [structuredClone(record.snapshot)]
+          : [],
+      ),
+    );
   }
 }
 
@@ -762,6 +816,13 @@ export class InMemoryVideoJobStore {
 
   getJob(jobId: string): Promise<VideoJobRecord | null> {
     const found = this.jobs.get(jobId);
+    return Promise.resolve(found ? structuredClone(found) : null);
+  }
+
+  findJobByAssetId(assetId: string): Promise<VideoJobRecord | null> {
+    const found = [...this.jobs.values()].find(
+      (job) => job.result?.assetId === assetId,
+    );
     return Promise.resolve(found ? structuredClone(found) : null);
   }
 

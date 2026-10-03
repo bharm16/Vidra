@@ -15,7 +15,7 @@ export type E2EUser = {
 };
 
 export const TEST_USER: E2EUser = {
-  uid: "e2e-user-1",
+  uid: process.env.E2E_USER_UID || "e2e-user-1",
   email: "e2e@example.com",
   displayName: "E2E Test User",
 };

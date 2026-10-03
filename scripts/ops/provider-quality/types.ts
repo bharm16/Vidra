@@ -9,7 +9,7 @@ export interface QualityPathResult {
   reason?: string;
   diagnosticCode?: "luma-model-mismatch";
   live: "not-verified";
-  quality: "awaiting-owner-review";
+  quality: "not-evaluated";
 }
 
 export interface ProviderQualityReport {
@@ -19,7 +19,7 @@ export interface ProviderQualityReport {
   workingTreeStatus?: string[];
   startedAt: string;
   finishedAt: string;
-  verdict: "contract-passed-quality-pending" | "contract-failed";
+  verdict: "contract-passed-live-pending" | "contract-failed";
   taskSet: "creative-tasks/v1";
   paths: QualityPathResult[];
   pending: string[];

@@ -7,6 +7,7 @@
     "notes": null
   },
   "execution": "Only after an authorized bounded live run; offline fixtures cannot be judged as creative output.",
+  "releaseScope": "Use the shared release generation support policy. Kling is excluded by the owner; Luma is deferred until a qualified Ray 3.2 migration. Historical provider IDs are not creative-review paths.",
   "tasks": [
     {
       "id": "cup-and-book",
@@ -70,7 +71,7 @@
         "Record exact visible picker motion words and exact submitted provider words",
         "Durable attachment, reopen and download have #143 evidence"
       ],
-      "paths": "Every callable final-video model; #143 intake clip proof is required separately"
+      "paths": "Every release-supported callable final-video model; #143 intake clip proof is required separately"
     },
     {
       "id": "pin-negotiation",

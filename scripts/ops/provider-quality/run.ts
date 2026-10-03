@@ -48,7 +48,7 @@ if (args.length !== 2 || args[0] !== "--report" || !args[1]) {
         unexpectedFailures: failed - knownDiagnostics,
         reportPath,
         live: "not-verified",
-        ownerReview: "pending",
+        quality: "not-evaluated",
       },
       null,
       2,

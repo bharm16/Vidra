@@ -77,6 +77,6 @@ export async function evaluateSketchRelay(
     submitted: structuredClone(transport.received),
     ...(reason ? { reason } : {}),
     live: "not-verified",
-    quality: "awaiting-owner-review",
+    quality: "not-evaluated",
   };
 }

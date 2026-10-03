@@ -460,9 +460,11 @@ export class MockAuthRepository {
   private currentUser: User | null = null;
   private authStateCallbacks: Array<(user: User | null) => void> = [];
 
+  constructor(private readonly uid: string = "mock-user-id") {}
+
   async signInWithGoogle(): Promise<User> {
     this.currentUser = {
-      uid: "mock-user-id",
+      uid: this.uid,
       email: "test@example.com",
       displayName: "Test User",
       photoURL: null,
@@ -476,7 +478,7 @@ export class MockAuthRepository {
 
   async signInWithEmail(email: string, _password: string): Promise<User> {
     this.currentUser = {
-      uid: "mock-user-id",
+      uid: this.uid,
       email,
       displayName: "Test User",
       emailVerified: true,
@@ -493,7 +495,7 @@ export class MockAuthRepository {
     displayName?: string,
   ): Promise<User> {
     this.currentUser = {
-      uid: "mock-user-id",
+      uid: this.uid,
       email,
       displayName: displayName || "Test User",
       emailVerified: false,

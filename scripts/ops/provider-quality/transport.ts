@@ -64,53 +64,6 @@ export class OfflineProviderTransport {
       });
     }
     if (
-      url.origin === "https://api.klingai.com" &&
-      /^\/v1\/videos\/(text2video|image2video)$/.test(url.pathname) &&
-      request.method === "POST"
-    ) {
-      const body = z
-        .record(z.string(), z.unknown())
-        .parse(await request.json());
-      this.received.push({ model: String(body.model_name), input: body });
-      return Response.json({
-        code: 0,
-        data: { task_id: "quality-video", task_status: "submitted" },
-      });
-    }
-    if (
-      url.origin === "https://api.klingai.com" &&
-      /^\/v1\/videos\/(text2video|image2video)\/quality-video$/.test(
-        url.pathname,
-      ) &&
-      request.method === "GET"
-    ) {
-      return Response.json({
-        code: 0,
-        data: {
-          task_id: "quality-video",
-          task_status: "succeed",
-          task_result: {
-            videos: [{ id: "quality-video", url: this.outputUrl }],
-          },
-        },
-      });
-    }
-    if (
-      url.origin === "https://api.lumalabs.ai" &&
-      url.pathname === "/dream-machine/v1/generations/video" &&
-      request.method === "POST"
-    ) {
-      const body = z
-        .record(z.string(), z.unknown())
-        .parse(await request.json());
-      this.received.push({ model: String(body.model), input: body });
-      return Response.json({
-        id: "quality-video",
-        state: "completed",
-        assets: { video: this.outputUrl },
-      });
-    }
-    if (
       url.origin === "https://generativelanguage.googleapis.com" &&
       url.pathname ===
         "/v1beta/models/veo-3.1-generate-preview:predictLongRunning" &&

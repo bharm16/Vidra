@@ -1,0 +1,376 @@
+{
+  "schema": "vidra-live-provider-completion/v1",
+  "revision": "3968e2398c9d931e3d6b1d2033b2e3b1255dafac",
+  "quality": "not-evaluated",
+  "allocationCents": 200,
+  "reserveCents": 189,
+  "priorCorrectionEvidence": "Original401 and canonical-credential correction are preserved in separate receipts",
+  "actualBilledCost": "not-reconciled",
+  "results": [
+    {
+      "provider": "fal",
+      "model": "fal-ai/z-image/turbo/image-to-image",
+      "status": "completed",
+      "quality": "not-evaluated",
+      "seam": "fal-http",
+      "reserveCents": 2,
+      "pricingSource": "https://fal.ai/models/fal-ai/z-image/turbo/image-to-image",
+      "configuration": {
+        "sourceWidth": 512,
+        "sourceHeight": 512,
+        "strength": 0.6,
+        "num_inference_steps": 8,
+        "seed": 20261003,
+        "output_format": "webp",
+        "sync_mode": true
+      },
+      "elapsedMs": 1071,
+      "artifact": {
+        "path": "/tmp/vidra-live-completion-20261003/fal-existing-key-correction/fal-output.webp",
+        "sha256": "a226d00a3b26089b4d7751f1123e5da1e47fa0777170aba8eb2cbdc0fe776848",
+        "bytes": 14142,
+        "kind": "image",
+        "verification": {
+          "format": "webp",
+          "width": 512,
+          "height": 512,
+          "decoded": true
+        }
+      }
+    },
+    {
+      "provider": "replicate",
+      "model": "wan-video/wan-2.2-i2v-fast",
+      "status": "completed",
+      "quality": "not-evaluated",
+      "seam": "free-http-intake",
+      "reserveCents": 20,
+      "pricingSource": "https://replicate.com/wan-video/wan-2.2-i2v-fast",
+      "configuration": {
+        "source": "controlled512x512 PNG fallback because initial fal credential selection failed401",
+        "numFrames": 81,
+        "fps": 16,
+        "promptExtend": false,
+        "seed": 20261003,
+        "aspectRatio": "1:1",
+        "providerResolutionDefault": "480p",
+        "evidencePath": "/tmp/vidra-live-completion-20261003/replicate.result.json"
+      },
+      "elapsedMs": 30565,
+      "artifact": {
+        "path": "/tmp/vidra-live-completion-20261003/replicate-output.mp4",
+        "sha256": "c0697841ac104ab31a3bd41d2acc6b05d7eb06715f8fb89fbd8e3d942ef0b103",
+        "bytes": 159892,
+        "kind": "video",
+        "verification": {
+          "container": "mp4",
+          "codec": "h264",
+          "width": 624,
+          "height": 624,
+          "durationSeconds": 5.0625,
+          "decoded": true
+        }
+      },
+      "reusedEvidence": true
+    },
+    {
+      "provider": "google",
+      "model": "veo-3.1-generate-preview",
+      "status": "completed",
+      "quality": "not-evaluated",
+      "seam": "production-adapter",
+      "reserveCents": 160,
+      "pricingSource": "https://ai.google.dev/gemini-api/docs/pricing#veo-3.1",
+      "configuration": {
+        "seconds": "4",
+        "size": "720p",
+        "aspectRatio": "16:9",
+        "seed": 20261003,
+        "evidencePath": "/tmp/vidra-live-completion-20261003/google.result.json"
+      },
+      "elapsedMs": 39771,
+      "artifact": {
+        "path": "/tmp/vidra-live-completion-20261003/google-output.mp4",
+        "sha256": "d76ee979570fa824e6b5d00c8a7a6986cecc953d4185bc8885f8fcaadb386ed2",
+        "bytes": 1206649,
+        "kind": "video",
+        "verification": {
+          "container": "mp4",
+          "codec": "h264",
+          "width": 1280,
+          "height": 720,
+          "durationSeconds": 4,
+          "decoded": true
+        }
+      },
+      "reusedEvidence": true
+    },
+    {
+      "provider": "openai-text",
+      "model": "gpt-5.6-luna",
+      "status": "completed",
+      "quality": "not-evaluated",
+      "seam": "aiService-text",
+      "reserveCents": 5,
+      "pricingSource": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "configuration": {
+        "operation": "studio_turn",
+        "maxTokens": 1024,
+        "maxRetries": 0,
+        "retryOnValidationFailure": false,
+        "logprobs": false,
+        "responseFormat": "json_object",
+        "evidencePath": "/tmp/vidra-live-completion-20261003/openai-text.result.json"
+      },
+      "elapsedMs": 1705,
+      "artifact": {
+        "path": "/tmp/vidra-live-completion-20261003/openai-text-output.json",
+        "sha256": "4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+        "bytes": 11,
+        "kind": "text",
+        "verification": {
+          "executedBy": {
+            "client": "openai",
+            "provider": "openai",
+            "model": "gpt-5.6-luna",
+            "viaFallback": false
+          },
+          "nonempty": true
+        }
+      },
+      "reusedEvidence": true
+    }
+  ],
+  "pendingProviders": [],
+  "exclusions": [
+    "Kling: owner excluded",
+    "Luma: unqualified legacy API",
+    "Sora Videos API: shut down2026-09-24; OpenAI row proves text only"
+  ],
+  "boundary": "Wan: real free HTTP intake/worker/attachment/reopen/download over controlled persistence. Google: production adapter. OpenAI: aiService text. fal: real HTTP image. Browser/depth/deployed persistence remain separate.",
+  "sourceState": "Uncommitted coordinated working tree; not commit-level or deployed qualification",
+  "workingTreeStatus": [
+    " M README.md",
+    " M client/src/components/ToolSidebar/config/modelConfig.ts",
+    " M client/src/config/videoModels.ts",
+    " M client/src/features/generations/hooks/__tests__/useGenerationActions.test.tsx",
+    " M client/src/features/generations/hooks/useGenerationActions.ts",
+    " M client/src/features/generations/hooks/useGenerationsRuntime.ts",
+    " M client/src/features/prompt-optimizer/PromptCanvas/hooks/__tests__/usePromptVersioning.first-generation.regression.test.ts",
+    " M client/src/features/prompt-optimizer/PromptCanvas/hooks/usePromptVersioning.ts",
+    " M client/src/features/prompt-optimizer/PromptOptimizerContainer/PromptOptimizerWorkspace.tsx",
+    " M client/src/features/realtime-sketch/hooks/useAcceptLiveOutput.ts",
+    " M client/src/features/workspace-shell/CanvasWorkspace.tsx",
+    " M client/src/features/workspace-shell/components/FrameStage.tsx",
+    " M client/src/features/workspace-shell/components/__tests__/ModelRecommendationDropdown.test.tsx",
+    " M docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md",
+    " M docs/adr/0023-bounded-free-validation-proposal.md",
+    " M docs/architecture/admission-media-lifecycle.md",
+    " M docs/architecture/deferred-work-ledger.md",
+    " M docs/architecture/provider-quality.md",
+    " M docs/audits/2026-10-03-docs-consistency.md",
+    " M scripts/ops/provider-quality/__tests__/evaluate.test.ts",
+    " M scripts/ops/provider-quality/__tests__/review.test.ts",
+    " M scripts/ops/provider-quality/creative-tasks.json",
+    " M scripts/ops/provider-quality/evaluate.ts",
+    " M scripts/ops/provider-quality/review.ts",
+    " M scripts/ops/provider-quality/routing.ts",
+    " M scripts/ops/provider-quality/run.ts",
+    " M scripts/ops/provider-quality/sketch.ts",
+    " M scripts/ops/provider-quality/transport.ts",
+    " M scripts/ops/provider-quality/types.ts",
+    " M scripts/ops/provider-quality/video.ts",
+    " M server/src/clients/adapters/openai/OpenAiRequestBuilder.ts",
+    " M server/src/config/routes/preview.registration.ts",
+    " M server/src/routes/preview/__tests__/availability.test.ts",
+    " M server/src/routes/preview/__tests__/inlineProcessor.test.ts",
+    " M server/src/routes/preview/__tests__/pictureAttachmentRecovery.regression.test.ts",
+    " M server/src/routes/preview/availability.ts",
+    " M server/src/routes/preview/handlers/__tests__/mediaReferenceView.security.test.ts",
+    " M server/src/routes/preview/handlers/imageGenerate.ts",
+    " M server/src/routes/preview/handlers/mediaReferenceView.ts",
+    " M server/src/routes/preview/handlers/video-generate/intake.ts",
+    " M server/src/routes/preview/handlers/videoGenerate.ts",
+    " M server/src/routes/preview/inlineProcessor.ts",
+    " M server/src/services/model-intelligence/services/ModelCapabilityRegistry.ts",
+    " M server/src/services/video-generation/__tests__/generateVideoWorkflow.test.ts",
+    " M server/src/services/video-generation/availability.ts",
+    " M server/src/services/video-generation/jobs/RequestIdempotencyService.ts",
+    " M server/src/services/video-generation/jobs/VideoJobStore.ts",
+    " M server/src/services/video-generation/jobs/processVideoJob.ts",
+    " M server/src/services/video-generation/providers/ProviderRegistry.ts",
+    " M server/src/services/video-generation/providers/__tests__/ProviderRegistry.test.ts",
+    " M shared/__tests__/videoModels.test.ts",
+    " M shared/videoModels.ts",
+    " M tests/integration/helpers/cross-mode/boundaryDoubles.ts",
+    " M tests/integration/helpers/cross-mode/harness.ts",
+    " M tests/unit/video-generate-motion.test.ts",
+    " M tests/unit/video-generate.contract.test.ts",
+    "?? client/src/features/generations/api/__tests__/unresolvedSketchRecovery.test.ts",
+    "?? client/src/features/generations/api/sessionGenerations.ts",
+    "?? client/src/features/generations/hooks/__tests__/useServerGenerationHydration.test.tsx",
+    "?? client/src/features/generations/hooks/useServerGenerationHydration.ts",
+    "?? client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/__tests__/useUnresolvedSketchAcceptances.test.ts",
+    "?? client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/useUnresolvedSketchAcceptances.ts",
+    "?? client/src/features/realtime-sketch/__tests__/useThis.navigation.regression.test.tsx",
+    "?? client/src/features/workspace-shell/components/__tests__/FrameStage.sketch-recovery.test.tsx",
+    "?? scripts/ops/provider-quality/__tests__/completionLedger.test.ts",
+    "?? scripts/ops/provider-quality/__tests__/wanHttpCompletion.test.ts",
+    "?? scripts/ops/provider-quality/complete-live.ts",
+    "?? scripts/ops/provider-quality/completionEvidence.ts",
+    "?? scripts/ops/provider-quality/completionLedger.ts",
+    "?? scripts/ops/provider-quality/completionPlan.ts",
+    "?? scripts/ops/provider-quality/liveCompletion.ts",
+    "?? scripts/ops/provider-quality/wanHttpCompletion.ts",
+    "?? server/src/clients/adapters/__tests__/OpenAICompatibleAdapter.nativeTokenLimit.regression.test.ts",
+    "?? server/src/routes/preview/handlers/generationDestination.ts",
+    "?? tests/e2e/cross-mode.spec.ts",
+    "?? tests/e2e/cross-mode/",
+    "?? tests/unit/replay/cross-mode-receipts.test.ts"
+  ],
+  "rootAllocationCents": 400,
+  "ownerSharedCeilingCents": 1000,
+  "priorAttempts": [
+    {
+      "provider": "fal",
+      "model": "fal-ai/z-image/turbo/image-to-image",
+      "status": "failed",
+      "quality": "not-evaluated",
+      "seam": "fal-http",
+      "reserveCents": 2,
+      "pricingSource": "https://fal.ai/models/fal-ai/z-image/turbo/image-to-image",
+      "configuration": {
+        "sourceWidth": 512,
+        "sourceHeight": 512,
+        "strength": 0.6,
+        "num_inference_steps": 8,
+        "seed": 20261003,
+        "output_format": "webp",
+        "sync_mode": true
+      },
+      "elapsedMs": 424,
+      "reason": "fal answered HTTP401: {\"detail\":\"Cannot access application \\\"fal-ai/z-image\\\". Authentication is required to access this application.\"}"
+    }
+  ],
+  "requestEvidence": {
+    "replicate": {
+      "provider": "replicate",
+      "request": {
+        "endpoint": "https://api.replicate.com/v1/models/wan-video/wan-2.2-i2v-fast/predictions",
+        "body": {
+          "input": {
+            "prompt": "A red ceramic cup sits on a wooden table in soft morning light. The camera slowly moves closer.",
+            "negative_prompt": "morphing, distorted, disfigured, text, watermark, low quality, blurry, static, extra limbs, fused fingers",
+            "size": "1024*1024",
+            "num_frames": 81,
+            "frames_per_second": 16,
+            "prompt_extend": true,
+            "go_fast": true,
+            "sample_shift": 12,
+            "image": {
+              "type": "data-uri",
+              "bytes": 2182,
+              "sha256": "c88d7b29c62fbee670f504d80e8181f95f7b9e5355c27acb55a89ce34ab3a91d"
+            }
+          }
+        }
+      },
+      "dispatchedAt": "2026-10-03T20:16:21.945Z"
+    },
+    "google": {
+      "provider": "google",
+      "request": {
+        "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-generate-preview:predictLongRunning",
+        "body": {
+          "instances": [
+            {
+              "prompt": "A red ceramic cup sits on a wooden table in soft morning light. The camera slowly moves closer."
+            }
+          ],
+          "parameters": {
+            "aspectRatio": "16:9",
+            "resolution": "720p",
+            "durationSeconds": 4,
+            "seed": 20261003
+          }
+        }
+      },
+      "dispatchedAt": "2026-10-03T20:16:49.880Z"
+    },
+    "openai-text": {
+      "provider": "openai-text",
+      "request": {
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "body": {
+          "model": "gpt-5.6-luna",
+          "messages": [
+            {
+              "role": "system",
+              "content": "Respond only with valid JSON."
+            },
+            {
+              "role": "user",
+              "content": "Return one JSON object: {\"ok\":true}. This is a provider connectivity test."
+            }
+          ],
+          "max_completion_tokens": 1024,
+          "temperature": 1,
+          "seed": 438777681,
+          "response_format": {
+            "type": "json_object"
+          },
+          "frequency_penalty": 0
+        }
+      },
+      "dispatchedAt": "2026-10-03T20:17:29.664Z"
+    }
+  },
+  "falRequestEvidence": {
+    "provider": "fal",
+    "request": {
+      "endpoint": "https://fal.run/fal-ai/z-image/turbo/image-to-image",
+      "body": {
+        "prompt": "A red ceramic cup sits on a wooden table in soft morning light. The camera slowly moves closer.",
+        "image_url": {
+          "type": "data-uri",
+          "bytes": 2182,
+          "sha256": "c88d7b29c62fbee670f504d80e8181f95f7b9e5355c27acb55a89ce34ab3a91d"
+        },
+        "strength": 0.6,
+        "num_inference_steps": 8,
+        "seed": 20261003,
+        "sync_mode": true,
+        "output_format": "webp"
+      }
+    },
+    "dispatchedAt": "2026-10-03T20:23:05.482Z"
+  },
+  "wanHttpEvidence": {
+    "jobId": "07386797-ad97-497c-bd12-4035e1df23a5",
+    "sessionId": "session_acc_130bd3cd097445bf94497a52",
+    "promptVersionId": "v-1791058581627-3d2f6a",
+    "sourceGenerationId": "fc41e756-4287-4a76-9884-dbf68182538f",
+    "attachment": {
+      "state": "attached",
+      "generationId": "07386797-ad97-497c-bd12-4035e1df23a5",
+      "sessionId": "session_acc_130bd3cd097445bf94497a52",
+      "promptVersionId": "v-1791058581627-3d2f6a"
+    },
+    "reopenedThroughHttp": true,
+    "downloadedBytes": 159892,
+    "sha256": "c0697841ac104ab31a3bd41d2acc6b05d7eb06715f8fb89fbd8e3d942ef0b103",
+    "providerTranscript": [
+      {
+        "sourceObjectPath": null,
+        "sourceSha256": "5fdd94171f726dcfcd2aa1f388d1e7e8d27d38c395826c10e7a9cc4dd1327e14",
+        "sourceBytes": 1618,
+        "prompt": "A red ceramic cup sits on a wooden table in soft morning light. The camera slowly moves closer.",
+        "model": "wan-video/wan-2.2-i2v-fast",
+        "sourceRelocation": "owned URL to identical inline bytes at provider transport"
+      }
+    ],
+    "controlledPersistence": true,
+    "browserPickerProof": "separate #141/#143"
+  },
+  "scope": "One successful completion per active provider; no creative-quality assessment. Initial fal401 preserved; one root-authorized credential-resolution correction. No repeated Wan/Google/OpenAI call."
+}
