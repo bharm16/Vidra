@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { SessionRecord } from "@server/domain/session/types";
 import type { SessionGenerationRecord } from "@shared/types/session";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
@@ -83,10 +83,13 @@ interface SessionDtoJson {
     | undefined;
 }
 
-function acceptBody(idempotencyKey: string, destination?: {
-  sessionId: string;
-  promptVersionId: string;
-}): Record<string, unknown> {
+function acceptBody(
+  idempotencyKey: string,
+  destination?: {
+    sessionId: string;
+    promptVersionId: string;
+  },
+): Record<string, unknown> {
   return {
     liveOutputDataUri: CROSS_MODE_LIVE_OUTPUT_DATA_URI,
     sketchSnapshotDataUri: CROSS_MODE_SKETCH_DATA_URI,
@@ -150,13 +153,12 @@ async function createSessionWithRootVersion(
 }
 
 function takeIdsOf(dto: SessionDtoJson): string[] {
-  return (dto.prompt?.versions ?? []).flatMap(
-    (version) =>
-      (version.generations ?? [])
-        .map((generation) =>
-          typeof generation.id === "string" ? generation.id : "",
-        )
-        .filter((id) => id.length > 0),
+  return (dto.prompt?.versions ?? []).flatMap((version) =>
+    (version.generations ?? [])
+      .map((generation) =>
+        typeof generation.id === "string" ? generation.id : "",
+      )
+      .filter((id) => id.length > 0),
   );
 }
 
@@ -182,17 +184,16 @@ describe.skipIf(!runAgainstEmulator)(
 
     beforeAll(async () => {
       harness = await startRealAdapterHarness();
-      const { createOwnedPictureResolver } = await import("@services/owned-media");
-      imageAssetStore = harness.container.resolve<ImageAssetStore>(
-        "imageAssetStore",
+      const { createOwnedPictureResolver } = await import(
+        "@services/owned-media"
       );
-      storageService = harness.container.resolve<StorageService>(
-        "storageService",
-      );
+      imageAssetStore =
+        harness.container.resolve<ImageAssetStore>("imageAssetStore");
+      storageService =
+        harness.container.resolve<StorageService>("storageService");
       sessionStore = harness.container.resolve<SessionStore>("sessionStore");
-      studioProjectStore = harness.container.resolve<StudioProjectStore>(
-        "studioProjectStore",
-      );
+      studioProjectStore =
+        harness.container.resolve<StudioProjectStore>("studioProjectStore");
       // Touch the resolver import so the module graph is exercised the way the
       // app builds it (the routes registration builds the same resolver).
       expect(typeof createOwnedPictureResolver).toBe("function");
@@ -391,8 +392,7 @@ describe.skipIf(!runAgainstEmulator)(
           (version) => version.versionId === promptVersionId,
         )?.generations ?? [];
       const ids = generations.map(
-        (generation) =>
-          (generation as Record<string, unknown>).id as string,
+        (generation) => (generation as Record<string, unknown>).id as string,
       );
       expect(new Set(ids)).toEqual(
         new Set(records.map((record) => record.id as string)),
@@ -598,10 +598,59 @@ describe.skipIf(!runAgainstEmulator)(
       const objectsBefore = harness.bucket.objectCount;
 
       const body = { sessionId, generationId };
-      const [first, second] = await Promise.all([
-        harness.post("/api/studio/projects/from-session-picture", body),
-        harness.post("/api/studio/projects/from-session-picture", body),
-      ]);
+      // Launching HTTP requests together does not ensure both initial project
+      // reads see absence. Hold their GCS writes until BOTH reach the copy:
+      // neither can claim the project before the other has passed that read.
+      // Only the external bucket is controlled; storage, Firestore and the
+      // bridge above it still run their production implementations.
+      const originalFile = harness.bucket.file.bind(harness.bucket);
+      let copiesArrived = 0;
+      let releaseCopies!: () => void;
+      let arrivalError: Error | undefined;
+      const bothCopiesArrived = new Promise<void>((resolve) => {
+        releaseCopies = resolve;
+      });
+      // A request can fail before reaching GCS. Release and reject any parked
+      // write before the test timeout, so cleanup always restores the bucket.
+      const arrivalDeadline = setTimeout(() => {
+        arrivalError = new Error(
+          `Expected two bridge copies to arrive; received ${copiesArrived}`,
+        );
+        releaseCopies();
+      }, 10_000);
+      const fileSpy = vi
+        .spyOn(harness.bucket, "file")
+        .mockImplementation((path) => {
+          const file = originalFile(path);
+          if (
+            path.startsWith(`users/${REAL_ADAPTER_USER_ID}/previews/images/`)
+          ) {
+            const originalSave = file.save.bind(file);
+            vi.spyOn(file, "save").mockImplementation(
+              async (buffer, options): Promise<void> => {
+                copiesArrived += 1;
+                if (copiesArrived === 2) releaseCopies();
+                await bothCopiesArrived;
+                if (arrivalError) throw arrivalError;
+                await originalSave(buffer, options);
+              },
+            );
+          }
+          return file;
+        });
+      const [first, second] = await (async () => {
+        try {
+          return await Promise.all([
+            harness.post("/api/studio/projects/from-session-picture", body),
+            harness.post("/api/studio/projects/from-session-picture", body),
+          ]);
+        } finally {
+          clearTimeout(arrivalDeadline);
+          releaseCopies();
+          fileSpy.mockRestore();
+        }
+      })();
+      expect(copiesArrived).toBe(2);
 
       // Both presses answer 201 with the SAME project: exactly one claim of
       // the deterministic id won on the real store's create-if-absent, and
@@ -610,16 +659,16 @@ describe.skipIf(!runAgainstEmulator)(
       expect(second.status).toBe(201);
       const projectIds = new Set(
         [first, second].map(
-          (response) =>
-            (response.json.data as { id: string }).id,
+          (response) => (response.json.data as { id: string }).id,
         ),
       );
       expect(projectIds.size).toBe(1);
 
       const listed = await harness.get("/api/studio/projects");
       const projects = listed.json.data as Array<{ id: string }>;
-      expect(projects.filter((project) => project.id === [...projectIds][0]))
-        .toHaveLength(1);
+      expect(
+        projects.filter((project) => project.id === [...projectIds][0]),
+      ).toHaveLength(1);
 
       // Both presses copied the bytes before either claimed; the winner's
       // copy is the project's, the loser's is the named-for-cleanup orphan.
@@ -714,9 +763,9 @@ describe.skipIf(!runAgainstEmulator)(
       const repaired = await harness.get(`/api/sessions/${sessionId}`);
       expect(takeIdsOf(repaired.json.data as SessionDtoJson)).toEqual([takeId]);
       const repairedTake = (
-        (
-          (repaired.json.data as SessionDtoJson).prompt?.versions ?? []
-        ).flatMap((version) => version.generations ?? []) as Array<{
+        ((repaired.json.data as SessionDtoJson).prompt?.versions ?? []).flatMap(
+          (version) => version.generations ?? [],
+        ) as Array<{
           id?: string;
           storagePath?: string;
         }>
@@ -776,7 +825,10 @@ describe.skipIf(!runAgainstEmulator)(
           suggestions: ["s1", "s2", "s3"],
         },
         resolvedModel: "nano-banana-2",
-        calls: [0, 1, 2, 3].map((index) => ({ index, status: "running" as const })),
+        calls: [0, 1, 2, 3].map((index) => ({
+          index,
+          status: "running" as const,
+        })),
         reservedCents: perCallCents * 4,
         refundedCents: 0,
         createdAtMs: startedAtMs,
@@ -982,13 +1034,19 @@ describe.skipIf(!runAgainstEmulator)(
       expect(toPlain(read)).toEqual(toPlain(record));
 
       // The transactional read path serializes identically to the plain read.
-      const mutated = await sessionStore.mutate(record.id, (current) => current);
+      const mutated = await sessionStore.mutate(
+        record.id,
+        (current) => current,
+      );
       expect(toPlain(mutated)).toEqual(toPlain(read));
 
       // And the client-facing DTO keeps the whole schema intact.
       const dto = harness.sessionService.toDto(read as SessionRecord);
       const dtoJson = JSON.parse(JSON.stringify(dto)) as SessionDtoJson;
-      expect(takeIdsOf(dtoJson)).toEqual(["rt-generated-take", "rt-admitted-take"]);
+      expect(takeIdsOf(dtoJson)).toEqual([
+        "rt-generated-take",
+        "rt-admitted-take",
+      ]);
       expect(dtoJson.prompt?.versions?.[0]?.generations?.[1]?.origin).toBe(
         "sketchpad",
       );
@@ -1016,9 +1074,10 @@ describe.skipIf(!runAgainstEmulator)(
       expect(typeof generation?.storagePath).toBe("string");
       const storagePath = generation.storagePath as string;
       const staleUrl = (
-        await harness.bucket
-          .file(storagePath)
-          .getSignedUrl({ action: "read", expires: new Date(Date.now() - 60_000) })
+        await harness.bucket.file(storagePath).getSignedUrl({
+          action: "read",
+          expires: new Date(Date.now() - 60_000),
+        })
       )[0] as string;
       await sessionStore.mutate(sessionId, (current) => {
         if (!current.prompt) {
@@ -1176,7 +1235,10 @@ describe.skipIf(!runAgainstEmulator)(
           expect(harness.bucket.objectCount).toBe(objectsBefore);
 
           // The session is untouched: same takes, same name.
-          const after = await harness.get(`/api/sessions/${sessionId}`, callerA);
+          const after = await harness.get(
+            `/api/sessions/${sessionId}`,
+            callerA,
+          );
           expect(after.status).toBe(200);
           expect(takeIdsOf(after.json.data as SessionDtoJson)).toEqual(
             takesBefore,
