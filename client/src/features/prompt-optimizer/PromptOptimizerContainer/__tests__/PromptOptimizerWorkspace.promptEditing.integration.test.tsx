@@ -105,6 +105,7 @@ vi.mock("../../context/PromptStateContext", () => ({
     setPromptContext: vi.fn(),
     currentPromptUuid: "uuid-1",
     currentPromptDocId: "doc-1",
+    promptIdentityRef: { current: { uuid: "uuid-1", docId: "doc-1" } },
     setCurrentPromptUuid: vi.fn(),
     setCurrentPromptDocId: vi.fn(),
     activeVersionId: null,

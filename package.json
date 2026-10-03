@@ -167,6 +167,7 @@
     "eval:span:fast": "tsx --tsconfig server/tsconfig.json scripts/evaluation/span-labeling-evaluation.ts --fast",
     "eval:prompts:generate": "tsx --tsconfig server/tsconfig.json scripts/evaluation/generate-evaluation-prompts.ts",
     "eval:regression": "tsx --tsconfig server/tsconfig.json scripts/evaluation/compare-snapshots.ts",
+    "eval:provider-quality": "tsx --tsconfig server/tsconfig.json scripts/ops/provider-quality/run.ts",
     "judge:run": "tsx --tsconfig server/tsconfig.json scripts/quality-judge/run-judge.ts",
     "judge:calibrate": "tsx --tsconfig server/tsconfig.json scripts/quality-judge/calibration/run-calibration.ts",
     "golden:fix": "tsx --tsconfig server/tsconfig.json scripts/evaluation/fix-golden-set-indices.ts",

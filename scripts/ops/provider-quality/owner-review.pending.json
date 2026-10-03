@@ -1,0 +1,10 @@
+{
+  "schema": "vidra-creative-review/v1",
+  "taskSet": "creative-tasks/v1",
+  "ownerApproval": {
+    "reviewer": null,
+    "reviewedAt": null,
+    "notes": "Pending owner approval of the task set; no live creative outputs have been reviewed."
+  },
+  "results": []
+}

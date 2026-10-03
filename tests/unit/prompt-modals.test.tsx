@@ -124,6 +124,7 @@ const createPromptServicesState = (
     updateEntryHighlight: vi.fn(),
     updateEntryOutput: vi.fn(),
     updateEntryPersisted: vi.fn(),
+    flushVersionWrites: vi.fn(async (): Promise<void> => {}),
     updateEntryVersions: vi.fn(),
   },
 });

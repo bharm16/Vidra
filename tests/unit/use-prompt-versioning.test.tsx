@@ -48,6 +48,7 @@ const createPromptHistory = (
     updateEntryOutput: vi.fn(),
     updateEntryPersisted: vi.fn(),
     updateEntryVersions,
+    flushVersionWrites: vi.fn(async (): Promise<void> => {}),
     ...overrides,
   };
 };
