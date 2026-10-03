@@ -65,6 +65,7 @@
       "@migrations/*": ["scripts/migrations/*"],
       "@shared/*": ["shared/*"],
       "#shared/*": ["shared/*"],
+      "#tests/*": ["tests/*"],
       "@promptstudio/system/*": ["packages/promptstudio-system/src/*"]
     },
 

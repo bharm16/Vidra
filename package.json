@@ -10,7 +10,8 @@
     "packages/*"
   ],
   "imports": {
-    "#shared/*": "./shared/*"
+    "#shared/*": "./shared/*",
+    "#tests/*": "./tests/*"
   },
   "dependencies": {
     "@fal-ai/client": "^1.8.4",
