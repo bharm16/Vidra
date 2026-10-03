@@ -1,5 +1,5 @@
 /**
- * What each Groq-hosted Llama model can be asked for.
+ * Capabilities for explicitly named Groq-hosted text models.
  *
  * This replaces a substring test on the model id
  * (`!name.includes("instant") && !name.includes("8b") && (name.includes("70b")
@@ -14,15 +14,34 @@
  * conservative answer is the safe one until the model is declared here.
  */
 interface GroqModelCapabilities {
-  /** Token-level confidence. Only the larger models serve it. */
+  /** Token-level confidence, requested only for declared supporting models. */
   logprobs: boolean;
+  reasoningEffort?: "low";
+  strictSchema?: boolean;
 }
 
 const GROQ_MODEL_CAPABILITIES: Readonly<Record<string, GroqModelCapabilities>> =
   {
+    "qwen/qwen3.8-27b": { logprobs: false, strictSchema: true },
+    "openai/gpt-oss-20b": {
+      logprobs: false,
+      reasoningEffort: "low",
+      strictSchema: true,
+    },
+    "openai/gpt-oss-120b": {
+      logprobs: false,
+      reasoningEffort: "low",
+      strictSchema: true,
+    },
     "llama-3.1-8b-instant": { logprobs: false },
     "llama-3.3-70b-versatile": { logprobs: true },
   };
+
+export function groqModelCapabilities(
+  modelId: string,
+): GroqModelCapabilities | undefined {
+  return GROQ_MODEL_CAPABILITIES[modelId];
+}
 
 export function isDeclaredGroqModel(modelId: string): boolean {
   return modelId in GROQ_MODEL_CAPABILITIES;
