@@ -11,6 +11,12 @@ import { AuthRepository, MockAuthRepository } from "./AuthRepository";
 import { PromptRepository } from "./PromptRepository";
 import { LocalStoragePromptRepository } from "./LocalStoragePromptRepository";
 import type { SentryIntegration } from "./AuthRepository";
+import { z } from "zod";
+
+const E2EAuthUserSchema = z.object({
+  uid: z.string().trim().min(1),
+  email: z.string().email().default("test@example.com"),
+});
 
 // Sentry integration adapter
 const sentryAdapter: SentryIntegration = {
@@ -34,12 +40,9 @@ export function getAuthRepository(): AuthRepository {
         ? (window as unknown as Record<string, unknown>)
         : undefined;
     if (win?.__E2E_AUTH_USER__) {
-      const mockRepo = new MockAuthRepository();
-      const user = win.__E2E_AUTH_USER__ as Record<string, unknown>;
-      void mockRepo.signInWithEmail(
-        (user.email as string) ?? "test@example.com",
-        "e2e-password",
-      );
+      const user = E2EAuthUserSchema.parse(win.__E2E_AUTH_USER__);
+      const mockRepo = new MockAuthRepository(user.uid);
+      void mockRepo.signInWithEmail(user.email, "e2e-password");
       authRepository = mockRepo as unknown as AuthRepository;
       return authRepository;
     }

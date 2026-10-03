@@ -12,10 +12,13 @@
 import { CANONICAL_TO_VENDOR, type ModelVendor } from "@shared/modelIdentity";
 import {
   CANONICAL_PROMPT_MODEL_IDS,
+  isReleaseGenerationModelSupported,
   type CanonicalPromptModelId,
 } from "@shared/videoModels";
 
-export const AI_MODEL_IDS = CANONICAL_PROMPT_MODEL_IDS;
+export const AI_MODEL_IDS = CANONICAL_PROMPT_MODEL_IDS.filter(
+  isReleaseGenerationModelSupported,
+);
 
 export type AIModelId = CanonicalPromptModelId;
 

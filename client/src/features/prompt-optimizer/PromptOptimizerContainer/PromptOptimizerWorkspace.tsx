@@ -1,4 +1,5 @@
 import { sanitizeText } from "@/features/span-highlighting/utils/textUtils";
+import { useUnresolvedSketchAcceptances } from "./hooks/useUnresolvedSketchAcceptances";
 import { usePendingFirstFrame } from "./hooks/usePendingFirstFrame";
 /**
  * PromptOptimizerWorkspace - Main Orchestrator
@@ -637,10 +638,48 @@ function PromptOptimizerContent({
   // A frame is armed from EITHER an idea-box generation OR an upload, never
   // both at once (ADR-0022 decision 6): the made-but-not-saved surface shows
   // whichever take is owed, with the retry that re-attaches that same take.
-  const unattachedFrameTake = unattachedUploadTake ?? unattachedIdeaBoxTake;
+  const {
+    unattachedTake: unattachedSketchTake,
+    retryAttachment: retrySketchAttachment,
+  } = useUnresolvedSketchAcceptances({
+    creatorId: user?.uid,
+    sessionId: getActiveSessionId(),
+    onError: toast.error,
+    onAttached: (take, promptVersionId): void => {
+      const entry = promptHistoryEntries.find(
+        (item) => item.id === getActiveSessionId(),
+      );
+      if (
+        !entry?.uuid ||
+        !entry.versions?.some(
+          (version) => version.versionId === promptVersionId,
+        )
+      )
+        throw new Error("Reopen this session to see its saved picture");
+      updatePromptHistoryEntryLocal(entry.uuid, {
+        versions: entry.versions.map((version) =>
+          version.versionId === promptVersionId
+            ? {
+                ...version,
+                generations: [
+                  ...(version.generations ?? []).filter(
+                    (existing) => existing.id !== take.id,
+                  ),
+                  take,
+                ],
+              }
+            : version,
+        ),
+      });
+    },
+  });
+  const unattachedFrameTake =
+    unattachedUploadTake ?? unattachedIdeaBoxTake ?? unattachedSketchTake;
   const retryFrameAttachment = unattachedUploadTake
     ? retryUploadAttachment
-    : retryIdeaBoxAttachment;
+    : unattachedIdeaBoxTake
+      ? retryIdeaBoxAttachment
+      : retrySketchAttachment;
 
   const handleOptimizationApplied = useCallback(
     async (optimizedPrompt: string): Promise<void> => {

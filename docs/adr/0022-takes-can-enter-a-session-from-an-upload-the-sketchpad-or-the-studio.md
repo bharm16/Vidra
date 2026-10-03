@@ -73,8 +73,8 @@ collection, provider generation, or retention cleanup is introduced. See
 [Reference-first admission](../architecture/reference-first-admission.md).
 
 **Acceptance status:** direction recorded; implementation and deterministic
-regressions present. Owner sign-off on Decision A and the current browser
-walkthrough remain open.
+regressions present. Owner provisional acceptance is recorded in ADR-0023; the current browser
+walkthrough remains open.
 
 ### 2. Production provenance and associated words are two things, never one
 
@@ -407,15 +407,21 @@ the **session-launched live-editor surface is deferred for this release** (issue
 and optional destination contract remain available. No "work on this in the live
 editor" entry is added, and a future session-launched entry must return to its
 origin rather than mint an unrelated session on destination-resolution failure.
-The owner direction is recorded; owner sign-off on Decision B remains open.
+The owner provisionally accepted continuing with these results on 2026-10-03
+(ADR-0023). The standalone direction remains; this does not approve the overall design.
 
 Media ownership, inspection rules and the pending retention decision are recorded
 in [Admission media lifecycle](../architecture/admission-media-lifecycle.md)
 (#137). Copy-isolation tests and a dry-run inventory do not authorize deletion;
-the retention window and enabling cleanup remain owner decisions.
+automatic cleanup and retention periods are deferred for this testing phase
+under ADR-0023.
 
 The [Deferred work ledger](../architecture/deferred-work-ledger.md) records the
 scopes still outside this release and the decisions needed to reopen them.
 [Current proof limits](../audits/2026-10-03-docs-consistency.md) distinguish the
 landed contracts and local checks from the open browser, live, quality,
 deployment and owner acceptance gates (#146).
+
+The free testing mode, $10 shared live-test allowance and deferred creator caps
+are recorded in [ADR-0023](0023-bounded-free-validation-proposal.md), which narrowly
+supplements the active picture/clip intake boundary in decisions 6 and 8.

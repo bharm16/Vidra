@@ -72,21 +72,31 @@ describe("creative review evidence completeness", () => {
     ).toBe(false);
     expect(() => assessReviewCoverage(review, [])).toThrow("non-empty");
   });
-  it("includes failing models in the creative matrix and excludes invalid aspect-ratio contract probes", () => {
+  it("includes supported failing models while excluding deferred models and invalid aspect-ratio probes", () => {
     expect(
       expectedCreativeReviews({
         schema: "vidra-provider-quality/v1",
         paths: [
-          { id: "video/luma-ray3/i2v/16:9", operation: "motion" },
+          { id: "video/wan/i2v/16:9", operation: "motion", contract: "failed" },
+          {
+            id: "video/luma-ray3/release-excluded",
+            operation: "motion",
+            contract: "not-run",
+          },
           {
             id: "studio/generate/nano-banana-2/invalid-ratio",
             operation: "generate",
+            contract: "passed",
           },
-          { id: "studio/routing/incapable-pin-negotiate", operation: "edit" },
+          {
+            id: "studio/routing/incapable-pin-negotiate",
+            operation: "edit",
+            contract: "passed",
+          },
         ],
       }),
     ).toEqual([
-      { taskId: "motion-pair", pathId: "video/luma-ray3/i2v/16:9" },
+      { taskId: "motion-pair", pathId: "video/wan/i2v/16:9" },
       {
         taskId: "pin-negotiation",
         pathId: "studio/routing/incapable-pin-negotiate",

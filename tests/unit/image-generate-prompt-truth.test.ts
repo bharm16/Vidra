@@ -1,3 +1,6 @@
+import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
+import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,22 +29,28 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
   });
 
   it("sends the golden-path draft prompt to the image service verbatim", async () => {
-    const generatePreviewMock = vi.fn(
-      async (_prompt: string, _options: Record<string, unknown>) => ({
-        imageUrl: "https://images.example.com/generated.webp",
-        metadata: { model: "test-model", aspectRatio: "16:9" },
-      }),
-    );
+    const generatePreviewMock = vi.fn<
+      ImageGenerationService["generatePreview"]
+    >(async () => ({
+      imageUrl: "https://images.example.com/generated.webp",
+      metadata: {
+        model: "test-model",
+        aspectRatio: "16:9",
+        duration: 1,
+        generatedAt: "2026-10-03T00:00:00Z",
+      },
+    }));
 
+    const imagePort = { generatePreview: generatePreviewMock } satisfies Pick<
+      ImageGenerationService,
+      "generatePreview"
+    >;
     const handler = createImageGenerateHandler({
-      imageGenerationService: {
-        generatePreview: generatePreviewMock,
-      } as never,
-      userCreditService: {
-        reserveCredits: vi.fn(async () => true),
-        refundCredits: vi.fn(async () => true),
-      } as never,
-      assetService: null as never,
+      imageGenerationService: imagePort as unknown as ImageGenerationService,
+      requestIdempotencyService:
+        new InMemoryIdempotencyService() as unknown as RequestIdempotencyService,
+      userCreditService: null,
+      assetService: null,
     });
 
     const app = createApp(handler);
@@ -53,10 +62,12 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
     const response = await runSupertestOrSkip(() =>
       request(app)
         .post("/preview/generate")
+        .set("Idempotency-Key", "prompt-truth-1")
         .send({ prompt: videoShapedPrompt }),
     );
     if (!response) return;
 
+    expect(response.status).toBe(200);
     expect(generatePreviewMock).toHaveBeenCalledTimes(1);
     expect(generatePreviewMock.mock.calls[0]?.[0]).toBe(videoShapedPrompt);
   });

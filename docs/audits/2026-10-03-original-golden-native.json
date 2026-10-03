@@ -1,0 +1,696 @@
+{
+  "schema": "vidra-original-golden-native/v1",
+  "runAt": "2026-10-03T22:07:38.486Z",
+  "scope": "original3Tier1 specs only; no qualitygrading; originalspec unchanged",
+  "specSha256": "f9afbd21f419828ea0e0a76fd181f893a9b3da4b450b79a82436f47fd34ba1f9",
+  "results": [
+    {
+      "title": "a guest submit is sign-in-gated and preserves the prompt",
+      "file": "golden-path.spec.ts",
+      "line": 33,
+      "outcomes": [
+        {
+          "status": "passed",
+          "durationMs": 6710
+        }
+      ]
+    },
+    {
+      "title": "a one-line idea expands into a session that survives refresh",
+      "file": "golden-path.spec.ts",
+      "line": 55,
+      "outcomes": [
+        {
+          "status": "passed",
+          "durationMs": 14000
+        }
+      ]
+    },
+    {
+      "title": "the expanded words grow labeled spans, and click-to-enhance applies a real suggestion",
+      "file": "golden-path.spec.ts",
+      "line": 105,
+      "outcomes": [
+        {
+          "status": "passed",
+          "durationMs": 27123
+        }
+      ]
+    }
+  ],
+  "ledger": {
+    "capUsd": 3,
+    "conservativeReservedUsd": 2.9591648,
+    "paidPostCount": 31,
+    "priorConservativeReservationUsd": 1.99,
+    "cumulativeUpperBoundUsd": 4.9491648,
+    "invoiceReconciled": false,
+    "rateAndConfigurationEvidence": "/tmp/vidra-original-golden-20261003/allocation.json",
+    "calls": [
+      {
+        "id": "3c22e1c9-1bf1-4f53-b8c7-33b72b775122",
+        "at": "2026-10-03T21:51:45.967Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "path": "/v1/chat/completions",
+        "bodySha256": "58422264385b45f4be14c47c6fd0841b24e1c139df02e03667989c5535d91383",
+        "inputTokenUpperBound": 294,
+        "outputTokenUpperBound": 50,
+        "reservedUsd": 0.00022229999999999998,
+        "cumulativeReservedUsd": 0.00022229999999999998,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "8b07b5d6-4d30-4ddc-89b4-dfe7f1344f6e",
+        "at": "2026-10-03T21:51:45.991Z",
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b",
+        "path": "/openai/v1/chat/completions",
+        "bodySha256": "d27cc6163a72bcbe249ee2c5e7733b54d7187846e94496f6a3f7996d8eb52c0e",
+        "inputTokenUpperBound": 664,
+        "outputTokenUpperBound": 50,
+        "reservedUsd": 0.00019439999999999998,
+        "cumulativeReservedUsd": 0.0004167,
+        "rateSource": "https://console.groq.com/docs/model/openai/gpt-oss-20b",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "12b500c1-088c-4f1c-bb84-a2bec6847c90",
+        "at": "2026-10-03T21:51:45.995Z",
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "path": "/openai/v1/chat/completions",
+        "bodySha256": "03dd836b80b7dee7a4712dde9d6ac4d35ef74b8d003097840640da4b641a413e",
+        "inputTokenUpperBound": 279,
+        "outputTokenUpperBound": 50,
+        "reservedUsd": 0.0012696,
+        "cumulativeReservedUsd": 0.0016863,
+        "rateSource": "https://console.groq.com/docs/models",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "1d3c2792-ec56-46ce-bc17-5787857102e9",
+        "at": "2026-10-03T21:51:46.001Z",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "path": "/v1beta/models/gemini-2.5-flash:generateContent",
+        "bodySha256": "ed305602a6e8e1204c5958a1a5a60be0335de803e875ed737ad289f7a8376fb6",
+        "inputTokenUpperBound": 270,
+        "outputTokenUpperBound": 50,
+        "reservedUsd": 0.000618,
+        "cumulativeReservedUsd": 0.0023043,
+        "rateSource": "https://ai.google.dev/gemini-api/docs/pricing",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "c4801774-ca00-46a6-82dc-2393bb8c2a85",
+        "at": "2026-10-03T22:03:58.948Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "a0ae3eafc006daa901563351fd2c1e640178469853aca5a6f8db390def44ce8d",
+        "inputTokenUpperBound": 3138,
+        "outputTokenUpperBound": 400,
+        "reservedUsd": 0.0021321000000000005,
+        "cumulativeReservedUsd": 0.0044364,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "e1c1ecbd-85a7-427f-b229-0a34a57d49e8",
+        "at": "2026-10-03T22:04:02.697Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "84e7e9d0276e0c5da3ba60f62f5c1658bdf1a3ce12405b4e6710484447cef8ce",
+        "inputTokenUpperBound": 17132,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24849,
+        "cumulativeReservedUsd": 0.2529264,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "79291dff-50c3-46dd-b0f9-a8a67abca9f2",
+        "at": "2026-10-03T22:04:06.452Z",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+        "bodySha256": "24e3d40ecd6e989df02a0bd6d9fbe9f69d97a43490b23e1d155e70d2af2225fe",
+        "inputTokenUpperBound": 6978,
+        "outputTokenUpperBound": 16384,
+        "reservedUsd": 0.1291602,
+        "cumulativeReservedUsd": 0.3820866,
+        "rateSource": "https://ai.google.dev/gemini-api/docs/pricing",
+        "safetyFactor": 3,
+        "stream": true
+      },
+      {
+        "id": "b5436e43-4f42-47fa-84a7-02ed7964b892",
+        "at": "2026-10-03T22:04:06.495Z",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "path": "/v1beta/models/gemini-2.5-flash:generateContent",
+        "bodySha256": "3c1b0acdb7ae3916a8890c86d828b3c83b512086bd17565d2170d37685e97b8c",
+        "inputTokenUpperBound": 8202,
+        "outputTokenUpperBound": 16384,
+        "reservedUsd": 0.13026179999999998,
+        "cumulativeReservedUsd": 0.5123484,
+        "rateSource": "https://ai.google.dev/gemini-api/docs/pricing",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "907d3ef9-1d7e-468c-b77e-927185aa93fd",
+        "at": "2026-10-03T22:04:06.684Z",
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell",
+        "path": "/v1/models/black-forest-labs/flux-schnell/predictions",
+        "bodySha256": "89a80ff4cc09dd8873ff3f53e0493728a891b1035c006b2906faafe2debdfd4b",
+        "inputTokenUpperBound": 537,
+        "outputTokenUpperBound": null,
+        "reservedUsd": 0.01,
+        "cumulativeReservedUsd": 0.5223484,
+        "rateSource": "scripts/ops/live-provider-smoke/ceiling.ts FIRST_FRAME_PROVIDER_COST_USD .01 vs published.003/image",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "982350d4-1fc7-4277-9cd6-c9d0e873a1c4",
+        "at": "2026-10-03T22:04:09.745Z",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+        "bodySha256": "24e3d40ecd6e989df02a0bd6d9fbe9f69d97a43490b23e1d155e70d2af2225fe",
+        "inputTokenUpperBound": 6978,
+        "outputTokenUpperBound": 16384,
+        "reservedUsd": 0.1291602,
+        "cumulativeReservedUsd": 0.6515086000000001,
+        "rateSource": "https://ai.google.dev/gemini-api/docs/pricing",
+        "safetyFactor": 3,
+        "stream": true
+      },
+      {
+        "id": "2e9ee0db-7c55-4c6f-a692-2a6e18d0cd56",
+        "at": "2026-10-03T22:04:15.531Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "ff133760c48db6af2b8e39840d54ddfcc092e258b9fb7f962c01f24596d79f48",
+        "inputTokenUpperBound": 3132,
+        "outputTokenUpperBound": 400,
+        "reservedUsd": 0.0021293999999999996,
+        "cumulativeReservedUsd": 0.653638,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "c12e1e97-e458-4200-84e7-68f70862c4b6",
+        "at": "2026-10-03T22:04:18.452Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "37bd65c89cdd9237cc30152a1533872d685e7430d59f74a3721683cc46dd2895",
+        "inputTokenUpperBound": 17024,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24768,
+        "cumulativeReservedUsd": 0.9013180000000001,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "fda07940-0874-476b-bf2f-e121ba5f388d",
+        "at": "2026-10-03T22:04:20.787Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "2f3c11c0f492a94d194d4eb53b59acc230dd70332a05f10a63c72f8512225061",
+        "inputTokenUpperBound": 17024,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24768,
+        "cumulativeReservedUsd": 1.1489980000000002,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "9fcb815c-6f11-4bf5-aeca-f81ab190ea78",
+        "at": "2026-10-03T22:04:23.253Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "74a256790914abf4bf7d8439e2b0bf6948a0e9f42626d451f7a26d51bae789bc",
+        "inputTokenUpperBound": 17024,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24768,
+        "cumulativeReservedUsd": 1.396678,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "9ca7443f-26fb-4578-9445-48680a278b72",
+        "at": "2026-10-03T22:04:24.655Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "74a256790914abf4bf7d8439e2b0bf6948a0e9f42626d451f7a26d51bae789bc",
+        "inputTokenUpperBound": 17024,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24768,
+        "cumulativeReservedUsd": 1.644358,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "e5dd7b71-30ce-4037-bad3-d8ed84e0af50",
+        "at": "2026-10-03T22:04:26.817Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "74a256790914abf4bf7d8439e2b0bf6948a0e9f42626d451f7a26d51bae789bc",
+        "inputTokenUpperBound": 17024,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24768,
+        "cumulativeReservedUsd": 1.8920379999999999,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "ede995b4-4fe8-4c7b-8867-9d9f2266c076",
+        "at": "2026-10-03T22:04:27.095Z",
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "path": "/openai/v1/chat/completions",
+        "bodySha256": "787938378c66d04e998160e12218bff330c8f883d44341ea0040f0b101d1851f",
+        "inputTokenUpperBound": 9367,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.07048079999999998,
+        "cumulativeReservedUsd": 1.9625187999999998,
+        "rateSource": "https://console.groq.com/docs/models",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "48b7be3f-ba01-4dba-a828-79fc5dcdc821",
+        "at": "2026-10-03T22:04:28.446Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "96fd19f8bcbfdda3ab1e5cca6a95c5630054196ed8ad3254a79734a5060ca570",
+        "inputTokenUpperBound": 17052,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24789,
+        "cumulativeReservedUsd": 2.2104087999999997,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "364d4332-be05-46a3-bb30-2ec99c2d32d2",
+        "at": "2026-10-03T22:04:29.692Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "96fd19f8bcbfdda3ab1e5cca6a95c5630054196ed8ad3254a79734a5060ca570",
+        "inputTokenUpperBound": 17052,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24789,
+        "cumulativeReservedUsd": 2.4582987999999997,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "280532c0-ce7f-4812-9210-85fd6d1f4f35",
+        "at": "2026-10-03T22:04:31.822Z",
+        "provider": "openai",
+        "model": "gpt-4o-2024-08-06",
+        "path": "/v1/chat/completions",
+        "bodySha256": "96fd19f8bcbfdda3ab1e5cca6a95c5630054196ed8ad3254a79734a5060ca570",
+        "inputTokenUpperBound": 17052,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.24789,
+        "cumulativeReservedUsd": 2.7061887999999996,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "610e990c-f949-410e-b479-042edfcad008",
+        "at": "2026-10-03T22:04:31.959Z",
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
+        "path": "/openai/v1/chat/completions",
+        "bodySha256": "787938378c66d04e998160e12218bff330c8f883d44341ea0040f0b101d1851f",
+        "inputTokenUpperBound": 9367,
+        "outputTokenUpperBound": 4000,
+        "reservedUsd": 0.07048079999999998,
+        "cumulativeReservedUsd": 2.7766695999999995,
+        "rateSource": "https://console.groq.com/docs/models",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "e9399adf-0f3e-4139-9fcc-fd47dcf3e0fe",
+        "at": "2026-10-03T22:04:34.225Z",
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+        "bodySha256": "5cea49a07f19e906a289c3664052eff6ef2e75a702fffc0e94e7cbb321d918b3",
+        "inputTokenUpperBound": 6949,
+        "outputTokenUpperBound": 16384,
+        "reservedUsd": 0.1291341,
+        "cumulativeReservedUsd": 2.9058036999999994,
+        "rateSource": "https://ai.google.dev/gemini-api/docs/pricing",
+        "safetyFactor": 3,
+        "stream": true
+      },
+      {
+        "id": "86f95d37-d16e-4c03-8270-5659a869453f",
+        "at": "2026-10-03T22:04:34.416Z",
+        "provider": "replicate",
+        "model": "black-forest-labs/flux-schnell",
+        "path": "/v1/models/black-forest-labs/flux-schnell/predictions",
+        "bodySha256": "f03b6b248bc891a5a182304acb33bc2108b6682ef39f8992377358d70a8c2c10",
+        "inputTokenUpperBound": 508,
+        "outputTokenUpperBound": null,
+        "reservedUsd": 0.01,
+        "cumulativeReservedUsd": 2.915803699999999,
+        "rateSource": "scripts/ops/live-provider-smoke/ceiling.ts FIRST_FRAME_PROVIDER_COST_USD .01 vs published.003/image",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "bf625cdf-cbe2-4c6e-93f9-b38b3324966b",
+        "at": "2026-10-03T22:04:38.593Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "164fa9c1a86ecf0ead99cc5d4cbb52c0ff441e07644a23f4c360ac5d5b9e061c",
+        "inputTokenUpperBound": 5470,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.0061479,
+        "cumulativeReservedUsd": 2.9219515999999994,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "7c3810c2-d28e-42b3-addf-062f7476837e",
+        "at": "2026-10-03T22:04:39.780Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "164fa9c1a86ecf0ead99cc5d4cbb52c0ff441e07644a23f4c360ac5d5b9e061c",
+        "inputTokenUpperBound": 5470,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.0061479,
+        "cumulativeReservedUsd": 2.9280994999999996,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "1c266fff-44be-42d8-a380-81dca4f03e17",
+        "at": "2026-10-03T22:04:41.890Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "164fa9c1a86ecf0ead99cc5d4cbb52c0ff441e07644a23f4c360ac5d5b9e061c",
+        "inputTokenUpperBound": 5470,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.0061479,
+        "cumulativeReservedUsd": 2.9342474,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "12031f49-7d25-49f4-a5ee-d7143a82f2cc",
+        "at": "2026-10-03T22:04:42.205Z",
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b",
+        "path": "/openai/v1/chat/completions",
+        "bodySha256": "b697aa4b86b0427f47d4e1f47393ffa4369feefb576c360f2a8b5e63e07e1e5a",
+        "inputTokenUpperBound": 5410,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.0030604499999999997,
+        "cumulativeReservedUsd": 2.93730785,
+        "rateSource": "https://console.groq.com/docs/model/openai/gpt-oss-20b",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "28923798-60a8-4dea-a497-0c8d55cc6a67",
+        "at": "2026-10-03T22:04:42.534Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "07939bec5f9496ee5e3c0e10d165af9aeee38a4b15f1c5277cd246194be9aa97",
+        "inputTokenUpperBound": 5694,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.006248700000000001,
+        "cumulativeReservedUsd": 2.94355655,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "9bbbe2d1-4b0a-4fbf-ab41-30f17205382d",
+        "at": "2026-10-03T22:04:43.638Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "07939bec5f9496ee5e3c0e10d165af9aeee38a4b15f1c5277cd246194be9aa97",
+        "inputTokenUpperBound": 5694,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.006248700000000001,
+        "cumulativeReservedUsd": 2.94980525,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "de17adc4-08b5-42e9-8d14-f37ff78951cf",
+        "at": "2026-10-03T22:04:45.737Z",
+        "provider": "openai",
+        "model": "gpt-4o-mini-2024-07-18",
+        "path": "/v1/chat/completions",
+        "bodySha256": "07939bec5f9496ee5e3c0e10d165af9aeee38a4b15f1c5277cd246194be9aa97",
+        "inputTokenUpperBound": 5694,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.006248700000000001,
+        "cumulativeReservedUsd": 2.95605395,
+        "rateSource": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+        "safetyFactor": 3,
+        "stream": false
+      },
+      {
+        "id": "abd48bbb-9a27-4fb3-b467-7942e3dc756a",
+        "at": "2026-10-03T22:04:46.060Z",
+        "provider": "groq",
+        "model": "openai/gpt-oss-20b",
+        "path": "/openai/v1/chat/completions",
+        "bodySha256": "598b99cd6b260c644b92e023e2ba0d6ae64ea15d32aa5b681f23415e85beb7cb",
+        "inputTokenUpperBound": 5634,
+        "outputTokenUpperBound": 2048,
+        "reservedUsd": 0.0031108500000000005,
+        "cumulativeReservedUsd": 2.9591648,
+        "rateSource": "https://console.groq.com/docs/model/openai/gpt-oss-20b",
+        "safetyFactor": 3,
+        "stream": false
+      }
+    ],
+    "responses": [
+      {
+        "id": "8b07b5d6-4d30-4ddc-89b4-dfe7f1344f6e",
+        "at": "2026-10-03T21:51:46.458Z",
+        "status": 200
+      },
+      {
+        "id": "12b500c1-088c-4f1c-bb84-a2bec6847c90",
+        "at": "2026-10-03T21:51:46.669Z",
+        "status": 200
+      },
+      {
+        "id": "1d3c2792-ec56-46ce-bc17-5787857102e9",
+        "at": "2026-10-03T21:51:47.024Z",
+        "status": 200
+      },
+      {
+        "id": "3c22e1c9-1bf1-4f53-b8c7-33b72b775122",
+        "at": "2026-10-03T21:51:47.721Z",
+        "status": 200
+      },
+      {
+        "id": "c4801774-ca00-46a6-82dc-2393bb8c2a85",
+        "at": "2026-10-03T22:04:02.643Z",
+        "status": 200
+      },
+      {
+        "id": "e1c1ecbd-85a7-427f-b229-0a34a57d49e8",
+        "at": "2026-10-03T22:04:05.793Z",
+        "status": 200
+      },
+      {
+        "id": "907d3ef9-1d7e-468c-b77e-927185aa93fd",
+        "at": "2026-10-03T22:04:08.221Z",
+        "status": 201
+      },
+      {
+        "id": "b5436e43-4f42-47fa-84a7-02ed7964b892",
+        "at": "2026-10-03T22:04:14.782Z",
+        "status": 200
+      },
+      {
+        "id": "79291dff-50c3-46dd-b0f9-a8a67abca9f2",
+        "at": "2026-10-03T22:04:15.481Z",
+        "status": 200
+      },
+      {
+        "id": "982350d4-1fc7-4277-9cd6-c9d0e873a1c4",
+        "at": "2026-10-03T22:04:17.473Z",
+        "status": 200
+      },
+      {
+        "id": "2e9ee0db-7c55-4c6f-a692-2a6e18d0cd56",
+        "at": "2026-10-03T22:04:18.437Z",
+        "status": 200
+      },
+      {
+        "id": "c12e1e97-e458-4200-84e7-68f70862c4b6",
+        "at": "2026-10-03T22:04:20.750Z",
+        "status": 200
+      },
+      {
+        "id": "fda07940-0874-476b-bf2f-e121ba5f388d",
+        "at": "2026-10-03T22:04:23.230Z",
+        "status": 200
+      },
+      {
+        "id": "9fcb815c-6f11-4bf5-aeca-f81ab190ea78",
+        "at": "2026-10-03T22:04:23.609Z",
+        "status": 429
+      },
+      {
+        "id": "9ca7443f-26fb-4578-9445-48680a278b72",
+        "at": "2026-10-03T22:04:24.806Z",
+        "status": 429
+      },
+      {
+        "id": "e5dd7b71-30ce-4037-bad3-d8ed84e0af50",
+        "at": "2026-10-03T22:04:27.078Z",
+        "status": 429
+      },
+      {
+        "id": "ede995b4-4fe8-4c7b-8867-9d9f2266c076",
+        "at": "2026-10-03T22:04:28.427Z",
+        "status": 200
+      },
+      {
+        "id": "48b7be3f-ba01-4dba-a828-79fc5dcdc821",
+        "at": "2026-10-03T22:04:28.684Z",
+        "status": 429
+      },
+      {
+        "id": "364d4332-be05-46a3-bb30-2ec99c2d32d2",
+        "at": "2026-10-03T22:04:29.813Z",
+        "status": 429
+      },
+      {
+        "id": "280532c0-ce7f-4812-9210-85fd6d1f4f35",
+        "at": "2026-10-03T22:04:31.951Z",
+        "status": 429
+      },
+      {
+        "id": "610e990c-f949-410e-b479-042edfcad008",
+        "at": "2026-10-03T22:04:33.587Z",
+        "status": 200
+      },
+      {
+        "id": "86f95d37-d16e-4c03-8270-5659a869453f",
+        "at": "2026-10-03T22:04:35.329Z",
+        "status": 201
+      },
+      {
+        "id": "e9399adf-0f3e-4139-9fcc-fd47dcf3e0fe",
+        "at": "2026-10-03T22:04:37.511Z",
+        "status": 200
+      },
+      {
+        "id": "bf625cdf-cbe2-4c6e-93f9-b38b3324966b",
+        "at": "2026-10-03T22:04:38.768Z",
+        "status": 429
+      },
+      {
+        "id": "7c3810c2-d28e-42b3-addf-062f7476837e",
+        "at": "2026-10-03T22:04:39.881Z",
+        "status": 429
+      },
+      {
+        "id": "1c266fff-44be-42d8-a380-81dca4f03e17",
+        "at": "2026-10-03T22:04:42.197Z",
+        "status": 429
+      },
+      {
+        "id": "12031f49-7d25-49f4-a5ee-d7143a82f2cc",
+        "at": "2026-10-03T22:04:42.525Z",
+        "status": 200
+      },
+      {
+        "id": "28923798-60a8-4dea-a497-0c8d55cc6a67",
+        "at": "2026-10-03T22:04:42.632Z",
+        "status": 429
+      },
+      {
+        "id": "9bbbe2d1-4b0a-4fbf-ab41-30f17205382d",
+        "at": "2026-10-03T22:04:43.727Z",
+        "status": 429
+      },
+      {
+        "id": "de17adc4-08b5-42e9-8d14-f37ff78951cf",
+        "at": "2026-10-03T22:04:46.049Z",
+        "status": 429
+      },
+      {
+        "id": "abd48bbb-9a27-4fb3-b467-7942e3dc756a",
+        "at": "2026-10-03T22:04:46.355Z",
+        "status": 200
+      }
+    ],
+    "unknownCostOrOvercapRefusals": []
+  },
+  "seams": {
+    "apiPort": 58106,
+    "vitePort": 58107,
+    "identity": "api-key:vidra-golden-local-test",
+    "auth": "MockAuthRepository + declared auth-only Viteproxy syntheticXAPIKey; realserverauthmiddleware",
+    "providerAndRequestData": "realunchanged APIs/providers; no response/bodymocks",
+    "persistence": "realFirestore/GCS usingexistingignored-envcredentials",
+    "qwenOverride": "childprocessQWEN_MODEL=qwen/qwen3.8-27b solelyforknownpublicprice; permanentQwen3.6default notqualifiedbythisrun",
+    "modelTokens": "max nativeoutputcap +inputtokenupperboundrawJSONUTF8bytes x3safetyfactor",
+    "backgroundWriters": "NODE_ENVtest skipsAPI/workerroleinitialization; worker/sweeper/reconciliation/retention/repair existingkill switches disabled",
+    "capabilitiesProbe": "read-onlyJSONregistry loader, no generation"
+  },
+  "preservedSetupFailures": [
+    "api.initial-log-level-error.log",
+    "playwright.initial-missing-browser.log",
+    "playwright.initial-missing-recorder.log",
+    "playwright.auth-403.log",
+    "results.auth-403.json",
+    "test-results.auth-403"
+  ],
+  "cleanup": "onlyowned58106/58107processes stopped; no userports/jobcleanup/testdata deletion"
+}

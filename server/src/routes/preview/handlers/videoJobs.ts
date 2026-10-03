@@ -85,8 +85,12 @@ export const createVideoJobsHandler =
       success: true,
       jobId: job.id,
       status: job.status,
-      creditsReserved: job.creditsReserved,
-      creditsDeducted: job.creditsReserved,
+      ...(job.creditsReserved > 0
+        ? {
+            creditsReserved: job.creditsReserved,
+            creditsDeducted: job.creditsReserved,
+          }
+        : {}),
       ...(job.requestId ? { requestId: job.requestId } : {}),
     };
 
@@ -150,7 +154,12 @@ export const createVideoJobsHandler =
     // generation outcome. The client treats the job as terminal only once this
     // resolves, so a clip can never render as a node the session never got.
     // `record` rides along while unresolved — it is what a retry re-sends.
-    if (!job.attachment && job.status === "completed" && job.sessionId && job.promptVersionId) {
+    if (
+      !job.attachment &&
+      job.status === "completed" &&
+      job.sessionId &&
+      job.promptVersionId
+    ) {
       // The window between markCompleted and the pending checkpoint. The take
       // is owed and unresolved, which is exactly what `pending` means — saying
       // nothing here would let the client call the job terminal a beat early.

@@ -26,6 +26,8 @@ describe("preview availability helpers", () => {
       openai: {
         "veo-4": {},
         "sora-2": {},
+        "luma-ray3": {},
+        "kling-26": {},
       },
     });
 
@@ -33,7 +35,7 @@ describe("preview availability helpers", () => {
     const first = getCapabilityModelIds();
     const second = getCapabilityModelIds();
 
-    expect(new Set(first)).toEqual(new Set(["wan-2.2", "veo-4", "sora-2"]));
+    expect(new Set(first)).toEqual(new Set(["wan-2.2", "veo-4"]));
     expect(first).toBe(second);
     expect(getCapabilitiesRegistryMock).toHaveBeenCalledTimes(1);
   });

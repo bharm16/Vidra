@@ -1,4 +1,5 @@
 import type { VideoModelId, VideoProviderAvailability } from "../types";
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import {
   resolveGenerationModelSelection,
   resolveProviderForGenerationModel,
@@ -45,7 +46,10 @@ export function resolveAutoModelId(
   providers: VideoProviderAvailability,
 ): VideoModelId | null {
   for (const entry of AUTO_MODEL_PRIORITY) {
-    if (providers[entry.provider]) {
+    if (
+      providers[entry.provider] &&
+      isReleaseGenerationModelSupported(entry.modelId())
+    ) {
       return entry.modelId();
     }
   }

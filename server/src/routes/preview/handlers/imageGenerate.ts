@@ -1,3 +1,4 @@
+import { validateGenerationDestination } from "./generationDestination";
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
 import type { PreviewApiResponse } from "@shared/schemas/preview.schemas";
@@ -13,7 +14,6 @@ import type {
   ImagePreviewSpeedMode,
 } from "@services/image-generation/providers/types";
 import { IMAGE_PREVIEW_SPEED_MODES } from "@shared/schemas/preview.schemas";
-import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
 import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
 import { attachTakeWithOwedTracking } from "@services/sessions/attachTakeWithOwedTracking";
 import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
@@ -29,7 +29,6 @@ type ImageGenerateServices = Pick<
   | "owedTakeAttachmentStore"
 >;
 
-const IMAGE_PREVIEW_CREDIT_COST = 1;
 const TRIGGER_REGEX = /@([a-zA-Z][a-zA-Z0-9_-]*)/g;
 
 const SPEED_MODE_OPTIONS = new Set<ImagePreviewSpeedMode>(
@@ -42,7 +41,6 @@ const hasPromptTriggers = (prompt: string): boolean =>
 export const createImageGenerateHandler =
   ({
     imageGenerationService,
-    userCreditService,
     assetService,
     storageService,
     requestIdempotencyService,
@@ -189,12 +187,30 @@ export const createImageGenerateHandler =
       });
     }
 
+    const destinationError = await validateGenerationDestination(
+      sessionService,
+      userId,
+      { sessionId, promptVersionId },
+    );
+    if (destinationError)
+      return sendApiError(
+        res,
+        req,
+        destinationError.status,
+        destinationError.payload,
+      );
+
     const rawIdempotencyKey = req.get("Idempotency-Key");
     const idempotencyKey =
       typeof rawIdempotencyKey === "string" &&
       rawIdempotencyKey.trim().length > 0
         ? rawIdempotencyKey.trim()
         : null;
+    if (!idempotencyKey)
+      return sendApiError(res, req, 400, {
+        error: "Idempotency-Key header is required",
+        code: GENERATION_ERROR_CODES.IDEMPOTENCY_KEY_REQUIRED,
+      });
     let idempotencyRecordId: string | null = null;
 
     const releaseIdempotencyLock = async (reason: string): Promise<void> => {
@@ -245,6 +261,8 @@ export const createImageGenerateHandler =
           ...(normalizedOutputQuality !== undefined
             ? { outputQuality: normalizedOutputQuality }
             : {}),
+          ...(typeof sessionId === "string" ? { sessionId } : {}),
+          ...(typeof promptVersionId === "string" ? { promptVersionId } : {}),
         },
       });
 
@@ -308,49 +326,6 @@ export const createImageGenerateHandler =
           });
         }
       }
-    }
-
-    if (!userCreditService) {
-      logger.error(
-        "User credit service is not available - blocking preview access",
-        undefined,
-        {
-          path: req.path,
-        },
-      );
-      return await respondWithError(503, {
-        error: "Image generation service is not available",
-        code: GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
-        details: "Credit service is not configured",
-      });
-    }
-
-    const previewCost = IMAGE_PREVIEW_CREDIT_COST;
-    const refundOperationToken =
-      requestId ??
-      buildRefundKey([
-        "preview-image",
-        userId,
-        resolvedPrompt,
-        Date.now(),
-        randomUUID().slice(0, 8),
-      ]);
-    const previewRefundKey = buildRefundKey([
-      "preview-image",
-      refundOperationToken,
-      userId,
-      "generation",
-    ]);
-    const hasCredits = await userCreditService.reserveCredits(
-      userId,
-      previewCost,
-    );
-    if (!hasCredits) {
-      return await respondWithError(402, {
-        error: "Insufficient credits",
-        code: GENERATION_ERROR_CODES.INSUFFICIENT_CREDITS,
-        details: `This preview requires ${previewCost} credit${previewCost === 1 ? "" : "s"}.`,
-      });
     }
 
     try {
@@ -514,18 +489,6 @@ export const createImageGenerateHandler =
         error instanceof Error ? error : new Error(errorMessage);
       const isServiceUnavailable = statusCode === 503;
 
-      await refundWithGuard({
-        userCreditService,
-        userId,
-        amount: previewCost,
-        refundKey: previewRefundKey,
-        reason: "preview image generation failed",
-        metadata: {
-          requestId,
-          path: req.path,
-        },
-      });
-
       logger.error("Image preview generation failed", errorInstance, {
         statusCode,
         userId,
@@ -535,7 +498,9 @@ export const createImageGenerateHandler =
         resolvedCharacterCount,
       });
 
-      return await respondWithError(statusCode, {
+      // Provider dispatch may already have made/stored a picture. Never reopen
+      // its claim after an ambiguous completion write and regenerate on retry.
+      return sendApiError(res, req, statusCode, {
         error: "Image generation failed",
         code: isServiceUnavailable
           ? GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE

@@ -233,7 +233,7 @@ export async function evaluateStudioRouting(
       submitted: structuredClone(transport.received),
       ...(reason ? { reason } : {}),
       live: "not-verified",
-      quality: "awaiting-owner-review",
+      quality: "not-evaluated",
     });
   }
   return results;

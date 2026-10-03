@@ -36,7 +36,7 @@ function createEngine(responses: string[] = []) {
     resolveExecution: vi.fn(() => ({
       client: "groq",
       provider: "groq",
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       viaFallback: false,
     })),
     execute,

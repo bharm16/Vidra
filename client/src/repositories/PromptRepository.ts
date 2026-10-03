@@ -307,7 +307,10 @@ export class PromptRepository {
       highlightCache:
         (prompt.highlightCache as Record<string, unknown>) ?? null,
       versions: normalizePersistedVersions(prompt.versions),
-      ...(prompt.uuid ? { uuid: prompt.uuid } : {}),
+      // Admissions can create a session without the legacy prompt uuid. The
+      // client still needs a stable identity for local version updates and
+      // words persistence; each server session supplies its own fallback.
+      uuid: prompt.uuid || session.id,
       ...(prompt.mode ? { mode: prompt.mode } : {}),
     };
     return mapped;

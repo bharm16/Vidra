@@ -42,6 +42,12 @@ const extractAssetId = (pathOrId: string): string => {
 
 const toAssetIds = (paths: string[]): string[] => paths.map(extractAssetId);
 
+interface InFlightSubmission {
+  controller: AbortController;
+  promptVersionId: string | null;
+  sessionId: string | null;
+}
+
 interface UseGenerationActionsOptions {
   aspectRatio?: string | undefined;
   duration?: number | undefined;
@@ -53,11 +59,14 @@ interface UseGenerationActionsOptions {
   // falls through to the legacy client-authoritative dispatch path.
   sessionId?: string | null | undefined;
   generations?: Generation[] | undefined;
+  ensureWordsVersionPersisted?:
+    | ((info: { sessionId: string; promptVersionId: string }) => Promise<void>)
+    | undefined;
   onInsufficientCredits?:
     | ((required: number, operation: string) => void)
     | undefined;
   /**
-   * Invoked when a preview POST returns a server-persisted generationId.
+   * Invoked after a picture is persisted or a clip job confirms attachment.
    * Callers use this signal to re-fetch the session so the gallery can
    * hydrate from authoritative server state instead of waiting for a
    * page reload.
@@ -297,12 +306,13 @@ export function useGenerationActions(
   options: UseGenerationActionsOptions = {},
 ) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const inFlightRef = useRef<Map<string, AbortController>>(new Map());
+  const inFlightRef = useRef<Map<string, InFlightSubmission>>(new Map());
   const isSubmittingRef = useRef(false);
   const generationsRef = useRef<Generation[]>(options.generations ?? []);
-  const promptVersionRef = useRef<string | null>(
-    options.promptVersionId ?? null,
-  );
+  const promptScopeRef = useRef({
+    version: options.promptVersionId ?? null,
+    session: options.sessionId ?? null,
+  });
   // Bug 9 fix: ref for options to avoid callback churn
   const optionsRef = useRef(options);
   optionsRef.current = options;
@@ -342,20 +352,25 @@ export function useGenerationActions(
   );
 
   const abortAll = useCallback(() => {
-    inFlightRef.current.forEach((controller) => controller.abort());
+    inFlightRef.current.forEach((submission) => submission.controller.abort());
     inFlightRef.current.clear();
   }, []);
 
   const abortMismatched = useCallback(
-    (nextPromptVersionId: string | null) => {
+    (nextPromptVersionId: string | null, nextSessionId: string | null) => {
       const entries = Array.from(inFlightRef.current.entries());
-      for (const [id, controller] of entries) {
+      for (const [id, submission] of entries) {
         const generation = generationsRef.current.find(
           (item) => item.id === id,
         );
-        const generationVersionId = generation?.promptVersionId ?? null;
-        if (!generation || generationVersionId !== nextPromptVersionId) {
-          controller.abort();
+        // A prepared request is not in the gallery until HTTP accepts it.
+        // Its captured destination, rather than gallery presence, decides
+        // whether a new-version render belongs to the current selection.
+        if (
+          submission.promptVersionId !== nextPromptVersionId ||
+          submission.sessionId !== nextSessionId
+        ) {
+          submission.controller.abort();
           if (
             generation &&
             (generation.status === "generating" ||
@@ -373,10 +388,18 @@ export function useGenerationActions(
 
   useEffect(() => {
     const nextPromptVersionId = options.promptVersionId ?? null;
-    if (promptVersionRef.current === nextPromptVersionId) return;
-    abortMismatched(nextPromptVersionId);
-    promptVersionRef.current = nextPromptVersionId;
-  }, [abortMismatched, options.promptVersionId]);
+    const nextSessionId = options.sessionId ?? null;
+    if (
+      promptScopeRef.current.version === nextPromptVersionId &&
+      promptScopeRef.current.session === nextSessionId
+    )
+      return;
+    abortMismatched(nextPromptVersionId, nextSessionId);
+    promptScopeRef.current = {
+      version: nextPromptVersionId,
+      session: nextSessionId,
+    };
+  }, [abortMismatched, options.promptVersionId, options.sessionId]);
 
   useEffect(() => () => abortAll(), [abortAll]);
 
@@ -405,12 +428,20 @@ export function useGenerationActions(
    * cannot drift apart.
    */
   const registerSubmission = useCallback(
-    (initialId: string, controller: AbortController) => {
+    (
+      initialId: string,
+      controller: AbortController,
+      promptVersionId: string | null,
+    ) => {
       let currentId = initialId;
       // The pending flag is exclusive while held: the isSubmittingRef guard
       // blocks a second submission until this one hands it back.
       let ownsPendingFlag = true;
-      inFlightRef.current.set(currentId, controller);
+      inFlightRef.current.set(currentId, {
+        controller,
+        promptVersionId,
+        sessionId: optionsRef.current.sessionId ?? null,
+      });
       return {
         /**
          * Take on the id the server persisted this take under, replacing the
@@ -527,7 +558,12 @@ export function useGenerationActions(
       }
 
       const controller = new AbortController();
-      inFlightRef.current.set(generation.id, controller);
+      const resumedSessionId = optionsRef.current.sessionId;
+      inFlightRef.current.set(generation.id, {
+        controller,
+        promptVersionId: generation.promptVersionId,
+        sessionId: resumedSessionId ?? null,
+      });
 
       log.info("Resuming persisted video generation job", {
         generationId: generation.id,
@@ -563,6 +599,12 @@ export function useGenerationActions(
             serverJobStatus: "completed",
             error: null,
           });
+          if (jobResult.attachment?.state === "attached" && resumedSessionId) {
+            optionsRef.current.onServerGenerationPersisted?.({
+              sessionId: resumedSessionId,
+              generationId: jobId,
+            });
+          }
         })
         .catch((error) => {
           if (controller.signal.aborted) {
@@ -778,9 +820,32 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      const submission = registerSubmission(takeId, controller);
+      const submission = registerSubmission(
+        takeId,
+        controller,
+        generation.promptVersionId,
+      );
 
+      const requestSessionParams = {
+        ...readSessionParams(optionsRef.current),
+        ...(generation.promptVersionId
+          ? { promptVersionId: generation.promptVersionId }
+          : {}),
+      };
+      const ensureWordsVersionPersisted =
+        optionsRef.current.ensureWordsVersionPersisted;
       try {
+        if (
+          requestSessionParams.sessionId &&
+          requestSessionParams.promptVersionId &&
+          ensureWordsVersionPersisted
+        ) {
+          await ensureWordsVersionPersisted({
+            sessionId: requestSessionParams.sessionId,
+            promptVersionId: requestSessionParams.promptVersionId,
+          });
+          if (controller.signal.aborted) return;
+        }
         if (isDraft && model === "flux-kontext") {
           const response = await generateStoryboardPreview(prompt, {
             ...(resolved.aspectRatio
@@ -1035,7 +1100,7 @@ export function useGenerationActions(
             ...(resolved.faceSwapAlreadyApplied
               ? { faceSwapAlreadyApplied: true }
               : {}),
-            ...readSessionParams(optionsRef.current),
+            ...requestSessionParams,
           },
         );
         if (controller.signal.aborted) {
@@ -1091,10 +1156,13 @@ export function useGenerationActions(
             },
           );
           submission.releasePendingFlag();
-          log.debug(`Waiting for ${dispatchNoun.toLowerCase()} job to complete`, {
-            generationId: takeId,
-            jobId: response.jobId,
-          });
+          log.debug(
+            `Waiting for ${dispatchNoun.toLowerCase()} job to complete`,
+            {
+              generationId: takeId,
+              jobId: response.jobId,
+            },
+          );
           const jobResult = await waitForVideoJob(
             response.jobId,
             controller.signal,
@@ -1175,6 +1243,13 @@ export function useGenerationActions(
             ...buildMediaAssetIdsUpdate(videoAssetId, videoStoragePath),
             ...(clipAttachment === "failed" ? { attachment: "failed" } : {}),
           });
+          const attachedSessionId = requestSessionParams.sessionId;
+          if (clipAttachment === "attached" && attachedSessionId) {
+            optionsRef.current.onServerGenerationPersisted?.({
+              sessionId: attachedSessionId,
+              generationId: takeId,
+            });
+          }
         }
       } catch (error) {
         failGenerationRun(error, {
@@ -1236,7 +1311,11 @@ export function useGenerationActions(
       });
 
       const controller = new AbortController();
-      const submission = registerSubmission(generation.id, controller);
+      const submission = registerSubmission(
+        generation.id,
+        controller,
+        generation.promptVersionId,
+      );
 
       try {
         const resolvedSeedImageUrl = await resolveSeedImageUrl(
@@ -1376,7 +1455,7 @@ export function useGenerationActions(
 
   const cancelGeneration = useCallback(
     (id: string) => {
-      const controller = inFlightRef.current.get(id);
+      const controller = inFlightRef.current.get(id)?.controller;
       log.info("Cancel generation requested", {
         generationId: id,
         hasController: Boolean(controller),

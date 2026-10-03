@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getAuthRepository } from "@repositories/index";
 
 import { acceptLiveOutput } from "../api/acceptLiveOutput";
 import {
@@ -52,7 +53,12 @@ export type AcceptanceStatus =
    * frame. `sessionId` and `generationId` address the arm door, which arms
    * the SAME take from the session's own record.
    */
-  | { state: "unarmed"; sessionId: string; generationId: string; message?: string }
+  | {
+      state: "unarmed";
+      sessionId: string;
+      generationId: string;
+      message?: string;
+    }
   /** The arm door is in flight; the same take, nothing else. */
   | { state: "arming"; sessionId: string; generationId: string }
   | { state: "failed"; message: string };
@@ -87,13 +93,24 @@ function mintEditorScope(): string {
  * pressed for. A newer press replaces the attempt; a response is applied only
  * while its own attempt is still the current one.
  */
+interface AcceptanceScope {
+  readonly routeKey: string;
+  readonly pathname: string;
+  readonly browserUrl: string;
+  readonly creatorId: string | undefined;
+}
+
 interface AcceptanceAttempt {
+  readonly scope: AcceptanceScope;
   readonly idempotencyKey: string;
   readonly output: LiveOutput;
 }
 
 export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationRef = useRef(location);
+  locationRef.current = location;
   const [status, setStatus] = useState<AcceptanceStatus>({ state: "idle" });
   // The mirror the callbacks read: an updater must stay pure (no request
   // kicked off inside it — StrictMode would fire it twice), so the side
@@ -102,9 +119,7 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
   /** The one writer: resolves through setState AND keeps the mirror honest. */
   const apply = useCallback(
     (
-      next:
-        | AcceptanceStatus
-        | ((latest: AcceptanceStatus) => AcceptanceStatus),
+      next: AcceptanceStatus | ((latest: AcceptanceStatus) => AcceptanceStatus),
     ): void => {
       if (typeof next !== "function") {
         // Written synchronously, so a guard reading the ref in the same tick
@@ -143,9 +158,53 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
     };
   }, []);
 
+  const captureScope = useCallback(
+    (): AcceptanceScope => ({
+      routeKey: locationRef.current.key,
+      pathname: locationRef.current.pathname,
+      browserUrl: window.location.href,
+      creatorId: getAuthRepository().getCurrentUser()?.uid,
+    }),
+    [],
+  );
+  const ownsScope = useCallback(
+    (scope: AcceptanceScope): boolean =>
+      mountedRef.current &&
+      locationRef.current.key === scope.routeKey &&
+      window.location.href === scope.browserUrl &&
+      getAuthRepository().getCurrentUser()?.uid === scope.creatorId,
+    [],
+  );
+
+  // Suspense can retain this editor after navigation. Restore retryable local
+  // state on departure; durable acceptances and their keys stay server-owned.
+  const previousRouteRef = useRef(location.key);
+  useEffect((): void => {
+    if (previousRouteRef.current === location.key) return;
+    previousRouteRef.current = location.key;
+    const current = statusRef.current;
+    if (
+      getAuthRepository().getCurrentUser()?.uid !==
+      attemptRef.current?.scope.creatorId
+    ) {
+      apply({ state: "idle" });
+    } else if (current.state === "accepting") {
+      apply({ state: "idle" });
+    } else if (current.state === "saving") {
+      apply({ state: "unattached", attachment: current.attachment });
+    } else if (current.state === "arming") {
+      apply({
+        state: "unarmed",
+        sessionId: current.sessionId,
+        generationId: current.generationId,
+      });
+    }
+  }, [location.key, apply]);
+
   const accept = useCallback(
     (output: LiveOutput): void => {
       const attempt: AcceptanceAttempt = {
+        scope: captureScope(),
         idempotencyKey: `${editorScopeRef.current}:${output.requestId}`,
         output,
       };
@@ -164,7 +223,8 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
           // from a live editor still on screen, may move the creator. A
           // response for a superseded attempt — or one whose editor is gone —
           // is dropped; the take itself is already safe server-side.
-          if (!mountedRef.current || attemptRef.current !== attempt) return;
+          if (!ownsScope(attempt.scope) || attemptRef.current !== attempt)
+            return;
           // Issues #134 and #136: BOTH facts decide what "accepted" means
           // here. An unresolved attachment is a picture made but not saved —
           // the truthful state, with its retry. An attached take whose arming
@@ -199,7 +259,8 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
           armingRef.current = result.arming;
         })
         .catch((error: unknown) => {
-          if (!mountedRef.current || attemptRef.current !== attempt) return;
+          if (!ownsScope(attempt.scope) || attemptRef.current !== attempt)
+            return;
           apply({
             state: "failed",
             message:
@@ -209,7 +270,7 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
           });
         });
     },
-    [apply, navigate],
+    [apply, navigate, captureScope, ownsScope],
   );
 
   /**
@@ -224,6 +285,15 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
   const retryAttachment = useCallback((): void => {
     const current = statusRef.current;
     if (current.state !== "unattached") return;
+    const attempt = attemptRef.current;
+    const scope = captureScope();
+    if (
+      !attempt ||
+      attempt.scope.creatorId !== scope.creatorId ||
+      attempt.scope.pathname !== scope.pathname ||
+      attempt.scope.browserUrl !== scope.browserUrl
+    )
+      return;
     const { attachment } = current;
     apply({ state: "saving", attachment });
     void retryPictureAttachment(attachment)
@@ -232,7 +302,12 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
         // a newer press has since replaced an older debt's state.
         const ownsSurface = (): boolean => {
           const latest = statusRef.current;
-          return latest.state === "saving" && latest.attachment === attachment;
+          return (
+            ownsScope(scope) &&
+            attemptRef.current === attempt &&
+            latest.state === "saving" &&
+            latest.attachment === attachment
+          );
         };
         if (!ownsSurface()) return;
         // Issue #136: an arming that was refused because the take was not
@@ -250,8 +325,7 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
             .then(() => {
               if (!ownsSurface()) return;
               apply({ state: "idle" });
-              if (mountedRef.current)
-                navigate(`/session/${attachment.sessionId}`);
+              navigate(`/session/${attachment.sessionId}`);
             });
           return;
         }
@@ -259,11 +333,16 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
         // The take is in its session now — the landing "Use this" always
         // promised. Only a creator still looking at the editor is moved; the
         // editor stays behind them, keeping nothing (ADR-0017).
-        if (mountedRef.current) navigate(`/session/${attachment.sessionId}`);
+        navigate(`/session/${attachment.sessionId}`);
       })
       .catch((error: unknown) => {
         const latest = statusRef.current;
-        if (latest.state !== "saving" || latest.attachment !== attachment) {
+        if (
+          !ownsScope(scope) ||
+          attemptRef.current !== attempt ||
+          latest.state !== "saving" ||
+          latest.attachment !== attachment
+        ) {
           return;
         }
         apply({
@@ -275,7 +354,7 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
               : "Could not save this picture",
         });
       });
-  }, [apply, navigate]);
+  }, [apply, navigate, captureScope, ownsScope]);
 
   /**
    * The creator's side of a saved-but-not-armed outcome (issue #136): arm the
@@ -287,13 +366,25 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
   const retryArming = useCallback((): void => {
     const current = statusRef.current;
     if (current.state !== "unarmed") return;
+    const attempt = attemptRef.current;
+    const scope = captureScope();
+    if (
+      !attempt ||
+      attempt.scope.creatorId !== scope.creatorId ||
+      attempt.scope.pathname !== scope.pathname ||
+      attempt.scope.browserUrl !== scope.browserUrl
+    )
+      return;
     const { sessionId, generationId } = current;
     apply({ state: "arming", sessionId, generationId });
     void retryFirstFrameArming(sessionId, generationId)
       .then(() => {
         const latest = statusRef.current;
         if (
+          !ownsScope(scope) ||
+          attemptRef.current !== attempt ||
           latest.state !== "arming" ||
+          latest.sessionId !== sessionId ||
           latest.generationId !== generationId
         ) {
           return;
@@ -301,11 +392,17 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
         apply({ state: "idle" });
         // The frame is armed — the landing "Use this" promised. Only a
         // creator still looking at the editor is moved (ADR-0017).
-        if (mountedRef.current) navigate(`/session/${sessionId}`);
+        navigate(`/session/${sessionId}`);
       })
       .catch((error: unknown) => {
         const latest = statusRef.current;
-        if (latest.state !== "arming" || latest.generationId !== generationId) {
+        if (
+          !ownsScope(scope) ||
+          attemptRef.current !== attempt ||
+          latest.state !== "arming" ||
+          latest.sessionId !== sessionId ||
+          latest.generationId !== generationId
+        ) {
           return;
         }
         apply({
@@ -318,7 +415,7 @@ export function useAcceptLiveOutput(): UseAcceptLiveOutputReturn {
               : "Could not set the first frame",
         });
       });
-  }, [apply, navigate]);
+  }, [apply, navigate, captureScope, ownsScope]);
 
   return { status, accept, retryAttachment, retryArming };
 }

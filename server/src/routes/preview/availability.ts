@@ -1,4 +1,5 @@
 import { getCapabilitiesRegistry } from "@services/capabilities";
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import type { VideoAvailabilityReport } from "@services/video-generation/types";
 
 let capabilityModelIdsCache: string[] | null = null;
@@ -12,7 +13,7 @@ export const getCapabilityModelIds = (): string[] => {
   for (const [provider, models] of Object.entries(getCapabilitiesRegistry())) {
     if (provider === "generic") continue;
     for (const modelId of Object.keys(models)) {
-      ids.add(modelId);
+      if (isReleaseGenerationModelSupported(modelId)) ids.add(modelId);
     }
   }
   capabilityModelIdsCache = Array.from(ids);

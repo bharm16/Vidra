@@ -1,5 +1,6 @@
 import type { DraftModel } from "@components/ToolSidebar/types";
 import { modelDisplayLabel } from "@shared/modelIdentity";
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import {
   getDefaultGenerationDurationSeconds,
   getGenerationCreditCost,
@@ -52,7 +53,7 @@ export const VIDEO_RENDER_MODELS = [
     label: modelDisplayLabel("luma-ray3"),
     creditsPerSecond: getGenerationCreditsPerSecond("luma-ray3") ?? 7,
   },
-];
+].filter((model) => isReleaseGenerationModelSupported(model.id));
 
 export const IMAGE_MODEL = {
   id: "replicate-flux-kontext-fast",

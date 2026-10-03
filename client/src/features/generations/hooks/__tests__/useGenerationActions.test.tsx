@@ -66,6 +66,39 @@ describe("useGenerationActions insufficient credits handling", () => {
     });
   });
 
+  it("requests authoritative clip hydration only after the job confirms attachment", async () => {
+    generateVideoPreviewMock.mockResolvedValue({
+      success: true,
+      jobId: "job-saved",
+      status: "queued",
+    });
+    waitForVideoJobMock.mockResolvedValue({
+      videoUrl: "https://example.com/saved.mp4",
+      attachment: {
+        state: "attached",
+        sessionId: "session-saved",
+        promptVersionId: "v-saved",
+        generationId: "job-saved",
+        record: { id: "job-saved" },
+      },
+    });
+    const onServerGenerationPersisted = vi.fn();
+    const { result } = renderHook(() =>
+      useGenerationActions(vi.fn(), {
+        sessionId: "session-saved",
+        promptVersionId: "v-saved",
+        onServerGenerationPersisted,
+      }),
+    );
+    await act(async () =>
+      result.current.generateRender("google/veo-3", "Visible camera words", {}),
+    );
+    expect(onServerGenerationPersisted).toHaveBeenCalledExactlyOnceWith({
+      sessionId: "session-saved",
+      generationId: "job-saved",
+    });
+  });
+
   it("does not create a draft generation before a 402 rejection and reports insufficient credits", async () => {
     const dispatch = vi.fn();
     const onInsufficientCredits = vi.fn();

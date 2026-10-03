@@ -1,25 +1,38 @@
+import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
+import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { SessionService } from "@services/sessions/SessionService";
+import type { SessionRecord } from "@services/sessions/types";
+import type { RouteCreditService } from "@services/credits/ports";
+import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createImageGenerateHandler } from "@routes/preview/handlers/imageGenerate";
 import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
 
-// M5 / D4 (ADR-0013): a quick picture becomes a persisted generation record
-// when the client supplies sessionId + promptVersionId, so it can be a node in
-// the space. Without them it stays anonymous (backward compatible).
-//
-// ADR-0022 decision 6 (the narrow freeze exception for session attachment):
-// "the media was generated" and "the take reached its session" are two facts,
-// not one. The append used to be a swallowed catch whose only signal was an
-// ABSENT generationId — indistinguishable from the anonymous case above. The
-// handler now answers both questions explicitly.
-//
-// The policy argument is already written down in this repo, one layer over:
-// inlineProcessor.durable-copy.regression.test.ts pins the OPPOSITE treatment
-// for the durable storage copy — a post-completion step that must fail loudly
-// and refund rather than be best-effort. Attachment differs on exactly one
-// point: the media IS durable and the creator's credit already bought it, so
-// the honest outcome is "made but not saved, retry it", not a refund.
+// A generated picture's attachment is a separate fact: failed attachment keeps
+// the owned media and immutable take identity. Free validation never reserves
+// or refunds credits; an authenticated standalone picture has no attachment.
+const SESSION_RECORD: SessionRecord = {
+  id: "session-1",
+  userId: "user-1",
+  status: "active",
+  hasContinuity: false,
+  createdAt: new Date("2026-10-03T00:00:00Z"),
+  updatedAt: new Date("2026-10-03T00:00:00Z"),
+  prompt: {
+    input: "a cat on a couch",
+    output: "a cat on a couch",
+    versions: [
+      {
+        versionId: "v1",
+        signature: "sig-1",
+        prompt: "a cat on a couch",
+        timestamp: "2026-10-03T00:00:00Z",
+      },
+    ],
+  },
+};
 
 const createApp = (handler: express.RequestHandler) => {
   const app = express();
@@ -37,21 +50,57 @@ const createApp = (handler: express.RequestHandler) => {
   return app;
 };
 
-const makeServices = (appendGenerationToVersion: ReturnType<typeof vi.fn>) => ({
-  imageGenerationService: {
-    generatePreview: vi.fn(async () => ({
-      imageUrl: "https://images.example.com/pic.webp",
-      metadata: { model: "flux-schnell", aspectRatio: "16:9" },
-    })),
-  } as never,
-  userCreditService: {
-    reserveCredits: vi.fn(async () => true),
-    refundCredits: vi.fn(async () => true),
-    getBalance: vi.fn(async () => 5),
-  } as never,
-  assetService: null as never,
-  sessionService: { appendGenerationToVersion } as never,
-});
+const makeServices = (
+  appendGenerationToVersion: SessionService["appendGenerationToVersion"],
+) => {
+  const imagePort = {
+    generatePreview: vi
+      .fn<ImageGenerationService["generatePreview"]>()
+      .mockResolvedValue({
+        imageUrl: "https://images.example.com/pic.webp",
+        metadata: {
+          model: "flux-schnell",
+          aspectRatio: "16:9",
+          duration: 1,
+          generatedAt: "2026-10-03T00:00:00Z",
+        },
+      }),
+  } satisfies Pick<ImageGenerationService, "generatePreview">;
+  const sessionPort = {
+    appendGenerationToVersion,
+    requireOwnedSession: async (
+      uid: string,
+      sessionId: string,
+    ): Promise<SessionRecord> => {
+      if (uid !== SESSION_RECORD.userId || sessionId !== SESSION_RECORD.id)
+        throw new Error("Session unavailable to this creator");
+      return SESSION_RECORD;
+    },
+  } satisfies Pick<
+    SessionService,
+    "appendGenerationToVersion" | "requireOwnedSession"
+  >;
+  const credits = {
+    reserveCredits: vi
+      .fn<RouteCreditService["reserveCredits"]>()
+      .mockResolvedValue(false),
+    refundCredits: vi
+      .fn<RouteCreditService["refundCredits"]>()
+      .mockResolvedValue(false),
+    getBalance: vi.fn<RouteCreditService["getBalance"]>().mockResolvedValue(0),
+    checkAndReserveInTransaction: vi
+      .fn<RouteCreditService["checkAndReserveInTransaction"]>()
+      .mockResolvedValue({ ok: false, reason: "insufficient_credits" }),
+  } satisfies RouteCreditService;
+  return {
+    imageGenerationService: imagePort as unknown as ImageGenerationService,
+    userCreditService: credits,
+    assetService: null,
+    sessionService: sessionPort as SessionService,
+    requestIdempotencyService:
+      new InMemoryIdempotencyService() as unknown as RequestIdempotencyService,
+  };
+};
 
 describe("imageGenerate session persistence (M5 D4)", () => {
   beforeEach(() => {
@@ -59,24 +108,29 @@ describe("imageGenerate session persistence (M5 D4)", () => {
   });
 
   it("persists a picture generation record and returns generationId when a session is supplied", async () => {
-    const appendGenerationToVersion = vi.fn(
+    const appendGenerationToVersion = vi.fn<
+      SessionService["appendGenerationToVersion"]
+    >(
       async (
         _userId: string,
         _sessionId: string,
         _promptVersionId: string,
         _record: Record<string, unknown>,
-      ): Promise<void> => undefined,
+      ): Promise<SessionRecord> => SESSION_RECORD,
     );
     const app = createApp(
       createImageGenerateHandler(makeServices(appendGenerationToVersion)),
     );
 
     const res = await runSupertestOrSkip(() =>
-      request(app).post("/preview/generate").send({
-        prompt: "a cat on a couch",
-        sessionId: "session-1",
-        promptVersionId: "v1",
-      }),
+      request(app)
+        .post("/preview/generate")
+        .set("Idempotency-Key", "picture-persist-1")
+        .send({
+          prompt: "a cat on a couch",
+          sessionId: "session-1",
+          promptVersionId: "v1",
+        }),
     );
     if (!res) return;
 
@@ -98,30 +152,33 @@ describe("imageGenerate session persistence (M5 D4)", () => {
   });
 
   it("regression: a rejecting session write returns an explicit failed attachment, keeps the media, and never refunds", async () => {
-    const appendGenerationToVersion = vi.fn(
-      async (): Promise<void> => {
-        throw new Error("firestore unavailable");
-      },
-    );
+    const appendGenerationToVersion = vi.fn<
+      SessionService["appendGenerationToVersion"]
+    >(async (): Promise<SessionRecord> => {
+      throw new Error("firestore unavailable");
+    });
     const services = makeServices(appendGenerationToVersion);
     const app = createApp(createImageGenerateHandler(services));
 
     const res = await runSupertestOrSkip(() =>
-      request(app).post("/preview/generate").send({
-        prompt: "a cat on a couch",
-        sessionId: "session-1",
-        promptVersionId: "v1",
-      }),
+      request(app)
+        .post("/preview/generate")
+        .set("Idempotency-Key", "picture-persist-1")
+        .send({
+          prompt: "a cat on a couch",
+          sessionId: "session-1",
+          promptVersionId: "v1",
+        }),
     );
     if (!res) return;
 
-    // The picture was made. The creator keeps it, and keeps paying for it.
+    // The picture was made. Free validation preserves it without credit activity.
     expect(res.status).toBe(200);
-    expect(res.body?.data?.imageUrl).toBe("https://images.example.com/pic.webp");
-    expect(
-      (services.userCreditService as unknown as { refundCredits: ReturnType<typeof vi.fn> })
-        .refundCredits,
-    ).not.toHaveBeenCalled();
+    expect(res.body?.data?.imageUrl).toBe(
+      "https://images.example.com/pic.webp",
+    );
+    expect(services.userCreditService.refundCredits).not.toHaveBeenCalled();
+    expect(services.userCreditService.reserveCredits).not.toHaveBeenCalled();
 
     // ...and the second fact is stated rather than swallowed.
     expect(res.body?.data?.attachment?.state).toBe("failed");
@@ -134,13 +191,15 @@ describe("imageGenerate session persistence (M5 D4)", () => {
   });
 
   it("hands back the exact record that failed to attach, under the take identity already minted", async () => {
-    const appendGenerationToVersion = vi.fn(
+    const appendGenerationToVersion = vi.fn<
+      SessionService["appendGenerationToVersion"]
+    >(
       async (
         _userId: string,
         _sessionId: string,
         _promptVersionId: string,
         _record: Record<string, unknown>,
-      ): Promise<void> => {
+      ): Promise<SessionRecord> => {
         throw new Error("firestore unavailable");
       },
     );
@@ -149,11 +208,14 @@ describe("imageGenerate session persistence (M5 D4)", () => {
     );
 
     const res = await runSupertestOrSkip(() =>
-      request(app).post("/preview/generate").send({
-        prompt: "a cat on a couch",
-        sessionId: "session-1",
-        promptVersionId: "v1",
-      }),
+      request(app)
+        .post("/preview/generate")
+        .set("Idempotency-Key", "picture-persist-1")
+        .send({
+          prompt: "a cat on a couch",
+          sessionId: "session-1",
+          promptVersionId: "v1",
+        }),
     );
     if (!res) return;
 
@@ -171,19 +233,22 @@ describe("imageGenerate session persistence (M5 D4)", () => {
   });
 
   it("states the attachment explicitly when the session write succeeds", async () => {
-    const appendGenerationToVersion = vi.fn(
-      async (): Promise<void> => undefined,
-    );
+    const appendGenerationToVersion = vi.fn<
+      SessionService["appendGenerationToVersion"]
+    >(async (): Promise<SessionRecord> => SESSION_RECORD);
     const app = createApp(
       createImageGenerateHandler(makeServices(appendGenerationToVersion)),
     );
 
     const res = await runSupertestOrSkip(() =>
-      request(app).post("/preview/generate").send({
-        prompt: "a cat on a couch",
-        sessionId: "session-1",
-        promptVersionId: "v1",
-      }),
+      request(app)
+        .post("/preview/generate")
+        .set("Idempotency-Key", "picture-persist-1")
+        .send({
+          prompt: "a cat on a couch",
+          sessionId: "session-1",
+          promptVersionId: "v1",
+        }),
     );
     if (!res) return;
 
@@ -195,28 +260,54 @@ describe("imageGenerate session persistence (M5 D4)", () => {
     expect(res.body?.data?.attachment?.record).toBeUndefined();
   });
 
-  it("does not persist (and returns no generationId) for an anonymous quick picture", async () => {
-    const appendGenerationToVersion = vi.fn(
+  it("rejects a foreign destination before generation or attachment", async () => {
+    const append = vi
+      .fn<SessionService["appendGenerationToVersion"]>()
+      .mockResolvedValue(SESSION_RECORD);
+    const services = makeServices(append);
+    const app = createApp(createImageGenerateHandler(services));
+    const response = await request(app)
+      .post("/preview/generate")
+      .set("Idempotency-Key", "foreign-session-1")
+      .send({
+        prompt: "a cat",
+        sessionId: "another-session",
+        promptVersionId: "v1",
+      });
+    expect(response.status).toBe(404);
+    expect(
+      services.imageGenerationService.generatePreview,
+    ).not.toHaveBeenCalled();
+    expect(append).not.toHaveBeenCalled();
+  });
+
+  it("does not persist (and returns no generationId) for an authenticated standalone quick picture", async () => {
+    const appendGenerationToVersion = vi.fn<
+      SessionService["appendGenerationToVersion"]
+    >(
       async (
         _userId: string,
         _sessionId: string,
         _promptVersionId: string,
         _record: Record<string, unknown>,
-      ): Promise<void> => undefined,
+      ): Promise<SessionRecord> => SESSION_RECORD,
     );
     const app = createApp(
       createImageGenerateHandler(makeServices(appendGenerationToVersion)),
     );
 
     const res = await runSupertestOrSkip(() =>
-      request(app).post("/preview/generate").send({ prompt: "a cat" }),
+      request(app)
+        .post("/preview/generate")
+        .set("Idempotency-Key", "picture-persist-1")
+        .send({ prompt: "a cat" }),
     );
     if (!res) return;
 
     expect(appendGenerationToVersion).not.toHaveBeenCalled();
     expect(res.body?.data?.generationId).toBeUndefined();
     // No session was named, so there is no attachment fact to report — an
-    // anonymous picture is not a failed attachment.
+    // standalone picture is not a failed attachment.
     expect(res.body?.data?.attachment).toBeUndefined();
   });
 });

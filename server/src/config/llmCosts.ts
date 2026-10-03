@@ -33,7 +33,8 @@ const MODEL_COST_RATES: Record<string, TokenCostRate> = {
   "qwen/qwen3.6-27b": { input: 0.0006, output: 0.003 },
 
   // Groq-hosted Llama
-  "llama-3.1-8b-instant": { input: 0.00005, output: 0.00008 },
+  // Groq production default: $0.075/M input, $0.30/M output (2026-10-03).
+  "openai/gpt-oss-20b": { input: 0.000075, output: 0.0003 },
 
   // Anthropic
   "claude-sonnet-4": { input: 0.003, output: 0.015 },

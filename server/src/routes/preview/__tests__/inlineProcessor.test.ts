@@ -82,7 +82,7 @@ const createClaimedJob = (
   userId: "user-1",
   request: {
     prompt: "a cinematic sunset",
-    options: { model: "sora-2" },
+    options: { model: "veo-3" },
   },
   creditsReserved: 5,
   attempts: 1,
@@ -193,7 +193,7 @@ describe("scheduleInlineVideoProcessing", () => {
     );
     expect(generateVideo).toHaveBeenCalledWith(
       "a cinematic sunset",
-      { model: "sora-2" },
+      { model: "veo-3" },
       undefined,
     );
     expect(storageService.saveFromUrl).toHaveBeenCalled();
@@ -250,7 +250,10 @@ describe("scheduleInlineVideoProcessing", () => {
 
   const withLineage = (): void => {
     jobStore.claimJob.mockResolvedValue(
-      createClaimedJob({ sessionId: "session-1", promptVersionId: "version-1" }),
+      createClaimedJob({
+        sessionId: "session-1",
+        promptVersionId: "version-1",
+      }),
     );
   };
 
@@ -279,9 +282,9 @@ describe("scheduleInlineVideoProcessing", () => {
     });
     // What is owed rides with the marker, so a resume re-sends the same record
     // rather than rebuilding one.
-    expect((pending as { record: Record<string, unknown> }).record).toMatchObject(
-      { id: "job-1", mediaType: "video" },
-    );
+    expect(
+      (pending as { record: Record<string, unknown> }).record,
+    ).toMatchObject({ id: "job-1", mediaType: "video" });
   });
 
   it("regression: a failing session write leaves the clip completed, records a failed attachment, and never refunds", async () => {

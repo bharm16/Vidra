@@ -1,6 +1,7 @@
 import { MODEL_CATALOG } from "@shared/modelCatalog";
 import {
   CANONICAL_PROMPT_MODEL_IDS,
+  isReleaseGenerationModelSupported,
   type CanonicalPromptModelId,
 } from "@shared/videoModels";
 import type { ModelCapabilities } from "../types";
@@ -31,12 +32,18 @@ export class ModelCapabilityRegistry {
   }
 
   getAllModels(): CanonicalPromptModelId[] {
-    return Array.from(this.capabilities.keys());
+    return Array.from(this.capabilities.keys()).filter(
+      isReleaseGenerationModelSupported,
+    );
   }
 
   getProductionModels(): CanonicalPromptModelId[] {
     return Array.from(this.capabilities.entries())
-      .filter(([, cap]) => cap.qualityTier !== "preview")
+      .filter(
+        ([id, cap]) =>
+          cap.qualityTier !== "preview" &&
+          isReleaseGenerationModelSupported(id),
+      )
       .map(([id]) => id);
   }
 

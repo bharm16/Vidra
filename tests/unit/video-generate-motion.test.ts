@@ -1,111 +1,83 @@
 import express from "express";
 import request from "supertest";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const { scheduleInlineMock } = vi.hoisted(() => ({
-  scheduleInlineMock: vi.fn(),
-}));
-
-vi.mock("@routes/preview/inlineProcessor", () => ({
-  scheduleInlineVideoProcessing: scheduleInlineMock,
-}));
-
+import { describe, expect, it } from "vitest";
+import { asyncHandler } from "@middleware/asyncHandler";
 import { createVideoGenerateHandler } from "@routes/preview/handlers/videoGenerate";
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
+import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
 
-// Adapter: delegates the atomic method to the existing createJob + reserveCredits mocks
-// so tests written against the legacy 2-step API keep their assertions intact.
-const buildAtomicReservation = (
-  createJob: ReturnType<typeof vi.fn>,
-): ((
-  input: Record<string, unknown>,
-  deps: {
-    creditService: {
-      reserveCredits: (uid: string, cost: number) => Promise<boolean>;
+/** Public HTTP prompt truth, with external persistence/provider ports controlled. */
+describe("videoGenerate prompt truth in free validation", () => {
+  it("queues visible words verbatim; motion metadata never inserts hidden prose", async () => {
+    const receipts = new InMemoryIdempotencyService();
+    let queued: VideoJobRecord | null = null;
+    const store = {
+      createJobWithReceipt: async (
+        input: Parameters<VideoJobStore["createJobWithReceipt"]>[0],
+        deps: Parameters<VideoJobStore["createJobWithReceipt"]>[1],
+      ): Promise<{
+        job: VideoJobRecord;
+        snapshot: ReturnType<typeof deps.buildSnapshot>;
+      }> => {
+        const job: VideoJobRecord = {
+          ...input,
+          id: "verbatim-clip",
+          status: "queued",
+          attempts: 0,
+          maxAttempts: 3,
+          createdAtMs: Date.now(),
+          updatedAtMs: Date.now(),
+        };
+        const snapshot = deps.buildSnapshot(job);
+        await receipts.markCompleted({
+          recordId: deps.recordId,
+          snapshot,
+        });
+        queued = job;
+        return { job, snapshot };
+      },
+      // Background processing is outside this assertion; the real atomic
+      // adapter and inline worker are exercised by video-generate.contract.
+      claimJob: async (): Promise<null> => null,
     };
-    cost: number;
-  },
-) => Promise<
-  { reserved: true; job: unknown } | { reserved: false; reason: string }
->) => {
-  return async (input, { creditService, cost }) => {
-    const ok = await creditService.reserveCredits(input.userId as string, cost);
-    if (!ok) {
-      return { reserved: false, reason: "insufficient_credits" };
-    }
-    const job = await createJob(input);
-    return { reserved: true, job };
-  };
-};
-
-describe("videoGenerate prompt truth", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("queues the prompt verbatim — motion params never splice into it", async () => {
-    const createJobMock = vi.fn(async (payload: Record<string, unknown>) => ({
-      id: "job-1",
-      status: "queued",
-      ...payload,
-    }));
-
     const handler = createVideoGenerateHandler({
       videoGenerationService: {
         getModelAvailability: () => ({
           available: true,
-          resolvedModelId: "sora-2",
+          resolvedModelId: "google/veo-3",
         }),
       } as never,
-      videoJobStore: {
-        createJob: createJobMock,
-        createJobWithReservation: buildAtomicReservation(createJobMock),
-      } as never,
-      userCreditService: {
-        reserveCredits: vi.fn(async () => true),
-        refundCredits: vi.fn(async () => true),
-      } as never,
-      keyframeService: null as never,
-      faceSwapService: null as never,
-      assetService: null as never,
+      videoJobStore: store as unknown as VideoJobStore,
+      requestIdempotencyService:
+        receipts as unknown as RequestIdempotencyService,
     });
-
     const app = express();
+    app.use(express.json());
     app.use((req, _res, next) => {
-      (req as express.Request & { user?: { uid?: string } }).user = {
-        uid: "user-123",
+      (req as express.Request & { user?: { uid: string } }).user = {
+        uid: "creator-a",
       };
       next();
     });
-    app.use(express.json());
-    app.post("/preview/video/generate", handler);
-
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/preview/video/generate")
-        .send({
-          prompt: "A cinematic shot of a runner at dawn.",
-          model: "sora-2",
-          generationParams: {
-            camera_motion_id: "pan_left",
-            subject_motion: "running steadily toward the horizon",
-          },
-        }),
-    );
-    if (!response) return;
-
+    app.post("/video", asyncHandler(handler));
+    const response = await request(app)
+      .post("/video")
+      .set("Idempotency-Key", "verbatim-words")
+      .send({
+        prompt: "A cinematic shot of a runner at dawn.",
+        model: "google/veo-3",
+        generationParams: {
+          camera_motion_id: "pan_left",
+          subject_motion: "running steadily toward the horizon",
+        },
+      });
     expect(response.status).toBe(202);
-    expect(createJobMock).toHaveBeenCalledTimes(1);
-
-    const jobPayload = createJobMock.mock.calls[0]?.[0] as
-      | { request?: { prompt?: string } }
-      | undefined;
-    const prompt = jobPayload?.request?.prompt ?? "";
-
-    // ADR-0010 truth: the queued prompt is byte-for-byte the input; motion
-    // params (camera_motion_id / subject_motion) are never spliced in as text.
-    expect(prompt).toBe("A cinematic shot of a runner at dawn.");
-    expect(prompt).not.toContain("Camera motion:");
-    expect(prompt).not.toContain("Subject motion:");
+    const job = queued as VideoJobRecord | null;
+    expect(job?.request.prompt).toBe("A cinematic shot of a runner at dawn.");
+    expect(job?.request.prompt).not.toContain("Camera motion:");
+    expect(job?.request.prompt).not.toContain("Subject motion:");
+    expect(job?.creditsReserved).toBe(0);
   });
 });

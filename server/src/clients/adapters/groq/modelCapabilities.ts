@@ -33,7 +33,6 @@ const GROQ_MODEL_CAPABILITIES: Readonly<Record<string, GroqModelCapabilities>> =
       reasoningEffort: "low",
       strictSchema: true,
     },
-    "llama-3.1-8b-instant": { logprobs: false },
     "llama-3.3-70b-versatile": { logprobs: true },
   };
 

@@ -27,7 +27,7 @@ describe("parseEnv", () => {
     expect(result.PORT).toBe(3001);
     expect(result.NODE_ENV).toBe("development");
     expect(result.OPENAI_MODEL).toBe("gpt-4o-mini");
-    expect(result.GROQ_MODEL).toBe("llama-3.1-8b-instant");
+    expect(result.GROQ_MODEL).toBe("openai/gpt-oss-20b");
     expect(result.GEMINI_MODEL).toBe("gemini-2.5-flash");
     expect(result.ENABLE_CONVERGENCE).toBe(true);
     expect(result.VIDEO_STORAGE_BASE_PATH).toBe("video-previews");

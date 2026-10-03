@@ -43,6 +43,7 @@ import type { LLMAdapter } from "@interfaces/ILLMAdapter";
 import { buildLlamaMessages, wrapInXmlTags } from "./groq/messageBuilder";
 import { normalizeResponse } from "./groq/responseNormalizer";
 import { checkContextSize, estimateContextTokens } from "./groq/contextBudget";
+import { DEFAULT_GROQ_MODEL } from "@config/llmModelDefaults";
 
 /**
  * Groq API Adapter optimized for Llama 3.x models
@@ -69,7 +70,7 @@ export class GroqLlamaAdapter implements LLMAdapter<LlamaCompletionOptions> {
   constructor({
     apiKey,
     baseURL = "https://api.groq.com/openai/v1",
-    defaultModel = "llama-3.1-8b-instant",
+    defaultModel = DEFAULT_GROQ_MODEL,
     defaultTimeout = 30000,
   }: GroqAdapterConfig) {
     if (!apiKey) {

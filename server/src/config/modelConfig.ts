@@ -51,6 +51,7 @@ interface ModelConfigEntry {
  * qwen-model regression test pins llmCosts and the adapter default to it.
  */
 export const DEFAULT_QWEN_MODEL = "qwen/qwen3.6-27b";
+export { DEFAULT_GROQ_MODEL } from "./llmModelDefaults";
 
 const QWEN_FALLBACK = {
   model: process.env.QWEN_MODEL || DEFAULT_QWEN_MODEL,

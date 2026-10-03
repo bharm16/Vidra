@@ -7,7 +7,10 @@ import { ReplicateFluxKontextFastProvider } from "../../../server/src/services/i
 import { IMAGE_PREVIEW_PROVIDER_IDS } from "../../../server/src/services/image-generation/providers/types";
 import { generateReplicateVideo } from "../../../server/src/services/video-generation/providers/replicateProvider";
 import { VIDEO_MODEL_PROVIDERS } from "../../../server/src/config/videoModelRegistry";
-import type { VideoModelId } from "../../../shared/videoModels";
+import {
+  isReleaseGenerationModelSupported,
+  type VideoModelId,
+} from "../../../shared/videoModels";
 import type {
   StudioModelEntry,
   StudioUtilityOperation,
@@ -269,7 +272,10 @@ function previewProbes(): Probe[] {
 function videoProbes(): Probe[] {
   const replicate = new Replicate({ auth: TOKEN });
   return (Object.entries(VIDEO_MODEL_PROVIDERS) as [VideoModelId, string][])
-    .filter(([, provider]) => provider === "replicate")
+    .filter(
+      ([model, provider]) =>
+        provider === "replicate" && isReleaseGenerationModelSupported(model),
+    )
     .flatMap(([model]) =>
       [false, true].flatMap((withFrame) =>
         ["16:9", "9:16", "1:1"].map((ratio): Probe => {
@@ -382,7 +388,7 @@ export async function evaluateProviderContracts(
           submitted: structuredClone(transport.received),
           ...(reason ? { reason } : {}),
           live: "not-verified",
-          quality: "awaiting-owner-review",
+          quality: "not-evaluated",
         });
       }
       results.push(...(await evaluateStudioRouting(transport)));
@@ -399,15 +405,15 @@ export async function evaluateProviderContracts(
     finishedAt: new Date().toISOString(),
     verdict: paths.some((path) => path.contract === "failed")
       ? "contract-failed"
-      : "contract-passed-quality-pending",
+      : "contract-passed-live-pending",
     taskSet: "creative-tasks/v1",
     paths,
     pending: [
       "#143 real HTTP clip acceptance",
-      "Owner review of creative-tasks/v1 and actual outputs",
-      "Live provider acceptance and output quality for every path",
+      "Creative quality review waived by owner; quality is not evaluated",
+      "One successful live completion per included provider",
       "Production timeout expiration: run canonical timeout/poll-resilience regression suites",
-      "Canonical Luma ray3 currently dispatches ray-2; provider parity requires explicit resolution",
+      "Luma deferred from this release until Ray 3.2 migration, new credentials and live qualification",
       "Replicate video run has no app-level timeout in its adapter; timeoutMs null records that gap",
     ],
   };

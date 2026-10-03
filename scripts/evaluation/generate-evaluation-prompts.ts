@@ -15,6 +15,7 @@
  *   scripts/evaluation/data/evaluation-prompts-{timestamp}.json
  */
 
+import { DEFAULT_GROQ_MODEL } from "../../server/src/config/llmModelDefaults";
 import { config as loadEnv } from "dotenv";
 
 import {
@@ -104,7 +105,7 @@ function createAIService(): AIModelService {
   const clients: ClientsMap = { openai: null };
   const groqTimeoutMs = Number(process.env.GROQ_TIMEOUT_MS || 5000);
   const openaiTimeoutMs = Number(process.env.OPENAI_TIMEOUT_MS || 60000);
-  const groqModel = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+  const groqModel = process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL;
   const openaiModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const groqBaseURL =
     process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1";

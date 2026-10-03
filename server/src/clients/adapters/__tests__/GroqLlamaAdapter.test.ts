@@ -56,7 +56,7 @@ describe("GroqLlamaAdapter", () => {
   it("injects JSON instruction for json_object mode", async () => {
     const adapter = new GroqLlamaAdapter({
       apiKey: "key",
-      defaultModel: "llama-3.1-8b-instant",
+      defaultModel: "openai/gpt-oss-20b",
     });
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -84,7 +84,7 @@ describe("GroqLlamaAdapter", () => {
   it("enables logprobs only for supported models", async () => {
     const adapter = new GroqLlamaAdapter({
       apiKey: "key",
-      defaultModel: "llama-3.1-8b-instant",
+      defaultModel: "openai/gpt-oss-20b",
     });
     const fetchMock = vi
       .fn()
@@ -119,7 +119,7 @@ describe("GroqLlamaAdapter", () => {
   it("retries on validation failure and returns valid JSON response", async () => {
     const adapter = new GroqLlamaAdapter({
       apiKey: "key",
-      defaultModel: "llama-3.1-8b-instant",
+      defaultModel: "openai/gpt-oss-20b",
     });
     const fetchMock = vi
       .fn()
@@ -151,7 +151,7 @@ describe("GroqLlamaAdapter", () => {
   it("prefixes prefilled JSON responses with opening brace", async () => {
     const adapter = new GroqLlamaAdapter({
       apiKey: "key",
-      defaultModel: "llama-3.1-8b-instant",
+      defaultModel: "openai/gpt-oss-20b",
     });
     global.fetch = vi.fn().mockResolvedValue(
       new Response(

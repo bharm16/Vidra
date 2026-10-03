@@ -34,7 +34,7 @@ and [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketch
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Semantic labeling and suggestions         | Labeled prompt phrases support click-to-enhance and explicit replacement.                                                                                  |
 | Structured optimization                   | One LLM pass emits a cached artifact; deterministic intent and prompt-lint gates finish it. Model-target compilation uses the same artifact.               |
-| Pictures and clips                        | Provider adapters exist for image generation and Wan, Sora, Veo, Kling and Luma video paths; an adapter is not live quality certification.                 |
+| Pictures and clips                        | Image generation and Wan and Veo video paths are offered for free testing; Kling, retired Sora and the incompatible legacy Luma path are excluded.         |
 | Studio generation, editing and transforms | Stable model slugs, capability-based Auto routing and explicit negotiation for an incapable pin. A first turn can edit when a source image already exists. |
 | Cross-mode admission                      | Upload, shown live output and produced studio images share admission, ownership, ancestry and resumable attachment contracts.                              |
 | Camera choice                             | The chosen direction becomes visible words; its depth-backed or fallback illustration is always labeled illustrative.                                      |
@@ -42,19 +42,21 @@ and [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketch
 
 ## Operating policy and verification
 
-The product has no customer-visible credits. Legacy credit/payment machinery
-remains in the repository, and the existing quick-picture and clip HTTP intake
-still reserves credits. This is an unresolved release constraint: [#120](https://github.com/bharm16/Vidra/issues/120)
-chooses bounded free validation or a paid Keep contract; [#123](https://github.com/bharm16/Vidra/issues/123)
-and [#124](https://github.com/bharm16/Vidra/issues/124) implement that policy.
-No release mode or dollar cap is approved by this document. Old credit plans
-are not the active offer.
+The owner selected free testing under [ADR-0023](docs/adr/0023-bounded-free-validation-proposal.md).
+There is no customer-visible credit or checkout requirement. New per-creator
+spending caps and paid Keep are deferred; existing rate limits and sketch/studio
+allowances remain. The shared authorization for additional real-generation
+testing is $10 total. [#124](https://github.com/bharm16/Vidra/issues/124) implements
+free picture/clip HTTP intake and safe job publication.
+Saved projects stay until explicit creator deletion, automatic abandoned-file
+cleanup remains off, and homepage clips are deferred.
 
 Offline replay and emulator/controlled-storage checks establish specific
 contracts. They do not establish that the real browser controls and HTTP
-intake complete a live clip, that creative output meets expectations, or that
+intake complete a live clip, that each provider completes a real request, or that
 the deployed version is accepted. [Current gates and proof limits](docs/audits/2026-10-03-docs-consistency.md)
-remain explicit. Continuity, multi-shot production and broader generation
+remain explicit. This testing phase requires one successful real completion
+per included provider; the owner waived creative quality scoring. Continuity, multi-shot production and broader generation
 economics/resilience remain [deferred](docs/architecture/deferred-work-ledger.md).
 
 ## Quick Start
@@ -86,11 +88,12 @@ quality task matrix evaluates support independently of registration.
 
 **Optimizes prompts AND generates video with** (each has a generation adapter under `server/src/services/video-generation/providers/`):
 
-- **OpenAI Sora 2**
 - **Google Veo 3**
-- **Kling**
-- **Luma Ray 3**
 - **Wan**
+
+Kling is excluded for this testing phase. OpenAI shut down Sora video generation
+on 2026-09-24; its text services remain separate. The legacy Luma adapter is deferred
+until its model/API mismatch is corrected. Historical ids remain readable.
 
 **Optimizes prompts for, without generating:**
 
@@ -273,7 +276,7 @@ npm run arch:check  # Architecture gates (cycles + forbidden imports)
 - ✅ Structured optimization (cached artifact + intent lock + prompt lint)
 - ✅ Semantic span labeling (30+ categories)
 - ✅ Click-to-enhance suggestions
-- ✅ Direct Video Generation (Sora 2, Veo 3, Kling v2.1, Luma Ray 3, Wan 2.2/2.5)
+- ✅ Direct Video Generation (Veo 3, Wan 2.2/2.5; Kling/Luma/Sora excluded this testing phase)
 - ✅ Prompt compilation for Runway Gen-4.5 (prompt target only — no generation adapter)
 - ✅ Video Preview Generation (Wan 2.2)
 - ✅ Image Preview Generation (Flux Schnell)

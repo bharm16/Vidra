@@ -6,6 +6,7 @@ import { clearPendingGenerationIntent } from "../../utils/pendingGenerationInten
 const setControlsMock = vi.fn();
 const generateDraftMock = vi.fn();
 const generateRenderMock = vi.fn();
+const keyframeRenderMock = vi.fn();
 const generateStoryboardMock = vi.fn();
 const saveToHistoryMock = vi.fn();
 const navigateMock = vi.fn();
@@ -192,7 +193,7 @@ vi.mock("@features/generations/hooks/useKeyframeWorkflow", () => ({
       pendingModel: null,
     },
     selectedFrameUrl: null,
-    handleRender: vi.fn(),
+    handleRender: keyframeRenderMock,
     handleApproveKeyframe: vi.fn(),
     handleSkipKeyframe: vi.fn(),
     handleSelectFrame: vi.fn(),
@@ -281,6 +282,29 @@ describe("regression: signed-in generation session promotion", () => {
       }),
     );
     expect(saveToHistoryMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("dispatches a free render at zero credits instead of silently blocking the enabled button", async () => {
+    mockBalance = 0;
+    mockSessionId = "session-remote";
+    mockCurrentPromptDocId = "session-remote";
+    renderHook(() =>
+      useGenerationsRuntime({
+        prompt: mockPrompt,
+        promptVersionId: "version-1",
+        aspectRatio: "16:9",
+        duration: 8,
+        versions: [],
+        onCreateVersionIfNeeded: () => "version-1",
+      }),
+    );
+    const controls = setControlsMock.mock.calls.at(-1)?.[0] as
+      | { onRender?: (model: string) => void }
+      | undefined;
+    act(() => {
+      controls?.onRender?.("google/veo-3");
+    });
+    await waitFor(() => expect(keyframeRenderMock).toHaveBeenCalledTimes(1));
   });
 
   // Regression: the resume effect used to require exact prompt equality

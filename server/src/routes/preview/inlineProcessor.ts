@@ -14,7 +14,7 @@ interface InlineVideoProcessorParams {
   videoGenerationService: NonNullable<
     PreviewRoutesServices["videoGenerationService"]
   >;
-  userCreditService: NonNullable<PreviewRoutesServices["userCreditService"]>;
+  userCreditService?: NonNullable<PreviewRoutesServices["userCreditService"]>;
   storageService?: NonNullable<PreviewRoutesServices["storageService"]> | null;
   /**
    * Session append port. Without it, processVideoJob never persists the
@@ -69,7 +69,7 @@ export function scheduleInlineVideoProcessing({
         jobStore: videoJobStore,
         videoGenerationService: videoGenerationService as never,
         storageService: storageService ?? null,
-        userCreditService,
+        ...(userCreditService ? { userCreditService } : {}),
         ...(sessionService ? { sessionService } : {}),
         workerId,
         leaseMs,
@@ -77,6 +77,12 @@ export function scheduleInlineVideoProcessing({
         refundReason: "inline video preview failed",
         logPrefix: "Inline preview job",
       });
-    })();
+    })().catch((error: unknown) =>
+      logger.error(
+        "Inline clip scheduling/claim failed; durable job remains recoverable",
+        error instanceof Error ? error : undefined,
+        { jobId, workerId },
+      ),
+    );
   }, 300);
 }

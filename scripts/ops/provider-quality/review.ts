@@ -113,6 +113,7 @@ export const ContractReviewInventorySchema = z.object({
     .array(
       z.object({
         id: z.string().min(1),
+        contract: z.enum(["passed", "failed", "not-run"]),
         operation: z.enum([
           "generate",
           "edit",
@@ -131,7 +132,10 @@ export function expectedCreativeReviews(
 ): { taskId: string; pathId: string }[] {
   const report = ContractReviewInventorySchema.parse(input);
   return report.paths
-    .filter((path) => !path.id.includes("invalid-ratio"))
+    .filter(
+      (path) =>
+        path.contract !== "not-run" && !path.id.includes("invalid-ratio"),
+    )
     .map((path) => ({
       pathId: path.id,
       taskId: path.id.includes("incapable-pin")
