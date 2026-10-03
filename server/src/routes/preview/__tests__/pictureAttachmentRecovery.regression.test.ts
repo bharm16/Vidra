@@ -12,6 +12,11 @@ import type {
   OwedTakeAttachmentStore,
 } from "@services/sessions/attachTakeWithOwedTracking";
 import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
+import type { SessionRecord } from "@server/domain/session/types";
+import type { SessionService } from "@services/sessions/SessionService";
+import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
+import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import { InMemoryIdempotencyService } from "../../../../../tests/integration/helpers/cross-mode/boundaryDoubles";
 
 /**
  * ADR-0022 decision 6 (issue #133) — the quick-picture recovery path.
@@ -91,6 +96,25 @@ function makeOwedStore(): OwedTakeAttachmentStore & {
 function makeSessionService() {
   const appended: Record<string, unknown>[] = [];
   const state = { failNext: false, notFound: false };
+  const session: SessionRecord = {
+    id: SESSION,
+    userId: OWNER,
+    status: "active",
+    createdAt: new Date("2026-10-03T00:00:00Z"),
+    updatedAt: new Date("2026-10-03T00:00:00Z"),
+    prompt: {
+      input: "a quiet harbour",
+      output: "a quiet harbour",
+      versions: [
+        {
+          versionId: VERSION,
+          signature: "harbour-version",
+          prompt: "a quiet harbour",
+          timestamp: "2026-10-03T00:00:00Z",
+        },
+      ],
+    },
+  };
   return {
     state,
     appended,
@@ -109,10 +133,26 @@ function makeSessionService() {
         if (state.failNext) throw new Error("firestore unavailable");
         const id = typeof record.id === "string" ? record.id : "";
         if (!appended.some((r) => r.id === id)) appended.push(record);
-        return {};
+        return session;
       },
     ),
-    requireOwnedSession: vi.fn(async () => ({ userId: OWNER })),
+    requireOwnedSession: vi.fn(
+      async (userId: string, sessionId: string): Promise<SessionRecord> => {
+        if (state.notFound || sessionId !== SESSION) {
+          const error = new Error(`Session not found: ${sessionId}`);
+          error.name = "SessionNotFoundError";
+          throw error;
+        }
+        if (userId !== OWNER) throw new Error("Session access denied");
+        return session;
+      },
+    ),
+  } satisfies Pick<
+    SessionService,
+    "appendGenerationToVersion" | "requireOwnedSession"
+  > & {
+    state: typeof state;
+    appended: typeof appended;
   };
 }
 
@@ -120,9 +160,14 @@ function makeImageGenerationService() {
   return {
     generatePreview: vi.fn(async () => ({
       imageUrl: "https://cdn.example.com/pic.png",
-      metadata: { model: "flux-schnell", aspectRatio: "1:1" },
+      metadata: {
+        model: "flux-schnell",
+        aspectRatio: "1:1",
+        duration: 100,
+        generatedAt: "2026-10-03T00:00:00Z",
+      },
     })),
-  };
+  } satisfies Pick<ImageGenerationService, "generatePreview">;
 }
 
 function createApp(deps: {
@@ -147,7 +192,10 @@ function createApp(deps: {
     },
     assetService: null,
     storageService: null,
-    requestIdempotencyService: null,
+    requestIdempotencyService: new InMemoryIdempotencyService() satisfies Pick<
+      RequestIdempotencyService,
+      "claimRequest" | "markCompleted" | "markFailed"
+    >,
     sessionService: deps.sessionService,
     owedTakeAttachmentStore: deps.owedTakeAttachmentStore,
   } as never;
@@ -167,6 +215,7 @@ function createApp(deps: {
 const generate = (app: express.Express) =>
   request(app)
     .post("/generate")
+    .set("Idempotency-Key", "quick-picture-recovery")
     .send({
       prompt: "a quiet harbour",
       sessionId: SESSION,
@@ -218,6 +267,14 @@ describe("regression: quick-picture attachment recovery (issue #133)", () => {
     const made = await generate(app);
     const generationId: string = made.body.data.attachment.generationId;
     expect(imageGenerationService.generatePreview).toHaveBeenCalledTimes(1);
+
+    // A repeated generation request after the lost response replays the same
+    // failed attachment, rather than paying for a second picture.
+    const replayed = await generate(app);
+    expect(replayed.status).toBe(200);
+    expect(replayed.body).toEqual(made.body);
+    expect(imageGenerationService.generatePreview).toHaveBeenCalledTimes(1);
+    expect(owedStore.docs.size).toBe(1);
 
     // Reload: the client discovers what the session is owed.
     const found = await request(app)

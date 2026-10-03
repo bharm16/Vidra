@@ -8,6 +8,7 @@
  * frame — replacing the fake `deps.llm.record(...)` calls in the drivers.
  */
 
+import { DEFAULT_GROQ_MODEL } from "../../../server/src/config/llmModelDefaults";
 import { LLMClient } from "../../../server/src/clients/LLMClient.js";
 import { DEFAULT_QWEN_MODEL } from "../../../server/src/config/modelConfig.js";
 import { GeminiAdapter } from "../../../server/src/clients/adapters/GeminiAdapter.js";
@@ -34,7 +35,7 @@ const DEFAULTS = {
   qwenTimeout: 10000,
   geminiTimeout: 30000,
   openAIModel: "gpt-4o-mini",
-  groqModel: "llama-3.1-8b-instant",
+  groqModel: DEFAULT_GROQ_MODEL,
   qwenModel: DEFAULT_QWEN_MODEL,
   geminiModel: "gemini-2.5-flash",
   geminiBaseURL: "https://generativelanguage.googleapis.com/v1beta",

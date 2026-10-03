@@ -1,5 +1,6 @@
 import { AIModelService } from "../../server/src/services/ai-model/AIModelService.js";
 import { ModelConfig } from "../../server/src/config/modelConfig.js";
+import { DEFAULT_GROQ_MODEL } from "../../server/src/config/llmModelDefaults";
 import { GroqLlamaAdapter } from "../../server/src/clients/adapters/GroqLlamaAdapter.js";
 import { OpenAICompatibleAdapter } from "../../server/src/clients/adapters/OpenAICompatibleAdapter.js";
 
@@ -37,7 +38,7 @@ export function createGoldenSetAIService(
   // write here cannot change that snapshot. Pin this CLI-owned operation itself.
   const model =
     provider === "groq"
-      ? env.GROQ_MODEL || "llama-3.1-8b-instant"
+      ? env.GROQ_MODEL || DEFAULT_GROQ_MODEL
       : env.OPENAI_MODEL || "gpt-4o-mini";
   ModelConfig.span_labeling = {
     ...ModelConfig.span_labeling,

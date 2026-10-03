@@ -13,6 +13,7 @@
  * should match or beat it, closing the negation/synonym/inflection blind spots
  * the regex structurally missed.
  */
+import { DEFAULT_GROQ_MODEL } from "../../server/src/config/llmModelDefaults";
 import { config as loadEnv } from "dotenv";
 import { AIModelService } from "../../server/src/services/ai-model/AIModelService.js";
 import type { ClientsMap } from "../../server/src/services/ai-model/types.js";
@@ -91,7 +92,7 @@ function createAIService(): AIModelService {
     clients.groq = new OpenAICompatibleAdapter({
       apiKey: process.env.GROQ_API_KEY,
       baseURL: groqBaseURL,
-      defaultModel: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+      defaultModel: process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL,
       defaultTimeout: groqTimeoutMs,
       providerName: "groq",
     });

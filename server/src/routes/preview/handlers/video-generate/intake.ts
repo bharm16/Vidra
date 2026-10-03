@@ -1,4 +1,5 @@
 import { VIDEO_MODELS } from "@config/modelConfig";
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import { resolveModelId as resolveCapabilityModelId } from "@services/capabilities/modelProviders";
 import type { ILogger } from "@interfaces/ILogger";
@@ -10,28 +11,13 @@ import {
   buildVideoRequestPlan,
   createModelUnavailableError,
 } from "./requestPlan";
-import { runVideoPreprocessing } from "./preprocessing";
-import { createVideoRefundManager } from "./refundManager";
 import type { VideoErrorResult, VideoGenerateServices } from "./types";
-
-const hasStatusCode = (value: unknown): value is { statusCode: number } => {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  if (!("statusCode" in value)) {
-    return false;
-  }
-  const statusCode = (value as { statusCode?: unknown }).statusCode;
-  return typeof statusCode === "number" && Number.isFinite(statusCode);
-};
 
 export interface VideoGenerateIntakeArgs {
   payload: VideoRequestPayload;
   userId: string;
   requestId?: string | undefined;
-  /** Prompt after stripping AND @-trigger resolution (overrides payload.prompt). */
   cleanedPrompt: string;
-  /** Character asset after @-trigger resolution (overrides payload.characterAssetId). */
   characterAssetId?: string | undefined;
   autoKeyframe: boolean;
   faceSwapAlreadyApplied: boolean;
@@ -42,387 +28,211 @@ export interface VideoGenerateIntakeArgs {
       VideoGenerateServices["videoGenerationService"]
     >;
     videoJobStore: NonNullable<VideoGenerateServices["videoJobStore"]>;
-    userCreditService: NonNullable<VideoGenerateServices["userCreditService"]>;
-    keyframeService: VideoGenerateServices["keyframeService"];
-    faceSwapService: VideoGenerateServices["faceSwapService"];
-    assetService: VideoGenerateServices["assetService"];
     storageService: VideoGenerateServices["storageService"];
     sessionService: VideoGenerateServices["sessionService"];
   };
-  idempotencyRecordId: string | null;
-  requestIdempotencyService: VideoGenerateServices["requestIdempotencyService"];
+  idempotencyRecordId: string;
+  idempotencyKey: string;
+  requestIdempotencyService: NonNullable<
+    VideoGenerateServices["requestIdempotencyService"]
+  >;
   log: ILogger;
 }
-
 export type VideoGenerateIntakeResult =
   | { ok: true; status: 202; body: Record<string, unknown> }
-  | { ok: false; error: VideoErrorResult };
+  | { ok: false; error: VideoErrorResult; retainClaim?: true };
 
-/**
- * Video-generation intake — owns the credit-bearing business workflow:
- * preprocessing, model-availability gating, request-plan construction, and the
- * atomic job + credit reservation, together with the compensating refunds that
- * keep the credit ledger correct on every failure path. Every failure returns a
- * uniform {@link VideoErrorResult} (with refunds already issued) so the HTTP
- * route can translate them identically; success returns the 202 body.
- *
- * The route owns request parsing, URL safety, auth, and the idempotency lock
- * release (markFailed). markCompleted is recorded HERE on success because the
- * snapshot it stores IS the response body assembled in this workflow.
- */
+/** ADR-0023 / #124: free active intake; existing paid preprocessing stays frozen. */
 export async function runVideoGenerateIntake(
   args: VideoGenerateIntakeArgs,
 ): Promise<VideoGenerateIntakeResult> {
+  const { payload, userId, requestId, cleanedPrompt, services, log } = args;
   const {
-    payload,
-    userId,
-    requestId,
-    cleanedPrompt,
-    autoKeyframe,
-    faceSwapAlreadyApplied,
-    promptWasStripped,
-    rawMotionMeta,
-    services: {
-      videoGenerationService,
-      videoJobStore,
-      userCreditService,
-      keyframeService,
-      faceSwapService,
-      assetService,
-      storageService,
-      sessionService,
-    },
-    idempotencyRecordId,
-    requestIdempotencyService,
-    log,
-  } = args;
-
+    videoGenerationService,
+    videoJobStore,
+    storageService,
+    sessionService,
+  } = services;
   const {
-    aspectRatio,
     model,
     startImage,
+    inputReference,
     endImage,
     referenceImages,
     extendVideoUrl,
-    inputReference,
     generationParams,
-    sessionId: requestedSessionId,
-    promptVersionId: requestedPromptVersionId,
-    sourceGenerationId: requestedSourceGenerationId,
+    aspectRatio,
   } = payload;
-
-  let characterAssetId = args.characterAssetId;
-
-  const refunds = createVideoRefundManager({
-    userCreditService,
-    userId,
-    requestId,
-    cleanedPrompt,
-    model,
-  });
-
-  const preprocessing = await runVideoPreprocessing({
-    requestId,
-    userId,
-    startImage,
-    characterAssetId,
-    autoKeyframe,
-    faceSwapAlreadyApplied,
-    aspectRatio,
-    cleanedPrompt,
-    services: {
-      userCreditService,
-      keyframeService,
-      faceSwapService,
-      assetService,
-    },
-    refunds,
-    log,
-  });
-
-  if (preprocessing.error) {
-    return { ok: false, error: preprocessing.error };
-  }
-
-  const resolvedStartImage = preprocessing.resolvedStartImage;
-  const generatedKeyframeUrl = preprocessing.generatedKeyframeUrl;
-  const swappedImageUrl = preprocessing.swappedImageUrl;
-  characterAssetId = preprocessing.characterAssetId;
-
-  const availability = videoGenerationService.getModelAvailability(model);
-  if (!availability.available) {
-    await refunds.refundKeyframeCredits(
-      "video model unavailable after keyframe reservation",
-    );
-    await refunds.refundFaceSwapCredits(
-      "video model unavailable after face-swap reservation",
-    );
-
-    const snapshot = videoGenerationService.getAvailabilitySnapshot(
-      Object.values(VIDEO_MODELS) as VideoModelId[],
-    );
-    const availableCapabilityModels = Array.from(
-      new Set(
-        snapshot.availableModelIds
-          .map((modelId) => resolveCapabilityModelId(modelId))
-          .filter(
-            (modelId): modelId is string =>
-              typeof modelId === "string" && modelId.length > 0,
-          ),
-      ),
-    );
-
-    const unavailable = createModelUnavailableError({
-      availability,
-      availableModelIds: snapshot.availableModelIds,
-      availableCapabilityModels,
-    });
-    return { ok: false, error: unavailable };
-  }
-
-  const operation = "generateVideo";
-  const costModel = availability.resolvedModelId || model;
-
-  const planResult = buildVideoRequestPlan({
-    generationParams,
-    model,
-    operation,
-    requestId: requestId || "unknown",
-    userId,
-    costModel,
-    cleanedPrompt,
-    resolvedStartImage,
-    inputReference,
-    endImage,
-    referenceImages,
-    extendVideoUrl,
-    aspectRatio,
-    characterAssetId,
-    faceSwapAlreadyApplied,
-    swappedImageUrl,
-  });
-
-  if (!planResult.ok) {
-    await refunds.refundKeyframeCredits(
-      "video request normalization failed after keyframe reservation",
-    );
-    await refunds.refundFaceSwapCredits(
-      "video request normalization failed after face-swap reservation",
-    );
-    return { ok: false, error: planResult.error };
-  }
-
-  const plan = planResult.value;
-
-  log.info("Resolved motion context for video generation", {
-    operation: "resolveMotionContext",
-    requestId,
-    userId,
-    hasStartImage: Boolean(resolvedStartImage),
-    hasInputReference: Boolean(inputReference),
-    isI2VRequest: Boolean(resolvedStartImage || inputReference),
-    rawHasCameraMotion: rawMotionMeta.hasCameraMotion,
-    rawCameraMotionId: rawMotionMeta.cameraMotionId,
-    rawHasSubjectMotion: rawMotionMeta.hasSubjectMotion,
-    rawSubjectMotionLength: rawMotionMeta.subjectMotionLength,
-    normalizedHasCameraMotion: plan.normalizedMotionMeta.hasCameraMotion,
-    normalizedCameraMotionId: plan.normalizedMotionMeta.cameraMotionId,
-    normalizedHasSubjectMotion: plan.normalizedMotionMeta.hasSubjectMotion,
-    normalizedSubjectMotionLength:
-      plan.normalizedMotionMeta.subjectMotionLength,
-    resolvedCameraMotionId: plan.motionContext.cameraMotionId,
-    resolvedCameraMotionText: plan.motionContext.cameraMotionText,
-    resolvedSubjectMotionLength: plan.motionContext.subjectMotion?.length ?? 0,
-  });
-
-  log.debug("Queueing operation.", {
-    operation,
-    requestId,
-    userId,
-    promptLength: cleanedPrompt.length,
-    promptWasStripped,
-    aspectRatio,
-    model,
-    videoCost: refunds.ledger.videoCost,
-    keyframeCost: refunds.ledger.keyframeCost,
-    faceSwapCost: refunds.ledger.faceSwapCost,
-    totalCost:
-      refunds.ledger.videoCost +
-      refunds.ledger.keyframeCost +
-      refunds.ledger.faceSwapCost,
-    usedKeyframe: Boolean(generatedKeyframeUrl),
-    faceSwapApplied: Boolean(swappedImageUrl),
-    hasCameraMotion: Boolean(plan.motionContext.cameraMotionId),
-    cameraMotionId: plan.motionContext.cameraMotionId,
-    hasSubjectMotion: Boolean(plan.motionContext.subjectMotion),
-    subjectMotionLength: plan.motionContext.subjectMotion?.length ?? 0,
-  });
-
-  try {
-    const reservationResult = await videoJobStore.createJobWithReservation(
-      {
-        userId,
-        ...(requestId ? { requestId } : {}),
-        ...(requestedSessionId ? { sessionId: requestedSessionId } : {}),
-        ...(requestedPromptVersionId
-          ? { promptVersionId: requestedPromptVersionId }
-          : {}),
-        ...(requestedSourceGenerationId
-          ? { sourceGenerationId: requestedSourceGenerationId }
-          : {}),
-        request: {
-          prompt: cleanedPrompt,
-          options: plan.options,
-        },
-        creditsReserved: plan.videoCost,
-      },
-      { creditService: userCreditService, cost: plan.videoCost },
-    );
-
-    if (!reservationResult.reserved) {
-      const userFacingReason =
-        reservationResult.reason === "user_not_found"
-          ? "user not found"
-          : "insufficient";
-      await refunds.refundKeyframeCredits(
-        `video credits ${userFacingReason} after keyframe reservation`,
-      );
-      await refunds.refundFaceSwapCredits(
-        `video credits ${userFacingReason} after face-swap reservation`,
-      );
-      const preprocessingCost =
-        refunds.ledger.keyframeCost + refunds.ledger.faceSwapCost;
-      return {
-        ok: false,
-        error: {
-          status: 402,
-          payload: {
-            error:
-              reservationResult.reason === "user_not_found"
-                ? "User not found"
-                : "Insufficient credits",
-            code: GENERATION_ERROR_CODES.INSUFFICIENT_CREDITS,
-            details: `This generation requires ${plan.videoCost} credits${preprocessingCost > 0 ? ` (plus ${preprocessingCost} already reserved for preprocessing)` : ""}.`,
-          },
-        },
-      };
-    }
-
-    refunds.setVideoCost(plan.videoCost);
-    const job = reservationResult.job;
-
-    log.info("Operation queued.", {
-      operation,
-      requestId,
-      userId,
-      jobId: job.id,
-      videoCost: refunds.ledger.videoCost,
-      keyframeCost: refunds.ledger.keyframeCost,
-      faceSwapCost: refunds.ledger.faceSwapCost,
-      keyframeUrl: generatedKeyframeUrl,
-      faceSwapUrl: swappedImageUrl,
-      hasCameraMotion: Boolean(plan.motionContext.cameraMotionId),
-      cameraMotionId: plan.motionContext.cameraMotionId,
-      hasSubjectMotion: Boolean(plan.motionContext.subjectMotion),
-      subjectMotionLength: plan.motionContext.subjectMotion?.length ?? 0,
-    });
-
-    scheduleInlineVideoProcessing({
-      jobId: job.id,
-      ...(requestId ? { requestId } : {}),
-      videoJobStore,
-      videoGenerationService,
-      userCreditService,
-      storageService: storageService ?? null,
-      sessionService: sessionService ?? null,
-    });
-
-    // No `typeof === "function"` guard: `userCreditService` satisfies the
-    // RouteCreditService port (DI resolves the concrete UserCreditService),
-    // and the route's null-checks gate this branch — so `getBalance` is
-    // statically guaranteed to exist.
-    let remainingCredits: number | null = null;
-    try {
-      remainingCredits = await userCreditService.getBalance(userId);
-    } catch (error) {
-      log.warn("Failed to resolve remaining credits after video reservation.", {
-        operation,
-        requestId,
-        userId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-
-    const responsePayload = {
-      jobId: job.id,
-      status: job.status,
-      creditsReserved: refunds.ledger.videoCost,
-      creditsDeducted:
-        refunds.ledger.videoCost +
-        refunds.ledger.keyframeCost +
-        refunds.ledger.faceSwapCost,
-      ...(typeof remainingCredits === "number" ? { remainingCredits } : {}),
-      keyframeGenerated: Boolean(generatedKeyframeUrl),
-      keyframeUrl: generatedKeyframeUrl,
-      faceSwapApplied: Boolean(swappedImageUrl),
-      faceSwapUrl: swappedImageUrl,
-    };
-
-    const responseBody = {
-      success: true,
-      data: responsePayload,
-      ...responsePayload,
-    } as Record<string, unknown>;
-
-    if (idempotencyRecordId && requestIdempotencyService) {
-      await requestIdempotencyService.markCompleted({
-        recordId: idempotencyRecordId,
-        jobId: job.id,
-        snapshot: {
-          statusCode: 202,
-          body: responseBody,
-        },
-      });
-    }
-
-    return { ok: true, status: 202, body: responseBody };
-  } catch (error: unknown) {
-    await refunds.refundVideoCredits("video queueing failed");
-    await refunds.refundKeyframeCredits(
-      "video queueing failed after keyframe reservation",
-    );
-    await refunds.refundFaceSwapCredits(
-      "video queueing failed after face-swap reservation",
-    );
-
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const statusCode = hasStatusCode(error) ? error.statusCode : 500;
-    const errorInstance =
-      error instanceof Error ? error : new Error(errorMessage);
-    const code =
-      statusCode === 503
-        ? GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE
-        : GENERATION_ERROR_CODES.GENERATION_FAILED;
-
-    log.error("Operation failed.", errorInstance, {
-      operation,
-      requestId,
-      userId,
-      refundAmount:
-        refunds.ledger.videoCost +
-        refunds.ledger.keyframeCost +
-        refunds.ledger.faceSwapCost,
-      statusCode,
-    });
-
+  if (model && !isReleaseGenerationModelSupported(model))
     return {
       ok: false,
       error: {
-        status: statusCode,
+        status: 400,
         payload: {
-          error: "Video generation failed",
-          code,
-          details: errorMessage,
+          error: "Requested model is excluded from this release",
+          code: GENERATION_ERROR_CODES.INVALID_REQUEST,
+        },
+      },
+    };
+  if (
+    args.characterAssetId &&
+    ((startImage && !args.faceSwapAlreadyApplied) ||
+      (!startImage && args.autoKeyframe))
+  )
+    return {
+      ok: false,
+      error: {
+        status: 400,
+        payload: {
+          error:
+            "Automatic character keyframes and face swap are not available in free validation",
+          code: GENERATION_ERROR_CODES.INVALID_REQUEST,
+          details:
+            "Use an already supplied first frame or plain prompt; the consistency stack remains frozen.",
+        },
+      },
+    };
+  const availability = videoGenerationService.getModelAvailability(model);
+  if (
+    !availability.available ||
+    (availability.resolvedModelId &&
+      !isReleaseGenerationModelSupported(availability.resolvedModelId))
+  ) {
+    const snapshot = videoGenerationService.getAvailabilitySnapshot(
+      Object.values(VIDEO_MODELS) as VideoModelId[],
+    );
+    return {
+      ok: false,
+      error: createModelUnavailableError({
+        availability,
+        availableModelIds: snapshot.availableModelIds.filter(
+          isReleaseGenerationModelSupported,
+        ),
+        availableCapabilityModels: [
+          ...new Set(
+            snapshot.availableModelIds
+              .filter(isReleaseGenerationModelSupported)
+              .map(resolveCapabilityModelId)
+              .filter(
+                (id): id is string => typeof id === "string" && id.length > 0,
+              ),
+          ),
+        ],
+      }),
+    };
+  }
+  const resolvedModel = availability.resolvedModelId || model;
+  const planResult = buildVideoRequestPlan({
+    generationParams,
+    model: resolvedModel,
+    operation: "generateVideo",
+    requestId: requestId || "unknown",
+    userId,
+    costModel: resolvedModel,
+    cleanedPrompt,
+    resolvedStartImage: startImage,
+    inputReference,
+    endImage,
+    referenceImages,
+    extendVideoUrl,
+    aspectRatio,
+    characterAssetId: args.characterAssetId,
+    faceSwapAlreadyApplied: args.faceSwapAlreadyApplied,
+    swappedImageUrl: null,
+  });
+  if (!planResult.ok) return { ok: false, error: planResult.error };
+
+  try {
+    const published = await videoJobStore.createJobWithReceipt(
+      {
+        userId,
+        ...(requestId ? { requestId } : {}),
+        ...(payload.sessionId ? { sessionId: payload.sessionId } : {}),
+        ...(payload.promptVersionId
+          ? { promptVersionId: payload.promptVersionId }
+          : {}),
+        ...(payload.sourceGenerationId
+          ? { sourceGenerationId: payload.sourceGenerationId }
+          : {}),
+        request: { prompt: cleanedPrompt, options: planResult.value.options },
+        creditsReserved: 0,
+      },
+      {
+        idempotency: args.requestIdempotencyService,
+        recordId: args.idempotencyRecordId,
+        buildSnapshot: (job) => {
+          const data = {
+            jobId: job.id,
+            status: job.status,
+            keyframeGenerated: false,
+            keyframeUrl: null,
+            faceSwapApplied: Boolean(args.faceSwapAlreadyApplied && startImage),
+            faceSwapUrl: args.faceSwapAlreadyApplied
+              ? (startImage ?? null)
+              : null,
+          };
+          return { statusCode: 202, body: { success: true, data, ...data } };
+        },
+      },
+    );
+    // Publication is committed. A scheduling failure cannot release its claim
+    // or refund/recreate the accepted job; the existing queue remains recoverable.
+    try {
+      scheduleInlineVideoProcessing({
+        jobId: published.job.id,
+        ...(requestId ? { requestId } : {}),
+        videoJobStore,
+        videoGenerationService,
+        storageService: storageService ?? null,
+        sessionService: sessionService ?? null,
+      });
+    } catch (error) {
+      log.warn(
+        "Free clip accepted; inline scheduling failed, durable job remains queued",
+        {
+          jobId: published.job.id,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+    }
+    return { ok: true, status: 202, body: published.snapshot.body };
+  } catch (error) {
+    // An ambiguous transaction outcome must not mark a completed claim failed.
+    // Preserve its lock; a replay can discover a committed receipt safely.
+    const receipt = await args.requestIdempotencyService.getResponseSnapshot({
+      userId,
+      route: "/api/preview/video/generate",
+      key: args.idempotencyKey,
+    });
+    if (receipt?.statusCode === 202 && typeof receipt.body.jobId === "string") {
+      try {
+        scheduleInlineVideoProcessing({
+          jobId: receipt.body.jobId,
+          videoJobStore,
+          videoGenerationService,
+          storageService: storageService ?? null,
+          sessionService: sessionService ?? null,
+        });
+      } catch {
+        /* Durable receipt remains replayable even if inline scheduling is unavailable. */
+      }
+      return { ok: true, status: 202, body: receipt.body };
+    }
+    log.error(
+      "Free clip publication failed",
+      error instanceof Error ? error : undefined,
+      { userId, requestId },
+    );
+    return {
+      ok: false,
+      retainClaim: true,
+      error: {
+        status: 503,
+        payload: {
+          error: "Video intake could not confirm durable publication",
+          code: GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
+          details:
+            "Retry this request with the same idempotency key; no new job will be scheduled without its receipt.",
         },
       },
     };

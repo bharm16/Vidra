@@ -1,7 +1,10 @@
 # Admission media lifecycle and dry-run inventory (#137)
 
-**Status:** Copy isolation and inspection implemented. Cleanup disabled. Retention
-period and permission to enable deletion remain an owner decision.
+**Status:** Copy isolation and inspection implemented. Cleanup disabled by the
+2026-10-03 testing policy in [ADR-0023](../adr/0023-bounded-free-validation-proposal.md).
+Owner approval on 2026-10-03: keep saved projects until the creator explicitly
+deletes them; leave automatic deletion off. Retention periods for abandoned
+uploads are deferred and do not block testing.
 
 ADR-0022 decisions 4–6 govern copies and resumable admissions. This document does
 not reopen the frozen retention workers in ADR-0002.
@@ -66,9 +69,15 @@ exits 2 rather than reporting verified abandonment. The example report under
 `docs/architecture/examples/` uses synthetic data and demonstrates the format;
 it is not a production inventory or a live-adapter qualification.
 
-## Retention decision still needed
+## Current decision: no automatic deletion
 
-Do not enable age-based cleanup. Before any deletion capability is added, the
+Saved projects have no inactivity expiry: they remain until the creator
+explicitly deletes them. This decision does not add a trash/recovery interface;
+current record deletion and independently accepted-copy behavior stay as tested.
+
+For this testing phase, keep abandoned objects and report candidates without
+deleting them. Do not remove saved work just because it has not been opened.
+Before any deletion capability is added, the
 owner must choose the retention/recovery window and the eligible namespaces.
 A future deletion must re-read current references and in-flight admissions,
 prove the object was created before the scan, and use the exact inventoried

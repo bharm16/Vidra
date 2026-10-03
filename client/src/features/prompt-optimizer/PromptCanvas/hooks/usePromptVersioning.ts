@@ -413,6 +413,20 @@ export function usePromptVersioning({
   const syncVersionGenerations = useCallback(
     (generations: Generation[]): void => {
       if (!currentPromptUuid) return;
+      // The video worker establishes a job-backed clip's immutable take facts.
+      // Saving a local progress record under that id first blocks attachment
+      // when the worker later supplies the completed status and timestamp.
+      // Progress (including the provisional id before HTTP acceptance) stays
+      // local; existing server takes are preserved by the merge below.
+      const writableGenerations = generations.filter(
+        (generation) =>
+          generation.mediaType !== "video" ||
+          (!generation.jobId &&
+            !generation.serverJobStatus &&
+            generation.status !== "pending" &&
+            generation.status !== "generating"),
+      );
+      if (writableGenerations.length === 0) return;
       // Previously bailed here when the history entry hadn't hydrated yet
       // (common during draft→persisted transition): saveToHistory returns
       // the new uuid before the local history array has refreshed, so
@@ -423,7 +437,7 @@ export function usePromptVersioning({
 
       let versions = currentVersionsRef.current;
       if (!versions.length) {
-        const seedSource = [...generations]
+        const seedSource = [...writableGenerations]
           .reverse()
           .find(
             (generation) =>
@@ -453,7 +467,7 @@ export function usePromptVersioning({
       // preferring the more complete record for each generation.
       const mergedGenerations = mergeGenerationsById(
         target.generations,
-        generations,
+        writableGenerations,
       );
 
       // Extract thumbnail from the merged set (includes all completed generations)

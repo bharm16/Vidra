@@ -1,4 +1,5 @@
 import { resolveGenerationModelSelection } from "@config/videoModelRegistry";
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import type {
   VideoAvailabilitySnapshot,
   VideoModelAvailability,
@@ -156,6 +157,18 @@ export function getModelAvailability(
     supportsImageInput: capabilityInfo.supportsImageInput,
     supportsI2V: capabilityInfo.supportsImageInput,
   };
+
+  if (!isReleaseGenerationModelSupported(resolvedId)) {
+    return {
+      ...base,
+      available: false,
+      reason: "unsupported_model",
+      statusCode: 400,
+      message: "This video model is not offered during free testing.",
+      entitled: false,
+      planTier: "unknown",
+    };
+  }
 
   if (!isAvailable) {
     return {

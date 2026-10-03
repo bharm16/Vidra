@@ -7,6 +7,7 @@
  * Run with: npm run verify-keys
  */
 
+import { DEFAULT_GROQ_MODEL } from "../server/src/config/llmModelDefaults";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -146,7 +147,7 @@ async function testGroqKey() {
       log.success("Groq API key is valid", { modelCount: data.data.length });
 
       // Check if the configured model is available
-      const configuredModel = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+      const configuredModel = process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL;
       const modelAvailable = data.data.some((m) => m.id === configuredModel);
 
       if (modelAvailable) {
@@ -257,7 +258,7 @@ async function testResponseTimes() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+            model: process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL,
             messages: [
               { role: "system", content: 'Respond with just the word "test"' },
               { role: "user", content: "Test" },
@@ -286,7 +287,6 @@ async function testResponseTimes() {
     }
   }
 }
-
 
 /**
  * Test Gemini API Key (GEMINI_API_KEY, falling back to GOOGLE_API_KEY —
@@ -462,7 +462,9 @@ ${colors.reset}`);
   if (failed.length === 0) {
     log.success("All provider credentials are valid and working! ✨");
   } else {
-    log.warning(`Providers with missing/invalid credentials: ${failed.join(", ")}`);
+    log.warning(
+      `Providers with missing/invalid credentials: ${failed.join(", ")}`,
+    );
     log.info(
       "Surfaces routed to those providers will fail — the LLM failover chain covers OpenAI/Groq/Gemini, but image (Replicate), the live editor (fal), and renders (Luma/Kling) have no fallback.",
     );

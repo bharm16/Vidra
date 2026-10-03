@@ -8,7 +8,11 @@ type MediaKind = "image" | "video";
 
 type MediaReferenceViewServices = Pick<
   PreviewRoutesServices,
-  "imageGenerationService" | "videoGenerationService" | "videoJobStore" | "storageService"
+  | "imageGenerationService"
+  | "videoGenerationService"
+  | "videoJobStore"
+  | "storageService"
+  | "ownedPictureResolver"
 >;
 
 function isStorageReference(reference: string): boolean {
@@ -26,6 +30,7 @@ export const createMediaReferenceViewHandler =
     videoGenerationService,
     videoJobStore,
     storageService,
+    ownedPictureResolver,
   }: MediaReferenceViewServices) =>
   async (
     req: Request,
@@ -59,6 +64,35 @@ export const createMediaReferenceViewHandler =
       return res.status(400).json({
         success: false,
         error: "kind must be image or video",
+      });
+    }
+
+    // Admitted pictures live in the image-asset store. Generic owned-media
+    // signing deliberately accepts only opaque refs and users/<uid>/ paths.
+    if (
+      kind === "image" &&
+      reference.includes("/") &&
+      !reference.startsWith("users/") &&
+      !isOwnedMediaReference(reference)
+    ) {
+      if (!ownedPictureResolver) {
+        return res.status(503).json({
+          success: false,
+          error: "Picture resolver is not available",
+        });
+      }
+      const picture = await ownedPictureResolver.resolveOwnedPicture(userId, {
+        storagePath: reference,
+      });
+      if (!picture) {
+        return res.status(404).json({
+          success: false,
+          error: "Image asset not found",
+        });
+      }
+      return res.json({
+        success: true,
+        data: { viewUrl: picture.viewUrl, source: "preview" },
       });
     }
 

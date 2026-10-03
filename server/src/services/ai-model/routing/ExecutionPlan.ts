@@ -1,4 +1,5 @@
 import { logger } from "@infrastructure/Logger";
+import { DEFAULT_GROQ_MODEL } from "@config/llmModelDefaults";
 import {
   ModelConfig,
   DEFAULT_CONFIG,
@@ -13,7 +14,7 @@ const DEFAULT_FALLBACK_ORDER = ["openai", "groq", "gemini", "qwen"] as const;
 
 let providerSettings: Record<string, { model: string; timeout: number }> = {
   openai: { model: DEFAULT_CONFIG.model, timeout: DEFAULT_CONFIG.timeout },
-  groq: { model: "llama-3.1-8b-instant", timeout: 5000 },
+  groq: { model: DEFAULT_GROQ_MODEL, timeout: 5000 },
   qwen: { model: DEFAULT_QWEN_MODEL, timeout: 10000 },
   gemini: { model: "gemini-2.5-flash", timeout: 30000 },
 };

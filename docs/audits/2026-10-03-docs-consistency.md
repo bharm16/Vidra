@@ -46,20 +46,42 @@ authorize deletion. Actual configured base paths and buckets override defaults.
 GitHub issue states and #146's live `dependencies/blocked_by` edges were
 read on 2026-10-03. Closed issues are not a replacement for their scoped evidence.
 
-| Ticket                                                                  | Observed state                               | Remaining implication                                                                                                                                                                      |
-| ----------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [#118](https://github.com/bharm16/Vidra/issues/118) vector storage      | Closed                                       | Raster-only first-frame admission and explicit SVG refusal stay intact.                                                                                                                    |
-| [#142](https://github.com/bharm16/Vidra/issues/142) real adapters       | Closed                                       | Local Firestore/Auth emulator and controlled conformance-bucket proof is recorded in the [media lifecycle](../architecture/admission-media-lifecycle.md); this is not deployed acceptance. |
-| [#120](https://github.com/bharm16/Vidra/issues/120) operating policy    | Open; owner decision                         | Free-validation versus paid Keep and dollar bounds remain unapproved. Skipping this ticket does not select a mode.                                                                         |
-| [#124](https://github.com/bharm16/Vidra/issues/124) HTTP intake         | Open; depends on #120/#123                   | The active picture/clip intake still reserves credits. Replay bypassing intake does not demonstrate this acceptance.                                                                       |
-| [#141](https://github.com/bharm16/Vidra/issues/141) browser walkthrough | Open; includes #124 dependency               | Actual controls, submitted payload, navigation and listed recovery failures still need browser proof.                                                                                      |
-| [#143](https://github.com/bharm16/Vidra/issues/143) real clip and depth | Open; depends on #124/#136/#141/#142/#140    | A playable live clip, durable reopen/download, both picker depth states and authorized spend remain required.                                                                              |
-| [#144](https://github.com/bharm16/Vidra/issues/144) quality             | Open; depends on #140/#143                   | Harness/task preparation does not provide owner-reviewed creative results. Groq selection remains a separate #106 gate.                                                                    |
-| [#65](https://github.com/bharm16/Vidra/issues/65) all-shells review     | Open; current pass depends on #134/#135/#141 | The July walkthrough stays historical; current studio/editor/bridge/recovery/camera inspection and owner sign-off remain required.                                                         |
-| [#137](https://github.com/bharm16/Vidra/issues/137) lifecycle           | Open; retention decision remains             | Copy-isolation tests and dry-run tools exist. No production inventory or authorized cleanup is claimed.                                                                                    |
-| [#145](https://github.com/bharm16/Vidra/issues/145) deployment/recovery | Open                                         | Production access denial, deployment configuration, rollback and recovery evidence require the deployed version.                                                                           |
+| Ticket                                                                  | Observed state                               | Remaining implication                                                                                                                                                                                                                           |
+| ----------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#118](https://github.com/bharm16/Vidra/issues/118) vector storage      | Closed                                       | Raster-only first-frame admission and explicit SVG refusal stay intact.                                                                                                                                                                         |
+| [#142](https://github.com/bharm16/Vidra/issues/142) real adapters       | Closed                                       | Local Firestore/Auth emulator and controlled conformance-bucket proof is recorded in the [media lifecycle](../architecture/admission-media-lifecycle.md); this is not deployed acceptance.                                                      |
+| [#120](https://github.com/bharm16/Vidra/issues/120) operating policy    | Open in tracker; decision accepted           | ADR-0023 records free testing, $10 shared live-test allowance and explicitly deferred creator caps.                                                                                                                                             |
+| [#124](https://github.com/bharm16/Vidra/issues/124) HTTP intake         | Open in tracker; implementation verified     | The owner removed the #123 dependency for free testing. Free HTTP picture/clip tests and atomic publication pass; the live Wan intake also attached, reopened and downloaded.                                                                   |
+| [#141](https://github.com/bharm16/Vidra/issues/141) browser walkthrough | Open; includes #124 dependency               | All 10 actual-controls cases pass, including payload, recovery, concurrency, playback/reload and both depth states; providers/storage are controlled.                                                                                           |
+| [#143](https://github.com/bharm16/Vidra/issues/143) real clip and depth | Open; depends on #124/#136/#141/#142/#140    | A playable live clip, durable reopen/download, both picker depth states and authorized spend remain required.                                                                                                                                   |
+| [#144](https://github.com/bharm16/Vidra/issues/144) quality             | Open; depends on #140/#143                   | Owner now requires one real completion per included provider and explicitly declines quality scoring. Live fal, Wan, Veo and OpenAI completions are recorded; Groq completed separately. Quality grading was waived, not represented as passed. |
+| [#65](https://github.com/bharm16/Vidra/issues/65) all-shells review     | Open; current pass depends on #134/#135/#141 | The July walkthrough stays historical; current studio/editor/bridge/recovery/camera inspection and owner sign-off remain required.                                                                                                              |
+| [#137](https://github.com/bharm16/Vidra/issues/137) lifecycle           | Open in tracker; no-deletion policy accepted | Keep saved projects until explicit deletion; automatic cleanup stays off. Copy-isolation tests and read-only inspection exist; no production inventory or deletion is claimed.                                                                  |
+| [#145](https://github.com/bharm16/Vidra/issues/145) deployment/recovery | Open                                         | Production access denial, deployment configuration, rollback and recovery evidence require the deployed version.                                                                                                                                |
 
 #146's live recorded blockers are #118/#124/#120/#141/#142/#143/#144/#65.
 The two closed prerequisites narrow the remaining gates; they do not remove
-the open policy, browser, live, quality or owner acceptance. This document does
-not close #146 or authorize paid recording/smoke execution.
+the remaining browser, live-provider, deployed or design acceptance checks. This document does
+not close #146. ADR-0023 authorizes up to $10 total additional live provider
+testing; acceptance still needs actual output evidence.
+
+## Owner decisions after the initial tracker snapshot
+
+On 2026-10-03 the owner chose free testing, deferred creator caps, authorized
+$10 total real-generation testing, chose no homepage clips, excluded Kling and
+approved keeping saved projects until explicit deletion with automatic cleanup
+off. Existing local and deployment testing infrastructure remains the test
+environment. Current results are accepted provisionally for continued work; the
+overall design was explicitly rejected. #65 therefore remains open. See
+[ADR-0023](../adr/0023-bounded-free-validation-proposal.md).
+
+At 14:43 CDT the owner narrowed provider acceptance to one successful real
+completion per included provider and waived quality scoring/creative review.
+This supersedes #144's original human-review requirement for this phase.
+
+Final local evidence: the clean cross-mode browser suite passed 10 cases; the
+unchanged original golden-path Tier 1 suite passed three against real services.
+All five commit checks passed with 7,448 unit tests and one skip. The cumulative
+conservative live-test reservation is $4.9491648 of $10, including preserved
+retries. See [the browser audit](2026-10-03-cross-mode-browser.md). Deployed
+rollback/access acceptance and the rejected overall design remain open.

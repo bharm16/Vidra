@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { CreditRefunder } from "@services/credits/ports";
+import type { JobStorageService } from "@services/video-generation/jobs/processVideoJob";
 
 /**
  * Pin for the paid-content durability invariant (owner directive: "a user
@@ -76,7 +78,7 @@ const createClaimedJob = (): VideoJobRecord => ({
   userId: "user-1",
   request: {
     prompt: "a cinematic sunset",
-    options: { model: "sora-2" },
+    options: { model: "veo-3" },
   },
   creditsReserved: 5,
   attempts: 3,
@@ -110,7 +112,11 @@ describe("regression: a paid render either lands durably or the job fails and re
     generateVideo = vi.fn().mockResolvedValue(FAKE_RESULT);
     // Truthy: refundWithGuard returns on the first attempt, so the real guard
     // runs its success path without retry sleeps under fake timers.
-    userCreditService = { refundCredits: vi.fn().mockResolvedValue(true) };
+    userCreditService = {
+      refundCredits: vi
+        .fn<CreditRefunder["refundCredits"]>()
+        .mockResolvedValue(true),
+    } satisfies CreditRefunder;
     jobStore.claimJob.mockResolvedValue(createClaimedJob());
   });
 
@@ -118,9 +124,9 @@ describe("regression: a paid render either lands durably or the job fails and re
     vi.useRealTimers();
   });
 
-  async function invokeProcessor(storageService: {
-    saveFromUrl: ReturnType<typeof vi.fn>;
-  }): Promise<void> {
+  async function invokeProcessor(
+    storageService: JobStorageService,
+  ): Promise<void> {
     const { scheduleInlineVideoProcessing } = await import(
       "../inlineProcessor"
     );
@@ -144,14 +150,21 @@ describe("regression: a paid render either lands durably or the job fails and re
   it("a failed durable copy fails the job and refunds — it never completes against staging", async () => {
     const storageService = {
       saveFromUrl: vi
-        .fn()
+        .fn<JobStorageService["saveFromUrl"]>()
         .mockRejectedValue(new Error("GCS write unavailable")),
-    };
+    } satisfies JobStorageService;
 
     await invokeProcessor(storageService);
 
     // The provider rendered, but the artifact never landed durably — the job
     // must not read as a success the user paid for and cannot keep.
+    expect(generateVideo).toHaveBeenCalledTimes(1);
+    expect(storageService.saveFromUrl).toHaveBeenCalledWith(
+      "user-1",
+      FAKE_RESULT.videoUrl,
+      "generation",
+      expect.any(Object),
+    );
     expect(jobStore.markCompleted).not.toHaveBeenCalled();
     expect(jobStore.markFailed).toHaveBeenCalled();
     expect(userCreditService.refundCredits).toHaveBeenCalledWith(
@@ -163,13 +176,13 @@ describe("regression: a paid render either lands durably or the job fails and re
 
   it("a completed job's record always carries the durable storage path", async () => {
     const storageService = {
-      saveFromUrl: vi.fn().mockResolvedValue({
+      saveFromUrl: vi.fn<JobStorageService["saveFromUrl"]>().mockResolvedValue({
         storagePath: "users/user-1/generations/1785600000000-abc.mp4",
         viewUrl: "https://storage.example.com/signed/abc.mp4",
         expiresAt: "2099-01-01T00:00:00.000Z",
         sizeBytes: 1024000,
       }),
-    };
+    } satisfies JobStorageService;
 
     await invokeProcessor(storageService);
 

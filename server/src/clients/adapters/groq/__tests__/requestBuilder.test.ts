@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { buildGroqPayload, takeUndeclaredGroqModels } from "../requestBuilder";
 import { supportsLogprobs } from "../modelCapabilities";
 
-const DEFAULT_MODEL = "llama-3.1-8b-instant";
+const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
 const build = (
   options: Parameters<typeof buildGroqPayload>[0]["options"],
@@ -112,6 +112,7 @@ describe("buildGroqPayload", () => {
       type: "json_schema",
       json_schema: {
         name: "spans",
+        strict: true,
         schema: { type: "object", additionalProperties: false },
       },
     });
@@ -153,7 +154,7 @@ describe("undeclared models are reported, not silently downgraded", () => {
 
   it("says nothing about a declared model that simply lacks the capability", () => {
     takeUndeclaredGroqModels();
-    build({ logprobs: true, model: "llama-3.1-8b-instant" });
+    build({ logprobs: true, model: "openai/gpt-oss-20b" });
     expect(takeUndeclaredGroqModels()).toEqual([]);
   });
 });
@@ -161,7 +162,7 @@ describe("undeclared models are reported, not silently downgraded", () => {
 describe("supportsLogprobs", () => {
   it("answers from a declared table, not from the shape of the name", () => {
     expect(supportsLogprobs("llama-3.3-70b-versatile")).toBe(true);
-    expect(supportsLogprobs("llama-3.1-8b-instant")).toBe(false);
+    expect(supportsLogprobs("openai/gpt-oss-20b")).toBe(false);
   });
 
   it("declines for a model it has never heard of", () => {

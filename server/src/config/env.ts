@@ -16,6 +16,7 @@ import {
   type FlagName,
 } from "./feature-flags.ts";
 import { DEFAULT_QWEN_MODEL } from "./modelConfig.ts";
+import { DEFAULT_GROQ_MODEL } from "./llmModelDefaults";
 
 // ─── Reusable coercion helpers ─────────────────────────────────
 
@@ -114,7 +115,7 @@ const openaiSchema = z.object({
 
 const groqSchema = z.object({
   GROQ_API_KEY: optionalApiKey(),
-  GROQ_MODEL: z.string().default("llama-3.1-8b-instant"),
+  GROQ_MODEL: z.string().default(DEFAULT_GROQ_MODEL),
   GROQ_TIMEOUT_MS: coercePositiveInt(5000),
   GROQ_MAX_CONCURRENT: coercePositiveInt(5),
   GROQ_QUEUE_TIMEOUT_MS: coercePositiveInt(30000),

@@ -111,6 +111,23 @@ describe("PromptRepository", () => {
     });
   });
 
+  it("gives server-created sketch sessions distinct stable client identities without a prompt uuid", async () => {
+    mockApiClient.get.mockResolvedValue({
+      data: ["session_sketch_a", "session_sketch_b"].map((id) => ({
+        id,
+        updatedAt: "2026-10-03T12:00:00Z",
+        prompt: { input: "sketch words", output: "sketch words", versions: [] },
+      })),
+    });
+    const result = await repository.getUserPrompts("user-1");
+    expect(result.map((entry) => ({ id: entry.id, uuid: entry.uuid }))).toEqual(
+      [
+        { id: "session_sketch_a", uuid: "session_sketch_a" },
+        { id: "session_sketch_b", uuid: "session_sketch_b" },
+      ],
+    );
+  });
+
   it("getUserPrompts keeps prompt entries that also have continuity payloads", async () => {
     mockApiClient.get.mockResolvedValue({
       data: [

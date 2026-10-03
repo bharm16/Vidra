@@ -1,3 +1,5 @@
+import { validateGenerationDestination } from "./generationDestination";
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import type { Request, Response } from "express";
 import { isIP } from "node:net";
 import { logger } from "@infrastructure/Logger";
@@ -5,7 +7,6 @@ import { parseVideoRequest } from "@routes/preview/videoRequest";
 import { sendApiError } from "@middleware/apiErrorResponse";
 import { GENERATION_ERROR_CODES } from "@routes/generationErrorCodes";
 import type { ApiErrorCode } from "@shared/types/api";
-import { resolveVideoGenerateIdempotencyMode } from "@services/video-generation/jobs/RequestIdempotencyService";
 import { assertUrlSafe } from "@server/shared/urlValidation";
 import { stripOptimizerScaffolding } from "../prompt";
 import { extractMotionMeta } from "./video-generate/motion";
@@ -24,10 +25,7 @@ export const createVideoGenerateHandler =
   ({
     videoGenerationService,
     videoJobStore,
-    userCreditService,
     storageService,
-    keyframeService,
-    faceSwapService,
     assetService,
     requestIdempotencyService,
     sessionService,
@@ -142,6 +140,25 @@ export const createVideoGenerateHandler =
       });
     }
 
+    if (model && !isReleaseGenerationModelSupported(model)) {
+      return sendApiError(res, req, 400, {
+        error: "Requested model is excluded from this release",
+        code: GENERATION_ERROR_CODES.INVALID_REQUEST,
+      });
+    }
+    const destinationError = await validateGenerationDestination(
+      sessionService,
+      userId,
+      parsed.payload,
+    );
+    if (destinationError)
+      return sendApiError(
+        res,
+        req,
+        destinationError.status,
+        destinationError.payload,
+      );
+
     // Session records persist signed media URLs that die after ~1h; a
     // restored session's request must not hand a dead grant to a provider.
     // Re-mint the requester's own signed URLs before the payload flows on.
@@ -153,7 +170,6 @@ export const createVideoGenerateHandler =
       requestId,
     });
 
-    const idempotencyMode = resolveVideoGenerateIdempotencyMode();
     const rawIdempotencyKey = req.get("Idempotency-Key");
     const idempotencyKey =
       typeof rawIdempotencyKey === "string" &&
@@ -162,7 +178,7 @@ export const createVideoGenerateHandler =
         : null;
     let idempotencyRecordId: string | null = null;
 
-    if (!idempotencyKey && idempotencyMode === "required") {
+    if (!idempotencyKey) {
       return sendApiError(res, req, 400, {
         error: "Idempotency-Key header is required",
         code: GENERATION_ERROR_CODES.IDEMPOTENCY_KEY_REQUIRED,
@@ -182,16 +198,6 @@ export const createVideoGenerateHandler =
         code: GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
         details: "Idempotency service is not configured",
       });
-    }
-
-    if (!idempotencyKey && idempotencyMode === "soft") {
-      log.warn(
-        "Video generation request missing Idempotency-Key header in soft mode",
-        {
-          requestId,
-          userId,
-        },
-      );
     }
 
     if (idempotencyKey && requestIdempotencyService) {
@@ -272,27 +278,6 @@ export const createVideoGenerateHandler =
       ...rawMotionMeta,
     });
 
-    if (!userCreditService) {
-      log.error(
-        "User credit service is not available - blocking paid feature access",
-        undefined,
-        {
-          path: req.path,
-        },
-      );
-      if (idempotencyRecordId && requestIdempotencyService) {
-        await requestIdempotencyService.markFailed(
-          idempotencyRecordId,
-          GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
-        );
-      }
-      return sendApiError(res, req, 503, {
-        error: "Video generation service is not available",
-        code: GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
-        details: "Credit service is not configured",
-      });
-    }
-
     const releaseIdempotencyLock = async (reason: string): Promise<void> => {
       if (!idempotencyRecordId || !requestIdempotencyService) {
         return;
@@ -309,6 +294,13 @@ export const createVideoGenerateHandler =
       return sendApiError(res, req, status, payload);
     };
 
+    if (!idempotencyRecordId || !requestIdempotencyService) {
+      return sendApiError(res, req, 503, {
+        error: "A durable intake claim is required",
+        code: GENERATION_ERROR_CODES.SERVICE_UNAVAILABLE,
+      });
+    }
+
     const intake = await runVideoGenerateIntake({
       payload: generationPayload,
       userId,
@@ -322,19 +314,23 @@ export const createVideoGenerateHandler =
       services: {
         videoGenerationService,
         videoJobStore,
-        userCreditService,
-        keyframeService,
-        faceSwapService,
-        assetService,
         storageService,
         sessionService,
       },
       idempotencyRecordId,
+      idempotencyKey,
       requestIdempotencyService,
       log,
     });
 
     if (!intake.ok) {
+      if (intake.retainClaim)
+        return sendApiError(
+          res,
+          req,
+          intake.error.status,
+          intake.error.payload,
+        );
       return await respondWithError(
         intake.error.status,
         intake.error.payload,

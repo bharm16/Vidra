@@ -408,6 +408,7 @@ export function CanvasWorkspace({
     hasExpandedPrompt,
     writingFailed,
     pendingReference,
+    unattachedFrameTake,
   } = usePromptResultsData();
   const workspaceStage = deriveWorkspaceStage(
     computeWorkspaceArtifacts({
@@ -415,7 +416,9 @@ export function CanvasWorkspace({
       ideaBoxStageKind: ideaBoxStage?.kind ?? "idle",
       isExpanding: isExpanding ?? false,
       hasExpandedPrompt: hasExpandedPrompt ?? false,
-      hasStartFrame: Boolean(domain.startFrame || pendingReference),
+      hasStartFrame: Boolean(
+        domain.startFrame || pendingReference || unattachedFrameTake,
+      ),
       writingFailed: writingFailed ?? false,
     }),
   );
@@ -749,7 +752,9 @@ export function CanvasWorkspace({
                 failure="writing"
                 onRetry={() => void onIdeaBoxExpand?.()}
               />
-            ) : shots.length === 0 || pendingReference ? (
+            ) : shots.length === 0 ||
+              pendingReference ||
+              unattachedFrameTake ? (
               /* Pre-render beats: the first frame (or its pending/failed state)
                owns the canvas — see CONTEXT.md, "First frame". */
               <FrameStage startFrame={domain.startFrame} prompt={prompt} />

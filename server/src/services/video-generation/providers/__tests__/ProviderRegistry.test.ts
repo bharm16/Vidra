@@ -83,7 +83,7 @@ describe("ProviderRegistry", () => {
         kling: true,
         gemini: true,
       }),
-    ).toBe(VIDEO_MODELS.SORA_2);
+    ).toBe(VIDEO_MODELS.VEO_3);
 
     expect(
       resolveAutoModelId({
@@ -93,7 +93,7 @@ describe("ProviderRegistry", () => {
         kling: true,
         gemini: true,
       }),
-    ).toBe(VIDEO_MODELS.LUMA_RAY3);
+    ).toBe(VIDEO_MODELS.VEO_3);
 
     expect(
       resolveAutoModelId({
@@ -103,7 +103,7 @@ describe("ProviderRegistry", () => {
         kling: true,
         gemini: true,
       }),
-    ).toBe(VIDEO_MODELS.KLING_V2_1);
+    ).toBe(VIDEO_MODELS.VEO_3);
 
     expect(
       resolveAutoModelId({
@@ -123,6 +123,18 @@ describe("ProviderRegistry", () => {
         openai: false,
         luma: false,
         kling: false,
+        gemini: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not select excluded providers even when their credentials exist", () => {
+    expect(
+      resolveAutoModelId({
+        replicate: false,
+        openai: true,
+        luma: true,
+        kling: true,
         gemini: false,
       }),
     ).toBeNull();

@@ -200,6 +200,44 @@ export class RequestIdempotencyService {
     );
   }
 
+  /** Publish a queued job's receipt in the same transaction as the job (#124). */
+  async completeInTransaction(
+    transaction: FirebaseFirestore.Transaction,
+    input: {
+      recordId: string;
+      userId: string;
+      jobId: string;
+      snapshot: IdempotencyResponseSnapshot;
+    },
+  ): Promise<void> {
+    const ref = this.collection.doc(input.recordId);
+    const current = await transaction.get(ref);
+    const claim = current.data() as Partial<IdempotencyRecord> | undefined;
+    if (
+      !current.exists ||
+      claim?.userId !== input.userId ||
+      claim.status !== "pending"
+    ) {
+      throw new Error(
+        "A matching owned pending intake claim is required before publishing a job",
+      );
+    }
+    const now = Date.now();
+    transaction.set(
+      ref,
+      {
+        status: "completed",
+        jobId: input.jobId,
+        responseSnapshot: input.snapshot,
+        lockExpiresAtMs: now,
+        expiresAt: new Date(now + this.replayTtlMs),
+        updatedAtMs: now,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  }
+
   async markCompleted(input: {
     recordId: string;
     jobId?: string;
@@ -230,17 +268,24 @@ export class RequestIdempotencyService {
       await this.firestoreCircuitExecutor.executeWrite(
         "idempotency.markFailed",
         async () =>
-          await this.collection.doc(recordId).set(
-            {
-              status: "failed",
-              lastError: reason,
-              lockExpiresAtMs: now - 1,
-              expiresAt: new Date(now + this.replayTtlMs),
-              updatedAtMs: now,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            },
-            { merge: true },
-          ),
+          await this.db.runTransaction(async (transaction) => {
+            const ref = this.collection.doc(recordId);
+            const snapshot = await transaction.get(ref);
+            if (!snapshot.exists || snapshot.data()?.status === "completed")
+              return;
+            transaction.set(
+              ref,
+              {
+                status: "failed",
+                lastError: reason,
+                lockExpiresAtMs: now - 1,
+                expiresAt: new Date(now + this.replayTtlMs),
+                updatedAtMs: now,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true },
+            );
+          }),
       );
     } catch (error) {
       this.log.warn("Failed to clear idempotency lock after error", {

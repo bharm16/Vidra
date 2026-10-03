@@ -284,6 +284,19 @@ export function FrameStage({
         )}
       </>
     );
+  } else if (unattachedFrameTake) {
+    body = (
+      <StageNoticeTile
+        headline="Made, but not saved"
+        detail="Your picture already exists. Save it to this session without making it again."
+        {...(onRetryFrameAttachment
+          ? {
+              actionLabel: "Save it",
+              onAction: () => void onRetryFrameAttachment(),
+            }
+          : {})}
+      />
+    );
   } else if (hasExpandedPrompt) {
     // Restored session with an expanded prompt but no frame asset: the
     // stage's no-frame state owns the canvas (never the first-run hero).

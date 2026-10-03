@@ -34,10 +34,18 @@ export class OpenAiRequestBuilder {
     const temperature =
       options.temperature !== undefined ? options.temperature : defaultTemp;
 
+    const model = options.model || this.config.defaultModel;
+    // The configured studio reasoning model requires this native field on
+    // the FIRST request. Keep the adapter's error-driven compatibility retry
+    // for other models; do not spend a rejected POST discovering a known rule.
+    // https://developers.openai.com/api/reference/typescript/resources/chat/subresources/completions/methods/create
+    const usesCompletionTokenLimit = model === "gpt-5.6-luna";
     const payload: OpenAiPayload = {
-      model: options.model || this.config.defaultModel,
+      model,
       messages,
-      max_tokens: options.maxTokens || 2048,
+      ...(usesCompletionTokenLimit
+        ? { max_completion_tokens: options.maxTokens || 2048 }
+        : { max_tokens: options.maxTokens || 2048 }),
       temperature,
       ...(stream ? { stream: true } : {}),
     };

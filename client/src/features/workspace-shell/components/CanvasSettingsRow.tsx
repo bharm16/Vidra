@@ -313,8 +313,7 @@ export function CanvasSettingsRow({
     selectedDraftModel?.id ?? renderModelId,
     duration,
   );
-  // ADR-0002: with BILLING_UI frozen, credits never gate generation —
-  // validation-phase renders run as a hard-capped passthrough.
+  // ADR-0023: with billing frozen, credits do not gate free testing.
   const hasInsufficientCredits =
     FEATURES.BILLING_UI &&
     typeof creditBalance === "number" &&

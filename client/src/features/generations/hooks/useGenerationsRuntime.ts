@@ -4,6 +4,8 @@ import type {
   GenerationOverrides,
 } from "@features/generation-controls";
 import { useCreditBalance } from "@/contexts/CreditBalanceContext";
+import { FEATURES } from "@/config/features.config";
+import { getAuthRepository } from "@repositories/index";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { useToast } from "@components/Toast";
 import { logger } from "@/services/LoggingService";
@@ -24,6 +26,7 @@ import { selectHeroGeneration } from "../utils/selectHeroGeneration";
 import { getModelConfig, getModelCreditCost } from "../config/generationConfig";
 import { useGenerationsState } from "./useGenerationsState";
 import { useGenerationActions } from "./useGenerationActions";
+import { useServerGenerationHydration } from "./useServerGenerationHydration";
 import { useAssetReferenceImages } from "./useAssetReferenceImages";
 import { useGenerationMediaRefresh } from "./useGenerationMediaRefresh";
 import { useKeyframeWorkflow } from "./useKeyframeWorkflow";
@@ -316,22 +319,45 @@ export function useGenerationsRuntime({
     selectedModelSupportsExtend,
   ]);
 
-  const loadHistoryFromFirestore = promptHistory.loadHistoryFromFirestore;
-  const refreshHistoryFromServer = useCallback((): void => {
-    const uid = authUser?.uid;
-    if (!uid) return;
-    // Fire-and-forget — the gallery re-renders on its own when history state
-    // hydrates. Any error is logged by useHistoryPersistence internally.
-    void loadHistoryFromFirestore(uid);
-  }, [authUser?.uid, loadHistoryFromFirestore]);
+  const handleServerGenerationPersisted = useServerGenerationHydration({
+    creatorId: authUser?.uid,
+    sessionId: currentSessionId ?? null,
+    history: promptHistory.history,
+    updateEntryLocal: promptHistory.updateEntryLocal,
+    onError: (error): void => {
+      log.warn("Saved take could not be refreshed", {
+        error: error instanceof Error ? error.message : "Unknown read failure",
+      });
+      toast.warning(
+        "Saved, but could not refresh. Reopen this session to see it.",
+      );
+    },
+  });
 
-  const handleServerGenerationPersisted = useCallback((): void => {
-    // ISSUE-12 UX polish: after the server confirms attachment, refresh
-    // history so the session's version.generations flows into
-    // initialGenerations → useGenerationsState → GalleryPanel without the
-    // user needing to reload.
-    refreshHistoryFromServer();
-  }, [refreshHistoryFromServer]);
+  const flushVersionWrites = promptHistory.flushVersionWrites;
+  const ensureWordsVersionPersisted = useCallback(
+    async (info: {
+      sessionId: string;
+      promptVersionId: string;
+    }): Promise<void> => {
+      const creatorId = authUser?.uid;
+      if (
+        !creatorId ||
+        !currentPromptUuid ||
+        !currentPromptDocId ||
+        info.sessionId !== currentPromptDocId ||
+        getAuthRepository().getCurrentUser()?.uid !== creatorId
+      ) {
+        throw new Error("Save the current words before making a clip.");
+      }
+      await flushVersionWrites(
+        currentPromptUuid,
+        info.sessionId,
+        info.promptVersionId,
+      );
+    },
+    [authUser?.uid, currentPromptDocId, currentPromptUuid, flushVersionWrites],
+  );
 
   const generationActionsOptions = useMemo(
     () => ({
@@ -350,6 +376,7 @@ export function useGenerationsRuntime({
       generations,
       onInsufficientCredits: notifyInsufficientCredits,
       onServerGenerationPersisted: handleServerGenerationPersisted,
+      ensureWordsVersionPersisted,
     }),
     [
       aspectRatio,
@@ -358,6 +385,7 @@ export function useGenerationsRuntime({
       fps,
       generations,
       handleServerGenerationPersisted,
+      ensureWordsVersionPersisted,
       mergedGenerationParams,
       notifyInsufficientCredits,
       promptVersionId,
@@ -463,6 +491,7 @@ export function useGenerationsRuntime({
 
   const hasCreditsFor = useCallback(
     (required: number, operation: string): boolean => {
+      if (!FEATURES.BILLING_UI) return true;
       if (!authUidRef.current) return true;
       if (balanceRef.current === null || balanceRef.current === undefined)
         return true;

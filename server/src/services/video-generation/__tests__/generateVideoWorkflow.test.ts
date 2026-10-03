@@ -83,7 +83,7 @@ describe("generateVideoWorkflow", () => {
     await expect(
       generateVideoWorkflow(
         "cinematic prompt",
-        { model: "sora-2" },
+        { model: "google/veo-3" },
         providers,
         assetStore,
         log,
@@ -95,24 +95,24 @@ describe("generateVideoWorkflow", () => {
   });
 
   it("dispatches to provider resolved from canonical model id", async () => {
-    const providers = createProviderMap({ openai: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
 
     const result = await generateVideoWorkflow(
       "a runner through rain",
-      { model: "sora-2" },
+      { model: "google/veo-3" },
       providers,
       assetStore,
       log,
     );
 
-    const openAIGenerate = providers.openai.generate;
-    expect(openAIGenerate).toHaveBeenCalledTimes(1);
-    expect(openAIGenerate).toHaveBeenCalledWith(
+    const geminiGenerate = providers.gemini.generate;
+    expect(geminiGenerate).toHaveBeenCalledTimes(1);
+    expect(geminiGenerate).toHaveBeenCalledWith(
       "a runner through rain",
-      "sora-2",
-      expect.objectContaining({ model: "sora-2" }),
+      "google/veo-3",
+      expect.objectContaining({ model: "google/veo-3" }),
       assetStore,
       log,
     );
@@ -126,13 +126,16 @@ describe("generateVideoWorkflow", () => {
   });
 
   it("uses i2v mode and startImageUrl when startImage is provided", async () => {
-    const providers = createProviderMap({ openai: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
 
     const result = await generateVideoWorkflow(
       "portrait shot",
-      { model: "sora-2", startImage: "https://images.example.com/start.png" },
+      {
+        model: "google/veo-3",
+        startImage: "https://images.example.com/start.png",
+      },
       providers,
       assetStore,
       log,
@@ -143,14 +146,14 @@ describe("generateVideoWorkflow", () => {
   });
 
   it("uses i2v mode when inputReference is provided", async () => {
-    const providers = createProviderMap({ openai: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
 
     const result = await generateVideoWorkflow(
       "portrait shot",
       {
-        model: "sora-2",
+        model: "google/veo-3",
         inputReference: "https://images.example.com/reference.png",
       },
       providers,
@@ -165,18 +168,18 @@ describe("generateVideoWorkflow", () => {
   });
 
   it("propagates provider errors and logs failure", async () => {
-    const providers = createProviderMap({ openai: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
     const providerError = new Error("Provider rate limit");
-    providers.openai.generate = vi.fn(async () => {
+    providers.gemini.generate = vi.fn(async () => {
       throw providerError;
     });
 
     await expect(
       generateVideoWorkflow(
         "a cat on skateboard",
-        { model: "sora-2" },
+        { model: "google/veo-3" },
         providers,
         assetStore,
         log,
@@ -190,10 +193,10 @@ describe("generateVideoWorkflow", () => {
   });
 
   it("passes through seed from provider generation result", async () => {
-    const providers = createProviderMap({ openai: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
-    providers.openai.generate = vi.fn(async () => ({
+    providers.gemini.generate = vi.fn(async () => ({
       asset: {
         id: "asset-seeded",
         url: "https://example.com/seeded.mp4",
@@ -205,7 +208,7 @@ describe("generateVideoWorkflow", () => {
 
     const result = await generateVideoWorkflow(
       "seeded prompt",
-      { model: "sora-2" },
+      { model: "google/veo-3" },
       providers,
       assetStore,
       log,
@@ -252,11 +255,41 @@ describe("generateVideoWorkflow", () => {
     });
   });
 
+  it.each([
+    "kling-v2-1-master",
+    "KLING_V2_1",
+    "kling-26",
+    "luma-ray3",
+    "LUMA_RAY3",
+    "sora-2",
+    "sora-2-pro",
+    "SORA_2",
+  ])(
+    "rejects excluded model %s before provider dispatch even with credentials",
+    async (model) => {
+      const providers = createProviderMap();
+      await expect(
+        generateVideoWorkflow(
+          "x",
+          { model },
+          providers,
+          createAssetStore(),
+          createLog(),
+        ),
+      ).rejects.toMatchObject({
+        statusCode: 400,
+        details: expect.objectContaining({ reason: "unsupported_model" }),
+      });
+      for (const provider of Object.values(providers))
+        expect(provider.generate).not.toHaveBeenCalled();
+    },
+  );
+
   it("propagates resolvedAspectRatio from provider to result", async () => {
-    const providers = createProviderMap({ kling: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
-    providers.kling.generate = vi.fn(async () => ({
+    providers.gemini.generate = vi.fn(async () => ({
       asset: {
         id: "asset-ar",
         url: "https://example.com/ar.mp4",
@@ -268,7 +301,7 @@ describe("generateVideoWorkflow", () => {
 
     const result = await generateVideoWorkflow(
       "wide shot",
-      { model: "kling-v2-1-master", aspectRatio: "21:9" },
+      { model: "google/veo-3", aspectRatio: "21:9" },
       providers,
       assetStore,
       log,
@@ -278,13 +311,13 @@ describe("generateVideoWorkflow", () => {
   });
 
   it("omits resolvedAspectRatio when provider does not return one", async () => {
-    const providers = createProviderMap({ openai: true });
+    const providers = createProviderMap({ gemini: true });
     const assetStore = createAssetStore();
     const log = createLog();
 
     const result = await generateVideoWorkflow(
       "simple prompt",
-      { model: "sora-2" },
+      { model: "google/veo-3" },
       providers,
       assetStore,
       log,
@@ -306,8 +339,8 @@ describe("generateVideoWorkflow", () => {
 
     vi.useFakeTimers();
     try {
-      const providers = createProviderMap({ openai: true });
-      providers.openai.generate = vi.fn(
+      const providers = createProviderMap({ gemini: true });
+      providers.gemini.generate = vi.fn(
         () =>
           new Promise<{ asset: StoredVideoAsset }>(() => {
             // Intentionally unresolved promise for watchdog coverage.
@@ -316,7 +349,7 @@ describe("generateVideoWorkflow", () => {
 
       const promise = generateVideoWorkflow(
         "watchdog prompt",
-        { model: "sora-2" },
+        { model: "google/veo-3" },
         providers,
         createAssetStore(),
         createLog(),

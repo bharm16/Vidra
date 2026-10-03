@@ -12,7 +12,7 @@
  *
  * When to use this vs GroqLlamaAdapter:
  * - Use GroqQwenAdapter for: qwen/qwen3.6-27b, qwen/qwen3* models
- * - Use GroqLlamaAdapter for: llama-3.1-8b-instant, llama-* models
+ * - Use GroqLlamaAdapter for the general Groq default (GPT-OSS 20B)
  */
 
 import { APIError, TimeoutError, ClientAbortError } from "../LLMClient.ts";

@@ -24,7 +24,7 @@ function createService(responses: string[] = []) {
     const index = Math.min(execute.mock.calls.length - 1, responses.length - 1);
     return {
       text: responses[index] ?? "{}",
-      metadata: { model: "llama-3.1-8b-instant", provider: "groq" },
+      metadata: { model: "openai/gpt-oss-20b", provider: "groq" },
     };
   });
 
@@ -32,12 +32,12 @@ function createService(responses: string[] = []) {
     getOperationConfig: vi.fn(() => ({
       temperature: 0.6,
       client: "groq",
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
     })),
     resolveExecution: vi.fn(() => ({
       client: "groq",
       provider: "groq",
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       viaFallback: false,
     })),
     execute,

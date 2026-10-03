@@ -19,24 +19,52 @@ vi.mock("@promptstudio/system/components/ui", () => {
 });
 
 describe("ModelRecommendationDropdown", () => {
+  it("does not offer excluded historical models supplied by stale saved options", async () => {
+    const user = userEvent.setup();
+    const onModelChange = vi.fn();
+    render(
+      <ModelRecommendationDropdown
+        renderModelOptions={[
+          { id: "google/veo-3", label: "Veo" },
+          { id: "sora-2", label: "Sora" },
+          { id: "kling-v2-1-master", label: "Kling" },
+          { id: "luma-ray3", label: "Luma" },
+        ]}
+        renderModelId="google/veo-3"
+        onModelChange={onModelChange}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Video model" }));
+    expect(
+      screen.queryByRole("option", { name: /Kling/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Luma/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Sora/i }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("option", { name: /Veo/i }));
+    expect(onModelChange).toHaveBeenCalledWith("google/veo-3");
+  });
+
   it("uses provided render model options for the non-recommended list", async () => {
     const user = userEvent.setup();
 
     render(
       <ModelRecommendationDropdown
-        renderModelOptions={[
-          { id: "sora-2", label: "Sora" },
-          { id: "google/veo-3", label: "Veo" },
-        ]}
-        renderModelId="sora-2"
+        renderModelOptions={[{ id: "google/veo-3", label: "Veo" }]}
+        renderModelId="google/veo-3"
         onModelChange={vi.fn()}
       />,
     );
 
     await user.click(screen.getByRole("button", { name: "Video model" }));
 
-    expect(screen.getByRole("option", { name: /Sora/i })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: /Veo/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Sora/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("option", { name: /Kling/i }),
     ).not.toBeInTheDocument();
@@ -54,7 +82,7 @@ describe("ModelRecommendationDropdown", () => {
           id: model.id,
           label: model.label,
         }))}
-        renderModelId="sora-2"
+        renderModelId="google/veo-3"
         onModelChange={vi.fn()}
         recommendedModelId="google/veo-3"
         modelRecommendation={{
@@ -97,7 +125,7 @@ describe("ModelRecommendationDropdown", () => {
           id: model.id,
           label: model.label,
         }))}
-        renderModelId="sora-2"
+        renderModelId="google/veo-3"
         onModelChange={vi.fn()}
       />,
     );
@@ -106,7 +134,7 @@ describe("ModelRecommendationDropdown", () => {
 
     // Strength copy leads each card (ADR-0008 showroom reskin).
     expect(
-      screen.getAllByText("Cinematic motion and high fidelity").length,
+      screen.getAllByText("Strong lighting, realism, and camera").length,
     ).toBeGreaterThan(0);
     // Generation economics never speak in the showroom ("~48 cr" chips).
     expect(screen.queryByText(/~\s*\d/)).not.toBeInTheDocument();
@@ -120,11 +148,8 @@ describe("ModelRecommendationDropdown", () => {
 
     render(
       <ModelRecommendationDropdown
-        renderModelOptions={[
-          { id: "sora-2", label: "Sora" },
-          { id: "google/veo-3", label: "Veo" },
-        ]}
-        renderModelId="sora-2"
+        renderModelOptions={[{ id: "google/veo-3", label: "Veo" }]}
+        renderModelId="google/veo-3"
         onModelChange={onModelChange}
       />,
     );
@@ -144,8 +169,8 @@ describe("ModelRecommendationDropdown", () => {
 
     render(
       <ModelRecommendationDropdown
-        renderModelOptions={[{ id: "sora-2", label: "Sora" }]}
-        renderModelId="sora-2"
+        renderModelOptions={[{ id: "google/veo-3", label: "Veo" }]}
+        renderModelId="google/veo-3"
         onModelChange={vi.fn()}
       />,
     );

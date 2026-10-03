@@ -1,10 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Generation } from "@features/generations/types";
-import type {
-  PromptHistoryEntry,
-  PromptVersionEntry,
-} from "@features/prompt-optimizer/types/domain/prompt-session";
+import type { PromptHistoryEntry } from "@features/prompt-optimizer/types/domain/prompt-session";
 import { usePromptVersioning } from "../usePromptVersioning";
 
 const makeGeneration = (): Generation => ({
@@ -23,51 +20,81 @@ const makeGeneration = (): Generation => ({
   isFavorite: false,
 });
 
-describe("usePromptVersioning syncVersionGenerations", () => {
-  it("seeds the first version from an in-flight generation when versions have not hydrated yet", () => {
-    const updateEntryVersions = vi.fn();
-    const historyEntry: PromptHistoryEntry = {
-      id: "doc-1",
-      uuid: "uuid-1",
-      input:
-        "A cinematic drone shot of a lighthouse in a winter storm at dusk.",
-      output: "",
-      versions: [],
-    };
-    const generation = makeGeneration();
+function renderEmptyHistoryVersioning() {
+  const updateEntryVersions = vi.fn();
+  const historyEntry: PromptHistoryEntry = {
+    id: "doc-1",
+    uuid: "uuid-1",
+    input: "A cinematic drone shot of a lighthouse in a winter storm at dusk.",
+    output: "",
+    versions: [],
+  };
 
-    const { result } = renderHook(() =>
-      usePromptVersioning({
-        promptHistory: {
-          history: [historyEntry],
-          updateEntryVersions,
-        },
-        currentPromptUuid: "uuid-1",
-        currentPromptDocId: "doc-1",
-        activeVersionId: null,
-        latestHighlightRef: { current: null },
-        versionEditCountRef: { current: 0 },
-        versionEditsRef: { current: [] },
-        resetVersionEdits: vi.fn(),
-      }),
-    );
+  const view = renderHook(() =>
+    usePromptVersioning({
+      promptHistory: {
+        history: [historyEntry],
+        updateEntryVersions,
+      },
+      currentPromptUuid: "uuid-1",
+      currentPromptDocId: "doc-1",
+      activeVersionId: null,
+      latestHighlightRef: { current: null },
+      versionEditCountRef: { current: 0 },
+      versionEditsRef: { current: [] },
+      resetVersionEdits: vi.fn(),
+    }),
+  );
+
+  return { ...view, updateEntryVersions };
+}
+
+describe("usePromptVersioning syncVersionGenerations", () => {
+  it("keeps a queued job-backed clip local instead of establishing conflicting take facts", () => {
+    const generation = makeGeneration();
+    const { result, updateEntryVersions } = renderEmptyHistoryVersioning();
 
     act(() => {
       result.current.syncVersionGenerations([generation]);
     });
 
-    expect(updateEntryVersions).toHaveBeenCalledTimes(1);
-    expect(updateEntryVersions).toHaveBeenCalledWith(
-      "uuid-1",
-      "doc-1",
-      expect.any(Array),
-    );
+    expect(updateEntryVersions).not.toHaveBeenCalled();
+    act(() => {
+      result.current.syncVersionGenerations([
+        { ...generation, serverJobStatus: undefined },
+      ]);
+    });
+    expect(updateEntryVersions).not.toHaveBeenCalled();
 
-    const persistedVersions = updateEntryVersions.mock
-      .calls[0]?.[2] as PromptVersionEntry[];
-    expect(persistedVersions).toHaveLength(1);
-    expect(persistedVersions[0]?.versionId).toBe("v-seed");
-    expect(persistedVersions[0]?.prompt).toBe(generation.prompt);
-    expect(persistedVersions[0]?.generations).toEqual([generation]);
+    act(() => {
+      result.current.syncVersionGenerations([
+        {
+          ...generation,
+          status: "completed",
+          completedAt: 5000,
+          jobId: null,
+          serverJobStatus: "completed",
+          mediaUrls: ["https://example.com/clip.mp4"],
+        },
+      ]);
+    });
+    expect(updateEntryVersions).not.toHaveBeenCalled();
+  });
+  it("still seeds an image version while history has not hydrated", () => {
+    const { result, updateEntryVersions } = renderEmptyHistoryVersioning();
+    const image = {
+      ...makeGeneration(),
+      model: "flux-schnell",
+      mediaType: "image" as const,
+      serverJobStatus: undefined,
+    };
+    act(() => result.current.syncVersionGenerations([image]));
+    expect(updateEntryVersions).toHaveBeenCalledWith("uuid-1", "doc-1", [
+      expect.objectContaining({
+        versionId: "v-seed",
+        prompt: image.prompt,
+        generations: [image],
+      }),
+    ]);
   });
 });

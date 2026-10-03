@@ -1,3 +1,4 @@
+import { isReleaseGenerationModelSupported } from "@shared/videoModels";
 import { logger } from "@infrastructure/Logger";
 import type { CreditRefunder } from "@services/credits/ports";
 import { buildRefundKey, refundWithGuard } from "@services/credits/refundGuard";
@@ -8,7 +9,11 @@ import {
 } from "./classifyError";
 import { HeartbeatManager } from "./HeartbeatManager";
 import { RetryPolicy } from "@server/utils/RetryPolicy";
-import type { VideoJobAttachment, VideoJobError, VideoJobRecord } from "./types";
+import type {
+  VideoJobAttachment,
+  VideoJobError,
+  VideoJobRecord,
+} from "./types";
 import type { VideoGenerationResult } from "../types";
 import {
   attachCompletedJobToSession,
@@ -105,7 +110,7 @@ export interface ProcessVideoJobDeps {
   jobStore: JobProcessingStore;
   videoGenerationService: JobGenerationService;
   storageService: JobStorageService | null;
-  userCreditService: CreditRefunder;
+  userCreditService?: CreditRefunder;
   /** Worker ID used for heartbeats and logging. */
   workerId: string;
   /** Lease duration in ms — heartbeat fires at leaseMs / 3. */
@@ -190,6 +195,11 @@ export async function processVideoJob(
     maxAttempts: job.maxAttempts,
   });
 
+  // Only free zero-reservation jobs may omit the old refund dependency.
+  if (job.creditsReserved > 0 && !userCreditService) {
+    throw new Error("A credit refunder is required for a legacy charged job");
+  }
+
   const heartbeat =
     deps.heartbeat ??
     new HeartbeatManager({
@@ -210,6 +220,15 @@ export async function processVideoJob(
       throw new Error("Storage service unavailable for required durable write");
     }
 
+    if (
+      job.request.options?.model &&
+      !isReleaseGenerationModelSupported(job.request.options.model)
+    ) {
+      throw withStage(
+        new Error("Unsupported model in this release"),
+        "generation",
+      );
+    }
     let result: VideoGenerationResult;
     try {
       result = await videoGenerationService.generateVideo(
@@ -316,7 +335,9 @@ export async function processVideoJob(
 
     if (!marked) {
       log.error(
-        `${logPrefix} completion failed — refunding credits`,
+        job.creditsReserved > 0
+          ? `${logPrefix} completion failed — refunding credits`
+          : `${logPrefix} completion bookkeeping failed`,
         undefined,
         {
           jobId: job.id,
@@ -327,19 +348,21 @@ export async function processVideoJob(
           recovery: "manual — asset exists at storagePath",
         },
       );
-      const refundKey = buildRefundKey(["video-job", job.id, "video"]);
-      await refundWithGuard({
-        userCreditService,
-        userId: job.userId,
-        amount: job.creditsReserved,
-        refundKey,
-        reason: `${refundReason} markCompleted failed after retries`,
-        metadata: {
-          jobId: job.id,
-          workerId,
-          storagePath: storageResult.storagePath,
-        },
-      });
+      if (job.creditsReserved > 0 && userCreditService) {
+        const refundKey = buildRefundKey(["video-job", job.id, "video"]);
+        await refundWithGuard({
+          userCreditService,
+          userId: job.userId,
+          amount: job.creditsReserved,
+          refundKey,
+          reason: `${refundReason} markCompleted failed after retries`,
+          metadata: {
+            jobId: job.id,
+            workerId,
+            storagePath: storageResult.storagePath,
+          },
+        });
+      }
       return;
     }
 
@@ -451,21 +474,24 @@ export async function processVideoJob(
 
     const markedFailed = await jobStore.markFailed(job.id, terminalError);
     if (markedFailed) {
-      const refundKey = buildRefundKey(["video-job", job.id, "video"]);
-      const refunded = await refundWithGuard({
-        userCreditService,
-        userId: job.userId,
-        amount: job.creditsReserved,
-        refundKey,
-        reason: refundReason,
-        metadata: {
-          jobId: job.id,
-          workerId,
-          category: terminalError.category,
-          code: terminalError.code,
-          attempt: job.attempts,
-        },
-      });
+      let refunded = false;
+      if (job.creditsReserved > 0 && userCreditService) {
+        const refundKey = buildRefundKey(["video-job", job.id, "video"]);
+        refunded = await refundWithGuard({
+          userCreditService,
+          userId: job.userId,
+          amount: job.creditsReserved,
+          refundKey,
+          reason: refundReason,
+          metadata: {
+            jobId: job.id,
+            workerId,
+            category: terminalError.category,
+            code: terminalError.code,
+            attempt: job.attempts,
+          },
+        });
+      }
       await jobStore.enqueueDeadLetter(job, terminalError, dlqSource, {
         creditsRefunded: refunded,
       });

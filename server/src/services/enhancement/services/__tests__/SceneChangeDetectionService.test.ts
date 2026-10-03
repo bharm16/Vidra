@@ -37,7 +37,7 @@ const createService = (
     const index = Math.min(execute.mock.calls.length - 1, responses.length - 1);
     return {
       text: responses[index] ?? "{}",
-      metadata: { model: "llama-3.1-8b-instant", provider: "groq" },
+      metadata: { model: "openai/gpt-oss-20b", provider: "groq" },
     };
   });
 

@@ -1,3 +1,7 @@
+import type {
+  RequestIdempotencyService,
+  IdempotencyResponseSnapshot,
+} from "./RequestIdempotencyService";
 import type { DocumentData, Query } from "firebase-admin/firestore";
 import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
@@ -151,6 +155,66 @@ export class VideoJobStore {
     });
 
     return this.parseJob(docRef.id, record);
+  }
+
+  /**
+   * Free validation intake publishes a job and its replay receipt atomically.
+   * Workers cannot observe a queued job before its authoritative 202 exists.
+   * This opens only intake publication; credit reservation stays separate.
+   */
+  async createJobWithReceipt(
+    input: CreateJobInput,
+    deps: {
+      idempotency: Pick<RequestIdempotencyService, "completeInTransaction">;
+      recordId: string;
+      buildSnapshot: (job: VideoJobRecord) => IdempotencyResponseSnapshot;
+    },
+  ): Promise<{ job: VideoJobRecord; snapshot: IdempotencyResponseSnapshot }> {
+    if (input.creditsReserved !== 0)
+      throw new Error("Free intake requires zero reserved credits");
+    const now = Date.now();
+    const ref = this.collection.doc();
+    const record = {
+      schemaVersion: 1 as const,
+      status: "queued",
+      userId: input.userId,
+      ...(input.sessionId ? { sessionId: input.sessionId } : {}),
+      ...(input.promptVersionId
+        ? { promptVersionId: input.promptVersionId }
+        : {}),
+      ...(input.sourceGenerationId
+        ? { sourceGenerationId: input.sourceGenerationId }
+        : {}),
+      ...(input.requestId ? { requestId: input.requestId } : {}),
+      request: input.request,
+      creditsReserved: 0,
+      provider: resolveProviderFromRequest(input.request),
+      attempts: 0,
+      maxAttempts: resolvePositiveInt(
+        input.maxAttempts,
+        this.defaultMaxAttempts,
+      ),
+      createdAtMs: now,
+      updatedAtMs: now,
+    };
+    const job = this.parseJob(ref.id, record);
+    const snapshot = deps.buildSnapshot(job);
+    await this.withTiming("createJobWithReceipt", "write", async () => {
+      await this.db.runTransaction(async (transaction) => {
+        await deps.idempotency.completeInTransaction(transaction, {
+          recordId: deps.recordId,
+          userId: input.userId,
+          jobId: job.id,
+          snapshot,
+        });
+        transaction.set(ref, {
+          ...record,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+    });
+    return { job, snapshot };
   }
 
   /**
@@ -773,10 +837,14 @@ export class VideoJobStore {
           }),
       );
     } catch (error) {
-      logger.error("Failed to set attachment state on video job", error as Error, {
-        jobId,
-        state: attachment.state,
-      });
+      logger.error(
+        "Failed to set attachment state on video job",
+        error as Error,
+        {
+          jobId,
+          state: attachment.state,
+        },
+      );
       return false;
     }
   }

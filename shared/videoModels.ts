@@ -154,6 +154,28 @@ export function resolveCanonicalPromptModelId(
   return PROMPT_MODEL_ALIASES[normalized] ?? null;
 }
 
+/** Release exclusions do not remove historical ids from saved takes. */
+export const DEFERRED_RELEASE_GENERATION_MODELS = [
+  "kling-2.1",
+  "luma-ray3",
+  "sora-2",
+] as const satisfies readonly CanonicalPromptModelId[];
+
+/**
+ * Additional release-policy check for an already registered generation model.
+ * Registration/credentials must still be checked by the caller; env-configured
+ * provider ids are deliberately not rejected merely for being absent here.
+ */
+export function isReleaseGenerationModelSupported(model: string): boolean {
+  const normalized = normalizePromptModelAlias(model);
+  if (normalized.startsWith("sora-2") || normalized.startsWith("openai/sora-2"))
+    return false;
+  const canonical = resolveCanonicalPromptModelId(model);
+  return !DEFERRED_RELEASE_GENERATION_MODELS.some(
+    (deferred) => deferred === canonical,
+  );
+}
+
 export function getPromptModelConstraints(
   value?: string | null,
 ): PromptModelConstraints | undefined {

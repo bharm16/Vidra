@@ -1,6 +1,7 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { DEFAULT_QWEN_MODEL } from "@config/modelConfig";
+import { DEFAULT_GROQ_MODEL } from "@config/llmModelDefaults";
 import {
   FirestoreCircuitExecutor,
   setFirestoreCircuitExecutor,
@@ -38,7 +39,7 @@ export function registerCoreServices(container: DIContainer): void {
     groq: {
       apiKey: process.env.GROQ_API_KEY,
       timeout: parseInt(process.env.GROQ_TIMEOUT_MS || "5000", 10),
-      model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
+      model: process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL,
     },
     qwen: {
       apiKey: process.env.GROQ_API_KEY,
