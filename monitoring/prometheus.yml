@@ -1,4 +1,4 @@
-# Prometheus Configuration for Prompt Builder API
+# Prometheus Configuration for Vidra API
 #
 # This configuration scrapes metrics from the application
 # and provides data for Grafana dashboards

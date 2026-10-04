@@ -1,6 +1,6 @@
 # Server (Backend)
 
-Express API server for the Vidra video prompt editor.
+Express API server for Vidra.
 
 Root `AGENTS.md` rules apply here — especially the non-negotiable rules and commit protocol.
 

@@ -5,7 +5,6 @@ export interface Mode {
   id: string;
   name: string;
   icon: IconProps["icon"];
-  description: string;
 }
 
 export type WorkspaceUser = User;

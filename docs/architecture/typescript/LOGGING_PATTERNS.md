@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the logging standards for the Prompt Builder codebase. Proper logging enables debugging, monitoring, and tracing across the full stack. Inconsistent or missing logs make debugging impossible.
+This document defines the logging standards for the Vidra codebase. Proper logging enables debugging, monitoring, and tracing across the full stack. Inconsistent or missing logs make debugging impossible.
 
 ---
 

@@ -1,6 +1,6 @@
 # Test Writing Guide
 
-> Single reference for writing and generating tests in the PromptCanvas codebase.
+> Single reference for writing and generating tests in the Vidra codebase.
 > Covers quality heuristics, TypeScript patterns, integration testing, and codebase-specific guidance.
 
 ---

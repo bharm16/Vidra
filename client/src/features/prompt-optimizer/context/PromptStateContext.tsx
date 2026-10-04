@@ -134,9 +134,8 @@ export function PromptStateProvider({
     () => [
       {
         id: "video",
-        name: "Video Prompt",
+        name: "Video",
         icon: VideoCamera,
-        description: "Generate AI video prompts",
       },
     ],
     [],

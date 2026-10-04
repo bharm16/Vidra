@@ -100,7 +100,7 @@ spec:
             component: api
           annotations:
             summary: "API is down"
-            description: "Prompt Builder API has been down for more than 2 minutes"
+            description: "Vidra API has been down for more than 2 minutes"
 
         # Low success rate
         - alert: LowSuccessRate

@@ -1,6 +1,6 @@
 /**
  * UNIFIED TECHNICAL TAXONOMY
- * The single source of truth for all Video Prompt Builder categories.
+ * The single source of truth for all Vidra taxonomy categories.
  *
  * HIERARCHY PRINCIPLE:
  * 1. SHOT & CAMERA (framing + movement) - What the camera sees and how it moves

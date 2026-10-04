@@ -118,7 +118,7 @@ export function initSentry(): void {
     initialScope: {
       tags: {
         platform: "web",
-        app: "prompt-builder",
+        app: "vidra",
       },
     },
   });

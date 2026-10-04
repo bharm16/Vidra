@@ -1,4 +1,4 @@
-# Prometheus configuration for Prompt Builder monitoring
+# Prometheus configuration for Vidra monitoring
 global:
   scrape_interval: 15s
   evaluation_interval: 15s

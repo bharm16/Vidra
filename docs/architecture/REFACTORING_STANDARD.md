@@ -1,4 +1,4 @@
-# Prompt Builder Refactoring Standard
+# Refactoring Standard
 
 ## Core Principle
 

@@ -1,4 +1,4 @@
-# Debugging Guide for Prompt Builder
+# Debugging Guide
 
 ## Quick Start
 

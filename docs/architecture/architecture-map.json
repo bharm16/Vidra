@@ -1,7 +1,6 @@
 {
   "meta": {
     "project": "Vidra",
-    "tagline": "Interactive editing canvas for AI video prompts with semantic span labeling, click-to-enhance suggestions, and fast previews.",
     "stage": "pre-launch (zero users)",
     "sourceOfTruth": [
       "server/src/config/feature-flags.ts",

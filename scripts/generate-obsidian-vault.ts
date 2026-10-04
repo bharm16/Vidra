@@ -57,7 +57,7 @@ interface DependencyEdge {
 }
 
 interface ArchitectureMap {
-  meta: { project: string; tagline: string };
+  meta: { project: string };
   routes: RouteEntry[];
   featureFlags: FlagEntry[];
   dependencies: DependencyEdge[];

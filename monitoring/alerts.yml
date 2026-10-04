@@ -1,4 +1,4 @@
-# Prometheus Alert Rules for Prompt Builder API
+# Prometheus Alert Rules for Vidra API
 #
 # These alerts trigger when performance or availability issues occur
 # Alerts are sent to Alertmanager, which can route to Slack, PagerDuty, etc.
@@ -171,7 +171,7 @@ groups:
           component: api
         annotations:
           summary: "Service is down"
-          description: "The Prompt Builder API is not responding to health checks"
+          description: "The Vidra API is not responding to health checks"
 
       # High request rate (potential DDoS)
       - alert: UnusuallyHighRequestRate

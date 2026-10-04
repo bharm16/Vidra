@@ -1,7 +1,6 @@
 /**
  * Type definitions for the Visual Convergence feature
  *
- * The Visual Convergence feature transforms PromptCanvas into a visual-first video creation platform.
  * Users make creative decisions by selecting from generated images rather than writing prompts.
  */
 

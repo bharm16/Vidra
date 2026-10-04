@@ -81,9 +81,8 @@ vi.mock("../../context/PromptStateContext", () => ({
     modes: [],
     currentMode: {
       id: "video",
-      name: "Video Prompt",
+      name: "Video",
       icon: () => null,
-      description: "",
     },
     videoTier: "standard",
     setVideoTier: vi.fn(),

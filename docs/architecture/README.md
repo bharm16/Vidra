@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-This directory contains the architectural standards and patterns for the Prompt Builder codebase.
+This directory contains the architectural standards and patterns for the Vidra codebase.
 
 Current cross-mode contracts: [deterministic replay proof](cross-mode-golden-path.md),
 [record/replay mode](replay-mode.md), [media ownership and inspection](admission-media-lifecycle.md),

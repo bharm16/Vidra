@@ -1,4 +1,4 @@
-# Codex Agent Guide (Vidra / PromptCanvas)
+# Codex Agent Guide (Vidra)
 
 > **Sync note:** Canonical rules live in `CLAUDE.md`. This file adapts them for Codex.
 > When updating shared rules, update `CLAUDE.md` first, then sync here.

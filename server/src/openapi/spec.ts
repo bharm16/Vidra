@@ -464,8 +464,6 @@ export function buildOpenApiSpec(): OpenApiDocument {
       title: "Vidra API",
       version: "1.0.0",
       description:
-        "Interactive editing canvas for AI video prompts with semantic span labeling, " +
-        "click-to-enhance suggestions, and fast previews.\n\n" +
         "## Authentication\n\n" +
         "Most endpoints require an `X-API-Key` header. Credit-gated endpoints " +
         "(preview, payment) additionally require a Firebase ID token via the " +

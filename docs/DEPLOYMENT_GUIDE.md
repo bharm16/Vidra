@@ -17,7 +17,7 @@
 
 ## Overview
 
-This guide covers the complete deployment engineering approach for the Prompt Builder application, including:
+This guide covers the complete deployment engineering approach for the Vidra application, including:
 
 - Automated CI/CD pipelines
 - Zero-downtime deployments

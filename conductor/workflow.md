@@ -89,7 +89,7 @@ All tasks follow a strict lifecycle:
     - If tests fail, you **must** inform the user and begin debugging. You may attempt to propose a fix a **maximum of two times**. If the tests still fail after your second proposed fix, you **must stop**, report the persistent failure, and ask the user for guidance.
 
 4.  **Propose a Detailed, Actionable Manual Verification Plan:**
-    - **CRITICAL:** To generate the plan, first analyze `product.md`, `product-guidelines.md`, and `plan.md` to determine the user-facing goals of the completed phase.
+    - **CRITICAL:** To generate the plan, first analyze `product-guidelines.md` and `plan.md` to determine the user-facing goals of the completed phase.
     - You **must** generate a step-by-step plan that walks the user through the verification process, including any necessary commands and specific, expected outcomes.
     - The plan you present to the user **must** follow this format:
 

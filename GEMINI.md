@@ -1,8 +1,4 @@
-# Project: Vidra (PromptCanvas)
-
-## Purpose
-
-- Interactive editing canvas for AI video prompts with semantic span labeling, click-to-enhance suggestions, and fast previews.
+# Project: Vidra
 
 ## Tech stack
 

@@ -1,6 +1,6 @@
 {
   "dashboard": {
-    "title": "Prompt Builder API Performance",
+    "title": "Vidra API Performance",
     "tags": ["prompt-builder", "api", "performance"],
     "timezone": "browser",
     "panels": [

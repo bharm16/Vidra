@@ -1,6 +1,6 @@
 # Client (Frontend)
 
-React 18 + Vite frontend for the Vidra video prompt editor.
+React 18 + Vite frontend for Vidra.
 
 Root `AGENTS.md` rules apply here — especially the non-negotiable rules and commit protocol.
 

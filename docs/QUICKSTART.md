@@ -1,6 +1,6 @@
 # Quick Start
 
-Minimal local setup instructions for PromptCanvas.
+Minimal local setup instructions for Vidra.
 
 ## Prerequisites
 

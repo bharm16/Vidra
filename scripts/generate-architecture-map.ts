@@ -43,7 +43,6 @@ const OUTPUT = path.join(
 interface ArchitectureMap {
   meta: {
     project: string;
-    tagline: string;
     stage: string;
     sourceOfTruth: string[];
   };
@@ -61,8 +60,6 @@ export function buildArchitectureMap(): ArchitectureMap {
   return {
     meta: {
       project: "Vidra",
-      tagline:
-        "Interactive editing canvas for AI video prompts with semantic span labeling, click-to-enhance suggestions, and fast previews.",
       stage: "pre-launch (zero users)",
       // Only the inputs buildArchitectureMap actually reads — the CI
       // freshness gate can only detect drift in these. (CLAUDE.md and
