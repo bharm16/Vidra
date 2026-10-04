@@ -1,6 +1,6 @@
 # Client (Frontend)
 
-React 18 + Vite frontend for the Vidra video prompt editor.
+React 18 + Vite frontend for Vidra.
 
 Commit protocol, TypeScript rules, and change scope limits are defined in the root `CLAUDE.md` — all rules apply here.
 Root `AGENTS.md` rules apply here — especially the non-negotiable rules and commit protocol.
@@ -9,8 +9,8 @@ Root `AGENTS.md` rules apply here — especially the non-negotiable rules and co
 
 - React 18 + Vite
 - Tailwind CSS + `@promptstudio/system` (design system) + Radix UI primitives
-- TypeScript/JavaScript mix (migration in progress)
-- Lucide React for icons
+- TypeScript
+- Icons: `@phosphor-icons/react` through the design system; type icon props as `IconProps["icon"]`, never a hand-rolled `ComponentType`
 
 ## Commands
 
@@ -33,12 +33,11 @@ client/src/
 ├── api/                   # API client functions
 ├── services/              # Client-side services
 ├── repositories/          # Data access layer
-├── schemas/               # Zod validation schemas
 ├── contexts/              # React context providers
 ├── config/                # Client configuration
 ├── types/                 # TypeScript type definitions
 ├── utils/                 # Pure utility functions
-└── styles/                # Global styles
+└── assets/                # Static assets
 ```
 
 ## Architecture Pattern
@@ -91,3 +90,8 @@ FeatureName/
 - `@promptstudio/system` components for UI primitives
 - Radix UI for accessible primitives (dialogs, popovers, tooltips)
 - Check `client/src/components/` for existing shared components before creating new ones
+
+## Gotchas
+
+- shadcn `Button` keeps its `h-9` even with `h-auto`; use `!h-auto`. Invisible to tsc and tests — needs a browser check.
+- Targeted tests: `npx vitest run <path> --config config/test/vitest.unit.config.js` (a bare run globs foreign worktree copies when worktrees exist).

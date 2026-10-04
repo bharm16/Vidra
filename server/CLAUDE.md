@@ -1,6 +1,6 @@
 # Server (Backend)
 
-Express API server for the Vidra video prompt editor.
+Express API server for Vidra.
 
 Commit protocol, TypeScript rules, and change scope limits are defined in the root `CLAUDE.md` — all rules apply here.
 Root `AGENTS.md` rules apply here — especially the non-negotiable rules and commit protocol.
@@ -33,13 +33,17 @@ server/
 ├── src/
 │   ├── app.ts             # Express app setup
 │   ├── server.ts          # HTTP server wiring
+│   ├── errors/            # DomainError base class
+│   ├── infrastructure/    # DIContainer, Logger
+│   ├── openapi/           # OpenAPI spec builder
+│   ├── replay/            # Record/replay cassette seam (REPLAY_MODE)
 │   ├── config/
 │   │   └── services/      # DI registration (domain-scoped)
 │   ├── services/          # Business logic (domain subdirectories)
 │   ├── routes/            # HTTP route handlers
 │   ├── clients/           # External API clients (LLM, etc.)
 │   ├── llm/               # LLM orchestration and span labeling
-│   ├── middleware/         # Express middleware
+│   ├── middleware/        # Express middleware, incl. respond.ts envelope helpers
 │   ├── schemas/           # Zod validation schemas
 │   ├── contracts/         # Request/response contracts
 │   └── utils/             # Shared helpers
@@ -55,10 +59,10 @@ ServiceName/
 ├── services/              # Specialized sub-services
 │   ├── SubService1.ts
 │   └── SubService2.ts
-├── templates/             # External .md prompt templates
-│   └── template.md
 └── types.ts               # Service-specific types
 ```
+
+Services that own an LLM prompt keep its `.md` template in a sibling `templates/` directory (see `studio/`, `model-intelligence/`, `image-observation/`, `llm/span-labeling/`).
 
 ## Conventions
 
@@ -66,7 +70,7 @@ ServiceName/
 
 - Keep route handlers thin — all business logic in services
 - Validate request body with Zod schemas
-- Return consistent response shapes: `{ success: true, data }` or `{ success: false, error }`
+- Return the canonical envelope through `respond.ok` / `respond.fail` from `server/src/middleware/respond.ts`
 
 ### Services
 
@@ -90,7 +94,7 @@ ServiceName/
 
 ### Error Handling
 
-- Use typed error classes (ValidationError, NotFoundError, etc.)
+- Throw subclasses of `DomainError` (`server/src/errors/DomainError.ts`); the error middleware maps them to status codes
 - Log errors with context using Pino
 - Return appropriate HTTP status codes
 
