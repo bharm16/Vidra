@@ -212,7 +212,43 @@ const control = async (
     res.statusCode = object ? 200 : 404;
     if (object) {
       res.setHeader("content-type", object.contentType);
-      res.end(object.buffer);
+      res.setHeader("accept-ranges", "bytes");
+      const size = object.buffer.byteLength;
+      const range = req.headers.range;
+      let start = 0;
+      let end = size - 1;
+      if (range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+        if (match && (match[1] || match[2])) {
+          start = match[1]
+            ? Number(match[1])
+            : Math.max(0, size - Number(match[2]));
+          end =
+            match[1] && match[2]
+              ? Math.min(Number(match[2]), size - 1)
+              : size - 1;
+        }
+        if (
+          !match ||
+          (!match[1] && !match[2]) ||
+          (!match[1] && Number(match[2]) === 0) ||
+          !Number.isSafeInteger(start) ||
+          !Number.isSafeInteger(end) ||
+          start < 0 ||
+          start >= size ||
+          end < start
+        ) {
+          res.statusCode = 416;
+          res.setHeader("content-range", `bytes */${size}`);
+          res.end();
+          return;
+        }
+        res.statusCode = 206;
+        res.setHeader("content-range", `bytes ${start}-${end}/${size}`);
+      }
+      const body = object.buffer.subarray(start, end + 1);
+      res.setHeader("content-length", body.byteLength);
+      res.end(req.method === "HEAD" ? undefined : body);
     } else res.end();
     return;
   }

@@ -74,8 +74,10 @@ async function preparePage(page: Page): Promise<void> {
   // Only the object transport is routed. Application APIs reach the real server.
   await page.route("https://objects.cross-mode.invalid/**", async (route) => {
     const url = new URL(route.request().url());
+    const range = await route.request().headerValue("range");
     const response = await page.request.get(
       `/__test/objects?path=${encodeURIComponent(decodeURIComponent(url.pathname.slice(1)))}`,
+      { headers: range ? { range } : {} },
     );
     await route.fulfill({ response });
   });
