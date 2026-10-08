@@ -12,7 +12,6 @@
 import { useCallback, type MutableRefObject } from "react";
 import { applySuggestionToPrompt } from "@features/prompt-optimizer/utils/applySuggestion";
 import { updateHighlightSnapshotForSuggestion } from "@features/prompt-optimizer/utils/updateHighlightSnapshot";
-import { updateSpanListForSuggestion } from "@features/prompt-optimizer/utils/updateSpanListForSuggestion";
 import { recordSpanEdit } from "@features/prompt-optimizer/hooks/useEditHistory";
 import type { Toast } from "@hooks/types";
 import type {
@@ -20,16 +19,10 @@ import type {
   SuggestionItem,
   SuggestionsData,
 } from "@features/prompt-optimizer/PromptCanvas/types";
-import type {
-  CoherenceCheckRequest,
-  CoherenceSpan,
-} from "@features/prompt-optimizer/types/coherence";
 import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
-import { buildCoherenceSpansFromSnapshot } from "../utils/buildCoherenceSpans";
 
 const log = logger.child("useSuggestionApply");
-export { buildCoherenceSpansFromSnapshot } from "../utils/buildCoherenceSpans";
 
 interface UseSuggestionApplyParams {
   suggestionsData: SuggestionsData | null;
@@ -50,9 +43,6 @@ interface UseSuggestionApplyParams {
       output: string,
     ) => void;
   };
-  onCoherenceCheck?:
-    | ((payload: CoherenceCheckRequest) => Promise<void> | void)
-    | undefined;
 }
 
 /**
@@ -68,7 +58,6 @@ export function useSuggestionApply({
   currentPromptUuid,
   currentPromptDocId,
   promptHistory,
-  onCoherenceCheck,
 }: UseSuggestionApplyParams): {
   handleSuggestionClick: (suggestion: SuggestionItem | string) => Promise<void>;
 } {
@@ -156,64 +145,6 @@ export function useSuggestionApply({
           handleDisplayedPromptChange(result.updatedPrompt);
           toast.success("Suggestion applied");
 
-          const targetSpanId =
-            (targetSpan?.id as string | null | undefined) ??
-            (metadata?.spanId as string | null | undefined) ??
-            null;
-
-          if (onCoherenceCheck) {
-            const baseSpans = Array.isArray(suggestionsData.allLabeledSpans)
-              ? suggestionsData.allLabeledSpans
-              : [];
-            const updatedSpans = updateSpanListForSuggestion({
-              spans: baseSpans,
-              matchStart: result.matchStart ?? offsets?.start ?? null,
-              matchEnd: result.matchEnd ?? offsets?.end ?? null,
-              replacementText: suggestionText,
-              targetSpanId,
-              targetStart:
-                (targetSpan?.start as number | null | undefined) ??
-                (metadata?.start as number | null | undefined) ??
-                offsets?.start ??
-                null,
-              targetEnd:
-                (targetSpan?.end as number | null | undefined) ??
-                (metadata?.end as number | null | undefined) ??
-                offsets?.end ??
-                null,
-              targetCategory:
-                (targetSpan?.category as string | null | undefined) ??
-                (metadata?.category as string | null | undefined) ??
-                null,
-            });
-
-            const fallbackSpans = buildCoherenceSpansFromSnapshot(
-              updatedHighlights ?? latestHighlightRef.current,
-              result.updatedPrompt,
-            );
-            const coherenceSpans: CoherenceSpan[] =
-              updatedSpans.length > 0
-                ? (updatedSpans as unknown as CoherenceSpan[])
-                : fallbackSpans;
-
-            if (coherenceSpans.length > 0) {
-              void onCoherenceCheck({
-                beforePrompt: fullPrompt,
-                afterPrompt: result.updatedPrompt,
-                appliedChange: {
-                  spanId: targetSpanId ?? undefined,
-                  category:
-                    (targetSpan?.category as string | null | undefined) ??
-                    (metadata?.category as string | null | undefined) ??
-                    undefined,
-                  oldText: selectedText,
-                  newText: suggestionText,
-                },
-                spans: coherenceSpans,
-              });
-            }
-          }
-
           // Track this edit in history
           recordSpanEdit({
             original: selectedText,
@@ -268,7 +199,6 @@ export function useSuggestionApply({
       currentPromptUuid,
       currentPromptDocId,
       updateEntryOutput,
-      onCoherenceCheck,
     ],
   );
 

@@ -18,11 +18,7 @@ export type PendingGenerationIntent =
       model: string;
       overrides?: GenerationOverrides | undefined;
     }
-  | {
-      sessionId: string;
-      prompt: string;
-      kind: "storyboard";
-    };
+;
 
 let pendingIntent: PendingGenerationIntent | null = null;
 

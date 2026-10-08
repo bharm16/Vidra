@@ -92,8 +92,8 @@ vi.mock("@/components/ToolSidebar/context", () => ({
   useSidebarGenerationDomain: () => null,
 }));
 
-vi.mock("../hooks/useModelSelectionRecommendation", () => ({
-  useModelSelectionRecommendation: () => ({
+vi.mock("../hooks/useVideoModelSelection", () => ({
+  useVideoModelSelection: () => ({
     recommendationMode: "t2v",
     modelRecommendation: null,
     recommendedModelId: undefined,
@@ -129,12 +129,8 @@ const buildProps = (): React.ComponentProps<typeof CanvasWorkspace> => ({
 });
 
 describe("regression: canvas empty-session shell wiring", () => {
-  it("keeps a single prompt textbox and the minimal sheet controls in the empty-session shell", () => {
-    // Empty session = no prompt, no shots. Under the unified path the
-    // floating composer always mounts; the prompt textbox lives there. The
-    // pre-work sheet shows only the two inline selectors (16:9 · duration) +
-    // a circular submit — the model picker / frame chrome belongs to the
-    // working composer (ADR-0014 + rulings), so it is deliberately absent.
+  it("keeps one prompt textbox and its video settings in the empty-session shell", () => {
+    // Before-first-generation uses the same live editor and settings actors.
     const props = buildProps();
     render(
       withSelectedSpan(
@@ -151,9 +147,9 @@ describe("regression: canvas empty-session shell wiring", () => {
     expect(
       screen.getAllByRole("textbox", { name: "Shot description" }),
     ).toHaveLength(1);
-    // Minimal sheet: the settings row mounts, the model picker does not.
-    expect(screen.getByTestId("canvas-settings-row")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Video model/i })).toBeNull();
+    // Empty editor state still has the manual settings control.
+    expect(screen.getByRole("region", { name: "Video composer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Video model" })).toBeInTheDocument();
   });
 
   it("does not lock the user into empty state when prompt content exists, even without a prompt version id", () => {
@@ -180,6 +176,6 @@ describe("regression: canvas empty-session shell wiring", () => {
     ).toBeInTheDocument();
     // The composer chrome stays wired (the settings row mounts with the
     // editor); the shell is not wedged into a dead empty state.
-    expect(screen.getByTestId("canvas-settings-row")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Video composer" })).toBeInTheDocument();
   });
 });

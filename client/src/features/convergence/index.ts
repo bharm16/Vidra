@@ -1,11 +1,4 @@
-/**
- * Convergence Feature Barrel Exports
- *
- * The convergence wizard has been removed, but motion-related components
- * and shared utilities remain in use.
+/** Historical camera vocabulary remains readable in saved generation controls.
+ * Frozen camera/depth UI and wire clients are retired; shared contracts stay intact.
  */
-
 export * from "./types";
-export * from "./utils";
-export * from "./components/CameraMotionPicker";
-export * from "./components/shared";

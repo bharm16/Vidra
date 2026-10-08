@@ -2,35 +2,32 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
-import { X } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Textarea } from "@promptstudio/system/components/ui/textarea";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@promptstudio/system/components/ui/popover";
+import closeIcon from "@/assets/design-system/phrase-suggestions-close.svg";
+import loadingIcon from "@/assets/design-system/phrase-suggestions-loading.svg";
+import "./phrase-suggestions.css";
 import { MAX_REQUEST_LENGTH } from "@/components/SuggestionsPanel/config/panelConfig";
-import { TriggerAutocomplete } from "@/features/assets/components/TriggerAutocomplete";
-import type { AssetSuggestion } from "@/features/assets/hooks/useTriggerAutocomplete";
 import { PromptEditor } from "@/features/prompt-optimizer/components/PromptEditor";
 import { MOTION_GOLD_HEX } from "@/features/prompt-optimizer/config/categoryColors";
 import { useSelectedSpan } from "@/features/prompt-optimizer/context/SelectedSpanContext";
 import { addPromptFocusIntentListener } from "@features/workspace-shell/events";
-import { useAnimatedPresence } from "@/hooks/useAnimatedPresence";
 import { cn } from "@/utils/cn";
 
-/**
- * Everything needed to drive a prompt-editing surface: the editable node, the
- * pointer/keyboard handlers that turn edits and selections into spans, and the
- * trigger-autocomplete state that rides along with them.
- *
- * One name for a cluster that four types used to declare independently — this
- * surface, `CanvasWorkspaceProps`, `PromptCanvasViewProps` (flat, among 88
- * props), and `PromptCanvasEditorSectionProps` (as a `Pick` of those). They all
- * pass the same 18 values to the same two renderers, so adding a handler meant
- * finding four declarations and three call sites.
- */
+/** Shared editor wiring. The editable node remains mounted while its span panel opens or closes. */
 export interface PromptEditorWiring {
   editorRef: React.RefObject<HTMLDivElement>;
+  /** Managed words decide emptiness even when contenteditable retains a BR. */
+  isEmpty?: boolean | undefined;
   onTextSelection: (event: React.MouseEvent<HTMLDivElement>) => void;
   onHighlightClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   onHighlightMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -38,25 +35,16 @@ export interface PromptEditorWiring {
   onHighlightMouseLeave: (event: React.MouseEvent<HTMLDivElement>) => void;
   onCopyEvent: (event: React.ClipboardEvent<HTMLDivElement>) => void;
   onInput: (event: React.FormEvent<HTMLDivElement>) => void;
-  onEditorKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
-  onEditorBlur: (event: React.FocusEvent<HTMLDivElement>) => void;
-  autocompleteOpen: boolean;
-  autocompleteSuggestions: AssetSuggestion[];
-  autocompleteSelectedIndex: number;
-  autocompletePosition: { top: number; left: number };
-  autocompleteLoading: boolean;
-  onAutocompleteSelect: (asset: AssetSuggestion) => void;
-  onAutocompleteClose: () => void;
-  onAutocompleteIndexChange: (index: number) => void;
 }
 
 export interface PromptEditorSurfaceProps extends PromptEditorWiring {
-  /** Visual variant — "empty" mirrors today's centered hero text styling; "active" mirrors the docked variant. */
-  variant?: "empty" | "active";
+  /** Visual slot in the new or ongoing Video composer. */
+  variant?: "empty" | "active" | "composer";
 }
 
 export function PromptEditorSurface({
   editorRef,
+  isEmpty,
   variant = "active",
   onTextSelection,
   onHighlightClick,
@@ -65,20 +53,9 @@ export function PromptEditorSurface({
   onHighlightMouseLeave,
   onCopyEvent,
   onInput,
-  onEditorKeyDown,
-  onEditorBlur,
-  autocompleteOpen,
-  autocompleteSuggestions,
-  autocompleteSelectedIndex,
-  autocompletePosition,
-  autocompleteLoading,
-  onAutocompleteSelect,
-  onAutocompleteClose,
-  onAutocompleteIndexChange,
 }: PromptEditorSurfaceProps): React.ReactElement {
   const {
     selectedSpanId,
-    suggestionCount,
     suggestionsListRef,
     inlineSuggestions,
     activeSuggestionIndex,
@@ -88,7 +65,6 @@ export function PromptEditorSurface({
     onCloseInlinePopover,
     selectionLabel,
     isMotionSelection,
-    onApplyActiveSuggestion,
     isInlineLoading,
     isInlineError,
     inlineErrorMessage,
@@ -105,19 +81,31 @@ export function PromptEditorSurface({
     isBulkCopyLoading = false,
   } = useSelectedSpan();
   const isEmptyLayout = variant === "empty";
-  const placeholderText = isEmptyLayout
-    ? "Describe your idea…"
-    : "Describe your shot…";
-  const [isSuggestionTrayCollapsed, setIsSuggestionTrayCollapsed] =
-    useState(false);
+  const placeholderText = "Describe the video you want to create…";
   const [isDebugCopied, setIsDebugCopied] = useState(false);
-  const previousSelectedSpanIdRef = useRef<string | null>(null);
-  const { shouldRender: shouldRenderAutocomplete, phase: autocompletePhase } =
-    useAnimatedPresence(autocompleteOpen, { exitMs: 140 });
-  const {
-    shouldRender: shouldRenderSuggestionTray,
-    phase: suggestionTrayPhase,
-  } = useAnimatedPresence(Boolean(selectedSpanId), { exitMs: 180 });
+  const customRequestRef = useRef<HTMLTextAreaElement>(null);
+  const initialLoading = isInlineLoading && !isCustomLoading;
+  const showOptions =
+    inlineSuggestions.length > 0 &&
+    (!isInlineLoading || isCustomLoading) &&
+    (!isInlineError || isCustomLoading);
+  const phraseState = isCustomLoading
+    ? "Custom loading"
+    : initialLoading
+      ? "Loading"
+      : isInlineError
+        ? "Error"
+        : isInlineEmpty || !inlineSuggestions.length
+          ? "Empty"
+          : customRequest.trim()
+            ? "Custom request"
+            : "Ready";
+  useLayoutEffect(() => {
+    const input = customRequestRef.current;
+    if (!input) return;
+    input.style.height = "0px";
+    input.style.height = `${input.scrollHeight}px`;
+  }, [customRequest, initialLoading]);
   const debugPayload = useMemo(() => {
     if (!import.meta.env.DEV) {
       return null;
@@ -152,313 +140,298 @@ export function PromptEditorSurface({
     });
   }, [editorRef]);
 
-  useEffect(() => {
-    const previousSelectedSpanId = previousSelectedSpanIdRef.current;
-    if (selectedSpanId && selectedSpanId !== previousSelectedSpanId) {
-      setIsSuggestionTrayCollapsed(false);
-    }
-    previousSelectedSpanIdRef.current = selectedSpanId;
-  }, [selectedSpanId]);
-
   return (
-    // Inset from the composer card edge so the editor text and the tray's
-    // scrolling chip row never clip against the border/rounded corner. The
-    // Anchor sheet supplies its own padding on the card, so the editor sits
-    // flush.
     <div
-      className={cn("px-4 pb-2.5 pt-3", isEmptyLayout && "p-0")}
+      className={cn(
+        "vidra-prompt-editor px-4 pb-2.5 pt-3",
+        (isEmptyLayout || variant === "composer") && "p-0",
+      )}
       style={
-        isEmptyLayout
+        isEmptyLayout || variant === "composer"
           ? // Feed the global [contenteditable] !important sizing the display
             // triple rather than out-specifying it — the rule reads these vars.
             // Display type tightens: the base default is +0.01em, which at this
             // size read as a visible +0.26px of loosening on the largest text
             // on the page.
             ({
-              "--editor-font-size": "var(--text-heading)",
-              "--editor-line-height": "var(--text-heading-lh)",
-              "--editor-letter-spacing": "var(--text-heading-ls)",
+              "--editor-font-size": "var(--text-body)",
+              "--editor-line-height": "var(--text-body-lh)",
+              "--editor-letter-spacing": "var(--text-body-ls)",
               "--editor-padding-y": "0px",
               "--editor-padding-x": "0px",
             } as React.CSSProperties)
           : undefined
       }
     >
-      <div className="relative">
-        <PromptEditor
-          ref={editorRef}
-          className={cn(
-            // ps-scrollbar-thin (not -hide): long expanded prompts overflow
-            // this 180px window — the scrollbar is the visible affordance
-            // that there is more prompt below the fold.
-            "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none",
-            isEmptyLayout
-              ? "text-foreground caret-foreground min-h-[104px] [&:empty]:min-h-[104px]"
-              : "text-tool-text-dim text-ui min-h-[56px] leading-[1.75] [&:empty]:min-h-[56px]",
-          )}
-          placeholder={placeholderText}
-          onTextSelection={onTextSelection}
-          onHighlightClick={onHighlightClick}
-          onHighlightMouseDown={onHighlightMouseDown}
-          onHighlightMouseEnter={onHighlightMouseEnter}
-          onHighlightMouseLeave={onHighlightMouseLeave}
-          onCopyEvent={onCopyEvent}
-          onInput={onInput}
-          onKeyDown={onEditorKeyDown}
-          onBlur={onEditorBlur}
-        />
-        {shouldRenderAutocomplete ? (
-          <TriggerAutocomplete
-            isOpen={autocompleteOpen}
-            suggestions={autocompleteSuggestions}
-            selectedIndex={autocompleteSelectedIndex}
-            position={autocompletePosition}
-            isLoading={autocompleteLoading}
-            onSelect={onAutocompleteSelect}
-            onClose={onAutocompleteClose}
-            setSelectedIndex={onAutocompleteIndexChange}
-            motionPhase={autocompletePhase}
-          />
-        ) : null}
-      </div>
-
-      {shouldRenderSuggestionTray ? (
-        <div
-          className="motion-presence-panel border-tool-nav-active mt-2.5 border-t pt-2.5"
-          data-motion-state={suggestionTrayPhase}
+      <Popover
+        open={Boolean(selectedSpanId)}
+        onOpenChange={(open) => {
+          if (!open) onCloseInlinePopover();
+        }}
+      >
+        <PopoverAnchor asChild>
+          <div className="relative">
+            <PromptEditor
+              ref={editorRef}
+              {...(isEmpty === undefined ? {} : { isEmpty })}
+              className={cn(
+                // ps-scrollbar-thin (not -hide): long expanded prompts overflow
+                // this 180px window — the scrollbar is the visible affordance
+                // that there is more prompt below the fold.
+                "ps-scrollbar-thin max-h-[180px] overflow-y-auto outline-none",
+                isEmptyLayout
+                  ? "text-foreground caret-foreground min-h-[104px] [&:empty]:min-h-[104px]"
+                  : variant === "composer"
+                    ? "text-foreground min-h-[96px] leading-6"
+                    : "text-tool-text-dim text-ui min-h-[56px] leading-[1.75] [&:empty]:min-h-[56px]",
+              )}
+              placeholder={placeholderText}
+              onTextSelection={onTextSelection}
+              onHighlightClick={onHighlightClick}
+              onHighlightMouseDown={onHighlightMouseDown}
+              onHighlightMouseEnter={onHighlightMouseEnter}
+              onHighlightMouseLeave={onHighlightMouseLeave}
+              onCopyEvent={onCopyEvent}
+              onInput={onInput}
+            />
+          </div>
+        </PopoverAnchor>
+        <PopoverContent
+          className="vidra-phrase-suggestions ps-scrollbar-thin"
+          align="start"
+          side="bottom"
+          sideOffset={8}
+          collisionPadding={12}
+          aria-label="Phrase suggestions"
           data-testid="canvas-suggestion-tray"
+          data-phrase-state={phraseState}
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onInteractOutside={(event) => {
+            const target = event.target;
+            if (target instanceof Node && editorRef.current?.contains(target))
+              event.preventDefault();
+          }}
+          onKeyDown={(event) => {
+            const focusedOption =
+              event.target instanceof Element
+                ? event.target.closest<HTMLButtonElement>("button[data-index]")
+                : null;
+            if (
+              focusedOption &&
+              inlineSuggestions.length > 0 &&
+              (event.key === "ArrowDown" || event.key === "ArrowUp")
+            ) {
+              event.preventDefault();
+              event.stopPropagation();
+              const delta = event.key === "ArrowDown" ? 1 : -1;
+              const nextIndex =
+                (Number(focusedOption.dataset.index) +
+                  delta +
+                  inlineSuggestions.length) %
+                inlineSuggestions.length;
+              interactionSourceRef.current = "keyboard";
+              onActiveSuggestionChange(nextIndex);
+              suggestionsListRef.current
+                ?.querySelector<HTMLButtonElement>(
+                  `button[data-index="${nextIndex}"]`,
+                )
+                ?.focus();
+              return;
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              onCloseInlinePopover();
+            } else if (
+              event.key === "Enter" &&
+              event.target instanceof Element &&
+              event.target.closest("button")
+            ) {
+              // Native buttons handle their own activation; the existing span
+              // keyboard controller still owns Up/Down/Enter in the editor.
+              event.stopPropagation();
+            }
+          }}
         >
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="text-tool-text-dim text-meta truncate font-semibold tracking-[0.05em]">
-                {selectionLabel
-                  ? `Replace "${selectionLabel}"`
-                  : "Replace selection"}
+          <div className="vidra-phrase-suggestions__header">
+            <div className="vidra-phrase-suggestions__selection">
+              <p className="vidra-phrase-suggestions__replace">Replace</p>
+              <p className="vidra-phrase-suggestions__phrase">
+                {selectionLabel || "Selection"}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="vidra-phrase-suggestions__close"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={onCloseInlinePopover}
+              aria-label="Close suggestions"
+            >
+              <img src={closeIcon} alt="" aria-hidden="true" />
+            </Button>
+          </div>
+          {isMotionSelection ? (
+            <div
+              data-testid="motion-not-in-picture-note"
+              className="vidra-phrase-suggestions__motion"
+              style={{ color: MOTION_GOLD_HEX }}
+            >
+              Not in the picture — this drives the video
+            </div>
+          ) : null}
+          {initialLoading ? (
+            <div
+              className="vidra-phrase-suggestions__status vidra-phrase-suggestions__status--loading"
+              role="status"
+            >
+              <span className="vidra-phrase-suggestions__loading-icon">
+                <img
+                  src={loadingIcon}
+                  alt=""
+                  aria-hidden="true"
+                  className="animate-spin"
+                />
               </span>
-              <span
-                key={suggestionCount}
-                className="motion-count-bump bg-tool-rail-border text-tool-text-subdued text-meta rounded-full px-2 py-0.5 font-semibold"
-                title={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
-                aria-label={`${suggestionCount} suggestion${suggestionCount === 1 ? "" : "s"}`}
+              <span>Finding alternatives…</span>
+            </div>
+          ) : null}
+          {showOptions ? (
+            <div
+              ref={suggestionsListRef}
+              className="vidra-phrase-suggestions__options"
+            >
+              {inlineSuggestions.map((suggestion, index) => (
+                <Button
+                  key={suggestion.key}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-index={index}
+                  data-active={activeSuggestionIndex === index || undefined}
+                  aria-pressed={activeSuggestionIndex === index}
+                  className="vidra-phrase-suggestions__option"
+                  title={suggestion.text}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onMouseEnter={() => {
+                    interactionSourceRef.current = "mouse";
+                    onActiveSuggestionChange(index);
+                  }}
+                  onFocus={() => {
+                    interactionSourceRef.current = "keyboard";
+                    onActiveSuggestionChange(index);
+                  }}
+                  onClick={() => {
+                    onSuggestionClick(suggestion.item);
+                    onCloseInlinePopover();
+                  }}
+                >
+                  <span>{suggestion.text}</span>
+                </Button>
+              ))}
+            </div>
+          ) : null}
+          {!initialLoading && isInlineError && !isCustomLoading ? (
+            <div
+              className="vidra-phrase-suggestions__status"
+              role="alert"
+              title={inlineErrorMessage}
+            >
+              Couldn’t load suggestions.
+            </div>
+          ) : null}
+          {!initialLoading && !isInlineError && !showOptions ? (
+            <div className="vidra-phrase-suggestions__status" role="status">
+              No alternatives found.
+            </div>
+          ) : null}
+          {!initialLoading ? (
+            <form
+              className="vidra-phrase-suggestions__custom"
+              data-suggest-custom
+              onSubmit={onCustomRequestSubmit}
+            >
+              <Textarea
+                ref={customRequestRef}
+                id="inline-custom-request"
+                value={customRequest}
+                onChange={(event) => {
+                  onCustomRequestChange(event.target.value);
+                  if (customRequestError) onCustomRequestErrorChange("");
+                }}
+                placeholder="Describe a change…"
+                className="vidra-phrase-suggestions__input ps-scrollbar-thin"
+                maxLength={MAX_REQUEST_LENGTH}
+                rows={1}
+                aria-label="Custom suggestion request"
+                aria-invalid={Boolean(customRequestError)}
+              />
+              <Button
+                type="submit"
+                variant={customRequest.trim() ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "vidra-phrase-suggestions__suggest",
+                  isCustomLoading &&
+                    "vidra-phrase-suggestions__suggest--loading",
+                )}
+                data-empty={!customRequest.trim() || undefined}
+                disabled={isCustomRequestDisabled || isCustomLoading}
+                aria-busy={isCustomLoading || undefined}
+                aria-label={
+                  isCustomLoading ? "Requesting alternatives" : "Suggest"
+                }
               >
-                {suggestionCount}
-              </span>
-              {import.meta.env.DEV && debugPayload ? (
+                {isCustomLoading ? (
+                  <span className="vidra-phrase-suggestions__loading-icon">
+                    <img
+                      src={loadingIcon}
+                      alt=""
+                      aria-hidden="true"
+                      className="animate-spin"
+                    />
+                  </span>
+                ) : (
+                  "Suggest"
+                )}
+              </Button>
+            </form>
+          ) : null}
+          {customRequestError ? (
+            <div className="vidra-phrase-suggestions__error" role="alert">
+              {customRequestError}
+            </div>
+          ) : null}
+          {import.meta.env.DEV && (debugPayload || onCopyAllDebug) ? (
+            <div className="vidra-phrase-suggestions__debug">
+              {debugPayload ? (
                 <Button
                   type="button"
                   variant="ghost"
                   size="xs"
-                  className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleCopyDebug();
-                  }}
+                  onClick={handleCopyDebug}
                 >
                   {isDebugCopied ? "Copied!" : "Copy Debug"}
                 </Button>
               ) : null}
-              {import.meta.env.DEV && onCopyAllDebug ? (
+              {onCopyAllDebug ? (
                 <Button
                   type="button"
                   variant="ghost"
                   size="xs"
-                  className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onCopyAllDebug();
-                  }}
                   disabled={isBulkCopyLoading}
+                  onClick={onCopyAllDebug}
                 >
                   {isBulkCopyLoading ? "Copying All..." : "Copy All Debug"}
                 </Button>
               ) : null}
             </div>
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                className="text-tool-text-subdued hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setIsSuggestionTrayCollapsed((prev) => !prev);
-                }}
-              >
-                {isSuggestionTrayCollapsed ? "Expand" : "Collapse"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                className="text-tool-text-label hover:bg-tool-rail-border hover:text-tool-text-dim rounded-md"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onCloseInlinePopover();
-                }}
-                aria-label="Close suggestions"
-              >
-                <X size={12} weight="bold" aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-
-          {isMotionSelection ? (
-            <div
-              data-testid="motion-not-in-picture-note"
-              className="text-meta mb-2 flex items-center gap-1.5 font-medium"
-              style={{ color: MOTION_GOLD_HEX }}
-            >
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: MOTION_GOLD_HEX }}
-                aria-hidden="true"
-              />
-              Not in the picture — this drives the video
-            </div>
           ) : null}
-
-          {!isSuggestionTrayCollapsed ? (
-            <>
-              <div
-                className="border-tool-rail-border border-b pb-2"
-                data-suggest-custom
-              >
-                <form
-                  className="flex items-center gap-2"
-                  onSubmit={onCustomRequestSubmit}
-                >
-                  <Textarea
-                    id="inline-custom-request"
-                    value={customRequest}
-                    onChange={(event) => {
-                      onCustomRequestChange(event.target.value);
-                      if (customRequestError) {
-                        onCustomRequestErrorChange("");
-                      }
-                    }}
-                    placeholder="Add a specific change (e.g. football field)"
-                    className="border-tool-nav-active bg-tool-surface-prompt-compact text-foreground placeholder:text-tool-text-subdued min-h-9 flex-1 resize-none rounded-lg border px-3 py-2 text-xs"
-                    maxLength={MAX_REQUEST_LENGTH}
-                    rows={1}
-                    aria-label="Custom suggestion request"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="border-tool-accent-neutral/25 bg-tool-accent-neutral text-tool-surface-deep rounded-lg border font-semibold hover:opacity-90"
-                    disabled={isCustomRequestDisabled}
-                    aria-busy={isCustomLoading}
-                  >
-                    {isCustomLoading ? "Applying..." : "Apply"}
-                  </Button>
-                </form>
-                {customRequestError ? (
-                  <div
-                    className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3 py-2 text-xs"
-                    role="alert"
-                  >
-                    {customRequestError}
-                  </div>
-                ) : null}
-              </div>
-
-              {isInlineError ? (
-                <div
-                  className="motion-shake-x text-danger mt-2 rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3 py-2 text-xs"
-                  role="alert"
-                >
-                  {inlineErrorMessage}
-                </div>
-              ) : null}
-
-              {isInlineLoading ? (
-                <div className="mt-2 flex gap-2">
-                  <div className="bg-tool-rail-border h-8 w-24 animate-pulse rounded-lg" />
-                  <div className="bg-tool-rail-border h-8 w-32 animate-pulse rounded-lg" />
-                  <div className="bg-tool-rail-border h-8 w-20 animate-pulse rounded-lg" />
-                </div>
-              ) : null}
-
-              {!isInlineLoading && !isInlineError && suggestionCount > 0 ? (
-                <div
-                  ref={suggestionsListRef}
-                  className="ps-scrollbar-thin mt-2 flex gap-2 overflow-x-auto pb-1"
-                >
-                  {inlineSuggestions.map((suggestion, index) => (
-                    <Button
-                      key={suggestion.key}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      data-index={index}
-                      className={cn(
-                        "flex-shrink-0 rounded-lg text-xs font-normal transition-[transform,border-color,color,background-color] duration-[160ms] [transition-timing-function:var(--motion-ease-standard)]",
-                        activeSuggestionIndex === index
-                          ? "border-tool-accent-neutral/50 bg-tool-accent-neutral/10 text-foreground -translate-y-px"
-                          : "border-tool-nav-active bg-tool-surface-prompt-compact text-tool-text-dim hover:border-tool-text-label hover:text-foreground",
-                      )}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => {
-                        interactionSourceRef.current = "mouse";
-                        onActiveSuggestionChange(index);
-                      }}
-                      onClick={() => {
-                        onSuggestionClick(suggestion.item);
-                        onCloseInlinePopover();
-                      }}
-                    >
-                      {suggestion.text}
-                      {index === 0 ? (
-                        <span className="text-tool-accent-neutral text-meta ml-1.5 font-semibold">
-                          Best
-                        </span>
-                      ) : suggestion.meta ? (
-                        <span className="text-tool-text-subdued text-meta ml-1.5">
-                          {suggestion.meta}
-                        </span>
-                      ) : null}
-                    </Button>
-                  ))}
-                </div>
-              ) : null}
-
-              {isInlineEmpty ? (
-                <div className="text-tool-text-subdued mt-2 text-xs">
-                  No suggestions yet.
-                </div>
-              ) : null}
-
-              <div className="border-tool-rail-border mt-2 flex items-center gap-2 border-t pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="border-tool-nav-active text-tool-text-dim hover:border-tool-text-label hover:text-foreground rounded-lg font-semibold"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onCloseInlinePopover();
-                  }}
-                >
-                  Clear
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="border-tool-accent-neutral/25 bg-tool-accent-neutral text-tool-surface-deep rounded-lg border font-semibold hover:opacity-90"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onApplyActiveSuggestion();
-                    onCloseInlinePopover();
-                  }}
-                  disabled={suggestionCount === 0}
-                >
-                  Use selected
-                </Button>
-              </div>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

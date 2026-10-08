@@ -68,6 +68,7 @@ export function usePendingFirstFrame(params: Params): {
   isReferenceUploading: () => boolean;
   beginReferenceSelection: () => ReferenceSelectionGuard;
   admitReference: () => Promise<void>;
+  clearReference: () => void;
   bindDraftToSession: () => boolean;
   unattachedTake: TakeAttachment | null;
 } {
@@ -171,6 +172,28 @@ export function usePendingFirstFrame(params: Params): {
       });
   }, [key, persist]);
 
+  const clearReference = useCallback((): void => {
+    const ownKey = latest.current.key;
+    if (!ownKey) return;
+    selection.current = null;
+    sequence.current += 1;
+    uploads.current.delete(ownKey);
+    if (activeUpload.current?.key === ownKey) activeUpload.current = null;
+    memory.current.delete(ownKey);
+    try {
+      localStorage.removeItem(ownKey);
+    } catch {
+      latest.current.onError(
+        "Reference cleared for this tab. Browser recovery could not be removed.",
+      );
+    }
+    if (stateRef.current?.key === ownKey) {
+      stateRef.current = null;
+      setState(null);
+    }
+    setBusy(false);
+  }, []);
+
   const stageReference = useCallback(
     async (file: File, sessionId: string | null): Promise<void> => {
       const owner = latest.current.creatorId;
@@ -220,14 +243,18 @@ export function usePendingFirstFrame(params: Params): {
           }
         }
       } catch (error) {
-        if (latest.current.key === destinationKey)
+        if (
+          uploads.current.get(destinationKey) === operation &&
+          latest.current.key === destinationKey
+        )
           latest.current.onError(
             error instanceof Error ? error.message : "Upload failed",
           );
       } finally {
-        if (activeUpload.current?.operation === operation)
+        if (activeUpload.current?.operation === operation) {
           activeUpload.current = null;
-        if (latest.current.key === destinationKey) setBusy(false);
+          if (latest.current.key === destinationKey) setBusy(false);
+        }
       }
     },
     [persist],
@@ -392,6 +419,7 @@ export function usePendingFirstFrame(params: Params): {
     isReferenceUploading,
     beginReferenceSelection,
     admitReference,
+    clearReference,
     bindDraftToSession,
     unattachedTake,
   };

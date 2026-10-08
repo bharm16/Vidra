@@ -1,21 +1,40 @@
-import { Button } from "@promptstudio/system/components/ui/button";
 import React from "react";
+import { Button } from "@promptstudio/system/components/ui/button";
 import { cn } from "@/utils/cn";
 import type { KeyframeTile } from "@/features/generation-controls/types";
 import {
   usePromptResultsActions,
   usePromptResultsData,
 } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
+import expandingIcon from "@/assets/design-system/frame-expanding.svg";
+import framingIcon from "@/assets/design-system/frame-framing.svg";
+import failureIcon from "@/assets/design-system/frame-failed.svg";
 
 export interface FrameStageProps {
-  /** Current start frame, if the loop has produced (or been given) one. */
   startFrame: KeyframeTile | null;
-  /** Current composer text — quoted while the idea is being expanded. */
   prompt: string;
 }
 
-const TILE_CLASS =
-  "relative mx-auto aspect-video w-full max-w-[720px] overflow-hidden rounded-xl border border-tool-rail-border";
+interface FrameStageViewProps extends FrameStageProps {
+  data: Pick<
+    ReturnType<typeof usePromptResultsData>,
+    | "ideaBoxStage"
+    | "isExpanding"
+    | "hasExpandedPrompt"
+    | "unattachedFrameTake"
+    | "pendingReference"
+  >;
+  actions: Pick<
+    ReturnType<typeof usePromptResultsActions>,
+    | "onIdeaBoxAccept"
+    | "onIdeaBoxRegenerate"
+    | "onRetryFrameAttachment"
+    | "onAdmitPendingReference"
+  >;
+}
+
+const CARD_CLASS =
+  "relative w-full max-w-[656px] overflow-hidden rounded-card bg-[var(--vidra-stage-panel)] after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-[0.5px] after:ring-inset after:ring-white after:content-['']";
 
 function StageCopy({
   headline,
@@ -25,192 +44,218 @@ function StageCopy({
   detail?: string | undefined;
 }): React.ReactElement {
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
-      <p className="text-foreground m-0 text-ui font-medium">{headline}</p>
+    <>
+      <p className="m-0 text-ui font-normal text-foreground">{headline}</p>
       {detail ? (
-        <p className="text-tool-text-subdued m-0 max-w-[520px] truncate text-meta">
-          {detail}
-        </p>
-      ) : null}
-    </div>
+        <p className="m-0 text-meta font-normal text-foreground">{detail}</p>
+      ) : (
+        <div className="h-[18px]" />
+      )}
+    </>
   );
 }
 
-/**
- * The stage's single designed notice: one tile, one message, at most one
- * action — all inside the frame slot, so the no-frame beat still reads as
- * "the frame owns the canvas" rather than copy floating over a void.
- */
 function StageNoticeTile({
   headline,
   detail,
+  icon,
   actionLabel,
   onAction,
+  actionDisabled = false,
 }: {
   headline: string;
   detail?: string | undefined;
+  icon?: string | undefined;
   actionLabel?: string | undefined;
   onAction?: (() => void) | undefined;
+  actionDisabled?: boolean;
 }): React.ReactElement {
   return (
-    <div
-      className={cn(
-        TILE_CLASS,
-        "bg-tool-surface-card flex flex-col items-center justify-center gap-3 px-6",
-      )}
-      data-testid="frame-stage-notice"
-    >
-      <StageCopy headline={headline} detail={detail} />
-      {actionLabel && onAction ? (
-        <button
-          type="button"
-          className={cn(
-            "border-tool-rail-border rounded-md border px-3 py-1.5 text-meta",
-            "text-foreground transition-colors hover:bg-white/10",
-          )}
-          onClick={onAction}
-        >
-          {actionLabel}
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
-function SkeletonTile(): React.ReactElement {
-  return (
-    <div className={cn(TILE_CLASS, "bg-tool-surface-card")} aria-hidden>
-      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.04] via-transparent to-white/[0.02]" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-white/15 border-t-white/60" />
+    <div className={CARD_CLASS} data-testid="frame-stage-notice">
+      <div className="flex aspect-[164/125] min-h-[226px] w-full flex-col items-center justify-center bg-[var(--vidra-stage-placeholder)] p-6">
+        <div className="flex w-full max-w-[584px] flex-col items-center gap-3 text-center">
+          {icon ? <img src={icon} alt="" draggable={false} /> : null}
+          <p className="m-0 text-body font-normal text-foreground">
+            {headline}
+          </p>
+          {detail ? (
+            <p className="m-0 text-ui font-normal text-foreground">{detail}</p>
+          ) : null}
+          {actionLabel && onAction ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onAction}
+              disabled={actionDisabled}
+            >
+              {actionLabel}
+            </Button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
 
-/**
- * The canvas stage for the expansion loop. The first frame — or its pending
- * or failed state — owns the canvas at every beat; the prompt stays in the
- * composer as its editable caption (CONTEXT.md, "First frame").
- *
- * Renders nothing once real generations exist (ShotRows own the canvas) and
- * nothing on the untouched empty canvas (EmptyHero owns it).
- */
+function MediaCard({
+  url,
+  label,
+  contain = false,
+  children,
+}: {
+  url: string;
+  label: string;
+  contain?: boolean;
+  children: React.ReactNode;
+}): React.ReactElement {
+  return (
+    <div className={CARD_CLASS} data-testid="frame-stage-media">
+      <div className="relative aspect-video w-full bg-[var(--vidra-stage-panel)]">
+        <img
+          src={url}
+          alt={label}
+          className={cn(
+            "absolute inset-0 h-full w-full",
+            contain ? "object-contain" : "object-cover",
+          )}
+        />
+      </div>
+      <div className="flex min-h-[131px] flex-col items-start gap-1 bg-[var(--vidra-stage-panel)] p-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** The real loop state and callbacks feed the same Page 21 compound in every beat. */
 export function FrameStage({
   startFrame,
   prompt,
 }: FrameStageProps): React.ReactElement | null {
+  const data = usePromptResultsData();
+  const actions = usePromptResultsActions();
+  return (
+    <FrameStageView
+      startFrame={startFrame}
+      prompt={prompt}
+      data={data}
+      actions={actions}
+    />
+  );
+}
+
+/** Presentation seam for the ready, unsaved, reference, pending and failed states. */
+export function FrameStageView({
+  startFrame,
+  prompt,
+  data,
+  actions,
+}: FrameStageViewProps): React.ReactElement | null {
   const {
     ideaBoxStage,
     isExpanding,
     hasExpandedPrompt,
     unattachedFrameTake,
     pendingReference,
-  } = usePromptResultsData();
+  } = data;
   const {
     onIdeaBoxAccept,
     onIdeaBoxRegenerate,
     onRetryFrameAttachment,
     onAdmitPendingReference,
-  } = usePromptResultsActions();
-
+  } = actions;
   const stageKind = ideaBoxStage?.kind ?? "idle";
-  const quotedIdea = prompt.trim() ? `“${prompt.trim()}”` : undefined;
-
-  const gateButtonClass = cn(
-    "rounded-md border border-tool-rail-border px-3 py-1.5 text-meta",
-    "text-foreground transition-colors hover:bg-white/10",
-  );
-
+  const quotedIdea = prompt.trim() ? "“" + prompt.trim() + "”" : undefined;
   let body: React.ReactElement | null = null;
 
   if (pendingReference) {
-    body = (
-      <>
-        <div className="relative mx-auto flex h-[clamp(24px,calc(100dvh-var(--workspace-topbar-h)-360px),240px)] w-full max-w-[720px] items-center justify-center overflow-hidden rounded-xl border border-tool-rail-border">
-          {pendingReference.url ? (
-            <img
-              src={pendingReference.url}
-              alt="Pending reference picture"
-              className="block max-h-full max-w-full object-contain"
-            />
-          ) : (
-            <StageCopy
-              headline={
-                pendingReference.uploading
-                  ? "Uploading your reference…"
-                  : "Your reference is saved"
+    const headline = pendingReference.uploading
+      ? "Uploading your reference…"
+      : pendingReference.attachmentFailed
+        ? "Made, but not saved"
+        : pendingReference.attempted
+          ? "Reference waiting to be saved"
+          : "Reference waiting for your words";
+    const detail = pendingReference.uploading
+      ? "Wait for the picture to finish uploading before expanding your words."
+      : pendingReference.attempted
+        ? "Retry saving this picture with its original words."
+        : "Write and expand your words below, then use this picture with them.";
+    if (pendingReference.uploading || !pendingReference.url) {
+      body = (
+        <StageNoticeTile
+          headline={headline}
+          detail={detail}
+          {...(!pendingReference.uploading && onAdmitPendingReference
+            ? {
+                actionLabel: pendingReference.busy
+                  ? "Saving…"
+                  : pendingReference.attempted
+                    ? "Retry saving"
+                    : "Use with these words",
+                onAction: () => void onAdmitPendingReference(),
+                actionDisabled: pendingReference.busy,
               }
-            />
-          )}
-        </div>
-        <StageCopy
-          headline={
-            pendingReference.uploading
-              ? "Uploading your reference…"
-              : pendingReference.attachmentFailed
-                ? "Made, but not saved"
-                : pendingReference.attempted
-                  ? "Reference waiting to be saved"
-                  : "Reference waiting for your words"
-          }
-          detail={
-            pendingReference.uploading
-              ? "Wait for the picture to finish uploading before expanding your words."
-              : pendingReference.attempted
-                ? "Retry saving this picture with its original words."
-                : "Write and expand your words below, then use this picture with them."
-          }
+            : {})}
         />
-        {onAdmitPendingReference && !pendingReference.uploading ? (
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            className={gateButtonClass}
-            disabled={pendingReference.busy}
-            onClick={() => void onAdmitPendingReference()}
-          >
-            {pendingReference.busy
-              ? "Saving…"
-              : pendingReference.attempted
-                ? "Retry saving"
-                : "Use with these words"}
-          </Button>
-        ) : null}
-      </>
-    );
+      );
+    } else {
+      body = (
+        <MediaCard
+          url={pendingReference.url}
+          label="Pending reference picture"
+          contain
+        >
+          <StageCopy headline={headline} detail={detail} />
+          <div className="min-h-0 flex-1" />
+          {onAdmitPendingReference ? (
+            <div className="flex w-full justify-end">
+              <Button
+                type="button"
+                className="w-[192px]"
+                disabled={pendingReference.busy}
+                onClick={() => void onAdmitPendingReference()}
+              >
+                {pendingReference.busy
+                  ? "Saving…"
+                  : pendingReference.attempted
+                    ? "Retry saving"
+                    : "Use with these words"}
+              </Button>
+            </div>
+          ) : null}
+        </MediaCard>
+      );
+    }
   } else if (isExpanding) {
     body = (
-      <>
-        <SkeletonTile />
-        <StageCopy headline="Expanding your idea…" detail={quotedIdea} />
-      </>
+      <StageNoticeTile
+        headline="Expanding your idea…"
+        detail={quotedIdea}
+        icon={expandingIcon}
+      />
     );
   } else if (stageKind === "framing") {
     body = (
-      <>
-        <SkeletonTile />
-        <StageCopy headline="Painting your first frame…" />
-      </>
+      <StageNoticeTile
+        headline="Painting your first frame…"
+        icon={framingIcon}
+      />
     );
   } else if (stageKind === "failed") {
     const failedStage = ideaBoxStage?.kind === "failed" ? ideaBoxStage : null;
-    // After repeated identical failures, retrying is clearly not working —
-    // acknowledge a systemic problem instead of looping the same copy (B7).
-    const isRepeatedFailure = (failedStage?.consecutiveFailures ?? 1) >= 2;
-    const headline = isRepeatedFailure
-      ? "Still couldn’t create a frame"
-      : "Couldn’t create a frame";
-    const message = isRepeatedFailure
-      ? "This looks like a problem on our side — give it a minute and try again."
-      : (failedStage?.message ?? "Image generation failed");
-    // One designed state: the message and its single retry live inside the
-    // frame slot — no competing "No frame yet" placeholder beside the error.
+    const repeated = (failedStage?.consecutiveFailures ?? 1) >= 2;
     body = (
       <StageNoticeTile
-        headline={headline}
-        detail={message}
+        headline={
+          repeated ? "Still couldn’t create a frame" : "Couldn’t create a frame"
+        }
+        detail={
+          repeated
+            ? "This looks like a problem on our side — give it a minute and try again."
+            : (failedStage?.message ?? "Image generation failed")
+        }
+        icon={failureIcon}
         {...(onIdeaBoxRegenerate
           ? {
               actionLabel: "Try again",
@@ -220,69 +265,58 @@ export function FrameStage({
       />
     );
   } else if (startFrame) {
-    const isGate = stageKind === "ready";
+    const gate = stageKind === "ready";
     body = (
-      <>
-        <div className={TILE_CLASS}>
-          <img
-            src={startFrame.url}
-            alt="Your first frame"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          {/* ADR-0022 decision 6: the frame is real and paid for; what failed
-              was filing it. Said plainly, on the frame, with the one action
-              that fixes it — never mistaken for a failed generation. */}
-          {unattachedFrameTake ? (
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-md border border-tool-rail-border bg-tool-surface-deep/90 px-2.5 py-1.5">
-              <span className="text-meta text-tool-text-subdued">
-                Made, but not saved
-              </span>
-              {onRetryFrameAttachment ? (
-                <button
-                  type="button"
-                  className="text-meta text-foreground underline underline-offset-2 hover:opacity-80"
-                  onClick={() => void onRetryFrameAttachment()}
-                >
-                  Save it
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        {isGate ? (
-          <div className="flex flex-col items-center gap-2">
-            <StageCopy headline="Does this frame match your idea?" />
-            <div className="flex items-center gap-2">
-              {onIdeaBoxAccept ? (
-                <button
-                  type="button"
-                  className={cn(
-                    gateButtonClass,
-                    "bg-foreground text-tool-surface-deep hover:opacity-90",
-                  )}
-                  onClick={onIdeaBoxAccept}
-                >
-                  Looks right
-                </button>
-              ) : null}
-              {onIdeaBoxRegenerate ? (
-                <button
-                  type="button"
-                  className={gateButtonClass}
-                  onClick={() => void onIdeaBoxRegenerate()}
-                >
-                  Try a different frame
-                </button>
-              ) : null}
-            </div>
+      <MediaCard url={startFrame.url} label="Your first frame">
+        <StageCopy
+          headline={
+            gate ? "Does this frame match your idea?" : "Your first frame"
+          }
+          {...(!gate && !unattachedFrameTake
+            ? { detail: "Describe its motion below, then Make it." }
+            : {})}
+        />
+        <div className="min-h-0 flex-1" />
+        {gate ? (
+          <div className="flex w-full flex-wrap items-center gap-3">
+            {onIdeaBoxRegenerate ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-[192px]"
+                onClick={() => void onIdeaBoxRegenerate()}
+              >
+                Try a different frame
+              </Button>
+            ) : null}
+            {onIdeaBoxAccept ? (
+              <Button
+                type="button"
+                className="ml-auto w-28"
+                onClick={onIdeaBoxAccept}
+              >
+                Looks right
+              </Button>
+            ) : null}
           </div>
-        ) : (
-          <StageCopy
-            headline="Your first frame"
-            detail="Describe its motion below, then Make it."
-          />
-        )}
-      </>
+        ) : null}
+        {unattachedFrameTake ? (
+          <div className="flex w-full items-center gap-3">
+            <span className="text-meta font-normal text-foreground">
+              Made, but not saved
+            </span>
+            {onRetryFrameAttachment ? (
+              <Button
+                type="button"
+                className="ml-auto w-[88px]"
+                onClick={() => void onRetryFrameAttachment()}
+              >
+                Save it
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </MediaCard>
     );
   } else if (unattachedFrameTake) {
     body = (
@@ -298,9 +332,6 @@ export function FrameStage({
       />
     );
   } else if (hasExpandedPrompt) {
-    // Restored session with an expanded prompt but no frame asset: the
-    // stage's no-frame state owns the canvas (never the first-run hero).
-    // The single action re-runs frame generation from the current prompt.
     body = (
       <StageNoticeTile
         headline="No frame yet"
@@ -314,14 +345,12 @@ export function FrameStage({
       />
     );
   }
-
   if (!body) return null;
-
   return (
     <div
       role="status"
       aria-live="polite"
-      className="mx-auto flex min-h-[calc(100vh-var(--workspace-topbar-h)-240px)] max-w-[840px] flex-col items-center justify-center gap-5 py-8"
+      className="mx-auto w-full max-w-[656px] py-4"
       data-testid="frame-stage"
     >
       {body}

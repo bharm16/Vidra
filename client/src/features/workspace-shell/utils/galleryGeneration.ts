@@ -9,7 +9,7 @@ import type {
   GalleryGeneration,
   GalleryPromptSpan,
   GalleryTier,
-} from "@/features/prompt-optimizer/components/GalleryPanel";
+} from "@/features/workspace-shell/types/result";
 
 interface GalleryGenerationEntry {
   gallery: GalleryGeneration;

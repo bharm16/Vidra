@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   computeStudioLayout,
   STUDIO_CELL_SIZE,
+  STUDIO_CELL_HEIGHT,
   STUDIO_CELL_GAP,
   STUDIO_GROUP_GAP,
 } from "../computeStudioLayout";
@@ -17,7 +18,7 @@ describe("computeStudioLayout", () => {
     // Two columns: a|b on the first row, c|d on the second.
     expect(a?.y).toBe(b?.y);
     expect(c?.y).toBe(d?.y);
-    expect(c?.y).toBe(STUDIO_CELL_SIZE + STUDIO_CELL_GAP);
+    expect(c?.y).toBe(STUDIO_CELL_HEIGHT + STUDIO_CELL_GAP);
     expect(a?.x).toBe(c?.x);
     expect(b?.x ?? 0 - (a?.x ?? 0)).toBeGreaterThan(0);
   });
@@ -34,7 +35,7 @@ describe("computeStudioLayout", () => {
       { turnId: "t2", imageIds: ["e"] },
     ]);
 
-    const firstGroupHeight = 2 * STUDIO_CELL_SIZE + STUDIO_CELL_GAP;
+    const firstGroupHeight = 2 * STUDIO_CELL_HEIGHT + STUDIO_CELL_GAP;
     const e = items.find((item) => item.imageId === "e");
     expect(e?.y).toBe(firstGroupHeight + STUDIO_GROUP_GAP);
     expect(e?.turnId).toBe("t2");

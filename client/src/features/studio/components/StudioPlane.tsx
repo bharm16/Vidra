@@ -6,6 +6,7 @@ import type { StudioTurn } from "../api/schemas";
 import {
   computeStudioLayout,
   STUDIO_CELL_SIZE,
+  STUDIO_CELL_HEIGHT,
 } from "../lib/computeStudioLayout";
 
 /**
@@ -96,7 +97,7 @@ export function StudioPlane({
               left: item.x,
               top: item.y,
               width: item.size,
-              height: item.size,
+              height: STUDIO_CELL_HEIGHT,
             }}
             title={promptByImageId.get(item.imageId)}
             aria-pressed={selected}
@@ -121,9 +122,7 @@ export function StudioPlane({
           data-live="true"
           {...{ [CANVAS_FOCUS_ATTR]: STUDIO_EMPTY_FOCUS_ID }}
           style={{ width: STUDIO_CELL_SIZE * 2, height: STUDIO_CELL_SIZE }}
-        >
-          Generations land here as groups — pan and zoom to browse.
-        </div>
+        ></div>
       ) : null}
     </div>
   );

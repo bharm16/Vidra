@@ -96,7 +96,7 @@ describe("PromptRepository", () => {
     const result = await repository.getUserPrompts("user-1", 25);
 
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      "/sessions?limit=25&includeContinuity=true&includePrompt=true",
+      "/sessions?limit=25&includeContinuity=false&includePrompt=true",
     );
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
@@ -159,7 +159,7 @@ describe("PromptRepository", () => {
     });
   });
 
-  it("getUserPrompts includes continuity-only sessions so sequence history survives reloads", async () => {
+  it("getUserPrompts omits dormant continuity-only records while retaining authoring prompts", async () => {
     mockApiClient.get.mockResolvedValue({
       data: [
         {
@@ -194,22 +194,14 @@ describe("PromptRepository", () => {
     const result = await repository.getUserPrompts("user-1", 10);
 
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      "/sessions?limit=10&includeContinuity=true&includePrompt=true",
+      "/sessions?limit=10&includeContinuity=false&includePrompt=true",
     );
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
       id: "session_prompt_1",
       uuid: "33333333-3333-4333-8333-333333333333",
       input: "prompt input",
       output: "prompt output",
-    });
-    expect(result[1]).toMatchObject({
-      id: "session_continuity_1",
-      uuid: "session_continuity_1",
-      title: "Continuity Session",
-      input: "",
-      output: "",
-      versions: [],
     });
   });
 
@@ -262,7 +254,7 @@ describe("PromptRepository", () => {
     });
   });
 
-  it("maps continuity-only sessions to a minimal prompt entry for route loading", async () => {
+  it("does not fabricate an authoring prompt when opening a dormant continuity-only record", async () => {
     mockApiClient.get.mockResolvedValue({
       data: {
         id: "continuity_1",
@@ -284,15 +276,7 @@ describe("PromptRepository", () => {
 
     const result = await repository.getById("continuity_1");
 
-    expect(result).toMatchObject({
-      id: "continuity_1",
-      uuid: "continuity_1",
-      title: "Continuity Session",
-      input: "",
-      output: "",
-      mode: "video",
-      versions: [],
-    });
+    expect(result).toBeNull();
   });
 
   it("resolves uuid to session id once and reuses cached resolution for later writes", async () => {

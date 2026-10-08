@@ -1,7 +1,13 @@
 import React, { useCallback, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import projectBackIcon from "./assets/project-back.svg";
+import projectNewIcon from "./assets/project-new.svg";
+import selectActiveIcon from "@/assets/design-system/studio-select-active.svg";
+import selectIcon from "@/assets/design-system/studio-select.svg";
+import panIcon from "@/assets/design-system/studio-pan.svg";
+import panActiveIcon from "@/assets/design-system/studio-pan-active.svg";
+import addReferenceIcon from "@/assets/design-system/studio-reference.svg";
 
 import { CanvasViewport } from "@/components/canvas/CanvasViewport";
 import { NavRail } from "@components/navigation/NavRail";
@@ -21,12 +27,9 @@ import { isTurnInFlight } from "./hooks/studioReducer";
 import "./studio.css";
 
 /**
- * The studio (ADR-0019): Vidra's conversational image generation and
- * editing workspace on its own rail surface. Left: the chat panel (header,
- * thread, composer). Right: the shared infinite plane with derived batch
- * groups. Layout slots follow the plan's "Layout and control placement"
- * section; one documented deviation — the NavRail is Vidra's app chrome,
- * so the reference's top-bar avatar/menu are omitted (the rail owns them).
+ * The Studio (ADR-0019): a project strip and floating conversation above the
+ * shared canvas. Page 21's canonical Studio components own the chrome;
+ * selection-scoped download and session handoff actions remain available.
  *
  * One project, named by the route: /studio/:projectId opens that project,
  * /studio/new opens projectless and lets the first send create the record.
@@ -58,6 +61,8 @@ export function StudioPage(): React.ReactElement {
   });
   const { state } = studio;
   const [titleDraft, setTitleDraft] = useState<string | null>(null);
+  const [canvasTool, setCanvasTool] = useState<"select" | "pan">("select");
+  const attachmentPicker = useRef<HTMLInputElement>(null);
 
   // A project born from a session picture (ADR-0022 decision 4) opens on that
   // picture: it is the project's subject and its selection, so it has to be on
@@ -90,9 +95,19 @@ export function StudioPage(): React.ReactElement {
   return (
     <div className="flex h-screen min-h-0 overflow-hidden">
       <NavRail active="studio" />
-      <div className="st-frame min-w-0 flex-1">
+      <div
+        className="st-frame min-w-0 flex-1"
+        data-has-images={Boolean(
+          originImage ||
+            state.unresolvedReturns.length > 0 ||
+            state.turns.some((turn) =>
+              turn.calls.some(
+                (call) => call.status === "succeeded" && call.image,
+              ),
+            ),
+        )}
+      >
         <div className="st-topbar">
-          <span className="st-topbar-label">Studio</span>
           {/* Selection-scoped actions, right-anchored as a group. Both act on
               the project's selection, not on a cell — a control nested inside a
               plane cell would be a button inside a button. Download SVG appears
@@ -100,7 +115,7 @@ export function StudioPage(): React.ReactElement {
               is ADR-0022 decision 4. Unsaved returns are receipts the server
               still owes (decision 6, issue #135), shown regardless of what is
               selected so a reload cannot bury them. */}
-          <div className="ml-auto flex items-center gap-3">
+          <div className="st-selection-actions">
             <UnsavedReturnNotice
               returns={state.unresolvedReturns}
               onRetry={studio.retryReturnAttachment}
@@ -127,48 +142,48 @@ export function StudioPage(): React.ReactElement {
         </div>
 
         <div className="st-body">
-          <div className="st-panel">
-            <div className="st-panel-header">
-              {/* Back to the project index. This was a toggle that opened an
+          <div className="st-panel-header">
+            {/* Back to the project index. This was a toggle that opened an
                   overlay list; the index is a page now, so the affordance is
                   navigation and says so. */}
-              <Link
-                to="/studio"
-                className="st-icon-btn"
-                title="All projects"
-                aria-label="All projects"
-              >
-                <ArrowLeft size={16} strokeWidth={1.75} />
-              </Link>
-              <input
-                className="st-panel-title"
-                aria-label="Project title"
-                value={titleDraft ?? state.project?.title ?? ""}
-                onChange={(event) => setTitleDraft(event.target.value)}
-                onBlur={() => {
-                  if (titleDraft !== null && titleDraft.trim()) {
-                    void studio.renameProject(titleDraft);
-                  }
-                  setTitleDraft(null);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    (event.target as HTMLInputElement).blur();
-                  }
-                }}
-              />
-              {/* Routes rather than writing — the record is born on the first
+            <Link
+              to="/studio"
+              className="st-icon-btn"
+              title="All projects"
+              aria-label="All projects"
+            >
+              <img src={projectBackIcon} alt="" />
+            </Link>
+            <input
+              className="st-panel-title"
+              aria-label="Project title"
+              placeholder="New project"
+              value={titleDraft ?? state.project?.title ?? ""}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              onBlur={() => {
+                if (titleDraft !== null && titleDraft.trim()) {
+                  void studio.renameProject(titleDraft);
+                }
+                setTitleDraft(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  (event.target as HTMLInputElement).blur();
+                }
+              }}
+            />
+            {/* Routes rather than writing — the record is born on the first
                   send, so an abandoned new project leaves nothing behind. */}
-              <Link
-                to="/studio/new"
-                className="st-icon-btn"
-                title="New project"
-                aria-label="New project"
-              >
-                <Plus size={16} strokeWidth={1.75} />
-              </Link>
-            </div>
-
+            <Link
+              to="/studio/new"
+              className="st-icon-btn"
+              title="New project"
+              aria-label="New project"
+            >
+              <img src={projectNewIcon} alt="" />
+            </Link>
+          </div>
+          <div className="st-panel">
             <StudioThread
               turns={state.turns}
               optimisticMessage={state.optimisticMessage}
@@ -191,6 +206,7 @@ export function StudioPage(): React.ReactElement {
               pinnedModel={state.project?.pinnedModel ?? null}
               busy={busy}
               pendingAttachments={state.pendingAttachments}
+              attachmentPickerRef={attachmentPicker}
               onPin={(slug) => void studio.pinModel(slug)}
               onSend={(message) => void studio.sendMessage(message)}
               onAttachFile={(file) => void studio.attachFile(file)}
@@ -201,17 +217,56 @@ export function StudioPage(): React.ReactElement {
           </div>
 
           <div className="st-stage">
-            {/* No canvas tool rail. It held two buttons — one of which
-                duplicated the composer's attach 120px away — and a two-item
-                rail floating mid-canvas reads as a stray fragment rather than
-                a toolbar. Studio has no canvas tools yet: the plane is
-                deliberately non-interactive (ADR-0019 §4), so select, pan and
-                frame have nothing to drive, and there is no history for undo
-                and redo to walk. The .st-float / .st-tool-rail recipe stays in
-                studio.css; the rail returns when there are tools for it.
-                Fit-to-view moved to the zoom control, where camera actions
-                belong. */}
-            <CanvasViewport liveNodeId={liveTurnId}>
+            <div
+              role="toolbar"
+              aria-label="Studio canvas tools"
+              className="st-canvas-tools"
+            >
+              <Button
+                type="button"
+                variant={canvasTool === "select" ? "default" : "ghost"}
+                size="icon-lg"
+                className="st-tool-button"
+                aria-label="Select"
+                aria-pressed={canvasTool === "select"}
+                onClick={() => setCanvasTool("select")}
+              >
+                <img
+                  src={canvasTool === "select" ? selectActiveIcon : selectIcon}
+                  alt=""
+                />
+              </Button>
+              <Button
+                type="button"
+                variant={canvasTool === "pan" ? "default" : "ghost"}
+                size="icon-lg"
+                className="st-tool-button"
+                aria-label="Pan"
+                aria-pressed={canvasTool === "pan"}
+                onClick={() => setCanvasTool("pan")}
+              >
+                <img
+                  src={canvasTool === "pan" ? panActiveIcon : panIcon}
+                  alt=""
+                />
+              </Button>
+              <span aria-hidden="true" className="st-tool-divider" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="st-tool-reference"
+                disabled={busy}
+                onClick={() => attachmentPicker.current?.click()}
+              >
+                <img src={addReferenceIcon} alt="" />
+                Add reference
+              </Button>
+            </div>
+            <CanvasViewport
+              liveNodeId={liveTurnId}
+              interactionMode={canvasTool}
+            >
               <StudioPlane
                 turns={state.turns}
                 selectedImageId={state.selectedImageId}

@@ -5,50 +5,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import React from "react";
 
 import Settings from "@components/Settings/Settings";
 import type { AppSettings } from "@components/Settings/types";
 
-vi.mock("@promptstudio/system/components/ui/button", () => ({
-  Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
-    <button {...props}>{children}</button>
-  ),
-}));
-
-vi.mock("@promptstudio/system/components/ui/card", () => ({
-  Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@promptstudio/system/components/ui/dialog", () => ({
-  Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DialogContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-}));
-
-vi.mock("@promptstudio/system/components/ui/switch", () => ({
-  Switch: ({
-    checked,
-    onCheckedChange,
-    ...props
-  }: {
-    checked?: boolean;
-    onCheckedChange?: (value: boolean) => void;
-  }) => (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onCheckedChange?.(!checked)}
-      {...props}
-    />
-  ),
-}));
+// Exercise the actual accessible primitives so dialog exports and confirmation
+// behavior stay covered when the visual composition changes.
+vi.unmock("@promptstudio/system/components/ui/button");
+vi.unmock("@promptstudio/system/components/ui/dialog");
+vi.unmock("@promptstudio/system/components/ui/switch");
 
 const baseSettings: AppSettings = {
   fontSize: "medium",
@@ -70,19 +36,12 @@ describe("Settings", () => {
         />,
       );
 
-      await user.click(screen.getByText("Clear All Data"));
-      expect(
-        screen.getByText(
-          "Are you sure? This will permanently delete all your saved prompts and history.",
-        ),
-      ).toBeInTheDocument();
-
-      await user.click(screen.getByText("Yes, Delete All"));
-      expect(
-        screen.queryByText(
-          "Are you sure? This will permanently delete all your saved prompts and history.",
-        ),
-      ).not.toBeInTheDocument();
+      const clearButton = screen.getByRole("button", {
+        name: "Clear All Data",
+      });
+      expect(clearButton).toBeDisabled();
+      await user.click(clearButton);
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     });
   });
 
@@ -139,18 +98,15 @@ describe("Settings", () => {
 
       await user.click(screen.getByText("Reset Settings to Default"));
       expect(
-        screen.getByText(
-          "Are you sure? This will reset all settings to their default values.",
-        ),
+        screen.getByText("Reset all settings to their default values?"),
       ).toBeInTheDocument();
 
+      expect(resetSettings).not.toHaveBeenCalled();
       await user.click(screen.getByText("Yes, Reset"));
 
       expect(resetSettings).toHaveBeenCalled();
       expect(
-        screen.queryByText(
-          "Are you sure? This will reset all settings to their default values.",
-        ),
+        screen.queryByText("Reset all settings to their default values?"),
       ).not.toBeInTheDocument();
     });
 
@@ -170,6 +126,7 @@ describe("Settings", () => {
       );
 
       await user.click(screen.getByText("Clear All Data"));
+      expect(onClearAllData).not.toHaveBeenCalled();
       await user.click(screen.getByText("Yes, Delete All"));
 
       expect(onClearAllData).toHaveBeenCalled();

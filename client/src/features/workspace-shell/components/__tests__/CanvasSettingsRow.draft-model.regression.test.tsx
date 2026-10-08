@@ -29,15 +29,6 @@ vi.mock("@hooks/useAuthUser", () => ({
   useAuthUser: () => ({ uid: "test-user", emailVerified: true }),
 }));
 
-vi.mock("@/config/features.config", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/config/features.config")>();
-  return {
-    ...actual,
-    FEATURES: { ...actual.FEATURES, BILLING_UI: true },
-  };
-});
-
 function ControlsBridge({
   controls,
 }: {
@@ -67,7 +58,7 @@ const buildState = (selectedModel: string): GenerationControlsState => ({
 });
 
 describe("regression: draft model selections stay on the draft action path", () => {
-  it("uses the selected draft model for the button label and action even when renderModelId disagrees", () => {
+  it("uses the selected draft model for the action even when renderModelId disagrees", () => {
     const onDraft = vi.fn();
     const onRender = vi.fn();
 
@@ -76,7 +67,6 @@ describe("regression: draft model selections stay on the draft action path", () 
         <GenerationControlsProvider>
           <ControlsBridge
             controls={{
-              onStoryboard: vi.fn(),
               onDraft,
               onRender,
               isGenerating: false,
@@ -93,9 +83,8 @@ describe("regression: draft model selections stay on the draft action path", () 
       </GenerationControlsStoreProvider>,
     );
 
-    // Wan 2.2: ceil(3.5 credits/sec × 5s duration) = 18 credits
     const generateButton = screen.getByRole("button", {
-      name: "Draft 18 credits",
+      name: "Generate",
     });
     fireEvent.click(generateButton);
 

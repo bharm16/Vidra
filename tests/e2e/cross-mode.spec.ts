@@ -145,13 +145,16 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
     await page
       .getByRole("button", { name: "Video model", exact: true })
       .click();
-    await page.getByRole("option", { name: /Veo/ }).click();
+    await page.getByRole("menuitemradio", { name: /Veo/ }).click();
     await expect(
       page.getByRole("button", { name: "Video model", exact: true }),
     ).toHaveAttribute("aria-expanded", "false");
-    await page.getByRole("button", { name: /^Camera motion/ }).click();
-    await expect(page.getByTestId("camera-motion-illustrative")).toBeVisible();
-    await page.getByRole("option", { name: "Push In", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: /^Camera motion/ }),
+    ).toHaveCount(0);
+    await page
+      .getByLabel("Shot description")
+      .fill(WORDS + " The camera pushes in.");
     const visibleWords = await page
       .getByLabel("Shot description")
       .textContent();
@@ -208,9 +211,7 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
           .evaluate((video: HTMLVideoElement) => video.readyState),
       )
       .toBeGreaterThanOrEqual(2);
-    await page
-      .getByRole("button", { name: "Play video preview", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Play video", exact: true }).click();
     await expect
       .poll(async () =>
         page
@@ -219,17 +220,122 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
           .evaluate((video: HTMLVideoElement) => video.paused),
       )
       .toBe(false);
-    await page.getByLabel("Close generation detail").click();
+    await page.getByRole("button", { name: "Fullscreen", exact: true }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Fullscreen result" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Close fullscreen" }).click();
+    await expect(
+      page.getByRole("region", { name: "Selected result" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Fullscreen result" }),
+    ).toHaveCount(0);
+    const inlineVideo = page
+      .getByRole("region", { name: "Selected result" })
+      .locator("video");
+    if (
+      !(await inlineVideo.evaluate(
+        (element: HTMLVideoElement) => element.paused,
+      ))
+    ) {
+      await page
+        .getByRole("button", { name: "Pause video", exact: true })
+        .click();
+      await expect
+        .poll(() =>
+          inlineVideo.evaluate((element: HTMLVideoElement) => element.paused),
+        )
+        .toBe(true);
+    }
+    await page.getByRole("button", { name: "Play video", exact: true }).click();
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate((element: HTMLVideoElement) => element.paused),
+      )
+      .toBe(false);
+    await page
+      .getByRole("button", { name: "Pause video", exact: true })
+      .click();
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate((element: HTMLVideoElement) => element.paused),
+      )
+      .toBe(true);
+    await page.getByLabel("Playback position").focus();
+    await page.keyboard.press("Home");
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate(
+          (element: HTMLVideoElement) => element.currentTime,
+        ),
+      )
+      .toBeLessThan(0.01);
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate((element: HTMLVideoElement) => element.seeking),
+      )
+      .toBe(false);
+    await page.keyboard.press("ArrowRight", { delay: 100 });
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate(
+          (element: HTMLVideoElement) => element.currentTime,
+        ),
+      )
+      .toBeGreaterThan(0);
+
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Result details" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Result details" }),
+    ).not.toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath("result-desktop.png"),
+    });
+    await page.setViewportSize({ width: 393, height: 852 });
+    const selectedResult = page.getByRole("region", {
+      name: "Selected result",
+    });
+    await expect(selectedResult).toBeVisible();
+    await expect(
+      selectedResult.getByRole("button", { name: "Download" }),
+    ).toBeVisible();
+    await expect
+      .poll(() =>
+        page
+          .locator("aside")
+          .first()
+          .evaluate((element) => element.getBoundingClientRect().width),
+      )
+      .toBe(64);
+    const mobileBounds = await selectedResult.boundingBox();
+    expect(mobileBounds?.width).toBeLessThanOrEqual(329);
+    await page.screenshot({
+      path: test.info().outputPath("result-mobile.png"),
+    });
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    await page
+      .getByRole("region", { name: "Selected result" })
+      .getByRole("button", { name: "Take actions" })
+      .click();
+    await page.getByRole("menuitem", { name: "Close preview" }).click();
     await page.reload();
     await expect(
-      page.getByTestId(`space-node-words-${String(submitted.promptVersionId)}`),
+      page.getByTestId(
+        `conversation-words-${String(submitted.promptVersionId)}`,
+      ),
     ).toBeVisible();
     await page
       .getByRole("button", { name: "Fit to view", exact: true })
       .click();
     await page
-      .getByTestId(`space-node-words-${String(submitted.promptVersionId)}`)
-      .press("Enter");
+      .getByTestId(`conversation-words-${String(submitted.promptVersionId)}`)
+      .click();
     await expect(page.getByLabel("Shot description")).toHaveText(
       visibleWords ?? "",
     );
@@ -395,29 +501,41 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
     ).toBeVisible();
   });
 
-  test("selecting an older picture restores its associated version words", async ({
+  test("inspection preserves camera edits and explicit reuse restores associated words", async ({
     page,
   }) => {
     await drawLiveFrame(page);
     const accepted = await acceptShownFrame(page);
     await page.waitForURL(`**/session/${accepted.sessionId}`);
+    await expect(
+      page.getByRole("button", { name: "Camera motion", exact: true }),
+    ).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Camera motion", exact: true })
-      .click();
-    await expect(page.getByTestId("camera-motion-illustrative")).toBeVisible();
-    await page.getByRole("option", { name: "Push In", exact: true }).click();
+      .getByLabel("Shot description")
+      .fill(WORDS + " The camera pushes in.");
     await expect(page.getByLabel("Shot description")).toContainText(
       "The camera pushes in.",
     );
-    await expect
-      .poll(
-        async () =>
-          (await browserState(page)).sessions.find(
-            (entry) => entry.id === accepted.sessionId,
-          )?.prompt.versions?.length ?? 0,
-      )
-      .toBeGreaterThan(1);
+    // Editing the working description doesn't mint a take's associated version.
+    // Inspection preserves this draft; explicit Reuse restores the take's words.
     await page.getByTestId(`space-node-${accepted.generationId}`).click();
+    await expect(page.getByLabel("Shot description")).toContainText(
+      "The camera pushes in.",
+    );
+    await expect(
+      page.getByRole("region", { name: "Selected result" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Result details" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(page.getByLabel("Shot description")).toContainText(
+      "The camera pushes in.",
+    );
+    await page
+      .getByRole("button", { name: "Reuse setup", exact: true })
+      .click();
     await expect(page.getByLabel("Shot description")).toHaveText(WORDS);
     const take = (await browserState(page)).sessions
       .find((entry) => entry.id === accepted.sessionId)
@@ -551,38 +669,5 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
       releaseNew?.();
       await second.close();
     }
-  });
-
-  test("depth available keeps the real picker illustrative and writes the selected words", async ({
-    page,
-  }) => {
-    await drawLiveFrame(page);
-    const accepted = await acceptShownFrame(page);
-    await page.waitForURL(`**/session/${accepted.sessionId}`);
-    await page.request.get("/__test/fault?depth=available");
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        (reply) =>
-          reply.url().endsWith("/api/motion/depth") &&
-          reply.request().method() === "POST",
-      ),
-      page.getByRole("button", { name: "Camera motion", exact: true }).click(),
-    ]);
-    expect(response.status()).toBe(200);
-    const result = (await response.json()) as {
-      data: { fallbackMode: boolean; depthMapUrl: string };
-    };
-    expect(result.data.fallbackMode).toBe(false);
-    expect(result.data.depthMapUrl).toContain("depth-fixture.png");
-    await expect(page.getByTestId("camera-motion-illustrative")).toBeVisible();
-    await page.getByRole("option", { name: "Push In", exact: true }).click();
-    await expect(page.getByLabel("Shot description")).toContainText(
-      "The camera pushes in.",
-    );
-    const state = await browserState(page);
-    expect(state.depthInputs.at(-1)?.image_url).toContain(
-      "objects.cross-mode.invalid/",
-    );
-    expect(state.outbound).toEqual([]);
   });
 });

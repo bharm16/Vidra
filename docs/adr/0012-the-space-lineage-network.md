@@ -2,6 +2,9 @@
 
 **Status:** accepted (2026-07-05) · amends [ADR-0010](0010-one-visible-text-one-loop-subscription-at-keep.md) · clarified by [ADR-0013](0013-space-lineage-is-persisted-not-derived.md) (lineage is persisted, not derived)
 
+**2026-10-08 presentation amendment:** The owner requested a Recraft-style asset space: results are grouped by dispatch in chronological rows, new generations appear below, and conversation/composer outputs move to the side panel. Prompt nodes and visible connectors are removed. The persisted ancestry and take/associated-words contracts are preserved; the historical three-column diagram below no longer defines the visible layout. [Migration and acceptance](../design/page21-component-migration.md) records the implementation.
+
+
 > **Amended by [ADR-0022](0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)** — the three columns are media types, not an ancestry-depth limit: a picture may refine another picture, drawn inside the picture column.
 
 A 2026-07-05 design exploration (empty-state wireframe review → lineage brainstorm)

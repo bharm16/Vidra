@@ -4,7 +4,6 @@ import type { Generation } from "@features/generations/types";
 import { normalizePersistedGenerations } from "@features/generations/utils/normalizePersistedGeneration";
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
 import { deriveEdgeKind } from "../deriveEdgeKind";
-import { computeLineageLayout } from "../computeLineageLayout";
 import { resolveWordsForNode } from "../resolveWordsForNode";
 
 const version = (
@@ -516,10 +515,8 @@ describe("deriveSpaceNodesFromVersions", () => {
     expect(nodes.find((n) => n.id === "gen-pic-gone")).toMatchObject({
       archived: true,
     });
-    // The render pass drops it entirely.
-    const laidOut = computeLineageLayout(nodes);
-    expect(laidOut.some((n) => n.id === "gen-pic-gone")).toBe(false);
-    expect(laidOut.some((n) => n.id === "gen-pic-live")).toBe(true);
+    // Archived identity is retained in data; the asset-space renderer hides it.
+    expect(nodes.some((node) => node.id === "gen-pic-live" && !node.archived)).toBe(true);
   });
 
   it("returns no nodes for an empty version list", () => {

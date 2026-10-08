@@ -16,18 +16,6 @@ vi.mock("@/services/ApiClient", () => ({
   },
 }));
 
-vi.mock("@/features/continuity/api/continuityApi", () => ({
-  continuityApi: {
-    createSession: vi.fn(),
-    createSceneProxy: vi.fn(),
-    previewSceneProxy: vi.fn(),
-    addShot: vi.fn(),
-    updateShot: vi.fn(),
-    updateShotStyleReference: vi.fn(),
-    generateShot: vi.fn(),
-  },
-}));
-
 const buildSession = (): SessionDto => ({
   id: "session-429",
   userId: "user-1",

@@ -4,13 +4,11 @@ import { CaretDown, CaretRight } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { cn } from "@/utils/cn";
-import { FEATURES } from "@/config/features.config";
 import { useWorkspaceProject } from "../hooks/useWorkspaceProject";
-import { useWorkspaceCredits } from "../hooks/useWorkspaceCredits";
 import { AccountPopover } from "./AccountPopover";
 
 interface WorkspaceTopBarProps {
-  /** Pre-work (empty state): drop the session breadcrumb + credits so only the
+  /** Pre-work (empty state): drop the session breadcrumb so only the
    *  Library/avatar cluster remains — the handoff's minimal top bar
    *  (REBUILD.md: "empty state carries a minimal top bar"). */
   minimal?: boolean;
@@ -20,7 +18,6 @@ export function WorkspaceTopBar({
   minimal = false,
 }: WorkspaceTopBarProps = {}): React.ReactElement {
   const project = useWorkspaceProject();
-  const credits = useWorkspaceCredits();
   const user = useAuthUser();
 
   return (
@@ -59,17 +56,6 @@ export function WorkspaceTopBar({
       )}
 
       <div className="flex-1" />
-
-      {!minimal && FEATURES.BILLING_UI ? (
-        <span
-          className="text-tool-text-dim text-meta font-mono"
-          aria-label="Credits remaining"
-          title={`${credits.credits.toLocaleString()} credits`}
-        >
-          {credits.credits.toLocaleString()}
-          <span className="text-tool-text-subdued ml-1">cr</span>
-        </span>
-      ) : null}
 
       {/* Right-side chrome cluster (ADR-0010 site-scope D7): the tool rail is
         gone, so the account affordance lives here. Library + avatar are

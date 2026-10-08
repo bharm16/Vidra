@@ -1,14 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { ArrowUp, ChevronDown, Maximize2, Paperclip, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@promptstudio/system/components/ui/dropdown-menu";
+import { X } from "lucide-react";
+import expandIcon from "../assets/composer-expand.svg";
+import sendIcon from "../assets/composer-send.svg";
+import modelChevronIcon from "../assets/model-chevron.svg";
+import attachIcon from "../assets/composer-attach.svg";
 import { cn } from "@/utils/cn";
 import type { StudioAttachment, StudioModelInfo } from "../api/schemas";
 
 /**
  * Band 3: the composer. Row A = the text field with the expand toggle at
  * its top-right. Row B = model picker on the left, flex gap, send anchored
- * right (plan: "Layout and control placement"). No settings button, no
- * attach, no cost hints — latency hints only (S-37 / behavior 9).
+ * right. Desktop attachment lives in the canvas toolbar; the mobile composer
+ * retains its attachment action. Model choices show latency hints only.
  */
 
 interface StudioComposerProps {
@@ -23,6 +33,7 @@ interface StudioComposerProps {
   onSend: (message: string) => void;
   onAttachFile: (file: File) => void;
   onRemoveAttachment: (attachmentId: string) => void;
+  attachmentPickerRef?: React.RefObject<HTMLInputElement> | undefined;
 }
 
 export function StudioComposer({
@@ -34,34 +45,12 @@ export function StudioComposer({
   onSend,
   onAttachFile,
   onRemoveAttachment,
+  attachmentPickerRef,
 }: StudioComposerProps): React.ReactElement {
   const [draft, setDraft] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const pickerRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const onPointerDown = (event: PointerEvent): void => {
-      if (
-        pickerRef.current &&
-        event.target instanceof Node &&
-        !pickerRef.current.contains(event.target)
-      ) {
-        setPickerOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") setPickerOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [pickerOpen]);
+  const ownFileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = attachmentPickerRef ?? ownFileInputRef;
 
   const submit = (): void => {
     const message = draft.trim();
@@ -77,7 +66,10 @@ export function StudioComposer({
     pinnedModel !== null && models.length > 0 && pinnedInfo === null;
 
   return (
-    <div className="st-composer" data-testid="studio-composer">
+    <div
+      className={cn("st-composer", expanded && "st-composer-expanded")}
+      data-testid="studio-composer"
+    >
       {pinIsStale ? (
         <p className="st-stale-pin-note" role="status">
           Your pinned model is no longer available — using Auto.
@@ -87,7 +79,7 @@ export function StudioComposer({
         <div className="st-attach-chips">
           {pendingAttachments.map((attachment) => (
             <span key={attachment.id} className="st-attach-chip">
-              <Paperclip size={11} strokeWidth={1.75} />
+              <img src={attachIcon} alt="" />
               <span className="st-attach-name">{attachment.filename}</span>
               <Button
                 variant="ghost"
@@ -125,68 +117,64 @@ export function StudioComposer({
           aria-label={expanded ? "Shrink field" : "Expand field"}
           onClick={() => setExpanded((value) => !value)}
         >
-          <Maximize2 size={13} strokeWidth={1.75} />
+          <img src={expandIcon} alt="" />
         </Button>
       </div>
 
+      <div className="st-writing-divider" aria-hidden="true" />
       <div className="st-composer-strip">
-        <div ref={pickerRef} className="st-picker">
-          <Button
-            variant="ghost"
-            type="button"
-            className="st-picker-btn"
-            aria-haspopup="listbox"
-            aria-expanded={pickerOpen}
-            onClick={() => setPickerOpen((value) => !value)}
-          >
-            {pinnedInfo ? pinnedInfo.displayName : "Auto"}
-            <ChevronDown size={13} strokeWidth={1.75} />
-          </Button>
-          {pickerOpen ? (
-            <div className="st-picker-pop" role="listbox" aria-label="Model">
-              <Button
-                variant="ghost"
-                type="button"
-                role="option"
-                aria-selected={pinnedModel === null}
+        <div className="st-picker">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" type="button" className="st-picker-btn">
+                <span className="st-picker-label">
+                  {pinnedInfo ? pinnedInfo.displayName : "Auto"}
+                </span>
+                <span className="st-model-chevron">
+                  <img src={modelChevronIcon} alt="" />
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="st-picker-pop"
+              side="top"
+              align="start"
+              sideOffset={8}
+              aria-label="Image model"
+            >
+              <DropdownMenuItem
+                role="menuitemradio"
+                aria-checked={pinnedInfo === null}
                 className={cn(
                   "st-picker-row",
-                  pinnedModel === null && "st-picker-row-active",
+                  pinnedInfo === null && "st-picker-row-active",
                 )}
-                onClick={() => {
-                  onPin(null);
-                  setPickerOpen(false);
-                }}
+                onSelect={() => onPin(null)}
               >
                 <span className="st-picker-name">Auto</span>
                 <span className="st-picker-hint">
                   We pick the model for your task
                 </span>
-              </Button>
+              </DropdownMenuItem>
               {models.map((model) => (
-                <Button
-                  variant="ghost"
+                <DropdownMenuItem
                   key={model.slug}
-                  type="button"
-                  role="option"
-                  aria-selected={pinnedModel === model.slug}
+                  role="menuitemradio"
+                  aria-checked={pinnedModel === model.slug}
                   className={cn(
                     "st-picker-row",
                     pinnedModel === model.slug && "st-picker-row-active",
                   )}
-                  onClick={() => {
-                    onPin(model.slug);
-                    setPickerOpen(false);
-                  }}
+                  onSelect={() => onPin(model.slug)}
                 >
                   <span className="st-picker-name">{model.displayName}</span>
                   <span className="st-picker-hint">
                     ~{model.latencyHintSeconds}s
                   </span>
-                </Button>
+                </DropdownMenuItem>
               ))}
-            </div>
-          ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="st-strip-gap" />
@@ -212,7 +200,7 @@ export function StudioComposer({
           disabled={busy}
           onClick={() => fileInputRef.current?.click()}
         >
-          <Paperclip size={14} strokeWidth={1.75} />
+          <img src={attachIcon} alt="" />
         </Button>
 
         <Button
@@ -224,7 +212,7 @@ export function StudioComposer({
           disabled={busy || draft.trim().length === 0}
           onClick={submit}
         >
-          <ArrowUp size={16} strokeWidth={1.75} />
+          <img src={sendIcon} alt="" />
         </Button>
       </div>
     </div>

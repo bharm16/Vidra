@@ -1,12 +1,5 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  User as UserIcon,
-} from "@promptstudio/system/components/ui";
 import { getAuthRepository } from "@repositories/index";
 import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
@@ -17,9 +10,12 @@ import { Spinner } from "./auth/Spinner";
 import { safeRedirect } from "./auth/authParams";
 import { authErrorCopy } from "./auth/authErrorCopy";
 import { GoogleGlyph } from "./auth/GoogleGlyph";
-
-
-type AuthFlow = "google" | "email";
+import {
+  AUTH_INPUT_CLASS,
+  AuthPasswordField,
+  AuthEmailAlternative,
+  AuthLegalLinks,
+} from "./auth/AuthFormControls";
 
 function secureEquals(left: string, right: string): boolean {
   const encoder = new TextEncoder();
@@ -140,155 +136,116 @@ export function SignUpPage(): React.ReactElement {
 
   return (
     <AuthModalCard
-      heading="Create your account"
+      heading={"Create your\naccount"}
       subhead={
-        <>
-          Already have one?{" "}
-          <Link to={signInLink} className="ps-auth-accent-link">
-            Sign in
-          </Link>
-        </>
+        <Link to={signInLink} className="ps-auth-accent-link">
+          Sign in
+        </Link>
       }
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-6">
         {error ? (
           <div
             role="alert"
-            className="text-danger mb-4 rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
+            className="text-danger rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
           >
             {error}
           </div>
         ) : null}
-
         <Button
           type="button"
           onClick={handleGoogleSignUp}
           disabled={isBusy}
-          variant="ghost"
-          className="relative !h-auto w-full gap-[11px] rounded-md bg-white py-[13px] text-ui font-semibold text-[color:var(--background)] shadow-sm hover:bg-white/90 hover:text-[color:var(--background)]"
+          variant="secondary"
+          size="lg"
+          className="relative w-full font-normal"
         >
-          {isBusy ? <Spinner /> : <GoogleGlyph />}
+          <span className="absolute left-4 top-3">
+            {isBusy ? <Spinner /> : <GoogleGlyph />}
+          </span>
           Sign up with Google
         </Button>
-
-        <div className="text-tool-text-muted my-[26px] flex items-center gap-3 font-mono text-meta">
-          <span className="h-px flex-1 bg-white/[0.09]" />
-          OR
-          <span className="h-px flex-1 bg-white/[0.09]" />
-        </div>
-
-        <form onSubmit={handleEmailSignUp} className="flex flex-col gap-[11px]">
-          <div className="relative">
-            <UserIcon
-              className="text-tool-text-muted pointer-events-none absolute left-4 top-1/2 z-10 h-[17px] w-[17px] -translate-y-1/2"
-              aria-hidden="true"
-            />
-            <Input
-              id={nameId}
-              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              autoComplete="name"
-              aria-label="Full name"
-              placeholder="Your name (optional)"
-            />
-          </div>
-
-          <div className="relative">
-            <Mail
-              className="text-tool-text-muted pointer-events-none absolute left-4 top-1/2 z-10 h-[17px] w-[17px] -translate-y-1/2"
-              aria-hidden="true"
-            />
-            <Input
-              id={emailId}
-              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              inputMode="email"
-              aria-label="Email"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div className="relative">
-            <Lock
-              className="text-tool-text-muted pointer-events-none absolute left-4 top-1/2 z-10 h-[17px] w-[17px] -translate-y-1/2"
-              aria-hidden="true"
-            />
-            <Input
+        <AuthEmailAlternative />
+        <form onSubmit={handleEmailSignUp} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            <div>
+              <label
+                htmlFor={nameId}
+                className="mb-2 block text-ui font-normal"
+              >
+                Full name (optional)
+              </label>
+              <Input
+                id={nameId}
+                className={AUTH_INPUT_CLASS}
+                type="text"
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                autoComplete="name"
+                placeholder="Your name"
+                disabled={isBusy}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor={emailId}
+                className="mb-2 block text-ui font-normal"
+              >
+                Email
+              </label>
+              <Input
+                id={emailId}
+                className={AUTH_INPUT_CLASS}
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                inputMode="email"
+                placeholder="Enter your email"
+                disabled={isBusy}
+              />
+            </div>
+            <AuthPasswordField
               id={passwordId}
-              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 pr-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
-              type={showPassword ? "text" : "password"}
+              label="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              aria-label="Password"
-              placeholder="Password (at least 6 characters)"
-            />
-            <Button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-md p-0"
+              onChange={setPassword}
+              visible={showPassword}
+              onToggle={() => setShowPassword((value) => !value)}
               disabled={isBusy}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Eye className="h-4 w-4" aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-
-          <div className="relative">
-            <Lock
-              className="text-tool-text-muted pointer-events-none absolute left-4 top-1/2 z-10 h-[17px] w-[17px] -translate-y-1/2"
-              aria-hidden="true"
-            />
-            <Input
-              id={confirmId}
-              className="h-[46px] rounded-md border-white/[0.10] bg-white/[0.03] pl-11 text-ui shadow-none focus-visible:border-[color:var(--accent)]"
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
-              aria-label="Confirm password"
-              placeholder="Confirm password"
+              placeholder="Password"
             />
+            <div>
+              <label
+                htmlFor={confirmId}
+                className="mb-2 block text-ui font-normal"
+              >
+                Confirm password
+              </label>
+              <Input
+                id={confirmId}
+                className={AUTH_INPUT_CLASS}
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+                placeholder="Confirm password"
+                disabled={isBusy}
+              />
+            </div>
           </div>
-
           <Button
             type="submit"
             disabled={isBusy}
-            variant="ghost"
-            className="ps-auth-primary mt-[3px] !h-auto w-full gap-2 rounded-md py-[13px] text-ui font-semibold"
+            size="lg"
+            className="ps-auth-primary-action w-full font-normal"
           >
             {isBusy ? <Spinner /> : null}
             Create account &amp; continue
           </Button>
         </form>
-
-        <p className="text-tool-text-muted mt-[18px] text-center text-meta leading-[1.5]">
-          By continuing you agree to our{" "}
-          <Link
-            to="/terms-of-service"
-            className="text-tool-text-dim hover:text-foreground underline underline-offset-2"
-          >
-            Terms
-          </Link>{" "}
-          &amp;{" "}
-          <Link
-            to="/privacy-policy"
-            className="text-tool-text-dim hover:text-foreground underline underline-offset-2"
-          >
-            Privacy Policy
-          </Link>
-        </p>
+        <AuthLegalLinks />
       </div>
     </AuthModalCard>
   );

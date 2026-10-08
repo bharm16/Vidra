@@ -16,11 +16,6 @@ vi.mock("@/services", () => ({
   },
 }));
 
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  publishCreditBalanceSync: vi.fn(),
-  requestCreditBalanceRefresh: vi.fn(),
-}));
-
 vi.mock("../../api", () => ({
   compileWanPrompt: (...args: unknown[]) => compileWanPromptMock(...args),
   generateVideoPreview: (...args: unknown[]) =>

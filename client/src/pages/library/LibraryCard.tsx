@@ -9,6 +9,7 @@ import {
 } from "@features/history/utils/historyMedia";
 import { cn } from "@utils/cn";
 import { LibraryThumbnail } from "./LibraryThumbnail";
+import playIcon from "@/assets/design-system/play.svg";
 
 interface LibraryCardProps {
   entry: PromptHistoryEntry;
@@ -29,31 +30,16 @@ export function LibraryCard({ entry }: LibraryCardProps): React.ReactElement {
     typeof entry.id === "string" && entry.id.trim() ? entry.id.trim() : null;
 
   const cover = (
-    <div className="relative h-[172px] overflow-hidden rounded-md border border-white/10 shadow-[0_16px_36px_-20px_rgba(0,0,0,0.7)] transition-all duration-200 group-hover:-translate-y-[3px] group-hover:border-white/30 group-hover:shadow-[0_22px_46px_-20px_rgba(0,0,0,0.8)]">
+    <div className="relative h-[171px] shrink-0 overflow-hidden rounded-card bg-[var(--vidra-stage-placeholder)] after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-[0.5px] after:ring-inset after:ring-white after:content-['']">
       <LibraryThumbnail thumbnail={thumbnail} label={title} />
 
-      {/* Top scrim so the badge reads over bright frames. */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,14,0.5),rgba(10,11,14,0)_34%)]" />
-
-      <div
-        className={cn(
-          "text-foreground absolute left-[10px] top-[9px] flex items-center rounded-md px-2 py-[3px] font-mono text-meta backdrop-blur-[4px]",
-          isClip ? "bg-black/60" : "bg-white/[0.14]",
-        )}
-      >
+      <div className="text-foreground absolute left-[10px] top-[9px] flex h-5 min-w-[66.41px] items-center rounded-md bg-[var(--vidra-stage-panel)] px-2 font-sans text-meta">
         {isClip ? "clip" : "session"}
       </div>
 
       {isClip ? (
         <div className="absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 backdrop-blur-[3px]">
-          <svg
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-            className="ml-[2px] h-4 w-4 text-white"
-          >
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          <img src={playIcon} alt="" draggable={false} />
         </div>
       ) : null}
     </div>
@@ -61,16 +47,16 @@ export function LibraryCard({ entry }: LibraryCardProps): React.ReactElement {
 
   const meta = (
     <>
-      <div className="text-foreground mt-2.5 truncate font-sans text-ui font-medium">
+      <div className="text-foreground h-5 shrink-0 truncate font-sans text-ui font-normal">
         {title}
       </div>
-      <div className="text-tool-text-muted mt-0.5 font-mono text-meta">
+      <div className="text-foreground h-[18px] shrink-0 font-sans text-meta">
         {when}
       </div>
     </>
   );
 
-  const cardClass = "group flex flex-col";
+  const cardClass = "group flex h-[229px] min-w-0 flex-col gap-2 rounded-card";
 
   if (!sessionId) {
     return (

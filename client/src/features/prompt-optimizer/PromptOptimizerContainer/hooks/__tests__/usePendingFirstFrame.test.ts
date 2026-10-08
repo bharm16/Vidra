@@ -169,6 +169,102 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("reference before words (issue #119)", () => {
+  it("clears the in-memory reference when browser recovery deletion fails", async () => {
+    const hook = setup();
+    await act(async () => {
+      await hook.result.current.stageReference(file, null);
+    });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("Storage unavailable");
+    });
+    expect(() => act(() => hook.result.current.clearReference())).not.toThrow();
+    expect(hook.result.current.pendingReference).toBeNull();
+    expect(hook.setStartFrame).not.toHaveBeenCalled();
+  });
+  it("removes a selected reference from recovery without admitting or arming it", async () => {
+    const hook = setup();
+    await act(async () => {
+      await hook.result.current.stageReference(file, null);
+    });
+    expect(localStorage.getItem(keyOf(null))).not.toBeNull();
+    act(() => hook.result.current.clearReference());
+    expect(hook.result.current.pendingReference).toBeNull();
+    expect(localStorage.getItem(keyOf(null))).toBeNull();
+    expect(hook.setStartFrame).not.toHaveBeenCalled();
+    expect(wire.admit).not.toHaveBeenCalled();
+    hook.unmount();
+    const reopened = setup();
+    expect(reopened.result.current.pendingReference).toBeNull();
+  });
+
+  it("ignores a canceled upload failure after a new reference is selected", async () => {
+    const canceled = deferred<typeof uploaded>();
+    wire.upload.mockReturnValueOnce(canceled.promise);
+    const hook = setup();
+    let upload!: Promise<void>;
+    act(() => {
+      upload = hook.result.current.stageReference(file, null);
+    });
+    act(() => hook.result.current.clearReference());
+    await act(async () => {
+      await hook.result.current.stageReference(
+        new File(["second"], "second.png", { type: "image/png" }),
+        null,
+      );
+    });
+    await act(async () => {
+      canceled.resolve({ ...uploaded, success: false });
+      await upload;
+    });
+    expect(hook.onError).not.toHaveBeenCalled();
+    expect(hook.result.current.pendingReference?.url).toBe(
+      uploaded.data.viewUrl,
+    );
+  });
+
+  it("a cleared upload cannot restore itself or clear the busy state of its replacement", async () => {
+    const first = deferred<typeof uploaded>();
+    const replacement = deferred<typeof uploaded>();
+    wire.upload
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(replacement.promise);
+    const hook = setup();
+    let firstUpload!: Promise<void>;
+    let replacementUpload!: Promise<void>;
+    act(() => {
+      firstUpload = hook.result.current.stageReference(file, null);
+    });
+    act(() => hook.result.current.clearReference());
+    act(() => {
+      replacementUpload = hook.result.current.stageReference(
+        new File(["second"], "second.png", { type: "image/png" }),
+        null,
+      );
+    });
+    await act(async () => {
+      first.resolve(uploaded);
+      await firstUpload;
+    });
+    expect(hook.result.current.pendingReference?.uploading).toBe(true);
+    expect(hook.result.current.isReferenceUploading()).toBe(true);
+    expect(localStorage.getItem(keyOf(null))).toBeNull();
+    await act(async () => {
+      replacement.resolve({
+        success: true,
+        data: {
+          ...uploaded.data,
+          storagePath: "users/creator/previews/images/second.png",
+          viewUrl: "https://media.example/second",
+        },
+      });
+      await replacementUpload;
+    });
+    expect(hook.result.current.pendingReference?.url).toBe(
+      "https://media.example/second",
+    );
+    expect(hook.result.current.pendingReference?.uploading).toBe(false);
+  });
+
   it("uploads wordless input durably without arming or admitting it", async () => {
     const hook = setup();
     await act(async () => {

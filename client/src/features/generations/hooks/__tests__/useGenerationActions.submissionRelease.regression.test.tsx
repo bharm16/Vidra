@@ -27,11 +27,6 @@ vi.mock("@/services", () => ({
   },
 }));
 
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  publishCreditBalanceSync: vi.fn(),
-  requestCreditBalanceRefresh: vi.fn(),
-}));
-
 vi.mock("@features/generations/api", () => ({
   compileWanPrompt: (...args: unknown[]) => compileWanPromptMock(...args),
   generateVideoPreview: (...args: unknown[]) =>
@@ -93,24 +88,10 @@ describe("regression: a submission is released on every exit path", () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
-  it("releases the pending flag when the storyboard request rejects", async () => {
-    const dispatch = vi.fn();
-    generateStoryboardPreviewMock.mockRejectedValue(new Error("network down"));
-
-    const { result } = renderHook(() => useGenerationActions(dispatch));
-    await act(async () => {
-      await result.current.generateStoryboard("a prompt", {
-        seedImageUrl: "https://example.com/seed.png",
-      });
-    });
-
-    expect(result.current.isSubmitting).toBe(false);
-  });
-
   /**
    * The pending flag is handed off the moment a take is accepted, because from
    * then on the take's own status drives the UI. Between acceptance and that
-   * handoff the storyboard path calls back into the caller
+   * handoff the clip attachment path calls back into the caller
    * (`onServerGenerationPersisted`) — and a throw there landed in the catch with
    * the take already accepted, where the conditional clear is a no-op. The flag
    * stuck true, and `isGenerationBusy` keeps the generate and preview buttons
@@ -118,14 +99,8 @@ describe("regression: a submission is released on every exit path", () => {
    */
   it("releases the pending flag when a post-acceptance callback throws", async () => {
     const dispatch = vi.fn();
-    generateStoryboardPreviewMock.mockResolvedValue({
-      success: true,
-      data: {
-        imageUrls: ["https://example.com/frame-1.png"],
-        generationId: "server-generation-1",
-        baseImageUrl: "https://example.com/base.png",
-      },
-    });
+    generateVideoPreviewMock.mockResolvedValue({ success: true, jobId: "job-saved", status: "queued" });
+    waitForVideoJobMock.mockResolvedValue({ videoUrl: "https://example.com/clip.mp4", attachment: { state: "attached", sessionId: "session-1", promptVersionId: "v-1", generationId: "job-saved", record: { id: "job-saved" } } });
 
     const { result } = renderHook(() =>
       useGenerationActions(dispatch, {
@@ -137,9 +112,7 @@ describe("regression: a submission is released on every exit path", () => {
     );
 
     await act(async () => {
-      await result.current.generateStoryboard("a prompt", {
-        seedImageUrl: "https://example.com/seed.png",
-      });
+      await result.current.generateRender("google/veo-3", "a prompt", { promptVersionId: "v-1" });
     });
 
     expect(result.current.isSubmitting).toBe(false);

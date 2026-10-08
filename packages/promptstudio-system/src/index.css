@@ -1,6 +1,7 @@
 @layer ps.tokens, ps.base, ps.animations, ps.utilities;
 
 @import "./tokens.css";
+@import "./vidra.css";
 @import "./base.css";
 @import "./animations.css";
 @import "./utilities.css";

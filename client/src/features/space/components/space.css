@@ -71,11 +71,16 @@
 }
 
 .ps-node-live {
-  animation: es-live 4.5s ease-in-out infinite;
+  box-shadow: 0 0 0 0.5px var(--border-strong);
 }
 
 .ps-node-forming {
-  background: linear-gradient(100deg, #14161c, #1c1f27 50%, #14161c);
+  background: linear-gradient(
+    100deg,
+    var(--canvas),
+    var(--chrome) 50%,
+    var(--canvas)
+  );
   background-size: 220% 100%;
   animation:
     es-settle 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -93,9 +98,59 @@
 
 /* The mono caption under each take (PROMPT · IMAGE 1 · CLIP 1). */
 .ps-node-caption {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Page 21 playback track; the native input keeps seek/keyboard behavior. */
+.vidra-result-scrub {
+  appearance: none;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.vidra-result-scrub::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: var(--vidra-radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--foreground) var(--seek-progress),
+    var(--fill) var(--seek-progress)
+  );
+}
+.vidra-result-scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: var(--vidra-radius-pill);
+  background: transparent;
+}
+.vidra-result-scrub:is(:hover, :focus-visible)::-webkit-slider-thumb {
+  background: var(--foreground);
+}
+.vidra-result-scrub::-moz-range-track {
+  height: 2px;
+  border-radius: var(--vidra-radius-pill);
+  background: var(--fill);
+}
+.vidra-result-scrub::-moz-range-progress {
+  height: 2px;
+  border-radius: var(--vidra-radius-pill);
+  background: var(--foreground);
+}
+.vidra-result-scrub::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: var(--vidra-radius-pill);
+  background: transparent;
+}
+.vidra-result-scrub:is(:hover, :focus-visible)::-moz-range-thumb {
+  background: var(--foreground);
 }

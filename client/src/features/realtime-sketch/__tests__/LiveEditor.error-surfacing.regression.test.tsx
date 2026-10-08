@@ -84,7 +84,9 @@ describe("regression: the live editor surfaces relay failures", () => {
       /Exhausted balance/,
     );
     // …and the idle invitation is gone: it would read as "nothing sent yet".
-    expect(screen.queryByText(/Draw on the sketchpad/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("No live render yet"),
+    ).not.toBeInTheDocument();
     // The styling hooks must be real, separate class tokens — a concatenated
     // `le-errorle-error-centered` renders as unstyled text on the panel,
     // which is how this first shipped.
@@ -102,7 +104,7 @@ describe("regression: the live editor surfaces relay failures", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Draw on the sketchpad/)).toBeInTheDocument();
+    expect(screen.getByLabelText("No live render yet")).toBeInTheDocument();
     expect(screen.queryByTestId("live-editor-error")).not.toBeInTheDocument();
   });
 });

@@ -3,7 +3,7 @@
  *
  * Guards the real behavior carried through the rebuild — sign out, email
  * verification, reset-password link, the signed-out CTA — plus the new
- * settings-section switching. Tests exercise the public surface (render,
+ * absence of fabricated dashboards. Tests exercise the public surface (render,
  * click, assert observable content) so they survive the visual polish pass.
  */
 import React from "react";
@@ -42,39 +42,6 @@ vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return { ...actual, useNavigate: () => mockNavigate };
 });
-
-// Local Button stub: render `asChild` children as-is (so links stay anchors)
-// and forward only DOM-valid props, keeping the design-system's variant/
-// loading props off the DOM.
-vi.mock("@promptstudio/system/components/ui/button", () => ({
-  Button: ({
-    asChild,
-    children,
-    onClick,
-    disabled,
-    type,
-    className,
-  }: {
-    asChild?: boolean;
-    children: React.ReactNode;
-    onClick?: React.MouseEventHandler<HTMLElement>;
-    disabled?: boolean;
-    type?: "button" | "submit" | "reset";
-    className?: string;
-  }) => {
-    if (asChild) return <>{children}</>;
-    return (
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        type={type}
-        className={className}
-      >
-        {children}
-      </button>
-    );
-  },
-}));
 
 const signedIn = (overrides?: Partial<User>): User => ({
   uid: "user-1",
@@ -162,24 +129,59 @@ describe("AccountPage behavior", () => {
     ).toHaveAttribute("href", "/signup");
   });
 
-  it("switches settings sections via the sub-nav", () => {
+  it("shows real identity and recovery without fabricated dashboards or navigation", () => {
     mockUseAuthUser.mockReturnValue(signedIn());
     renderPage();
 
-    // Personal profile is the default section.
-    expect(screen.getByText("Reset password")).toBeTruthy();
-    expect(screen.queryByText("Billing history")).toBeNull();
-    expect(screen.queryByText("Daily credits")).toBeNull();
+    expect(screen.getByText("alex@vidra.test")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Reset password" }),
+    ).toHaveAttribute(
+      "href",
+      "/forgot-password?email=alex%40vidra.test&redirect=%2Faccount",
+    );
+    expect(
+      screen.queryByRole("button", {
+        name: /subscription|usage|top up|upgrade|buy credits/i,
+      }),
+    ).toBeNull();
+    expect(
+      screen.queryByText(
+        /10 left|monthly pool|Clips made|Daily credits|Activity/,
+      ),
+    ).toBeNull();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /subscription/i }));
-    expect(screen.getByText("Billing history")).toBeTruthy();
-    expect(screen.queryByText("Reset password")).toBeNull();
+  it("retains the account and reports a sign-out failure without navigating away", async () => {
+    mockUseAuthUser.mockReturnValue(signedIn());
+    authRepositoryMock.signOut.mockRejectedValue(new Error("Offline"));
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: /sign out/i }));
+    await waitFor(() =>
+      expect(toastMock.error).toHaveBeenCalledWith("Failed to sign out"),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("link", { name: "Reset password" }),
+    ).toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /usage/i }));
-    expect(screen.getByText("Daily credits")).toBeTruthy();
-    expect(screen.queryByText("Billing history")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: /personal profile/i }));
-    expect(screen.getByText("Reset password")).toBeTruthy();
+  it("reports failed verification delivery and keeps recovery available", async () => {
+    mockUseAuthUser.mockReturnValue(signedIn({ emailVerified: false }));
+    authRepositoryMock.sendVerificationEmail.mockRejectedValue(
+      new Error("Offline"),
+    );
+    renderPage();
+    fireEvent.click(
+      screen.getByRole("button", { name: /resend verification/i }),
+    );
+    await waitFor(() =>
+      expect(toastMock.error).toHaveBeenCalledWith(
+        "Failed to send verification email.",
+      ),
+    );
+    expect(
+      screen.getByRole("button", { name: /resend verification/i }),
+    ).toBeInTheDocument();
   });
 });

@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AppShell } from "../AppShell";
-import { useCreditBalance } from "@/contexts/CreditBalanceContext";
 
 const unsubscribeMock = vi.fn();
 const onAuthStateChangedMock = vi.fn(() => unsubscribeMock);
 const useNavigationConfigMock = vi.fn();
-const useUserCreditBalanceMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@repositories/index", () => ({
   getAuthRepository: () => ({
@@ -18,11 +16,6 @@ vi.mock("../hooks/useNavigationConfig", () => ({
   useNavigationConfig: () => useNavigationConfigMock(),
 }));
 
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  useUserCreditBalance: (...args: unknown[]) =>
-    useUserCreditBalanceMock(...args),
-}));
-
 vi.mock("../variants/TopNavbar", () => ({
   TopNavbar: () => <div data-testid="top-navbar" />,
 }));
@@ -30,21 +23,11 @@ vi.mock("../variants/TopNavbar", () => ({
 describe("AppShell", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useUserCreditBalanceMock.mockReturnValue({
-      balance: 42,
-      isLoading: false,
-      error: null,
-    });
     useNavigationConfigMock.mockReturnValue({
       variant: "sidebar",
-      currentPath: "/assets",
+      currentPath: "/",
     });
   });
-
-  const CreditProbe = () => {
-    const { balance } = useCreditBalance();
-    return <span data-testid="credit-probe">{balance ?? "none"}</span>;
-  };
 
   describe("error handling", () => {
     it("cleans up auth subscription on unmount", () => {
@@ -75,7 +58,7 @@ describe("AppShell", () => {
     it("renders the top navigation variant", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "topnav",
-        currentPath: "/pricing",
+        currentPath: "/docs",
       });
 
       render(<AppShell>Marketing</AppShell>);
@@ -87,7 +70,7 @@ describe("AppShell", () => {
     it("renders workspace content in the sidebar variant (no tool rail — ADR-0010 D7)", () => {
       useNavigationConfigMock.mockReturnValue({
         variant: "sidebar",
-        currentPath: "/assets",
+        currentPath: "/",
       });
 
       render(<AppShell>Workspace</AppShell>);
@@ -99,19 +82,6 @@ describe("AppShell", () => {
       expect(screen.queryByTestId("top-navbar")).toBeNull();
     });
 
-    it("provides credit context to workspace children in the sidebar variant", () => {
-      useNavigationConfigMock.mockReturnValue({
-        variant: "sidebar",
-        currentPath: "/assets",
-      });
 
-      render(
-        <AppShell>
-          <CreditProbe />
-        </AppShell>,
-      );
-
-      expect(screen.getByTestId("credit-probe")).toHaveTextContent("42");
-    });
   });
 });

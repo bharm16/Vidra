@@ -266,6 +266,8 @@ milestone's "returns after a refresh with everything intact" unachievable by con
 
 ### 7. A narrow thaw for the illustrative camera preview
 
+**Frontend amendment, 2026-10-08 (#177, owner: Bryce Harmon):** the camera picker, modal and illustrative depth preview are retired from the frontend alongside other dormant controls. Camera direction can still be edited as visible words. The depth route and backend service are retained as dormant under their existing registration; this amendment does not unregister backend routes or broaden the convergence flag. The original decision below remains the history of the narrow thaw. See the [retirement ledger](../design/dormant-frontend-retirement.md).
+
 The camera-motion picker and its depth-backed illustrative preview, with their tests, are
 authorized as **motion authoring for the active loop**. Motion direction is authoring
 intelligence — ADR-0002's moat and explicitly part of what stays active — not the

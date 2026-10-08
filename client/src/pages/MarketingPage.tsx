@@ -114,13 +114,6 @@ export function MarketingPage({
                 className="flex flex-wrap items-center gap-x-4 gap-y-1"
               >
                 <Link
-                  to="/pricing"
-                  className="hover:text-white"
-                  style={{ color: AUTH_COLORS.textDim }}
-                >
-                  Pricing
-                </Link>
-                <Link
                   to="/contact"
                   className="hover:text-white"
                   style={{ color: AUTH_COLORS.textDim }}

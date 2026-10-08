@@ -1,0 +1,366 @@
+{
+  "schema": "vidra/page21-verification/v1",
+  "baseline": "5bdcae305ac7577433ad0e84675fef6497713021",
+  "pageId": "699:23",
+  "date": "2026-10-08",
+  "inventory": {
+    "currentIds": 963,
+    "missingIds": 0,
+    "duplicateIds": 0,
+    "brokenCodePaths": 0
+  },
+  "familyEvidence": {
+    "auth-settings-verification.json": {
+      "status": "Auth and Settings complete; source left unstaged",
+      "nodes": [
+        "703:301942",
+        "703:301972",
+        "703:302009",
+        "703:302021",
+        "703:302028",
+        "703:302039",
+        "703:302069",
+        "703:302088",
+        "703:302111",
+        "703:302624"
+      ],
+      "verification": {
+        "typecheck": "npx tsc --noEmit exit0 (whole repo current)",
+        "eslint": "owned paths exit0",
+        "csslint": "auth.css exit0",
+        "focused": "10 files46 tests passed",
+        "e2e": "tests/e2e/auth-pages.spec.ts4 passed"
+      },
+      "geometry": {
+        "auth": {
+          "desktop": 440,
+          "mobile": 353,
+          "heading": "48/48",
+          "inputAndAction": 48,
+          "labels": "14/20+8 gap",
+          "credentialsGap": 20,
+          "googleAndEye": 24,
+          "passwordTarget": 48,
+          "legal": "two14/20 rows gap8"
+        },
+        "settings": {
+          "width": 640,
+          "padding": 24,
+          "radius": 24,
+          "gap": 20,
+          "segments": "228x32; three76px; radius8",
+          "switch": "40x24",
+          "reset": "264x40",
+          "clear": "160x40",
+          "done": "88x40"
+        }
+      },
+      "artifacts": {
+        "desktop": [
+          "auth-signin-desktop.png",
+          "auth-signup-desktop.png",
+          "auth-request-desktop.png",
+          "auth-reset-required-desktop.png",
+          "auth-reset-ready-desktop.png",
+          "auth-verify-desktop.png",
+          "auth-gate-generate-desktop.png",
+          "auth-gate-expired-desktop.png",
+          "settings-desktop.png"
+        ],
+        "mobile": [
+          "auth-signin-mobile.png",
+          "auth-signup-mobile.png",
+          "settings-mobile.png",
+          "settings-confirmation-mobile.png"
+        ]
+      },
+      "behavioralEvidence": {
+        "authGate": "Both pre-go and http401 Close cancel their request while retaining typed workspace prompt",
+        "reset": "ready browser capture used controlled Firebase HTTP response; password confirmation SDK negative and positive paths exercised in unit tests",
+        "mobileSignup": "896px document at385x844, physical mouse wheel scrollY52",
+        "deletion": "mobile confirmation cancelled; unit checks require explicit Yes before callback; no saved data deleted"
+      },
+      "limitations": [
+        "No real authentication-provider smoke run; browser reset-ready response was controlled at the SDK wire boundary.",
+        "Later common brand swap requires refreshing older non-signin captures if publishing the full image set."
+      ]
+    },
+    "support-verification.json": {
+      "nodes": [
+        "703:2224",
+        "703:2248"
+      ],
+      "status": "Support body implementation and verification complete; shared TopNavbar mismatch reported to root",
+      "sourceFiles": [
+        "client/src/pages/ContactSupportPage.tsx",
+        "client/src/pages/__tests__/ContactSupportPage.behavior.test.tsx"
+      ],
+      "geometry": {
+        "viewport": "1440x1000",
+        "contentWidth": 960,
+        "title": "x240 y136 width760 height48 font48/48",
+        "form": "x240 y260 width600 height504",
+        "help": "x920 y260 width280 height428",
+        "columnGap": 80,
+        "topic": "three194.667x48,8px gaps",
+        "email": "600x48",
+        "message": "600x200,16/24 including placeholder",
+        "compose": "208x48",
+        "footer": "x240 y872 width960 height48"
+      },
+      "verification": {
+        "focused": "11 files50 tests passed (Auth/Settings/Support combined)",
+        "supportCases": 4,
+        "typecheckLog": "support-typecheck-final.log",
+        "eslintLog": "support-lint-final.log",
+        "browser": "support-geometry-final.log and support-mobile-final.log; invalid email kept contact route and produced native validation; phone document width385 equals viewport385"
+      },
+      "behavior": "Preserved configured mailbox, percent-encoded mailto subject/body, optional reply address, clipboard feedback1400ms, security topic, app/docs/legal links. Replaced old summary cards and FAST ROUTING decoration with actual Page21 form and help column.",
+      "captures": [
+        "support-desktop.png",
+        "support-mobile.png"
+      ],
+      "remainingOutsideScope": "Shared TopNavbar shows18pxbrand and white40pxSignin instead of scene14pxbrand/gray36px. Root notified; no navigation files edited."
+    },
+    "phrase-geometry.json": [
+      {
+        "name": "ready",
+        "state": "Ready",
+        "width": 336,
+        "height": 286,
+        "background": "rgb(51, 51, 51)",
+        "border": "0.5px solid rgb(255, 255, 255)",
+        "radius": "14px",
+        "padding": "16px",
+        "gap": "12px",
+        "optionCount": 3,
+        "customVisible": true,
+        "customHeight": 57,
+        "suggestSize": {
+          "width": 72,
+          "height": 40
+        },
+        "inputHeight": 20,
+        "icons": [
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          }
+        ]
+      },
+      {
+        "name": "loading",
+        "state": "Loading",
+        "width": 336,
+        "height": 133,
+        "background": "rgb(51, 51, 51)",
+        "border": "0.5px solid rgb(255, 255, 255)",
+        "radius": "14px",
+        "padding": "16px",
+        "gap": "12px",
+        "optionCount": 0,
+        "customVisible": false,
+        "suggestSize": null,
+        "icons": [
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          },
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          }
+        ]
+      },
+      {
+        "name": "error",
+        "state": "Error",
+        "width": 336,
+        "height": 198,
+        "background": "rgb(51, 51, 51)",
+        "border": "0.5px solid rgb(255, 255, 255)",
+        "radius": "14px",
+        "padding": "16px",
+        "gap": "12px",
+        "optionCount": 0,
+        "customVisible": true,
+        "customHeight": 57,
+        "suggestSize": {
+          "width": 72,
+          "height": 40
+        },
+        "inputHeight": 20,
+        "icons": [
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          }
+        ]
+      },
+      {
+        "name": "empty",
+        "state": "Empty",
+        "width": 336,
+        "height": 198,
+        "background": "rgb(51, 51, 51)",
+        "border": "0.5px solid rgb(255, 255, 255)",
+        "radius": "14px",
+        "padding": "16px",
+        "gap": "12px",
+        "optionCount": 0,
+        "customVisible": true,
+        "customHeight": 57,
+        "suggestSize": {
+          "width": 72,
+          "height": 40
+        },
+        "inputHeight": 20,
+        "icons": [
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          }
+        ]
+      },
+      {
+        "name": "custom",
+        "state": "Custom request",
+        "width": 336,
+        "height": 286,
+        "background": "rgb(51, 51, 51)",
+        "border": "0.5px solid rgb(255, 255, 255)",
+        "radius": "14px",
+        "padding": "16px",
+        "gap": "12px",
+        "optionCount": 3,
+        "customVisible": true,
+        "customHeight": 57,
+        "suggestSize": {
+          "width": 72,
+          "height": 40
+        },
+        "inputHeight": 40,
+        "icons": [
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          }
+        ]
+      },
+      {
+        "name": "custom-loading",
+        "state": "Custom loading",
+        "width": 336,
+        "height": 286,
+        "background": "rgb(51, 51, 51)",
+        "border": "0.5px solid rgb(255, 255, 255)",
+        "radius": "14px",
+        "padding": "16px",
+        "gap": "12px",
+        "optionCount": 3,
+        "customVisible": true,
+        "customHeight": 57,
+        "suggestSize": {
+          "width": 72,
+          "height": 36
+        },
+        "inputHeight": 40,
+        "icons": [
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          },
+          {
+            "layoutWidth": "16px",
+            "layoutHeight": "16px",
+            "width": 16,
+            "height": 16,
+            "naturalWidth": 16,
+            "naturalHeight": 16
+          }
+        ]
+      }
+    ],
+    "studio_live": {
+      "studioFocusedTests": 90,
+      "liveFocusedTests": 100,
+      "recoveryFocusedTests": 19,
+      "desktopChat": "344x912",
+      "desktopComposer": "312x160",
+      "mobileChat": "297x764",
+      "mobileComposer": "265x160",
+      "desktopLivePanels": "536x556 with512x512 bitmap bodies",
+      "mobileLivePanels": "297x244 with208x208 displayed bodies",
+      "bitmapMapping": "208px display midpoint maps to256,256 bitmap pixel"
+    },
+    "navigation_library": {
+      "focusedTests": 25,
+      "desktopRail": 256,
+      "mobileRail": 64,
+      "desktopCard": "304x229",
+      "coverHeight": 171,
+      "filterHeight": 36,
+      "menuRows": 42,
+      "menuText": "12/16",
+      "selectionMarker": 18,
+      "checkGlyph": 12
+    },
+    "root": {
+      "videoBefore": "896x280",
+      "videoAfter": "400x748",
+      "videoMobile": "297x356",
+      "normalAsset": "352x220 preview +8 gap +20 caption",
+      "referenceLifetime": "removal, storagefailure and canceled upload tests",
+      "editorLifetime": "same DOM node retained through pre-generation expansion",
+      "mediaLifetime": "only one fullscreen/inline video owns the ref; pause/play/scrub decoded in browser"
+    }
+  },
+  "sourceDecisions": [
+    "Canonical component geometry wins over older applied specimens; applied examples guide page placement.",
+    "Stored/rendered paints win over inconsistent bound aliases at the affected compound only.",
+    "Invisible white-on-white primary/filter labels are corrected to readable black.",
+    "Owner-superseded graph is an asset-row layout; backend ancestry and records remain."
+  ],
+  "gates": {
+    "typecheck": "Passed: npx tsc --noEmit",
+    "eslint": "Passed: full-tree quiet ESLint",
+    "css": "Passed: full-tree stylelint",
+    "architecture": "Passed: client/server cycles and forbidden imports",
+    "unit": "931 files passed,1 existing skip;7175 tests passed,1 existing skip",
+    "replay": "3 files /36 tests passed",
+    "browser": "9 cross-mode journeys passed; focused keyboard and desktop/mobile family proofs also passed",
+    "build": "Passed: production Vite build"
+  },
+  "reviews": {
+    "standards": "Passed after focused-option keyboard correction; no remaining required source findings",
+    "spec": "Passed: complete963-ID inventory, owner-superseded rows, dormant frontend boundaries and retained state journeys"
+  }
+}

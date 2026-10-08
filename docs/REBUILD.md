@@ -1,3 +1,5 @@
+**Current UI, 2026-10-08:** #177 concludes the legacy layout migration. The historical entries below remain an audit trail. [Page 21 migration and retirement](design/page21-component-migration.md) supersedes their pending branch, viewer and account-placeholder retirement instructions.
+
 # Vidra rebuild — status and pickup point
 
 _Last updated: 2026-07-08._

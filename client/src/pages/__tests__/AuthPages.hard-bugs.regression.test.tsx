@@ -155,20 +155,20 @@ describe("regression: auth page hard-bug fixes", () => {
   });
 
   it("preserves redirect on the sign-up footer sign-in link", () => {
-    renderSignUp("/signup?redirect=%2Fsettings%2Fbilling");
+    renderSignUp("/signup?redirect=%2Fstudio");
 
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
       "href",
-      "/signin?redirect=%2Fsettings%2Fbilling",
+      "/signin?redirect=%2Fstudio",
     );
   });
 
   it("preserves redirect on the sign-in footer create-account link", () => {
-    renderSignIn("/signin?redirect=%2Fsettings%2Fbilling");
+    renderSignIn("/signin?redirect=%2Fstudio");
 
     expect(
       screen.getByRole("link", { name: "Create an account" }),
-    ).toHaveAttribute("href", "/signup?redirect=%2Fsettings%2Fbilling");
+    ).toHaveAttribute("href", "/signup?redirect=%2Fstudio");
   });
 
   it("maps auth/invalid-credential to the credential guidance copy", async () => {
@@ -178,10 +178,10 @@ describe("regression: auth page hard-bug fixes", () => {
 
     renderSignIn("/signin");
 
-    fireEvent.change(screen.getByPlaceholderText("Enter your email"), {
+    fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "ada@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password", { exact: true }), {
       target: { value: "wrong-password" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Sign in & continue" }));
@@ -202,21 +202,18 @@ describe("regression: auth page hard-bug fixes", () => {
       code: "auth/unauthorized-continue-uri",
     });
 
-    renderSignUp("/signup?redirect=%2Fsettings%2Fbilling");
+    renderSignUp("/signup?redirect=%2Fstudio");
 
-    fireEvent.change(screen.getByPlaceholderText("Your name (optional)"), {
+    fireEvent.change(screen.getByLabelText("Full name (optional)"), {
       target: { value: "Ada" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Enter your email"), {
+    fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "ada@example.com" },
     });
-    fireEvent.change(
-      screen.getByPlaceholderText("Password (at least 6 characters)"),
-      {
-        target: { value: "Passw0rd!" },
-      },
-    );
-    fireEvent.change(screen.getByPlaceholderText("Confirm password"), {
+    fireEvent.change(screen.getByLabelText("Password", { exact: true }), {
+      target: { value: "Passw0rd!" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
       target: { value: "Passw0rd!" },
     });
     fireEvent.click(
@@ -226,14 +223,14 @@ describe("regression: auth page hard-bug fixes", () => {
     await waitFor(() => {
       expect(readLocationProbe()).toMatchObject({
         pathname: "/email-verification",
-        search: "?redirect=%2Fsettings%2Fbilling&email=ada%40example.com",
+        search: "?redirect=%2Fstudio&email=ada%40example.com",
         state: { delivery: "failed" },
       });
     });
 
     expect(screen.queryByText(/We sent a verification link to/i)).toBeNull();
     expect(
-      screen.getByText(/couldn't send the verification email yet/i),
+      screen.getByText(/couldn[’']t send the verification email yet/i),
     ).toBeInTheDocument();
     expect(toastMock.success).toHaveBeenCalledTimes(1);
     expect(toastMock.success).toHaveBeenCalledWith(
@@ -248,21 +245,18 @@ describe("regression: auth page hard-bug fixes", () => {
       displayName: "Ada",
     });
 
-    renderSignUp("/signup?redirect=%2Fsettings%2Fbilling");
+    renderSignUp("/signup?redirect=%2Fstudio");
 
-    fireEvent.change(screen.getByPlaceholderText("Your name (optional)"), {
+    fireEvent.change(screen.getByLabelText("Full name (optional)"), {
       target: { value: "Ada" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Enter your email"), {
+    fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "ada@example.com" },
     });
-    fireEvent.change(
-      screen.getByPlaceholderText("Password (at least 6 characters)"),
-      {
-        target: { value: "Passw0rd!" },
-      },
-    );
-    fireEvent.change(screen.getByPlaceholderText("Confirm password"), {
+    fireEvent.change(screen.getByLabelText("Password", { exact: true }), {
+      target: { value: "Passw0rd!" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm password"), {
       target: { value: "Passw0rd!" },
     });
     fireEvent.click(
@@ -272,7 +266,7 @@ describe("regression: auth page hard-bug fixes", () => {
     await waitFor(() => {
       expect(readLocationProbe()).toMatchObject({
         pathname: "/email-verification",
-        search: "?redirect=%2Fsettings%2Fbilling&email=ada%40example.com",
+        search: "?redirect=%2Fstudio&email=ada%40example.com",
         state: { delivery: "sent" },
       });
     });
@@ -294,9 +288,13 @@ describe("regression: auth page hard-bug fixes", () => {
       state: { delivery: "failed" },
     });
 
-    expect(screen.getByText("Verification email not sent")).toBeInTheDocument();
     expect(
-      screen.getByText(/couldn't send the verification email yet/i),
+      screen.getByText(
+        /was created, but we couldn’t send the verification email yet/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/couldn[’']t send the verification email yet/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/We sent a verification link to/i)).toBeNull();
   });
@@ -313,13 +311,19 @@ describe("regression: auth page hard-bug fixes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Resend email" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Check your inbox")).toBeInTheDocument();
+      expect(
+        screen.getByText(/We sent a verification link to/i),
+      ).toBeInTheDocument();
     });
 
     expect(
       screen.getByText(/We sent a verification link to/i),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Verification email not sent")).toBeNull();
+    expect(
+      screen.queryByText(
+        /was created, but we couldn’t send the verification email yet/i,
+      ),
+    ).toBeNull();
     expect(authRepositoryMock.sendVerificationEmail).toHaveBeenCalledWith(
       undefined,
     );
@@ -347,7 +351,11 @@ describe("regression: auth page hard-bug fixes", () => {
       );
     });
 
-    expect(screen.getByText("Verification email not sent")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /was created, but we couldn’t send the verification email yet/i,
+      ),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/We sent a verification link to/i)).toBeNull();
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(toastMock.error).not.toHaveBeenCalled();

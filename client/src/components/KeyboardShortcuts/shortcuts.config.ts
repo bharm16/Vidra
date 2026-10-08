@@ -51,24 +51,11 @@ export const SHORTCUTS: ShortcutCategory[] = [
     category: "Results View",
     items: [
       { keys: ["Cmd", "C"], description: "Copy optimized prompt", id: "copy" },
-      { keys: ["Cmd", "E"], description: "Export prompt", id: "export" },
-      { keys: ["Cmd", "S"], description: "Save to history", id: "save" },
-      {
-        keys: ["Cmd", "Backspace"],
-        description: "Delete current prompt",
-        id: "delete",
-      },
     ],
   },
   {
-    category: "Navigation",
+    category: "Suggestions",
     items: [
-      {
-        keys: ["Cmd", "B"],
-        description: "Toggle history sidebar",
-        id: "sidebar",
-      },
-      { keys: ["Cmd", "1-5"], description: "Switch prompt mode", id: "mode" },
       {
         keys: ["Alt", "1-9"],
         description: "Apply suggestion",

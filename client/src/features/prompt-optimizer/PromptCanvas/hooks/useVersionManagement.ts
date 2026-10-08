@@ -37,10 +37,6 @@ interface PromptOptimizerActions {
 }
 
 interface UseVersionManagementOptions {
-  hasShotContext: boolean;
-  shotId: string | null;
-  shotPromptEntry: PromptHistoryEntry | null;
-  updateShotVersions: (versions: PromptVersionEntry[]) => void;
   promptHistory: PromptHistoryStore;
   currentPromptUuid: string | null;
   currentPromptDocId: string | null;
@@ -100,10 +96,6 @@ interface UseVersionManagementResult {
 }
 
 export function useVersionManagement({
-  hasShotContext,
-  shotId,
-  shotPromptEntry,
-  updateShotVersions,
   promptHistory,
   currentPromptUuid,
   currentPromptDocId,
@@ -128,33 +120,9 @@ export function useVersionManagement({
 }: UseVersionManagementOptions): UseVersionManagementResult {
   const { history, createDraft, updateEntryVersions } = promptHistory;
   const { setOptimizedPrompt } = promptOptimizer;
-  const versionHistory = useMemo(() => {
-    if (hasShotContext && shotPromptEntry) {
-      return {
-        history: [shotPromptEntry],
-        updateEntryVersions: (
-          _uuid: string,
-          _docId: string | null,
-          versions: PromptVersionEntry[],
-        ) => {
-          updateShotVersions(versions);
-        },
-      };
-    }
-    return {
-      history,
-      updateEntryVersions,
-    };
-  }, [
-    hasShotContext,
-    shotPromptEntry,
-    updateShotVersions,
-    history,
-    updateEntryVersions,
-  ]);
-
-  const versioningPromptUuid = hasShotContext ? shotId : currentPromptUuid;
-  const versioningPromptDocId = hasShotContext ? null : currentPromptDocId;
+  const versionHistory = { history, updateEntryVersions };
+  const versioningPromptUuid = currentPromptUuid;
+  const versioningPromptDocId = currentPromptDocId;
 
   const currentPromptEntry = useMemo(() => {
     if (!versionHistory.history.length) return null;
@@ -306,9 +274,6 @@ export function useVersionManagement({
   );
 
   const ensureDraftEntry = useCallback((): { uuid: string; docId: string } => {
-    if (hasShotContext && shotId) {
-      return { uuid: shotId, docId: "" };
-    }
     // The ref (when wired) is at least as fresh as the render-time props —
     // it sees a promotion made earlier in this very turn.
     const liveUuid = promptIdentityRef?.current.uuid ?? currentPromptUuid;
@@ -326,8 +291,6 @@ export function useVersionManagement({
     setCurrentPromptDocId(draft.id);
     return { uuid: draft.uuid, docId: draft.id };
   }, [
-    hasShotContext,
-    shotId,
     currentPromptDocId,
     currentPromptUuid,
     promptIdentityRef,
@@ -345,10 +308,6 @@ export function useVersionManagement({
       versions: PromptVersionEntry[],
       identifiers?: { uuid: string; docId?: string },
     ) => {
-      if (hasShotContext && shotId) {
-        updateShotVersions(versions);
-        return;
-      }
       if (!identifiers?.uuid) return;
       updateEntryVersions(
         identifiers.uuid,
@@ -356,7 +315,7 @@ export function useVersionManagement({
         versions,
       );
     },
-    [hasShotContext, shotId, updateShotVersions, updateEntryVersions],
+    [updateEntryVersions],
   );
 
   const handleCreateVersion = useCallback((): void => {

@@ -11,6 +11,7 @@ export const PromptEditor = forwardRef<HTMLDivElement, PromptEditorProps>(
     {
       className,
       placeholder,
+      isEmpty,
       onTextSelection,
       onHighlightClick,
       onHighlightMouseDown,
@@ -51,6 +52,7 @@ export const PromptEditor = forwardRef<HTMLDivElement, PromptEditorProps>(
         suppressContentEditableWarning
         className={cn("min-h-px w-full break-words", className)}
         data-placeholder={placeholder}
+        data-empty={isEmpty}
         role="textbox"
         aria-label="Shot description"
       />

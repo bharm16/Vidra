@@ -1,9 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { X } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { AmbientLight, Grain, Vignette } from "@/components/atmosphere";
 import { VidraMark } from "@/components/brand";
+import authClose from "@/assets/design-system/auth-close.svg";
 
 import "./auth.css";
 
@@ -12,6 +11,7 @@ interface AuthModalCardProps {
   heading: string;
   /** The line beneath the title — the mode toggle or a short instruction. */
   subhead?: React.ReactNode;
+  headingIcon?: React.ReactNode;
   /** The form column body (buttons + inputs). */
   children: React.ReactNode;
   /**
@@ -23,91 +23,60 @@ interface AuthModalCardProps {
 
 /* Vidra lockup — the shared brand mark + wordtype, mirrored from
    WorkspaceTopBar so the auth stage carries the same signature. */
-function VidraLockup(): React.ReactElement {
+export function AuthBrand(): React.ReactElement {
   return (
     <span className="inline-flex items-center gap-2.5">
-      <VidraMark className="h-[26px] w-[26px] rounded-lg" />
-      <span className="text-foreground text-body-lg font-semibold tracking-[-0.01em]">
-        Vidra
-      </span>
+      <VidraMark className="h-[26px] w-[26px]" />
+      <span className="text-foreground text-body-lg font-normal">Vidra</span>
     </span>
   );
 }
 
-/* The sunset showcase — a purely decorative gradient panel beside the form
-   (handoff right column). Layered gradients + a slow-floating light bloom. */
-function AuthShowcase(): React.ReactElement {
-  return (
-    <div
-      aria-hidden
-      className="ps-auth-showcase relative hidden md:block md:w-[332px] md:shrink-0"
-    >
-      <div className="ps-auth-showcase__wash absolute inset-0" />
-      <div className="ps-auth-showcase__bloom absolute left-[14%] top-[8%] h-[250px] w-[250px] rounded-full" />
-      <div className="ps-auth-showcase__base absolute inset-x-0 bottom-0 h-2/5" />
-      <div className="ps-auth-showcase__hill-a absolute inset-x-[-10%] bottom-[13%] h-[86px] rounded-[50%]" />
-      <div className="ps-auth-showcase__hill-b absolute bottom-[5%] left-[-20%] right-[10%] h-[74px] rounded-[50%]" />
-    </div>
-  );
-}
-
-/**
- * The auth surface frame — atmospheric dark stage + centered glass modal with a
- * two-column layout (form column + sunset showcase). Rebuilt from
- * design_handoff_vidra/Auth.dc.html (ADR-0014); the sign-in / sign-up / reset
- * pages supply the heading, subhead and form body and keep all their own auth
- * logic.
- */
+/** Shared Page 21 authentication surface; pages retain their auth logic. */
 export function AuthModalCard({
   heading,
   subhead,
+  headingIcon,
   children,
   dismissTo = "/",
 }: AuthModalCardProps): React.ReactElement {
   return (
-    <div className="text-foreground relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[color:var(--background)] px-4 py-12">
-      {/* Atmosphere backdrop (ADR-0014): ambient light + grain sit behind the
-          content (negative z, inside this isolated root); the vignette frames
-          over them but below the modal. */}
-      <AmbientLight />
-      <Grain />
-      <Vignette />
-
+    <div className="text-foreground relative isolate flex min-h-screen flex-col bg-canvas px-4 pb-10 pt-[88px]">
       <Link
         to={dismissTo}
         aria-label="Vidra home"
-        className="absolute left-6 top-6 z-10 inline-flex transition-opacity hover:opacity-80"
+        className="absolute left-8 top-7 z-10 inline-flex transition-opacity hover:opacity-80"
       >
-        <VidraLockup />
+        <AuthBrand />
       </Link>
 
-      <div className="ps-auth-modal relative z-10 flex w-[min(100%-2rem,412px)] overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.045] shadow-[0_50px_110px_-30px_rgba(0,0,0,0.8)] backdrop-blur-[16px] backdrop-saturate-150 md:w-[744px]">
-        {/* Form column */}
-        <div className="flex w-full flex-col px-8 pb-8 pt-10 sm:px-9 md:w-[412px] md:shrink-0">
-          <h1 className="text-foreground text-center text-heading font-semibold leading-[1.05] tracking-[-0.015em]">
-            {heading}
-          </h1>
-          {subhead ? (
-            <p className="text-tool-text-muted mt-[9px] text-center text-ui">
-              {subhead}
-            </p>
-          ) : null}
-          <div className="mt-6">{children}</div>
+      <main className="flex flex-1 items-center justify-center">
+        <div className="ps-auth-modal relative z-10 w-full max-w-[440px]">
+          {/* Form column */}
+          <div className="flex w-full flex-col">
+            {headingIcon ? <div className="mb-3">{headingIcon}</div> : null}
+            <h1 className="whitespace-pre-line text-foreground text-display-lg font-medium">
+              {heading}
+            </h1>
+            {subhead ? (
+              <p className="whitespace-pre-line text-foreground mt-3 text-body">
+                {subhead}
+              </p>
+            ) : null}
+            <div className="mt-6">{children}</div>
+          </div>
         </div>
-
-        <AuthShowcase />
-
-        <Button
-          asChild
-          variant="ghost"
-          size="icon"
-          className="absolute right-[15px] top-[15px] z-10 h-[30px] w-[30px] rounded-full border border-white/[0.24] bg-black/40 text-white backdrop-blur-[4px] hover:bg-black/60 hover:text-white"
-        >
-          <Link to={dismissTo} aria-label="Close">
-            <X />
-          </Link>
-        </Button>
-      </div>
+      </main>
+      <Button
+        asChild
+        variant="ghost"
+        size="icon-lg"
+        className="absolute right-6 top-5 z-10 rounded-md"
+      >
+        <Link to={dismissTo} aria-label="Close">
+          <img src={authClose} alt="" />
+        </Link>
+      </Button>
     </div>
   );
 }

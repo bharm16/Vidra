@@ -246,57 +246,6 @@ describe("regression: pending-intent resume survives transient empty prompt", ()
     });
   });
 
-  it("storyboard fires when the editor prompt is momentarily empty during navigation", async () => {
-    const capturedPrompt = "A cinematic aerial shot of a lone astronaut";
-    mockPrompt = capturedPrompt;
-
-    const { rerender } = renderHook(
-      ({ prompt }) =>
-        useGenerationsRuntime({
-          prompt,
-          promptVersionId: "version-1",
-          aspectRatio: "16:9",
-          duration: 8,
-          versions: [],
-          onCreateVersionIfNeeded: () => "version-1",
-          presentation: "hero",
-        }),
-      { initialProps: { prompt: capturedPrompt } },
-    );
-
-    await waitFor(() => {
-      expect(setControlsMock).toHaveBeenCalled();
-    });
-
-    const controlsPayload = setControlsMock.mock.calls.at(-1)?.[0] as
-      | { onStoryboard?: () => void }
-      | undefined;
-
-    act(() => {
-      controlsPayload?.onStoryboard?.();
-    });
-
-    await waitFor(() => {
-      expect(saveToHistoryMock).toHaveBeenCalledTimes(1);
-      expect(navigateMock).toHaveBeenCalledWith("/session/session-remote", {
-        replace: true,
-      });
-    });
-
-    // Simulate the editor being transiently empty while the session loader
-    // rehydrates. Under the bug this dropped the intent silently.
-    rerender({ prompt: "" });
-
-    await waitFor(() => {
-      expect(generateStoryboardMock).toHaveBeenCalledTimes(1);
-    });
-
-    // The storyboard MUST be dispatched with the captured prompt, not the
-    // fallback placeholder from executeStoryboardAction.
-    const [dispatchedPrompt] = generateStoryboardMock.mock.calls[0] ?? [];
-    expect(dispatchedPrompt).toBe(capturedPrompt);
-  });
-
   it("draft fires with the captured prompt when the editor prop briefly empties", async () => {
     const capturedPrompt = "A cinematic fox running through snow";
     mockPrompt = capturedPrompt;

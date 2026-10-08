@@ -1,16 +1,11 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  CheckCircle2,
-  Mail,
-  RefreshCw,
-  ShieldAlert,
-} from "@promptstudio/system/components/ui";
 import { getAuthRepository } from "@repositories/index";
 import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { useAuthUser } from "@hooks/useAuthUser";
-import { AuthShell } from "./auth/AuthShell";
+import { AuthModalCard } from "./auth/AuthModalCard";
+import authMail from "@/assets/design-system/auth-mail.svg";
 import { Spinner } from "./auth/Spinner";
 import { readActionMode, readOobCode, safeRedirect } from "./auth/authParams";
 import { authErrorCopy } from "./auth/authErrorCopy";
@@ -147,230 +142,82 @@ export function EmailVerificationPage(): React.ReactElement {
     Boolean(error) && !showVerifiedPanel && !showVerifyInProgress;
   const showDeliveryFailurePanel =
     deliveryState === "failed" && !showVerifiedPanel;
-  const showInboxPanel = !showVerifiedPanel && !showDeliveryFailurePanel;
   const inlineErrorTitle =
     verifyState === "error"
       ? "Verification failed"
       : "Could not send verification email";
 
+  const heading = showVerifiedPanel ? "Email verified" : "Verify your email";
+  const subhead = showVerifiedPanel
+    ? "You’re confirmed. Jump back into the app."
+    : showVerifyInProgress
+      ? "Applying your confirmation code. This should take a moment."
+      : showDeliveryFailurePanel
+        ? `Your account${displayEmail ? ` for ${displayEmail}` : ""} was created, but we couldn’t send the verification email yet. Try resending it from this page.`
+        : displayEmail
+          ? `We sent a verification link to ${displayEmail}. Click it to confirm.`
+          : "Open the verification email and click\nthe link to confirm.";
+
   return (
-    <AuthShell
-      title="Verify your email"
-      footer={
-        <>
-          Need to sign in?{" "}
-          <Link
-            to={`/signin?redirect=${encodeURIComponent(continuePath)}`}
-            className="text-foreground hover:underline"
-          >
-            Sign in
-          </Link>
-          .
-        </>
-      }
+    <AuthModalCard
+      heading={heading}
+      headingIcon={<img src={authMail} alt="" />}
+      subhead={<span className="text-muted">{subhead}</span>}
     >
-      <div className="flex flex-col gap-4">
-        <p className="text-muted text-ui leading-relaxed">
-          We use verification to keep accounts secure and deliver resets
-          reliably.
-        </p>
-
-        {showVerifyInProgress ? (
-          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
-            <div className="flex items-start gap-2.5">
-              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
-                <Spinner />
-              </span>
-              <div className="min-w-0">
-                <p className="text-foreground text-ui font-semibold">
-                  Verifying…
-                </p>
-                <p className="text-muted mt-1 text-ui leading-snug">
-                  Applying your confirmation code. This should take a moment.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {showVerifiedPanel ? (
-          <div className="rounded-lg border border-[color:var(--badge-success-border)] bg-[color:var(--badge-success-bg)] px-3.5 py-2.5">
-            <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--badge-success-border)] bg-[color:var(--badge-success-bg)]">
-                <CheckCircle2
-                  className="animate-scale-in h-4 w-4 text-[color:var(--badge-success-text)]"
-                  aria-hidden="true"
-                />
-              </span>
-              <div className="min-w-0">
-                <p className="text-ui font-semibold text-[color:var(--badge-success-text)]">
-                  Email verified
-                </p>
-                <p className="mt-0.5 text-ui leading-snug text-[color:var(--badge-success-text)] opacity-70">
-                  You're confirmed. Jump back into the app.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
+      <div className="flex flex-col gap-6">
         {showInlineError ? (
           <div
             role="alert"
-            className="rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5"
+            className="rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui text-danger"
           >
-            <div className="flex items-start gap-2.5">
-              <ShieldAlert
-                className="text-danger mt-0.5 h-4 w-4 shrink-0"
-                aria-hidden="true"
-              />
-              <div className="min-w-0">
-                <p className="text-danger text-ui font-semibold">
-                  {inlineErrorTitle}
-                </p>
-                <p className="text-danger mt-0.5 text-ui leading-snug opacity-80">
-                  {error}
-                </p>
-              </div>
-            </div>
+            <p>{inlineErrorTitle}</p>
+            <p className="mt-1">{error}</p>
           </div>
         ) : null}
-
-        {showDeliveryFailurePanel ? (
-          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
-            <div className="flex items-start gap-2.5">
-              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
-                <ShieldAlert
-                  className="text-danger h-4 w-4"
-                  aria-hidden="true"
-                />
-              </span>
-              <div className="min-w-0">
-                <p className="text-foreground text-ui font-semibold">
-                  Verification email not sent
-                </p>
-                <p className="text-muted mt-1 text-ui leading-snug">
-                  {displayEmail ? (
-                    <>
-                      Your account was created for{" "}
-                      <span className="text-foreground font-medium">
-                        {displayEmail}
-                      </span>
-                      , but we couldn&apos;t send the verification email yet.
-                      Try resending it from this page.
-                    </>
-                  ) : (
-                    <>
-                      Your account was created, but we couldn&apos;t send the
-                      verification email yet. Try resending it from this page.
-                    </>
-                  )}
-                </p>
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <Button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={!user || isResending || resendCooldown > 0}
-                    variant="secondary"
-                    className="w-full"
-                  >
-                    {isResending ? (
-                      <Spinner />
-                    ) : (
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                    )}
-                    {resendCooldown > 0
-                      ? `Resend in ${resendCooldown}s`
-                      : "Resend email"}
-                  </Button>
-
-                  <Button asChild variant="outline" className="w-full">
-                    <Link
-                      to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
-                    >
-                      Password help
-                    </Link>
-                  </Button>
-                </div>
-
-                {!user ? (
-                  <p className="text-faint mt-3 text-meta leading-relaxed">
-                    Sign in first to resend a verification email. If you&apos;re
-                    on a different device, just click the link in your inbox.
-                  </p>
-                ) : null}
-              </div>
-            </div>
+        {showVerifyInProgress ? (
+          <div role="status" className="flex items-center gap-3 text-body">
+            <Spinner />
+            Verifying…
           </div>
         ) : null}
-
-        {showInboxPanel ? (
-          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
-            <div className="flex items-start gap-2.5">
-              <span className="border-border bg-raise mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border">
-                <Mail className="text-faint h-4 w-4" aria-hidden="true" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-foreground text-ui font-semibold">
-                  Check your inbox
-                </p>
-                <p className="text-muted mt-1 text-ui leading-snug">
-                  {displayEmail ? (
-                    <>
-                      We sent a verification link to{" "}
-                      <span className="text-foreground font-medium">
-                        {displayEmail}
-                      </span>
-                      . Click it to confirm.
-                    </>
-                  ) : (
-                    <>
-                      Open the verification email and click the link to confirm.
-                    </>
-                  )}
-                </p>
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <Button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={!user || isResending || resendCooldown > 0}
-                    variant="secondary"
-                    className="w-full"
-                  >
-                    {isResending ? (
-                      <Spinner />
-                    ) : (
-                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                    )}
-                    {resendCooldown > 0
-                      ? `Resend in ${resendCooldown}s`
-                      : "Resend email"}
-                  </Button>
-
-                  <Button asChild variant="outline" className="w-full">
-                    <Link
-                      to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
-                    >
-                      Password help
-                    </Link>
-                  </Button>
-                </div>
-
-                {!user ? (
-                  <p className="text-faint mt-3 text-meta leading-relaxed">
-                    Sign in first to resend a verification email. If you're on a
-                    different device, just click the link in your inbox.
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        <Button type="button" onClick={handleContinue} className="w-full">
-          Continue
+        <Button
+          type="button"
+          onClick={handleContinue}
+          size="lg"
+          className="ps-auth-primary-action w-full font-normal"
+        >
+          {user ? "Continue" : "Sign in to continue"}
         </Button>
+        {!showVerifiedPanel ? (
+          <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              onClick={handleResend}
+              disabled={!user || isResending || resendCooldown > 0}
+              variant="secondary"
+              size="lg"
+              className="w-[176px] shrink-0 font-normal"
+            >
+              {isResending ? <Spinner /> : null}
+              {resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : "Resend email"}
+            </Button>
+            {!user ? (
+              <p className="text-ui text-muted">
+                Sign in to resend
+                <br />a verification email.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        <Link
+          to={`/forgot-password${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
+          className="w-28 text-body hover:underline"
+        >
+          Password help
+        </Link>
       </div>
-    </AuthShell>
+    </AuthModalCard>
   );
 }

@@ -8,9 +8,6 @@ const authState: { user: unknown } = { user: null };
 vi.mock("../../hooks/useWorkspaceProject", () => ({
   useWorkspaceProject: () => ({ name: projectState.name }),
 }));
-vi.mock("../../hooks/useWorkspaceCredits", () => ({
-  useWorkspaceCredits: () => ({ credits: 1234 }),
-}));
 vi.mock("@hooks/useAuthUser", () => ({
   useAuthUser: () => authState.user,
 }));
@@ -69,11 +66,6 @@ describe("WorkspaceTopBar", () => {
     // Locked: must NOT be a button — a click affordance that loses data on
     // remount violates the project's "browsing is read-only" UX rule.
     expect(label.tagName.toLowerCase()).toBe("span");
-  });
-
-  it("renders the credits formatted with thousands separator", () => {
-    renderTopBar();
-    expect(screen.getByText(/1,234/)).toBeInTheDocument();
   });
 
   it("carries no auth affordance when signed out — the rail owns it", () => {

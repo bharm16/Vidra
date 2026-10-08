@@ -10,17 +10,7 @@ import { useCallback, useReducer } from "react";
 import type { PromptCanvasAction, PromptCanvasState } from "../types";
 
 export const initialPromptCanvasState: PromptCanvasState = {
-  showExportMenu: false,
-  showLegend: false,
-  rightPaneMode: "refine",
   showHighlights: true,
-  visualLastGeneratedAt: null,
-  videoLastGeneratedAt: null,
-  visualGenerateRequestId: 0,
-  videoGenerateRequestId: 0,
-  isEditing: false,
-  originalInputPrompt: "",
-  originalSelectedModel: undefined,
   selectedSpanId: null,
   lastAppliedSpanId: null,
   hasInteracted: false,
@@ -49,16 +39,6 @@ export function promptCanvasReducer(
       }
       return changed ? { ...state, ...action.payload } : state;
     }
-    case "INCREMENT_VISUAL_REQUEST_ID":
-      return {
-        ...state,
-        visualGenerateRequestId: state.visualGenerateRequestId + 1,
-      };
-    case "INCREMENT_VIDEO_REQUEST_ID":
-      return {
-        ...state,
-        videoGenerateRequestId: state.videoGenerateRequestId + 1,
-      };
     default:
       return state;
   }
@@ -67,8 +47,6 @@ export function promptCanvasReducer(
 export interface UsePromptCanvasStateReturn {
   state: PromptCanvasState;
   setState: (payload: Partial<PromptCanvasState>) => void;
-  incrementVisualRequestId: () => void;
-  incrementVideoRequestId: () => void;
 }
 
 export function usePromptCanvasState(): UsePromptCanvasStateReturn {
@@ -81,13 +59,5 @@ export function usePromptCanvasState(): UsePromptCanvasStateReturn {
     dispatch({ type: "MERGE_STATE", payload });
   }, []);
 
-  const incrementVisualRequestId = useCallback(() => {
-    dispatch({ type: "INCREMENT_VISUAL_REQUEST_ID" });
-  }, []);
-
-  const incrementVideoRequestId = useCallback(() => {
-    dispatch({ type: "INCREMENT_VIDEO_REQUEST_ID" });
-  }, []);
-
-  return { state, setState, incrementVisualRequestId, incrementVideoRequestId };
+  return { state, setState };
 }

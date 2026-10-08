@@ -38,13 +38,6 @@ vi.mock("@components/KeyboardShortcuts", () => ({
   ),
 }));
 
-vi.mock("@/PromptImprovementForm", () => ({
-  __esModule: true,
-  default: ({ initialPrompt }: { initialPrompt: string }) => (
-    <div>Improver: {initialPrompt}</div>
-  ),
-}));
-
 const mockUsePromptUIStateContext = vi.mocked(usePromptUIStateContext);
 const mockUsePromptServices = vi.mocked(usePromptServices);
 const mockUseSettings = vi.mocked(useSettings);
@@ -64,10 +57,6 @@ const createPromptUiState = (
   setShowSettings: vi.fn(),
   showShortcuts: false,
   setShowShortcuts: vi.fn(),
-  showImprover: false,
-  setShowImprover: vi.fn(),
-  showBrainstorm: false,
-  setShowBrainstorm: vi.fn(),
   currentAIIndex: 0,
   setCurrentAIIndex: vi.fn(),
   outputSaveState: "idle",
@@ -136,7 +125,6 @@ describe("PromptModals", () => {
         createPromptUiState({
           showSettings: false,
           showShortcuts: false,
-          showImprover: false,
         }),
       );
 
@@ -160,7 +148,6 @@ describe("PromptModals", () => {
         createPromptUiState({
           showSettings: false,
           showShortcuts: true,
-          showImprover: false,
         }),
       );
 
@@ -179,7 +166,7 @@ describe("PromptModals", () => {
   });
 
   describe("core behavior", () => {
-    it("renders improvement form with the current prompt", async () => {
+    it("closes active settings without mounting dormant improvement UI", async () => {
       const setShowSettings = vi.fn();
 
       mockUsePromptUIStateContext.mockReturnValue(
@@ -187,7 +174,6 @@ describe("PromptModals", () => {
           showSettings: true,
           setShowSettings,
           showShortcuts: false,
-          showImprover: true,
         }),
       );
 
@@ -203,7 +189,7 @@ describe("PromptModals", () => {
 
       render(<PromptModals />);
 
-      expect(screen.getByText("Improver: hello world")).toBeInTheDocument();
+      expect(screen.queryByText("Improver: hello world")).not.toBeInTheDocument();
 
       fireEvent.click(
         screen.getByRole("button", { name: "Close Settings", hidden: true }),

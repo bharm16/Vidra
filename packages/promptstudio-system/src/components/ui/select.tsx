@@ -3,7 +3,8 @@
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CaretDown, CaretUp, Check } from "./icons";
+import { CaretDown, CaretUp } from "./icons";
+import selectionCheck from "./selection-check.svg";
 
 import { cn } from "@promptstudio/system/lib/utils";
 
@@ -50,16 +51,16 @@ const selectTriggerVariants = cva(
 );
 
 const selectItemVariants = cva(
-  "relative flex w-full cursor-pointer select-none items-center outline-none transition-colors duration-base data-[highlighted]:bg-surface-2 data-[highlighted]:text-foreground data-[state=checked]:bg-surface-2 data-[state=checked]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+  "group relative flex w-full shrink-0 cursor-pointer select-none items-center gap-2 pr-[42px] outline-none transition-colors duration-base data-[highlighted]:bg-hover data-[highlighted]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
   {
     variants: {
       size: {
-        xxs: "min-h-ps-8 rounded px-ps-3 py-ps-1 text-label-sm",
-        xs: "min-h-ps-9 rounded px-ps-3 py-ps-1 text-label-sm",
-        sm: "min-h-ps-9 rounded-md px-ps-3 py-ps-1 text-label",
-        default: "min-h-ps-10 rounded-md px-ps-3 py-ps-2 text-body",
-        md: "min-h-ps-10 rounded-md px-ps-3 py-ps-2 text-body",
-        lg: "min-h-ps-10 rounded-md px-ps-3 py-ps-2 text-body-lg",
+        xxs: "h-[42px] rounded-card pl-3 text-meta font-normal",
+        xs: "h-[42px] rounded-card pl-3 text-meta font-normal",
+        sm: "h-[42px] rounded-card pl-3 text-meta font-normal",
+        default: "h-[42px] rounded-card pl-3 text-meta font-normal",
+        md: "h-[42px] rounded-card pl-3 text-meta font-normal",
+        lg: "h-[42px] rounded-card pl-3 text-meta font-normal",
       },
     },
     defaultVariants: {
@@ -150,7 +151,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "bg-popover text-popover-foreground shadow-elevated data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-overlay max-h-[--radix-select-content-available-height] min-w-[8rem] origin-[--radix-select-content-transform-origin] overflow-y-auto overflow-x-hidden rounded-lg border-0",
+        "bg-[var(--vidra-dialog-surface)] text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-overlay max-h-[--radix-select-content-available-height] min-w-[max(160px,var(--radix-select-trigger-width))] origin-[--radix-select-content-transform-origin] overflow-y-auto overflow-x-hidden rounded-lg border-[0.5px] border-white",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,
@@ -161,9 +162,8 @@ const SelectContent = React.forwardRef<
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
         className={cn(
-          "p-ps-1",
-          position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+          "flex flex-col gap-1 p-3 [&>[role=group]]:flex [&>[role=group]]:flex-col [&>[role=group]]:gap-1",
+          position === "popper" && "w-full",
         )}
       >
         {children}
@@ -180,10 +180,7 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn(
-      "px-ps-3 py-ps-2 text-label-sm font-semibold text-ghost",
-      className,
-    )}
+    className={cn("text-meta font-normal text-foreground", className)}
     {...props}
   />
 ));
@@ -199,7 +196,6 @@ const SelectItem = React.forwardRef<
 >(({ className, children, size: sizeProp, ...props }, ref) => {
   const context = React.useContext(SelectContext);
   const size = sizeProp ?? context.size ?? "default";
-  const iconSize = size === "xxs" || size === "xs" || size === "sm" ? 12 : 16;
 
   return (
     <SelectPrimitive.Item
@@ -207,13 +203,13 @@ const SelectItem = React.forwardRef<
       className={cn(selectItemVariants({ size }), className)}
       {...props}
     >
-      <span className="flex items-center gap-ps-2">
-        <span className="flex size-icon-md items-center justify-center">
-          <SelectPrimitive.ItemIndicator>
-            <Check size={iconSize} />
-          </SelectPrimitive.ItemIndicator>
-        </span>
-        <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemText className="min-w-0 flex-1">
+        {children}
+      </SelectPrimitive.ItemText>
+      <span className="absolute right-3 flex h-[18px] w-[18px] items-center justify-center rounded-full border border-[var(--vidra-border-focus)] group-data-[state=checked]:border-transparent group-data-[state=checked]:bg-white">
+        <SelectPrimitive.ItemIndicator className="flex items-center justify-center">
+          <img src={selectionCheck} alt="" draggable={false} />
+        </SelectPrimitive.ItemIndicator>
       </span>
     </SelectPrimitive.Item>
   );

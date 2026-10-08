@@ -1,5 +1,4 @@
 import React from "react";
-import { Chrome, Eye, EyeOff, Mail } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
 import {
@@ -10,7 +9,14 @@ import {
 } from "@promptstudio/system/components/ui/dialog";
 import { getAuthRepository } from "@repositories/index";
 import { useAuthUser } from "@hooks/useAuthUser";
-import { cn } from "@/utils/cn";
+import { GoogleGlyph } from "@/pages/auth/GoogleGlyph";
+import { AuthBrand } from "@/pages/auth/AuthModalCard";
+import {
+  AUTH_INPUT_CLASS,
+  AuthPasswordField,
+  AuthEmailAlternative,
+} from "@/pages/auth/AuthFormControls";
+import authClose from "@/assets/design-system/auth-close.svg";
 import {
   authGateController,
   type AuthGateReason,
@@ -94,12 +100,12 @@ function Spinner(): React.ReactElement {
 
 const REASON_COPY: Record<AuthGateReason, { title: string; body: string }> = {
   "http-401": {
-    title: "Sign in to continue",
-    body: "Your session expired. Sign in to pick up right where you left off — your work is saved.",
+    title: "Sign in to\ncontinue",
+    body: "Your session expired. Sign in to continue;\nyour work is saved.",
   },
   "pre-go": {
     title: "Sign in to make it",
-    body: "Sign in to generate. Your prompt stays exactly as you left it.",
+    body: "Sign in to generate. Your prompt stays\nexactly as you left it.",
   },
 };
 
@@ -181,117 +187,107 @@ export function AuthGateDialog(): React.ReactElement {
     <Dialog
       open={requestOpen}
       onOpenChange={(open) => {
-        if (!open) {
-          authGateController.cancelPending();
-        }
+        if (!open) authGateController.cancelPending();
       }}
     >
       <DialogContent
-        className={cn(
-          "border-tool-rail-border bg-tool-panel-inner w-full max-w-md border p-0 text-white",
-        )}
+        hideClose
+        className="inset-0 flex h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-y-auto rounded-none border-0 bg-canvas p-0 text-foreground shadow-none"
       >
-        <div className="border-tool-rail-border border-b px-5 py-4">
-          <DialogTitle className="text-ui font-semibold text-white">
-            {copy.title}
-          </DialogTitle>
-          <DialogDescription className="text-body-sm text-ghost mt-1">
-            {copy.body}
-          </DialogDescription>
+        <div className="absolute left-8 top-7">
+          <AuthBrand />
         </div>
-
-        <div className="flex flex-col gap-4 px-5 py-4">
-          {error ? (
-            <div
-              role="alert"
-              className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
-            >
-              {error}
-            </div>
-          ) : null}
-
-          <Button
-            type="button"
-            onClick={() => void handleGoogleSignIn()}
-            disabled={isBusy}
-            variant="secondary"
-            className="w-full"
-          >
-            {isBusy ? (
-              <Spinner />
-            ) : (
-              <Chrome className="h-4 w-4" aria-hidden="true" />
-            )}
-            Continue with Google
-          </Button>
-
-          <div className="flex items-center gap-3">
-            <div className="bg-border h-px flex-1" />
-            <span className="text-faint text-meta font-medium">or</span>
-            <div className="bg-border h-px flex-1" />
-          </div>
-
-          <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3.5">
-            <div>
-              <label htmlFor={emailId} className="text-overline text-faint">
-                Email
-              </label>
-              <div className="relative mt-1">
-                <Mail
-                  className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
-                  aria-hidden="true"
-                />
-                <Input
-                  id={emailId}
-                  className="pl-10"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  inputMode="email"
-                  placeholder="you@company.com"
-                />
+        <div className="flex min-h-full flex-col px-4 pb-10 pt-[88px]">
+          <div className="flex flex-1 items-center justify-center">
+            <div className="flex w-full max-w-[440px] flex-col gap-6">
+              <div className="flex flex-col gap-3">
+                <DialogTitle className="whitespace-pre-line text-display-lg font-medium leading-none">
+                  {copy.title}
+                </DialogTitle>
+                <DialogDescription className="whitespace-pre-line text-body text-foreground">
+                  {copy.body}
+                </DialogDescription>
               </div>
-            </div>
-
-            <div>
-              <label htmlFor={passwordId} className="text-overline text-faint">
-                Password
-              </label>
-              <div className="relative mt-1">
-                <Input
-                  id={passwordId}
-                  className="pr-10"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                />
-                <Button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1.5 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md p-0"
-                  disabled={isBusy}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+              {error ? (
+                <div
+                  role="alert"
+                  className="rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui text-danger"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                  )}
+                  {error}
+                </div>
+              ) : null}
+              <Button
+                type="button"
+                onClick={() => void handleGoogleSignIn()}
+                disabled={isBusy}
+                variant="secondary"
+                size="lg"
+                className="relative w-full font-normal"
+              >
+                <span className="absolute left-4 top-3">
+                  {isBusy ? <Spinner /> : <GoogleGlyph />}
+                </span>
+                Continue with Google
+              </Button>
+              <AuthEmailAlternative />
+              <form
+                onSubmit={handleEmailSignIn}
+                className="flex flex-col gap-6"
+              >
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <label
+                      htmlFor={emailId}
+                      className="mb-2 block text-ui font-normal"
+                    >
+                      Email
+                    </label>
+                    <Input
+                      id={emailId}
+                      className={AUTH_INPUT_CLASS}
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      autoComplete="email"
+                      inputMode="email"
+                      placeholder="you@company.com"
+                      disabled={isBusy}
+                    />
+                  </div>
+                  <AuthPasswordField
+                    id={passwordId}
+                    label="Password"
+                    value={password}
+                    onChange={setPassword}
+                    visible={showPassword}
+                    onToggle={() => setShowPassword((value) => !value)}
+                    disabled={isBusy}
+                    autoComplete="current-password"
+                    placeholder="Password"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isBusy}
+                  size="lg"
+                  className="ps-auth-primary-action w-full font-normal"
+                >
+                  {isBusy ? <Spinner /> : null}Sign in
                 </Button>
-              </div>
+              </form>
             </div>
-
-            <Button type="submit" disabled={isBusy} className="w-full">
-              {isBusy ? <Spinner /> : null}
-              Sign in
-            </Button>
-          </form>
+          </div>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-lg"
+          className="absolute right-6 top-5 rounded-md"
+          aria-label="Close sign-in"
+          onClick={() => authGateController.cancelPending()}
+        >
+          <img src={authClose} alt="" />
+        </Button>
       </DialogContent>
     </Dialog>
   );

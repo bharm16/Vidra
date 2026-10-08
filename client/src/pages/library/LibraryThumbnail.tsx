@@ -1,8 +1,8 @@
 import React from "react";
-import { Image } from "@promptstudio/system/components/ui";
 import type { HistoryThumbnailRef } from "@features/history/utils/historyMedia";
 import { useResolvedMediaUrl } from "@/hooks/useResolvedMediaUrl";
 import { rewriteGcsUrlToProxy } from "@/services/media/MediaUrlResolver";
+import imageIcon from "@/assets/design-system/library-image.svg";
 
 interface LibraryThumbnailProps {
   thumbnail: HistoryThumbnailRef;
@@ -45,8 +45,8 @@ export function LibraryThumbnail({
 
   if (showFallback) {
     return (
-      <div className="ps-thumb-muted flex h-full w-full items-center justify-center">
-        <Image className="text-tool-text-label h-5 w-5" aria-hidden="true" />
+      <div className="flex h-full w-full items-center justify-center bg-[var(--vidra-stage-placeholder)]">
+        <img src={imageIcon} alt="" draggable={false} />
       </div>
     );
   }

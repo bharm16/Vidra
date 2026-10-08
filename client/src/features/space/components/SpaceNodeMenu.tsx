@@ -1,5 +1,5 @@
 import React from "react";
-import { MoreVertical } from "lucide-react";
+import takeMenuIcon from "@/assets/design-system/take-menu.svg";
 import { Button } from "@promptstudio/system/components/ui/button";
 import {
   DropdownMenu,
@@ -31,7 +31,9 @@ export interface SpaceNodeMenuProps {
    * Open the take in the viewer — a clip PLAYS, a picture shows full-size.
    * Browsing-only (UX rule 1): the viewer never mutates the working prompt.
    */
-  onView?: (node: SpaceNode) => void;
+  onView?: ((node: SpaceNode) => void) | undefined;
+  onFullscreen?: (() => void) | undefined;
+  onCloseView?: (() => void) | undefined;
 }
 
 /**
@@ -51,6 +53,8 @@ export function SpaceNodeMenu({
   onDownload,
   onShare,
   onView,
+  onFullscreen,
+  onCloseView,
 }: SpaceNodeMenuProps): React.ReactElement {
   const showAnimate = node.kind === "picture" && Boolean(onAnimate);
   const showRefine = node.kind === "picture" && Boolean(onRefine);
@@ -66,12 +70,22 @@ export function SpaceNodeMenu({
           size="icon-xs"
           aria-label="Take actions"
           data-testid={`space-node-menu-${node.id}`}
-          className="border-tool-rail-border bg-tool-surface-card/80 rounded-md border backdrop-blur"
+          className="bg-fill rounded-full"
         >
-          <MoreVertical className="h-3.5 w-3.5" />
+          <img src={takeMenuIcon} alt="" width={12} height={12} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {onFullscreen ? (
+          <DropdownMenuItem onSelect={onFullscreen}>
+            Fullscreen
+          </DropdownMenuItem>
+        ) : null}
+        {onCloseView ? (
+          <DropdownMenuItem onSelect={onCloseView}>
+            Close preview
+          </DropdownMenuItem>
+        ) : null}
         {showView ? (
           <DropdownMenuItem
             onSelect={() => onView?.(node)}

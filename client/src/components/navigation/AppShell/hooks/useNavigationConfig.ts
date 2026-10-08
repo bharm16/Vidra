@@ -17,6 +17,11 @@ import type { NavigationConfig, ShellVariant } from "../types";
  * Determines shell variant based on current pathname.
  */
 function resolveVariant(pathname: string): ShellVariant {
+  // Shared clips own their public header, including loading and missing states.
+  if (pathname.startsWith("/share/")) {
+    return "none";
+  }
+
   if ((AUTH_ROUTES as readonly string[]).includes(pathname)) {
     return "none";
   }

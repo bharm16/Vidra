@@ -1,0 +1,449 @@
+{
+  "schema": "vidra/dormant-frontend-retirement/v1",
+  "issue": 177,
+  "owner_direction": "2026-10-08: unregister frozen and dormant frontend routes and controls; retain backend routes/services and mark them dormant.",
+  "scope": "Frontend registrations and exclusively owned dormant frontend code/tests. No server or shared files are changed.",
+  "backend_status_definition": "dormant_registered describes product maintenance status. Existing server registration and runtime gates remain unchanged; it does not claim every gated route is mounted in every environment.",
+  "retired_ui_routes": [
+    "/pricing",
+    "/billing",
+    "/settings/billing",
+    "/settings/billing/invoices",
+    "/assets",
+    "/consistent",
+    "/continuity",
+    "/continuity/:sessionId",
+    "/session/:sessionId/continuity",
+    "/session/new/continuity"
+  ],
+  "retired_registrations": [
+    {
+      "workflow": "named_asset_authoring",
+      "catalog_labels": [
+        "AssetCases",
+        "AssetGrid",
+        "DetectedAssets",
+        "AssetEditor",
+        "QuickCharacterCreate",
+        "TriggerAutocomplete"
+      ],
+      "frontend": [
+        "App routes for AssetsPage",
+        "workspace asset list/editor/detected-assets producers",
+        "SidebarDataProvider named-asset domain",
+        "editor trigger autocomplete and validation",
+        "automatic generation prompt asset resolution"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "GET /api/assets",
+        "POST /api/assets",
+        "GET /api/assets/suggestions",
+        "POST /api/assets/resolve",
+        "POST /api/assets/validate",
+        "GET /api/assets/:id",
+        "PATCH /api/assets/:id",
+        "DELETE /api/assets/:id",
+        "POST /api/assets/:id/images",
+        "DELETE /api/assets/:id/images/:imageId",
+        "PATCH /api/assets/:id/images/:imageId/primary",
+        "GET /api/assets/:id/for-generation"
+      ],
+      "backend_services": [
+        "server/src/services/asset/AssetService.ts",
+        "server/src/services/asset/AssetResolverService.ts",
+        "server/src/services/asset/TriggerValidationService.ts"
+      ],
+      "existing_gate": "assetService availability in server/src/routes/api.routes.ts"
+    },
+    {
+      "workflow": "camera_depth_preview",
+      "catalog_labels": [
+        "CameraCases",
+        "CameraMotionPicker",
+        "CameraMotionOption",
+        "CameraMotionModal",
+        "FrameAnimator",
+        "BackButton"
+      ],
+      "frontend": [
+        "CanvasWorkspace Camera control and modal",
+        "CanvasSettingsRow camera control",
+        "depth estimation request hook",
+        "FrameAnimator camera warp",
+        "implicit frozen camera/subject state merges into new optimization/generation"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "POST /api/motion/depth"
+      ],
+      "backend_services": [
+        "server/src/services/convergence/depth/DepthEstimationService.ts"
+      ],
+      "existing_gate": "Depth route retained exactly as registered in server/src/config/routes/motion.registration.ts. Convergence media proxy remains separately gated."
+    },
+    {
+      "workflow": "continuity_and_sequence_editor",
+      "catalog_labels": [
+        "SequenceCases",
+        "ContinuityIntentPicker",
+        "ContinueSceneButton",
+        "ShotVisualStrip",
+        "PipelineStatus",
+        "SceneProxyPreviewPanel"
+      ],
+      "frontend": [
+        "App continuity/consistent routes",
+        "PromptResultsLayout sequence panels",
+        "WorkspaceSessionContext shot hydration, virtual shots and continuity action callbacks",
+        "editor-shot/model binding",
+        "shot-owned version adapter",
+        "useGenerationsRuntime sequence generation and continue-sequence navigation",
+        "PromptRepository continuity-only library inclusion and fabricated empty authoring entries"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "POST /api/sessions/continuity",
+        "POST /api/sessions/:sessionId/shots",
+        "PATCH /api/sessions/:sessionId/shots/:shotId",
+        "POST /api/sessions/:sessionId/shots/:shotId/generate",
+        "GET /api/sessions/:sessionId/shots/:shotId/status",
+        "POST /api/sessions/:sessionId/shots/:shotId/generate-stream",
+        "POST /api/sessions/:sessionId/shots/:shotId/scene-proxy-preview",
+        "PUT /api/sessions/:sessionId/shots/:shotId/style-reference",
+        "PUT /api/sessions/:sessionId/settings",
+        "PUT /api/sessions/:sessionId/style-reference",
+        "POST /api/sessions/:sessionId/scene-proxy"
+      ],
+      "backend_services": [
+        "server/src/services/continuity/ContinuitySessionService.ts",
+        "server/src/services/continuity/ContinuityShotGenerator.ts",
+        "server/src/services/continuity/SceneProxyService.ts"
+      ],
+      "existing_gate": "Continuity routes remain conditional on continuityService; DI/runtime gates are unchanged."
+    },
+    {
+      "workflow": "storyboard_and_character_preprocessing",
+      "catalog_labels": [
+        "KontextFrameStrip",
+        "KeyframeOptionCard",
+        "VersionDivider"
+      ],
+      "frontend": [
+        "CanvasSettingsRow storyboard command",
+        "GenerationControlsContext and SidebarDataProvider storyboard registration",
+        "pending storyboard intent/resume",
+        "useGenerationActions storyboard action and Flux Kontext retry branch",
+        "automatic detected-character keyframe gate",
+        "face-swap preview state and dispatch overrides",
+        "unused storyboard and face-swap frontend wire helpers"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "POST /api/preview/generate/storyboard",
+        "POST /api/preview/face-swap"
+      ],
+      "backend_services": [
+        "server/src/services/image-generation/storyboard/StoryboardPreviewService.ts",
+        "server/src/services/image-generation/storyboard/StoryboardFramePlanner.ts",
+        "server/src/services/continuity/CharacterKeyframeService.ts",
+        "server/src/services/video-generation/FaceSwapService.ts",
+        "server/src/services/video-generation/KeyframeGenerationService.ts"
+      ],
+      "existing_gate": "Existing preview registration and free-intake refusals retained; this cleanup does not enable or disable a backend."
+    },
+    {
+      "workflow": "model_intelligence_and_showroom",
+      "catalog_labels": [
+        "ModelRecommendationDropdown",
+        "ModelCard"
+      ],
+      "frontend": [
+        "model recommendation hook/API",
+        "model-intelligence telemetry",
+        "showroom dropdown/sample gallery",
+        "CanvasWorkspace recommendation producer"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "POST /api/model-intelligence/recommend",
+        "POST /api/model-intelligence/track"
+      ],
+      "backend_services": [
+        "server/src/services/model-intelligence/ModelIntelligenceService.ts"
+      ],
+      "existing_gate": "Backend route mounting remains conditional on modelIntelligenceService."
+    },
+    {
+      "workflow": "coherence_feedback",
+      "catalog_labels": [
+        "Supplemental",
+        "CoherencePanel",
+        "CoherenceMarkPopover"
+      ],
+      "frontend": [
+        "coherence producer/provider",
+        "span issue marker/popover",
+        "coherence check callback after applying an inline suggestion",
+        "coherence frontend API and recommendation application helpers"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "POST /api/enhancement/prompt-coherence"
+      ],
+      "backend_services": [
+        "server/src/services/enhancement/services/PromptCoherenceService.ts"
+      ],
+      "existing_gate": "Existing enhancement route registration retained. Active optimizer intent checks and inline suggestions are separate retained behavior."
+    },
+    {
+      "workflow": "old_prompt_authoring_forms",
+      "catalog_labels": [
+        "SpanCategoryAccordion",
+        "PromptImprovementForm"
+      ],
+      "frontend": [
+        "improvement and concept hook registration",
+        "showImprover/showBrainstorm modal state and setters",
+        "improveFirst shortcut callback",
+        "old category accordion"
+      ],
+      "backend_status": "not_applicable",
+      "backend_routes": [],
+      "note": "Active optimize, span labeling and inline phrase suggestions remain registered."
+    },
+    {
+      "workflow": "billing_and_credit_presentations",
+      "catalog_labels": [
+        "CreditOnboardingBanner",
+        "BalancePill",
+        "StepCreditBadge"
+      ],
+      "frontend": [
+        "pricing/billing/invoices routes and sidebar/footer links",
+        "AppShell credit subscription provider",
+        "workspace credit display hook",
+        "generation response balance-sync UI events",
+        "billing frontend API/pages and paid-product lists"
+      ],
+      "backend_status": "dormant_registered",
+      "backend_routes": [
+        "GET /api/payment/status",
+        "GET /api/payment/credits/balance",
+        "GET /api/payment/credits/history",
+        "GET /api/payment/invoices",
+        "POST /api/payment/portal",
+        "POST /api/payment/checkout",
+        "POST /api/payment/webhook"
+      ],
+      "backend_services": [
+        "server/src/services/payment/PaymentService.ts",
+        "server/src/services/credits/UserCreditService.ts"
+      ],
+      "existing_gate": "Payment registration, webhooks, workers and existing guards stay unchanged. Active free-generation intake and hard spending limits are not retired."
+    }
+  ],
+  "retained_active_registrations": [
+    {
+      "path": "client/src/features/prompt-optimizer/context/WorkspaceSessionContext.tsx",
+      "reason": "Generic session id/prompt/media access, fetch de-duplication, stale-route protection and 429 cooldown remain active; there is no continuity API import or shot/action registration."
+    },
+    {
+      "path": "client/src/features/generations/hooks/useGenerationsRuntime.ts",
+      "reason": "Draft/render, words-version persistence, media refresh, server hydration, retry/cancel and explicit reference/clip-extension reuse remain active."
+    },
+    {
+      "path": "client/src/features/generations/hooks/useKeyframeWorkflow.ts",
+      "reason": "Explicit first-frame selection and source identity are retained. Character-keyframe approval/skip state is retired."
+    },
+    {
+      "path": "client/src/features/preview/api/previewApi.ts",
+      "reason": "Active picture generation, uploaded/pending reference admission, video dispatch, jobs and durable media URL resolution remain. Storyboard/face-swap write helpers are removed."
+    },
+    {
+      "path": "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/useSuggestionApply.ts",
+      "reason": "Inline suggestion application, highlight updates, edit history and undo semantics remain; no dormant coherence request is registered."
+    },
+    {
+      "path": "client/src/features/generation-controls/context",
+      "reason": "Saved legacy camera vocabulary and persisted domain shape remain readable for historical inputs. No retired UI mount or implicit motion-state merge revives those controls."
+    },
+    {
+      "path": "client/src/features/realtime-sketch",
+      "reason": "Standalone live editor and explicit Use this/acceptance recovery remain active. Live editor is not the retired depth/camera workflow."
+    },
+    {
+      "path": "client/src/features/studio/components/DownloadSelectedImage.tsx",
+      "reason": "Active download utility on a mixed catalog board; its presence under SharedCases does not make it dormant."
+    },
+    {
+      "path": "client/src/features/space/components/UnattachedTakeBadge.tsx",
+      "reason": "Active made-but-not-saved recovery utility; mixed board labels do not authorize removing recovery."
+    }
+  ],
+  "retired_frontend_files": [
+    "client/src/PromptImprovementForm/PromptImprovementForm.tsx",
+    "client/src/PromptImprovementForm/index.ts",
+    "client/src/PromptImprovementForm/types.ts",
+    "client/src/PromptImprovementForm/utils/__tests__/questionGeneration.test.ts",
+    "client/src/PromptImprovementForm/utils/questionGeneration.ts",
+    "client/src/components/modals/CameraMotionModal.tsx",
+    "client/src/components/modals/__tests__/CameraMotionModal.conflict.test.tsx",
+    "client/src/contexts/CreditBalanceContext.tsx",
+    "client/src/features/assets/AssetLibrary.tsx",
+    "client/src/features/assets/__tests__/AssetCard.test.tsx",
+    "client/src/features/assets/__tests__/AssetEditor.test.tsx",
+    "client/src/features/assets/__tests__/AssetGrid.test.tsx",
+    "client/src/features/assets/__tests__/AssetTypeSelector.test.tsx",
+    "client/src/features/assets/__tests__/ReferenceImageGrid.test.tsx",
+    "client/src/features/assets/__tests__/ReferenceImageUploader.test.tsx",
+    "client/src/features/assets/__tests__/TriggerAutocomplete.test.tsx",
+    "client/src/features/assets/__tests__/assetApi.test.ts",
+    "client/src/features/assets/__tests__/useAssetState.test.ts",
+    "client/src/features/assets/__tests__/useTriggerAutocomplete.test.ts",
+    "client/src/features/assets/api/assetApi.ts",
+    "client/src/features/assets/api/schemas.ts",
+    "client/src/features/assets/components/AssetCard.tsx",
+    "client/src/features/assets/components/AssetEditor.tsx",
+    "client/src/features/assets/components/AssetGrid.tsx",
+    "client/src/features/assets/components/AssetTypeSelector.tsx",
+    "client/src/features/assets/components/ReferenceImageGrid.tsx",
+    "client/src/features/assets/components/ReferenceImageUploader.tsx",
+    "client/src/features/assets/components/TriggerAutocomplete.tsx",
+    "client/src/features/assets/components/__tests__/AssetEditor.a11y.regression.test.tsx",
+    "client/src/features/assets/components/__tests__/AssetEditor.preselectedType.regression.test.tsx",
+    "client/src/features/assets/config/assetConfig.ts",
+    "client/src/features/assets/hooks/useAssetState.ts",
+    "client/src/features/assets/hooks/useTriggerAutocomplete.ts",
+    "client/src/features/billing/api/billingApi.ts",
+    "client/src/features/billing/creditPacks.ts",
+    "client/src/features/billing/hooks/useBillingStatus.ts",
+    "client/src/features/billing/hooks/useCreditHistory.ts",
+    "client/src/features/billing/subscriptionTiers.ts",
+    "client/src/features/continuity/api/continuityApi.ts",
+    "client/src/features/continuity/api/schemas.ts",
+    "client/src/features/continuity/components/ContinueSceneButton/ContinueSceneButton.tsx",
+    "client/src/features/continuity/components/ContinueSceneButton/index.ts",
+    "client/src/features/continuity/components/StrengthSlider.tsx",
+    "client/src/features/continuity/types.ts",
+    "client/src/features/convergence/api/motionApi.ts",
+    "client/src/features/convergence/components/CameraMotionPicker/CameraMotionErrorBoundary.tsx",
+    "client/src/features/convergence/components/CameraMotionPicker/CameraMotionOption.tsx",
+    "client/src/features/convergence/components/CameraMotionPicker/CameraMotionPicker.tsx",
+    "client/src/features/convergence/components/CameraMotionPicker/__tests__/CameraMotionPicker.illustrative.test.tsx",
+    "client/src/features/convergence/components/CameraMotionPicker/index.ts",
+    "client/src/features/convergence/components/index.ts",
+    "client/src/features/convergence/components/shared/BackButton.tsx",
+    "client/src/features/convergence/components/shared/FrameAnimator.tsx",
+    "client/src/features/convergence/components/shared/index.ts",
+    "client/src/features/convergence/hooks/.gitkeep",
+    "client/src/features/convergence/hooks/useCameraMotion.ts",
+    "client/src/features/convergence/utils/.gitkeep",
+    "client/src/features/convergence/utils/__tests__/cameraMotionRenderer.media-proxy.regression.test.ts",
+    "client/src/features/convergence/utils/cameraMotionRenderer.ts",
+    "client/src/features/convergence/utils/index.ts",
+    "client/src/features/generations/hooks/useAssetReferenceImages.ts",
+    "client/src/features/model-intelligence/api/index.ts",
+    "client/src/features/model-intelligence/api/modelIntelligenceApi.ts",
+    "client/src/features/model-intelligence/api/schemas.ts",
+    "client/src/features/model-intelligence/api/telemetryApi.ts",
+    "client/src/features/model-intelligence/constants.ts",
+    "client/src/features/model-intelligence/hooks/useModelRecommendation.ts",
+    "client/src/features/model-intelligence/index.ts",
+    "client/src/features/model-intelligence/types.ts",
+    "client/src/features/model-intelligence/utils/modelLabels.ts",
+    "client/src/features/prompt-optimizer/PromptCanvas/api/triggerValidation.ts",
+    "client/src/features/prompt-optimizer/PromptCanvas/components/CoherenceMarkPopover.tsx",
+    "client/src/features/prompt-optimizer/PromptCanvas/components/__tests__/CoherenceMarkPopover.test.tsx",
+    "client/src/features/prompt-optimizer/PromptCanvas/hooks/useCoherenceSpanMarkers.ts",
+    "client/src/features/prompt-optimizer/PromptCanvas/hooks/useShotGenerations.ts",
+    "client/src/features/prompt-optimizer/PromptCanvas/hooks/useTriggerValidation.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/__tests__/PromptOptimizerWorkspace.editorShotPromptBinding.test.tsx",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/__tests__/useEditorShotPromptBinding.initial-hydration.regression.test.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/__tests__/useEditorShotPromptBinding.virtual-shot.regression.test.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/useAssetManagement.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/useConceptBrainstorm.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/useEditorShotPromptBinding.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/useImprovementFlow.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/hooks/usePromptCoherence.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/utils/__tests__/buildCoherenceSpans.test.ts",
+    "client/src/features/prompt-optimizer/PromptOptimizerContainer/utils/buildCoherenceSpans.ts",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/SpanCategoryAccordion.tsx",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/components/CategorySection.tsx",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/components/SpanItem.tsx",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/components/types.ts",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/config/categoryConfig.ts",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/hooks/useSpanGrouping.ts",
+    "client/src/features/prompt-optimizer/SpanCategoryAccordion/utils/spanFormatting.ts",
+    "client/src/features/prompt-optimizer/api/__tests__/coherenceCheckApi.test.ts",
+    "client/src/features/prompt-optimizer/api/coherenceCheckApi.ts",
+    "client/src/features/prompt-optimizer/components/AssetsSidebar/api/__tests__/assetsSidebarApi.test.ts",
+    "client/src/features/prompt-optimizer/components/AssetsSidebar/api/assetsSidebarApi.ts",
+    "client/src/features/prompt-optimizer/components/AssetsSidebar/hooks/useAssetsSidebar.ts",
+    "client/src/features/prompt-optimizer/components/AssetsSidebar/index.ts",
+    "client/src/features/prompt-optimizer/components/DetectedAssets/AssetChip.tsx",
+    "client/src/features/prompt-optimizer/components/DetectedAssets/AssetPopover.tsx",
+    "client/src/features/prompt-optimizer/components/DetectedAssets/DetectedAssets.tsx",
+    "client/src/features/prompt-optimizer/components/DetectedAssets/__tests__/AssetChip.test.tsx",
+    "client/src/features/prompt-optimizer/components/DetectedAssets/hooks/useDetectedAssets.ts",
+    "client/src/features/prompt-optimizer/components/DetectedAssets/index.ts",
+    "client/src/features/prompt-optimizer/components/QuickCharacterCreate/ImageUploadGrid.tsx",
+    "client/src/features/prompt-optimizer/components/QuickCharacterCreate/QuickCharacterCreate.tsx",
+    "client/src/features/prompt-optimizer/components/QuickCharacterCreate/hooks/useQuickCharacterCreate.ts",
+    "client/src/features/prompt-optimizer/components/QuickCharacterCreate/index.ts",
+    "client/src/features/prompt-optimizer/components/coherence/CoherenceIssueCard.tsx",
+    "client/src/features/prompt-optimizer/components/coherence/useCoherenceAnnotations.ts",
+    "client/src/features/prompt-optimizer/context/CoherenceContext.tsx",
+    "client/src/features/prompt-optimizer/context/__tests__/CoherenceContext.test.tsx",
+    "client/src/features/prompt-optimizer/types/coherence.ts",
+    "client/src/features/prompt-optimizer/utils/__tests__/applySpanEdit.test.ts",
+    "client/src/features/prompt-optimizer/utils/__tests__/updateSpanListForSuggestion.test.ts",
+    "client/src/features/prompt-optimizer/utils/applyCoherenceRecommendation.ts",
+    "client/src/features/prompt-optimizer/utils/applySpanEdit.ts",
+    "client/src/features/prompt-optimizer/utils/updateSpanListForSuggestion.ts",
+    "client/src/features/sequence-editor/components/ContinuityIntentPicker.tsx",
+    "client/src/features/sequence-editor/components/PipelineStatus.tsx",
+    "client/src/features/sequence-editor/components/PreviousShotContext.tsx",
+    "client/src/features/sequence-editor/components/SceneProxyPreviewPanel.tsx",
+    "client/src/features/sequence-editor/components/ShotVisualStrip.tsx",
+    "client/src/features/sequence-editor/components/index.ts",
+    "client/src/features/workspace-shell/components/ModelRecommendationDropdown.tsx",
+    "client/src/features/workspace-shell/components/__tests__/ModelRecommendationDropdown.test.tsx",
+    "client/src/features/workspace-shell/hooks/useWorkspaceCredits.ts",
+    "client/src/hooks/useUserCreditBalance.ts",
+    "client/src/pages/AssetsPage.tsx",
+    "client/src/pages/BillingInvoicesPage.tsx",
+    "client/src/pages/BillingPage.tsx",
+    "client/src/pages/PricingPage.tsx",
+    "tests/e2e/detected-assets-update-depth.spec.ts",
+    "tests/unit/asset-chip.test.tsx",
+    "tests/unit/asset-popover.test.tsx",
+    "tests/unit/camera-motion-modal.test.tsx",
+    "tests/unit/category-section.test.tsx",
+    "tests/unit/detected-assets.test.tsx",
+    "tests/unit/prompt-improvement-form.test.tsx",
+    "tests/unit/prompt-improvement-question-generation.test.ts",
+    "tests/unit/span-category-accordion.test.tsx",
+    "tests/unit/span-formatting.test.tsx",
+    "tests/unit/span-item.test.tsx",
+    "tests/unit/use-asset-reference-images.test.tsx",
+    "tests/unit/use-assets-sidebar.test.tsx",
+    "tests/unit/use-coherence-span-markers.test.tsx",
+    "tests/unit/use-concept-brainstorm.test.tsx",
+    "tests/unit/use-detected-assets.test.tsx",
+    "tests/unit/use-improvement-flow.test.tsx",
+    "tests/unit/use-quick-character-create.test.tsx",
+    "tests/unit/use-span-grouping.test.tsx"
+  ],
+  "verification": {
+    "owned_source_lint": "Passed: /private/tmp/vidra-page21/dormant-agent-eslint-final.log. Root still owns the full-tree mandatory lint gate.",
+    "typecheck": "Dormant production and owned tests compile. Last full-tree typecheck had only concurrent SharedCanvasViewport/AuthGate test errors owned by other agents; root owns the final full-tree gate.",
+    "focused": "27 files / 100 tests passed in dormant-agent-focused-1.log. After remaining orphan coherence/API retirement and dormant-only repository mapping, 6 followup files / 34 tests passed in dormant-agent-focused-followup.log. Only the removed detected-assets presentation case was retired from its mixed workspace test; active prompt editing and undo cases remain.",
+    "render_resumption": "dormant-agent-render-resume-red.log reproduces a lost render dispatch during empty-editor navigation; captured prompt fallback then passes both new hook regressions in dormant-agent-focused-followup.log.",
+    "full_gates": "Root agent owns final typecheck, lint, architecture, unit, replay and browser verification before commit.",
+    "retired_routes": "14 App route tests passed, including /continuity and /session/new/continuity, with all old client feature variables supplied as true: /private/tmp/vidra-page21/dormant-agent-retired-routes-final.log."
+  },
+  "unregistered_related_paths": [
+    "/invoices"
+  ]
+}

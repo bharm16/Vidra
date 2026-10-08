@@ -217,7 +217,7 @@
   flex: 0 0 auto;
 }
 
-/* ---- Sizes: these three and nothing else ---- */
+/* Page 21 roles: pills 36, actions 40, forms 48, compact targets 28. */
 /* The size/type rule, so it is a decision rather than an accident:
    36px LIST ROWS carry 14px (nav entries, menu items — they sit in a
    reading rhythm), 32px CONTROLS carry 12px (toolbar buttons, chips,
@@ -229,8 +229,8 @@
 }
 
 .ps-btn--sm {
-  height: var(--control-md); /* 32 */
-  padding-inline: var(--space-2-5);
+  height: 36px;
+  padding-inline: 12px;
 }
 .ps-btn--md {
   height: var(--control-lg); /* 36 — the default */
@@ -244,8 +244,8 @@
 /* Square 32 — floating canvas panels, where the denser size reads better
    against the board and matches the surrounding canvas chrome. */
 .ps-btn--icon-sm {
-  height: var(--control-md);
-  width: var(--control-md);
+  height: 28px;
+  width: 28px;
   padding: 0;
 }
 
@@ -268,9 +268,7 @@
   color: var(--background);
 }
 .ps-btn--primary:disabled {
-  background: var(--fill);
-  color: var(--ghost-foreground);
-  opacity: 1;
+  opacity: 0.5;
 }
 
 /* Quiet: no resting fill until hovered. For rows that sit in a list
@@ -293,8 +291,8 @@
 .ps-btn--menu {
   width: 100%;
   justify-content: flex-start;
-  padding-left: var(--space-8);
-  padding-right: var(--space-3);
+  padding-left: var(--space-3);
+  padding-right: var(--space-8);
 }
 
 /* The focus ring, unlayered so preflight's `outline: none` on buttons cannot
@@ -304,4 +302,24 @@
   outline: 2px solid var(--fg);
   outline-offset: 2px;
   border-radius: inherit;
+}
+
+/* Page 21 action role; widths hug content unless the calling layout fills. */
+.ps-btn--action {
+  height: var(--vidra-height-action);
+  padding-inline: var(--space-6);
+  border-radius: var(--radius-full);
+}
+.ps-btn--soft {
+  background: var(--vidra-surface-secondary-action);
+  color: var(--foreground);
+}
+
+.ps-btn--menu-row {
+  height: var(--vidra-height-menu-row);
+  border-radius: var(--vidra-radius-card);
+  padding-inline: var(--space-3);
+  font-size: var(--text-meta);
+  font-weight: 400;
+  line-height: var(--text-meta-lh);
 }

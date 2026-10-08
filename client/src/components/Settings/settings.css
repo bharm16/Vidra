@@ -1,0 +1,8 @@
+/* Native Page 21 paints (703:302624/302637/302658/302675) differ from
+   their bound aliases: the outlines and primary fills are opaque white,
+   and the segment backgrounds are #292929. Keep this correction local. */
+.ps-settings-dialog {
+  --settings-native-outline: #fff;
+  --settings-native-segment: #292929;
+  --settings-native-primary: #fff;
+}

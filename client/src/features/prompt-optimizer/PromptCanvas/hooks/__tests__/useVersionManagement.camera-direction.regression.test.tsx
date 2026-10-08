@@ -67,10 +67,6 @@ const setupVersions = (displayedPrompt: string) => {
   const hook = renderHook(() => {
     const highlightState = useHighlightState();
     return useVersionManagement({
-      hasShotContext: false,
-      shotId: null,
-      shotPromptEntry: null,
-      updateShotVersions: vi.fn(),
       promptHistory: {
         history: [historyEntry],
         createDraft: vi.fn(() => ({ uuid: "uuid-1", id: "doc-1" })),

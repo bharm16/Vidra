@@ -2,6 +2,8 @@
 
 **Status:** accepted (2026-07-08) · concretizes [ADR-0008](0008-one-design-language-across-all-shells.md) — names `design_handoff_vidra/` as the pixel-level source of truth, gives its accent a value and a token home, and supersedes any conflicting visual/chrome wording in the site-scope doc (notably D7's "top-bar cluster, no rail")
 
+**2026-10-08 amendment:** The owner explicitly authorized [Page 21 - Vidra design system](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c?node-id=699-23) to replace the current component styling. Its Inter type, neutral surfaces and role-specific control geometry now supersede the earlier component language below. The complete [migration inventory](../design/page21-component-migration.md) identifies the source nodes, implementation and #177 retirement. Existing functional, persistence and frozen-backend contracts remain authoritative; this component migration does not adopt the unapproved draft ownership decisions on Pages 22/23.
+
 The rebuild carries two kinds of spec, and they drifted apart. **Functional** specs
 ([ADR-0010](0010-one-visible-text-one-loop-subscription-at-keep.md)/[0011](0011-rebuild-scope-decisions.md)/[0012](0012-the-space-lineage-network.md)/[0013](0013-space-lineage-is-persisted-not-derived.md)
 plus the build- and site-scope docs) fix the state machine, the space model, and route

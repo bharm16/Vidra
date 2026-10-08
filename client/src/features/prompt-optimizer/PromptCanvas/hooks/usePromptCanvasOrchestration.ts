@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useDrawerState } from "@components/CollapsibleDrawer";
 import { useToast } from "@components/Toast";
 import { useDebugLogger } from "@hooks/useDebugLogger";
 // Performance config consumed internally by useSpanLabelingPipeline
@@ -13,8 +12,6 @@ import {
   sanitizeText,
   LABELLED_HIGHLIGHT_SELECTOR,
 } from "@features/span-highlighting";
-import { useTriggerAutocomplete } from "@features/assets/hooks/useTriggerAutocomplete";
-import { useOutlineOverlay } from "./useOutlineOverlay";
 import { useEditorInput } from "./useEditorInput";
 
 import type { SelectedSpanContextValue } from "@features/prompt-optimizer/context/SelectedSpanContext";
@@ -26,18 +23,12 @@ import { usePromptCanvasState } from "./usePromptCanvasState";
 import { useResolvedGenerationParams } from "./useResolvedGenerationParams";
 import { usePromptStatus } from "./usePromptStatus";
 import { useSpanSelectionEffects } from "./useSpanSelectionEffects";
-import { useCoherenceSpanMarkers } from "./useCoherenceSpanMarkers";
-import { useCoherence } from "@features/prompt-optimizer/context/CoherenceContext";
 import { useSuggestionSelection } from "./useSuggestionSelection";
 import { useTextSelection } from "./useTextSelection";
 import { useEditorContent } from "./useEditorContent";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
-import { usePromptExport } from "./usePromptExport";
 import { useLockedSpanInteractions } from "./useLockedSpanInteractions";
-import { useTriggerValidation } from "./useTriggerValidation";
 import { useInlineSuggestionState } from "./useInlineSuggestionState";
-import { useCanvasEditorState } from "./useCanvasEditorState";
-import { useShotGenerations } from "./useShotGenerations";
 import { useVersionManagement } from "./useVersionManagement";
 import { applyGenerationReuse } from "../utils/reuseGeneration";
 import { resolveInitialGenerations } from "../utils/resolveInitialGenerations";
@@ -45,11 +36,9 @@ import type {
   Generation,
   GenerationsPanelProps,
 } from "@features/generations/types";
-import type { VersionsPanelPropsBase } from "../components/PromptCanvasView.types";
 import { DEFAULT_ASPECT_RATIO } from "@features/generation-controls/resolveGenerationParams";
 import { buildBulkDebugPayload } from "../utils/bulkDebugPayload";
 import { useGenerationControlsStoreState } from "@features/generation-controls";
-import { useWorkspaceSession } from "@features/prompt-optimizer/context/WorkspaceSessionContext";
 import { usePromptInsertionBus } from "@features/prompt-optimizer/context/PromptInsertionBusContext";
 import {
   usePromptActions,
@@ -66,8 +55,6 @@ import {
 import { serializeKeyframes } from "@features/prompt-optimizer/utils/keyframeTransforms";
 
 import type { PromptCanvasViewProps } from "../components/PromptCanvasView.types";
-import { isEditableTarget } from "@components/KeyboardShortcuts/editableTarget";
-import { isMac } from "@components/KeyboardShortcuts/shortcuts.config";
 
 /**
  * PromptCanvas orchestration: composes the canvas's hooks, effects, and
@@ -97,9 +84,6 @@ export function usePromptCanvasOrchestration(): {
   const { promptOptimizer, promptHistory } = usePromptServices();
   const { domain } = useGenerationControlsStoreState();
   const keyframes = domain.keyframes;
-  const { hasActiveContinuityShot, currentShot, updateShot } =
-    useWorkspaceSession();
-  const hasShotContext = Boolean(hasActiveContinuityShot && currentShot);
   const {
     currentPromptUuid,
     currentPromptDocId,
@@ -129,7 +113,6 @@ export function usePromptCanvasOrchestration(): {
     setInputPrompt: onInputPromptChange,
     displayedPrompt,
     previewAspectRatio,
-    qualityScore,
     isProcessing,
     optimizationResultVersion,
   } = promptOptimizer;
@@ -139,17 +122,8 @@ export function usePromptCanvasOrchestration(): {
   const [isBulkCopyLoading, setIsCopyAllDebugLoading] = useState(false);
 
   // Refs
-  const outlineOverlayRef = useRef<HTMLDivElement>(null!);
-  const coherence = useCoherence();
   const { registerInsertHandler } = usePromptInsertionBus();
   const toast = useToast();
-  const versionsDrawer = useDrawerState({
-    defaultOpen: true,
-    storageKey: "prompt-optimizer:versions-drawer",
-    position: "bottom",
-    desktopMode: "push",
-  });
-
   const {
     applyInitialHighlightSnapshot,
     resetEditStacks,
@@ -193,7 +167,6 @@ export function usePromptCanvasOrchestration(): {
 
   const { state, setState } = usePromptCanvasState();
   const {
-    showLegend,
     selectedSpanId,
     lastAppliedSpanId,
     hasInteracted,
@@ -215,81 +188,32 @@ export function usePromptCanvasOrchestration(): {
   const editorDisplayText = showResults
     ? (normalizedDisplayedPrompt ?? "")
     : normalizedInputPrompt;
-  const isOptimizing = Boolean(isProcessing);
-
-  const {
-    editorRef,
-    editorWrapperRef,
-    editorColumnRef,
-    outputLocklineRef,
-    lockButtonRef,
-    exportMenuRef,
-    generationsSheetOpen,
-    setGenerationsSheetOpen,
-    showDiff,
-    setShowDiff,
-    copied,
-    handleCopy,
-    handleCopyEvent,
-    handleShare,
-    showExportMenu,
-    setShowExportMenu,
-    modelFormatOptions,
-    modelFormatValue,
-    modelFormatLabel,
-    handleModelFormatChange,
-  } = useCanvasEditorState({
-    showResults,
-    displayedPrompt: editorDisplayText,
-    inputPrompt,
-    promptUuid,
-    isOptimizing,
-    genericOptimizedPrompt: promptOptimizer.genericOptimizedPrompt,
-    onReoptimize,
-    logAction: debug.logAction,
-  });
-  const {
-    isOpen: autocompleteOpen,
-    suggestions: autocompleteSuggestions,
-    selectedIndex: autocompleteSelectedIndex,
-    position: autocompletePosition,
-    isLoading: autocompleteLoading,
-    handleInputChange: handleAutocomplete,
-    handleKeyDown: handleAutocompleteKeyDown,
-    setSelectedIndex: setAutocompleteSelectedIndex,
-    close: closeAutocomplete,
-  } = useTriggerAutocomplete();
-
-  const validateTriggers = useTriggerValidation(500);
-
+  const editorRef = useRef<HTMLDivElement>(null!);
+  const editorWrapperRef = useRef<HTMLDivElement>(null!);
+  const lockButtonRef = useRef<HTMLButtonElement>(null!);
+  const handleCopyEvent = useCallback(
+    (event: React.ClipboardEvent): void => {
+      if (window.getSelection()?.toString().trim()) return;
+      event.clipboardData.setData("text/plain", editorDisplayText);
+      event.preventDefault();
+    },
+    [editorDisplayText],
+  );
   // Extract suggestions visibility state for contextual UI
   const isSuggestionsOpen = Boolean(
     selectedSpanId || (suggestionsData && suggestionsData.show !== false),
   );
-  const { shotId, shotPromptEntry, updateShotVersions } = useShotGenerations({
-    currentShot,
-    updateShot,
-  });
-
   const {
     currentVersions,
-    orderedVersions,
-    versionsForPanel,
-    selectedVersionId,
     activeVersion,
     promptVersionId,
     handleSelectVersion,
-    handleCreateVersion,
     createVersionIfNeeded,
     handleGenerationsChange,
     setGenerationFavorite,
     syncVersionHighlights,
     versioningPromptUuid,
   } = useVersionManagement({
-    hasShotContext,
-    shotId,
-    shotPromptEntry,
-    updateShotVersions,
     promptHistory,
     currentPromptUuid,
     currentPromptDocId,
@@ -332,21 +256,6 @@ export function usePromptCanvasOrchestration(): {
     ],
   );
 
-  const versionsPanelProps = useMemo<VersionsPanelPropsBase>(
-    () => ({
-      versions: versionsForPanel,
-      selectedVersionId,
-      onSelectVersion: handleSelectVersion,
-      onCreateVersion: handleCreateVersion,
-    }),
-    [
-      versionsForPanel,
-      selectedVersionId,
-      handleSelectVersion,
-      handleCreateVersion,
-    ],
-  );
-
   const generationsPanelProps = useMemo<GenerationsPanelProps>(
     () => ({
       prompt: showResults
@@ -383,14 +292,6 @@ export function usePromptCanvasOrchestration(): {
     ],
   );
 
-  const setShowLegend = useCallback(
-    (value: boolean) => setState({ showLegend: value }),
-    [setState],
-  );
-  const setRightPaneMode = useCallback(
-    (value: "refine" | "preview") => setState({ rightPaneMode: value }),
-    [setState],
-  );
   const setSelectedSpanId = useCallback(
     (value: string | null) => setState({ selectedSpanId: value }),
     [setState],
@@ -414,20 +315,9 @@ export function usePromptCanvasOrchestration(): {
     [setState],
   );
 
-  // Span outline overlay (state machine, dismissal, hover brightness)
-  const { outlineOverlayState, outlineOverlayActive, openOutlineOverlay } =
-    useOutlineOverlay({
-      outlineOverlayRef,
-      editorRef: editorRef as React.RefObject<HTMLElement>,
-      enableMLHighlighting,
-      showHighlights,
-      hoveredSpanId,
-      setHoveredSpanId,
-    });
-
   // --- Span Labeling Pipeline ---
   // Composes: data conversion → labeling → signature gate → parse → highlight rendering
-  const { parseResult, categorySpans, highlightFingerprint, formattedHTML } =
+  const { parseResult, highlightFingerprint, formattedHTML } =
     useSpanLabelingPipeline({
       displayedPrompt,
       promptUuid,
@@ -465,11 +355,6 @@ export function usePromptCanvasOrchestration(): {
     }
   }, [normalizedDisplayedPrompt, enableMLHighlighting, debug]);
 
-  const hasVisibleOutput =
-    typeof normalizedDisplayedPrompt === "string" &&
-    normalizedDisplayedPrompt.length > 0;
-  const isOutputLoading = Boolean(isProcessing && !hasVisibleOutput);
-
   // Ambient motion: every ~6s, momentarily fade a random token
   useEffect(() => {
     if (!showHighlights) return;
@@ -500,32 +385,24 @@ export function usePromptCanvasOrchestration(): {
     selectedSpanId,
     onFetchSuggestions,
     onSpanSelect: handleSpanSelect,
-    onIntentRefine: () => setRightPaneMode("refine"),
   });
 
-  const {
-    lockButtonPosition,
-    isHoveredLocked,
-    handleHighlightMouseEnter,
-    handleHighlightMouseLeave,
-    handleLockButtonMouseLeave,
-    handleToggleLock,
-    cancelHideLockButton,
-  } = useLockedSpanInteractions({
-    editorRef: editorRef as React.RefObject<HTMLElement>,
-    editorWrapperRef,
-    lockButtonRef,
-    enableMLHighlighting,
-    showHighlights,
-    hoveredSpanId,
-    setHoveredSpanId,
-    parseResultSpans: parseResult.spans,
-    lockedSpans,
-    addLockedSpan,
-    removeLockedSpan,
-    highlightFingerprint,
-    displayedPrompt: normalizedDisplayedPrompt,
-  });
+  const { handleHighlightMouseEnter, handleHighlightMouseLeave } =
+    useLockedSpanInteractions({
+      editorRef: editorRef as React.RefObject<HTMLElement>,
+      editorWrapperRef,
+      lockButtonRef,
+      enableMLHighlighting,
+      showHighlights,
+      hoveredSpanId,
+      setHoveredSpanId,
+      parseResultSpans: parseResult.spans,
+      lockedSpans,
+      addLockedSpan,
+      removeLockedSpan,
+      highlightFingerprint,
+      displayedPrompt: normalizedDisplayedPrompt,
+    });
 
   usePromptStatus({
     displayedPrompt: normalizedDisplayedPrompt,
@@ -551,15 +428,6 @@ export function usePromptCanvasOrchestration(): {
     setState,
   });
 
-  useCoherenceSpanMarkers({
-    editorRef: editorRef as React.RefObject<HTMLElement>,
-    enableMLHighlighting,
-    showHighlights,
-    affectedSpanIds: coherence.affectedSpanIds,
-    spanIssueMap: coherence.spanIssueMap,
-    highlightFingerprint,
-  });
-
   useSuggestionSelection({
     selectedSpanId,
     hasInteracted,
@@ -575,47 +443,13 @@ export function usePromptCanvasOrchestration(): {
     toast,
   });
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (isEditableTarget(event.target)) return;
-
-      const isMod = isMac ? event.metaKey : event.ctrlKey;
-
-      if (!isMod || !["1", "2", "3"].includes(event.key)) return;
-
-      const index = Number.parseInt(event.key, 10) - 1;
-      const version = orderedVersions[index];
-      if (version?.versionId) {
-        event.preventDefault();
-        handleSelectVersion(version.versionId);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSelectVersion, orderedVersions]);
-
-  const handleExport = usePromptExport({
-    inputPrompt,
-    displayedPrompt: normalizedDisplayedPrompt,
-    qualityScore,
-    selectedMode,
-    setShowExportMenu,
-    toast,
-    debug,
-  });
-
-  const { handleInput, handleEditorKeyDown, insertTrigger } = useEditorInput({
+  const { handleInput } = useEditorInput({
     editorRef: editorRef as React.RefObject<HTMLElement>,
     editorDisplayText,
     showResults,
     onInputPromptChange,
     onDisplayedPromptChange,
     onResetResultsForEditing,
-    handleAutocomplete,
-    handleAutocompleteKeyDown,
-    closeAutocomplete,
-    validateTriggers,
     registerInsertHandler,
     logAction: debug.logAction,
   });
@@ -741,38 +575,9 @@ export function usePromptCanvasOrchestration(): {
   };
 
   const viewProps: PromptCanvasViewProps = {
-    editorSection: {
-      editorWrapperRef,
-      outputLocklineRef,
-      lockButtonRef,
-      enableMLHighlighting,
-      hoveredSpanId,
-      lockButtonPosition,
-      isHoveredLocked,
-      onToggleLock: handleToggleLock,
-      onCancelHideLockButton: cancelHideLockButton,
-      onLockButtonMouseLeave: handleLockButtonMouseLeave,
-      isOutputLoading,
-      openOutlineOverlay,
-      copied,
-      onCopy: handleCopy,
-      modelFormatValue,
-      modelFormatLabel,
-      modelFormatOptions,
-      modelFormatDisabled: isOptimizing || modelFormatOptions.length === 0,
-      onModelFormatChange: handleModelFormatChange,
-      onUndo,
-      onRedo,
-      canUndo,
-      canRedo,
-      exportMenuRef,
-      showExportMenu,
-      onToggleExportMenu: setShowExportMenu,
-      onExport: handleExport,
-      onShare: handleShare,
-    },
     editing: {
       editorRef,
+      isEmpty: !editorDisplayText.trim(),
       onTextSelection: handleTextSelection,
       onHighlightClick: handleHighlightClick,
       onHighlightMouseDown: handleHighlightMouseDown,
@@ -780,39 +585,10 @@ export function usePromptCanvasOrchestration(): {
       onHighlightMouseLeave: handleHighlightMouseLeave,
       onCopyEvent: handleCopyEvent,
       onInput: handleInput,
-      onEditorKeyDown: handleEditorKeyDown,
-      onEditorBlur: closeAutocomplete,
-      autocompleteOpen,
-      autocompleteSuggestions,
-      autocompleteSelectedIndex,
-      autocompletePosition,
-      autocompleteLoading,
-      onAutocompleteSelect: insertTrigger,
-      onAutocompleteClose: closeAutocomplete,
-      onAutocompleteIndexChange: setAutocompleteSelectedIndex,
     },
-    selectedMode,
-    outlineOverlayActive,
-    outlineOverlayState,
-    outlineOverlayRef,
-    categorySpans,
-    onCategorySpanHoverChange: setHoveredSpanId,
-    showLegend,
-    onCloseLegend: () => setShowLegend(false),
-    promptContext,
-    isSuggestionsOpen,
-    editorColumnRef,
-    versionsDrawer,
-    versionsPanelProps,
     generationsPanelProps,
     onReuseGeneration: handleReuseGeneration,
     onToggleGenerationFavorite: setGenerationFavorite,
-    generationsSheetOpen,
-    onGenerationsSheetOpenChange: setGenerationsSheetOpen,
-    showDiff,
-    onShowDiffChange: setShowDiff,
-    inputPrompt,
-    normalizedDisplayedPrompt,
   };
 
   return { selectedSpanValue, viewProps };

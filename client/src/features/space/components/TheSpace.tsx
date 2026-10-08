@@ -1,305 +1,150 @@
 import React from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
-
 import { cn } from "@/utils/cn";
 import { UnattachedTakeBadge } from "./UnattachedTakeBadge";
 import { CANVAS_FOCUS_ATTR } from "@/components/canvas/CanvasViewport";
-import { computeLineageLayout } from "../lineage/computeLineageLayout";
 import { rewriteGcsUrlToProxy } from "@/services/media/MediaUrlResolver";
-import { deriveEdgeKind } from "../lineage/deriveEdgeKind";
-import { edgePath } from "../lineage/edgePath";
-import type { EdgeKind, LineageNodeKind, SpaceNode } from "../lineage/types";
+import type { SpaceNode } from "../lineage/types";
 import "./space.css";
 
-const COL_W = 300;
-const ROW_H = 210;
-const SIZE: Record<LineageNodeKind, { w: number; h: number }> = {
-  words: { w: 216, h: 120 },
-  picture: { w: 248, h: 155 },
-  clip: { w: 248, h: 155 },
-};
-
-/** The demoted words chip (ADR-0015) — a quiet origin marker, not a card. */
-const CHIP_SIZE = { w: 104, h: 34 };
-
-/** Edge stroke by derived kind — the drawn relationship reads the verb. */
-const EDGE_STROKE: Record<EdgeKind, string> = {
-  spine: "rgba(255,255,255,0.22)",
-  roll: "#d3a44e", // a re-roll sibling (motion gold)
-  reword: "#8b8baa", // a reworded words-version
-  move: "#6b8a6b", // picture → clip
-  refine: "#7d8fb3", // picture → picture, inside the picture column (ADR-0022)
-};
-
-/** The mono caption under each take. */
-const CAPTION: Record<LineageNodeKind, string> = {
-  words: "prompt",
-  picture: "image",
-  clip: "clip",
-};
+const ASSET_WIDTH = 352;
+const ASSET_GAP = 32;
+const ROW_HEIGHT = 328;
 
 export interface TheSpaceProps {
   nodes: SpaceNode[];
-  /** The current take — rendered enlarged, camera centered (ADR-0012). */
+  /** Actual dispatch groups, oldest first. New generations add rows below. */
+  rows?: ReadonlyArray<ReadonlyArray<string>>;
   liveNodeId?: string | null;
-  /** Selecting a node restores its paired words (the take-restore contract). */
   onSelectNode?: (id: string) => void;
-  /**
-   * ADR-0015: the words node rendering full-size (the composer's open box is
-   * bound to it). Every other words node demotes to the origin chip; null
-   * demotes them all.
-   */
-  focusedNodeId?: string | null;
-  /**
-   * Per-node context menu (RULINGS §5), rendered at the node's corner as a
-   * sibling of the select button — never nested — so its actions don't collide
-   * with selection. Return null to give a node no menu.
-   */
   renderNodeMenu?: (node: SpaceNode) => React.ReactNode;
+  selectedNodeId?: string | null;
+  renderSelectedResult?: (node: SpaceNode) => React.ReactNode;
 }
 
-/**
- * The space (ADR-0012 / ADR-0013): the page's content as an auto-laid-out
- * lineage network. Three fixed generations as columns, siblings as rows, edges
- * typed by the verb that made them. Nothing is dragged or placed — layout is
- * derived every render; the creator only ever operates the guided loop.
- */
+/** Pannable asset space. Conversation and ancestry data are owned elsewhere. */
 export function TheSpace({
   nodes,
+  rows,
   liveNodeId,
   onSelectNode,
   renderNodeMenu,
-  focusedNodeId = null,
+  selectedNodeId,
+  renderSelectedResult,
 }: TheSpaceProps): React.ReactElement {
-  const positioned = computeLineageLayout(nodes);
-  const byId = new Map(positioned.map((node) => [node.id, node]));
-
-  const columns = positioned.reduce((max, n) => Math.max(max, n.column + 1), 1);
-  const rows = positioned.reduce((max, n) => Math.max(max, n.row + 1), 1);
-  const width = columns * COL_W;
-  const height = rows * ROW_H;
-
-  type Placeable = {
-    id: string;
-    column: number;
-    row: number;
-    kind: LineageNodeKind;
-  };
-
-  /** Words nodes demote to the chip footprint unless focused (ADR-0015). */
-  const sizeOf = (n: {
-    id: string;
-    kind: LineageNodeKind;
-  }): { w: number; h: number } =>
-    n.kind === "words" && n.id !== focusedNodeId ? CHIP_SIZE : SIZE[n.kind];
-
-  const nodeLeft = (n: Placeable): number =>
-    n.column * COL_W + (COL_W - sizeOf(n).w) / 2;
-  const nodeTop = (n: Placeable): number =>
-    n.row * ROW_H + (ROW_H - sizeOf(n).h) / 2;
-
-  const liveLeftAnchor = (n: Placeable): { x: number; y: number } => ({
-    x: nodeLeft(n),
-    y: nodeTop(n) + sizeOf(n).h / 2,
-  });
-  const rightAnchor = (n: Placeable): { x: number; y: number } => ({
-    x: nodeLeft(n) + sizeOf(n).w,
-    y: nodeTop(n) + sizeOf(n).h / 2,
-  });
-
-  const liveNode = positioned.find((n) => n.id === liveNodeId) ?? null;
-
+  const assets = nodes.filter(
+    (node) => node.kind !== "words" && !node.archived,
+  );
+  const byId = new Map(assets.map((node) => [node.id, node]));
+  const shown = new Set<string>();
+  const groups: SpaceNode[][] = [];
+  for (const ids of rows ?? assets.map((node) => [node.id])) {
+    const group = ids.flatMap((id) => {
+      const node = byId.get(id);
+      if (!node || shown.has(id)) return [];
+      shown.add(id);
+      return [node];
+    });
+    if (group.length) groups.push(group);
+  }
+  for (const node of assets) if (!shown.has(node.id)) groups.push([node]);
+  const width =
+    Math.max(1, ...groups.map((group) => group.length)) *
+      (ASSET_WIDTH + ASSET_GAP) -
+    ASSET_GAP;
   return (
     <div
-      className="relative mx-auto my-10"
-      style={{ width, height }}
+      className="relative mx-auto my-8"
+      style={{ width, height: Math.max(1, groups.length) * ROW_HEIGHT }}
       data-testid="the-space"
     >
-      {/* Ambient spotlight behind the live take. */}
-      {liveNode ? (
+      {groups.map((group, row) => (
         <div
-          aria-hidden
-          className="pointer-events-none absolute rounded-full blur-[12px]"
-          style={{
-            left: nodeLeft(liveNode) + sizeOf(liveNode).w / 2 - 270,
-            top: nodeTop(liveNode) + sizeOf(liveNode).h / 2 - 215,
-            width: 540,
-            height: 430,
-            opacity: 0.7,
-            background:
-              "radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--accent) 32%, transparent), color-mix(in srgb, var(--accent) 7%, transparent) 46%, transparent 72%)",
-          }}
-        />
-      ) : null}
-
-      <svg
-        className="pointer-events-none absolute inset-0"
-        width={width}
-        height={height}
-        fill="none"
-        aria-hidden="true"
-      >
-        {positioned.map((node) => {
-          if (!node.ancestorId) return null;
-          const ancestor = byId.get(node.ancestorId);
-          if (!ancestor) return null;
-          const kind = deriveEdgeKind(node, positioned);
-          const isLiveEdge = node.id === liveNodeId;
-          return (
-            <path
-              key={`edge-${node.id}`}
-              d={edgePath(rightAnchor(ancestor), liveLeftAnchor(node))}
-              stroke={isLiveEdge ? "var(--accent)" : EDGE_STROKE[kind]}
-              strokeWidth={isLiveEdge ? 2.2 : 1.8}
-              strokeDasharray={kind === "reword" ? "6 4" : undefined}
-            />
-          );
-        })}
-      </svg>
-
-      {positioned.map((node) => {
-        const isLive = node.id === liveNodeId;
-        const menu = renderNodeMenu?.(node);
-        const demoted = node.kind === "words" && node.id !== focusedNodeId;
-        const focusedWords = node.kind === "words" && node.id === focusedNodeId;
-        const { w, h } = sizeOf(node);
-        return (
-          <React.Fragment key={node.id}>
-            <Button
-              variant="ghost"
-              type="button"
-              data-testid={`space-node-${node.id}`}
-              data-live={isLive ? "true" : "false"}
-              {...{ [CANVAS_FOCUS_ATTR]: node.id }}
-              onClick={() => onSelectNode?.(node.id)}
-              className="group absolute flex !h-auto flex-col items-stretch !p-0 text-left hover:bg-transparent"
-              style={{ left: nodeLeft(node), top: nodeTop(node), width: w }}
-            >
-              {demoted ? (
-                /* The origin chip (ADR-0015): quiet at rest, unmistakably a
-                   door on hover — it is the only way back to editing. */
-                <span
-                  className={cn(
-                    "text-meta inline-flex items-center justify-center gap-[7px] rounded-md border px-3 font-mono",
-                    "text-tool-text-muted border-white/[0.08] bg-white/[0.03]",
-                    "transition-all group-hover:scale-[1.04]",
-                    "group-hover:border-[color:color-mix(in_srgb,var(--accent)_52%,transparent)]",
-                    "group-hover:text-foreground group-hover:bg-hover",
-                  )}
-                  style={{ height: h }}
-                >
-                  {/* Text-lines glyph — verbatim from the composer handoff. */}
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
+          key={group[0]?.id}
+          role="group"
+          aria-label={"Generation " + (row + 1) + " results"}
+        >
+          {group.map((node, column) => {
+            const live = node.id === liveNodeId;
+            const placement = {
+              left: column * (ASSET_WIDTH + ASSET_GAP),
+              top: row * ROW_HEIGHT,
+              width: ASSET_WIDTH,
+            };
+            if (node.id === selectedNodeId) {
+              const selected = renderSelectedResult?.(node);
+              if (selected)
+                return (
+                  <div
+                    key={node.id}
+                    className="absolute"
+                    style={placement}
+                    {...{ [CANVAS_FOCUS_ATTR]: node.id }}
                   >
-                    <path d="M4 6h16" />
-                    <path d="M4 12h16" />
-                    <path d="M4 18h10" />
-                  </svg>
-                  Prompt
-                  <span className="text-tool-text-muted text-meta hidden group-hover:inline">
-                    Edit words
-                  </span>
-                </span>
-              ) : (
-                <>
+                    {selected}
+                  </div>
+                );
+            }
+            return (
+              <div key={node.id} className="absolute" style={placement}>
+                <Button
+                  variant="ghost"
+                  type="button"
+                  data-testid={"space-node-" + node.id}
+                  data-live={live ? "true" : "false"}
+                  {...{ [CANVAS_FOCUS_ATTR]: node.id }}
+                  onClick={() => onSelectNode?.(node.id)}
+                  className="group flex !h-auto w-full flex-col items-stretch !p-0 text-left hover:bg-transparent"
+                  aria-label={
+                    node.kind === "clip" ? "View clip" : "View picture"
+                  }
+                >
                   <div
                     className={cn(
-                      "relative overflow-hidden rounded-md border transition-transform",
-                      node.status === "forming"
-                        ? "ps-node-forming border-[color:var(--accent)]"
-                        : isLive || focusedWords
-                          ? "ps-node-live border-[color:var(--accent)]"
-                          : "border-tool-rail-border bg-tool-surface-card hover:border-tool-text-label",
-                      (isLive || focusedWords) &&
-                        node.status !== "forming" &&
-                        "scale-[1.02]",
+                      "rounded-card bg-canvas relative aspect-[8/5] overflow-hidden border-[0.5px]",
+                      "border-foreground",
+                      node.status === "forming" && "ps-node-forming",
                     )}
-                    style={{ height: h }}
                   >
-                    <SpaceNodeBody node={node} />
+                    {node.status === "forming" ? (
+                      <div
+                        role="status"
+                        className="text-ui text-muted flex h-full items-center justify-center"
+                      >
+                        Generating…
+                      </div>
+                    ) : node.status === "failed" ? (
+                      <div
+                        role="status"
+                        className="text-ui text-muted flex h-full items-center justify-center"
+                      >
+                        Generation failed
+                      </div>
+                    ) : node.mediaUrl ? (
+                      <img
+                        src={
+                          rewriteGcsUrlToProxy(node.mediaUrl) ?? node.mediaUrl
+                        }
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-contain"
+                      />
+                    ) : null}
                     {node.unattached ? (
                       <UnattachedTakeBadge takeId={node.id} />
                     ) : null}
-                    {isLive ? (
-                      <span className="text-meta absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-[color:var(--accent)] px-2 py-1 font-medium text-white">
-                        <span className="ps-live-badge-dot h-1.5 w-1.5 rounded-full bg-white" />
-                        LIVE
-                      </span>
-                    ) : null}
                   </div>
-                  <span
-                    className={cn(
-                      "ps-node-caption mt-2 text-center",
-                      isLive
-                        ? "text-[color:color-mix(in_srgb,var(--accent)_55%,#fff)]"
-                        : "text-tool-text-label",
-                    )}
-                  >
-                    {CAPTION[node.kind]}
+                  <span className="text-ui text-muted mt-2 text-left">
+                    {node.kind === "clip" ? "Clip" : "Image"}
                   </span>
-                </>
-              )}
-            </Button>
-            {menu && !demoted ? (
-              <div
-                className="absolute z-20"
-                style={{
-                  left: nodeLeft(node) + w - 30,
-                  top: nodeTop(node) + 6,
-                }}
-              >
-                {menu}
+                </Button>
+                <div className="absolute right-1.5 top-1.5 z-20">
+                  {renderNodeMenu?.(node)}
+                </div>
               </div>
-            ) : null}
-          </React.Fragment>
-        );
-      })}
+            );
+          })}
+        </div>
+      ))}
     </div>
-  );
-}
-
-function SpaceNodeBody({ node }: { node: SpaceNode }): React.ReactElement {
-  if (node.status === "forming") {
-    return (
-      <div className="flex h-full w-full items-center justify-center gap-1.5">
-        <span className="ps-node-dot h-[7px] w-[7px] rounded-full bg-[color:color-mix(in_srgb,var(--accent)_75%,#fff)]" />
-        <span className="ps-node-dot h-[7px] w-[7px] rounded-full bg-[color:color-mix(in_srgb,var(--accent)_75%,#fff)] [animation-delay:0.16s]" />
-        <span className="ps-node-dot h-[7px] w-[7px] rounded-full bg-[color:color-mix(in_srgb,var(--accent)_75%,#fff)] [animation-delay:0.32s]" />
-      </div>
-    );
-  }
-  if (node.kind === "words") {
-    return (
-      <div className="flex h-full w-full items-center px-4 py-3">
-        <span className="text-foreground text-ui line-clamp-4 leading-snug">
-          {node.label ?? "—"}
-        </span>
-      </div>
-    );
-  }
-  return (
-    <>
-      {node.mediaUrl ? (
-        // Signed GCS URLs expire after an hour; the media proxy is the only
-        // path that can rescue an expired one, so it is the only form the
-        // space ever hands to an <img>.
-        <img
-          src={rewriteGcsUrlToProxy(node.mediaUrl) ?? node.mediaUrl}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      ) : (
-        <div className="bg-tool-surface-deep absolute inset-0" />
-      )}
-    </>
   );
 }

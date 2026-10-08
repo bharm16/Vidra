@@ -46,10 +46,6 @@ const setup = (params: {
 
   const hook = renderHook(() =>
     useVersionManagement({
-      hasShotContext: false,
-      shotId: null,
-      shotPromptEntry: null,
-      updateShotVersions: vi.fn(),
       promptHistory: {
         history: [
           {

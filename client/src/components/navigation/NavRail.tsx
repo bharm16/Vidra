@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  CircleHelp,
-  Library as LibraryIcon,
-  Paintbrush,
-  PanelLeft,
-  Plus,
-  Sparkles,
-} from "lucide-react";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { VidraMark } from "@/components/brand";
 import { cn } from "@/utils/cn";
 import { useAuthUser } from "@hooks/useAuthUser";
+import { useCompactViewport } from "@/hooks/useCompactViewport";
+import brandIcon from "@/assets/design-system/nav-brand.svg";
+import collapseIcon from "@/assets/design-system/nav-collapse.svg";
+import plusIcon from "@/assets/design-system/nav-plus.svg";
+import libraryIcon from "@/assets/design-system/nav-library.svg";
+import liveIcon from "@/assets/design-system/nav-live.svg";
+import studioIcon from "@/assets/design-system/nav-studio.svg";
+import helpIcon from "@/assets/design-system/nav-help.svg";
 
 type RailActive =
   | "new"
@@ -22,18 +21,15 @@ type RailActive =
   | "none";
 
 interface NavRailProps {
-  /** Which destination the current route represents, for the active highlight. */
   active?: RailActive;
 }
 
 interface RailItemProps {
   to: string;
   label: string;
-  icon: React.ReactNode;
+  icon: string;
   active?: boolean;
   collapsed: boolean;
-  /** Accent-tint the icon (the primary "New session" action). */
-  accent?: boolean;
 }
 
 function RailItem({
@@ -42,175 +38,162 @@ function RailItem({
   icon,
   active = false,
   collapsed,
-  accent = false,
 }: RailItemProps): React.ReactElement {
   return (
-    <Link
-      to={to}
-      title={collapsed ? label : undefined}
-      aria-current={active ? "page" : undefined}
+    <Button
+      asChild
+      variant="ghost"
+      size="sm"
       className={cn(
-        // The shared control base owns height, type, gap, fill and states —
-        // including the selected treatment, which keys off aria-current.
-        "ps-btn ps-btn--md ps-btn--rect ps-btn--quiet",
-        // Expanded, the row is full-width and left-aligned; collapsed, the
-        // base's centring is what we want.
-        !collapsed && "ps-btn--row",
+        "h-9 w-full justify-start gap-2 rounded-md px-2 font-normal",
+        active && "bg-float",
       )}
     >
-      <span className={cn("flex flex-none items-center justify-center")}>
-        {icon}
-      </span>
-      {collapsed ? null : <span className="whitespace-nowrap">{label}</span>}
-    </Link>
+      <Link
+        to={to}
+        title={collapsed ? label : undefined}
+        aria-label={collapsed ? label : undefined}
+        aria-current={active ? "page" : undefined}
+      >
+        <img src={icon} alt="" draggable={false} className="shrink-0" />
+        {collapsed ? null : <span className="whitespace-nowrap">{label}</span>}
+      </Link>
+    </Button>
   );
 }
 
-/**
- * The persistent navigation rail (design_handoff_vidra / Rail.dc.html) — the
- * workspace's chrome once the space exists (the empty state keeps a minimal top
- * bar instead). Collapses 256⇄64px; logo doubles as "new session".
- */
-/**
- * Below this width the expanded rail costs more than it gives: at 393px it took
- * 256px — 65% of the viewport — and left every surface behind it a 137px column.
- * 767px is Tailwind's `md` boundary, so the rail starts collapsed exactly where
- * the layouts stop having room for it.
- */
-const RAIL_COLLAPSE_BELOW = "(max-width: 767px)";
-
-/**
- * Whether the rail should START collapsed. Read once, for the initial state
- * only: after that the toggle is the user's, and a resize listener that forced
- * the rail shut would fight anyone who deliberately opened it (UX rule 2 —
- * tools persist).
- */
-function shouldStartCollapsed(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia(RAIL_COLLAPSE_BELOW).matches;
-}
-
+/** Page 21 navigation rail: 56px header, 36px destinations and 12px gutters. */
 export function NavRail({ active = "none" }: NavRailProps): React.ReactElement {
-  const [collapsed, setCollapsed] = useState(shouldStartCollapsed);
+  // Each layout keeps its own preference so resizing cannot open the rail on a
+  // phone or discard a deliberate desktop collapse.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const compactViewport = useCompactViewport();
+  const collapsed = compactViewport ? !mobileExpanded : desktopCollapsed;
   const user = useAuthUser();
   const accountName =
     user?.displayName ?? user?.email?.split("@")[0] ?? "Guest";
 
   return (
     <aside
-      // 16px gutters, not 8. At 8 the 240px-wide pills had almost no air
-      // either side of them and the filled CTA read as bleeding into the
-      // rail's edges; items reflow to 224 inside the same 256px rail.
-      className="bg-canvas flex h-full flex-none flex-col overflow-hidden px-4 pb-4 transition-[width] duration-[260ms] ease-out"
+      aria-label="Primary navigation"
+      className="flex h-full flex-none flex-col overflow-hidden border-r-[length:var(--vidra-border-hairline)] border-white bg-black transition-[width] duration-[260ms] ease-out"
       style={{ width: collapsed ? 64 : 256 }}
     >
-      {/* Header — logo (→ new session) + collapse toggle. */}
       <div
         className={cn(
-          // A 44px band flush with the top, so the rail's header baseline is the
-          // topbar's: the 8px of rail padding used to push it down and "Vidra"
-          // sat 9px lower than "Studio".
-          "mb-2 flex h-11 items-center gap-2",
-          collapsed ? "flex-col" : "justify-between",
+          "flex shrink-0 gap-2 p-3",
+          collapsed ? "h-[88px] flex-col items-center" : "h-14 items-center",
         )}
       >
         <Link
           to="/"
-          title="New session"
-          className="hover:bg-hover flex h-9 items-center gap-2 rounded-md p-2 transition-colors"
-        >
-          <VidraMark className="h-6 w-6 flex-none rounded-sm" />
-          {collapsed ? null : (
-            <span className="text-foreground text-ui whitespace-nowrap font-medium">
-              Vidra
-            </span>
+          title="Vidra home"
+          aria-label="Vidra home"
+          className={cn(
+            "flex h-7 items-center gap-2 font-sans text-ui font-normal",
+            collapsed ? "w-10 justify-center" : "min-w-0 flex-1",
           )}
+        >
+          <img src={brandIcon} alt="" draggable={false} className="shrink-0" />
+          {collapsed ? null : <span>Vidra</span>}
         </Link>
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="icon-xs"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          onClick={() => setCollapsed((c) => !c)}
-          className="ps-btn ps-btn--icon ps-btn--rect ps-btn--quiet"
+          onClick={() =>
+            compactViewport
+              ? setMobileExpanded((value) => !value)
+              : setDesktopCollapsed((value) => !value)
+          }
+          className={cn("shrink-0 rounded-md", collapsed && "w-10")}
         >
-          <PanelLeft strokeWidth={1.75} />
+          <img src={collapseIcon} alt="" draggable={false} />
         </Button>
       </div>
-
-      {/* The verb, separated from the destinations. Styled as a nav row it was
-          indistinguishable from Library and Studio, so the rail read as four
-          equal-weight places with nothing to do — the reference tools all put
-          a filled primary at the top of the rail. */}
-      <Link
-        to="/"
-        title={collapsed ? "New session" : undefined}
-        className={cn(
-          "ps-btn ps-btn--md ps-btn--rect ps-btn--primary mb-3",
-          !collapsed && "ps-btn--row justify-center",
-        )}
-      >
-        <Plus strokeWidth={1.75} />
-        {collapsed ? null : (
-          <span className="whitespace-nowrap">New session</span>
-        )}
-      </Link>
-
-      {/* Destinations. */}
-      <div className="flex flex-col gap-1">
-        <RailItem
-          to="/history"
-          label="Library"
-          collapsed={collapsed}
-          active={active === "library"}
-          icon={<LibraryIcon strokeWidth={1.75} />}
-        />
-        <RailItem
-          to="/live-editor"
-          label="Live editor"
-          collapsed={collapsed}
-          active={active === "live-editor"}
-          icon={<Paintbrush strokeWidth={1.75} />}
-        />
-        <RailItem
-          to="/studio"
-          label="Studio"
-          collapsed={collapsed}
-          active={active === "studio"}
-          icon={<Sparkles strokeWidth={1.75} />}
-        />
-      </div>
-
-      <div className="flex-1" />
-
-      {/* Docs + account. */}
-      <RailItem
-        to="/docs"
-        label="Docs & help"
-        collapsed={collapsed}
-        icon={<CircleHelp strokeWidth={1.75} />}
-      />
-      <Link
-        to={user ? "/account" : "/signin"}
-        title="Account"
-        className={cn(
-          "ps-btn ps-btn--md ps-btn--rect ps-btn--quiet ps-btn--row mt-1.5",
-          active === "account" && "bg-active",
-        )}
-      >
-        <span className="border-border bg-chrome text-fg text-meta flex h-6 w-6 flex-none items-center justify-center rounded-full border font-medium uppercase tracking-normal">
-          {accountName.charAt(0)}
-        </span>
-        {collapsed ? null : (
-          // One quiet line. This was the largest and one of only two 400-weight
-          // labels in the rail, for the least important action; signed out it
-          // additionally said "Guest" over "Sign in" — the same thing twice.
-          <span className="text-tool-text-muted text-meta min-w-0 truncate font-medium tracking-normal">
-            {user ? accountName : "Sign in"}
-          </span>
-        )}
-      </Link>
+      <nav className="flex min-h-0 flex-1 flex-col gap-4 p-3">
+        <Button
+          asChild
+          variant="secondary"
+          size="sm"
+          className={cn(
+            "h-9 shrink-0 gap-2 px-3 font-normal",
+            collapsed ? "w-9 p-0" : "w-full",
+          )}
+        >
+          <Link
+            to="/"
+            aria-label={collapsed ? "New session" : undefined}
+            title={collapsed ? "New session" : undefined}
+          >
+            <img src={plusIcon} alt="" draggable={false} className="shrink-0" />
+            {collapsed ? null : <span>New session</span>}
+          </Link>
+        </Button>
+        <div className="flex shrink-0 flex-col gap-1">
+          <RailItem
+            to="/history"
+            label="Library"
+            collapsed={collapsed}
+            active={active === "library"}
+            icon={libraryIcon}
+          />
+          <RailItem
+            to="/live-editor"
+            label="Live editor"
+            collapsed={collapsed}
+            active={active === "live-editor"}
+            icon={liveIcon}
+          />
+          <RailItem
+            to="/studio"
+            label="Studio"
+            collapsed={collapsed}
+            active={active === "studio"}
+            icon={studioIcon}
+          />
+        </div>
+        <div className="min-h-0 flex-1" />
+        <div className="flex shrink-0 flex-col gap-2">
+          <RailItem
+            to="/docs"
+            label="Docs & help"
+            collapsed={collapsed}
+            icon={helpIcon}
+          />
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-9 w-full gap-3 rounded-md px-3 font-normal",
+              collapsed ? "justify-center p-0" : "justify-start",
+              active === "account" && "bg-float",
+            )}
+          >
+            <Link
+              to={user ? "/account" : "/signin"}
+              title={user ? "Account" : "Sign in"}
+              aria-label={
+                collapsed ? (user ? "Account" : "Sign in") : undefined
+              }
+              aria-current={active === "account" ? "page" : undefined}
+            >
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-fill text-meta font-normal uppercase">
+                {accountName.charAt(0)}
+              </span>
+              {collapsed ? null : (
+                <span className="min-w-0 truncate">
+                  {user ? accountName : "Sign in"}
+                </span>
+              )}
+            </Link>
+          </Button>
+        </div>
+      </nav>
     </aside>
   );
 }

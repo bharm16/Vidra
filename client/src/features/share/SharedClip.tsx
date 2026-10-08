@@ -1,24 +1,13 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { AmbientLight, Grain, Vignette } from "@components/atmosphere";
-import { VidraMark } from "@components/brand";
 import { VideoPlayer } from "@components/MediaViewer/components/VideoPlayer";
 import { useSharedClip } from "./hooks/useSharedClip";
+import { cn } from "@/utils/cn";
+import brandIcon from "@/assets/design-system/shared-brand.svg";
+import arrowIcon from "@/assets/design-system/shared-arrow.svg";
 
-/**
- * Public clip page (ADR-0010 site-scope D8; visual rebuild to
- * design_handoff_vidra / ADR-0014).
- *
- * A logged-out visitor sees a shared clip as the cinematic hero + its paired
- * description + a "start your own" CTA back to the workspace — the growth loop
- * that replaces the prompt-era share. The page is a dark, atmospheric stage:
- * ambient light + grain sit behind the content (negative z, inside the isolated
- * root); a vignette frames over it.
- *
- * Data/loading/notFound/error behavior is unchanged from useSharedClip — this
- * is a presentation rebuild only.
- */
+/** Public shared clip with the Page 21 player, caption and creation link. */
 
 /* Vidra lockup — the shared brand mark beside the wordtype, linking home
    (mirrors the app's WorkspaceTopBar lockup). */
@@ -29,16 +18,15 @@ function VidraLockup(): React.ReactElement {
       aria-label="Vidra home"
       className="inline-flex items-center gap-[11px]"
     >
-      <VidraMark className="h-7 w-7 rounded-lg" />
-      <span className="text-foreground text-subhead font-semibold tracking-[-0.01em]">
+      <img src={brandIcon} alt="" draggable={false} />
+      <span className="text-foreground text-body-lg font-normal leading-7">
         Vidra
       </span>
     </Link>
   );
 }
 
-/* The white pill CTA — the growth loop's call to action, back to the workspace.
-   Shared by the clip and not-found states so the two stay identical. */
+/* The same supporting creation action appears in loaded and missing states. */
 function StartYourOwnCta({
   className,
 }: {
@@ -47,59 +35,44 @@ function StartYourOwnCta({
   return (
     <Button
       asChild
-      size="lg"
-      className={`text-app h-auto gap-2 rounded-md bg-white px-6 py-3.5 text-ui font-semibold shadow-[0_12px_32px_-10px_rgba(255,255,255,0.34)] transition-transform hover:bg-white hover:shadow-[0_16px_40px_-10px_rgba(255,255,255,0.46)] ${className ?? ""}`}
+      variant="secondary"
+      size="sm"
+      className={cn(
+        "h-9 w-[182.59px] gap-2 bg-fill px-3 font-normal",
+        className,
+      )}
     >
       <Link to="/">
         Start your own clip
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <path d="M5 12h14" />
-          <path d="M13 6l6 6-6 6" />
-        </svg>
+        <img src={arrowIcon} alt="" draggable={false} />
       </Link>
     </Button>
   );
 }
 
-/* The atmospheric shell every state renders inside: the isolated dark stage with
-   ambient light + grain behind, the public chrome bar on top, and the vignette
-   framing over it. Content is centered in the stage. */
+/* The standalone public clip chrome remains available in every read state. */
 function ClipShell({
   children,
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <div className="bg-app text-foreground relative isolate flex h-full min-h-full flex-col overflow-hidden font-sans">
-      <AmbientLight />
-      <Grain />
-
+    <div className="text-foreground flex min-h-screen flex-col bg-[var(--vidra-public-surface)] font-sans">
       {/* Public chrome */}
-      <header className="relative flex h-[72px] shrink-0 items-center justify-between border-b border-white/[0.05] px-10">
+      <header className="flex h-[72px] shrink-0 items-center justify-between border-b-[0.5px] border-white px-4 sm:px-10">
         <VidraLockup />
         <Button
           asChild
-          variant="outline"
-          className="text-tool-text-secondary hover:text-foreground h-auto rounded-md border-white/[0.16] bg-white/[0.04] px-[18px] py-[9px] text-ui font-medium hover:border-white/[0.16] hover:bg-hover"
+          variant="secondary"
+          size="sm"
+          className="h-9 w-[70.88px] bg-fill px-3 font-normal text-muted"
         >
           <Link to="/signin">Sign in</Link>
         </Button>
       </header>
 
       {/* Stage */}
-      <main className="relative flex flex-1 flex-col items-center justify-center px-6 pb-16">
-        {children}
-      </main>
-
-      <Vignette intensity="default" />
+      <main className="flex flex-col items-center px-6 pb-16">{children}</main>
     </div>
   );
 }
@@ -124,11 +97,9 @@ export default function SharedClip(): React.ReactElement {
   if (error || notFound || !clip) {
     return (
       <ClipShell>
-        <div className="ps-rise max-w-md text-center">
-          <h1 className="text-heading font-semibold tracking-[-0.01em]">
-            Clip not found
-          </h1>
-          <p className="text-tool-text-dim mt-3 text-ui leading-relaxed">
+        <div className="max-w-md text-center">
+          <h1 className="text-heading font-medium">Clip not found</h1>
+          <p className="mt-3 text-ui font-normal text-muted">
             This clip doesn&rsquo;t exist or is no longer shared.
           </p>
           <StartYourOwnCta className="mt-7" />
@@ -139,15 +110,7 @@ export default function SharedClip(): React.ReactElement {
 
   return (
     <ClipShell>
-      {/* Player — the cinematic hero: a 16:9 frame with an accent-tinted ring
-          glow and a deep drop shadow, rising in on entrance. */}
-      <div
-        className="ps-rise relative aspect-video w-full max-w-[784px] overflow-hidden rounded-xl border border-white/[0.14] bg-black"
-        style={{
-          boxShadow:
-            "0 44px 96px -34px rgba(0,0,0,0.82), 0 0 0 6px color-mix(in srgb, var(--accent) 6%, transparent)",
-        }}
-      >
+      <div className="relative aspect-video w-full max-w-[784px] overflow-hidden rounded-xl bg-black after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:ring-[0.5px] after:ring-inset after:ring-white after:content-['']">
         <VideoPlayer
           src={clip.videoUrl}
           className="h-full w-full rounded-none"
@@ -158,14 +121,11 @@ export default function SharedClip(): React.ReactElement {
         />
       </div>
 
-      {/* Description — the paired prompt, set as a centered italic caption. The
+      {/* Description — the paired prompt, set as a centered caption. The
           curly quotes are decorative (aria-hidden) and kept out of the text
           node so the caption reads cleanly to assistive tech. */}
       {clip.description ? (
-        <p
-          className="ps-rise text-tool-text-dim mt-6 max-w-[600px] whitespace-pre-wrap text-center text-body-lg italic leading-[1.55]"
-          style={{ animationDelay: "0.1s" }}
-        >
+        <p className="mt-6 max-w-[600px] whitespace-pre-wrap text-center text-body-lg font-normal leading-7 text-muted">
           <span aria-hidden>&ldquo;</span>
           <span>{clip.description}</span>
           <span aria-hidden>&rdquo;</span>
@@ -173,12 +133,9 @@ export default function SharedClip(): React.ReactElement {
       ) : null}
 
       {/* CTA — the growth loop back to the workspace. */}
-      <div
-        className="ps-rise mt-7 flex flex-col items-center gap-3"
-        style={{ animationDelay: "0.2s" }}
-      >
+      <div className="mt-7 flex flex-col items-center gap-3">
         <StartYourOwnCta />
-        <span className="text-tool-text-muted font-mono text-xs">
+        <span className="text-meta font-normal text-muted">
           Free to try &middot; no account needed to watch
         </span>
       </div>

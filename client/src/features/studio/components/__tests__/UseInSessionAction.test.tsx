@@ -109,9 +109,7 @@ describe("UseInSessionAction", () => {
         attachment: failedAttachment,
       },
     } satisfies UseInSessionOutcome);
-    const onRetryAttachment = vi
-      .fn()
-      .mockResolvedValue({ ok: true as const });
+    const onRetryAttachment = vi.fn().mockResolvedValue({ ok: true as const });
     renderAction(onUse, "img-1", onRetryAttachment);
 
     await userEvent.click(
@@ -129,10 +127,7 @@ describe("UseInSessionAction", () => {
 
     // The retry is the same-take contract: the attachment the server handed
     // back — record and identity included — is what travels.
-    expect(onRetryAttachment).toHaveBeenCalledWith(
-      "img-1",
-      failedAttachment,
-    );
+    expect(onRetryAttachment).toHaveBeenCalledWith("img-1", failedAttachment);
 
     // Attached truthfully at last.
     await waitFor(() =>
@@ -156,12 +151,10 @@ describe("UseInSessionAction", () => {
         attachment: failedAttachment,
       },
     } satisfies UseInSessionOutcome);
-    const onRetryAttachment = vi
-      .fn()
-      .mockResolvedValue({
-        ok: false as const,
-        message: "the session is gone",
-      });
+    const onRetryAttachment = vi.fn().mockResolvedValue({
+      ok: false as const,
+      message: "the session is gone",
+    });
     renderAction(onUse, "img-1", onRetryAttachment);
 
     await userEvent.click(
@@ -197,7 +190,9 @@ describe("UseInSessionAction", () => {
       screen.getByRole("button", { name: "Use this in the session" }),
     );
 
-    expect(await screen.findByText("Saving to the session…")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Saving to the session…"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Added to the session.")).toBeNull();
   });
 
@@ -223,11 +218,14 @@ describe("UseInSessionAction", () => {
       state: "returned",
       result: {
         ...returned.result,
-        arming: { state: "failed", generationId: "take-2", reason: "keyframe write failed" },
+        arming: {
+          state: "failed",
+          generationId: "take-2",
+          reason: "keyframe write failed",
+        },
       },
     } satisfies UseInSessionOutcome);
-    const onRetryArming =
-      vi.fn().mockResolvedValue({ ok: true as const });
+    const onRetryArming = vi.fn().mockResolvedValue({ ok: true as const });
     renderAction(onUse, "img-1", undefined, onRetryArming);
 
     await userEvent.click(
@@ -237,7 +235,9 @@ describe("UseInSessionAction", () => {
     // The take IS saved — this band is never a save failure — but the frame
     // is not armed, and the retry addresses it by identity.
     expect(
-      await screen.findByText(/Saved, but not set as the session’s first frame/),
+      await screen.findByText(
+        /Saved, but not set as the session’s first frame/,
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByText("Added to the session.")).toBeNull();
 

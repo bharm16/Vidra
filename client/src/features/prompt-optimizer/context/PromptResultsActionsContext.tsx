@@ -57,6 +57,7 @@ interface PromptResultsActionsOnly {
   onIdeaBoxExpand?: (() => Promise<void> | void) | undefined;
   /** Explicitly associate a pending reference with saved words. */
   onAdmitPendingReference?: (() => Promise<void>) | undefined;
+  onClearPendingReference?: (() => void) | undefined;
   /**
    * Fill the composer with starter text (first-run example chips). Fill-only:
    * never submits — editing stays explicit.
@@ -168,6 +169,7 @@ export function PromptResultsActionsProvider({
   onIdeaBoxExpand,
   onComposerFill,
   onAdmitPendingReference,
+  onClearPendingReference,
 }: PromptResultsActionsProviderProps): React.ReactElement {
   // Pause auto-save while a generation is in-flight to prevent prompt edits
   // from overwriting the session identity tied to the active render.
@@ -215,6 +217,7 @@ export function PromptResultsActionsProvider({
       onIdeaBoxExpand,
       onComposerFill,
       onAdmitPendingReference,
+      onClearPendingReference,
     }),
     [
       user,
@@ -232,6 +235,7 @@ export function PromptResultsActionsProvider({
       onIdeaBoxExpand,
       onComposerFill,
       onAdmitPendingReference,
+      onClearPendingReference,
     ],
   );
 

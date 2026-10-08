@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize, Minus, Plus } from "lucide-react";
+import zoomPlusIcon from "@/assets/design-system/zoom-plus.svg";
+import zoomFitIcon from "@/assets/design-system/zoom-fit.svg";
+import zoomMinusIcon from "@/assets/design-system/zoom-minus.svg";
 import { Button } from "@promptstudio/system/components/ui/button";
 import {
   cameraToCenter,
@@ -37,6 +39,8 @@ export function CanvasViewport({
   children,
   liveNodeId,
   onBackgroundClick,
+  interactionMode = "select",
+  focusTop,
 }: {
   children: React.ReactNode;
   /**
@@ -50,6 +54,10 @@ export function CanvasViewport({
    * the composer.
    */
   onBackgroundClick?: () => void;
+  /** Studio Pan mode suppresses image selection while moving the camera. */
+  interactionMode?: "select" | "pan";
+  /** Optional screen-space top inset for a focused editor; default centers it. */
+  focusTop?: number;
 }): React.ReactElement {
   const [camera, setCamera] = useState<CanvasCamera>({ x: 0, y: 0, scale: 1 });
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -106,7 +114,11 @@ export function CanvasViewport({
   };
 
   const onClickCapture = (event: React.MouseEvent<HTMLDivElement>): void => {
-    if (travelledRef.current <= CLICK_DRAG_THRESHOLD) return;
+    const target = event.target as HTMLElement;
+    const panSelection =
+      interactionMode === "pan" &&
+      Boolean(target.closest("[" + CANVAS_FOCUS_ATTR + "]"));
+    if (!panSelection && travelledRef.current <= CLICK_DRAG_THRESHOLD) return;
     travelledRef.current = 0;
     event.preventDefault();
     event.stopPropagation();
@@ -164,6 +176,7 @@ export function CanvasViewport({
    * the two diverge, and auto-centering stands down for good.
    */
   const autoCameraRef = useRef<CanvasCamera | null>(null);
+  const focusedNodeRef = useRef<string | null>(null);
 
   // Rects are read post-transform, so the delta is pure screen-space. The
   // target is set as an absolute value: re-runs against the same layout
@@ -184,19 +197,40 @@ export function CanvasViewport({
     }
     const focus = unionRect(rects);
     if (!focus) return;
-    const next = cameraToCenter(
+    const viewport = canvas.getBoundingClientRect();
+    const centered = cameraToCenter(
       committedCameraRef.current,
-      canvas.getBoundingClientRect(),
+      viewport,
       focus,
     );
+    const next =
+      focusTop === undefined
+        ? centered
+        : {
+            ...centered,
+            y:
+              committedCameraRef.current.y +
+              viewport.top +
+              focusTop -
+              focus.top,
+          };
     autoCameraRef.current = next;
     setCamera(next);
-  }, [liveNodeId]);
+  }, [liveNodeId, focusTop]);
 
   // Camera: recenter on the live node when it changes. Ephemeral by design.
   useEffect(() => {
     if (!liveNodeId) return;
-    centerOnLiveNode();
+    const changedNode = focusedNodeRef.current !== liveNodeId;
+    focusedNodeRef.current = liveNodeId;
+    const auto = autoCameraRef.current;
+    const live = committedCameraRef.current;
+    if (
+      changedNode ||
+      auto === null ||
+      (auto.x === live.x && auto.y === live.y && auto.scale === live.scale)
+    )
+      centerOnLiveNode();
   }, [liveNodeId, centerOnLiveNode]);
 
   // A stage that resizes after mount (collapsing the rail, resizing the
@@ -266,43 +300,43 @@ export function CanvasViewport({
       {/* A floating panel is the same material as the chrome it belongs to,
           just smaller: one surface step above the canvas, 10px radius, 4px
           padding, and children on the one control size. */}
-      <div className="bg-surface-2 absolute bottom-3 right-3 z-20 flex items-center gap-0.5 rounded-md p-1">
+      <div className="vidra-canvas-controls absolute bottom-3 right-3 z-20 flex h-10 w-[154px] items-center rounded-md border-[0.5px] p-1">
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
+          size="icon-xs"
+          className="bg-fill"
           aria-label="Zoom out"
           onClick={() => zoomStep(-1)}
         >
-          <Minus strokeWidth={1.75} />
+          <img src={zoomMinusIcon} alt="" width={16} height={16} />
         </Button>
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
+          size="icon-xs"
+          className="bg-fill"
           aria-label="Fit to view"
           title="Fit to view"
           onClick={centerOnLiveNode}
         >
-          <Maximize strokeWidth={1.75} />
+          <img src={zoomFitIcon} alt="" width={16} height={16} />
         </Button>
         <span
           data-testid="space-zoom-level"
-          className="text-tool-text-subdued text-meta min-w-[44px] cursor-default text-center font-medium tabular-nums"
+          className="text-foreground text-meta h-4 w-11 flex-none cursor-default text-center font-normal tabular-nums"
         >
           {Math.round(camera.scale * 100)}%
         </span>
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="ps-btn ps-btn--icon-sm ps-btn--rect ps-btn--quiet"
+          size="icon-xs"
+          className="bg-fill"
           aria-label="Zoom in"
           onClick={() => zoomStep(1)}
         >
-          <Plus strokeWidth={1.75} />
+          <img src={zoomPlusIcon} alt="" width={16} height={16} />
         </Button>
       </div>
     </div>

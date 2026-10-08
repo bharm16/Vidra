@@ -12,7 +12,6 @@ import {
 } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  CreditCard,
   LogIn,
   LogOut,
   User as UserIcon,
@@ -124,7 +123,12 @@ export function UserMenu({
 
     return (
       <div className={cn("flex items-center", className)}>
-        <Button asChild className="rounded-full">
+        <Button
+          asChild
+          variant="secondary"
+          size="sm"
+          className="h-9 rounded-full bg-fill px-3 font-normal"
+        >
           <Link to={`/signin?redirect=${returnTo}`}>Sign in</Link>
         </Button>
       </div>
@@ -176,16 +180,6 @@ export function UserMenu({
                 <UserIcon className="h-3.5 w-3.5" /> Account
               </Link>
             </Button>
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start"
-            >
-              <Link to="/settings/billing" onClick={() => setOpen(false)}>
-                <CreditCard className="h-3.5 w-3.5" /> Billing
-              </Link>
-            </Button>
             <div className="bg-border my-1 h-px" />
             <Button
               variant="ghost"
@@ -206,7 +200,12 @@ export function UserMenu({
   // (ADR-0008, design-overhaul decision 6).
   return (
     <div className={cn("flex items-center", className)}>
-      <Button asChild className="rounded-full">
+      <Button
+        asChild
+        variant="secondary"
+        size="sm"
+        className="h-9 rounded-full bg-fill px-3 font-normal"
+      >
         <Link to="/">Open workspace</Link>
       </Button>
     </div>

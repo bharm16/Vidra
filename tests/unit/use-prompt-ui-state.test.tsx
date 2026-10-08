@@ -11,8 +11,6 @@ describe("usePromptUiState", () => {
       expect(result.current.showResults).toBe(false);
       expect(result.current.showSettings).toBe(false);
       expect(result.current.showShortcuts).toBe(false);
-      expect(result.current.showImprover).toBe(false);
-      expect(result.current.showBrainstorm).toBe(false);
     });
 
     it("defaults output status and AI index to safe values", () => {

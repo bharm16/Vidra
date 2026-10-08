@@ -24,7 +24,7 @@ describe("useNavigationConfig", () => {
   describe("edge cases", () => {
     it("returns sidebar variant for workspace exact routes", () => {
       const { result } = renderHook(() => useNavigationConfig(), {
-        wrapper: wrapWithRouter("/assets"),
+        wrapper: wrapWithRouter("/"),
       });
 
       expect(result.current.variant).toBe("sidebar");
@@ -40,11 +40,30 @@ describe("useNavigationConfig", () => {
   });
 
   describe("core behavior", () => {
+    it("lets shared clips own their standalone public header", () => {
+      const { result } = renderHook(() => useNavigationConfig(), {
+        wrapper: wrapWithRouter("/share/clip-id"),
+      });
+      expect(result.current.variant).toBe("none");
+      expect(result.current.currentPath).toBe("/share/clip-id");
+    });
     it("defaults to topnav for non-workspace routes", () => {
       const { result } = renderHook(() => useNavigationConfig(), {
-        wrapper: wrapWithRouter("/pricing"),
+        wrapper: wrapWithRouter("/support"),
       });
 
+      expect(result.current.variant).toBe("topnav");
+    });
+    it.each([
+      "/assets",
+      "/continuity",
+      "/consistent-video",
+      "/billing",
+      "/pricing",
+    ])("does not register the retired %s route as a workspace", (path) => {
+      const { result } = renderHook(() => useNavigationConfig(), {
+        wrapper: wrapWithRouter(path),
+      });
       expect(result.current.variant).toBe("topnav");
     });
   });

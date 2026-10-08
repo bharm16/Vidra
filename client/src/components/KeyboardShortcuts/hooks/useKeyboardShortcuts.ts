@@ -7,12 +7,8 @@ export interface KeyboardShortcutsCallbacks {
   openSettings?: () => void;
   createNew?: () => void;
   optimize?: () => void;
-  improveFirst?: () => void;
   canCopy?: () => boolean;
   copy?: () => void;
-  export?: () => void;
-  toggleSidebar?: () => void;
-  switchMode?: (index: number) => void;
   applySuggestion?: (index: number) => void;
   closeModal?: () => void;
 }
@@ -81,25 +77,6 @@ export function useKeyboardShortcuts(
           e.preventDefault();
           callbacks.copy?.();
         }
-      }
-
-      // Cmd/Ctrl + E - Export
-      if (isMod && e.key === "e") {
-        e.preventDefault();
-        callbacks.export?.();
-      }
-
-      // Cmd/Ctrl + B - Toggle sidebar
-      if (isMod && e.key === "b") {
-        e.preventDefault();
-        callbacks.toggleSidebar?.();
-      }
-
-      // Cmd/Ctrl + 1-5 - Switch modes
-      if (isMod && ["1", "2", "3", "4", "5"].includes(e.key)) {
-        e.preventDefault();
-        const modeIndex = parseInt(e.key) - 1;
-        callbacks.switchMode?.(modeIndex);
       }
 
       // Alt + 1-9 - Apply suggestions

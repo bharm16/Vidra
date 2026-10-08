@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="44" height="28" viewBox="0 0 44 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Vidra / Switch">
+<path d="M2 14C2 7.37258 7.37258 2 14 2H30C36.6274 2 42 7.37258 42 14V14C42 20.6274 36.6274 26 30 26H14C7.37258 26 2 20.6274 2 14V14Z" fill="white" fill-opacity="0.05"/>
+<path d="M30 1C37.1797 1 43 6.8203 43 14C43 21.1797 37.1797 27 30 27H14C6.8203 27 1 21.1797 1 14C1 6.8203 6.8203 1 14 1H30Z" stroke="white" stroke-opacity="0.6" stroke-width="2"/>
+<circle id="Checked switch thumb" cx="14" cy="14" r="10" fill="white"/>
+</g>
+</svg>

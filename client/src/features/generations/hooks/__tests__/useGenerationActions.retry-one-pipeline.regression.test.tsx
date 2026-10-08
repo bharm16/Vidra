@@ -26,11 +26,6 @@ vi.mock("@/services", () => ({
   },
 }));
 
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  publishCreditBalanceSync: vi.fn(),
-  requestCreditBalanceRefresh: vi.fn(),
-}));
-
 vi.mock("../../api", () => ({
   compileWanPrompt: (...args: unknown[]) => compileWanPromptMock(...args),
   generateVideoPreview: (...args: unknown[]) =>
@@ -116,25 +111,5 @@ describe("regression: retry re-runs the one pipeline for every tier", () => {
     );
     const [prompt] = generateVideoPreviewMock.mock.calls[0] as [string];
     expect(prompt).toBe("compiled prompt");
-  });
-
-  it("re-enters the storyboard branch for a flux-kontext draft", async () => {
-    const take = makeTake({
-      tier: "draft",
-      model: "flux-kontext",
-      mediaType: "image-sequence",
-    });
-    const { result } = renderHook(() =>
-      useGenerationActions(vi.fn(), { generations: [take] }),
-    );
-
-    act(() => {
-      result.current.retryGeneration("take-1");
-    });
-
-    await waitFor(() =>
-      expect(generateStoryboardPreviewMock).toHaveBeenCalled(),
-    );
-    expect(generateVideoPreviewMock).not.toHaveBeenCalled();
   });
 });

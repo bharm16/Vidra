@@ -108,8 +108,8 @@ vi.mock("@/components/ToolSidebar/context", () => ({
   useSidebarGenerationDomain: () => null,
 }));
 
-vi.mock("../hooks/useModelSelectionRecommendation", () => ({
-  useModelSelectionRecommendation: () => ({
+vi.mock("../hooks/useVideoModelSelection", () => ({
+  useVideoModelSelection: () => ({
     recommendationMode: "t2v",
     modelRecommendation: null,
     recommendedModelId: undefined,
@@ -126,7 +126,7 @@ vi.mock("../components/WorkspaceTopBar", () => ({
 vi.mock("@/components/navigation/NavRail", () => ({ NavRail: () => null }));
 
 vi.mock("../components/CanvasSettingsRow", () => ({
-  CanvasSettingsRow: () => <div data-testid="canvas-settings-row" />,
+  CanvasSettingsRow: ({ renderComposer }: { renderComposer: (slots: import("../components/VideoComposer").VideoComposerSlots) => React.ReactElement }) => renderComposer({ media: null, settings: null, generate: null }),
 }));
 
 vi.mock("@/features/prompt-optimizer/components/GenerationPopover", () => ({
@@ -164,6 +164,19 @@ const buildProps = (
 });
 
 describe("regression: restored sessions engage the FrameStage", () => {
+  it("keeps the wide editor and its exact draft node while expansion starts without a generated result", () => {
+    dataState.hasExpandedPrompt = false;
+    const props = buildProps(EXPANDED_PROMPT);
+    const { rerender } = render(withSelectedSpan(<CanvasWorkspace {...props} />));
+    const editor = screen.getByRole("textbox", { name: "Shot description" });
+    editor.textContent = "Retain these edited words";
+    dataState.hasExpandedPrompt = true;
+    rerender(withSelectedSpan(<CanvasWorkspace {...props} />));
+    expect(screen.getByRole("region", { name: "Video composer" })).toHaveClass("vidra-video-composer--new");
+    expect(screen.getByRole("textbox", { name: "Shot description" })).toBe(editor);
+    expect(editor).toHaveTextContent("Retain these edited words");
+  });
+
   it("a session with an expanded prompt and no frame shows the stage's no-frame state, not the hero", () => {
     dataState.hasExpandedPrompt = true;
 

@@ -1,6 +1,9 @@
 import { createRef } from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.unmock("@promptstudio/system/components/ui/button");
+vi.unmock("@promptstudio/system/components/ui/textarea");
 import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import { PromptEditorSurface } from "../PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "../PromptEditorSurface";
@@ -19,16 +22,6 @@ function makeProps(
     onHighlightMouseLeave: noop,
     onCopyEvent: noop,
     onInput: noop,
-    onEditorKeyDown: noop,
-    onEditorBlur: noop,
-    autocompleteOpen: false,
-    autocompleteSuggestions: [],
-    autocompleteSelectedIndex: -1,
-    autocompletePosition: { top: 0, left: 0 },
-    autocompleteLoading: false,
-    onAutocompleteSelect: noop,
-    onAutocompleteClose: noop,
-    onAutocompleteIndexChange: noop,
     ...overrides,
   };
 }
@@ -41,7 +34,7 @@ describe("PromptEditorSurface", () => {
     const editor = container.querySelector("[data-placeholder]");
     expect(editor).not.toBeNull();
     expect(editor?.getAttribute("data-placeholder") ?? "").toMatch(
-      /describe your shot/i,
+      /describe the video you want to create/i,
     );
   });
 

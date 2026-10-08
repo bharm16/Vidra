@@ -7,9 +7,6 @@ import {
 describe("usePromptCanvasState reducer", () => {
   it("exposes expected initial state", () => {
     expect(initialPromptCanvasState).toMatchObject({
-      showExportMenu: false,
-      showLegend: false,
-      rightPaneMode: "refine",
       showHighlights: true,
       selectedSpanId: null,
       promptState: "generated",
@@ -20,7 +17,7 @@ describe("usePromptCanvasState reducer", () => {
     const state = initialPromptCanvasState;
     const next = promptCanvasReducer(state, {
       type: "MERGE_STATE",
-      payload: { showLegend: false, promptState: "generated" },
+      payload: { showHighlights: true, promptState: "generated" },
     });
 
     expect(next).toBe(state);
@@ -30,26 +27,14 @@ describe("usePromptCanvasState reducer", () => {
     const state = initialPromptCanvasState;
     const next = promptCanvasReducer(state, {
       type: "MERGE_STATE",
-      payload: { showLegend: true, selectedSpanId: "span-1" },
+      payload: { showHighlights: false, selectedSpanId: "span-1" },
     });
 
     expect(next).toEqual({
       ...state,
-      showLegend: true,
+      showHighlights: false,
       selectedSpanId: "span-1",
     });
-  });
-
-  it("increments visual and video request ids", () => {
-    const afterVisual = promptCanvasReducer(initialPromptCanvasState, {
-      type: "INCREMENT_VISUAL_REQUEST_ID",
-    });
-    const afterVideo = promptCanvasReducer(afterVisual, {
-      type: "INCREMENT_VIDEO_REQUEST_ID",
-    });
-
-    expect(afterVisual.visualGenerateRequestId).toBe(1);
-    expect(afterVideo.videoGenerateRequestId).toBe(1);
   });
 
   it("returns unchanged state for unknown actions", () => {

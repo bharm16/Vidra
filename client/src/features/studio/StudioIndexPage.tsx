@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import projectCreateIcon from "./assets/project-create.svg";
 import { CaretDown } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
 import {
@@ -10,7 +10,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@promptstudio/system/components/ui/dropdown-menu";
-import { Grain } from "@/components/atmosphere";
 import { NavRail } from "@components/navigation/NavRail";
 
 import { StudioProjectCard } from "./components/StudioProjectCard";
@@ -69,8 +68,6 @@ export function StudioIndexPage(): React.ReactElement {
     <div className="flex h-screen overflow-hidden">
       <NavRail active="studio" />
       <div className="text-foreground bg-canvas relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <Grain />
-
         {/* The same 44px chrome band the project route carries, so opening a
             project does not shift the whole content area down by 44px. The
             page name sits at the control size here, as it does there. */}
@@ -138,10 +135,12 @@ export function StudioIndexPage(): React.ReactElement {
                 aria-label="Create new project"
                 className="st-project-card flex flex-col"
               >
-                <div className="st-card-thumb rounded-card flex aspect-video items-center justify-center overflow-hidden">
-                  <Plus size={40} strokeWidth={1.75} className="text-fg-dim" />
+                <div className="st-card-thumb st-create-thumb rounded-card flex items-center justify-center overflow-hidden">
+                  <img src={projectCreateIcon} alt="" />
                 </div>
-                <div className="st-card-title truncate">Create new project</div>
+                <div className="st-card-title st-create-title truncate">
+                  Create new project
+                </div>
               </Link>
 
               {sorted.map((project) => (

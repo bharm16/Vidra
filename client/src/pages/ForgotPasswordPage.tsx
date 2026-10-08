@@ -1,11 +1,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Mail } from "@promptstudio/system/components/ui";
 import { getAuthRepository } from "@repositories/index";
 import { useToast } from "@components/Toast";
 import { Button } from "@promptstudio/system/components/ui/button";
 import { Input } from "@promptstudio/system/components/ui/input";
-import { AuthShell } from "./auth/AuthShell";
+import { AuthModalCard } from "./auth/AuthModalCard";
+import { AUTH_INPUT_CLASS } from "./auth/AuthFormControls";
 import { Spinner } from "./auth/Spinner";
 import { safeRedirect } from "./auth/authParams";
 import { authErrorCopy } from "./auth/authErrorCopy";
@@ -22,6 +22,7 @@ export function ForgotPasswordPage(): React.ReactElement {
   const location = useLocation();
   const redirect = safeRedirect(location.search);
 
+  const emailId = React.useId();
   const [email, setEmail] = React.useState(() =>
     getInitialEmail(location.search),
   );
@@ -68,88 +69,73 @@ export function ForgotPasswordPage(): React.ReactElement {
     : "/signin";
 
   return (
-    <AuthShell
-      title="Reset your password"
-      footer={
-        <>
-          Remembered it?{" "}
-          <Link to={signInLink} className="text-foreground hover:underline">
-            Back to sign in
-          </Link>
-          .
-        </>
+    <AuthModalCard
+      heading="Reset your password"
+      subhead={
+        <span className="text-muted">
+          {
+            "Enter your account email. If an account exists,\nwe’ll send a reset link."
+          }
+        </span>
       }
     >
-      <div className="flex flex-col gap-4">
-        <p className="text-muted text-ui leading-relaxed">
-          Enter the email for your account. If it exists, we'll send a reset
-          link.
-        </p>
-
+      <div className="flex flex-col gap-6">
         {error ? (
           <div
             role="alert"
-            className="text-danger rounded-lg border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui"
+            className="rounded-md border border-[color:var(--badge-danger-border)] bg-[color:var(--badge-danger-bg)] px-3.5 py-2.5 text-ui text-danger"
           >
             {error}
           </div>
         ) : null}
-
         {sentTo ? (
-          <div className="border-border bg-surface-2 rounded-lg border px-3.5 py-3">
-            <p className="text-foreground text-ui font-semibold">
-              Check your inbox
-            </p>
-            <p className="text-muted mt-1 text-ui leading-snug">
+          <div role="status" className="flex flex-col gap-2 text-body">
+            <p>Check your inbox</p>
+            <p className="text-muted">
               We sent a reset link to{" "}
-              <span className="text-foreground font-medium">{sentTo}</span>. If
-              you don't see it, check spam.
+              <span className="text-foreground">{sentTo}</span>. If you don’t
+              see it, check spam.
             </p>
           </div>
         ) : null}
-
-        <form onSubmit={handleSend} className="flex flex-col gap-3.5">
+        <form onSubmit={handleSend} className="flex flex-col gap-6">
           <div>
-            <label className="text-overline text-faint">Email</label>
-            <div className="relative mt-1">
-              <Mail
-                className="text-faint pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <Input
-                className="pl-10"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                inputMode="email"
-                placeholder="you@company.com"
-                disabled={isBusy}
-              />
-            </div>
+            <label htmlFor={emailId} className="mb-2 block text-ui font-normal">
+              Email
+            </label>
+            <Input
+              id={emailId}
+              className={AUTH_INPUT_CLASS}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              placeholder="you@company.com"
+              disabled={isBusy}
+            />
           </div>
-
-          <Button type="submit" disabled={isBusy} className="w-full">
-            {isBusy ? <Spinner /> : null}
-            Send reset email
+          <Button
+            type="submit"
+            disabled={isBusy}
+            size="lg"
+            className="ps-auth-primary-action w-full font-normal"
+          >
+            {isBusy ? <Spinner /> : null}Send reset email
           </Button>
-
-          <div className="flex items-center justify-between gap-3">
-            <Link
-              to={signInLink}
-              className="text-faint hover:text-foreground text-meta font-medium transition"
-            >
-              Back to sign in
-            </Link>
-            <Link
-              to="/privacy-policy"
-              className="text-ghost hover:text-foreground text-meta font-medium transition"
-            >
-              Privacy
-            </Link>
-          </div>
         </form>
+        <div className="flex items-center gap-6 text-body">
+          <Link to={signInLink} className="w-32 shrink-0 hover:underline">
+            Back to sign in
+          </Link>
+          <Link
+            to="/privacy-policy"
+            className="w-[60px] shrink-0 hover:underline"
+          >
+            Privacy
+          </Link>
+        </div>
       </div>
-    </AuthShell>
+    </AuthModalCard>
   );
 }

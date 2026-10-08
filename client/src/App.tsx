@@ -22,13 +22,7 @@ import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import { AuthGateDialog } from "@features/auth-gate";
 import { apiClient } from "./services/ApiClient";
 import { trackPageView } from "./services/analytics";
-import { FEATURES } from "./config/features.config";
 
-const PricingPage = lazy(() =>
-  import("./pages/PricingPage").then((module) => ({
-    default: module.PricingPage,
-  })),
-);
 const DocsPage = lazy(() =>
   import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })),
 );
@@ -77,16 +71,7 @@ const ContactSupportPage = lazy(() =>
     default: module.ContactSupportPage,
   })),
 );
-const BillingPage = lazy(() =>
-  import("./pages/BillingPage").then((module) => ({
-    default: module.BillingPage,
-  })),
-);
-const BillingInvoicesPage = lazy(() =>
-  import("./pages/BillingInvoicesPage").then((module) => ({
-    default: module.BillingInvoicesPage,
-  })),
-);
+
 const HistoryPage = lazy(() =>
   import("./pages/HistoryPage").then((module) => ({
     default: module.HistoryPage,
@@ -204,14 +189,9 @@ function AppRoutes(): React.ReactElement {
       <Route element={<MarketingShell />}>
         {/* Marketing / company navigation. ADR-0010 site-scope (D9/D10): the
             input at "/" is the only front door — /home and /products redirect
-            there; /pricing parks on "/" until the subscription rewrite. */}
+            there. Frozen pricing/billing routes are unregistered. */}
         <Route path="/home" element={<Navigate to="/" replace />} />
         <Route path="/products" element={<Navigate to="/" replace />} />
-        {FEATURES.BILLING_UI ? (
-          <Route path="/pricing" element={<PricingPage />} />
-        ) : (
-          <Route path="/pricing" element={<Navigate to="/" replace />} />
-        )}
         <Route path="/docs" element={<DocsPage />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
@@ -224,31 +204,7 @@ function AppRoutes(): React.ReactElement {
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         <Route path="/contact" element={<ContactSupportPage />} />
         <Route path="/support" element={<Navigate to="/contact" replace />} />
-        {FEATURES.BILLING_UI ? (
-          <>
-            <Route path="/settings/billing" element={<BillingPage />} />
-            <Route
-              path="/settings/billing/invoices"
-              element={<BillingInvoicesPage />}
-            />
-            <Route
-              path="/billing"
-              element={<Navigate to="/settings/billing" replace />}
-            />
-          </>
-        ) : (
-          <>
-            <Route
-              path="/settings/billing"
-              element={<Navigate to="/" replace />}
-            />
-            <Route
-              path="/settings/billing/invoices"
-              element={<Navigate to="/" replace />}
-            />
-            <Route path="/billing" element={<Navigate to="/" replace />} />
-          </>
-        )}
+
         <Route
           path="/share/:uuid"
           element={
@@ -336,21 +292,6 @@ function AppRoutes(): React.ReactElement {
         path="/session/:sessionId/create"
         element={<SessionPathRedirect />}
       />
-      <Route
-        path="/session/:sessionId/continuity"
-        element={<SessionPathRedirect />}
-      />
-      <Route
-        path="/session/new/continuity"
-        element={<Navigate to="/" replace />}
-      />
-      {/* ADR-0010 site-scope D11: /assets parks on "/" while its consumption
-          surfaces (Characters/Styles panels, reference images) are removed;
-          the AssetsPage component is kept for un-parking if @-assets return. */}
-      <Route path="/assets" element={<Navigate to="/" replace />} />
-      <Route path="/continuity" element={<Navigate to="/" replace />} />
-      <Route path="/continuity/:sessionId" element={<SessionPathRedirect />} />
-      <Route path="/consistent" element={<Navigate to="/" replace />} />
       <Route path="/prompt/:uuid" element={<PromptRedirect />} />
 
       {/* Catch-all 404 — wrapped in MarketingShell for nav/footer */}

@@ -1,33 +1,24 @@
 import React, { useState } from "react";
-import {
-  X,
-  Type,
-  Save,
-  Trash2,
-  Download,
-  FileText,
-} from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@promptstudio/system/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from "@promptstudio/system/components/ui/dialog";
 import { Switch } from "@promptstudio/system/components/ui/switch";
+import settingsClose from "@/assets/design-system/settings-close.svg";
 import type { SettingsProps, FontSize, ExportFormat } from "./types";
+import "./settings.css";
 
-/**
- * Settings - Modal panel for managing user preferences.
- *
- * Displays settings grouped by category with toggles and selection buttons.
- * State management is handled by the useSettings hook.
- */
+const FONT_SIZES: FontSize[] = ["small", "medium", "large"];
+const FORMATS: Array<{ value: ExportFormat; label: string }> = [
+  { value: "text", label: "Text" },
+  { value: "markdown", label: "Markdown" },
+  { value: "json", label: "JSON" },
+];
+
+/** Page 21 Settings, node 703:302624; callbacks retain their existing scope. */
 export default function Settings({
   isOpen,
   onClose,
@@ -36,259 +27,191 @@ export default function Settings({
   resetSettings,
   onClearAllData,
 }: SettingsProps): React.ReactElement | null {
-  const [showConfirmReset, setShowConfirmReset] = useState(false);
-  const [showConfirmClear, setShowConfirmClear] = useState(false);
-
+  const [confirmation, setConfirmation] = useState<"reset" | "clear" | null>(
+    null,
+  );
+  const closeDialog = (): void => {
+    setConfirmation(null);
+    onClose();
+  };
   if (!isOpen) return null;
-
-  const handleResetSettings = (): void => {
-    resetSettings();
-    setShowConfirmReset(false);
-  };
-
-  const handleClearAllData = (): void => {
-    if (onClearAllData) {
-      onClearAllData();
-    }
-    setShowConfirmClear(false);
-  };
-
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open) closeDialog();
       }}
     >
-      <DialogContent className="w-full max-w-3xl gap-0 rounded-xl border border-border bg-surface-1 p-0 shadow-lg [&>button]:hidden">
-        <Card className="border-none bg-transparent shadow-none">
-          <CardHeader className="flex items-center justify-between">
-            <DialogTitle
-              id="settings-title"
-              className="text-heading-20 text-foreground"
+      <DialogContent
+        hideClose
+        className="ps-settings-dialog max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] max-w-[640px] gap-5 overflow-y-auto rounded-xl border-0 bg-chrome p-6 ring-[0.5px] ring-inset ring-[color:var(--settings-native-outline)]"
+      >
+        <header className="flex h-9 items-center justify-between">
+          <DialogTitle className="text-body-lg font-normal">
+            Settings
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Appearance, saving and export preferences
+          </DialogDescription>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-md"
+            onClick={closeDialog}
+            aria-label="Close settings"
+          >
+            <img src={settingsClose} alt="" />
+          </Button>
+        </header>
+        <div className="h-px bg-border" />
+        <section className="space-y-2">
+          <h3 className="text-meta text-foreground">Appearance</h3>
+          <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
+            <span className="text-ui font-normal">Font Size</span>
+            <div
+              className="flex h-8 w-[228px] overflow-hidden rounded-[var(--vidra-radius-segment)] bg-[var(--settings-native-segment)] ring-[0.5px] ring-inset ring-[color:var(--settings-native-outline)]"
+              role="group"
+              aria-label="Font size"
             >
-              Settings
-            </DialogTitle>
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              size="icon"
-              aria-label="Close settings"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </CardHeader>
-
-          <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto">
-            {/* Appearance Section */}
-            <section>
-              <h3 className="text-heading-18 text-foreground mb-4">
-                Appearance
-              </h3>
-
-              {/* Font Size */}
-              <div className="p-4 rounded-lg border border-border bg-surface-2">
-                <div className="flex items-center gap-3 mb-3">
-                  <Type className="h-5 w-5 text-muted" aria-hidden="true" />
-                  <label className="text-label-16 text-foreground">
-                    Font Size
-                  </label>
-                </div>
-                <div className="flex gap-2">
-                  {(["small", "medium", "large"] as FontSize[]).map((size) => (
-                    <Button
-                      key={size}
-                      onClick={() => updateSetting("fontSize", size)}
-                      variant="ghost"
-                      className={`
-                      flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 ps-focus-ring
-                      ${
-                        settings.fontSize === size
-                          ? "bg-primary-600 text-white shadow-md scale-105"
-                          : "bg-surface-1 text-foreground hover:bg-hover border border-border"
-                      }
-                    `}
-                      aria-pressed={settings.fontSize === size}
-                    >
-                      {size.charAt(0).toUpperCase() + size.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Behavior Section */}
-            <section>
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Behavior
-              </h3>
-
-              {/* Auto-save Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-surface-2">
-                <div className="flex items-center gap-3">
-                  <Save
-                    className="h-5 w-5 text-success-600"
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <label
-                      htmlFor="auto-save-toggle"
-                      className="font-medium text-foreground"
-                    >
-                      Auto-save
-                    </label>
-                    <p className="text-sm text-muted">
-                      Automatically save prompts to history
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="auto-save-toggle"
-                  checked={settings.autoSave}
-                  onCheckedChange={(checked) =>
-                    updateSetting("autoSave", checked)
+              {FONT_SIZES.map((size) => (
+                <Button
+                  key={size}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => updateSetting("fontSize", size)}
+                  aria-pressed={settings.fontSize === size}
+                  className={
+                    "h-8 flex-1 rounded-none px-0 text-meta font-normal " +
+                    (settings.fontSize === size
+                      ? "bg-[var(--settings-native-primary)] text-primary-foreground hover:bg-[var(--settings-native-primary)]"
+                      : "bg-secondary text-foreground hover:bg-hover")
                   }
-                  aria-label="Toggle auto-save"
-                  className="data-[state=checked]:bg-success-600"
-                />
+                >
+                  {size.charAt(0).toUpperCase() + size.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section className="space-y-2">
+          <h3 className="text-meta text-foreground">Behavior</h3>
+          <div className="flex min-h-11 items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="auto-save-toggle" className="text-ui font-normal">
+                Auto-save
+              </label>
+              <p className="text-meta text-foreground">
+                Automatically save prompts to history
+              </p>
+            </div>
+            <Switch
+              id="auto-save-toggle"
+              checked={settings.autoSave}
+              onCheckedChange={(checked) => updateSetting("autoSave", checked)}
+              className="data-[state=checked]:bg-[var(--settings-native-primary)]"
+              aria-label="Toggle auto-save"
+            />
+          </div>
+        </section>
+        <section className="space-y-2">
+          <h3 className="text-meta text-foreground">Export Preferences</h3>
+          <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
+            <span className="text-ui font-normal">Default Export Format</span>
+            <div
+              className="flex h-8 w-[228px] overflow-hidden rounded-[var(--vidra-radius-segment)] bg-[var(--settings-native-segment)] ring-[0.5px] ring-inset ring-[color:var(--settings-native-outline)]"
+              role="group"
+              aria-label="Default export format"
+            >
+              {FORMATS.map((format) => (
+                <Button
+                  key={format.value}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => updateSetting("exportFormat", format.value)}
+                  aria-pressed={settings.exportFormat === format.value}
+                  className={
+                    "h-8 flex-1 rounded-none px-0 text-meta font-normal " +
+                    (settings.exportFormat === format.value
+                      ? "bg-[var(--settings-native-primary)] text-primary-foreground hover:bg-[var(--settings-native-primary)]"
+                      : "bg-secondary text-foreground hover:bg-hover")
+                  }
+                >
+                  {format.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </section>
+        <div className="h-px bg-border" />
+        <section className="space-y-2">
+          <h3 className="text-meta text-foreground">Danger Zone</h3>
+          {confirmation ? (
+            <div
+              role="alertdialog"
+              aria-label={
+                confirmation === "reset"
+                  ? "Reset settings confirmation"
+                  : "Clear data confirmation"
+              }
+              className="rounded-card border border-border p-4"
+            >
+              <p className="mb-3 text-ui">
+                {confirmation === "reset"
+                  ? "Reset all settings to their default values?"
+                  : "Permanently delete your saved prompts and history?"}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant={confirmation === "clear" ? "destructive" : "default"}
+                  onClick={() => {
+                    if (confirmation === "reset") resetSettings();
+                    else onClearAllData?.();
+                    setConfirmation(null);
+                  }}
+                >
+                  {confirmation === "reset" ? "Yes, Reset" : "Yes, Delete All"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setConfirmation(null)}
+                >
+                  Cancel
+                </Button>
               </div>
-            </section>
-
-            {/* Export Section */}
-            <section>
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Export Preferences
-              </h3>
-
-              <div className="p-4 rounded-lg border border-border bg-surface-2">
-                <div className="flex items-center gap-3 mb-3">
-                  <Download className="h-5 w-5 text-muted" aria-hidden="true" />
-                  <label className="text-label-16 text-foreground">
-                    Default Export Format
-                  </label>
-                </div>
-                <div className="flex gap-2">
-                  {[
-                    { value: "text" as ExportFormat, label: "Text" },
-                    { value: "markdown" as ExportFormat, label: "Markdown" },
-                    { value: "json" as ExportFormat, label: "JSON" },
-                  ].map((format) => (
-                    <Button
-                      key={format.value}
-                      onClick={() =>
-                        updateSetting("exportFormat", format.value)
-                      }
-                      variant="ghost"
-                      className={`
-                      flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 ps-focus-ring
-                      ${
-                        settings.exportFormat === format.value
-                          ? "bg-primary-600 text-white shadow-md scale-105"
-                          : "bg-surface-1 text-foreground hover:bg-hover border border-border"
-                      }
-                    `}
-                      aria-pressed={settings.exportFormat === format.value}
-                    >
-                      {format.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Danger Zone */}
-            <section>
-              <h3 className="text-heading-18 text-error-600 mb-4">
-                Danger Zone
-              </h3>
-
-              <div className="space-y-3">
-                {/* Reset Settings */}
-                {!showConfirmReset ? (
-                  <Button
-                    onClick={() => setShowConfirmReset(true)}
-                    variant="secondary"
-                    className="w-full hover:border-warning-400 hover:bg-warning-50"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Reset Settings to Default
-                  </Button>
-                ) : (
-                  <div className="p-4 rounded-lg border-2 border-warning-300 bg-warning-50">
-                    <p className="text-sm text-warning-900 mb-3">
-                      Are you sure? This will reset all settings to their
-                      default values.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleResetSettings}
-                        size="sm"
-                        variant="default"
-                        className="flex-1 bg-warning-600 hover:bg-warning-700 text-white"
-                      >
-                        Yes, Reset
-                      </Button>
-                      <Button
-                        onClick={() => setShowConfirmReset(false)}
-                        size="sm"
-                        variant="secondary"
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Clear All Data */}
-                {!showConfirmClear ? (
-                  <Button
-                    onClick={() => setShowConfirmClear(true)}
-                    variant="secondary"
-                    className="w-full hover:border-error-400 hover:bg-error-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Clear All Data
-                  </Button>
-                ) : (
-                  <div className="p-4 rounded-lg border-2 border-error-300 bg-error-50">
-                    <p className="text-sm text-error-900 mb-3">
-                      Are you sure? This will permanently delete all your saved
-                      prompts and history.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleClearAllData}
-                        size="sm"
-                        variant="default"
-                        className="flex-1 bg-error-600 hover:bg-error-700 text-white"
-                      >
-                        Yes, Delete All
-                      </Button>
-                      <Button
-                        onClick={() => setShowConfirmClear(false)}
-                        size="sm"
-                        variant="secondary"
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-          </CardContent>
-
-          <CardFooter className="flex items-center justify-between">
-            <p className="text-xs text-muted">
-              Settings are saved automatically
-            </p>
-            <Button onClick={onClose} variant="default">
-              Done
-            </Button>
-          </CardFooter>
-        </Card>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                className="w-[264px]"
+                onClick={() => setConfirmation("reset")}
+              >
+                Reset Settings to Default
+              </Button>
+              <Button
+                variant="secondary"
+                className="w-[160px] text-muted"
+                disabled={!onClearAllData}
+                onClick={() => setConfirmation("clear")}
+              >
+                Clear All Data
+              </Button>
+            </div>
+          )}
+        </section>
+        <div className="h-px bg-border" />
+        <footer className="flex items-center justify-between gap-3">
+          <p className="text-meta text-foreground">
+            Settings are saved automatically
+          </p>
+          <Button
+            className="w-[88px] bg-[var(--settings-native-primary)]"
+            onClick={closeDialog}
+          >
+            Done
+          </Button>
+        </footer>
       </DialogContent>
     </Dialog>
   );

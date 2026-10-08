@@ -1,6 +1,9 @@
 import { createRef } from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.unmock("@promptstudio/system/components/ui/button");
+vi.unmock("@promptstudio/system/components/ui/textarea");
 import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/selectedSpanTestHarness";
 import { PromptEditorSurface } from "../PromptEditorSurface";
 import type { PromptEditorSurfaceProps } from "../PromptEditorSurface";
@@ -9,12 +12,12 @@ import type { PromptEditorSurfaceProps } from "../PromptEditorSurface";
  * Regression: composer overflow has designed affordances.
  *
  * 1. Failure boundary: UI component — PromptEditorSurface's editor window
- *    and suggestion-chip row.
+ *    and phrase replacement popover.
  * 2. Mock boundary: SelectedSpan context value (the tray input). The
  *    surface renders for real.
  * 3. Invariants: long expanded prompts scroll behind a VISIBLE scrollbar
- *    (never the hidden one), and the editor + tray are inset from the card
- *    edge so overflowing chips stop clipping against the composer border.
+ *    (never the hidden one), and phrase replacement controls escape
+ *    the composer scroll viewport through the real popover portal.
  */
 
 const noop = (): void => {};
@@ -31,16 +34,6 @@ function makeProps(
     onHighlightMouseLeave: noop,
     onCopyEvent: noop,
     onInput: noop,
-    onEditorKeyDown: noop,
-    onEditorBlur: noop,
-    autocompleteOpen: false,
-    autocompleteSuggestions: [],
-    autocompleteSelectedIndex: -1,
-    autocompletePosition: { top: 0, left: 0 },
-    autocompleteLoading: false,
-    onAutocompleteSelect: noop,
-    onAutocompleteClose: noop,
-    onAutocompleteIndexChange: noop,
     ...overrides,
   };
 }
@@ -66,8 +59,8 @@ describe("regression: composer overflow affordances", () => {
     expect(root.className).toMatch(/px-4/);
   });
 
-  it("the suggestion-chip row keeps its horizontal scroll affordance when chips overflow", () => {
-    render(
+  it("replacement controls render outside the composer overflow viewport", () => {
+    const { container } = render(
       withSelectedSpan(<PromptEditorSurface {...makeProps()} />, {
         selectedSpanId: "span-1",
         selectionLabel: "golden retriever",
@@ -92,8 +85,10 @@ describe("regression: composer overflow affordances", () => {
     );
 
     const tray = screen.getByTestId("canvas-suggestion-tray");
-    const chipRow = tray.querySelector(".overflow-x-auto");
-    expect(chipRow).not.toBeNull();
-    expect((chipRow as HTMLElement).className).toContain("ps-scrollbar-thin");
+    expect(container.contains(tray)).toBe(false);
+    expect(
+      screen.getByRole("button", { name: "a sprinting border collie" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Suggest" })).toBeInTheDocument();
   });
 });

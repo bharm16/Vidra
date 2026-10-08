@@ -57,10 +57,6 @@ const PREVIOUS_SESSION_ENTRY: PromptHistoryEntry = {
 const setup = (identity: { uuid: string | null; docId: string | null }) =>
   renderHook(() =>
     useVersionManagement({
-      hasShotContext: false,
-      shotId: null,
-      shotPromptEntry: null,
-      updateShotVersions: vi.fn(),
       promptHistory: {
         history: [PREVIOUS_SESSION_ENTRY],
         createDraft: vi.fn(() => ({ uuid: "u", id: "draft-1" })),

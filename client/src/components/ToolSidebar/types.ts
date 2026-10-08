@@ -44,7 +44,6 @@ export interface ToolSidebarGenerationDomain {
   onImageUpload?: (file: File) => void | Promise<void>;
   onStartFrameUpload?: (file: File) => void | Promise<void>;
   onUploadSidebarImage?: (file: File) => Promise<SidebarUploadedImage | null>;
-  onStoryboard: () => void;
 }
 
 export interface ToolSidebarAssetsDomain {

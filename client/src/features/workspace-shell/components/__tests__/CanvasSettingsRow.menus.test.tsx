@@ -74,7 +74,7 @@ describe("CanvasSettingsRow aspect/duration menus (system DropdownMenu)", () => 
 
     const menu = await screen.findByRole("menu");
     expect(menu.className).toContain("z-overlay");
-    expect(menu.className).toContain("bg-popover");
+    expect(menu.className).toContain("bg-[var(--vidra-dialog-surface)]");
     expect(
       screen.getByRole("menuitemradio", { name: "9:16" }),
     ).toBeInTheDocument();

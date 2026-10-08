@@ -125,7 +125,10 @@ export function UseInSessionAction({
                   attachment: { ...attachment, state: "attached" },
                   arming:
                     outcomeArming?.state === "failed"
-                      ? { state: "armed", generationId: attachment.generationId }
+                      ? {
+                          state: "armed",
+                          generationId: attachment.generationId,
+                        }
                       : current.result.arming,
                 },
               }
@@ -139,7 +142,10 @@ export function UseInSessionAction({
     }
   };
 
-  const retryArming = async (sessionId: string, generationId: string): Promise<void> => {
+  const retryArming = async (
+    sessionId: string,
+    generationId: string,
+  ): Promise<void> => {
     if (!onRetryArming) return;
     setBusy(true);
     setRetryFailure(null);
@@ -171,7 +177,7 @@ export function UseInSessionAction({
     const arming = outcome.result.arming;
     if (attachment?.state === "failed") {
       return (
-        <div className="st-topbar-right flex items-center gap-2">
+        <div className="st-topbar-right st-receipt">
           <span className="st-topbar-label">
             Made, but not saved — the session is missing this picture.
           </span>
@@ -199,7 +205,7 @@ export function UseInSessionAction({
     }
     if (attachment?.state === "pending") {
       return (
-        <div className="st-topbar-right flex items-center gap-2">
+        <div className="st-topbar-right st-receipt">
           <span className="st-topbar-label">Saving to the session…</span>
         </div>
       );
@@ -207,7 +213,7 @@ export function UseInSessionAction({
     if (attachment?.state !== "attached") {
       // No attachment fact — the outcome is unknown, which is not a success.
       return (
-        <div className="st-topbar-right flex items-center gap-2">
+        <div className="st-topbar-right st-receipt">
           <span className="st-topbar-label">
             Couldn’t confirm whether it saved.
           </span>
@@ -223,7 +229,7 @@ export function UseInSessionAction({
     // The take is saved; the arming fact is the second truth (issue #136).
     if (arming?.state === "failed") {
       return (
-        <div className="st-topbar-right flex items-center gap-2">
+        <div className="st-topbar-right st-receipt">
           <span className="st-topbar-label">
             Saved, but not set as the session’s first frame.
           </span>
@@ -235,10 +241,7 @@ export function UseInSessionAction({
             type="button"
             disabled={busy}
             onClick={() =>
-              void retryArming(
-                outcome.result.sessionId,
-                arming.generationId,
-              )
+              void retryArming(outcome.result.sessionId, arming.generationId)
             }
           >
             {busy ? "Setting…" : "Set it"}
@@ -253,7 +256,7 @@ export function UseInSessionAction({
       );
     }
     return (
-      <div className="st-topbar-right flex items-center gap-2">
+      <div className="st-topbar-right st-receipt">
         <span className="st-topbar-label">Added to the session.</span>
         <Link
           className="st-topbar-label underline"
@@ -267,7 +270,7 @@ export function UseInSessionAction({
 
   if (outcome?.state === "origin-session-missing") {
     return (
-      <div className="st-topbar-right flex items-center gap-2">
+      <div className="st-topbar-right st-receipt">
         <span className="st-topbar-label">{outcome.message}</span>
         <Button
           variant="ghost"
@@ -296,9 +299,10 @@ export function UseInSessionAction({
       });
     };
     return (
-      <div className="st-topbar-right flex items-center gap-2">
+      <div className="st-topbar-right st-receipt">
         <span className="st-topbar-label">{outcome.message}</span>
         <Input
+          aria-label="Session words"
           value={words}
           disabled={busy}
           placeholder="Words this session starts from"
@@ -320,7 +324,7 @@ export function UseInSessionAction({
   }
 
   return (
-    <div className="st-topbar-right">
+    <div className="st-topbar-right st-receipt">
       <Button
         variant="ghost"
         type="button"

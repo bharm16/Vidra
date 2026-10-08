@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "./icons";
+import closeIcon from "./dialog-close.svg";
 
 import { cn } from "@promptstudio/system/lib/utils";
 
@@ -29,23 +29,27 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    hideClose?: boolean;
+  }
+>(({ className, children, hideClose = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "border-border/50 bg-raise shadow-floating data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] z-modal fixed left-[50%] top-[50%] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border p-6 duration-200 sm:rounded-md",
+        "bg-[var(--vidra-dialog-surface)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] z-modal fixed left-[50%] top-[50%] grid w-[calc(100%_-_32px)] max-w-[480px] translate-x-[-50%] translate-y-[-50%] gap-5 rounded-xl border-0 p-6 ring-[0.5px] ring-inset ring-white duration-200",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="data-[state=open]:bg-accent data-[state=open]:text-muted absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 disabled:pointer-events-none">
-        <X size={16} />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideClose ? (
+        <DialogPrimitive.Close className="absolute right-[18px] top-6 inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover disabled:pointer-events-none">
+          <img src={closeIcon} alt="" draggable={false} />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      ) : null}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
@@ -55,13 +59,7 @@ const DialogHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
-      className,
-    )}
-    {...props}
-  />
+  <div className={cn("flex flex-col gap-5 text-left", className)} {...props} />
 );
 DialogHeader.displayName = "DialogHeader";
 
@@ -70,10 +68,7 @@ const DialogFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className,
-    )}
+    className={cn("flex flex-row justify-end gap-2", className)}
     {...props}
   />
 );
@@ -85,10 +80,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
-      className,
-    )}
+    className={cn("text-body-lg font-normal leading-7", className)}
     {...props}
   />
 ));
@@ -100,7 +92,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-muted text-sm", className)}
+    className={cn("text-muted text-body font-normal", className)}
     {...props}
   />
 ));

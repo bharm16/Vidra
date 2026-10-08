@@ -18,13 +18,6 @@ vi.mock("@/services", () => ({
   },
 }));
 
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  publishCreditBalanceSync: (...args: unknown[]) =>
-    publishCreditBalanceSyncMock(...args),
-  requestCreditBalanceRefresh: (...args: unknown[]) =>
-    requestCreditBalanceRefreshMock(...args),
-}));
-
 vi.mock("../../api", () => ({
   compileWanPrompt: (...args: unknown[]) => compileWanPromptMock(...args),
   generateVideoPreview: (...args: unknown[]) =>

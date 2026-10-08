@@ -83,10 +83,6 @@ vi.mock("../../context/PromptStateContext", () => ({
     setShowShortcuts: vi.fn(),
     showHistory: false,
     setShowHistory: vi.fn(),
-    showImprover: false,
-    setShowImprover: vi.fn(),
-    showBrainstorm: false,
-    setShowBrainstorm: vi.fn(),
     setShowResults: promptStateSetters.setShowResults,
     currentAIIndex: 0,
     setCurrentAIIndex: vi.fn(),
@@ -288,13 +284,5 @@ describe("PromptOptimizerWorkspace prompt interaction integration", () => {
 
     expect(capturedViewProps.current).toBeTruthy();
     expect(capturedViewProps.current.sequenceWorkspaceProps).toBeUndefined();
-  });
-
-  it("uses displayed prompt for detected assets while results are visible", () => {
-    render(<PromptOptimizerWorkspace />);
-
-    expect(capturedViewProps.current.detectedAssetsPrompt).toBe(
-      "optimized output",
-    );
   });
 });

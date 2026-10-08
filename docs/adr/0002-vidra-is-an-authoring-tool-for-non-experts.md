@@ -12,6 +12,8 @@ and a revived stack revives its tests with it.
 
 > **Amended by [ADR-0022](0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)** — two narrow exceptions to this freeze and no more: the worker-to-session attachment boundary (decision 6) and the illustrative camera-motion preview as active-loop motion authoring (decision 7).
 
+**Frontend amendment, 2026-10-08 (#177, owner: Bryce Harmon):** frozen and dormant frontend routes, controls and exclusively owned frontend modules/tests are retired. Backend routes/services, shared contracts and stored records stay available under their existing gates and are marked dormant. This supersedes the frontend “all code stays” posture above and the camera-picker UI exception; see the [retirement ledger](../design/dormant-frontend-retirement.md). Worker attachment, explicit reference/Studio/Sketch handoffs and ordinary authoring remain active.
+
 Vidra had grown to 23 server service domains and 14 client features with **no
 canonical product definition** — the root `CONTEXT.md` and `docs/agents/domain.md`
 both pointed at a product description that had never been written. The code had

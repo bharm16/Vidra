@@ -12,25 +12,16 @@ import { usePendingFirstFrame } from "./hooks/usePendingFirstFrame";
  * - Conditional layout rendering
  */
 
-import React, {
-  useCallback,
-  useMemo,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useKeyboardShortcuts } from "@components/KeyboardShortcuts";
 import { useToast } from "@components/Toast";
-import { logger } from "@/services/LoggingService";
 import { useAuthUser } from "@hooks/useAuthUser";
 import type { User } from "../context/types";
-import type { CapabilityValues } from "@shared/capabilities";
 import type {
   PromptHistoryEntry,
   PromptVersionEntry,
 } from "@features/prompt-optimizer/types/domain/prompt-session";
-import { useAssetsSidebar } from "../components/AssetsSidebar";
 import {
   usePromptConfig,
   usePromptUIStateContext,
@@ -45,7 +36,6 @@ import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
-import { scrollToSpanById } from "../utils/scrollToSpanById";
 import {
   uploadPreviewImage,
   validatePreviewImageFile,
@@ -55,14 +45,9 @@ import {
   useHighlightsPersistence,
   useUndoRedo,
   usePromptOptimization,
-  useImprovementFlow,
-  useConceptBrainstorm,
   useEnhancementSuggestions,
   usePromptKeyframesSync,
   useStablePromptContext,
-  usePromptCoherence,
-  useAssetManagement,
-  useEditorShotPromptBinding,
   useFirstFrameAdmission,
 } from "./hooks";
 import { useI2VContext } from "../hooks/useI2VContext";
@@ -74,21 +59,12 @@ import {
 } from "@/features/idea-box";
 import { isRemoteSessionId } from "@/repositories/sessionIdNamespace";
 import { PromptOptimizerWorkspaceView } from "./components/PromptOptimizerWorkspaceView";
-import {
-  WorkspaceSessionProvider,
-  useWorkspaceSession,
-} from "../context/WorkspaceSessionContext";
+import { WorkspaceSessionProvider } from "../context/WorkspaceSessionContext";
 import { PromptResultsActionsProvider } from "../context/PromptResultsActionsContext";
 import { PromptInsertionBusProvider } from "../context/PromptInsertionBusContext";
 import { SidebarDataProvider } from "./providers/sidebar";
 import { addWorkspaceResetListener } from "../events";
 import { toCapabilityValues } from "@hooks/usePromptHistory/utils/capabilityValues";
-import {
-  CoherenceProvider,
-  type CoherenceContextValue,
-} from "../context/CoherenceContext";
-
-const log = logger.child("PromptOptimizerWorkspace");
 
 interface HydratedPromptHistoryInput {
   id?: string;
@@ -139,10 +115,6 @@ function PromptOptimizerContent({
     setShowSettings,
     showShortcuts,
     setShowShortcuts,
-    showImprover,
-    setShowImprover,
-    showBrainstorm,
-    setShowBrainstorm,
     setShowResults,
     setOutputSaveState,
     setOutputLastSavedAt,
@@ -189,15 +161,6 @@ function PromptOptimizerContent({
 
   // Navigation
   const { navigate, sessionId } = usePromptNavigation();
-  const assetsSidebar = useAssetsSidebar();
-  const {
-    assetEditorState,
-    quickCreateState,
-    handlers: assetManagement,
-  } = useAssetManagement({
-    assets: assetsSidebar.assets,
-    refreshAssets: assetsSidebar.refresh,
-  });
   const { domain } = useGenerationControlsStoreState();
   const {
     setKeyframes,
@@ -213,11 +176,7 @@ function PromptOptimizerContent({
   } = useGenerationControlsStoreActions();
   const keyframes = domain.keyframes;
   const startFrame = domain.startFrame;
-  const cameraMotion = domain.cameraMotion;
-  const subjectMotion = domain.subjectMotion;
   const i2vContext = useI2VContext();
-  const { hasActiveContinuityShot, currentShotId, currentShot, updateShot } =
-    useWorkspaceSession();
 
   const { serializedKeyframes: serializedKeyframesSync, onLoadKeyframes } =
     usePromptKeyframesSync({
@@ -277,30 +236,6 @@ function PromptOptimizerContent({
     location.search,
     navigate,
     setShowSettings,
-  ]);
-
-  useEditorShotPromptBinding({
-    currentEditorShot: currentShot,
-    hasActiveContinuityShot,
-    promptOptimizer,
-    updateShot,
-    setDisplayedPromptSilently,
-    setShowResults,
-  });
-
-  useEffect(() => {
-    if (!hasActiveContinuityShot || !currentShot) return;
-    const shotModelId = currentShot.modelId?.trim();
-    if (!shotModelId) return;
-    if (selectedModel === shotModelId) return;
-    setSelectedModel(shotModelId);
-  }, [
-    currentShot,
-    currentShot?.id,
-    currentShot?.modelId,
-    hasActiveContinuityShot,
-    selectedModel,
-    setSelectedModel,
   ]);
 
   const stablePromptContext = useStablePromptContext(promptContext);
@@ -507,22 +442,6 @@ function PromptOptimizerContent({
     setShowResults,
   ]);
 
-  const handleSequenceOptimizationApplied = useCallback(
-    async (optimizedPrompt: string): Promise<void> => {
-      if (!hasActiveContinuityShot || !currentShotId) return;
-      try {
-        await updateShot(currentShotId, { prompt: optimizedPrompt });
-      } catch (error) {
-        log.warn("Failed to persist optimized sequence prompt", {
-          shotId: currentShotId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        toast.error("Failed to save optimized shot prompt");
-      }
-    },
-    [currentShotId, hasActiveContinuityShot, toast, updateShot],
-  );
-
   // Persistence-target bridge (M5 D4): the canvas subtree below registers a
   // resolver that mints/reads the words-version at frame time; this owner adds
   // the session id (a route concern it already holds, gated through
@@ -590,6 +509,7 @@ function PromptOptimizerContent({
     isReferenceUploading,
     beginReferenceSelection,
     admitReference,
+    clearReference,
     bindDraftToSession,
   } = usePendingFirstFrame({
     creatorId: user?.uid,
@@ -686,15 +606,10 @@ function PromptOptimizerContent({
       // Read the originating pending input before any await allows route
       // effects to replace the draft context after ordinary persistence.
       const hasPendingInput = bindDraftToSession();
-      await handleSequenceOptimizationApplied(optimizedPrompt);
       if (hasPendingInput) return;
       await continueAfterOptimization(optimizedPrompt);
     },
-    [
-      handleSequenceOptimizationApplied,
-      continueAfterOptimization,
-      bindDraftToSession,
-    ],
+    [continueAfterOptimization, bindDraftToSession],
   );
 
   const handleIdeaBoxRegenerate = useCallback(async (): Promise<void> => {
@@ -714,25 +629,7 @@ function PromptOptimizerContent({
     regenerateFrame,
   ]);
 
-  const promptForAssets = useMemo(() => {
-    if (showResults && promptOptimizer.displayedPrompt) {
-      return promptOptimizer.displayedPrompt;
-    }
-    return promptOptimizer.inputPrompt;
-  }, [
-    promptOptimizer.displayedPrompt,
-    promptOptimizer.inputPrompt,
-    showResults,
-  ]);
-
-  const optimizationGenerationParams = useMemo<CapabilityValues>(
-    () => ({
-      ...(generationParams ?? {}),
-      ...(cameraMotion?.id ? { camera_motion_id: cameraMotion.id } : {}),
-      ...(subjectMotion.trim() ? { subject_motion: subjectMotion.trim() } : {}),
-    }),
-    [generationParams, cameraMotion?.id, subjectMotion],
-  );
+  const optimizationGenerationParams = generationParams;
 
   // Prompt optimization
   // A failed expansion (optimize produced no result) surfaces as a "writing"
@@ -787,95 +684,6 @@ function PromptOptimizerContent({
     [composerFillSetInputPrompt, handleDisplayedPromptChange],
   );
 
-  // Improvement flow
-  const { handleImproveFirst, handleImprovementComplete } = useImprovementFlow({
-    promptOptimizer,
-    toast,
-    setShowImprover,
-    handleOptimize,
-  });
-
-  // Concept brainstorm flow
-  const { handleConceptComplete, handleSkipBrainstorm } = useConceptBrainstorm({
-    promptOptimizer,
-    promptHistory,
-    selectedMode,
-    selectedModel,
-    generationParams: optimizationGenerationParams,
-    keyframes: serializedKeyframesSync,
-    setConceptElements,
-    setPromptContext,
-    setShowBrainstorm,
-    setCurrentPromptUuid,
-    setCurrentPromptDocId,
-    setDisplayedPromptSilently,
-    setShowResults,
-    applyInitialHighlightSnapshot,
-    resetEditStacks,
-    persistedSignatureRef,
-    skipLoadFromUrlRef,
-    navigate,
-    toast,
-  });
-
-  const {
-    issues: coherenceIssues,
-    isChecking: isCoherenceChecking,
-    isPanelExpanded,
-    setIsPanelExpanded,
-    affectedSpanIds,
-    spanIssueMap,
-    runCheck: runCoherenceCheck,
-    dismissIssue,
-    dismissAll,
-    applyFix,
-    togglePanelExpanded: toggleCoherencePanelExpanded,
-  } = usePromptCoherence({
-    promptOptimizer,
-    latestHighlightRef,
-    applyInitialHighlightSnapshot,
-    handleDisplayedPromptChange,
-    currentPromptUuid,
-    currentPromptDocId,
-    promptHistory,
-    toast,
-    log,
-  });
-
-  // Coherence travels by context, not through the canvas props: the producer is
-  // here and the consumers (the panel, the editor's span markers) are deep in
-  // the canvas subtree.
-  //
-  // The memo does not currently buy stability — `applyFix` re-derives on every
-  // keystroke (usePromptCoherence depends on displayedPrompt), and nothing on
-  // the path is memo'd, so consumers re-render per keystroke either way. It is
-  // here so the identity is correct if that ever changes.
-  const coherenceValue = useMemo<CoherenceContextValue>(
-    () => ({
-      issues: coherenceIssues,
-      isChecking: isCoherenceChecking,
-      isPanelExpanded,
-      onTogglePanelExpanded: toggleCoherencePanelExpanded,
-      onDismissIssue: dismissIssue,
-      onDismissAll: dismissAll,
-      onApplyFix: applyFix,
-      onScrollToSpan: scrollToSpanById,
-      affectedSpanIds,
-      spanIssueMap,
-    }),
-    [
-      coherenceIssues,
-      isCoherenceChecking,
-      isPanelExpanded,
-      toggleCoherencePanelExpanded,
-      dismissIssue,
-      dismissAll,
-      applyFix,
-      affectedSpanIds,
-      spanIssueMap,
-    ],
-  );
-
   // Enhancement suggestions
   const { fetchEnhancementSuggestions, handleSuggestionClick } =
     useEnhancementSuggestions({
@@ -891,7 +699,6 @@ function PromptOptimizerContent({
       currentPromptUuid,
       currentPromptDocId,
       promptHistory,
-      onCoherenceCheck: runCoherenceCheck,
     });
 
   // ============================================================================
@@ -906,15 +713,10 @@ function PromptOptimizerContent({
       !promptOptimizer.isProcessing &&
       showResults === false &&
       handleOptimize(),
-    improveFirst: handleImproveFirst,
     canCopy: () => showResults && Boolean(promptOptimizer.displayedPrompt),
     copy: () => {
       navigator.clipboard.writeText(promptOptimizer.displayedPrompt);
       toast.success("Copied to clipboard!");
-    },
-    export: () => showResults && toast.info("Use export button in canvas"),
-    switchMode: () => {
-      // Implementation from original
     },
     applySuggestion: (index: number) => {
       const suggestion = suggestionsData?.suggestions?.[index];
@@ -925,8 +727,6 @@ function PromptOptimizerContent({
     closeModal: () => {
       if (showSettings) setShowSettings(false);
       else if (showShortcuts) setShowShortcuts(false);
-      else if (showImprover) setShowImprover(false);
-      else if (showBrainstorm) setShowBrainstorm(false);
       else if (suggestionsData) setSuggestionsData(null);
     },
   });
@@ -945,12 +745,6 @@ function PromptOptimizerContent({
         clearResultsView={clearResultsView}
       >
         <SidebarDataProvider
-          assets={assetsSidebar.assets}
-          assetsByType={assetsSidebar.byType}
-          isLoadingAssets={assetsSidebar.isLoading}
-          onEditAsset={assetManagement.onEditAsset}
-          onCreateAsset={assetManagement.onCreateAsset}
-          onCreateFromTrigger={assetManagement.onCreateFromTrigger}
           onImageUpload={handleImageUpload}
           onStartFrameUpload={handleStartFrameUpload}
           onUploadSidebarImage={uploadSidebarImage}
@@ -978,6 +772,7 @@ function PromptOptimizerContent({
             unattachedFrameTake={unattachedFrameTake}
             pendingReference={pendingReference}
             onAdmitPendingReference={admitReference}
+            onClearPendingReference={clearReference}
             isExpanding={promptOptimizer.isProcessing}
             writingFailed={writingFailed}
             hasExpandedPrompt={
@@ -989,48 +784,9 @@ function PromptOptimizerContent({
             onIdeaBoxExpand={handleIdeaBoxExpand}
             onComposerFill={handleComposerFill}
           >
-            <CoherenceProvider value={coherenceValue}>
-              <PromptOptimizerWorkspaceView
-                shouldShowLoading={shouldShowLoading}
-                promptModalsProps={{
-                  onImprovementComplete: handleImprovementComplete,
-                  onConceptComplete: handleConceptComplete,
-                  onSkipBrainstorm: handleSkipBrainstorm,
-                }}
-                quickCreateState={quickCreateState}
-                onQuickCreateClose={assetManagement.onCloseQuickCreate}
-                onQuickCreateComplete={assetManagement.onQuickCreateComplete}
-                assetEditorState={assetEditorState}
-                assetEditorHandlers={{
-                  onClose: assetManagement.onCloseAssetEditor,
-                  onCreate: assetManagement.onCreate,
-                  onUpdate: assetManagement.onUpdate,
-                  onAddImage: assetManagement.onAddImage,
-                  onDeleteImage: assetManagement.onDeleteImage,
-                  onSetPrimaryImage: assetManagement.onSetPrimaryImage,
-                }}
-                detectedAssetsPrompt={promptForAssets}
-                detectedAssets={assetsSidebar.assets}
-                onEditAsset={assetManagement.onEditAsset}
-                onCreateFromTrigger={assetManagement.onCreateFromTrigger}
-                debugProps={{
-                  enabled:
-                    false &&
-                    (import.meta.env.DEV ||
-                      new URLSearchParams(window.location.search).get(
-                        "debug",
-                      ) === "true"),
-                  inputPrompt: promptOptimizer.inputPrompt,
-                  displayedPrompt: promptOptimizer.displayedPrompt,
-                  optimizedPrompt: promptOptimizer.optimizedPrompt,
-                  selectedMode,
-                  promptContext: stablePromptContext as unknown as Record<
-                    string,
-                    unknown
-                  > | null,
-                }}
-              />
-            </CoherenceProvider>
+            <PromptOptimizerWorkspaceView
+              shouldShowLoading={shouldShowLoading}
+            />
           </PromptResultsActionsProvider>
         </SidebarDataProvider>
       </PromptInsertionBusProvider>

@@ -18,13 +18,6 @@ vi.mock("@/services", () => ({
   },
 }));
 
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  publishCreditBalanceSync: (...args: unknown[]) =>
-    publishCreditBalanceSyncMock(...args),
-  requestCreditBalanceRefresh: (...args: unknown[]) =>
-    requestCreditBalanceRefreshMock(...args),
-}));
-
 vi.mock("../../api", () => ({
   compileWanPrompt: (...args: unknown[]) => compileWanPromptMock(...args),
   generateVideoPreview: (...args: unknown[]) =>
@@ -123,28 +116,6 @@ describe("useGenerationActions insufficient credits handling", () => {
     expect(onInsufficientCredits).toHaveBeenCalledWith(28, "Wan 2.2 preview");
   });
 
-  it("does not create a storyboard generation before a 402 rejection and reports insufficient credits", async () => {
-    const dispatch = vi.fn();
-    const onInsufficientCredits = vi.fn();
-    generateStoryboardPreviewMock.mockRejectedValue(
-      new ApiError("Insufficient credits", 402, {
-        code: "INSUFFICIENT_CREDITS",
-      }),
-    );
-
-    const { result } = renderHook(() =>
-      useGenerationActions(dispatch, { onInsufficientCredits }),
-    );
-
-    await act(async () => {
-      await result.current.generateStoryboard("Storyboard prompt", {});
-    });
-
-    expect(getAction(dispatch, "SET_GENERATIONS")).toBeUndefined();
-    expect(getAction(dispatch, "UPDATE_GENERATION")).toBeUndefined();
-    expect(onInsufficientCredits).toHaveBeenCalledWith(4, "Storyboard");
-  });
-
   it("does not create a render generation before a 402 rejection and reports insufficient credits", async () => {
     const dispatch = vi.fn();
     const onInsufficientCredits = vi.fn();
@@ -194,52 +165,7 @@ describe("useGenerationActions insufficient credits handling", () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
-  it("publishes the remaining balance immediately after a queued draft response reserves credits", async () => {
-    const dispatch = vi.fn();
-    generateVideoPreviewMock.mockResolvedValue({
-      success: true,
-      jobId: "job-1",
-      status: "queued",
-      remainingCredits: 1,
-    });
-    waitForVideoJobMock.mockResolvedValue({
-      videoUrl: "https://example.com/output.mp4",
-    });
 
-    const { result } = renderHook(() => useGenerationActions(dispatch));
-
-    await act(async () => {
-      await result.current.generateDraft("wan-2.2", "A queued prompt", {});
-    });
-
-    expect(publishCreditBalanceSyncMock).toHaveBeenCalledWith(1);
-  });
-
-  it("requests a balance refresh when the queued response omits remaining credits", async () => {
-    const dispatch = vi.fn();
-    generateVideoPreviewMock.mockResolvedValue({
-      success: true,
-      jobId: "job-1",
-      status: "queued",
-      creditsDeducted: 24,
-    });
-    waitForVideoJobMock.mockResolvedValue({
-      videoUrl: "https://example.com/output.mp4",
-    });
-
-    const { result } = renderHook(() => useGenerationActions(dispatch));
-
-    await act(async () => {
-      await result.current.generateRender(
-        "sora-2",
-        "A queued render prompt",
-        {},
-      );
-    });
-
-    expect(requestCreditBalanceRefreshMock).toHaveBeenCalledTimes(1);
-    expect(publishCreditBalanceSyncMock).not.toHaveBeenCalled();
-  });
 });
 
 describe("useGenerationActions cancellation behavior", () => {

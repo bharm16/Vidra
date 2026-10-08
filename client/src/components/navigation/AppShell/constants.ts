@@ -18,15 +18,13 @@ export const AUTH_ROUTES = [
   "/account",
   "/login",
   "/register",
-  "/settings/billing",
-  "/settings/billing/invoices",
 ] as const;
 
 /** Route prefixes that trigger sidebar variant */
 export const WORKSPACE_ROUTE_PREFIXES = ["/prompt/", "/session/"] as const;
 
 /** Exact routes that trigger sidebar variant */
-export const WORKSPACE_ROUTES_EXACT = ["/", "/assets", "/consistent"] as const;
+export const WORKSPACE_ROUTES_EXACT = ["/"] as const;
 
 // -----------------------------------------------------------------------------
 // Type Utilities

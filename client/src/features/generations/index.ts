@@ -1,10 +1,9 @@
 /**
- * GenerationsPanel Module
+ * Generation runtime
  *
- * Barrel exports for the GenerationsPanel feature.
+ * Shared generation data and runtime; presentations belong to the workspace.
  */
 
-export { GenerationsPanel } from "./GenerationsPanel";
 export type {
   Generation,
   GenerationMediaType,
@@ -21,4 +20,3 @@ export type {
   TimelineGenerationItem,
   TimelineItem,
 } from "./hooks/useGenerationsTimeline";
-export { VersionDivider } from "./components/VersionDivider";

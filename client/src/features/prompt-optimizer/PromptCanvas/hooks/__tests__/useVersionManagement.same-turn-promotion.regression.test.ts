@@ -48,10 +48,6 @@ const setup = () => {
   const hook = renderHook(() => {
     const session = usePromptSessionState();
     const versioning = useVersionManagement({
-      hasShotContext: false,
-      shotId: null,
-      shotPromptEntry: null,
-      updateShotVersions: vi.fn(),
       promptHistory: {
         history: [],
         createDraft,

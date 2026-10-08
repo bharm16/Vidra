@@ -1,16 +1,15 @@
-/*
- * Studio chrome.
- *
- * Canvas-app surface model, measured off Recraft: the board is the FLOOR and
- * every piece of chrome floats above it as one lighter material.
- *
- * There is no --studio-* namespace. It aliased root tokens for one component,
- * which meant every rule using it broke the moment its selector matched an
- * element outside .st-frame — the project rows on /studio lost their hover
- * entirely, because var() on an undefined property falls back to transparent
- * and the broken rule won on source order.
- */
+/* Page 21 canonical Studio: 703:301516, 703:300987, 703:2329. */
 .st-frame {
+  /* Stored Page 21 paints differ from bound aliases in generated context. */
+  --studio-chat-paint: #121212;
+  --studio-composer-paint: #292929;
+  --studio-frame-stroke: #ffffff;
+  --studio-panel-width: 344px;
+  --studio-panel-inset: var(--space-4);
+  --studio-stage-inset: calc(
+    var(--studio-panel-width) + var(--space-4) + var(--space-6)
+  );
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -18,86 +17,101 @@
   background: var(--canvas);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-weight: 400;
 }
 
-/* ── Top bar: three zones (left label / centered title / reserved right) ── */
-
-.st-topbar {
+.st-body {
   position: relative;
   display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.st-topbar {
+  position: absolute;
+  z-index: 20;
+  top: var(--space-3);
+  right: var(--space-4);
+  display: flex;
+  max-width: calc(100% - var(--studio-stage-inset) - var(--space-4));
+  min-height: 52px;
   align-items: center;
-  height: 44px;
-  flex: none;
-  /* Matches the content column's gutter — the title sat 12px inside the
-     subtitle and the grid, so the page had two left edges. */
-  padding: 0 24px;
-  background: var(--chrome);
-  /* No rule: it ran the full 1472px, continuing across the canvas where the
-     chrome->canvas colour step already separates. The panel header's own
-     hairline carries the load inside the panel. */
+}
+
+.st-selection-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.st-topbar-right {
+  min-width: 0;
+}
+.st-receipts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  width: 100%;
+}
+.st-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .st-topbar-label {
-  font-size: var(--text-meta);
-  line-height: var(--text-meta-lh);
-  font-weight: 500;
+  color: var(--fg-muted);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+}
+
+.st-topbar a {
   color: var(--fg);
 }
 
-/* Centered in the full frame width, not the canvas width. */
-
-/* Right zone stays right-anchored even while nearly empty (spec). */
-.st-topbar-right {
-  margin-left: auto;
-  min-width: 34px;
-}
-
-/* ── Body: fixed panel + fluid stage ── */
-
-.st-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.st-panel {
-  display: flex;
-  flex-direction: column;
-  width: 360px;
-  flex: none;
-  min-height: 0;
-  /* No divider: chrome against canvas is a 7-level step and reads as an edge
-     on its own. A rule here was compensating for surfaces that were 3 levels
-     apart. */
-  background: var(--chrome);
-}
-
-/* Band 1 — header: menu far left, title, new-project far right. */
 .st-panel-header {
+  position: absolute;
+  z-index: 20;
+  left: var(--studio-panel-inset);
+  top: var(--space-3);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex: none;
-  height: 44px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--space-2);
+  width: var(--studio-panel-width);
+  height: 52px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-card);
+  background: var(--fill);
 }
 
-/* The project title — editable in place, and the only copy on the page. */
 .st-panel-title {
   flex: 1;
   min-width: 0;
-  background: transparent;
+  height: 28px;
+  padding: 0;
+  overflow: hidden;
   border: none;
+  border-radius: var(--vidra-radius-control);
+  background: transparent;
   font: inherit;
   font-size: var(--text-ui);
   line-height: var(--text-ui-lh);
   color: var(--fg-muted);
-  white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
-  border-radius: var(--radius-sm);
-  padding: 0 6px;
+}
+
+.st-panel-title::placeholder {
+  color: var(--fg-muted);
 }
 .st-panel-title:hover,
 .st-panel-title:focus {
@@ -106,193 +120,220 @@
   outline: none;
 }
 
-/* Band 2 — the thread. */
-.st-thread {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
+.st-icon-btn {
+  display: inline-flex;
+  flex: none;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--vidra-radius-control);
+  background: transparent !important;
+  color: var(--fg);
+  cursor: pointer;
 }
 
-.st-thread-empty {
-  margin: auto 8px;
-  font-size: var(--text-ui);
-  line-height: var(--text-ui-lh);
-  color: var(--fg-muted);
-  text-align: center;
+.st-icon-btn:hover {
+  background: var(--hover) !important;
+}
+
+.st-panel {
+  position: absolute;
+  z-index: 10;
+  left: var(--studio-panel-inset);
+  top: 76px;
+  bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--studio-panel-width);
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: var(--space-4);
+  border: 0;
+  outline: 0.5px solid var(--studio-frame-stroke);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-panel);
+  background: var(--studio-chat-paint);
+}
+
+.st-thread {
+  background: var(--studio-chat-paint);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+  overscroll-behavior: contain;
 }
 
 .st-turn {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: var(--space-5);
 }
 
 .st-msg-user {
   align-self: flex-end;
-  max-width: 88%;
-  padding: 8px 11px;
-  border-radius: var(--radius-panel);
-  background: var(--raise);
-  font-size: var(--text-ui);
-  line-height: var(--text-ui-lh);
+  width: 280px;
+  max-width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--fill);
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.st-reasoning {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.st-reasoning-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  width: 105px !important;
+  height: 36px !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) !important;
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+  color: var(--fg-muted) !important;
+  font-size: var(--text-ui) !important;
+  font-weight: 400 !important;
+  line-height: var(--text-ui-lh) !important;
+}
+.st-reasoning-toggle:hover {
+  background: var(--hover) !important;
+}
+.st-reasoning-chevron {
+  flex: none;
+  transition: transform 120ms ease;
+}
+.st-reasoning-chevron-collapsed {
+  transform: rotate(180deg);
+}
+.st-reasoning-text {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  color: var(--fg-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.st-thinking {
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  color: var(--fg-muted);
 }
 
 .st-card {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.625rem;
-  border-radius: var(--radius-panel);
-  background: var(--raise);
-  border: 1px solid var(--hairline);
+  gap: var(--space-3);
 }
-
-.st-card-error {
-  border-color: rgba(255, 120, 120, 0.35);
-}
-
 .st-card-text {
-  font-size: var(--text-ui);
-  line-height: var(--text-ui-lh);
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
   color: var(--fg);
 }
-
+.st-card-error {
+  padding: var(--space-3);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--fill);
+}
 .st-question + .st-question {
-  margin-top: 0.375rem;
+  margin-top: var(--space-3);
 }
 
-.st-thinking {
-  font-size: var(--text-meta);
-  color: var(--fg-muted);
-  padding-left: 2px;
-}
-
-/* Behavior 8: the LLM's persisted reasoning above its results, collapsible
-   per turn (reference product parity). */
-.st-reasoning {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.st-reasoning-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  align-self: flex-start;
-  font-size: var(--text-meta);
-  color: var(--fg-muted);
-  cursor: pointer;
-}
-
-.st-reasoning-chevron {
-  transition: transform 120ms ease;
-}
-
-.st-reasoning-chevron-collapsed {
-  transform: rotate(180deg);
-}
-
-.st-reasoning-text {
-  margin: 0;
-  padding-left: 2px;
-  font-size: var(--text-meta);
-  line-height: var(--text-meta-lh);
-  color: var(--fg-muted);
-}
-
-/* Suggestion / quick-pick pills — a horizontal wrap row directly beneath
-   the content they belong to (spec: never floating, never in composer). */
 .st-pills {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
+  flex-direction: column;
+  gap: var(--space-2);
 }
-
 .st-pill {
-  border: 1px solid var(--hairline);
-  background: var(--raise);
-  color: var(--fg);
-  height: 32px;
-  border-radius: var(--radius-sm);
-  padding: 0 10px;
-  font-size: var(--text-meta);
-  line-height: var(--text-meta-lh);
-  cursor: pointer;
+  display: flex;
+  width: 100% !important;
+  height: 36px !important;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--space-2) var(--space-3) !important;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+  color: var(--fg) !important;
+  font-size: var(--text-ui) !important;
+  font-weight: 400 !important;
+  line-height: var(--text-ui-lh) !important;
   text-align: left;
 }
-
 .st-pill:hover:not(:disabled) {
-  background: var(--raise);
+  background: var(--hover) !important;
 }
-
 .st-pill:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: default;
 }
 
-/* Results: 2×2 grid for a 4-call generate, one cell for a 1-call edit. */
 .st-result-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
 }
-
 .st-result-single {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
 }
-
 .st-cell {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--radius-panel);
-  overflow: hidden;
-  border: 2px solid transparent;
-  background: var(--chrome);
-  padding: 0;
-  cursor: pointer;
   display: flex;
+  width: 100% !important;
+  max-width: 152px;
+  height: auto !important;
+  aspect-ratio: 7 / 4;
   align-items: center;
   justify-content: center;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 0 !important;
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-card) !important;
+  background: var(--canvas) !important;
+  white-space: normal !important;
 }
-
 .st-cell-selected {
-  border-color: #8b8cf6;
+  outline-color: var(--fg) !important;
 }
-
 .st-cell-img {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
-
 .st-cell-failed {
   cursor: default;
-  border-style: dashed;
-  border-color: rgba(255, 120, 120, 0.35);
+  outline-style: dashed !important;
 }
-
 .st-cell-running {
   cursor: default;
 }
-
 .st-cell-note {
+  padding: var(--space-2);
   font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
   color: var(--fg-muted);
-  padding: 0.5rem;
   text-align: center;
 }
-
 .st-pulse {
   width: 10px;
   height: 10px;
@@ -300,7 +341,6 @@
   background: var(--fg-muted);
   animation: st-pulse 1.1s ease-in-out infinite;
 }
-
 @keyframes st-pulse {
   0%,
   100% {
@@ -313,656 +353,437 @@
   }
 }
 
-/* Band 3 — composer: bordered box pinned to the panel bottom. */
 .st-composer {
-  flex: none;
-  margin: 0 16px 16px;
-  /* No border and no shadow — it is the same material as the panel it sits
-     in, shaped by its radius and the control row beneath it. The old 1px
-     outline plus a background identical to the canvas made it read as a
-     detached widget floating over a hole. */
-  border: none;
-  border-radius: var(--radius-panel);
-  /* Raised, not flush. Recraft's composer gets away with flush because it
-     sits under a full transcript and carries a dense row of bordered
-     controls; in an empty panel a flush composer has no container at all —
-     the placeholder floats in open space. */
-  background: var(--raise);
-  padding: 10px 12px 8px;
-}
-
-/* S-12: staged reference-image chips above the field. */
-.st-attach-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  padding: 8px 12px 0;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: calc(100% - 2 * var(--space-4));
+  min-height: 160px;
+  padding: var(--space-3);
+  border: 0;
+  outline: 0.5px solid var(--studio-frame-stroke);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-panel);
+  background: var(--studio-composer-paint);
 }
-
-.st-attach-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  max-width: 100%;
-  padding: 3px 8px;
-  border: 1px solid var(--hairline);
-  border-radius: 9999px;
-  font-size: var(--text-meta);
-  color: var(--fg-muted);
+.st-composer-expanded {
+  min-height: 216px;
 }
-
-.st-attach-name {
-  max-width: 9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Behavior 9: one-line stale-pin notice above the field. */
-.st-stale-pin-note {
-  margin: 0;
-  padding: 8px 12px 0;
-  font-size: var(--text-meta);
-  color: var(--fg-muted);
-}
-
 .st-composer-field {
-  position: relative;
+  display: flex;
+  gap: var(--space-2);
+  height: 83px;
 }
-
+.st-composer-expanded .st-composer-field {
+  height: 139px;
+}
 .st-input {
+  flex: 1;
   width: 100%;
-  min-height: 58px;
-  max-height: 120px;
+  min-width: 0;
+  height: 100%;
   resize: none;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--fg);
-  font: inherit;
-  font-size: var(--text-ui);
-  line-height: var(--text-ui-lh);
-  /* The composer wrapper owns the padding — the old asymmetric
-     10/30/6/11 was compensating for the expand toggle's position. */
   padding: 0;
-}
-
-.st-input-expanded {
-  min-height: 140px;
-  max-height: 240px;
-}
-
-.st-input::placeholder {
-  color: var(--fg-dim);
-}
-
-/* Expand toggle at the field's top-right corner (spec Row A). */
-.st-expand {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-}
-
-.st-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  border: none;
   background: transparent;
-  color: var(--fg-muted);
-  cursor: pointer;
-}
-
-.st-icon-btn:hover {
-  background: var(--hover);
+  border: 0;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: var(--text-body-lh);
   color: var(--fg);
 }
-
-/* Row B: picker left, flex gap, send always right-most (spec grammar). */
+.st-input::placeholder {
+  color: var(--fg-muted);
+}
+.st-expand {
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+}
+.st-writing-divider {
+  width: 100%;
+  height: 1px;
+  flex: none;
+  background: var(--border);
+}
 .st-composer-strip {
   display: flex;
+  height: 36px;
+  flex: none;
   align-items: center;
-  gap: 0.5rem;
-  padding: 6px 8px 8px;
+  gap: var(--space-2);
 }
-
 .st-strip-gap {
   flex: 1;
 }
-
 .st-picker {
   position: relative;
+  min-width: 0;
 }
-
 .st-picker-btn {
   display: inline-flex;
+  min-width: 84px;
+  max-width: 180px;
+  height: 36px !important;
   align-items: center;
-  gap: 0.3125rem;
-  border: 1px solid var(--hairline);
-  background: var(--raise);
-  color: var(--fg);
-  height: 32px;
-  border-radius: var(--radius-sm);
-  padding: 0 10px;
-  font-size: var(--text-meta);
-  line-height: var(--text-meta-lh);
-  cursor: pointer;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) !important;
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+  color: var(--fg) !important;
+  font-size: var(--text-ui) !important;
+  font-weight: 400 !important;
+  line-height: var(--text-ui-lh) !important;
 }
-
 .st-picker-btn:hover {
-  background: var(--raise);
+  background: var(--hover) !important;
 }
-
-/* Opens upward, overlaying the lower thread (observed in the reference). */
 .st-picker-pop {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  width: 236px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  width: 288px;
+  max-width: calc(100vw - 6 * var(--space-4));
   max-height: 300px;
   overflow-y: auto;
-  /* Floating panel: a step above the chrome it covers, on the same 10px
-     radius as the zoom cluster — 12 made it a third floating radius. */
-  background: var(--float);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  padding: var(--space-1);
-  z-index: 30;
+  padding: var(--space-2) !important;
+  border: 0;
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-card);
+  background: var(--canvas);
   box-shadow: var(--shadow-popover);
 }
-
 .st-picker-row {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--fg);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2-5);
-  font-size: var(--text-ui);
-  line-height: var(--text-ui-lh);
-  cursor: pointer;
+  width: 100% !important;
+  height: 56px !important;
+  align-items: flex-start !important;
+  justify-content: center;
+  gap: var(--space-0-5) !important;
+  padding: var(--space-2) var(--space-3) !important;
+  border-radius: var(--radius-card) !important;
+  background: var(--fill) !important;
+  color: var(--fg) !important;
   text-align: left;
 }
-
-.st-picker-row:hover {
-  background: var(--raise);
-}
-
+.st-picker-row:hover,
 .st-picker-row-active {
-  background: var(--raise);
+  background: var(--hover) !important;
 }
-
+.st-picker-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-model-chevron {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  overflow: hidden;
+}
+.st-model-chevron img {
+  max-width: none;
+}
 .st-picker-name {
   font-size: var(--text-ui);
+  font-weight: 400;
   line-height: var(--text-ui-lh);
-  font-weight: var(--weight-ui-active);
 }
-
 .st-picker-hint {
   font-size: var(--text-meta);
+  font-weight: 400;
   line-height: var(--text-meta-lh);
-  font-weight: var(--weight-ui);
   color: var(--fg-muted);
 }
-
 .st-send {
   display: inline-flex;
+  flex: none;
+  width: 36px !important;
+  height: 36px !important;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: var(--fg);
-  color: var(--on-primary);
-  cursor: pointer;
+  padding: 0 !important;
+  border-radius: var(--radius-full);
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
 }
-
 .st-send:disabled {
-  /* Dimming a white fill composites to ~#5a5a5a — indistinguishable from
-     the ghost buttons beside it, so the page had no visible primary action.
-     A disabled primary is a different fill, not a faded one. */
-  background: var(--raise);
-  color: oklch(100% 0 0deg / 0.3);
-  opacity: 1;
+  opacity: 0.5;
   cursor: default;
 }
-
-/* ── Stage / plane ── */
+.st-attach-btn {
+  display: none;
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+}
+.st-attach-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.st-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-card);
+  color: var(--fg-muted);
+  font-size: var(--text-meta);
+}
+.st-attach-name {
+  max-width: 9rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.st-attach-remove {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.st-stale-pin-note {
+  margin: 0;
+  font-size: var(--text-meta);
+  line-height: var(--text-meta-lh);
+  color: var(--fg-muted);
+}
 
 .st-stage {
   position: relative;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  min-height: 0;
+  padding-left: var(--studio-stage-inset);
 }
-
 .st-plane {
   position: relative;
 }
-
 .st-plane-cell {
   position: absolute;
-  border-radius: var(--radius-panel);
+  padding: 0 !important;
   overflow: hidden;
-  border: 2px solid transparent;
-  background: var(--chrome);
-  padding: 0;
-  cursor: pointer;
+  border: 0 !important;
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-card) !important;
+  background: var(--canvas) !important;
 }
-
-.st-plane-cell[data-live="true"] {
-  /* Camera target only — no visual difference. */
+.st-plane-cell.st-cell-selected {
+  outline-color: var(--fg) !important;
 }
-
 .st-plane-empty {
+  pointer-events: none;
+}
+
+.st-canvas-tools {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: var(--space-3);
   display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 264px;
+  height: 52px;
+  padding: var(--space-1-5);
+  border: 0;
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+  border-radius: var(--radius-card);
+  background: var(--chrome);
+  transform: translateX(-50%);
+}
+.st-tool-button {
+  width: 40px !important;
+  height: 40px !important;
+  flex: none;
+  padding: 0 !important;
+  border-radius: var(--vidra-radius-control);
+}
+.st-tool-button[aria-pressed="true"] {
+  background: var(--fg) !important;
+  color: var(--primary-foreground) !important;
+}
+.st-tool-button[aria-pressed="false"] {
+  background: transparent !important;
+}
+.st-tool-divider {
+  display: flex;
+  width: 24px;
+  height: 40px;
+  flex: none;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 1.25rem;
-  font-size: var(--text-ui);
-  line-height: var(--text-ui-lh);
-  color: var(--fg-muted);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-panel);
-  line-height: var(--text-ui-lh);
 }
-
-/* ── Project list overlay (band-1 menu) ── */
-
-.st-projects {
-  position: absolute;
-  top: 46px;
-  left: 8px;
-  width: 268px;
-  max-height: 50vh;
-  overflow-y: auto;
-  background: var(--chrome);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-panel);
-  padding: 0.25rem;
-  z-index: 40;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+.st-tool-divider::after {
+  content: "";
+  width: 1px;
+  height: 24px;
+  background: var(--border);
 }
-
-.st-projects-empty {
-  padding: 0.75rem;
-  font-size: var(--text-meta);
-  color: var(--fg-muted);
-}
-
-.st-projects-row {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: 100%;
-  border-radius: var(--radius-sm);
-  padding: 2px;
-}
-
-.st-projects-row:hover {
-  background: var(--raise);
-}
-
-.st-projects-row-active {
-  background: var(--raise);
-}
-
-/* The open button carries the title/date pair and fills the row. */
-.st-projects-open {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
+.st-tool-reference {
+  display: inline-flex;
   flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--fg);
-  border-radius: var(--radius-sm);
-  padding: 6px 7px;
-  cursor: pointer;
-  text-align: left;
-}
-
-/* Two-step delete: quiet icon, labeled "Delete?" once armed. */
-.st-projects-delete {
-  flex: none;
-  border: none;
-  background: transparent;
-  color: var(--fg-muted);
-  border-radius: var(--radius-sm);
-  padding: 0.375rem;
-  font-size: var(--text-meta);
-  cursor: pointer;
-}
-
-.st-projects-delete:hover {
-  color: var(--fg);
-}
-
-.st-projects-delete-armed {
-  color: rgba(255, 138, 138, 0.95);
-}
-
-.st-projects-title {
-  font-size: var(--text-meta);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.st-projects-date {
-  flex: none;
-  font-size: var(--text-meta);
-  color: var(--fg-muted);
-}
-
-/* ── Design-system Button overrides ──
-   ADR-0008 bans raw <button>, so the chrome above rides Button
-   (variant="ghost"), whose cva utilities (h-ps-6, px-ps-4,
-   hover:bg-hover, whitespace-nowrap) would otherwise beat these
-   feature classes. The !important set below pins the studio's box model
-   and colors — same escape hatch the rebuild used for h-9 vs h-auto. */
-
-.st-pill {
-  height: 32px !important;
-  padding: 0 10px !important;
-  border-radius: var(--radius-sm) !important;
-  font-size: var(--text-meta) !important;
-  line-height: var(--text-meta-lh) !important;
-  white-space: normal !important;
-  justify-content: flex-start !important;
-  background: var(--raise) !important;
-  color: var(--fg) !important;
-}
-
-.st-pill:hover:not(:disabled) {
-  background: var(--raise) !important;
-}
-
-.st-icon-btn {
-  height: 32px !important;
-  width: 32px !important;
+  height: 40px !important;
+  align-items: center;
+  gap: var(--space-2);
   padding: 0 !important;
-  border-radius: var(--radius-sm) !important;
-  background: transparent !important;
-  color: var(--fg-muted) !important;
-}
-
-.st-icon-btn:hover {
-  background: var(--hover) !important;
-  color: var(--fg) !important;
-}
-
-.st-send {
-  height: 32px !important;
-  width: 32px !important;
-  padding: 0 !important;
-  border-radius: var(--radius-sm) !important;
-}
-
-.st-send:enabled {
-  background: var(--fg) !important;
-  color: var(--on-primary) !important;
-}
-
-.st-send:disabled {
-  background: var(--raise) !important;
-  color: oklch(100% 0 0deg / 0.3) !important;
-  opacity: 1 !important;
-}
-
-.st-picker-btn {
-  height: 32px !important;
-  padding: 0 10px !important;
-  border-radius: var(--radius-sm) !important;
-  font-size: var(--text-meta) !important;
-  line-height: var(--text-meta-lh) !important;
-  background: var(--raise) !important;
-  color: var(--fg) !important;
-}
-
-.st-picker-btn:hover {
-  background: var(--raise) !important;
-}
-
-.st-picker-row {
-  height: auto !important;
-  width: 100% !important;
-  padding: var(--space-1) var(--space-2-5) !important;
+  border-radius: var(--vidra-radius-control);
   font-size: var(--text-ui) !important;
+  font-weight: 400 !important;
   line-height: var(--text-ui-lh) !important;
-  border-radius: var(--radius-sm) !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  gap: 1px !important;
-  white-space: normal !important;
-  background: transparent !important;
-  color: var(--fg) !important;
 }
 
-.st-picker-row:hover {
-  background: var(--raise) !important;
+@media (max-width: 767px) {
+  .st-frame {
+    --studio-panel-width: 100%;
+    display: grid;
+    grid-template-rows: 52px auto minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .st-body {
+    display: contents;
+  }
+  .st-panel-header {
+    position: static;
+    grid-row: 1;
+    width: 100%;
+  }
+  .st-topbar {
+    position: static;
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+    min-height: 36px;
+    justify-content: flex-end;
+  }
+  .st-selection-actions {
+    gap: var(--space-1);
+  }
+  .st-topbar-right {
+    flex-wrap: wrap;
+  }
+  .st-receipt {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .st-panel {
+    position: static;
+    grid-row: 3;
+    width: 100%;
+    height: 100%;
+  }
+  .st-stage {
+    display: none;
+  }
+  .st-canvas-tools {
+    display: none;
+  }
+  .st-attach-btn {
+    display: inline-flex;
+  }
+  .st-cell {
+    max-width: 152px;
+  }
+  .st-picker-btn {
+    max-width: 137px;
+  }
+  .st-frame[data-has-images="false"] .st-topbar {
+    display: none;
+  }
+  .st-frame[data-has-images="false"] {
+    grid-template-rows: 52px minmax(0, 1fr);
+  }
+  .st-frame[data-has-images="false"] .st-panel {
+    grid-row: 2;
+  }
 }
 
-.st-picker-row-active {
-  background: var(--raise) !important;
-}
-
-.st-projects-open {
-  height: auto !important;
-  width: auto !important;
-  padding: 6px 7px !important;
-  border-radius: var(--radius-sm) !important;
-  white-space: normal !important;
-  justify-content: space-between !important;
-  background: transparent !important;
-  color: var(--fg) !important;
-}
-
-.st-projects-delete {
-  height: auto !important;
-  width: auto !important;
-  padding: 0.375rem !important;
-  background: transparent !important;
-}
-
-.st-attach-remove {
-  height: auto !important;
-  width: auto !important;
-  padding: 1px !important;
-  background: transparent !important;
-}
-
-.st-reasoning-toggle {
-  height: auto !important;
-  width: auto !important;
-  padding: 2px !important;
-  background: transparent !important;
-  color: var(--fg-muted) !important;
-}
-
-.st-projects-row:hover {
-  background: var(--raise) !important;
-}
-
-.st-projects-row-active {
-  background: var(--raise) !important;
-}
-
-.st-cell {
-  height: auto !important;
-  padding: 0 !important;
-  border-radius: var(--radius-panel) !important;
-  white-space: normal !important;
-  background: var(--chrome) !important;
-  border: 2px solid transparent !important;
-}
-
-.st-cell:hover {
-  background: var(--chrome) !important;
-}
-
-.st-cell-selected {
-  border-color: #8b8cf6 !important;
-}
-
-.st-plane-cell {
-  /* height comes from the inline style (computed layout) — an !important
-     height here would beat the inline value and flatten the cells. */
-  padding: 0 !important;
-  border-radius: var(--radius-panel) !important;
-  background: var(--chrome) !important;
-  border: 2px solid transparent !important;
-}
-
-.st-plane-cell:hover {
-  background: var(--chrome) !important;
-}
-
-.st-plane-cell.st-cell-selected {
-  border-color: #8b8cf6 !important;
-}
-
-/* ── Floating panels over the board ────────────────────────────────────────
-   Same material as the panel, just smaller: one surface step above the
-   canvas, 10px radius, 4px padding, children on the one control size. */
-.st-float {
-  position: absolute;
-  display: flex;
-  padding: var(--space-1);
-  gap: var(--space-1);
-  background: var(--chrome);
-  border-radius: var(--radius-md);
-  z-index: 20;
-}
-
-.st-tool-rail {
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  flex-direction: column;
-  width: 40px;
-}
-
-/* The zoom readout is a label, not canvas — it must not offer the pan grab. */
-.st-float span,
-.st-float .value {
-  cursor: default;
-}
-
-/* ── Sort control ──────────────────────────────────────────────────────────
-   A well, not a raised panel: the track is recessed BELOW the floor, and
-   rises to it on hover. This was a segmented track holding sort orders — but
-   a segmented control picks between mutually-exclusive views, and sort is a
-   setting on the view you are already in. */
+/* Studio index: project card703:303542 and Create action703:301467. */
 .st-sort {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1-5);
-  height: var(--control-md);
-  padding: 0 var(--space-2-5);
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
   border: none;
-  border-radius: var(--radius-sm);
-  background: var(--recess);
+  border-radius: var(--radius-full);
+  background: var(--fill);
   color: var(--fg);
-  font-size: var(--text-meta);
-  line-height: var(--text-meta-lh);
-  font-weight: var(--weight-ui-active);
-  cursor: pointer;
-  transition: var(--transition-colors);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  font-weight: 400;
 }
-
 .st-sort:hover,
 .st-sort[data-state="open"] {
-  background: var(--chrome);
+  background: var(--hover);
 }
-
-/* ── Project index ─────────────────────────────────────────────────────────
-   Tight across, loose down: a row reads as one group and the eye then drops.
-   A uniform 24px lattice has no reading direction — and it also cost a whole
-   column, because auto-fill only lays six 280px tracks once 6×280 + 5×gap
-   fits the content width. At a 24px gap that is 1800px; at 12px, 1740. */
 .st-project-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   column-gap: var(--space-3);
   row-gap: var(--space-6);
 }
-
-/* One thumb treatment for every tile in the grid, the create tile included.
-   They used to carry different heights, radii and borders, so a row's thumb
-   bottoms and caption baselines disagreed by 13px. */
 .st-card-thumb {
-  background: var(--chrome);
+  background: var(--fill);
   transition: var(--transition-colors);
 }
-
 .st-project-card:hover .st-card-thumb {
-  background: var(--float);
-  /* An outline, not a border: painted outside the box, so arming a card on
-     hover cannot reflow the grid. At rest there is no ring at all. */
-  outline: 1px solid var(--hairline);
+  background: var(--hover);
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
 }
-
-/* An overlay, not a solid. The old #333 was the same value as the hover
-   fill, so the label went invisible exactly when the pointer arrived. 20%
-   white composites to a readable grey on the resting fill and survives the
-   hover step too. */
+.st-create-thumb {
+  aspect-ratio: 7 / 4;
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+}
 .st-card-empty {
-  color: oklch(100% 0 0deg / 0.2);
-  font-size: 26px;
-  font-weight: 580;
-  line-height: 32px;
-  letter-spacing: -0.035em;
+  color: var(--fg-muted);
+  font-size: var(--text-heading);
+  font-weight: 500;
+  line-height: var(--text-heading-lh);
 }
-
-/* Geist is variable, and the half-stops are what make a caption read dense
-   at this size — 500/400 sets loose under a 280px thumb. */
 .st-card-title {
   margin-top: var(--space-2);
   color: var(--fg);
   font-size: var(--text-ui);
   line-height: var(--text-ui-lh);
-  font-weight: 550;
+  font-weight: 400;
 }
-
+.st-create-title {
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+}
 .st-card-meta {
   margin-top: var(--space-0-5);
   color: var(--fg-muted);
   font-size: var(--text-meta);
   line-height: var(--text-meta-lh);
-  font-weight: 450;
+  font-weight: 400;
 }
-
-/* Opaque fill plus hairline, not a bare white overlay: 10% white reads fine
-   over an empty dark thumb and disappears over a bright generated one. */
 .st-card-menu {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border);
+  border-radius: var(--vidra-radius-control);
   background: var(--chrome);
   color: var(--fg);
   cursor: pointer;
   opacity: 0;
   transition: var(--transition-opacity);
 }
-
-/* Stays up while its own menu is open — otherwise travelling to the menu
-   takes the pointer off the card and hides the trigger under it. */
 .st-project-card:hover .st-card-menu,
 .st-card-menu:focus-visible,
 .st-card-menu[data-state="open"] {

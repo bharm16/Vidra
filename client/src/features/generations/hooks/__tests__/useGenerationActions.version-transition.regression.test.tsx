@@ -13,10 +13,6 @@ vi.mock("../../api", () => ({
   generateStoryboardPreview: vi.fn(),
   waitForVideoJob: vi.fn(),
 }));
-vi.mock("@/hooks/useUserCreditBalance", () => ({
-  publishCreditBalanceSync: vi.fn(),
-  requestCreditBalanceRefresh: vi.fn(),
-}));
 
 const schema = {
   provider: "generic",

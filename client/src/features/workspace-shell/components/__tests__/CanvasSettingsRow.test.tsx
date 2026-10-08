@@ -101,8 +101,7 @@ function renderRow(options: {
                   onStartFrameUpload: options.onReferenceUpload,
                   onRender: vi.fn(),
                   onDraft: vi.fn(),
-                  onStoryboard: vi.fn(),
-                }
+                          }
               : null,
           }}
         >
@@ -127,7 +126,6 @@ describe("CanvasSettingsRow", () => {
       isExpanding: true,
       onReferenceUpload,
       controls: {
-        onStoryboard: vi.fn(),
         onRender: vi.fn(),
         onDraft: vi.fn(),
         isGenerating: false,
@@ -150,7 +148,6 @@ describe("CanvasSettingsRow", () => {
     renderRow({
       isReferenceUploading: true,
       controls: {
-        onStoryboard: vi.fn(),
         onRender,
         onDraft: vi.fn(),
         isGenerating: false,
@@ -163,14 +160,12 @@ describe("CanvasSettingsRow", () => {
     expect(onRender).not.toHaveBeenCalled();
   });
 
-  it("uses GenerationControlsContext controls for preview and render actions", () => {
-    const onStoryboard = vi.fn();
+  it("uses GenerationControlsContext for the current render action", () => {
     const onDraft = vi.fn();
     const onRender = vi.fn();
 
     renderRow({
       controls: {
-        onStoryboard,
         onDraft,
         onRender,
         isGenerating: false,
@@ -178,10 +173,9 @@ describe("CanvasSettingsRow", () => {
       },
     });
 
-    fireEvent.click(screen.getByTestId("canvas-preview-button"));
     fireEvent.click(screen.getByTestId("canvas-generate-button"));
 
-    expect(onStoryboard).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("canvas-preview-button")).not.toBeInTheDocument();
     expect(onRender).toHaveBeenCalledWith("sora-2");
     expect(onDraft).not.toHaveBeenCalled();
   });
@@ -192,7 +186,6 @@ describe("CanvasSettingsRow", () => {
 
     renderRow({
       controls: {
-        onStoryboard: vi.fn(),
         onDraft,
         onRender,
         isGenerating: false,
@@ -207,17 +200,15 @@ describe("CanvasSettingsRow", () => {
     expect(onRender).not.toHaveBeenCalled();
   });
 
-  it("disables preview/generate buttons when controls are unavailable", () => {
+  it("disables generation when controls are unavailable", () => {
     renderRow({ controls: null });
 
-    expect(screen.getByTestId("canvas-preview-button")).toBeDisabled();
     expect(screen.getByTestId("canvas-generate-button")).toBeDisabled();
   });
 
-  it("disables preview/generate buttons while generation is in progress", () => {
+  it("disables generation while generation is in progress", () => {
     renderRow({
       controls: {
-        onStoryboard: vi.fn(),
         onDraft: vi.fn(),
         onRender: vi.fn(),
         isGenerating: true,
@@ -225,63 +216,24 @@ describe("CanvasSettingsRow", () => {
       },
     });
 
-    expect(screen.getByTestId("canvas-preview-button")).toBeDisabled();
     expect(screen.getByTestId("canvas-generate-button")).toBeDisabled();
   });
 
-  it("renders the handoff's exact control set — no frame/reference popovers", () => {
-    renderRow({
-      controls: {
-        onStoryboard: vi.fn(),
-        onDraft: vi.fn(),
-        onRender: vi.fn(),
-        isGenerating: false,
-        activeDraftModel: null,
-      },
-    });
-
-    // The composer handoff's docked row is exactly: aspect · duration ·
-    // model · preview, then Make it. Asserted as the row's whole control
-    // population, so any control added back — a start/end-frame or reference
-    // popover under any name — fails this, which a queryByTestId on a mocked
-    // module could not.
+  it("keeps the supported media and settings controls, without dormant camera/storyboard actions", () => {
+    renderRow({ controls: { onDraft: vi.fn(), onRender: vi.fn(), isGenerating: false, activeDraftModel: null } });
     const row = screen.getByTestId("canvas-settings-row");
-    const controls = within(row).getAllByRole("button");
-
-    expect(controls).toHaveLength(5);
     expect(within(row).getByRole("button", { name: "16:9" })).toBeVisible();
     expect(within(row).getByRole("button", { name: "5s" })).toBeVisible();
-    expect(
-      within(row).getByRole("button", { name: "Video model" }),
-    ).toBeVisible();
-    expect(controls).toContain(screen.getByTestId("canvas-preview-button"));
-    expect(controls).toContain(screen.getByTestId("canvas-generate-button"));
-  });
-
-  it("renders the model control icon-only, reachable as 'Video model' (composer handoff)", () => {
-    renderRow({
-      controls: {
-        onStoryboard: vi.fn(),
-        onDraft: vi.fn(),
-        onRender: vi.fn(),
-        isGenerating: false,
-        activeDraftModel: null,
-      },
-    });
-
-    // The docked row is a compact icon toolbar: the model trigger shows the
-    // sparkle glyph only — no visible label — and stays reachable by its
-    // accessible name.
-    const trigger = screen.getByRole("button", { name: "Video model" });
-    expect(trigger).not.toHaveTextContent("Model ·");
-    expect(trigger).not.toHaveTextContent("Sora 2");
-    expect(trigger.querySelector("svg")).not.toBeNull();
+    expect(within(row).getByRole("button", { name: "Video model" })).toHaveTextContent("Sora 2");
+    expect(within(row).getByRole("button", { name: "Upload reference picture" })).toBeVisible();
+    expect(within(row).getByRole("button", { name: "Open Sketch" })).toBeVisible();
+    expect(within(row).queryByRole("button", { name: /Camera motion|Storyboard|Preview storyboard/ })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("canvas-preview-button")).not.toBeInTheDocument();
   });
 
   it("shows extend chip and clears extend mode from prompt row", () => {
     renderRow({
       controls: {
-        onStoryboard: vi.fn(),
         onDraft: vi.fn(),
         onRender: vi.fn(),
         isGenerating: false,
@@ -325,8 +277,7 @@ describe("pending reference words action (issue #119)", () => {
             controls={{
               onRender,
               onDraft,
-              onStoryboard: vi.fn(),
-              isGenerating: false,
+                    isGenerating: false,
               activeDraftModel: null,
             }}
           />

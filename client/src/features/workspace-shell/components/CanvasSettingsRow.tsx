@@ -1,16 +1,19 @@
 import { useSidebarGenerationDomain } from "@/components/ToolSidebar/context";
 import { ReferenceUploadButton } from "./ReferenceUploadButton";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { CaretDown, X } from "@promptstudio/system/components/ui";
-import { FEATURES } from "@/config/features.config";
-import {
-  VIDEO_DRAFT_MODELS,
-  STORYBOARD_COST,
-  getVideoCost,
-} from "@/components/ToolSidebar/config/modelConfig";
+import { useResolvedMediaUrl } from "@/hooks/useResolvedMediaUrl";
+import type { PendingFirstFrameView } from "@features/prompt-optimizer/PromptOptimizerContainer/hooks/usePendingFirstFrame";
+import type { VideoComposerSlots } from "./VideoComposer";
+import sketchIcon from "@/assets/design-system/sketch.svg";
+import closeIcon from "@/assets/design-system/composer-close.svg";
+import modelIcon from "@/assets/design-system/composer-model.svg";
+import downIcon from "@/assets/design-system/composer-down.svg";
+import ratioIcon from "@/assets/design-system/composer-ratio.svg";
+import clockIcon from "@/assets/design-system/composer-clock.svg";
+import generateIcon from "@/assets/design-system/composer-generate.svg";
+import React, { useCallback, useMemo } from "react";
+import { VIDEO_DRAFT_MODELS } from "@/components/ToolSidebar/config/modelConfig";
 import { useGenerationControlsContext } from "@/features/prompt-optimizer/context/GenerationControlsContext";
 import { usePromptResultsActionsOptional } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
-import { useCreditBalance } from "@/contexts/CreditBalanceContext";
 import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
@@ -21,215 +24,48 @@ import {
   resolveDurationSeconds,
 } from "@features/generation-controls/resolveGenerationParams";
 import { useCapabilitiesClamping } from "../hooks/useCapabilitiesClamping";
-import { ModelRecommendationDropdown } from "./ModelRecommendationDropdown";
-import type { ModelRecommendation } from "@/features/model-intelligence/types";
-import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
+import { VideoModelSelect } from "./VideoModelSelect";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@promptstudio/system/components/ui/dropdown-menu";
-import { cn } from "@/utils/cn";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { authGateController, runWhenAuthenticated } from "@features/auth-gate";
-
-export interface RecommendationContext {
-  model?: ModelRecommendation | null | undefined;
-  recommendedModelId?: string | undefined;
-  efficientModelId?: string | undefined;
-  promptId?: string | undefined;
-  mode?: "t2v" | "i2v" | undefined;
-  ageMs?: number | null | undefined;
-}
 
 interface CanvasSettingsRowProps {
   prompt: string;
   hasPendingReference?: boolean;
+  pendingReference?: PendingFirstFrameView | null | undefined;
+  onClearPendingReference?: (() => void) | undefined;
   isReferenceUploading?: boolean;
   isExpanding?: boolean;
   renderModelId: string;
-  /** Model picker options + recommendation metadata. The picker chip lives
-   *  in the chip row now (replaces the floating ModelCornerSelector). The
-   *  inner dropdown wants a mutable array, so the type matches its contract
-   *  rather than over-tightening to readonly here. */
   renderModelOptions: Array<{ id: string; label: string }>;
-  /** Model-intelligence context, bundled: these six always travel together
-   *  (from useModelSelectionRecommendation) and previously arrived as six
-   *  separate props. */
-  recommendation?: RecommendationContext | undefined;
   onModelChange: (modelId: string) => void;
-  /**
-   * Opens the camera-motion picker. Summoned by the armed first frame
-   * (ADR-0022 D7): the control is absent with no frame, so the picker is a
-   * setting the frame brings with it rather than a resident of the row
-   * (ADR-0009/ADR-0010's anatomy is untouched).
-   */
-  onOpenCameraMotion?: (() => void) | undefined;
-  /** Whether to show the storyboard-preview eye button. Hidden in the empty
-   *  moment so the chip row matches the screenshot's clean 5-chip layout. */
-  showPreviewButton?: boolean;
-  /**
-   * `sheet` is the Anchor's pre-work glass-sheet layout: only the aspect +
-   * duration selectors and a circular submit (the handoff's minimal input —
-   * REBUILD.md: "two inline selectors on the input, 16:9 ▾ · 6s ▾"). `docked`
-   * is the full workspace chrome. Defaults to `docked`.
-   */
-  variant?: "docked" | "sheet";
+  onOpenSketch?: (() => void) | undefined;
+  renderComposer?:
+    | ((slots: VideoComposerSlots) => React.ReactElement)
+    | undefined;
 }
-
-// C8 cooldown window: how long after a Preview-storyboard click we drop
-// repeat clicks. Sized to outlast the multi-step prelude (optimize →
-// session-create) that gates the upstream isSubmittingRef flip.
-const PREVIEW_CLICK_COOLDOWN_MS = 2000;
-
-// Ghost-text chip trigger for the aspect/duration menus — matches the
-// retired MiniDropdown's quiet trigger, while the menu itself is the system
-// DropdownMenu (opaque popover surface on the named z-index scale).
-const MENU_TRIGGER_CLASS = "ps-btn ps-btn--md ps-btn--rect ps-btn--quiet";
-
-// Docked variant (the composer handoff): icon-only 42px control buttons —
-// aspect · duration · model · preview — styled as a compact canvas toolbar.
-// The accessible name carries the current VALUE (e.g. "16:9", "10s") so the
-// setting is announced; the title names the control.
-const ICON_TRIGGER_CLASS = "ps-btn ps-btn--icon ps-btn--rect ps-btn--quiet";
-
-/* Control glyphs copied VERBATIM from the composer handoff
-   (design_handoff_composer/Composer States.dc.html) — 21px, 1.7 stroke,
-   sparkle filled. Kept as literal SVGs so the bar matches the frames
-   exactly instead of approximating with library icons. */
-
-function AspectGlyph(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="7" width="18" height="10" rx="1.8" />
-    </svg>
-  );
-}
-
-function DurationGlyph(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 7.5V12l3 1.8" />
-    </svg>
-  );
-}
-
-function ModelGlyph(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z" />
-    </svg>
-  );
-}
-
-function CameraMotionGlyph(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2.5" y="7.5" width="12" height="9" rx="1.8" />
-      <path d="M14.5 11.2l5-2.6v6.8l-5-2.6z" />
-      <path d="M5.5 20h9" />
-    </svg>
-  );
-}
-
-function PreviewGlyph(): React.ReactElement {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function MakeItArrowGlyph(): React.ReactElement {
-  return (
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 12h14" />
-      <path d="M13 6l6 6-6 6" />
-    </svg>
-  );
-}
-
-// Sheet (Anchor) variant: the aspect/duration selectors read as bordered mono
-// pills inside the glass sheet, matching the handoff's two inline chips.
-const SHEET_MENU_TRIGGER_CLASS =
-  "ps-btn ps-btn--md ps-btn--pill font-mono text-ui-mono";
 
 export function CanvasSettingsRow({
   prompt,
   hasPendingReference = false,
+  pendingReference,
+  onClearPendingReference,
   isReferenceUploading = false,
   isExpanding = false,
   renderModelId,
   renderModelOptions,
-  recommendation,
   onModelChange,
-  onOpenCameraMotion,
-  showPreviewButton = true,
-  variant = "docked",
+  onOpenSketch,
+  renderComposer,
 }: CanvasSettingsRowProps): React.ReactElement {
-  const isSheet = variant === "sheet";
-  const { controls, onInsufficientCredits } = useGenerationControlsContext();
-  const { balance: creditBalance } = useCreditBalance();
+  const { controls } = useGenerationControlsContext();
   // Auth-at-Go (M4): the primary generate action is gated behind sign-in for
   // logged-out users. We read auth state here and resume the action after a
   // successful login rather than clearing the typed draft.
@@ -237,6 +73,28 @@ export function CanvasSettingsRow({
   const onStartFrameUpload = useSidebarGenerationDomain()?.onStartFrameUpload;
   const { domain } = useGenerationControlsStoreState();
   const storeActions = useGenerationControlsStoreActions();
+  const reference = useResolvedMediaUrl({
+    kind: "image",
+    url: pendingReference
+      ? (pendingReference.url ?? null)
+      : (domain.startFrame?.url ?? null),
+    assetId: pendingReference ? null : (domain.startFrame?.assetId ?? null),
+    storagePath: pendingReference
+      ? null
+      : (domain.startFrame?.storagePath ?? null),
+    enabled: pendingReference
+      ? Boolean(pendingReference.url)
+      : Boolean(domain.startFrame),
+    deferUntilResolved: true,
+  });
+
+  const videoReference = useResolvedMediaUrl({
+    kind: "video",
+    url: domain.extendVideo?.url ?? null,
+    enabled: Boolean(domain.extendVideo),
+    deferUntilResolved: true,
+  });
+
   // Tolerant: this chrome also mounts outside the prompt-results tree
   // (and in credit-gate tests); no provider simply means no idea-box routing.
   const onIdeaBoxExpand = usePromptResultsActionsOptional()?.onIdeaBoxExpand;
@@ -256,25 +114,6 @@ export function CanvasSettingsRow({
   const isSubmitting = controls?.isSubmitting ?? false;
   const isGenerationBusy = isGenerating || isSubmitting;
 
-  // C8 guard: rapid Preview-storyboard double-clicks fire `onStoryboard`
-  // multiple times because the upstream isSubmittingRef inside
-  // useGenerationActions only flips AFTER the workspace-level prelude
-  // (optimize -> session-create) completes. During that prelude, the button
-  // looks enabled and a second click would silently re-charge credits.
-  // Hold a short cooldown ref so each Preview click fires the handler at
-  // most once per ~2s window.
-  const previewClickCooldownRef = useRef(false);
-  const previewCooldownTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (previewCooldownTimerRef.current !== null) {
-        window.clearTimeout(previewCooldownTimerRef.current);
-        previewCooldownTimerRef.current = null;
-      }
-    };
-  }, []);
-
   const handleAspectRatioChange = useCallback(
     (value: string) => {
       storeActions.mergeGenerationParams({ aspect_ratio: value });
@@ -289,17 +128,16 @@ export function CanvasSettingsRow({
     [storeActions],
   );
 
-  const { aspectRatioOptions, durationOptions, schema } =
-    useCapabilitiesClamping({
-      selectedModel: domain.selectedModel,
-      videoTier: domain.videoTier,
-      renderModelId,
-      aspectRatio,
-      duration,
-      setVideoTier: storeActions.setVideoTier,
-      onAspectRatioChange: handleAspectRatioChange,
-      onDurationChange: handleDurationChange,
-    });
+  const { aspectRatioOptions, durationOptions } = useCapabilitiesClamping({
+    selectedModel: domain.selectedModel,
+    videoTier: domain.videoTier,
+    renderModelId,
+    aspectRatio,
+    duration,
+    setVideoTier: storeActions.setVideoTier,
+    onAspectRatioChange: handleAspectRatioChange,
+    onDurationChange: handleDurationChange,
+  });
 
   const selectedDraftModel = useMemo(
     () =>
@@ -309,62 +147,11 @@ export function CanvasSettingsRow({
   );
   const isDraftModelSelected = selectedDraftModel !== null;
 
-  const creditCost = getVideoCost(
-    selectedDraftModel?.id ?? renderModelId,
-    duration,
-  );
-  // ADR-0023: with billing frozen, credits do not gate free testing.
-  const hasInsufficientCredits =
-    FEATURES.BILLING_UI &&
-    typeof creditBalance === "number" &&
-    creditBalance < creditCost;
-  const hasInsufficientPreviewCredits =
-    FEATURES.BILLING_UI &&
-    typeof creditBalance === "number" &&
-    creditBalance < STORYBOARD_COST;
-  const operationLabel = isDraftModelSelected
-    ? `${selectedDraftModel?.label ?? "Draft"} preview`
-    : "Video render";
-
-  const previewDisabled =
-    !controls?.onStoryboard ||
+  const generateDisabled =
     isGenerationBusy ||
-    (!hasPrompt && !hasStartFrame) ||
-    hasInsufficientPreviewCredits;
-  const generateDisabled = isDraftModelSelected
-    ? !controls?.onDraft ||
-      isGenerationBusy ||
-      !hasPrompt ||
-      hasInsufficientCredits
-    : !controls?.onRender ||
-      isGenerationBusy ||
-      !hasPrompt ||
-      hasInsufficientCredits;
-
-  const trackGenerationStart = useCallback(
-    (selectedModelId: string) => {
-      // Flag gating lives inside trackModelRecommendationEvent (ADR-0002).
-      void trackModelRecommendationEvent({
-        event: "generation_started",
-        ...(recommendation?.promptId
-          ? {
-              recommendationId: recommendation.promptId,
-              promptId: recommendation.promptId,
-            }
-          : {}),
-        ...(recommendation?.recommendedModelId
-          ? { recommendedModelId: recommendation.recommendedModelId }
-          : {}),
-        selectedModelId,
-        ...(recommendation?.mode ? { mode: recommendation.mode } : {}),
-        durationSeconds: duration,
-        ...(typeof recommendation?.ageMs === "number"
-          ? { timeSinceRecommendationMs: recommendation.ageMs }
-          : {}),
-      });
-    },
-    [duration, recommendation],
-  );
+    isExpanding ||
+    !hasPrompt ||
+    (isDraftModelSelected ? !controls?.onDraft : !controls?.onRender);
 
   const runGenerate = useCallback(() => {
     // Idea Box: with no start frame, generate means "run the expansion loop"
@@ -374,29 +161,18 @@ export function CanvasSettingsRow({
       void onIdeaBoxExpand();
       return;
     }
-    if (hasInsufficientCredits) {
-      onInsufficientCredits?.(creditCost, operationLabel);
-      return;
-    }
     if (selectedDraftModel) {
-      trackGenerationStart(selectedDraftModel.id);
       controls?.onDraft?.(selectedDraftModel.id);
     } else {
-      trackGenerationStart(renderModelId);
       controls?.onRender?.(renderModelId);
     }
   }, [
     controls,
-    creditCost,
-    hasInsufficientCredits,
     hasStartFrame,
     hasPendingReference,
     onIdeaBoxExpand,
-    onInsufficientCredits,
-    operationLabel,
     renderModelId,
     selectedDraftModel,
-    trackGenerationStart,
   ]);
 
   const handleGenerate = useCallback(() => {
@@ -428,319 +204,201 @@ export function CanvasSettingsRow({
 
   const formatDurationLabel = useCallback((v: number) => `${v}s`, []);
 
-  return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-[6px] px-[10px] py-[9px]",
-        isSheet && "gap-2 px-0 py-0",
-      )}
-      data-testid="canvas-settings-row"
-    >
-      <div className="flex flex-wrap items-center gap-[6px]">
-        {onStartFrameUpload ? (
-          <ReferenceUploadButton
-            onUpload={handleReferenceUpload}
-            disabled={isGenerationBusy || isReferenceUploading || isExpanding}
-          />
-        ) : null}
-        {/* Aspect/duration selectors and summoned reference upload are part
-            of the input. The working row also exposes model and preview. */}
-        {isSheet ? null : (
-          <>
-            {domain.extendVideo ? (
-              <div className="border-surface-2 bg-tool-nav-hover text-foreground inline-flex h-[28px] items-center gap-1 rounded-full border pl-2.5 pr-1 text-xs font-semibold">
-                <svg
-                  width="11"
-                  height="11"
-                  viewBox="0 0 11 11"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="1.2" y="2.2" width="6.4" height="6" rx="1" />
-                  <path d="M7.6 4.2 9.8 3v5L7.6 6.8" />
-                </svg>
-                Extending
-                <button
-                  type="button"
-                  className="text-tool-text-dim hover:bg-tool-nav-active hover:text-foreground ml-0.5 flex h-5 w-5 items-center justify-center rounded transition-colors"
-                  onClick={() => storeActions.clearExtendVideo()}
-                  aria-label="Clear extend mode"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ) : null}
-          </>
-        )}
-
-        {/* Aspect ratio menu — icon-only in the docked row; the accessible
-            name is the current value so tests and readers see "16:9". */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={isSheet ? SHEET_MENU_TRIGGER_CLASS : ICON_TRIGGER_CLASS}
-            aria-label={isSheet ? undefined : aspectRatio}
-            title={isSheet ? undefined : "Aspect ratio"}
-          >
-            {isSheet ? (
-              <>
-                {aspectRatio}
-                <CaretDown
-                  size={16}
-                  aria-hidden="true"
-                  className="opacity-50"
-                />
-              </>
-            ) : (
-              <AspectGlyph />
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start">
-            <DropdownMenuRadioGroup
-              value={aspectRatio}
-              onValueChange={handleAspectRatioChange}
-            >
-              {aspectRatioOptions.map((option) => (
-                <DropdownMenuRadioItem key={option} value={option}>
-                  {option}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Duration menu (Radix radio values are strings; the store keeps
-            duration numeric) */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={isSheet ? SHEET_MENU_TRIGGER_CLASS : ICON_TRIGGER_CLASS}
-            aria-label={isSheet ? undefined : formatDurationLabel(duration)}
-            title={isSheet ? undefined : "Duration"}
-          >
-            {isSheet ? (
-              <>
-                {formatDurationLabel(duration)}
-                <CaretDown
-                  size={16}
-                  aria-hidden="true"
-                  className="opacity-50"
-                />
-              </>
-            ) : (
-              <DurationGlyph />
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start">
-            <DropdownMenuRadioGroup
-              value={String(duration)}
-              onValueChange={(value) => handleDurationChange(Number(value))}
-            >
-              {durationOptions.map((option) => (
-                <DropdownMenuRadioItem key={option} value={String(option)}>
-                  {formatDurationLabel(option)}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Model picker — replaces the floating ModelCornerSelector. The
-            bullseye icon prefix mirrors the screenshot's model chip glyph.
-            Hidden in the Anchor sheet (defaults ride the first submit). */}
-        {isSheet ? null : (
-          <ModelRecommendationDropdown
-            renderModelOptions={renderModelOptions}
-            renderModelId={renderModelId}
-            onModelChange={onModelChange}
-            modelRecommendation={recommendation?.model ?? null}
-            {...(recommendation?.recommendedModelId
-              ? { recommendedModelId: recommendation.recommendedModelId }
-              : {})}
-            {...(recommendation?.efficientModelId
-              ? { efficientModelId: recommendation.efficientModelId }
-              : {})}
-            triggerAriaLabel="Video model"
-            triggerPrefixIcon={<ModelGlyph />}
-            triggerLabelHidden
-            triggerClassName={ICON_TRIGGER_CLASS}
-          />
-        )}
-
-        {/* Camera motion — summoned by the armed first frame, gone without
-            one (ADR-0022 D7). Not part of the handoff's resident control set:
-            it appears with the frame and leaves with it. */}
-        {!isSheet && hasStartFrame && onOpenCameraMotion ? (
-          <button
-            type="button"
-            data-testid="canvas-camera-motion-button"
-            className={ICON_TRIGGER_CLASS}
-            onClick={onOpenCameraMotion}
-            aria-label={
-              domain.cameraMotion
-                ? `Camera motion: ${domain.cameraMotion.label}`
-                : "Camera motion"
-            }
-            title="Camera motion"
-          >
-            <CameraMotionGlyph />
-          </button>
-        ) : null}
-
-        {/* Preview — the 4th icon of the control cluster per the composer
-            handoff (aspect · duration · model · preview). Hidden pre-content
-            (parent passes showPreviewButton). */}
-        {showPreviewButton ? (
-          <button
-            type="button"
-            data-testid="canvas-preview-button"
-            className={cn(
-              ICON_TRIGGER_CLASS,
-              "disabled:text-tool-text-label disabled:cursor-not-allowed",
-            )}
-            onClick={() => {
-              if (hasInsufficientPreviewCredits) {
-                onInsufficientCredits?.(STORYBOARD_COST, "Storyboard preview");
-                return;
-              }
-              if (previewClickCooldownRef.current) {
-                return;
-              }
-              previewClickCooldownRef.current = true;
-              controls?.onStoryboard?.();
-              previewCooldownTimerRef.current = window.setTimeout(() => {
-                previewClickCooldownRef.current = false;
-                previewCooldownTimerRef.current = null;
-              }, PREVIEW_CLICK_COOLDOWN_MS);
-            }}
-            disabled={previewDisabled}
-            aria-label={
-              isSubmitting
-                ? "Starting storyboard generation"
-                : hasInsufficientPreviewCredits
-                  ? `Need ${STORYBOARD_COST} credits for preview — top up in billing`
-                  : FEATURES.BILLING_UI
-                    ? `Preview storyboard ${STORYBOARD_COST} credits`
-                    : "Preview storyboard"
-            }
-            title={
-              isSubmitting
-                ? "Starting..."
-                : hasInsufficientPreviewCredits
-                  ? `Need ${STORYBOARD_COST} credits`
-                  : FEATURES.BILLING_UI
-                    ? `Preview · ${STORYBOARD_COST} cr`
-                    : "Preview"
-            }
-          >
-            <PreviewGlyph />
-          </button>
-        ) : null}
+  const media = (
+    <>
+      <div className="vidra-media-action">
+        <ReferenceUploadButton
+          tile
+          onUpload={handleReferenceUpload}
+          disabled={
+            !onStartFrameUpload ||
+            isGenerationBusy ||
+            isReferenceUploading ||
+            isExpanding
+          }
+        />
       </div>
-
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-[6px]">
-        {/* Make it — the calm off-white primary (composer handoff). */}
+      <div className="vidra-media-action">
         <button
           type="button"
-          data-testid="canvas-generate-button"
-          onClick={handleGenerate}
-          disabled={generateDisabled || isReferenceUploading}
-          aria-busy={isGenerationBusy}
-          aria-label={
-            isGenerationBusy
-              ? "Starting generation"
-              : hasInsufficientCredits
-                ? `Need ${creditCost} credits — top up in billing`
-                : FEATURES.BILLING_UI
-                  ? `${isDraftModelSelected ? "Draft" : "Generate"} ${creditCost} credits`
-                  : isDraftModelSelected
-                    ? "Draft"
-                    : "Generate"
-          }
-          title={
-            isGenerationBusy
-              ? "Starting..."
-              : hasInsufficientCredits
-                ? `Need ${creditCost} credits`
-                : FEATURES.BILLING_UI
-                  ? `${isDraftModelSelected ? "Draft" : "Generate"} · ${creditCost} cr`
-                  : isDraftModelSelected
-                    ? "Draft"
-                    : "Generate"
-          }
-          className={cn(
-            isSheet
-              ? "ps-btn ps-btn--icon ps-btn--pill ps-btn--primary"
-              : "ps-btn ps-btn--md ps-btn--rect ps-btn--primary",
-          )}
+          className="vidra-media-action__button"
+          aria-label="Open Sketch"
+          disabled={!onOpenSketch}
+          onClick={onOpenSketch}
         >
-          {isSheet ? (
-            isGenerationBusy ? (
-              <svg
-                className="animate-spin"
-                width={16}
-                height={16}
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeDasharray="38 18"
-                />
-              </svg>
-            ) : (
-              <svg
-                width={16}
-                height={16}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.1}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 19V5" />
-                <path d="M6 11l6-6 6 6" />
-              </svg>
-            )
-          ) : isGenerationBusy ? (
-            <>
-              <svg
-                className="animate-spin"
-                width={14}
-                height={14}
-                viewBox="0 0 14 14"
-                fill="none"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="7"
-                  cy="7"
-                  r="5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeDasharray="22 10"
-                />
-              </svg>
-              Rendering…
-            </>
-          ) : (
-            <>
-              Make it
-              <MakeItArrowGlyph />
-            </>
-          )}
+          <span className="vidra-composer-icon">
+            <img src={sketchIcon} alt="" />
+          </span>
         </button>
+        <span className="vidra-media-action__label">Sketch</span>
       </div>
+      {pendingReference || domain.startFrame ? (
+        <div className="vidra-reference">
+          <div className="vidra-reference__image">
+            {reference.url && !pendingReference?.uploading ? (
+              <img src={reference.url} alt="Reference picture" />
+            ) : null}
+            <button
+              type="button"
+              className="vidra-reference__remove"
+              aria-label="Remove reference"
+              disabled={pendingReference?.busy || pendingReference?.uploading}
+              onClick={() => {
+                if (pendingReference) {
+                  onClearPendingReference?.();
+                  return;
+                }
+                const frame = domain.startFrame;
+                const index = domain.keyframes.findIndex(
+                  (entry) =>
+                    (frame?.id && entry.id === frame.id) ||
+                    (frame?.assetId && entry.assetId === frame.assetId) ||
+                    (frame?.storagePath &&
+                      entry.storagePath === frame.storagePath) ||
+                    (frame?.url && entry.url === frame.url),
+                );
+                if (index >= 0)
+                  storeActions.setKeyframes(
+                    domain.keyframes.filter((_, at) => at !== index),
+                  );
+                storeActions.clearStartFrame();
+              }}
+            >
+              <span className="vidra-composer-icon vidra-composer-icon--close">
+                <img src={closeIcon} alt="" />
+              </span>
+            </button>
+          </div>
+          <span className="text-meta text-muted">Reference</span>
+        </div>
+      ) : null}
+      {domain.extendVideo ? (
+        <div className="vidra-reference">
+          <div className="vidra-reference__image">
+            {videoReference.url ? (
+              <video
+                src={videoReference.url}
+                aria-label="Video reference"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            ) : null}
+            <button
+              type="button"
+              className="vidra-reference__remove"
+              aria-label="Clear extend mode"
+              onClick={storeActions.clearExtendVideo}
+            >
+              <span className="vidra-composer-icon vidra-composer-icon--close">
+                <img src={closeIcon} alt="" />
+              </span>
+            </button>
+          </div>
+          <span className="text-meta text-muted">Extending</span>
+        </div>
+      ) : null}
+    </>
+  );
+  const settings = (
+    <>
+      <VideoModelSelect
+        options={renderModelOptions}
+        value={renderModelId}
+        onChange={onModelChange}
+        icon={
+          <span className="vidra-composer-icon">
+            <img src={modelIcon} alt="" />
+          </span>
+        }
+      />
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="vidra-setting vidra-setting--ratio"
+          aria-label={aspectRatio}
+          title="Aspect ratio"
+        >
+          <span className="vidra-composer-icon">
+            <img src={ratioIcon} alt="" />
+          </span>
+          {aspectRatio}
+          <span className="vidra-composer-icon">
+            <img src={downIcon} alt="" />
+          </span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start">
+          <DropdownMenuLabel className="mb-1">Aspect ratio</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={aspectRatio}
+            onValueChange={handleAspectRatioChange}
+          >
+            {aspectRatioOptions.map((option) => (
+              <DropdownMenuRadioItem key={option} value={option}>
+                {option}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="vidra-setting vidra-setting--duration"
+          aria-label={formatDurationLabel(duration)}
+          title="Duration"
+        >
+          <span className="vidra-composer-icon">
+            <img src={clockIcon} alt="" />
+          </span>
+          {formatDurationLabel(duration)}
+          <span className="vidra-composer-icon">
+            <img src={downIcon} alt="" />
+          </span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start">
+          <DropdownMenuLabel className="mb-1">Duration</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={String(duration)}
+            onValueChange={(value) => handleDurationChange(Number(value))}
+          >
+            {durationOptions.map((option) => (
+              <DropdownMenuRadioItem key={option} value={String(option)}>
+                {formatDurationLabel(option)}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  );
+  const generate = (
+    <button
+      type="button"
+      data-testid="canvas-generate-button"
+      className="vidra-generate"
+      onClick={handleGenerate}
+      disabled={generateDisabled || isReferenceUploading}
+      aria-label={isGenerationBusy ? "Starting generation" : "Generate"}
+      aria-busy={isGenerationBusy || undefined}
+    >
+      {isGenerationBusy ? (
+        <span
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          aria-hidden="true"
+        />
+      ) : (
+        <span className="vidra-composer-icon">
+          <img src={generateIcon} alt="" />
+        </span>
+      )}
+      {isGenerationBusy ? "Generating…" : "Generate"}
+    </button>
+  );
+  if (renderComposer) return renderComposer({ media, settings, generate });
+  return (
+    <div data-testid="canvas-settings-row" className="flex flex-col gap-3 p-4">
+      <div className="flex items-center gap-3">{media}</div>
+      <div className="flex flex-wrap gap-2">{settings}</div>
+      {generate}
     </div>
   );
 }

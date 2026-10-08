@@ -21,7 +21,8 @@ export interface StudioLayoutItem {
   size: number;
 }
 
-export const STUDIO_CELL_SIZE = 220;
+export const STUDIO_CELL_SIZE = 352;
+export const STUDIO_CELL_HEIGHT = (STUDIO_CELL_SIZE * 4) / 7;
 export const STUDIO_CELL_GAP = 24;
 export const STUDIO_GROUP_GAP = 96;
 
@@ -53,13 +54,15 @@ export function computeStudioLayout(
         turnId: group.turnId,
         // Groups are centered on x = 0 so mixed sizes align visually.
         x: column * (STUDIO_CELL_SIZE + STUDIO_CELL_GAP) - groupWidth / 2,
-        y: yOffset + row * (STUDIO_CELL_SIZE + STUDIO_CELL_GAP),
+        y: yOffset + row * (STUDIO_CELL_HEIGHT + STUDIO_CELL_GAP),
         size: STUDIO_CELL_SIZE,
       });
     });
 
     yOffset +=
-      rows * STUDIO_CELL_SIZE + (rows - 1) * STUDIO_CELL_GAP + STUDIO_GROUP_GAP;
+      rows * STUDIO_CELL_HEIGHT +
+      (rows - 1) * STUDIO_CELL_GAP +
+      STUDIO_GROUP_GAP;
   }
 
   return items;

@@ -11,17 +11,9 @@ import type {
 } from "@features/generation-controls";
 import { useKeyframeUrlRefresh } from "../hooks/useKeyframeUrlRefresh";
 
-export interface FaceSwapPreviewState {
-  url: string;
-  characterAssetId: string;
-  targetImageUrl: string;
-  createdAt: number;
-}
-
 export interface GenerationControlsHandlers {
   onDraft: (model: DraftModel, overrides?: GenerationOverrides) => void;
   onRender: (model: string, overrides?: GenerationOverrides) => void;
-  onStoryboard: () => void;
   isGenerating: boolean;
   isSubmitting?: boolean | undefined;
   activeDraftModel: string | null;
@@ -30,13 +22,6 @@ export interface GenerationControlsHandlers {
 interface GenerationControlsContextValue {
   controls: GenerationControlsHandlers | null;
   setControls: (controls: GenerationControlsHandlers | null) => void;
-  onStoryboard: (() => void) | null;
-  onInsufficientCredits: ((required: number, operation: string) => void) | null;
-  setOnInsufficientCredits: (
-    handler: ((required: number, operation: string) => void) | null,
-  ) => void;
-  faceSwapPreview: FaceSwapPreviewState | null;
-  setFaceSwapPreview: (preview: FaceSwapPreviewState | null) => void;
 }
 
 const GenerationControlsContext =
@@ -50,30 +35,14 @@ export function GenerationControlsProvider({
   const [controls, setControls] = useState<GenerationControlsHandlers | null>(
     null,
   );
-  const [onInsufficientCredits, setOnInsufficientCredits] = useState<
-    ((required: number, operation: string) => void) | null
-  >(null);
-  const [faceSwapPreview, setFaceSwapPreview] =
-    useState<FaceSwapPreviewState | null>(null);
-
   useKeyframeUrlRefresh();
-
-  const onStoryboard = useMemo(
-    () => controls?.onStoryboard ?? null,
-    [controls],
-  );
 
   const contextValue = useMemo<GenerationControlsContextValue>(
     () => ({
       controls,
       setControls,
-      onStoryboard,
-      onInsufficientCredits,
-      setOnInsufficientCredits,
-      faceSwapPreview,
-      setFaceSwapPreview,
     }),
-    [controls, faceSwapPreview, onInsufficientCredits, onStoryboard],
+    [controls],
   );
 
   return (

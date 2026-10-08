@@ -130,17 +130,7 @@ export interface SuggestionsData {
 }
 
 export interface PromptCanvasState {
-  showExportMenu: boolean;
-  showLegend: boolean;
-  rightPaneMode: "refine" | "preview";
   showHighlights: boolean;
-  visualLastGeneratedAt: number | null;
-  videoLastGeneratedAt: number | null;
-  visualGenerateRequestId: number;
-  videoGenerateRequestId: number;
-  isEditing: boolean;
-  originalInputPrompt: string;
-  originalSelectedModel: string | undefined;
   selectedSpanId: string | null;
   lastAppliedSpanId: string | null;
   hasInteracted: boolean;
@@ -152,9 +142,7 @@ export interface PromptCanvasState {
 }
 
 export type PromptCanvasAction =
-  | { type: "MERGE_STATE"; payload: Partial<PromptCanvasState> }
-  | { type: "INCREMENT_VISUAL_REQUEST_ID" }
-  | { type: "INCREMENT_VIDEO_REQUEST_ID" };
+  | { type: "MERGE_STATE"; payload: Partial<PromptCanvasState> };
 
 export interface ValidSpan {
   start: number;

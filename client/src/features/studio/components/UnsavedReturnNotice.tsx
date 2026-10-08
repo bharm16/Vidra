@@ -52,15 +52,13 @@ export function UnsavedReturnNotice({
   };
 
   return (
-    <div className="st-topbar-right flex flex-col items-end gap-1">
+    <div className="st-topbar-right st-receipts">
       {returns.map(({ imageId, attachment }) => (
-        <div key={imageId} className="flex items-center gap-2">
+        <div key={imageId} className="st-receipt">
           <span className="st-topbar-label">
             A picture you sent to the session didn’t save.
           </span>
-          {failure ? (
-            <span className="st-topbar-label">{failure}</span>
-          ) : null}
+          {failure ? <span className="st-topbar-label">{failure}</span> : null}
           {attachment.record ? (
             <Button
               variant="ghost"

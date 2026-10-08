@@ -1,60 +1,92 @@
-/*
- * Live Editor chrome — exact values from design_handoff_live_editor
- * (Krea-style floating UI; the handoff is the authoritative visual spec).
- * Feature-scoped: the realtime sketch is the only consumer. Neutral
- * monochrome by design — no accent color anywhere in the chrome.
- */
-
+/* Page 21 Live editor: 703:299711 canvas, 703:299836 prompt,
+   703:300319 / 703:300444 mobile. The drawing bitmap stays 512 square. */
 .le-stage {
+  /* Direct node paints: Live root299711/300319 and panels/prompt. */
+  --live-shell-paint: #1b1b1b;
+  --live-panel-paint: #292929;
+  --live-frame-stroke: #ffffff;
   position: relative;
   height: 100%;
   overflow: hidden;
-  background: #0b0c0f;
+  background: var(--live-shell-paint);
   font-family: var(--font-sans);
-  color: #f2f3f6;
+  color: var(--fg);
 }
-
-/* The editor pair is ONE fixed-size object on the infinite plane
-   (ADR-0017); the camera centers it on mount and the creator pans/zooms
-   around it.
-
-   The page IS the generation frame — same shape AND same size. Square,
-   because the model's fast path is square (measured: 512² ≈ 0.18s inference
-   vs 640² 1.7s, 704² 3.5s, 768² 4.4s round-trip — larger frames kill the
-   realtime feel). Sized from --le-frame, which LiveEditor sets from
-   SNAPSHOT_SIZE, so the page and the bitmap can never drift apart: at 1:1 a
-   stroke's weight and position on screen ARE its weight and position in the
-   frame. Pinning the page to a larger fixed width stretched the bitmap and
-   quietly shrank every subject inside the frame. Want a bigger surface?
-   Zoom the plane — zoom scales strokes with it, so composition holds. */
+.le-stage .vidra-canvas-controls {
+  right: 44px;
+  bottom: var(--space-8);
+}
+.le-title {
+  position: absolute;
+  z-index: 5;
+  top: var(--space-8);
+  left: 44px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  pointer-events: none;
+}
 .le-editor-pair {
   display: flex;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: 0;
 }
-
+.le-panel {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: calc(var(--le-frame) + 2 * var(--space-3));
+  height: calc(var(--le-frame) + 44px);
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--live-panel-paint);
+}
+/* Figma frame strokes paint above their opaque children. */
+.le-panel::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: inherit;
+  outline: 0.5px solid var(--live-frame-stroke);
+  outline-offset: -0.5px;
+  content: "";
+  pointer-events: none;
+}
+.le-panel-header {
+  display: flex;
+  flex: none;
+  width: 100%;
+  height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) 0 var(--space-4);
+  font-size: var(--text-meta);
+  font-weight: 400;
+  line-height: var(--text-meta-lh);
+}
+.le-render-header {
+  justify-content: flex-start;
+  padding: 0 var(--space-3);
+}
 .le-panel-sketch {
+  position: relative;
+  flex: none;
   width: var(--le-frame);
   height: var(--le-frame);
-  position: relative;
-  border-radius: 1rem;
   background: #e9e9e6;
-  overflow: hidden;
 }
-
 .le-panel-output {
+  position: relative;
+  flex: none;
   width: var(--le-frame);
   height: var(--le-frame);
-  position: relative;
-  border-radius: 1rem;
-  background: #0f1013;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  overflow: hidden;
+  background: var(--live-panel-paint);
 }
-
-/* The page IS the canvas: the square bitmap fills the square panel
-   edge-to-edge, so there is no dead margin where strokes silently vanish
-   (the regression that motivated the square panels above). */
 .le-canvas {
   position: absolute;
   inset: 0;
@@ -62,378 +94,346 @@
   height: 100%;
   touch-action: none;
 }
-
 .le-canvas-drawable {
   cursor: crosshair;
 }
-
 .le-output-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
-
 .le-output-empty {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font:
-    400 14px var(--font-sans),
-    system-ui,
-    sans-serif;
-  color: rgba(255, 255, 255, 0.28);
+  padding: var(--space-4);
+  color: var(--fg-muted);
+  font-size: var(--text-ui);
+  line-height: var(--text-ui-lh);
+  text-align: center;
 }
-
-/* Failure surface. Deliberately the one place the chrome breaks monochrome:
-   a creator whose frames are dying must read it as a problem, not decor. */
 .le-error {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 12px 14px;
-  border-radius: 0.75rem;
-  background: rgba(28, 20, 18, 0.92);
-  border: 1px solid rgba(214, 129, 92, 0.32);
-  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.9);
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--chrome);
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
 }
-
 .le-error-centered {
   top: 50%;
   bottom: auto;
   transform: translateY(-50%);
 }
-
 .le-error-title {
-  font:
-    500 13px var(--font-sans),
-    system-ui,
-    sans-serif;
-  color: #e4a184;
+  font-size: var(--text-ui);
+  font-weight: 500;
+  line-height: var(--text-ui-lh);
+  color: var(--fg);
 }
-
 .le-error-detail {
-  font:
-    400 12.5px var(--font-sans),
-    system-ui,
-    sans-serif;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.62);
+  font-size: var(--text-meta);
+  font-weight: 400;
+  line-height: var(--text-meta-lh);
+  color: var(--fg-muted);
   overflow-wrap: anywhere;
 }
-
 .le-float {
   position: absolute;
   left: 50%;
-  bottom: 26px;
+  bottom: var(--space-8);
   transform: translateX(-50%);
   z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  /* The stack's empty flex regions must not eat strokes/pans meant for the
-     plane below — only the bar and composer themselves take the pointer. */
+  width: 640px;
+  max-width: calc(100% - 2 * var(--space-4));
   pointer-events: none;
 }
-
 .le-float > * {
   pointer-events: auto;
 }
 
-/* ── icon bar ─────────────────────────────────────────────────────────── */
-
 .le-bar {
-  display: inline-flex;
+  display: flex;
+  flex: none;
   align-items: center;
-  gap: 0.625rem;
-  border-radius: 1.375rem;
-  background: #1d1e20;
-  box-shadow:
-    0 20px 50px -20px rgba(0, 0, 0, 0.9),
-    0 4px 16px rgba(0, 0, 0, 0.5);
-  padding: 10px 12px;
+  gap: var(--space-1-5);
+  width: 204px;
+  height: 36px;
+  padding: 0;
 }
-
-/* Buttons ride the system Button; these neutralize its chrome and pin the
-   handoff geometry (41×41, radius 12, 21px stroke-2.1 icons). */
 .le-btn {
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 41px;
-  height: 41px;
-  padding: 0;
+  width: 36px !important;
+  height: 36px !important;
+  padding: var(--space-1-5) !important;
   border: 0;
-  border-radius: 0.75rem;
-  background: transparent;
-  color: #eceded;
-  cursor: pointer;
-  transition: all 0.16s;
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+  color: var(--fg);
 }
-
 .le-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  background: var(--hover) !important;
 }
-
-.le-btn svg {
-  width: 21px;
-  height: 21px;
-}
-
-.le-btn-active,
-.le-btn-active:hover {
-  color: #ffffff;
-}
-
 .le-btn-active {
-  background: #3a3b3e;
+  background: var(--active) !important;
 }
-
-.le-btn-active:hover {
-  background: #434447;
+/* Raw selected Brush299780 has a white fill and a white glyph. Keep the
+   selected fill while correcting that source contrast defect locally. */
+.le-btn[aria-label="Brush"][aria-pressed="true"] {
+  background: #ffffff !important;
+  color: #000000;
+}
+.le-btn[aria-label="Brush"][aria-pressed="true"] img {
+  filter: brightness(0);
 }
 
 .le-ink-circle {
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--vidra-radius-control);
 }
-
-.le-ink-circle svg {
-  width: 18px;
-  height: 18px;
+.le-bar img {
+  max-width: none;
 }
-
-/* ── popovers (brush + strength share the panel) ─────────────────────── */
 
 .le-popover {
-  position: absolute;
-  bottom: 58px;
-  left: 50%;
-  transform: translateX(-50%);
+  z-index: 30;
   display: flex;
   flex-direction: column;
-  gap: 0.1875rem;
-  padding: 0.5rem;
-  border-radius: 1rem;
-  background: #242528;
-  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.9);
-  animation: le-rise 0.18s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  gap: var(--space-2);
+  width: auto;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--vidra-radius-dialog);
+  outline: 0.5px solid var(--border);
+  outline-offset: -0.5px;
+  background: var(--canvas);
+  box-shadow: none;
+  color: var(--fg);
+  font-family: var(--font-sans);
 }
-
-@keyframes le-rise {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 8px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
 .le-pop-row {
   display: flex;
-  gap: 0.1875rem;
+  gap: var(--space-1-5);
   justify-content: center;
 }
-
 .le-pop-item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
   border: 0;
-  border-radius: 0.6875rem;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.16s;
+  border-radius: var(--vidra-radius-control);
+  background: transparent !important;
 }
-
 .le-pop-item:hover {
-  background: rgba(255, 255, 255, 0.11);
+  background: var(--hover) !important;
 }
-
-.le-pop-item-selected,
-.le-pop-item-selected:hover {
-  background: rgba(255, 255, 255, 0.13);
+.le-pop-item-selected {
+  background: var(--active) !important;
 }
-
 .le-pop-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  margin: 2px;
+  background: var(--border);
 }
-
 .le-ink-dot {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-full);
+  border: 0.5px solid var(--border-strong);
 }
-
 .le-size-dot {
-  border-radius: 50%;
-  background: #dfe1e6;
+  border-radius: var(--radius-full);
+  background: var(--fg);
 }
-
 .le-popover-strength {
-  padding: 12px 14px;
-  gap: 0.5rem;
-  align-items: center;
   width: 190px;
+  align-items: center;
 }
-
 .le-strength-value {
-  font:
-    500 13px var(--font-sans),
-    system-ui,
-    sans-serif;
-  color: #f2f3f6;
+  font-size: var(--text-meta);
+  font-weight: 400;
+  line-height: var(--text-meta-lh);
+  color: var(--fg);
 }
-
 .le-strength-slider {
   width: 100%;
-  accent-color: #eceded;
+  accent-color: var(--fg);
 }
-
-/* ── composer ─────────────────────────────────────────────────────────── */
 
 .le-composer {
-  width: 540px;
-  /* Same treatment as the Studio composer so the two screens agree: flush
-     chrome material, shaped by its radius, no shadow stack. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 136px;
+  padding: var(--space-4);
   border-radius: var(--radius-panel);
-  background: var(--raise);
-  padding: 16px 18px 13px;
+  outline: 0.5px solid var(--live-frame-stroke);
+  outline-offset: -0.5px;
+  background: var(--live-panel-paint);
 }
-
 .le-prompt-row {
   display: flex;
-  align-items: flex-end;
-  gap: 0.625rem;
+  flex: none;
+  align-items: flex-start;
+  gap: var(--space-2);
+  height: 56px;
 }
-
 .le-prompt {
   flex: 1;
   min-width: 0;
+  height: 100%;
   border: 0;
   outline: none;
   background: transparent;
-  font:
-    400 17px var(--font-sans),
-    system-ui,
-    sans-serif;
-  color: #f4f5f7;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  font-weight: 400;
+  line-height: var(--text-ui-lh);
+  color: var(--fg);
   padding: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  resize: none;
 }
-
 .le-resize-glyph {
   flex: none;
-  margin-bottom: 2px;
+  max-width: none;
 }
-
 .le-chips {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: 0.4375rem;
-  margin-top: 0.875rem;
+  gap: var(--space-2);
+  height: 36px;
   position: relative;
 }
-
 .le-chip {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: 0.4375rem;
-  height: 32px;
-  padding: 0 13px;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 36px !important;
+  padding: var(--space-2) var(--space-3) !important;
   border: 0;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #f2f3f6;
-  font:
-    500 13px var(--font-sans),
-    system-ui,
-    sans-serif;
-  cursor: pointer;
-  transition: all 0.16s;
+  border-radius: var(--radius-full);
+  background: var(--fill) !important;
+  color: var(--fg) !important;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui) !important;
+  font-weight: 400 !important;
+  line-height: var(--text-ui-lh) !important;
   white-space: nowrap;
 }
-
 .le-chip:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--hover) !important;
 }
-
-.le-chip svg {
-  width: 14px;
-  height: 14px;
-}
-
 .le-chip-mode {
-  gap: 0.5rem;
-  padding: 0 13px 0 5px;
+  width: 162px;
 }
-
-.le-chip-thumb {
+.le-chip-strength {
+  width: 88px;
+}
+.le-chip-seed {
+  width: 80px;
+}
+.le-chip-thumb,
+.le-chip-thumb-empty {
+  flex: none;
   width: 23px;
   height: 23px;
-  border-radius: 50%;
+  border-radius: var(--vidra-radius-control);
   object-fit: cover;
   display: block;
+  background: var(--fill);
 }
-
-.le-chip-thumb-empty {
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-  display: block;
-}
-
-/* "Use this" — the one action on this surface that leaves the plane, so it is
-   the one chip that reads as filled rather than as another setting. */
 .le-chip-accept {
   margin-left: auto;
-  background: #f2f3f6;
-  color: #16181d;
+  width: 88px;
 }
-
-.le-chip-accept:hover:not(:disabled) {
-  background: #ffffff;
-}
-
 .le-chip-accept:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(242, 243, 246, 0.45);
+  opacity: 0.5;
   cursor: default;
 }
-
-/* A refused acceptance names itself here rather than in the output panel: the
-   picture is fine, it is the saving that failed. */
 .le-accept-error {
-  margin-top: 0.625rem;
-  font:
-    400 12px var(--font-sans),
-    system-ui,
-    sans-serif;
-  color: #ffb4a8;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-meta);
+  font-weight: 400;
+  line-height: var(--text-meta-lh);
+  color: var(--fg-muted);
+}
+
+@media (max-width: 767px) {
+  .le-stage .vidra-canvas-controls {
+    right: var(--space-3);
+    bottom: var(--space-4);
+  }
+  .le-title {
+    top: var(--space-6);
+    left: var(--space-4);
+  }
+  .le-editor-pair {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .le-panel {
+    --le-frame: 208px;
+    width: calc(100vw - 64px - 2 * var(--space-4));
+    height: 244px;
+  }
+  .le-panel-header {
+    height: 36px;
+    padding: 0 var(--space-2);
+  }
+  .le-sketch-header {
+    justify-content: flex-start;
+  }
+  .le-sketch-header > span {
+    flex: none;
+    width: 57px;
+  }
+  .le-render-header {
+    padding: 0 var(--space-3);
+  }
+  .le-float {
+    bottom: 76px;
+    width: calc(100% - 2 * var(--space-4));
+  }
+  .le-composer {
+    min-height: 192px;
+  }
+  .le-prompt-row {
+    height: 64px;
+  }
+  .le-chips {
+    flex-wrap: wrap;
+    height: 80px;
+    align-content: center;
+  }
+  .le-chip-accept {
+    margin-left: 0;
+  }
 }

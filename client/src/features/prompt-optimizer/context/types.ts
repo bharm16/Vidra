@@ -151,10 +151,6 @@ export interface PromptUIState {
   setShowSettings: (show: boolean) => void;
   showShortcuts: boolean;
   setShowShortcuts: (show: boolean) => void;
-  showImprover: boolean;
-  setShowImprover: (show: boolean) => void;
-  showBrainstorm: boolean;
-  setShowBrainstorm: (show: boolean) => void;
   currentAIIndex: number;
   setCurrentAIIndex: (index: number) => void;
 

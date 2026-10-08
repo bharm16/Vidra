@@ -5,7 +5,7 @@ import type {
 } from "@shared/capabilities";
 import { useCapabilities } from "@features/prompt-optimizer/hooks/useCapabilities";
 import { logger } from "@/services/LoggingService";
-import { VIDEO_DRAFT_MODEL } from "@components/ToolSidebar/config/modelConfig";
+import { VIDEO_DRAFT_MODELS } from "@components/ToolSidebar/config/modelConfig";
 import {
   DEFAULT_ASPECT_RATIOS,
   DEFAULT_DURATIONS,
@@ -48,15 +48,21 @@ export function useCapabilitiesClamping({
 }: UseCapabilitiesClampingOptions): UseCapabilitiesClampingResult {
   useEffect(() => {
     if (!selectedModel.trim()) return;
-    const expectedTier: VideoTier =
-      selectedModel === VIDEO_DRAFT_MODEL.id ? "draft" : "render";
+    const expectedTier: VideoTier = VIDEO_DRAFT_MODELS.some(
+      (model) => model.id === selectedModel,
+    )
+      ? "draft"
+      : "render";
     if (videoTier === expectedTier) return;
     setVideoTier(expectedTier);
   }, [selectedModel, setVideoTier, videoTier]);
 
   const capabilitiesModelId = useMemo(
-    () => (videoTier === "draft" ? VIDEO_DRAFT_MODEL.id : renderModelId),
-    [renderModelId, videoTier],
+    () =>
+      VIDEO_DRAFT_MODELS.some((model) => model.id === selectedModel)
+        ? selectedModel
+        : renderModelId,
+    [renderModelId, selectedModel],
   );
 
   const { schema } = useCapabilities(capabilitiesModelId);

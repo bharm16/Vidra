@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { ChevronUp } from "lucide-react";
+import thinkingChevronIcon from "../assets/thinking-chevron.svg";
 import { cn } from "@/utils/cn";
 import type { StudioTurn } from "../api/schemas";
 import { ResultCard } from "./ResultCard";
@@ -27,9 +27,9 @@ function ThinkingSection({ text }: { text: string }): React.ReactElement {
         onClick={() => setCollapsed((value) => !value)}
       >
         Thinking
-        <ChevronUp
-          size={13}
-          strokeWidth={1.75}
+        <img
+          src={thinkingChevronIcon}
+          alt=""
           className={cn(
             "st-reasoning-chevron",
             collapsed && "st-reasoning-chevron-collapsed",
@@ -82,13 +82,6 @@ export function StudioThread({
 
   return (
     <div className="st-thread" data-testid="studio-thread">
-      {turns.length === 0 && optimisticMessage === null ? (
-        <div className="st-thread-empty">
-          Describe the image you want — variations, follow-up suggestions, and
-          edits happen here.
-        </div>
-      ) : null}
-
       {turns.map((turn) => {
         const isLatest = turn.id === latestTurnId;
         const decision = turn.decision;

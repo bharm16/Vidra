@@ -256,128 +256,17 @@ export function DocsPage(): React.ReactElement {
           <h2 className="text-foreground text-body-lg mt-[30px] font-semibold">
             What the space shows
           </h2>
-          <div className="mt-[14px] flex items-center gap-[22px]">
-            <svg width="316" height="72" viewBox="0 0 316 72" fill="none">
-              <path d="M42,36 L104,36" stroke="#5b6cff" strokeWidth="2.2" />
-              <path
-                d="M42,36 C74,36 70,15 104,15"
-                stroke="rgba(255,255,255,.18)"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M42,36 C74,36 70,57 104,57"
-                stroke="#c2a24e"
-                strokeWidth="1.5"
-                strokeDasharray="5 3"
-              />
-              <path d="M160,36 L222,36" stroke="#5b6cff" strokeWidth="2.4" />
-              <path d="M278,36 L304,36" stroke="#3fbf6f" strokeWidth="2.4" />
-              <rect
-                x="6"
-                y="24"
-                width="36"
-                height="24"
-                rx="6"
-                fill="#14161c"
-                stroke="rgba(255,255,255,.16)"
-              />
-              <rect
-                x="104"
-                y="5"
-                width="56"
-                height="20"
-                rx="5"
-                fill="#14161c"
-                stroke="rgba(255,255,255,.14)"
-              />
-              <rect
-                x="104"
-                y="47"
-                width="56"
-                height="20"
-                rx="5"
-                fill="#191509"
-                stroke="rgba(211,164,78,.4)"
-              />
-              <rect
-                x="104"
-                y="24"
-                width="56"
-                height="24"
-                rx="6"
-                fill="#161821"
-                stroke="#5b6cff"
-                strokeWidth="1.6"
-              />
-              <rect
-                x="222"
-                y="24"
-                width="56"
-                height="24"
-                rx="6"
-                fill="#161821"
-                stroke="#5b6cff"
-                strokeWidth="1.6"
-              />
-              <rect
-                x="304"
-                y="26"
-                width="10"
-                height="20"
-                rx="4"
-                fill="#12211a"
-                stroke="#3fbf6f"
-                strokeWidth="1.6"
-              />
-            </svg>
-            <div className="text-tool-text-subdued text-meta flex flex-col gap-[7px] font-mono">
-              <span className="flex items-center gap-2">
-                <svg width="20" height="4">
-                  <line
-                    x1="0"
-                    y1="2"
-                    x2="20"
-                    y2="2"
-                    stroke="#5b6cff"
-                    strokeWidth="2.4"
-                  />
-                </svg>
-                move
-              </span>
-              <span className="flex items-center gap-2">
-                <svg width="20" height="4">
-                  <line
-                    x1="0"
-                    y1="2"
-                    x2="20"
-                    y2="2"
-                    stroke="rgba(255,255,255,.2)"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                roll
-              </span>
-              <span className="flex items-center gap-2">
-                <svg width="20" height="4">
-                  <line
-                    x1="0"
-                    y1="2"
-                    x2="20"
-                    y2="2"
-                    stroke="#c2a24e"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 3"
-                  />
-                </svg>
-                reword
-              </span>
-            </div>
-          </div>
-          <p className="text-tool-text-subdued text-ui mt-[15px] max-w-[560px] leading-[1.65]">
-            Everything you make lives in one space, in three columns &mdash;
-            words, pictures, clips &mdash; connected by what you did. The node
-            you&rsquo;re viewing is the live one; selecting any node brings its
-            words back into the input.
+          <p className="text-tool-text-subdued text-ui mt-4 max-w-[560px] leading-[1.65]">
+            Results appear in rows in one space. Each generation adds its
+            results below the previous ones. Pan, scroll, or zoom to explore
+            them. After your first generation, your working description and
+            conversation history live in the side panel.
+          </p>
+          <p className="text-tool-text-subdued text-ui mt-3 max-w-[560px] leading-[1.65]">
+            Selecting a result opens it for inspection and keeps your current
+            words, references, and settings. Choose Reuse setup to restore that
+            result&rsquo;s setup, or Use words in the history to refill only the
+            description. Neither action starts a generation.
           </p>
         </section>
 

@@ -7,7 +7,6 @@ import type { DraftModel } from "@features/generation-controls";
 import type { GenerationsAction } from "./useGenerationsState";
 import {
   compileWanPrompt,
-  generateStoryboardPreview,
   generateVideoPreview,
   waitForVideoJob,
 } from "../api";
@@ -19,7 +18,6 @@ import { logger } from "@/services/LoggingService";
 import { sanitizeError } from "@/utils/logging";
 import { extractMotionMeta } from "@/utils/motion";
 import { resolveMediaUrl } from "@/services/media/MediaUrlResolver";
-import { assetApi } from "@/features/assets/api/assetApi";
 import { safeUrlHost } from "@/utils/url";
 import { ApiError } from "@/services/http/ApiError";
 import {
@@ -27,20 +25,14 @@ import {
   hasGcsSignedUrlParams,
   parseGcsSignedUrlExpiryMs,
 } from "@/utils/storageUrl";
-import {
-  publishCreditBalanceSync,
-  requestCreditBalanceRefresh,
-} from "@/hooks/useUserCreditBalance";
 import { getModelConfig, getModelCreditCost } from "../config/generationConfig";
 import { getVideoInputSupport } from "../utils/videoInputSupport";
 
-/** Extract the asset ID (last path segment) from a storage path or return the value as-is. */
+/** Extract the durable asset id without changing stored media paths. */
 const extractAssetId = (pathOrId: string): string => {
   const segments = pathOrId.split("/").filter(Boolean);
   return segments.length > 0 ? segments[segments.length - 1]! : pathOrId;
 };
-
-const toAssetIds = (paths: string[]): string[] => paths.map(extractAssetId);
 
 interface InFlightSubmission {
   controller: AbortController;
@@ -76,12 +68,23 @@ interface UseGenerationActionsOptions {
     | undefined;
 }
 
-interface StoryboardParams extends GenerationParams {
-  seedImageUrl?: string | null | undefined;
+interface UseGenerationActionsResult {
+  generateDraft: (
+    model: DraftModel,
+    prompt: string,
+    params: GenerationParams,
+  ) => Promise<void>;
+  generateRender: (
+    model: string,
+    prompt: string,
+    params: GenerationParams,
+  ) => Promise<void>;
+  isSubmitting: boolean;
+  cancelGeneration: (id: string) => void;
+  retryGeneration: (id: string) => void;
 }
 
 const log = logger.child("useGenerationActions");
-const TRIGGER_REGEX = /@([a-zA-Z][a-zA-Z0-9_-]*)/g;
 
 /**
  * Normalize the session-persistence context from hook options. Returns
@@ -98,20 +101,6 @@ const readSessionParams = (
     ...(promptVersionId ? { promptVersionId } : {}),
   };
 };
-
-const extractFaceSwapMeta = (params?: GenerationParams) => {
-  const resolvedFaceSwapUrl =
-    params?.faceSwapUrl ??
-    (params?.faceSwapAlreadyApplied ? (params.startImage?.url ?? null) : null);
-  return {
-    faceSwapUrl: resolvedFaceSwapUrl,
-    faceSwapApplied: Boolean(resolvedFaceSwapUrl),
-    characterAssetId: params?.characterAssetId ?? null,
-  } as const;
-};
-
-const hasPromptTriggers = (prompt: string): boolean =>
-  Array.from(prompt.matchAll(TRIGGER_REGEX)).length > 0;
 
 const START_IMAGE_REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
@@ -215,25 +204,6 @@ const resolveReferenceImageUrl = async (
   return await resolveRefreshableImageUrl(referenceImage);
 };
 
-const resolveSeedImageUrl = async (
-  seedImageUrl: string | null | undefined,
-): Promise<string | null> => {
-  if (!seedImageUrl || typeof seedImageUrl !== "string")
-    return seedImageUrl ?? null;
-  const storagePath = extractStorageObjectPath(seedImageUrl);
-  if (!storagePath) return seedImageUrl;
-  const expiresAtMs = parseGcsSignedUrlExpiryMs(seedImageUrl);
-  const needsRefresh = shouldRefreshStartImage(seedImageUrl, expiresAtMs);
-  if (!needsRefresh) return seedImageUrl;
-  const resolved = await resolveMediaUrl({
-    kind: "image",
-    url: seedImageUrl,
-    storagePath,
-    preferFresh: true,
-  });
-  return resolved.url ?? seedImageUrl;
-};
-
 const resolveExtendVideoUrl = async (
   extendVideoUrl: string | null | undefined,
 ): Promise<string | null> => {
@@ -248,20 +218,6 @@ const resolveExtendVideoUrl = async (
   });
 
   return resolved.url ?? extendVideoUrl;
-};
-
-const syncCreditBalanceFromResponse = (
-  remainingCredits?: number | null,
-): void => {
-  if (
-    typeof remainingCredits !== "number" ||
-    !Number.isFinite(remainingCredits)
-  ) {
-    requestCreditBalanceRefresh();
-    return;
-  }
-
-  publishCreditBalanceSync(remainingCredits);
 };
 
 const resolveAcceptedGenerationStatus = (
@@ -304,7 +260,7 @@ const buildMediaAssetIdsUpdate = (
 export function useGenerationActions(
   dispatch: React.Dispatch<GenerationsAction>,
   options: UseGenerationActionsOptions = {},
-) {
+): UseGenerationActionsResult {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inFlightRef = useRef<Map<string, InFlightSubmission>>(new Map());
   const isSubmittingRef = useRef(false);
@@ -739,11 +695,8 @@ export function useGenerationActions(
    * The tier is data the run carries: it picks the prompt prep and the log
    * vocabulary, not which pipeline executes.
    *
-   * Draft-only phases: a flux-kontext draft is a storyboard (a different
-   * provider call inside the same submission envelope), and a video draft
-   * resolves @-triggers then compiles the WAN prompt. Render-only: a start
-   * frame that IS a character asset skips URL resolution and travels as
-   * `characterAssetId`, never as `startImage`.
+   * A video draft compiles the visible words for WAN; render sends them as-is.
+   * Frozen storyboard, character-keyframe and face-swap inputs have no frontend entry point.
    */
   const runVideoGeneration = useCallback(
     async (
@@ -752,7 +705,7 @@ export function useGenerationActions(
       prompt: string,
       params: GenerationParams,
     ) => {
-      if (isSubmittingRef.current) return;
+      if (isSubmittingRef.current || model === "flux-kontext") return;
       setSubmissionPending(true);
       const isDraft = tier === "draft";
       const runLabel = isDraft ? ("Draft" as const) : ("Render" as const);
@@ -771,15 +724,9 @@ export function useGenerationActions(
       let generationAccepted = false;
       const startedAt = Date.now();
       const motionMeta = extractMotionMeta(resolved.generationParams);
-      const faceSwapMeta = extractFaceSwapMeta(resolved);
-      const isCharacterAsset =
-        !isDraft &&
-        resolved.startImage?.source === "asset" &&
-        Boolean(resolved.startImage?.assetId);
-      const startImageUrlHost =
-        !isCharacterAsset && resolved.startImage?.url
-          ? safeUrlHost(resolved.startImage.url)
-          : null;
+      const startImageUrlHost = resolved.startImage?.url
+        ? safeUrlHost(resolved.startImage.url)
+        : null;
       const requestedEndImage = Boolean(resolved.endImage?.url);
       const requestedReferenceImageCount =
         resolved.referenceImages?.length ?? 0;
@@ -792,27 +739,7 @@ export function useGenerationActions(
         promptLength: prompt.trim().length,
         aspectRatio: resolved.aspectRatio ?? null,
         hasStartImage: Boolean(resolved.startImage),
-        ...(isDraft
-          ? {
-              startImageUrlHost,
-              faceSwapApplied: faceSwapMeta.faceSwapApplied,
-              faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-                ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-                : null,
-              characterAssetId: faceSwapMeta.characterAssetId,
-            }
-          : {
-              isCharacterAsset,
-              startImageUrlHost,
-              characterAssetId: isCharacterAsset
-                ? (resolved.startImage?.assetId ?? null)
-                : null,
-              faceSwapApplied: faceSwapMeta.faceSwapApplied,
-              faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-                ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-                : null,
-              characterAssetIdOverride: faceSwapMeta.characterAssetId,
-            }),
+        startImageUrlHost,
         requestedEndImage,
         requestedReferenceImageCount,
         requestedExtendMode,
@@ -846,108 +773,11 @@ export function useGenerationActions(
           });
           if (controller.signal.aborted) return;
         }
-        if (isDraft && model === "flux-kontext") {
-          const response = await generateStoryboardPreview(prompt, {
-            ...(resolved.aspectRatio
-              ? { aspectRatio: resolved.aspectRatio }
-              : {}),
-            ...readSessionParams(optionsRef.current),
-          });
-          if (controller.signal.aborted) {
-            return;
-          }
-          if (!response.success) {
-            const reason =
-              response.message || response.error || "Failed to generate frames";
-            log.warn("Storyboard draft response invalid", {
-              generationId: takeId,
-              success: false,
-              hasImageUrls: false,
-              error: reason,
-              ...motionMeta,
-            });
-            throw new Error(reason);
-          }
-          if (!response.data.imageUrls?.length) {
-            log.warn("Storyboard draft response invalid", {
-              generationId: takeId,
-              success: true,
-              hasImageUrls: false,
-              error: "Failed to generate frames",
-              ...motionMeta,
-            });
-            throw new Error("Failed to generate frames");
-          }
-          const urls = response.data.imageUrls;
-          const storagePaths = response.data.storagePaths;
-          const serverGenerationId = response.data.generationId;
-          const durationMs = Date.now() - startedAt;
-
-          log.info("Storyboard draft generation succeeded", {
-            generationId: takeId,
-            durationMs,
-            framesCount: urls.length,
-            serverPersisted: Boolean(serverGenerationId),
-            ...motionMeta,
-          });
-          generationAccepted = true;
-          // When the server persisted, adopt the server-assigned id so a
-          // subsequent session refetch is an id-matched no-op rather than
-          // a clobbering duplicate.
-          acceptGeneration(
-            serverGenerationId
-              ? { ...generation, id: serverGenerationId }
-              : generation,
-            {
-              status: "completed",
-              completedAt: Date.now(),
-              mediaUrls: urls,
-              ...(storagePaths?.length
-                ? { mediaAssetIds: toAssetIds(storagePaths) }
-                : {}),
-              thumbnailUrl: response.data.baseImageUrl || urls[0] || null,
-            },
-          );
-          // C7 fix: storyboard previews charge credits server-side, so the
-          // client must refresh the balance badge or it stays stale until
-          // the next bigger transaction. Mirrors the same call on the
-          // draft-render and full-render success paths.
-          syncCreditBalanceFromResponse(response.remainingCredits);
-          submission.releasePendingFlag();
-          return;
-        }
-
-        // Draft-only prompt preparation: resolve @-triggers into their asset
-        // text, then compile the WAN prompt. A render sends the words as-is.
+        // Draft-only prompt preparation compiles the visible words for WAN.
+        // Named-asset trigger resolution is dormant and is not requested.
         let requestPrompt = prompt;
-        let resolvedCharacterAssetId =
-          resolved.characterAssetId?.trim() || null;
         if (isDraft) {
-          let promptForCompilation = prompt.trim();
-          if (hasPromptTriggers(promptForCompilation)) {
-            try {
-              const resolvedPrompt =
-                await assetApi.resolve(promptForCompilation);
-              const expandedPrompt = resolvedPrompt.expandedText.trim();
-              if (expandedPrompt.length > 0) {
-                promptForCompilation = expandedPrompt;
-              }
-              if (!resolvedCharacterAssetId) {
-                resolvedCharacterAssetId =
-                  resolvedPrompt.characters[0]?.id ?? null;
-              }
-            } catch (error) {
-              const info = sanitizeError(error);
-              log.warn(
-                "Prompt trigger resolution failed; falling back to raw prompt",
-                {
-                  generationId: takeId,
-                  error: info.message,
-                  errorName: info.name,
-                },
-              );
-            }
-          }
+          const promptForCompilation = prompt.trim();
           if (controller.signal.aborted) {
             return;
           }
@@ -990,11 +820,9 @@ export function useGenerationActions(
           ? requestedExtendVideoUrl
           : null;
 
-        const resolvedStartImage = isCharacterAsset
-          ? (resolved.startImage ?? null)
-          : resolved.startImage
-            ? await resolveStartImageUrl(resolved.startImage)
-            : null;
+        const resolvedStartImage = resolved.startImage
+          ? await resolveStartImageUrl(resolved.startImage)
+          : null;
         const resolvedEndImage = allowedEndImageInput
           ? await resolveEndImageUrl(allowedEndImageInput)
           : null;
@@ -1011,10 +839,9 @@ export function useGenerationActions(
         if (controller.signal.aborted) {
           return;
         }
-        const requestStartImageUrlHost =
-          !isCharacterAsset && resolvedStartImage?.url
-            ? safeUrlHost(resolvedStartImage.url)
-            : startImageUrlHost;
+        const requestStartImageUrlHost = resolvedStartImage?.url
+          ? safeUrlHost(resolvedStartImage.url)
+          : startImageUrlHost;
         const requestEndImageUrlHost = resolvedEndImage?.url
           ? safeUrlHost(resolvedEndImage.url)
           : null;
@@ -1022,38 +849,13 @@ export function useGenerationActions(
           ? safeUrlHost(resolvedExtendVideoUrl)
           : null;
 
-        // What the request names as the character: a render whose start frame
-        // IS the asset names that asset; otherwise whatever the options
-        // carried (a draft may have upgraded it from a prompt trigger).
-        const requestCharacterAssetId = isCharacterAsset
-          ? (resolved.startImage?.assetId ?? null)
-          : resolvedCharacterAssetId;
-
         log.info(`${dispatchNoun} request dispatched`, {
           generationId: takeId,
           model,
           aspectRatio: resolved.aspectRatio ?? null,
-          ...(isDraft
-            ? {
-                promptLength: requestPrompt.length,
-                hasStartImage: Boolean(resolvedStartImage?.url),
-                startImageUrlHost: requestStartImageUrlHost,
-                motionPromptInjected: false,
-                faceSwapApplied: faceSwapMeta.faceSwapApplied,
-                faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-                  ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-                  : null,
-                characterAssetId: resolvedCharacterAssetId,
-              }
-            : {
-                isCharacterAsset,
-                startImageUrlHost: requestStartImageUrlHost,
-                faceSwapApplied: faceSwapMeta.faceSwapApplied,
-                faceSwapUrlHost: faceSwapMeta.faceSwapUrl
-                  ? safeUrlHost(faceSwapMeta.faceSwapUrl)
-                  : null,
-                characterAssetId: faceSwapMeta.characterAssetId,
-              }),
+          promptLength: requestPrompt.length,
+          hasStartImage: Boolean(resolvedStartImage?.url),
+          startImageUrlHost: requestStartImageUrlHost,
           requestedEndImage,
           requestedReferenceImageCount,
           requestedExtendMode,
@@ -1069,10 +871,10 @@ export function useGenerationActions(
           resolved.aspectRatio ?? undefined,
           model,
           {
-            ...(!isCharacterAsset && resolvedStartImage?.url
+            ...(resolvedStartImage?.url
               ? { startImage: resolvedStartImage.url }
               : {}),
-            ...(!isCharacterAsset && resolvedStartImage?.generationId
+            ...(resolvedStartImage?.generationId
               ? { sourceGenerationId: resolvedStartImage.generationId }
               : {}),
             ...(resolvedEndImage?.url
@@ -1091,14 +893,8 @@ export function useGenerationActions(
             ...(resolvedExtendVideoUrl
               ? { extendVideoUrl: resolvedExtendVideoUrl }
               : {}),
-            ...(requestCharacterAssetId
-              ? { characterAssetId: requestCharacterAssetId }
-              : {}),
             ...(resolved.generationParams
               ? { generationParams: resolved.generationParams }
-              : {}),
-            ...(resolved.faceSwapAlreadyApplied
-              ? { faceSwapAlreadyApplied: true }
               : {}),
             ...requestSessionParams,
           },
@@ -1119,7 +915,6 @@ export function useGenerationActions(
             : null,
           ...motionMeta,
         });
-        syncCreditBalanceFromResponse(response.remainingCredits);
         let videoUrl: string | null = null;
         let videoStoragePath: string | null = response.storagePath ?? null;
         let videoPosterUrl: string | null = response.startImageUrl ?? null;
@@ -1224,8 +1019,7 @@ export function useGenerationActions(
         log.info(`${dispatchNoun} generation succeeded`, {
           generationId: takeId,
           durationMs,
-          faceSwapApplied:
-            response?.faceSwapApplied ?? faceSwapMeta.faceSwapApplied,
+          faceSwapApplied: response?.faceSwapApplied ?? false,
           ...motionMeta,
         });
         if (response.jobId) {
@@ -1286,167 +1080,6 @@ export function useGenerationActions(
     [runVideoGeneration],
   );
 
-  const generateStoryboard = useCallback(
-    async (prompt: string, params: StoryboardParams) => {
-      if (isSubmittingRef.current) return;
-      setSubmissionPending(true);
-      const { seedImageUrl, ...baseParams } = params;
-      const resolved = resolveGenerationOptions(optionsRef.current, baseParams);
-      const generation = buildGeneration("flux-kontext", prompt, resolved);
-      const modelConfig = getModelConfig("flux-kontext");
-      const requiredCredits = modelConfig?.credits ?? 4;
-      const operationLabel = "Storyboard";
-      let generationAccepted = false;
-      const startedAt = Date.now();
-      const motionMeta = extractMotionMeta(resolved.generationParams);
-
-      log.info("Storyboard generation started", {
-        generationId: generation.id,
-        tier: "draft",
-        model: "flux-kontext",
-        promptLength: prompt.trim().length,
-        aspectRatio: resolved.aspectRatio ?? null,
-        hasSeedImageUrl: Boolean(seedImageUrl),
-        ...motionMeta,
-      });
-
-      const controller = new AbortController();
-      const submission = registerSubmission(
-        generation.id,
-        controller,
-        generation.promptVersionId,
-      );
-
-      try {
-        const resolvedSeedImageUrl = await resolveSeedImageUrl(
-          seedImageUrl ?? null,
-        );
-        // Prefer the freshly-created promptVersionId passed in params over
-        // the stale options snapshot. `onCreateVersionIfNeeded()` in
-        // executeStoryboardAction builds a new version ID and sets React
-        // state, but optionsRef.current still holds the previous render's
-        // value until the next React commit — so without this override the
-        // server sees an empty promptVersionId and skips attaching the
-        // generation to the session.
-        const sessionParams = readSessionParams(optionsRef.current);
-        const response = await generateStoryboardPreview(prompt, {
-          ...(resolved.aspectRatio
-            ? { aspectRatio: resolved.aspectRatio }
-            : {}),
-          ...(resolvedSeedImageUrl
-            ? { seedImageUrl: resolvedSeedImageUrl }
-            : {}),
-          ...sessionParams,
-          ...(params.promptVersionId
-            ? { promptVersionId: params.promptVersionId }
-            : {}),
-        });
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (!response.success) {
-          const reason =
-            response.message ||
-            response.error ||
-            "Failed to generate storyboard";
-          log.warn("Storyboard generation response invalid", {
-            generationId: generation.id,
-            success: false,
-            hasImageUrls: false,
-            error: reason,
-            ...motionMeta,
-          });
-          throw new Error(reason);
-        }
-        if (!response.data.imageUrls?.length) {
-          log.warn("Storyboard generation response invalid", {
-            generationId: generation.id,
-            success: true,
-            hasImageUrls: false,
-            error: "Failed to generate storyboard",
-            ...motionMeta,
-          });
-          throw new Error("Failed to generate storyboard");
-        }
-        const urls = response.data.imageUrls;
-        const storagePaths = response.data.storagePaths;
-        const serverGenerationId = response.data.generationId;
-        const durationMs = Date.now() - startedAt;
-        log.info("Storyboard generation succeeded", {
-          generationId: generation.id,
-          durationMs,
-          framesCount: urls.length,
-          serverPersisted: Boolean(serverGenerationId),
-          ...motionMeta,
-        });
-
-        generationAccepted = true;
-        // When the server persisted, adopt the server-assigned id so a
-        // subsequent session refetch is an id-matched no-op rather than a
-        // clobbering duplicate. When the server didn't persist (legacy or
-        // soft-fail path), keep the client-minted id; syncVersionGenerations
-        // mirrors it upward eventually.
-        acceptGeneration(
-          serverGenerationId
-            ? { ...generation, id: serverGenerationId }
-            : generation,
-          {
-            status: "completed",
-            completedAt: Date.now(),
-            mediaUrls: urls,
-            ...(storagePaths?.length
-              ? { mediaAssetIds: toAssetIds(storagePaths) }
-              : {}),
-            thumbnailUrl: response.data.baseImageUrl || urls[0] || null,
-          },
-        );
-
-        // ISSUE-12 UX polish: tell the caller the server has persisted the
-        // generation so it can re-fetch the session and hydrate the gallery
-        // without requiring a page reload. Only fire when the server
-        // actually attached (generationId present) AND we have a session
-        // to refetch.
-        const sessionIdForCallback =
-          sessionParams.sessionId ?? optionsRef.current.sessionId;
-        if (serverGenerationId && sessionIdForCallback) {
-          optionsRef.current.onServerGenerationPersisted?.({
-            sessionId: sessionIdForCallback,
-            generationId: serverGenerationId,
-          });
-        }
-        // C7 fix: storyboard previews charge credits server-side, so the
-        // client must refresh the balance badge or it stays stale until
-        // the next bigger transaction. Mirrors the same call on the
-        // draft-render and full-render success paths.
-        syncCreditBalanceFromResponse(response.remainingCredits);
-        submission.releasePendingFlag();
-      } catch (error) {
-        failGenerationRun(error, {
-          runLabel: "Storyboard",
-          model: "flux-kontext",
-          generation,
-          takeId: generation.id,
-          accepted: generationAccepted,
-          controller,
-          submission,
-          operationLabel,
-          requiredCredits,
-          startedAt,
-          motionMeta,
-          jobBacked: false,
-        });
-      } finally {
-        submission.release();
-      }
-    },
-    [
-      acceptGeneration,
-      failGenerationRun,
-      registerSubmission,
-      setSubmissionPending,
-    ],
-  );
-
   const generateRender = useCallback(
     (model: string, prompt: string, params: GenerationParams) =>
       runVideoGeneration("render", model, prompt, params),
@@ -1469,7 +1102,7 @@ export function useGenerationActions(
   const retryGeneration = useCallback(
     (id: string) => {
       const generation = generationsRef.current.find((item) => item.id === id);
-      if (!generation) return;
+      if (!generation || generation.mediaType === "image") return;
       const opts = optionsRef.current;
       const motionMeta = extractMotionMeta(opts.generationParams);
       log.info("Retry generation requested", {
@@ -1488,8 +1121,7 @@ export function useGenerationActions(
         generationParams: opts.generationParams,
       };
       // One pipeline: the take's tier is data it carries (derived from its
-      // model, ADR-0021), not a fork between two copies of the run. A
-      // flux-kontext draft re-enters its storyboard branch the same way.
+      // model, ADR-0021), not a fork between two copies of the run.
       runVideoGeneration(
         generation.tier,
         generation.model,
@@ -1503,7 +1135,6 @@ export function useGenerationActions(
   return {
     generateDraft,
     generateRender,
-    generateStoryboard,
     isSubmitting,
     cancelGeneration,
     retryGeneration,

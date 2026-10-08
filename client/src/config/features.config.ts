@@ -1,10 +1,9 @@
 /**
  * Client-side feature flags.
  *
- * Flags are declared here with metadata so they appear in the generated
- * flag documentation. The legacy pre-canvas layout branch remains exercised
- * by PromptOptimizerWorkspaceView.test.tsx — keep both branches alive until
- * the layout migration is formally concluded.
+ * Frozen UI names remain as metadata for the flag documentation generator.
+ * Their frontend entry points have been retired (#177); runtime values are
+ * permanently false even when an old deployment supplies a VITE_FEATURE flag.
  */
 
 interface ClientFlagDef<T> {
@@ -16,17 +15,9 @@ interface ClientFlagDef<T> {
 }
 
 const FLAG_DEFS = {
-  CANVAS_FIRST_LAYOUT: {
-    envName: "VITE_FEATURE_CANVAS_FIRST_LAYOUT",
-    default: true,
-    description:
-      "Renders the canvas-first workspace. Set to 'false' to fall back to the legacy sidebar layout.",
-    migrationFlag: true,
-  } satisfies ClientFlagDef<boolean>,
   // ── ADR-0002 frozen-stack surfaces ──────────────────────────────
-  // These gate the client UI for stacks ADR-0002 froze. Default off during
-  // the authoring-loop validation phase; thawing a stack means flipping its
-  // default here in a reviewed change, not setting env vars in prod.
+  // Retired frontend registrations. Environment variables cannot restore them;
+  // revival requires a reviewed frontend implementation and product decision.
   BILLING_UI: {
     envName: "VITE_FEATURE_BILLING_UI",
     default: false,
@@ -55,48 +46,16 @@ const FLAG_DEFS = {
     envName: "VITE_FEATURE_MODEL_INTELLIGENCE_UI",
     default: false,
     description:
-      "Model recommendation calls and dropdown hints on the canvas. Premature per ADR-0002: v1 hardcodes the best model.",
+      "Retired model-analysis recommendation calls, telemetry and showroom. Manual supported-model selection remains active.",
   } satisfies ClientFlagDef<boolean>,
 } as const;
 
-function resolveBoolFlag(envName: string, fallback: boolean): boolean {
-  // import.meta.env is Vite-specific; guard so this module stays importable
-  // from Node tooling (e.g. the flag documentation generator).
-  const env =
-    typeof import.meta !== "undefined"
-      ? (import.meta as { env?: Record<string, string | undefined> }).env
-      : undefined;
-  const raw = env?.[envName];
-  if (raw === "false") return false;
-  if (raw === "true") return true;
-  return fallback;
-}
-
 export const FEATURES = {
-  CANVAS_FIRST_LAYOUT: resolveBoolFlag(
-    FLAG_DEFS.CANVAS_FIRST_LAYOUT.envName,
-    FLAG_DEFS.CANVAS_FIRST_LAYOUT.default,
-  ),
-  BILLING_UI: resolveBoolFlag(
-    FLAG_DEFS.BILLING_UI.envName,
-    FLAG_DEFS.BILLING_UI.default,
-  ),
-  CONTINUITY_UI: resolveBoolFlag(
-    FLAG_DEFS.CONTINUITY_UI.envName,
-    FLAG_DEFS.CONTINUITY_UI.default,
-  ),
-  CONVERGENCE_UI: resolveBoolFlag(
-    FLAG_DEFS.CONVERGENCE_UI.envName,
-    FLAG_DEFS.CONVERGENCE_UI.default,
-  ),
-  SEQUENCE_EDITOR_UI: resolveBoolFlag(
-    FLAG_DEFS.SEQUENCE_EDITOR_UI.envName,
-    FLAG_DEFS.SEQUENCE_EDITOR_UI.default,
-  ),
-  MODEL_INTELLIGENCE_UI: resolveBoolFlag(
-    FLAG_DEFS.MODEL_INTELLIGENCE_UI.envName,
-    FLAG_DEFS.MODEL_INTELLIGENCE_UI.default,
-  ),
+  BILLING_UI: false,
+  CONTINUITY_UI: false,
+  CONVERGENCE_UI: false,
+  SEQUENCE_EDITOR_UI: false,
+  MODEL_INTELLIGENCE_UI: false,
 } as const;
 
 /** Metadata used by the flag documentation generator. Runtime code should read FEATURES. */

@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import type { Asset, AssetType } from "@shared/types/asset";
+import React, { useMemo, type ReactNode } from "react";
 import type {
   DraftModel,
   GenerationOverrides,
@@ -17,7 +10,6 @@ import {
   usePromptActions,
   usePromptConfig,
   usePromptHighlights,
-  usePromptNavigation,
   usePromptServices,
   usePromptSession,
 } from "@/features/prompt-optimizer/context/PromptStateContext";
@@ -29,12 +21,6 @@ import {
 
 interface SidebarDataProviderProps {
   children: ReactNode;
-  assets: Asset[];
-  assetsByType: Record<AssetType, Asset[]>;
-  isLoadingAssets: boolean;
-  onEditAsset: (assetId: string) => void;
-  onCreateAsset: (type: AssetType) => void;
-  onCreateFromTrigger?: (trigger: string) => void;
   onImageUpload?: (file: File) => void | Promise<void>;
   onStartFrameUpload?: (file: File) => void | Promise<void>;
   onUploadSidebarImage?: (file: File) => Promise<{
@@ -46,19 +32,12 @@ interface SidebarDataProviderProps {
 
 export function SidebarDataProvider({
   children,
-  assets,
-  assetsByType,
-  isLoadingAssets,
-  onEditAsset,
-  onCreateAsset,
-  onCreateFromTrigger,
   onImageUpload,
   onStartFrameUpload,
   onUploadSidebarImage,
 }: SidebarDataProviderProps): React.ReactElement {
   const { promptHistory, promptOptimizer } = usePromptServices();
   const { selectedModel } = usePromptConfig();
-  const { sessionId: routeSessionId } = usePromptNavigation();
   const { initialHighlights } = usePromptHighlights();
   const { currentPromptUuid, currentPromptDocId } = usePromptSession();
   const { handleCreateNew, loadFromHistory } = usePromptActions();
@@ -83,8 +62,6 @@ export function SidebarDataProvider({
     hasHighlights: Boolean(initialHighlights),
   });
   const activeModelLabel = resolveActiveModelLabel(selectedModel);
-  const sessionScopeId =
-    routeSessionId?.trim() || currentPromptUuid?.trim() || "draft";
   const sessions = useMemo(
     () => ({
       history: promptHistory.history,
@@ -123,10 +100,9 @@ export function SidebarDataProvider({
   const promptInteraction = useMemo(
     () => ({
       isProcessing: promptOptimizer.isProcessing,
-      ...(onCreateFromTrigger ? { onCreateFromTrigger } : {}),
       onInsertTrigger: insertAtCaret,
     }),
-    [insertAtCaret, onCreateFromTrigger, promptOptimizer.isProcessing],
+    [insertAtCaret, promptOptimizer.isProcessing],
   );
 
   const generation = useMemo(
@@ -137,9 +113,6 @@ export function SidebarDataProvider({
       onRender: (model: string, overrides?: GenerationOverrides): void => {
         controls?.onRender?.(model, overrides);
       },
-      onStoryboard: (): void => {
-        controls?.onStoryboard?.();
-      },
       ...(onImageUpload ? { onImageUpload } : {}),
       ...(onStartFrameUpload ? { onStartFrameUpload } : {}),
       ...(onUploadSidebarImage ? { onUploadSidebarImage } : {}),
@@ -147,25 +120,14 @@ export function SidebarDataProvider({
     [controls, onImageUpload, onStartFrameUpload, onUploadSidebarImage],
   );
 
-  const assetsDomain = useMemo(
-    () => ({
-      assets,
-      assetsByType,
-      isLoadingAssets,
-      onEditAsset,
-      onCreateAsset,
-    }),
-    [assets, assetsByType, isLoadingAssets, onCreateAsset, onEditAsset],
-  );
-
   const value = useMemo(
     () => ({
       sessions,
       promptInteraction,
       generation,
-      assets: assetsDomain,
+      assets: null,
     }),
-    [assetsDomain, generation, promptInteraction, sessions],
+    [generation, promptInteraction, sessions],
   );
 
   return (

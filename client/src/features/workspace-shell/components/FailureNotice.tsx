@@ -25,27 +25,21 @@ export function FailureNotice({
       role="alert"
       data-testid="failure-notice"
       className={cn(
-        "border-tool-rail-border bg-tool-surface-card mx-auto flex max-w-[520px]",
-        "flex-col items-center gap-3 rounded-xl border px-6 py-8 text-center",
+        "mx-auto flex w-fit max-w-[520px] flex-col items-center gap-3",
+        "rounded-card bg-[var(--vidra-stage-placeholder)] px-6 py-8 text-center ring-[0.5px] ring-inset ring-white",
       )}
     >
       <div className="flex flex-col gap-1">
-        <p className="text-foreground m-0 text-ui font-medium">
+        <p className="text-foreground m-0 text-ui font-normal">
           {copy.message}
         </p>
         {copy.notCharged ? (
-          <p className="text-tool-text-subdued m-0 text-meta">
+          <p className="m-0 text-meta font-normal text-muted">
             Nothing was charged.
           </p>
         ) : null}
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={onRetry}
-        className="border-tool-rail-border text-foreground rounded-md hover:bg-white/10"
-      >
+      <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
         {copy.retryLabel}
       </Button>
     </div>

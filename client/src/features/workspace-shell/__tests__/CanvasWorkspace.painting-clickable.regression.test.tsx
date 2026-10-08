@@ -104,8 +104,8 @@ vi.mock("@/components/ToolSidebar/context", () => ({
   useSidebarGenerationDomain: () => null,
 }));
 
-vi.mock("../hooks/useModelSelectionRecommendation", () => ({
-  useModelSelectionRecommendation: () => ({
+vi.mock("../hooks/useVideoModelSelection", () => ({
+  useVideoModelSelection: () => ({
     recommendationMode: "t2v",
     modelRecommendation: null,
     recommendedModelId: undefined,

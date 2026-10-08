@@ -12,7 +12,7 @@ import { withSelectedSpan } from "@/features/prompt-optimizer/context/__tests__/
 // ADR-0010 / M3 (differentiator reachability — kill the I2V box-repurposing):
 // a start frame (I2V mode) must NOT repurpose the composer's text box into a
 // motion-direction input. The input is the description in every stage, so its
-// placeholder stays "Describe your shot…" — never "Optional: add motion
+// placeholder stays "Describe the video you want to create…" — never "Optional: add motion
 // direction…". The repurposed placeholder tells the user the box is no longer
 // the editable description where click-to-enhance lives; that is one of the
 // box-repurposing surfaces this slice removes.
@@ -100,8 +100,8 @@ vi.mock("@/components/ToolSidebar/context", () => ({
   useSidebarGenerationDomain: () => null,
 }));
 
-vi.mock("../hooks/useModelSelectionRecommendation", () => ({
-  useModelSelectionRecommendation: () => ({
+vi.mock("../hooks/useVideoModelSelection", () => ({
+  useVideoModelSelection: () => ({
     recommendationMode: "t2v",
     modelRecommendation: null,
     recommendedModelId: undefined,
@@ -142,6 +142,6 @@ describe("regression: the input is the description in every stage (M3)", () => {
     render(withSelectedSpan(<CanvasWorkspace {...props} />));
 
     const editor = screen.getByRole("textbox", { name: "Shot description" });
-    expect(editor).toHaveAttribute("data-placeholder", "Describe your shot…");
+    expect(editor).toHaveAttribute("data-placeholder", "Describe the video you want to create…");
   });
 });

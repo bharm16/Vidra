@@ -1,0 +1,28 @@
+/* Native Page 21 support paints differ from the semantic aliases emitted
+   by get_design_context. Values were read from 703:2248, 2228/2229,
+   2233/2236, 2239 and 2270. These are scoped to the existing support page. */
+.ps-support-page {
+  --support-native-surface: #1b1b1b;
+  --support-native-selected: #262626;
+  --support-native-message: #292929;
+  background: var(--support-native-surface);
+}
+.ps-support-topic[aria-pressed="false"] {
+  background: var(--support-native-surface);
+  border-color: var(--foreground);
+}
+.ps-support-topic[aria-pressed="true"] {
+  background: var(--support-native-selected);
+  border-color: var(--primary);
+}
+.ps-support-email,
+.ps-support-message,
+.ps-support-footer {
+  border-color: var(--foreground);
+}
+.ps-support-message {
+  background: var(--support-native-message);
+}
+.ps-support-compose {
+  background: var(--foreground);
+}

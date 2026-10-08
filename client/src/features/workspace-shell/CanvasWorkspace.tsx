@@ -1,27 +1,10 @@
-import React, {
-  Suspense,
-  lazy,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { VIDEO_DRAFT_MODEL } from "@/components/ToolSidebar/config/modelConfig";
-import type { CameraPath } from "@/features/convergence/types";
-import { cameraMotionDirection } from "@shared/cameraMotion";
-import {
-  writeCameraDirection,
-  type CameraDirectionConflict,
-} from "./utils/cameraDirection";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { VIDEO_DRAFT_MODELS } from "@/components/ToolSidebar/config/modelConfig";
 import {
   useGenerationControlsStoreActions,
   useGenerationControlsStoreState,
 } from "@features/generation-controls";
-import { resolveDurationSeconds } from "@features/generation-controls/resolveGenerationParams";
-import {
-  useOptionalPromptHighlights,
-  useOptionalPromptServices,
-} from "@/features/prompt-optimizer/context/PromptStateContext";
+import { useOptionalPromptServices } from "@/features/prompt-optimizer/context/PromptStateContext";
 import {
   useRegisterPersistenceTarget,
   type PersistenceTarget,
@@ -37,16 +20,12 @@ import type {
   InlineSuggestion,
   SuggestionItem,
 } from "@/features/prompt-optimizer/PromptCanvas/types";
-import { trackModelRecommendationEvent } from "@/features/model-intelligence/api";
-import { useModelSelectionRecommendation } from "./hooks/useModelSelectionRecommendation";
-import { GenerationPopover } from "@/features/prompt-optimizer/components/GenerationPopover";
+import { useVideoModelSelection } from "./hooks/useVideoModelSelection";
+import { readTakeOrigin } from "@/features/generations/utils/serverOwnedRecordFields";
+import { SelectedResult } from "./components/SelectedResult";
 import { cn } from "@/utils/cn";
-import {
-  AmbientLight,
-  DottedGrid,
-  Grain,
-  Vignette,
-} from "@/components/atmosphere";
+import { useCompactViewport } from "@/hooks/useCompactViewport";
+
 import { NavRail } from "@/components/navigation/NavRail";
 import { buildGalleryGenerationEntries } from "./utils/galleryGeneration";
 import { deriveWorkspaceStage } from "./utils/deriveWorkspaceStage";
@@ -62,8 +41,8 @@ import {
 } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import { WorkspaceTopBar } from "./components/WorkspaceTopBar";
 import { FrameStage } from "./components/FrameStage";
-import { CanvasPromptBar } from "./components/CanvasPromptBar";
-import { useComposerFocus } from "./hooks/useComposerFocus";
+import { VideoComposer } from "./components/VideoComposer";
+import { PromptEditorSurface } from "./components/PromptEditorSurface";
 import { CanvasSettingsRow } from "./components/CanvasSettingsRow";
 import { YourWordsChip } from "./components/YourWordsChip";
 import { FailureNotice } from "./components/FailureNotice";
@@ -77,6 +56,8 @@ import { nonLeafIds, isRemovableLeaf } from "@/features/space/lineage/leaf";
 import { createShare } from "@/features/share/api/createShare";
 import { createStudioProjectFromSessionPicture } from "@/features/studio/api/studioApi";
 import { useToast } from "@components/Toast";
+import { resolveMediaUrl } from "@/services/media/MediaUrlResolver";
+import { downloadMedia } from "@/utils/downloadMedia";
 import type { SpaceNode } from "@/features/space/lineage/types";
 import { archiveGeneration } from "@/features/space/api/spaceApi";
 import { ApiError } from "@/services/http/ApiError";
@@ -84,21 +65,6 @@ import type {
   PromptEditorWiring,
   PromptEditorSurfaceProps,
 } from "./components/PromptEditorSurface";
-
-// Lazy-loaded so the Three.js bundle (~120 KB compressed, only used inside
-// CameraMotionModal's renderer) stays out of the workspace landing chunk.
-const CameraMotionModal = lazy(() =>
-  import("@/components/modals/CameraMotionModal").then((m) => ({
-    default: m.CameraMotionModal,
-  })),
-);
-
-/** The blocked choice, held so "Replace those words" can re-run it. */
-interface CameraDirectionConflictState {
-  kind: CameraDirectionConflict;
-  text: string;
-  cameraPath: CameraPath;
-}
 
 interface CanvasWorkspaceProps {
   generationsPanelProps: GenerationsPanelProps;
@@ -115,6 +81,7 @@ interface CanvasWorkspaceProps {
    * wired, and "Refine in the studio" is not offered.
    */
   onOpenStudioProject?: (projectId: string) => void;
+  onOpenSketch?: (() => void) | undefined;
 }
 
 export function CanvasWorkspace({
@@ -123,15 +90,15 @@ export function CanvasWorkspace({
   onReuseGeneration,
   onToggleGenerationFavorite,
   onOpenStudioProject,
+  onOpenSketch,
 }: CanvasWorkspaceProps): React.ReactElement {
   const storeActions = useGenerationControlsStoreActions();
   const { domain } = useGenerationControlsStoreState();
-  const promptHighlights = useOptionalPromptHighlights();
   const promptServices = useOptionalPromptServices();
-  const { session, hasActiveContinuityShot, currentShot, updateShot } =
-    useWorkspaceSession();
+  const { session } = useWorkspaceSession();
   const toast = useToast();
-  const { onComposerFill, onIdeaBoxExpand } = usePromptResultsActions();
+  const { onComposerFill, onIdeaBoxExpand, onClearPendingReference } =
+    usePromptResultsActions();
 
   // M5 D4: publish the words-version a golden-path first frame should persist
   // onto. This lives here because the canvas owns version creation
@@ -145,83 +112,25 @@ export function CanvasWorkspace({
   }, [onCreateVersionIfNeeded]);
   useRegisterPersistenceTarget(resolvePersistenceTarget);
   useWorkspaceKeyboardShortcuts();
-  const [showCameraMotionModal, setShowCameraMotionModal] = useState(false);
-  const [cameraConflict, setCameraConflict] =
-    useState<CameraDirectionConflictState | null>(null);
-  // The prompt as it stood when a camera direction was written. The
-  // words-version is minted once the write has landed in the editor, because
-  // onCreateVersionIfNeeded reads the displayed prompt from its own state:
-  // called in the same tick it would version the previous text.
-  const [promptBeforeCameraWrite, setPromptBeforeCameraWrite] = useState<
-    string | null
-  >(null);
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const mobileLayout = useCompactViewport();
 
   const prompt = generationsPanelProps.prompt;
-  const durationSeconds = resolveDurationSeconds(
-    domain.generationParams,
-    domain.selectedModel,
-  );
-
-  const {
-    recommendationMode,
-    modelRecommendation,
-    recommendedModelId,
-    efficientModelId,
-    renderModelOptions,
-    renderModelId,
-    recommendationAgeMs,
-  } = useModelSelectionRecommendation({
-    prompt,
-    keyframesCount: domain.startFrame ? 1 : 0,
-    durationSeconds,
+  const { renderModelOptions, renderModelId } = useVideoModelSelection({
     selectedModel: domain.selectedModel,
     videoTier: domain.videoTier,
-    promptHighlights: promptHighlights?.initialHighlights ?? null,
   });
 
   const handleModelChange = useCallback(
     (modelId: string): void => {
-      const nextTier = modelId === VIDEO_DRAFT_MODEL.id ? "draft" : "render";
+      const nextTier = VIDEO_DRAFT_MODELS.some((model) => model.id === modelId)
+        ? "draft"
+        : "render";
       if (modelId === domain.selectedModel) return;
-
-      void trackModelRecommendationEvent({
-        event: "model_selected",
-        recommendationId: modelRecommendation?.promptId,
-        promptId: modelRecommendation?.promptId,
-        recommendedModelId,
-        selectedModelId: modelId,
-        mode: recommendationMode,
-        durationSeconds,
-        ...(typeof recommendationAgeMs === "number"
-          ? { timeSinceRecommendationMs: recommendationAgeMs }
-          : {}),
-      });
-
       storeActions.setSelectedModel(modelId);
       if (nextTier !== domain.videoTier) storeActions.setVideoTier(nextTier);
-
-      if (
-        hasActiveContinuityShot &&
-        currentShot &&
-        currentShot.modelId !== modelId
-      ) {
-        void updateShot(currentShot.id, { modelId });
-      }
     },
-    [
-      currentShot,
-      domain.selectedModel,
-      domain.videoTier,
-      durationSeconds,
-      hasActiveContinuityShot,
-      modelRecommendation?.promptId,
-      recommendationAgeMs,
-      recommendationMode,
-      recommendedModelId,
-      storeActions,
-      updateShot,
-    ],
+    [domain.selectedModel, domain.videoTier, storeActions],
   );
 
   const onStateSnapshotProp = generationsPanelProps.onStateSnapshot;
@@ -240,21 +149,9 @@ export function CanvasWorkspace({
 
   useEffect(() => {
     setViewingId(null);
-  }, [generationsPanelProps.promptVersionId]);
+  }, [session?.id]);
 
   const heroGeneration = generationsRuntime.heroGeneration;
-
-  // ADR-0015: the composer is bound to the words node's focus. Words are
-  // focused by default while writing; a CLIP steals focus the moment it
-  // exists; the demoted chip is the manual way back. A picture hero never
-  // steals — hydrated sessions reload the accepted frame as an image
-  // generation, and the restored working words must stay visible.
-  const { wordsFocused, focusedWordsId, focusWords, blurWords } =
-    useComposerFocus(
-      heroGeneration
-        ? { id: heroGeneration.id, mediaType: heroGeneration.mediaType }
-        : null,
-    );
 
   const galleryEntries = useMemo(() => {
     // Versions flow in unconditionally: they are identity-gated at the
@@ -297,10 +194,6 @@ export function CanvasWorkspace({
     setViewingId(null);
   }, [generationLookup, viewingId]);
 
-  const handleSelectGeneration = useCallback((generationId: string): void => {
-    setViewingId(generationId);
-  }, []);
-
   const handleReuse = useCallback(
     (generationId: string): void => {
       const generation = generationLookup.get(generationId);
@@ -310,88 +203,6 @@ export function CanvasWorkspace({
     },
     [generationLookup, onReuseGeneration],
   );
-  // The direction this workspace last wrote, derived from the stored choice
-  // rather than kept as a second copy — it is the replace target, so a
-  // different path swaps those words instead of adding a contradiction.
-  const previousCameraDirection = domain.cameraMotion
-    ? cameraMotionDirection(domain.cameraMotion.id)
-    : undefined;
-
-  // ADR-0022 D7: the choice becomes words. It rides onComposerFill — the
-  // editor's real change path — so the previous words land on the undo stack
-  // and the creator can take them back; the silent setter would not.
-  const applyCameraMotion = useCallback(
-    (cameraPath: CameraPath, replaceExistingCameraSpan: boolean): void => {
-      const direction = cameraMotionDirection(cameraPath.id);
-      // An id with no words of its own would make the choice a hidden
-      // parameter. Better to do nothing than to send something unreadable.
-      if (!direction || !onComposerFill) return;
-
-      const write = writeCameraDirection({
-        prompt,
-        direction,
-        ...(previousCameraDirection
-          ? { previousDirection: previousCameraDirection }
-          : {}),
-        spans: promptHighlights?.latestHighlightRef.current?.spans ?? [],
-        lockedSpans: promptServices?.promptOptimizer.lockedSpans ?? [],
-        replaceExistingCameraSpan,
-      });
-
-      if (write.outcome === "conflict") {
-        setCameraConflict({
-          kind: write.conflict,
-          text: write.conflictText,
-          cameraPath,
-        });
-        return;
-      }
-
-      setCameraConflict(null);
-      setPromptBeforeCameraWrite(prompt);
-      onComposerFill(write.prompt);
-      storeActions.setCameraMotion(cameraPath);
-      setShowCameraMotionModal(false);
-    },
-    [
-      onComposerFill,
-      previousCameraDirection,
-      prompt,
-      promptHighlights,
-      promptServices,
-      storeActions,
-    ],
-  );
-
-  const handleCameraMotionSelect = useCallback(
-    (cameraPath: CameraPath): void => applyCameraMotion(cameraPath, false),
-    [applyCameraMotion],
-  );
-
-  const handleReplaceConflictingCameraWords = useCallback((): void => {
-    if (!cameraConflict) return;
-    applyCameraMotion(cameraConflict.cameraPath, true);
-  }, [applyCameraMotion, cameraConflict]);
-
-  // Mint (or reuse) the words-version once the written direction has landed.
-  // Signature-gated upstream: a write that leaves the text identical creates
-  // no version, and takes already made keep the words they were made from.
-  useEffect(() => {
-    if (promptBeforeCameraWrite === null) return;
-    if (prompt === promptBeforeCameraWrite) return;
-    setPromptBeforeCameraWrite(null);
-    onCreateVersionIfNeeded();
-  }, [onCreateVersionIfNeeded, prompt, promptBeforeCameraWrite]);
-
-  // Opens the camera-motion picker from the armed first frame's controls
-  // (ADR-0022 D7). Guarded on domain.startFrame so the modal mount (which
-  // dereferences startFrame.url) never sees a null start frame.
-  const handleOpenMotion = useCallback((): void => {
-    if (!domain.startFrame) return;
-    setCameraConflict(null);
-    setShowCameraMotionModal(true);
-  }, [domain.startFrame]);
-
   // Pre-work: nothing has happened yet — no shots, no frame, loop idle, and
   // the session holds no expanded prompt. Unlike moment === "empty" this
   // survives focus and typing, so the hero stays on screen while the creator
@@ -423,6 +234,14 @@ export function CanvasWorkspace({
     }),
   );
   const isPreWork = workspaceStage.stage === "empty";
+  // An attached upload or an expansion attempt is still a setup. The first
+  // actual generation opens the side editor; its draft subtree stays mounted.
+  const beforeFirstGeneration = ![
+    ...generationsPanelProps.versions.flatMap(
+      (version) => version.generations ?? [],
+    ),
+    ...generationsRuntime.generations,
+  ].some((generation) => readTakeOrigin(generation) !== "upload");
 
   // Persist the front-door prompt across reloads (the session autosave only
   // covers post-submit words); restore replays through the editor's input path.
@@ -463,6 +282,44 @@ export function CanvasWorkspace({
     );
   }, [generationsPanelProps.versions, locallyArchivedIds]);
 
+  useEffect(() => {
+    if (
+      viewingId &&
+      spaceNodes.some((node) => node.id === viewingId && node.archived)
+    )
+      setViewingId(null);
+  }, [spaceNodes, viewingId]);
+
+  const generationRows = useMemo(() => {
+    const records = new Map(
+      [
+        ...generationsPanelProps.versions.flatMap(
+          (version) => version.generations ?? [],
+        ),
+        ...generationsRuntime.generations,
+      ].map((generation) => [generation.id, generation]),
+    );
+    const ordered = spaceNodes
+      .filter((node) => node.kind !== "words" && !node.archived)
+      .sort(
+        (left, right) =>
+          (records.get(left.id)?.createdAt ?? 0) -
+          (records.get(right.id)?.createdAt ?? 0),
+      );
+    const groups = new Map<string, string[]>();
+    for (const node of ordered) {
+      const dispatchId = records.get(node.id)?.jobId || node.id;
+      const group = groups.get(dispatchId) ?? [];
+      group.push(node.id);
+      groups.set(dispatchId, group);
+    }
+    return [...groups.values()];
+  }, [
+    generationsPanelProps.versions,
+    generationsRuntime.generations,
+    spaceNodes,
+  ]);
+
   const spaceNonLeafIds = useMemo(() => nonLeafIds(spaceNodes), [spaceNodes]);
 
   // Take-restore (M5, ADR-0012): refill the composer with a node's paired
@@ -472,13 +329,8 @@ export function CanvasWorkspace({
     (nodeId: string): void => {
       const words = resolveWordsForNode(nodeId, spaceNodes);
       if (words) onComposerFill?.(words);
-      // ADR-0015: a words node takes focus (box opens); a take returns focus
-      // to the media (box collapses). The fill happens either way.
-      const node = spaceNodes.find((n) => n.id === nodeId);
-      if (node?.kind === "words") focusWords(nodeId);
-      else blurWords();
     },
-    [spaceNodes, onComposerFill, focusWords, blurWords],
+    [spaceNodes, onComposerFill],
   );
 
   // Open a media take in the viewer — a clip PLAYS, a picture shows
@@ -493,16 +345,7 @@ export function CanvasWorkspace({
     [generationLookup],
   );
 
-  // Selecting a node on the canvas restores its words; a media take also
-  // opens in the viewer (the composer fill is invisible prep, the viewer is
-  // the visible response — without it a completed clip had no way to play).
-  const handleSelectSpaceNode = useCallback(
-    (nodeId: string): void => {
-      restoreTakeWords(nodeId);
-      viewSpaceNode(nodeId);
-    },
-    [restoreTakeWords, viewSpaceNode],
-  );
+  const handleSelectSpaceNode = viewSpaceNode;
 
   // Leaf-only removal (M5, ADR-0012). The server re-enforces the rule and
   // returns 409 for a non-leaf; a rejection leaves the node in place.
@@ -511,7 +354,10 @@ export function CanvasWorkspace({
       const sessionId = session?.id;
       if (!sessionId) return;
       void archiveGeneration(sessionId, node.id)
-        .then(() => setLocallyArchivedIds((prev) => new Set(prev).add(node.id)))
+        .then(() => {
+          setLocallyArchivedIds((prev) => new Set(prev).add(node.id));
+          setViewingId((current) => (current === node.id ? null : current));
+        })
         .catch((error: unknown) => {
           // The node stays put — locallyArchivedIds is only added to on
           // success — and, like the neighbouring share and studio actions,
@@ -547,10 +393,22 @@ export function CanvasWorkspace({
   // underlying generation record.
   const handleDownloadSpaceNode = useCallback(
     (node: SpaceNode): void => {
-      const generation = generationLookup.get(node.id);
-      if (generation) generationsRuntime.handleDownload(generation);
+      const result = galleryGenerations.find((entry) => entry.id === node.id);
+      if (!result) return;
+      void resolveMediaUrl({
+        kind: result.mediaType === "video" ? "video" : "image",
+        url: result.mediaUrl,
+        storagePath: node.storagePath ?? null,
+        assetId: result.mediaAssetId ?? node.assetId ?? null,
+        preferFresh: true,
+      })
+        .then((media) => {
+          if (media.url) downloadMedia(media.url);
+          else toast.error("Media unavailable");
+        })
+        .catch(() => toast.error("Couldn't download this result"));
     },
-    [generationLookup, generationsRuntime],
+    [galleryGenerations, toast],
   );
 
   // Share (RULINGS §5, ADR-0010 D8): mint a public /share link for this clip
@@ -590,7 +448,7 @@ export function CanvasWorkspace({
   );
 
   const renderSpaceNodeMenu = useCallback(
-    (node: SpaceNode): React.ReactNode => (
+    (node: SpaceNode, onFullscreen?: () => void): React.ReactNode => (
       <SpaceNodeMenu
         node={node}
         removable={isRemovableLeaf(node, spaceNonLeafIds)}
@@ -602,7 +460,9 @@ export function CanvasWorkspace({
           : {})}
         onDownload={handleDownloadSpaceNode}
         onShare={handleShareSpaceNode}
-        onView={(target) => viewSpaceNode(target.id)}
+        onView={onFullscreen ? undefined : (target) => viewSpaceNode(target.id)}
+        onFullscreen={onFullscreen}
+        onCloseView={onFullscreen ? () => setViewingId(null) : undefined}
       />
     ),
     [
@@ -621,57 +481,28 @@ export function CanvasWorkspace({
 
   const surfaceProps: PromptEditorSurfaceProps = editing;
 
-  const recommendationContext = useMemo(
-    () => ({
-      model: modelRecommendation,
-      recommendedModelId,
-      efficientModelId,
-      promptId: modelRecommendation?.promptId,
-      mode: recommendationMode,
-      ageMs: recommendationAgeMs,
-    }),
-    [
-      efficientModelId,
-      modelRecommendation,
-      recommendationAgeMs,
-      recommendationMode,
-      recommendedModelId,
-    ],
-  );
-  const hasGenerations = galleryEntries.length > 0;
-
-  const chromeSlot = useMemo(
-    () => (
-      // No divider between text and controls — the handoff's open box is one
-      // uninterrupted surface (frame A).
-      <div className={cn(isPreWork ? "mt-1" : undefined)}>
-        <CanvasSettingsRow
-          variant={isPreWork ? "sheet" : "docked"}
-          prompt={prompt}
-          hasPendingReference={Boolean(pendingReference)}
-          isReferenceUploading={pendingReference?.uploading ?? false}
-          isExpanding={isExpanding ?? false}
-          renderModelId={renderModelId}
-          renderModelOptions={renderModelOptions}
-          recommendation={recommendationContext}
-          onModelChange={handleModelChange}
-          onOpenCameraMotion={handleOpenMotion}
-          showPreviewButton={hasGenerations}
+  const composer = (
+    <CanvasSettingsRow
+      prompt={prompt}
+      hasPendingReference={Boolean(pendingReference)}
+      pendingReference={pendingReference}
+      onClearPendingReference={onClearPendingReference}
+      isReferenceUploading={pendingReference?.uploading ?? false}
+      isExpanding={isExpanding ?? false}
+      renderModelId={renderModelId}
+      renderModelOptions={renderModelOptions}
+      onModelChange={handleModelChange}
+      onOpenSketch={onOpenSketch}
+      renderComposer={(slots) => (
+        <VideoComposer
+          {...slots}
+          layout={
+            mobileLayout ? "mobile" : beforeFirstGeneration ? "new" : "ongoing"
+          }
+          writing={<PromptEditorSurface {...surfaceProps} variant="composer" />}
         />
-      </div>
-    ),
-    [
-      prompt,
-      renderModelId,
-      renderModelOptions,
-      recommendationContext,
-      handleModelChange,
-      handleOpenMotion,
-      hasGenerations,
-      pendingReference,
-      isExpanding,
-      isPreWork,
-    ],
+      )}
+    />
   );
 
   // Fill-only starter pills below the Anchor sheet — clicking one loads the
@@ -694,6 +525,36 @@ export function CanvasWorkspace({
     </div>
   ) : null;
 
+  const selectedNode = spaceNodes.find((node) => node.id === viewingId);
+  const renderSelectedResult = (): React.ReactNode => {
+    if (!viewingId) return null;
+    const result = galleryGenerations.find((entry) => entry.id === viewingId);
+    const generation = generationLookup.get(viewingId);
+    if (!result || !generation) return null;
+    return (
+      <SelectedResult
+        key={viewingId}
+        generation={result}
+        onClose={() => setViewingId(null)}
+        onReuse={() => handleReuse(viewingId)}
+        onToggleFavorite={(favorite) =>
+          onToggleGenerationFavorite(viewingId, favorite)
+        }
+        onDownload={downloadMedia}
+        renderTakeMenu={
+          selectedNode
+            ? (onFullscreen) => renderSpaceNodeMenu(selectedNode, onFullscreen)
+            : undefined
+        }
+        onShare={
+          selectedNode && selectedNode.kind === "clip" && session?.id
+            ? () => handleShareSpaceNode(selectedNode)
+            : undefined
+        }
+      />
+    );
+  };
+
   return (
     <div className="text-foreground flex h-full overflow-hidden">
       {/* The nav rail is chrome for every workspace moment — hiding it on the
@@ -703,7 +564,7 @@ export function CanvasWorkspace({
       <div
         className={cn(
           "relative isolate grid h-full min-w-0 flex-1 grid-rows-[var(--workspace-topbar-h)_1fr] overflow-hidden",
-          "[background:var(--background)]",
+          "bg-black",
         )}
         style={
           // Pre-work: the composer rises to mid-screen so the hero question and
@@ -727,21 +588,64 @@ export function CanvasWorkspace({
             : undefined
         }
       >
-        {/* Backdrop — the design-handoff atmosphere (ADR-0014). The empty state
-          gets ambient light + grain behind + the anchor vignette over; the
-          working canvas gets the dotted grid (behind content, negative z). */}
-        {isPreWork ? (
-          <>
-            <AmbientLight />
-            <Grain />
-            <Vignette intensity="anchor" />
-          </>
-        ) : (
-          <DottedGrid />
-        )}
         <WorkspaceTopBar minimal={isPreWork} />
-        <div className="grid min-h-0 grid-cols-1">
-          <div className="relative min-h-0 overflow-y-auto scroll-smooth px-7 pb-[140px]">
+        <div
+          className={cn(
+            "relative grid min-h-0 grid-cols-1",
+            !beforeFirstGeneration &&
+              "max-md:grid-rows-[minmax(0,42%)_minmax(0,1fr)] md:grid-cols-[432px_minmax(0,1fr)]",
+          )}
+        >
+          <aside
+            aria-label="Conversation"
+            className={
+              beforeFirstGeneration
+                ? "absolute left-1/2 z-10 w-[896px] max-w-[calc(100%-32px)] -translate-x-1/2"
+                : "border-border flex min-h-0 flex-col gap-5 overflow-y-auto border-r bg-black px-4 py-6"
+            }
+            style={
+              beforeFirstGeneration
+                ? {
+                    bottom: isPreWork
+                      ? "var(--workspace-composer-bottom)"
+                      : "var(--space-4)",
+                  }
+                : undefined
+            }
+          >
+            {!beforeFirstGeneration ? (
+              <h2 className="text-body-lg font-normal">Video</h2>
+            ) : null}
+            {composer}
+            {yourWordsSlot}
+            <div hidden={beforeFirstGeneration} className="flex-none">
+              {generationsPanelProps.versions.map((version) => (
+                <article
+                  key={version.versionId}
+                  className="rounded-card bg-fill text-ui mb-4 p-4"
+                >
+                  <p className="text-foreground whitespace-pre-wrap break-words">
+                    {version.prompt}
+                  </p>
+                  <button
+                    type="button"
+                    data-testid={"conversation-words-" + version.versionId}
+                    className="ps-btn ps-btn--sm ps-btn--pill mt-2"
+                    onClick={() => onComposerFill?.(version.prompt)}
+                  >
+                    Use words
+                  </button>
+                </article>
+              ))}
+            </div>
+            {isPreWork ? starterPillsSlot : null}
+          </aside>
+          <div className="relative min-h-0 overflow-hidden px-4 pb-4">
+            {mobileLayout && viewingId ? (
+              <aside className="rounded-card bg-canvas absolute left-4 right-4 top-4 z-30 max-h-[calc(100%-32px)] overflow-y-auto">
+                {renderSelectedResult()}
+              </aside>
+            ) : null}
             <TileStateAnnouncer shots={shots} />
 
             {isPreWork ? null : workspaceStage.failure === "writing" ? (
@@ -763,71 +667,23 @@ export function CanvasWorkspace({
               // lineage network. The shots-grid fallback was removed in the
               // M6 deletion pass (2026-08-27).
               <CanvasViewport
-                liveNodeId={heroGeneration?.id ?? null}
-                onBackgroundClick={blurWords}
+                liveNodeId={viewingId ?? heroGeneration?.id ?? null}
               >
                 <TheSpace
                   nodes={spaceNodes}
-                  liveNodeId={heroGeneration?.id ?? null}
-                  focusedNodeId={focusedWordsId}
+                  rows={generationRows}
+                  liveNodeId={viewingId ?? heroGeneration?.id ?? null}
                   onSelectNode={handleSelectSpaceNode}
                   renderNodeMenu={renderSpaceNodeMenu}
+                  selectedNodeId={viewingId}
+                  renderSelectedResult={() =>
+                    mobileLayout ? null : renderSelectedResult()
+                  }
                 />
               </CanvasViewport>
             )}
-
-            <CanvasPromptBar
-              surfaceProps={surfaceProps}
-              chromeSlot={chromeSlot}
-              yourWordsSlot={yourWordsSlot}
-              isPreWork={isPreWork}
-              footerSlot={starterPillsSlot}
-              collapsed={!isPreWork && !wordsFocused}
-            />
           </div>
         </div>
-
-        {viewingId ? (
-          <GenerationPopover
-            generations={galleryGenerations}
-            activeId={viewingId}
-            onChange={setViewingId}
-            onClose={() => setViewingId(null)}
-            onReuse={handleReuse}
-            onToggleFavorite={onToggleGenerationFavorite}
-          />
-        ) : null}
-
-        {/* The armed first frame is the whole gate (ADR-0022 D7): the picker
-            no longer reads the umbrella convergence flag, which keeps its
-            frozen default — flipping it would thaw the whole stack. */}
-        {domain.startFrame ? (
-          <Suspense fallback={null}>
-            <CameraMotionModal
-              isOpen={showCameraMotionModal}
-              onClose={() => setShowCameraMotionModal(false)}
-              imageUrl={domain.startFrame.url}
-              imageStoragePath={domain.startFrame.storagePath ?? null}
-              imageAssetId={domain.startFrame.assetId ?? null}
-              initialSelection={domain.cameraMotion}
-              onSelect={handleCameraMotionSelect}
-              conflict={
-                cameraConflict
-                  ? {
-                      kind: cameraConflict.kind,
-                      text: cameraConflict.text,
-                      // A lock is the creator's explicit "do not touch" —
-                      // it gets no override, only camera words they merely
-                      // wrote do.
-                      ...(cameraConflict.kind === "existing-camera-span"
-                        ? { onReplace: handleReplaceConflictingCameraWords }
-                        : {}),
-                    }
-                  : null
-              }
-            />
-          </Suspense>
-        ) : null}
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       <div className="gap-ps-1 flex flex-col">
         <textarea
           className={cn(
-            "min-h-ps-11 border-border bg-surface-1 px-ps-3 py-ps-2 text-body text-foreground placeholder:text-faint placeholder:text-label-sm focus-visible:border-border-strong flex w-full rounded-lg border placeholder:font-medium disabled:cursor-not-allowed disabled:opacity-50",
+            "flex min-h-[200px] w-full rounded-card border-0 bg-[var(--vidra-message-surface)] p-4 text-body font-normal text-foreground ring-[0.5px] ring-inset ring-white placeholder:font-normal placeholder:text-foreground focus-visible:!outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-50",
             errorClassName,
             className,
           )}

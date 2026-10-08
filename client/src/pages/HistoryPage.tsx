@@ -1,14 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Image, Search } from "@promptstudio/system/components/ui";
+import { Image } from "@promptstudio/system/components/ui";
 import { Button } from "@promptstudio/system/components/ui/button";
-import { AmbientLight, Grain } from "@/components/atmosphere";
 import { NavRail } from "@/components/navigation/NavRail";
 import { useAuthUser } from "@hooks/useAuthUser";
 import { usePromptHistory } from "@hooks/usePromptHistory";
 import { hasVideoArtifact } from "@features/history/utils/historyMedia";
 import { LibraryCard } from "./library/LibraryCard";
 import { LibraryFilterChip } from "./library/LibraryFilterChip";
+import searchIcon from "@/assets/design-system/library-search.svg";
 
 /**
  * Library — the full archive of the user's Sessions and Kept clips, presented
@@ -24,7 +24,7 @@ import { LibraryFilterChip } from "./library/LibraryFilterChip";
 type LibraryFilter = "all" | "sessions" | "clips";
 
 const GRID_CLASS =
-  "grid grid-cols-2 gap-x-5 gap-y-[22px] sm:grid-cols-3 lg:grid-cols-4";
+  "grid grid-cols-[repeat(auto-fill,minmax(304px,304px))] gap-6 max-sm:grid-cols-1";
 
 export function HistoryPage(): React.ReactElement {
   const user = useAuthUser();
@@ -54,26 +54,22 @@ export function HistoryPage(): React.ReactElement {
     <div className="flex h-screen overflow-hidden">
       <NavRail active="library" />
       <div className="text-foreground relative isolate flex h-full min-w-0 flex-1 flex-col overflow-hidden [background:var(--background)]">
-        {/* Design-handoff atmosphere — ambient bloom + filmic grain sit behind the
-          content (negative z, inside this isolated root). */}
-        <AmbientLight />
-        <Grain />
-
-        {/* Header — title, search pill, filter chips. */}
-        <header className="flex-none px-4 pb-[18px] pt-[30px] sm:px-9">
+        <header className="flex flex-none flex-col gap-5 p-4 sm:p-8">
           {/* Stacked until sm. The nav rail is a fixed 256px, so a 393px phone
               leaves ~137px here; a row put the title and a fixed 264px pill in
               that space and the pill was pushed to x=382 — past the viewport,
               clipped by the overflow-hidden root, with the input itself
               computing to zero width. */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <h1 className="text-foreground text-heading font-sans font-semibold tracking-[-0.015em]">
+            <h1 className="text-foreground font-sans text-body-lg font-normal leading-7">
               Library
             </h1>
-            <div className="flex w-full min-w-0 items-center gap-[9px] rounded-full border border-white/[0.12] bg-white/[0.04] px-[15px] py-[9px] sm:w-[264px]">
-              <Search
-                className="text-tool-text-muted h-[15px] w-[15px] shrink-0"
-                aria-hidden="true"
+            <div className="flex h-10 w-full min-w-0 items-center gap-2.5 rounded-md border-hairline border-border bg-chrome px-3 sm:w-[288px]">
+              <img
+                src={searchIcon}
+                alt=""
+                draggable={false}
+                className="shrink-0"
               />
               <input
                 type="search"
@@ -83,12 +79,12 @@ export function HistoryPage(): React.ReactElement {
                 }
                 placeholder="Search your work"
                 aria-label="Search your library"
-                className="placeholder:text-tool-text-muted text-foreground text-ui w-full bg-transparent font-sans leading-none outline-none"
+                className="placeholder:text-tool-text-muted text-foreground text-ui min-w-0 flex-1 bg-transparent font-sans font-normal outline-none"
               />
             </div>
           </div>
 
-          <div className="mt-[18px] flex gap-[9px]">
+          <div className="flex gap-2">
             <LibraryFilterChip
               active={filter === "all"}
               onClick={() => setFilter("all")}
@@ -98,12 +94,14 @@ export function HistoryPage(): React.ReactElement {
             <LibraryFilterChip
               active={filter === "sessions"}
               onClick={() => setFilter("sessions")}
+              className="w-[92px]"
             >
               Sessions
             </LibraryFilterChip>
             <LibraryFilterChip
               active={filter === "clips"}
               onClick={() => setFilter("clips")}
+              className="w-24"
             >
               Kept clips
             </LibraryFilterChip>
@@ -111,14 +109,14 @@ export function HistoryPage(): React.ReactElement {
         </header>
 
         {/* Grid — the scrolling archive. */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-9 pb-[34px] pt-[6px]">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 sm:px-8">
           {promptHistory.isLoadingHistory ? (
             <div className={GRID_CLASS} aria-hidden="true">
               {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="flex flex-col">
-                  <div className="h-[172px] animate-pulse rounded-md border border-white/10 bg-white/[0.04]" />
-                  <div className="mt-2.5 h-3 w-3/4 animate-pulse rounded bg-white/[0.06]" />
-                  <div className="mt-2 h-2.5 w-1/3 animate-pulse rounded bg-white/[0.04]" />
+                <div key={index} className="flex h-[229px] flex-col gap-2">
+                  <div className="h-[171px] shrink-0 animate-pulse rounded-card border-hairline border-border bg-chrome" />
+                  <div className="h-5 w-3/4 animate-pulse rounded bg-fill" />
+                  <div className="h-[18px] w-1/3 animate-pulse rounded bg-fill" />
                 </div>
               ))}
             </div>

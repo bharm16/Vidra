@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { API_CONFIG } from "@/config/api.config";
 import {
   generatePreview,
-  generateStoryboardPreview,
   getImageAssetViewUrl,
   getVideoAssetViewUrl,
   uploadPreviewImage,
@@ -68,12 +67,6 @@ describe("previewApi", () => {
   describe("error handling", () => {
     it("rejects when generatePreview receives an empty prompt", async () => {
       await expect(generatePreview("  ")).rejects.toThrow(
-        "Prompt is required and must be a non-empty string",
-      );
-    });
-
-    it("rejects when generateStoryboardPreview receives an empty prompt", async () => {
-      await expect(generateStoryboardPreview("")).rejects.toThrow(
         "Prompt is required and must be a non-empty string",
       );
     });
@@ -164,32 +157,6 @@ describe("previewApi", () => {
         }),
         expect.objectContaining({
           timeout: 60000,
-          headers: expect.objectContaining({
-            "Idempotency-Key": expect.any(String),
-          }),
-        }),
-      );
-    });
-
-    it("uses the storyboard timeout and trims the seed image URL", async () => {
-      await generateStoryboardPreview("Storyboard prompt", {
-        seedImageUrl: "  https://images.example.com/seed.png ",
-        aspectRatio: "16:9",
-        speedMode: "Real Time",
-        seed: 7,
-      });
-
-      expect(apiClientMocks.post).toHaveBeenCalledWith(
-        "/preview/generate/storyboard",
-        expect.objectContaining({
-          prompt: "Storyboard prompt",
-          seedImageUrl: "https://images.example.com/seed.png",
-          aspectRatio: "16:9",
-          speedMode: "Real Time",
-          seed: 7,
-        }),
-        expect.objectContaining({
-          timeout: API_CONFIG.timeout.storyboard,
           headers: expect.objectContaining({
             "Idempotency-Key": expect.any(String),
           }),

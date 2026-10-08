@@ -1,0 +1,224 @@
+/* Exact geometry from Page 21 Video composer; interaction/state stays in its controller. */
+.vidra-video-composer {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  max-width: 100%;
+  height: 748px;
+  flex: none;
+  overflow: hidden;
+  border: 0;
+  padding: var(--vidra-border-hairline);
+  box-shadow: inset 0 0 0 var(--vidra-border-hairline)
+    var(--vidra-border-subtle);
+  border-radius: var(--vidra-radius-composer);
+  background: var(--vidra-surface-panel);
+}
+.vidra-video-composer--new {
+  width: 896px;
+  height: 280px;
+}
+.vidra-video-composer--mobile {
+  width: 297px;
+  height: 356px;
+}
+.vidra-video-composer__media {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100px;
+  flex: none;
+  padding: var(--space-3);
+}
+.vidra-video-composer__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  padding: calc(var(--space-4) + var(--vidra-border-hairline));
+  border: 0;
+  box-shadow: inset 0 0 0 var(--vidra-border-hairline)
+    var(--vidra-border-subtle);
+  border-radius: var(--vidra-radius-dialog);
+  background: var(--vidra-surface-input);
+}
+.vidra-video-composer__writing {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.vidra-video-composer__settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+.vidra-video-composer__generate {
+  width: 100%;
+  flex: none;
+}
+.vidra-video-composer--new .vidra-video-composer__body {
+  position: relative;
+  padding-bottom: calc(var(--space-4) + var(--vidra-border-hairline));
+  border-radius: var(--vidra-radius-dialog);
+}
+.vidra-video-composer--new .vidra-video-composer__settings {
+  padding-right: calc(136px + var(--space-4));
+}
+.vidra-video-composer--new .vidra-video-composer__generate {
+  position: absolute;
+  right: calc(var(--space-4) + var(--vidra-border-hairline));
+  bottom: calc(var(--space-4) + var(--vidra-border-hairline));
+  width: 136px;
+}
+.vidra-setting {
+  display: inline-flex;
+  height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--vidra-radius-pill);
+  background: var(--vidra-surface-control);
+  color: var(--vidra-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  font-weight: 400;
+  line-height: 20px;
+}
+.vidra-setting:hover {
+  background: var(--vidra-surface-hover);
+}
+.vidra-media-action {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+.vidra-media-action__button {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--vidra-radius-control);
+  background: linear-gradient(#2b2b2b, #404040);
+}
+.vidra-media-action__label {
+  font-size: var(--vidra-type-media-label-size);
+  line-height: 10px;
+  color: var(--vidra-text-secondary);
+  font-weight: 500;
+}
+.vidra-reference {
+  display: flex;
+  width: 96px;
+  height: 76px;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5);
+  border-radius: var(--vidra-radius-dialog);
+}
+.vidra-reference__image {
+  position: relative;
+  width: 92px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: var(--vidra-radius-card);
+}
+.vidra-reference__image > img,
+.vidra-reference__image > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vidra-reference__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--vidra-radius-control);
+  background: var(--vidra-surface-panel);
+}
+.vidra-generate {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  border: 0;
+  border-radius: var(--vidra-radius-pill);
+  background: var(--vidra-surface-primary);
+  color: var(--vidra-text-on-primary);
+  font-size: var(--text-ui);
+  line-height: 20px;
+  font-weight: 450;
+}
+.vidra-generate:disabled,
+.vidra-media-action__button:disabled {
+  opacity: 0.5;
+}
+
+.vidra-composer-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+.vidra-composer-icon--close {
+  width: 14px;
+  height: 14px;
+}
+.vidra-setting--model {
+  min-width: 102px;
+}
+.vidra-setting--ratio {
+  width: 104px;
+}
+.vidra-setting--duration {
+  width: 93px;
+}
+.vidra-video-composer--ongoing .vidra-setting--model {
+  min-width: 88px;
+}
+.vidra-video-composer--ongoing .vidra-setting--ratio {
+  width: 96px;
+}
+.vidra-video-composer--ongoing .vidra-setting--duration {
+  width: 82px;
+}
+.vidra-video-composer--mobile .vidra-video-composer__settings {
+  min-height: 88px;
+  align-content: flex-start;
+}
+.vidra-video-composer--mobile .vidra-setting--model {
+  margin-right: calc(100% - 102px);
+}
+
+.vidra-video-composer--new .vidra-video-composer__settings {
+  height: 40px;
+}
+/* The canonical post-generation editor reserves its 40px prompt-tools slot. */
+.vidra-video-composer--ongoing .vidra-video-composer__generate {
+  margin-top: calc(40px + var(--space-3));
+}

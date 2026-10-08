@@ -150,8 +150,7 @@ describe("KeyboardShortcuts", () => {
     it("fires shortcut callbacks and prevents default", async () => {
       const { useKeyboardShortcuts } = await loadKeyboardModules("MacIntel");
       const openShortcuts = vi.fn();
-      const switchMode = vi.fn();
-      renderHook(() => useKeyboardShortcuts({ openShortcuts, switchMode }));
+      renderHook(() => useKeyboardShortcuts({ openShortcuts }));
 
       const openEvent = new KeyboardEvent("keydown", {
         key: "k",
@@ -168,9 +167,8 @@ describe("KeyboardShortcuts", () => {
       document.dispatchEvent(modeEvent);
 
       expect(openShortcuts).toHaveBeenCalled();
-      expect(switchMode).toHaveBeenCalledWith(1);
       expect(openEvent.defaultPrevented).toBe(true);
-      expect(modeEvent.defaultPrevented).toBe(true);
+      expect(modeEvent.defaultPrevented).toBe(false);
     });
   });
 });

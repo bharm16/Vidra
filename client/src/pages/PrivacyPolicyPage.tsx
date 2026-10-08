@@ -308,13 +308,6 @@ export function PrivacyPolicyPage(): React.ReactElement {
               >
                 Support
               </Link>
-              <Link
-                to="/pricing"
-                className="hover:text-white"
-                style={{ color: AUTH_COLORS.textDim }}
-              >
-                Pricing
-              </Link>
             </nav>
           </div>
         </footer>

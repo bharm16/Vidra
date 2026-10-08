@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { StudioModelInfo } from "@features/studio/api/schemas";
 import { StudioComposer } from "../StudioComposer";
@@ -56,5 +57,32 @@ describe("StudioComposer — stale pin (behavior 9)", () => {
     renderComposer("recraft-v4.1", []);
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("lets a keyboard user replace a stale pin with an available model", async () => {
+    const user = userEvent.setup();
+    const onPin = vi.fn();
+    render(
+      <StudioComposer
+        models={models}
+        pinnedModel="recraft-v3-retired"
+        busy={false}
+        pendingAttachments={[]}
+        onPin={onPin}
+        onSend={vi.fn()}
+        onAttachFile={vi.fn()}
+        onRemoveAttachment={vi.fn()}
+      />,
+    );
+
+    screen.getByRole("button", { name: "Auto" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      await screen.findByRole("menuitemradio", { name: /^Auto/ }),
+    ).toHaveAttribute("aria-checked", "true");
+    await user.keyboard("{ArrowDown}{Enter}");
+
+    expect(onPin).toHaveBeenCalledWith("recraft-v4.1");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });

@@ -59,4 +59,14 @@ describe("regression: recentering is idempotent across StrictMode re-runs", () =
       "translate(-600px, -460px) scale(1)",
     );
   });
+  it("a top-aligned focus remains idempotent while centering the same horizontal union", () => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function(this: Element) {
+      if (this.getAttribute("data-testid") === "space-canvas") return rect({ left: 0, top: 0, width: 800, height: 600 });
+      if (this.getAttribute("data-canvas-focus") === "editor-pair") return rect({ left: 900, top: 700, width: 200, height: 120 });
+      return rect({});
+    });
+    render(<React.StrictMode><CanvasViewport liveNodeId="editor-pair" focusTop={92}><div data-canvas-focus="editor-pair">live node</div></CanvasViewport></React.StrictMode>);
+    expect(screen.getByTestId("space-viewport-content").style.transform).toBe("translate(-600px, -608px) scale(1)");
+  });
+
 });

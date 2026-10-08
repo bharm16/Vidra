@@ -10,8 +10,7 @@ import type { TopNavbarProps } from "../types";
 export function TopNavbar({ user }: TopNavbarProps): ReactElement {
   return (
     <header
-      className="z-sticky border-border bg-app fixed inset-x-0 top-0 box-border w-full border-b py-4"
-      style={{ height: "var(--global-top-nav-height)" }}
+      className="z-sticky fixed inset-x-0 top-0 box-border h-16 w-full border-b-[0.5px] border-white bg-[var(--vidra-public-surface)]"
       role="banner"
     >
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-5">

@@ -13,9 +13,7 @@ import { sanitizeError } from "@/utils/logging";
 import { extractMotionMeta } from "@/utils/motion";
 import { safeUrlHost } from "@/utils/url";
 import {
-  FaceSwapPreviewResponseSchema,
   GeneratePreviewResponseSchema,
-  GenerateStoryboardPreviewResponseSchema,
   GenerateVideoResponseSchema,
   MediaViewUrlBatchItemSchema,
   MediaViewUrlBatchResponseSchema,
@@ -105,31 +103,7 @@ export function validatePreviewImageFile(
   return { valid: true };
 }
 
-export interface GenerateStoryboardPreviewRequest {
-  prompt: string;
-  aspectRatio?: string;
-  seedImageUrl?: string;
-  speedMode?: PreviewSpeedMode;
-  seed?: number;
-  // ISSUE-12: when both provided, the server appends the generation to the
-  // named session version so the client can render it from a session refetch
-  // instead of an optimistic local dispatch.
-  sessionId?: string;
-  promptVersionId?: string;
-}
-
-// ISSUE-37: derive from the canonical Zod schema so the inferred TS type
-// cannot drift from runtime parsing. Field-level docs (generationId,
-// remainingCredits, …) live in shared/schemas/preview.schemas.ts.
-export type GenerateStoryboardPreviewResponse = z.infer<
-  typeof GenerateStoryboardPreviewResponseSchema
->;
-
 export type MediaViewUrlResponse = z.infer<typeof MediaViewUrlResponseSchema>;
-
-export type FaceSwapPreviewResponse = z.infer<
-  typeof FaceSwapPreviewResponseSchema
->;
 
 /**
  * Generate a preview image from a prompt
@@ -187,77 +161,6 @@ export async function generatePreview(
   )) as unknown;
 
   return GeneratePreviewResponseSchema.parse(payload);
-}
-
-/**
- * Generate a storyboard preview (base frame + chained edits)
- */
-export async function generateStoryboardPreview(
-  prompt: string,
-  options?: Omit<GenerateStoryboardPreviewRequest, "prompt">,
-): Promise<GenerateStoryboardPreviewResponse> {
-  requireNonEmptyString(prompt, "Prompt");
-
-  const seedImageUrl = options?.seedImageUrl?.trim();
-
-  const payload = (await apiClient.post(
-    "/preview/generate/storyboard",
-    {
-      prompt: prompt.trim(),
-      ...(options?.aspectRatio ? { aspectRatio: options.aspectRatio } : {}),
-      ...(seedImageUrl ? { seedImageUrl } : {}),
-      ...(options?.speedMode ? { speedMode: options.speedMode } : {}),
-      ...(options?.seed !== undefined ? { seed: options.seed } : {}),
-      ...(options?.sessionId ? { sessionId: options.sessionId } : {}),
-      ...(options?.promptVersionId
-        ? { promptVersionId: options.promptVersionId }
-        : {}),
-    },
-    {
-      timeout: API_CONFIG.timeout.storyboard,
-      headers: {
-        "Idempotency-Key": generateIdempotencyKey(),
-      },
-    },
-  )) as unknown;
-
-  return GenerateStoryboardPreviewResponseSchema.parse(payload);
-}
-
-export async function faceSwapPreview(options: {
-  characterAssetId: string;
-  targetImageUrl: string;
-  aspectRatio?: string;
-}): Promise<FaceSwapPreviewResponse> {
-  requireNonEmptyString(options?.characterAssetId, "characterAssetId");
-  requireNonEmptyString(options?.targetImageUrl, "targetImageUrl");
-
-  const payload = (await apiClient.post(
-    "/preview/face-swap",
-    {
-      characterAssetId: options.characterAssetId.trim(),
-      targetImageUrl: options.targetImageUrl.trim(),
-      ...(options.aspectRatio ? { aspectRatio: options.aspectRatio } : {}),
-    },
-    {
-      headers: {
-        "Idempotency-Key": generateIdempotencyKey(),
-      },
-    },
-  )) as unknown;
-
-  const parsed = FaceSwapPreviewResponseSchema.parse(payload);
-
-  const swapData = parsed.success ? parsed.data : null;
-  log.info("Face-swap preview request completed", {
-    hasFaceSwapUrl: Boolean(swapData?.faceSwapUrl),
-    faceSwapUrlHost: swapData?.faceSwapUrl
-      ? safeUrlHost(swapData.faceSwapUrl)
-      : null,
-    creditsDeducted: swapData?.creditsDeducted ?? null,
-  });
-
-  return parsed;
 }
 
 export async function getImageAssetViewUrl(

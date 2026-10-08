@@ -10,9 +10,9 @@ const spine: SpaceNode[] = [
 ];
 
 describe("TheSpace", () => {
-  it("renders a node per visible take, in three generations", () => {
+  it("renders media assets only without prompt nodes", () => {
     render(<TheSpace nodes={spine} liveNodeId="p" />);
-    expect(screen.getAllByTestId(/^space-node-/)).toHaveLength(3);
+    expect(screen.getAllByTestId(/^space-node-/)).toHaveLength(2);
   });
 
   it("marks the live node so the player centers on it", () => {
@@ -23,30 +23,32 @@ describe("TheSpace", () => {
     );
   });
 
-  it("restores a take on selecting its node (the take-restore contract)", () => {
+  it("inspects an asset through the selection callback", () => {
     const onSelectNode = vi.fn();
+    render(<TheSpace nodes={spine} onSelectNode={onSelectNode} />);
+    fireEvent.click(screen.getByTestId("space-node-p"));
+    expect(onSelectNode).toHaveBeenCalledWith("p");
+    expect(screen.queryByTestId("space-node-w")).toBeNull();
+    expect(screen.queryByText("a cat on a couch")).toBeNull();
+  });
+
+  it("groups each dispatch's results in a row and appends new rows below", () => {
     render(
-      <TheSpace nodes={spine} liveNodeId="p" onSelectNode={onSelectNode} />,
+      <TheSpace
+        nodes={[
+          ...spine,
+          { id: "p2", kind: "picture", ancestorId: "w", status: "ready" },
+        ]}
+        rows={[["p", "p2"], ["c"]]}
+      />,
     );
-    fireEvent.click(screen.getByTestId("space-node-w"));
-    expect(onSelectNode).toHaveBeenCalledWith("w");
-  });
-
-  it("demotes words nodes to a quiet origin chip by default (ADR-0015)", () => {
-    render(<TheSpace nodes={spine} liveNodeId="p" />);
-    // The chip: a small "Prompt" marker with an Edit-words hover hint —
-    // the full prompt text does not render in the space.
-    expect(screen.queryByText("a cat on a couch")).not.toBeInTheDocument();
-    expect(screen.getByText("Prompt")).toBeInTheDocument();
-    expect(screen.getByText("Edit words")).toBeInTheDocument();
-    // Still the same selectable node (the chip is the door back to editing).
-    expect(screen.getByTestId("space-node-w")).toBeInTheDocument();
-  });
-
-  it("renders the focused words node as its full card (box open)", () => {
-    render(<TheSpace nodes={spine} liveNodeId="p" focusedNodeId="w" />);
-    expect(screen.getByText("a cat on a couch")).toBeInTheDocument();
-    expect(screen.queryByText("Edit words")).not.toBeInTheDocument();
+    const rows = screen.getAllByRole("group", {
+      name: /Generation .* results/,
+    });
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toContainElement(screen.getByTestId("space-node-p"));
+    expect(rows[0]).toContainElement(screen.getByTestId("space-node-p2"));
+    expect(rows[1]).toContainElement(screen.getByTestId("space-node-c"));
   });
 
   it("excludes archived nodes (nothing vanishes, but the render skips them)", () => {
@@ -60,6 +62,6 @@ describe("TheSpace", () => {
       />,
     );
     expect(screen.queryByTestId("space-node-p2")).not.toBeInTheDocument();
-    expect(screen.getAllByTestId(/^space-node-/)).toHaveLength(3);
+    expect(screen.getAllByTestId(/^space-node-/)).toHaveLength(2);
   });
 });
