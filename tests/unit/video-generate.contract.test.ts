@@ -1,14 +1,13 @@
 import { registerPreviewRoutes } from "@config/routes/preview.registration";
 import { DIContainer } from "@infrastructure/DIContainer";
-import { __resetStarterCreditsCacheForTests } from "@middleware/starterCredits";
 import express from "express";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { createVideoGenerateHandler } from "@routes/preview/handlers/videoGenerate";
 import { createImageGenerateHandler } from "@routes/preview/handlers/imageGenerate";
-import { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
-import { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
+import { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import { SessionService } from "@services/sessions/SessionService";
 import { InMemorySessionStore } from "../integration/helpers/cross-mode/boundaryDoubles";
@@ -270,7 +269,6 @@ function clip(app: express.Express, body: Data = {}, user = OWNER, key = KEY) {
     .send({ prompt: "A city at night", model: MODEL, ...body });
 }
 beforeEach(() => {
-  __resetStarterCreditsCacheForTests();
   db = new MemoryFirestore();
   external.firestore = db;
   scheduled = [];
@@ -309,11 +307,7 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
       userCreditService: { ...h.credits, ensureStarterGrant },
       sessionService: h.services.sessionService,
       storageService: h.services.storageService,
-      storyboardPreviewService: null,
       videoContentAccessService: null,
-      keyframeGenerationService: null,
-      faceSwapService: null,
-      assetService: null,
       imageAssetStore: {
         getPublicUrl: async (): Promise<string> =>
           "https://cdn.example.com/image.png",
@@ -365,8 +359,14 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
     ).toBe(200);
     expect(ensureStarterGrant).not.toHaveBeenCalled();
     expect((await request(app).get("/api/preview/available")).status).toBe(401);
-    await request(app).post("/api/preview/face-swap").set(auth).send({});
-    expect(ensureStarterGrant).toHaveBeenCalledTimes(1);
+    for (const path of [
+      "/api/preview/face-swap",
+      "/api/preview/generate/storyboard",
+    ]) {
+      const retired = await request(app).post(path).set(auth).send({});
+      expect(retired.status).toBe(404);
+    }
+    expect(ensureStarterGrant).not.toHaveBeenCalled();
   });
   it("accepts signed-in clip and picture requests with zero balance and never uses credit ports", async () => {
     const h = await harness();

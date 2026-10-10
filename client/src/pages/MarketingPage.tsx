@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AUTH_COLORS } from "./auth/auth-styles";
 
 type MarketingPageProps = {
   /** Page title shown in the compact header */
@@ -40,14 +39,14 @@ export function MarketingPage({
   return (
     <div
       className="h-full overflow-y-auto"
-      style={{ background: AUTH_COLORS.bg }}
+      style={{ background: "var(--background)" }}
     >
       {/* Compact header — matches HistoryPage / ContactSupportPage pattern */}
       <div
         className="sticky top-0 z-10 px-4 py-3 sm:px-6"
         style={{
-          background: AUTH_COLORS.bg,
-          borderBottom: `1px solid ${AUTH_COLORS.divider}`,
+          background: "var(--background)",
+          borderBottom: `1px solid ${"var(--border)"}`,
         }}
       >
         <div
@@ -58,22 +57,22 @@ export function MarketingPage({
             {eyebrow ? (
               <p
                 className="text-meta font-semibold tracking-[0.2em]"
-                style={{ color: AUTH_COLORS.textLabel }}
+                style={{ color: "var(--ghost-foreground)" }}
               >
                 {eyebrow}
               </p>
             ) : null}
-            <h1 className="text-ui font-semibold text-white tracking-tight truncate">
+            <h1 className="text-ui truncate font-semibold tracking-tight text-white">
               {title}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-3">
             {actions}
             <Link
               to="/"
-              className="text-meta font-medium hover:text-white transition-colors"
-              style={{ color: AUTH_COLORS.textDim }}
+              className="text-meta font-medium transition-colors hover:text-white"
+              style={{ color: "var(--faint-foreground)" }}
             >
               Back to app
             </Link>
@@ -88,8 +87,8 @@ export function MarketingPage({
       >
         {subtitle ? (
           <p
-            className="pt-5 pb-1 text-ui leading-relaxed"
-            style={{ color: AUTH_COLORS.textSecondary }}
+            className="text-ui pb-1 pt-5 leading-relaxed"
+            style={{ color: "var(--muted-foreground)" }}
           >
             {subtitle}
           </p>
@@ -99,10 +98,10 @@ export function MarketingPage({
 
         {!hideFooter ? (
           <footer
-            className="py-6 text-meta"
+            className="text-meta py-6"
             style={{
-              borderTop: `1px solid ${AUTH_COLORS.cardBorder}`,
-              color: AUTH_COLORS.textDim,
+              borderTop: `1px solid ${"var(--border)"}`,
+              color: "var(--faint-foreground)",
             }}
           >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -116,21 +115,21 @@ export function MarketingPage({
                 <Link
                   to="/contact"
                   className="hover:text-white"
-                  style={{ color: AUTH_COLORS.textDim }}
+                  style={{ color: "var(--faint-foreground)" }}
                 >
                   Support
                 </Link>
                 <Link
                   to="/privacy-policy"
                   className="hover:text-white"
-                  style={{ color: AUTH_COLORS.textDim }}
+                  style={{ color: "var(--faint-foreground)" }}
                 >
                   Privacy
                 </Link>
                 <Link
                   to="/terms-of-service"
                   className="hover:text-white"
-                  style={{ color: AUTH_COLORS.textDim }}
+                  style={{ color: "var(--faint-foreground)" }}
                 >
                   Terms
                 </Link>

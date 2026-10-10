@@ -18,7 +18,7 @@ requires its separate verification.
 ## What is real and what is controlled
 
 The live editor, sketch canvas, acceptance action, studio, selection and return,
-camera picker, generate button, navigation and reload are the production React
+camera words, generate button, navigation and reload are the production React
 components. Admission, studio turns, session writes, first-frame arming,
 generation HTTP intake, inline job processing and worker attachment are the
 production routes and services. Clip intake is never replaced by `page.route()`.

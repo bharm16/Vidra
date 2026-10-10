@@ -1,9 +1,9 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { describe, expect, it } from "vitest";
 import { SuggestionDiversityEnforcer } from "../SuggestionDiversityEnforcer";
-import type { AIService } from "../types";
 
 function createService(): SuggestionDiversityEnforcer {
-  return new SuggestionDiversityEnforcer({} as AIService);
+  return new SuggestionDiversityEnforcer({} as AIExecutionPort);
 }
 
 describe("SuggestionDiversityEnforcer original echo detection regression", () => {

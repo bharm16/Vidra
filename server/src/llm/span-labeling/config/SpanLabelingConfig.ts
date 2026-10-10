@@ -256,57 +256,6 @@ export const NEURO_SYMBOLIC = {
 } as const;
 
 /**
- * @deprecated Use NEURO_SYMBOLIC instead
- * Symbolic NLP Configuration (Legacy - kept for backward compatibility)
- */
-export const SYMBOLIC_NLP = {
-  // Master switch for symbolic NLP pipeline
-  ENABLED: false, // Disabled - replaced by NEURO_SYMBOLIC
-
-  // Feature flags for individual components
-  FEATURES: {
-    // Penn Treebank POS tagging with Brill transformation rules
-    POS_TAGGING: false,
-
-    // Shallow parsing / chunking (NP/VP/PP extraction)
-    CHUNKING: false,
-
-    // Frame semantics (Motion, Cinematography, Lighting)
-    FRAME_SEMANTICS: false,
-
-    // Semantic role labeling (Arg0/Arg1/ArgM)
-    SEMANTIC_ROLES: false,
-  },
-
-  // Fallback strategy if symbolic processing fails
-  FALLBACK_TO_DICTIONARY: true,
-
-  // Fallback to LLM if symbolic processing produces insufficient results
-  FALLBACK_TO_LLM: false,
-
-  // Minimum confidence threshold for accepting symbolic spans (0-1)
-  MIN_CONFIDENCE_THRESHOLD: 0.8,
-
-  // Minimum number of semantic spans to consider successful
-  MIN_SEMANTIC_SPANS: 15,
-
-  // NEW: Require at least 3 frames matched
-  MIN_FRAMES: 3,
-
-  // NEW: At least 10% of chunks should be VPs
-  MIN_VP_RATIO: 0.1,
-
-  // Enable detailed semantic metadata in response
-  INCLUDE_SEMANTIC_METADATA: true,
-
-  // Enable relationship graph in response
-  INCLUDE_RELATIONSHIPS: true,
-
-  // Maximum processing time (ms) before fallback
-  MAX_PROCESSING_TIME: 100,
-} as const;
-
-/**
  * Get estimated max tokens for a given number of spans
  */
 export function estimateMaxTokens(maxSpans: number): number {
@@ -331,7 +280,6 @@ const SpanLabelingConfig = {
   COMPROMISE,
   LIGHTING,
   NEURO_SYMBOLIC,
-  SYMBOLIC_NLP, // @deprecated - kept for backward compatibility
   estimateMaxTokens,
 };
 

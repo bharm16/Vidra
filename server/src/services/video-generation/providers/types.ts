@@ -99,7 +99,7 @@ export interface VideoProvider {
   ): Promise<VideoGenerateResult>;
 }
 
-export type VideoProviderMap = Record<VideoProviderId, VideoProvider>;
+export type VideoProviderMap = Partial<Record<VideoProviderId, VideoProvider>>;
 
 /**
  * What each provider needs to be usable, and what to say when it isn't.

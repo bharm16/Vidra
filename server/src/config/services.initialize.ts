@@ -1,9 +1,8 @@
+import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { getAuth, getFirestore } from "@infrastructure/firebaseAdmin";
-import type { Bucket } from "@google-cloud/storage";
 import type { LLMClient } from "@clients/LLMClient";
-import type { ServiceConfig } from "./services/service-config.types.ts";
 import type { CapabilitiesProbeService } from "@services/capabilities/CapabilitiesProbeService";
 import { getRuntimeFlags, resolveAllFlags } from "./feature-flags.ts";
 
@@ -220,7 +219,6 @@ async function initializeCommon(container: DIContainer): Promise<void> {
     "promptOptimizationService",
     "enhancementService",
     "sceneDetectionService",
-    "promptCoherenceService",
     "spanLabelingCacheService",
   ];
 
@@ -285,12 +283,7 @@ async function initializeCommon(container: DIContainer): Promise<void> {
 // Phase 2a: API-role initialization
 // ────────────────────────────────────────────────────────────────
 
-async function initializeApiServices(container: DIContainer): Promise<void> {
-  const isTestEnv =
-    process.env.NODE_ENV === "test" ||
-    process.env.VITEST ||
-    process.env.VITEST_WORKER_ID;
-
+async function initializeApiServices(): Promise<void> {
   // GLiNER warmup (API role only)
   const { warmupGliner } = await import(
     "@llm/span-labeling/nlp/NlpSpanService"
@@ -323,193 +316,39 @@ async function initializeApiServices(container: DIContainer): Promise<void> {
       reason: "prewarm disabled or GLiNER disabled",
     });
   }
-
-  // Depth estimation warmup (API role only, non-blocking)
-  const { warmupDepthEstimationOnStartup, setDepthEstimationModuleConfig } =
-    await import("@services/convergence/depth");
-  const config = container.resolve<ServiceConfig>("config");
-  const depthConfig = config.convergence.depth;
-  setDepthEstimationModuleConfig({
-    warmupRetryTimeoutMs: depthConfig.warmupRetryTimeoutMs,
-    falWarmupEnabled: depthConfig.falWarmupEnabled,
-    falWarmupIntervalMs: depthConfig.falWarmupIntervalMs,
-    falWarmupImageUrl:
-      depthConfig.falWarmupImageUrl ||
-      "https://storage.googleapis.com/generativeai-downloads/images/cat.jpg",
-    warmupOnStartup: depthConfig.warmupOnStartup,
-    warmupTimeoutMs: depthConfig.warmupTimeoutMs,
-  });
-
-  if (!isTestEnv) {
-    warmupDepthEstimationOnStartup()
-      .then((depthWarmup) => {
-        if (depthWarmup.success) {
-          logger.info("✅ Depth estimation warmed up", {
-            provider: depthWarmup.provider,
-            durationMs: depthWarmup.durationMs,
-          });
-        } else if (depthWarmup.skipped) {
-          logger.info("ℹ️ Depth warmup skipped", {
-            reason: depthWarmup.message || "Unknown reason",
-          });
-        } else {
-          logger.warn("⚠️ Depth warmup failed", {
-            provider: depthWarmup.provider,
-            reason: depthWarmup.message || "Unknown reason",
-          });
-        }
-      })
-      .catch((error) => {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        logger.warn("⚠️ Depth warmup failed", { error: errorMessage });
-      });
-  } else {
-    logger.info("ℹ️ Depth warmup skipped", { reason: "test environment" });
-  }
 }
-
-// ────────────────────────────────────────────────────────────────
-// Phase 2b: Worker-role initialization
-// ────────────────────────────────────────────────────────────────
 
 async function initializeWorkerServices(container: DIContainer): Promise<void> {
-  const runtimeFlags = getRuntimeFlags();
-
-  // Depth estimation module config is needed by worker role too
-  const { setDepthEstimationModuleConfig } = await import(
-    "@services/convergence/depth"
-  );
-  const config = container.resolve<ServiceConfig>("config");
-  const depthConfig = config.convergence.depth;
-  setDepthEstimationModuleConfig({
-    warmupRetryTimeoutMs: depthConfig.warmupRetryTimeoutMs,
-    falWarmupEnabled: depthConfig.falWarmupEnabled,
-    falWarmupIntervalMs: depthConfig.falWarmupIntervalMs,
-    falWarmupImageUrl:
-      depthConfig.falWarmupImageUrl ||
-      "https://storage.googleapis.com/generativeai-downloads/images/cat.jpg",
-    warmupOnStartup: depthConfig.warmupOnStartup,
-    warmupTimeoutMs: depthConfig.warmupTimeoutMs,
-  });
-
-  // Dynamic imports to keep worker-specific types lazy
-  const { CreditRefundSweeper } = await import(
-    "@services/credits/CreditRefundSweeper"
-  );
-  const { CreditReconciliationWorker } = await import(
-    "@services/credits/CreditReconciliationWorker"
-  );
-  const { VideoAssetRetentionService } = await import(
-    "@services/video-generation/storage/VideoAssetRetentionService"
-  );
-  const { VideoJobSweeper } = await import(
-    "@services/video-generation/jobs/VideoJobSweeper"
-  );
-  const { VideoJobWorker } = await import(
-    "@services/video-generation/jobs/VideoJobWorker"
-  );
-  const { DlqReprocessorWorker } = await import(
-    "@services/video-generation/jobs/DlqReprocessorWorker"
-  );
-  const { VideoJobReconciler } = await import(
-    "@services/video-generation/jobs/VideoJobReconciler"
-  );
-  const { ProviderCircuitManager } = await import(
-    "@services/video-generation/jobs/ProviderCircuitManager"
-  );
-  const { WebhookReconciliationWorker } = await import(
-    "@services/payment/WebhookReconciliationWorker"
-  );
-  const { BillingProfileRepairWorker } = await import(
-    "@services/payment/BillingProfileRepairWorker"
-  );
-
-  // Suppress unused-variable lint — these imports are used for instanceof below
-  void CreditRefundSweeper;
-  void CreditReconciliationWorker;
-  void VideoAssetRetentionService;
-  void VideoJobSweeper;
-  void VideoJobWorker;
-  void DlqReprocessorWorker;
-  void VideoJobReconciler;
-  void ProviderCircuitManager;
-  void WebhookReconciliationWorker;
-  void BillingProfileRepairWorker;
-
   type Startable = { start(): void };
-
-  const startIfResolved = (
-    serviceName: string,
-    label: string,
-  ): Startable | null => {
-    const service = container.resolve<Startable | null>(serviceName);
-    if (service) {
-      service.start();
-      logger.info(`✅ ${label} started`);
-    }
-    return service;
+  const startIfResolved = (name: string): void => {
+    const service = container.resolve<Startable | null>(name);
+    service?.start();
   };
-
-  startIfResolved("creditRefundSweeper", "Credit refund sweeper");
-  startIfResolved("creditReconciliationWorker", "Credit reconciliation worker");
-  startIfResolved(
-    "videoAssetRetentionService",
-    "Video asset retention service",
-  );
-  startIfResolved("videoJobSweeper", "Video job sweeper");
-
-  const videoJobWorker = container.resolve<Startable | null>("videoJobWorker");
-  const workerDisabled = runtimeFlags.videoWorkerDisabled;
-  if (videoJobWorker && !workerDisabled) {
-    videoJobWorker.start();
-    logger.info("✅ Video job worker started");
-  } else if (videoJobWorker && workerDisabled) {
-    logger.warn("Video job worker disabled via VIDEO_JOB_WORKER_DISABLED");
-  }
-
-  const dlqReprocessorWorker = startIfResolved(
-    "dlqReprocessorWorker",
-    "DLQ reprocessor worker",
-  ) as (Startable & { resetPollInterval(): void }) | null;
-  startIfResolved("videoJobReconciler", "Video job reconciler");
-  startIfResolved(
-    "webhookReconciliationWorker",
-    "Webhook reconciliation worker",
-  );
-  startIfResolved(
-    "billingProfileRepairWorker",
-    "Billing profile repair worker",
-  );
-
-  // Wire circuit breaker recovery to reset worker poll intervals
-  const providerCircuitManager = container.resolve<{
-    onRecovery(cb: (provider: string) => void): void;
-  } | null>("providerCircuitManager");
-  if (providerCircuitManager && (videoJobWorker || dlqReprocessorWorker)) {
-    providerCircuitManager.onRecovery((provider) => {
-      logger.info(
-        "Provider circuit recovery detected, resetting worker poll intervals",
-        { provider },
+  startIfResolved("creditRefundSweeper");
+  startIfResolved("videoAssetRetentionService");
+  const worker = container.resolve<
+    (Startable & { resetPollInterval(): void }) | null
+  >("videoJobWorker");
+  if (!getRuntimeFlags().videoWorkerDisabled) {
+    const recoverAttachments = container.resolve<() => Promise<void>>(
+      "resumePendingVideoAttachments",
+    );
+    void recoverAttachments().catch((error: unknown) => {
+      logger.warn(
+        "Clip attachment recovery failed; persisted debt remains pending",
+        {
+          error: error instanceof Error ? error.message : String(error),
+        },
       );
-      (
-        videoJobWorker as Startable & { resetPollInterval?(): void }
-      )?.resetPollInterval?.();
-      dlqReprocessorWorker?.resetPollInterval();
     });
+    worker?.start();
   }
+  const circuits = container.resolve<{
+    onRecovery(cb: (provider: string) => void): void;
+  }>("providerCircuitManager");
+  if (worker) circuits.onRecovery(() => worker.resetPollInterval());
 }
 
-// ────────────────────────────────────────────────────────────────
-// Public API
-// ────────────────────────────────────────────────────────────────
-
-/**
- * Initialize and validate all services.
- *
- * Runs common initialization first, then role-specific setup
- * based on the PROCESS_ROLE environment variable.
- */
 export async function initializeServices(
   container: DIContainer,
 ): Promise<DIContainer> {
@@ -535,27 +374,10 @@ export async function initializeServices(
   // Phase 2: role-specific initialization
   if (!isTestEnv) {
     if (runtimeFlags.processRole === "api") {
-      await initializeApiServices(container);
+      await initializeApiServices();
     } else if (runtimeFlags.processRole === "worker") {
       await initializeWorkerServices(container);
     }
-  } else {
-    // In test, configure depth module but skip warmups and workers
-    const { setDepthEstimationModuleConfig } = await import(
-      "@services/convergence/depth"
-    );
-    const config = container.resolve<ServiceConfig>("config");
-    const depthConfig = config.convergence.depth;
-    setDepthEstimationModuleConfig({
-      warmupRetryTimeoutMs: depthConfig.warmupRetryTimeoutMs,
-      falWarmupEnabled: depthConfig.falWarmupEnabled,
-      falWarmupIntervalMs: depthConfig.falWarmupIntervalMs,
-      falWarmupImageUrl:
-        depthConfig.falWarmupImageUrl ||
-        "https://storage.googleapis.com/generativeai-downloads/images/cat.jpg",
-      warmupOnStartup: depthConfig.warmupOnStartup,
-      warmupTimeoutMs: depthConfig.warmupTimeoutMs,
-    });
   }
 
   return container;

@@ -1,9 +1,9 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
 import type { CacheService } from "@services/cache/CacheService";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
 import { TemperatureOptimizer } from "@utils/TemperatureOptimizer";
-import type { AIExecutionPort as AIService } from "@services/ai-model/ports/AIExecutionPort";
 
 /**
  * Scene change detection result
@@ -23,12 +23,12 @@ export interface SceneChangeResult {
  * (routes/enhancement/sceneChangeRoute.ts).
  */
 export class SceneChangeDetectionService {
-  private readonly ai: AIService;
+  private readonly ai: AIExecutionPort;
   private readonly cacheConfig: { ttl: number; namespace: string };
   private readonly log: ILogger;
 
   constructor(
-    aiService: AIService,
+    aiService: AIExecutionPort,
     private readonly cacheService: CacheService,
   ) {
     this.ai = aiService;

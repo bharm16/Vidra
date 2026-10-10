@@ -30,9 +30,8 @@ the job processor directly for the clip:
 
 It **composes** capabilities that each ship with their own tests (#83, #85,
 #86, #87, #88, #89). It proves these seams line up. It does not operate the
-browser camera picker or call the credit-bearing video HTTP intake. #141 owns
-the actual controls/intake walkthrough, #143 the bounded live clip and both
-depth states, and #124 the unresolved intake operating mode.
+browser UI or call the zero-reservation video HTTP intake. #141 owns
+the actual controls/intake walkthrough, #143 the bounded live clip and visible camera words, and #124 the free intake and receipt-publication contract.
 
 ## Boundaries
 
@@ -46,23 +45,23 @@ instead. Two mechanisms, and the difference is load-bearing:
   token production registers its Firestore/GCS adapter at, or injected at the
   same port the live implementation satisfies.
 
-| Boundary                               | Adapter type    | Where it stands                                                                                                                                      |
-| -------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LLM router (`aiService`)               | **Recorded**    | `RecordReplayAiService` — the studio's `studio_turn` decisions                                                                                       |
-| Image preview provider                 | **Recorded**    | `RecordReplayImagePreviewProvider` (registered for every provider token; unused by this path)                                                        |
-| Studio image provider                  | **Recorded**    | `RecordReplayStudioImageRunner` — the edit and the four generate variants                                                                            |
-| Sketch relay upstream (`fal.run`)      | **Recorded**    | `RecordReplaySketchRelay`, injected as the relay's `fetchFn` (**new with this walkthrough**)                                                         |
-| Depth estimation (`/api/motion/depth`) | **Not reached** | The camera step writes words; the illustrative preview is a view, not a durable fact (see below). The guard is what proves no depth model was called |
-| Object storage (GCS reads/writes)      | **Controlled**  | `InMemoryObjectStore` + `InMemoryImageAssetStore` + `InMemoryStorageService`                                                                         |
-| Session persistence (Firestore)        | **Controlled**  | `InMemorySessionStore` at the `sessionStore` token                                                                                                   |
-| Idempotency records (Firestore)        | **Controlled**  | `InMemoryIdempotencyService` at `requestIdempotencyService`                                                                                          |
-| Studio project/turn store (Firestore)  | **Controlled**  | `InMemoryStudioProjectStore` at `studioProjectStore`                                                                                                 |
-| Video job store (Firestore)            | **Controlled**  | `InMemoryVideoJobStore` at `videoJobStore`                                                                                                           |
-| Sketch daily budget (Firestore)        | **Controlled**  | The real `SketchBudgetService` over an in-memory `SketchBudgetStore`                                                                                 |
-| Video provider                         | **Controlled**  | `ControlledVideoProvider` at `processVideoJob`'s `videoGenerationService` port                                                                       |
-| Credit refunds                         | **Controlled**  | `RefundWitness` — present so the clip path has its port, and so "never refunds" is asserted                                                          |
-| Firebase auth                          | **Bypassed**    | The API-key auth path (`x-api-key` + `ALLOWED_API_KEYS`); no token verification, no GCP                                                              |
-| GCE metadata (ADC discovery)           | **Disabled**    | `METADATA_SERVER_DETECTION=none` — nothing here needs Google credentials                                                                             |
+| Boundary                               | Adapter type    | Where it stands                                                                               |
+| -------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| LLM router (`aiService`)               | **Recorded**    | `RecordReplayAiService` — the studio's `studio_turn` decisions                                |
+| Image preview provider                 | **Recorded**    | `RecordReplayImagePreviewProvider` (registered for every provider token; unused by this path) |
+| Studio image provider                  | **Recorded**    | `RecordReplayStudioImageRunner` — the edit and the four generate variants                     |
+| Sketch relay upstream (`fal.run`)      | **Recorded**    | `RecordReplaySketchRelay`, injected as the relay's `fetchFn` (**new with this walkthrough**)  |
+| Depth estimation (`/api/motion/depth`) | **Not reached** | The camera step writes words; the backend is retired and the guard excludes provider calls    |
+| Object storage (GCS reads/writes)      | **Controlled**  | `InMemoryObjectStore` + `InMemoryImageAssetStore` + `InMemoryStorageService`                  |
+| Session persistence (Firestore)        | **Controlled**  | `InMemorySessionStore` at the `sessionStore` token                                            |
+| Idempotency records (Firestore)        | **Controlled**  | `InMemoryIdempotencyService` at `requestIdempotencyService`                                   |
+| Studio project/turn store (Firestore)  | **Controlled**  | `InMemoryStudioProjectStore` at `studioProjectStore`                                          |
+| Video job store (Firestore)            | **Controlled**  | `InMemoryVideoJobStore` at `videoJobStore`                                                    |
+| Sketch daily budget (Firestore)        | **Controlled**  | The real `SketchBudgetService` over an in-memory `SketchBudgetStore`                          |
+| Video provider                         | **Controlled**  | `ControlledVideoProvider` at `processVideoJob`'s `videoGenerationService` port                |
+| Credit refunds                         | **Controlled**  | `RefundWitness` — present so the clip path has its port, and so "never refunds" is asserted   |
+| Firebase auth                          | **Bypassed**    | The API-key auth path (`x-api-key` + `ALLOWED_API_KEYS`); no token verification, no GCP       |
+| GCE metadata (ADC discovery)           | **Disabled**    | `METADATA_SERVER_DETECTION=none` — nothing here needs Google credentials                      |
 
 The controlled adapters live in
 `tests/integration/helpers/cross-mode/boundaryDoubles.ts`; the wiring is
@@ -79,45 +78,9 @@ guard **routes** into the in-process store. Reading a stored object therefore
 exercises the real `fetchRemoteMedia` (its MIME allowlist, its byte ceiling,
 its redirect revalidation) without a byte leaving the process.
 
-### Why depth estimation is not exercised
+### Camera direction and retired depth execution
 
-ADR-0022 decision 7 opens two things: the camera choice landing in the words,
-and the illustrative depth-backed preview. Only the first is a durable fact —
-it becomes the take's associated words — and only the first is what the
-milestone's "returns with everything intact" can be broken by. The preview is
-a view, `/api/motion/depth` is not on this path, and the guard is what proves
-no depth model was reached.
-
-## The offline guarantee
-
-Deleting provider credentials proves a client was never _constructed_. It does
-not prove nothing _left_. `tests/integration/helpers/cross-mode/outboundGuard.ts`
-answers the actual question: it intercepts `fetch` (undici — every LLM SDK,
-Replicate, and the relay's upstream) and `node:http` / `node:https` (everything
-on the classic agent), allows loopback and the one routed host, and **fails the
-call** on anything else while recording the destination.
-
-The guard has its own test —
-`tests/integration/cross-mode-outbound-guard.integration.test.ts` — because a
-guard that silently passes everything certifies exactly the bug it exists to
-catch.
-
-## Fixtures
-
-`server/src/replay/fixtures/cross-mode/sketch-to-clip.json`, one cassette for
-the whole walkthrough, validated against the live shared contracts at load and
-at replay (`tests/unit/replay/contract-drift.test.ts` validates it on every
-unit run). Canonical inputs live in `scripts/replay/goldenScenarios.ts` —
-**changed there and nowhere else**, so anything replaying or re-recording them
-sends byte-identical bodies.
-
-**These entries are authored, not captured — yet.** Their _requests_ are
-exactly what the code produces — a request that drifts by one character
-misses loudly with its key — but their _responses_ are hand-written payloads
-that satisfy the live contracts, because capturing them needs live provider
-keys and spend. The pack's recorder (below) closes that gap; until the owner
-runs it, saying so plainly here is cheaper than letting a future reader
-infer that a green gate means a provider answered.
+Camera choices are visible words consumed by generation. The depth picker/backend and its illustration are retired; shared saved camera metadata remains readable. Neither the replay nor the browser journey calls a depth model. Current UI proof uses explicit words edits and reuse, while provider-quality evidence evaluates surviving generation adapters separately.
 
 ### Re-recording the cassette
 
@@ -241,7 +204,7 @@ authored answer no real provider would produce is exactly what it catches.
 each provider answered inside its timeout, and each response satisfies the same
 shared contract the cassette is held to (the shared replay payload schemas,
 plus a magic-byte sniff of the image itself). Never output quality — that is
-the LLM-judge and golden-set evals' job — and never the ancestry, identity or
+separate provider-quality evidence and deterministic evaluations — and never the ancestry, identity or
 attachment rules, which the offline walkthrough already pins exactly.
 
 **Cost ceiling — derived, not counted.** Issue #140 replaced the original

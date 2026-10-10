@@ -6,7 +6,6 @@ import {
   suggestionSchema,
   customSuggestionSchema,
   sceneChangeSchema,
-  coherenceCheckSchema,
 } from "@config/schemas";
 
 describe("prompt schemas contract", () => {
@@ -120,18 +119,6 @@ describe("suggestion schemas contract", () => {
         changedField: "lighting",
         newValue: "moonlit",
         fullPrompt: "A hero runs through rain.",
-      }).success,
-    ).toBe(true);
-
-    expect(
-      coherenceCheckSchema.safeParse({
-        beforePrompt: "A hero runs through rain.",
-        afterPrompt: "A hero sprints through rain.",
-        appliedChange: {
-          spanId: "s-1",
-          oldText: "runs",
-          newText: "sprints",
-        },
       }).success,
     ).toBe(true);
   });

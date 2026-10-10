@@ -4,16 +4,11 @@ import type { OwnedPictureResolver } from "@services/owned-media";
  */
 
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
-import type { StoryboardPreviewService } from "@services/image-generation/storyboard/StoryboardPreviewService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
-import type { AIModelService } from "@services/ai-model/AIModelService";
-import type { RouteCreditService } from "@services/credits/ports";
-import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
+import type { CreditRefunder } from "@services/video-generation/refunds/ports";
+import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import type { VideoContentAccessService } from "@services/video-generation/access/VideoContentAccessService";
-import type KeyframeGenerationService from "@services/video-generation/KeyframeGenerationService";
-import type { FaceSwapService } from "@services/video-generation/FaceSwapService";
-import type { AssetService } from "@services/asset/AssetService";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { AdmissionMediaStore } from "@services/admission/admitPictureTake";
 import type { OwedTakeAttachmentStore } from "@services/sessions/attachTakeWithOwedTracking";
@@ -84,15 +79,11 @@ export interface PreviewStorageService {
  */
 export interface PreviewRoutesServices {
   imageGenerationService: ImageGenerationService | null;
-  storyboardPreviewService?: StoryboardPreviewService | null;
   videoGenerationService: VideoGenerationService | null;
   videoJobStore?: VideoJobStore | null;
   videoContentAccessService?: VideoContentAccessService | null;
-  userCreditService?: RouteCreditService | null;
+  userCreditService?: CreditRefunder | null;
   storageService?: PreviewStorageService | null;
-  keyframeService?: KeyframeGenerationService | null;
-  faceSwapService?: FaceSwapService | null;
-  assetService?: AssetService | null;
   requestIdempotencyService?: RequestIdempotencyService | null;
   sessionService?: SessionService | null;
   /**

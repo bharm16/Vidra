@@ -4,10 +4,8 @@ import { registerEnhancementSuggestionsRoute } from "./enhancement/enhancementSu
 import { registerCustomSuggestionsRoute } from "./enhancement/customSuggestionsRoute";
 import { registerSceneChangeRoute } from "./enhancement/sceneChangeRoute";
 import { registerNlpTestRoute } from "./enhancement/nlpTestRoute";
-import { registerCoherenceCheckRoute } from "./enhancement/coherenceCheckRoute";
 import type { EnhancementService } from "@services/enhancement/EnhancementService";
 import type { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
-import type { PromptCoherenceService } from "@services/enhancement/services/PromptCoherenceService";
 import type { SuggestionsTelemetryService } from "@services/observability/SuggestionsTelemetryService";
 
 export interface EnhancementServices {
@@ -16,7 +14,6 @@ export interface EnhancementServices {
     "getEnhancementSuggestions" | "getCustomSuggestions"
   >;
   sceneDetectionService: Pick<SceneChangeDetectionService, "detectSceneChange">;
-  promptCoherenceService: Pick<PromptCoherenceService, "checkCoherence">;
   suggestionsTelemetryService: Pick<
     SuggestionsTelemetryService,
     "startSuggestionsTrace"
@@ -32,7 +29,6 @@ export function createEnhancementRoutes(services: EnhancementServices): Router {
   const {
     enhancementService,
     sceneDetectionService,
-    promptCoherenceService,
     suggestionsTelemetryService,
   } = services;
 
@@ -45,7 +41,6 @@ export function createEnhancementRoutes(services: EnhancementServices): Router {
   });
   registerCustomSuggestionsRoute(router, { enhancementService });
   registerSceneChangeRoute(router, { sceneDetectionService });
-  registerCoherenceCheckRoute(router, { promptCoherenceService, perfMonitor });
   registerNlpTestRoute(router);
 
   return router;

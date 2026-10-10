@@ -41,7 +41,7 @@ const buildApp = (service: SessionService): express.Express => {
     };
     next();
   });
-  app.use("/sessions", createSessionRoutes(service, null, null));
+  app.use("/sessions", createSessionRoutes(service));
   return app;
 };
 

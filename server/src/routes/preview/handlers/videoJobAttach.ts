@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { isIP } from "node:net";
 import { logger } from "@infrastructure/Logger";
 import type { PreviewRoutesServices } from "@routes/types";
-import { attachCompletedJobToSession } from "@services/video-generation/jobs/attachJobToSession";
+import { attachCompletedJobToSession } from "@services/video-generation/runtime/attachJobToSession";
 
 type VideoJobAttachServices = Pick<
   PreviewRoutesServices,

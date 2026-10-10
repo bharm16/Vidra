@@ -4,10 +4,10 @@
  *
  * Usage:
  *   npx tsx scripts/generate-flag-docs.ts               # print to stdout
- *   npx tsx scripts/generate-flag-docs.ts --check       # exit non-zero if CLAUDE.md table is stale
- *   npx tsx scripts/generate-flag-docs.ts --write       # rewrite the table block in CLAUDE.md
+ *   npx tsx scripts/generate-flag-docs.ts --check       # exit non-zero if docs/architecture/FEATURE_FLAGS.md table is stale
+ *   npx tsx scripts/generate-flag-docs.ts --write       # rewrite the table block in docs/architecture/FEATURE_FLAGS.md
  *
- * The CLAUDE.md table lives between the markers:
+ * The docs/architecture/FEATURE_FLAGS.md table lives between the markers:
  *   <!-- BEGIN: feature-flag-table -->
  *   <!-- END: feature-flag-table -->
  */
@@ -25,7 +25,10 @@ const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const CLAUDE_MD = path.join(REPO_ROOT, "CLAUDE.md");
+const FLAG_DOCS_PATH = path.join(
+  REPO_ROOT,
+  "docs/architecture/FEATURE_FLAGS.md",
+);
 const BEGIN_MARKER = "<!-- BEGIN: feature-flag-table -->";
 const END_MARKER = "<!-- END: feature-flag-table -->";
 
@@ -96,7 +99,7 @@ function renderTable(): string {
 }
 
 function rewriteClaudeMd(): { changed: boolean; updated: string } {
-  const current = fs.readFileSync(CLAUDE_MD, "utf8");
+  const current = fs.readFileSync(FLAG_DOCS_PATH, "utf8");
   const table = renderTable();
 
   const beginIdx = current.indexOf(BEGIN_MARKER);
@@ -109,7 +112,7 @@ function rewriteClaudeMd(): { changed: boolean; updated: string } {
     const anchorIdx = current.indexOf(anchor);
     if (anchorIdx === -1) {
       throw new Error(
-        `CLAUDE.md is missing the "${anchor}" heading; cannot place the generated table.`,
+        `docs/architecture/FEATURE_FLAGS.md is missing the "${anchor}" heading; cannot place the generated table.`,
       );
     }
     const insertAt = current.indexOf("\n\n", anchorIdx + anchor.length) + 2;
@@ -130,11 +133,13 @@ function main(): void {
   if (args.has("--write")) {
     const { changed, updated } = rewriteClaudeMd();
     if (changed) {
-      fs.writeFileSync(CLAUDE_MD, updated, "utf8");
-      process.stdout.write("CLAUDE.md feature-flag table updated.\n");
+      fs.writeFileSync(FLAG_DOCS_PATH, updated, "utf8");
+      process.stdout.write(
+        "docs/architecture/FEATURE_FLAGS.md feature-flag table updated.\n",
+      );
     } else {
       process.stdout.write(
-        "CLAUDE.md feature-flag table is already current.\n",
+        "docs/architecture/FEATURE_FLAGS.md feature-flag table is already current.\n",
       );
     }
     return;
@@ -144,11 +149,13 @@ function main(): void {
     const { changed } = rewriteClaudeMd();
     if (changed) {
       process.stderr.write(
-        "CLAUDE.md feature-flag table is stale. Run: npx tsx scripts/generate-flag-docs.ts --write\n",
+        "docs/architecture/FEATURE_FLAGS.md feature-flag table is stale. Run: npx tsx scripts/generate-flag-docs.ts --write\n",
       );
       process.exit(1);
     }
-    process.stdout.write("CLAUDE.md feature-flag table is current.\n");
+    process.stdout.write(
+      "docs/architecture/FEATURE_FLAGS.md feature-flag table is current.\n",
+    );
     return;
   }
 

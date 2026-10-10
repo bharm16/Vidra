@@ -52,10 +52,6 @@ interface SpanLabelingConfig {
   templateVersion: string;
 }
 
-interface ConstitutionalAIConfig {
-  sampleRate: number;
-}
-
 interface CacheConfig {
   promptOptimization: string;
   contextInference: string;
@@ -118,13 +114,6 @@ export const OptimizationConfig = {
     minConfidence: 0.5,
     templateVersion: "v1",
   } as SpanLabelingConfig,
-
-  // Constitutional AI sampling (1 = always, 0 = never).
-  // Dormant: no caller sets `useConstitutionalAI: true`.
-  // See server/src/services/prompt-optimization/workflows/constitutionalReview.ts for the re-enable steps.
-  constitutionalAI: {
-    sampleRate: 1,
-  } as ConstitutionalAIConfig,
 
   // Cache configuration keys
   cache: {

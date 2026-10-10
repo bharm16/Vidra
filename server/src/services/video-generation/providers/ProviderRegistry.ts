@@ -14,7 +14,7 @@ export function getProviderAvailability(
   providers: VideoProviderMap,
 ): VideoProviderAvailability {
   return Object.fromEntries(
-    VIDEO_PROVIDER_IDS.map((id) => [id, providers[id].isAvailable()]),
+    VIDEO_PROVIDER_IDS.map((id) => [id, providers[id]?.isAvailable() ?? false]),
   ) as VideoProviderAvailability;
 }
 
@@ -34,9 +34,6 @@ const AUTO_MODEL_PRIORITY: ReadonlyArray<{
     provider: "replicate",
     modelId: () => resolveGenerationModelSelection("PRO").modelId,
   },
-  { provider: "openai", modelId: () => "sora-2" },
-  { provider: "luma", modelId: () => "luma-ray3" },
-  { provider: "kling", modelId: () => "kling-v2-1-master" },
   { provider: "gemini", modelId: () => "google/veo-3" },
 ];
 

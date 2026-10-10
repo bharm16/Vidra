@@ -47,30 +47,6 @@ export function registerHealthRoutes(
         "health-workers",
       ),
     ],
-    [
-      "dlqReprocessorWorker",
-      resolveOptionalService<StatusProvider | null>(
-        container,
-        "dlqReprocessorWorker",
-        "health-workers",
-      ),
-    ],
-    [
-      "webhookReconciliationWorker",
-      resolveOptionalService<StatusProvider | null>(
-        container,
-        "webhookReconciliationWorker",
-        "health-workers",
-      ),
-    ],
-    [
-      "billingProfileRepairWorker",
-      resolveOptionalService<StatusProvider | null>(
-        container,
-        "billingProfileRepairWorker",
-        "health-workers",
-      ),
-    ],
   ];
   const workers: Record<string, StatusProvider> = {};
   for (const [name, provider] of workerEntries) {

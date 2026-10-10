@@ -40,7 +40,7 @@ const createProvider = (
 
 const createProviderMap = (
   overrides?: Partial<Record<VideoProvider["id"], boolean>>,
-): VideoProviderMap => {
+): Required<VideoProviderMap> => {
   const sharedAsset: StoredVideoAsset = {
     id: "asset-1",
     url: "https://example.com/video.mp4",

@@ -1,167 +1,53 @@
-# CONTEXT
+# Vidra product and ownership contract
 
-Domain vocabulary for Vidra. Read before naming a domain concept in an issue title, plan, refactor proposal, hypothesis, or test name.
+A creator expands a brief into visible words, refines them, makes a picture, then makes it move. Studio provides standalone conversational image work; Sketch provides live drawing-conditioned output. Each has explicit admission/handoffs into a session. Testing is free ([ADR-0023](docs/adr/0023-bounded-free-validation-proposal.md)); existing Studio/Sketch spending bounds remain.
 
-## Source of truth: the CLAUDE.md Domain Glossary
+## Vocabulary
 
-The canonical definitions for this project's core domain terms — **Span labeling, Enhancement / Suggestions, Optimization, Continuity, Convergence, Model Intelligence, Preview, Generation** — live in the **"Domain Glossary"** table in [`CLAUDE.md`](CLAUDE.md), alongside each term's server path and route.
+| Term                    | Contract                                                                                            |
+| ----------------------- | --------------------------------------------------------------------------------------------------- |
+| Span labeling           | Categorizes phrases for semantic highlights without rewriting.                                      |
+| Enhancement/suggestions | Alternatives for a selected phrase, applied through an explicit edit.                               |
+| Optimization            | Structured rewriting and model-specific compilation, finished by intent validation and prompt lint. |
+| Session                 | Persisted authoring work: words versions and takes with destination/ancestry.                       |
+| Working words           | Current editable direction/settings. Browsing preserves them.                                       |
+| Take                    | Durable picture or clip with a server-assigned id, distinct from its job id.                        |
+| Associated words        | Words version named at admission. Explicit **Reuse setup** restores setup.                          |
+| Production provenance   | Known inputs/instructions that made the artifact. Unknown upload provenance stays unknown.          |
+| Origin                  | Closed admission set: generated, upload, sketchpad, studio.                                         |
+| Space                   | Session media in chronological dispatch rows, with ancestry persisted.                              |
+| Draft/render tier       | Model cost/quality choice, not lifecycle. Generated takes are persisted.                            |
+| Studio project          | Standalone persisted conversation/images with explicit one-image handoffs.                          |
+| Sketchpad/live output   | Drawing surface and ephemeral generated image; **Use this** admits the exact displayed output.      |
 
-Do **not** copy those definitions here. `CLAUDE.md` is loaded into every agent's context, so a second copy would only create a source that drifts out of sync. When you name one of those concepts, use the term exactly as the glossary defines it — and honor its rule: _"Do not conflate them."_
+`/api/preview` remains a compatibility URL prefix. Say picture, clip or take for artifacts.
 
-## Local glossary (terms not yet in CLAUDE.md)
+## State and recovery
 
-`/grill-with-docs` appends entries below as planning sessions resolve vocabulary the CLAUDE.md glossary doesn't already cover.
+Selection inspects artifacts without changing the working draft. **Reuse setup** deliberately restores setup. Tool panels persist across context changes. Playback requires a selected playable clip.
 
-### Creator
+Dispatch captures words, inputs, model, settings and destination. Receipts recover accepted artifacts after lost responses. Video jobs retain claims/leases and terminal failure evidence. Durable completion precedes attachment; repair reuses media, take id, session and words version without resubmission or refunds.
 
-The non-expert video maker Vidra exists for — someone who cannot yet reliably produce a single good shot, stuck at "I don't know what to type." Explicitly _not_ the expert whose problem is multi-shot coherence. Resolved 2026-06-08 during scope-clarification grilling. Avoid synonyms: user, customer.
+Uploaded references are owned durable copies with explicit words association. Generic sessions and saved camera/model/continuity fields remain compatible. Source retirement does not migrate or delete stored records.
 
-### Authoring intelligence
+## Ownership
 
-Vidra's core capability and reason to exist: converting a creator's vague intent into generation-ready I2V inputs (first-frame prompt, motion description, model selection). The umbrella over the narrower CLAUDE.md-glossary mechanics (span labeling, enhancement, optimization, model intelligence) — name those mechanics by their own terms; use "authoring intelligence" for the whole capability. Resolved 2026-06-08 during scope-clarification grilling.
+| Responsibility                    | Source                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| Claims/replay receipts            | `server/src/services/admission/idempotency/`                            |
+| Picture admission                 | `server/src/services/admission/`                                        |
+| Video completion/attachment       | `server/src/services/video-generation/runtime/`                         |
+| Legacy charged-job refunds        | `server/src/services/video-generation/refunds/`                         |
+| Sessions/owed picture attachments | `server/src/services/sessions/`                                         |
+| Durable media/URL authorization   | Storage services, image/video asset stores, `infrastructure/signedUrl/` |
+| Routes                            | [ROUTE_MAP.md](docs/architecture/ROUTE_MAP.md)                          |
 
-### I2V (image-to-video)
+Named assets/triggers, depth/convergence, continuity generation, storyboards/character preprocessing, recommendation, coherence/observation endpoints, paid intake and broad automatic replay workers are retired. Legacy refunds remain until charged jobs/refund debt are drained or migrated.
 
-The generation paradigm Vidra targets, where a source image (the first frame) is the primary control over the result; the text motion description is secondary. Contrast T2V (text-to-video), where text is the only control surface. Resolved 2026-06-08 during scope-clarification grilling. Avoid synonyms: img2vid, animation.
+Generation offers come from `shared/videoModels.ts`. Historical model/provider ids remain readable; prompt compilation keeps separate targets. Retiring an adapter does not rewrite saved takes.
 
-### Expansion
+## References
 
-The interaction model where Vidra converts a creator's thin idea (a one-liner) into a generation-ready first-frame prompt — authoring _for_ them from a blank page. ADR-0002's primary unvalidated hypothesis is that creators need expansion, not refinement. Resolved 2026-06-09 during validation-study grilling. Avoid synonyms: brainstorm, generation (which means rendering video).
+[Page 21 migration](docs/design/page21-component-migration.md) and [tokens](docs/design/page21-tokens.json) retain the current visual/behavioral reference. [Cross-mode contracts](docs/architecture/cross-mode-golden-path.md), [replay](docs/architecture/replay-mode.md) and [media lifecycle](docs/architecture/admission-media-lifecycle.md) define recovery and proof limits. Replay does not qualify live provider quality. Current decisions live in [ADRs](docs/adr/); retired plans/studies/handoffs are recoverable from Git history.
 
-### Refinement
-
-The interaction model where Vidra improves a draft the creator already wrote — span labeling plus click-to-enhance. Assumes the creator can produce a workable draft; demoted to a secondary layer under ADR-0002. Resolved 2026-06-09 during validation-study grilling. Avoid synonyms: enhancement (the CLAUDE.md-glossary mechanism is one _part_ of refinement), editing.
-
-### Idea Box
-
-The empty-canvas entry surface of the workspace: a creator's submit runs the expansion loop (expand → first frame → gate → motion → render) with one explicit gate at the first frame. Every empty-canvas submit expands — no mode, no toggle, no input classification. Resolved 2026-06-10 during front-door design grilling. Avoid synonyms: wizard, onboarding flow, create page.
-
-### First frame
-
-The source image handed to an I2V model — the dominant control over the final video, and therefore the artifact most worth getting right. In I2V the first frame has displaced the text prompt as the center of the product. Consequently the frame (or its pending/failed state) owns the workspace canvas at every beat of the expansion loop, and the prompt renders as its editable caption — never the reverse. The session contract still spells it `version.preview`, which names nothing (the term was retired 2026-08-10) — read that field as the first frame. Resolved 2026-06-08 during scope-clarification grilling; canvas-ownership corollary resolved 2026-07-02 during UX-review grilling; contract-spelling note added 2026-08-10 during the generation audit. Avoid synonyms: source image, still, preview.
-
-### Preview-image persistence
-
-The general storage concern of saving a PNG under `users/{owner}/previews/images/` through `storageService.savePreviewImage(userId, buffer, metadata?)`. This verb fixes `PREVIEW_IMAGE` and `image/png`; the same general namespace also holds studio output and bridge copies. The separate `ImageAssetStore` writes admitted picture media and sketch snapshots under `image-previews/{owner}/{assetId}`. Frozen convergence media uses `convergenceStorageService` and `convergence/{owner}/{purpose}/{uuid}.{ext}`. Namespace names are storage concerns, not a revived Preview domain concept. Corrected 2026-10-03 against the registrations and storage contracts; the earlier continuity-only description no longer matched them. Avoid synonyms: image upload, saveFromBuffer.
-
-### Public span category
-
-The `category` field on a span in the labelSpans route DTO (`toPublicSpan`): a normalized, valid taxonomy id — never a raw role and never the invalid `unknown`. Normalized once, server-side, via the shared `normalizeRole` in `@shared/taxonomy`; the client trusts it rather than re-deriving. Resolved 2026-06-08 during architecture-deepening review. Avoid synonyms: span role, raw role.
-
-### Selected span
-
-The span the creator clicked for click-to-enhance, together with the suggestion session it opens (inline suggestions, custom request, apply/close). Owned by one client module — `SelectedSpanContext` in `client/src/features/prompt-optimizer/context/` — provided by PromptCanvas and consumed via `useSelectedSpan()`; never threaded through component props. Resolved 2026-07-01 during architecture-deepening review. Avoid synonyms: highlighted span (that is the Enhancement request field), active span.
-
-### Golden path
-
-The single end-to-end walkthrough that defines a working product: empty canvas → creator submits a one-liner → expansion → first frame (explicit gate) → motion → render → a clip the creator can watch and keep. "Complete product" and "works end to end" mean the golden path runs green — nothing else counts as done. Composed from the Idea Box and ADR-0002 definitions. Resolved 2026-07-01 during ship-definition grilling; first audit: [docs/audits/2026-07-01-golden-path-audit.md](docs/audits/2026-07-01-golden-path-audit.md). Avoid synonyms: happy path, main flow, E2E flow.
-
-### Span palette
-
-The semantic color set carried by span categories — the only color inside the text that carries meaning. Chrome carries a restrained accent and the space carries state colors (accepted 2026-07-05 with the hi-fi board); span hues stay reserved for categories — governed by [docs/adr/0008-one-design-language-across-all-shells.md](docs/adr/0008-one-design-language-across-all-shells.md). Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: highlight colors, accent palette, brand colors.
-
-### Model showroom
-
-The full-screen gallery where a creator browses draft/render models as large sample-still cards and picks one — a deliberate showcase moment, not a settings dropdown. Speaks the workspace monochrome language; generation economics (credits, prices) never appear in it. Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: model picker, render-models modal, model selector.
-
-### Session library
-
-The full-archive presentation of Sessions on its own page: same entity, titles, thumbnails, and vocabulary as the rail panel, which remains the quick switcher. Replaces the prompt-level "History" page; a session's internal generation attempts are not library entries. Resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: history, prompt history, archive.
-
-### Gallery landing
-
-The logged-out front door is the page itself: a stranger lands on the input (one quiet product line above it, starter chips below) and can type immediately — auth appears at Go, and the typed draft survives sign-up and runs right after. Vidra-made clips render under the input once dogfooding produces them; no empty grid, no separate manifesto screen. Revised 2026-07-04 during entry-spec grilling (supersedes the 2026-07-02 manifesto zero-state); original resolved 2026-07-02 during design-overhaul grilling. Avoid synonyms: marketing site, homepage, splash page, manifesto.
-
-### The input
-
-The single text box on the workspace. It starts holding the creator's one-liner; after go, the same box holds the full shot description Vidra wrote, with clickable highlights for swapping words. There is never a second text surface on the page. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: composer, prompt bar, caption, prompt artifact.
-
-### The space
-
-The scrollable/pannable field of media assets. Each generation's results occupy a row; new dispatches add rows below, as explicitly requested on 2026-10-08. Conversation outputs and the working input stay in the side panel. Prompt nodes and visible connectors are retired. Take identities, associated words and persisted ancestry remain available for explicit reuse, editing and recovery; this is a presentation change, not a new record model. See [Page 21 migration](docs/design/page21-component-migration.md). Avoid synonyms: node editor, graph editor.
-
-### The player
-
-The live node in the space — whichever take is current, enlarged, with the camera centered on it: the waiting state, then the picture, then the video, in place. Selecting another node slides the camera and restores that take's paired words into the input. Nothing plays anywhere else. It appears with the first go and never before. Originally resolved 2026-07-04 as a fixed rectangle; redefined 2026-07-05 as the live node (ADR-0012). Avoid synonyms: stage, viewport, FrameStage (a component name, not a domain term).
-
-### The next-step button
-
-The page shows only the action that advances the work right now: Go → Use this / Try again → Make it move → Keep. Controls for other moments stay hidden until their moment. Resolved 2026-07-04 during requirements-strip grilling. Avoid synonyms: CTA, gate controls, action bar.
-
-### The page
-
-The workspace is exactly the space, the input, and the next-step button. Before the first go there is no space — just the centered input with its starter chips; on first submit the input docks to its permanent position and the space is born with the first node. Everything else is a setting summoned on demand or lives off the page (past work in the session library). When a design discussion adds a fourth resident element, the discussion is wrong. Resolved 2026-07-04; anatomy revised 2026-07-05 (ADR-0012). Avoid synonyms: workspace shell, editing canvas.
-
-### Take
-
-One result inside a session: a picture or a clip with its Origin, recorded Production provenance and Associated words. Pictures may enter through generation, upload, Sketch or Studio; clips are generated. Inspection selects the media without changing the working prompt or settings. Reuse setup explicitly restores the chosen take's associated words and applicable generation settings; Use words restores only a chosen conversation output. Provenance and associated words remain distinct. Take identities and ancestry survive the asset-row presentation change. Updated 2026-10-08 under #177. See [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md). Avoid synonyms: preview, stage frame.
-
-### Keep
-
-The action that ends the loop: the creator saves the clip they're proud of to the library. Everything upstream of Keep is free; Keep is where the subscription offer lives (ADR-0010). Resolved 2026-07-04 during untangling decision. Avoid synonyms: save, export, download (downloading is what happens after Keep).
-
-### Words node
-
-The space's node for a words-version — the text that made the takes beneath it (ADR-0013 persists it as every picture's immediate ancestor; a reword creates a sibling words-version). A words node is a node but not a Take (takes are pictures and clips only). Resolved 2026-07-09 during space-workflow grilling. Avoid synonyms: prompt node, text node, words card.
-
-### Sketchpad
-
-The drawing surface of the realtime sketch: where the creator lays rough strokes, whose current state is captured as a picture that conditions generation. A different thing from the space — the space is a lineage network that is never drawn on. Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: canvas, drawing canvas, board.
-
-### Live output
-
-The continuously updating generated image produced from the sketchpad and the prompt, and the pane that shows it. Ephemeral by definition — the [Live editor](#live-editor) keeps nothing, so a live output is not a [Take](#take). One exception: the creator can accept the shown live output into a session, where it becomes a picture take with [Origin](#origin) `sketchpad` and the snapshot, prompt, seed, strength, and steps of that exact output as its [Production provenance](#production-provenance) ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md)) — the action is "Use this" or "accept", never [Keep](#keep). Acceptance is a one-way export at the creator's press: the live editor still holds no lineage and no takes ([ADR-0017](docs/adr/0017-live-editor-is-its-own-plane-not-the-space.md) stands). Until accepted, it is the only ephemeral generated image in the product: everything the CLAUDE.md-glossary Generation produces is persisted and becomes a node. Resolved 2026-07-09 during realtime-sketch grilling; the contrast term was "Preview" until that was retired 2026-08-10; the accept exception revised 2026-09-17 with ADR-0022. Avoid synonyms: preview, preview pane, render pane, result.
-
-### Realtime sketch
-
-The capability under test in the sketch spike: the creator draws on the sketchpad and the live output tracks the drawing at sub-second cadence — steering composition with strokes instead of words. A candidate expansion input for first frames. Lives on the Live editor page, outside the page's anatomy (the workspace remains exactly the space, the input, and the next-step button). Resolved 2026-07-09 during realtime-sketch grilling. Avoid synonyms: realtime editor, draw mode, sketch-to-image feature.
-
-### Live editor
-
-The realtime sketch's own page: an infinite pannable/zoomable plane (the shared canvas camera) holding the editor pair — sketchpad and live output — with the floating chrome fixed to the screen. A first-class rail destination directly under Library. Not the space: it has no lineage, no takes, one editor object, and an ephemeral camera. The select tool pans the plane; brush and eraser strokes never do. Resolved 2026-07-09 during live-editor-surface grilling. Avoid synonyms: sketch page, canvas page, board, node editor.
-
-### Page (live editor)
-
-The sketchpad's drawing surface, which **is** the generation frame — same shape and same size, derived from it rather than chosen ([ADR-0018](docs/adr/0018-the-live-editor-page-is-the-generation-frame.md)). Sizing the page independently stretches the bitmap and shrinks every subject inside the frame, which reads as a model-quality regression rather than a layout bug. A bigger surface is the plane's zoom, never a bigger page. Resolved 2026-07-24 diagnosing the stretched-canvas regression. Avoid synonyms: sketch panel, canvas size, drawing area.
-
-### The studio
-
-The chat-driven image workspace on its own rail surface: a creator commissions finished images through conversation — a brief, at most a couple of clarifying questions, batches of variations, and follow-up moves. The images are the deliverable in their own right — the studio is not a first-frame factory. Two optional handoffs connect it to a session in both directions: a session picture can open a studio project that records where it came from, and a studio image can be sent back to a session as a picture [Take](#take). Both are creator-invoked, one image at a time, and neither makes the studio a supplier — a [Studio project](#studio-project) stays its own record and never lives inside a session. Governed by [ADR-0019](docs/adr/0019-the-studio-standalone-conversational-image-workspace.md) and [ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md). Resolved 2026-07-24 during studio grilling; the downstream rule revised 2026-09-17 with ADR-0022. Avoid synonyms: AI chat, image chat, design workspace, chat canvas.
-
-### Studio project
-
-The persisted unit of studio work: one conversation thread plus every image it produced, returnable across visits. A studio project is not a Session (the video loop's entity) and never lives inside `SessionPrompt` — it is its own first-class record. Resolved 2026-07-24 during studio grilling. Avoid synonyms: session, chat, thread, conversation.
-
-### Batch (studio)
-
-One studio turn's set of sibling variations, generated together and landing as one cluster on the studio plane. Cluster placement is derived from thread order — nothing spatial is stored, the same rule the space lives by. Resolved 2026-07-24 during studio grilling. Avoid synonyms: grid, set, generation group.
-
-### Camera focus
-
-What the shared plane centers on: every element tagged with the live id, centered as one union rather than one at a time. A focus target is a **set**, so [The player](#the-player)'s single live node and a studio [Batch](#batch-studio)'s four siblings are the same case — the plane owes no consumer a "there must be exactly one" rule. The tag is `data-canvas-focus`, published by `CanvasViewport` as `CANVAS_FOCUS_ATTR` and keyed by the same id the `liveNodeId` prop carries, so the two halves cannot disagree about which object is live; a mismatch centers nothing rather than centering the wrong thing. Resolved 2026-08-04 during architecture-deepening review, replacing an undeclared `data-live="true"` first-match lookup that centered a batch on its top-left tile. Avoid synonyms: live node (that is one focus target, not the concept), camera target.
-
-### Take identity
-
-The one id a [Take](#take) is known by: the id the server assigned when it persisted the take. The client's optimistic id is provisional — it is replaced by the server's on persist, so a later session refetch matches the take already on screen instead of duplicating it, and a lineage edge (ADR-0013) always names an id that exists. A take's identity is not its job id: the job is the work that produced the take, and it ends; the take does not. Resolved 2026-08-10 during the generation audit, generalizing the rule the picture path already followed. Avoid synonyms: generation id, job id, local id.
-
-### Origin
-
-Where a [Take](#take) entered its session from: generated (from the session's own words), upload, sketchpad, or studio. A closed set, recorded on the take at admission and validated at the wire — never inferred afterwards from which other fields happen to be filled in, and never widened by a caller inventing a value. Origin names the door a take came through; [Production provenance](#production-provenance) names the inputs that made it. Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 1). Avoid synonyms: source, type, kind, provenance.
-
-### Production provenance
-
-What actually produced a [Take](#take): the prompt or edit instruction plus the source inputs it consumed, recorded when known and recorded as unknown when it is not. An upload has unknown provenance rather than an invented one; a studio edit's provenance is its edit instruction ("remove the chair"), not a shot description; an accepted [Live output](#live-output)'s provenance is the snapshot, prompt, seed, strength, and steps of the output that was on screen, not the sketchpad's state at the click. Never restored into [The input](#the-input) — that is [Associated words](#associated-words). Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 2). Avoid synonyms: paired words, the take's prompt, lineage, origin.
-
-### Associated words
-
-The words-version a [Take](#take) is filed under — the direction restored into [The input](#the-input) when the take is selected, and the [Words node](#words-node) the take hangs from in the space. Every take has one, including an admitted picture, whose associated words are the version the admission named rather than a description of the image. May coincide with [Production provenance](#production-provenance); never presented as the same thing. Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 2). Avoid synonyms: paired words, the take's prompt, caption, provenance.
-
-### Refine edge
-
-[The space](#the-space)'s edge between two pictures: the later picture was produced by editing the earlier one (a studio edit today). Drawn inside the picture column — the space's three columns are media types, not an ancestry-depth limit. Derived from its endpoints like every other edge kind and never stored (ADR-0013): picture → picture is always a refine edge. A take with several source inputs records all of them and exposes one display ancestor for drawing; a take with no source input in this session has no display ancestor, hangs from its words node, and reads as picture-ancestry-unknown rather than being attached to whichever sibling is listed first. Resolved 2026-09-17 during cross-mode admission grilling ([ADR-0022](docs/adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md), decision 3, amending [ADR-0012](docs/adr/0012-the-space-lineage-network.md)). Avoid synonyms: edit edge, derived-from, branch, version link.
-
-<!-- New terms go here, following the format above. -->
-
-## Relationship to ADRs
-
-Term _meanings_ live here (and in the CLAUDE.md glossary); architectural _decisions_ — why an approach was chosen, with trade-offs — live in [`docs/adr/`](docs/adr/). When a term's meaning hinges on a decision, link the ADR instead of restating it. Example: the labeling pipeline's shape is governed by [docs/adr/0001-span-labeling-extraction-strategy.md](docs/adr/0001-span-labeling-extraction-strategy.md).
+ADRs are preserved project records, including superseded decisions. Their dated implementation descriptions remain historical evidence; current ownership is defined above and verified against source.

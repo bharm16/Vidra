@@ -3,7 +3,6 @@ import type { VideoService } from "@services/enhancement/services/types";
 import { AIModelService } from "@services/ai-model/index";
 import { EnhancementService } from "@services/enhancement/index";
 import { BrainstormContextBuilder } from "@services/enhancement/services/BrainstormContextBuilder";
-import { PromptCoherenceService } from "@services/enhancement/services/PromptCoherenceService";
 import { SuggestionDiversityEnforcer } from "@services/enhancement/services/SuggestionDiversityEnforcer";
 import { SceneChangeDetectionService } from "@services/enhancement/services/SceneChangeDetectionService";
 import type { CacheService } from "@services/cache/CacheService";
@@ -64,11 +63,5 @@ export function registerEnhancementServices(container: DIContainer): void {
     (aiService: AIModelService, cacheService: CacheService) =>
       new SceneChangeDetectionService(aiService, cacheService),
     ["aiService", "cacheService"],
-  );
-
-  container.register(
-    "promptCoherenceService",
-    (aiService: AIModelService) => new PromptCoherenceService(aiService),
-    ["aiService"],
   );
 }

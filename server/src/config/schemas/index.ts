@@ -18,9 +18,7 @@ export {
   suggestionSchema,
   customSuggestionSchema,
   sceneChangeSchema,
-  coherenceCheckSchema,
   type SuggestionRequest,
   type CustomSuggestionRequest,
   type SceneChangeRequest,
-  type CoherenceCheckRequest,
 } from "./suggestionSchemas.ts";

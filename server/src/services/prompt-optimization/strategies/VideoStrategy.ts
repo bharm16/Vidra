@@ -1,3 +1,4 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import OptimizationConfig from "@config/OptimizationConfig";
 // Import the examples along with the generator
@@ -12,7 +13,6 @@ import { getVideoTemplateBuilder } from "./video-templates/index";
 import { getVideoOptimizationSchema } from "@utils/provider/SchemaFactory";
 import type { CapabilityValues } from "@shared/capabilities";
 import type {
-  AIService,
   LockedSpan,
   OptimizationRequest,
   ShotPlan,
@@ -52,9 +52,9 @@ function slotCompletenessScore(slots: VideoPromptSlots): number {
  */
 export class VideoStrategy implements OptimizationStrategy {
   readonly name = "video";
-  private readonly ai: AIService;
+  private readonly ai: AIExecutionPort;
 
-  constructor(aiService: AIService) {
+  constructor(aiService: AIExecutionPort) {
     this.ai = aiService;
   }
 

@@ -20,8 +20,8 @@ import type {
   StudioTurnStatus,
 } from "@services/studio/types";
 import type { AdmissionIdempotencyPort } from "../admitPictureTake";
-import { attachCompletedJobToSession } from "@services/video-generation/jobs/attachJobToSession";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import { attachCompletedJobToSession } from "@services/video-generation/runtime/attachJobToSession";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 
 /**
  * "Use this in the session" — ADR-0022 decisions 2, 3 and 4, issue #89.
@@ -1363,7 +1363,10 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
   // identity-based produced-image retrieval.
 
   /** Hop 1 of the chain: edit the bridged picture, return it into the session. */
-  async function returnEditOfBridgedPicture(projectId: string, bridgedImageId: string) {
+  async function returnEditOfBridgedPicture(
+    projectId: string,
+    bridgedImageId: string,
+  ) {
     const { imageIds } = await runTurn(
       fixture.studio,
       fixture.decide,
@@ -1467,9 +1470,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     if (result.state !== "returned") return;
     // The one consumed take is the display ancestor, wherever it sits in the
     // turn's input order.
-    expect(result.result.ancestorGenerationId).toBe(
-      hop1.returned.generationId,
-    );
+    expect(result.result.ancestorGenerationId).toBe(hop1.returned.generationId);
 
     const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
     const returned = takesOf(session, SOURCE.promptVersionId).find(
@@ -1480,9 +1481,9 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     // a take of this session, and it is the display ancestor.
     expect(inputs).toHaveLength(4);
     expect(inputs.filter((input) => input.kind === "take")).toHaveLength(1);
-    expect(inputs.filter((input) => input.kind === "studio-image")).toHaveLength(
-      3,
-    );
+    expect(
+      inputs.filter((input) => input.kind === "studio-image"),
+    ).toHaveLength(3);
     expect(returned.ancestorGenerationId).toBe(hop1.returned.generationId);
   });
 
@@ -1531,7 +1532,10 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
 
   it("still gives an unrelated generation no relationship after other images have been returned to the session", async () => {
     const project = await bridgedProject();
-    await returnEditOfBridgedPicture(project.id, project.origin!.bridgedImageId);
+    await returnEditOfBridgedPicture(
+      project.id,
+      project.origin!.bridgedImageId,
+    );
 
     // A from-scratch generate consumes no image at all — a returned take
     // living beside it in the session gives it nothing.
@@ -1605,9 +1609,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
       kind: string;
       storagePath?: string;
     }>;
-    expect(
-      inputs.some((input) => input.kind === "take"),
-    ).toBe(false);
+    expect(inputs.some((input) => input.kind === "take")).toBe(false);
     // The consumed image is still recorded in full — by its durable studio
     // path — as an ordinary studio image.
     const sourceTurn = await fixture.studio.getTurn(OWNER, project.id, turnId);
@@ -1676,9 +1678,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
 
     expect(repaired.state).toBe("returned");
     if (repaired.state !== "returned") return;
-    expect(repaired.result.generationId).toBe(
-      interrupted.result.generationId,
-    );
+    expect(repaired.result.generationId).toBe(interrupted.result.generationId);
 
     const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
     const takes = takesOf(session, SOURCE.promptVersionId);
@@ -1703,9 +1703,7 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     ).toBe(true);
     // The chain, whole: exactly two returned takes beyond the bridged
     // original, each the ancestor of the next.
-    expect(
-      takes.filter((take) => take.origin === "studio"),
-    ).toHaveLength(2);
+    expect(takes.filter((take) => take.origin === "studio")).toHaveLength(2);
   });
 });
 
@@ -1735,7 +1733,9 @@ describe("readUnresolvedReturnAttachment (issue #135)", () => {
       getResponseSnapshot: async ({ userId, route, key }) => {
         expect(route).toBe("picture-admission");
         expect(userId).toBe(KEY_INPUT.userId);
-        expect(key).toBe(`studio-return:${KEY_INPUT.projectId}:${KEY_INPUT.imageId}`);
+        expect(key).toBe(
+          `studio-return:${KEY_INPUT.projectId}:${KEY_INPUT.imageId}`,
+        );
         return snapshot;
       },
     };

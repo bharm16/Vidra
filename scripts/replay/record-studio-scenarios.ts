@@ -59,7 +59,7 @@ if (!store) {
 
 const aiService = container.resolve(
   "aiService",
-) as import("../../server/src/services/studio/StudioPolicyEngine.ts").StudioAIService;
+) as import("../../server/src/services/ai-model/ports/AIExecutionPort.ts").AIExecutionPort;
 
 const engine = new StudioPolicyEngine({ ai: aiService });
 

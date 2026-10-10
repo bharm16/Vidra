@@ -1,90 +1,11 @@
-# Disaster Recovery Runbook
+# Data recovery acceptance
 
-## Overview
+Export/restore wrappers remain in `scripts/ops/firestore-export.sh` and `scripts/ops/firestore-restore.sh`. Start with an emulator restore and verify the exact project, backup and expected record counts before any live restore. A live restore requires explicit authorization.
 
-This runbook covers backup, restore, and verification procedures for Vidra's critical data stores. All procedures target Firestore as the primary state store.
+The older `dr-smoke-test` program checked obsolete `credit_balances` records and could report success on an empty collection; it is retired. Its historical pass does not verify the preserved refund ledger.
 
-## RPO / RTO Targets
+Current integrity boundaries include generic sessions/takes, `video_jobs`, `video_job_dlq`, request receipts and owed attachments; legacy credit data lives on `users/{uid}.credits`, nested `credit_transactions`, `credit_refunds` and the failed-refund store. Use the collection constants and parsers in the current admission/session/runtime/refund owners when selecting an export and validating a restore.
 
-| Metric                             | Target     | Notes                                    |
-| ---------------------------------- | ---------- | ---------------------------------------- |
-| **RPO** (Recovery Point Objective) | 1 hour     | Firestore scheduled exports run hourly   |
-| **RTO** (Recovery Time Objective)  | 30 minutes | From backup artifact to verified restore |
+Acceptance must compare expected counts and representative identities, destinations, provenance, media handles, claim/receipt consistency and refund keys/debt states against the chosen backup. Include nested ledger rows, completion/attachment state and durable media objects. An empty unexpected collection is non-verification, not success. Reconcile discrepancies before enabling writers.
 
-## Critical Collections
-
-| Collection              | Priority | Impact if Lost                   |
-| ----------------------- | -------- | -------------------------------- |
-| `users`                 | P0       | User accounts and auth state     |
-| `credit_balances`       | P0       | User credit balances (financial) |
-| `credit_transactions`   | P0       | Credit audit trail               |
-| `video_jobs`            | P1       | Active video generation queue    |
-| `video_job_dlq`         | P2       | Failed job retry queue           |
-| `request_idempotency`   | P3       | Idempotency dedup (TTL-managed)  |
-| `stripe_webhook_events` | P1       | Payment event dedup              |
-
-## Procedures
-
-### 1. Scheduled Export (Automated)
-
-Firestore exports are configured via Cloud Scheduler to run hourly to a GCS bucket.
-
-**Bucket:** `gs://${PROJECT_ID}-firestore-backups/`
-**Schedule:** Every hour at :00
-**Retention:** 7 days (lifecycle policy on GCS bucket)
-
-### 2. Manual Export
-
-```bash
-# Export all collections
-scripts/ops/firestore-export.sh --project <PROJECT_ID>
-
-# Export specific collections only
-scripts/ops/firestore-export.sh --project <PROJECT_ID> --collections credit_balances,credit_transactions,users
-```
-
-### 3. Restore from Backup
-
-```bash
-# Restore to emulator (safe, for testing)
-scripts/ops/firestore-restore.sh --source gs://<BUCKET>/<EXPORT_PATH> --target emulator
-
-# Restore to project (DESTRUCTIVE - requires confirmation)
-scripts/ops/firestore-restore.sh --source gs://<BUCKET>/<EXPORT_PATH> --target <PROJECT_ID>
-```
-
-**WARNING:** Restoring to a live project will overwrite existing documents. Always verify against emulator first.
-
-### 4. Smoke Test (Post-Restore Verification)
-
-```bash
-# Run against emulator after restore
-scripts/ops/dr-smoke-test.sh --target emulator
-
-# Run against project
-scripts/ops/dr-smoke-test.sh --target <PROJECT_ID>
-```
-
-The smoke test verifies:
-
-1. User credit balance totals match transaction sums
-2. Video job record counts by status match expected distribution
-3. No orphaned credit transactions (user exists for every transaction)
-4. DLQ entries reference valid job IDs
-
-### 5. DR Drill Schedule
-
-Run a full drill monthly:
-
-1. Export from production
-2. Restore to emulator
-3. Run smoke test
-4. Document results in drill log
-
-## Escalation
-
-| Severity          | Contact                      | SLA             |
-| ----------------- | ---------------------------- | --------------- |
-| P0 (data loss)    | On-call engineer + team lead | 15 min response |
-| P1 (degraded)     | On-call engineer             | 30 min response |
-| P2 (non-critical) | Next business day            | 24 hours        |
+Bootstrap/replay tests check application contracts against fixtures; they do not validate restored production records. Source cleanup performs no export, restore, ledger drain, mutation or media deletion.

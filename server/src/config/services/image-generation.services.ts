@@ -1,6 +1,5 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
-import type { LLMClient } from "@clients/LLMClient";
 import { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import { ReplicateFluxKontextFastProvider } from "@services/image-generation/providers/ReplicateFluxKontextFastProvider";
 import { ReplicateFluxSchnellProvider } from "@services/image-generation/providers/ReplicateFluxSchnellProvider";
@@ -10,8 +9,6 @@ import {
   parseImagePreviewProviderOrder,
   resolveImagePreviewProviderSelection,
 } from "@services/image-generation/providers/registry";
-import { StoryboardFramePlanner } from "@services/image-generation/storyboard/StoryboardFramePlanner";
-import { StoryboardPreviewService } from "@services/image-generation/storyboard/StoryboardPreviewService";
 import type { CassetteStore } from "@server/replay/CassetteStore";
 import { RecordReplayImagePreviewProvider } from "@server/replay/RecordReplayImagePreviewProvider";
 import { resolveAllFlags } from "../feature-flags.ts";
@@ -65,28 +62,6 @@ function throughReplaySeam(
 }
 
 export function registerImageGenerationServices(container: DIContainer): void {
-  container.register(
-    "storyboardFramePlanner",
-    (geminiClient: LLMClient | null, openAIClient: LLMClient | null) => {
-      if (!geminiClient) {
-        logger.warn(
-          "Gemini client not available, storyboard frame planner disabled",
-        );
-        return null;
-      }
-      if (!openAIClient) {
-        logger.warn(
-          "OpenAI client not available, vision-based storyboard planning disabled (text-only fallback)",
-        );
-      }
-      return new StoryboardFramePlanner({
-        llmClient: geminiClient,
-        visionLlmClient: openAIClient,
-      });
-    },
-    ["geminiClient", "openAIClient"],
-  );
-
   container.register(
     "replicateFluxSchnellProvider",
     (config: ServiceConfig, replayCassetteStore: CassetteStore | null) =>
@@ -161,26 +136,5 @@ export function registerImageGenerationServices(container: DIContainer): void {
       });
     },
     [...IMAGE_PREVIEW_PROVIDER_TOKENS, "imageAssetStore", "config"],
-  );
-
-  container.register(
-    "storyboardPreviewService",
-    (
-      imageGenerationService: ImageGenerationService | null,
-      storyboardFramePlanner: StoryboardFramePlanner | null,
-    ) => {
-      if (!imageGenerationService || !storyboardFramePlanner) {
-        logger.warn("Storyboard preview service disabled", {
-          imageGenerationServiceAvailable: Boolean(imageGenerationService),
-          storyboardFramePlannerAvailable: Boolean(storyboardFramePlanner),
-        });
-        return null;
-      }
-      return new StoryboardPreviewService({
-        imageGenerationService,
-        storyboardFramePlanner,
-      });
-    },
-    ["imageGenerationService", "storyboardFramePlanner"],
   );
 }

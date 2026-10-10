@@ -1,8 +1,8 @@
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { SessionRecord } from "@services/sessions/types";
-import type { RouteCreditService } from "@services/credits/ports";
+import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
 import express from "express";
 import request from "supertest";
@@ -82,20 +82,30 @@ const makeServices = (
   >;
   const credits = {
     reserveCredits: vi
-      .fn<RouteCreditService["reserveCredits"]>()
+      .fn<(userId: string, cost: number) => Promise<boolean>>()
       .mockResolvedValue(false),
     refundCredits: vi
-      .fn<RouteCreditService["refundCredits"]>()
+      .fn<CreditRefunder["refundCredits"]>()
       .mockResolvedValue(false),
-    getBalance: vi.fn<RouteCreditService["getBalance"]>().mockResolvedValue(0),
+    getBalance: vi
+      .fn<(userId: string) => Promise<number>>()
+      .mockResolvedValue(0),
     checkAndReserveInTransaction: vi
-      .fn<RouteCreditService["checkAndReserveInTransaction"]>()
+      .fn<
+        (
+          transaction: FirebaseFirestore.Transaction,
+          userId: string,
+          cost: number,
+        ) => Promise<
+          | { ok: true }
+          | { ok: false; reason: "user_not_found" | "insufficient_credits" }
+        >
+      >()
       .mockResolvedValue({ ok: false, reason: "insufficient_credits" }),
-  } satisfies RouteCreditService;
+  };
   return {
     imageGenerationService: imagePort as unknown as ImageGenerationService,
     userCreditService: credits,
-    assetService: null,
     sessionService: sessionPort as SessionService,
     requestIdempotencyService:
       new InMemoryIdempotencyService() as unknown as RequestIdempotencyService,

@@ -1,16 +1,11 @@
 import assert from "node:assert/strict";
-import OpenAI from "openai";
-import { generateSoraVideo } from "../../../server/src/services/video-generation/providers/soraProvider";
 import {
   generateVeoVideo,
   DEFAULT_VEO_BASE_URL,
 } from "../../../server/src/services/video-generation/providers/veoProvider";
 import { getProviderPollTimeoutMs } from "../../../server/src/services/video-generation/providers/timeoutPolicy";
 import { VIDEO_MODEL_PROVIDERS } from "../../../server/src/config/videoModelRegistry";
-import {
-  isReleaseGenerationModelSupported,
-  type SoraModelId,
-} from "../../../shared/videoModels";
+import { isReleaseGenerationModelSupported } from "../../../shared/videoModels";
 import type {
   VideoAssetStore,
   StoredVideoAsset,
@@ -47,11 +42,6 @@ const store: VideoAssetStore = {
 export async function evaluateOtherVideoAdapters(
   transport: OfflineProviderTransport,
 ): Promise<QualityPathResult[]> {
-  const openai = new OpenAI({
-    apiKey: "offline-quality-fixture-token",
-    fetch: transport.fetch,
-    maxRetries: 0,
-  });
   const results: QualityPathResult[] = [];
   for (const [requestedModel, provider] of Object.entries(
     VIDEO_MODEL_PROVIDERS,
@@ -91,16 +81,7 @@ export async function evaluateOtherVideoAdapters(
         };
         let reason: string | undefined;
         try {
-          if (provider === "openai")
-            await generateSoraVideo(
-              openai,
-              QUALITY_PROMPT,
-              requestedModel as SoraModelId,
-              options,
-              store,
-              log,
-            );
-          else if (provider === "gemini")
+          if (provider === "gemini")
             await generateVeoVideo(
               "offline-quality-fixture-token",
               DEFAULT_VEO_BASE_URL,

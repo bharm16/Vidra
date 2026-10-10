@@ -18,10 +18,10 @@ import {
   CROSS_MODE_CAMERA_DIRECTION_2,
 } from "@scripts/replay/goldenScenarios";
 import { writeCameraDirection } from "@/features/workspace-shell/utils/cameraDirection";
-import { processVideoJob } from "@services/video-generation/jobs/processVideoJob";
-import { resumePendingAttachments } from "@services/video-generation/jobs/resumePendingAttachments";
+import { processVideoJob } from "@services/video-generation/runtime/processVideoJob";
+import { resumePendingAttachments } from "@services/video-generation/runtime/resumePendingAttachments";
 import type { SessionService } from "@services/sessions/SessionService";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 import {
   CROSS_MODE_USER_ID,
   CROSS_MODE_API_KEY,

@@ -152,158 +152,44 @@
       "a": 1
     }
   ],
-  [
-    "number/8",
-    36
-  ],
-  [
-    "height/pill",
-    36
-  ],
-  [
-    "number/9",
-    28
-  ],
-  [
-    "height/step",
-    28
-  ],
-  [
-    "number/10",
-    40
-  ],
-  [
-    "height/action",
-    40
-  ],
-  [
-    "number/11",
-    48
-  ],
-  [
-    "height/media",
-    48
-  ],
-  [
-    "number/12",
-    42
-  ],
-  [
-    "height/menu-row",
-    42
-  ],
-  [
-    "number/13",
-    24
-  ],
-  [
-    "height/number",
-    24
-  ],
-  [
-    "number/14",
-    32
-  ],
-  [
-    "height/segment",
-    32
-  ],
-  [
-    "number/15",
-    999
-  ],
-  [
-    "radius/pill",
-    999
-  ],
-  [
-    "radius/composer",
-    32
-  ],
-  [
-    "radius/popover",
-    24
-  ],
-  [
-    "number/16",
-    16
-  ],
-  [
-    "radius/menu",
-    16
-  ],
-  [
-    "number/17",
-    14
-  ],
-  [
-    "radius/menu-row",
-    14
-  ],
-  [
-    "number/18",
-    10
-  ],
-  [
-    "radius/tile",
-    10
-  ],
-  [
-    "number/19",
-    8
-  ],
-  [
-    "radius/segment",
-    8
-  ],
-  [
-    "number/20",
-    2
-  ],
-  [
-    "space/2",
-    2
-  ],
-  [
-    "number/21",
-    4
-  ],
-  [
-    "space/4",
-    4
-  ],
-  [
-    "number/22",
-    6
-  ],
-  [
-    "space/6",
-    6
-  ],
-  [
-    "space/8",
-    8
-  ],
-  [
-    "number/23",
-    12
-  ],
-  [
-    "space/12",
-    12
-  ],
-  [
-    "space/16",
-    16
-  ],
-  [
-    "space/24",
-    24
-  ],
-  [
-    "space/32",
-    32
-  ],
+  ["number/8", 36],
+  ["height/pill", 36],
+  ["number/9", 28],
+  ["height/step", 28],
+  ["number/10", 40],
+  ["height/action", 40],
+  ["number/11", 48],
+  ["height/media", 48],
+  ["number/12", 42],
+  ["height/menu-row", 42],
+  ["number/13", 24],
+  ["height/number", 24],
+  ["number/14", 32],
+  ["height/segment", 32],
+  ["number/15", 999],
+  ["radius/pill", 999],
+  ["radius/composer", 32],
+  ["radius/popover", 24],
+  ["number/16", 16],
+  ["radius/menu", 16],
+  ["number/17", 14],
+  ["radius/menu-row", 14],
+  ["number/18", 10],
+  ["radius/tile", 10],
+  ["number/19", 8],
+  ["radius/segment", 8],
+  ["number/20", 2],
+  ["space/2", 2],
+  ["number/21", 4],
+  ["space/4", 4],
+  ["number/22", 6],
+  ["space/6", 6],
+  ["space/8", 8],
+  ["number/23", 12],
+  ["space/12", 12],
+  ["space/16", 16],
+  ["space/24", 24],
+  ["space/32", 32],
   [
     "rgba/white-5",
     {
@@ -817,252 +703,66 @@
       "a": 0.6000000238418579
     }
   ],
-  [
-    "height/pill",
-    36
-  ],
-  [
-    "height/action",
-    40
-  ],
-  [
-    "height/form",
-    48
-  ],
-  [
-    "height/compact",
-    32
-  ],
-  [
-    "height/menu-row",
-    42
-  ],
-  [
-    "height/step",
-    28
-  ],
-  [
-    "height/number",
-    24
-  ],
-  [
-    "radius/pill",
-    999
-  ],
-  [
-    "radius/composer",
-    32
-  ],
-  [
-    "radius/dialog",
-    24
-  ],
-  [
-    "radius/menu",
-    16
-  ],
-  [
-    "radius/card",
-    14
-  ],
-  [
-    "radius/control",
-    10
-  ],
-  [
-    "radius/compact",
-    8
-  ],
-  [
-    "space/2",
-    2
-  ],
-  [
-    "space/4",
-    4
-  ],
-  [
-    "space/6",
-    6
-  ],
-  [
-    "space/8",
-    8
-  ],
-  [
-    "space/12",
-    12
-  ],
-  [
-    "space/16",
-    16
-  ],
-  [
-    "space/24",
-    24
-  ],
-  [
-    "space/32",
-    32
-  ],
-  [
-    "space/0",
-    0
-  ],
-  [
-    "space/0",
-    0
-  ],
-  [
-    "space/20",
-    20
-  ],
-  [
-    "space/20",
-    20
-  ],
-  [
-    "space/40",
-    40
-  ],
-  [
-    "space/40",
-    40
-  ],
-  [
-    "space/48",
-    48
-  ],
-  [
-    "space/48",
-    48
-  ],
-  [
-    "space/64",
-    64
-  ],
-  [
-    "space/64",
-    64
-  ],
-  [
-    "radius/none",
-    0
-  ],
-  [
-    "radius/none",
-    0
-  ],
-  [
-    "border/hairline",
-    0.5
-  ],
-  [
-    "border/hairline",
-    0.5
-  ],
-  [
-    "border/focus-width",
-    2
-  ],
-  [
-    "border/focus-width",
-    2
-  ],
-  [
-    "opacity/disabled",
-    0.5
-  ],
-  [
-    "opacity/disabled",
-    0.5
-  ],
-  [
-    "type/title/size",
-    24
-  ],
-  [
-    "type/title/size",
-    24
-  ],
-  [
-    "type/title/line",
-    32
-  ],
-  [
-    "type/title/line",
-    32
-  ],
-  [
-    "type/body/size",
-    16
-  ],
-  [
-    "type/body/size",
-    16
-  ],
-  [
-    "type/body/line",
-    24
-  ],
-  [
-    "type/body/line",
-    24
-  ],
-  [
-    "type/compact/size",
-    12
-  ],
-  [
-    "type/compact/size",
-    12
-  ],
-  [
-    "type/compact/line",
-    16
-  ],
-  [
-    "type/compact/line",
-    16
-  ],
-  [
-    "type/label/size",
-    14
-  ],
-  [
-    "type/label/size",
-    14
-  ],
-  [
-    "type/label/line",
-    20
-  ],
-  [
-    "type/label/line",
-    20
-  ],
-  [
-    "type/action/size",
-    14
-  ],
-  [
-    "type/action/size",
-    14
-  ],
-  [
-    "type/action/line",
-    20
-  ],
-  [
-    "type/action/line",
-    20
-  ],
-  [
-    "size/switch-width",
-    40
-  ],
-  [
-    "size/switch-height",
-    24
-  ]
+  ["height/pill", 36],
+  ["height/action", 40],
+  ["height/form", 48],
+  ["height/compact", 32],
+  ["height/menu-row", 42],
+  ["height/step", 28],
+  ["height/number", 24],
+  ["radius/pill", 999],
+  ["radius/composer", 32],
+  ["radius/dialog", 24],
+  ["radius/menu", 16],
+  ["radius/card", 14],
+  ["radius/control", 10],
+  ["radius/compact", 8],
+  ["space/2", 2],
+  ["space/4", 4],
+  ["space/6", 6],
+  ["space/8", 8],
+  ["space/12", 12],
+  ["space/16", 16],
+  ["space/24", 24],
+  ["space/32", 32],
+  ["space/0", 0],
+  ["space/0", 0],
+  ["space/20", 20],
+  ["space/20", 20],
+  ["space/40", 40],
+  ["space/40", 40],
+  ["space/48", 48],
+  ["space/48", 48],
+  ["space/64", 64],
+  ["space/64", 64],
+  ["radius/none", 0],
+  ["radius/none", 0],
+  ["border/hairline", 0.5],
+  ["border/hairline", 0.5],
+  ["border/focus-width", 2],
+  ["border/focus-width", 2],
+  ["opacity/disabled", 0.5],
+  ["opacity/disabled", 0.5],
+  ["type/title/size", 24],
+  ["type/title/size", 24],
+  ["type/title/line", 32],
+  ["type/title/line", 32],
+  ["type/body/size", 16],
+  ["type/body/size", 16],
+  ["type/body/line", 24],
+  ["type/body/line", 24],
+  ["type/compact/size", 12],
+  ["type/compact/size", 12],
+  ["type/compact/line", 16],
+  ["type/compact/line", 16],
+  ["type/label/size", 14],
+  ["type/label/size", 14],
+  ["type/label/line", 20],
+  ["type/label/line", 20],
+  ["type/action/size", 14],
+  ["type/action/size", 14],
+  ["type/action/line", 20],
+  ["type/action/line", 20],
+  ["size/switch-width", 40],
+  ["size/switch-height", 24]
 ]

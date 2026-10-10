@@ -1,5 +1,5 @@
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
 import express from "express";
 import request from "supertest";
@@ -50,7 +50,6 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
       requestIdempotencyService:
         new InMemoryIdempotencyService() as unknown as RequestIdempotencyService,
       userCreditService: null,
-      assetService: null,
     });
 
     const app = createApp(handler);

@@ -14,7 +14,6 @@ import {
   type VideoAssetStore,
 } from "@services/video-generation/storage";
 import { createVideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
-import { createGCSStorageService } from "@services/convergence/storage";
 import type { ServiceConfig } from "./service-config.types.ts";
 
 export function registerStorageServices(container: DIContainer): void {
@@ -89,20 +88,6 @@ export function registerStorageServices(container: DIContainer): void {
         signedUrlTtlMs: config.imageAssets.storage.signedUrlTtlMs,
         cacheControl: config.imageAssets.storage.cacheControl,
       }),
-    ["gcsBucket", "config", "signedUrlMinter"],
-  );
-  container.register(
-    "convergenceStorageService",
-    (
-      gcsBucket: Bucket,
-      config: ServiceConfig,
-      signedUrlMinter: SignedUrlMinter,
-    ) =>
-      createGCSStorageService(
-        gcsBucket,
-        signedUrlMinter,
-        config.convergence.storage.signedUrlTtlSeconds * 1000,
-      ),
     ["gcsBucket", "config", "signedUrlMinter"],
   );
 

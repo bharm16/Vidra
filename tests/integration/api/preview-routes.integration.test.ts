@@ -9,8 +9,8 @@ import type {
 } from "@routes/types";
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
-import type { RouteCreditService } from "@services/credits/ports";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
+import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 import { API_KEY_UID_PREFIX } from "@utils/apiKeyUser";
 import { InMemoryIdempotencyService } from "../helpers/cross-mode/boundaryDoubles";
 
@@ -57,31 +57,38 @@ function createApp() {
   >;
   const userCreditService = {
     reserveCredits: vi
-      .fn<RouteCreditService["reserveCredits"]>()
+      .fn<(userId: string, cost: number) => Promise<boolean>>()
       .mockResolvedValue(false),
     refundCredits: vi
-      .fn<RouteCreditService["refundCredits"]>()
+      .fn<CreditRefunder["refundCredits"]>()
       .mockResolvedValue(false),
-    getBalance: vi.fn<RouteCreditService["getBalance"]>().mockResolvedValue(0),
+    getBalance: vi
+      .fn<(userId: string) => Promise<number>>()
+      .mockResolvedValue(0),
     checkAndReserveInTransaction: vi
-      .fn<RouteCreditService["checkAndReserveInTransaction"]>()
+      .fn<
+        (
+          transaction: FirebaseFirestore.Transaction,
+          userId: string,
+          cost: number,
+        ) => Promise<
+          | { ok: true }
+          | { ok: false; reason: "user_not_found" | "insufficient_credits" }
+        >
+      >()
       .mockResolvedValue({ ok: false, reason: "insufficient_credits" }),
-  } satisfies RouteCreditService;
+  };
   const services = {
     // This route contract fixture checks the public methods used by the
     // handler; concrete generation services are outside its coverage.
     imageGenerationService:
       imageGenerationService as unknown as ImageGenerationService,
-    storyboardPreviewService: null,
     videoGenerationService:
       videoGenerationService as unknown as VideoGenerationService,
     videoJobStore: null,
     videoContentAccessService: null,
     userCreditService,
     storageService: storageServiceMock,
-    keyframeService: null,
-    faceSwapService: null,
-    assetService: null,
     requestIdempotencyService:
       new InMemoryIdempotencyService() as unknown as RequestIdempotencyService,
   } satisfies PreviewRoutesServices;

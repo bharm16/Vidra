@@ -28,7 +28,7 @@ import {
 } from "./outboundGuard";
 import { CROSS_MODE_CLIP } from "@scripts/replay/goldenScenarios";
 import type { SessionService } from "@services/sessions/SessionService";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 
 /**
  * Boots the REAL app for the cross-mode walkthrough — offline by default, or
@@ -327,7 +327,7 @@ export async function startCrossModeHarness({
     },
     async runClipJob(job: VideoJobRecord): Promise<void> {
       const { processVideoJob } = await import(
-        "@services/video-generation/jobs/processVideoJob"
+        "@services/video-generation/runtime/processVideoJob"
       );
       await processVideoJob(job, {
         jobStore: jobs,

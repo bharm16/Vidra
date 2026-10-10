@@ -21,9 +21,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303060",
@@ -41,9 +39,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303073",
@@ -113,9 +109,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303105",
@@ -150,9 +144,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303125",
@@ -187,9 +179,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303145",
@@ -224,9 +214,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303165",
@@ -341,9 +329,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:303237",
@@ -381,9 +367,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:303267",
@@ -695,10 +679,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:303393",
@@ -856,9 +837,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303502",
@@ -876,9 +855,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303515",
@@ -961,11 +938,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303554",
@@ -983,11 +956,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303566",
@@ -1005,11 +974,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303579",
@@ -1097,11 +1062,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303606",
@@ -1119,11 +1080,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303638",
@@ -1299,11 +1256,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303727",
@@ -1426,11 +1379,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303800",
@@ -1501,11 +1450,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:303832",
@@ -1631,9 +1576,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303945",
@@ -1651,9 +1594,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:303958",
@@ -1759,10 +1700,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:304001",
@@ -1780,10 +1718,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:304007",
@@ -1818,10 +1753,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:304029",
@@ -1839,9 +1771,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:304096",
@@ -2033,9 +1963,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:304215",
@@ -2053,9 +1981,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:304227",
@@ -2090,11 +2016,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:304269",
@@ -2112,11 +2034,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:304272",
@@ -2134,11 +2052,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:304301",
@@ -2246,11 +2160,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:304367",
@@ -2376,9 +2286,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:304416",
@@ -2415,9 +2323,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:304424",
@@ -2425,16 +2331,12 @@
       "type": "COMPONENT",
       "parentId": "703:304422",
       "status": "implemented-composition",
-      "sourceFiles": [
-        "client/src/pages/DocsPage.tsx"
-      ],
+      "sourceFiles": ["client/src/pages/DocsPage.tsx"],
       "verification": [
         "Active Docs table-of-contents item links to the updated asset-row/side-history/inspection/reuse section."
       ],
       "family": "Public",
-      "canonicalReferences": [
-        "703:304424"
-      ]
+      "canonicalReferences": ["703:304424"]
     },
     {
       "id": "703:304428",
@@ -2542,9 +2444,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:304460",
@@ -2685,10 +2585,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Public",
-      "canonicalReferences": [
-        "703:308269",
-        "703:304450"
-      ]
+      "canonicalReferences": ["703:308269", "703:304450"]
     },
     {
       "id": "703:304500",
@@ -3025,10 +2922,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:304576",
@@ -3180,10 +3074,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Public",
-      "canonicalReferences": [
-        "703:308269",
-        "703:304450"
-      ]
+      "canonicalReferences": ["703:308269", "703:304450"]
     },
     {
       "id": "703:304644",
@@ -3256,9 +3147,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:304681",
@@ -3330,11 +3219,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:304728",
@@ -3405,11 +3290,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:304760",
@@ -3535,11 +3416,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:304819",
@@ -3838,11 +3715,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:304975",
@@ -3932,11 +3805,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:305018",
@@ -3954,11 +3823,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:305050",
@@ -3994,11 +3859,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:305089",
@@ -4034,11 +3895,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:305131",
@@ -4074,11 +3931,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:305166",
@@ -4843,9 +4696,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:305624",
@@ -4865,9 +4716,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:305634",
@@ -4887,9 +4736,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:305639",
@@ -4907,11 +4754,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Composer",
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "703:305645",
@@ -5157,9 +5000,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:305780",
@@ -5231,9 +5072,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:305807",
@@ -6111,9 +5950,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306359",
@@ -6151,10 +5988,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:306374",
@@ -6214,9 +6048,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:306434",
@@ -6254,9 +6086,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:306464",
@@ -6423,9 +6253,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306615",
@@ -6503,9 +6331,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:306702",
@@ -6548,9 +6374,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:306776",
@@ -6668,9 +6492,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306904",
@@ -6706,9 +6528,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306921",
@@ -6726,9 +6546,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306930",
@@ -6746,9 +6564,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306940",
@@ -6766,9 +6582,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:306949",
@@ -6860,9 +6674,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307037",
@@ -6960,9 +6772,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:307103",
@@ -7000,9 +6810,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:307131",
@@ -7056,9 +6864,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307205",
@@ -7076,11 +6882,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:307226",
@@ -7098,11 +6900,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:307249",
@@ -7120,11 +6918,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:307256",
@@ -7160,9 +6954,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307326",
@@ -7180,9 +6972,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307336",
@@ -7200,11 +6990,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:307341",
@@ -7240,9 +7026,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307420",
@@ -7260,9 +7044,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307429",
@@ -7280,11 +7062,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:307463",
@@ -7302,9 +7080,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307529",
@@ -7322,9 +7098,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307539",
@@ -7342,10 +7116,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:307556",
@@ -7363,10 +7134,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:307562",
@@ -7384,10 +7152,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:307580",
@@ -7405,9 +7170,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:307646",
@@ -7653,9 +7416,7 @@
       "type": "COMPONENT",
       "parentId": "703:307933",
       "status": "preserved-library-internal",
-      "sourceFiles": [
-        "client/src/assets/design-system/take-menu.svg"
-      ],
+      "sourceFiles": ["client/src/assets/design-system/take-menu.svg"],
       "verification": [
         "Captured Radix/Lucide internal name; retained through the corresponding shared component or exact local Figma asset."
       ],
@@ -7821,10 +7582,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:308019",
@@ -7842,10 +7600,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:308024",
@@ -7899,10 +7654,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:308065",
@@ -7920,10 +7672,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:308073",
@@ -8391,10 +8140,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Public",
-      "canonicalReferences": [
-        "703:308269",
-        "703:304450"
-      ]
+      "canonicalReferences": ["703:308269", "703:304450"]
     },
     {
       "id": "703:308330",
@@ -8448,11 +8194,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:308354",
@@ -10142,11 +9884,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:309337",
@@ -10164,11 +9902,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:299711",
@@ -10188,11 +9922,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299776",
@@ -10212,11 +9942,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299805",
@@ -10236,11 +9962,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299810",
@@ -10260,11 +9982,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299817",
@@ -10284,11 +10002,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299823",
@@ -10308,11 +10022,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299829",
@@ -10332,11 +10042,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299836",
@@ -10356,11 +10062,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299872",
@@ -10380,11 +10082,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299878",
@@ -10404,11 +10102,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299888",
@@ -10428,11 +10122,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299896",
@@ -10452,11 +10142,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299900",
@@ -10476,11 +10162,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299965",
@@ -10500,11 +10182,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:299995",
@@ -10524,11 +10202,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300000",
@@ -10548,11 +10222,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300007",
@@ -10572,11 +10242,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300013",
@@ -10596,11 +10262,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300019",
@@ -10620,11 +10282,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300026",
@@ -10644,11 +10302,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300062",
@@ -10668,11 +10322,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300068",
@@ -10692,11 +10342,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300078",
@@ -10716,11 +10362,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300086",
@@ -10740,11 +10382,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300090",
@@ -10764,11 +10402,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300119",
@@ -10788,11 +10422,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300124",
@@ -10812,11 +10442,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300131",
@@ -10836,11 +10462,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300137",
@@ -10860,11 +10482,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300143",
@@ -10884,11 +10502,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300254",
@@ -10908,11 +10522,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300290",
@@ -10932,11 +10542,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300296",
@@ -10956,11 +10562,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300306",
@@ -10980,11 +10582,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300314",
@@ -11004,11 +10602,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300319",
@@ -11028,11 +10622,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300384",
@@ -11052,11 +10642,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300413",
@@ -11076,11 +10662,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300418",
@@ -11100,11 +10682,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300425",
@@ -11124,11 +10702,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300431",
@@ -11148,11 +10722,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300437",
@@ -11172,11 +10742,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300444",
@@ -11196,11 +10762,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300479",
@@ -11220,11 +10782,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300485",
@@ -11244,11 +10802,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300495",
@@ -11268,11 +10822,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300503",
@@ -11292,11 +10842,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300507",
@@ -11316,10 +10862,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300511",
@@ -11339,10 +10882,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300515",
@@ -11362,10 +10902,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300519",
@@ -11385,10 +10922,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300536",
@@ -11408,10 +10942,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300540",
@@ -11431,10 +10962,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300544",
@@ -11454,10 +10982,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300548",
@@ -11477,10 +11002,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300552",
@@ -11500,10 +11022,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300556",
@@ -11523,10 +11042,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300560",
@@ -11546,10 +11062,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300564",
@@ -11569,10 +11082,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300569",
@@ -11592,10 +11102,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300573",
@@ -11615,10 +11122,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300590",
@@ -11638,10 +11142,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300596",
@@ -11661,10 +11162,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300613",
@@ -11684,10 +11182,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300619",
@@ -11706,10 +11201,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300634",
@@ -11728,10 +11220,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300638",
@@ -11750,10 +11239,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300653",
@@ -11774,9 +11260,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:300671",
@@ -11795,10 +11279,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300679",
@@ -11817,10 +11298,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300687",
@@ -11841,9 +11319,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Settings",
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:300705",
@@ -11862,10 +11338,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300713",
@@ -11884,10 +11357,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:300721",
@@ -11907,10 +11377,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300727",
@@ -11930,10 +11397,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300744",
@@ -11953,10 +11417,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:300751",
@@ -11976,11 +11437,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Live editor",
-      "canonicalReferences": [
-        "703:299711",
-        "703:299836",
-        "703:300319"
-      ]
+      "canonicalReferences": ["703:299711", "703:299836", "703:300319"]
     },
     {
       "id": "703:300817",
@@ -12201,11 +11658,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:300979",
@@ -12226,11 +11679,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:300987",
@@ -12251,11 +11700,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301020",
@@ -12276,11 +11721,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301029",
@@ -12301,11 +11742,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301069",
@@ -12326,11 +11763,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301075",
@@ -12351,11 +11784,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301082",
@@ -12376,11 +11805,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301110",
@@ -12401,11 +11826,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301115",
@@ -12426,11 +11847,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301123",
@@ -12451,11 +11868,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301135",
@@ -12476,11 +11889,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301147",
@@ -12501,11 +11910,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301160",
@@ -12526,11 +11931,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301165",
@@ -12551,11 +11952,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301192",
@@ -12576,11 +11973,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301196",
@@ -12601,11 +11994,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301217",
@@ -12626,11 +12015,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301225",
@@ -12651,11 +12036,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301233",
@@ -12676,11 +12057,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301241",
@@ -12701,11 +12078,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301305",
@@ -12726,11 +12099,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301313",
@@ -12751,11 +12120,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301323",
@@ -12776,11 +12141,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301333",
@@ -12801,11 +12162,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301343",
@@ -12826,11 +12183,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301347",
@@ -12851,11 +12204,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301380",
@@ -12876,11 +12225,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301390",
@@ -12901,11 +12246,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301406",
@@ -12926,11 +12267,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301430",
@@ -12951,11 +12288,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301434",
@@ -12976,11 +12309,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301467",
@@ -13001,11 +12330,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301478",
@@ -13026,11 +12351,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301497",
@@ -13051,11 +12372,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301516",
@@ -13076,11 +12393,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301517",
@@ -13101,11 +12414,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301520",
@@ -13126,11 +12435,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301523",
@@ -13151,11 +12456,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301526",
@@ -13176,11 +12477,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301529",
@@ -13201,11 +12498,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301532",
@@ -13226,11 +12519,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301535",
@@ -13251,11 +12540,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301841",
@@ -13276,11 +12561,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301842",
@@ -13301,11 +12582,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301843",
@@ -13326,11 +12603,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301844",
@@ -13351,11 +12624,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301845",
@@ -13376,11 +12645,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301848",
@@ -13401,11 +12666,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301853",
@@ -13426,11 +12687,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301859",
@@ -13451,11 +12708,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301869",
@@ -13476,11 +12729,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301870",
@@ -13501,11 +12750,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301872",
@@ -13526,11 +12771,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301874",
@@ -13551,11 +12792,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:301879",
@@ -14181,9 +13418,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "703:302624"
-      ]
+      "canonicalReferences": ["703:302624"]
     },
     {
       "id": "703:302693",
@@ -14201,10 +13436,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302705",
@@ -14222,10 +13454,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302717",
@@ -14243,10 +13472,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302739",
@@ -14264,10 +13490,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302755",
@@ -14285,10 +13508,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302774",
@@ -14306,10 +13526,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302794",
@@ -14327,10 +13544,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302809",
@@ -14348,10 +13562,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "First frame",
-      "canonicalReferences": [
-        "703:308008",
-        "703:308047"
-      ]
+      "canonicalReferences": ["703:308008", "703:308047"]
     },
     {
       "id": "703:302819",
@@ -14369,11 +13580,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:302833",
@@ -14391,11 +13598,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:302851",
@@ -14413,11 +13616,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:302888",
@@ -14435,11 +13634,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:302902",
@@ -14457,11 +13652,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:302920",
@@ -14479,11 +13670,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:302936",
@@ -14520,9 +13707,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:302989",
@@ -14564,11 +13749,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:838",
@@ -14596,11 +13777,7 @@
         "width": 896,
         "height": 280
       },
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:856",
@@ -14624,11 +13801,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:874",
@@ -14652,11 +13825,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:890",
@@ -14684,11 +13853,7 @@
         "width": 400,
         "height": 748
       },
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:906",
@@ -14712,11 +13877,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:923",
@@ -14744,11 +13905,7 @@
         "width": 297,
         "height": 356
       },
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:298044",
@@ -14766,9 +13923,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298045",
@@ -14786,9 +13941,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298062",
@@ -14806,9 +13959,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298079",
@@ -14826,9 +13977,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298096",
@@ -14846,9 +13995,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298113",
@@ -14866,9 +14013,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298130",
@@ -14886,9 +14031,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298147",
@@ -14906,9 +14049,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298163",
@@ -14926,9 +14067,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298179",
@@ -14946,9 +14085,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298195",
@@ -14966,9 +14103,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298211",
@@ -14986,9 +14121,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298227",
@@ -15006,9 +14139,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298809",
@@ -15222,11 +14353,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:298876",
@@ -15250,11 +14377,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:298886",
@@ -15278,11 +14401,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:298895",
@@ -15306,11 +14425,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "702:298902",
@@ -15328,9 +14443,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298915",
@@ -15348,9 +14461,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298921",
@@ -15368,9 +14479,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298927",
@@ -15390,10 +14499,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "702:298935",
@@ -15411,9 +14517,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298942",
@@ -15434,11 +14538,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "702:298950",
@@ -15456,9 +14556,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "702:298957",
@@ -15476,9 +14574,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:1591",
@@ -15496,9 +14592,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Navigation",
-      "canonicalReferences": [
-        "702:298062"
-      ]
+      "canonicalReferences": ["702:298062"]
     },
     {
       "id": "703:1599",
@@ -15517,10 +14611,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Account",
-      "canonicalReferences": [
-        "703:300619",
-        "703:300653"
-      ]
+      "canonicalReferences": ["703:300619", "703:300653"]
     },
     {
       "id": "703:1605",
@@ -16513,11 +15604,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "703:1989",
@@ -16541,11 +15628,7 @@
         "client/src/features/workspace-shell/components/AnchorSheet.tsx",
         "client/src/features/workspace-shell/components/CanvasPromptBar.tsx"
       ],
-      "canonicalReferences": [
-        "702:838",
-        "702:890",
-        "702:923"
-      ]
+      "canonicalReferences": ["702:838", "702:890", "702:923"]
     },
     {
       "id": "703:2016",
@@ -16565,10 +15648,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Library",
-      "canonicalReferences": [
-        "703:300519",
-        "703:300507"
-      ]
+      "canonicalReferences": ["703:300519", "703:300507"]
     },
     {
       "id": "703:2030",
@@ -17083,10 +16163,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Support",
-      "canonicalReferences": [
-        "703:2224",
-        "703:2248"
-      ]
+      "canonicalReferences": ["703:2224", "703:2248"]
     },
     {
       "id": "703:2248",
@@ -17106,10 +16183,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Support",
-      "canonicalReferences": [
-        "703:2224",
-        "703:2248"
-      ]
+      "canonicalReferences": ["703:2224", "703:2248"]
     },
     {
       "id": "703:2308",
@@ -17127,11 +16201,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2313",
@@ -17149,11 +16219,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2322",
@@ -17171,11 +16237,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2329",
@@ -17193,11 +16255,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2330",
@@ -17215,11 +16273,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2340",
@@ -17237,11 +16291,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2350",
@@ -17259,11 +16309,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2360",
@@ -17281,11 +16327,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2416",
@@ -17306,11 +16348,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Studio",
-      "canonicalReferences": [
-        "703:301517",
-        "703:300987",
-        "703:2329"
-      ]
+      "canonicalReferences": ["703:301517", "703:300987", "703:2329"]
     },
     {
       "id": "703:2427",
@@ -17328,11 +16366,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2432",
@@ -17350,11 +16384,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2438",
@@ -17372,11 +16402,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2443",
@@ -17394,11 +16420,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2448",
@@ -17416,11 +16438,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2449",
@@ -17438,11 +16456,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2454",
@@ -17460,11 +16474,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:2460",
@@ -17482,11 +16492,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299287",
@@ -17504,11 +16510,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299319",
@@ -17526,11 +16528,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299353",
@@ -17548,11 +16546,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299354",
@@ -17570,11 +16564,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299360",
@@ -17592,11 +16582,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299366",
@@ -17614,11 +16600,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299372",
@@ -17636,11 +16618,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Result",
-      "canonicalReferences": [
-        "703:299354",
-        "703:299319",
-        "703:299366"
-      ]
+      "canonicalReferences": ["703:299354", "703:299319", "703:299366"]
     },
     {
       "id": "703:299548",
@@ -17659,9 +16637,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299553",
@@ -17680,9 +16656,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299554",
@@ -17701,9 +16675,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299571",
@@ -17722,9 +16694,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299581",
@@ -17743,9 +16713,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299593",
@@ -17764,9 +16732,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299605",
@@ -17785,9 +16751,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "703:299622",
@@ -17806,9 +16770,7 @@
         "Media/text remain dynamic. Historical captured copy may be superseded by the canonical family; source discrepancies are recorded in the migration notes."
       ],
       "family": "Phrase suggestions",
-      "canonicalReferences": [
-        "703:299554"
-      ]
+      "canonicalReferences": ["703:299554"]
     },
     {
       "id": "723:6419",

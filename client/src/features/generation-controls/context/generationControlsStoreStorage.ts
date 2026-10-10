@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CAMERA_MOTION_CATEGORIES } from "@/features/convergence/types";
+import { CAMERA_MOTION_CATEGORIES } from "@shared/cameraMotion";
 import {
   loadActiveTab,
   loadCameraMotion,

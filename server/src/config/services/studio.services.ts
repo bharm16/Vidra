@@ -1,10 +1,8 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
 import { StudioModelRegistry } from "@services/studio/StudioModelRegistry";
-import {
-  StudioPolicyEngine,
-  type StudioAIService,
-} from "@services/studio/StudioPolicyEngine";
+import { StudioPolicyEngine } from "@services/studio/StudioPolicyEngine";
 import { ReplicateStudioImageRunner } from "@services/studio/providers/ReplicateStudioImageRunner";
 import type {
   LiveStudioImageRunner,
@@ -60,7 +58,7 @@ export function registerStudioServices(container: DIContainer): void {
     (
       config: ServiceConfig,
       storageService: StudioImageStorage | null,
-      aiService: StudioAIService | null,
+      aiService: AIExecutionPort | null,
       replayCassetteStore: CassetteStore | null,
       studioProjectStore: StudioProjectStore,
     ) => {

@@ -1,10 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AUTH_COLORS } from "./auth/auth-styles";
 
 const CARD: React.CSSProperties = {
-  background: AUTH_COLORS.card,
-  border: `1px solid ${AUTH_COLORS.cardBorder}`,
+  background: "var(--card)",
+  border: `1px solid ${"var(--border)"}`,
   borderRadius: "10px",
 };
 
@@ -31,7 +30,7 @@ function SectionHeading({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <h2 id={id} className="scroll-mt-16 mb-3 text-ui font-semibold text-white">
+    <h2 id={id} className="text-ui mb-3 scroll-mt-16 font-semibold text-white">
       {children}
     </h2>
   );
@@ -49,36 +48,39 @@ export function PrivacyPolicyPage(): React.ReactElement {
   return (
     <div
       className="h-full overflow-y-auto"
-      style={{ background: AUTH_COLORS.bg }}
+      style={{ background: "var(--background)" }}
     >
       {/* Sticky header */}
       <div
         className="sticky top-0 z-10 px-4 py-3 sm:px-6"
         style={{
-          background: AUTH_COLORS.bg,
-          borderBottom: `1px solid ${AUTH_COLORS.divider}`,
+          background: "var(--background)",
+          borderBottom: `1px solid ${"var(--border)"}`,
         }}
       >
-        <div className="mx-auto max-w-4xl flex items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           <div className="min-w-0">
             <p
               className="text-meta font-semibold tracking-[0.2em]"
-              style={{ color: AUTH_COLORS.textLabel }}
+              style={{ color: "var(--ghost-foreground)" }}
             >
               LEGAL
             </p>
-            <h1 className="text-ui font-semibold text-white tracking-tight">
+            <h1 className="text-ui font-semibold tracking-tight text-white">
               Privacy Policy
             </h1>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-meta" style={{ color: AUTH_COLORS.textDim }}>
+          <div className="flex shrink-0 items-center gap-3">
+            <span
+              className="text-meta"
+              style={{ color: "var(--faint-foreground)" }}
+            >
               Updated {updatedAt}
             </span>
             <Link
               to="/"
-              className="text-meta font-medium hover:text-white transition-colors"
-              style={{ color: AUTH_COLORS.textDim }}
+              className="text-meta font-medium transition-colors hover:text-white"
+              style={{ color: "var(--faint-foreground)" }}
             >
               Back to app
             </Link>
@@ -87,14 +89,14 @@ export function PrivacyPolicyPage(): React.ReactElement {
       </div>
 
       {/* Content with sidebar TOC */}
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-16">
+      <div className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
         <div className="mt-5 grid gap-5 lg:grid-cols-[200px_1fr]">
           {/* TOC sidebar */}
           <aside className="lg:sticky lg:top-14 lg:self-start">
             <nav aria-label="On this page" className="text-meta">
               <p
-                className="text-meta font-semibold tracking-[0.18em] mb-2"
-                style={{ color: AUTH_COLORS.textLabel }}
+                className="text-meta mb-2 font-semibold tracking-[0.18em]"
+                style={{ color: "var(--ghost-foreground)" }}
               >
                 ON THIS PAGE
               </p>
@@ -102,8 +104,8 @@ export function PrivacyPolicyPage(): React.ReactElement {
                 {TOC.map((item) => (
                   <li key={item.id}>
                     <a
-                      className="hover:text-white transition-colors"
-                      style={{ color: AUTH_COLORS.textDim }}
+                      className="transition-colors hover:text-white"
+                      style={{ color: "var(--faint-foreground)" }}
                       href={`#${item.id}`}
                     >
                       {item.label}
@@ -117,8 +119,8 @@ export function PrivacyPolicyPage(): React.ReactElement {
           {/* Main content */}
           <div className="p-4" style={CARD}>
             <div
-              className="space-y-8 text-meta leading-relaxed"
-              style={{ color: AUTH_COLORS.textSecondary }}
+              className="text-meta space-y-8 leading-relaxed"
+              style={{ color: "var(--muted-foreground)" }}
             >
               <section>
                 <SectionHeading id="overview">Overview</SectionHeading>
@@ -132,7 +134,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                   Questions? Contact us at{" "}
                   <a
                     className="font-medium hover:underline"
-                    style={{ color: AUTH_COLORS.accent }}
+                    style={{ color: "var(--foreground)" }}
                     href={`mailto:${supportEmail}`}
                   >
                     {supportEmail}
@@ -145,7 +147,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                 <SectionHeading id="data">
                   Information we collect
                 </SectionHeading>
-                <ul className="list-disc pl-5 space-y-1.5">
+                <ul className="list-disc space-y-1.5 pl-5">
                   <li>
                     <span className="font-semibold text-white">
                       Account information
@@ -191,7 +193,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
 
               <section>
                 <SectionHeading id="use">How we use data</SectionHeading>
-                <ul className="list-disc pl-5 space-y-1.5">
+                <ul className="list-disc space-y-1.5 pl-5">
                   <li>Provide, maintain, and improve the Service.</li>
                   <li>Authenticate you and secure accounts.</li>
                   <li>Process payments and prevent fraud.</li>
@@ -224,7 +226,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                 <SectionHeading id="choices">
                   Your choices &amp; rights
                 </SectionHeading>
-                <ul className="list-disc pl-5 space-y-1.5">
+                <ul className="list-disc space-y-1.5 pl-5">
                   <li>Access and update account information in the Service.</li>
                   <li>Request deletion of your account and saved content.</li>
                   <li>Opt out of non-essential communications.</li>
@@ -269,7 +271,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                   Questions? Email{" "}
                   <a
                     className="font-medium hover:underline"
-                    style={{ color: AUTH_COLORS.accent }}
+                    style={{ color: "var(--foreground)" }}
                     href={`mailto:${supportEmail}`}
                   >
                     {supportEmail}
@@ -283,10 +285,10 @@ export function PrivacyPolicyPage(): React.ReactElement {
 
         {/* Footer */}
         <footer
-          className="mt-8 py-6 text-meta"
+          className="text-meta mt-8 py-6"
           style={{
-            borderTop: `1px solid ${AUTH_COLORS.cardBorder}`,
-            color: AUTH_COLORS.textDim,
+            borderTop: `1px solid ${"var(--border)"}`,
+            color: "var(--faint-foreground)",
           }}
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -297,14 +299,14 @@ export function PrivacyPolicyPage(): React.ReactElement {
               <Link
                 to="/terms-of-service"
                 className="hover:text-white"
-                style={{ color: AUTH_COLORS.textDim }}
+                style={{ color: "var(--faint-foreground)" }}
               >
                 Terms
               </Link>
               <Link
                 to="/contact"
                 className="hover:text-white"
-                style={{ color: AUTH_COLORS.textDim }}
+                style={{ color: "var(--faint-foreground)" }}
               >
                 Support
               </Link>

@@ -93,18 +93,6 @@ const MODEL_CONFIG_ENTRIES = {
   },
 
   /**
-   * Quality assessment of prompts
-   */
-  optimize_quality_assessment: {
-    client: "openai",
-    model: "gpt-4o-mini",
-    temperature: 0.2,
-    maxTokens: 1024,
-    timeout: 30000,
-    useSeed: true, // Consistent quality scores
-  },
-
-  /**
    * Shot interpretation (maps raw concept to flexible shot plan)
    * Uses structured output - temperature 0.0 per GPT-4o best practices
    */
@@ -207,20 +195,6 @@ const MODEL_CONFIG_ENTRIES = {
     useDeveloperMessage: false,
   },
 
-  /**
-   * Prompt-wide coherence checks after span edits
-   */
-  prompt_coherence_check: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.2,
-    maxTokens: 2048,
-    timeout: 25000,
-    responseFormat: "json_object",
-    useSeed: true, // Consistent coherence findings
-    useDeveloperMessage: true,
-  },
-
   // ============================================================================
   // Span Labeling Operations (Video Prompt Analysis)
   // ============================================================================
@@ -285,77 +259,6 @@ const MODEL_CONFIG_ENTRIES = {
     // Thinking tokens count against maxTokens on Gemini 2.5; uncapped dynamic
     // thinking consumed most of the budget and truncated rewrites mid-sentence.
     thinkingBudget: 0,
-  },
-
-  // ============================================================================
-  // Image Observation (I2V)
-  // ============================================================================
-
-  /**
-   * Image observation for i2v constraints
-   * Requires a vision-capable model.
-   */
-  image_observation: {
-    client: process.env.IMAGE_OBSERVATION_PROVIDER || "openai",
-    model: process.env.IMAGE_OBSERVATION_MODEL || "gpt-4o-mini-2024-07-18",
-    temperature: 0.1,
-    maxTokens: 800,
-    timeout: 30000,
-    responseFormat: "json_object",
-    useSeed: false,
-  },
-
-  /**
-   * FROZEN (ADR-0002) — no caller today; retained, not swept.
-   * Frame verification: per-span presence verdicts against a generated frame.
-   * Requires a vision-capable model. Temperature 0 for deterministic judging.
-   */
-  frame_verification: {
-    client: process.env.FRAME_VERIFICATION_PROVIDER || "openai",
-    // gpt-4o (not mini): the eval gate (P>=0.85, R>=0.75) only passes with
-    // gpt-4o + detail:"high" — mini stalls at R~0.64 on fine-detail spans.
-    model: process.env.FRAME_VERIFICATION_MODEL || "gpt-4o-2024-08-06",
-    temperature: 0,
-    maxTokens: 2048,
-    timeout: 45000,
-    responseFormat: "json_object",
-    useSeed: true, // Same (spans, frame) should judge identically
-  },
-
-  /**
-   * FROZEN (ADR-0002) — continuity's display-only style read of a reference
-   * image. Wired (StyleAnalysisService) but inside a frozen stack.
-   * Requires a vision-capable model. It had no entry here and silently
-   * resolved to DEFAULT_CONFIG; these values are that fallback made explicit.
-   */
-  style_analysis: {
-    client: "openai",
-    model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.0,
-    maxTokens: 2048,
-    timeout: 30000,
-    useSeed: false,
-    useDeveloperMessage: false,
-  },
-
-  /**
-   * Requirements extraction for model-intelligence recommendations.
-   * Reads a prompt and reports objective visual/physical observations as JSON.
-   * Full GPT-4o (not mini) — recommendation quality hinges on this perception
-   * correctly handling negation, synonyms, and inflected forms. Temperature 0
-   * for deterministic perception.
-   */
-  requirements_extraction: {
-    client: process.env.REQUIREMENTS_PROVIDER || "openai",
-    model: process.env.REQUIREMENTS_MODEL || "gpt-4o-2024-08-06",
-    temperature: 0,
-    maxTokens: 1024,
-    timeout: 30000,
-    responseFormat: "json_object",
-    fallbackTo: "qwen",
-    fallbackConfig: QWEN_FALLBACK,
-    useSeed: true, // Same prompt should perceive identically
-    useDeveloperMessage: true,
   },
 
   // ============================================================================

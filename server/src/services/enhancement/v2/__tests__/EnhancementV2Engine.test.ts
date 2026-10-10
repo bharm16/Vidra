@@ -1,11 +1,8 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EnhancementV2Engine } from "../EnhancementV2Engine";
 import type { EnhancementV2RequestContext } from "../types";
-import type {
-  AIService,
-  DiversityEnforcer,
-  VideoService,
-} from "../../services/types";
+import type { DiversityEnforcer, VideoService } from "../../services/types";
 
 /**
  * The engine runs against the REAL StructuredOutputEnforcer — only the
@@ -40,7 +37,7 @@ function createEngine(responses: string[] = []) {
       viaFallback: false,
     })),
     execute,
-  } as unknown as AIService;
+  } as unknown as AIExecutionPort;
 
   const videoPromptService = {
     countWords: vi.fn(

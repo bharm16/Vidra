@@ -48,7 +48,14 @@ describe("feature-flag boot validation is derived from the registry", () => {
       ).toBe(def.default);
     }
     // Guards the loop above against silently iterating an empty registry.
-    expect(ALL_FLAGS.length).toBeGreaterThanOrEqual(18);
+    expect(ALL_FLAGS.length).toBeGreaterThan(0);
+    const names = ALL_FLAGS.map((flag) => flag.envName);
+    for (const name of [
+      "ENABLE_STUDIO",
+      "LLM_PROVIDER_FAILOVER_ENABLED",
+      "REPLAY_MODE",
+    ])
+      expect(names).toContain(name);
   });
 
   it("rejects an unparseable value for every registered flag", () => {

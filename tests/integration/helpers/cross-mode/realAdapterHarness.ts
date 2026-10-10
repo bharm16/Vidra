@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import type { SessionService } from "@services/sessions/SessionService";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import type {
   SketchBudgetStore,
@@ -107,7 +107,9 @@ export interface FirebaseIdentity {
  * token at the emulator's Identity Toolkit surface, and the result verifies
  * through the same `getAuth().verifyIdToken` the API's auth middleware runs.
  */
-export async function createFirebaseIdentity(uid: string): Promise<FirebaseIdentity> {
+export async function createFirebaseIdentity(
+  uid: string,
+): Promise<FirebaseIdentity> {
   const emulatorHost = process.env.FIREBASE_AUTH_EMULATOR_HOST;
   if (!emulatorHost) {
     throw new Error(
@@ -173,11 +175,7 @@ export interface RealAdapterHarness {
   /** Resolved production adapters — the same instances the app uses. */
   readonly sessionService: SessionService;
   readonly requestIdempotency: RequestIdempotencyService;
-  post(
-    path: string,
-    body: unknown,
-    caller?: Caller,
-  ): Promise<ApiResponse>;
+  post(path: string, body: unknown, caller?: Caller): Promise<ApiResponse>;
   patch(path: string, body: unknown, caller?: Caller): Promise<ApiResponse>;
   get(path: string, caller?: Caller): Promise<ApiResponse>;
   delete(path: string, caller?: Caller): Promise<ApiResponse>;
@@ -192,7 +190,9 @@ export interface RealAdapterHarness {
  * this route exists so a bridge copy's `fetch` of a minted URL has somewhere
  * deterministic to land without a byte leaving the process.
  */
-function bucketRoute(bucket: ControlledBucket): (url: string) => Promise<Response> {
+function bucketRoute(
+  bucket: ControlledBucket,
+): (url: string) => Promise<Response> {
   return async (url: string) => {
     const parsed = new URL(url);
     const prefix = `/${bucket.name}/`;
@@ -331,8 +331,13 @@ export async function startRealAdapterHarness(): Promise<RealAdapterHarness> {
         json: (await response.json()) as Record<string, unknown>,
       };
     },
-    async get(path: string, caller: Caller = apiKeyCaller()): Promise<ApiResponse> {
-      const response = await fetch(`${baseUrl}${path}`, { headers: caller.headers });
+    async get(
+      path: string,
+      caller: Caller = apiKeyCaller(),
+    ): Promise<ApiResponse> {
+      const response = await fetch(`${baseUrl}${path}`, {
+        headers: caller.headers,
+      });
       return {
         status: response.status,
         json: (await response.json()) as Record<string, unknown>,
@@ -376,10 +381,17 @@ export function sessionServiceFailingAppendOnce(
   return {
     requireOwnedSession: (userId, sessionId) =>
       real.requireOwnedSession(userId, sessionId),
-    appendGenerationToVersion: (userId, sessionId, promptVersionId, generation) => {
+    appendGenerationToVersion: (
+      userId,
+      sessionId,
+      promptVersionId,
+      generation,
+    ) => {
       if (!failed) {
         failed = true;
-        return Promise.reject(new Error("process died before the append landed"));
+        return Promise.reject(
+          new Error("process died before the append landed"),
+        );
       }
       return real.appendGenerationToVersion(
         userId,

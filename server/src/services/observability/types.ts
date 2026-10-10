@@ -19,7 +19,6 @@ export interface OptimizeTraceCompleteSummary {
   hasContext: boolean;
   hasBrainstormContext: boolean;
   hasShotPlan: boolean;
-  useConstitutionalAI: boolean;
   /** Input prompt the user submitted. Lets dashboards show the actual text being optimized. */
   inputPrompt: string;
   /** Final optimized output. Null on error/abort when no output was produced. */
@@ -75,7 +74,6 @@ export interface OptimizeEventProperties {
   hasContext: boolean;
   hasBrainstormContext: boolean;
   hasShotPlan: boolean;
-  useConstitutionalAI: boolean;
   stages: OptimizeEventStages;
   /** Content fields — let dashboards show what was actually produced (vs counts only). */
   inputPrompt: string;

@@ -41,7 +41,6 @@ describe("OptimizeTelemetryService", () => {
       hasContext: false,
       hasBrainstormContext: false,
       hasShotPlan: false,
-      useConstitutionalAI: false,
       inputPrompt: "test input prompt",
       outputPrompt: "test output prompt",
     });
@@ -82,7 +81,6 @@ describe("OptimizeTelemetryService", () => {
       hasContext: false,
       hasBrainstormContext: false,
       hasShotPlan: false,
-      useConstitutionalAI: false,
       inputPrompt: "test input prompt",
       outputPrompt: "test output prompt",
     });
@@ -107,7 +105,6 @@ describe("OptimizeTelemetryService", () => {
       hasContext: false,
       hasBrainstormContext: false,
       hasShotPlan: false,
-      useConstitutionalAI: false,
       inputPrompt: "test input prompt",
       outputPrompt: "test output prompt",
     });
@@ -135,7 +132,6 @@ describe("OptimizeTelemetryService", () => {
       hasContext: false,
       hasBrainstormContext: false,
       hasShotPlan: false,
-      useConstitutionalAI: false,
       inputPrompt: "test input prompt",
       outputPrompt: "test output prompt",
     });
@@ -173,7 +169,6 @@ describe("OptimizeTelemetryService", () => {
       hasContext: false,
       hasBrainstormContext: false,
       hasShotPlan: false,
-      useConstitutionalAI: false,
       inputPrompt: "test input prompt",
       outputPrompt: "test output prompt",
     });
@@ -202,7 +197,6 @@ describe("OptimizeTelemetryService", () => {
         hasContext: false,
         hasBrainstormContext: false,
         hasShotPlan: false,
-        useConstitutionalAI: false,
         inputPrompt: "test input prompt",
         outputPrompt: "test output prompt",
       }),

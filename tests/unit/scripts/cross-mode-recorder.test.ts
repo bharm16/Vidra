@@ -1,9 +1,16 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { ReplayCassetteEntry } from "@shared/schemas/replay.schemas";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 import {
   BudgetedCassetteStore,
   finishRecording,
@@ -151,36 +158,37 @@ interface FakeHarnessOptions {
 function fakeHarness(
   store: BudgetedCassetteStore,
   options: FakeHarnessOptions = {},
-): RecorderHarness & { bodies: Array<{ path: string; body: unknown }>; clipJobs: string[] } {
-  const turns: FakeTurn[] =
-    options.turns ??
-    [
-      { action: "clarify", imageCount: 0, captures: [aiModelEntry()] },
-      {
-        action: "edit",
-        imageCount: 1,
-        captures: [aiModelEntry(), studioImageEntry()],
-      },
-      {
-        action: "generate",
-        imageCount: 4,
-        captures: [
-          aiModelEntry(),
-          // One corrective re-ask, exactly like the committed pack's fifth
-          // studio_turn entry.
-          aiModelEntry(),
-          studioImageEntry(),
-          studioImageEntry(),
-          studioImageEntry(),
-          studioImageEntry(),
-        ],
-      },
-      {
-        action: "edit",
-        imageCount: 1,
-        captures: [aiModelEntry(), studioImageEntry()],
-      },
-    ];
+): RecorderHarness & {
+  bodies: Array<{ path: string; body: unknown }>;
+  clipJobs: string[];
+} {
+  const turns: FakeTurn[] = options.turns ?? [
+    { action: "clarify", imageCount: 0, captures: [aiModelEntry()] },
+    {
+      action: "edit",
+      imageCount: 1,
+      captures: [aiModelEntry(), studioImageEntry()],
+    },
+    {
+      action: "generate",
+      imageCount: 4,
+      captures: [
+        aiModelEntry(),
+        // One corrective re-ask, exactly like the committed pack's fifth
+        // studio_turn entry.
+        aiModelEntry(),
+        studioImageEntry(),
+        studioImageEntry(),
+        studioImageEntry(),
+        studioImageEntry(),
+      ],
+    },
+    {
+      action: "edit",
+      imageCount: 1,
+      captures: [aiModelEntry(), studioImageEntry()],
+    },
+  ];
   const bodies: Array<{ path: string; body: unknown }> = [];
   const clipJobs: string[] = [];
   let turnIndex = 0;
@@ -195,7 +203,9 @@ function fakeHarness(
   return {
     bodies,
     clipJobs,
-    guard: { networkCalls: ["https://fal.run/fal-ai/z-image/turbo/image-to-image"] },
+    guard: {
+      networkCalls: ["https://fal.run/fal-ai/z-image/turbo/image-to-image"],
+    },
     studioProjects: {
       pinBridgedAttachmentId() {
         /* identity only; the driver reads nothing back */
@@ -259,10 +269,13 @@ function fakeHarness(
     async get(path) {
       if (path.includes("/turns/")) {
         const turn = turns[turnIndex - 1];
-        const images = Array.from({ length: turn?.imageCount ?? 0 }, (_, i) => ({
-          status: "succeeded",
-          image: { id: `img-${i}` },
-        }));
+        const images = Array.from(
+          { length: turn?.imageCount ?? 0 },
+          (_, i) => ({
+            status: "succeeded",
+            image: { id: `img-${i}` },
+          }),
+        );
         return {
           status: 200,
           json: {
@@ -280,9 +293,7 @@ function fakeHarness(
           json: {
             data: {
               prompt: {
-                versions: [
-                  { versionId: "v1", prompt: CROSS_MODE_PROMPT },
-                ],
+                versions: [{ versionId: "v1", prompt: CROSS_MODE_PROMPT }],
               },
             },
           },
@@ -343,7 +354,9 @@ describe("BudgetedCassetteStore", () => {
     store.beginScenario("cross-mode", "sketch-to-clip");
     store.record(sketchFrameEntry());
     store.record(aiModelEntry());
-    expect(() => store.record(aiModelEntry())).toThrow(SpendBudgetExceededError);
+    expect(() => store.record(aiModelEntry())).toThrow(
+      SpendBudgetExceededError,
+    );
     expect(() => store.record(aiModelEntry())).toThrow(/--max-live-calls/);
   });
 });
@@ -370,9 +383,11 @@ describe("recordCrossModePack", () => {
     expect(harness.clipJobs).toContain("seeded:cross-mode-clip-job");
     expect(harness.clipJobs).toContain("ran:cross-mode-clip-job");
 
-    const pack = JSON.parse(
-      readFileSync(outcome.written[0] ?? "", "utf8"),
-    ) as { surface: string; scenario: string; entries: ReplayCassetteEntry[] };
+    const pack = JSON.parse(readFileSync(outcome.written[0] ?? "", "utf8")) as {
+      surface: string;
+      scenario: string;
+      entries: ReplayCassetteEntry[];
+    };
     expect(pack.surface).toBe("cross-mode");
     expect(pack.scenario).toBe("sketch-to-clip");
     for (const entry of pack.entries) {
@@ -391,9 +406,9 @@ describe("recordCrossModePack", () => {
       ],
     });
 
-    await expect(runRecorder(harness, store, join(dir, "fixtures"))).rejects.toThrow(
-      /fumbled a behavior/,
-    );
+    await expect(
+      runRecorder(harness, store, join(dir, "fixtures")),
+    ).rejects.toThrow(/fumbled a behavior/);
     expect(store.capturedEntries.length).toBeGreaterThan(0);
   });
 
@@ -404,9 +419,9 @@ describe("recordCrossModePack", () => {
     const store = makeStore(dir, 3);
     const harness = fakeHarness(store);
 
-    await expect(runRecorder(harness, store, join(dir, "fixtures"))).rejects.toThrow(
-      SpendBudgetExceededError,
-    );
+    await expect(
+      runRecorder(harness, store, join(dir, "fixtures")),
+    ).rejects.toThrow(SpendBudgetExceededError);
     expect(store.capturedEntries).toHaveLength(3);
   });
 
@@ -477,17 +492,25 @@ describe("recordCrossModePack", () => {
       userId: "api-key:recorder",
       poll: { intervalMs: 1, timeoutMs: 1_000 },
       log: (message) => logs.push(message),
-    })) as { written: string[]; carriedSyntheticCount: number; droppedStaleCount: number };
+    })) as {
+      written: string[];
+      carriedSyntheticCount: number;
+      droppedStaleCount: number;
+    };
 
     expect(outcome.carriedSyntheticCount).toBe(1);
     expect(outcome.droppedStaleCount).toBe(1);
-    const pack = JSON.parse(
-      readFileSync(outcome.written[0] ?? "", "utf8"),
-    ) as { entries: ReplayCassetteEntry[] };
+    const pack = JSON.parse(readFileSync(outcome.written[0] ?? "", "utf8")) as {
+      entries: ReplayCassetteEntry[];
+    };
     expect(pack.entries.some((entry) => entry.key === syntheticKey)).toBe(true);
     expect(pack.entries.some((entry) => entry.key === staleKey)).toBe(false);
-    expect(logs.some((line) => line.includes("carried synthetic entry"))).toBe(true);
-    expect(logs.some((line) => line.includes("dropped stale entry"))).toBe(true);
+    expect(logs.some((line) => line.includes("carried synthetic entry"))).toBe(
+      true,
+    );
+    expect(logs.some((line) => line.includes("dropped stale entry"))).toBe(
+      true,
+    );
   });
 });
 

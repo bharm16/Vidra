@@ -21,32 +21,13 @@ import {
   createStorageRoutes,
   type StorageRoutesService,
 } from "./storage.routes";
-import { createAssetRoutes } from "./asset.routes";
-import { createConsistentGenerationRoutes } from "./consistentGeneration.routes";
-import { createReferenceImagesRoutes } from "./reference-images.routes";
-import { createImageObservationRoutes } from "./image-observation.routes";
 import { createSessionRoutes } from "./sessions.routes";
-import { createModelIntelligenceRoutes } from "./model-intelligence.routes";
 import type { OptimizeServices } from "./optimize/types";
-import type { ReferenceImageStorePort } from "@services/asset/reference-images/ports/ReferenceImageStorePort";
-import type { AssetService } from "@services/asset/AssetService";
-import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
-import type { RouteCreditService } from "@services/credits/ports";
-import type { ImageObservationService } from "@services/image-observation";
-import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
-import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { SessionDto } from "@shared/types/session";
 
 interface ApiServices extends OptimizeServices, EnhancementServices {
   storageService: StorageRoutesService;
-  assetService?: AssetService;
-  consistentVideoService?: ConsistentVideoService;
-  userCreditService?: RouteCreditService;
-  referenceImageRepository?: ReferenceImageStorePort | null;
-  imageObservationService?: ImageObservationService | null;
-  continuitySessionService?: ContinuitySessionService | null;
-  modelIntelligenceService?: ModelIntelligenceService | null;
   sessionService?: SessionService | null;
   /**
    * Issue #125: freshen a single session's picture view URLs on read from
@@ -85,15 +66,7 @@ export function createAPIRoutes(services: ApiServices): Router {
     optimizeTelemetryService,
     enhancementService,
     sceneDetectionService,
-    promptCoherenceService,
     suggestionsTelemetryService,
-    assetService,
-    consistentVideoService,
-    userCreditService,
-    referenceImageRepository,
-    imageObservationService,
-    continuitySessionService,
-    modelIntelligenceService,
     sessionService,
     storageService,
     remintSessionPictures,
@@ -115,7 +88,6 @@ export function createAPIRoutes(services: ApiServices): Router {
     createEnhancementRoutes({
       enhancementService,
       sceneDetectionService,
-      promptCoherenceService,
       suggestionsTelemetryService,
     }),
   );
@@ -123,46 +95,15 @@ export function createAPIRoutes(services: ApiServices): Router {
   // Mount storage routes under /storage
   router.use("/storage", createStorageRoutes(storageService));
 
-  if (assetService) {
-    router.use("/assets", createAssetRoutes(assetService));
-  }
-
-  if (referenceImageRepository) {
-    router.use(
-      "/reference-images",
-      createReferenceImagesRoutes(referenceImageRepository),
-    );
-  }
-
-  if (imageObservationService) {
-    router.use("/", createImageObservationRoutes(imageObservationService));
-  }
-
-  if (consistentVideoService) {
-    router.use(
-      "/generate/consistent",
-      createConsistentGenerationRoutes(
-        consistentVideoService,
-        userCreditService,
-      ),
-    );
-  }
-
   if (sessionService) {
     router.use(
       "/sessions",
       createSessionRoutes(
         sessionService,
-        continuitySessionService ?? null,
-        userCreditService,
         remintSessionPictures ?? undefined,
         armFirstFrame ?? undefined,
       ),
     );
-  }
-
-  if (modelIntelligenceService) {
-    router.use("/", createModelIntelligenceRoutes(modelIntelligenceService));
   }
 
   // Capabilities registry routes (schema-driven UI)

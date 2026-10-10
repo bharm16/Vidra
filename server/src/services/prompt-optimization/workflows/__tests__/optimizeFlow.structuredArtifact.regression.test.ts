@@ -122,7 +122,6 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
       compilationService: {
         compile,
       },
-      applyConstitutionalAI: vi.fn(async (prompt: string) => prompt),
       logOptimizationMetrics: vi.fn(),
       intentLock: passingIntentLock(),
       promptLint: passingLint(),
@@ -161,7 +160,9 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
 
   it("returns the same shape from a cache hit as from a miss", async () => {
     const structuredArtifact = createArtifact();
-    const cacheOutcome = vi.fn(async (_key: string, _outcome: unknown) => undefined);
+    const cacheOutcome = vi.fn(
+      async (_key: string, _outcome: unknown) => undefined,
+    );
     const deps = {
       request: {
         prompt: "baby driving a car",
@@ -174,7 +175,6 @@ describe("regression: targeted optimize reuses structured artifacts", () => {
         renderStructuredPrompt: vi.fn(() => "generic rendered prompt"),
       },
       compilationService: null,
-      applyConstitutionalAI: vi.fn(async (prompt: string) => prompt),
       logOptimizationMetrics: vi.fn(),
       intentLock: passingIntentLock(),
       promptLint: passingLint(),

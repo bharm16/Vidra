@@ -1,9 +1,9 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AIService } from "@services/prompt-optimization/types";
 import { PromptOptimizationService } from "@services/prompt-optimization/PromptOptimizationService";
 
 const createService = (): PromptOptimizationService => {
-  const aiService: AIService = {
+  const aiService: AIExecutionPort = {
     execute: vi.fn(async () => ({
       text: "",
       content: [{ text: "" }],

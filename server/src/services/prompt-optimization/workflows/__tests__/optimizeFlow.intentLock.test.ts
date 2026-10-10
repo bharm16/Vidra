@@ -61,7 +61,6 @@ describe("runOptimizeFlow intent lock wiring", () => {
         },
       })),
     },
-    applyConstitutionalAI: vi.fn(async (prompt: string) => prompt),
     logOptimizationMetrics: vi.fn(),
     intentLock: {
       enforceIntentLock: vi.fn(({ optimizedPrompt }) => ({

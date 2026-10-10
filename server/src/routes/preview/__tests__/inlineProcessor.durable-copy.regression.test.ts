@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
-import type { CreditRefunder } from "@services/credits/ports";
-import type { JobStorageService } from "@services/video-generation/jobs/processVideoJob";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
+import type { CreditRefunder } from "@services/video-generation/refunds/ports";
+import type { JobStorageService } from "@services/video-generation/runtime/processVideoJob";
 
 /**
  * Pin for the paid-content durability invariant (owner directive: "a user

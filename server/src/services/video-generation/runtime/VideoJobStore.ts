@@ -1,0 +1,887 @@
+import type {
+  RequestIdempotencyService,
+  IdempotencyResponseSnapshot,
+} from "../../admission/idempotency/RequestIdempotencyService";
+import type { DocumentData, Query } from "firebase-admin/firestore";
+import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
+import { logger } from "@infrastructure/Logger";
+import {
+  FirestoreCircuitExecutor,
+  getFirestoreCircuitExecutor,
+} from "@services/firestore/FirestoreCircuitExecutor";
+import type {
+  VideoJobAttachment,
+  VideoJobError,
+  VideoJobRecord,
+  VideoJobRequest,
+} from "./types";
+import { resolveProviderForModel } from "../providers/ProviderRegistry";
+import type { VideoModelId } from "../types";
+import { DeadLetterStore } from "./DeadLetterStore";
+import { parseVideoJobRecord } from "./parseVideoJobRecord";
+import {
+  resolvePositiveInt,
+  toVideoJobError,
+  type VideoJobErrorInput,
+} from "./normalizeError";
+import { computeBackoffMs, RETRY_JITTER_RATIO } from "./computeBackoff";
+
+const DEFAULT_MAX_ATTEMPTS = 3;
+const DEFAULT_PROVIDER = "unknown";
+const SLOW_FIRESTORE_OPERATION_MS = 1_000;
+// Bounds the per-session cancellation fan-out. Sized well below any
+// realistic per-session job count; if a session legitimately exceeds this,
+// the warning logged from findJobsBySessionId is the trigger to raise it
+// (or to paginate). The +1 sentinel pattern in findJobsBySessionId requires
+// this to remain a finite cap — do not raise to Number.MAX_SAFE_INTEGER.
+const FIND_JOBS_BY_SESSION_CAP = 500;
+
+interface CreateJobInput {
+  userId: string;
+  sessionId?: string;
+  /**
+   * ISSUE-12: when both sessionId and promptVersionId are set, the worker
+   * pipeline appends the completed generation to the named session version
+   * after successful markCompleted.
+   */
+  promptVersionId?: string;
+  /** M5 / ADR-0013: source picture id, persisted for the clip's lineage edge. */
+  sourceGenerationId?: string;
+  requestId?: string;
+  request: VideoJobRequest;
+  creditsReserved: number;
+  maxAttempts?: number;
+}
+
+function resolveProviderFromRequest(request: VideoJobRequest): string {
+  const model = request.options?.model;
+  if (typeof model === "string" && model.length > 0) {
+    try {
+      return resolveProviderForModel(model as VideoModelId);
+    } catch {
+      return DEFAULT_PROVIDER;
+    }
+  }
+  return DEFAULT_PROVIDER;
+}
+
+export class VideoJobStore {
+  private readonly db = getFirestore();
+  private readonly collection = this.db.collection("video_jobs");
+  private readonly log = logger.child({ service: "VideoJobStore" });
+  private readonly firestoreCircuitExecutor: FirestoreCircuitExecutor;
+  private readonly defaultMaxAttempts: number;
+  private readonly dlq: DeadLetterStore;
+
+  constructor(
+    firestoreCircuitExecutor: FirestoreCircuitExecutor = getFirestoreCircuitExecutor(),
+    defaultMaxAttempts: number = DEFAULT_MAX_ATTEMPTS,
+  ) {
+    this.firestoreCircuitExecutor = firestoreCircuitExecutor;
+    this.defaultMaxAttempts = defaultMaxAttempts;
+    this.dlq = new DeadLetterStore(firestoreCircuitExecutor);
+  }
+
+  private async withTiming<T>(
+    operation: string,
+    mode: "read" | "write",
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    const startedAt = Date.now();
+    try {
+      if (mode === "write") {
+        return await this.firestoreCircuitExecutor.executeWrite(
+          `videoJobStore.${operation}`,
+          fn,
+        );
+      }
+      return await this.firestoreCircuitExecutor.executeRead(
+        `videoJobStore.${operation}`,
+        fn,
+      );
+    } finally {
+      const durationMs = Date.now() - startedAt;
+      if (durationMs >= SLOW_FIRESTORE_OPERATION_MS) {
+        this.log.warn("Slow Firestore job operation", {
+          operation,
+          durationMs,
+        });
+      } else {
+        this.log.debug("Firestore job operation completed", {
+          operation,
+          durationMs,
+        });
+      }
+    }
+  }
+
+  /**
+   * Free validation intake publishes a job and its replay receipt atomically.
+   * Workers cannot observe a queued job before its authoritative 202 exists.
+   * This opens only intake publication; credit reservation stays separate.
+   */
+  async createJobWithReceipt(
+    input: CreateJobInput,
+    deps: {
+      idempotency: Pick<RequestIdempotencyService, "completeInTransaction">;
+      recordId: string;
+      buildSnapshot: (job: VideoJobRecord) => IdempotencyResponseSnapshot;
+    },
+  ): Promise<{ job: VideoJobRecord; snapshot: IdempotencyResponseSnapshot }> {
+    if (input.creditsReserved !== 0)
+      throw new Error("Free intake requires zero reserved credits");
+    const now = Date.now();
+    const ref = this.collection.doc();
+    const record = {
+      schemaVersion: 1 as const,
+      status: "queued",
+      userId: input.userId,
+      ...(input.sessionId ? { sessionId: input.sessionId } : {}),
+      ...(input.promptVersionId
+        ? { promptVersionId: input.promptVersionId }
+        : {}),
+      ...(input.sourceGenerationId
+        ? { sourceGenerationId: input.sourceGenerationId }
+        : {}),
+      ...(input.requestId ? { requestId: input.requestId } : {}),
+      request: input.request,
+      creditsReserved: 0,
+      provider: resolveProviderFromRequest(input.request),
+      attempts: 0,
+      maxAttempts: resolvePositiveInt(
+        input.maxAttempts,
+        this.defaultMaxAttempts,
+      ),
+      createdAtMs: now,
+      updatedAtMs: now,
+    };
+    const job = this.parseJob(ref.id, record);
+    const snapshot = deps.buildSnapshot(job);
+    await this.withTiming("createJobWithReceipt", "write", async () => {
+      await this.db.runTransaction(async (transaction) => {
+        await deps.idempotency.completeInTransaction(transaction, {
+          recordId: deps.recordId,
+          userId: input.userId,
+          jobId: job.id,
+          snapshot,
+        });
+        transaction.set(ref, {
+          ...record,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+    });
+    return { job, snapshot };
+  }
+
+  async getJob(jobId: string): Promise<VideoJobRecord | null> {
+    const snapshot = await this.withTiming(
+      "getJob",
+      "read",
+      async () => await this.collection.doc(jobId).get(),
+    );
+    if (!snapshot.exists) {
+      return null;
+    }
+    return this.parseJob(snapshot.id, snapshot.data());
+  }
+
+  /**
+   * Returns jobs (across all statuses) associated with the given session.
+   * Used by SessionService to cascade cancellation when a session is deleted.
+   */
+  async findJobsBySessionId(sessionId: string): Promise<VideoJobRecord[]> {
+    // Bound worst-case load on session delete: cancelJobsForSession dispatches
+    // one transaction per returned job in parallel, so a session with
+    // pathologically many jobs could fan out into a large concurrent
+    // transaction storm. The cap (FIND_JOBS_BY_SESSION_CAP) keeps the
+    // dispatch bounded.
+    //
+    // We query `limit + 1` (with deterministic ordering) so a returned size
+    // equal to limit + 1 unambiguously signals truncation — at which point
+    // we trim back to limit and log a warning so operators can paginate or
+    // raise the cap. Without orderBy, Firestore would return an arbitrary
+    // subset and the remaining jobs would silently keep processing after
+    // the session is deleted.
+    const snapshot = await this.withTiming(
+      "findJobsBySessionId",
+      "read",
+      async () =>
+        await this.collection
+          .where("sessionId", "==", sessionId)
+          .orderBy("createdAtMs", "asc")
+          .limit(FIND_JOBS_BY_SESSION_CAP + 1)
+          .get(),
+    );
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    let docs = snapshot.docs;
+    if (docs.length > FIND_JOBS_BY_SESSION_CAP) {
+      this.log.warn(
+        "Session has more jobs than the lookup cap; cancellation will be partial",
+        {
+          sessionId,
+          cap: FIND_JOBS_BY_SESSION_CAP,
+          observedAtLeast: docs.length,
+        },
+      );
+      docs = docs.slice(0, FIND_JOBS_BY_SESSION_CAP);
+    }
+
+    return docs
+      .map((doc) => {
+        try {
+          return this.parseJob(doc.id, doc.data());
+        } catch (error) {
+          this.log.warn("Skipping unparsable job record in session lookup", {
+            jobId: doc.id,
+            sessionId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
+      })
+      .filter((job): job is VideoJobRecord => job !== null);
+  }
+
+  /**
+   * Marks queued/processing jobs for the given session as failed with a
+   * session-deleted reason. Completed or already-failed jobs are left alone
+   * (their assets are handled by the retention/reconciler path).
+   *
+   * Returns the count of jobs successfully cancelled.
+   */
+  async cancelJobsForSession(sessionId: string): Promise<number> {
+    const jobs = await this.findJobsBySessionId(sessionId);
+    const cancellable = jobs.filter(
+      (job) => job.status === "queued" || job.status === "processing",
+    );
+
+    // Run cancellations in parallel. Each markFailed runs its own transaction
+    // (state-machine validation per doc) so they're safe to dispatch
+    // concurrently — different doc IDs, no cross-doc invariants. The serial
+    // loop here paid N round-trips on session delete.
+    const results = await Promise.all(
+      cancellable.map((job) =>
+        this.markFailed(job.id, {
+          message: "Session deleted — job cancelled",
+          code: "SESSION_DELETED",
+          category: "validation",
+          retryable: false,
+          stage: "queue",
+        }),
+      ),
+    );
+    return results.filter(Boolean).length;
+  }
+
+  async findJobByAssetId(assetId: string): Promise<VideoJobRecord | null> {
+    const snapshot = await this.withTiming(
+      "findJobByAssetId",
+      "read",
+      async () =>
+        await this.collection
+          .where("result.assetId", "==", assetId)
+          .limit(1)
+          .get(),
+    );
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const doc = snapshot.docs[0];
+    if (!doc) {
+      return null;
+    }
+    return this.parseJob(doc.id, doc.data());
+  }
+
+  async claimNextJob(
+    workerId: string,
+    leaseMs: number,
+    provider?: string,
+  ): Promise<VideoJobRecord | null> {
+    let queuedQuery: Query = this.collection.where("status", "==", "queued");
+    if (provider) {
+      queuedQuery = queuedQuery.where("provider", "==", provider);
+    }
+    queuedQuery = queuedQuery.orderBy("createdAtMs", "asc").limit(1);
+
+    const queued = await this.claimFromQuery(queuedQuery, workerId, leaseMs);
+    if (queued) {
+      return queued;
+    }
+
+    const now = Date.now();
+    const expiredQuery = this.collection
+      .where("status", "==", "processing")
+      .where("leaseExpiresAtMs", "<=", now)
+      .orderBy("leaseExpiresAtMs", "asc")
+      .limit(1);
+
+    return await this.claimFromQuery(expiredQuery, workerId, leaseMs);
+  }
+
+  /**
+   * Direct claim by id — used by the inline processor right after job creation
+   * and by admin/test flows. Deliberately bypasses the retry-backoff gate:
+   * callers that want backoff semantics should go through `claimNextJob`.
+   */
+  async claimJob(
+    jobId: string,
+    workerId: string,
+    leaseMs: number,
+  ): Promise<VideoJobRecord | null> {
+    try {
+      return await this.withTiming(
+        "claimJob",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return null;
+            }
+
+            const data = snapshot.data();
+            if (!data || data.status !== "queued") {
+              return null;
+            }
+
+            const now = Date.now();
+            const leaseExpiresAtMs = now + leaseMs;
+            const attempts =
+              typeof data.attempts === "number" &&
+              Number.isFinite(data.attempts)
+                ? data.attempts + 1
+                : 1;
+            const maxAttempts = resolvePositiveInt(
+              typeof data.maxAttempts === "number"
+                ? data.maxAttempts
+                : undefined,
+              this.defaultMaxAttempts,
+            );
+
+            transaction.update(docRef, {
+              status: "processing",
+              workerId,
+              attempts,
+              maxAttempts,
+              leaseExpiresAtMs,
+              lastHeartbeatAtMs: now,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              releasedAtMs: admin.firestore.FieldValue.delete(),
+              releaseReason: admin.firestore.FieldValue.delete(),
+            });
+
+            return this.parseJob(jobId, {
+              ...data,
+              status: "processing",
+              workerId,
+              attempts,
+              maxAttempts,
+              leaseExpiresAtMs,
+              lastHeartbeatAtMs: now,
+              updatedAtMs: now,
+            });
+          }),
+      );
+    } catch (error) {
+      logger.error("Failed to claim video job by id", error as Error, {
+        jobId,
+        workerId,
+      });
+      return null;
+    }
+  }
+
+  async renewLease(
+    jobId: string,
+    workerId: string,
+    leaseMs: number,
+  ): Promise<boolean> {
+    try {
+      return await this.withTiming(
+        "renewLease",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const data = snapshot.data();
+            if (
+              !data ||
+              data.status !== "processing" ||
+              data.workerId !== workerId
+            ) {
+              return false;
+            }
+
+            const now = Date.now();
+            transaction.update(docRef, {
+              leaseExpiresAtMs: now + leaseMs,
+              lastHeartbeatAtMs: now,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (error) {
+      logger.error("Failed to renew video job lease", error as Error, {
+        jobId,
+        workerId,
+      });
+      return false;
+    }
+  }
+
+  async releaseClaim(
+    jobId: string,
+    workerId: string,
+    reason: string,
+  ): Promise<boolean> {
+    try {
+      return await this.withTiming(
+        "releaseClaim",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const data = snapshot.data();
+            if (
+              !data ||
+              data.status !== "processing" ||
+              data.workerId !== workerId
+            ) {
+              return false;
+            }
+
+            const now = Date.now();
+            transaction.update(docRef, {
+              status: "queued",
+              releasedAtMs: now,
+              releaseReason: reason,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              workerId: admin.firestore.FieldValue.delete(),
+              leaseExpiresAtMs: admin.firestore.FieldValue.delete(),
+              lastHeartbeatAtMs: admin.firestore.FieldValue.delete(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (error) {
+      logger.error("Failed to release claimed video job", error as Error, {
+        jobId,
+        workerId,
+        reason,
+      });
+      return false;
+    }
+  }
+
+  async requeueForRetry(
+    jobId: string,
+    workerId: string,
+    error: VideoJobError,
+  ): Promise<boolean> {
+    const normalizedError = toVideoJobError(error);
+    try {
+      return await this.withTiming(
+        "requeueForRetry",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const data = snapshot.data();
+            if (
+              !data ||
+              data.status !== "processing" ||
+              data.workerId !== workerId
+            ) {
+              return false;
+            }
+
+            const now = Date.now();
+            const attempts =
+              typeof data.attempts === "number" &&
+              Number.isFinite(data.attempts)
+                ? data.attempts
+                : 0;
+            const nextRetryAtMs =
+              now +
+              computeBackoffMs(attempts, {
+                jitterRatio: RETRY_JITTER_RATIO,
+                now,
+              });
+            transaction.update(docRef, {
+              status: "queued",
+              error: normalizedError,
+              releasedAtMs: now,
+              releaseReason: "retry",
+              nextRetryAtMs,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              workerId: admin.firestore.FieldValue.delete(),
+              leaseExpiresAtMs: admin.firestore.FieldValue.delete(),
+              lastHeartbeatAtMs: admin.firestore.FieldValue.delete(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (txError) {
+      logger.error("Failed to requeue video job for retry", txError as Error, {
+        jobId,
+        workerId,
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Persist the raw provider result (video URL, assetId) to the job record immediately
+   * after generation succeeds but before storage. This enables the reconciler to retry
+   * storage from the provider URL if the worker crashes between generation and completion.
+   */
+  async setProviderResult(
+    jobId: string,
+    workerId: string,
+    providerResult: {
+      providerVideoUrl: string;
+      assetId: string;
+      contentType: string;
+      inputMode?: string;
+    },
+  ): Promise<boolean> {
+    try {
+      return await this.withTiming(
+        "setProviderResult",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const data = snapshot.data();
+            if (
+              !data ||
+              data.status !== "processing" ||
+              data.workerId !== workerId
+            ) {
+              return false;
+            }
+
+            const now = Date.now();
+            transaction.update(docRef, {
+              providerResult: providerResult,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (error) {
+      logger.error(
+        "Failed to set provider result on video job",
+        error as Error,
+        { jobId, workerId },
+      );
+      return false;
+    }
+  }
+
+  /**
+   * ADR-0022 decision 6: record whether the completed clip has reached its
+   * session. Deliberately not gated on worker id or job status the way
+   * `setProviderResult` is — by the time this runs the job is completed and its
+   * lease is released, and a resumed attachment is written by a different
+   * worker than the one that generated the clip.
+   */
+  async setAttachment(
+    jobId: string,
+    attachment: VideoJobAttachment,
+  ): Promise<boolean> {
+    // Firestore rejects an update carrying `undefined`, so the optional halves
+    // are spread in only when present.
+    const payload: Record<string, unknown> = {
+      state: attachment.state,
+      generationId: attachment.generationId,
+      sessionId: attachment.sessionId,
+      promptVersionId: attachment.promptVersionId,
+      updatedAtMs: attachment.updatedAtMs,
+      ...(attachment.record ? { record: attachment.record } : {}),
+      ...(attachment.reason ? { reason: attachment.reason } : {}),
+    };
+
+    try {
+      return await this.withTiming(
+        "setAttachment",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const now = Date.now();
+            transaction.update(docRef, {
+              attachment: payload,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (error) {
+      logger.error(
+        "Failed to set attachment state on video job",
+        error as Error,
+        {
+          jobId,
+          state: attachment.state,
+        },
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Jobs whose session is still owed a take. Equality-only, so it needs no
+   * composite index. `pending` is crash residue — a worker died between
+   * `markCompleted` and the append — and is what a restarting worker settles;
+   * a `failed` attachment is already surfaced to its creator with a retry, so
+   * it is deliberately NOT swept here.
+   */
+  async findPendingAttachments(
+    limitCount: number = 50,
+  ): Promise<VideoJobRecord[]> {
+    const snapshot = await this.withTiming(
+      "findPendingAttachments",
+      "read",
+      async () =>
+        await this.collection
+          .where("attachment.state", "==", "pending")
+          .limit(limitCount)
+          .get(),
+    );
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => this.parseJob(doc.id, doc.data()));
+  }
+
+  async markCompleted(
+    jobId: string,
+    result: VideoJobRecord["result"],
+  ): Promise<boolean> {
+    const now = Date.now();
+
+    try {
+      return await this.withTiming(
+        "markCompleted",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const data = snapshot.data();
+            if (!data || data.status !== "processing") {
+              return false;
+            }
+
+            transaction.update(docRef, {
+              status: "completed",
+              result,
+              completedAtMs: now,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              workerId: admin.firestore.FieldValue.delete(),
+              leaseExpiresAtMs: admin.firestore.FieldValue.delete(),
+              lastHeartbeatAtMs: admin.firestore.FieldValue.delete(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (error) {
+      logger.error("Failed to mark video job completed", error as Error, {
+        jobId,
+      });
+      return false;
+    }
+  }
+
+  async markFailed(jobId: string, error: VideoJobErrorInput): Promise<boolean> {
+    const now = Date.now();
+    const normalizedError = toVideoJobError(error);
+
+    try {
+      return await this.withTiming(
+        "markFailed",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const docRef = this.collection.doc(jobId);
+            const snapshot = await transaction.get(docRef);
+            if (!snapshot.exists) {
+              return false;
+            }
+
+            const data = snapshot.data();
+            if (
+              !data ||
+              data.status === "failed" ||
+              data.status === "completed"
+            ) {
+              return false;
+            }
+
+            transaction.update(docRef, {
+              status: "failed",
+              error: normalizedError,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              workerId: admin.firestore.FieldValue.delete(),
+              leaseExpiresAtMs: admin.firestore.FieldValue.delete(),
+              lastHeartbeatAtMs: admin.firestore.FieldValue.delete(),
+            });
+
+            return true;
+          }),
+      );
+    } catch (txError) {
+      logger.error("Failed to mark video job failed", txError as Error, {
+        jobId,
+      });
+      return false;
+    }
+  }
+
+  async enqueueDeadLetter(
+    job: VideoJobRecord,
+    error: VideoJobError,
+    source: string,
+    options?: { creditsRefunded?: boolean },
+  ): Promise<void> {
+    return this.dlq.enqueueDeadLetter(job, error, source, options);
+  }
+
+  private async claimFromQuery(
+    query: Query,
+    workerId: string,
+    leaseMs: number,
+  ): Promise<VideoJobRecord | null> {
+    try {
+      return await this.withTiming(
+        "claimFromQuery",
+        "write",
+        async () =>
+          await this.db.runTransaction(async (transaction) => {
+            const snapshot = await transaction.get(query);
+            if (snapshot.empty) {
+              return null;
+            }
+
+            const doc = snapshot.docs[0];
+            if (!doc) {
+              return null;
+            }
+            const data = doc.data();
+            if (!data) {
+              return null;
+            }
+
+            const now = Date.now();
+
+            // Respect retry backoff: skip this job if it's waiting to retry.
+            // The next poll cycle will reconsider it once the clock catches up.
+            if (
+              typeof data.nextRetryAtMs === "number" &&
+              data.nextRetryAtMs > now
+            ) {
+              return null;
+            }
+
+            const leaseExpiresAtMs = now + leaseMs;
+            const attempts =
+              typeof data.attempts === "number" &&
+              Number.isFinite(data.attempts)
+                ? data.attempts + 1
+                : 1;
+            const maxAttempts = resolvePositiveInt(
+              typeof data.maxAttempts === "number"
+                ? data.maxAttempts
+                : undefined,
+              this.defaultMaxAttempts,
+            );
+
+            transaction.update(doc.ref, {
+              status: "processing",
+              workerId,
+              attempts,
+              maxAttempts,
+              leaseExpiresAtMs,
+              lastHeartbeatAtMs: now,
+              updatedAtMs: now,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              releasedAtMs: admin.firestore.FieldValue.delete(),
+              releaseReason: admin.firestore.FieldValue.delete(),
+              nextRetryAtMs: admin.firestore.FieldValue.delete(),
+            });
+
+            return this.parseJob(doc.id, {
+              ...data,
+              status: "processing",
+              workerId,
+              attempts,
+              maxAttempts,
+              leaseExpiresAtMs,
+              lastHeartbeatAtMs: now,
+              updatedAtMs: now,
+            });
+          }),
+      );
+    } catch (error) {
+      logger.error("Failed to claim video job", error as Error);
+      return null;
+    }
+  }
+
+  private parseJob(id: string, data: DocumentData | undefined): VideoJobRecord {
+    return parseVideoJobRecord(id, data, this.defaultMaxAttempts);
+  }
+}

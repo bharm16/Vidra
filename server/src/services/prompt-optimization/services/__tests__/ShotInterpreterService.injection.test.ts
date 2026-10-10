@@ -1,6 +1,5 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { AIService } from "@services/prompt-optimization/types";
 import { ShotInterpreterService } from "../ShotInterpreterService";
 
 const mockEnforceJSON = vi.hoisted(() => vi.fn());
@@ -34,11 +33,11 @@ interface CapturedEnforceCall {
 
 const createService = (): {
   service: ShotInterpreterService;
-  aiService: AIService;
+  aiService: AIExecutionPort;
 } => {
   const aiService = {
     execute: vi.fn(),
-  } as unknown as AIService;
+  } as unknown as AIExecutionPort;
 
   return {
     service: new ShotInterpreterService(aiService),

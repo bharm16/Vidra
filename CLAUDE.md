@@ -1,419 +1,72 @@
 # Vidra
 
-## Tech Stack
-
-- **Monorepo**: Node.js >= 20, ESM (`"type": "module"` in all package.json files)
-- **Client**: React 18 + Vite, Tailwind CSS + `@promptstudio/system` (design system), Radix UI primitives, TypeScript
-- **Server**: Express + tsx (TypeScript), LLM providers (OpenAI, Gemini, Groq), Firebase Admin, Stripe
-- **Shared**: Import via `#shared/*` path alias
-- **Testing**: Vitest (unit), Playwright (e2e), fast-check (property)
-
-## Runtime Constraints
-
-- ESM only — no `require()`, no `__dirname` (use `import.meta.url` + `fileURLToPath`)
-- Node 20+ — top-level await, `structuredClone`, native fetch all available
-- Vite dev server proxies `/api` to port 3001 — never hardcode URLs in client code
-- Firebase Admin requires `GOOGLE_APPLICATION_CREDENTIALS` env var at startup
-- Redis is optional — all caching falls back to in-memory when `REDIS_URL` is unset
+Canonical engineering rules. Agent entrypoints link here; update this file before syncing a mirror. Product contracts live in [CONTEXT.md](CONTEXT.md). Read the applicable `client/CLAUDE.md` or `server/CLAUDE.md` before editing that layer.
 
-## Server Startup Requirement
+## Boundaries
 
-The Express server runs `admin.auth().listUsers()` and `firestore.listCollections()` on startup (`server/src/config/services.initialize.ts`). Without valid Firebase credentials, the server exits with `FATAL: Application failed to start`. Skipped only when `NODE_ENV=test`.
+- Client and server import their own code and `shared/`; neither imports the other.
+- Shared code is pure types, schemas, constants and data utilities, without framework, network, database or filesystem dependencies. Run `npx tsc --noEmit` immediately after a shared contract change, before changing other files.
+- Services use constructor injection and canonical domain imports. `container.resolve()` belongs only in DI configuration and route factories.
+- Text LLM calls go through `aiService`. Cross-domain coordination belongs in a route factory or an orchestrator with explicit ports.
+- Client feature `api/` modules validate wire responses with Zod and transform when UI shapes differ. Fetch calls stay out of components. UI-only types belong to the feature.
 
-Provide one of: `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_SERVICE_ACCOUNT_PATH`, or `GOOGLE_APPLICATION_CREDENTIALS`. The Vite client (`npm run dev`) runs without the server — UI development works fine, but `/api/*` calls will fail.
+## Current scope and behavior
 
-## Repository Structure
+Authoring, span labeling, suggestions, optimization, supplied reference admission, free pictures/clips, Studio and Sketch remain active. Generic sessions, words/take ancestry, authentication, durable media grants, receipts, leases and attachment recovery support the loop.
 
-```
-client/          # React frontend (Vite) — see client/CLAUDE.md
-server/          # Express API + services — see server/CLAUDE.md
-shared/          # Shared types and utilities (contract layer)
-packages/        # Workspace packages (@promptstudio/system)
-config/          # Build, lint, and test configuration
-scripts/         # Dev tools, migrations, evaluations
-docs/            # Architecture docs (see docs/architecture/)
-tests/           # E2E, load, and evaluation suites
-```
+Named asset/trigger libraries, depth/convergence, continuity generation, storyboards/character preprocessing, recommendation, coherence/observation endpoints, paid intake and broad replay workers are retired. Historical session/camera/model fields remain readable. `video-generation/refunds/` preserves the existing ledger and failed-refund recovery for previously charged jobs. Free intake reserves zero credits; a charged job without a refunder fails closed.
 
-## Domain Glossary
+- Browsing and selection preserve working words/settings. Restore them through explicit **Reuse setup**.
+- Repeatedly used panels persist across context changes; opening an unrelated panel does not close them.
+- Dispatch snapshots visible words, inputs, model, settings and destination. A retry after a lost response reuses its authoritative receipt and original take identity.
+- Durable completion precedes attachment. Attachment repair reuses stored media/destination without regeneration or refunds.
+- Preserve Studio/Sketch spending bounds. Free testing does not authorize paid offerings, provider spend or schedules.
 
-These terms have specific meanings in this codebase. Do not conflate them.
+The URL prefix `/api/preview` remains compatible with saved media. Say picture, clip or take for artifacts. Draft/render is a model tier, not lifecycle. Generation offers come from `shared/videoModels.ts`; historical ids and prompt compilation have separate contracts.
 
-| Term                          | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Server Path                                                                      | Route                                               |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------- |
-| **Span labeling**             | ML categorization of prompt phrases into taxonomy categories (subject, camera, lighting…) for UI highlights                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `server/src/llm/span-labeling/`                                                  | `/api/llm/label-spans`                              |
-| **Enhancement / Suggestions** | AI-generated alternative phrases for a user-selected span (click-to-enhance)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `server/src/services/enhancement/`                                               | `/api/enhancement/*`                                |
-| **Optimization**              | Structured prompt rewriting: one `optimize_standard` LLM pass emits a structured artifact, which is cached under an `artifactKey` and rendered to a generic prompt, then finished by a deterministic intent-lock check and a prompt-lint gate. When the request carries a `targetModel` the artifact is instead compiled into that model's own prose and finished with a validate-only intent check; `/api/optimize-compile` recompiles from a cached `artifactKey`. Groq's role in this service is the non-OpenAI prompt-template family (`GroqVideoTemplateBuilder`, also used for Gemini) and the `optimize_standard` fallback client. | `server/src/services/prompt-optimization/`                                       | `/api/optimize` (buffered), `/api/optimize-compile` |
-| **Continuity**                | Shot-to-shot visual consistency in multi-shot sequences                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `server/src/services/continuity/`                                                | — (mounted under `/api/sessions/*`)                 |
-| **Convergence**               | **Frozen (ADR-0002)** — the directory holds no convergence pipeline. What remains are parts the live app still depends on: `constants.ts` (camera-path catalogue re-exported from `shared/cameraMotion.ts`, direction options, session TTL), `helpers.ts` (step navigation + `withRetry`), `types.ts`, `depth/DepthEstimationService` (fal.ai Depth Anything v2, behind `POST /api/motion/depth`) and `storage/StorageService`, registered separately as `convergenceStorageService`. The general `storageService` resolves to `server/src/services/storage/StorageService.ts`.                                                           | `server/src/services/convergence/`                                               | `/api/motion/depth`, `/api/motion/media/*`          |
-| **Model Intelligence**        | AI-powered model recommendation based on prompt analysis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `server/src/services/model-intelligence/`                                        | `/api/model-intelligence`                           |
-| **Generation**                | Producing a take — a picture (Flux Schnell, Flux Kontext) or a clip (Wan, Sora, Veo, Kling, Luma)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `server/src/services/image-generation/`, `server/src/services/video-generation/` | `/api/preview/*` (legacy prefix)                    |
-| **Draft tier**                | The cost/quality tier a creator picks per generation (`draft` \| `render`) — model selection, not lifecycle, and derived from the model rather than stored ([ADR-0021](docs/adr/0021-the-draft-render-tier-is-derived-from-the-model.md))                                                                                                                                                                                                                                                                                                                                                                                                 | `server/src/config/videoModelRegistry.ts`                                        | — (never crosses the wire)                          |
+## Changes and checks
 
-> **"Preview" is not a domain term.** It was retired 2026-08-10: nothing this pipeline produces is a draft awaiting a final. Every picture and clip is persisted, id'd, and becomes a node in the space (see `CONTEXT.md` → Take). `/api/preview/*` survives only as a URL prefix — renaming it would break media URLs already persisted inside generation records — and `client/src/features/preview/api/` keeps the name to match the route. Neither names a concept. When you mean the artifact, say picture, clip, or take; when you mean the tier, say draft or render.
+Preserve ADRs as project records. Cleanup must not delete or replace their history; describe current implementation status in `CONTEXT.md` and cleanup records.
 
-> **Product priority (see [ADR-0002](docs/adr/0002-vidra-is-an-authoring-tool-for-non-experts.md)).** These terms name capabilities, not equal priorities. Vidra's active product is the **authoring loop** (Span labeling, Enhancement, Optimization, plus first-frame Generation and motion). **Generation economics** (credits, payment, video-job resilience) and the **multi-shot/consistency stack** (Continuity, Convergence) are **frozen, not active** — dormant until ADR-0002 is revisited. Do not treat the frozen stacks as load-bearing when planning work.
+Read impacted modules/contracts first. Follow the `studio/` frontend pattern and the thin orchestrator/specialized services pattern in `prompt-optimization/`. Split by responsibility, not line count. Preserve independently owned work and credential/environment files.
 
-## Service Architecture
+Use explicit exported/async return types, `unknown` and guards instead of `any`, and Zod at input/persistence boundaries. Prefer `undefined` except for deliberate nullable wire fields. If a type fix needs to widen more than three interfaces, find the root cause. Keep dependency upgrades and test infrastructure changes separate from production changes.
 
-### DI Registration
+Add the smallest useful behavioral test. Auth, authorization, payment and user-data changes require a negative path. Exclusive tests retire with their implementation; tests for surviving data/recovery contracts stay. Server regression tests mock process-external boundaries; client tests may mock their feature API.
 
-Services are registered via domain-scoped files in `server/src/config/services/`:
+Before **every commit**, all five gates must pass:
 
-| Registration File                | Registers                                                                                                                                                                                                                                                           |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core.services.ts`               | metrics, Firebase clients, face embedding, imageObservation, llmJudge, sketchBudgetService                                                                                                                                                                          |
-| `cache.services.ts`              | cacheService, redisClient                                                                                                                                                                                                                                           |
-| `credit.services.ts`             | userCreditService, creditReconciliation                                                                                                                                                                                                                             |
-| `storage.services.ts`            | storageService, convergenceStorageService, imageAssetStore, videoAssetStore, signedUrlLedger, signedUrlMinter, videoContentAccessService, videoAssetRetentionService                                                                                                |
-| `llm.services.ts`                | aiModelService, concurrency                                                                                                                                                                                                                                         |
-| `enhancement.services.ts`        | enhancementService, videoPromptService, sceneDetectionService, promptCoherenceService                                                                                                                                                                               |
-| `optimization.services.ts`       | promptOptimizationService, templateService                                                                                                                                                                                                                          |
-| `image-generation.services.ts`   | storyboardFramePlanner, replicateFluxSchnellProvider, replicateFluxKontextFastProvider, imageGenerationService, storyboardPreviewService                                                                                                                            |
-| `video-generation.services.ts`   | videoGenerationService, keyframeGenerationService, faceSwapService, consistentVideoService, capabilitiesProbeService, providerCircuitManager, videoWorkerHeartbeatStore, videoJobHandler, videoJobWorker, videoJobSweeper, dlqReprocessorWorker, videoJobReconciler |
-| `continuity.services.ts`         | continuitySessionService (gated — see Feature Flags below)                                                                                                                                                                                                          |
-| `payment.services.ts`            | paymentService, billingProfileStore, webhook + repair workers                                                                                                                                                                                                       |
-| `model-intelligence.services.ts` | modelIntelligenceService, modelIntelligenceAvailabilityGate                                                                                                                                                                                                         |
-| `session.services.ts`            | sessionService, assetService, referenceImageRepository                                                                                                                                                                                                              |
-| `video-jobs.services.ts`         | videoJobStore, requestIdempotencyService                                                                                                                                                                                                                            |
-| `span-labeling.services.ts`      | spanLabelingProvider                                                                                                                                                                                                                                                |
-| `studio.services.ts`             | studioProjectStore, studioService (gated by ENABLE_STUDIO)                                                                                                                                                                                                          |
-| `share.services.ts`              | shareStore                                                                                                                                                                                                                                                          |
-| `observability.services.ts`      | postHogClient                                                                                                                                                                                                                                                       |
-| `replay.services.ts`             | replayCassetteStore, sketchRelayFetch                                                                                                                                                                                                                               |
+1. `npx tsc --noEmit`
+2. `npx eslint --config config/lint/eslint.config.js . --quiet`
+3. `npm run arch:check`
+4. `npm run test:unit`
+5. `npm run test:replay`
 
-The container is created in `server/src/config/services.config.ts` and initialized in `services.initialize.ts`. Routes consume services via factory functions in `server/src/config/routes.config.ts`.
+`npm run verify` runs these independent gates concurrently; `verify:seq` is the sequential fallback. A failed gate blocks a commit. Install hooks with `bash scripts/install-hooks.sh`, preserving custom hooks.
 
-### Dependency Rules
-
-- Services receive dependencies through **constructor injection** — never call `container.resolve()` outside of route factory functions or DI config files.
-- The `aiService` is the **only** LLM routing layer. Never call provider clients (claude, groq, gemini) directly from business services.
-- Cross-domain dependencies flow through the route layer or an orchestrator service, not via direct imports.
-
-### Frontend-Backend Decoupling
-
-The client and server are **strictly decoupled**. Neither side may import from the other.
-
-- `client/src/` **NEVER** imports from `server/src/` — and vice versa
-- The only shared code lives in `shared/` (types, constants, Zod schemas, and pure utility functions — never I/O or framework-dependent logic)
-- Changes to `shared/` are **contract changes** — run `tsc --noEmit` immediately after modifying
-
-**Shared layer rule:** Code in `shared/` must be pure — no Node.js APIs, no React, no `fetch`,
-no file I/O, no database access. Pure functions that operate on data (validation, parsing,
-condition matching) are acceptable and encouraged to prevent client/server implementation drift.
-
-**Anti-corruption layer:** Each client feature's `api/` directory validates server responses at the wire (Zod). Where the UI shape diverges from the server DTO (e.g. `continuity` flattens a nested session, `span-highlighting` reshapes label spans) the `api/` layer additionally transforms — that transform is the anti-corruption layer. Where the shapes match, it is a validation boundary, not a transform:
-
-```
-Server DTO → feature/api/schemas.ts (Zod) → feature/api/*.ts (validate; transform only where the shape diverges) → hook → component
-```
-
-Cross-layer change protocol: see `.claude/skills/cross-layer-change/SKILL.md`.
-
-## Feature Flags
-
-Server flags are declared in [`server/src/config/feature-flags.ts`](server/src/config/feature-flags.ts) — that file is the source of truth. Update the registry, then run `npx tsx scripts/generate-flag-docs.ts --write` to refresh the table below.
-
-<!-- BEGIN: feature-flag-table -->
-
-<!-- Auto-generated by scripts/generate-flag-docs.ts. Do not edit by hand. -->
-<!-- Source of truth: server/src/config/feature-flags.ts -->
-
-#### Mode
-
-| Env Var              | Default | Legacy Aliases | Description                                                                                                                              |
-| -------------------- | ------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `ENABLE_CONVERGENCE` | `true`  | —              | Enables continuity/convergence services. When false, continuitySessionService resolves to null.                                          |
-| `ENABLE_STUDIO`      | `true`  | —              | Enables the Studio conversational image workspace (ADR-0019). When false, studioService resolves to null and /api/studio is not mounted. |
-
-#### Worker
-
-| Env Var                     | Default | Legacy Aliases | Description                                                                            |
-| --------------------------- | ------- | -------------- | -------------------------------------------------------------------------------------- |
-| `VIDEO_JOB_WORKER_DISABLED` | `false` | —              | Forces video worker loops off even when PROCESS_ROLE=worker. Used for emergency drain. |
-
-#### Killswitch
-
-| Env Var                          | Default | Legacy Aliases | Description                                                    |
-| -------------------------------- | ------- | -------------- | -------------------------------------------------------------- |
-| `WEBHOOK_RECONCILIATION_ENABLED` | `true`  | —              | Stripe webhook reconciliation background service.              |
-| `BILLING_PROFILE_REPAIR_ENABLED` | `true`  | —              | Billing profile repair background worker.                      |
-| `CREDIT_REFUND_SWEEPER_ENABLED`  | `true`  | —              | Credit refund sweeper background service.                      |
-| `CREDIT_RECONCILIATION_ENABLED`  | `true`  | —              | Credit reconciliation background service.                      |
-| `VIDEO_JOB_SWEEPER_ENABLED`      | `true`  | —              | Video job stale-task sweeper.                                  |
-| `VIDEO_DLQ_REPROCESSOR_ENABLED`  | `true`  | —              | Dead-letter-queue reprocessor for failed video jobs.           |
-| `VIDEO_ASSET_RETENTION_ENABLED`  | `true`  | —              | Video asset cleanup/retention service.                         |
-| `VIDEO_ASSET_RECONCILER_ENABLED` | `false` | —              | Video asset orphan-detection reconciler. Opt-in (default off). |
-
-#### Provider
-
-| Env Var                         | Default | Legacy Aliases | Description                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LLM_PROVIDER_FAILOVER_ENABLED` | `true`  | —              | Health-based LLM provider failover in the aiService routing layer: a per-provider circuit breaker opens after consecutive failures and routes operations to their configured fallback provider until the primary recovers. Tune via LLM_FAILOVER_CONSECUTIVE_FAILURES (default 5) and LLM_FAILOVER_COOLDOWN_MS (default 30000). |
-| `ALLOW_UNHEALTHY_GEMINI`        | `false` | —              | Use Gemini even when the provider health check fails. Useful for dev/debug; not recommended in production.                                                                                                                                                                                                                      |
-
-#### Experimental
-
-| Env Var                   | Default | Legacy Aliases | Description                                                                                |
-| ------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------ |
-| `ENABLE_FACE_EMBEDDING`   | `false` | —              | Enables face embedding service for continuity quality gates. Requires Replicate API token. |
-| `CONTINUITY_CLIP_ENABLED` | `true`  | —              | Enables CLIP embedding in continuity quality gate checks.                                  |
-| `DEPTH_WARMUP_ON_STARTUP` | `false` | —              | Controls depth estimation service warmup during server boot.                               |
-
-#### Debug
-
-| Env Var                    | Default      | Legacy Aliases | Description                                                                                                                                                                                                                       |
-| -------------------------- | ------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `REPLAY_MODE`              | `off`        | —              | Record/replay seam at the LLM boundary and provider adapters. `record` captures live provider responses into contract-validated fixtures; `replay` serves those fixtures with zero network. See docs/architecture/replay-mode.md. |
-| `UNHANDLED_REJECTION_MODE` | `classified` | —              | How unhandled promise rejections are categorized. `strict` exits the process; `classified` logs and continues.                                                                                                                    |
-
-<!-- END: feature-flag-table -->
-
-**Rule:** Code consuming `continuitySessionService` must always null-check — the service is legitimately `null` when `ENABLE_CONVERGENCE=false`.
-
-## Route → Service → Client API Map
-
-| Route                       | Server Route File              | Client API/Service                                                   |
-| --------------------------- | ------------------------------ | -------------------------------------------------------------------- |
-| `POST /api/optimize`        | `optimize.routes.ts`           | `services/PromptOptimizationApi.ts`                                  |
-| `POST /api/enhancement/*`   | `enhancement.routes.ts`        | `api/enhancementSuggestionsApi.ts`, `features/prompt-optimizer/api/` |
-| `POST /api/llm/label-spans` | `labelSpansRoute.ts`           | `features/span-highlighting/api/spanLabelingApi.ts`                  |
-| `/api/preview/*`            | `preview.routes.ts`            | `features/preview/api/`                                              |
-| `/api/payment/*`            | `payment.routes.ts`            | `features/billing/api/billingApi.ts`                                 |
-| `/api/motion/*`             | `motion.routes.ts`             | `features/convergence/api/motionApi.ts`                              |
-| `/api/storage/*`            | `storage.routes.ts`            | `api/storageApi.ts`                                                  |
-| `/api/capabilities`         | `capabilities.routes.ts`       | `services/CapabilitiesApi.ts`                                        |
-| `/api/model-intelligence/*` | `model-intelligence.routes.ts` | `features/model-intelligence/api/`                                   |
-| `/api/sessions/*`           | `sessions.routes.ts`           | (no dedicated client — uses ApiClient directly)                      |
-| `/api/assets/*`             | `asset.routes.ts`              | `features/assets/`                                                   |
-| `/api/reference-images/*`   | `reference-images.routes.ts`   | (server-only — no client caller)                                     |
-| `/health`                   | `health.routes.ts`             | (not called from client)                                             |
-| `/api/studio/*`             | `studio.routes.ts`             | `features/studio/api/studioApi.ts`                                   |
-| `/api/share/*`              | `share.routes.ts`              | `features/share/`                                                    |
-| `/api/sketch/*`             | `sketch-accept.routes.ts`      | `features/realtime-sketch/`                                          |
-| `/api/fal/i2i`              | `fal-i2i.routes.ts`            | `features/realtime-sketch/config/constants.ts` (`FAL_I2I_PATH`)      |
-
-**Rule:** API calls never go directly in React components. Use `client/src/api/` for thin fetch wrappers or `client/src/services/` for stateful clients. Feature-scoped APIs live in `client/src/features/<name>/api/`.
-
-## Commands
-
-```bash
-npm start           # Dev orchestrator (client + server)
-npm run dev         # Vite client only
-npm run server      # API server only
-npm run restart     # Kill ports 3001/5173 and restart dev
-npm run build       # Production build
-npm run lint        # ESLint
-npm run lint:fix    # ESLint with auto-fix
-npm run lint:all    # ESLint + Stylelint
-npm run format      # Prettier format all files
-npm run test:unit   # Run unit tests
-npm run test:e2e    # Playwright e2e tests
-npm run test:coverage # Unit tests with coverage report
-npm run test:regression      # Run only regression tests
-npm run test:regression:list  # Audit all regression test files
-npm run eval:golden-set      # Relaxed F1 vs blessed baseline (gate mode)
-npm run eval:golden-set:bless # Bless a fresh baseline for the active provider
-npm run architecture:map        # Print architecture map JSON to stdout
-npm run architecture:map:write  # Regenerate docs/architecture/architecture-map.json
-npm run architecture:map:check  # CI drift gate — fails when JSON is stale
-npm run obsidian:vault          # Rebuild docs/graph/ Obsidian notes from the architecture map (docs/ is the vault root)
-```
-
-## Span Labeling Evaluation
-
-Two distinct evals run against the span labeling subsystem — keep them separate.
-
-| Eval                         | Script                                                                                  | Metric                                                               | Cadence                                                |
-| ---------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
-| **LLM-as-judge**             | `npm run eval:span` (legacy spawner) → `scripts/evaluation/span-labeling-evaluation.ts` | Coverage / Precision / Granularity / Taxonomy (1–5 via GPT-4o judge) | On-demand                                              |
-| **Relaxed F1 vs golden set** | `npm run eval:golden-set` → `scripts/evaluation/golden-set-relaxed-f1.ts`               | Per-category F1 vs blessed baseline; gate exit code                  | Nightly via `.github/workflows/span-labeling-eval.yml` |
-
-The Relaxed F1 gate is **deterministic** (hand-labeled ground truth) and uses [`scripts/evaluation/baseline-gate.ts`](scripts/evaluation/baseline-gate.ts) for per-category regression detection. Baselines live in `scripts/evaluation/golden-set-baselines/{provider}.json` — see the README there for the bless workflow.
-
-## Operating in a Worktree (Parallel Agents)
-
-When this checkout is a git worktree (e.g., a Conductor.build workspace) running alongside other agents, additional restrictions apply.
-
-**Detect worktree status:**
-
-```bash
-git rev-parse --git-common-dir
-# Output `.git` → main checkout. Anything else → worktree.
-```
-
-### Never start servers in a worktree
-
-Ports 3001 (server) and 5173 (Vite) are shared with the main checkout and other worktrees. Forbidden inside a worktree:
-
-- `npm start`, `npm run dev`, `npm run server`, `npm run restart` — port collisions
-- `npm run test:e2e`, any Playwright command (including targeted specs) — browser process conflicts; defer e2e to the main checkout or CI
-- Long-running watchers: `npm run test:watch`, `tsc --watch`, `vite --watch`
-
-Use these for verification — fast, deterministic, no port binding:
-
-```bash
-npx tsc --noEmit            # type check
-npm run lint                # ESLint
-npm run test:unit           # unit tests, no server boot
-npx vitest run <path> --config config/test/vitest.unit.config.js   # targeted tests (a bare run globs foreign worktree copies)
-```
-
-In a worktree, skip step 4 of "Validation Order Before Handoff" below — e2e runs in the main checkout or CI only.
-
-### Use `NODE_ENV=test` for any code path that boots the server
-
-Worktrees may not have valid Firebase credentials. The startup probe (`admin.auth().listUsers()` / `firestore.listCollections()`) hard-exits without them. If a verification step requires executing server boot code, set `NODE_ENV=test` to skip the probe — same gate the test suite uses. The Integration Test Gate command in the next section is already correct for worktrees.
-
-### Treat the worktree as ephemeral
-
-- `.env` and `gcs-service-account.json` are typically symlinked from the main checkout — do not move, copy, or rewrite them
-- `node_modules/` is local to this worktree — `npm install` is fine; do not symlink it from another checkout
-- The worktree is destroyed after merge — do not store work-critical state outside the repo (e.g., in `~/`)
-- If verification genuinely requires a running server, stop and flag it for the human reviewer rather than starting one
-
-## Commit Protocol (MANDATORY)
-
-Before EVERY commit, run all five checks in order:
-
-1. `npx tsc --noEmit` — must exit 0
-2. `npx eslint --config config/lint/eslint.config.js . --quiet` — must have 0 errors
-3. `npm run arch:check` — no circular imports, no forbidden cross-layer imports (~12s)
-4. `npm run test:unit` — must pass all shards
-5. `npm run test:replay` — replay gate: the Idea Box golden path, the cross-mode walkthrough, and the outbound guard's own test (offline, ~6s) must pass
-
-`npm run verify` runs all five concurrently (they are independent; wall-clock cost is the unit suite) and fails if any gate fails. `npm run verify:seq` is the sequential fallback.
-
-Check 3 is here because `tsc` accepts a type-only import cycle and the other
-four gates cannot see one: two cycles reached `main` on 2026-08-08 with every
-other gate green. It also catches a client→server import, which no type error
-would report.
-
-If any check fails, DO NOT commit. Fix the failures first.
-
-A pre-commit hook enforces checks 1-3 automatically and runs the mock-boundary
-quality check (`scripts/check-regression-test-quality.sh`) when staged regression
-tests are present. Commit-message prefixes do not require new test blocks. Run
-`bash scripts/install-hooks.sh` after cloning and after pulling hook changes; the
-installer also removes obsolete project-managed hooks without touching custom hooks.
-
-### Test Policy
-
-- **The replay gate is the merge gate.** `npm run test:replay` runs two offline walkthroughs against contract-validated fixtures: the Idea Box golden path (the full authoring loop — see `docs/architecture/replay-mode.md`) and the cross-mode golden path (sketch → Use this → studio → back to the session → camera words → clip → refresh — see `docs/architecture/cross-mode-golden-path.md`), plus the test of the outbound guard that keeps both offline. If any is red, the product is broken no matter how green the unit suite is.
-- **The replay gate cannot tell you a provider is up.** It proves wiring and recovery against recorded and controlled boundaries; current provider availability and output quality are the live-provider smoke test's job (specified in `docs/architecture/cross-mode-golden-path.md`, nightly, never a merge gate) and the evals'.
-- **Frozen domains carry no tests.** Stacks frozen by ADR-0002 run zero tests in any gate; their suites were removed 2026-07-25. Git history is the archive — if a frozen stack revives, its tests revive with it.
-- **Tests die with their code.** Deleting, freezing, or replacing a module deletes its tests in the same commit.
-- **Behavior changes use the smallest useful test seam.** Add or strengthen a test when it materially protects observable behavior. Authentication, authorization, payment, and user-data changes require a negative-path test. Do not auto-load an additional TDD or debugging workflow merely because a change is a bugfix.
-- **Server-side regression tests mock only process-external boundaries** (LLM SDKs, Firebase, Stripe, Redis, `node:*`, logging, time). If a test needs to mock an internal module, it sits at the wrong seam — move it up a layer or into the replay suite. Client-side (jsdom) tests may mock at their feature's `api/` module: that is the client's wire boundary.
-
-### Integration Test Gate (Service Changes)
-
-When modifying `server/src/config/services.config.ts`, `services.initialize.ts`, `app.ts`, `server.ts`, or `server/index.ts`, also run:
+Registration/startup/lifecycle changes also require:
 
 ```bash
 PORT=0 npx vitest run tests/integration/bootstrap.integration.test.ts tests/integration/di-container.integration.test.ts --config config/test/vitest.integration.config.js
 ```
 
-## Primary Workflows
+Read [.agents/skills/integration-test/SKILL.md](.agents/skills/integration-test/SKILL.md) before writing integration tests. Assertions come from contracts; repair source unless the referenced contract has genuinely retired.
 
-### 1) Feature Workflow
+Before handoff, run typecheck, `npm run lint:all`, unit tests, relevant provider-free e2e journeys and `npm run build`. Replay proves wiring/recovery, not provider availability/quality. Deterministic span evaluation and its baseline workflow remain separate. Run `npm run verify:drift` after route/flag/catalog changes.
 
-1. Read relevant scope docs and impacted modules first (`client/`, `server/`, `shared/`).
-2. Implement using established patterns:
-   - Frontend: `client/src/features/studio/` style (orchestrator + hooks + api + components).
-   - Backend: `server/src/services/prompt-optimization/` style (thin orchestrator + specialized services).
-3. Add/update tests close to changed behavior.
-4. Run targeted verification first, then full checks before handoff.
+## Runtime
 
-## Validation Order Before Handoff
+Node 20+, ESM, React/Vite, Express/TypeScript. Commands live in `package.json`. Vite proxies `/api` to the API server; use that proxy in client URLs. Redis is optional.
 
-1. `npx tsc --noEmit`
-2. `npm run lint:all`
-3. `npm run test:unit`
-4. `npm run test:e2e` (or targeted e2e spec if scope is narrow)
-5. `npm run build`
+Server startup needs valid Firebase Admin credentials via `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_SERVICE_ACCOUNT_PATH` or `GOOGLE_APPLICATION_CREDENTIALS`. Startup probes are skipped only in test mode. The Vite client runs independently, with API calls requiring the server.
 
-### Commit Scope Rules
+Concurrent worktrees share main-checkout ports: run checks without servers there; browser/e2e work belongs in the main checkout or CI. Keep symlinked `.env` and credential files in place. Server-boot verification uses `NODE_ENV=test` and ephemeral ports.
 
-- Never combine dependency upgrades with code changes in the same commit
-- Never combine test infrastructure changes with production code changes
+For performance, establish a working baseline and measure one change at a time. Migrations require a clean dry run, expected counts/sample checks, explicit execution authorization and post-run verification.
 
-### Change Scope Limits
+## References
 
-- Type changes to shared interfaces: must run `tsc --noEmit` BEFORE continuing to other files
-- Dependency version bumps: isolated commit, nothing else in it
-- If fixing types requires adding `| null` or `| undefined` to more than 3 interfaces, STOP — find the root cause instead of widening types
-- If a test fix requires changing the production type to make it pass, that's a production code change — treat it accordingly
-
-## Code Rules
-
-### SRP / Separation of Concerns
-
-Before modifying code, ask:
-
-1. How many distinct responsibilities does this file have?
-2. How many reasons to change? (different stakeholders, different triggers)
-3. If only 1 responsibility → don't split, even if over line threshold
-
-### File Splitting: When to Actually Split
-
-| Type       | Split When                          |
-| ---------- | ----------------------------------- |
-| Components | Mixed presentation + business logic |
-| Hooks      | Managing unrelated state domains    |
-| Services   | Multiple reasons to change          |
-| Utils      | Functions with different concerns   |
-
-Do NOT split files solely because they exceed a line threshold. Do NOT create components only used in one place. Do NOT extract code that always changes together. Do NOT add indirection without improving cohesion. Do NOT use `?.` more than 2 levels deep (fix your types instead).
-
-### TypeScript Rules
-
-- **No `any`**: Use `unknown` + type guards, generics, or `Record<string, unknown>`
-- **No JSDoc types**: Use TypeScript annotations (JSDoc OK for descriptions/examples)
-- **No magic strings**: Lift to union types or `as const` arrays
-- **Zod at boundaries**: Validate API responses, user input, URL params, localStorage
-- **Explicit return types**: Required for exported functions and async functions
-- **Prefer `undefined`**: Over `null` (except when API explicitly returns null)
-
-## UX Behavioral Rules
-
-These are architectural constraints, not styling opinions.
-
-1. **Browsing is read-only. Editing is explicit.** Viewing past state never mutates the current working prompt or settings. Any state restoration requires a deliberate, labeled action. If clicking something can lose the user's work, the design is wrong.
-
-2. **Tools persist. Navigation interrupts.** Panels the user checks repeatedly must remain visible while switching contexts. Opening one panel should not close an unrelated panel.
-
-## Procedural Workflows
-
-These are on-demand — loaded via skills when the task applies:
-
-- **Integration tests:** `docs/architecture/typescript/TEST_GUIDE.md` Part 3
-- **Cross-layer changes:** `.claude/skills/cross-layer-change/SKILL.md`
-- **New feature scaffolding:** `.claude/skills/new-feature/SKILL.md`
-
-## Active Programs
-
-Cross-cutting initiatives in flight. Read the program doc before working on any of its sub-projects — it's where the end state and decomposition live.
-
-- **Measurement Program** — [`docs/superpowers/programs/measurement.md`](docs/superpowers/programs/measurement.md) — every active-loop surface emits operational + quality telemetry to PostHog with traffic-source discrimination. #0 (eval visibility), #1 (source discriminator + synthetic harness), #3 (LLM judge) shipped. GH Actions secrets set + both nightly quality crons verified live 2026-07-01 (first span-labeling gate run tripped on Groq baseline drift — investigate vs re-bless; see the nightly-revival Reordering entry). Next: #2 (route telemetry coverage, rescoped to active-loop surfaces per ADR-0002 — see the 2026-07-01 Reordering entry).
-
-## Subsystem Guides
-
-- Frontend-specific: `client/CLAUDE.md`
-- Backend-specific: `server/CLAUDE.md`
-- Architecture rules: `docs/architecture/CLAUDE_CODE_RULES.md`
-- Service boundaries: `docs/architecture/SERVICE_BOUNDARIES.md`
-
-## Agent skills
-
-### Issue tracker
-
-GitHub Issues on `bharm16/Vidra`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Canonical five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+- [Route map](docs/architecture/ROUTE_MAP.md) and [service boundaries](docs/architecture/SERVICE_BOUNDARIES.md).
+- [Replay](docs/architecture/replay-mode.md), [cross-mode contracts](docs/architecture/cross-mode-golden-path.md), [media lifecycle](docs/architecture/admission-media-lifecycle.md).
+- [Page 21 adoption](docs/design/page21-component-migration.md): current components/state journeys. Pages 22/23 do not authorize a new draft ownership model.
+- [Issue tracker](docs/agents/issue-tracker.md) and [triage labels](docs/agents/triage-labels.md).

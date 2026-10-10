@@ -10,10 +10,6 @@ import type { ApiErrorCode } from "@shared/types/api";
 import { assertUrlSafe } from "@server/shared/urlValidation";
 import { stripOptimizerScaffolding } from "../prompt";
 import { extractMotionMeta } from "./video-generate/motion";
-import {
-  extractPromptTriggers,
-  resolvePromptTriggers,
-} from "./video-generate/triggerResolution";
 import { runVideoGenerateIntake } from "./video-generate/intake";
 import { refreshOwnedMediaUrls } from "./video-generate/refreshOwnedMediaUrls";
 import { STORAGE_CONFIG } from "@services/storage/config/storageConfig";
@@ -26,7 +22,6 @@ export const createVideoGenerateHandler =
     videoGenerationService,
     videoJobStore,
     storageService,
-    assetService,
     requestIdempotencyService,
     sessionService,
   }: VideoGenerateServices) =>
@@ -61,7 +56,7 @@ export const createVideoGenerateHandler =
       autoKeyframe = true,
       faceSwapAlreadyApplied = false,
     } = parsed.payload;
-    let characterAssetId = requestedCharacterAssetId;
+    const characterAssetId = requestedCharacterAssetId;
 
     if (startImage) {
       try {
@@ -128,9 +123,6 @@ export const createVideoGenerateHandler =
       (req as Request & { user?: { uid?: string } }).user?.uid ?? null;
     const requestId = (req as Request & { id?: string }).id;
     const rawMotionMeta = extractMotionMeta(generationParams);
-    const promptTriggers = extractPromptTriggers(cleanedPrompt);
-    const uniquePromptTriggerCount = new Set(promptTriggers).size;
-    const hasPromptTriggers = uniquePromptTriggerCount > 0;
 
     if (!userId || userId === "anonymous" || isIP(userId) !== 0) {
       return sendApiError(res, req, 401, {
@@ -227,36 +219,6 @@ export const createVideoGenerateHandler =
       idempotencyRecordId = claim.recordId;
     }
 
-    const triggerResolution = await resolvePromptTriggers({
-      cleanedPrompt,
-      hasPromptTriggers,
-      uniquePromptTriggerCount,
-      userId,
-      requestId,
-      characterAssetId,
-      assetService,
-      log,
-    });
-
-    if (!triggerResolution.ok) {
-      if (idempotencyRecordId && requestIdempotencyService) {
-        await requestIdempotencyService.markFailed(
-          idempotencyRecordId,
-          triggerResolution.error.payload.code ||
-            triggerResolution.error.payload.error,
-        );
-      }
-      return sendApiError(
-        res,
-        req,
-        triggerResolution.error.status,
-        triggerResolution.error.payload,
-      );
-    }
-
-    cleanedPrompt = triggerResolution.value.cleanedPrompt;
-    characterAssetId = triggerResolution.value.characterAssetId;
-
     log.info("Video preview request received", {
       operation: "generateVideoPreview",
       requestId,
@@ -269,12 +231,6 @@ export const createVideoGenerateHandler =
       hasCharacterAssetId: Boolean(characterAssetId),
       autoKeyframe,
       faceSwapAlreadyApplied,
-      hasPromptTriggers,
-      uniquePromptTriggerCount,
-      promptExpandedFromTrigger:
-        triggerResolution.value.promptExpandedFromTrigger,
-      resolvedAssetCount: triggerResolution.value.resolvedAssetCount,
-      resolvedCharacterCount: triggerResolution.value.resolvedCharacterCount,
       ...rawMotionMeta,
     });
 

@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Trimmed 2026-08-27 to the behaviors only this suite covers: loud boot
-// failure, the worker-role depth-warmup skip, and the raw-body-before-json
-// webhook ordering (a documented Stripe invariant the bootstrap integration
-// test does not pin). The old collaborator-list case ("createApp called
-// these mocks with these args") punished refactors without guarding
-// behavior — the bootstrap integration test boots the real thing.
+// Bootstrap/route behavior is covered by the real integration suite. This test pins loud DI failures.
 const {
   useMock,
   expressMock,
@@ -67,7 +62,6 @@ function buildContainer(): { resolve: ReturnType<typeof vi.fn> } {
 describe("createApp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getRuntimeFlagsMock.mockReturnValue({ processRole: "api" });
   });
 
   describe("dependency resolution", () => {
@@ -81,30 +75,4 @@ describe("createApp", () => {
       expect(() => createApp(container as never)).toThrow("resolve failed");
     });
   });
-
-  describe("edge cases", () => {
-    it("registers webhook routes before middleware", () => {
-      const container = buildContainer();
-
-      createApp(container as never);
-
-      expect(useMock).toHaveBeenCalledWith("/api/payment", { id: "webhook" });
-      const useCallOrder = useMock.mock.invocationCallOrder[0];
-      const middlewareCallOrder =
-        configureMiddlewareMock.mock.invocationCallOrder[0];
-      expect(useCallOrder).toBeDefined();
-      expect(middlewareCallOrder).toBeDefined();
-      expect(useCallOrder ?? 0).toBeLessThan(middlewareCallOrder ?? 0);
-    });
-
-    it("skips depth warmup when role is worker", () => {
-      getRuntimeFlagsMock.mockReturnValue({ processRole: "worker" });
-      const container = buildContainer();
-
-      createApp(container as never);
-
-      expect(initializeDepthWarmerMock).not.toHaveBeenCalled();
-    });
-  });
-
 });

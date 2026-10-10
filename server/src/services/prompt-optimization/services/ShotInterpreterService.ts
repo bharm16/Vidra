@@ -1,7 +1,8 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
 import { StructuredOutputEnforcer } from "@utils/StructuredOutputEnforcer";
-import type { AIService, ShotPlan } from "../types";
+import type { ShotPlan } from "../types";
 
 /**
  * ShotInterpreterService
@@ -16,7 +17,7 @@ import type { AIService, ShotPlan } from "../types";
  * - Provide structured hints for camera, lighting, and style without blocking missing fields
  */
 export class ShotInterpreterService {
-  private readonly ai: AIService;
+  private readonly ai: AIExecutionPort;
   private readonly log: ILogger;
   private readonly cache = new Map<
     string,
@@ -26,7 +27,7 @@ export class ShotInterpreterService {
   private readonly cacheMaxEntries: number;
 
   constructor(
-    aiService: AIService,
+    aiService: AIExecutionPort,
     cacheConfig?: { cacheTtlMs: number; cacheMax: number },
   ) {
     this.ai = aiService;

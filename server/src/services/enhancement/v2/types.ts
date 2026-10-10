@@ -1,5 +1,5 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type {
-  AIService,
   BrainstormContext,
   DiversityEnforcer,
   EnhancementResult,
@@ -209,7 +209,7 @@ export interface GuidedGenerationResult {
 }
 
 export interface EnhancementV2Dependencies {
-  aiService: AIService;
+  aiService: AIExecutionPort;
   videoPromptService: VideoService;
   diversityEnforcer: DiversityEnforcer;
   policyVersion: string;

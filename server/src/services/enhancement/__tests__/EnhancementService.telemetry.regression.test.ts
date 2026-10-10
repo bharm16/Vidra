@@ -1,9 +1,9 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { describe, expect, it, vi } from "vitest";
 import type { CacheService } from "@services/cache/CacheService";
 import { EnhancementService } from "../EnhancementService";
 import type { SuggestionsTrace } from "@services/observability/SuggestionsTelemetryService";
 import type {
-  AIService,
   BrainstormBuilder,
   DiversityEnforcer,
   VideoService,
@@ -38,7 +38,7 @@ describe("EnhancementService telemetry trace lifecycle (regression)", () => {
     const aiService = {
       getOperationConfig: vi.fn(() => ({ temperature: 0.6 })),
       execute: vi.fn(),
-    } as unknown as AIService;
+    } as unknown as AIExecutionPort;
 
     const videoPromptService = {
       isVideoPrompt: vi.fn(() => true),

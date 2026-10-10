@@ -42,10 +42,6 @@ import {
 import { resolveFalApiKey } from "@utils/falApiKey";
 import type { ShareService } from "@services/share/ShareService";
 import type { StorageRoutesService } from "@routes/storage.routes";
-import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
-import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
-import type { ConsistentVideoService } from "@services/video-generation/ConsistentVideoService";
-import type { UserCreditService } from "@services/credits/UserCreditService";
 import type { OptimizeTelemetryService } from "@services/observability/OptimizeTelemetryService";
 import type { SuggestionsTelemetryService } from "@services/observability/SuggestionsTelemetryService";
 import type { SpanLabelingTelemetryService } from "@services/observability/SpanLabelingTelemetryService";
@@ -56,34 +52,11 @@ export function registerApiRoutes(
   app: Application,
   container: DIContainer,
 ): void {
-  const userCreditService = container.resolve("userCreditService");
-
   const videoGenerationService = resolveOptionalService<unknown>(
     container,
     "videoGenerationService",
     "preview",
   );
-
-  const continuitySessionService =
-    resolveOptionalService<ContinuitySessionService | null>(
-      container,
-      "continuitySessionService",
-      "continuity",
-    );
-  const modelIntelligenceService =
-    resolveOptionalService<ModelIntelligenceService | null>(
-      container,
-      "modelIntelligenceService",
-      "model-intelligence",
-    );
-  const consistentVideoService: ConsistentVideoService | null =
-    !videoGenerationService
-      ? null
-      : resolveOptionalService<ConsistentVideoService | null>(
-          container,
-          "consistentVideoService",
-          "consistent-generation",
-        );
 
   // Media proxy — mounted before the auth middleware on /api; the access
   // posture and the rescue's requirements are carried by MediaProxyOptions.
@@ -141,14 +114,17 @@ export function registerApiRoutes(
   // own persisted record, its URL re-minted from the durable handle (#125)
   // when the resolver is wired. One session service, one resolver, one
   // spelling of the arm; the route never learns either.
-  const armFirstFrameBinding = (
-    sessionService: SessionService,
-  ): ((
-    input: { userId: string; sessionId: string; generationId: string },
-  ) => Promise<
-    | { ok: true; frame: Record<string, unknown> }
-    | { ok: false; reason: string }
-  >) =>
+  const armFirstFrameBinding =
+    (
+      sessionService: SessionService,
+    ): ((input: {
+      userId: string;
+      sessionId: string;
+      generationId: string;
+    }) => Promise<
+      | { ok: true; frame: Record<string, unknown> }
+      | { ok: false; reason: string }
+    >) =>
     (input) =>
       armFirstFrame(
         {
@@ -166,20 +142,11 @@ export function registerApiRoutes(
     ),
     enhancementService: container.resolve("enhancementService"),
     sceneDetectionService: container.resolve("sceneDetectionService"),
-    promptCoherenceService: container.resolve("promptCoherenceService"),
     suggestionsTelemetryService: container.resolve<SuggestionsTelemetryService>(
       "suggestionsTelemetryService",
     ),
     storageService: container.resolve<StorageRoutesService>("storageService"),
-    assetService: container.resolve("assetService"),
-    ...(consistentVideoService ? { consistentVideoService } : {}),
-    userCreditService:
-      container.resolve<UserCreditService>("userCreditService"),
-    referenceImageRepository: container.resolve("referenceImageRepository"),
-    imageObservationService: container.resolve("imageObservationService"),
-    continuitySessionService,
     sessionService: container.resolve("sessionService"),
-    modelIntelligenceService,
     remintSessionPictures,
     armFirstFrame: armFirstFrameBinding(
       container.resolve<SessionService>("sessionService"),

@@ -86,11 +86,7 @@ function createApp(options: { continuityEnabled?: boolean } = {}) {
   app.use(
     "/api/sessions",
     apiAuthMiddleware,
-    createSessionRoutes(
-      sessionService as never,
-      options.continuityEnabled === false ? null : (continuityService as never),
-      null,
-    ),
+    createSessionRoutes(sessionService as never),
   );
 
   return { app, sessionService };

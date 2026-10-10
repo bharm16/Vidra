@@ -2,7 +2,6 @@ import type { ILogger } from "@interfaces/ILogger";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type { PromptLintResult } from "../services/PromptLintGateService";
 import type {
-  AIService,
   CompilationState,
   CompileContext,
   CompileSource,
@@ -74,12 +73,6 @@ export type CompilationServiceLike = {
   }>;
 };
 
-export type ConstitutionalReviewLike = (
-  prompt: string,
-  mode: OptimizationMode,
-  signal?: AbortSignal | undefined,
-) => Promise<string>;
-
 export type IntentLockLike = {
   enforceIntentLock(params: {
     originalPrompt: string;
@@ -116,7 +109,6 @@ export interface OptimizeFlowArgs {
   shotInterpreter: ShotInterpreterLike;
   strategy: OptimizationStrategyLike;
   compilationService: CompilationServiceLike | null;
-  applyConstitutionalAI: ConstitutionalReviewLike;
   logOptimizationMetrics: (
     originalPrompt: string,
     optimizedPrompt: string,
@@ -125,12 +117,4 @@ export interface OptimizeFlowArgs {
   intentLock: IntentLockLike;
   promptLint: PromptLintLike;
   telemetry: OptimizeTrace;
-}
-
-export interface ConstitutionalReviewFlowArgs {
-  prompt: string;
-  mode: OptimizationMode;
-  signal?: AbortSignal | undefined;
-  log: ILogger;
-  ai: AIService;
 }

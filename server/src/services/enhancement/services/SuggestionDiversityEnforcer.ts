@@ -1,5 +1,6 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
-import type { Suggestion, AIService } from "./types.js";
+import type { Suggestion } from "./types.js";
 
 /**
  * SuggestionDiversityEnforcer
@@ -12,7 +13,7 @@ import type { Suggestion, AIService } from "./types.js";
 export class SuggestionDiversityEnforcer {
   private readonly maxLlmReplacements = 2;
 
-  constructor(private readonly ai: AIService) {}
+  constructor(private readonly ai: AIExecutionPort) {}
 
   /**
    * Ensure diverse suggestions by replacing too-similar ones

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { KeyframeTile } from "../../types";
-import type { CameraPath } from "@/features/convergence/types";
+import type { CameraPath } from "@shared/cameraMotion";
 import {
   DEFAULT_GENERATION_CONTROLS_STATE,
   type GenerationControlsState,

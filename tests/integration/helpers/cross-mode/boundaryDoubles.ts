@@ -18,10 +18,10 @@ import type { SessionRecord } from "@server/domain/session/types";
 import type {
   VideoJobAttachment,
   VideoJobRecord,
-} from "@services/video-generation/jobs/types";
+} from "@services/video-generation/runtime/types";
 import type { VideoGenerationResult } from "@services/video-generation/types";
 import type { AdmissionIdempotencyClaim } from "@services/admission/admitPictureTake";
-import type { CreditRefunder } from "@services/credits/ports";
+import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 
 /**
  * Controlled adapters for every process-external boundary the cross-mode

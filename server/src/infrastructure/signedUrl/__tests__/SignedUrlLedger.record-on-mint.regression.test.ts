@@ -5,7 +5,6 @@ import { createFakeBucket, SIGNATURE } from "./fakeGcsSigning";
 import { SignedUrlService } from "@services/storage/services/SignedUrlService";
 import { GcsImageAssetStore } from "@services/image-generation/storage/GcsImageAssetStore";
 import { GcsVideoAssetStore } from "@services/video-generation/storage/GcsVideoAssetStore";
-import { GCSStorageService } from "@services/convergence/storage/StorageService";
 
 /**
  * Regression companion to the media-proxy rescue hardening: the rescue only
@@ -94,26 +93,5 @@ describe("regression: every mint site records a v4 grant on the ledger", () => {
     expect(
       await ledger.isMintedGrant("video-previews/asset-7", SIGNATURE),
     ).toBe(true);
-  });
-
-  it("the convergence store records the grant behind uploadBuffer", async () => {
-    const ledger = makeLedger();
-    const bucket = createFakeBucket();
-    const store = new GCSStorageService(
-      bucket as never,
-      new SignedUrlMinter(bucket as never, ledger),
-      3_600_000,
-    );
-
-    const url = await store.uploadBuffer(
-      Buffer.from([0x89, 0x50, 0x4e, 0x47]),
-      "user-1",
-      "image/png",
-      "frame",
-    );
-    await settle();
-
-    expect(new URL(url).searchParams.get("X-Goog-Signature")).toBe(SIGNATURE);
-    expect(await ledger.isMintedGrant(objectPathOf(url), SIGNATURE)).toBe(true);
   });
 });

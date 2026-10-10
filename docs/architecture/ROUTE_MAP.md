@@ -8,47 +8,18 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | Method | Full path                                                        | Source file                                                    |
 | ------ | ---------------------------------------------------------------- | -------------------------------------------------------------- |
 | GET    | `/api-docs`                                                      | `server/src/openapi/devRoute.ts`                               |
-| GET    | `/api/assets`                                                    | `server/src/routes/asset.routes.ts`                            |
-| POST   | `/api/assets`                                                    | `server/src/routes/asset.routes.ts`                            |
-| DELETE | `/api/assets/:id`                                                | `server/src/routes/asset.routes.ts`                            |
-| GET    | `/api/assets/:id`                                                | `server/src/routes/asset.routes.ts`                            |
-| PATCH  | `/api/assets/:id`                                                | `server/src/routes/asset.routes.ts`                            |
-| GET    | `/api/assets/:id/for-generation`                                 | `server/src/routes/asset.routes.ts`                            |
-| POST   | `/api/assets/:id/images`                                         | `server/src/routes/asset.routes.ts`                            |
-| DELETE | `/api/assets/:id/images/:imageId`                                | `server/src/routes/asset.routes.ts`                            |
-| PATCH  | `/api/assets/:id/images/:imageId/primary`                        | `server/src/routes/asset.routes.ts`                            |
-| POST   | `/api/assets/resolve`                                            | `server/src/routes/asset.routes.ts`                            |
-| GET    | `/api/assets/suggestions`                                        | `server/src/routes/asset.routes.ts`                            |
-| POST   | `/api/assets/validate`                                           | `server/src/routes/asset.routes.ts`                            |
 | GET    | `/api/capabilities`                                              | `server/src/routes/capabilities.routes.ts`                     |
 | POST   | `/api/enhancement/custom-suggestions`                            | `server/src/routes/enhancement/customSuggestionsRoute.ts`      |
-| POST   | `/api/enhancement/observe-image`                                 | `server/src/routes/image-observation.routes.ts`                |
-| POST   | `/api/enhancement/prompt-coherence`                              | `server/src/routes/enhancement/coherenceCheckRoute.ts`         |
 | POST   | `/api/enhancement/scene-change`                                  | `server/src/routes/enhancement/sceneChangeRoute.ts`            |
 | POST   | `/api/enhancement/suggestions`                                   | `server/src/routes/enhancement/enhancementSuggestionsRoute.ts` |
 | GET    | `/api/enhancement/test-nlp`                                      | `server/src/routes/enhancement/nlpTestRoute.ts`                |
 | POST   | `/api/fal/i2i`                                                   | `server/src/routes/fal-i2i.routes.ts`                          |
-| POST   | `/api/generate/consistent/keyframe`                              | `server/src/routes/consistentGeneration.routes.ts`             |
 | POST   | `/api/llm/label-spans`                                           | `server/src/routes/labelSpansRoute.ts`                         |
 | POST   | `/api/llm/label-spans/stream`                                    | `server/src/routes/labelSpansRoute.ts`                         |
-| POST   | `/api/model-intelligence/recommend`                              | `server/src/routes/model-intelligence.routes.ts`               |
-| POST   | `/api/model-intelligence/track`                                  | `server/src/routes/model-intelligence.routes.ts`               |
 | GET    | `/api/models`                                                    | `server/src/routes/capabilities.routes.ts`                     |
-| POST   | `/api/motion/depth`                                              | `server/src/routes/motion.routes.ts`                           |
-| GET    | `/api/motion/media/proxy`                                        | `server/src/routes/convergence/convergenceMedia.routes.ts`     |
-| POST   | `/api/motion/media/upload-image`                                 | `server/src/routes/convergence/convergenceMedia.routes.ts`     |
 | POST   | `/api/optimize`                                                  | `server/src/routes/optimize.routes.ts`                         |
 | POST   | `/api/optimize-compile`                                          | `server/src/routes/optimize.routes.ts`                         |
-| POST   | `/api/payment/checkout`                                          | `server/src/routes/payment.routes.ts`                          |
-| GET    | `/api/payment/credits/balance`                                   | `server/src/routes/payment.routes.ts`                          |
-| GET    | `/api/payment/credits/history`                                   | `server/src/routes/payment.routes.ts`                          |
-| GET    | `/api/payment/invoices`                                          | `server/src/routes/payment.routes.ts`                          |
-| POST   | `/api/payment/portal`                                            | `server/src/routes/payment.routes.ts`                          |
-| GET    | `/api/payment/status`                                            | `server/src/routes/payment.routes.ts`                          |
-| POST   | `/api/payment/webhook`                                           | `server/src/routes/payment.routes.ts`                          |
-| POST   | `/api/preview/face-swap`                                         | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/generate`                                          | `server/src/routes/preview.routes.ts`                          |
-| POST   | `/api/preview/generate/storyboard`                               | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/image/content/:contentId`                          | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/image/view`                                        | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/image/view-batch`                                  | `server/src/routes/preview.routes.ts`                          |
@@ -64,10 +35,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/preview/video/view`                                        | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/providers`                                                 | `server/src/routes/capabilities.routes.ts`                     |
 | GET    | `/api/public/share/:shareId`                                     | `server/src/routes/share.routes.ts`                            |
-| GET    | `/api/reference-images`                                          | `server/src/routes/reference-images.routes.ts`                 |
-| POST   | `/api/reference-images`                                          | `server/src/routes/reference-images.routes.ts`                 |
-| DELETE | `/api/reference-images/:id`                                      | `server/src/routes/reference-images.routes.ts`                 |
-| POST   | `/api/reference-images/from-url`                                 | `server/src/routes/reference-images.routes.ts`                 |
 | GET    | `/api/registry`                                                  | `server/src/routes/capabilities.routes.ts`                     |
 | GET    | `/api/sessions`                                                  | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions`                                                  | `server/src/routes/sessions.routes.ts`                         |
@@ -75,19 +42,8 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/sessions/:sessionId`                                       | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/first-frame/arm`                       | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/generations/:generationId/archive`     | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/:sessionId/scene-proxy`                           | `server/src/routes/sessions.routes.ts`                         |
-| PUT    | `/api/sessions/:sessionId/settings`                              | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/:sessionId/shots`                                 | `server/src/routes/sessions.routes.ts`                         |
-| PATCH  | `/api/sessions/:sessionId/shots/:shotId`                         | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/:sessionId/shots/:shotId/generate`                | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/:sessionId/shots/:shotId/generate-stream`         | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/:sessionId/shots/:shotId/scene-proxy-preview`     | `server/src/routes/sessions.routes.ts`                         |
-| GET    | `/api/sessions/:sessionId/shots/:shotId/status`                  | `server/src/routes/sessions.routes.ts`                         |
-| PUT    | `/api/sessions/:sessionId/shots/:shotId/style-reference`         | `server/src/routes/sessions.routes.ts`                         |
-| PUT    | `/api/sessions/:sessionId/style-reference`                       | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/versions/:versionId/generations`       | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/by-prompt/:uuid`                                  | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/continuity`                                       | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/share`                                                     | `server/src/routes/share.routes.ts`                            |
 | POST   | `/api/sketch/accept`                                             | `server/src/routes/sketch-accept.routes.ts`                    |
 | GET    | `/api/sketch/accept/unresolved`                                  | `server/src/routes/sketch-accept.routes.ts`                    |
@@ -119,4 +75,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                                   | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                  | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **111**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **67**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

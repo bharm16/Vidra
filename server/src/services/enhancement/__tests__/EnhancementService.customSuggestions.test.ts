@@ -1,8 +1,8 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CacheService } from "@services/cache/CacheService";
 import { EnhancementService } from "../EnhancementService";
 import type {
-  AIService,
   BrainstormBuilder,
   DiversityEnforcer,
   VideoService,
@@ -41,7 +41,7 @@ function createService(responses: string[] = []) {
       viaFallback: false,
     })),
     execute,
-  } as unknown as AIService;
+  } as unknown as AIExecutionPort;
 
   const videoPromptService = {
     isVideoPrompt: vi.fn(() => true),

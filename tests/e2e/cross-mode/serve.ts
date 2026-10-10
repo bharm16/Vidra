@@ -9,13 +9,11 @@ import type { InMemoryObjectStore } from "#tests/integration/helpers/cross-mode/
 
 process.env.GCS_BUCKET_NAME = "prompt-builder-test-bucket";
 process.env.ALLOWED_ORIGINS = "http://127.0.0.1:58141";
-process.env.ENABLE_CONVERGENCE = "false";
 process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE = "soft";
 process.env.VITE_FIREBASE_API_KEY = "synthetic-firebase-key";
 process.env.VITE_FIREBASE_PROJECT_ID = "demo-browser-proof";
 process.env.VIDEO_JOB_WORKER_ENABLED = "false";
 process.env.VIDEO_JOB_INLINE_ENABLED = "true";
-process.env.DEPTH_WARMUP_ON_STARTUP = "false";
 
 const frame = await readFile(new URL("./frame.png", import.meta.url));
 const blueFrame = await readFile(new URL("./frame-blue.png", import.meta.url));
@@ -24,49 +22,8 @@ const providerCalls: Array<Record<string, unknown>> = [];
 let objectStore: InMemoryObjectStore | undefined;
 let failAppend = false;
 let failArming = false;
-let depthAvailable = false;
-const depthInputs: Array<unknown> = [];
 
 const harness = await startCrossModeHarness({
-  outboundRoutes: {
-    "queue.fal.run": async (value, init): Promise<Response> => {
-      const url = new URL(value);
-      const endpoint = "/fal-ai/image-preprocessors/depth-anything/v2";
-      if (
-        !depthAvailable ||
-        !(
-          url.pathname.startsWith(endpoint) ||
-          url.pathname.startsWith(
-            "/fal-ai/image-preprocessors/requests/browser-depth-fixture",
-          )
-        )
-      )
-        throw new Error("Unscripted fal queue request");
-      const requestId = "browser-depth-fixture";
-      const responseUrl = `https://queue.fal.run${endpoint}/requests/${requestId}`;
-      const queue = {
-        request_id: requestId,
-        status: "COMPLETED",
-        response_url: responseUrl,
-        status_url: `${responseUrl}/status`,
-        cancel_url: `${responseUrl}/cancel`,
-        logs: [],
-      };
-      if (init?.method === "POST") {
-        depthInputs.push(JSON.parse(String(init.body)) as unknown);
-        return Response.json(queue);
-      }
-      if (url.pathname.endsWith("/status")) return Response.json(queue);
-      if (!objectStore) throw new Error("Object boundary unavailable");
-      return Response.json({
-        image: {
-          url: objectStore.urlFor("provider/depth-fixture.png"),
-          width: 32,
-          height: 32,
-        },
-      });
-    },
-  },
   async configureBoundaries({
     container,
     objects,
@@ -76,10 +33,6 @@ const harness = await startCrossModeHarness({
     idempotency,
   }): Promise<void> {
     objectStore = objects;
-    objects.put("provider/depth-fixture.png", {
-      buffer: frame,
-      contentType: "image/png",
-    });
     const {
       BrowserAIProvider,
       BrowserVideoJobStore,
@@ -165,12 +118,6 @@ const harness = await startCrossModeHarness({
   },
 });
 
-// The mounted sketch relay captured its synthetic key at registration. Depth's
-// independent factory reads env per request; exercise the real unavailable
-// response without constructing a paid depth client.
-for (const key of ["FAL_KEY", "FAL_API_KEY", "FAL_KEY_ID", "FAL_KEY_SECRET"])
-  delete process.env[key];
-
 const vite = await createServer({
   configFile: "config/build/vite.config.ts",
   plugins: [
@@ -255,9 +202,6 @@ const control = async (
   if (url.pathname === "/__test/fault") {
     failAppend = url.searchParams.get("append") === "fail";
     failArming = url.searchParams.get("arm") === "fail";
-    depthAvailable = url.searchParams.get("depth") === "available";
-    if (depthAvailable) process.env.FAL_KEY = "synthetic-depth-key";
-    else delete process.env.FAL_KEY;
     if (url.searchParams.get("concurrent") === "2")
       harness.images.releaseTogether(2);
     res.end("ok");
@@ -270,7 +214,6 @@ const control = async (
         sessions: await harness.sessions.findByUser(CROSS_MODE_USER_ID),
         providerCalls,
         outbound: harness.guard.violations,
-        depthInputs,
       }),
     );
     return;

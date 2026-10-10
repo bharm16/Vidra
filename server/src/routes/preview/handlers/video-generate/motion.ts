@@ -1,5 +1,6 @@
+const CAMERA_MOTION_KEY = "camera_motion_id";
+const SUBJECT_MOTION_KEY = "subject_motion";
 import { describeCameraMotion, CAMERA_PATHS } from "#shared/cameraMotion";
-import { CAMERA_MOTION_KEY, SUBJECT_MOTION_KEY } from "./constants";
 
 export interface MotionContext {
   cameraMotionId: string | null;

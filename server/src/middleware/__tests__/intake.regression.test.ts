@@ -6,10 +6,8 @@ import { ApiErrorResponseSchema } from "@shared/schemas/api.schemas";
 import { handle, requireBody, requireCreatorId } from "../intake";
 import { createShareRouter } from "@routes/share.routes";
 import { createStorageRoutes } from "@routes/storage.routes";
-import { createAssetRoutes } from "@routes/asset.routes";
 import type { ShareService } from "@services/share/ShareService";
 import type { StorageRoutesService } from "@routes/storage.routes";
-import type { AssetService } from "@services/asset/AssetService";
 
 /**
  * Invariant: there is exactly ONE 401 body and exactly ONE 400 body on this
@@ -71,12 +69,6 @@ const storageService = (): StorageRoutesService =>
     getStorageUsage: vi.fn(async () => ({ bytes: 0 })),
   }) as unknown as StorageRoutesService;
 
-const assetService = (): AssetService =>
-  ({
-    createAsset: vi.fn(async () => ({ id: "a1" })),
-    resolvePrompt: vi.fn(async () => ({ resolved: "x" })),
-  }) as unknown as AssetService;
-
 /** Mount a router with an optional signed-in Creator. */
 const mount = (
   path: string,
@@ -112,11 +104,6 @@ describe("intake — one 401 shape across previously-divergent routes", () => {
       build: () => mount("/storage", createStorageRoutes(storageService())),
       send: (app) => request(app).get("/storage/usage"),
     },
-    {
-      name: "asset.routes (was requireUserId, no body validation)",
-      build: () => mount("/assets", createAssetRoutes(assetService())),
-      send: (app) => request(app).post("/assets").send({}),
-    },
   ];
 
   for (const { name, build, send } of cases) {
@@ -146,16 +133,6 @@ describe("intake — one 400 shape across previously-divergent routes", () => {
       name: "share.routes (was 'Invalid share request', no code)",
       build: () => mount("/share", createShareRouter(shareService()), "u1"),
       send: (app) => request(app).post("/share").send({}),
-    },
-    {
-      name: "asset.routes POST / (validated nothing — 500 on a missing field)",
-      build: () => mount("/assets", createAssetRoutes(assetService()), "u1"),
-      send: (app) => request(app).post("/assets").send({ type: "character" }),
-    },
-    {
-      name: "asset.routes POST /resolve (was 'prompt is required', no code)",
-      build: () => mount("/assets", createAssetRoutes(assetService()), "u1"),
-      send: (app) => request(app).post("/assets/resolve").send({}),
     },
   ];
 

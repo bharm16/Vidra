@@ -1,6 +1,4 @@
-import OpenAI from "openai";
 import Replicate from "replicate";
-import { LumaAI } from "lumaai";
 
 /**
  * SDK construction for the video-generation providers.
@@ -46,50 +44,6 @@ export function createReplicateVideoClient(
     return null;
   }
   return new Replicate({ auth: apiToken });
-}
-
-export function createSoraVideoClient(
-  apiKey: string | undefined,
-  log: WarnSink,
-): OpenAI | null {
-  if (!apiKey) {
-    log.warn(
-      "OPENAI_API_KEY not provided, Sora video generation will be disabled",
-    );
-    return null;
-  }
-  return new OpenAI({ apiKey });
-}
-
-export function createLumaVideoClient(
-  apiKey: string | undefined,
-  log: WarnSink,
-): LumaAI | null {
-  if (!apiKey) {
-    log.warn(
-      "LUMA_API_KEY or LUMAAI_API_KEY not provided, Luma video generation will be disabled",
-    );
-    return null;
-  }
-  return new LumaAI({ authToken: apiKey });
-}
-
-/**
- * Kling and Veo have no SDK — they are raw HTTP — so their "client" is the
- * credential itself. These exist so the missing-key warning stays uniform
- * across all five providers instead of only the three with SDKs.
- */
-export function resolveKlingCredential(
-  apiKey: string | undefined,
-  log: WarnSink,
-): string | null {
-  if (!apiKey) {
-    log.warn(
-      "KLING_API_KEY not provided, Kling video generation will be disabled",
-    );
-    return null;
-  }
-  return apiKey;
 }
 
 export function resolveVeoCredential(

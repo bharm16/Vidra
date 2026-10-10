@@ -1,33 +1,35 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AUTH_COLORS } from "./auth/auth-styles";
 
 export function NotFoundPage(): React.ReactElement {
   return (
     <div
       className="h-full overflow-y-auto"
-      style={{ background: AUTH_COLORS.bg }}
+      style={{ background: "var(--background)" }}
     >
-      <div className="mx-auto max-w-md px-4 sm:px-6 pt-24 pb-16 text-center">
+      <div className="mx-auto max-w-md px-4 pb-16 pt-24 text-center sm:px-6">
         <p
           className="text-meta font-semibold tracking-[0.2em]"
-          style={{ color: AUTH_COLORS.textLabel }}
+          style={{ color: "var(--ghost-foreground)" }}
         >
           404
         </p>
-        <h1 className="mt-2 text-ui font-semibold text-white tracking-tight">
+        <h1 className="text-ui mt-2 font-semibold tracking-tight text-white">
           Page not found
         </h1>
         <p
-          className="mt-2 text-ui"
-          style={{ color: AUTH_COLORS.textSecondary }}
+          className="text-ui mt-2"
+          style={{ color: "var(--muted-foreground)" }}
         >
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <Link
           to="/"
-          className="mt-5 inline-flex h-9 items-center rounded-lg px-4 text-ui font-semibold transition"
-          style={{ background: AUTH_COLORS.accent, color: AUTH_COLORS.bg }}
+          className="text-ui mt-5 inline-flex h-9 items-center rounded-lg px-4 font-semibold transition"
+          style={{
+            background: "var(--foreground)",
+            color: "var(--background)",
+          }}
         >
           Back to workspace
         </Link>

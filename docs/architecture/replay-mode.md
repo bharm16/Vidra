@@ -87,13 +87,7 @@ replay integration suite handles them as follows:
   [cross-mode-golden-path.md](cross-mode-golden-path.md) for the full table.
   The Idea Box suite still exercises first-frame preview at the provider seam
   only, which is why its cassette covers the provider call and not the route.
-- **Credits** (Firestore `userCreditService`): the cross-mode replay does not
-  exercise credit reservations or the video HTTP intake. It injects a refund
-  witness at the job processor and asserts no refund on this controlled path.
-  ADR-0022 decision 6 opens session attachment only; decision 8 keeps credits
-  out of the product. Existing picture/clip HTTP intake still reserves credits;
-  #120/#123/#124 must settle the operating policy and its implementation.
-  A replay pass does not establish that a creator can generate through HTTP.
+- **Legacy refunds** (`video-generation/refunds/`): the cross-mode replay injects a refund witness at the job processor and asserts no refund on its controlled path. Current picture/clip HTTP intake reserves zero credits; its authentication, receipt publication, replay and failure contracts are covered by the free-intake HTTP suites and browser journey. A replay pass alone does not qualify a live provider or deployed intake.
 - **Telemetry** (`llmCallTelemetryService`, Firestore-backed): only injected
   in record mode; replay mode runs without it.
 

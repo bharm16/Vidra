@@ -9,15 +9,12 @@ import React, {
 } from "react";
 import debounce from "lodash/debounce";
 import type { CapabilityValues } from "@shared/capabilities";
-import type { CameraPath } from "@/features/convergence/types";
+import type { CameraPath } from "@shared/cameraMotion";
 import type { KeyframeTile, VideoTier } from "../types";
 import {
   DEFAULT_GENERATION_CONTROLS_STATE,
   type ExtendVideoSource,
   type GenerationControlsState,
-  type GenerationControlsTab,
-  type ImageSubTab,
-  type VideoReferenceImage,
 } from "./generationControlsStoreTypes";
 import {
   loadGenerationControlsStoreState,

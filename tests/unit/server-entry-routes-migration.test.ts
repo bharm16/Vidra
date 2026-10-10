@@ -10,7 +10,6 @@ vi.mock("@config/routes.config", () => ({
   configureRoutes: vi.fn(),
 }));
 
-
 import * as middlewareConfig from "@config/middleware.config";
 import * as routesConfig from "@config/routes.config";
 import { createApp } from "@server/app";
@@ -60,9 +59,6 @@ const createApiServices = (
       reasoning: "",
       suggestedUpdates: {},
     })),
-  },
-  promptCoherenceService: {
-    checkCoherence: vi.fn(async () => ({ conflicts: [], harmonizations: [] })),
   },
   suggestionsTelemetryService: {
     startSuggestionsTrace: vi.fn(() => ({
@@ -341,4 +337,3 @@ describe("api.routes", () => {
     );
   });
 });
-

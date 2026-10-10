@@ -125,7 +125,6 @@ function createTestContainer(overrides: { gcsBucket?: object } = {}): {
     promptOptimizationService: stubService,
     enhancementService: stubService,
     sceneDetectionService: stubService,
-    promptCoherenceService: stubService,
     spanLabelingCacheService: stubService,
     config: stubConfig,
   };

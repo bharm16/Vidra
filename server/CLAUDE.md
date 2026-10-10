@@ -1,103 +1,13 @@
-# Server (Backend)
+# Server
 
-Express API server for Vidra.
+Follow [../CLAUDE.md](../CLAUDE.md). Express, TypeScript/tsx, ESM, Firebase Admin, optional Redis and Pino.
 
-Commit protocol, TypeScript rules, and change scope limits are defined in the root `CLAUDE.md` — all rules apply here.
-Root `AGENTS.md` rules apply here — especially the non-negotiable rules and commit protocol.
+- Use constructor injection and canonical domain imports. Keep response shaping in thin routes and coordinate domains through explicit ports at registration.
+- Validate requests with Zod; use canonical envelopes from `middleware/respond.ts` and typed domain errors for error middleware.
+- Text LLM calls go through `aiService`; SDK construction belongs in `clients/`. Keep service-owned prompt templates beside their owner.
+- `admission/idempotency/` owns durable receipts. `video-generation/runtime/` owns records, leases, completion, terminal evidence and clip attachment recovery.
+- `video-generation/refunds/` retains legacy charged-job/refund-debt compatibility. Free intake reserves zero credits; charged jobs require a refunder.
+- Generic sessions and shared schemas still read historical continuity/camera/provider fields. Their execution backends are retired.
+- Preserve media ownership, signed-URL grants and original take/session/version identity during recovery.
 
-## Stack
-
-- Node.js 20, Express, TypeScript via tsx
-- ESM (`"type": "module"`)
-- LLM providers: OpenAI, Gemini, Groq (routed through `aiService` only)
-- Firebase Admin for auth and storage
-- Stripe for payments
-- Redis (optional) for caching
-- Pino for structured logging
-
-## Commands
-
-```bash
-npm run server      # Start dev server (port 3001)
-npm run server:e2e  # Start server in test mode
-
-# Integration test gate (run when modifying DI config, app.ts, server.ts, or server/index.ts):
-PORT=0 npx vitest run tests/integration/bootstrap.integration.test.ts tests/integration/di-container.integration.test.ts --config config/test/vitest.integration.config.js
-```
-
-## Structure
-
-```
-server/
-├── index.ts               # Entry point
-├── src/
-│   ├── app.ts             # Express app setup
-│   ├── server.ts          # HTTP server wiring
-│   ├── errors/            # DomainError base class
-│   ├── infrastructure/    # DIContainer, Logger
-│   ├── openapi/           # OpenAPI spec builder
-│   ├── replay/            # Record/replay cassette seam (REPLAY_MODE)
-│   ├── config/
-│   │   └── services/      # DI registration (domain-scoped)
-│   ├── services/          # Business logic (domain subdirectories)
-│   ├── routes/            # HTTP route handlers
-│   ├── clients/           # External API clients (LLM, etc.)
-│   ├── llm/               # LLM orchestration and span labeling
-│   ├── middleware/        # Express middleware, incl. respond.ts envelope helpers
-│   ├── schemas/           # Zod validation schemas
-│   ├── contracts/         # Request/response contracts
-│   └── utils/             # Shared helpers
-```
-
-## Architecture Pattern
-
-Follow the **PromptOptimizationService** pattern in `server/src/services/prompt-optimization/`:
-
-```
-ServiceName/
-├── ServiceNameService.ts  # Thin orchestrator (delegates, no business logic)
-├── services/              # Specialized sub-services
-│   ├── SubService1.ts
-│   └── SubService2.ts
-└── types.ts               # Service-specific types
-```
-
-Services that own an LLM prompt keep its `.md` template in a sibling `templates/` directory (see `studio/`, `model-intelligence/`, `image-observation/`, `llm/span-labeling/`).
-
-## Conventions
-
-### Routes
-
-- Keep route handlers thin — all business logic in services
-- Validate request body with Zod schemas
-- Return the canonical envelope through `respond.ok` / `respond.fail` from `server/src/middleware/respond.ts`
-
-### Services
-
-- Single responsibility per service
-- Inject dependencies via constructor — never call `container.resolve()` in service code
-- Use external `.md` files for LLM prompt templates
-- Structured logging with Pino
-
-### LLM Access
-
-- All LLM calls go through `aiService` — never call provider clients directly
-- Provider clients live in `clients/` with adapters
-- Rate limits and retries handled at client level
-
-### Frontend-Backend Boundary
-
-- **NEVER** import from `client/src/` — only from `#shared/*` or server-local code
-- Routes return general-purpose DTOs, not shapes tailored to specific UI components
-- If a server change seems to require a `shared/` type change, stop and ask whether a server-local type would suffice
-- For genuine cross-layer changes: see `.claude/skills/cross-layer-change/SKILL.md`
-
-### Error Handling
-
-- Throw subclasses of `DomainError` (`server/src/errors/DomainError.ts`); the error middleware maps them to status codes
-- Log errors with context using Pino
-- Return appropriate HTTP status codes
-
-## Reference Docs
-
-- Logging patterns: `docs/architecture/typescript/LOGGING_PATTERNS.md`
+Read [integration-test guidance](../.agents/skills/integration-test/SKILL.md) before writing integration tests. Registration/startup changes require the root bootstrap/DI gate. Logging reference: [LOGGING_PATTERNS.md](../docs/architecture/typescript/LOGGING_PATTERNS.md).

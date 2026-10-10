@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { KeyframeTile } from "../types";
-import type { CameraPath } from "@/features/convergence/types";
-import { CAMERA_MOTION_CATEGORIES } from "@/features/convergence/types";
+import type { CameraPath } from "@shared/cameraMotion";
+import { CAMERA_MOTION_CATEGORIES } from "@shared/cameraMotion";
 
 const STORAGE_KEYS = {
   cameraMotion: "generation-controls:cameraMotion",
@@ -76,8 +76,6 @@ export const loadSubjectMotion = (): string => {
   }
 };
 
-
-
 export const loadActiveTab = (): "video" | "image" => {
   if (typeof window === "undefined") return "video";
   try {
@@ -90,7 +88,6 @@ export const loadActiveTab = (): "video" | "image" => {
   }
 };
 
-
 export const loadImageSubTab = (): "references" | "styles" => {
   if (typeof window === "undefined") return "references";
   try {
@@ -102,7 +99,6 @@ export const loadImageSubTab = (): "references" | "styles" => {
     return "references";
   }
 };
-
 
 const KeyframeTileSchema = z.object({
   id: z.string(),
@@ -127,4 +123,3 @@ export const loadKeyframes = (): KeyframeTile[] => {
     return [];
   }
 };
-

@@ -18,9 +18,6 @@ function createApp(overrides?: {
   sceneDetectionService?: {
     detectSceneChange?: ReturnType<typeof vi.fn>;
   };
-  promptCoherenceService?: {
-    checkCoherence?: ReturnType<typeof vi.fn>;
-  };
 }) {
   const enhancementService = {
     getEnhancementSuggestions: vi.fn(async () => ({
@@ -49,14 +46,6 @@ function createApp(overrides?: {
     ...overrides?.sceneDetectionService,
   };
 
-  const promptCoherenceService = {
-    checkCoherence: vi.fn(async () => ({
-      conflicts: [],
-      harmonizations: [],
-    })),
-    ...overrides?.promptCoherenceService,
-  };
-
   const suggestionsTelemetryService = {
     startSuggestionsTrace: vi.fn(() => ({
       recordStage: vi.fn(),
@@ -72,7 +61,6 @@ function createApp(overrides?: {
     createEnhancementRoutes({
       enhancementService,
       sceneDetectionService,
-      promptCoherenceService,
       suggestionsTelemetryService: suggestionsTelemetryService as never,
     }),
   );
@@ -93,7 +81,6 @@ function createApp(overrides?: {
     app,
     enhancementService,
     sceneDetectionService,
-    promptCoherenceService,
   };
 }
 
@@ -188,19 +175,6 @@ describe("enhancement routes", () => {
       .send({
         highlightedText: "runner",
         fullPrompt: "A runner in rain",
-      });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe("Invalid request");
-  });
-
-  it("returns 400 for invalid coherence check requests", async () => {
-    const { app } = createApp();
-
-    const response = await request(app)
-      .post("/enhancement/prompt-coherence")
-      .send({
-        beforePrompt: "A runner in rain",
       });
 
     expect(response.status).toBe(400);

@@ -3,9 +3,9 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { createVideoGenerateHandler } from "@routes/preview/handlers/videoGenerate";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
-import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
+import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { InMemoryIdempotencyService } from "../integration/helpers/cross-mode/boundaryDoubles";
 
 /** Public HTTP prompt truth, with external persistence/provider ports controlled. */

@@ -3,16 +3,12 @@ import { join, resolve } from "node:path";
 import { describe, it, expect } from "vitest";
 
 /**
- * Architecture test enforcing the bidirectional decoupling between
- * `server/src/services/sessions/` and `server/src/services/continuity/`.
- *
- * Neither service domain may import from the other. Shared type and
- * helper code lives in `server/src/domain/` and `server/src/utils/`.
+ * Generic sessions stay independent of the retired continuity execution domain.
+ * Historical serialization contracts live in `server/src/domain/`.
  */
 
 const REPO_ROOT = process.cwd();
 const SESSIONS_DIR = resolve(REPO_ROOT, "server/src/services/sessions");
-const CONTINUITY_DIR = resolve(REPO_ROOT, "server/src/services/continuity");
 
 type Violation = { file: string; import: string };
 
@@ -73,11 +69,6 @@ const collectViolations = (
 };
 
 describe("sessions <-> continuity decoupling", () => {
-  it("services/continuity/ imports nothing from @services/sessions", () => {
-    const violations = collectViolations(CONTINUITY_DIR, "@services/sessions");
-    expect(violations).toEqual([]);
-  });
-
   it("services/sessions/ imports nothing from @services/continuity", () => {
     const violations = collectViolations(SESSIONS_DIR, "@services/continuity");
     expect(violations).toEqual([]);

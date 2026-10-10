@@ -22,7 +22,6 @@ type ImageGenerateServices = Pick<
   PreviewRoutesServices,
   | "imageGenerationService"
   | "userCreditService"
-  | "assetService"
   | "storageService"
   | "requestIdempotencyService"
   | "sessionService"
@@ -41,7 +40,6 @@ const hasPromptTriggers = (prompt: string): boolean =>
 export const createImageGenerateHandler =
   ({
     imageGenerationService,
-    assetService,
     storageService,
     requestIdempotencyService,
     sessionService,
@@ -289,44 +287,6 @@ export const createImageGenerateHandler =
     const shouldResolvePrompt = hasPromptTriggers(resolvedPrompt);
     let resolvedAssetCount = 0;
     let resolvedCharacterCount = 0;
-
-    if (shouldResolvePrompt) {
-      if (!assetService) {
-        logger.warn("Asset service unavailable for image prompt resolution", {
-          userId,
-          path: req.path,
-        });
-      } else {
-        try {
-          const resolved = await assetService.resolvePrompt(
-            userId,
-            resolvedPrompt,
-          );
-          const expandedPrompt = resolved.expandedText.trim();
-          if (expandedPrompt.length > 0) {
-            resolvedPrompt = expandedPrompt;
-          }
-          resolvedAssetCount = resolved.assets.length;
-          resolvedCharacterCount = resolved.characters.length;
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-          logger.error(
-            "Image prompt resolution failed",
-            error instanceof Error ? error : new Error(errorMessage),
-            {
-              userId,
-              path: req.path,
-            },
-          );
-          return await respondWithError(500, {
-            error: "Image prompt resolution failed",
-            code: GENERATION_ERROR_CODES.GENERATION_FAILED,
-            details: errorMessage,
-          });
-        }
-      }
-    }
 
     try {
       const result = await imageGenerationService.generatePreview(

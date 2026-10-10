@@ -83,7 +83,7 @@ const buildApp = (service: SessionService): express.Express => {
     };
     next();
   });
-  app.use("/sessions", createSessionRoutes(service, null, null));
+  app.use("/sessions", createSessionRoutes(service));
   return app;
 };
 
@@ -152,10 +152,7 @@ describe("sessions routes — canonical envelope contract", () => {
   it("unauthenticated requests return the error envelope", async () => {
     const app = express();
     app.use(express.json());
-    app.use(
-      "/sessions",
-      createSessionRoutes(buildSessionService(), null, null),
-    );
+    app.use("/sessions", createSessionRoutes(buildSessionService()));
 
     const response = await runSupertestOrSkip(() =>
       request(app).get("/sessions"),

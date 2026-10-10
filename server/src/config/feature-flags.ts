@@ -80,14 +80,6 @@ export interface FlagResolution<T> {
 // ─── Flag registry ─────────────────────────────────────────────────
 
 const MODE_FLAGS = {
-  convergence: {
-    kind: "bool",
-    envName: "ENABLE_CONVERGENCE",
-    default: true,
-    description:
-      "Enables continuity/convergence services. When false, continuitySessionService resolves to null.",
-    category: "mode",
-  },
   studio: {
     kind: "bool",
     envName: "ENABLE_STUDIO",
@@ -115,20 +107,6 @@ const WORKER_FLAGS = {
  * (default `true`).
  */
 const KILLSWITCH_FLAGS = {
-  webhookReconciliationEnabled: {
-    kind: "bool",
-    envName: "WEBHOOK_RECONCILIATION_ENABLED",
-    default: true,
-    description: "Stripe webhook reconciliation background service.",
-    category: "killswitch",
-  },
-  billingProfileRepairEnabled: {
-    kind: "bool",
-    envName: "BILLING_PROFILE_REPAIR_ENABLED",
-    default: true,
-    description: "Billing profile repair background worker.",
-    category: "killswitch",
-  },
   creditRefundSweeperEnabled: {
     kind: "bool",
     envName: "CREDIT_REFUND_SWEEPER_ENABLED",
@@ -136,43 +114,11 @@ const KILLSWITCH_FLAGS = {
     description: "Credit refund sweeper background service.",
     category: "killswitch",
   },
-  creditReconciliationEnabled: {
-    kind: "bool",
-    envName: "CREDIT_RECONCILIATION_ENABLED",
-    default: true,
-    description: "Credit reconciliation background service.",
-    category: "killswitch",
-  },
-  videoJobSweeperEnabled: {
-    kind: "bool",
-    envName: "VIDEO_JOB_SWEEPER_ENABLED",
-    default: true,
-    description: "Video job stale-task sweeper.",
-    category: "killswitch",
-  },
-  videoDlqReprocessorEnabled: {
-    kind: "bool",
-    envName: "VIDEO_DLQ_REPROCESSOR_ENABLED",
-    default: true,
-    description: "Dead-letter-queue reprocessor for failed video jobs.",
-    category: "killswitch",
-  },
   videoAssetRetentionEnabled: {
     kind: "bool",
     envName: "VIDEO_ASSET_RETENTION_ENABLED",
     default: true,
     description: "Video asset cleanup/retention service.",
-    category: "killswitch",
-  },
-  /**
-   * Orphan-detection reconciler. Opt-in (default off).
-   */
-  videoAssetReconcilerEnabled: {
-    kind: "bool",
-    envName: "VIDEO_ASSET_RECONCILER_ENABLED",
-    default: false,
-    description:
-      "Video asset orphan-detection reconciler. Opt-in (default off).",
     category: "killswitch",
   },
 } as const satisfies Record<string, FlagDef>;
@@ -196,38 +142,7 @@ const PROVIDER_FLAGS = {
   },
 } as const satisfies Record<string, FlagDef>;
 
-const EXPERIMENTAL_FLAGS = {
-  faceEmbeddingEnabled: {
-    kind: "bool",
-    envName: "ENABLE_FACE_EMBEDDING",
-    default: false,
-    description:
-      "Enables face embedding service for continuity quality gates. Requires Replicate API token.",
-    category: "experimental",
-    requiresEnv: ["REPLICATE_API_TOKEN"],
-    dependsOn: ["ENABLE_CONVERGENCE"],
-  },
-  continuityClipEnabled: {
-    kind: "bool",
-    envName: "CONTINUITY_CLIP_ENABLED",
-    default: true,
-    description: "Enables CLIP embedding in continuity quality gate checks.",
-    category: "experimental",
-    requiresEnv: ["REPLICATE_API_TOKEN"],
-    dependsOn: ["ENABLE_CONVERGENCE"],
-  },
-  // Note: FAL_DEPTH_WARMUP_ENABLED is NOT in this registry — it stays inline
-  // in core.services.ts via resolveBoolFlag, alongside the other depth knobs.
-  // Both depth warmups default OFF: they call fal on the same FAL_KEY the live
-  // editor spends, for a stack ADR-0002 froze.
-  depthWarmupOnStartup: {
-    kind: "bool",
-    envName: "DEPTH_WARMUP_ON_STARTUP",
-    default: false,
-    description: "Controls depth estimation service warmup during server boot.",
-    category: "experimental",
-  },
-} as const satisfies Record<string, FlagDef>;
+const EXPERIMENTAL_FLAGS = {} as const satisfies Record<string, FlagDef>;
 
 const DEBUG_FLAGS = {
   replayMode: {
@@ -390,7 +305,6 @@ export function getFlagEnvNames(): Array<{
 
 export interface RuntimeFlags {
   processRole: "api" | "worker";
-  enableConvergence: boolean;
   videoWorkerDisabled: boolean;
   videoWorkerShutdownDrainSeconds: number;
   allowUnhealthyGemini: boolean;
@@ -413,7 +327,6 @@ export function getRuntimeFlags(
 
   return {
     processRole,
-    enableConvergence: flags.convergence,
     videoWorkerDisabled:
       processRole !== "worker" || flags.videoJobWorkerDisabled,
     videoWorkerShutdownDrainSeconds:

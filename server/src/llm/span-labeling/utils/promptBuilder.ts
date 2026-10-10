@@ -41,9 +41,7 @@ import {
 
 // Groq/Llama 3-specific imports
 import {
-  GROQ_FULL_SYSTEM_PROMPT,
   GROQ_FEW_SHOT_EXAMPLES,
-  GROQ_SANDWICH_REMINDER,
   getGroqSystemPrompt,
 } from "../schemas/GroqSchema.js";
 

@@ -8,7 +8,7 @@ import { createVideoJobAttachHandler } from "../handlers/videoJobAttach";
 import type {
   VideoJobAttachment,
   VideoJobRecord,
-} from "@services/video-generation/jobs/types";
+} from "@services/video-generation/runtime/types";
 
 /**
  * ADR-0022 decision 6 — the negative path.
@@ -109,8 +109,8 @@ const createApp = (
 
 const ATTACHMENT_SOURCES = [
   "../../../services/sessions/attachTakeToSession.ts",
-  "../../../services/video-generation/jobs/attachJobToSession.ts",
-  "../../../services/video-generation/jobs/resumePendingAttachments.ts",
+  "../../../services/video-generation/runtime/attachJobToSession.ts",
+  "../../../services/video-generation/runtime/resumePendingAttachments.ts",
   "../handlers/videoJobAttach.ts",
 ] as const;
 

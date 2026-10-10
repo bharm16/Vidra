@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { KeyframeTile } from "../../types";
-import type { CameraPath } from "@/features/convergence/types";
+import type { CameraPath } from "@shared/cameraMotion";
 import {
   loadCameraMotion,
   loadKeyframes,

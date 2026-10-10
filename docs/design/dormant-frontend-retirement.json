@@ -74,9 +74,7 @@
         "implicit frozen camera/subject state merges into new optimization/generation"
       ],
       "backend_status": "dormant_registered",
-      "backend_routes": [
-        "POST /api/motion/depth"
-      ],
+      "backend_routes": ["POST /api/motion/depth"],
       "backend_services": [
         "server/src/services/convergence/depth/DepthEstimationService.ts"
       ],
@@ -154,10 +152,7 @@
     },
     {
       "workflow": "model_intelligence_and_showroom",
-      "catalog_labels": [
-        "ModelRecommendationDropdown",
-        "ModelCard"
-      ],
+      "catalog_labels": ["ModelRecommendationDropdown", "ModelCard"],
       "frontend": [
         "model recommendation hook/API",
         "model-intelligence telemetry",
@@ -188,9 +183,7 @@
         "coherence frontend API and recommendation application helpers"
       ],
       "backend_status": "dormant_registered",
-      "backend_routes": [
-        "POST /api/enhancement/prompt-coherence"
-      ],
+      "backend_routes": ["POST /api/enhancement/prompt-coherence"],
       "backend_services": [
         "server/src/services/enhancement/services/PromptCoherenceService.ts"
       ],
@@ -198,10 +191,7 @@
     },
     {
       "workflow": "old_prompt_authoring_forms",
-      "catalog_labels": [
-        "SpanCategoryAccordion",
-        "PromptImprovementForm"
-      ],
+      "catalog_labels": ["SpanCategoryAccordion", "PromptImprovementForm"],
       "frontend": [
         "improvement and concept hook registration",
         "showImprover/showBrainstorm modal state and setters",
@@ -443,7 +433,5 @@
     "full_gates": "Root agent owns final typecheck, lint, architecture, unit, replay and browser verification before commit.",
     "retired_routes": "14 App route tests passed, including /continuity and /session/new/continuity, with all old client feature variables supplied as true: /private/tmp/vidra-page21/dormant-agent-retired-routes-final.log."
   },
-  "unregistered_related_paths": [
-    "/invoices"
-  ]
+  "unregistered_related_paths": ["/invoices"]
 }

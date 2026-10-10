@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 
 const mocks = vi.hoisted(() => ({
   loggerDebug: vi.fn(),
@@ -31,18 +31,20 @@ vi.mock("@infrastructure/Logger", () => {
   };
 });
 
-vi.mock("@services/credits/refundGuard", () => ({
+vi.mock("@services/video-generation/refunds/refundGuard", () => ({
   buildRefundKey: mocks.buildRefundKey,
   refundWithGuard: mocks.refundWithGuard,
 }));
 
 // Passthrough mocks: resolve aliased paths so Vitest can load the real modules
-vi.mock("@services/video-generation/jobs/classifyError", async () => {
-  return await import("../../../services/video-generation/jobs/classifyError");
-});
-vi.mock("@services/video-generation/jobs/processVideoJob", async () => {
+vi.mock("@services/video-generation/runtime/classifyError", async () => {
   return await import(
-    "../../../services/video-generation/jobs/processVideoJob"
+    "../../../services/video-generation/runtime/classifyError"
+  );
+});
+vi.mock("@services/video-generation/runtime/processVideoJob", async () => {
+  return await import(
+    "../../../services/video-generation/runtime/processVideoJob"
   );
 });
 vi.mock("@server/utils/RetryPolicy", async () => {

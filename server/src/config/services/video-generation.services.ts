@@ -1,17 +1,8 @@
-import type { Bucket } from "@google-cloud/storage";
 import type { DIContainer } from "@infrastructure/DIContainer";
 import { logger } from "@infrastructure/Logger";
-import AssetService from "@services/asset/AssetService";
 import { CapabilitiesProbeService } from "@services/capabilities/CapabilitiesProbeService";
-import type { UserCreditService } from "@services/credits/UserCreditService";
-import ConsistentVideoService from "@services/video-generation/ConsistentVideoService";
-import FaceSwapService from "@services/video-generation/FaceSwapService";
-import KeyframeGenerationService from "@services/video-generation/KeyframeGenerationService";
-import { FalFaceSwapProvider } from "@services/video-generation/providers/FalFaceSwapProvider";
+import type { LegacyCreditRefundService } from "@services/video-generation/refunds/LegacyCreditRefundService";
 import { ReplicateVideoProvider } from "@services/video-generation/providers/ReplicateVideoProvider";
-import { SoraVideoProvider } from "@services/video-generation/providers/SoraVideoProvider";
-import { LumaVideoProvider } from "@services/video-generation/providers/LumaVideoProvider";
-import { KlingVideoProvider } from "@services/video-generation/providers/KlingVideoProvider";
 import { VeoVideoProvider } from "@services/video-generation/providers/VeoVideoProvider";
 import {
   VIDEO_PROVIDER_IDS,
@@ -19,23 +10,17 @@ import {
   type VideoProviderMap,
 } from "@services/video-generation/providers/types";
 import {
-  createLumaVideoClient,
   createReplicateVideoClient,
-  createSoraVideoClient,
-  resolveKlingCredential,
   resolveVeoCredential,
 } from "@clients/videoProviderClients";
 import { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
-import { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
-import { VideoWorkerHeartbeatStore } from "@services/video-generation/jobs/VideoWorkerHeartbeatStore";
-import { VideoJobHandler } from "@services/video-generation/jobs/VideoJobHandler";
+import { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
+import { VideoWorkerHeartbeatStore } from "@services/video-generation/runtime/VideoWorkerHeartbeatStore";
+import { VideoJobHandler } from "@services/video-generation/runtime/VideoJobHandler";
 import type { SessionService } from "@services/sessions/SessionService";
-import { VideoJobWorker } from "@services/video-generation/jobs/VideoJobWorker";
-import { resumePendingAttachments } from "@services/video-generation/jobs/resumePendingAttachments";
-import { createVideoJobSweeper } from "@services/video-generation/jobs/VideoJobSweeper";
-import { createVideoJobReconciler } from "@services/video-generation/jobs/VideoJobReconciler";
-import { ProviderCircuitManager } from "@services/video-generation/jobs/ProviderCircuitManager";
-import { DlqReprocessorWorker } from "@services/video-generation/jobs/DlqReprocessorWorker";
+import { VideoJobWorker } from "@services/video-generation/runtime/VideoJobWorker";
+import { resumePendingAttachments } from "@services/video-generation/runtime/resumePendingAttachments";
+import { ProviderCircuitManager } from "@services/video-generation/runtime/ProviderCircuitManager";
 import type { VideoAssetStore } from "@services/video-generation/storage";
 import type { StorageService } from "@services/storage/StorageService";
 import { setTimeoutPolicyConfig } from "@services/video-generation/providers/timeoutPolicy";
@@ -51,9 +36,6 @@ import type { ServiceConfig } from "./service-config.types.ts";
  */
 export const VIDEO_PROVIDER_TOKENS = [
   "replicateVideoProvider",
-  "soraVideoProvider",
-  "lumaVideoProvider",
-  "klingVideoProvider",
   "veoVideoProvider",
 ] as const;
 
@@ -66,45 +48,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
           config.videoProviders.credentials.replicateApiToken,
           logger,
         ),
-      }),
-    ["config"],
-  );
-
-  container.register(
-    "soraVideoProvider",
-    (config: ServiceConfig) =>
-      new SoraVideoProvider({
-        openai: createSoraVideoClient(
-          config.videoProviders.credentials.openAIKey,
-          logger,
-        ),
-      }),
-    ["config"],
-  );
-
-  container.register(
-    "lumaVideoProvider",
-    (config: ServiceConfig) =>
-      new LumaVideoProvider({
-        luma: createLumaVideoClient(
-          config.videoProviders.credentials.lumaApiKey,
-          logger,
-        ),
-      }),
-    ["config"],
-  );
-
-  container.register(
-    "klingVideoProvider",
-    (config: ServiceConfig) =>
-      new KlingVideoProvider({
-        apiKey: resolveKlingCredential(
-          config.videoProviders.credentials.klingApiKey,
-          logger,
-        ),
-        ...(config.videoProviders.credentials.klingBaseUrl
-          ? { baseUrl: config.videoProviders.credentials.klingBaseUrl }
-          : {}),
       }),
     ["config"],
   );
@@ -128,9 +71,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
     "videoGenerationService",
     (
       replicate: VideoProvider,
-      sora: VideoProvider,
-      luma: VideoProvider,
-      kling: VideoProvider,
       veo: VideoProvider,
       videoAssetStore: VideoAssetStore,
       config: ServiceConfig,
@@ -142,9 +82,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
 
       const providers: VideoProviderMap = {
         replicate,
-        openai: sora,
-        luma,
-        kling,
         gemini: veo,
       };
 
@@ -154,7 +91,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
         !Object.values(providers).some((provider) => provider.isAvailable())
       ) {
         logger.warn(
-          "No video generation credentials provided (REPLICATE_API_TOKEN, OPENAI_API_KEY, LUMA_API_KEY or LUMAAI_API_KEY, KLING_API_KEY, or GEMINI_API_KEY)",
+          "No supported video generation credentials provided (REPLICATE_API_TOKEN or GEMINI_API_KEY)",
         );
         return null;
       }
@@ -165,70 +102,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       });
     },
     [...VIDEO_PROVIDER_TOKENS, "videoAssetStore", "config"],
-  );
-
-  container.register(
-    "keyframeGenerationService",
-    (config: ServiceConfig) => {
-      const falKey = config.fal.apiKey;
-      if (!falKey) {
-        logger.warn(
-          "KeyframeGenerationService: FAL_KEY/FAL_API_KEY not set, service will be unavailable",
-        );
-        return null;
-      }
-      const replicateToken = config.replicate.apiToken;
-      return new KeyframeGenerationService({
-        falApiKey: falKey,
-        ...(replicateToken ? { apiToken: replicateToken } : {}),
-        enableFaceEmbedding: config.features.faceEmbedding,
-      });
-    },
-    ["config"],
-  );
-
-  container.register(
-    "faceSwapService",
-    (config: ServiceConfig) => {
-      const falKey = config.fal.apiKey;
-      if (!falKey) {
-        logger.warn(
-          "FaceSwapService: FAL_KEY/FAL_API_KEY not set, service will be unavailable",
-        );
-        return null;
-      }
-      const faceSwapProvider = new FalFaceSwapProvider({ apiKey: falKey });
-      if (!faceSwapProvider.isAvailable()) {
-        logger.warn("FaceSwapService: Fal face swap provider unavailable");
-        return null;
-      }
-      return new FaceSwapService({ faceSwapProvider });
-    },
-    ["config"],
-  );
-
-  container.register(
-    "consistentVideoService",
-    (
-      assetService: AssetService | null,
-      keyframeGenerationService: KeyframeGenerationService | null,
-    ) => {
-      if (!assetService || !keyframeGenerationService) {
-        logger.warn("Consistent video service disabled", {
-          assetServiceAvailable: Boolean(assetService),
-          keyframeGenerationServiceAvailable: Boolean(
-            keyframeGenerationService,
-          ),
-        });
-        return null;
-      }
-
-      return new ConsistentVideoService({
-        assetService,
-        keyframeService: keyframeGenerationService,
-      });
-    },
-    ["assetService", "keyframeGenerationService"],
   );
 
   container.register(
@@ -264,7 +137,7 @@ export function registerVideoGenerationServices(container: DIContainer): void {
     (
       videoJobStore: VideoJobStore,
       videoGenerationService: VideoGenerationService | null,
-      creditService: UserCreditService,
+      creditService: LegacyCreditRefundService,
       storageService: StorageService,
       providerCircuitManager: ProviderCircuitManager,
       sessionService: SessionService,
@@ -289,11 +162,21 @@ export function registerVideoGenerationServices(container: DIContainer): void {
     [
       "videoJobStore",
       "videoGenerationService",
-      "userCreditService",
+      "legacyCreditRefunder",
       "storageService",
       "providerCircuitManager",
       "sessionService",
     ],
+  );
+
+  // Completed media can owe an attachment even when no generation provider is configured.
+  container.register(
+    "resumePendingVideoAttachments",
+    (jobStore: VideoJobStore, sessionService: SessionService) =>
+      async (): Promise<void> => {
+        await resumePendingAttachments({ jobStore, sessionService });
+      },
+    ["videoJobStore", "sessionService"],
   );
 
   container.register(
@@ -304,7 +187,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       providerCircuitManager: ProviderCircuitManager,
       videoWorkerHeartbeatStore: VideoWorkerHeartbeatStore,
       config: ServiceConfig,
-      sessionService: SessionService | null,
     ) => {
       if (!videoJobHandler) {
         return null;
@@ -312,18 +194,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
 
       const wc = config.videoJobs.worker;
       return new VideoJobWorker(videoJobStore, videoJobHandler, {
-        // ADR-0022 decision 6: a restarting worker settles the clip
-        // attachments its predecessor died owing.
-        ...(sessionService
-          ? {
-              resumePendingAttachments: async (): Promise<void> => {
-                await resumePendingAttachments({
-                  jobStore: videoJobStore,
-                  sessionService,
-                });
-              },
-            }
-          : {}),
         pollIntervalMs: wc.pollIntervalMs,
         leaseMs: wc.leaseSeconds * 1000,
         maxConcurrent: wc.maxConcurrent,
@@ -346,57 +216,6 @@ export function registerVideoGenerationServices(container: DIContainer): void {
       "providerCircuitManager",
       "videoWorkerHeartbeatStore",
       "config",
-      "sessionService",
     ],
-  );
-
-  container.register(
-    "videoJobSweeper",
-    (
-      videoJobStore: VideoJobStore,
-      creditService: UserCreditService,
-      config: ServiceConfig,
-    ) =>
-      createVideoJobSweeper(
-        videoJobStore,
-        creditService,
-        undefined,
-        config.videoJobs.sweeper,
-      ),
-    ["videoJobStore", "userCreditService", "config"],
-  );
-
-  container.register(
-    "dlqReprocessorWorker",
-    (
-      videoJobStore: VideoJobStore,
-      providerCircuitManager: ProviderCircuitManager,
-      config: ServiceConfig,
-    ) => {
-      const dlq = config.videoJobs.dlqReprocessor;
-      if (dlq.disabled) {
-        return null;
-      }
-
-      return new DlqReprocessorWorker(videoJobStore, {
-        pollIntervalMs: dlq.pollIntervalMs,
-        maxEntriesPerRun: dlq.maxEntriesPerRun,
-        providerCircuitManager,
-      });
-    },
-    ["videoJobStore", "providerCircuitManager", "config"],
-  );
-
-  container.register(
-    "videoJobReconciler",
-    (gcsBucket: Bucket, videoJobStore: VideoJobStore, config: ServiceConfig) =>
-      createVideoJobReconciler(
-        gcsBucket,
-        config.videoAssets.storage.basePath,
-        videoJobStore,
-        undefined,
-        config.videoAssets.reconciler,
-      ),
-    ["gcsBucket", "videoJobStore", "config"],
   );
 }

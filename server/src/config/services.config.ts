@@ -1,3 +1,4 @@
+import { registerAdmissionServices } from "./services/admission.services.ts";
 /**
  * Service Configuration and Registration
  *
@@ -10,7 +11,7 @@ import { registerCoreServices } from "./services/core.services.ts";
 import { registerObservabilityServices } from "./services/observability.services.ts";
 import { registerCacheServices } from "./services/cache.services.ts";
 import { registerStorageServices } from "./services/storage.services.ts";
-import { registerCreditServices } from "./services/credit.services.ts";
+import { registerRefundServices } from "./services/refund.services.ts";
 import { registerVideoJobServices } from "./services/video-jobs.services.ts";
 import { registerReplayServices } from "./services/replay.services.ts";
 import { registerLLMServices } from "./services/llm.services.ts";
@@ -20,12 +21,8 @@ import { registerOptimizationServices } from "./services/optimization.services.t
 import { registerVideoGenerationServices } from "./services/video-generation.services.ts";
 import { registerImageGenerationServices } from "./services/image-generation.services.ts";
 import { registerStudioServices } from "./services/studio.services.ts";
-import { registerContinuityServices } from "./services/continuity.services.ts";
-import { registerPaymentServices } from "./services/payment.services.ts";
-import { registerModelIntelligenceServices } from "./services/model-intelligence.services.ts";
 import { registerSessionServices } from "./services/session.services.ts";
 import { registerShareServices } from "./services/share.services.ts";
-import { getRuntimeFlags } from "./feature-flags.ts";
 
 export type { ServiceConfig } from "./services/service-config.types.ts";
 
@@ -36,7 +33,6 @@ export type { ServiceConfig } from "./services/service-config.types.ts";
  */
 export async function configureServices(): Promise<DIContainer> {
   const container = createContainer();
-  const { enableConvergence } = getRuntimeFlags();
 
   // Foundation: logging, metrics, circuit breaker, config
   registerCoreServices(container);
@@ -45,8 +41,9 @@ export async function configureServices(): Promise<DIContainer> {
   registerStorageServices(container);
 
   // Domain infrastructure: credits, video jobs
-  registerCreditServices(container);
+  registerRefundServices(container);
   registerVideoJobServices(container);
+  registerAdmissionServices(container);
 
   // Business logic: LLM, enhancement, video generation, image generation
   // (observation services are registered by registerCoreServices)
@@ -62,19 +59,6 @@ export async function configureServices(): Promise<DIContainer> {
   // both registered above.
   registerImageGenerationServices(container);
   registerStudioServices(container);
-
-  // Continuity (gated on ENABLE_CONVERGENCE).
-  if (enableConvergence) {
-    registerContinuityServices(container);
-  } else {
-    // Keep this token resolvable when convergence is disabled.
-    container.registerValue("continuitySessionService", null);
-  }
-
-  registerPaymentServices(container);
-  // Model-intelligence: depends on billingProfileStore (payment) and
-  // videoGenerationService (generation) — must follow both.
-  registerModelIntelligenceServices(container);
   registerSessionServices(container);
   registerShareServices(container);
 

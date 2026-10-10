@@ -86,10 +86,7 @@
       ]
     },
     "support-verification.json": {
-      "nodes": [
-        "703:2224",
-        "703:2248"
-      ],
+      "nodes": ["703:2224", "703:2248"],
       "status": "Support body implementation and verification complete; shared TopNavbar mismatch reported to root",
       "sourceFiles": [
         "client/src/pages/ContactSupportPage.tsx",
@@ -116,10 +113,7 @@
         "browser": "support-geometry-final.log and support-mobile-final.log; invalid email kept contact route and produced native validation; phone document width385 equals viewport385"
       },
       "behavior": "Preserved configured mailbox, percent-encoded mailto subject/body, optional reply address, clipboard feedback1400ms, security topic, app/docs/legal links. Replaced old summary cards and FAST ROUTING decoration with actual Page21 form and help column.",
-      "captures": [
-        "support-desktop.png",
-        "support-mobile.png"
-      ],
+      "captures": ["support-desktop.png", "support-mobile.png"],
       "remainingOutsideScope": "Shared TopNavbar shows18pxbrand and white40pxSignin instead of scene14pxbrand/gray36px. Root notified; no navigation files edited."
     },
     "phrase-geometry.json": [

@@ -1,6 +1,6 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
-import OptimizationConfig from "@config/OptimizationConfig";
 
 import { VideoStrategy } from "./strategies/VideoStrategy";
 import { ShotInterpreterService } from "./services/ShotInterpreterService";
@@ -13,7 +13,6 @@ import type { VideoPromptService } from "../video-prompt-analysis/VideoPromptSer
 import type { CacheService } from "@services/cache/CacheService";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type {
-  AIService,
   CompileContext,
   CompilePromptResponse,
   OptimizationMode,
@@ -21,7 +20,6 @@ import type {
   OptimizationResponse,
 } from "./types";
 import { runOptimizeFlow } from "./workflows/optimizeFlow";
-import { runConstitutionalReviewFlow } from "./workflows/constitutionalReview";
 
 const makeNoopTrace = (): OptimizeTrace =>
   ({
@@ -36,7 +34,7 @@ const makeNoopTrace = (): OptimizeTrace =>
  * Refactored Prompt Optimization Service - Orchestrator Pattern
  */
 export class PromptOptimizationService {
-  private readonly ai: AIService;
+  private readonly ai: AIExecutionPort;
   private readonly videoStrategy: VideoStrategy;
   private readonly shotInterpreter: ShotInterpreterService;
   private readonly optimizationCache: OptimizationCacheService;
@@ -46,7 +44,7 @@ export class PromptOptimizationService {
   private readonly log: ILogger;
 
   constructor(
-    aiService: AIService,
+    aiService: AIExecutionPort,
     cacheService: CacheService,
     videoPromptService: VideoPromptService | null = null,
     shotPlanCacheConfig?: { cacheTtlMs: number; cacheMax: number },
@@ -103,8 +101,6 @@ export class PromptOptimizationService {
       shotInterpreter: this.shotInterpreter,
       strategy: this.videoStrategy,
       compilationService: this.compilationService,
-      applyConstitutionalAI: (nextPrompt, mode, signal) =>
-        this.applyConstitutionalAI(nextPrompt, mode, signal),
       logOptimizationMetrics: (originalPrompt, optimizedPrompt, mode) =>
         this.logOptimizationMetrics(originalPrompt, optimizedPrompt, mode),
       intentLock: this.intentLock,
@@ -173,23 +169,6 @@ export class PromptOptimizationService {
       // typed wire field — no second copy.
       compilation: finished.compilation ?? compilation.compilation,
     };
-  }
-
-  /**
-   * Apply constitutional AI review to optimized prompt
-   */
-  private async applyConstitutionalAI(
-    prompt: string,
-    mode: OptimizationMode,
-    signal?: AbortSignal,
-  ): Promise<string> {
-    return runConstitutionalReviewFlow({
-      prompt,
-      mode,
-      signal,
-      log: this.log,
-      ai: this.ai,
-    });
   }
 
   /**

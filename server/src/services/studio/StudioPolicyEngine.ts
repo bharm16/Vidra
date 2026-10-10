@@ -30,13 +30,6 @@ import type {
 } from "./types";
 
 /**
- * @deprecated Use `AIExecutionPort` — the aiService port this module already
- * depended on, structurally. Kept as an alias only so call sites outside this
- * module keep compiling while they migrate to the real port.
- */
-export type StudioAIService = AIExecutionPort;
-
-/**
  * Realtime hooks for the user-visible `thinking` field. onThinkingStart
  * fires per LLM attempt (a corrective retry restarts the text); deltas are
  * the thinking string's characters, in order, as the model emits them.

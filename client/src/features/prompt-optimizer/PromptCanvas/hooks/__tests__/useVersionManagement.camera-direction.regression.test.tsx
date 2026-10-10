@@ -25,7 +25,7 @@ import {
   DEFAULT_GENERATION_CONTROLS_STATE,
 } from "@features/generation-controls";
 import { cameraMotionDirection, CAMERA_PATHS } from "@shared/cameraMotion";
-import type { CameraPath } from "@/features/convergence/types";
+import type { CameraPath } from "@shared/cameraMotion";
 import { useVersionManagement } from "../useVersionManagement";
 
 vi.mock("../usePromptVersioning", () => ({

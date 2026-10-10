@@ -1,19 +1,9 @@
 import type { DIContainer } from "@infrastructure/DIContainer";
-import { logger } from "@infrastructure/Logger";
-import type { Bucket } from "@google-cloud/storage";
-import AssetService from "@services/asset/AssetService";
-import { FirestoreAssetStore } from "@services/asset/storage/FirestoreAssetStore";
-import AssetResolverService from "@services/asset/AssetResolverService";
-import { ReferenceImageProcessingService } from "@services/asset/ReferenceImageProcessingService";
-import type { FaceEmbeddingService } from "@services/asset/FaceEmbeddingService";
-import { FirestoreReferenceImageStore } from "@services/asset/reference-images/storage/FirestoreReferenceImageStore";
 import { SessionService } from "@services/sessions/SessionService";
 import { SessionStore } from "@services/sessions/SessionStore";
 import { FirestoreOwedTakeAttachmentStore } from "@services/sessions/OwedTakeAttachmentStore";
-import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
+import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
-import type { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
-import type { ServiceConfig } from "./service-config.types.ts";
 
 /**
  * Registers session, asset, and reference-image repositories.
@@ -43,65 +33,5 @@ export function registerSessionServices(container: DIContainer): void {
     (firestoreCircuitExecutor: FirestoreCircuitExecutor) =>
       new FirestoreOwedTakeAttachmentStore(firestoreCircuitExecutor),
     ["firestoreCircuitExecutor"],
-  );
-
-  container.register(
-    "assetService",
-    (
-      gcsBucket: Bucket,
-      gcsBucketName: string,
-      faceEmbeddingService: FaceEmbeddingService | null,
-      config: ServiceConfig,
-    ) => {
-      try {
-        const repository = new FirestoreAssetStore({
-          bucket: gcsBucket,
-          bucketName: gcsBucketName,
-        });
-        const resolver = new AssetResolverService(repository);
-        const referenceImages = new ReferenceImageProcessingService();
-        const embeddingService = config.features.faceEmbedding
-          ? faceEmbeddingService
-          : null;
-        return new AssetService(
-          repository,
-          referenceImages,
-          resolver,
-          undefined,
-          embeddingService,
-        );
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        logger.warn("Asset service disabled", { error: errorMessage });
-        return null;
-      }
-    },
-    ["gcsBucket", "gcsBucketName", "faceEmbeddingService", "config"],
-  );
-
-  container.register(
-    "referenceImageRepository",
-    (
-      gcsBucket: Bucket,
-      gcsBucketName: string,
-      signedUrlMinter: SignedUrlMinter,
-    ) => {
-      try {
-        return new FirestoreReferenceImageStore({
-          bucket: gcsBucket,
-          bucketName: gcsBucketName,
-          minter: signedUrlMinter,
-        });
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        logger.warn("Reference image service disabled", {
-          error: errorMessage,
-        });
-        return null;
-      }
-    },
-    ["gcsBucket", "gcsBucketName", "signedUrlMinter"],
   );
 }

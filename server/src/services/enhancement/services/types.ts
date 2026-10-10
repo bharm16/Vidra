@@ -3,7 +3,6 @@
  * Shared type definitions used across enhancement service modules
  */
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
-import type { VideoPromptService } from "@services/video-prompt-analysis/index";
 import type { SuggestionsTrace } from "@services/observability/SuggestionsTelemetryService";
 import type { PromptMode } from "../constants.js";
 
@@ -234,7 +233,6 @@ export interface SharedPromptContext {
   focusGuidance?: string; // Context-aware guidance (optional)
   spanAnchors?: string; // Anchors from labeled spans
   nearbySpanHints?: string; // Nearby spans to avoid conflicting with
-  replacementInstruction: string; // Deprecated - kept for compatibility
   highlightWordCount?: number | null;
   mode: "rewrite" | "placeholder";
 }
@@ -442,9 +440,6 @@ export interface VideoService {
     editHistory: EditHistoryEntry[],
   ): string[] | null;
 }
-
-/** @deprecated Use AIExecutionPort from @services/ai-model/ports/AIExecutionPort */
-export type AIService = AIExecutionPort;
 
 /**
  * Brainstorm builder interface

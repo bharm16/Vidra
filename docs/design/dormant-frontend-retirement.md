@@ -1,5 +1,7 @@
 # Dormant frontend retirement
 
+**Backend status, 2026-10-09:** This remains the October 8 frontend/design adoption record. Its retained-backend statements are historical: the selected dormant registrations/endpoints have now been retired. Current ownership and saved-record/recovery compatibility live in [CONTEXT.md](../../CONTEXT.md) and the [cleanup record](../audits/2026-10-09-frozen-separation-plan.md).
+
 The owner amended #177 on 2026-10-08: remove the live frontend controls and routes for every frozen/dormant workflow; keep backend routes and services available and mark them dormant. The [JSON ledger](dormant-frontend-retirement.json) records each registration, its backend counterpart and the exact file removal list.
 
 `dormant_registered` is the backend's product maintenance status, not an instruction to unregister or enable it. Existing server gates remain unchanged. This frontend cleanup changes no server file, shared contract, persisted record or worker registration.

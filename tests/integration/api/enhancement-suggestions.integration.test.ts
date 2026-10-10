@@ -62,10 +62,6 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       detectSceneChange: vi.fn(),
     };
 
-    const promptCoherenceService = {
-      checkCoherence: vi.fn(),
-    };
-
     const app = express();
     app.use(express.json());
     app.use(
@@ -81,7 +77,6 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       createEnhancementRoutes({
         enhancementService: enhancementService as never,
         sceneDetectionService: sceneDetectionService as never,
-        promptCoherenceService: promptCoherenceService as never,
         suggestionsTelemetryService: {
           startSuggestionsTrace: vi.fn(() => ({
             recordStage: vi.fn(),
@@ -174,7 +169,6 @@ describe("Enhancement Suggestions Flow (integration)", () => {
       createEnhancementRoutes({
         enhancementService: enhancementService as never,
         sceneDetectionService: { detectSceneChange: vi.fn() } as never,
-        promptCoherenceService: { checkCoherence: vi.fn() } as never,
         suggestionsTelemetryService: {
           startSuggestionsTrace: vi.fn(() => ({
             recordStage: vi.fn(),

@@ -36,7 +36,6 @@ describe("optimize.completed event schema (contract)", () => {
       hasContext: true,
       hasBrainstormContext: false,
       hasShotPlan: false,
-      useConstitutionalAI: false,
       inputPrompt: "snapshot fixture input prompt",
       outputPrompt: "snapshot fixture optimized output",
     });
@@ -83,7 +82,6 @@ describe("optimize.completed event schema (contract)", () => {
           "requestId",
           "stages",
           "targetModel",
-          "useConstitutionalAI",
           "userId",
         ],
         "sampleValues": {

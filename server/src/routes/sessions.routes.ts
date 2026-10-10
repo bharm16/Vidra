@@ -21,26 +21,10 @@ import type {
   SessionUpdateRequest,
   SessionVersionsUpdate,
 } from "@services/sessions/types";
-import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
-import type { CreateSessionRequest as ContinuityCreateSessionRequest } from "@services/continuity/types";
-import type { RouteCreditService } from "@services/credits/ports";
 import { SessionGenerationRecordSchema } from "@shared/schemas/session.schemas";
 import type { SessionDto } from "@shared/types/session";
 import type { ApiResponse } from "@shared/types/api";
 import { logger } from "@infrastructure/Logger";
-import {
-  ContinuitySessionInputSchema,
-  handleCreateSceneProxy,
-  handleCreateShot,
-  handleGenerateShot,
-  handlePreviewSceneProxy,
-  handleUpdatePrimaryStyleReference,
-  handleUpdateSessionSettings,
-  handleUpdateShot,
-  handleUpdateStyleReference,
-  requireSessionForUser,
-} from "./continuity/continuityRouteShared";
-import { handleGenerateShotStream } from "./continuity/handleGenerateShotStream";
 
 const CreateSessionSchema = z
   .object({
@@ -48,10 +32,6 @@ const CreateSessionSchema = z
     prompt: z.record(z.string(), z.unknown()).optional(),
   })
   .strip();
-
-const CreateContinuitySessionSchema = ContinuitySessionInputSchema.extend({
-  sessionId: z.string().optional(),
-}).strip();
 
 const UpdateSessionSchema = z
   .object({
@@ -189,35 +169,6 @@ function handleSessionMutationError(error: unknown, res: Response): boolean {
   return false;
 }
 
-/**
- * Canonical 400 for schema validation failures: `details` is the flattened
- * string the shared ApiResponse contract requires; the structured Zod issues
- * are logged server-side instead of leaking onto the wire.
- */
-function toContinuityCreateSessionRequest(
-  data: z.infer<typeof CreateContinuitySessionSchema>,
-): ContinuityCreateSessionRequest {
-  return {
-    name: data.name,
-    ...(typeof data.description === "string"
-      ? { description: data.description }
-      : {}),
-    ...(typeof data.sourceVideoId === "string"
-      ? { sourceVideoId: data.sourceVideoId }
-      : {}),
-    ...(typeof data.sourceImageUrl === "string"
-      ? { sourceImageUrl: data.sourceImageUrl }
-      : {}),
-    ...(typeof data.initialPrompt === "string"
-      ? { initialPrompt: data.initialPrompt }
-      : {}),
-    ...(data.settings ? { settings: data.settings } : {}),
-    ...(typeof data.sessionId === "string"
-      ? { sessionId: data.sessionId }
-      : {}),
-  };
-}
-
 function toSessionCreateRequest(
   data: z.infer<typeof CreateSessionSchema>,
 ): SessionCreateRequest {
@@ -319,8 +270,6 @@ function toSessionVersionsUpdate(
 
 export function createSessionRoutes(
   sessionService: SessionService,
-  continuityService: ContinuitySessionService | null = null,
-  userCreditService?: RouteCreditService | null,
   /**
    * Issue #125: freshen a single session's picture view URLs on read, minting
    * from owner-checked durable handles (see `remintSessionPictureUrls`). Bound
@@ -406,52 +355,6 @@ export function createSessionRoutes(
       }),
     );
   };
-
-  if (continuityService) {
-    router.post(
-      "/continuity",
-      asyncHandler(async (req: Request, res: Response) => {
-        const userId = requireCreatorId(req, res);
-        if (!userId) return;
-        const parsed = requireBody(CreateContinuitySessionSchema, req, res);
-        if (!parsed.ok) return;
-        if (parsed.value.sessionId) {
-          const existing = await sessionService.getSession(
-            parsed.value.sessionId,
-          );
-          if (!existing) {
-            res
-              .status(404)
-              .json({ success: false, error: "Session not found" });
-            return;
-          }
-          if (existing.userId !== userId) {
-            res.status(403).json({ success: false, error: "Access denied" });
-            return;
-          }
-        }
-        const continuityRequest = toContinuityCreateSessionRequest(
-          parsed.value,
-        );
-        const continuitySession = await continuityService.createSession(
-          userId,
-          continuityRequest,
-        );
-        const session = await sessionService.getSession(continuitySession.id);
-        if (!session) {
-          res.status(500).json({
-            success: false,
-            error: "Session not available after creation",
-          });
-          return;
-        }
-        res.json({
-          success: true,
-          data: sessionService.toDto(session),
-        } satisfies ApiResponse<SessionDto>);
-      }),
-    );
-  }
 
   router.get(
     "/",
@@ -681,7 +584,10 @@ export function createSessionRoutes(
           res.json({
             success: true,
             data: {
-              arming: { state: "armed", generationId: parsed.value.generationId },
+              arming: {
+                state: "armed",
+                generationId: parsed.value.generationId,
+              },
               keyframe: result.frame,
             },
           } satisfies ApiResponse<{
@@ -732,200 +638,6 @@ export function createSessionRoutes(
     apply: (userId, sessionId, update) =>
       sessionService.updateVersionsForUser(userId, sessionId, update),
   });
-
-  if (continuityService) {
-    // Continuity operations (session-scoped)
-    router.post(
-      "/:sessionId/shots",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        await handleCreateShot(continuityService, req, res, {
-          sessionId: session.id,
-          status: 200,
-        });
-      }),
-    );
-
-    router.patch(
-      "/:sessionId/shots/:shotId",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        const shotId = requireRouteParam(req, res, "shotId");
-        if (!shotId) return;
-        await handleUpdateShot(continuityService, req, res, {
-          sessionId: session.id,
-          shotId,
-        });
-      }),
-    );
-
-    router.post(
-      "/:sessionId/shots/:shotId/generate",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        await handleGenerateShot(
-          continuityService,
-          session,
-          req,
-          res,
-          userCreditService,
-        );
-      }),
-    );
-
-    router.get(
-      "/:sessionId/shots/:shotId/status",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        const shotId = requireRouteParam(req, res, "shotId");
-        if (!shotId) return;
-        const shot = session.shots.find((candidate) => candidate.id === shotId);
-        if (!shot) {
-          res.status(404).json({ success: false, error: "Shot not found" });
-          return;
-        }
-
-        // Status reads are eventually consistent with persisted generator checkpoints.
-        res.json({
-          success: true,
-          data: {
-            shotId: shot.id,
-            status: shot.status,
-            continuityMechanismUsed: shot.continuityMechanismUsed ?? null,
-            styleScore: shot.styleScore ?? null,
-            identityScore: shot.identityScore ?? null,
-            styleDegraded: shot.styleDegraded ?? false,
-            styleDegradedReason: shot.styleDegradedReason ?? null,
-            generatedKeyframeUrl: shot.generatedKeyframeUrl ?? null,
-            frameBridgeUrl: shot.frameBridge?.frameUrl ?? null,
-            retryCount: shot.retryCount ?? 0,
-            error: shot.error ?? null,
-          },
-        });
-      }),
-    );
-
-    router.post(
-      "/:sessionId/shots/:shotId/generate-stream",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        await handleGenerateShotStream(
-          continuityService,
-          session,
-          req,
-          res,
-          userCreditService,
-        );
-      }),
-    );
-
-    router.post(
-      "/:sessionId/shots/:shotId/scene-proxy-preview",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        const shotId = requireRouteParam(req, res, "shotId");
-        if (!shotId) return;
-        await handlePreviewSceneProxy(continuityService, req, res, {
-          sessionId: session.id,
-          shotId,
-        });
-      }),
-    );
-
-    router.put(
-      "/:sessionId/shots/:shotId/style-reference",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        const shotId = requireRouteParam(req, res, "shotId");
-        if (!shotId) return;
-        await handleUpdateStyleReference(continuityService, req, res, {
-          sessionId: session.id,
-          shotId,
-        });
-      }),
-    );
-
-    router.put(
-      "/:sessionId/settings",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        await handleUpdateSessionSettings(continuityService, req, res, {
-          sessionId: session.id,
-        });
-      }),
-    );
-
-    router.put(
-      "/:sessionId/style-reference",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        await handleUpdatePrimaryStyleReference(continuityService, req, res, {
-          sessionId: session.id,
-        });
-      }),
-    );
-
-    router.post(
-      "/:sessionId/scene-proxy",
-      asyncHandler(async (req: Request, res: Response) => {
-        const session = await requireSessionForUser(
-          continuityService,
-          req,
-          res,
-        );
-        if (!session) return;
-        await handleCreateSceneProxy(continuityService, req, res, {
-          sessionId: session.id,
-          status: 200,
-        });
-      }),
-    );
-  }
 
   return router;
 }

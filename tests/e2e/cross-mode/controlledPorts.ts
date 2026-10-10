@@ -8,8 +8,8 @@ import type {
   ResolvedExecution,
 } from "@services/ai-model/types";
 import type { OperationName } from "@config/modelConfig";
-import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 import type {
   VideoAssetStore,
   StoredVideoAsset,
@@ -96,28 +96,6 @@ export class BrowserAIProvider extends AIModelService {
 export class BrowserVideoJobStore extends InMemoryVideoJobStore {
   constructor(private readonly idempotency: InMemoryIdempotencyService) {
     super();
-  }
-
-  async createJob(
-    input: Parameters<VideoJobStore["createJob"]>[0],
-  ): Promise<VideoJobRecord> {
-    const now = Date.now();
-    const job: VideoJobRecord = {
-      ...input,
-      id: randomUUID(),
-      schemaVersion: 1,
-      status: "queued",
-      attempts: 0,
-      maxAttempts: input.maxAttempts ?? 3,
-      createdAtMs: now,
-      updatedAtMs: now,
-    };
-    this.seed(job);
-    return job;
-  }
-
-  async createJobWithReservation(): Promise<never> {
-    throw new Error("Free browser intake must never reserve credits");
   }
 
   async createJobWithReceipt(

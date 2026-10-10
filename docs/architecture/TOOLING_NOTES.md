@@ -1,6 +1,6 @@
 ## Tooling Pins
 
-The npm `overrides` section in [`package.json`](/Users/bryceharmon/Desktop/prompt-builder/package.json) is intentionally pinned for tooling stability:
+The npm `overrides` section in [`package.json`](/Users/bryceharmon/Desktop/Vidra/package.json) is intentionally pinned for tooling stability:
 
 - `onnxruntime-node@1.19.2`
   Keeps GLiNER startup stable. Later versions introduced native binary changes that broke model loading at boot.

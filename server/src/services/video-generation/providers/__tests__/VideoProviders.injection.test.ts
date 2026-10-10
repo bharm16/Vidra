@@ -1,18 +1,8 @@
 import { describe, it, expect } from "vitest";
 import type Replicate from "replicate";
-import type OpenAI from "openai";
-import type { LumaAI } from "lumaai";
 import { ReplicateVideoProvider } from "../ReplicateVideoProvider";
-import { SoraVideoProvider } from "../SoraVideoProvider";
-import { LumaVideoProvider } from "../LumaVideoProvider";
-import { KlingVideoProvider } from "../KlingVideoProvider";
 import { VeoVideoProvider } from "../VeoVideoProvider";
-import {
-  VIDEO_PROVIDER_CREDENTIALS,
-  VIDEO_PROVIDER_IDS,
-  type VideoProvider,
-} from "../types";
-import { DEFAULT_KLING_BASE_URL } from "../klingProvider";
+import { VIDEO_PROVIDER_CREDENTIALS, type VideoProvider } from "../types";
 import { DEFAULT_VEO_BASE_URL } from "../veoProvider";
 import type { VideoModelId } from "@shared/videoModels";
 import type { VideoAssetStore } from "@services/video-generation/storage";
@@ -28,17 +18,11 @@ const noopLog = {
 
 const configured = (): VideoProvider[] => [
   new ReplicateVideoProvider({ replicate: {} as Replicate }),
-  new SoraVideoProvider({ openai: {} as OpenAI }),
-  new LumaVideoProvider({ luma: {} as LumaAI }),
-  new KlingVideoProvider({ apiKey: "kling-key" }),
   new VeoVideoProvider({ apiKey: "gemini-key" }),
 ];
 
 const unconfigured = (): VideoProvider[] => [
   new ReplicateVideoProvider(),
-  new SoraVideoProvider(),
-  new LumaVideoProvider(),
-  new KlingVideoProvider(),
   new VeoVideoProvider(),
 ];
 
@@ -48,7 +32,7 @@ describe("video providers — injection contract", () => {
       configured()
         .map((provider) => provider.id)
         .sort(),
-    ).toEqual([...VIDEO_PROVIDER_IDS].sort());
+    ).toEqual(["gemini", "replicate"]);
   });
 
   it("reports available when its own client is injected", () => {
@@ -90,25 +74,12 @@ describe("video providers — injection contract", () => {
 
 describe("raw-HTTP providers normalize their base URL", () => {
   it("defaults when none is configured", () => {
-    // Behavior formerly owned by createVideoProviderSdks; asserted here now
-    // that each provider normalizes its own.
-    expect(
-      new KlingVideoProvider({ apiKey: "k" }) as unknown as {
-        baseUrl: string;
-      },
-    ).toMatchObject({ baseUrl: DEFAULT_KLING_BASE_URL });
     expect(
       new VeoVideoProvider({ apiKey: "k" }) as unknown as { baseUrl: string },
     ).toMatchObject({ baseUrl: DEFAULT_VEO_BASE_URL });
   });
 
   it("trims trailing slashes off a configured base URL", () => {
-    expect(
-      new KlingVideoProvider({
-        apiKey: "k",
-        baseUrl: "https://kling.example.com//",
-      }) as unknown as { baseUrl: string },
-    ).toMatchObject({ baseUrl: "https://kling.example.com" });
     expect(
       new VeoVideoProvider({
         apiKey: "k",

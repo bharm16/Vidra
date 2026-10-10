@@ -20,15 +20,9 @@ import type { DIContainer } from "./infrastructure/DIContainer.ts";
 import type { IPostHogClient } from "./infrastructure/PostHogClient.ts";
 import type { SpanLabelingCacheService } from "./services/cache/SpanLabelingCacheService.ts";
 import type { CapabilitiesProbeService } from "./services/capabilities/CapabilitiesProbeService.ts";
-import type { CreditRefundSweeper } from "./services/credits/CreditRefundSweeper.ts";
-import type { CreditReconciliationWorker } from "./services/credits/CreditReconciliationWorker.ts";
-import type { VideoJobWorker } from "./services/video-generation/jobs/VideoJobWorker.ts";
-import type { VideoJobSweeper } from "./services/video-generation/jobs/VideoJobSweeper.ts";
+import type { CreditRefundSweeper } from "./services/video-generation/refunds/CreditRefundSweeper.ts";
+import type { VideoJobWorker } from "./services/video-generation/runtime/VideoJobWorker.ts";
 import type { VideoAssetRetentionService } from "./services/video-generation/storage/VideoAssetRetentionService.ts";
-import type { WebhookReconciliationWorker } from "./services/payment/WebhookReconciliationWorker.ts";
-import type { BillingProfileRepairWorker } from "./services/payment/BillingProfileRepairWorker.ts";
-import type { DlqReprocessorWorker } from "./services/video-generation/jobs/DlqReprocessorWorker.ts";
-import type { VideoJobReconciler } from "./services/video-generation/jobs/VideoJobReconciler.ts";
 import { getRuntimeFlags } from "./config/feature-flags.ts";
 
 function isFatalUnhandledRejection(reason: unknown): boolean {
@@ -124,50 +118,16 @@ export function stopAllPeriodicWorkers(container: DIContainer): void {
     }
   };
 
-  // Stop periodic loops first to prevent new claims/retries during shutdown
-  const videoJobSweeper = resolveOptional<VideoJobSweeper | null>(
-    "videoJobSweeper",
-  );
-  videoJobSweeper?.stop();
-
   const creditRefundSweeper = resolveOptional<CreditRefundSweeper | null>(
     "creditRefundSweeper",
   );
   creditRefundSweeper?.stop();
-
-  const creditReconciliationWorker =
-    resolveOptional<CreditReconciliationWorker | null>(
-      "creditReconciliationWorker",
-    );
-  creditReconciliationWorker?.stop();
 
   const videoAssetRetentionService =
     resolveOptional<VideoAssetRetentionService | null>(
       "videoAssetRetentionService",
     );
   videoAssetRetentionService?.stop();
-
-  const webhookReconciliationWorker =
-    resolveOptional<WebhookReconciliationWorker | null>(
-      "webhookReconciliationWorker",
-    );
-  webhookReconciliationWorker?.stop();
-
-  const billingProfileRepairWorker =
-    resolveOptional<BillingProfileRepairWorker | null>(
-      "billingProfileRepairWorker",
-    );
-  billingProfileRepairWorker?.stop();
-
-  const dlqReprocessorWorker = resolveOptional<DlqReprocessorWorker | null>(
-    "dlqReprocessorWorker",
-  );
-  dlqReprocessorWorker?.stop();
-
-  const videoJobReconciler = resolveOptional<VideoJobReconciler | null>(
-    "videoJobReconciler",
-  );
-  videoJobReconciler?.stop();
 
   const capabilitiesProbe = resolveOptional<CapabilitiesProbeService | null>(
     "capabilitiesProbeService",

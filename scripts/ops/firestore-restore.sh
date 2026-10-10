@@ -80,7 +80,7 @@ if [[ "$TARGET" == "emulator" ]]; then
 
   echo ""
   echo "Emulator restore complete. Run smoke test to verify:"
-  echo "  scripts/ops/dr-smoke-test.sh --target emulator"
+  echo "  See docs/operations/DR_RUNBOOK.md for current data-integrity acceptance"
 else
   echo "WARNING: Restoring to live project '$TARGET'"
   echo "This will OVERWRITE existing documents with matching IDs."
@@ -101,5 +101,5 @@ else
   echo "  gcloud firestore operations list --project $TARGET"
   echo ""
   echo "After completion, run smoke test:"
-  echo "  scripts/ops/dr-smoke-test.sh --target $TARGET"
+  echo "  See docs/operations/DR_RUNBOOK.md for current data-integrity acceptance"
 fi

@@ -1,4 +1,5 @@
-import type { AIService } from "@services/prompt-optimization/types";
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
+
 import {
   parseVideoPromptStructuredResponse,
   type VideoPromptStructuredResponse,
@@ -12,7 +13,7 @@ import { normalizeSlots } from "./normalizeSlots";
 import { scoreSlots } from "./scoreSlots";
 
 export async function rerollSlots(options: {
-  ai: AIService;
+  ai: AIExecutionPort;
   templateSystemPrompt: string;
   developerMessage?: string;
   schema: Record<string, unknown>;

@@ -22,7 +22,6 @@ export const runOptimizeFlow = async ({
   shotInterpreter,
   strategy,
   compilationService,
-  applyConstitutionalAI,
   logOptimizationMetrics,
   intentLock,
   promptLint,
@@ -41,7 +40,6 @@ export const runOptimizeFlow = async ({
     lockedSpans = [],
     shotPlan = null,
     shotPlanAttempted = false,
-    useConstitutionalAI = false,
     signal,
     targetModel,
   } = request;
@@ -54,7 +52,6 @@ export const runOptimizeFlow = async ({
     hasContext: !!context,
     hasBrainstormContext: !!brainstormContext,
     hasShotPlan: !!shotPlan,
-    useConstitutionalAI: !!useConstitutionalAI,
     inputPrompt: prompt,
   };
 
@@ -73,7 +70,6 @@ export const runOptimizeFlow = async ({
     hasGenerationParams: !!generationParams,
     hasShotPlan: !!shotPlan,
     shotPlanAttempted,
-    useConstitutionalAI,
     skipCache,
     lockedSpanCount: lockedSpans.length,
   });
@@ -113,7 +109,6 @@ export const runOptimizeFlow = async ({
       mode,
       inputLength: prompt.length,
       outputLength: response.prompt.length,
-      useConstitutionalAI,
       intentLockPassed: response.quality.intentLock.passed,
       promptLintOk: response.quality.lint.ok,
     });
@@ -225,26 +220,6 @@ export const runOptimizeFlow = async ({
       artifactKey,
       structuredArtifact,
     );
-
-    if (useConstitutionalAI) {
-      const constitutionalStart = performance.now();
-      try {
-        optimizedPrompt = await applyConstitutionalAI(
-          optimizedPrompt,
-          mode,
-          signal,
-        );
-        t.recordLlmCall();
-      } catch (err) {
-        t.recordError("constitutional", err);
-        throw err;
-      } finally {
-        t.recordStage(
-          "constitutional",
-          performance.now() - constitutionalStart,
-        );
-      }
-    }
 
     // -----------------------------------------------------------------------
     // Step 2: No target model — finish here (intent repair, then lint)

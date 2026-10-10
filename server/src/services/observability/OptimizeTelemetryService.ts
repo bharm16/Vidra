@@ -84,7 +84,6 @@ export class OptimizeTrace {
       hasContext: summary.hasContext,
       hasBrainstormContext: summary.hasBrainstormContext,
       hasShotPlan: summary.hasShotPlan,
-      useConstitutionalAI: summary.useConstitutionalAI,
       stages,
       inputPrompt: summary.inputPrompt,
       outputPrompt: summary.outputPrompt,

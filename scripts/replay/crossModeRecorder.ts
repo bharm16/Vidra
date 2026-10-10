@@ -42,7 +42,7 @@ import {
   CROSS_MODE_SURFACE,
 } from "./goldenScenarios.ts";
 import type { ReplayCassetteEntry } from "@shared/schemas/replay.schemas";
-import type { VideoJobRecord } from "@services/video-generation/jobs/types";
+import type { VideoJobRecord } from "@services/video-generation/runtime/types";
 import { CassetteStore } from "@server/replay/CassetteStore";
 
 /**
@@ -62,9 +62,7 @@ const CAMERA_VERSION_ID = "v-cross-mode-camera";
 const CLIP_JOB_ID = "cross-mode-clip-job";
 
 export class SpendBudgetExceededError extends Error {
-  constructor(
-    readonly maxLiveCalls: number,
-  ) {
+  constructor(readonly maxLiveCalls: number) {
     super(
       `Live-call budget exceeded: the run captured its ${maxLiveCalls} allowed ` +
         `provider response and another call arrived. Raise --max-live-calls only ` +
@@ -155,9 +153,10 @@ interface StudioTurnView {
 /** Abort the run: the walkthrough left its canonical shape. */
 function drop(what: string, actual: unknown): never {
   throw new Error(
-    `Cross-mode recording aborted at ${what}: ${
-      JSON.stringify(actual)?.slice(0, 400)
-    }`,
+    `Cross-mode recording aborted at ${what}: ${JSON.stringify(actual)?.slice(
+      0,
+      400,
+    )}`,
   );
 }
 
@@ -229,14 +228,20 @@ export async function recordCrossModePack(
 
   // 3. The session picture opens a studio project that records its origin.
   log(`→ bridge: POST /api/studio/projects/from-session-picture`);
-  const bridged = await harness.post("/api/studio/projects/from-session-picture", {
-    sessionId,
-    generationId: sketchTakeId,
-  });
+  const bridged = await harness.post(
+    "/api/studio/projects/from-session-picture",
+    {
+      sessionId,
+      generationId: sketchTakeId,
+    },
+  );
   if (bridged.status !== 201) drop("the studio bridge", bridged);
   const projectId = (bridged.json.data as { id: string } | undefined)?.id;
   if (!projectId) drop("the studio bridge body", bridged.json);
-  harness.studioProjects.pinBridgedAttachmentId(projectId, BRIDGED_ATTACHMENT_ID);
+  harness.studioProjects.pinBridgedAttachmentId(
+    projectId,
+    BRIDGED_ATTACHMENT_ID,
+  );
   log(`✓ studio project ${projectId} bridged`);
 
   // 4. The studio conversation. Every decision is checked against the
@@ -301,7 +306,9 @@ export async function recordCrossModePack(
     returnIds.push(
       (returned.json.data as { generationId: string }).generationId,
     );
-    log(`✓ ${imageId} returned to the session as ${returnIds[returnIds.length - 1]}`);
+    log(
+      `✓ ${imageId} returned to the session as ${returnIds[returnIds.length - 1]}`,
+    );
   }
   const refinedTakeId = returnIds[returnIds.length - 1];
   if (!refinedTakeId) drop("the studio return legs", returnIds);

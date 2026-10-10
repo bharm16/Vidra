@@ -33,23 +33,6 @@ const editHistoryItemSchema = z.object({
   timestamp: z.number().optional(),
 });
 
-const coherenceSpanSchema = z.object({
-  id: z.string().optional(),
-  category: z.string().optional(),
-  text: z.string().optional(),
-  quote: z.string().optional(),
-  start: z.number().int().min(0).optional(),
-  end: z.number().int().min(0).optional(),
-  confidence: z.number().min(0).max(1).optional(),
-});
-
-const appliedChangeSchema = z.object({
-  spanId: z.string().optional(),
-  category: z.string().optional(),
-  oldText: z.string().optional(),
-  newText: z.string().optional(),
-});
-
 export const suggestionSchema = z.object({
   highlightedText: z
     .string()
@@ -134,14 +117,6 @@ export const sceneChangeSchema = z.object({
   sectionContext: z.string().max(5000).nullable().optional(),
 });
 
-export const coherenceCheckSchema = z.object({
-  beforePrompt: z.string().min(1).max(50000),
-  afterPrompt: z.string().min(1).max(50000),
-  appliedChange: appliedChangeSchema.optional(),
-  spans: z.array(coherenceSpanSchema).optional(),
-});
-
 export type SuggestionRequest = z.infer<typeof suggestionSchema>;
 export type CustomSuggestionRequest = z.infer<typeof customSuggestionSchema>;
 export type SceneChangeRequest = z.infer<typeof sceneChangeSchema>;
-export type CoherenceCheckRequest = z.infer<typeof coherenceCheckSchema>;

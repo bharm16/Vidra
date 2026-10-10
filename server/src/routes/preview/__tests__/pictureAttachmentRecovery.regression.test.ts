@@ -15,7 +15,7 @@ import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { SessionRecord } from "@server/domain/session/types";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
-import type { RequestIdempotencyService } from "@services/video-generation/jobs/RequestIdempotencyService";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { InMemoryIdempotencyService } from "../../../../../tests/integration/helpers/cross-mode/boundaryDoubles";
 
 /**
@@ -190,7 +190,6 @@ function createApp(deps: {
       reserveCredits: vi.fn(async () => true),
       refundCredits: vi.fn(async () => undefined),
     },
-    assetService: null,
     storageService: null,
     requestIdempotencyService: new InMemoryIdempotencyService() satisfies Pick<
       RequestIdempotencyService,

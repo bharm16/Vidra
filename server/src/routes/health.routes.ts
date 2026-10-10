@@ -3,7 +3,7 @@ import { asyncHandler } from "@middleware/asyncHandler";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { logger } from "@infrastructure/Logger";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
-import type { WorkerStatus } from "@services/credits/CreditRefundSweeper";
+import type { WorkerStatus } from "@services/jobs/WorkerStatus";
 import type { RedisStatus } from "@config/redis";
 
 interface WorkerStatusProvider {

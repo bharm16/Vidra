@@ -1,11 +1,11 @@
 import { logger } from "@infrastructure/Logger";
 import { DEFAULT_VIDEO_JOB_LEASE_SECONDS } from "@config/env";
 import type { PreviewRoutesServices } from "@routes/types";
-import type { VideoJobStore } from "@services/video-generation/jobs/VideoJobStore";
+import type { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import {
   processVideoJob,
   type JobSessionAppendPort,
-} from "@services/video-generation/jobs/processVideoJob";
+} from "@services/video-generation/runtime/processVideoJob";
 
 interface InlineVideoProcessorParams {
   jobId: string;

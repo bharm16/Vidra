@@ -1,6 +1,5 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { AIExecutionPort as AIService } from "@services/ai-model/ports/AIExecutionPort";
 import type { CacheService } from "@services/cache/CacheService";
 import {
   SceneChangeDetectionService,
@@ -47,7 +46,7 @@ const createService = (
       temperature: 0.3,
       client: "groq",
     })),
-  } as unknown as AIService;
+  } as unknown as AIExecutionPort;
 
   const cacheService = {
     getConfig: vi.fn(() => ({ ttl: 300, namespace: "scene-detection" })),

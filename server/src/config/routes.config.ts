@@ -22,9 +22,7 @@ import { respond } from "@middleware/respond";
 import { createFirestoreWriteGateMiddleware } from "@middleware/firestoreWriteGate";
 import { registerHealthRoutes } from "./routes/health.registration.ts";
 import { registerApiRoutes } from "./routes/api.registration.ts";
-import { registerMotionRoutes } from "./routes/motion.registration.ts";
 import { registerPreviewRoutes } from "./routes/preview.registration.ts";
-import { registerPaymentRoutes } from "./routes/payment.registration.ts";
 
 function registerRoutes(app: Application, container: DIContainer): void {
   const firestoreCircuitExecutor = container.resolve(
@@ -37,17 +35,11 @@ function registerRoutes(app: Application, container: DIContainer): void {
   // 2. Firestore write gate: fail-closed for all mutating /api routes
   app.use("/api", createFirestoreWriteGateMiddleware(firestoreCircuitExecutor));
 
-  // 3. Motion / convergence media
-  registerMotionRoutes(app, container);
-
   // 4. Core API, LLM endpoints, suggestions
   registerApiRoutes(app, container);
 
   // 5. Preview / generation
   registerPreviewRoutes(app, container);
-
-  // 6. Payment
-  registerPaymentRoutes(app, container);
 
   // 7. 404 Handler (must be registered AFTER all routes).
   // The unmatched path travels in `details` — the canonical envelope has no

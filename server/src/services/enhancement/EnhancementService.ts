@@ -1,3 +1,4 @@
+import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import { logger } from "@infrastructure/Logger";
 import type { ILogger } from "@interfaces/ILogger";
 import type { CacheService } from "@services/cache/CacheService";
@@ -16,7 +17,6 @@ import type {
   EnhancementV2RequestContext,
 } from "./v2/types.js";
 import type {
-  AIService,
   VideoService,
   BrainstormBuilder,
   DiversityEnforcer,
@@ -25,10 +25,6 @@ import type {
   EnhancementResult,
   EnhancementMetrics,
   Suggestion,
-  VideoConstraints,
-  GroupedSuggestions,
-  LabeledSpan,
-  NearbySpan,
 } from "./services/types";
 
 const makeNoopSuggestionsTrace = (): SuggestionsTrace =>
@@ -40,7 +36,7 @@ const makeNoopSuggestionsTrace = (): SuggestionsTrace =>
   }) as unknown as SuggestionsTrace;
 
 interface EnhancementServiceDependencies {
-  aiService: AIService;
+  aiService: AIExecutionPort;
   videoPromptService: VideoService;
   brainstormBuilder: BrainstormBuilder;
   diversityEnforcer: DiversityEnforcer;
@@ -49,7 +45,7 @@ interface EnhancementServiceDependencies {
 }
 
 interface EnhancementCoreServices {
-  ai: AIService;
+  ai: AIExecutionPort;
   videoPromptService: VideoService;
   brainstormBuilder: BrainstormBuilder;
 }

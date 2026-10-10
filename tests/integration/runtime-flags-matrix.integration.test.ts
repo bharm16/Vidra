@@ -81,6 +81,32 @@ describe("Runtime flag matrix contracts (integration)", () => {
     });
   });
 
+  it.each(["true", "false"])(
+    "retired flags cannot remount dormant routes (%s)",
+    async (flag) => {
+      await withApp({ ENABLE_CONVERGENCE: flag }, async (app) => {
+        for (const path of [
+          "/api/assets",
+          "/api/reference-images",
+          "/api/motion/depth",
+          "/api/motion/media/view",
+          "/api/model-intelligence/recommend",
+          "/api/payment/webhook",
+          "/api/preview/generate/storyboard",
+          "/api/preview/face-swap",
+          "/api/sessions/session-1/shots",
+        ]) {
+          const response = await request(app)
+            .post(path)
+            .set("x-api-key", TEST_API_KEY)
+            .send({});
+          expect(response.status, path).toBe(404);
+          expect(response.body.code, path).toBe("INVALID_REQUEST");
+        }
+      });
+    },
+  );
+
   it("keeps health stable across PROCESS_ROLE api/worker runtime modes", async () => {
     await withApp(
       {

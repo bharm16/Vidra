@@ -3,7 +3,6 @@
  * Shared type definitions used across prompt optimization modules
  */
 import type { VideoPromptStructuredResponse } from "@server/contracts/prompt-analysis/structuredPrompt";
-import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
 import type { OptimizeTrace } from "@services/observability/OptimizeTelemetryService";
 import type { CapabilityValues } from "@shared/capabilities";
 import type { LockedSpan } from "@shared/schemas/optimization.schemas";
@@ -63,7 +62,6 @@ export interface OptimizationRequest {
   lockedSpans?: LockedSpan[];
   shotPlan?: ShotPlan | null;
   shotPlanAttempted?: boolean;
-  useConstitutionalAI?: boolean;
   signal?: AbortSignal;
   /** Present in legacy I2V calls; ignored after the I2V pipeline removal. */
   startImage?: string;
@@ -196,6 +194,3 @@ export interface OptimizationStrategy {
   ): string;
   name: string;
 }
-
-/** @deprecated Use AIExecutionPort from @services/ai-model/ports/AIExecutionPort */
-export type AIService = AIExecutionPort;

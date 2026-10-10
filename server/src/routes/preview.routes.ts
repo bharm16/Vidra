@@ -10,7 +10,6 @@ import { createDiskUpload } from "@utils/upload";
 import { asyncHandler } from "@middleware/asyncHandler";
 import type { PreviewRoutesServices } from "./types";
 import { createImageGenerateHandler } from "./preview/handlers/imageGenerate";
-import { createImageStoryboardGenerateHandler } from "./preview/handlers/imageStoryboardGenerate";
 import { createVideoGenerateHandler } from "./preview/handlers/videoGenerate";
 import { createVideoJobsHandler } from "./preview/handlers/videoJobs";
 import { createVideoJobAttachHandler } from "./preview/handlers/videoJobAttach";
@@ -26,7 +25,6 @@ import { createImageAssetViewHandler } from "./preview/handlers/imageAssetView";
 import { createImageAssetViewBatchHandler } from "./preview/handlers/imageAssetViewBatch";
 import { createVideoAssetViewHandler } from "./preview/handlers/videoAssetView";
 import { createMediaReferenceViewHandler } from "./preview/handlers/mediaReferenceView";
-import { createFaceSwapPreviewHandler } from "./preview/handlers/faceSwap";
 
 const upload = createDiskUpload({
   fileSizeBytes: 10 * 1024 * 1024,
@@ -38,25 +36,9 @@ const upload = createDiskUpload({
 export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   const router = express.Router();
 
-  const resolvedServices: PreviewRoutesServices = {
-    ...services,
-    ...(services.keyframeService !== undefined
-      ? { keyframeService: services.keyframeService }
-      : {}),
-    ...(services.faceSwapService !== undefined
-      ? { faceSwapService: services.faceSwapService }
-      : {}),
-    ...(services.assetService !== undefined
-      ? { assetService: services.assetService }
-      : {}),
-    ...(services.storageService !== undefined
-      ? { storageService: services.storageService }
-      : {}),
-  };
+  const resolvedServices = services;
 
   const imageGenerateHandler = createImageGenerateHandler(resolvedServices);
-  const imageStoryboardGenerateHandler =
-    createImageStoryboardGenerateHandler(resolvedServices);
   const videoGenerateHandler = createVideoGenerateHandler(resolvedServices);
   const videoJobsHandler = createVideoJobsHandler(resolvedServices);
   const videoJobAttachHandler = createVideoJobAttachHandler(resolvedServices);
@@ -69,17 +51,12 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   const videoAssetViewHandler = createVideoAssetViewHandler(resolvedServices);
   const mediaReferenceViewHandler =
     createMediaReferenceViewHandler(resolvedServices);
-  const faceSwapPreviewHandler = createFaceSwapPreviewHandler(resolvedServices);
   const owedPictureAttachmentsHandler =
     createOwedPictureAttachmentsHandler(resolvedServices);
   const retryPictureAttachmentHandler =
     createRetryPictureAttachmentHandler(resolvedServices);
 
   router.post("/generate", asyncHandler(imageGenerateHandler));
-  router.post(
-    "/generate/storyboard",
-    asyncHandler(imageStoryboardGenerateHandler),
-  );
   router.post(
     "/upload",
     upload.single("file"),
@@ -93,7 +70,6 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   router.post("/image/view-batch", asyncHandler(imageAssetViewBatchHandler));
   router.get("/video/view", asyncHandler(videoAssetViewHandler));
   router.get("/media/view", asyncHandler(mediaReferenceViewHandler));
-  router.post("/face-swap", asyncHandler(faceSwapPreviewHandler));
   router.post("/video/generate", asyncHandler(videoGenerateHandler));
   router.get("/video/jobs/:jobId", asyncHandler(videoJobsHandler));
   // ADR-0022 decision 6: the creator's retry for a clip that was made but

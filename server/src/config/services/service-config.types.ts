@@ -43,22 +43,6 @@ export interface ServiceConfig {
     port: string | number;
     environment: string | undefined;
   };
-  stripe: {
-    secretKey: string | undefined;
-    webhookSecret: string | undefined;
-    priceCreditsJson: string | undefined;
-    webhookReconciliation: {
-      disabled: boolean;
-      intervalSeconds: number;
-      lookbackHours: number;
-    };
-    profileRepair: {
-      disabled: boolean;
-      intervalSeconds: number;
-      maxPerRun: number;
-      maxAttempts: number;
-    };
-  };
   credits: {
     refundSweeper: {
       disabled: boolean;
@@ -66,37 +50,16 @@ export interface ServiceConfig {
       maxPerRun: number;
       maxAttempts: number;
     };
-    reconciliation: {
-      disabled: boolean;
-      incrementalIntervalSeconds: number;
-      fullIntervalHours: number;
-      maxIntervalSeconds: number;
-      backoffFactor: number;
-      incrementalScanLimit: number;
-      fullPassPageSize: number;
-    };
   };
   videoJobs: {
     maxAttempts: number;
     hostname: string | undefined;
-    sweeper: {
-      disabled: boolean;
-      staleQueueSeconds: number;
-      staleProcessingSeconds: number;
-      sweepIntervalSeconds: number;
-      sweepMax: number;
-    };
     worker: {
       pollIntervalMs: number;
       leaseSeconds: number;
       maxConcurrent: number;
       heartbeatIntervalMs: number;
       perProviderMaxConcurrent: number | undefined;
-    };
-    dlqReprocessor: {
-      disabled: boolean;
-      pollIntervalMs: number;
-      maxEntriesPerRun: number;
     };
     providerCircuit: {
       failureRateThreshold: number;
@@ -122,12 +85,6 @@ export interface ServiceConfig {
       previousTokenSecrets?: readonly string[];
       tokenTtlSeconds: number;
     };
-    reconciler: {
-      disabled: boolean;
-      orphanThresholdMs: number;
-      reconcileIntervalMs: number;
-      maxObjectsPerRun: number;
-    };
   };
   imageAssets: {
     storage: {
@@ -143,30 +100,9 @@ export interface ServiceConfig {
     imagePreviewProviderOrder: string[];
     credentials: {
       replicateApiToken: string | undefined;
-      openAIKey: string | undefined;
-      lumaApiKey: string | undefined;
-      klingApiKey: string | undefined;
-      klingBaseUrl: string | undefined;
       geminiApiKey: string | undefined;
       geminiBaseUrl: string | undefined;
     };
-  };
-  convergence: {
-    depth: {
-      warmupRetryTimeoutMs: number;
-      falWarmupEnabled: boolean;
-      falWarmupIntervalMs: number;
-      falWarmupImageUrl: string | undefined;
-      warmupOnStartup: boolean;
-      warmupTimeoutMs: number;
-    };
-    storage: {
-      signedUrlTtlSeconds: number;
-    };
-  };
-  continuity: {
-    ipAdapterModel: string;
-    disableClip: boolean;
   };
   capabilities: {
     probeUrl: string | undefined;
@@ -179,9 +115,6 @@ export interface ServiceConfig {
   };
   enhancement: {
     policyVersion: string;
-  };
-  features: {
-    faceEmbedding: boolean;
   };
   firestore: {
     circuit: {

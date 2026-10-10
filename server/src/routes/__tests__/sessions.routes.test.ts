@@ -172,10 +172,7 @@ const createApp = (
     }
     next();
   });
-  app.use(
-    "/sessions",
-    createSessionRoutes(sessionService as never, continuityService as never),
-  );
+  app.use("/sessions", createSessionRoutes(sessionService as never));
   return app;
 };
 
@@ -234,43 +231,6 @@ describe("sessions.routes", () => {
     );
     if (!allowed) return;
     expect(allowed.status).toBe(200);
-  });
-
-  it("validates continuity create sessionId ownership checks", async () => {
-    const { sessionService, continuityService } = buildServices();
-    const app = createApp(sessionService, continuityService);
-
-    sessionService.getSession.mockResolvedValueOnce(null);
-    const notFound = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/continuity")
-        .set("x-user-id", "user-1")
-        .send({
-          sessionId: "missing",
-          name: "Continuity",
-          sourceImageUrl: "https://example.com/a.png",
-        }),
-    );
-    if (!notFound) return;
-    expect(notFound.status).toBe(404);
-
-    sessionService.getSession.mockResolvedValueOnce({
-      id: "session-1",
-      userId: "other-user",
-      status: "active",
-    });
-    const forbidden = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/continuity")
-        .set("x-user-id", "user-1")
-        .send({
-          sessionId: "session-1",
-          name: "Continuity",
-          sourceImageUrl: "https://example.com/a.png",
-        }),
-    );
-    if (!forbidden) return;
-    expect(forbidden.status).toBe(403);
   });
 
   it("returns 403 for unauthorized scoped session updates before unscoped mutations", async () => {
@@ -473,7 +433,7 @@ describe("sessions.routes", () => {
       }
       next();
     });
-    app.use("/sessions", createSessionRoutes(sessionService, null));
+    app.use("/sessions", createSessionRoutes(sessionService));
 
     const response = await runSupertestOrSkip(() =>
       request(app)
@@ -534,101 +494,17 @@ describe("sessions.routes", () => {
     expect(sessionService.updateOutputForUser).not.toHaveBeenCalled();
     expect(sessionService.updateVersionsForUser).not.toHaveBeenCalled();
   });
-
-  it("returns shot status payload for /sessions/:sessionId/shots/:shotId/status", async () => {
-    const { sessionService, continuityService } = buildServices();
-    const app = createApp(sessionService, continuityService);
-
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/sessions/session-1/shots/shot-1/status")
-        .set("x-user-id", "user-1"),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      success: true,
-      data: {
-        shotId: "shot-1",
-        status: "generating-video",
-        continuityMechanismUsed: "frame-bridge",
-        styleScore: 0.82,
-        identityScore: 0.91,
-        styleDegraded: false,
-        styleDegradedReason: null,
-        generatedKeyframeUrl: "https://example.com/keyframe.png",
-        frameBridgeUrl: "https://example.com/bridge.png",
-        retryCount: 1,
-        error: null,
-      },
-    });
-  });
-
-  it("returns 404 for unknown shots on status route", async () => {
-    const { sessionService, continuityService } = buildServices();
-    continuityService.getSession.mockResolvedValueOnce({
-      id: "session-1",
-      userId: "user-1",
-      shots: [],
-      defaultSettings: {
-        generationMode: "continuity",
-        defaultContinuityMode: "frame-bridge",
-        defaultStyleStrength: 0.6,
-        defaultModel: "model-a",
-        autoExtractFrameBridge: false,
-        useCharacterConsistency: false,
-      },
-    });
-    const app = createApp(sessionService, continuityService);
-
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/sessions/session-1/shots/missing-shot/status")
-        .set("x-user-id", "user-1"),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({
-      success: false,
-      error: "Shot not found",
-    });
-  });
-
-  it("wires session-scoped scene proxy preview route to service previewSceneProxy", async () => {
-    const { sessionService, continuityService } = buildServices();
-    const app = createApp(sessionService, continuityService);
-
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/shots/shot-1/scene-proxy-preview")
-        .set("x-user-id", "user-1")
-        .send({ camera: { yaw: 0.12, pitch: -0.05, roll: 0, dolly: -1 } }),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(200);
-    expect(continuityService.previewSceneProxy).toHaveBeenCalledWith(
-      "session-1",
-      "shot-1",
-      {
-        yaw: 0.12,
-        pitch: -0.05,
-        roll: 0,
-        dolly: -1,
-      },
-    );
-  });
 });
 
 describe("sessions.routes — the first-frame arm door (issue #136)", () => {
   /** Creates the app with an explicit arm binding, like registration does. */
   const createArmApp = (
     armFirstFrame:
-      | ((
-          input: { userId: string; sessionId: string; generationId: string },
-        ) => Promise<
+      | ((input: {
+          userId: string;
+          sessionId: string;
+          generationId: string;
+        }) => Promise<
           | { ok: true; frame: Record<string, unknown> }
           | { ok: false; reason: string }
         >)
@@ -649,8 +525,6 @@ describe("sessions.routes — the first-frame arm door (issue #136)", () => {
       "/sessions",
       createSessionRoutes(
         { requireCreator: true } as never,
-        null,
-        null,
         undefined,
         armFirstFrame,
       ),

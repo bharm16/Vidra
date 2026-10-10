@@ -175,12 +175,6 @@ const videoGenerationSchema = z.object({
   REPLICATE_API_TOKEN: optionalApiKey(),
   FAL_KEY: optionalApiKey(),
   FAL_API_KEY: optionalApiKey(),
-  FAL_KEY_ID: optionalString(),
-  FAL_KEY_SECRET: optionalString(),
-  LUMA_API_KEY: optionalApiKey(),
-  LUMAAI_API_KEY: optionalApiKey(),
-  KLING_API_KEY: optionalApiKey(),
-  KLING_API_BASE_URL: optionalString(),
   IMAGE_PREVIEW_PROVIDER: optionalString(),
   IMAGE_PREVIEW_PROVIDER_ORDER: optionalString(),
 });
@@ -207,16 +201,6 @@ const videoJobSchema = z.object({
     .enum(["required", "soft"])
     .default("required"),
   VIDEO_JOB_HEARTBEAT_INTERVAL_MS: coercePositiveInt(20000),
-  VIDEO_JOB_STALE_QUEUE_SECONDS: coercePositiveInt(300),
-  VIDEO_JOB_STALE_QUEUE_MINUTES: z.coerce.number().int().positive().optional(),
-  VIDEO_JOB_STALE_PROCESSING_SECONDS: coercePositiveInt(90),
-  VIDEO_JOB_STALE_PROCESSING_MINUTES: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
-  VIDEO_JOB_SWEEP_INTERVAL_SECONDS: coercePositiveInt(15),
-  VIDEO_JOB_SWEEP_MAX: coercePositiveInt(25),
   VIDEO_PROVIDER_POLL_TIMEOUT_MS: coercePositiveInt(270000),
   VIDEO_WORKFLOW_TIMEOUT_MS: coercePositiveInt(300000),
   VIDEO_JOB_POLL_INTERVAL_MS: coercePositiveInt(2000),
@@ -230,8 +214,6 @@ const videoJobSchema = z.object({
   VIDEO_PROVIDER_CIRCUIT_MIN_VOLUME: coercePositiveInt(20),
   VIDEO_PROVIDER_CIRCUIT_COOLDOWN_MS: coercePositiveInt(60000),
   VIDEO_PROVIDER_CIRCUIT_MAX_SAMPLES: coercePositiveInt(50),
-  VIDEO_DLQ_POLL_INTERVAL_MS: coercePositiveInt(30000),
-  VIDEO_DLQ_MAX_ENTRIES_PER_RUN: coercePositiveInt(5),
   VIDEO_GENERATE_IDEMPOTENCY_PENDING_TTL_MS: coercePositiveInt(360000),
   VIDEO_GENERATE_IDEMPOTENCY_REPLAY_TTL_MS: coercePositiveInt(86400000),
   VIDEO_WORKER_SHUTDOWN_DRAIN_SECONDS: coercePositiveInt(45),
@@ -244,9 +226,6 @@ const videoAssetsSchema = z.object({
   VIDEO_ASSET_RETENTION_HOURS: coercePositiveInt(24),
   VIDEO_ASSET_CLEANUP_INTERVAL_MINUTES: coercePositiveInt(15),
   VIDEO_ASSET_CLEANUP_BATCH_SIZE: coercePositiveInt(100),
-  VIDEO_ASSET_RECONCILER_ORPHAN_THRESHOLD_MS: coercePositiveInt(3_600_000),
-  VIDEO_ASSET_RECONCILER_INTERVAL_MS: coercePositiveInt(300_000),
-  VIDEO_ASSET_RECONCILER_MAX_PER_RUN: coercePositiveInt(50),
 });
 
 const firestoreCircuitSchema = z.object({
@@ -262,27 +241,9 @@ const firestoreCircuitSchema = z.object({
 });
 
 const creditSchema = z.object({
-  CREDIT_RECONCILIATION_INCREMENTAL_SCAN_LIMIT: coercePositiveInt(500),
-  CREDIT_RECONCILIATION_FULL_PAGE_SIZE: coercePositiveInt(200),
-  CREDIT_RECONCILIATION_INCREMENTAL_INTERVAL_SECONDS: coercePositiveInt(3600),
-  CREDIT_RECONCILIATION_FULL_INTERVAL_HOURS: coercePositiveInt(24),
-  CREDIT_RECONCILIATION_MAX_INTERVAL_SECONDS: coercePositiveInt(21600),
-  CREDIT_RECONCILIATION_BACKOFF_FACTOR: coerceNonNegativeNumber(2),
   CREDIT_REFUND_SWEEP_INTERVAL_SECONDS: coercePositiveInt(60),
   CREDIT_REFUND_SWEEP_MAX: coercePositiveInt(25),
   CREDIT_REFUND_MAX_ATTEMPTS: coercePositiveInt(20),
-  FREE_TIER_STARTER_CREDITS: z.coerce.number().int().min(0).default(25),
-});
-
-const billingSchema = z.object({
-  STRIPE_SECRET_KEY: optionalApiKey(),
-  STRIPE_WEBHOOK_SECRET: optionalApiKey(),
-  STRIPE_PRICE_CREDITS: optionalString(),
-  WEBHOOK_RECONCILIATION_INTERVAL_SECONDS: coercePositiveInt(300),
-  WEBHOOK_RECONCILIATION_LOOKBACK_HOURS: coercePositiveInt(72),
-  BILLING_PROFILE_REPAIR_INTERVAL_SECONDS: coercePositiveInt(60),
-  BILLING_PROFILE_REPAIR_MAX_PER_RUN: coercePositiveInt(25),
-  BILLING_PROFILE_REPAIR_MAX_ATTEMPTS: coercePositiveInt(20),
 });
 
 const redisSchema = z.object({
@@ -317,12 +278,6 @@ const observabilitySchema = z.object({
 const startupSchema = z.object({
   SERVICE_STARTUP_HEALTHCHECKS: coerceBooleanString(false),
   SERVICE_STARTUP_PRE_RESOLVE: coerceBooleanString(false),
-  DEPTH_ESTIMATION_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
-  DEPTH_ESTIMATION_COLD_START_TIMEOUT_MS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
 });
 
 const capabilitiesSchema = z.object({
@@ -350,20 +305,6 @@ const sketchRelaySchema = z.object({
   // is a deliberate overestimate — it reserves more than a frame costs, never
   // less — and must be confirmed against fal's invoice before launch.
   SKETCH_FRAME_COST_MILLICENTS: coercePositiveInt(300),
-});
-
-const convergenceSchema = z.object({
-  DEPTH_ESTIMATION_WARMUP_RETRY_TIMEOUT_MS: coercePositiveInt(20_000),
-  // DEPTH_WARMUP_ON_STARTUP is a registered flag — validated by the derived
-  // featureFlagSchema above, not here.
-  DEPTH_WARMUP_TIMEOUT_MS: coercePositiveInt(60_000),
-  // FAL_DEPTH_WARMUP_ENABLED defaults OFF (see core.services.ts); declared
-  // here as optional for pass-through validation only.
-  FAL_DEPTH_WARMUP_ENABLED: optionalString(),
-  FAL_DEPTH_WARMUP_IMAGE_URL: optionalString(),
-  FAL_DEPTH_WARMUP_INTERVAL_MS: coercePositiveInt(120_000),
-  CONVERGENCE_STORAGE_SIGNED_URL_TTL_SECONDS: coercePositiveInt(86_400),
-  IP_ADAPTER_MODEL: optionalString(),
 });
 
 const enhancementSchema = z.object({
@@ -418,7 +359,6 @@ const envSchema = serverSchema
   .merge(videoAssetsSchema)
   .merge(firestoreCircuitSchema)
   .merge(creditSchema)
-  .merge(billingSchema)
   .merge(redisSchema)
   .merge(securitySchema)
   .merge(observabilitySchema)
@@ -426,7 +366,6 @@ const envSchema = serverSchema
   .merge(capabilitiesSchema)
   .merge(studioSchema)
   .merge(sketchRelaySchema)
-  .merge(convergenceSchema)
   .merge(enhancementSchema)
   .merge(spanLabelingSchema)
   .merge(devSchema)

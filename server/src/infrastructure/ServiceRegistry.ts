@@ -18,27 +18,15 @@ import type { LLMClient } from "@clients/LLMClient";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
-import type { UserCreditService } from "@services/credits/UserCreditService";
-import type { CreditRefundSweeper } from "@services/credits/CreditRefundSweeper";
-import type { CreditReconciliationWorker } from "@services/credits/CreditReconciliationWorker";
+import type { LegacyCreditRefundService } from "@services/video-generation/refunds/LegacyCreditRefundService";
+import type { CreditRefundSweeper } from "@services/video-generation/refunds/CreditRefundSweeper";
 import type { PromptOptimizationService } from "@services/prompt-optimization/PromptOptimizationService";
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
-import type { ContinuitySessionService } from "@services/continuity/ContinuitySessionService";
-import type { ModelIntelligenceService } from "@services/model-intelligence/ModelIntelligenceService";
-import type { VideoJobWorker } from "@services/video-generation/jobs/VideoJobWorker";
-import type { VideoJobSweeper } from "@services/video-generation/jobs/VideoJobSweeper";
-import type { DlqReprocessorWorker } from "@services/video-generation/jobs/DlqReprocessorWorker";
-import type { VideoJobReconciler } from "@services/video-generation/jobs/VideoJobReconciler";
-import type { ProviderCircuitManager } from "@services/video-generation/jobs/ProviderCircuitManager";
-import type { VideoWorkerHeartbeatStore } from "@services/video-generation/jobs/VideoWorkerHeartbeatStore";
+import type { VideoJobWorker } from "@services/video-generation/runtime/VideoJobWorker";
+import type { ProviderCircuitManager } from "@services/video-generation/runtime/ProviderCircuitManager";
+import type { VideoWorkerHeartbeatStore } from "@services/video-generation/runtime/VideoWorkerHeartbeatStore";
 import type { CapabilitiesProbeService } from "@services/capabilities/CapabilitiesProbeService";
-import type { PaymentService } from "@services/payment/PaymentService";
-import type { BillingProfileStore } from "@services/payment/BillingProfileStore";
-import type { StripeWebhookEventStore } from "@services/payment/StripeWebhookEventStore";
-import type { PaymentConsistencyStore } from "@services/payment/PaymentConsistencyStore";
-import type { WebhookReconciliationWorker } from "@services/payment/WebhookReconciliationWorker";
-import type { BillingProfileRepairWorker } from "@services/payment/BillingProfileRepairWorker";
 import type { SessionService } from "@services/sessions/SessionService";
 import type { VideoAssetRetentionService } from "@services/video-generation/storage/VideoAssetRetentionService";
 import type { ImageAssetStore } from "@services/image-generation/storage";
@@ -74,29 +62,17 @@ export interface ServiceRegistry {
   // Generation (nullable — resolves to null when provider creds are absent)
   imageGenerationService: ImageGenerationService | null;
   videoGenerationService: VideoGenerationService | null;
-  continuitySessionService: ContinuitySessionService | null;
-  modelIntelligenceService: ModelIntelligenceService | null;
   capabilitiesProbeService: CapabilitiesProbeService | null;
 
   // Credits / billing
-  userCreditService: UserCreditService;
+  legacyCreditRefunder: LegacyCreditRefundService;
   creditRefundSweeper: CreditRefundSweeper | null;
-  creditReconciliationWorker: CreditReconciliationWorker | null;
-  paymentService: PaymentService;
-  billingProfileStore: BillingProfileStore;
-  stripeWebhookEventStore: StripeWebhookEventStore;
-  paymentConsistencyStore: PaymentConsistencyStore;
 
   // Workers (nullable — only started in worker role)
   videoJobWorker: VideoJobWorker | null;
-  videoJobSweeper: VideoJobSweeper | null;
-  dlqReprocessorWorker: DlqReprocessorWorker | null;
-  videoJobReconciler: VideoJobReconciler | null;
   providerCircuitManager: ProviderCircuitManager | null;
   videoWorkerHeartbeatStore: VideoWorkerHeartbeatStore | null;
   videoAssetRetentionService: VideoAssetRetentionService | null;
-  webhookReconciliationWorker: WebhookReconciliationWorker | null;
-  billingProfileRepairWorker: BillingProfileRepairWorker | null;
 
   // Storage
   //

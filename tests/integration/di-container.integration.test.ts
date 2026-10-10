@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import * as firebaseBoundary from "@infrastructure/firebaseAdmin";
+import { describe, expect, it, vi } from "vitest";
 import { configureServices } from "@config/services.config";
 import type { StorageService } from "@services/storage/StorageService";
 
@@ -21,24 +22,13 @@ const REQUIRED_TOKENS = [
   "promptOptimizationService",
   "enhancementService",
   "sceneDetectionService",
-  "promptCoherenceService",
-  "userCreditService",
+  "legacyCreditRefunder",
   "sessionService",
   "storageService",
   "gcsBucket",
   // Every store signs through this one minter; a missing registration would
   // take out image, video, convergence and reference-image URLs at once.
   "signedUrlMinter",
-  "imageObservationService",
-  "assetService",
-  // Conditionally-mounted in api.routes.ts:107-150 but expected to register
-  // non-null whenever GCS is configured (which test setup guarantees).
-  // Missing this silently 404s /api/reference-images.
-  // consistentVideoService and modelIntelligenceService are correctly
-  // *not* listed — they legitimately resolve to null when video provider
-  // credentials are absent (FAL/Replicate/Luma keys), like
-  // continuitySessionService under ENABLE_CONVERGENCE=false.
-  "referenceImageRepository",
 ] as const;
 
 describe("DI Container (integration)", () => {
@@ -82,20 +72,66 @@ describe("DI Container (integration)", () => {
     expect(logger1).toBe(logger2);
   });
 
-  it("keeps continuity service resolvable when convergence is disabled", async () => {
-    const previousEnableConvergence = process.env.ENABLE_CONVERGENCE;
-    process.env.ENABLE_CONVERGENCE = "false";
+  it("keeps admission/runtime tokens and omits retired backend registrations", async () => {
+    const container = await configureServices();
+    const names = new Set(container.getServiceNames());
+    for (const token of [
+      "requestIdempotencyService",
+      "videoJobStore",
+      "imageAssetStore",
+      "refundFailureStore",
+      "legacyCreditRefunder",
+    ]) {
+      expect(names.has(token), token).toBe(true);
+      expect(container.resolve(token)).not.toBeNull();
+    }
+    for (const token of [
+      "assetService",
+      "referenceImageRepository",
+      "continuitySessionService",
+      "convergenceStorageService",
+      "paymentService",
+      "userCreditService",
+      "imageObservationService",
+      "modelIntelligenceService",
+      "videoJobSweeper",
+      "dlqReprocessorWorker",
+      "videoJobReconciler",
+    ])
+      expect(names.has(token), token).toBe(false);
+  });
 
+  it("provides startup attachment recovery without a generation provider", async () => {
+    type QueryBoundary = {
+      where(...args: unknown[]): QueryBoundary;
+      orderBy(...args: unknown[]): QueryBoundary;
+      limit(...args: unknown[]): QueryBoundary;
+      get(): Promise<{ docs: [] }>;
+    };
+    const read = vi.fn(async (): Promise<{ docs: [] }> => ({ docs: [] }));
+    const query: QueryBoundary = {
+      where: () => query,
+      orderBy: () => query,
+      limit: () => query,
+      get: read,
+    };
+    const external = vi
+      .spyOn(firebaseBoundary, "getFirestore")
+      .mockReturnValue({
+        collection: () => query,
+      } as unknown as ReturnType<typeof firebaseBoundary.getFirestore>);
     try {
       const container = await configureServices();
-      const continuityService = container.resolve("continuitySessionService");
-      expect(continuityService).toBeNull();
+      container.registerValue("videoGenerationService", null);
+      expect(container.resolve("videoJobWorker")).toBeNull();
+      const recover = container.resolve<() => Promise<void>>(
+        "resumePendingVideoAttachments",
+      );
+      expect(typeof recover).toBe("function");
+      await expect(recover()).resolves.toBeUndefined();
+      expect(read).toHaveBeenCalledTimes(1);
     } finally {
-      if (previousEnableConvergence === undefined) {
-        delete process.env.ENABLE_CONVERGENCE;
-      } else {
-        process.env.ENABLE_CONVERGENCE = previousEnableConvergence;
-      }
+      external.mockRestore();
     }
   });
 

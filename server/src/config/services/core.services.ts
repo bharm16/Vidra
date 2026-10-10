@@ -6,19 +6,11 @@ import {
   FirestoreCircuitExecutor,
   setFirestoreCircuitExecutor,
 } from "@services/firestore/FirestoreCircuitExecutor";
-import { FaceEmbeddingService } from "@services/asset/FaceEmbeddingService";
-import { AIModelService } from "@services/ai-model/index";
-import type { CacheService } from "@services/cache/CacheService";
-import { ImageObservationService } from "@services/image-observation";
 import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import { FirestoreSketchBudgetStore } from "@services/sketch-budget/storage/FirestoreSketchBudgetStore";
 import { resolveFalApiKey } from "@utils/falApiKey";
 import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
-import {
-  resolveBoolFlag,
-  resolvePositiveNumber,
-  resolveSignedUrlTtlMs,
-} from "./env-utils.ts";
+import { resolvePositiveNumber, resolveSignedUrlTtlMs } from "./env-utils.ts";
 import { resolveAllFlags } from "../feature-flags.ts";
 import { DEFAULT_VIDEO_JOB_LEASE_SECONDS } from "../env.ts";
 import type { ServiceConfig } from "./service-config.types.ts";
@@ -91,42 +83,6 @@ export function registerCoreServices(container: DIContainer): void {
       port: process.env.PORT || 3001,
       environment: process.env.NODE_ENV || "development",
     },
-    stripe: {
-      secretKey: process.env.STRIPE_SECRET_KEY,
-      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-      priceCreditsJson: process.env.STRIPE_PRICE_CREDITS,
-      webhookReconciliation: {
-        disabled: !flags.webhookReconciliationEnabled,
-        intervalSeconds: resolvePositiveNumber(
-          process.env.WEBHOOK_RECONCILIATION_INTERVAL_SECONDS,
-          300,
-          30,
-        ),
-        lookbackHours: resolvePositiveNumber(
-          process.env.WEBHOOK_RECONCILIATION_LOOKBACK_HOURS,
-          72,
-          1,
-        ),
-      },
-      profileRepair: {
-        disabled: !flags.billingProfileRepairEnabled,
-        intervalSeconds: resolvePositiveNumber(
-          process.env.BILLING_PROFILE_REPAIR_INTERVAL_SECONDS,
-          60,
-          1,
-        ),
-        maxPerRun: resolvePositiveNumber(
-          process.env.BILLING_PROFILE_REPAIR_MAX_PER_RUN,
-          25,
-          1,
-        ),
-        maxAttempts: resolvePositiveNumber(
-          process.env.BILLING_PROFILE_REPAIR_MAX_ATTEMPTS,
-          20,
-          1,
-        ),
-      },
-    },
     credits: {
       refundSweeper: {
         disabled: !flags.creditRefundSweeperEnabled,
@@ -146,39 +102,6 @@ export function registerCoreServices(container: DIContainer): void {
           1,
         ),
       },
-      reconciliation: {
-        disabled: !flags.creditReconciliationEnabled,
-        incrementalIntervalSeconds: resolvePositiveNumber(
-          process.env.CREDIT_RECONCILIATION_INCREMENTAL_INTERVAL_SECONDS,
-          3600,
-          1,
-        ),
-        fullIntervalHours: resolvePositiveNumber(
-          process.env.CREDIT_RECONCILIATION_FULL_INTERVAL_HOURS,
-          24,
-          1,
-        ),
-        maxIntervalSeconds: resolvePositiveNumber(
-          process.env.CREDIT_RECONCILIATION_MAX_INTERVAL_SECONDS,
-          21600,
-          1,
-        ),
-        backoffFactor: resolvePositiveNumber(
-          process.env.CREDIT_RECONCILIATION_BACKOFF_FACTOR,
-          2,
-          1.01,
-        ),
-        incrementalScanLimit: resolvePositiveNumber(
-          process.env.CREDIT_RECONCILIATION_INCREMENTAL_SCAN_LIMIT,
-          500,
-          1,
-        ),
-        fullPassPageSize: resolvePositiveNumber(
-          process.env.CREDIT_RECONCILIATION_FULL_PAGE_SIZE,
-          200,
-          1,
-        ),
-      },
     },
     videoJobs: {
       maxAttempts: resolvePositiveNumber(
@@ -187,41 +110,6 @@ export function registerCoreServices(container: DIContainer): void {
         1,
       ),
       hostname: process.env.HOSTNAME,
-      sweeper: {
-        disabled: !flags.videoJobSweeperEnabled,
-        staleQueueSeconds: (() => {
-          const s = Number.parseInt(
-            process.env.VIDEO_JOB_STALE_QUEUE_SECONDS || "",
-            10,
-          );
-          if (Number.isFinite(s) && s > 0) return s;
-          const m = Number.parseInt(
-            process.env.VIDEO_JOB_STALE_QUEUE_MINUTES || "",
-            10,
-          );
-          if (Number.isFinite(m) && m > 0) return m * 60;
-          return 300;
-        })(),
-        staleProcessingSeconds: (() => {
-          const s = Number.parseInt(
-            process.env.VIDEO_JOB_STALE_PROCESSING_SECONDS || "",
-            10,
-          );
-          if (Number.isFinite(s) && s > 0) return s;
-          const m = Number.parseInt(
-            process.env.VIDEO_JOB_STALE_PROCESSING_MINUTES || "",
-            10,
-          );
-          if (Number.isFinite(m) && m > 0) return m * 60;
-          return 90;
-        })(),
-        sweepIntervalSeconds: resolvePositiveNumber(
-          process.env.VIDEO_JOB_SWEEP_INTERVAL_SECONDS,
-          15,
-          1,
-        ),
-        sweepMax: resolvePositiveNumber(process.env.VIDEO_JOB_SWEEP_MAX, 25, 1),
-      },
       worker: {
         pollIntervalMs: resolvePositiveNumber(
           process.env.VIDEO_JOB_POLL_INTERVAL_MS,
@@ -256,19 +144,6 @@ export function registerCoreServices(container: DIContainer): void {
           );
           return Number.isFinite(v) && v > 0 ? v : undefined;
         })(),
-      },
-      dlqReprocessor: {
-        disabled: !flags.videoDlqReprocessorEnabled,
-        pollIntervalMs: resolvePositiveNumber(
-          process.env.VIDEO_DLQ_POLL_INTERVAL_MS,
-          30_000,
-          1,
-        ),
-        maxEntriesPerRun: resolvePositiveNumber(
-          process.env.VIDEO_DLQ_MAX_ENTRIES_PER_RUN,
-          5,
-          1,
-        ),
       },
       providerCircuit: {
         failureRateThreshold: resolvePositiveNumber(
@@ -335,24 +210,6 @@ export function registerCoreServices(container: DIContainer): void {
           1,
         ),
       },
-      reconciler: {
-        disabled: !flags.videoAssetReconcilerEnabled,
-        orphanThresholdMs: resolvePositiveNumber(
-          process.env.VIDEO_ASSET_RECONCILER_ORPHAN_THRESHOLD_MS,
-          3_600_000,
-          1,
-        ),
-        reconcileIntervalMs: resolvePositiveNumber(
-          process.env.VIDEO_ASSET_RECONCILER_INTERVAL_MS,
-          300_000,
-          1,
-        ),
-        maxObjectsPerRun: resolvePositiveNumber(
-          process.env.VIDEO_ASSET_RECONCILER_MAX_PER_RUN,
-          50,
-          1,
-        ),
-      },
     },
     imageAssets: {
       storage: {
@@ -385,58 +242,9 @@ export function registerCoreServices(container: DIContainer): void {
         .filter(Boolean),
       credentials: {
         replicateApiToken: process.env.REPLICATE_API_TOKEN,
-        openAIKey: process.env.OPENAI_API_KEY,
-        lumaApiKey:
-          process.env.LUMA_API_KEY || process.env.LUMAAI_API_KEY || undefined,
-        klingApiKey: process.env.KLING_API_KEY,
-        klingBaseUrl: process.env.KLING_API_BASE_URL,
         geminiApiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
         geminiBaseUrl: process.env.GEMINI_BASE_URL,
       },
-    },
-    convergence: {
-      depth: {
-        warmupRetryTimeoutMs: resolvePositiveNumber(
-          process.env.DEPTH_ESTIMATION_WARMUP_RETRY_TIMEOUT_MS,
-          20_000,
-          5_000,
-        ),
-        // Defaults OFF. This arms a 120s setInterval calling fal for the
-        // lifetime of the process, on the same FAL_KEY the live editor spends,
-        // warming a stack ADR-0002 froze. It was on by default everywhere but
-        // production, so every dev boot paid for it.
-        falWarmupEnabled: resolveBoolFlag(
-          process.env.FAL_DEPTH_WARMUP_ENABLED,
-          false,
-        ),
-        falWarmupIntervalMs: resolvePositiveNumber(
-          process.env.FAL_DEPTH_WARMUP_INTERVAL_MS,
-          120_000,
-          30_000,
-        ),
-        falWarmupImageUrl:
-          process.env.FAL_DEPTH_WARMUP_IMAGE_URL ||
-          "https://storage.googleapis.com/generativeai-downloads/images/cat.jpg",
-        warmupOnStartup: flags.depthWarmupOnStartup,
-        warmupTimeoutMs: resolvePositiveNumber(
-          process.env.DEPTH_WARMUP_TIMEOUT_MS,
-          60_000,
-          5_000,
-        ),
-      },
-      storage: {
-        signedUrlTtlSeconds: resolvePositiveNumber(
-          process.env.CONVERGENCE_STORAGE_SIGNED_URL_TTL_SECONDS,
-          86_400,
-          1,
-        ),
-      },
-    },
-    continuity: {
-      ipAdapterModel:
-        process.env.IP_ADAPTER_MODEL ||
-        "lucataco/ip-adapter-sdxl:cbe488c8df305a99d155b038abdf003a0bba4e82352e561fbaab2c8c9b70a96e",
-      disableClip: !flags.continuityClipEnabled,
     },
     capabilities: {
       probeUrl: process.env.CAPABILITIES_PROBE_URL,
@@ -461,9 +269,6 @@ export function registerCoreServices(container: DIContainer): void {
     },
     enhancement: {
       policyVersion: process.env.ENHANCEMENT_POLICY_VERSION || "2026-03-v2a",
-    },
-    features: {
-      faceEmbedding: flags.faceEmbeddingEnabled,
     },
     firestore: {
       circuit: {
@@ -551,30 +356,6 @@ export function registerCoreServices(container: DIContainer): void {
       return executor;
     },
     ["config"],
-  );
-
-  container.register(
-    "faceEmbeddingService",
-    (config: ServiceConfig) => {
-      const token = config.replicate.apiToken;
-      if (!token) {
-        logger.warn(
-          "FaceEmbeddingService disabled: REPLICATE_API_TOKEN not set",
-        );
-        return null;
-      }
-      return new FaceEmbeddingService(undefined, token);
-    },
-    ["config"],
-  );
-
-  // Observation services — thin AI-backed facades with no domain cohesion
-  // of their own; live here alongside other infrastructure-level services.
-  container.register(
-    "imageObservationService",
-    (aiService: AIModelService, cacheService: CacheService) =>
-      new ImageObservationService(aiService, cacheService),
-    ["aiService", "cacheService"],
   );
 
   // Sketch relay admission budget (issue #84) — a Firestore-backed daily

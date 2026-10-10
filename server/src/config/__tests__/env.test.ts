@@ -29,10 +29,9 @@ describe("parseEnv", () => {
     expect(result.OPENAI_MODEL).toBe("gpt-4o-mini");
     expect(result.GROQ_MODEL).toBe("openai/gpt-oss-20b");
     expect(result.GEMINI_MODEL).toBe("gemini-2.5-flash");
-    expect(result.ENABLE_CONVERGENCE).toBe(true);
+    expect(result.ENABLE_STUDIO).toBe(true);
     expect(result.VIDEO_STORAGE_BASE_PATH).toBe("video-previews");
     expect(result.IMAGE_STORAGE_BASE_PATH).toBe("image-previews");
-    expect(result.FREE_TIER_STARTER_CREDITS).toBe(25);
   });
 
   it("coerces string numbers to actual numbers", () => {
@@ -52,12 +51,12 @@ describe("parseEnv", () => {
   it("coerces boolean strings correctly", () => {
     const result = parseEnv(
       minimalEnv({
-        ENABLE_CONVERGENCE: "false",
+        ENABLE_STUDIO: "false",
         SENTRY_DEBUG: "true",
       }),
     );
 
-    expect(result.ENABLE_CONVERGENCE).toBe(false);
+    expect(result.ENABLE_STUDIO).toBe(false);
     expect(result.SENTRY_DEBUG).toBe(true);
   });
 
