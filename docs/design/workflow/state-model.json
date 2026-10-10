@@ -1,0 +1,2755 @@
+{
+  "version": 1,
+  "status": "design contract, not application implementation",
+  "scope": "Single-owner image, clip, and video-edit projects; conversations, history, uploads, Sketch, exports, and read-only shares.",
+  "defaultTransition": {
+    "disposition": "reject",
+    "mutates": false,
+    "message": "This action is not available in the current state.",
+    "surface": "For user commands show the reason. For inapplicable stale/system events preserve state and log; known duplicates use explicit no-op rules."
+  },
+  "unknownEvent": {
+    "disposition": "reject",
+    "mutates": false,
+    "message": "Unsupported action; do not infer a transition."
+  },
+  "externalGuards": [
+    "Server authorization and project writability",
+    "Revision, receipt and request-hash checks",
+    "Explicit input roles and context branch",
+    "Current capability and quote validation",
+    "Confirmed provider outcome rather than browser timeout",
+    "Durability and attachment before deliverable aggregation"
+  ],
+  "invariants": {
+    "I01": "Inspection preserves drafts and inputs",
+    "I02": "Accepted request snapshots are immutable",
+    "I03": "Transport retry cannot duplicate a request or charge",
+    "I04": "Output slot identity and sources are exact",
+    "I05": "Draft persistence is independent of jobs",
+    "I06": "Background results cannot steal focus",
+    "I07": "Repair does not regenerate media",
+    "I08": "Context excludes unrelated branches",
+    "I09": "History restoration preserves outputs",
+    "I10": "States have defined actions or wait reasons",
+    "I11": "Inputs and exports pin immutable versions",
+    "I12": "Unknown outcomes require reconciliation",
+    "I13": "Authorization is checked at every boundary",
+    "I14": "Customer usage differs from provider expense",
+    "I15": "Unsupported actions cannot simulate success"
+  },
+  "models": [
+    {
+      "id": "project",
+      "initial": "local",
+      "states": {
+        "local": "New work exists only on this device; generation is unavailable.",
+        "creating": "An idempotent project-creation request is being reconciled.",
+        "ready": "The owner can work in this project.",
+        "load_failed": "Project loading failed; retry the same identity.",
+        "inaccessible": "Authorization is missing; cached private content is hidden.",
+        "trashing": "Trash is requested; new work is blocked while the server decides.",
+        "trashed": "Project and work are retained but read-only; public links are denied."
+      },
+      "terminal": [],
+      "events": [
+        "access_denied",
+        "access_restored",
+        "create",
+        "create_rejected",
+        "created",
+        "load_failed",
+        "loaded",
+        "rejected",
+        "response_lost",
+        "restored",
+        "trash",
+        "trash_confirmed"
+      ],
+      "transitions": [
+        {
+          "from": "local",
+          "event": "create",
+          "to": "creating",
+          "rule": "H01"
+        },
+        {
+          "from": "creating",
+          "event": "created",
+          "to": "ready",
+          "rule": "H01"
+        },
+        {
+          "from": "creating",
+          "event": "response_lost",
+          "to": "creating",
+          "rule": "J02"
+        },
+        {
+          "from": "creating",
+          "event": "create_rejected",
+          "to": "local",
+          "rule": "J03"
+        },
+        {
+          "from": "ready",
+          "event": "load_failed",
+          "to": "load_failed",
+          "rule": "R07"
+        },
+        {
+          "from": "load_failed",
+          "event": "loaded",
+          "to": "ready",
+          "rule": "R07"
+        },
+        {
+          "from": "ready",
+          "event": "access_denied",
+          "to": "inaccessible",
+          "rule": "R07"
+        },
+        {
+          "from": "load_failed",
+          "event": "access_denied",
+          "to": "inaccessible",
+          "rule": "R07"
+        },
+        {
+          "from": "inaccessible",
+          "event": "access_restored",
+          "to": "ready",
+          "rule": "R05"
+        },
+        {
+          "from": "ready",
+          "event": "trash",
+          "to": "trashing",
+          "rule": "L04"
+        },
+        {
+          "from": "trashing",
+          "event": "trash_confirmed",
+          "to": "trashed",
+          "rule": "L04"
+        },
+        {
+          "from": "trashing",
+          "event": "rejected",
+          "to": "ready",
+          "rule": "L04"
+        },
+        {
+          "from": "trashing",
+          "event": "response_lost",
+          "to": "trashing",
+          "rule": "J02"
+        },
+        {
+          "from": "trashed",
+          "event": "restored",
+          "to": "ready",
+          "rule": "L04"
+        }
+      ]
+    },
+    {
+      "id": "conversation",
+      "initial": "active",
+      "states": {
+        "active": "Requests and drafts can be added.",
+        "archiving": "Archive write is pending; local draft is retained.",
+        "archived": "History is readable; new submissions require restore."
+      },
+      "terminal": [],
+      "events": [
+        "archive",
+        "confirmed",
+        "rejected",
+        "response_lost",
+        "restore"
+      ],
+      "transitions": [
+        {
+          "from": "active",
+          "event": "archive",
+          "to": "archiving",
+          "rule": "L03"
+        },
+        {
+          "from": "archiving",
+          "event": "confirmed",
+          "to": "archived",
+          "rule": "L03"
+        },
+        {
+          "from": "archiving",
+          "event": "response_lost",
+          "to": "archiving",
+          "rule": "J02"
+        },
+        {
+          "from": "archiving",
+          "event": "rejected",
+          "to": "active",
+          "rule": "L03"
+        },
+        {
+          "from": "archived",
+          "event": "restore",
+          "to": "active",
+          "rule": "L03"
+        }
+      ]
+    },
+    {
+      "id": "connection",
+      "initial": "online",
+      "states": {
+        "online": "Protected reads/writes can be attempted subject to authorization.",
+        "offline": "Only cached reading and local editing are available.",
+        "reconnecting": "Reconcile saved writes, receipts and jobs before enabling new dispatch."
+      },
+      "terminal": [],
+      "events": ["lost", "network_available", "reconciled"],
+      "transitions": [
+        {
+          "from": "online",
+          "event": "lost",
+          "to": "offline",
+          "rule": "R02"
+        },
+        {
+          "from": "offline",
+          "event": "network_available",
+          "to": "reconnecting",
+          "rule": "R02"
+        },
+        {
+          "from": "reconnecting",
+          "event": "reconciled",
+          "to": "online",
+          "rule": "R01"
+        },
+        {
+          "from": "reconnecting",
+          "event": "lost",
+          "to": "offline",
+          "rule": "R02"
+        }
+      ]
+    },
+    {
+      "id": "authentication",
+      "initial": "guest",
+      "states": {
+        "guest": "Anonymous text draft only; protected work requires sign-in.",
+        "signed_in": "The current authenticated owner can access their work.",
+        "reauth_required": "Protected operations paused; same-owner local work retained.",
+        "signed_out": "Private content hidden and owner-scoped local drafts locked."
+      },
+      "terminal": [],
+      "events": [
+        "different_owner_sign_in",
+        "expired",
+        "same_owner_sign_in",
+        "sign_in",
+        "sign_out",
+        "start_anonymous"
+      ],
+      "transitions": [
+        {
+          "from": "guest",
+          "event": "sign_in",
+          "to": "signed_in",
+          "rule": "R05"
+        },
+        {
+          "from": "signed_in",
+          "event": "expired",
+          "to": "reauth_required",
+          "rule": "R05"
+        },
+        {
+          "from": "reauth_required",
+          "event": "same_owner_sign_in",
+          "to": "signed_in",
+          "rule": "R05"
+        },
+        {
+          "from": "signed_in",
+          "event": "sign_out",
+          "to": "signed_out",
+          "rule": "R06"
+        },
+        {
+          "from": "reauth_required",
+          "event": "sign_out",
+          "to": "signed_out",
+          "rule": "R06"
+        },
+        {
+          "from": "signed_out",
+          "event": "same_owner_sign_in",
+          "to": "signed_in",
+          "rule": "R05"
+        },
+        {
+          "from": "signed_out",
+          "event": "different_owner_sign_in",
+          "to": "signed_in",
+          "rule": "R05"
+        },
+        {
+          "from": "reauth_required",
+          "event": "different_owner_sign_in",
+          "to": "signed_in",
+          "rule": "R05"
+        },
+        {
+          "from": "signed_out",
+          "event": "start_anonymous",
+          "to": "guest",
+          "rule": "R05"
+        }
+      ]
+    },
+    {
+      "id": "draft",
+      "initial": "open",
+      "states": {
+        "open": "Editable, with readiness and saving tracked separately.",
+        "parked": "Retained unfinished work outside the current composer.",
+        "submitted": "Frozen revision belongs to an accepted request.",
+        "discarded": "Explicitly discarded draft; submitted history is unaffected."
+      },
+      "terminal": ["submitted", "discarded"],
+      "events": [
+        "accepted",
+        "discard",
+        "park",
+        "reopen",
+        "reuse_setup",
+        "view_history"
+      ],
+      "transitions": [
+        {
+          "from": "open",
+          "event": "park",
+          "to": "parked",
+          "rule": "D01"
+        },
+        {
+          "from": "parked",
+          "event": "reopen",
+          "to": "open",
+          "rule": "D01"
+        },
+        {
+          "from": "open",
+          "event": "accepted",
+          "to": "submitted",
+          "rule": "D03"
+        },
+        {
+          "from": "open",
+          "event": "discard",
+          "to": "discarded",
+          "rule": "D01"
+        },
+        {
+          "from": "parked",
+          "event": "discard",
+          "to": "discarded",
+          "rule": "D01"
+        },
+        {
+          "from": "submitted",
+          "event": "view_history",
+          "to": "submitted",
+          "rule": "H07"
+        },
+        {
+          "from": "submitted",
+          "event": "reuse_setup",
+          "to": "submitted",
+          "rule": "H07"
+        }
+      ]
+    },
+    {
+      "id": "draft_save",
+      "initial": "local",
+      "states": {
+        "local": "Newest revision is locally checkpointed, not server-acknowledged.",
+        "saving": "Saving a captured revision; newer edits may exist.",
+        "saved": "The current revision is acknowledged by the server.",
+        "failed": "Server save failed; the local revision remains recoverable.",
+        "conflict": "Both server and local revisions are retained; submit blocked.",
+        "local_failed": "Local checkpoint failed; leaving requires export or explicit discard."
+      },
+      "terminal": [],
+      "events": [
+        "ack_current",
+        "ack_stale",
+        "checkpoint_recovered",
+        "combine",
+        "draft_exported",
+        "edit_checkpointed",
+        "keep_local_as_new",
+        "local_checkpoint_failure_protected",
+        "local_checkpoint_failure_unprotected",
+        "remote_failure",
+        "revision_conflict",
+        "save",
+        "use_server"
+      ],
+      "transitions": [
+        {
+          "from": "local",
+          "event": "edit_checkpointed",
+          "to": "local",
+          "rule": "D08"
+        },
+        {
+          "from": "saved",
+          "event": "edit_checkpointed",
+          "to": "local",
+          "rule": "D08"
+        },
+        {
+          "from": "failed",
+          "event": "edit_checkpointed",
+          "to": "local",
+          "rule": "D08"
+        },
+        {
+          "from": "local",
+          "event": "save",
+          "to": "saving",
+          "rule": "D08"
+        },
+        {
+          "from": "failed",
+          "event": "save",
+          "to": "saving",
+          "rule": "D08"
+        },
+        {
+          "from": "saving",
+          "event": "ack_current",
+          "to": "saved",
+          "rule": "D08"
+        },
+        {
+          "from": "saving",
+          "event": "ack_stale",
+          "to": "local",
+          "rule": "D08"
+        },
+        {
+          "from": "saving",
+          "event": "edit_checkpointed",
+          "to": "local",
+          "rule": "D08"
+        },
+        {
+          "from": "saving",
+          "event": "remote_failure",
+          "to": "failed",
+          "rule": "D08"
+        },
+        {
+          "from": "saving",
+          "event": "revision_conflict",
+          "to": "conflict",
+          "rule": "R03"
+        },
+        {
+          "from": "conflict",
+          "event": "keep_local_as_new",
+          "to": "local",
+          "rule": "R03"
+        },
+        {
+          "from": "conflict",
+          "event": "use_server",
+          "to": "saved",
+          "rule": "R03"
+        },
+        {
+          "from": "conflict",
+          "event": "combine",
+          "to": "local",
+          "rule": "R03"
+        },
+        {
+          "from": "local",
+          "event": "local_checkpoint_failure_unprotected",
+          "to": "local_failed",
+          "rule": "D08"
+        },
+        {
+          "from": "saving",
+          "event": "local_checkpoint_failure_unprotected",
+          "to": "local_failed",
+          "rule": "D08"
+        },
+        {
+          "from": "saved",
+          "event": "local_checkpoint_failure_unprotected",
+          "to": "local_failed",
+          "rule": "D08"
+        },
+        {
+          "from": "failed",
+          "event": "local_checkpoint_failure_unprotected",
+          "to": "local_failed",
+          "rule": "D08"
+        },
+        {
+          "from": "conflict",
+          "event": "local_checkpoint_failure_unprotected",
+          "to": "local_failed",
+          "rule": "D08"
+        },
+        {
+          "from": "local_failed",
+          "event": "local_checkpoint_failure_unprotected",
+          "to": "local_failed",
+          "rule": "D08"
+        },
+        {
+          "from": "local_failed",
+          "event": "checkpoint_recovered",
+          "to": "local",
+          "rule": "D08"
+        },
+        {
+          "from": "local_failed",
+          "event": "draft_exported",
+          "to": "local_failed",
+          "rule": "D10"
+        },
+        {
+          "from": "saved",
+          "event": "local_checkpoint_failure_protected",
+          "to": "saved",
+          "rule": "D08"
+        },
+        {
+          "from": "local_failed",
+          "event": "ack_current",
+          "to": "saved",
+          "rule": "D08"
+        }
+      ]
+    },
+    {
+      "id": "input_target",
+      "initial": "none",
+      "states": {
+        "none": "No media target; only actions not requiring media may submit.",
+        "version": "One explicitly bound, available version or validated input set.",
+        "pending": "This draft explicitly waits for one named request slot.",
+        "choice_required": "An output, primary input or context change must be chosen explicitly before submission.",
+        "unavailable": "Bound source is failed, lost, unlinked or unauthorized."
+      },
+      "terminal": [],
+      "events": [
+        "access_lost",
+        "bind_available",
+        "bind_pending",
+        "clear",
+        "inspect",
+        "output_deliverable",
+        "output_failed",
+        "require_choice",
+        "same_source_recovered"
+      ],
+      "transitions": [
+        {
+          "from": "none",
+          "event": "bind_available",
+          "to": "version",
+          "rule": "C02"
+        },
+        {
+          "from": "version",
+          "event": "bind_available",
+          "to": "version",
+          "rule": "C02"
+        },
+        {
+          "from": "choice_required",
+          "event": "bind_available",
+          "to": "version",
+          "rule": "C02"
+        },
+        {
+          "from": "unavailable",
+          "event": "bind_available",
+          "to": "version",
+          "rule": "C02"
+        },
+        {
+          "from": "none",
+          "event": "bind_pending",
+          "to": "pending",
+          "rule": "D04"
+        },
+        {
+          "from": "version",
+          "event": "bind_pending",
+          "to": "pending",
+          "rule": "D04"
+        },
+        {
+          "from": "choice_required",
+          "event": "bind_pending",
+          "to": "pending",
+          "rule": "D04"
+        },
+        {
+          "from": "none",
+          "event": "require_choice",
+          "to": "choice_required",
+          "rule": "D05"
+        },
+        {
+          "from": "version",
+          "event": "require_choice",
+          "to": "choice_required",
+          "rule": "D05"
+        },
+        {
+          "from": "pending",
+          "event": "require_choice",
+          "to": "choice_required",
+          "rule": "D05"
+        },
+        {
+          "from": "pending",
+          "event": "output_deliverable",
+          "to": "version",
+          "rule": "D04"
+        },
+        {
+          "from": "pending",
+          "event": "output_failed",
+          "to": "unavailable",
+          "rule": "D04"
+        },
+        {
+          "from": "version",
+          "event": "access_lost",
+          "to": "unavailable",
+          "rule": "M04"
+        },
+        {
+          "from": "unavailable",
+          "event": "same_source_recovered",
+          "to": "version",
+          "rule": "M04"
+        },
+        {
+          "from": "none",
+          "event": "clear",
+          "to": "none",
+          "rule": "C05"
+        },
+        {
+          "from": "version",
+          "event": "clear",
+          "to": "none",
+          "rule": "C05"
+        },
+        {
+          "from": "pending",
+          "event": "clear",
+          "to": "none",
+          "rule": "C05"
+        },
+        {
+          "from": "choice_required",
+          "event": "clear",
+          "to": "none",
+          "rule": "C05"
+        },
+        {
+          "from": "unavailable",
+          "event": "clear",
+          "to": "none",
+          "rule": "C05"
+        },
+        {
+          "from": "none",
+          "event": "inspect",
+          "to": "none",
+          "rule": "I01"
+        },
+        {
+          "from": "version",
+          "event": "inspect",
+          "to": "version",
+          "rule": "I01"
+        },
+        {
+          "from": "pending",
+          "event": "inspect",
+          "to": "pending",
+          "rule": "I01"
+        },
+        {
+          "from": "choice_required",
+          "event": "inspect",
+          "to": "choice_required",
+          "rule": "I01"
+        },
+        {
+          "from": "unavailable",
+          "event": "inspect",
+          "to": "unavailable",
+          "rule": "I01"
+        }
+      ]
+    },
+    {
+      "id": "submission",
+      "initial": "idle",
+      "states": {
+        "idle": "No request envelope is in transit for this draft revision.",
+        "sending": "Frozen envelope and submission identity are stored and being sent.",
+        "unknown": "Acceptance is unknown; reconcile this exact identity.",
+        "accepted": "Authoritative receipt recovered; accepted request is immutable.",
+        "rejected": "Authoritative pre-acceptance rejection; original draft retained.",
+        "needs_attention": "Acceptance deadline expired without authoritative outcome; frozen envelope retained for manual reconciliation."
+      },
+      "terminal": ["accepted"],
+      "events": [
+        "accepted",
+        "check_again",
+        "corrected_new_revision",
+        "definitely_absent",
+        "duplicate_response",
+        "receipt_found",
+        "recovery_deadline",
+        "rejected",
+        "response_uncertain",
+        "submit_valid"
+      ],
+      "transitions": [
+        {
+          "from": "idle",
+          "event": "submit_valid",
+          "to": "sending",
+          "rule": "D03"
+        },
+        {
+          "from": "sending",
+          "event": "accepted",
+          "to": "accepted",
+          "rule": "J01"
+        },
+        {
+          "from": "sending",
+          "event": "response_uncertain",
+          "to": "unknown",
+          "rule": "J02"
+        },
+        {
+          "from": "sending",
+          "event": "rejected",
+          "to": "rejected",
+          "rule": "J03"
+        },
+        {
+          "from": "unknown",
+          "event": "receipt_found",
+          "to": "accepted",
+          "rule": "J02"
+        },
+        {
+          "from": "unknown",
+          "event": "definitely_absent",
+          "to": "sending",
+          "rule": "J02"
+        },
+        {
+          "from": "unknown",
+          "event": "rejected",
+          "to": "rejected",
+          "rule": "J03"
+        },
+        {
+          "from": "unknown",
+          "event": "check_again",
+          "to": "unknown",
+          "rule": "J02"
+        },
+        {
+          "from": "accepted",
+          "event": "duplicate_response",
+          "to": "accepted",
+          "rule": "J01"
+        },
+        {
+          "from": "rejected",
+          "event": "corrected_new_revision",
+          "to": "idle",
+          "rule": "J03"
+        },
+        {
+          "from": "unknown",
+          "event": "recovery_deadline",
+          "to": "needs_attention",
+          "rule": "J15"
+        },
+        {
+          "from": "needs_attention",
+          "event": "check_again",
+          "to": "unknown",
+          "rule": "J15"
+        },
+        {
+          "from": "needs_attention",
+          "event": "receipt_found",
+          "to": "accepted",
+          "rule": "J15"
+        },
+        {
+          "from": "needs_attention",
+          "event": "definitely_absent",
+          "to": "sending",
+          "rule": "J15"
+        },
+        {
+          "from": "needs_attention",
+          "event": "rejected",
+          "to": "rejected",
+          "rule": "J15"
+        }
+      ]
+    },
+    {
+      "id": "request",
+      "initial": "queued",
+      "states": {
+        "queued": "Accepted and queued; no outcome assumed.",
+        "running": "At least one required output slot is executing.",
+        "settling": "Execution produced outputs; saving/linking or remaining slots are unresolved.",
+        "reconciling": "External execution/terminal status is uncertain.",
+        "succeeded": "All required output slots are durable and deliverable.",
+        "partial": "At least one deliverable slot; remaining slots are terminal failures/cancellations.",
+        "failed": "No deliverable slots and all slots definitively failed/lost.",
+        "cancelled": "All required slots cancelled before producing a deliverable.",
+        "needs_attention": "Automatic recovery expired; evidence retained and unsettled usage released. Manual status/storage recovery remains available."
+      },
+      "terminal": [],
+      "events": [
+        "all_cancelled",
+        "all_deliverable",
+        "check_status",
+        "contradictory_terminal",
+        "duplicate_or_old_event",
+        "no_slots_dispatched_cancelled",
+        "none_deliverable_all_failed",
+        "outcome_unknown",
+        "output_received",
+        "proven_failure",
+        "recovery_deadline",
+        "some_deliverable_rest_terminal",
+        "start",
+        "verified_running",
+        "verified_saving"
+      ],
+      "transitions": [
+        {
+          "from": "queued",
+          "event": "start",
+          "to": "running",
+          "rule": "J04"
+        },
+        {
+          "from": "queued",
+          "event": "no_slots_dispatched_cancelled",
+          "to": "cancelled",
+          "rule": "J10"
+        },
+        {
+          "from": "queued",
+          "event": "proven_failure",
+          "to": "failed",
+          "rule": "P01"
+        },
+        {
+          "from": "running",
+          "event": "output_received",
+          "to": "settling",
+          "rule": "J06"
+        },
+        {
+          "from": "running",
+          "event": "outcome_unknown",
+          "to": "reconciling",
+          "rule": "J04"
+        },
+        {
+          "from": "settling",
+          "event": "outcome_unknown",
+          "to": "reconciling",
+          "rule": "J04"
+        },
+        {
+          "from": "running",
+          "event": "all_deliverable",
+          "to": "succeeded",
+          "rule": "J07"
+        },
+        {
+          "from": "settling",
+          "event": "all_deliverable",
+          "to": "succeeded",
+          "rule": "J07"
+        },
+        {
+          "from": "reconciling",
+          "event": "all_deliverable",
+          "to": "succeeded",
+          "rule": "J07"
+        },
+        {
+          "from": "running",
+          "event": "some_deliverable_rest_terminal",
+          "to": "partial",
+          "rule": "J07"
+        },
+        {
+          "from": "settling",
+          "event": "some_deliverable_rest_terminal",
+          "to": "partial",
+          "rule": "J07"
+        },
+        {
+          "from": "reconciling",
+          "event": "some_deliverable_rest_terminal",
+          "to": "partial",
+          "rule": "J07"
+        },
+        {
+          "from": "running",
+          "event": "none_deliverable_all_failed",
+          "to": "failed",
+          "rule": "J07"
+        },
+        {
+          "from": "settling",
+          "event": "none_deliverable_all_failed",
+          "to": "failed",
+          "rule": "J07"
+        },
+        {
+          "from": "reconciling",
+          "event": "none_deliverable_all_failed",
+          "to": "failed",
+          "rule": "J07"
+        },
+        {
+          "from": "running",
+          "event": "all_cancelled",
+          "to": "cancelled",
+          "rule": "J12"
+        },
+        {
+          "from": "settling",
+          "event": "all_cancelled",
+          "to": "cancelled",
+          "rule": "J12"
+        },
+        {
+          "from": "reconciling",
+          "event": "all_cancelled",
+          "to": "cancelled",
+          "rule": "J12"
+        },
+        {
+          "from": "reconciling",
+          "event": "verified_running",
+          "to": "running",
+          "rule": "J04"
+        },
+        {
+          "from": "reconciling",
+          "event": "verified_saving",
+          "to": "settling",
+          "rule": "J06"
+        },
+        {
+          "from": "succeeded",
+          "event": "contradictory_terminal",
+          "to": "reconciling",
+          "rule": "J09"
+        },
+        {
+          "from": "partial",
+          "event": "contradictory_terminal",
+          "to": "reconciling",
+          "rule": "J09"
+        },
+        {
+          "from": "failed",
+          "event": "contradictory_terminal",
+          "to": "reconciling",
+          "rule": "J09"
+        },
+        {
+          "from": "cancelled",
+          "event": "contradictory_terminal",
+          "to": "reconciling",
+          "rule": "J09"
+        },
+        {
+          "from": "queued",
+          "event": "duplicate_or_old_event",
+          "to": "queued",
+          "rule": "J09"
+        },
+        {
+          "from": "running",
+          "event": "duplicate_or_old_event",
+          "to": "running",
+          "rule": "J09"
+        },
+        {
+          "from": "settling",
+          "event": "duplicate_or_old_event",
+          "to": "settling",
+          "rule": "J09"
+        },
+        {
+          "from": "reconciling",
+          "event": "duplicate_or_old_event",
+          "to": "reconciling",
+          "rule": "J09"
+        },
+        {
+          "from": "succeeded",
+          "event": "duplicate_or_old_event",
+          "to": "succeeded",
+          "rule": "J09"
+        },
+        {
+          "from": "partial",
+          "event": "duplicate_or_old_event",
+          "to": "partial",
+          "rule": "J09"
+        },
+        {
+          "from": "failed",
+          "event": "duplicate_or_old_event",
+          "to": "failed",
+          "rule": "J09"
+        },
+        {
+          "from": "cancelled",
+          "event": "duplicate_or_old_event",
+          "to": "cancelled",
+          "rule": "J09"
+        },
+        {
+          "from": "queued",
+          "event": "recovery_deadline",
+          "to": "needs_attention",
+          "rule": "J13"
+        },
+        {
+          "from": "running",
+          "event": "recovery_deadline",
+          "to": "needs_attention",
+          "rule": "J13"
+        },
+        {
+          "from": "settling",
+          "event": "recovery_deadline",
+          "to": "needs_attention",
+          "rule": "J13"
+        },
+        {
+          "from": "reconciling",
+          "event": "recovery_deadline",
+          "to": "needs_attention",
+          "rule": "J13"
+        },
+        {
+          "from": "needs_attention",
+          "event": "check_status",
+          "to": "reconciling",
+          "rule": "J13"
+        },
+        {
+          "from": "needs_attention",
+          "event": "all_deliverable",
+          "to": "succeeded",
+          "rule": "J13"
+        },
+        {
+          "from": "needs_attention",
+          "event": "some_deliverable_rest_terminal",
+          "to": "partial",
+          "rule": "J13"
+        },
+        {
+          "from": "needs_attention",
+          "event": "none_deliverable_all_failed",
+          "to": "failed",
+          "rule": "J13"
+        },
+        {
+          "from": "needs_attention",
+          "event": "all_cancelled",
+          "to": "cancelled",
+          "rule": "J13"
+        },
+        {
+          "from": "needs_attention",
+          "event": "duplicate_or_old_event",
+          "to": "needs_attention",
+          "rule": "J09"
+        }
+      ]
+    },
+    {
+      "id": "output_slot",
+      "initial": "waiting",
+      "states": {
+        "waiting": "Stable slot accepted; no provider dispatch yet.",
+        "running": "Provider attempt may be executing.",
+        "unknown": "Provider outcome cannot yet be established.",
+        "received": "Provider output exists; durable copy still required.",
+        "saving": "Copying or validating the same output into owned storage.",
+        "save_failed": "Output existed; retry storing that same output.",
+        "stored": "Durable output version exists; attachment is tracked separately.",
+        "failed": "Definitive provider failure, without usable output.",
+        "output_lost": "Provider output cannot be recovered into durable storage.",
+        "cancelled": "Cancellation confirmed without a delivered output."
+      },
+      "terminal": ["stored"],
+      "events": [
+        "admit_existing_output",
+        "begin_copy",
+        "cancel_confirmed",
+        "conflicting_extra_output",
+        "copied",
+        "copy_failed",
+        "dispatch",
+        "duplicate_output",
+        "late_output",
+        "output_expired_unrecoverable",
+        "pre_dispatch_refused",
+        "proven_not_accepted_retry_allowed",
+        "proven_provider_failure",
+        "provider_output",
+        "response_uncertain",
+        "retry_same_output",
+        "status_check",
+        "verified_late_output"
+      ],
+      "transitions": [
+        {
+          "from": "waiting",
+          "event": "dispatch",
+          "to": "running",
+          "rule": "J04"
+        },
+        {
+          "from": "waiting",
+          "event": "cancel_confirmed",
+          "to": "cancelled",
+          "rule": "J10"
+        },
+        {
+          "from": "running",
+          "event": "response_uncertain",
+          "to": "unknown",
+          "rule": "J04"
+        },
+        {
+          "from": "running",
+          "event": "provider_output",
+          "to": "received",
+          "rule": "J06"
+        },
+        {
+          "from": "unknown",
+          "event": "provider_output",
+          "to": "received",
+          "rule": "J06"
+        },
+        {
+          "from": "running",
+          "event": "proven_provider_failure",
+          "to": "failed",
+          "rule": "J07"
+        },
+        {
+          "from": "unknown",
+          "event": "proven_provider_failure",
+          "to": "failed",
+          "rule": "J07"
+        },
+        {
+          "from": "running",
+          "event": "cancel_confirmed",
+          "to": "cancelled",
+          "rule": "J10"
+        },
+        {
+          "from": "unknown",
+          "event": "cancel_confirmed",
+          "to": "cancelled",
+          "rule": "J10"
+        },
+        {
+          "from": "received",
+          "event": "begin_copy",
+          "to": "saving",
+          "rule": "J06"
+        },
+        {
+          "from": "saving",
+          "event": "copied",
+          "to": "stored",
+          "rule": "J06"
+        },
+        {
+          "from": "saving",
+          "event": "copy_failed",
+          "to": "save_failed",
+          "rule": "J06"
+        },
+        {
+          "from": "save_failed",
+          "event": "retry_same_output",
+          "to": "saving",
+          "rule": "J08"
+        },
+        {
+          "from": "received",
+          "event": "output_expired_unrecoverable",
+          "to": "output_lost",
+          "rule": "J08"
+        },
+        {
+          "from": "saving",
+          "event": "output_expired_unrecoverable",
+          "to": "output_lost",
+          "rule": "J08"
+        },
+        {
+          "from": "save_failed",
+          "event": "output_expired_unrecoverable",
+          "to": "output_lost",
+          "rule": "J08"
+        },
+        {
+          "from": "unknown",
+          "event": "status_check",
+          "to": "unknown",
+          "rule": "J04"
+        },
+        {
+          "from": "cancelled",
+          "event": "late_output",
+          "to": "received",
+          "rule": "J11"
+        },
+        {
+          "from": "stored",
+          "event": "duplicate_output",
+          "to": "stored",
+          "rule": "J09"
+        },
+        {
+          "from": "waiting",
+          "event": "admit_existing_output",
+          "to": "received",
+          "rule": "M07"
+        },
+        {
+          "from": "waiting",
+          "event": "pre_dispatch_refused",
+          "to": "failed",
+          "rule": "P01"
+        },
+        {
+          "from": "running",
+          "event": "proven_not_accepted_retry_allowed",
+          "to": "waiting",
+          "rule": "J05"
+        },
+        {
+          "from": "unknown",
+          "event": "proven_not_accepted_retry_allowed",
+          "to": "waiting",
+          "rule": "J05"
+        },
+        {
+          "from": "failed",
+          "event": "verified_late_output",
+          "to": "received",
+          "rule": "J09"
+        },
+        {
+          "from": "output_lost",
+          "event": "verified_late_output",
+          "to": "received",
+          "rule": "J09"
+        },
+        {
+          "from": "stored",
+          "event": "conflicting_extra_output",
+          "to": "stored",
+          "rule": "J09"
+        }
+      ]
+    },
+    {
+      "id": "attachment",
+      "initial": "pending",
+      "states": {
+        "pending": "Owned durable output still needs a project association.",
+        "attached": "Original output is linked to its recorded project.",
+        "failed": "Association failed; repair reuses media and identity.",
+        "destination_missing": "The recorded destination is unavailable or trashed; retain recovery ownership.",
+        "recovery_attached": "Durable output is linked to the owner recovery inbox; original project target remains recorded."
+      },
+      "terminal": ["attached"],
+      "events": [
+        "copy_to_chosen_project",
+        "destination_unavailable",
+        "duplicate_ack",
+        "link_failed",
+        "linked",
+        "project_restored",
+        "recovery_linked",
+        "restore_original_project",
+        "retry"
+      ],
+      "transitions": [
+        {
+          "from": "pending",
+          "event": "linked",
+          "to": "attached",
+          "rule": "J06"
+        },
+        {
+          "from": "pending",
+          "event": "link_failed",
+          "to": "failed",
+          "rule": "J06"
+        },
+        {
+          "from": "pending",
+          "event": "destination_unavailable",
+          "to": "destination_missing",
+          "rule": "R07"
+        },
+        {
+          "from": "failed",
+          "event": "destination_unavailable",
+          "to": "destination_missing",
+          "rule": "R07"
+        },
+        {
+          "from": "failed",
+          "event": "retry",
+          "to": "pending",
+          "rule": "J08"
+        },
+        {
+          "from": "destination_missing",
+          "event": "project_restored",
+          "to": "pending",
+          "rule": "R07"
+        },
+        {
+          "from": "attached",
+          "event": "duplicate_ack",
+          "to": "attached",
+          "rule": "J09"
+        },
+        {
+          "from": "pending",
+          "event": "recovery_linked",
+          "to": "recovery_attached",
+          "rule": "J06"
+        },
+        {
+          "from": "failed",
+          "event": "recovery_linked",
+          "to": "recovery_attached",
+          "rule": "J06"
+        },
+        {
+          "from": "destination_missing",
+          "event": "recovery_linked",
+          "to": "recovery_attached",
+          "rule": "J06"
+        },
+        {
+          "from": "recovery_attached",
+          "event": "restore_original_project",
+          "to": "pending",
+          "rule": "R09"
+        },
+        {
+          "from": "recovery_attached",
+          "event": "copy_to_chosen_project",
+          "to": "recovery_attached",
+          "rule": "R09"
+        }
+      ]
+    },
+    {
+      "id": "cancellation",
+      "initial": "none",
+      "states": {
+        "none": "No cancellation intent has been recorded.",
+        "requested": "Cancellation requested; completion and charges remain possible.",
+        "confirmed": "Cancellation has authoritative confirmation.",
+        "unable": "Cancellation could not stop the work; its outcome remains tracked.",
+        "reconciling": "Late or contradictory output requires reconciliation."
+      },
+      "terminal": [],
+      "events": [
+        "before_dispatch_confirmed",
+        "cancellation_still_valid",
+        "completion_verified",
+        "completion_won",
+        "late_output",
+        "provider_confirmed",
+        "request_cancel",
+        "response_uncertain",
+        "unsupported"
+      ],
+      "transitions": [
+        {
+          "from": "none",
+          "event": "request_cancel",
+          "to": "requested",
+          "rule": "J10"
+        },
+        {
+          "from": "requested",
+          "event": "before_dispatch_confirmed",
+          "to": "confirmed",
+          "rule": "J10"
+        },
+        {
+          "from": "requested",
+          "event": "provider_confirmed",
+          "to": "confirmed",
+          "rule": "J10"
+        },
+        {
+          "from": "requested",
+          "event": "unsupported",
+          "to": "unable",
+          "rule": "J10"
+        },
+        {
+          "from": "requested",
+          "event": "completion_won",
+          "to": "unable",
+          "rule": "J11"
+        },
+        {
+          "from": "requested",
+          "event": "response_uncertain",
+          "to": "requested",
+          "rule": "J11"
+        },
+        {
+          "from": "confirmed",
+          "event": "late_output",
+          "to": "reconciling",
+          "rule": "J11"
+        },
+        {
+          "from": "reconciling",
+          "event": "cancellation_still_valid",
+          "to": "confirmed",
+          "rule": "J11"
+        },
+        {
+          "from": "reconciling",
+          "event": "completion_verified",
+          "to": "unable",
+          "rule": "J11"
+        }
+      ]
+    },
+    {
+      "id": "upload",
+      "initial": "staged",
+      "states": {
+        "staged": "File and intended input role selected locally.",
+        "uploading": "Upload in progress using one import identity.",
+        "verifying": "Server validates content and durable ownership.",
+        "ready": "Owned file is available as an input.",
+        "failed": "Recoverable transport/storage failure.",
+        "rejected": "File is incompatible or invalid; choose/fix a file.",
+        "missing_bytes": "Local file bytes unavailable after reload.",
+        "cancelled": "Draft upload was cancelled; no late reattachment."
+      },
+      "terminal": ["ready"],
+      "events": [
+        "bytes_missing",
+        "cancel",
+        "choose_different_file",
+        "invalid",
+        "late_upload_ready",
+        "matching_file_reselected",
+        "retry",
+        "start",
+        "transferred",
+        "transport_failed",
+        "validated"
+      ],
+      "transitions": [
+        {
+          "from": "staged",
+          "event": "start",
+          "to": "uploading",
+          "rule": "M01"
+        },
+        {
+          "from": "uploading",
+          "event": "transferred",
+          "to": "verifying",
+          "rule": "M01"
+        },
+        {
+          "from": "verifying",
+          "event": "validated",
+          "to": "ready",
+          "rule": "M01"
+        },
+        {
+          "from": "uploading",
+          "event": "transport_failed",
+          "to": "failed",
+          "rule": "M01"
+        },
+        {
+          "from": "verifying",
+          "event": "transport_failed",
+          "to": "failed",
+          "rule": "M01"
+        },
+        {
+          "from": "staged",
+          "event": "invalid",
+          "to": "rejected",
+          "rule": "M01"
+        },
+        {
+          "from": "verifying",
+          "event": "invalid",
+          "to": "rejected",
+          "rule": "M01"
+        },
+        {
+          "from": "failed",
+          "event": "retry",
+          "to": "uploading",
+          "rule": "M01"
+        },
+        {
+          "from": "staged",
+          "event": "bytes_missing",
+          "to": "missing_bytes",
+          "rule": "M02"
+        },
+        {
+          "from": "failed",
+          "event": "bytes_missing",
+          "to": "missing_bytes",
+          "rule": "M02"
+        },
+        {
+          "from": "missing_bytes",
+          "event": "matching_file_reselected",
+          "to": "staged",
+          "rule": "M02"
+        },
+        {
+          "from": "missing_bytes",
+          "event": "choose_different_file",
+          "to": "staged",
+          "rule": "M02"
+        },
+        {
+          "from": "rejected",
+          "event": "choose_different_file",
+          "to": "staged",
+          "rule": "M02"
+        },
+        {
+          "from": "staged",
+          "event": "cancel",
+          "to": "cancelled",
+          "rule": "M03"
+        },
+        {
+          "from": "uploading",
+          "event": "cancel",
+          "to": "cancelled",
+          "rule": "M03"
+        },
+        {
+          "from": "verifying",
+          "event": "cancel",
+          "to": "cancelled",
+          "rule": "M03"
+        },
+        {
+          "from": "failed",
+          "event": "cancel",
+          "to": "cancelled",
+          "rule": "M03"
+        },
+        {
+          "from": "cancelled",
+          "event": "late_upload_ready",
+          "to": "ready",
+          "rule": "M03"
+        }
+      ]
+    },
+    {
+      "id": "media_access",
+      "initial": "unloaded",
+      "states": {
+        "unloaded": "Version has not been requested by the viewer.",
+        "loading": "Resolving/loading the named version.",
+        "ready": "The named version is accessible; decoding may be separate.",
+        "refreshing": "Refreshing an expired URL for the same version.",
+        "unavailable": "Media cannot currently be retrieved; history remains.",
+        "denied": "Owner/access check failed; no alternate URL bypass."
+      },
+      "terminal": [],
+      "events": [
+        "access_restored",
+        "close",
+        "denied",
+        "fetch_failed",
+        "loaded",
+        "open",
+        "refreshed",
+        "retry",
+        "url_expired"
+      ],
+      "transitions": [
+        {
+          "from": "unloaded",
+          "event": "open",
+          "to": "loading",
+          "rule": "M04"
+        },
+        {
+          "from": "loading",
+          "event": "loaded",
+          "to": "ready",
+          "rule": "M04"
+        },
+        {
+          "from": "loading",
+          "event": "denied",
+          "to": "denied",
+          "rule": "M04"
+        },
+        {
+          "from": "ready",
+          "event": "denied",
+          "to": "denied",
+          "rule": "M04"
+        },
+        {
+          "from": "refreshing",
+          "event": "denied",
+          "to": "denied",
+          "rule": "M04"
+        },
+        {
+          "from": "loading",
+          "event": "fetch_failed",
+          "to": "unavailable",
+          "rule": "M04"
+        },
+        {
+          "from": "refreshing",
+          "event": "fetch_failed",
+          "to": "unavailable",
+          "rule": "M04"
+        },
+        {
+          "from": "ready",
+          "event": "url_expired",
+          "to": "refreshing",
+          "rule": "M04"
+        },
+        {
+          "from": "refreshing",
+          "event": "refreshed",
+          "to": "ready",
+          "rule": "M04"
+        },
+        {
+          "from": "unavailable",
+          "event": "retry",
+          "to": "loading",
+          "rule": "M04"
+        },
+        {
+          "from": "denied",
+          "event": "access_restored",
+          "to": "loading",
+          "rule": "M04"
+        },
+        {
+          "from": "unloaded",
+          "event": "close",
+          "to": "unloaded",
+          "rule": "M04"
+        },
+        {
+          "from": "loading",
+          "event": "close",
+          "to": "unloaded",
+          "rule": "M04"
+        },
+        {
+          "from": "ready",
+          "event": "close",
+          "to": "unloaded",
+          "rule": "M04"
+        },
+        {
+          "from": "refreshing",
+          "event": "close",
+          "to": "unloaded",
+          "rule": "M04"
+        },
+        {
+          "from": "unavailable",
+          "event": "close",
+          "to": "unloaded",
+          "rule": "M04"
+        },
+        {
+          "from": "denied",
+          "event": "close",
+          "to": "unloaded",
+          "rule": "M04"
+        }
+      ]
+    },
+    {
+      "id": "playback",
+      "initial": "stopped",
+      "states": {
+        "stopped": "No playback; selected clip starts at zero unless restoring fullscreen.",
+        "playing": "Decoded selected clip is playing.",
+        "paused": "Selected clip paused at its current time.",
+        "buffering": "Selected clip is waiting for media data.",
+        "ended": "Selected clip reached its end.",
+        "error": "Playback/decode failed; generation status is unchanged."
+      },
+      "terminal": [],
+      "events": [
+        "autoplay_refused",
+        "buffering",
+        "change_viewed_version",
+        "decode_failed",
+        "ended",
+        "fullscreen_change",
+        "pause",
+        "play_decoded",
+        "resumed",
+        "retry"
+      ],
+      "transitions": [
+        {
+          "from": "stopped",
+          "event": "play_decoded",
+          "to": "playing",
+          "rule": "M05"
+        },
+        {
+          "from": "paused",
+          "event": "play_decoded",
+          "to": "playing",
+          "rule": "M05"
+        },
+        {
+          "from": "ended",
+          "event": "play_decoded",
+          "to": "playing",
+          "rule": "M05"
+        },
+        {
+          "from": "playing",
+          "event": "pause",
+          "to": "paused",
+          "rule": "M05"
+        },
+        {
+          "from": "playing",
+          "event": "buffering",
+          "to": "buffering",
+          "rule": "M05"
+        },
+        {
+          "from": "buffering",
+          "event": "resumed",
+          "to": "playing",
+          "rule": "M05"
+        },
+        {
+          "from": "buffering",
+          "event": "pause",
+          "to": "paused",
+          "rule": "M05"
+        },
+        {
+          "from": "playing",
+          "event": "ended",
+          "to": "ended",
+          "rule": "M05"
+        },
+        {
+          "from": "stopped",
+          "event": "autoplay_refused",
+          "to": "paused",
+          "rule": "M05"
+        },
+        {
+          "from": "stopped",
+          "event": "decode_failed",
+          "to": "error",
+          "rule": "M05"
+        },
+        {
+          "from": "playing",
+          "event": "decode_failed",
+          "to": "error",
+          "rule": "M05"
+        },
+        {
+          "from": "paused",
+          "event": "decode_failed",
+          "to": "error",
+          "rule": "M05"
+        },
+        {
+          "from": "buffering",
+          "event": "decode_failed",
+          "to": "error",
+          "rule": "M05"
+        },
+        {
+          "from": "error",
+          "event": "retry",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "stopped",
+          "event": "change_viewed_version",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "playing",
+          "event": "change_viewed_version",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "paused",
+          "event": "change_viewed_version",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "buffering",
+          "event": "change_viewed_version",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "ended",
+          "event": "change_viewed_version",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "error",
+          "event": "change_viewed_version",
+          "to": "stopped",
+          "rule": "M05"
+        },
+        {
+          "from": "playing",
+          "event": "fullscreen_change",
+          "to": "playing",
+          "rule": "M05"
+        },
+        {
+          "from": "paused",
+          "event": "fullscreen_change",
+          "to": "paused",
+          "rule": "M05"
+        },
+        {
+          "from": "buffering",
+          "event": "fullscreen_change",
+          "to": "buffering",
+          "rule": "M05"
+        }
+      ]
+    },
+    {
+      "id": "sketch",
+      "initial": "off",
+      "states": {
+        "off": "No live preview dispatch; accepted images remain in project history.",
+        "connecting": "Starting the bounded live preview session.",
+        "live": "Live preview input can dispatch within its allowance.",
+        "paused": "Drawing and last output retained; no further dispatch.",
+        "error": "Preview failed; retain the last successful displayed output.",
+        "limit_reached": "Allowance prevents additional frames until reset."
+      },
+      "terminal": [],
+      "events": [
+        "accept_displayed",
+        "allowance_exhausted",
+        "allowance_reset",
+        "connected",
+        "leave",
+        "pause",
+        "preview_failed",
+        "resume",
+        "retry"
+      ],
+      "transitions": [
+        {
+          "from": "off",
+          "event": "resume",
+          "to": "connecting",
+          "rule": "M06"
+        },
+        {
+          "from": "connecting",
+          "event": "connected",
+          "to": "live",
+          "rule": "M06"
+        },
+        {
+          "from": "connecting",
+          "event": "preview_failed",
+          "to": "error",
+          "rule": "M06"
+        },
+        {
+          "from": "live",
+          "event": "preview_failed",
+          "to": "error",
+          "rule": "M06"
+        },
+        {
+          "from": "error",
+          "event": "retry",
+          "to": "connecting",
+          "rule": "M06"
+        },
+        {
+          "from": "live",
+          "event": "pause",
+          "to": "paused",
+          "rule": "M06"
+        },
+        {
+          "from": "error",
+          "event": "pause",
+          "to": "paused",
+          "rule": "M06"
+        },
+        {
+          "from": "paused",
+          "event": "resume",
+          "to": "connecting",
+          "rule": "M06"
+        },
+        {
+          "from": "connecting",
+          "event": "allowance_exhausted",
+          "to": "limit_reached",
+          "rule": "M08"
+        },
+        {
+          "from": "live",
+          "event": "allowance_exhausted",
+          "to": "limit_reached",
+          "rule": "M08"
+        },
+        {
+          "from": "limit_reached",
+          "event": "allowance_reset",
+          "to": "paused",
+          "rule": "M08"
+        },
+        {
+          "from": "live",
+          "event": "accept_displayed",
+          "to": "live",
+          "rule": "M07"
+        },
+        {
+          "from": "paused",
+          "event": "accept_displayed",
+          "to": "paused",
+          "rule": "M07"
+        },
+        {
+          "from": "error",
+          "event": "accept_displayed",
+          "to": "error",
+          "rule": "M07"
+        },
+        {
+          "from": "off",
+          "event": "leave",
+          "to": "off",
+          "rule": "M06"
+        },
+        {
+          "from": "connecting",
+          "event": "leave",
+          "to": "off",
+          "rule": "M06"
+        },
+        {
+          "from": "live",
+          "event": "leave",
+          "to": "off",
+          "rule": "M06"
+        },
+        {
+          "from": "paused",
+          "event": "leave",
+          "to": "off",
+          "rule": "M06"
+        },
+        {
+          "from": "error",
+          "event": "leave",
+          "to": "off",
+          "rule": "M06"
+        },
+        {
+          "from": "limit_reached",
+          "event": "leave",
+          "to": "off",
+          "rule": "M06"
+        },
+        {
+          "from": "limit_reached",
+          "event": "accept_displayed",
+          "to": "limit_reached",
+          "rule": "M07"
+        },
+        {
+          "from": "connecting",
+          "event": "accept_displayed",
+          "to": "connecting",
+          "rule": "M07"
+        }
+      ]
+    },
+    {
+      "id": "video_edit",
+      "initial": "empty",
+      "states": {
+        "empty": "No positive-duration content yet; editing allowed, export unavailable.",
+        "valid": "All current edit inputs/settings/timing pass validation.",
+        "invalid": "Saved editable work has identified source/timing/format conflicts."
+      },
+      "terminal": [],
+      "events": [
+        "export_snapshot",
+        "invalid_change",
+        "remove_all",
+        "restore_invalid_revision",
+        "restore_valid_revision",
+        "source_unavailable",
+        "undo_to_empty",
+        "valid_change"
+      ],
+      "transitions": [
+        {
+          "from": "empty",
+          "event": "valid_change",
+          "to": "valid",
+          "rule": "E02"
+        },
+        {
+          "from": "valid",
+          "event": "valid_change",
+          "to": "valid",
+          "rule": "E02"
+        },
+        {
+          "from": "invalid",
+          "event": "valid_change",
+          "to": "valid",
+          "rule": "E02"
+        },
+        {
+          "from": "empty",
+          "event": "invalid_change",
+          "to": "invalid",
+          "rule": "E02"
+        },
+        {
+          "from": "valid",
+          "event": "invalid_change",
+          "to": "invalid",
+          "rule": "E02"
+        },
+        {
+          "from": "invalid",
+          "event": "invalid_change",
+          "to": "invalid",
+          "rule": "E02"
+        },
+        {
+          "from": "valid",
+          "event": "remove_all",
+          "to": "empty",
+          "rule": "E02"
+        },
+        {
+          "from": "invalid",
+          "event": "remove_all",
+          "to": "empty",
+          "rule": "E02"
+        },
+        {
+          "from": "valid",
+          "event": "source_unavailable",
+          "to": "invalid",
+          "rule": "E07"
+        },
+        {
+          "from": "valid",
+          "event": "restore_valid_revision",
+          "to": "valid",
+          "rule": "D09"
+        },
+        {
+          "from": "invalid",
+          "event": "restore_valid_revision",
+          "to": "valid",
+          "rule": "D09"
+        },
+        {
+          "from": "valid",
+          "event": "restore_invalid_revision",
+          "to": "invalid",
+          "rule": "D09"
+        },
+        {
+          "from": "invalid",
+          "event": "restore_invalid_revision",
+          "to": "invalid",
+          "rule": "D09"
+        },
+        {
+          "from": "valid",
+          "event": "export_snapshot",
+          "to": "valid",
+          "rule": "E04"
+        },
+        {
+          "from": "valid",
+          "event": "undo_to_empty",
+          "to": "empty",
+          "rule": "D07"
+        },
+        {
+          "from": "invalid",
+          "event": "undo_to_empty",
+          "to": "empty",
+          "rule": "D07"
+        }
+      ]
+    },
+    {
+      "id": "sharing",
+      "initial": "private",
+      "states": {
+        "private": "No public link exists for this immutable version.",
+        "publishing": "Idempotent publication request is pending.",
+        "publication_unknown": "Publication outcome must be reconciled.",
+        "published": "Confirmed active link points to one immutable version.",
+        "revoking": "Revocation requested; do not claim it is already complete.",
+        "revocation_unknown": "Revocation outcome is uncertain.",
+        "revoked": "Link permanently denied; a future publication requires a new link."
+      },
+      "terminal": ["revoked"],
+      "events": [
+        "confirmed",
+        "confirmed_revoked",
+        "definitely_absent",
+        "project_trashed",
+        "publish",
+        "receipt_found",
+        "rejected",
+        "response_lost",
+        "revoke",
+        "still_active"
+      ],
+      "transitions": [
+        {
+          "from": "private",
+          "event": "publish",
+          "to": "publishing",
+          "rule": "L06"
+        },
+        {
+          "from": "publishing",
+          "event": "confirmed",
+          "to": "published",
+          "rule": "L06"
+        },
+        {
+          "from": "publishing",
+          "event": "response_lost",
+          "to": "publication_unknown",
+          "rule": "L07"
+        },
+        {
+          "from": "publishing",
+          "event": "rejected",
+          "to": "private",
+          "rule": "L06"
+        },
+        {
+          "from": "publication_unknown",
+          "event": "receipt_found",
+          "to": "published",
+          "rule": "L07"
+        },
+        {
+          "from": "publication_unknown",
+          "event": "definitely_absent",
+          "to": "publishing",
+          "rule": "L07"
+        },
+        {
+          "from": "published",
+          "event": "revoke",
+          "to": "revoking",
+          "rule": "L06"
+        },
+        {
+          "from": "revoking",
+          "event": "confirmed",
+          "to": "revoked",
+          "rule": "L06"
+        },
+        {
+          "from": "revoking",
+          "event": "response_lost",
+          "to": "revocation_unknown",
+          "rule": "L07"
+        },
+        {
+          "from": "revocation_unknown",
+          "event": "confirmed_revoked",
+          "to": "revoked",
+          "rule": "L07"
+        },
+        {
+          "from": "revocation_unknown",
+          "event": "still_active",
+          "to": "revoking",
+          "rule": "L07"
+        },
+        {
+          "from": "published",
+          "event": "project_trashed",
+          "to": "revoked",
+          "rule": "L07"
+        },
+        {
+          "from": "publishing",
+          "event": "project_trashed",
+          "to": "revoked",
+          "rule": "L07"
+        },
+        {
+          "from": "publication_unknown",
+          "event": "project_trashed",
+          "to": "revoked",
+          "rule": "L07"
+        },
+        {
+          "from": "revoking",
+          "event": "project_trashed",
+          "to": "revoked",
+          "rule": "L07"
+        },
+        {
+          "from": "revocation_unknown",
+          "event": "project_trashed",
+          "to": "revoked",
+          "rule": "L07"
+        }
+      ]
+    },
+    {
+      "id": "usage",
+      "initial": "not_required",
+      "states": {
+        "not_required": "Free mode; customer billing absent, provider expense still recorded.",
+        "quoted": "Current quote matches the reviewed request and expiry.",
+        "quote_invalid": "Quote expired/changed or request changed; submit blocked.",
+        "reserving": "Atomic acceptance and usage reservation in progress.",
+        "reserved": "Accepted maximum held; no duplicate reservation allowed.",
+        "reconciling": "Reservation/settlement outcome unknown.",
+        "settled": "Successful delivered slots settled once under the accepted policy.",
+        "released": "Unused/failed slots released or refunded without erasing provider expense.",
+        "unavailable": "Allowance/entitlement/payment prevents new dispatch."
+      },
+      "terminal": ["settled", "released"],
+      "events": [
+        "accept",
+        "confirmed_cancel_release",
+        "delivered_settlement",
+        "denied",
+        "draft_changed",
+        "duplicate_release",
+        "duplicate_settlement",
+        "late_output",
+        "no_deliverable_release",
+        "paid_mode_enabled",
+        "quote_expired",
+        "recovery_deadline_release",
+        "refreshed_entitlement",
+        "reserved",
+        "response_uncertain",
+        "reviewed_new_quote",
+        "settlement_uncertain",
+        "verified_released",
+        "verified_reserved",
+        "verified_settled"
+      ],
+      "transitions": [
+        {
+          "from": "not_required",
+          "event": "paid_mode_enabled",
+          "to": "quoted",
+          "rule": "P01"
+        },
+        {
+          "from": "quoted",
+          "event": "quote_expired",
+          "to": "quote_invalid",
+          "rule": "P01"
+        },
+        {
+          "from": "quoted",
+          "event": "draft_changed",
+          "to": "quote_invalid",
+          "rule": "P01"
+        },
+        {
+          "from": "quote_invalid",
+          "event": "reviewed_new_quote",
+          "to": "quoted",
+          "rule": "P01"
+        },
+        {
+          "from": "quoted",
+          "event": "accept",
+          "to": "reserving",
+          "rule": "P02"
+        },
+        {
+          "from": "reserving",
+          "event": "reserved",
+          "to": "reserved",
+          "rule": "P02"
+        },
+        {
+          "from": "reserving",
+          "event": "denied",
+          "to": "unavailable",
+          "rule": "P02"
+        },
+        {
+          "from": "reserving",
+          "event": "response_uncertain",
+          "to": "reconciling",
+          "rule": "P02"
+        },
+        {
+          "from": "reserved",
+          "event": "delivered_settlement",
+          "to": "settled",
+          "rule": "P03"
+        },
+        {
+          "from": "reserved",
+          "event": "no_deliverable_release",
+          "to": "released",
+          "rule": "P03"
+        },
+        {
+          "from": "reserved",
+          "event": "settlement_uncertain",
+          "to": "reconciling",
+          "rule": "P04"
+        },
+        {
+          "from": "reconciling",
+          "event": "verified_reserved",
+          "to": "reserved",
+          "rule": "P02"
+        },
+        {
+          "from": "reconciling",
+          "event": "verified_settled",
+          "to": "settled",
+          "rule": "P04"
+        },
+        {
+          "from": "reconciling",
+          "event": "verified_released",
+          "to": "released",
+          "rule": "P04"
+        },
+        {
+          "from": "unavailable",
+          "event": "refreshed_entitlement",
+          "to": "quoted",
+          "rule": "P01"
+        },
+        {
+          "from": "settled",
+          "event": "duplicate_settlement",
+          "to": "settled",
+          "rule": "P02"
+        },
+        {
+          "from": "released",
+          "event": "duplicate_release",
+          "to": "released",
+          "rule": "P02"
+        },
+        {
+          "from": "reserved",
+          "event": "recovery_deadline_release",
+          "to": "released",
+          "rule": "J13"
+        },
+        {
+          "from": "reconciling",
+          "event": "recovery_deadline_release",
+          "to": "released",
+          "rule": "J13"
+        },
+        {
+          "from": "released",
+          "event": "late_output",
+          "to": "released",
+          "rule": "J11"
+        },
+        {
+          "from": "reserved",
+          "event": "confirmed_cancel_release",
+          "to": "released",
+          "rule": "J11"
+        }
+      ]
+    },
+    {
+      "id": "clarification",
+      "initial": "waiting",
+      "states": {
+        "waiting": "Persisted question targets an exact draft revision; answer required.",
+        "answering": "Answer submission is being saved under that question identity.",
+        "proposal_ready": "Answer saved and proposal based on the same current draft revision.",
+        "stale_proposal": "Target changed or became noneditable; retain proposal and require an authorized writable new draft or explicit resolution.",
+        "applied": "Proposal explicitly applied; no media dispatched.",
+        "dismissed": "Question/proposal closed; required missing information still blocks submission."
+      },
+      "terminal": ["applied"],
+      "events": [
+        "answer",
+        "apply",
+        "apply_as_new_draft",
+        "dismiss",
+        "draft_changed",
+        "reopen",
+        "response_uncertain",
+        "saved_current",
+        "saved_stale",
+        "saved_target_locked",
+        "target_not_editable"
+      ],
+      "transitions": [
+        {
+          "from": "waiting",
+          "event": "answer",
+          "to": "answering",
+          "rule": "C09"
+        },
+        {
+          "from": "answering",
+          "event": "saved_current",
+          "to": "proposal_ready",
+          "rule": "C09"
+        },
+        {
+          "from": "answering",
+          "event": "saved_stale",
+          "to": "stale_proposal",
+          "rule": "C09"
+        },
+        {
+          "from": "answering",
+          "event": "response_uncertain",
+          "to": "answering",
+          "rule": "J02"
+        },
+        {
+          "from": "proposal_ready",
+          "event": "draft_changed",
+          "to": "stale_proposal",
+          "rule": "C09"
+        },
+        {
+          "from": "proposal_ready",
+          "event": "apply",
+          "to": "applied",
+          "rule": "C09"
+        },
+        {
+          "from": "stale_proposal",
+          "event": "apply_as_new_draft",
+          "to": "applied",
+          "rule": "C09"
+        },
+        {
+          "from": "waiting",
+          "event": "dismiss",
+          "to": "dismissed",
+          "rule": "C09"
+        },
+        {
+          "from": "proposal_ready",
+          "event": "dismiss",
+          "to": "dismissed",
+          "rule": "C09"
+        },
+        {
+          "from": "stale_proposal",
+          "event": "dismiss",
+          "to": "dismissed",
+          "rule": "C09"
+        },
+        {
+          "from": "dismissed",
+          "event": "reopen",
+          "to": "waiting",
+          "rule": "C09"
+        },
+        {
+          "from": "proposal_ready",
+          "event": "target_not_editable",
+          "to": "stale_proposal",
+          "rule": "C08"
+        },
+        {
+          "from": "answering",
+          "event": "saved_target_locked",
+          "to": "stale_proposal",
+          "rule": "C08"
+        }
+      ]
+    },
+    {
+      "id": "download",
+      "initial": "idle",
+      "states": {
+        "idle": "No current file transfer requested.",
+        "resolving": "Resolving an authorized URL for this stored version.",
+        "started": "Browser file transfer has started; no claim about writing to disk.",
+        "failed": "Resolve/transfer failed; original file/job remain intact."
+      },
+      "terminal": [],
+      "events": [
+        "download",
+        "download_again",
+        "retry_same_version",
+        "transfer_failed",
+        "transfer_started"
+      ],
+      "transitions": [
+        {
+          "from": "idle",
+          "event": "download",
+          "to": "resolving",
+          "rule": "L08"
+        },
+        {
+          "from": "resolving",
+          "event": "transfer_started",
+          "to": "started",
+          "rule": "L08"
+        },
+        {
+          "from": "resolving",
+          "event": "transfer_failed",
+          "to": "failed",
+          "rule": "L08"
+        },
+        {
+          "from": "started",
+          "event": "transfer_failed",
+          "to": "failed",
+          "rule": "L08"
+        },
+        {
+          "from": "failed",
+          "event": "retry_same_version",
+          "to": "resolving",
+          "rule": "L08"
+        },
+        {
+          "from": "started",
+          "event": "download_again",
+          "to": "resolving",
+          "rule": "L08"
+        }
+      ]
+    },
+    {
+      "id": "assistant_response",
+      "initial": "streaming",
+      "states": {
+        "streaming": "Provisional text is arriving for a captured request/context.",
+        "interrupted": "Text stream stopped; reconcile the same request.",
+        "saved": "Final response/proposal is durable and available for explicit Apply.",
+        "failed": "Text request definitively failed; user can deliberately request again."
+      },
+      "terminal": ["saved", "failed"],
+      "events": [
+        "definitive_failure",
+        "final_found",
+        "final_saved",
+        "response_uncertain",
+        "resume_stream"
+      ],
+      "transitions": [
+        {
+          "from": "streaming",
+          "event": "final_saved",
+          "to": "saved",
+          "rule": "J14"
+        },
+        {
+          "from": "streaming",
+          "event": "response_uncertain",
+          "to": "interrupted",
+          "rule": "J14"
+        },
+        {
+          "from": "interrupted",
+          "event": "resume_stream",
+          "to": "streaming",
+          "rule": "J14"
+        },
+        {
+          "from": "interrupted",
+          "event": "final_found",
+          "to": "saved",
+          "rule": "J14"
+        },
+        {
+          "from": "streaming",
+          "event": "definitive_failure",
+          "to": "failed",
+          "rule": "J14"
+        },
+        {
+          "from": "interrupted",
+          "event": "definitive_failure",
+          "to": "failed",
+          "rule": "J14"
+        }
+      ]
+    }
+  ],
+  "readiness": {
+    "evaluation": "derived for the current draft; never persisted as project stage",
+    "rule": "A03",
+    "primaryBlockerPriority": [
+      "authorization_or_project_access",
+      "prior_submission_unknown",
+      "draft_conflict_or_unacknowledged_revision",
+      "missing_or_unavailable_input",
+      "unresolved_output_or_context_choice",
+      "incompatible_action_model_setting_or_mask",
+      "context_limit",
+      "service_unavailable",
+      "quota_or_quote",
+      "missing_instruction"
+    ],
+    "whenNone": "ready",
+    "allReasonsVisible": true
+  },
+  "reusedModels": {
+    "export": "submission + request + output_slot + attachment + cancellation + usage, with a captured video-edit revision (E04/E05)",
+    "text_assistance": "submission + assistant_response + clarification where needed (J14/C09)",
+    "image_or_video_generation": "submission + request + output_slot + attachment + cancellation + usage",
+    "sketch_acceptance": "submission + output_slot(received/saving/stored) + attachment; no provider regeneration or customer charge (M07/M09)",
+    "video_edit_save": "video_edit + draft_save, each with its own edit-revision identity (E01/D08)"
+  },
+  "instanceIdentity": "Every submission consumes its own execution draft; contextual draft/editor/media IDs are inputs, never substituted as submission uniqueness keys (H12).",
+  "reusedModelGroups": {
+    "image_or_video_generation": [
+      "submission",
+      "request",
+      "output_slot",
+      "attachment",
+      "cancellation",
+      "usage"
+    ],
+    "export": [
+      "submission",
+      "request",
+      "output_slot",
+      "attachment",
+      "cancellation",
+      "usage"
+    ],
+    "text_assistance": ["submission", "assistant_response", "clarification"],
+    "sketch_acceptance": ["submission", "output_slot", "attachment"],
+    "video_edit_save": ["video_edit", "draft_save"]
+  }
+}

@@ -1,5 +1,7 @@
 # Vidra is an authoring tool for non-expert creators; generation is commodity; the multi-shot/consistency play is deferred
 
+> **Product direction amendment, 2026-10-09:** [ADR-0024](0024-creation-has-no-required-order.md) replaces the single-clip/expansion-first product constraint with images, clips, and finished videos without a required creation order. Authoring intelligence is not an established competitive advantage. Earlier decisions remain below as history; current implementation scope is in [CONTEXT.md](../../CONTEXT.md).
+
 **Status:** accepted (2026-06-08) · amended 2026-06-10 — the n=5 validation
 study was cancelled by owner decision; expansion-first is adopted on builder
 conviction plus the dry-run/live-loop evidence (n=1, facilitator-judged), not

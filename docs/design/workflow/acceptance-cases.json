@@ -1,0 +1,1197 @@
+{
+  "status": "behavioral acceptance specifications, not passing application tests",
+  "cases": [
+    {
+      "id": "HISTORY-01",
+      "rules": ["H01", "I04"],
+      "given": "Two projects and media items have identical names and timestamps.",
+      "when": "Open or reference one by its ID.",
+      "then": "Only that ID is addressed; no title/time-based merge occurs."
+    },
+    {
+      "id": "HISTORY-02",
+      "rules": ["H02", "H04"],
+      "given": "Image A produced edit B; B produced edit C.",
+      "when": "Edit A to produce D.",
+      "then": "D has A as primary parent; B and C remain with their original source IDs."
+    },
+    {
+      "id": "HISTORY-03",
+      "rules": ["H02", "H05", "I11"],
+      "given": "Image C is used to generate clip V.",
+      "when": "Mark image D preferred afterward.",
+      "then": "V still records and displays C as its source."
+    },
+    {
+      "id": "HISTORY-04",
+      "rules": ["H03", "J07"],
+      "given": "A four-output request has slots 1 through 4.",
+      "when": "Outputs arrive 4, 2, then failure 1, then 3.",
+      "then": "Cards retain slot numbers; failure 1 remains visible; results do not renumber."
+    },
+    {
+      "id": "HISTORY-05",
+      "rules": ["H06", "I09"],
+      "given": "An item has preferred version A and unfavorited result B.",
+      "when": "B completes, then the creator favorites B.",
+      "then": "Completion does not change preference; favorite changes only B's marker."
+    },
+    {
+      "id": "HISTORY-06",
+      "rules": ["H07", "C03", "I02"],
+      "given": "Request Q1 produced A; later Q2 and Q3 produced other results.",
+      "when": "Edit and run Q1 again with changed words.",
+      "then": "New Q4 records revisesRequestId Q1 and Q1's original parent context; Q1-Q3 and their outputs remain."
+    },
+    {
+      "id": "HISTORY-07",
+      "rules": ["H08", "I03"],
+      "given": "Q1 is accepted before Q2 but finishes afterward.",
+      "when": "Observe both results and a duplicate Q1 completion event.",
+      "then": "History stays Q1 then Q2; each output appears once under its originating request."
+    },
+    {
+      "id": "HISTORY-08",
+      "rules": ["H09", "I04"],
+      "given": "Image A is owned in project P and referenced in conversations X and Y.",
+      "when": "Submit one edit from each conversation.",
+      "then": "Both requests reference exact A; histories remain distinct and no storage duplicate is required."
+    },
+    {
+      "id": "HISTORY-09",
+      "rules": ["H10", "I02"],
+      "given": "Request Q and media A are accepted/stored.",
+      "when": "Rename project, conversation and media title.",
+      "then": "Request hash, original words, media bytes and ancestry are unchanged."
+    },
+    {
+      "id": "HISTORY-10",
+      "rules": ["H11", "D01"],
+      "given": "A project gallery is open with no active conversation.",
+      "when": "Choose Edit on A twice during destination creation.",
+      "then": "One idempotent destination conversation/draft is created; no generation occurs."
+    },
+    {
+      "id": "HISTORY-11",
+      "rules": ["H11", "C11"],
+      "given": "Library image A belongs to project P while Q is active.",
+      "when": "Choose Copy to Q.",
+      "then": "Create an owned Q copy, preserve P's original, and do not copy private conversation instructions or alter Q's active draft."
+    },
+    {
+      "id": "HISTORY-12",
+      "rules": ["H05", "I01"],
+      "given": "Draft X edits A; viewer shows B.",
+      "when": "Open B fullscreen and close it.",
+      "then": "Draft X's source, instructions, model, context and destination remain unchanged."
+    },
+    {
+      "id": "HISTORY-13",
+      "rules": ["H07", "C03"],
+      "given": "Result B was an edit of A under request Q.",
+      "when": "Choose Make another variation on B.",
+      "then": "New draft copies Q's original A input; next result is an alternative from A, not an edit of B."
+    },
+    {
+      "id": "CONTEXT-01",
+      "rules": ["C01", "I08"],
+      "given": "A-to-B-to-C edits exist; another branch from A requested blue lighting.",
+      "when": "Edit B with warmer lighting.",
+      "then": "Context contains B's ancestor path and new instruction; C's later edits and the blue sibling instruction are excluded."
+    },
+    {
+      "id": "CONTEXT-02",
+      "rules": ["C02", "H04"],
+      "given": "A is primary base and B is a visual reference with unrelated history.",
+      "when": "Submit an image edit.",
+      "then": "Record both inputs and roles; B's conversation instructions are excluded unless explicitly selected as context."
+    },
+    {
+      "id": "CONTEXT-03",
+      "rules": ["C03", "C07"],
+      "given": "An old request used project instruction revision N; project is now N+1.",
+      "when": "Reuse the old request.",
+      "then": "Draft retains N and shows the available update; N+1 is applied only explicitly."
+    },
+    {
+      "id": "CONTEXT-04",
+      "rules": ["C04", "I01"],
+      "given": "Composer targets A while the viewer shows B.",
+      "when": "Send Make it darker with Edit image selected.",
+      "then": "The visible bound input A is used; viewing B supplies no target change."
+    },
+    {
+      "id": "CONTEXT-05",
+      "rules": ["C04", "I10"],
+      "given": "No unique media input is bound and several result batches exist.",
+      "when": "Enter Use the second one.",
+      "then": "A persisted clarification asks which request/slot; no media dispatch occurs."
+    },
+    {
+      "id": "CONTEXT-06",
+      "rules": ["C05", "D01"],
+      "given": "A meaningful draft edits A with branch context.",
+      "when": "Choose New request.",
+      "then": "Old draft is parked; new draft has no media target or conversation-specific context and retains the chosen project-instruction revision."
+    },
+    {
+      "id": "CONTEXT-07",
+      "rules": ["C06", "I08"],
+      "given": "A branch context exceeds the selected model's catalog limit.",
+      "when": "Try to submit.",
+      "then": "Submission is context_limit blocked; no hidden truncation or automatic summary occurs."
+    },
+    {
+      "id": "CONTEXT-08",
+      "rules": ["C06", "C08"],
+      "given": "A proposed summary covers context requests Q1-Q9.",
+      "when": "Apply the reviewed summary.",
+      "then": "New draft revision records summary text and covered IDs; original history remains; no generation runs."
+    },
+    {
+      "id": "CONTEXT-09",
+      "rules": ["C07", "I02"],
+      "given": "One draft and one accepted request use project instructions N.",
+      "when": "Save project instructions N+1.",
+      "then": "Existing draft shows update availability but keeps N; accepted request remains immutable."
+    },
+    {
+      "id": "CONTEXT-10",
+      "rules": ["C08", "D07"],
+      "given": "Wording assistance was requested for draft revision 4; revision 5 now exists.",
+      "when": "The suggestion arrives.",
+      "then": "Show a diff tied to revision 4; do not overwrite revision 5; deliberate Apply creates one undoable revision."
+    },
+    {
+      "id": "CONTEXT-11",
+      "rules": ["C09", "I02"],
+      "given": "A clarification targets draft D revision 4.",
+      "when": "Answer after D advanced to revision 5.",
+      "then": "Save the answer as an immutable entry and stale proposal; only Apply as new draft or explicit resolution may use it."
+    },
+    {
+      "id": "CONTEXT-12",
+      "rules": ["C09", "I10"],
+      "given": "Two questions in the same conversation await answers.",
+      "when": "Send an answer without a unique question reference.",
+      "then": "Ask which question; neither target draft changes and neither request runs."
+    },
+    {
+      "id": "CONTEXT-13",
+      "rules": ["C10", "I08"],
+      "given": "Draft uses A's history and pixels.",
+      "when": "Replace its primary image with unrelated B inside the draft.",
+      "then": "Show input/context difference and block submit until the creator chooses B's directions or explicitly keeps A's directions."
+    },
+    {
+      "id": "CONTEXT-14",
+      "rules": ["C11", "H04"],
+      "given": "An owned legacy image has no producing-request/settings snapshot.",
+      "when": "Choose View, then attempt exact Reuse, then choose Edit.",
+      "then": "View works; exact Reuse is unavailable; Edit opens with unknown/empty historical context and requires new instructions."
+    },
+    {
+      "id": "CONTEXT-15",
+      "rules": ["C12", "I11"],
+      "given": "A mask is bound to image A at dimensions and transform T.",
+      "when": "Replace A with B or crop/rotate/resize A.",
+      "then": "The mask is invalid until explicitly redrawn/remapped; it cannot silently apply to different pixels."
+    },
+    {
+      "id": "DRAFT-01",
+      "rules": ["D01", "I05"],
+      "given": "An active draft contains custom text and settings.",
+      "when": "Choose Edit another result.",
+      "then": "Park the old draft and open a new explicit-target draft; reopening the old draft restores its content."
+    },
+    {
+      "id": "DRAFT-02",
+      "rules": ["D01"],
+      "given": "Active draft has only untouched defaults.",
+      "when": "Choose New request.",
+      "then": "Replace the empty draft without creating a parked empty entry."
+    },
+    {
+      "id": "DRAFT-03",
+      "rules": ["D02", "I05"],
+      "given": "Request Q runs from draft D revision 3.",
+      "when": "Type a new follow-up and change settings.",
+      "then": "Save a separate draft/revision while Q's accepted snapshot remains revision 3."
+    },
+    {
+      "id": "DRAFT-04",
+      "rules": ["D03", "J01", "I03"],
+      "given": "Two tabs display the same saved draft ID/revision.",
+      "when": "Both submit simultaneously with different client submission IDs.",
+      "then": "Atomic draft-revision uniqueness produces one receipt, reservation and execution; mismatching hashes conflict."
+    },
+    {
+      "id": "DRAFT-05",
+      "rules": ["D04", "H05"],
+      "given": "A single supported image edit is running.",
+      "when": "Type another edit in the visibly waiting follow-up draft.",
+      "then": "Pending input is Q's exact slot; submit stays disabled until its original-project durable result exists."
+    },
+    {
+      "id": "DRAFT-06",
+      "rules": ["D04", "I06"],
+      "given": "A follow-up draft waits on Q's slot and already contains text.",
+      "when": "Q completes successfully and attaches to its original project.",
+      "then": "Resolve only the declared input; preserve words/settings; do not auto-submit or move the viewer."
+    },
+    {
+      "id": "DRAFT-07",
+      "rules": ["D04", "I12"],
+      "given": "A follow-up draft waits on Q.",
+      "when": "Q definitively fails or its output is lost.",
+      "then": "Keep follow-up words and failed dependency; offer choose input/reuse setup; never substitute Q's original source automatically."
+    },
+    {
+      "id": "DRAFT-08",
+      "rules": ["D05", "H03"],
+      "given": "A batch produces four images; slot 2 is ready while others run.",
+      "when": "Choose slot 2 for editing.",
+      "then": "Bind slot 2 exactly and permit an otherwise valid request; other slots keep their identities/statuses."
+    },
+    {
+      "id": "DRAFT-09",
+      "rules": ["D06", "I06"],
+      "given": "Draft X waits on Q, then the creator starts independent draft Y.",
+      "when": "Q completes.",
+      "then": "Update parked X's declared dependency and Q's history only; active Y/viewer/navigation remain unchanged."
+    },
+    {
+      "id": "DRAFT-10",
+      "rules": ["D07", "I09"],
+      "given": "Text has undo history; a generation has already completed.",
+      "when": "Press Undo in the text field, then type a new edit.",
+      "then": "Undo affects text only; result and charge remain; new text clears only that draft's redo path."
+    },
+    {
+      "id": "DRAFT-11",
+      "rules": ["D08", "I05"],
+      "given": "Revision 8 is being saved; revision 9 is typed.",
+      "when": "Acknowledgment for revision 8 arrives.",
+      "then": "Revision 9 remains unsaved/remotely pending; the old ack cannot label it Saved."
+    },
+    {
+      "id": "DRAFT-12",
+      "rules": ["D08", "D10"],
+      "given": "Local checkpointing fails but current revision 9 is acknowledged on the server.",
+      "when": "Navigate or sign out.",
+      "then": "Navigation is allowed with accurate storage status; no forced export/discard of remotely safe work."
+    },
+    {
+      "id": "DRAFT-13",
+      "rules": ["D09", "E04"],
+      "given": "A video edit at revision 7 has an export in progress.",
+      "when": "Restore edit revision 3.",
+      "then": "Create revision 8 with revision 3's contents; export continues rendering revision 7."
+    },
+    {
+      "id": "DRAFT-14",
+      "rules": ["D10", "R06"],
+      "given": "Newest draft revision is neither locally checkpointed nor server-acknowledged.",
+      "when": "Try to leave through app navigation/sign-out.",
+      "then": "Offer retry, explicit draft export/continue, or discard; do not claim work is saved."
+    },
+    {
+      "id": "DRAFT-15",
+      "rules": ["D11", "I06"],
+      "given": "A video request, export, download, or text-assistance request completes.",
+      "when": "Continue working.",
+      "then": "No implicit next image/video edit target is created; export keeps source editor; download keeps draft; text produces an explicit proposal."
+    },
+    {
+      "id": "ACTION-01",
+      "rules": ["A01", "I15"],
+      "given": "A catalog entry lacks a capability, cost bound or mandatory recovery deadline.",
+      "when": "Try to run the affected action.",
+      "then": "Action is unavailable with the missing-policy/capability reason; no permissive fallback occurs."
+    },
+    {
+      "id": "ACTION-02",
+      "rules": ["A02", "I13"],
+      "given": "Client shows a source as valid but ownership changed before submit.",
+      "when": "Submit.",
+      "then": "Server denies before accepting executable work and preserves the draft; stale UI grants nothing."
+    },
+    {
+      "id": "ACTION-03",
+      "rules": ["A03", "I10"],
+      "given": "A draft has no authorization, a conflict and a missing input.",
+      "when": "Inspect readiness.",
+      "then": "Show all three reasons with authorization primary; submit remains disabled."
+    },
+    {
+      "id": "ACTION-04",
+      "rules": ["A04", "I11"],
+      "given": "A valid image-animation draft has model-specific duration and inputs.",
+      "when": "Switch to an incompatible model.",
+      "then": "Preserve old revision and show unresolved values; no silent clamp/removal; require explicit resolution."
+    },
+    {
+      "id": "ACTION-05",
+      "rules": ["A05", "H03"],
+      "given": "A reviewed request asks for two outputs.",
+      "when": "Assistant or provider proposes four after acceptance.",
+      "then": "Do not increase accepted slots/spend; additional work requires a new reviewed request."
+    },
+    {
+      "id": "ACTION-06",
+      "rules": ["A05", "H05"],
+      "given": "A proposed multi-step request still needs an uncreated intermediate image.",
+      "when": "Try to run the later step.",
+      "then": "Keep that step a draft until an exact valid input exists; no hidden dependency scheduling occurs."
+    },
+    {
+      "id": "ACTION-07",
+      "rules": ["A01", "C08"],
+      "given": "The creator selects Ask or Improve wording.",
+      "when": "Submit a description of desired media.",
+      "then": "Return text/proposal only; no image/video generation occurs until the explicit media action is run."
+    },
+    {
+      "id": "JOB-01",
+      "rules": ["J01", "I03"],
+      "given": "A frozen request was accepted under submission S and hash H.",
+      "when": "Replay S/H repeatedly and concurrently.",
+      "then": "Return its same receipt; no second reservation, queue item or provider execution."
+    },
+    {
+      "id": "JOB-02",
+      "rules": ["J01", "I02"],
+      "given": "Submission S is bound to hash H.",
+      "when": "Send S with different instruction/input hash K.",
+      "then": "Reject identity conflict; neither original snapshot nor job is overwritten."
+    },
+    {
+      "id": "JOB-03",
+      "rules": ["J02", "I12"],
+      "given": "Submit request timed out without a receipt.",
+      "when": "Reload, reconnect and press Check status.",
+      "then": "Restore envelope/S; query acceptance; recover existing receipt or resend identical S only after proven absence."
+    },
+    {
+      "id": "JOB-04",
+      "rules": ["J03", "R05"],
+      "given": "Server definitively rejects before acceptance because authentication expired.",
+      "when": "Sign in again.",
+      "then": "Preserve draft; no automatic generation; creator submits the restored valid revision deliberately."
+    },
+    {
+      "id": "JOB-05",
+      "rules": ["J04", "I12"],
+      "given": "A worker lease expires after a provider may have accepted.",
+      "when": "Replacement worker claims recovery.",
+      "then": "Reconcile original attempt; do not make a second external generation call solely because the lease expired."
+    },
+    {
+      "id": "JOB-06",
+      "rules": ["J05", "I07"],
+      "given": "A generation failed before provider acceptance with proof and retry budget remaining.",
+      "when": "Apply allowed automatic retry policy.",
+      "then": "Retain original reviewed inputs/model and maximum usage; record attempt; never silently switch provider or creative settings."
+    },
+    {
+      "id": "JOB-07",
+      "rules": ["J05", "I07"],
+      "given": "Provider may have accepted, or another provider would be required.",
+      "when": "Automatic retry is considered.",
+      "then": "Do not regenerate; reconcile or offer a new explicit reviewed request."
+    },
+    {
+      "id": "JOB-08",
+      "rules": ["J06", "I14"],
+      "given": "Provider returned an image but durable storage failed.",
+      "when": "Observe and retry saving.",
+      "then": "Show Made; saving needs attention; retry the same output; no Ready claim or duplicate generation/charge."
+    },
+    {
+      "id": "JOB-09",
+      "rules": ["J06", "P04"],
+      "given": "Stored output cannot attach to a trashed/missing original project.",
+      "when": "Attach to owner recovery inbox.",
+      "then": "Show Ready in recovery; preserve original destination; allow owned download/copy; no silently created project."
+    },
+    {
+      "id": "JOB-10",
+      "rules": ["J07"],
+      "given": "Two of four slots are ready and one failed while one is running.",
+      "when": "Compute request status.",
+      "then": "Keep in progress with counts; do not mark partial terminal until the last slot resolves."
+    },
+    {
+      "id": "JOB-11",
+      "rules": ["J07"],
+      "given": "Two slots are ready, one failed and one cancelled.",
+      "when": "Compute request status.",
+      "then": "Mark partial and keep both ready outputs and both terminal slot records."
+    },
+    {
+      "id": "JOB-12",
+      "rules": ["J07"],
+      "given": "No output is ready and every slot is cancelled.",
+      "when": "Compute request status.",
+      "then": "Mark cancelled; retain slot IDs and cancellation evidence."
+    },
+    {
+      "id": "JOB-13",
+      "rules": ["J07"],
+      "given": "No output is ready; some slots failed and others cancelled.",
+      "when": "Compute request status.",
+      "then": "Mark failed with per-slot details; do not claim a fully cancelled request."
+    },
+    {
+      "id": "JOB-14",
+      "rules": ["J08", "I07"],
+      "given": "Saving failed and the provider output has now expired irrecoverably.",
+      "when": "User requests recovery.",
+      "then": "Record output_lost; disable impossible same-output repair; new generation is a new explicit request."
+    },
+    {
+      "id": "JOB-15",
+      "rules": ["J09", "I04"],
+      "given": "Slot is stored at server revision 12.",
+      "when": "Receive revision 10 Running, then duplicate revision 12.",
+      "then": "Do not revert or duplicate it; ignore/log stale observations."
+    },
+    {
+      "id": "JOB-16",
+      "rules": ["J09", "I12"],
+      "given": "Two authoritative events claim contradictory terminal outcomes.",
+      "when": "Observe the conflict.",
+      "then": "Keep evidence/media and enter reconciliation; callback timestamp cannot choose truth."
+    },
+    {
+      "id": "JOB-17",
+      "rules": ["J10", "P03"],
+      "given": "A queued job has not dispatched externally.",
+      "when": "Cancel races with worker start.",
+      "then": "Server atomic order decides: confirmed pre-dispatch cancellation releases usage, otherwise request provider cancellation and retain execution status."
+    },
+    {
+      "id": "JOB-18",
+      "rules": ["J11", "I14"],
+      "given": "Cancellation was requested but not confirmed.",
+      "when": "The job finishes first.",
+      "then": "Keep result; label completion-before-cancel; apply accepted usage policy; do not change active draft/selection."
+    },
+    {
+      "id": "JOB-19",
+      "rules": ["J11", "P04"],
+      "given": "Cancellation was confirmed and customer usage released.",
+      "when": "A late provider result arrives.",
+      "then": "Store/reconcile the result and provider expense; never re-debit released customer usage."
+    },
+    {
+      "id": "JOB-20",
+      "rules": ["J12"],
+      "given": "A batch has ready, running and unstarted slots.",
+      "when": "Cancel remaining work or close the browser.",
+      "then": "Explicit cancel affects named remaining slots; ready results stay; closing alone cancels nothing."
+    },
+    {
+      "id": "JOB-21",
+      "rules": ["J13", "I12"],
+      "given": "An accepted request reaches its captured recovery deadline with uncertain provider outcome.",
+      "when": "Automatic recovery stops.",
+      "then": "Show Needs attention, retain evidence and release unsettled customer reservation; do not label provider failure or automatically regenerate."
+    },
+    {
+      "id": "JOB-22",
+      "rules": ["J13", "P04"],
+      "given": "A request's usage was released after recovery expiry.",
+      "when": "Its result is later recovered.",
+      "then": "Deliver the owned result without re-debit; preserve recovery history and provider expense."
+    },
+    {
+      "id": "JOB-23",
+      "rules": ["J14", "C08"],
+      "given": "Assistant response is streaming against draft revision 4.",
+      "when": "Connection breaks midway.",
+      "then": "Show incomplete text and reconcile the same text request; partial text cannot be Applied as a final proposal."
+    },
+    {
+      "id": "MEDIA-01",
+      "rules": ["M01", "A02"],
+      "given": "A local file has a familiar extension but unsupported actual content.",
+      "when": "Upload and verify.",
+      "then": "Reject content before it becomes a usable input; preserve draft role and explain the reason."
+    },
+    {
+      "id": "MEDIA-02",
+      "rules": ["M01", "I03"],
+      "given": "An upload response is lost.",
+      "when": "Retry with the same import identity.",
+      "then": "Recover/resume one logical item; do not create another media item from a transport retry."
+    },
+    {
+      "id": "MEDIA-03",
+      "rules": ["M02"],
+      "given": "A draft references staged bytes that were not recoverable after reload.",
+      "when": "Reselect a file of the same name with different bytes.",
+      "then": "Do not resume old identity as if identical; create a new input revision or require matching bytes."
+    },
+    {
+      "id": "MEDIA-04",
+      "rules": ["M03"],
+      "given": "Two drafts reference one in-progress upload.",
+      "when": "Remove it from only draft A.",
+      "then": "Draft B and the upload continue; A's removed role does not return on completion."
+    },
+    {
+      "id": "MEDIA-05",
+      "rules": ["M03"],
+      "given": "A shared upload is still running.",
+      "when": "Explicitly cancel after reviewing affected drafts; output arrives late.",
+      "then": "Affected references remain unavailable/removed; late file is a project item with no automatic draft reattachment."
+    },
+    {
+      "id": "MEDIA-06",
+      "rules": ["M04", "I11"],
+      "given": "A stored version's signed URL expires.",
+      "when": "View or download it.",
+      "then": "Resolve the same durable handle to a fresh authorized URL; do not regenerate or change version identity."
+    },
+    {
+      "id": "MEDIA-07",
+      "rules": ["M04", "I13"],
+      "given": "Media access is denied.",
+      "when": "Try an old cached URL or a related viewer action.",
+      "then": "Do not bypass authorization; show unavailable reference while preserving history."
+    },
+    {
+      "id": "MEDIA-08",
+      "rules": ["M05"],
+      "given": "A decoded clip is paused at 3 seconds.",
+      "when": "Enter fullscreen and return.",
+      "then": "Same clip/time/pause state remains; choosing another version starts that version at zero."
+    },
+    {
+      "id": "MEDIA-09",
+      "rules": ["M05"],
+      "given": "Autoplay is refused or video buffering/decode fails.",
+      "when": "Observe the player.",
+      "then": "Expose Play/retry playback; generation remains successful; images do not show active clip playback."
+    },
+    {
+      "id": "MEDIA-10",
+      "rules": ["M06"],
+      "given": "Sketch has a last successful preview and a newer pending drawing.",
+      "when": "A new frame fails and then creator leaves Sketch.",
+      "then": "Retain labeled last output; pause dispatch on leave; current project request is unchanged."
+    },
+    {
+      "id": "MEDIA-11",
+      "rules": ["M07", "I03"],
+      "given": "Sketch displays output O1 while O2 is arriving.",
+      "when": "Press Accept twice and lose the response.",
+      "then": "One acceptance records O1's exact drawing/settings/destination; recover same receipt; O2 cannot substitute."
+    },
+    {
+      "id": "MEDIA-12",
+      "rules": ["M08"],
+      "given": "Sketch has an unaccepted drawing and preview at close.",
+      "when": "Reopen.",
+      "then": "Offer locally saved drawing/settings; do not claim preview history saved or restart generation automatically; accepted outputs remain durable."
+    },
+    {
+      "id": "MEDIA-13",
+      "rules": ["M09", "P05"],
+      "given": "Sketch reaches its existing server allowance.",
+      "when": "Try more frames or accept an already displayed output.",
+      "then": "Disable new frame dispatch until authorized reset; preserve drawing/output; acceptance does not create retroactive customer charges."
+    },
+    {
+      "id": "EDIT-01",
+      "rules": ["E01", "I11"],
+      "given": "Video edit uses exact clip versions A1 and B1.",
+      "when": "A2 and B2 are later generated/preferred.",
+      "then": "The edit still uses A1/B1 until an explicit replacement revision."
+    },
+    {
+      "id": "EDIT-02",
+      "rules": ["E02"],
+      "given": "Edit contains invalid trim bounds, zero length or inaccessible input.",
+      "when": "Export.",
+      "then": "Block export with each offending element identified; keep editable saved work."
+    },
+    {
+      "id": "EDIT-03",
+      "rules": ["E02"],
+      "given": "Output aspect ratio changes from landscape to portrait.",
+      "when": "Apply the change.",
+      "then": "Require visible fit/fill/crop choices; no silent stretching or off-screen text."
+    },
+    {
+      "id": "EDIT-04",
+      "rules": ["E03", "I15"],
+      "given": "Creator requests generated music, automatic captions or unsupported effect.",
+      "when": "Inspect available actions.",
+      "then": "Show capability unavailable; manual captions/imported audio remain supported; do not simulate unavailable features."
+    },
+    {
+      "id": "EDIT-05",
+      "rules": ["E04", "I02"],
+      "given": "Saved edit revision 7 begins export.",
+      "when": "Change text and trim to revision 8 while export runs.",
+      "then": "Export captures revision 7; show newer edit exists; revision 8 can have a separate export."
+    },
+    {
+      "id": "EDIT-06",
+      "rules": ["E05", "I07"],
+      "given": "An export render definitively failed.",
+      "when": "Choose Retry export.",
+      "then": "Create new request retryOf original with same edit/source versions and reviewed cost; never regenerate source clips."
+    },
+    {
+      "id": "EDIT-07",
+      "rules": ["E05", "J06"],
+      "given": "Export rendered successfully but storage/attachment response failed.",
+      "when": "Retry saving/check status.",
+      "then": "Recover same export/media ID; do not start a new render."
+    },
+    {
+      "id": "EDIT-08",
+      "rules": ["E06", "E09"],
+      "given": "A 5-second timeline item is replaced by a 3-second clip.",
+      "when": "Choose replacement.",
+      "then": "Keep pending change invalid until explicit Change duration or Cancel; preview timing effects before applying."
+    },
+    {
+      "id": "EDIT-09",
+      "rules": ["E07"],
+      "given": "An export's pinned source becomes inaccessible.",
+      "when": "Run recovery.",
+      "then": "Pause/reconcile then fail with missing source if not recoverable; keep edit and never use an unauthorized stale URL."
+    },
+    {
+      "id": "EDIT-10",
+      "rules": ["E08"],
+      "given": "Clip A has 5 seconds followed by clip B; caption is attached to B.",
+      "when": "Trim A to 3 seconds.",
+      "then": "B and its attached caption shift earlier by 2 seconds; background audio's composition-time anchor does not shift."
+    },
+    {
+      "id": "EDIT-11",
+      "rules": ["E08"],
+      "given": "Text attached to a clip extends past a newly shortened clip interval.",
+      "when": "Apply trim.",
+      "then": "Keep text element, mark edit invalid and require explicit timing change/removal; do not silently delete it."
+    },
+    {
+      "id": "EDIT-12",
+      "rules": ["E08", "D07"],
+      "given": "A clip is inserted, removed or reordered.",
+      "when": "Undo the command.",
+      "then": "Restore that single edit action as a new saved revision; media/history/jobs remain unchanged."
+    },
+    {
+      "id": "EDIT-13",
+      "rules": ["E09"],
+      "given": "A clip has source audio and the background track is occupied.",
+      "when": "Attempt detach audio.",
+      "then": "Explain track-capacity conflict and make detach unavailable; mute/volume remain explicit supported changes."
+    },
+    {
+      "id": "RESTORE-01",
+      "rules": ["R01", "I05"],
+      "given": "A project has saved draft changes, running jobs and an unrelated viewed image.",
+      "when": "Reload.",
+      "then": "Restore each independently; reconstruct nonterminal jobs from server receipts rather than a local polling flag."
+    },
+    {
+      "id": "RESTORE-02",
+      "rules": ["R02", "I07"],
+      "given": "The app is offline with an editable cached draft.",
+      "when": "Press Generate, then reconnect.",
+      "then": "No silent queued dispatch; replay safe saves/reconcile accepted work only; a never-accepted generation needs visible submit."
+    },
+    {
+      "id": "RESTORE-03",
+      "rules": ["R03", "D08"],
+      "given": "Two tabs edit draft base revision 5.",
+      "when": "Both save different content.",
+      "then": "First accepted write wins revision; second is a retained conflict copy; preserve both and block submit from conflict."
+    },
+    {
+      "id": "RESTORE-04",
+      "rules": ["R03"],
+      "given": "A conflict shows local and server content.",
+      "when": "Choose Keep mine as separate draft or Use server version.",
+      "then": "Keep the losing content as a recoverable copy; never last-write-win silently."
+    },
+    {
+      "id": "RESTORE-05",
+      "rules": ["R04", "J01"],
+      "given": "One tab accepts draft revision 5 while another still shows it.",
+      "when": "Second tab learns the receipt or tries to edit/submit.",
+      "then": "Mark frozen revision submitted; create/open another draft before further edits; intentional rerun requires copied draft."
+    },
+    {
+      "id": "RESTORE-06",
+      "rules": ["R05", "I13"],
+      "given": "Account A has an unknown submission and local work.",
+      "when": "Session expires, then account B signs in.",
+      "then": "Do not expose/adopt A's private data in B; A's server job can continue and reconciles only under A."
+    },
+    {
+      "id": "RESTORE-07",
+      "rules": ["R05"],
+      "given": "An anonymous draft exists and the signed-in account has another draft.",
+      "when": "Adopt the anonymous draft.",
+      "then": "Keep both; do not overwrite either based on recency."
+    },
+    {
+      "id": "RESTORE-08",
+      "rules": ["R06"],
+      "given": "Local-only drafts exist before sign-out.",
+      "when": "Sign out after checkpoint status is shown.",
+      "then": "Lock same-owner drafts and clear rendered private content; no encryption claim and no cross-account adoption."
+    },
+    {
+      "id": "RESTORE-09",
+      "rules": ["R07"],
+      "given": "Project loading transiently fails or known destination is gone.",
+      "when": "Retry/load recovery.",
+      "then": "Retry same ID for transient errors; offer restore/copy for missing destination; never silently create a replacement project."
+    },
+    {
+      "id": "RESTORE-10",
+      "rules": ["R08", "A02"],
+      "given": "Queue capacity/provider service is unavailable before acceptance.",
+      "when": "Submit.",
+      "then": "Refuse without publishing executable work; preserve draft and show cause; existing accepted receipts remain tracked."
+    },
+    {
+      "id": "LIFECYCLE-01",
+      "rules": ["L01", "I01"],
+      "given": "An input is bound in the composer.",
+      "when": "Filter, sort, rename or favorite items so it leaves the visible gallery.",
+      "then": "Input remains explicitly bound and visible in composer; request order/history is unchanged."
+    },
+    {
+      "id": "LIFECYCLE-02",
+      "rules": ["L02", "H05"],
+      "given": "Version A has children and is used by a draft/export/share.",
+      "when": "Hide A.",
+      "then": "Gallery hides it; dependencies/history and existing share still reference A; Show hidden/Restore can reveal it."
+    },
+    {
+      "id": "LIFECYCLE-03",
+      "rules": ["L03"],
+      "given": "A conversation has draft text and a running job.",
+      "when": "Archive it.",
+      "then": "Keep work/history/jobs; conversation is read-only until restore; no implicit job cancellation."
+    },
+    {
+      "id": "LIFECYCLE-04",
+      "rules": ["L04", "J10"],
+      "given": "Project has pending and running jobs plus public shares.",
+      "when": "Trash project.",
+      "then": "Block new writes and deny public links; cancel unstarted work. Outputs already attached stay in retained trash; outputs finishing after trash deliver through owner recovery with original target preserved."
+    },
+    {
+      "id": "LIFECYCLE-05",
+      "rules": ["L04", "L06"],
+      "given": "A trashed project had cancelled jobs and revoked shares.",
+      "when": "Restore project.",
+      "then": "Restore identities/work; do not restart jobs or reactivate old links."
+    },
+    {
+      "id": "LIFECYCLE-06",
+      "rules": ["L05", "I15"],
+      "given": "Creator opens historical-message or asset removal actions.",
+      "when": "Look for permanent purge/delete-history.",
+      "then": "Those destructive actions are unavailable; offered Hide/Archive/Trash accurately describe their behavior."
+    },
+    {
+      "id": "LIFECYCLE-07",
+      "rules": ["L06", "I11"],
+      "given": "A public link points at immutable export E7.",
+      "when": "Export E8 and mark it preferred.",
+      "then": "Old link still targets E7; publishing E8 requires another link."
+    },
+    {
+      "id": "LIFECYCLE-08",
+      "rules": ["L07", "I03"],
+      "given": "A share publication response is lost.",
+      "when": "Retry or reload.",
+      "then": "Recover publication by operation ID; do not create duplicate links."
+    },
+    {
+      "id": "LIFECYCLE-09",
+      "rules": ["L07"],
+      "given": "Link revocation times out.",
+      "when": "Display link management and retry.",
+      "then": "Show Revocation pending/unknown; do not claim revoked until authoritative denial; retry same revocation."
+    },
+    {
+      "id": "LIFECYCLE-10",
+      "rules": ["L07", "I13"],
+      "given": "Project trash commits while individual link cleanup is retrying.",
+      "when": "Open a previously published link.",
+      "then": "Authoritative access denies it even before cleanup completes."
+    },
+    {
+      "id": "LIFECYCLE-11",
+      "rules": ["L08", "I14"],
+      "given": "Stored output is ready.",
+      "when": "Download fails or browser transfer starts.",
+      "then": "Report transfer state only; no generation/export failure or additional charge; no claim of a completed disk write."
+    },
+    {
+      "id": "USAGE-01",
+      "rules": ["P01"],
+      "given": "Reviewed quote expires before server acceptance.",
+      "when": "Submit.",
+      "then": "Reject/requote before dispatch; preserve draft and require review of the new amount."
+    },
+    {
+      "id": "USAGE-02",
+      "rules": ["P01", "I02"],
+      "given": "Quote is accepted/reserved, then expires while queued.",
+      "when": "Execute later.",
+      "then": "Honor captured maximum; no silent reprice; incompatible provider cost requires failure/release or a new explicit request."
+    },
+    {
+      "id": "USAGE-03",
+      "rules": ["P02", "I03"],
+      "given": "Two different requests compete for the last allowance.",
+      "when": "Accept concurrently.",
+      "then": "Atomic reservation permits only the affordable work; duplicate settlements/reservations remain impossible."
+    },
+    {
+      "id": "USAGE-04",
+      "rules": ["P03", "J07"],
+      "given": "Four slots have distinct usage allocations; two deliver, one fails, one cancels.",
+      "when": "Settle the request.",
+      "then": "Charge only deliverable policy-eligible slots and release failed/cancelled allocations; record all actual provider expense separately."
+    },
+    {
+      "id": "USAGE-05",
+      "rules": ["P03", "I14"],
+      "given": "A technically delivered result is disliked by its creator.",
+      "when": "Choose a new variation.",
+      "then": "Show new attempt/cost; original successful delivery remains settled and preserved."
+    },
+    {
+      "id": "USAGE-06",
+      "rules": ["P04", "J06"],
+      "given": "Output is durable but neither project nor recovery inbox association is confirmed.",
+      "when": "Observe and later repair attachment.",
+      "then": "Hold unsettled reservation while within deadline; settle only after authoritative owned delivery; no regeneration."
+    },
+    {
+      "id": "USAGE-07",
+      "rules": ["P05", "I07"],
+      "given": "A delivered result needs status, attachment or transfer recovery.",
+      "when": "Perform recovery repeatedly.",
+      "then": "No new generation reservation or customer charge is created."
+    },
+    {
+      "id": "USAGE-08",
+      "rules": ["P05", "I10"],
+      "given": "Allowance is exhausted while ready outputs and drafts exist.",
+      "when": "Browse/download existing output and edit text.",
+      "then": "Permit existing access/drafting; block only new billable work with the exact allowance reason."
+    },
+    {
+      "id": "JOB-24",
+      "rules": ["J15", "I12"],
+      "given": "Submission acceptance remains unknown at its captured deadline.",
+      "when": "Automatic reconciliation expires and the creator checks later.",
+      "then": "Keep the frozen envelope in Needs attention; check the same ID; only authoritative absence permits resend; no rejection/failure is invented."
+    },
+    {
+      "id": "RESTORE-11",
+      "rules": ["R09", "I04"],
+      "given": "An owned result is in recovery because original project attachment failed.",
+      "when": "Copy it to project Q, then repair its original project P link.",
+      "then": "Copy admission in Q and repaired original in P have distinct explicit associations; original request target stays P; neither recovery path creates another provider generation."
+    },
+    {
+      "id": "HISTORY-14",
+      "rules": ["H12", "D03"],
+      "given": "Media draft D revision 4 is unchanged after asking for wording advice; video edit E revision 7 is saved.",
+      "when": "Generate from D and export E in two different presets using separate action drafts.",
+      "then": "Assistance does not consume D; exports consume their own settings drafts, not E. Same execution draft submitted from two tabs still converges to one receipt."
+    },
+    {
+      "id": "ACTION-08",
+      "rules": ["A06"],
+      "given": "Creator opens a new request without selecting inputs.",
+      "when": "Inspect the composer and then choose an action.",
+      "then": "One output, no implicit media selection, and visible captured catalog defaults apply; Run is unavailable until an action and all required inputs exist."
+    },
+    {
+      "id": "ACTION-09",
+      "rules": ["A07", "I02"],
+      "given": "Result B was generated from A with a known seed.",
+      "when": "Choose Make another variation and then retry its transport.",
+      "then": "The new draft visibly uses a fresh seed policy with the original A input; frozen per-slot seeds stay identical through transport retries. No exact-pixel replay guarantee is made."
+    },
+    {
+      "id": "JOB-25",
+      "rules": ["J05"],
+      "given": "Provider nonacceptance and nonbilling are proven within accepted retry budget.",
+      "when": "Automatic retry is allowed.",
+      "then": "The same slot returns to waiting with a new attempt record, not a new request or increased cost bound; an unknown external outcome never enters this transition."
+    },
+    {
+      "id": "JOB-26",
+      "rules": ["J09", "I11"],
+      "given": "A slot was classified failed/lost, or already holds a stored version.",
+      "when": "A newly verified late provider output arrives.",
+      "then": "Failed/lost slots can recover the verified output; a stored slot never replaces its bytes. Different extra bytes are retained separately in recovery without new slot or charge."
+    },
+    {
+      "id": "MEDIA-14",
+      "rules": ["M07", "M09"],
+      "given": "Sketch allowance is exhausted but a valid successful output remains displayed.",
+      "when": "Press Accept displayed output.",
+      "then": "Accept that exact existing output through admission; do not dispatch another preview or charge for historical frames."
+    },
+    {
+      "id": "CONTEXT-16",
+      "rules": ["C08", "C09", "H12", "I02"],
+      "given": "An assistance question targets draft D revision 4, which is submitted unchanged before its answer arrives.",
+      "when": "The answer arrives and the creator tries Apply.",
+      "then": "Treat the proposal as non-applicable despite matching revision; never mutate accepted D. Offer a separate authorized writable draft or retain/discard the proposal."
+    }
+  ],
+  "modelTraces": [
+    {
+      "id": "TRACE-SUBMIT-RECOVERY",
+      "model": "submission",
+      "events": [
+        "submit_valid",
+        "response_uncertain",
+        "receipt_found",
+        "duplicate_response"
+      ],
+      "expected": "accepted"
+    },
+    {
+      "id": "TRACE-OLD-IMAGE-BRANCH",
+      "model": "input_target",
+      "events": [
+        "bind_available",
+        "inspect",
+        "bind_pending",
+        "output_deliverable",
+        "inspect"
+      ],
+      "expected": "version"
+    },
+    {
+      "id": "TRACE-SAVE-NEWER-EDIT",
+      "model": "draft_save",
+      "events": ["save", "edit_checkpointed"],
+      "expected": "local"
+    },
+    {
+      "id": "TRACE-SAVE-CONFLICT",
+      "model": "draft_save",
+      "events": [
+        "save",
+        "revision_conflict",
+        "keep_local_as_new",
+        "save",
+        "ack_current"
+      ],
+      "expected": "saved"
+    },
+    {
+      "id": "TRACE-LOCAL-FAILURE-SERVER-SAFE",
+      "model": "draft_save",
+      "events": ["save", "ack_current", "local_checkpoint_failure_protected"],
+      "expected": "saved"
+    },
+    {
+      "id": "TRACE-PARTIAL-BATCH",
+      "model": "request",
+      "events": ["start", "output_received", "some_deliverable_rest_terminal"],
+      "expected": "partial"
+    },
+    {
+      "id": "TRACE-UNKNOWN-RECOVERY-DEADLINE",
+      "model": "request",
+      "events": [
+        "start",
+        "outcome_unknown",
+        "recovery_deadline",
+        "check_status",
+        "all_deliverable"
+      ],
+      "expected": "succeeded"
+    },
+    {
+      "id": "TRACE-CANCEL-LATE-RESULT",
+      "model": "output_slot",
+      "events": [
+        "dispatch",
+        "cancel_confirmed",
+        "late_output",
+        "begin_copy",
+        "copied"
+      ],
+      "expected": "stored"
+    },
+    {
+      "id": "TRACE-REPAIR-SAME-OUTPUT",
+      "model": "output_slot",
+      "events": [
+        "dispatch",
+        "provider_output",
+        "begin_copy",
+        "copy_failed",
+        "retry_same_output",
+        "copied"
+      ],
+      "expected": "stored"
+    },
+    {
+      "id": "TRACE-RECOVERY-INBOX",
+      "model": "attachment",
+      "events": [
+        "destination_unavailable",
+        "recovery_linked",
+        "copy_to_chosen_project",
+        "restore_original_project",
+        "linked"
+      ],
+      "expected": "attached"
+    },
+    {
+      "id": "TRACE-STALE-ANSWER",
+      "model": "clarification",
+      "events": [
+        "answer",
+        "saved_current",
+        "draft_changed",
+        "apply_as_new_draft"
+      ],
+      "expected": "applied"
+    },
+    {
+      "id": "TRACE-SHARE-UNKNOWN-REVOKE",
+      "model": "sharing",
+      "events": [
+        "publish",
+        "response_lost",
+        "receipt_found",
+        "revoke",
+        "response_lost",
+        "confirmed_revoked"
+      ],
+      "expected": "revoked"
+    },
+    {
+      "id": "TRACE-NO-LATE-REDEBIT",
+      "model": "usage",
+      "events": [
+        "paid_mode_enabled",
+        "accept",
+        "reserved",
+        "confirmed_cancel_release",
+        "late_output"
+      ],
+      "expected": "released"
+    },
+    {
+      "id": "TRACE-SKETCH-CAP",
+      "model": "sketch",
+      "events": [
+        "resume",
+        "connected",
+        "allowance_exhausted",
+        "allowance_reset"
+      ],
+      "expected": "paused"
+    },
+    {
+      "id": "TRACE-TEXT-STREAM-RESTORE",
+      "model": "assistant_response",
+      "events": ["response_uncertain", "final_found"],
+      "expected": "saved"
+    },
+    {
+      "id": "TRACE-DOWNLOAD-RETRY",
+      "model": "download",
+      "events": [
+        "download",
+        "transfer_failed",
+        "retry_same_version",
+        "transfer_started"
+      ],
+      "expected": "started"
+    },
+    {
+      "id": "TRACE-PROJECT-TRASH-RESTORE",
+      "model": "project",
+      "events": ["create", "created", "trash", "trash_confirmed", "restored"],
+      "expected": "ready"
+    },
+    {
+      "id": "TRACE-ACCEPTANCE-DEADLINE",
+      "model": "submission",
+      "events": [
+        "submit_valid",
+        "response_uncertain",
+        "recovery_deadline",
+        "check_again",
+        "receipt_found"
+      ],
+      "expected": "accepted"
+    },
+    {
+      "id": "TRACE-BOUNDED-PROVIDER-RETRY",
+      "model": "output_slot",
+      "events": [
+        "dispatch",
+        "proven_not_accepted_retry_allowed",
+        "dispatch",
+        "provider_output",
+        "begin_copy",
+        "copied"
+      ],
+      "expected": "stored"
+    },
+    {
+      "id": "TRACE-LATE-FAILED-OUTPUT",
+      "model": "output_slot",
+      "events": [
+        "dispatch",
+        "proven_provider_failure",
+        "verified_late_output",
+        "begin_copy",
+        "copied"
+      ],
+      "expected": "stored"
+    },
+    {
+      "id": "TRACE-ACCEPT-AFTER-SKETCH-CAP",
+      "model": "sketch",
+      "events": [
+        "resume",
+        "connected",
+        "allowance_exhausted",
+        "accept_displayed"
+      ],
+      "expected": "limit_reached"
+    },
+    {
+      "id": "TRACE-ASSISTANCE-FROZEN-TARGET",
+      "model": "clarification",
+      "events": [
+        "answer",
+        "saved_current",
+        "target_not_editable",
+        "apply_as_new_draft"
+      ],
+      "expected": "applied"
+    }
+  ]
+}

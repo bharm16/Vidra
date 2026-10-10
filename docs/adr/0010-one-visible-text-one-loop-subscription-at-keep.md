@@ -1,5 +1,7 @@
 # One visible text, one loop, subscription at Keep: the untangling decision
 
+> **Product direction amendment, 2026-10-09:** [ADR-0024](0024-creation-has-no-required-order.md) supersedes the mandatory S0–S6 sequence and one global prose field as universal workflow constraints. Explicit inputs, dispatch snapshots, preserved work, and recovery remain requirements. The paid Keep offer below remains historical and inactive under ADR-0023.
+
 **Status:** accepted (2026-07-04) · amended by [ADR-0012](0012-the-space-lineage-network.md) — the player is redefined as the space's live node and the takes strip is superseded by the space; the state machine, text contract, dispositions, and payment decision stand
 
 A 2026-07-04 deep audit (64 research agents, adversarially verified) found the authoring

@@ -1,5 +1,7 @@
 # The workspace is input-first: three residents, and no player before the first result
 
+> **Product direction amendment, 2026-10-09:** [ADR-0024](0024-creation-has-no-required-order.md) removes the fixed three-element layout and prescribed next-action sequence as constraints on the redesign. The historical reasoning remains below. Existing components remain documented by Page 21; this amendment does not claim a replacement layout is implemented.
+
 **Status:** accepted (2026-07-04) · the player is redefined by [ADR-0012](0012-the-space-lineage-network.md) as the space's live node — the "one rectangle" framing below predates the space
 
 The workspace's pre-work state had drifted into a floating hero ("What are you making?")

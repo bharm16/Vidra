@@ -1,5 +1,7 @@
 # Rebuild scope decisions: one living text, derived stage, persisted takes
 
+> **Product direction amendment, 2026-10-09:** Under [ADR-0024](0024-creation-has-no-required-order.md), D1 and D2 describe the existing session implementation rather than constrain every future action or output. Preserve old input/output records and persisted takes. A new workflow must distinguish the current request, viewed media, running work, saving, and export instead of assigning the whole workspace one stage.
+
 **Status:** accepted (2026-07-05)
 
 Scoping the ADR-0010 workspace rebuild ([build scope](../design/2026-07-05-untangle-build-scope.md))

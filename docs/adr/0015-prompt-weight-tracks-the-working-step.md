@@ -1,5 +1,7 @@
 # The prompt's screen weight tracks the working step: the composer collapses and the words node demotes when a take has focus
 
+> **Product direction amendment, 2026-10-09:** [ADR-0024](0024-creation-has-no-required-order.md) removes the mandatory creation-step model behind this focus rule. The redesign must preserve unfinished requests and keep background completion from taking focus. The implemented Page 21 layout remains the current component reference.
+
 **Status:** accepted (2026-07-09) · amends [ADR-0012](0012-the-space-lineage-network.md) (page anatomy: the input's _dock_ stays constant; its _form_ becomes two-state) · upholds [ADR-0010](0010-one-visible-text-one-loop-subscription-at-keep.md)'s truth contract
 
 A 2026-07-09 owner review of the live rebuilt workspace found the prompt carrying
