@@ -31,13 +31,6 @@ function Registrant({ resolver }: { resolver: Resolver }): null {
 }
 
 describe("persistenceTargetRegistrar", () => {
-  it("resolves to empty when no descendant has registered", () => {
-    render(<Owner />);
-
-    expect(captured.resolve).not.toBeNull();
-    expect(captured.resolve?.()).toEqual({});
-  });
-
   it("surfaces a registered descendant resolver to the owner", () => {
     const resolver: Resolver = () => ({
       sessionId: "sess-remote-xyz",

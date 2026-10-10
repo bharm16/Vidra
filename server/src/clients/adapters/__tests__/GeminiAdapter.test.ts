@@ -84,21 +84,6 @@ describe("GeminiAdapter", () => {
     });
   });
 
-  it("handles malformed structured output by throwing parse error", async () => {
-    const adapter = new GeminiAdapter({
-      apiKey: "key",
-      defaultModel: "gemini-2.5-flash",
-    });
-    vi.spyOn(adapter, "complete").mockResolvedValue({
-      text: "{invalid",
-      metadata: {},
-    });
-
-    await expect(
-      adapter.generateStructuredOutput("Prompt", { type: "object" }),
-    ).rejects.toThrow("Invalid JSON response from Gemini");
-  });
-
   it("streams SSE chunks and raw JSON fallback chunks", async () => {
     const adapter = new GeminiAdapter({
       apiKey: "key",

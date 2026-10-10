@@ -1,6 +1,6 @@
 # Page 21 component migration and #177 retirement
 
-**Backend status, 2026-10-09:** This remains the October 8 frontend/design adoption record. Its retained-backend statements are historical: the selected dormant registrations/endpoints have now been retired. Current ownership and saved-record/recovery compatibility live in [CONTEXT.md](../../CONTEXT.md) and the [cleanup record](../audits/2026-10-09-frozen-separation-plan.md).
+**Backend status, 2026-10-09:** This remains the October 8 frontend/design adoption record. Recorded acceptance and unchanged-server statements apply to that frontend revision. The selected dormant backend registrations/endpoints were subsequently retired; current ownership and saved-record/recovery compatibility live in [CONTEXT.md](../../CONTEXT.md).
 
 Source: [Page 21 - Vidra design system](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c?node-id=699-23), read 2026-10-08.
 Implementation baseline: `5bdcae305ac7577433ad0e84675fef6497713021`. Page 21 supersedes the earlier visual handoff for these components; #177, ADR-0002 and ADR-0022 retain the functional and backend boundaries. This change adopts component styling and supported actions; Pages 22/23 do not authorize a new draft ownership model. At 01:51 CDT on 2026-10-08 the owner explicitly replaced the visible lineage diagram: media assets form dispatch rows appended top down in the existing pannable/scrollable space, while conversation outputs and the working composer live in a side panel. Underlying ancestry records remain unchanged.
@@ -62,7 +62,7 @@ Focused component and browser checks protect account success/failure paths, actu
 
 ## Owner-directed dormant frontend cleanup
 
-The final owner direction removes registered frontend routes, controls and producers for frozen or dormant workflows. [dormant-frontend-retirement.md](dormant-frontend-retirement.md) and its [machine-readable ledger](dormant-frontend-retirement.json) list the eight workflows, ten route patterns, frontend registrations and backend counterparts. Backend status is `dormant_registered`; server registrations, gates, schemas and stored records are unchanged. The exact combined deletion list is [177-retired-files.json](177-retired-files.json).
+The October 8 frontend retirement is recorded in the [machine-readable ledger](dormant-frontend-retirement.json), including its then-dormant backend counterparts. The October 9 backend retirement supersedes that historical backend status; [CONTEXT.md](../../CONTEXT.md) defines the surviving contracts. The frontend deletion list is [177-retired-files.json](177-retired-files.json).
 
 This retires named-asset authoring/detection/autocomplete, camera/depth controls and FrameAnimator, continuity/sequence state and writers, storyboard and character/face-swap preview, model intelligence/showroom, coherence and old improver/accordion presentation, and all billing/credit UI subscriptions. Shared downloads, recovery, ordinary references, manual supported model selection, image/video generation, inline refinement, live sketch and Studio handoffs remain active. Historical metadata stays readable. Generic authoring sessions load without importing a continuity wire client, and continuity-only records do not become fabricated editable drafts in the Library.
 

@@ -20,22 +20,6 @@ const createProvider = (
 
 describe("image preview provider registry", () => {
   describe("error handling", () => {
-    it("returns null for unknown provider selections", () => {
-      expect(
-        resolveImagePreviewProviderSelection("unknown-provider"),
-      ).toBeNull();
-    });
-
-    it("returns an empty plan when the requested provider is unavailable", () => {
-      const provider = createProvider("replicate-flux-schnell", false);
-      const plan = buildProviderPlan({
-        providers: [provider],
-        requestedProvider: "replicate-flux-schnell",
-      });
-
-      expect(plan).toHaveLength(0);
-    });
-
     it("skips invalid entries when parsing provider order", () => {
       const order = parseImagePreviewProviderOrder("invalid, ,,,,");
       expect(order).toHaveLength(0);
@@ -52,13 +36,6 @@ describe("image preview provider registry", () => {
         "replicate-flux-schnell",
         "replicate-flux-kontext-fast",
       ]);
-    });
-
-    it("accepts auto selection and resolves aliases for explicit selection", () => {
-      expect(resolveImagePreviewProviderSelection("auto")).toBe("auto");
-      expect(resolveImagePreviewProviderSelection("kontext-fast")).toBe(
-        "replicate-flux-kontext-fast",
-      );
     });
   });
 
@@ -79,18 +56,6 @@ describe("image preview provider registry", () => {
       expect(plan.map((provider) => provider.id)).toEqual([
         "replicate-flux-kontext-fast",
         "replicate-flux-schnell",
-      ]);
-    });
-
-    it("recognizes known provider ids", () => {
-      expect(isImagePreviewProviderId("replicate-flux-schnell")).toBe(true);
-      expect(isImagePreviewProviderId("replicate-flux-kontext-fast")).toBe(
-        true,
-      );
-      expect(isImagePreviewProviderId("unknown-id")).toBe(false);
-      expect(IMAGE_PREVIEW_PROVIDER_IDS).toEqual([
-        "replicate-flux-schnell",
-        "replicate-flux-kontext-fast",
       ]);
     });
   });

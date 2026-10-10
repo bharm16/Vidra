@@ -11,7 +11,6 @@ import type { HighlightSnapshot } from "../types";
 import { usePromptVersioning } from "./usePromptVersioning";
 import {
   buildVersionEditMetadata,
-  isHighlightSnapshot,
   mintVersionId,
   resolveVersionTimestamp,
 } from "../utils/versioning";
@@ -30,10 +29,6 @@ interface PromptHistoryStore {
     docId: string | null,
     versions: PromptVersionEntry[],
   ) => void;
-}
-
-interface PromptOptimizerActions {
-  setOptimizedPrompt: (prompt: string) => void;
 }
 
 interface UseVersionManagementOptions {
@@ -64,12 +59,6 @@ interface UseVersionManagementOptions {
   selectedModel: string;
   generationParams: CapabilityValues;
   serializedKeyframes: PromptHistoryEntry["keyframes"];
-  promptOptimizer: PromptOptimizerActions;
-  applyInitialHighlightSnapshot: (
-    snapshot: HighlightSnapshot | null,
-    options: { bumpVersion: boolean; markPersisted: boolean },
-  ) => void;
-  setDisplayedPromptSilently: (text: string) => void;
   latestHighlightRef: MutableRefObject<HighlightSnapshot | null>;
   versionEditCountRef: MutableRefObject<number>;
   versionEditsRef: MutableRefObject<PromptVersionEdit[]>;
@@ -83,7 +72,6 @@ interface UseVersionManagementResult {
   selectedVersionId: string;
   activeVersion: PromptVersionEntry | null;
   promptVersionId: string;
-  handleSelectVersion: (versionId: string) => void;
   handleCreateVersion: () => void;
   createVersionIfNeeded: () => string;
   handleGenerationsChange: (nextGenerations: Generation[]) => void;
@@ -110,16 +98,12 @@ export function useVersionManagement({
   selectedModel,
   generationParams,
   serializedKeyframes,
-  promptOptimizer,
-  applyInitialHighlightSnapshot,
-  setDisplayedPromptSilently,
   latestHighlightRef,
   versionEditCountRef,
   versionEditsRef,
   resetVersionEdits,
 }: UseVersionManagementOptions): UseVersionManagementResult {
   const { history, createDraft, updateEntryVersions } = promptHistory;
-  const { setOptimizedPrompt } = promptOptimizer;
   const versionHistory = { history, updateEntryVersions };
   const versioningPromptUuid = currentPromptUuid;
   const versioningPromptDocId = currentPromptDocId;
@@ -233,44 +217,6 @@ export function useVersionManagement({
       versionEditsRef,
       resetVersionEdits,
     },
-  );
-
-  const handleSelectVersion = useCallback(
-    (versionId: string): void => {
-      const target =
-        currentVersions.find((version) => version.versionId === versionId) ||
-        orderedVersions.find((version) => version.versionId === versionId) ||
-        null;
-      if (!target) return;
-      const promptText = typeof target.prompt === "string" ? target.prompt : "";
-      if (!promptText.trim()) return;
-
-      setActiveVersionId(versionId);
-      setOptimizedPrompt(promptText);
-      setDisplayedPromptSilently(promptText);
-
-      const highlights = isHighlightSnapshot(target.highlights)
-        ? target.highlights
-        : null;
-      applyInitialHighlightSnapshot(highlights, {
-        bumpVersion: true,
-        markPersisted: false,
-      });
-      // Deliberately does NOT reset the undo/redo stacks. Selecting a take is
-      // browsing, and browsing is read-only (CLAUDE.md UX rule 1) — moving
-      // between takes must not cost the creator their edit history. Only an
-      // explicit, labelled restore may clear the stacks.
-      resetVersionEdits();
-    },
-    [
-      applyInitialHighlightSnapshot,
-      currentVersions,
-      orderedVersions,
-      resetVersionEdits,
-      setOptimizedPrompt,
-      setActiveVersionId,
-      setDisplayedPromptSilently,
-    ],
   );
 
   const ensureDraftEntry = useCallback((): { uuid: string; docId: string } => {
@@ -504,7 +450,6 @@ export function useVersionManagement({
     selectedVersionId,
     activeVersion,
     promptVersionId,
-    handleSelectVersion,
     handleCreateVersion,
     createVersionIfNeeded,
     handleGenerationsChange,

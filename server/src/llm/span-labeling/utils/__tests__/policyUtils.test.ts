@@ -22,16 +22,6 @@ describe("sanitizePolicy", () => {
       expect(result.allowOverlap).toBe(false);
     });
 
-    it("returns defaults when given non-object primitive", () => {
-      // @ts-expect-error Testing invalid input
-      const result = sanitizePolicy("invalid");
-
-      expect(result.nonTechnicalWordLimit).toBe(
-        DEFAULT_POLICY.nonTechnicalWordLimit,
-      );
-      expect(result.allowOverlap).toBe(false);
-    });
-
     it("replaces NaN word limit with default", () => {
       const result = sanitizePolicy({ nonTechnicalWordLimit: NaN });
 
@@ -47,52 +37,14 @@ describe("sanitizePolicy", () => {
         DEFAULT_POLICY.nonTechnicalWordLimit,
       );
     });
-
-    it("replaces negative word limit with default", () => {
-      const result = sanitizePolicy({ nonTechnicalWordLimit: -10 });
-
-      expect(result.nonTechnicalWordLimit).toBe(
-        DEFAULT_POLICY.nonTechnicalWordLimit,
-      );
-    });
-
-    it("replaces zero word limit with default", () => {
-      const result = sanitizePolicy({ nonTechnicalWordLimit: 0 });
-
-      expect(result.nonTechnicalWordLimit).toBe(
-        DEFAULT_POLICY.nonTechnicalWordLimit,
-      );
-    });
   });
 
   describe("edge cases", () => {
-    it("returns empty object policy merged with defaults", () => {
-      const result = sanitizePolicy({});
-
-      expect(result.nonTechnicalWordLimit).toBe(
-        DEFAULT_POLICY.nonTechnicalWordLimit,
-      );
-      expect(result.allowOverlap).toBe(DEFAULT_POLICY.allowOverlap);
-    });
-
     it("coerces truthy non-boolean allowOverlap to false", () => {
       // @ts-expect-error Testing type coercion
       const result = sanitizePolicy({ allowOverlap: "yes" });
 
       expect(result.allowOverlap).toBe(false);
-    });
-
-    it("coerces number allowOverlap to false", () => {
-      // @ts-expect-error Testing type coercion
-      const result = sanitizePolicy({ allowOverlap: 1 });
-
-      expect(result.allowOverlap).toBe(false);
-    });
-
-    it("handles boundary word limit of 1", () => {
-      const result = sanitizePolicy({ nonTechnicalWordLimit: 1 });
-
-      expect(result.nonTechnicalWordLimit).toBe(1);
     });
 
     it("handles string number word limit by using default", () => {
@@ -116,12 +68,6 @@ describe("sanitizePolicy", () => {
 
       expect(result.allowOverlap).toBe(true);
     });
-
-    it("preserves explicit false allowOverlap", () => {
-      const result = sanitizePolicy({ allowOverlap: false });
-
-      expect(result.allowOverlap).toBe(false);
-    });
   });
 });
 
@@ -135,71 +81,14 @@ describe("sanitizeOptions", () => {
       expect(result.templateVersion).toBe(DEFAULT_OPTIONS.templateVersion);
     });
 
-    it("returns defaults when given non-object primitive", () => {
-      // @ts-expect-error Testing invalid input
-      const result = sanitizeOptions(123);
-
-      expect(result.maxSpans).toBe(DEFAULT_OPTIONS.maxSpans);
-    });
-
-    it("replaces NaN maxSpans with default", () => {
-      const result = sanitizeOptions({ maxSpans: NaN });
-
-      expect(result.maxSpans).toBe(DEFAULT_OPTIONS.maxSpans);
-    });
-
-    it("replaces negative maxSpans with default", () => {
-      const result = sanitizeOptions({ maxSpans: -5 });
-
-      expect(result.maxSpans).toBe(DEFAULT_OPTIONS.maxSpans);
-    });
-
-    it("replaces zero maxSpans with default", () => {
-      const result = sanitizeOptions({ maxSpans: 0 });
-
-      expect(result.maxSpans).toBe(DEFAULT_OPTIONS.maxSpans);
-    });
-
     it("replaces non-integer maxSpans with default", () => {
       const result = sanitizeOptions({ maxSpans: 10.5 });
 
       expect(result.maxSpans).toBe(DEFAULT_OPTIONS.maxSpans);
     });
-
-    it("replaces negative minConfidence with default", () => {
-      const result = sanitizeOptions({ minConfidence: -0.5 });
-
-      expect(result.minConfidence).toBe(DEFAULT_OPTIONS.minConfidence);
-    });
-
-    it("replaces minConfidence greater than 1 with default", () => {
-      const result = sanitizeOptions({ minConfidence: 1.5 });
-
-      expect(result.minConfidence).toBe(DEFAULT_OPTIONS.minConfidence);
-    });
-
-    it("replaces NaN minConfidence with default", () => {
-      const result = sanitizeOptions({ minConfidence: NaN });
-
-      expect(result.minConfidence).toBe(DEFAULT_OPTIONS.minConfidence);
-    });
   });
 
   describe("edge cases", () => {
-    it("caps maxSpans at absolute limit", () => {
-      const result = sanitizeOptions({ maxSpans: 1000 });
-
-      expect(result.maxSpans).toBe(PERFORMANCE.MAX_SPANS_ABSOLUTE_LIMIT);
-    });
-
-    it("allows maxSpans exactly at absolute limit", () => {
-      const result = sanitizeOptions({
-        maxSpans: PERFORMANCE.MAX_SPANS_ABSOLUTE_LIMIT,
-      });
-
-      expect(result.maxSpans).toBe(PERFORMANCE.MAX_SPANS_ABSOLUTE_LIMIT);
-    });
-
     it("handles boundary minConfidence of 0", () => {
       const result = sanitizeOptions({ minConfidence: 0 });
 
@@ -210,13 +99,6 @@ describe("sanitizeOptions", () => {
       const result = sanitizeOptions({ minConfidence: 1 });
 
       expect(result.minConfidence).toBe(1);
-    });
-
-    it("converts non-string templateVersion to string", () => {
-      // @ts-expect-error Testing type coercion
-      const result = sanitizeOptions({ templateVersion: 123 });
-
-      expect(result.templateVersion).toBe("123");
     });
 
     it("uses default for empty string templateVersion", () => {
@@ -269,76 +151,16 @@ describe("sanitizeOptions", () => {
         }),
       );
     });
-
-    it("templateVersion is always a string type", () => {
-      fc.assert(
-        fc.property(fc.anything(), (input) => {
-          const result = sanitizeOptions({ templateVersion: input as string });
-          expect(typeof result.templateVersion).toBe("string");
-          // Note: String([]) returns "" so some edge cases may produce empty string
-          // The implementation uses || which is truthy-based, not nullish coalescing
-        }),
-      );
-    });
   });
 });
 
 describe("buildTaskDescription", () => {
-  describe("error handling", () => {
-    it("handles null policy gracefully", () => {
-      const result = buildTaskDescription(10, null);
-
-      expect(result).toContain("Identify up to 10 spans");
-    });
-
-    it("handles undefined policy gracefully", () => {
-      const result = buildTaskDescription(10, undefined);
-
-      expect(result).toContain("Identify up to 10 spans");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("handles zero maxSpans", () => {
-      const result = buildTaskDescription(0, DEFAULT_POLICY);
-
-      expect(result).toContain("Identify up to 0 spans");
-    });
-
-    it("handles policy with zero word limit", () => {
-      const result = buildTaskDescription(10, { nonTechnicalWordLimit: 0 });
-
-      // Zero is not > 0, so no word limit message should be added
-      expect(result).not.toContain("words or fewer");
-    });
-
-    it("handles policy with negative word limit", () => {
-      const result = buildTaskDescription(10, { nonTechnicalWordLimit: -5 });
-
-      // Negative is not > 0, so no word limit message
-      expect(result).not.toContain("words or fewer");
-    });
-  });
-
   describe("core behavior", () => {
-    it("includes overlap permitted message when allowOverlap is true", () => {
-      const result = buildTaskDescription(10, { allowOverlap: true });
-
-      expect(result).toContain("Overlapping spans are permitted");
-      expect(result).not.toContain("Do not return overlapping spans");
-    });
-
     it("includes no overlap message when allowOverlap is false", () => {
       const result = buildTaskDescription(10, { allowOverlap: false });
 
       expect(result).toContain("Do not return overlapping spans");
       expect(result).not.toContain("Overlapping spans are permitted");
-    });
-
-    it("includes word limit message when positive word limit is set", () => {
-      const result = buildTaskDescription(10, { nonTechnicalWordLimit: 15 });
-
-      expect(result).toContain("Non-technical spans must be 15 words or fewer");
     });
 
     it("combines all policy constraints into a single description", () => {

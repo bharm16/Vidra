@@ -20,4 +20,4 @@ Services tolerate unavailable telemetry without changing product outcomes. Prese
 
 Deterministic span-labeling evaluation uses `scripts/evaluation/golden-set-relaxed-f1.ts` and its blessed baselines. Offline replay proves wiring/recovery. Provider-quality tooling and bounded live smoke report their own evidence limits. No removed judge/dashboard/calendar program is a current release requirement.
 
-See [provider quality](provider-quality.md), [cross-mode contracts](cross-mode-golden-path.md) and [logging patterns](typescript/LOGGING_PATTERNS.md).
+See [cross-mode contracts](cross-mode-golden-path.md). Server logging signatures live in [ILogger](../../server/src/interfaces/ILogger.ts); browser logging lives in [LoggingService](../../client/src/services/LoggingService.ts).

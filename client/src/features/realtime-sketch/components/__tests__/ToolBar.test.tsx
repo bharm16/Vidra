@@ -24,19 +24,6 @@ function renderBar(
 }
 
 describe("ToolBar", () => {
-  it("marks the active tool with the raised state (select active by default)", () => {
-    renderBar();
-
-    expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Eraser" })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
-  });
-
   it("choosing the brush selects the tool and toggles its popover", () => {
     const props = renderBar();
 

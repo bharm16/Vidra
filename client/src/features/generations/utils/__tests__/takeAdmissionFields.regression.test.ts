@@ -3,7 +3,6 @@ import { SessionGenerationRecordSchema } from "@shared/schemas/session.schemas";
 import type { Generation } from "../../types";
 import { normalizePersistedGeneration } from "../normalizePersistedGeneration";
 import {
-  SERVER_OWNED_RECORD_FIELDS,
   preserveServerOwnedFields,
   readAncestorGenerationId,
   readMediaAssetId,
@@ -132,21 +131,6 @@ describe("take admission fields survive the client (ADR-0022 decisions 1-3)", ()
     if (!legacy) return;
     // Inferring an origin is exactly what the closed set exists to prevent.
     expect(readTakeOrigin(legacy)).toBeUndefined();
-  });
-
-  it("names every admission field AND durable handle as server-owned, so a merge cannot drop it", () => {
-    // The admission trio (decisions 1-3) plus the durable media handles
-    // (issue #125): both are server-owned identity a whole-record merge must
-    // not strand. The ephemeral URLs are deliberately absent — they refresh.
-    expect([...SERVER_OWNED_RECORD_FIELDS]).toEqual([
-      "ancestorGenerationId",
-      "archived",
-      "origin",
-      "productionProvenance",
-      "sourceInputs",
-      "storagePath",
-      "mediaAssetIds",
-    ]);
   });
 
   it("restores the admission fields AND the durable handle after a merge that picks a runtime record without them", () => {

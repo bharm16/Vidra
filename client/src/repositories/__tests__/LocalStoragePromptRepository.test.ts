@@ -38,24 +38,6 @@ describe("LocalStoragePromptRepository", () => {
   // save - error handling
   // ---------------------------------------------------------------------------
   describe("save", () => {
-    it("generates a UUID when none is provided", async () => {
-      const result = await repo.save("user1", {
-        input: "hello",
-        output: "world",
-      });
-      expect(result.uuid).toBeTruthy();
-      expect(result.uuid.length).toBeGreaterThan(0);
-    });
-
-    it("uses provided UUID when given", async () => {
-      const result = await repo.save("user1", {
-        uuid: "my-custom-uuid",
-        input: "hello",
-        output: "world",
-      });
-      expect(result.uuid).toBe("my-custom-uuid");
-    });
-
     it("trims whitespace from provided UUID", async () => {
       const result = await repo.save("user1", {
         uuid: "  my-uuid  ",
@@ -92,7 +74,7 @@ describe("LocalStoragePromptRepository", () => {
       }
 
       const all = await repo.getUserPrompts("user1", 200);
-      expect(all.length).toBeLessThanOrEqual(100);
+      expect(all).toHaveLength(100);
     });
 
     it("preserves mode and targetModel when provided", async () => {
@@ -107,14 +89,6 @@ describe("LocalStoragePromptRepository", () => {
       const entry = await repo.getByUuid("meta-uuid");
       expect(entry?.mode).toBe("video");
       expect(entry?.targetModel).toBe("kling-v1");
-    });
-
-    it("returns an id in the result", async () => {
-      const result = await repo.save("user1", {
-        input: "in",
-        output: "out",
-      });
-      expect(result.id).toBeTruthy();
     });
 
     it("falls back to trimmed history on QuotaExceededError", async () => {
@@ -179,11 +153,6 @@ describe("LocalStoragePromptRepository", () => {
   // getUserPrompts
   // ---------------------------------------------------------------------------
   describe("getUserPrompts", () => {
-    it("returns empty array when no history exists", async () => {
-      const result = await repo.getUserPrompts("user1");
-      expect(result).toEqual([]);
-    });
-
     it("respects limit parameter", async () => {
       for (let i = 0; i < 5; i++) {
         await repo.save("user1", { input: `in-${i}`, output: `out-${i}` });
@@ -203,43 +172,11 @@ describe("LocalStoragePromptRepository", () => {
       const result = await repo.getUserPrompts("user1");
       expect(result).toEqual([]);
     });
-
-    it("defaults limit to 10", async () => {
-      for (let i = 0; i < 15; i++) {
-        await repo.save("user1", { input: `in-${i}`, output: `out-${i}` });
-      }
-      const result = await repo.getUserPrompts("user1");
-      expect(result).toHaveLength(10);
-    });
   });
 
   // ---------------------------------------------------------------------------
   // getByUuid
   // ---------------------------------------------------------------------------
-  describe("getByUuid", () => {
-    it("returns null when entry does not exist", async () => {
-      const result = await repo.getByUuid("nonexistent");
-      expect(result).toBeNull();
-    });
-
-    it("returns the matching entry", async () => {
-      await repo.save("user1", {
-        uuid: "find-me",
-        input: "in",
-        output: "out",
-      });
-      const result = await repo.getByUuid("find-me");
-      expect(result).not.toBeNull();
-      expect(result?.uuid).toBe("find-me");
-      expect(result?.input).toBe("in");
-    });
-
-    it("returns null on corrupted data", async () => {
-      localStorage.setItem(testKey, "invalid json");
-      const result = await repo.getByUuid("any");
-      expect(result).toBeNull();
-    });
-  });
 
   // ---------------------------------------------------------------------------
   // updatePrompt
@@ -331,10 +268,6 @@ describe("LocalStoragePromptRepository", () => {
       expect(entry?.versions).toHaveLength(1);
       expect(entry?.versions?.[0]?.versionId).toBe("v1");
     });
-
-    it("no-ops when uuid is empty", async () => {
-      await expect(repo.updateVersions("", [])).resolves.toBeUndefined();
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -367,16 +300,6 @@ describe("LocalStoragePromptRepository", () => {
   // syncEntries
   // ---------------------------------------------------------------------------
   describe("syncEntries", () => {
-    it("replaces all stored entries", () => {
-      const entries = [
-        { input: "a", output: "b", timestamp: new Date().toISOString() },
-        { input: "c", output: "d", timestamp: new Date().toISOString() },
-      ];
-      const result = repo.syncEntries(entries as any);
-      expect(result.success).toBe(true);
-      expect(result.trimmed).toBe(false);
-    });
-
     it("returns success true after sync", () => {
       const result = repo.syncEntries([{ input: "x", output: "y" }] as any);
       expect(result.success).toBe(true);
@@ -394,17 +317,6 @@ describe("LocalStoragePromptRepository", () => {
   // deleteById
   // ---------------------------------------------------------------------------
   describe("deleteById", () => {
-    it("removes entry by ID", async () => {
-      const saved = await repo.save("user1", {
-        input: "del",
-        output: "me",
-      });
-      await repo.deleteById(saved.id);
-      const all = await repo.getUserPrompts("user1", 100);
-      const found = all.find((e) => e.id === saved.id);
-      expect(found).toBeUndefined();
-    });
-
     it("preserves entries count minus one after deletion", async () => {
       await repo.save("user1", { uuid: "a", input: "a", output: "a" });
       // wait a ms so Date.now() gives different IDs

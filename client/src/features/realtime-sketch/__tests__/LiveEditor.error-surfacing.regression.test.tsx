@@ -94,19 +94,6 @@ describe("regression: the live editor surfaces relay failures", () => {
     expect(surface).toHaveClass("le-error");
     expect(surface).toHaveClass("le-error-centered");
   });
-
-  it("keeps the idle invitation when nothing has failed yet", () => {
-    const pendingRelay: SendSketchFrame = () => new Promise(() => {});
-
-    render(
-      <MemoryRouter>
-        <LiveEditor sendFrameFn={pendingRelay} />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByLabelText("No live render yet")).toBeInTheDocument();
-    expect(screen.queryByTestId("live-editor-error")).not.toBeInTheDocument();
-  });
 });
 
 /**

@@ -57,7 +57,7 @@ vi.mock("@infrastructure/Logger", () => ({
   logger: mockLogger,
 }));
 
-import { LLMClient, ClientAbortError, TimeoutError } from "@clients/LLMClient";
+import { LLMClient, TimeoutError } from "@clients/LLMClient";
 
 const createAdapter = (overrides: Record<string, unknown> = {}) => ({
   complete: vi.fn().mockResolvedValue({ text: "ok", metadata: {} }),
@@ -102,39 +102,6 @@ describe("LLMClient", () => {
       await expect(client.complete("Prompt", {})).rejects.toBeInstanceOf(
         TimeoutError,
       );
-    });
-  });
-
-  describe("edge cases", () => {
-    it("surfaces adapter health check results", async () => {
-      const adapter = createAdapter({
-        healthCheck: vi
-          .fn()
-          .mockResolvedValue({ healthy: false, responseTime: 42 }),
-      });
-      const client = new LLMClient({ adapter, providerName: "test" });
-
-      const result = await client.healthCheck();
-
-      expect(result.healthy).toBe(false);
-      expect(result.provider).toBe("test");
-      expect(result.responseTime).toBe(42);
-    });
-
-    it("ignores ClientAbortError in circuit breaker error filter", () => {
-      const adapter = createAdapter();
-      const client = new LLMClient({ adapter, providerName: "test" });
-      const breaker = (
-        client as unknown as {
-          breaker: InstanceType<typeof FakeCircuitBreaker>;
-        }
-      ).breaker;
-      const errorFilter = breaker.options.errorFilter as (
-        err: Error,
-      ) => boolean;
-
-      expect(errorFilter(new ClientAbortError("client aborted"))).toBe(true);
-      expect(errorFilter(new Error("other"))).toBe(false);
     });
   });
 

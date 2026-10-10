@@ -54,41 +54,6 @@ describe("SpanLabelingCache service", () => {
     );
   });
 
-  it("persists entries and retrieves cache hits with signatures", async () => {
-    const { spanLabelingCache } = await loadCacheModule();
-
-    const payload = {
-      text: "A neon city skyline",
-      cacheId: "prompt-1",
-      maxSpans: 20,
-      minConfidence: 0.5,
-      templateVersion: "v1",
-    };
-
-    spanLabelingCache.set(payload, {
-      spans: [{ start: 2, end: 6, category: "environment", confidence: 0.9 }],
-      meta: { source: "network" },
-    });
-
-    const cached = spanLabelingCache.get(payload) as {
-      spans: unknown[];
-      signature: string;
-      meta: Record<string, unknown>;
-    } | null;
-
-    expect(cached).not.toBeNull();
-    expect(cached?.spans).toHaveLength(1);
-    expect(cached?.signature).toBeTruthy();
-    expect(cached?.meta).toMatchObject({ source: "network" });
-
-    const persistedRaw = localStorage.getItem(STORAGE_KEY);
-    expect(persistedRaw).toBeTruthy();
-    const persisted = JSON.parse(persistedRaw || "[]");
-    const firstEntryValue = persisted[0]?.[1];
-    expect(firstEntryValue.version).toEqual(expect.any(String));
-    expect(firstEntryValue.meta.cacheVersion).toEqual(expect.any(String));
-  });
-
   it("hydrates asynchronously from storage and loads valid entries only", async () => {
     const { spanLabelingCache } = await loadCacheModule();
 

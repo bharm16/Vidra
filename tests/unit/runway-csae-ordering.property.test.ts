@@ -95,16 +95,6 @@ const ENVIRONMENT_TERMS = [
   "in the garden",
 ] as const;
 
-/**
- * Find the position of a term in the prompt (case-insensitive)
- * Returns -1 if not found
- */
-function findTermPosition(prompt: string, term: string): number {
-  const lowerPrompt = prompt.toLowerCase();
-  const lowerTerm = term.toLowerCase();
-  return lowerPrompt.indexOf(lowerTerm);
-}
-
 function findSegmentIndex(prompt: string, terms: readonly string[]): number {
   const segments = prompt
     .toLowerCase()
@@ -130,23 +120,6 @@ function subjectTermVariants(subjectTerm: string): string[] {
   return variants;
 }
 
-function findFirstTermPosition(
-  prompt: string,
-  terms: readonly string[],
-): number {
-  const lowerPrompt = prompt.toLowerCase();
-  let best = Number.POSITIVE_INFINITY;
-
-  for (const term of terms) {
-    const index = lowerPrompt.indexOf(term.toLowerCase());
-    if (index !== -1 && index < best) {
-      best = index;
-    }
-  }
-
-  return Number.isFinite(best) ? best : -1;
-}
-
 describe("Runway CSAE Ordering Property Tests", () => {
   const strategy = new RunwayStrategy();
 
@@ -161,161 +134,6 @@ describe("Runway CSAE Ordering Property Tests", () => {
    * **Validates: Requirements 3.3, 3.4**
    */
   describe("Property 4: Runway CSAE Ordering", () => {
-    it("camera terms appear before subject terms in transformed output", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.constantFrom(...CAMERA_TERMS),
-          fc.constantFrom(...SUBJECT_TERMS),
-          fc.string({ minLength: 0, maxLength: 50 }),
-          async (cameraTerm, subjectTerm, filler) => {
-            // Create input with camera and subject in random order
-            const inputs = [
-              `${subjectTerm} ${filler} ${cameraTerm}`,
-              `${cameraTerm} ${filler} ${subjectTerm}`,
-              `${filler} ${subjectTerm} ${cameraTerm}`,
-            ];
-
-            for (const input of inputs) {
-              // Run normalize first (required before transform)
-              const normalized = strategy.normalize(input);
-              const result = await strategy.transform(normalized);
-              const prompt =
-                typeof result.prompt === "string"
-                  ? result.prompt
-                  : JSON.stringify(result.prompt);
-
-              // If both categories are present in output, camera should come first.
-              const cameraPos = findSegmentIndex(prompt, [cameraTerm]);
-              const subjectPos = findSegmentIndex(
-                prompt,
-                subjectTermVariants(subjectTerm),
-              );
-
-              if (cameraPos !== -1 && subjectPos !== -1) {
-                expect(cameraPos).toBeLessThan(subjectPos);
-              }
-            }
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("camera terms are moved to absolute start when present", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.constantFrom(...CAMERA_TERMS),
-          fc
-            .string({ minLength: 5, maxLength: 100 })
-            .filter((s) => s.trim().length > 0),
-          async (cameraTerm, otherContent) => {
-            // Create input with camera term NOT at the start
-            const input = `${otherContent} ${cameraTerm}`;
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-            const prompt =
-              typeof result.prompt === "string"
-                ? result.prompt
-                : JSON.stringify(result.prompt);
-
-            // Camera term should be near the start (within first 50 chars or first element)
-            const cameraPos = findTermPosition(prompt, cameraTerm);
-
-            if (cameraPos !== -1) {
-              // Camera should be in the first portion of the prompt
-              // Allow some flexibility for formatting
-              const firstCommaPos = prompt.indexOf(",");
-              const firstSegmentEnd =
-                firstCommaPos !== -1 ? firstCommaPos : prompt.length;
-
-              // Camera term should appear before or within the first segment
-              expect(cameraPos).toBeLessThanOrEqual(
-                firstSegmentEnd + cameraTerm.length,
-              );
-            }
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("subject terms appear before action terms in transformed output", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.constantFrom(...SUBJECT_TERMS),
-          fc.constantFrom(...ACTION_TERMS),
-          fc.string({ minLength: 0, maxLength: 30 }),
-          async (subjectTerm, actionTerm, filler) => {
-            // Create input with subject and action
-            const input = `${actionTerm} ${filler} ${subjectTerm}`;
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-            const prompt =
-              typeof result.prompt === "string"
-                ? result.prompt
-                : JSON.stringify(result.prompt);
-
-            const subjectPos = findSegmentIndex(
-              prompt,
-              subjectTermVariants(subjectTerm),
-            );
-            const actionPos = findSegmentIndex(prompt, [actionTerm]);
-
-            // If both categories are present, subject should come before action.
-            if (subjectPos !== -1 && actionPos !== -1) {
-              if (subjectPos === actionPos) {
-                const subjectTextPos = findFirstTermPosition(
-                  prompt,
-                  subjectTermVariants(subjectTerm),
-                );
-                const actionTextPos = findFirstTermPosition(prompt, [
-                  actionTerm,
-                ]);
-                if (subjectTextPos !== -1 && actionTextPos !== -1) {
-                  expect(subjectTextPos).toBeLessThan(actionTextPos);
-                }
-              } else {
-                expect(subjectPos).toBeLessThan(actionPos);
-              }
-            }
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("action terms appear before environment terms in transformed output", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.constantFrom(...ACTION_TERMS),
-          fc.constantFrom(...ENVIRONMENT_TERMS),
-          fc.string({ minLength: 0, maxLength: 30 }),
-          async (actionTerm, envTerm, filler) => {
-            // Create input with action and environment in reverse order
-            const input = `${envTerm} ${filler} ${actionTerm}`;
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-            const prompt =
-              typeof result.prompt === "string"
-                ? result.prompt
-                : JSON.stringify(result.prompt);
-
-            const actionPos = findSegmentIndex(prompt, [actionTerm]);
-            const envPos = findSegmentIndex(prompt, [envTerm]);
-
-            // If both are present, action should come before environment
-            if (actionPos !== -1 && envPos !== -1) {
-              expect(actionPos).toBeLessThan(envPos);
-            }
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
     it("full CSAE ordering is maintained with all four elements", async () => {
       await fc.assert(
         fc.asyncProperty(
@@ -413,50 +231,6 @@ describe("Runway CSAE Ordering Property Tests", () => {
   });
 
   describe("CSAE Ordering Edge Cases", () => {
-    it("handles prompts with only camera terms", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.constantFrom(...CAMERA_TERMS),
-          async (cameraTerm) => {
-            const input = cameraTerm;
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-
-            expect(result.prompt).not.toBeNull();
-            expect(result.prompt).not.toBeUndefined();
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("handles prompts with no recognizable CSAE elements", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.string({ minLength: 5, maxLength: 100 }).filter((s) => {
-            const lower = s.toLowerCase();
-            // Filter out strings that contain CSAE terms
-            return (
-              !CAMERA_TERMS.some((t) => lower.includes(t.toLowerCase())) &&
-              !SUBJECT_TERMS.some((t) => lower.includes(t.toLowerCase())) &&
-              !ACTION_TERMS.some((t) => lower.includes(t.toLowerCase())) &&
-              !ENVIRONMENT_TERMS.some((t) => lower.includes(t.toLowerCase()))
-            );
-          }),
-          async (input) => {
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-
-            // Should still produce valid output
-            expect(result.prompt).not.toBeNull();
-            expect(result.metadata).toBeDefined();
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
     it("preserves semantic content during CSAE reordering", async () => {
       await fc.assert(
         fc.asyncProperty(

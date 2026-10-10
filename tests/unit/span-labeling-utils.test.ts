@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { existsSync } from "fs";
-import path from "path";
 
 import {
   cleanJsonEnvelope,
@@ -11,7 +9,6 @@ import {
   TextChunker,
   countWords,
 } from "@llm/span-labeling/utils/chunkingUtils";
-import { vocabPath, modelPath } from "@llm/span-labeling/nlp/paths";
 
 import type { SpanLike } from "@llm/span-labeling/types";
 
@@ -93,13 +90,5 @@ describe("chunkingUtils", () => {
     const chunker = new TextChunker(2, 0);
     expect(chunker.needsChunking("one two three")).toBe(true);
     expect(chunker.needsChunking("one")).toBe(false);
-  });
-});
-
-describe("paths", () => {
-  it("exports stable vocab and model paths", () => {
-    expect(path.basename(vocabPath)).toBe("vocab.json");
-    expect(path.basename(modelPath)).toBe("model.onnx");
-    expect(existsSync(path.dirname(vocabPath))).toBe(true);
   });
 });

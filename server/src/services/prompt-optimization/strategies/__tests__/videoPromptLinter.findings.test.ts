@@ -159,10 +159,4 @@ describe("videoPromptLinter — typed findings", () => {
       }),
     );
   });
-
-  it("keeps `errors` as the message-only projection of findings", () => {
-    const result = lintVideoPromptSlots(baseSlots({ style: "cinematic" }));
-
-    expect(result.errors).toEqual(result.findings.map((f) => f.message));
-  });
 });

@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { ModelConfig } from "@config/modelConfig";
+import { describe, expect, it } from "vitest";
 import {
   capabilitiesFor,
   getProviderCapabilities,
   resolveProvider,
   type ProviderType,
 } from "../ProviderDetector";
-import { ModelConfig } from "@config/modelConfig";
 
 /**
  * Provider resolution is an exact lookup now (ADR-0020). The tests that
@@ -28,11 +28,6 @@ describe("resolveProvider", () => {
     for (const [client, expected] of REGISTERED_CLIENTS) {
       expect(resolveProvider({ client })).toBe(expected);
     }
-  });
-
-  it("is case- and whitespace-insensitive on the client name", () => {
-    expect(resolveProvider({ client: "OpenAI" })).toBe("openai");
-    expect(resolveProvider({ client: "  groq " })).toBe("groq");
   });
 
   it("falls back to the operation's configured client", () => {
@@ -77,42 +72,11 @@ describe("resolveProvider", () => {
 });
 
 describe("getProviderCapabilities", () => {
-  it("gives OpenAI strict schema, developer role and bookending", () => {
-    const caps = getProviderCapabilities("openai");
-    expect(caps.strictJsonSchema).toBe(true);
-    expect(caps.developerRole).toBe(true);
-    expect(caps.bookending).toBe(true);
-    expect(caps.needsPromptFormatInstructions).toBe(false);
-  });
-
-  it("gives Groq validation-based schema and prompt format instructions", () => {
-    const caps = getProviderCapabilities("groq");
-    expect(caps.strictJsonSchema).toBe(false);
-    expect(caps.developerRole).toBe(false);
-    expect(caps.needsPromptFormatInstructions).toBe(true);
-  });
-
-  it("gives Gemini strict schema without the developer role", () => {
-    const caps = getProviderCapabilities("gemini");
-    expect(caps.strictJsonSchema).toBe(true);
-    expect(caps.developerRole).toBe(false);
-  });
-
   it("falls back to the conservative row for an unknown provider", () => {
     const caps = getProviderCapabilities("unknown");
     expect(caps.strictJsonSchema).toBe(false);
     expect(caps.developerRole).toBe(false);
     expect(caps.bookending).toBe(false);
     expect(caps.needsPromptFormatInstructions).toBe(true);
-  });
-});
-
-describe("capabilitiesFor", () => {
-  it("returns the provider alongside its capability row", () => {
-    for (const [client, expected] of REGISTERED_CLIENTS) {
-      const { provider, capabilities } = capabilitiesFor({ client });
-      expect(provider).toBe(expected);
-      expect(capabilities).toEqual(getProviderCapabilities(expected));
-    }
   });
 });

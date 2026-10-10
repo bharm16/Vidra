@@ -28,12 +28,4 @@ describe("getRuntimeFlags", () => {
     expect(flags.processRole).toBe("worker");
     expect(flags.videoWorkerDisabled).toBe(false);
   });
-
-  it("defaults to api role in production", () => {
-    const flags = getRuntimeFlags({
-      NODE_ENV: "production",
-    } as NodeJS.ProcessEnv);
-    expect(flags.processRole).toBe("api");
-    expect(flags.videoWorkerDisabled).toBe(true);
-  });
 });

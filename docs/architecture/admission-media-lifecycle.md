@@ -9,8 +9,8 @@ uploads are deferred and do not block testing.
 ADR-0022 decisions 4–6 govern copies and resumable admissions. This document does
 not reopen the frozen retention workers in ADR-0002.
 
-The [consistency audit's namespace table](../audits/2026-10-03-docs-consistency.md#actual-storage-defaults)
-records the current storage defaults. Sketch snapshots use the image-asset store;
+Current storage defaults come from [storage registration](../../server/src/config/services/storage.services.ts)
+and [environment validation](../../server/src/config/env.ts). Sketch snapshots use the image-asset store;
 studio bridge copies use general owner-scoped raster storage. A feature name is
 not a bucket prefix, and configured paths must be read from the deployment.
 

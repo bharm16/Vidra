@@ -74,9 +74,6 @@ const setup = (identity: { uuid: string | null; docId: string | null }) =>
       selectedModel: "",
       generationParams: {},
       serializedKeyframes: [],
-      promptOptimizer: { setOptimizedPrompt: vi.fn() },
-      applyInitialHighlightSnapshot: vi.fn(),
-      setDisplayedPromptSilently: vi.fn(),
       latestHighlightRef: { current: null },
       versionEditCountRef: { current: 0 },
       versionEditsRef: { current: [] },
@@ -91,15 +88,5 @@ describe("useVersionManagement identity fallback (regression)", () => {
     expect(result.current.currentVersions).toEqual([]);
     expect(result.current.activeVersion).toBeNull();
     expect(result.current.versionsForPanel).toEqual([]);
-  });
-
-  it("still resolves the entry the identity points at", () => {
-    const { result } = setup({
-      uuid: PREVIOUS_SESSION_ENTRY.uuid ?? null,
-      docId: PREVIOUS_SESSION_ENTRY.id ?? null,
-    });
-
-    expect(result.current.currentVersions).toHaveLength(1);
-    expect(result.current.activeVersion?.versionId).toBe("v-prev-1");
   });
 });

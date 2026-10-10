@@ -96,7 +96,7 @@ export function hardenSystemPrompt(
 
 /**
  * Check if content contains potential prompt injection patterns
- * Used for logging/monitoring, not blocking (model handles security)
+ * Callers use the result for refusal or logging; span labeling refuses flagged input.
  *
  * Patterns require imperative-injection context, not just word matches —
  * this prevents false positives on creative content that uses words like

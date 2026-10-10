@@ -45,11 +45,6 @@ const buildWrapper = (
 };
 
 describe("useWorkspaceProject", () => {
-  it("falls back to Untitled when no sessions domain is mounted", () => {
-    const { result } = renderHook(() => useWorkspaceProject());
-    expect(result.current.name).toBe("Untitled");
-  });
-
   it("derives the name from the current session's prompt input", () => {
     const wrapper = buildWrapper(
       buildSessionsDomain({
@@ -104,17 +99,6 @@ describe("useWorkspaceProject", () => {
       buildSessionsDomain({
         history: [{ uuid: "uuid-1", input: "astronaut on mars", output: "" }],
         currentPromptUuid: "uuid-other",
-      }),
-    );
-    const { result } = renderHook(() => useWorkspaceProject(), { wrapper });
-    expect(result.current.name).toBe("Untitled");
-  });
-
-  it("falls back to Untitled when the current entry has no usable text", () => {
-    const wrapper = buildWrapper(
-      buildSessionsDomain({
-        history: [{ uuid: "uuid-1", input: "   ", output: "" }],
-        currentPromptUuid: "uuid-1",
       }),
     );
     const { result } = renderHook(() => useWorkspaceProject(), { wrapper });

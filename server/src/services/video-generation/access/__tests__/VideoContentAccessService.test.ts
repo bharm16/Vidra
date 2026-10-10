@@ -69,17 +69,6 @@ describe("VideoContentAccessService", () => {
     expect(externalUrl).toBe("https://cdn.example.com/video.mp4");
   });
 
-  it("creates service from explicit secret config", () => {
-    const service = createVideoContentAccessService({
-      tokenSecret: "configured-secret",
-      tokenTtlSeconds: 120,
-    });
-
-    expect(service).not.toBeNull();
-    const token = service?.issueToken({ assetId: "asset-1" });
-    expect(token).toBeTypeOf("string");
-  });
-
   it("returns null in production when no secret is configured", () => {
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "production";

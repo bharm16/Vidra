@@ -1,13 +1,13 @@
-import { describe, expect, it } from "vitest";
 import type {
-  SessionPromptVersionEntry,
   SessionPromptKeyframe,
+  SessionPromptVersionEntry,
 } from "@shared/types/session";
 import {
   enforceImmutableKeyframes,
   enforceImmutableVersions,
   reconcileGenerationRecord,
 } from "@utils/immutableMedia";
+import { describe, expect, it } from "vitest";
 
 describe("server immutable media utils", () => {
   it("preserves first-frame storagePath and assetId when incoming differs", () => {
@@ -185,12 +185,6 @@ describe("server immutable media utils", () => {
 
     expect(result.versions).toEqual(existing);
     expect(result.warnings.length).toBeGreaterThan(0);
-  });
-
-  it("leaves an empty array empty when there is nothing stored to preserve", () => {
-    const result = enforceImmutableVersions([], []);
-    expect(result.versions).toEqual([]);
-    expect(result.warnings).toHaveLength(0);
   });
 });
 

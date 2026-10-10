@@ -30,39 +30,4 @@ describe("OpenAiResponseParser", () => {
       expect(result.metadata?.finishReason).toBe("stop");
     });
   });
-
-  describe("core behavior", () => {
-    it("adds optimization tags based on options", () => {
-      const parser = new OpenAiResponseParser("openai");
-      const result = parser.parseResponse(
-        {
-          choices: [{ message: { content: "ok" } }],
-          model: "gpt-test",
-          id: "req-1",
-        },
-        {
-          schema: { type: "object" },
-          developerMessage: "Use JSON",
-          enableBookending: true,
-          seed: 42,
-          logprobs: true,
-          prediction: { type: "content", content: "predict" },
-        },
-      );
-
-      expect(result.metadata?.optimizations).toEqual(
-        expect.arrayContaining([
-          "structured-outputs-strict",
-          "developer-role",
-          "bookending",
-          "seed-deterministic",
-          "logprobs-confidence",
-          "predicted-outputs",
-        ]),
-      );
-      expect(result.metadata?.provider).toBe("openai");
-      expect(result.metadata?.model).toBe("gpt-test");
-      expect(result.metadata?.requestId).toBe("req-1");
-    });
-  });
 });

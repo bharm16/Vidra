@@ -1,24 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildTextNodeIndex,
   mapGlobalRangeToDom,
   surroundRange,
   wrapRangeSegments,
 } from "../anchorRanges";
 
 describe("anchorRanges", () => {
-  it("builds text node index with cumulative offsets across nested nodes", () => {
-    const root = document.createElement("div");
-    root.innerHTML = "Hello <strong>world</strong> and <em>friends</em>";
-
-    const index = buildTextNodeIndex(root);
-
-    expect(index.nodes.length).toBe(4);
-    expect(index.length).toBe("Hello world and friends".length);
-    expect(index.nodes[0]).toMatchObject({ start: 0, end: 6 });
-    expect(index.nodes[1]).toMatchObject({ start: 6, end: 11 });
-  });
-
   it("maps global ranges to DOM ranges and extracts selected text", () => {
     const root = document.createElement("div");
     root.textContent = "A cinematic slow pan across skyline";

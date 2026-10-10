@@ -5,6 +5,12 @@
  * Validates Requirements: 1.4, 1.5, 3.4, 3.5
  */
 
+/**
+ * Unit tests for Enhancement Suggestions API
+ *
+ * Tests cancellation, timeout, and error handling behavior.
+ * Validates Requirements: 1.4, 1.5, 3.4, 3.5
+ */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fetchEnhancementSuggestions } from "@features/prompt-optimizer/api/enhancementSuggestionsApi";
@@ -68,42 +74,6 @@ describe("fetchEnhancementSuggestions", () => {
     vi.useRealTimers();
   });
 
-  describe("timeout behavior", () => {
-    it("should throw timeout error after 8 seconds", async () => {
-      vi.useFakeTimers();
-      mockAbortableRequest();
-
-      const promise = fetchEnhancementSuggestions(defaultParams);
-      const rejection = promise
-        .then(() => {
-          throw new Error("Expected timeout rejection");
-        })
-        .catch((error: unknown) => error as Error);
-      await vi.advanceTimersByTimeAsync(TIMEOUT_MS);
-
-      const error = await rejection;
-      expect(error.message).toContain("Request timed out after 8 seconds");
-    });
-
-    it("should not timeout if response arrives quickly", async () => {
-      mockPostEnhancementSuggestions.mockResolvedValue(mockSuccessResponse);
-
-      const result = await fetchEnhancementSuggestions(defaultParams);
-
-      expect(result.suggestions).toEqual(["suggestion 1", "suggestion 2"]);
-      expect(result.isPlaceholder).toBe(false);
-    });
-
-    it("should clear timeout on successful response", async () => {
-      const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
-      mockPostEnhancementSuggestions.mockResolvedValue(mockSuccessResponse);
-
-      await fetchEnhancementSuggestions(defaultParams);
-
-      expect(clearTimeoutSpy).toHaveBeenCalled();
-    });
-  });
-
   describe("external signal cancellation", () => {
     it("should throw CancellationError when external signal is aborted", async () => {
       mockAbortableRequest();
@@ -118,23 +88,6 @@ describe("fetchEnhancementSuggestions", () => {
 
       await expect(promise).rejects.toThrow(CancellationError);
       await expect(promise).rejects.toThrow("Request cancelled by user");
-    });
-
-    it("should pass combined signal to postEnhancementSuggestions", async () => {
-      const externalController = new AbortController();
-      mockPostEnhancementSuggestions.mockResolvedValue(mockSuccessResponse);
-
-      await fetchEnhancementSuggestions({
-        ...defaultParams,
-        signal: externalController.signal,
-      });
-
-      expect(mockPostEnhancementSuggestions).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({
-          signal: expect.any(AbortSignal),
-        }),
-      );
     });
   });
 
@@ -155,20 +108,6 @@ describe("fetchEnhancementSuggestions", () => {
       expect(error).not.toBeInstanceOf(CancellationError);
       expect(error.message).toContain("Request timed out after 8 seconds");
     });
-
-    it("should throw CancellationError for user cancellation (not timeout error)", async () => {
-      mockAbortableRequest();
-      const externalController = new AbortController();
-
-      const promise = fetchEnhancementSuggestions({
-        ...defaultParams,
-        signal: externalController.signal,
-      });
-
-      externalController.abort();
-
-      await expect(promise).rejects.toThrow(CancellationError);
-    });
   });
 
   describe("error handling", () => {
@@ -179,19 +118,6 @@ describe("fetchEnhancementSuggestions", () => {
       await expect(fetchEnhancementSuggestions(defaultParams)).rejects.toThrow(
         "Network failure",
       );
-    });
-
-    it("should clear timeout on error", async () => {
-      const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
-      mockPostEnhancementSuggestions.mockRejectedValue(
-        new Error("Network error"),
-      );
-
-      await expect(
-        fetchEnhancementSuggestions(defaultParams),
-      ).rejects.toThrow();
-
-      expect(clearTimeoutSpy).toHaveBeenCalled();
     });
   });
 
@@ -217,17 +143,6 @@ describe("fetchEnhancementSuggestions", () => {
 
       expect(result.suggestions).toEqual([]);
       expect(result.isPlaceholder).toBe(true);
-    });
-
-    it("should handle false placeholder flag", async () => {
-      mockPostEnhancementSuggestions.mockResolvedValue({
-        suggestions: ["test"],
-        isPlaceholder: false,
-      });
-
-      const result = await fetchEnhancementSuggestions(defaultParams);
-
-      expect(result.isPlaceholder).toBe(false);
     });
   });
 

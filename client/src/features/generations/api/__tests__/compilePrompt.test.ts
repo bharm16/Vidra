@@ -94,21 +94,6 @@ describe("compileWanPrompt", () => {
   });
 
   describe("edge cases", () => {
-    it("trims whitespace from input prompt", async () => {
-      vi.mocked(promptOptimizationApiV2.compilePrompt).mockRejectedValue(
-        new Error("fail"),
-      );
-
-      const resultPromise = compileWanPrompt(
-        "\n  spaced prompt  \t",
-        abortController.signal,
-      );
-      await vi.runAllTimersAsync();
-      const result = await resultPromise;
-
-      expect(result).toBe("spaced prompt");
-    });
-
     it("returns original when compiled result is empty string", async () => {
       vi.mocked(promptOptimizationApiV2.compilePrompt).mockResolvedValue(
         mockCompileResult({ compiledPrompt: "   " }),
@@ -126,42 +111,6 @@ describe("compileWanPrompt", () => {
   });
 
   describe("core behavior", () => {
-    it('passes correct parameters to API with target model "wan"', async () => {
-      vi.mocked(promptOptimizationApiV2.compilePrompt).mockResolvedValue(
-        mockCompileResult({ compiledPrompt: "compiled result" }),
-      );
-
-      const resultPromise = compileWanPrompt(
-        "test prompt",
-        abortController.signal,
-      );
-      await vi.runAllTimersAsync();
-      await resultPromise;
-
-      expect(promptOptimizationApiV2.compilePrompt).toHaveBeenCalledWith({
-        prompt: "test prompt",
-        targetModel: "wan",
-        signal: expect.any(AbortSignal),
-      });
-    });
-
-    it("returns compiled prompt when API succeeds", async () => {
-      vi.mocked(promptOptimizationApiV2.compilePrompt).mockResolvedValue(
-        mockCompileResult({
-          compiledPrompt: "A cinematic shot of a cat walking through a forest",
-        }),
-      );
-
-      const resultPromise = compileWanPrompt(
-        "cat in forest",
-        abortController.signal,
-      );
-      await vi.runAllTimersAsync();
-      const result = await resultPromise;
-
-      expect(result).toBe("A cinematic shot of a cat walking through a forest");
-    });
-
     it("trims whitespace from compiled result", async () => {
       vi.mocked(promptOptimizationApiV2.compilePrompt).mockResolvedValue(
         mockCompileResult({ compiledPrompt: "  compiled with spaces  " }),

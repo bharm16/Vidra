@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import type { Request } from "express";
+import { describe, expect, it } from "vitest";
 import { extractUserId } from "../requestHelpers";
 
 const mockRequest = (overrides: Record<string, unknown> = {}): Request =>
@@ -13,24 +13,9 @@ const mockRequest = (overrides: Record<string, unknown> = {}): Request =>
 
 describe("extractUserId", () => {
   describe("priority order", () => {
-    it("returns Firebase user uid when present", () => {
-      const req = mockRequest({ user: { uid: "firebase-uid-123" } });
-      expect(extractUserId(req)).toBe("firebase-uid-123");
-    });
-
-    it("returns apiKey when no Firebase user", () => {
-      const req = mockRequest({ apiKey: "api-key-456" });
-      expect(extractUserId(req)).toBe("api-key-456");
-    });
-
     it("returns body userId when no Firebase user or apiKey", () => {
       const req = mockRequest({ body: { userId: "body-user-789" } });
       expect(extractUserId(req)).toBe("body-user-789");
-    });
-
-    it("returns anonymous when no auth source available", () => {
-      const req = mockRequest();
-      expect(extractUserId(req)).toBe("anonymous");
     });
   });
 

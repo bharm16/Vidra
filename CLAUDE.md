@@ -2,6 +2,8 @@
 
 Canonical engineering rules. Agent entrypoints link here; update this file before syncing a mirror. Product contracts live in [CONTEXT.md](CONTEXT.md). Read the applicable `client/CLAUDE.md` or `server/CLAUDE.md` before editing that layer.
 
+Use current source, tests and `CONTEXT.md` for implementation scope. ADRs preserve historical decisions and may link to retired documents recoverable from Git history.
+
 ## Boundaries
 
 - Client and server import their own code and `shared/`; neither imports the other.
@@ -26,7 +28,7 @@ The URL prefix `/api/preview` remains compatible with saved media. Say picture, 
 
 ## Changes and checks
 
-Preserve ADRs as project records. Cleanup must not delete or replace their history; describe current implementation status in `CONTEXT.md` and cleanup records.
+Preserve ADRs as project records. Cleanup must not delete or replace their history; describe current implementation status in `CONTEXT.md`.
 
 Read impacted modules/contracts first. Follow the `studio/` frontend pattern and the thin orchestrator/specialized services pattern in `prompt-optimization/`. Split by responsibility, not line count. Preserve independently owned work and credential/environment files.
 
@@ -50,7 +52,7 @@ Registration/startup/lifecycle changes also require:
 PORT=0 npx vitest run tests/integration/bootstrap.integration.test.ts tests/integration/di-container.integration.test.ts --config config/test/vitest.integration.config.js
 ```
 
-Read [.agents/skills/integration-test/SKILL.md](.agents/skills/integration-test/SKILL.md) before writing integration tests. Assertions come from contracts; repair source unless the referenced contract has genuinely retired.
+Assertions come from contracts; repair source unless the referenced contract has genuinely retired. [Test guidance](docs/architecture/typescript/TEST_GUIDE.md) identifies the current boundaries.
 
 Before handoff, run typecheck, `npm run lint:all`, unit tests, relevant provider-free e2e journeys and `npm run build`. Replay proves wiring/recovery, not provider availability/quality. Deterministic span evaluation and its baseline workflow remain separate. Run `npm run verify:drift` after route/flag/catalog changes.
 

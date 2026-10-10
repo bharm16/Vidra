@@ -66,8 +66,8 @@ without re-recording fails loudly. The drift gate is
 `tests/unit/replay/contract-drift.test.ts`, which also validates every
 committed fixture against the live contracts on each unit-test run.
 
-To re-record after an intentional contract change: run the record script
-(landing with the scenario pack) with `REPLAY_MODE=record`.
+To re-record after an intentional contract change, use the current recorder with
+`REPLAY_MODE=record`; recording makes live provider calls and requires spend authorization.
 
 ## GCP-dependent calls (stubbed / bypassed in replay)
 
@@ -102,15 +102,10 @@ guard's own test:
 npm run test:replay
 ```
 
-Re-record the golden scenario pack (live provider calls; needs OpenAI/Groq/
-Replicate keys in `.env`; never uses Gemini/GCP):
-
-```bash
-REPLAY_MODE=record NODE_ENV=test \
-SPAN_PROVIDER=qwen SPAN_MODEL=qwen/qwen3-32b \
-API_KEY=replay-golden-key ALLOWED_API_KEYS=replay-golden-key \
-npx tsx --tsconfig server/tsconfig.json scripts/replay/record-golden-scenarios.ts
-```
+The [golden-scenario recorder](../../scripts/replay/record-golden-scenarios.ts)
+documents its current provider/model setup and required credentials. Use that
+source when preparing an authorized live recording; cassette-era model ids are
+not current provider recommendations.
 
 Canonical inputs live in `scripts/replay/goldenScenarios.ts` — the recorder
 and the suite must send byte-identical bodies, so change inputs there only.

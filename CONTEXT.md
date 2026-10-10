@@ -4,21 +4,21 @@ A creator expands a brief into visible words, refines them, makes a picture, the
 
 ## Vocabulary
 
-| Term                    | Contract                                                                                            |
-| ----------------------- | --------------------------------------------------------------------------------------------------- |
-| Span labeling           | Categorizes phrases for semantic highlights without rewriting.                                      |
-| Enhancement/suggestions | Alternatives for a selected phrase, applied through an explicit edit.                               |
-| Optimization            | Structured rewriting and model-specific compilation, finished by intent validation and prompt lint. |
-| Session                 | Persisted authoring work: words versions and takes with destination/ancestry.                       |
-| Working words           | Current editable direction/settings. Browsing preserves them.                                       |
-| Take                    | Durable picture or clip with a server-assigned id, distinct from its job id.                        |
-| Associated words        | Words version named at admission. Explicit **Reuse setup** restores setup.                          |
-| Production provenance   | Known inputs/instructions that made the artifact. Unknown upload provenance stays unknown.          |
-| Origin                  | Closed admission set: generated, upload, sketchpad, studio.                                         |
-| Space                   | Session media in chronological dispatch rows, with ancestry persisted.                              |
-| Draft/render tier       | Model cost/quality choice, not lifecycle. Generated takes are persisted.                            |
-| Studio project          | Standalone persisted conversation/images with explicit one-image handoffs.                          |
-| Sketchpad/live output   | Drawing surface and ephemeral generated image; **Use this** admits the exact displayed output.      |
+| Term                    | Contract                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| Span labeling           | Categorizes phrases for semantic highlights without rewriting.                                           |
+| Enhancement/suggestions | Alternatives for a selected phrase, applied through an explicit edit.                                    |
+| Optimization            | Structured rewriting and model-specific compilation, finished by intent validation and prompt lint.      |
+| Session                 | Persisted authoring work: words versions and takes with destination/ancestry.                            |
+| Working words           | Current editable direction/settings. Browsing preserves them.                                            |
+| Take                    | Durable artifact with a server-assigned id: an admission id for pictures, the accepted job id for clips. |
+| Associated words        | Words version named at admission. Explicit **Reuse setup** restores setup.                               |
+| Production provenance   | Known inputs/instructions that made the artifact. Unknown upload provenance stays unknown.               |
+| Origin                  | Closed admission set: generated, upload, sketchpad, studio.                                              |
+| Space                   | Session media in chronological dispatch rows, with ancestry persisted.                                   |
+| Draft/render tier       | Model cost/quality choice, not lifecycle. Generated takes are persisted.                                 |
+| Studio project          | Standalone persisted conversation/images with explicit one-image handoffs.                               |
+| Sketchpad/live output   | Drawing surface and ephemeral generated image; **Use this** admits the exact displayed output.           |
 
 `/api/preview` remains a compatibility URL prefix. Say picture, clip or take for artifacts.
 

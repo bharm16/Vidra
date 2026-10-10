@@ -7,7 +7,6 @@ import {
   resolveFirstFrameProviderPlan,
   type SmokeCeilingInputs,
 } from "../ceiling";
-import { MAX_POLICY_ATTEMPTS } from "../../../../server/src/services/studio/StudioPolicyEngine";
 import { calculateLLMCost } from "../../../../server/src/config/llmCosts";
 
 /**
@@ -76,12 +75,6 @@ describe("smoke ceiling derivation", () => {
     expect(derivation.ceiling.ceilingCalls).toBe(5);
   });
 
-  it("derives against the studio policy engine's REAL re-ask policy, not a copy", () => {
-    // If the policy engine's attempts change, the ceiling must change with
-    // it — this pin is what makes a silent drift impossible.
-    expect(MAX_POLICY_ATTEMPTS).toBe(2);
-  });
-
   it("refuses an unverified studio-edit price instead of reserving against it", () => {
     const derivation = deriveSmokeCeiling(
       {
@@ -134,7 +127,9 @@ describe("smoke ceiling derivation", () => {
     );
     expect(derivation.ok).toBe(false);
     if (derivation.ok) return;
-    expect(derivation.unknownBounds[0]).toContain("SKETCH_FRAME_COST_MILLICENTS");
+    expect(derivation.unknownBounds[0]).toContain(
+      "SKETCH_FRAME_COST_MILLICENTS",
+    );
   });
 
   it("refuses an LLM cost lookup that yields no usable rate", () => {

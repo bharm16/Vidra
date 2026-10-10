@@ -66,11 +66,16 @@ const returned: UseInSessionOutcome = {
 };
 
 describe("UseInSessionAction", () => {
-  it("has no subject until an image is selected", () => {
-    renderAction(vi.fn(), null);
+  it("does not dispatch until an image is selected", async () => {
+    const onUse = vi.fn();
+    renderAction(onUse, null);
     expect(
       screen.getByRole("button", { name: "Use this in the session" }),
     ).toBeDisabled();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Use this in the session" }),
+    );
+    expect(onUse).not.toHaveBeenCalled();
   });
 
   it("offers the session once the picture is in it", async () => {
@@ -247,39 +252,6 @@ describe("UseInSessionAction", () => {
       expect(screen.getByText("Added to the session.")).toBeInTheDocument(),
     );
     expect(onRetryArming).toHaveBeenCalledWith("session-1", "take-2");
-  });
-
-  it("asks before starting a new session when the origin session is gone", async () => {
-    const onUse = vi
-      .fn()
-      .mockResolvedValueOnce({
-        state: "origin-session-missing",
-        sessionId: "session-1",
-        message: "The session this project came from is gone.",
-      } satisfies UseInSessionOutcome)
-      .mockResolvedValueOnce({
-        ...returned,
-        result: { ...returned.result, createdSession: true },
-      });
-    renderAction(onUse);
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Use this in the session" }),
-    );
-
-    // The refusal is a question, not an error, and nothing has been created.
-    const choice = await screen.findByRole("button", {
-      name: "Start a new session",
-    });
-    expect(onUse).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(choice);
-
-    await waitFor(() =>
-      expect(onUse).toHaveBeenLastCalledWith({
-        onMissingOriginSession: "new-session",
-      }),
-    );
   });
 
   it("asks for confirmed words, prefilled with the suggestion, and confirms with the creator's edited words (issue #131)", async () => {

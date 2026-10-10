@@ -3,11 +3,6 @@ import { describe, expect, it } from "vitest";
 import { getCacheStorage } from "@features/span-highlighting/services/storageAdapter";
 
 describe("storageAdapter", () => {
-  it("returns localStorage when available", () => {
-    const storage = getCacheStorage();
-    expect(storage).toBe(window.localStorage);
-  });
-
   it("falls back to sessionStorage when localStorage throws", () => {
     const originalLocalStorage = window.localStorage;
     Object.defineProperty(window, "localStorage", {

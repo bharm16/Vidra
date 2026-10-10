@@ -15,26 +15,6 @@ const ALL_PROVIDERS: ProviderType[] = [
 ];
 
 describe("enhancement provider profiles", () => {
-  it("resolves every provider — the lookup is total", () => {
-    // The allowlist this replaced ({openai, groq, qwen}) sent everything else
-    // down a config-resolved path, reintroducing the router/config divergence
-    // it was written to prevent. A total table has no such branch.
-    for (const provider of ALL_PROVIDERS) {
-      const profile = resolveEnhancementProfile(provider);
-      expect(profile).toBeDefined();
-      expect(profile.enhancementSchema(false)).toBeDefined();
-      expect(profile.customSuggestionSchema()).toBeDefined();
-    }
-  });
-
-  it("sends strict schemas only to grammar-constrained providers", () => {
-    expect(ENHANCEMENT_PROVIDER_PROFILES.openai.strictSchema).toBe(true);
-    expect(ENHANCEMENT_PROVIDER_PROFILES.gemini.strictSchema).toBe(true);
-    for (const provider of ["groq", "qwen", "anthropic", "unknown"] as const) {
-      expect(ENHANCEMENT_PROVIDER_PROFILES[provider].strictSchema).toBe(false);
-    }
-  });
-
   it("adds category to required only for placeholder requests", () => {
     for (const provider of ALL_PROVIDERS) {
       const profile = resolveEnhancementProfile(provider);

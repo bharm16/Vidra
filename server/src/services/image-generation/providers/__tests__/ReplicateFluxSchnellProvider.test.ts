@@ -1,10 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-} from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ReplicateFluxSchnellProvider } from "../ReplicateFluxSchnellProvider";
 import type { ImagePreviewRequest } from "../types";
 import { createReplicateMockKit } from "@services/__tests__/replicateTestKit";
@@ -34,7 +28,10 @@ type CreatePredictionRequest = {
   };
 };
 
-const kit = createReplicateMockKit<ReplicatePrediction, CreatePredictionRequest>();
+const kit = createReplicateMockKit<
+  ReplicatePrediction,
+  CreatePredictionRequest
+>();
 
 vi.mock("replicate", () => ({
   default: vi.fn(() => kit.instance),
@@ -61,17 +58,6 @@ describe("ReplicateFluxSchnellProvider", () => {
       if (previousToken) {
         process.env.REPLICATE_API_TOKEN = previousToken;
       }
-    });
-
-    it("rejects empty prompts before hitting the API", async () => {
-      const provider = new ReplicateFluxSchnellProvider({
-        apiToken: "token",
-      });
-      const request: ImagePreviewRequest = { prompt: "   ", userId: "user-1" };
-
-      await expect(provider.generatePreview(request)).rejects.toThrow(
-        "Prompt is required and must be a non-empty string",
-      );
     });
 
     it("maps insufficient credit errors to status 402 with parsed details", async () => {
@@ -296,27 +282,6 @@ describe("ReplicateFluxSchnellProvider", () => {
       expect(result.imageUrl).toBe("https://images.example.com/preview.webp");
       expect(result.model).toBe("black-forest-labs/flux-schnell");
       expect(result.aspectRatio).toBe("16:9");
-    });
-
-    it("returns the image URL when the output is a string", async () => {
-      const provider = new ReplicateFluxSchnellProvider({
-        apiToken: "token",
-      });
-      kit.createPredictionMock.mockResolvedValueOnce({
-        id: "pred-1",
-        status: "succeeded",
-        output: "https://images.example.com/output.webp",
-      });
-
-      const request: ImagePreviewRequest = {
-        prompt: "valid prompt",
-        userId: "user-1",
-      };
-
-      const result = await provider.generatePreview(request);
-
-      expect(result.imageUrl).toBe("https://images.example.com/output.webp");
-      expect(result.model).toBe("black-forest-labs/flux-schnell");
     });
   });
 

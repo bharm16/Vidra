@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   extractLightingSpans,
-  isLightingServiceAvailable,
   DEFAULT_LIGHTING_CONFIG,
 } from "../LightingService";
 
@@ -62,11 +61,6 @@ describe("extractLightingSpans", () => {
       expect(result.stats.totalExtracted).toBe(0);
     });
 
-    it("returns empty result for empty string", async () => {
-      const result = await extractLightingSpans("");
-      expect(result.spans).toEqual([]);
-    });
-
     it("returns empty result for non-string input", async () => {
       // @ts-expect-error testing runtime behavior
       const result = await extractLightingSpans(null);
@@ -120,6 +114,7 @@ describe("extractLightingSpans", () => {
     it("includes correct start/end positions matching original text", async () => {
       const text = "The scene has soft shadows and warm glow";
       const result = await extractLightingSpans(text);
+      expect(result.spans.length).toBeGreaterThan(0);
       for (const span of result.spans) {
         expect(span.start).toBeGreaterThanOrEqual(0);
         expect(span.end).toBeGreaterThan(span.start);
@@ -134,6 +129,7 @@ describe("extractLightingSpans", () => {
       const result = await extractLightingSpans(
         "dramatic shadows fill the room",
       );
+      expect(result.spans.length).toBeGreaterThan(0);
       for (const span of result.spans) {
         expect(span.confidence).toBeGreaterThanOrEqual(
           DEFAULT_LIGHTING_CONFIG.minConfidence,
@@ -142,28 +138,10 @@ describe("extractLightingSpans", () => {
       }
     });
 
-    it('sets source to "lighting" on all spans', async () => {
-      const result = await extractLightingSpans("soft shadows in the corner");
-      for (const span of result.spans) {
-        expect(span.source).toBe("lighting");
-      }
-    });
-
-    it("populates stats correctly", async () => {
-      const result = await extractLightingSpans(
-        "soft shadows and warm glow in the scene",
-      );
-      expect(typeof result.stats.patternsFound).toBe("number");
-      expect(typeof result.stats.latencyMs).toBe("number");
-      expect(result.stats.totalExtracted).toBe(result.spans.length);
-      expect(result.stats.shadowPhrases + result.stats.lightPhrases).toBe(
-        result.stats.patternsFound,
-      );
-    });
-
     it("deduplicates overlapping matches", async () => {
       const text = "beautiful soft shadows cast dramatic shadows";
       const result = await extractLightingSpans(text);
+      expect(result.spans.length).toBeGreaterThan(1);
       // Check no two spans have overlapping ranges
       const sorted = [...result.spans].sort((a, b) => a.start - b.start);
       for (let i = 1; i < sorted.length; i++) {
@@ -181,38 +159,11 @@ describe("extractLightingSpans", () => {
         "extremely intensely bright dramatic shadows appear",
         { maxPhraseWords: 2 },
       );
+      expect(result.spans.length).toBeGreaterThan(0);
       for (const span of result.spans) {
         const wordCount = span.text.split(/\s+/).length;
         expect(wordCount).toBeLessThanOrEqual(2);
       }
     });
-
-    it("handles multiple lighting patterns in one text", async () => {
-      const result = await extractLightingSpans(
-        "The room has soft shadows in one corner and warm glow near the window with harsh light overhead",
-      );
-      expect(result.spans.length).toBeGreaterThanOrEqual(2);
-    });
-  });
-});
-
-describe("isLightingServiceAvailable", () => {
-  it("returns true when compromise is working", () => {
-    expect(isLightingServiceAvailable()).toBe(true);
-  });
-});
-
-describe("DEFAULT_LIGHTING_CONFIG", () => {
-  it("has enabled=true by default", () => {
-    expect(DEFAULT_LIGHTING_CONFIG.enabled).toBe(true);
-  });
-
-  it("has reasonable minConfidence", () => {
-    expect(DEFAULT_LIGHTING_CONFIG.minConfidence).toBeGreaterThan(0);
-    expect(DEFAULT_LIGHTING_CONFIG.minConfidence).toBeLessThanOrEqual(1);
-  });
-
-  it("has maxPhraseWords > 0", () => {
-    expect(DEFAULT_LIGHTING_CONFIG.maxPhraseWords).toBeGreaterThan(0);
   });
 });

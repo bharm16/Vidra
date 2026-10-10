@@ -1,13 +1,9 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SignedUrlMinter } from "@infrastructure/signedUrl/SignedUrlMinter";
 import { SIGNED_URL_TTL_MS } from "@config/signedUrlPolicy";
 import { ownerSegment } from "@services/owned-media";
 import { GcsImageAssetStore } from "@services/image-generation/storage/GcsImageAssetStore";
-import { LocalImageAssetStore } from "@services/image-generation/storage/LocalImageAssetStore";
 import type {
   ImageAssetStore,
   StoredImageAsset,
@@ -37,7 +33,7 @@ import {
  * ONE conformance contract (`runStorageAdapterConformance`) run against every
  * image-store and storage implementation: the PRODUCTION adapters
  * (`GcsImageAssetStore` and `StorageService`, driven against a controlled
- * in-memory GCS bucket, plus `LocalImageAssetStore` on a real temp directory)
+ * in-memory GCS bucket)
  * and the cross-mode DOUBLES (`InMemoryImageAssetStore`, `InMemoryStorageService`).
  *
  * ## Why a controlled bucket, not the emulator
@@ -62,9 +58,8 @@ import {
 const IMAGE_BASE_PATH = "image-previews";
 
 /**
- * The `ImageAssetStore` family adapter: `GcsImageAssetStore`,
- * `LocalImageAssetStore` and `InMemoryImageAssetStore` all satisfy the same
- * interface, so one binding drives all three.
+ * The `ImageAssetStore` family adapter: `GcsImageAssetStore` and
+ * `InMemoryImageAssetStore` satisfy the same interface, so one binding drives both.
  */
 function imageAssetStoreOps(store: ImageAssetStore): ConformanceOps {
   return {
@@ -225,7 +220,6 @@ class ContentAddressedImageAssetStore implements ImageAssetStore {
 describe("Storage adapter conformance (integration)", () => {
   runStorageAdapterConformance({
     name: "GcsImageAssetStore (production, controlled bucket)",
-    urlsExpire: true,
     crossOwnerRefusal: "null",
     supportsAbsentProbe: true,
     refusesBlankOwner: true,
@@ -244,28 +238,7 @@ describe("Storage adapter conformance (integration)", () => {
   });
 
   runStorageAdapterConformance({
-    name: "LocalImageAssetStore (production, temp filesystem)",
-    urlsExpire: false,
-    crossOwnerRefusal: "null",
-    supportsAbsentProbe: true,
-    refusesBlankOwner: true,
-    namespacePrefix: (owner) => `${ownerSegment(owner)}/`,
-    make: async () => {
-      const directory = await mkdtemp(join(tmpdir(), "conformance-local-"));
-      const store = new LocalImageAssetStore({
-        directory,
-        publicPath: "https://cdn.conformance.invalid/media",
-      });
-      return {
-        ...imageAssetStoreOps(store),
-        teardown: () => rm(directory, { recursive: true, force: true }),
-      };
-    },
-  });
-
-  runStorageAdapterConformance({
     name: "InMemoryImageAssetStore (cross-mode double)",
-    urlsExpire: true,
     crossOwnerRefusal: "null",
     supportsAbsentProbe: true,
     refusesBlankOwner: true,
@@ -280,7 +253,6 @@ describe("Storage adapter conformance (integration)", () => {
 
   runStorageAdapterConformance({
     name: "StorageService (production, controlled bucket)",
-    urlsExpire: true,
     crossOwnerRefusal: "throws",
     supportsAbsentProbe: true,
     // `StorageService.uploadBuffer` does not guard a blank owner — the route's
@@ -300,7 +272,6 @@ describe("Storage adapter conformance (integration)", () => {
 
   runStorageAdapterConformance({
     name: "InMemoryStorageService (cross-mode double)",
-    urlsExpire: true,
     crossOwnerRefusal: "throws",
     // No presence-checking read: the cross-mode walkthrough never asks the
     // double to resolve a missing object, so adding one would be a rule of its

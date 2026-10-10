@@ -22,15 +22,6 @@ describe("regression: Firebase Storage URLs are proxied", () => {
     );
   });
 
-  it("still rewrites regular GCS signed URLs", () => {
-    const gcsUrl =
-      "https://storage.googleapis.com/bucket/img.webp?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Expires=900&X-Goog-Date=20260323T000000Z&X-Goog-Signature=abc";
-
-    const result = rewriteGcsUrlToProxy(gcsUrl);
-
-    expect(result).toContain("/api/storage/proxy?url=");
-  });
-
   it("does not rewrite non-GCS URLs", () => {
     const otherUrl = "https://cdn.example.com/image.png";
 

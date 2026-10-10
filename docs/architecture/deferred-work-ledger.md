@@ -14,4 +14,4 @@ Current source boundaries after the October 9, 2026 cleanup.
 | Live provider quality and hosted release acceptance                                                                     | Require current independent evidence. Offline replay does not establish them.         |
 | New paid product, broad media deletion and new creator caps                                                             | No implementation authorized by source cleanup; existing Studio/Sketch bounds remain. |
 
-Current generation offers are declared in `shared/videoModels.ts`. The retained [provider-quality contract](provider-quality.md) and [cross-mode contract](cross-mode-golden-path.md) state qualification limits. Source retirement is not a claim about hosted tracker/deployment state.
+Current generation offers are declared in `shared/videoModels.ts`. The [cross-mode contract](cross-mode-golden-path.md) states local proof limits; dated provider receipts remain in `scripts/ops/provider-quality/evidence/`. Source retirement is not a claim about hosted tracker/deployment state.

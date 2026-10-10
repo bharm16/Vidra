@@ -137,16 +137,4 @@ describe("useHistoryState", () => {
     expect(result.current.filteredHistory).toHaveLength(1);
     expect(result.current.filteredHistory[0]?.id).toBe("id-1");
   });
-
-  it("tracks loading state through setter", () => {
-    const { result } = renderHook(() => useHistoryState());
-
-    expect(result.current.state.isLoadingHistory).toBe(false);
-
-    act(() => {
-      result.current.setIsLoadingHistory(true);
-    });
-
-    expect(result.current.state.isLoadingHistory).toBe(true);
-  });
 });

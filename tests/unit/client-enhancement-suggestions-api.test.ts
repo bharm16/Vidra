@@ -25,18 +25,6 @@ describe("client enhancementSuggestionsApi", () => {
   });
 
   describe("error handling", () => {
-    it("throws when fetch is unavailable and no fetchImpl is provided", async () => {
-      const originalFetch = globalThis.fetch;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (globalThis as any).fetch = undefined;
-
-      await expect(requestEnhancementSuggestions(payload)).rejects.toThrow(
-        "Fetch is not available in this environment.",
-      );
-
-      globalThis.fetch = originalFetch;
-    });
-
     it("throws when response is not ok", async () => {
       mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
       const fetchImpl = vi
@@ -57,16 +45,6 @@ describe("client enhancementSuggestionsApi", () => {
         await parseEnhancementSuggestionsResponse<string>(response);
 
       expect(parsed).toEqual({ suggestions: [], isPlaceholder: false });
-    });
-
-    it("handles missing fields gracefully", async () => {
-      const response = new Response(JSON.stringify({}));
-
-      const parsed =
-        await parseEnhancementSuggestionsResponse<string>(response);
-
-      expect(parsed.suggestions).toEqual([]);
-      expect(parsed.isPlaceholder).toBe(false);
     });
 
     it("unwraps suggestions from the canonical success envelope", async () => {

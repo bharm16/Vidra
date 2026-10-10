@@ -207,7 +207,6 @@ export function usePromptCanvasOrchestration(): {
     currentVersions,
     activeVersion,
     promptVersionId,
-    handleSelectVersion,
     createVersionIfNeeded,
     handleGenerationsChange,
     setGenerationFavorite,
@@ -228,9 +227,6 @@ export function usePromptCanvasOrchestration(): {
     selectedModel,
     generationParams,
     serializedKeyframes,
-    promptOptimizer,
-    applyInitialHighlightSnapshot,
-    setDisplayedPromptSilently,
     latestHighlightRef,
     versionEditCountRef,
     versionEditsRef,
@@ -272,7 +268,6 @@ export function usePromptCanvasOrchestration(): {
       ),
       onGenerationsChange: handleGenerationsChange,
       versions: currentVersions,
-      onRestoreVersion: handleSelectVersion,
       onCreateVersionIfNeeded: createVersionIfNeeded,
     }),
     [
@@ -287,7 +282,6 @@ export function usePromptCanvasOrchestration(): {
       activeVersion,
       handleGenerationsChange,
       currentVersions,
-      handleSelectVersion,
       createVersionIfNeeded,
     ],
   );

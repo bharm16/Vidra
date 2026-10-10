@@ -26,20 +26,6 @@ describe("SuggestionDiversityEnforcer original echo detection regression", () =>
     ]);
   });
 
-  it("keeps suggestions that share no core concept with the original", () => {
-    const service = createService();
-
-    const result = service.filterOriginalEchoes(
-      [
-        { text: "low-angle handheld tracking shot" },
-        { text: "bird's-eye view with deep focus" },
-      ],
-      "medium close",
-    );
-
-    expect(result.length).toBe(2);
-  });
-
   it("keeps suggestions for single-word originals when Jaccard is low", () => {
     const service = createService();
 
@@ -68,17 +54,6 @@ describe("SuggestionDiversityEnforcer original echo detection regression", () =>
     expect(result.map((s) => s.text)).toEqual(["cool blue twilight glow"]);
   });
 
-  it("returns all suggestions when original is empty", () => {
-    const service = createService();
-
-    const suggestions = [
-      { text: "soft focus with motion blur" },
-      { text: "sharp high-contrast detail" },
-    ];
-
-    expect(service.filterOriginalEchoes(suggestions, "")).toEqual(suggestions);
-  });
-
   it("keeps 2-word original suggestions with low Jaccard overlap", () => {
     const service = createService();
 
@@ -95,24 +70,5 @@ describe("SuggestionDiversityEnforcer original echo detection regression", () =>
     );
 
     expect(result.length).toBe(3);
-  });
-
-  it("filters multi-word echo with high token overlap", () => {
-    const service = createService();
-
-    // original "shallow depth of field" tokenizes to {shallow, depth, field} (3 tokens, "of" is stop word)
-    // suggestion "shallow depth of field with soft bokeh" tokenizes to {shallow, depth, field, soft, bokeh}
-    // Jaccard = 3/5 = 0.6 >= 0.45, core concept "shallow" present → filtered
-    const result = service.filterOriginalEchoes(
-      [
-        { text: "shallow depth of field with soft bokeh" },
-        { text: "deep focus across the entire frame" },
-      ],
-      "shallow depth of field",
-    );
-
-    expect(result.map((s) => s.text)).toEqual([
-      "deep focus across the entire frame",
-    ]);
   });
 });

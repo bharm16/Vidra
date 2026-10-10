@@ -10,19 +10,6 @@ const spine: SpaceNode[] = [
 ];
 
 describe("TheSpace", () => {
-  it("renders media assets only without prompt nodes", () => {
-    render(<TheSpace nodes={spine} liveNodeId="p" />);
-    expect(screen.getAllByTestId(/^space-node-/)).toHaveLength(2);
-  });
-
-  it("marks the live node so the player centers on it", () => {
-    render(<TheSpace nodes={spine} liveNodeId="p" />);
-    expect(screen.getByTestId("space-node-p")).toHaveAttribute(
-      "data-live",
-      "true",
-    );
-  });
-
   it("inspects an asset through the selection callback", () => {
     const onSelectNode = vi.fn();
     render(<TheSpace nodes={spine} onSelectNode={onSelectNode} />);

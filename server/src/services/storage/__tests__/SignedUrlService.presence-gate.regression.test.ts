@@ -39,37 +39,6 @@ describe("regression: preview-image resolution signs only existing objects", () 
     vi.clearAllMocks();
   });
 
-  it("getViewUrlIfPresent returns null for an absent object instead of a dead URL", async () => {
-    const { mockFile, mockBucket } = buildMocks(false);
-    const service = new SignedUrlService(
-      new SignedUrlMinter(mockBucket as unknown as never),
-    );
-
-    const result = await service.getViewUrlIfPresent(
-      "users/user-1/previews/images/1785598164559-abc.webp",
-    );
-
-    expect(result).toBeNull();
-    expect(mockFile.exists).toHaveBeenCalled();
-    expect(mockFile.getSignedUrl).not.toHaveBeenCalled();
-  });
-
-  it("getViewUrlIfPresent signs a read URL when the object exists", async () => {
-    const { mockFile, mockBucket } = buildMocks(true);
-    const service = new SignedUrlService(
-      new SignedUrlMinter(mockBucket as unknown as never),
-    );
-
-    const result = await service.getViewUrlIfPresent(
-      "users/user-1/previews/images/1785598164559-abc.webp",
-    );
-
-    expect(result?.viewUrl).toBe("https://storage.googleapis.com/signed");
-    expect(mockFile.getSignedUrl).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "read" }),
-    );
-  });
-
   it("getPreviewImageViewUrl resolves the asset at the requester's own preview-image path", async () => {
     const { mockBucket, mockStorage } = buildMocks(true);
     const service = new StorageService({

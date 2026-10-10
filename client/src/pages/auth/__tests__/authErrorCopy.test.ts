@@ -1,14 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authErrorCopy, type AuthFlow } from "../authErrorCopy";
-
-const ALL_FLOWS: AuthFlow[] = [
-  "signIn",
-  "signUp",
-  "forgotPassword",
-  "passwordReset",
-  "verifyEmail",
-  "resendVerification",
-];
+import { authErrorCopy } from "../authErrorCopy";
 
 const err = (code: string): { code: string } => ({ code });
 
@@ -30,25 +21,12 @@ describe("authErrorCopy", () => {
     );
   });
 
-  it("falls back when the thrown value carries no code", () => {
-    expect(authErrorCopy({}, "signIn")).toBe(
-      "Failed to sign in. Please try again.",
-    );
-  });
-
   it("says something generic when the thrown value is not an object", () => {
     for (const thrown of [null, undefined, "boom", 42]) {
       expect(authErrorCopy(thrown, "signIn")).toBe(
         "Something went wrong. Please try again.",
       );
     }
-  });
-
-  it("gives one answer for a shared code, whatever the flow", () => {
-    const answers = new Set(
-      ALL_FLOWS.map((flow) => authErrorCopy(err("auth/invalid-email"), flow)),
-    );
-    expect([...answers]).toEqual(["Enter a valid email address."]);
   });
 
   it("lets a flow override a shared code", () => {
@@ -82,15 +60,6 @@ describe("authErrorCopy", () => {
     );
   });
 
-  it("keeps the sign-in and sign-up popup copy distinct", () => {
-    expect(authErrorCopy(err("auth/popup-closed-by-user"), "signIn")).toBe(
-      "Google popup was closed before sign-in completed.",
-    );
-    expect(authErrorCopy(err("auth/popup-closed-by-user"), "signUp")).toBe(
-      "Google popup was closed before sign-up completed.",
-    );
-  });
-
   it("treats a bad credential as one message, whichever code arrives", () => {
     for (const code of [
       "auth/user-not-found",
@@ -109,11 +78,4 @@ describe("authErrorCopy", () => {
    * `auth/network-request-failed`, so a dropped connection on the other four
    * flows reported the generic failure instead of the cause.
    */
-  it("answers a dropped connection on every flow", () => {
-    for (const flow of ALL_FLOWS) {
-      expect(authErrorCopy(err("auth/network-request-failed"), flow)).toBe(
-        "Network error. Check your connection and try again.",
-      );
-    }
-  });
 });

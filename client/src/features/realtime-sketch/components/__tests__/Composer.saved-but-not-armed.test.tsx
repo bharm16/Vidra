@@ -27,7 +27,12 @@ function renderComposer(
 ): ReturnType<typeof vi.fn> {
   render(
     <Composer
-      settings={{ prompt: "a brass desk lamp", strength: 0.62, steps: 4, seed: 1 }}
+      settings={{
+        prompt: "a brass desk lamp",
+        strength: 0.62,
+        steps: 4,
+        seed: 1,
+      }}
       updateSettings={vi.fn()}
       rerollSeed={vi.fn()}
       liveOutput={liveOutput}
@@ -45,21 +50,6 @@ function renderComposer(
 describe("the composer shows saved-but-not-armed truthfully (issue #136)", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("names the saved-but-not-armed state and offers the set-it retry", () => {
-    renderComposer({
-      state: "unarmed",
-      sessionId: "session-made",
-      generationId: "take-9",
-    });
-
-    const surface = screen.getByTestId("live-editor-accept-unarmed");
-    expect(surface).toHaveTextContent(
-      "Picture saved, but not set as the first frame",
-    );
-    // The save succeeded — the copy must not say otherwise.
-    expect(screen.queryByTestId("live-editor-accept-unattached")).toBeNull();
-  });
-
   it("the retry button invokes the hook's arm retry — the same take, by identity", () => {
     const onRetryArming = renderComposer({
       state: "unarmed",
@@ -67,6 +57,10 @@ describe("the composer shows saved-but-not-armed truthfully (issue #136)", () =>
       generationId: "take-9",
     });
 
+    expect(screen.getByTestId("live-editor-accept-unarmed")).toHaveTextContent(
+      "Picture saved, but not set as the first frame",
+    );
+    expect(screen.queryByTestId("live-editor-accept-unattached")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Set it" }));
     expect(onRetryArming).toHaveBeenCalledTimes(1);
   });
@@ -97,21 +91,5 @@ describe("the composer shows saved-but-not-armed truthfully (issue #136)", () =>
     expect(surface).toHaveTextContent("no durable media handle");
     // Still retryable.
     expect(screen.getByRole("button", { name: "Set it" })).toBeInTheDocument();
-  });
-
-  it("no arming surface appears while idle, accepting, or made-but-not-saved", () => {
-    renderComposer({
-      state: "unattached",
-      attachment: {
-        state: "failed",
-        generationId: "take-9",
-        sessionId: "session-made",
-        promptVersionId: "v-root",
-        reason: "session write failed",
-        record: { id: "take-9", mediaType: "image", status: "completed" },
-      },
-    });
-
-    expect(screen.queryByTestId("live-editor-accept-unarmed")).toBeNull();
   });
 });

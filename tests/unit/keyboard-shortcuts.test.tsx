@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { renderHook } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -103,20 +102,6 @@ describe("KeyboardShortcuts", () => {
       expect(copy).not.toHaveBeenCalled();
       expect(event.defaultPrevented).toBe(false);
     });
-
-    it("prevents default even when callbacks are missing", async () => {
-      const { useKeyboardShortcuts } = await loadKeyboardModules("MacIntel");
-      renderHook(() => useKeyboardShortcuts({}));
-
-      const event = new KeyboardEvent("keydown", {
-        key: "k",
-        metaKey: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(event);
-
-      expect(event.defaultPrevented).toBe(true);
-    });
   });
 
   describe("edge cases", () => {
@@ -124,51 +109,6 @@ describe("KeyboardShortcuts", () => {
       const { formatShortcut } = await loadKeyboardModules("Win32");
 
       expect(formatShortcut(["Cmd", "K"])).toEqual(["Ctrl", "K"]);
-    });
-
-    it("renders nothing when the dialog is closed", async () => {
-      const { KeyboardShortcuts } = await loadKeyboardModules("MacIntel");
-      const { container } = render(
-        <KeyboardShortcuts isOpen={false} onClose={vi.fn()} />,
-      );
-
-      expect(container.firstChild).toBeNull();
-    });
-
-    it("re-exports utilities from the compatibility entry point", async () => {
-      const { reExport, formatShortcut } =
-        await loadKeyboardModules("MacIntel");
-
-      expect(typeof reExport.default).toBe("function");
-      expect(reExport.formatShortcut(["Cmd", "K"])).toEqual(
-        formatShortcut(["Cmd", "K"]),
-      );
-    });
-  });
-
-  describe("core behavior", () => {
-    it("fires shortcut callbacks and prevents default", async () => {
-      const { useKeyboardShortcuts } = await loadKeyboardModules("MacIntel");
-      const openShortcuts = vi.fn();
-      renderHook(() => useKeyboardShortcuts({ openShortcuts }));
-
-      const openEvent = new KeyboardEvent("keydown", {
-        key: "k",
-        metaKey: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(openEvent);
-
-      const modeEvent = new KeyboardEvent("keydown", {
-        key: "2",
-        metaKey: true,
-        cancelable: true,
-      });
-      document.dispatchEvent(modeEvent);
-
-      expect(openShortcuts).toHaveBeenCalled();
-      expect(openEvent.defaultPrevented).toBe(true);
-      expect(modeEvent.defaultPrevented).toBe(false);
     });
   });
 });

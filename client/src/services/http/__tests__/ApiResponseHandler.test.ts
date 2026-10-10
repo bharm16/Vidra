@@ -38,17 +38,6 @@ function createHandler() {
 }
 
 describe("ApiResponseHandler", () => {
-  it("throws mapped error when response is null", async () => {
-    const { handler, errorFactory } = createHandler();
-
-    await expect(handler.handle(null)).rejects.toMatchObject({
-      message: "Empty response received",
-    });
-    expect(errorFactory.create).toHaveBeenCalledWith({
-      message: "Empty response received",
-    });
-  });
-
   it("uses error payload.error when non-OK response includes it", async () => {
     const { handler, errorFactory } = createHandler();
     const response = new Response(
@@ -73,12 +62,7 @@ describe("ApiResponseHandler", () => {
 
   it("falls back to HTTP status text when non-OK body is empty", async () => {
     const { handler, errorFactory } = createHandler();
-    const response = {
-      ok: false,
-      status: 503,
-      headers: { get: vi.fn().mockReturnValue("0") },
-      json: vi.fn().mockRejectedValue(new Error("No JSON body")),
-    } as unknown as Response;
+    const response = new Response(null, { status: 503 });
 
     await expect(handler.handle(response)).rejects.toMatchObject({
       message: "HTTP 503",
@@ -112,27 +96,12 @@ describe("ApiResponseHandler", () => {
     });
   });
 
-  it("returns null when parsing empty successful body with allowEmpty path", async () => {
-    const { handler } = createHandler();
-    const response = {
-      ok: true,
-      status: 200,
-      headers: { get: vi.fn().mockReturnValue("0") },
-      json: vi
-        .fn()
-        .mockRejectedValue(new Error("Unexpected end of JSON input")),
-    } as unknown as Response;
-
-    await expect(handler.handle(response)).resolves.toBeNull();
-  });
-
   it("throws parse error from safeParseJson when body is required", async () => {
     const { handler, errorFactory } = createHandler();
-    const response = {
+    const response = new Response("not valid JSON", {
       status: 200,
-      headers: { get: vi.fn().mockReturnValue("10") },
-      json: vi.fn().mockRejectedValue(new Error("invalid json")),
-    } as unknown as Response;
+      headers: { "content-type": "application/json" },
+    });
 
     await expect(
       handler.safeParseJson(response, { allowEmpty: false }),

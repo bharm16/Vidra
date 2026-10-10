@@ -1,10 +1,3 @@
-import express from "express";
-import request from "supertest";
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { createCapabilitiesRoutes } from "../capabilities.routes";
-import type { CapabilitiesSchema } from "@shared/capabilities";
-import { z } from "zod";
-import { ApiResponseSchema } from "@shared/schemas/api.schemas";
 import {
   getCapabilities,
   listModels,
@@ -12,49 +5,13 @@ import {
   resolveModelId,
   resolveProviderForModel,
 } from "@services/capabilities";
-
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") {
-    return true;
-  }
-
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") {
-    return null;
-  }
-
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
+import type { CapabilitiesSchema } from "@shared/capabilities";
+import { ApiResponseSchema } from "@shared/schemas/api.schemas";
+import express from "express";
+import request from "supertest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import { createCapabilitiesRoutes } from "../capabilities.routes";
 
 vi.mock("@services/capabilities", () => ({
   getCapabilities: vi.fn(),
@@ -116,12 +73,9 @@ describe("capabilities.routes", () => {
       provider === "google" && model === "veo-4" ? VEO_SCHEMA : null,
     );
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/capabilities")
-        .query({ provider: "generic", model: "google/veo-3" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/capabilities")
+      .query({ provider: "generic", model: "google/veo-3" });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -143,12 +97,9 @@ describe("capabilities.routes", () => {
       provider === "google" && model === "veo-4" ? VEO_SCHEMA : null,
     );
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/capabilities")
-        .query({ provider: "google", model: "google/veo-3" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/capabilities")
+      .query({ provider: "google", model: "google/veo-3" });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -173,10 +124,7 @@ describe("capabilities.routes — canonical envelope contract", () => {
   });
 
   it("GET /providers returns the success envelope", async () => {
-    const response = await runSupertestOrSkip(() =>
-      request(createTestApp()).get("/providers"),
-    );
-    if (!response) return;
+    const response = await request(createTestApp()).get("/providers");
     expect(response.status).toBe(200);
     const parsed = AnyEnvelope.parse(response.body);
     expect(parsed.success).toBe(true);
@@ -184,10 +132,7 @@ describe("capabilities.routes — canonical envelope contract", () => {
   });
 
   it("GET /models without provider returns the error envelope", async () => {
-    const response = await runSupertestOrSkip(() =>
-      request(createTestApp()).get("/models"),
-    );
-    if (!response) return;
+    const response = await request(createTestApp()).get("/models");
     expect(response.status).toBe(400);
     const parsed = AnyEnvelope.parse(response.body);
     expect(parsed.success).toBe(false);
@@ -195,25 +140,14 @@ describe("capabilities.routes — canonical envelope contract", () => {
 
   it("GET /capabilities for an unknown model returns string details", async () => {
     getCapabilitiesMock.mockReturnValue(null);
-    const response = await runSupertestOrSkip(() =>
-      request(createTestApp()).get("/capabilities?provider=x&model=y"),
+    const response = await request(createTestApp()).get(
+      "/capabilities?provider=x&model=y",
     );
-    if (!response) return;
     expect(response.status).toBe(404);
     const parsed = AnyEnvelope.parse(response.body);
     expect(parsed.success).toBe(false);
     if (!parsed.success) {
       expect(typeof parsed.details).toBe("string");
     }
-  });
-
-  it("GET /capabilities wraps the schema under data only", async () => {
-    const response = await runSupertestOrSkip(() =>
-      request(createTestApp()).get("/capabilities?provider=google&model=veo-4"),
-    );
-    if (!response) return;
-    expect(response.status).toBe(200);
-    expect(response.body.data).toMatchObject({ provider: "google" });
-    expect(response.body).not.toHaveProperty("provider");
   });
 });

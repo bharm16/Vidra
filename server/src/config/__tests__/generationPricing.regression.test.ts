@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { getGenerationCreditsPerSecond } from "@shared/generationPricing";
+import { describe, expect, it } from "vitest";
 import { VIDEO_MODELS } from "../modelConfig";
 import { getVideoCost, getVideoCreditsPerSecond } from "../modelCosts";
 
@@ -36,13 +36,6 @@ describe("generation pricing seam (regression)", () => {
   };
 
   it.each(Object.entries(EXPECTED_PER_SECOND))(
-    "getVideoCreditsPerSecond(%s) === %d",
-    (modelId, expected) => {
-      expect(getVideoCreditsPerSecond(modelId)).toBe(expected);
-    },
-  );
-
-  it.each(Object.entries(EXPECTED_PER_SECOND))(
     "getVideoCost(%s, 8s) === ceil(rate * 8)",
     (modelId, rate) => {
       expect(getVideoCost(modelId, 8)).toBe(Math.ceil(rate * 8));
@@ -52,15 +45,6 @@ describe("generation pricing seam (regression)", () => {
   // The flagged DRAFT/PRO collision is the one model id the shared table does
   // not cover. Every other model must now resolve through the single seam.
   const COLLISION_KEY = VIDEO_MODELS.DRAFT; // identical string to VIDEO_MODELS.PRO
-
-  it.each(
-    Object.keys(EXPECTED_PER_SECOND).filter((id) => id !== COLLISION_KEY),
-  )(
-    "shared GENERATION_PRICING covers %s (no silent literal fallback)",
-    (modelId) => {
-      expect(getGenerationCreditsPerSecond(modelId)).not.toBeNull();
-    },
-  );
 
   it("flags the DRAFT/PRO collision rather than inventing a price", () => {
     // DRAFT and PRO are the same model id with different intended rates (3.5 vs

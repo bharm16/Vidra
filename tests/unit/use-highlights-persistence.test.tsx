@@ -1,18 +1,17 @@
+import { act, renderHook } from "@testing-library/react";
 import {
+  beforeEach,
   describe,
   expect,
   it,
-  beforeEach,
   vi,
   type MockedFunction,
 } from "vitest";
-import { renderHook, act } from "@testing-library/react";
 
 import { useHighlightsPersistence } from "@features/prompt-optimizer/PromptOptimizerContainer/hooks/useHighlightsPersistence";
-import { getPromptRepository } from "@repositories/index";
-import type { HighlightSnapshot } from "@features/prompt-optimizer/context/types";
-import type { Toast } from "@hooks/types";
 import type { SpanLabelingResult } from "@features/span-highlighting/hooks/types";
+import type { Toast } from "@hooks/types";
+import { getPromptRepository } from "@repositories/index";
 
 const { logSpies } = vi.hoisted(() => ({
   logSpies: {

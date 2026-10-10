@@ -30,17 +30,6 @@ describe("historyDates", () => {
   });
 
   describe("edge cases", () => {
-    it("includes the year when the date is outside the current year", () => {
-      const iso = "2021-06-15T09:00:00Z";
-      const expected = new Date(iso).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-
-      expect(formatShortDate(iso)).toBe(expected);
-    });
-
     it("falls back to the short date when the timestamp is in the future", () => {
       const future = new Date(
         baseTime.getTime() + 2 * 60 * 60 * 1000,

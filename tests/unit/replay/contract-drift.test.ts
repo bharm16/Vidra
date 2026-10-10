@@ -100,29 +100,6 @@ describe("replay contract drift", () => {
     expect(attempt).toThrow(/golden-path/);
     expect(attempt).toThrow(/re-record/);
   });
-
-  it("a contract change on the additive side also fails loudly", () => {
-    const evolvedContracts = {
-      ...REPLAY_CONTRACTS,
-      "span-labeling-payload": {
-        encoding: "json" as const,
-        schema: z
-          .object({
-            spans: z.array(z.object({ text: z.string(), role: z.string() })),
-            // New required top-level field the old recordings never captured.
-            taxonomyVersion: z.string(),
-          })
-          .passthrough(),
-      },
-    };
-    expect(() =>
-      validateCassette(
-        validSpanCassette(),
-        "label-spans/golden-path.json",
-        evolvedContracts,
-      ),
-    ).toThrow(ReplayContractViolationError);
-  });
 });
 
 describe("committed replay fixtures", () => {

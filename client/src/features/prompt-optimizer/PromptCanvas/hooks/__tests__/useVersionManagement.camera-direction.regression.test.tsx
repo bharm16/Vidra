@@ -9,7 +9,6 @@
  * what happens to the version that already carries a take.
  */
 
-import React, { type ReactNode } from "react";
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type {
@@ -18,14 +17,9 @@ import type {
 } from "@features/prompt-optimizer/types/domain/prompt-session";
 import { useHighlightState } from "@features/prompt-optimizer/context/hooks/useHighlightState";
 import { createHighlightSignature } from "@/features/span-highlighting";
-import {
-  GenerationControlsStoreProvider,
-  useGenerationControlsStoreActions,
-  useGenerationControlsStoreState,
-  DEFAULT_GENERATION_CONTROLS_STATE,
-} from "@features/generation-controls";
-import { cameraMotionDirection, CAMERA_PATHS } from "@shared/cameraMotion";
-import type { CameraPath } from "@shared/cameraMotion";
+
+import { cameraMotionDirection } from "@shared/cameraMotion";
+
 import { useVersionManagement } from "../useVersionManagement";
 
 vi.mock("../usePromptVersioning", () => ({
@@ -84,10 +78,6 @@ const setupVersions = (displayedPrompt: string) => {
       selectedModel: "wan-2.2",
       generationParams: {},
       serializedKeyframes: [],
-      promptOptimizer: { setOptimizedPrompt: vi.fn() },
-      applyInitialHighlightSnapshot:
-        highlightState.applyInitialHighlightSnapshot,
-      setDisplayedPromptSilently: vi.fn(),
       latestHighlightRef: highlightState.latestHighlightRef,
       versionEditCountRef: { current: 0 },
       versionEditsRef: { current: [] },
@@ -141,48 +131,5 @@ describe("regression: changing the camera leaves an existing take's words alone"
 
     expect(versionId).toBe("v-1");
     expect(updateEntryVersions).not.toHaveBeenCalled();
-  });
-});
-
-describe("regression: the armed first frame keeps its take identity", () => {
-  it("leaves the start frame untouched when the camera motion changes", () => {
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <GenerationControlsStoreProvider
-        initialState={{
-          ...DEFAULT_GENERATION_CONTROLS_STATE,
-          domain: {
-            ...DEFAULT_GENERATION_CONTROLS_STATE.domain,
-            startFrame: {
-              id: "space-animate-gen-1",
-              url: "https://example.com/frame.png",
-              source: "generation",
-              generationId: "gen-1",
-            },
-          },
-        }}
-      >
-        {children}
-      </GenerationControlsStoreProvider>
-    );
-
-    const { result } = renderHook(
-      () => ({
-        state: useGenerationControlsStoreState(),
-        actions: useGenerationControlsStoreActions(),
-      }),
-      { wrapper },
-    );
-
-    const armedFrame = result.current.state.domain.startFrame;
-
-    act(() => {
-      result.current.actions.setCameraMotion(
-        CAMERA_PATHS[7] as unknown as CameraPath,
-      );
-    });
-
-    expect(result.current.state.domain.cameraMotion?.id).toBe("push_in");
-    expect(result.current.state.domain.startFrame).toEqual(armedFrame);
-    expect(result.current.state.domain.startFrame?.generationId).toBe("gen-1");
   });
 });

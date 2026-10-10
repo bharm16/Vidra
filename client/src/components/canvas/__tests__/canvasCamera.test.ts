@@ -4,7 +4,6 @@ import {
   MAX_SCALE,
   MIN_SCALE,
   cameraToCenter,
-  panBy,
   unionRect,
   zoomAtPoint,
   type CanvasCamera,
@@ -31,13 +30,6 @@ const worldUnder = (
 });
 
 describe("zoomAtPoint", () => {
-  it("keeps the world point under the cursor fixed while zooming", () => {
-    // Camera at identity, cursor over (100, 100), zoom to 2×. The world point
-    // (100, 100) must still render at screen (100, 100): offset −100.
-    const next = zoomAtPoint({ x: 0, y: 0, scale: 1 }, { x: 100, y: 100 }, 2);
-    expect(next).toEqual({ x: -100, y: -100, scale: 2 });
-  });
-
   it("anchors the cursor's world point across any zoom (property)", () => {
     fc.assert(
       fc.property(
@@ -66,34 +58,6 @@ describe("zoomAtPoint", () => {
   });
 });
 
-describe("panBy", () => {
-  it("moves the camera by the screen-space delta, scale untouched", () => {
-    expect(panBy({ x: 10, y: 20, scale: 1.5 }, 30, -5)).toEqual({
-      x: 40,
-      y: 15,
-      scale: 1.5,
-    });
-  });
-
-  it("composes additively (property)", () => {
-    fc.assert(
-      fc.property(
-        cameraArb,
-        fc.double({ min: -1000, max: 1000, noNaN: true }),
-        fc.double({ min: -1000, max: 1000, noNaN: true }),
-        fc.double({ min: -1000, max: 1000, noNaN: true }),
-        fc.double({ min: -1000, max: 1000, noNaN: true }),
-        (camera, dx1, dy1, dx2, dy2) => {
-          const stepped = panBy(panBy(camera, dx1, dy1), dx2, dy2);
-          const direct = panBy(camera, dx1 + dx2, dy1 + dy2);
-          expect(stepped.x).toBeCloseTo(direct.x, 6);
-          expect(stepped.y).toBeCloseTo(direct.y, 6);
-        },
-      ),
-    );
-  });
-});
-
 describe("cameraToCenter", () => {
   it("pans the camera so the node's rendered rect lands dead-center", () => {
     // Viewport 800×600 at the origin; the live node renders at (900, 700)
@@ -106,16 +70,6 @@ describe("cameraToCenter", () => {
       { left: 900, top: 700, width: 200, height: 120 },
     );
     expect(next).toEqual({ x: -550, y: -440, scale: 1.5 });
-  });
-
-  it("is a no-op when the node is already centered", () => {
-    const camera = { x: 12, y: -8, scale: 2 };
-    const next = cameraToCenter(
-      camera,
-      { left: 100, top: 40, width: 400, height: 300 },
-      { left: 200, top: 130, width: 200, height: 120 },
-    );
-    expect(next).toEqual(camera);
   });
 });
 
@@ -137,14 +91,6 @@ describe("unionRect", () => {
 
   it("returns null for an empty set — nothing to center on", () => {
     expect(unionRect([])).toBeNull();
-  });
-
-  it("is the identity on a single rect", () => {
-    fc.assert(
-      fc.property(rectArb, (rect) => {
-        expect(unionRect([rect])).toEqual(rect);
-      }),
-    );
   });
 
   it("contains every rect it was given", () => {

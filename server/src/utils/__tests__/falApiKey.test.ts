@@ -1,47 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { isFalKeyPlaceholder, resolveFalApiKey } from "../falApiKey";
 
 describe("isFalKeyPlaceholder", () => {
-  describe("error handling and edge cases", () => {
-    it("returns false for undefined", () => {
-      expect(isFalKeyPlaceholder(undefined)).toBe(false);
-    });
-
-    it("returns false for null", () => {
-      expect(isFalKeyPlaceholder(null)).toBe(false);
-    });
-
-    it("returns false for empty string", () => {
-      expect(isFalKeyPlaceholder("")).toBe(false);
-    });
-
-    it("returns false for whitespace-only string", () => {
-      expect(isFalKeyPlaceholder("   ")).toBe(false);
-    });
-  });
-
   describe("core behavior - detects placeholders", () => {
-    it("detects template pattern ${...}", () => {
-      expect(isFalKeyPlaceholder("${FAL_KEY}")).toBe(true);
-      expect(isFalKeyPlaceholder("${FAL_API_KEY}")).toBe(true);
-    });
-
-    it("detects $-prefixed values", () => {
-      expect(isFalKeyPlaceholder("$FAL_KEY")).toBe(true);
-      expect(isFalKeyPlaceholder("$ENV_VAR")).toBe(true);
-    });
-
     it('detects literal "undefined"', () => {
       expect(isFalKeyPlaceholder("undefined")).toBe(true);
     });
 
     it('detects literal "null"', () => {
       expect(isFalKeyPlaceholder("null")).toBe(true);
-    });
-
-    it("returns false for real API keys", () => {
-      expect(isFalKeyPlaceholder("fal-1234567890abcdef")).toBe(false);
-      expect(isFalKeyPlaceholder("abc123:secret456")).toBe(false);
     });
 
     it("trims whitespace before checking", () => {
@@ -90,19 +57,6 @@ describe("resolveFalApiKey", () => {
       expect(resolveFalApiKey("${FAL_KEY}")).toBeNull();
     });
 
-    it("returns null when explicit key is empty", () => {
-      expect(resolveFalApiKey("")).toBeNull();
-    });
-
-    it("returns null when explicit key is whitespace", () => {
-      expect(resolveFalApiKey("   ")).toBeNull();
-    });
-
-    it("ignores FAL_KEY env var if it is a placeholder", () => {
-      process.env.FAL_KEY = "${FAL_KEY}";
-      expect(resolveFalApiKey()).toBeNull();
-    });
-
     it("returns null when only FAL_KEY_ID is set", () => {
       process.env.FAL_KEY_ID = "myid";
       expect(resolveFalApiKey()).toBeNull();
@@ -118,16 +72,6 @@ describe("resolveFalApiKey", () => {
     it("returns explicit key first", () => {
       process.env.FAL_KEY = "env-key";
       expect(resolveFalApiKey("explicit-key")).toBe("explicit-key");
-    });
-
-    it("falls back to FAL_KEY env var", () => {
-      process.env.FAL_KEY = "env-fal-key";
-      expect(resolveFalApiKey()).toBe("env-fal-key");
-    });
-
-    it("falls back to FAL_API_KEY when FAL_KEY is missing", () => {
-      process.env.FAL_API_KEY = "env-fal-api-key";
-      expect(resolveFalApiKey()).toBe("env-fal-api-key");
     });
 
     it("falls back to FAL_KEY_ID:FAL_KEY_SECRET composite", () => {

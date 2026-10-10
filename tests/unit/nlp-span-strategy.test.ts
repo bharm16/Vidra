@@ -128,35 +128,4 @@ describe("NlpSpanStrategy", () => {
       expect(result).toBeNull();
     });
   });
-
-  describe("core behavior", () => {
-    it("returns validated NLP spans when coverage and counts are sufficient", async () => {
-      extractSemanticSpansMock.mockResolvedValue({
-        spans: [
-          { text: "Hero", start: 0, end: 4, role: "subject", confidence: 0.9 },
-        ],
-        stats: { phase: "neuro-symbolic" },
-      });
-      isGlinerAvailableMock.mockReturnValue(true);
-      validateSpansMock.mockReturnValue({
-        ok: true,
-        errors: [],
-        result: {
-          spans: [{ text: "Hero", role: "subject", confidence: 0.9 }],
-          meta: { version: "v1", notes: "nlp" },
-        },
-      });
-
-      const strategy = new NlpSpanStrategy();
-      const result = await strategy.extractSpans(
-        "Hero runs fast.",
-        { allowOverlap: false },
-        { maxSpans: 5 },
-        {} as never,
-      );
-
-      expect(result?.spans[0]?.text).toBe("Hero");
-      expect(result?.meta.notes).toBe("nlp");
-    });
-  });
 });

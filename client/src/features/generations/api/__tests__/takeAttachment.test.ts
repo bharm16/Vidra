@@ -48,11 +48,6 @@ describe("owed quick-picture attachment api (issue #133)", () => {
     expect(owed[0]).toMatchObject({ state: "failed", generationId: "gen-1" });
   });
 
-  it("returns an empty list when nothing is owed", async () => {
-    getMock.mockResolvedValue({ success: true, data: { attachments: [] } });
-    expect(await fetchOwedPictureAttachments("session-1")).toEqual([]);
-  });
-
   it("repairs one owed take by identity and returns its outcome", async () => {
     postMock.mockResolvedValue({
       success: true,
@@ -139,10 +134,5 @@ describe("unresolved sketch acceptance api (issue #134)", () => {
     });
     // The record rides along — it is exactly what the retry re-sends.
     expect(owed[0]?.record?.id).toBe("take-9");
-  });
-
-  it("returns an empty list when nothing is unresolved", async () => {
-    getMock.mockResolvedValue({ success: true, data: { attachments: [] } });
-    expect(await fetchUnresolvedSketchAcceptances("session-1")).toEqual([]);
   });
 });

@@ -3,8 +3,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   calculateEffectiveDebounce,
   checkCache,
-  createDisabledState,
-  createLoadingState,
 } from "@features/span-highlighting/utils/spanLabelingScheduler";
 import { spanLabelingCache } from "@features/span-highlighting/services/index.ts";
 import { calculateSmartDebounce } from "@features/span-highlighting/config/index.ts";
@@ -55,19 +53,6 @@ describe("spanLabelingScheduler", () => {
     expect(result.cacheCheckDuration).toBe(10);
   });
 
-  it("calculates debounce using smart debounce", () => {
-    mockCalculateSmartDebounce.mockReturnValue(750);
-
-    expect(
-      calculateEffectiveDebounce(payload, {
-        enabled: true,
-        debounceMs: 500,
-        useSmartDebounce: true,
-        immediate: false,
-      }),
-    ).toBe(750);
-  });
-
   it("returns zero debounce when immediate", () => {
     expect(
       calculateEffectiveDebounce(payload, {
@@ -77,26 +62,5 @@ describe("spanLabelingScheduler", () => {
         immediate: true,
       }),
     ).toBe(0);
-  });
-
-  it("creates disabled and loading states", () => {
-    expect(createDisabledState()).toEqual({
-      spans: [],
-      meta: null,
-      status: "idle",
-      error: null,
-      signature: null,
-    });
-
-    const loading = createLoadingState(
-      true,
-      "success",
-      [{ id: "1" }],
-      { source: "cache" },
-      "sig",
-    );
-    expect(loading.status).toBe("loading");
-    expect(loading.spans).toEqual([{ id: "1" }]);
-    expect(loading.signature).toBe("sig");
   });
 });

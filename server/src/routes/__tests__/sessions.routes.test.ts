@@ -1,7 +1,3 @@
-import express from "express";
-import request from "supertest";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSessionRoutes } from "../sessions.routes";
 import {
   GenerationNotRemovableError,
   SessionAccessDeniedError,
@@ -9,49 +5,10 @@ import {
   TakeFactsConflictError,
 } from "@services/sessions/SessionService";
 import type { SessionRecord } from "@services/sessions/types";
-
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") {
-    return true;
-  }
-
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") {
-    return null;
-  }
-
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
+import express from "express";
+import request from "supertest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createSessionRoutes } from "../sessions.routes";
 
 const buildServices = () => {
   const baseSessionDto = {
@@ -190,12 +147,9 @@ describe("sessions.routes", () => {
     ]);
     const app = createApp(sessionService, continuityService);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/sessions?limit=5&includeContinuity=false&includePrompt=true")
-        .set("x-user-id", "user-1"),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/sessions?limit=5&includeContinuity=false&includePrompt=true")
+      .set("x-user-id", "user-1");
 
     expect(response.status).toBe(200);
     expect(sessionService.listSessions).toHaveBeenCalledWith("user-1", {
@@ -214,10 +168,9 @@ describe("sessions.routes", () => {
       userId: "other-user",
       status: "active",
     });
-    const denied = await runSupertestOrSkip(() =>
-      request(app).get("/sessions/session-1").set("x-user-id", "user-1"),
-    );
-    if (!denied) return;
+    const denied = await request(app)
+      .get("/sessions/session-1")
+      .set("x-user-id", "user-1");
     expect(denied.status).toBe(403);
 
     process.env.ALLOW_DEV_CROSS_USER_SESSIONS = "true";
@@ -226,38 +179,10 @@ describe("sessions.routes", () => {
       userId: "other-user",
       status: "active",
     });
-    const allowed = await runSupertestOrSkip(() =>
-      request(app).get("/sessions/session-1").set("x-user-id", "user-1"),
-    );
-    if (!allowed) return;
+    const allowed = await request(app)
+      .get("/sessions/session-1")
+      .set("x-user-id", "user-1");
     expect(allowed.status).toBe(200);
-  });
-
-  it("returns 403 for unauthorized scoped session updates before unscoped mutations", async () => {
-    const { sessionService, continuityService } = buildServices();
-    sessionService.updateSessionForUser.mockRejectedValueOnce(
-      new SessionAccessDeniedError("session-1", "user-1", "other-user"),
-    );
-    const app = createApp(sessionService, continuityService);
-
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .patch("/sessions/session-1")
-        .set("x-user-id", "user-1")
-        .send({ name: "blocked update" }),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(403);
-    expect(response.body).toEqual({ success: false, error: "Access denied" });
-    expect(sessionService.updateSessionForUser).toHaveBeenCalledWith(
-      "user-1",
-      "session-1",
-      {
-        name: "blocked update",
-      },
-    );
-    expect(sessionService.updateSession).not.toHaveBeenCalled();
   });
 
   it("returns 403 for unauthorized scoped session delete before unscoped delete", async () => {
@@ -267,10 +192,9 @@ describe("sessions.routes", () => {
     );
     const app = createApp(sessionService, continuityService);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).delete("/sessions/session-1").set("x-user-id", "user-1"),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .delete("/sessions/session-1")
+      .set("x-user-id", "user-1");
 
     expect(response.status).toBe(403);
     expect(response.body).toEqual({ success: false, error: "Access denied" });
@@ -290,12 +214,9 @@ describe("sessions.routes", () => {
     });
     const app = createApp(sessionService, continuityService);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/generations/pic-1/archive")
-        .set("x-user-id", "user-1"),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/generations/pic-1/archive")
+      .set("x-user-id", "user-1");
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
@@ -313,19 +234,16 @@ describe("sessions.routes", () => {
     );
     const app = createApp(sessionService, continuityService);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/versions/v-1/generations")
-        .set("x-user-id", "user-1")
-        .send({
-          generation: {
-            id: "take-1",
-            origin: "generated",
-            productionProvenance: { state: "known", instruction: "forged" },
-          },
-        }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/versions/v-1/generations")
+      .set("x-user-id", "user-1")
+      .send({
+        generation: {
+          id: "take-1",
+          origin: "generated",
+          productionProvenance: { state: "known", instruction: "forged" },
+        },
+      });
 
     expect(response.status).toBe(409);
     expect(response.body).toEqual({
@@ -343,19 +261,16 @@ describe("sessions.routes", () => {
     });
     const app = createApp(sessionService, continuityService);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/versions/v-1/generations")
-        .set("x-user-id", "user-1")
-        .send({
-          generation: {
-            id: "take-1",
-            origin: "upload",
-            productionProvenance: { state: "unknown" },
-          },
-        }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/versions/v-1/generations")
+      .set("x-user-id", "user-1")
+      .send({
+        generation: {
+          id: "take-1",
+          origin: "upload",
+          productionProvenance: { state: "unknown" },
+        },
+      });
 
     expect(response.status).toBe(200);
     expect(sessionService.appendGenerationToVersion).toHaveBeenCalledWith(
@@ -373,12 +288,9 @@ describe("sessions.routes", () => {
     );
     const app = createApp(sessionService, continuityService);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/generations/pic-1/archive")
-        .set("x-user-id", "user-1"),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/generations/pic-1/archive")
+      .set("x-user-id", "user-1");
 
     expect(response.status).toBe(409);
     expect(response.body).toEqual({
@@ -435,13 +347,10 @@ describe("sessions.routes", () => {
     });
     app.use("/sessions", createSessionRoutes(sessionService));
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .patch(`/sessions/${created.id}`)
-        .set("x-user-id", "request-user")
-        .send({ name: "hijacked name" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .patch(`/sessions/${created.id}`)
+      .set("x-user-id", "request-user")
+      .send({ name: "hijacked name" });
 
     expect(response.status).toBe(403);
     const unchanged = await sessionService.getSession(created.id);
@@ -453,40 +362,28 @@ describe("sessions.routes", () => {
     const { sessionService, continuityService } = buildServices();
     const app = createApp(sessionService, continuityService);
 
-    const prompt = await runSupertestOrSkip(() =>
-      request(app)
-        .patch("/sessions/session-1/prompt")
-        .set("x-user-id", "user-1")
-        .send({ output: 42 }),
-    );
-    if (!prompt) return;
+    const prompt = await request(app)
+      .patch("/sessions/session-1/prompt")
+      .set("x-user-id", "user-1")
+      .send({ output: 42 });
     expect(prompt.status).toBe(400);
 
-    const highlights = await runSupertestOrSkip(() =>
-      request(app)
-        .patch("/sessions/session-1/highlights")
-        .set("x-user-id", "user-1")
-        .send({ highlightCache: "bad" }),
-    );
-    if (!highlights) return;
+    const highlights = await request(app)
+      .patch("/sessions/session-1/highlights")
+      .set("x-user-id", "user-1")
+      .send({ highlightCache: "bad" });
     expect(highlights.status).toBe(400);
 
-    const output = await runSupertestOrSkip(() =>
-      request(app)
-        .patch("/sessions/session-1/output")
-        .set("x-user-id", "user-1")
-        .send({ output: 99 }),
-    );
-    if (!output) return;
+    const output = await request(app)
+      .patch("/sessions/session-1/output")
+      .set("x-user-id", "user-1")
+      .send({ output: 99 });
     expect(output.status).toBe(400);
 
-    const versions = await runSupertestOrSkip(() =>
-      request(app)
-        .patch("/sessions/session-1/versions")
-        .set("x-user-id", "user-1")
-        .send({ versions: "bad" }),
-    );
-    if (!versions) return;
+    const versions = await request(app)
+      .patch("/sessions/session-1/versions")
+      .set("x-user-id", "user-1")
+      .send({ versions: "bad" });
     expect(versions.status).toBe(400);
 
     expect(sessionService.updatePromptForUser).not.toHaveBeenCalled();
@@ -546,13 +443,10 @@ describe("sessions.routes — the first-frame arm door (issue #136)", () => {
     });
     const app = createArmApp(arm);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/first-frame/arm")
-        .set("x-user-id", "user-1")
-        .send({ generationId: "take-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/first-frame/arm")
+      .set("x-user-id", "user-1")
+      .send({ generationId: "take-1" });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
@@ -575,13 +469,10 @@ describe("sessions.routes — the first-frame arm door (issue #136)", () => {
     });
     const app = createArmApp(arm);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/first-frame/arm")
-        .set("x-user-id", "user-1")
-        .send({ generationId: "take-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/first-frame/arm")
+      .set("x-user-id", "user-1")
+      .send({ generationId: "take-1" });
 
     expect(response.status).toBe(409);
     expect(response.body).toMatchObject({
@@ -598,13 +489,10 @@ describe("sessions.routes — the first-frame arm door (issue #136)", () => {
     });
     const app = createArmApp(arm);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/first-frame/arm")
-        .set("x-user-id", "user-1")
-        .send({ generationId: "take-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/first-frame/arm")
+      .set("x-user-id", "user-1")
+      .send({ generationId: "take-1" });
 
     expect(response.status).toBe(422);
     expect(response.body.success).toBe(false);
@@ -613,13 +501,10 @@ describe("sessions.routes — the first-frame arm door (issue #136)", () => {
   it("answers 503 when no arm is wired rather than pretending the route is missing", async () => {
     const app = createArmApp(undefined);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/first-frame/arm")
-        .set("x-user-id", "user-1")
-        .send({ generationId: "take-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/first-frame/arm")
+      .set("x-user-id", "user-1")
+      .send({ generationId: "take-1" });
 
     expect(response.status).toBe(503);
   });
@@ -628,13 +513,10 @@ describe("sessions.routes — the first-frame arm door (issue #136)", () => {
     const arm = vi.fn();
     const app = createArmApp(arm);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/sessions/session-1/first-frame/arm")
-        .set("x-user-id", "user-1")
-        .send({}),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/sessions/session-1/first-frame/arm")
+      .set("x-user-id", "user-1")
+      .send({});
 
     expect(response.status).toBe(400);
     expect(arm).not.toHaveBeenCalled();

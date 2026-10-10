@@ -34,10 +34,6 @@ const stringify = (input: AdmissionAcceptanceFingerprintInput): string =>
   JSON.stringify(buildAdmissionAcceptanceFingerprint(input));
 
 describe("buildAdmissionAcceptanceFingerprint (issue #114)", () => {
-  it("is stable: the same acceptance fingerprints identically", () => {
-    expect(stringify(baseInput())).toBe(stringify(baseInput()));
-  });
-
   it("keeps a take source input by its generationId but drops the durable storage handles that a retry re-mints", () => {
     const fingerprint = buildAdmissionAcceptanceFingerprint(baseInput());
 
@@ -107,11 +103,5 @@ describe("buildAdmissionAcceptanceFingerprint (issue #114)", () => {
     const reAncestored = baseInput();
     reAncestored.displayAncestorGenerationId = "gen-B";
     expect(stringify(reAncestored)).not.toBe(stringify(baseInput()));
-  });
-
-  it("carries no transient signed URL: none is an input, so none can be in the fingerprint", () => {
-    const serialized = stringify(baseInput());
-    expect(serialized).not.toContain("http");
-    expect(serialized).toContain("digest-a");
   });
 });

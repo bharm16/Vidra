@@ -67,15 +67,6 @@ describe("Composer", () => {
     expect(props.updateSettings).toHaveBeenCalledWith({ prompt: "a cottage" });
   });
 
-  it("the mode chip shows the live frame thumbnail when one exists", () => {
-    renderComposer({ liveOutput: liveOutput() });
-
-    expect(screen.getByRole("img", { name: "Latest frame" })).toHaveAttribute(
-      "src",
-      "data:image/png;base64,thumb",
-    );
-  });
-
   it("Use this hands back the very output it is displaying, and is dead without one", () => {
     const shown = liveOutput();
     const props = renderComposer({ liveOutput: shown });

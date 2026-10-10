@@ -44,7 +44,6 @@ export default defineConfig({
         "navigation.spec.ts",
         "history-page.spec.ts",
         "share-page.spec.ts",
-        "detected-assets-update-depth.spec.ts",
       ],
       use: browser,
     },

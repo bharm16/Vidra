@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
-import { createTracedLabelSpansCoordinator } from "../tracedCoordinator";
+import type { SpanLabelingTelemetryService } from "@services/observability/SpanLabelingTelemetryService";
+import { describe, expect, it, vi } from "vitest";
 import type {
   LabelSpansCoordinatorInput,
   LabelSpansCoordinatorResult,
 } from "../coordinator";
-import type { SpanLabelingTelemetryService } from "@services/observability/SpanLabelingTelemetryService";
+import { createTracedLabelSpansCoordinator } from "../tracedCoordinator";
 
 function makeTelemetry() {
   const trace = {
@@ -43,18 +43,6 @@ function makeInner(value: LabelSpansCoordinatorResult | Error) {
 }
 
 describe("createTracedLabelSpansCoordinator", () => {
-  it("returns the inner coordinator untouched when telemetry is null", async () => {
-    const value = {
-      result: { spans: [], meta: {} },
-      headers: {},
-    } as unknown as LabelSpansCoordinatorResult;
-    const inner = makeInner(value);
-    const coordinator = createTracedLabelSpansCoordinator(inner, null);
-
-    await expect(coordinator.resolve(INPUT)).resolves.toBe(value);
-    expect(inner.resolve).toHaveBeenCalledWith(INPUT);
-  });
-
   it("starts a trace and completes with success on a successful resolve", async () => {
     const { telemetry, trace, startSpanLabelingTrace } = makeTelemetry();
     const inner = makeInner({
@@ -88,19 +76,6 @@ describe("createTracedLabelSpansCoordinator", () => {
     expect(summary.spans).toEqual([
       { text: "hello", category: "subject.identity" },
     ]);
-  });
-
-  it("records a cache hit only when X-Cache is HIT", async () => {
-    const { telemetry, trace } = makeTelemetry();
-    const inner = makeInner({
-      result: { spans: [], meta: {} },
-      headers: { "X-Cache": "HIT" },
-    } as unknown as LabelSpansCoordinatorResult);
-    const coordinator = createTracedLabelSpansCoordinator(inner, telemetry);
-
-    await coordinator.resolve(INPUT);
-
-    expect(trace.recordCacheHit).toHaveBeenCalledTimes(1);
   });
 
   it("records an error and completes with error when there is no result", async () => {

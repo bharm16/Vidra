@@ -39,21 +39,4 @@ describe("OpenAiMessageBuilder", () => {
       );
     });
   });
-
-  describe("core behavior", () => {
-    it("adds developer message to the simple flow", () => {
-      const builder = new OpenAiMessageBuilder();
-      const messages = builder.buildMessages("System prompt", {
-        developerMessage: "Follow the schema",
-        userMessage: "Do the thing",
-      });
-
-      expect(messages[0]).toEqual({
-        role: "developer",
-        content: "Follow the schema",
-      });
-      expect(messages[1]).toEqual({ role: "system", content: "System prompt" });
-      expect(messages[2]).toEqual({ role: "user", content: "Do the thing" });
-    });
-  });
 });

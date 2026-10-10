@@ -86,46 +86,6 @@ describe("regression: passive session load does not re-PATCH highlights (ISSUE-3
     expect(updateEntryVersions).not.toHaveBeenCalled();
   });
 
-  it("still persists when the highlight content actually changes (different length)", () => {
-    // Sanity check: legitimate edits (different span set, same prompt
-    // signature) must STILL flow through to persistence.
-    const updateEntryVersions = vi.fn();
-
-    const { result } = renderHook(() =>
-      usePromptVersioning({
-        promptHistory: {
-          history: [buildHistoryEntry()],
-          updateEntryVersions,
-        },
-        currentPromptUuid: "uuid-1",
-        currentPromptDocId: "doc-1",
-        activeVersionId: null,
-        latestHighlightRef: { current: null },
-        versionEditCountRef: { current: 0 },
-        versionEditsRef: { current: [] },
-        resetVersionEdits: vi.fn(),
-      }),
-    );
-
-    // A genuine new labeling pass returns more spans than the persisted one.
-    const expandedSnapshot = buildSnapshot("2026-05-02T17:00:00.000Z", {
-      spans: [
-        { start: 0, end: 6, category: "subject", confidence: 0.9 },
-        { start: 7, end: 12, category: "action", confidence: 0.8 },
-        { start: 13, end: 20, category: "lighting", confidence: 0.7 },
-      ],
-    });
-
-    act(() => {
-      result.current.syncVersionHighlights(
-        expandedSnapshot,
-        "samurai meditates",
-      );
-    });
-
-    expect(updateEntryVersions).toHaveBeenCalledTimes(1);
-  });
-
   it("persists when the labeler reclassifies a span (same length, different category)", () => {
     // The harder case: an earlier labeling pass categorized a span as
     // "subject"; a later pass corrected it to "character". Same prompt text

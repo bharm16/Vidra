@@ -49,18 +49,6 @@ beforeEach(() => {
 });
 
 describe("regression: a submission is released on every exit path", () => {
-  it("releases the pending flag when the draft request rejects", async () => {
-    const dispatch = vi.fn();
-    generateVideoPreviewMock.mockRejectedValue(new Error("network down"));
-
-    const { result } = renderHook(() => useGenerationActions(dispatch));
-    await act(async () => {
-      await result.current.generateDraft("wan-2.2", "a prompt", {});
-    });
-
-    expect(result.current.isSubmitting).toBe(false);
-  });
-
   it("releases the pending flag when the draft response reports failure", async () => {
     const dispatch = vi.fn();
     generateVideoPreviewMock.mockResolvedValue({
@@ -71,18 +59,6 @@ describe("regression: a submission is released on every exit path", () => {
     const { result } = renderHook(() => useGenerationActions(dispatch));
     await act(async () => {
       await result.current.generateDraft("wan-2.2", "a prompt", {});
-    });
-
-    expect(result.current.isSubmitting).toBe(false);
-  });
-
-  it("releases the pending flag when the render request rejects", async () => {
-    const dispatch = vi.fn();
-    generateVideoPreviewMock.mockRejectedValue(new Error("network down"));
-
-    const { result } = renderHook(() => useGenerationActions(dispatch));
-    await act(async () => {
-      await result.current.generateRender("sora-2", "a prompt", {});
     });
 
     expect(result.current.isSubmitting).toBe(false);
@@ -99,8 +75,21 @@ describe("regression: a submission is released on every exit path", () => {
    */
   it("releases the pending flag when a post-acceptance callback throws", async () => {
     const dispatch = vi.fn();
-    generateVideoPreviewMock.mockResolvedValue({ success: true, jobId: "job-saved", status: "queued" });
-    waitForVideoJobMock.mockResolvedValue({ videoUrl: "https://example.com/clip.mp4", attachment: { state: "attached", sessionId: "session-1", promptVersionId: "v-1", generationId: "job-saved", record: { id: "job-saved" } } });
+    generateVideoPreviewMock.mockResolvedValue({
+      success: true,
+      jobId: "job-saved",
+      status: "queued",
+    });
+    waitForVideoJobMock.mockResolvedValue({
+      videoUrl: "https://example.com/clip.mp4",
+      attachment: {
+        state: "attached",
+        sessionId: "session-1",
+        promptVersionId: "v-1",
+        generationId: "job-saved",
+        record: { id: "job-saved" },
+      },
+    });
 
     const { result } = renderHook(() =>
       useGenerationActions(dispatch, {
@@ -112,7 +101,9 @@ describe("regression: a submission is released on every exit path", () => {
     );
 
     await act(async () => {
-      await result.current.generateRender("google/veo-3", "a prompt", { promptVersionId: "v-1" });
+      await result.current.generateRender("google/veo-3", "a prompt", {
+        promptVersionId: "v-1",
+      });
     });
 
     expect(result.current.isSubmitting).toBe(false);

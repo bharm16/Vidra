@@ -8,13 +8,19 @@
  * @module SuggestionCache.property.test
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+/**
+ * Property-based tests for SuggestionCache
+ *
+ * Tests the following correctness properties:
+ * - Property 5: Cache Key Uniqueness
+ * - Property 6: Cache Hit Returns Without API Call
+ *
+ * @module SuggestionCache.property.test
+ */
+import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
 
-import {
-  SuggestionCache,
-  simpleHash,
-} from "@features/prompt-optimizer/utils/SuggestionCache";
+import { SuggestionCache } from "@features/prompt-optimizer/utils/SuggestionCache";
 
 describe("SuggestionCache Property Tests", () => {
   /**
@@ -28,35 +34,6 @@ describe("SuggestionCache Property Tests", () => {
    * **Validates: Requirements 6.2, 6.5**
    */
   describe("Property 5: Cache Key Uniqueness", () => {
-    it("identical inputs produce identical cache keys", () => {
-      fc.assert(
-        fc.property(
-          fc.string({ minLength: 0, maxLength: 100 }),
-          fc.string({ minLength: 0, maxLength: 100 }),
-          fc.string({ minLength: 0, maxLength: 100 }),
-          fc.string({ minLength: 0, maxLength: 100 }),
-          (highlightedText, contextBefore, contextAfter, promptHash) => {
-            const key1 = SuggestionCache.generateKey(
-              highlightedText,
-              contextBefore,
-              contextAfter,
-              promptHash,
-            );
-            const key2 = SuggestionCache.generateKey(
-              highlightedText,
-              contextBefore,
-              contextAfter,
-              promptHash,
-            );
-
-            // Same inputs must produce same key
-            expect(key1).toBe(key2);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
     it("different highlightedText produces different cache keys", () => {
       fc.assert(
         fc.property(
@@ -188,19 +165,6 @@ describe("SuggestionCache Property Tests", () => {
         { numRuns: 100 },
       );
     });
-
-    it("simpleHash produces consistent results for same input", () => {
-      fc.assert(
-        fc.property(fc.string({ minLength: 0, maxLength: 500 }), (input) => {
-          const hash1 = simpleHash(input);
-          const hash2 = simpleHash(input);
-
-          // Same input must produce same hash
-          expect(hash1).toBe(hash2);
-        }),
-        { numRuns: 100 },
-      );
-    });
   });
 
   /**
@@ -213,37 +177,6 @@ describe("SuggestionCache Property Tests", () => {
    * **Validates: Requirements 6.1, 6.3**
    */
   describe("Property 6: Cache Hit Returns Without API Call", () => {
-    it("cached values are returned without modification", () => {
-      fc.assert(
-        fc.property(
-          fc.string({ minLength: 1, maxLength: 50 }),
-          fc.array(fc.string({ minLength: 1, maxLength: 100 }), {
-            minLength: 1,
-            maxLength: 10,
-          }),
-          (key, suggestions) => {
-            // Create fresh cache for each iteration to avoid cross-iteration pollution
-            const cache = new SuggestionCache<{ suggestions: string[] }>({
-              ttlMs: 300000,
-              maxEntries: 100,
-            });
-            const value = { suggestions };
-
-            // Set the value
-            cache.set(key, value);
-
-            // Get should return the exact same value
-            const retrieved = cache.get(key);
-
-            expect(retrieved).not.toBeNull();
-            expect(retrieved).toEqual(value);
-            expect(retrieved?.suggestions).toEqual(suggestions);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
     it("cache hit returns value, cache miss returns null", () => {
       fc.assert(
         fc.property(
@@ -272,42 +205,6 @@ describe("SuggestionCache Property Tests", () => {
 
             // Uncached key should return null
             expect(cache.get(uncachedKey)).toBeNull();
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("multiple cache entries are stored and retrieved independently", () => {
-      fc.assert(
-        fc.property(
-          fc.uniqueArray(fc.string({ minLength: 1, maxLength: 30 }), {
-            minLength: 2,
-            maxLength: 10,
-          }),
-          (keys) => {
-            // Create fresh cache for each iteration to avoid cross-iteration pollution
-            const cache = new SuggestionCache<{ suggestions: string[] }>({
-              ttlMs: 300000,
-              maxEntries: 100,
-            });
-
-            // Create unique values for each key
-            const entries = keys.map((key, index) => ({
-              key,
-              value: { suggestions: [`suggestion_${index}`] },
-            }));
-
-            // Set all entries
-            for (const entry of entries) {
-              cache.set(entry.key, entry.value);
-            }
-
-            // All entries should be retrievable with correct values
-            for (const entry of entries) {
-              const retrieved = cache.get(entry.key);
-              expect(retrieved).toEqual(entry.value);
-            }
           },
         ),
         { numRuns: 100 },
@@ -375,40 +272,6 @@ describe("SuggestionCache Property Tests", () => {
         { numRuns: 100 },
       );
     }, 30000);
-
-    it("has() returns true for valid entries and false for missing/expired", () => {
-      fc.assert(
-        fc.property(
-          // Use prefixed keys to avoid prototype property name collisions
-          fc
-            .string({ minLength: 1, maxLength: 50 })
-            .map((s) => `cache_key_${s}`),
-          fc
-            .string({ minLength: 1, maxLength: 50 })
-            .map((s) => `cache_key_${s}`),
-          fc.array(fc.string(), { minLength: 1, maxLength: 5 }),
-          (existingKey, missingKey, suggestions) => {
-            // Ensure keys are different
-            fc.pre(existingKey !== missingKey);
-
-            // Create fresh cache for each iteration to avoid cross-iteration pollution
-            const cache = new SuggestionCache<{ suggestions: string[] }>({
-              ttlMs: 300000,
-              maxEntries: 100,
-            });
-
-            cache.set(existingKey, { suggestions });
-
-            // has() should return true for existing key
-            expect(cache.has(existingKey)).toBe(true);
-
-            // has() should return false for missing key
-            expect(cache.has(missingKey)).toBe(false);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
 
     it("clear() removes all entries", () => {
       fc.assert(

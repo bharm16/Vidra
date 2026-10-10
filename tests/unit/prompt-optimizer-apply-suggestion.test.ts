@@ -10,7 +10,6 @@ vi.mock("@/services/LoggingService", () => ({
   },
 }));
 
-
 describe("applySuggestionToPrompt", () => {
   it("returns null when prompt or suggestion is empty", () => {
     expect(

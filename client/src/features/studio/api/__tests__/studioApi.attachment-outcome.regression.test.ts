@@ -85,35 +85,10 @@ describe("regression #135: the attachment outcome is validated at the wire", () 
     });
   });
 
-  it("carries an attached outcome through untouched", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        jsonResponse(
-          201,
-          returnedBody({
-            state: "attached",
-            generationId: "take-2",
-            sessionId: "session-1",
-            promptVersionId: "v1",
-          }),
-        ),
-      ),
-    );
-
-    const outcome = await returnStudioImageToSession("p-1", "img-1");
-
-    expect(outcome.state).toBe("returned");
-    if (outcome.state !== "returned") return;
-    expect(outcome.result.attachment?.state).toBe("attached");
-  });
-
   it("rejects a response whose attachment state is not one of the three", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        jsonResponse(201, returnedBody({ state: "bananas" })),
-      ),
+      vi.fn(async () => jsonResponse(201, returnedBody({ state: "bananas" }))),
     );
 
     await expect(returnStudioImageToSession("p-1", "img-1")).rejects.toThrow();

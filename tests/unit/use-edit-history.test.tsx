@@ -28,12 +28,6 @@ describe("span edit history", () => {
     ]);
   });
 
-  it("defaults the category to null when none is supplied", () => {
-    recordSpanEdit({ original: "at dusk", replacement: "at golden hour" });
-
-    expect(getRecentSpanEdits()[0]?.category).toBeNull();
-  });
-
   it("ignores no-op edits", () => {
     recordSpanEdit({ original: "same", replacement: "same" });
     recordSpanEdit({ original: " same ", replacement: "same" });

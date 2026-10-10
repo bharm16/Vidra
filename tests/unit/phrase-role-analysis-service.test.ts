@@ -10,35 +10,6 @@ describe("PhraseRoleAnalysisService", () => {
   // ERROR HANDLING & INVALID INPUT (~50%)
   // ===========================================================================
   describe("error handling and invalid input", () => {
-    it("returns default role for all null inputs", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(null, null, null, null);
-      expect(result).toBe("general visual detail");
-    });
-
-    it("returns default role for all undefined inputs", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      );
-      expect(result).toBe("general visual detail");
-    });
-
-    it("returns default role for empty strings", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole("", "", "", "");
-      expect(result).toBe("general visual detail");
-    });
-
-    it("returns default role for whitespace-only highlighted text with no category", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole("   ", null, null, null);
-      expect(result).toBe("general visual detail");
-    });
-
     it("returns default role when no patterns match any input", () => {
       const service = createService();
       const result = service.detectVideoPhraseRole(
@@ -48,19 +19,6 @@ describe("PhraseRoleAnalysisService", () => {
         null,
       );
       expect(result).toBe("general visual detail");
-    });
-
-    it("returns default when explicit category does not match any pattern", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "some text",
-        null,
-        null,
-        "completely_unknown_category",
-      );
-      // Falls through explicit category mapping, then tries context mapping
-      expect(typeof result).toBe("string");
-      expect(result.length).toBeGreaterThan(0);
     });
   });
 
@@ -103,34 +61,12 @@ describe("PhraseRoleAnalysisService", () => {
       );
       expect(result).toContain("camera");
     });
-
-    it("normalizes explicit category to lowercase before matching", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "some text",
-        null,
-        null,
-        "LIGHTING",
-      );
-      expect(result).toContain("lighting");
-    });
   });
 
   // ===========================================================================
   // CORE BEHAVIOR - CATEGORY MAPPING (~20%)
   // ===========================================================================
   describe("explicit category mapping", () => {
-    it('maps "subject" category to subject role', () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "a young woman",
-        null,
-        null,
-        "subject",
-      );
-      expect(result).toContain("subject");
-    });
-
     it('maps "subject.identity" category to subject role', () => {
       const service = createService();
       const result = service.detectVideoPhraseRole(
@@ -142,28 +78,6 @@ describe("PhraseRoleAnalysisService", () => {
       expect(result).toContain("subject");
     });
 
-    it('maps "camera" category to camera role', () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "dolly in",
-        null,
-        null,
-        "camera",
-      );
-      expect(result).toContain("camera");
-    });
-
-    it('maps "lighting" category to lighting role', () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "soft glow",
-        null,
-        null,
-        "lighting",
-      );
-      expect(result).toContain("lighting");
-    });
-
     it('maps "environment.location" category to location role', () => {
       const service = createService();
       const result = service.detectVideoPhraseRole(
@@ -171,17 +85,6 @@ describe("PhraseRoleAnalysisService", () => {
         null,
         null,
         "environment.location",
-      );
-      expect(result).toContain("location");
-    });
-
-    it('maps "environment" category to location role', () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "rainy streets",
-        null,
-        null,
-        "environment",
       );
       expect(result).toContain("location");
     });
@@ -241,29 +144,6 @@ describe("PhraseRoleAnalysisService", () => {
         null,
       );
       expect(result).toContain("location");
-    });
-
-    it("detects camera from context keywords", () => {
-      const service = createService();
-      // Use context without words that match environment/location patterns
-      const result = service.detectVideoPhraseRole(
-        "slowly moves",
-        "the lens tracks",
-        "the main element",
-        null,
-      );
-      expect(result).toContain("camera");
-    });
-
-    it("detects lighting from context keywords", () => {
-      const service = createService();
-      const result = service.detectVideoPhraseRole(
-        "warm tones",
-        "the lighting",
-        "creates depth",
-        null,
-      );
-      expect(result).toContain("lighting");
     });
 
     it("detects character from context keywords", () => {

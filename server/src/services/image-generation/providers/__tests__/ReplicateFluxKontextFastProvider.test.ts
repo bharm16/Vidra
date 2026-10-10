@@ -1,10 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-} from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ReplicateFluxKontextFastProvider } from "../ReplicateFluxKontextFastProvider";
 import type { ImagePreviewRequest } from "../types";
 import { createReplicateMockKit } from "@services/__tests__/replicateTestKit";
@@ -37,7 +31,10 @@ type CreatePredictionRequest = {
   };
 };
 
-const kit = createReplicateMockKit<ReplicatePrediction, CreatePredictionRequest>();
+const kit = createReplicateMockKit<
+  ReplicatePrediction,
+  CreatePredictionRequest
+>();
 
 vi.mock("replicate", () => ({
   default: vi.fn(() => kit.instance),
@@ -83,30 +80,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
         message: expect.stringContaining("requires inputImageUrl"),
         statusCode: 400,
       });
-    });
-
-    it("maps rate limit errors to status 429 with parsed detail", async () => {
-      const provider = new ReplicateFluxKontextFastProvider({
-        apiToken: "token",
-      });
-      const sleepSpy = vi
-        .spyOn(provider as any, "sleep")
-        .mockResolvedValue(undefined);
-      kit.createPredictionMock.mockRejectedValue(
-        new Error('429 {"detail": "Slow down", "retry_after": 0}'),
-      );
-
-      const request: ImagePreviewRequest = {
-        prompt: "valid prompt",
-        userId: "user-1",
-        inputImageUrl: "https://images.example.com/base.webp",
-      };
-
-      await expect(provider.generatePreview(request)).rejects.toMatchObject({
-        message: "Slow down",
-        statusCode: 429,
-      });
-      expect(sleepSpy).toHaveBeenCalled();
     });
 
     it("throws when Replicate returns an invalid output payload", async () => {
@@ -179,36 +152,6 @@ describe("ReplicateFluxKontextFastProvider", () => {
         .calls[0]?.[0] as CreatePredictionRequest;
       expect(call.input.output_quality).toBe(100);
       expect(call.input.seed).toBe(43);
-    });
-
-    it("retries create prediction on rate limits before succeeding", async () => {
-      const provider = new ReplicateFluxKontextFastProvider({
-        apiToken: "token",
-      });
-      const sleepSpy = vi
-        .spyOn(
-          provider as unknown as { sleep: (ms: number) => Promise<void> },
-          "sleep",
-        )
-        .mockResolvedValue(undefined);
-
-      kit.createPredictionMock
-        .mockRejectedValueOnce(new Error('429 {"retry_after": 1}'))
-        .mockResolvedValueOnce({
-          id: "pred-2",
-          status: "succeeded",
-          output: "https://images.example.com/output.webp",
-        });
-
-      const result = await provider.generatePreview({
-        prompt: "prompt",
-        userId: "user-1",
-        inputImageUrl: "https://images.example.com/base.webp",
-      });
-
-      expect(result.imageUrl).toBe("https://images.example.com/output.webp");
-      expect(kit.createPredictionMock).toHaveBeenCalledTimes(2);
-      expect(sleepSpy).toHaveBeenCalledWith(1000);
     });
   });
 

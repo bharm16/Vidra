@@ -87,34 +87,6 @@ describe("GenerationControlsStore", () => {
     expect(result.current.state.domain.keyframes).toHaveLength(3);
   });
 
-  it("sets and clears start frame", () => {
-    const { result } = renderHook(
-      () => ({
-        state: useGenerationControlsStoreState(),
-        actions: useGenerationControlsStoreActions(),
-      }),
-      { wrapper: buildWrapper() },
-    );
-
-    const frame: KeyframeTile = {
-      id: "start-frame-1",
-      url: "https://example.com/start.png",
-      source: "upload",
-    };
-
-    act(() => {
-      result.current.actions.setStartFrame(frame);
-    });
-
-    expect(result.current.state.domain.startFrame).toEqual(frame);
-
-    act(() => {
-      result.current.actions.clearStartFrame();
-    });
-
-    expect(result.current.state.domain.startFrame).toBeNull();
-  });
-
   it("clears extend mode when setting the start frame", () => {
     const initialState = buildInitialState({
       domain: {
@@ -234,25 +206,6 @@ describe("GenerationControlsStore", () => {
     expect(result.current.state.domain.subjectMotion).toBe("");
   });
 
-  it("returns same state reference on no-op updates", () => {
-    const { result } = renderHook(
-      () => ({
-        state: useGenerationControlsStoreState(),
-        actions: useGenerationControlsStoreActions(),
-      }),
-      { wrapper: buildWrapper() },
-    );
-
-    const previousState = result.current.state;
-    act(() => {
-      result.current.actions.setSubjectMotion(
-        result.current.state.domain.subjectMotion,
-      );
-    });
-
-    expect(result.current.state).toBe(previousState);
-  });
-
   it("hydrates from storage and persists updates", async () => {
     vi.useFakeTimers();
     const hydratedState = buildInitialState({
@@ -295,38 +248,5 @@ describe("GenerationControlsStore", () => {
     ) as GenerationControlsState;
     expect(persisted.domain.selectedModel).toBe("model-y");
     vi.useRealTimers();
-  });
-
-  it("hydrates start frame from keyframes[0] when persisted state is missing startFrame", () => {
-    localStorage.setItem(
-      "prompt-optimizer:generationControlsStore",
-      JSON.stringify({
-        domain: {
-          selectedModel: "",
-          generationParams: {},
-          videoTier: "render",
-          keyframes: [
-            {
-              id: "legacy-kf",
-              url: "https://example.com/legacy.png",
-              source: "upload",
-            },
-          ],
-          cameraMotion: null,
-          subjectMotion: "",
-        },
-        ui: {
-          activeTab: "video",
-          imageSubTab: "references",
-          constraintMode: "strict",
-        },
-      }),
-    );
-
-    const { result } = renderHook(() => useGenerationControlsStoreState(), {
-      wrapper: buildWrapper(),
-    });
-
-    expect(result.current.domain.startFrame?.id).toBe("legacy-kf");
   });
 });

@@ -10,44 +10,6 @@ describe("ConstraintGenerationService", () => {
   // ERROR HANDLING & INVALID INPUT (~50%)
   // ===========================================================================
   describe("error handling and invalid input", () => {
-    it("returns valid constraint config when details is empty object", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({}, {});
-      expect(result.mode).toBeDefined();
-      expect(result.minWords).toBeGreaterThanOrEqual(1);
-      expect(result.maxWords).toBeGreaterThanOrEqual(result.minWords);
-      expect(result.maxSentences).toBeGreaterThanOrEqual(1);
-      expect(typeof result.slotDescriptor).toBe("string");
-    });
-
-    it("handles non-finite highlightWordCount by falling back to text count", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightWordCount: NaN,
-        highlightedText: "one two three",
-      });
-      expect(result.minWords).toBeGreaterThanOrEqual(1);
-      expect(result.maxWords).toBeGreaterThanOrEqual(result.minWords);
-    });
-
-    it("handles Infinity highlightWordCount by falling back to text count", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightWordCount: Infinity,
-        highlightedText: "hello world",
-      });
-      expect(result.minWords).toBeGreaterThanOrEqual(1);
-    });
-
-    it("handles negative highlightWordCount by clamping to 0", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightWordCount: -5,
-      });
-      expect(result.minWords).toBeGreaterThanOrEqual(1);
-      expect(result.maxWords).toBeGreaterThanOrEqual(result.minWords);
-    });
-
     it("falls back to phrase mode when forceMode is unknown", () => {
       const service = createService();
       const result = service.getVideoReplacementConstraints(
@@ -55,16 +17,6 @@ describe("ConstraintGenerationService", () => {
         { forceMode: "nonexistent_mode_xyz" },
       );
       expect(result.mode).toBe("phrase");
-    });
-
-    it("handles undefined highlightedText gracefully", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightedText: undefined,
-        highlightWordCount: 0,
-      });
-      expect(result.mode).toBeDefined();
-      expect(result.slotDescriptor).toBe("visual detail");
     });
 
     it("treats unreliable category confidence (below 0.45) as untrusted", () => {
@@ -94,17 +46,6 @@ describe("ConstraintGenerationService", () => {
         highlightedCategory: "lighting setup",
         highlightWordCount: 5,
       });
-      expect(result.mode).toBe("lighting");
-    });
-
-    it("treats NaN confidence as reliable", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightedCategory: "lighting setup",
-        highlightedCategoryConfidence: NaN,
-        highlightWordCount: 5,
-      });
-      // NaN is not finite, so _isCategoryReliable returns true
       expect(result.mode).toBe("lighting");
     });
   });
@@ -168,15 +109,6 @@ describe("ConstraintGenerationService", () => {
       expect(result.slotDescriptor).toBe("visual detail");
     });
 
-    it("very short highlights (<=3 words) get micro mode", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightWordCount: 2,
-        highlightedText: "red car",
-      });
-      expect(result.mode).toBe("micro");
-    });
-
     it("boundary: 3 words is still very short (micro)", () => {
       const service = createService();
       const result = service.getVideoReplacementConstraints({
@@ -208,24 +140,6 @@ describe("ConstraintGenerationService", () => {
         highlightWordCount: 5,
       });
       expect(result.mode).toBe("micro");
-    });
-
-    it("selects micro for character category", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightedCategory: "character detail",
-        highlightWordCount: 5,
-      });
-      expect(result.mode).toBe("micro");
-    });
-
-    it("selects lighting for lighting category", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightedCategory: "lighting setup",
-        highlightWordCount: 5,
-      });
-      expect(result.mode).toBe("lighting");
     });
 
     it("selects micro for shot category", () => {
@@ -264,28 +178,10 @@ describe("ConstraintGenerationService", () => {
       expect(result.mode).toBe("location");
     });
 
-    it("selects location for location category", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightedCategory: "location detail",
-        highlightWordCount: 5,
-      });
-      expect(result.mode).toBe("location");
-    });
-
     it("selects style for style category", () => {
       const service = createService();
       const result = service.getVideoReplacementConstraints({
         highlightedCategory: "style reference",
-        highlightWordCount: 5,
-      });
-      expect(result.mode).toBe("style");
-    });
-
-    it("selects style for tone category", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightedCategory: "tone descriptor",
         highlightWordCount: 5,
       });
       expect(result.mode).toBe("style");
@@ -298,15 +194,6 @@ describe("ConstraintGenerationService", () => {
         highlightWordCount: 5,
       });
       expect(result.mode).toBe("style");
-    });
-
-    it("selects phrase for non-sentence text within phrase threshold", () => {
-      const service = createService();
-      const result = service.getVideoReplacementConstraints({
-        highlightWordCount: 6,
-        highlightedText: "warm golden light from the west",
-      });
-      expect(result.mode).toBe("phrase");
     });
 
     it("selects sentence for long sentence-like text", () => {

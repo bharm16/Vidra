@@ -71,19 +71,6 @@ describe("firebaseAuth", () => {
     });
   });
 
-  it("returns mode-dependent headers when no user exists", async () => {
-    const { buildFirebaseAuthHeaders } = await loadFirebaseAuthModule();
-    const mode = (import.meta as { env?: { MODE?: string } }).env?.MODE;
-
-    if (mode === "production") {
-      await expect(buildFirebaseAuthHeaders()).resolves.toEqual({});
-    } else {
-      await expect(buildFirebaseAuthHeaders()).resolves.toEqual({
-        "X-API-Key": "dev-key-12345",
-      });
-    }
-  });
-
   it("returns firebase token header when user token resolves", async () => {
     mockAuth.currentUser = {
       getIdToken: vi.fn().mockResolvedValue("firebase-token-123"),

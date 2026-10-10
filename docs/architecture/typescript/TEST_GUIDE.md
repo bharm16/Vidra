@@ -1,6 +1,6 @@
 # Test guidance
 
-Canonical gates and mock boundaries live in [CLAUDE.md](../../../CLAUDE.md). Integration contracts are governed by [.agents/skills/integration-test/SKILL.md](../../../.agents/skills/integration-test/SKILL.md).
+Canonical gates and mock boundaries live in [CLAUDE.md](../../../CLAUDE.md).
 
 ## Unit and regression tests
 

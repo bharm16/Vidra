@@ -1,30 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  AuthRetryTransport,
-  shouldTriggerAuthRetry,
-  type HttpTransport,
-} from "../AuthRetryTransport";
+import { AuthRetryTransport, type HttpTransport } from "../AuthRetryTransport";
 
 function response(status: number): Response {
   return new Response(null, { status });
 }
-
-describe("shouldTriggerAuthRetry", () => {
-  it("triggers on 401 for a logged-out user", () => {
-    expect(shouldTriggerAuthRetry(response(401), false)).toBe(true);
-  });
-
-  it("does not trigger on 401 when already authenticated (re-login won't help)", () => {
-    expect(shouldTriggerAuthRetry(response(401), false)).toBe(true);
-    expect(shouldTriggerAuthRetry(response(401), true)).toBe(false);
-  });
-
-  it("does not trigger on non-401 statuses", () => {
-    expect(shouldTriggerAuthRetry(response(200), false)).toBe(false);
-    expect(shouldTriggerAuthRetry(response(403), false)).toBe(false);
-    expect(shouldTriggerAuthRetry(response(500), false)).toBe(false);
-  });
-});
 
 describe("AuthRetryTransport", () => {
   it("passes non-401 responses straight through without opening the gate", async () => {

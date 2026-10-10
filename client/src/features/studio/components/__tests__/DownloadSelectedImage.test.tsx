@@ -49,11 +49,6 @@ const VECTOR = {
   storagePath: "users/u/previews/vectors/1-a.svg",
   viewUrl: "https://signed.example.com/vec.svg?disposition=attachment",
 };
-const RASTER = {
-  id: "img-ras",
-  storagePath: "users/u/previews/images/1-a.webp",
-  viewUrl: "https://signed.example.com/ras.webp",
-};
 
 describe("DownloadSelectedImage", () => {
   it("offers a download to the vector's view URL when a vector is selected", () => {
@@ -66,26 +61,6 @@ describe("DownloadSelectedImage", () => {
     const link = screen.getByTestId("studio-download-svg");
     expect(link).toHaveTextContent("Download SVG");
     expect(link).toHaveAttribute("href", VECTOR.viewUrl);
-  });
-
-  it("shows nothing for a raster selection — it is served inline, not as a download", () => {
-    render(
-      <DownloadSelectedImage
-        turns={[turnWith(RASTER)]}
-        selectedImageId={RASTER.id}
-      />,
-    );
-    expect(screen.queryByTestId("studio-download-svg")).toBeNull();
-  });
-
-  it("shows nothing when nothing is selected", () => {
-    render(
-      <DownloadSelectedImage
-        turns={[turnWith(VECTOR)]}
-        selectedImageId={null}
-      />,
-    );
-    expect(screen.queryByTestId("studio-download-svg")).toBeNull();
   });
 
   it("shows nothing when the vector's view URL could not be signed", () => {

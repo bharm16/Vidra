@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { GenerationControlsState } from "../generationControlsStoreTypes";
-import {
-  loadGenerationControlsStoreState,
-  persistGenerationControlsStoreState,
-} from "../generationControlsStoreStorage";
+import { loadGenerationControlsStoreState } from "../generationControlsStoreStorage";
 
 const SAMPLE_STATE: GenerationControlsState = {
   domain: {
@@ -175,27 +172,5 @@ describe("generationControlsStoreStorage", () => {
     expect(loaded.domain.endFrame).toBeNull();
     expect(loaded.domain.videoReferenceImages).toEqual([]);
     expect(loaded.domain.extendVideo).toBeNull();
-  });
-
-  it("persists to new key only", () => {
-    persistGenerationControlsStoreState(SAMPLE_STATE);
-
-    const stored = localStorage.getItem(
-      "prompt-optimizer:generationControlsStore",
-    );
-    expect(stored).not.toBeNull();
-
-    expect(localStorage.getItem("prompt-optimizer:selectedModel")).toBeNull();
-    expect(
-      localStorage.getItem("prompt-optimizer:generationParams"),
-    ).toBeNull();
-    expect(localStorage.getItem("prompt-optimizer:videoTier")).toBeNull();
-    expect(localStorage.getItem("generation-controls:keyframes")).toBeNull();
-    expect(localStorage.getItem("generation-controls:cameraMotion")).toBeNull();
-    expect(
-      localStorage.getItem("generation-controls:subjectMotion"),
-    ).toBeNull();
-    expect(localStorage.getItem("generation-controls:activeTab")).toBeNull();
-    expect(localStorage.getItem("generation-controls:imageSubTab")).toBeNull();
   });
 });

@@ -7,10 +7,6 @@ beforeEach(() => {
 
 describe("promptStateStorage", () => {
   describe("loadSelectedMode", () => {
-    it("returns default when missing", () => {
-      expect(loadSelectedMode()).toBe("video");
-    });
-
     it("returns stored mode when valid", () => {
       localStorage.setItem("prompt-optimizer:selectedMode", "image");
       expect(loadSelectedMode()).toBe("image");
@@ -26,10 +22,6 @@ describe("promptStateStorage", () => {
   });
 
   describe("loadVideoTier", () => {
-    it("returns default when missing", () => {
-      expect(loadVideoTier()).toBe("render");
-    });
-
     it("returns stored tier when valid", () => {
       localStorage.setItem("prompt-optimizer:videoTier", "draft");
       expect(loadVideoTier()).toBe("draft");

@@ -134,6 +134,8 @@ describe("Label Spans Routes (full-stack integration)", () => {
 
     expect(response.status).toBe(401);
     expect(response.body.error).toBe("Authentication required");
+    expect(aiServiceMock.execute).not.toHaveBeenCalled();
+    expect(aiServiceMock.stream).not.toHaveBeenCalled();
   });
 
   it("POST /api/llm/label-spans validates request payload", async () => {
@@ -143,7 +145,8 @@ describe("Label Spans Routes (full-stack integration)", () => {
       .send({ text: "" });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBeTypeOf("string");
+    expect(aiServiceMock.execute).not.toHaveBeenCalled();
+    expect(aiServiceMock.stream).not.toHaveBeenCalled();
   });
 
   it("POST /api/llm/label-spans returns labeled spans for a valid request", async () => {
@@ -159,11 +162,11 @@ describe("Label Spans Routes (full-stack integration)", () => {
     expect(response.status).toBe(200);
     // Response envelope: toPublicLabelSpansResult(result) is returned under
     // `data`, not spread at the top level.
-    expect(Array.isArray(response.body.data.spans)).toBe(true);
-    expect(response.body.data.spans.length).toBeGreaterThan(0);
     expect(response.body.data.spans[0]).toMatchObject({
+      text: "runner",
+      start: 2,
+      end: 8,
       category: "subject.identity",
-      confidence: expect.any(Number),
     });
   });
 
@@ -227,11 +230,16 @@ describe("Label Spans Routes (full-stack integration)", () => {
       })
       .filter((value): value is Record<string, unknown> => value !== null);
 
-    expect(parsed.length).toBeGreaterThan(0);
-    expect(parsed[0]).toMatchObject({
-      category: expect.any(String),
-      confidence: expect.any(Number),
-    });
+    expect(parsed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: "runner",
+          start: 2,
+          end: 8,
+          category: "subject.identity",
+        }),
+      ]),
+    );
   });
 
   it("POST /api/llm/label-spans/stream reports stream errors as JSON payloads", async () => {

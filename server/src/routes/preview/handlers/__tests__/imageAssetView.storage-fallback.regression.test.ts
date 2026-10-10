@@ -3,66 +3,6 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createImageAssetViewHandler } from "../imageAssetView";
 
-/**
- * Regression: Library covers 404'd through the view route while their objects
- * existed in GCS.
- *
- * Observed live (2026-08-01): current-loop frames persist via the storage
- * service at users/{uid}/previews/images/{timestamp}-{hash}.webp, but the
- * view route resolved assetIds only through the image-generation asset store
- * (image-previews/{uid}/{assetId} + legacy) — so every new frame's cover died
- * as soon as its signed URL expired, with the object sitting healthy in the
- * bucket (signed URL 200, view route 404).
- *
- * Invariant: for any preview-image asset whose object exists under the
- * requester's storage namespace, the view route resolves a URL — the
- * image-generation store miss falls back to the storage-service location;
- * only true absence 404s.
- */
-
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") {
-    return true;
-  }
-
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") {
-    return null;
-  }
-
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
-
 const createApp = (
   handler: ReturnType<typeof createImageAssetViewHandler>,
   userId: string | null = "user-1",
@@ -101,12 +41,9 @@ describe("imageAssetView storage-location fallback regression", () => {
     });
     const app = createApp(handler, "user-1");
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/preview/image/view")
-        .query({ assetId: STORAGE_ASSET_ID }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/image/view")
+      .query({ assetId: STORAGE_ASSET_ID });
 
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({
@@ -132,10 +69,9 @@ describe("imageAssetView storage-location fallback regression", () => {
     });
     const app = createApp(handler, "user-1");
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/image/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/image/view")
+      .query({ assetId: "asset-1" });
 
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({
@@ -154,32 +90,14 @@ describe("imageAssetView storage-location fallback regression", () => {
     });
     const app = createApp(handler, "user-1");
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .get("/preview/image/view")
-        .query({ assetId: STORAGE_ASSET_ID }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/image/view")
+      .query({ assetId: STORAGE_ASSET_ID });
 
     expect(response.status).toBe(404);
     expect(getPreviewImageViewUrl).toHaveBeenCalledWith(
       "user-1",
       STORAGE_ASSET_ID,
     );
-  });
-
-  it("404s cleanly when no storage service is wired", async () => {
-    const getImageUrl = vi.fn().mockResolvedValue(null);
-    const handler = createImageAssetViewHandler({
-      imageGenerationService: { getImageUrl } as never,
-    });
-    const app = createApp(handler, "user-1");
-
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/image/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
-
-    expect(response.status).toBe(404);
   });
 });

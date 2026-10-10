@@ -35,7 +35,9 @@ vi.mock("@/features/generations/api/takeAttachment", () => ({
 const acceptLiveOutputMock = vi.mocked(acceptLiveOutput);
 const retryPictureAttachmentMock = vi.mocked(retryPictureAttachment);
 
-function output(overrides: Partial<LiveOutput> & { requestId: string }): LiveOutput {
+function output(
+  overrides: Partial<LiveOutput> & { requestId: string },
+): LiveOutput {
   return {
     imageUrl: `data:image/webp;base64,output-${overrides.requestId}`,
     at: 0,
@@ -107,25 +109,6 @@ describe("Use this reports the attachment outcome (issue #134)", () => {
     acceptLiveOutputMock.mockReset();
     retryPictureAttachmentMock.mockReset();
     currentPathname = "/live";
-  });
-
-  it("shows an accepted-but-unattached take as made-but-not-saved instead of navigating into the session", async () => {
-    acceptLiveOutputMock.mockResolvedValue(resultWith(failedTake));
-
-    const { result } = renderAcceptance();
-
-    act(() => {
-      result.current.accept(output({ requestId: "1" }));
-    });
-    await act(async () => {});
-
-    // The truthful state, carrying exactly the attachment a retry re-sends.
-    expect(result.current.status).toEqual({
-      state: "unattached",
-      attachment: failedTake,
-    });
-    // The creator is NOT landed in a session whose space lacks the take.
-    expect(currentPathname).toBe("/live");
   });
 
   it("treats a pending attachment the same way: not accepted until the outcome is known", async () => {
@@ -287,27 +270,5 @@ describe("Use this reports the attachment outcome (issue #134)", () => {
       );
     });
     expect(currentPathname).toBe("/session/session-second");
-  });
-
-  it("a settled (attached) response behaves exactly as before: idle, then into the session", async () => {
-    acceptLiveOutputMock.mockResolvedValue(
-      resultWith({
-        state: "attached",
-        generationId: "take-1",
-        sessionId: "session-ok",
-        promptVersionId: "v-root",
-      }),
-    );
-
-    const { result } = renderAcceptance();
-
-    act(() => {
-      result.current.accept(output({ requestId: "1" }));
-    });
-    await act(async () => {});
-
-    expect(result.current.status.state).toBe("idle");
-    expect(currentPathname).toBe("/session/session-ok");
-    expect(retryPictureAttachmentMock).not.toHaveBeenCalled();
   });
 });

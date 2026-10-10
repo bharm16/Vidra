@@ -7,13 +7,19 @@ describe("applyTelemetrySourceHeader", () => {
     const built = applyTelemetrySourceHeader(
       {
         url: "/api/optimize",
-        init: { headers: { "Content-Type": "application/json" } },
+        init: {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer xyz",
+          },
+        },
       },
       "production",
     );
     expect(built.init.headers).toMatchObject({
       [TELEMETRY_SOURCE_HEADER]: "user",
       "Content-Type": "application/json",
+      Authorization: "Bearer xyz",
     });
   });
 
@@ -26,19 +32,5 @@ describe("applyTelemetrySourceHeader", () => {
       "development",
     );
     expect(built.init.headers).not.toHaveProperty(TELEMETRY_SOURCE_HEADER);
-  });
-
-  it("preserves existing headers", () => {
-    const built = applyTelemetrySourceHeader(
-      {
-        url: "/api/optimize",
-        init: { headers: { Authorization: "Bearer xyz" } },
-      },
-      "production",
-    );
-    expect(built.init.headers).toEqual({
-      Authorization: "Bearer xyz",
-      [TELEMETRY_SOURCE_HEADER]: "user",
-    });
   });
 });

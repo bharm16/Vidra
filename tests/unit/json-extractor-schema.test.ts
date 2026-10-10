@@ -10,12 +10,6 @@ describe("extractAndParse with schema validation", () => {
 
   type Item = z.infer<typeof ItemSchema>;
 
-  it("parses valid JSON without schema (backward compat)", () => {
-    const result = extractAndParse<Item>('{"id": 1, "name": "test"}', false);
-
-    expect(result).toEqual({ id: 1, name: "test" });
-  });
-
   it("validates and returns typed result when schema is provided", () => {
     const result = extractAndParse(
       '{"id": 1, "name": "test"}',

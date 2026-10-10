@@ -1,62 +1,13 @@
+import { createShareRouter } from "@routes/share.routes";
+import type { StorageRoutesService } from "@routes/storage.routes";
+import { createStorageRoutes } from "@routes/storage.routes";
+import type { ShareService } from "@services/share/ShareService";
+import { ApiErrorResponseSchema } from "@shared/schemas/api.schemas";
 import express from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { ApiErrorResponseSchema } from "@shared/schemas/api.schemas";
 import { handle, requireBody, requireCreatorId } from "../intake";
-import { createShareRouter } from "@routes/share.routes";
-import { createStorageRoutes } from "@routes/storage.routes";
-import type { ShareService } from "@services/share/ShareService";
-import type { StorageRoutesService } from "@routes/storage.routes";
-
-/**
- * Invariant: there is exactly ONE 401 body and exactly ONE 400 body on this
- * server, and both come out of `respond`.
- *
- * Before the intake seam these routes disagreed in ways a client could see:
- *
- *   share.routes.ts       400 {success,error:"Invalid share request"}
- *                             — no `code`, no `details`, no `requestId`
- *   storage.routes.ts     401 via a private resolveUserId + rejectAnonymous
- *   asset.routes.ts       400 {success,error:"prompt is required"} — no `code`,
- *                             and POST / validated NOTHING at all
- *   sessions/continuity   400 details: ZodIssue[] — an ARRAY, though the shared
- *                             contract types `details` as a string
- *
- * The tests below pin the collapsed shapes across previously-divergent routes.
- */
-
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") return false;
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") return true;
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") return null;
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) return null;
-    throw error;
-  }
-};
 
 const shareService = (): ShareService =>
   ({
@@ -108,8 +59,7 @@ describe("intake — one 401 shape across previously-divergent routes", () => {
 
   for (const { name, build, send } of cases) {
     it(`${name} returns the canonical 401`, async () => {
-      const response = await runSupertestOrSkip(() => send(build()));
-      if (!response) return;
+      const response = await send(build());
 
       expect(response.status).toBe(401);
       const parsed = ApiErrorResponseSchema.parse(response.body);
@@ -138,8 +88,7 @@ describe("intake — one 400 shape across previously-divergent routes", () => {
 
   for (const { name, build, send } of cases) {
     it(`${name} returns the canonical 400`, async () => {
-      const response = await runSupertestOrSkip(() => send(build()));
-      if (!response) return;
+      const response = await send(build());
 
       expect(response.status).toBe(400);
       const parsed = ApiErrorResponseSchema.parse(response.body);
@@ -172,12 +121,9 @@ describe("intake — every invalid field is reported", () => {
       })),
     );
 
-    const response = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/four")
-        .send({ alpha: 1, bravo: "two", charlie: "three", delta: "not-email" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .post("/four")
+      .send({ alpha: 1, bravo: "two", charlie: "three", delta: "not-email" });
 
     expect(response.status).toBe(400);
     const details = ApiErrorResponseSchema.parse(response.body).details ?? "";
@@ -238,10 +184,7 @@ describe("intake — handle() does not invent a success envelope", () => {
       }),
     );
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).post("/bare").send({}),
-    );
-    if (!response) return;
+    const response = await request(app).post("/bare").send({});
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({ spans: [] });
@@ -255,10 +198,7 @@ describe("intake — handle() does not invent a success envelope", () => {
       handle({ auth: "anonymous" }, () => ({ value: 7 })),
     );
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).post("/wrapped").send({}),
-    );
-    if (!response) return;
+    const response = await request(app).post("/wrapped").send({});
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, data: { value: 7 } });
@@ -284,10 +224,7 @@ describe("intake — handle() does not invent a success envelope", () => {
       },
     );
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).post("/boom").send({}),
-    );
-    if (!response) return;
+    const response = await request(app).post("/boom").send({});
 
     expect(response.body).toEqual({ caught: "handler exploded" });
   });

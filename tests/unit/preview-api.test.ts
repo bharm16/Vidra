@@ -1,12 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-
-import { API_CONFIG } from "@/config/api.config";
 import {
   generatePreview,
   getImageAssetViewUrl,
   getVideoAssetViewUrl,
   uploadPreviewImage,
-  generateVideoPreview,
   getVideoPreviewStatus,
 } from "@features/preview/api/previewApi";
 
@@ -71,18 +68,6 @@ describe("previewApi", () => {
       );
     });
 
-    it("rejects when getImageAssetViewUrl receives an empty assetId", async () => {
-      await expect(getImageAssetViewUrl("")).rejects.toThrow(
-        "assetId is required and must be a non-empty string",
-      );
-    });
-
-    it("rejects when getVideoPreviewStatus receives a missing jobId", async () => {
-      await expect(getVideoPreviewStatus("")).rejects.toThrow(
-        "jobId is required",
-      );
-    });
-
     it("throws the API error when uploadPreviewImage fails", async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,
@@ -97,23 +82,6 @@ describe("previewApi", () => {
   });
 
   describe("edge cases", () => {
-    it("accepts a string options argument for generatePreview", async () => {
-      await generatePreview("A prompt", "16:9");
-
-      expect(apiClientMocks.post).toHaveBeenCalledWith(
-        "/preview/generate",
-        expect.objectContaining({
-          prompt: "A prompt",
-          aspectRatio: "16:9",
-        }),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            "Idempotency-Key": expect.any(String),
-          }),
-        }),
-      );
-    });
-
     it("returns a fallback payload when uploadPreviewImage JSON parsing fails", async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
@@ -173,36 +141,6 @@ describe("previewApi", () => {
       );
       expect(apiClientMocks.get).toHaveBeenCalledWith(
         `/preview/video/view?assetId=${encodeURIComponent("video asset")}`,
-      );
-    });
-
-    it("posts a video preview request with timeout and options", async () => {
-      await generateVideoPreview("  Video prompt  ", "16:9", "model-x", {
-        startImage: "https://images.example.com/start.png",
-        inputReference: "ref-1",
-        generationParams: { quality: "high" },
-        characterAssetId: "asset-1",
-        autoKeyframe: true,
-      });
-
-      expect(apiClientMocks.post).toHaveBeenCalledWith(
-        "/preview/video/generate",
-        expect.objectContaining({
-          prompt: "Video prompt",
-          aspectRatio: "16:9",
-          model: "model-x",
-          startImage: "https://images.example.com/start.png",
-          inputReference: "ref-1",
-          generationParams: { quality: "high" },
-          characterAssetId: "asset-1",
-          autoKeyframe: true,
-        }),
-        expect.objectContaining({
-          timeout: API_CONFIG.timeout.video,
-          headers: expect.objectContaining({
-            "Idempotency-Key": expect.any(String),
-          }),
-        }),
       );
     });
 

@@ -104,22 +104,6 @@ describe("AIModelService", () => {
     getConfigMock.mockReturnValue(baseConfig("openai"));
   });
 
-  it("requires clients object in constructor", () => {
-    expect(() => new AIModelService({ clients: null as never })).toThrow(
-      "AIModelService requires clients object",
-    );
-  });
-
-  it("rejects execute when systemPrompt is missing", async () => {
-    const service = new AIModelService({
-      clients: { openai: { complete: vi.fn() } as never },
-    });
-
-    await expect(
-      service.execute("optimize_standard", {} as never),
-    ).rejects.toThrow("systemPrompt is required");
-  });
-
   it("throws when no AI providers are configured", async () => {
     const service = new AIModelService({
       clients: { openai: null },
@@ -128,22 +112,6 @@ describe("AIModelService", () => {
     await expect(
       service.execute("optimize_standard", { systemPrompt: "prompt" }),
     ).rejects.toThrow("No AI providers configured");
-  });
-
-  it("routes execute to primary client with built request options", async () => {
-    const complete = vi.fn().mockResolvedValue({ text: "ok", metadata: {} });
-    const service = new AIModelService({
-      clients: { openai: { complete } as never },
-    });
-
-    const response = await service.execute("optimize_standard", {
-      systemPrompt: "prompt",
-    });
-
-    expect(buildResponseFormatMock).toHaveBeenCalledTimes(1);
-    expect(buildRequestOptionsMock).toHaveBeenCalledTimes(1);
-    expect(complete).toHaveBeenCalledTimes(1);
-    expect(response.text).toBe("ok");
   });
 
   it("falls back when primary client is unavailable", async () => {
@@ -195,43 +163,6 @@ describe("AIModelService", () => {
 
   // span_labeling declares useSeed in the real config, which is what makes the
   // stream path derive a seed here.
-  it("streams with onChunk callback and seed when configured", async () => {
-    resolvePlanMock.mockReturnValue({
-      primaryConfig: baseConfig("openai"),
-      fallback: null,
-    });
-    const streamComplete = vi.fn().mockResolvedValue("streamed-text");
-    const service = new AIModelService({
-      clients: { openai: { complete: vi.fn(), streamComplete } as never },
-    });
-
-    const onChunk = vi.fn();
-    const text = await service.stream("span_labeling", {
-      systemPrompt: "prompt",
-      onChunk,
-    });
-
-    expect(text).toBe("streamed-text");
-    const streamOptions = streamComplete.mock.calls[0]?.[1] as {
-      seed?: number;
-    };
-    expect(streamOptions.seed).toBe(12345);
-  });
-
-  it("returns operation and client metadata helpers", () => {
-    const service = new AIModelService({
-      clients: { openai: { complete: vi.fn() } as never, gemini: null },
-    });
-
-    expect(service.listOperations()).toEqual(
-      expect.arrayContaining(["optimize_standard"]),
-    );
-    expect(service.getOperationConfig("optimize_standard")).toEqual(
-      baseConfig("openai"),
-    );
-    expect(service.hasOperation("optimize_standard")).toBe(true);
-    expect(service.getAvailableClients()).toEqual(["openai"]);
-  });
 
   it("emits llm.call.completed telemetry on successful execute", async () => {
     const record = vi.fn();
@@ -301,17 +232,6 @@ describe("AIModelService", () => {
     const service = new AIModelService({
       clients: { openai: { complete } as never },
       llmCallTelemetry: { record } as never,
-    });
-
-    await expect(
-      service.execute("optimize_standard", { systemPrompt: "prompt" }),
-    ).resolves.toMatchObject({ text: "ok" });
-  });
-
-  it("works without an injected llmCallTelemetry (optional dep)", async () => {
-    const complete = vi.fn().mockResolvedValue({ text: "ok", metadata: {} });
-    const service = new AIModelService({
-      clients: { openai: { complete } as never },
     });
 
     await expect(

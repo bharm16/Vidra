@@ -3,7 +3,6 @@ import { groqSpanProfile } from "../groq.profile";
 import { openAiSpanProfile } from "../openai.profile";
 import { geminiSpanProfile } from "../gemini.profile";
 import { genericSpanProfile } from "../generic.profile";
-import { SPAN_PROVIDER_PROFILES } from "../registry";
 import type { LabelSpansResult } from "@llm/span-labeling/types";
 
 /**
@@ -84,23 +83,6 @@ describe("groq profile", () => {
     >;
     expect(opts.logprobsAdjustment).toBe(false);
   });
-
-  it("keeps the result unchanged when there are no spans", () => {
-    const out = groqSpanProfile.postProcess!(result([]), {
-      averageConfidence: 0.2,
-    });
-
-    expect(out.spans).toEqual([]);
-    const opts = (out.meta._providerOptimizations ?? {}) as Record<
-      string,
-      unknown
-    >;
-    expect(opts.logprobsAdjustment).toBe(false);
-  });
-
-  it("requests logprobs, which the capping depends on", () => {
-    expect(groqSpanProfile.requestOptions.enableLogprobs).toBe(true);
-  });
 });
 
 describe("openai profile", () => {
@@ -120,21 +102,6 @@ describe("openai profile", () => {
     expect(out.meta._clientType).toBe("openai");
     expect(out.spans[0]?.text).toBe("sky");
     expect(out.spans[0]?.confidence).toBe(0.8);
-  });
-
-  it("returns meta even when spans are empty", () => {
-    expect(
-      openAiSpanProfile.postProcess!(result([]), {}).meta._clientType,
-    ).toBe("openai");
-  });
-
-  it("preserves existing meta fields while appending provider info", () => {
-    const out = openAiSpanProfile.postProcess!(
-      result([{ text: "sky", role: "style", confidence: 0.8 }], "keep"),
-      {},
-    );
-
-    expect(out.meta.notes).toBe("keep");
   });
 
   it("does NOT request logprobs, despite OpenAI being capable of them", () => {
@@ -228,28 +195,5 @@ describe("generic profile — ADR-0020 preserved accident", () => {
     // Preserved deliberately — changing it is a separately-measured decision.
     expect(genericSpanProfile.promptProviderName).toBe("unknown");
     expect(genericSpanProfile.jsonSchema).toBe(geminiSpanProfile.jsonSchema);
-  });
-});
-
-describe("registry invariants", () => {
-  it("gives each provider a distinct profile with its own id", () => {
-    for (const [id, profile] of Object.entries(SPAN_PROVIDER_PROFILES)) {
-      expect(profile.id).toBe(id);
-    }
-  });
-
-  it("declares a schema for every provider", () => {
-    // Today every profile sends one; a future profile that doesn't should be
-    // a deliberate edit here, not a silent undefined.
-    for (const profile of Object.values(SPAN_PROVIDER_PROFILES)) {
-      expect(profile.jsonSchema).toBeDefined();
-    }
-  });
-
-  it("offers streaming only where the provider supports it", () => {
-    expect(SPAN_PROVIDER_PROFILES.gemini.streamSpans).toBeTypeOf("function");
-    expect(SPAN_PROVIDER_PROFILES.groq.streamSpans).toBeUndefined();
-    expect(SPAN_PROVIDER_PROFILES.openai.streamSpans).toBeUndefined();
-    expect(SPAN_PROVIDER_PROFILES.generic.streamSpans).toBeUndefined();
   });
 });

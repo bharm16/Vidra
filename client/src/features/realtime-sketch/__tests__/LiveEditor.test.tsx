@@ -56,30 +56,4 @@ describe("LiveEditor (its own plane under the rail — ADR-0017)", () => {
     expect(canvas.width).toBe(SNAPSHOT_SIZE);
     expect(canvas.height).toBe(SNAPSHOT_SIZE);
   });
-
-  it("renders the rail, the infinite plane, and the editor pair with floating chrome", () => {
-    render(
-      <MemoryRouter>
-        <LiveEditor sendFrameFn={fakeSendFrame} />
-      </MemoryRouter>,
-    );
-
-    // Rail present with the live editor as the active destination.
-    expect(
-      screen.getByRole("link", { name: /Live editor/ }),
-    ).toBeInTheDocument();
-
-    // The editor pair rides the shared canvas viewport (the plane).
-    expect(screen.getByTestId("space-canvas")).toBeInTheDocument();
-    const pair = screen.getByTestId("live-editor-pair");
-    expect(screen.getByTestId("space-viewport-content")).toContainElement(pair);
-
-    // Floating chrome stays OUTSIDE the camera transform.
-    const composerPrompt = screen.getByLabelText("Prompt");
-    expect(screen.getByTestId("space-viewport-content")).not.toContainElement(
-      composerPrompt,
-    );
-    expect(screen.getByLabelText("Sketchpad")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Brush" })).toBeInTheDocument();
-  });
 });

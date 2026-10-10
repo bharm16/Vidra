@@ -94,16 +94,4 @@ describe("regression: editing while results are shown keeps the results view", (
       "a fox trots, soft rim light",
     );
   });
-
-  it("falls back to the legacy reset when no displayed-prompt handler is wired", () => {
-    const onResetResultsForEditing = vi.fn();
-
-    const { handleInput } = renderInput({
-      showResults: true,
-      onResetResultsForEditing,
-    });
-    act(() => handleInput());
-
-    expect(onResetResultsForEditing).toHaveBeenCalledTimes(1);
-  });
 });

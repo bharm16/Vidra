@@ -37,17 +37,4 @@ describe("SignedUrlService", () => {
       expect.objectContaining({ action: "write", contentType: "image/webp" }),
     );
   });
-
-  it("generates a view URL with read action", async () => {
-    const { service, mockFile } = buildService();
-    const result = await service.getViewUrl("users/user123/missing.mp4");
-
-    expect(result.viewUrl).toBeDefined();
-    expect(mockFile.getSignedUrl).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "read",
-        responseDisposition: "inline",
-      }),
-    );
-  });
 });

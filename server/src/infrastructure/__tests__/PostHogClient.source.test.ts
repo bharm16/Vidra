@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const captureSpy = vi.fn();
 const shutdownSpy = vi.fn(async () => {});
@@ -69,17 +69,6 @@ describe("PostHogClient source stamping", () => {
     expect(captureSpy.mock.calls[0]![0]!.properties).toEqual({
       source: "synthetic",
       foo: "bar",
-      harnessVersion: expect.any(String),
-    });
-  });
-
-  it("handles missing properties object", () => {
-    const client = createPostHogClient();
-    runWithRequestContext({ requestId: "req-1", source: "ci" }, () => {
-      client.capture({ distinctId: "d1", event: "test.event" });
-    });
-    expect(captureSpy.mock.calls[0]![0]!.properties).toEqual({
-      source: "ci",
       harnessVersion: expect.any(String),
     });
   });

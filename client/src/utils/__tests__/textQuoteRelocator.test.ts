@@ -25,7 +25,7 @@ describe("textQuoteRelocator", () => {
       start: text.indexOf("slow"),
       exact: false,
     });
-    expect(text.slice(result!.start, result!.end)).toContain("slow");
+    expect(text.slice(result!.start, result!.end)).toBe("slow\n  pan");
   });
 
   it("uses context scoring to pick the correct occurrence among duplicates", () => {

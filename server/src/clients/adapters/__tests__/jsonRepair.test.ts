@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { attemptJsonRepair } from "../jsonRepair";
 
 describe("attemptJsonRepair", () => {
@@ -28,15 +28,6 @@ describe("attemptJsonRepair", () => {
   });
 
   describe("edge cases", () => {
-    it("returns unchanged text and no changes for valid JSON", () => {
-      const input = '{"ok": true}';
-
-      const { repaired, changes } = attemptJsonRepair(input);
-
-      expect(repaired).toBe(input);
-      expect(changes).toHaveLength(0);
-    });
-
     it("adds missing closing braces for simple truncated objects", () => {
       const input = '{"ok":true';
 

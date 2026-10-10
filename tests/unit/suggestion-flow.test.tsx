@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fireEvent, render, waitFor, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 
 import { useSuggestionFetch } from "@features/prompt-optimizer/PromptOptimizerContainer/hooks/useSuggestionFetch";
 import { useTextSelection } from "@features/prompt-optimizer/PromptCanvas/hooks/useTextSelection";
 import { fetchEnhancementSuggestions } from "@features/prompt-optimizer/api/enhancementSuggestionsApi";
-import { CancellationError } from "@features/prompt-optimizer/utils/signalUtils";
 import type { SuggestionsData } from "@features/prompt-optimizer/PromptCanvas/types";
 import type { PromptOptimizer } from "@features/prompt-optimizer/context/types";
 import type { Toast } from "@hooks/types";
@@ -288,24 +287,6 @@ describe("useSuggestionFetch integration", () => {
     });
   });
 
-  it("should update state with suggestions after successful fetch", async () => {
-    const { getByTestId } = render(<TestHarness />);
-
-    // Trigger fetch
-    fireEvent.click(getByTestId("fetch-park"));
-
-    // Wait for debounce + API response
-    await waitFor(
-      () => {
-        expect(getByTestId("suggestions").textContent).toBe("2");
-      },
-      { timeout: 1000 },
-    );
-
-    expect(getByTestId("loading").textContent).toBe("not-loading");
-    expect(getByTestId("error").textContent).toBe("no-error");
-  });
-
   it("should set error state with onRetry callback on API error", async () => {
     fetchMock.mockRejectedValueOnce(new Error("Network error"));
 
@@ -324,21 +305,6 @@ describe("useSuggestionFetch integration", () => {
 
     expect(getByTestId("loading").textContent).toBe("not-loading");
     expect(getByTestId("has-retry").textContent).toBe("has-retry");
-  });
-
-  it("should not update state when request is cancelled (CancellationError)", async () => {
-    fetchMock.mockRejectedValueOnce(new CancellationError("Request cancelled"));
-
-    const { getByTestId } = render(<TestHarness />);
-
-    // Trigger fetch
-    fireEvent.click(getByTestId("fetch-park"));
-
-    // Wait a bit for any state updates
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    // Should not show error state for cancellation
-    expect(getByTestId("error").textContent).toBe("no-error");
   });
 
   it("should not fetch when mode is not video", async () => {

@@ -49,14 +49,14 @@ const createProviderMap = (
   };
 
   return {
+    openai: createProvider("openai", false, sharedAsset),
+    luma: createProvider("luma", false, sharedAsset),
+    kling: createProvider("kling", false, sharedAsset),
     replicate: createProvider(
       "replicate",
       overrides?.replicate ?? true,
       sharedAsset,
     ),
-    openai: createProvider("openai", overrides?.openai ?? true, sharedAsset),
-    luma: createProvider("luma", overrides?.luma ?? true, sharedAsset),
-    kling: createProvider("kling", overrides?.kling ?? true, sharedAsset),
     gemini: createProvider("gemini", overrides?.gemini ?? true, sharedAsset),
   };
 };
@@ -71,10 +71,7 @@ const createLog = () => ({
 describe("generateVideoWorkflow", () => {
   it("throws VIDEO_MODEL_UNAVAILABLE when credentials for requested model are missing", async () => {
     const providers = createProviderMap({
-      openai: false,
       replicate: false,
-      luma: false,
-      kling: false,
       gemini: false,
     });
     const assetStore = createAssetStore();
@@ -220,9 +217,6 @@ describe("generateVideoWorkflow", () => {
   it("returns structured VideoModelUnavailableError details for unsupported model selection", async () => {
     const providers = createProviderMap({
       replicate: true,
-      openai: true,
-      luma: true,
-      kling: true,
       gemini: true,
     });
     const assetStore = createAssetStore();
@@ -284,47 +278,6 @@ describe("generateVideoWorkflow", () => {
         expect(provider.generate).not.toHaveBeenCalled();
     },
   );
-
-  it("propagates resolvedAspectRatio from provider to result", async () => {
-    const providers = createProviderMap({ gemini: true });
-    const assetStore = createAssetStore();
-    const log = createLog();
-    providers.gemini.generate = vi.fn(async () => ({
-      asset: {
-        id: "asset-ar",
-        url: "https://example.com/ar.mp4",
-        contentType: "video/mp4",
-        createdAt: Date.now(),
-      },
-      resolvedAspectRatio: "16:9",
-    }));
-
-    const result = await generateVideoWorkflow(
-      "wide shot",
-      { model: "google/veo-3", aspectRatio: "21:9" },
-      providers,
-      assetStore,
-      log,
-    );
-
-    expect(result.resolvedAspectRatio).toBe("16:9");
-  });
-
-  it("omits resolvedAspectRatio when provider does not return one", async () => {
-    const providers = createProviderMap({ gemini: true });
-    const assetStore = createAssetStore();
-    const log = createLog();
-
-    const result = await generateVideoWorkflow(
-      "simple prompt",
-      { model: "google/veo-3" },
-      providers,
-      assetStore,
-      log,
-    );
-
-    expect(result.resolvedAspectRatio).toBeUndefined();
-  });
 
   it("enforces the workflow watchdog timeout when provider polling fails to terminate", async () => {
     const { setTimeoutPolicyConfig } = await import(

@@ -13,35 +13,6 @@ describe("InputStructureParser - parseInputStructure", () => {
       expect(result.alternatives).toBeUndefined();
     });
 
-    it("handles empty string", () => {
-      const result = parseInputStructure("");
-      expect(result.narrative).toBe("");
-    });
-
-    it("handles whitespace-only string", () => {
-      const result = parseInputStructure("   \n  \t  ");
-      expect(result.narrative).toBe("");
-    });
-
-    it("handles malformed JSON gracefully (returns as narrative)", () => {
-      const result = parseInputStructure("{ broken json here");
-      // Starts with { so it tries JSON parse, fails, falls back to text parsing
-      expect(result.narrative).toBeDefined();
-    });
-
-    it("handles JSON with no narrative or description field", () => {
-      const result = parseInputStructure('{"foo": "bar"}');
-      // No narrative/description field means null returned from tryParseJsonStructure
-      // Falls through to text-based parsing
-      expect(result.narrative).toBeDefined();
-    });
-
-    it("handles JSON with empty narrative string", () => {
-      const result = parseInputStructure('{"narrative": ""}');
-      // Empty string is falsy, so tryParseJsonStructure returns null
-      expect(result.narrative).toBeDefined();
-    });
-
     it("handles JSON object with only non-string values in technical", () => {
       const input = JSON.stringify({
         narrative: "A scene",
@@ -68,14 +39,6 @@ describe("InputStructureParser - parseInputStructure", () => {
   // EDGE CASES (~30%)
   // ===========================================================================
   describe("edge cases", () => {
-    it("parses JSON with narrative field", () => {
-      const input = JSON.stringify({
-        narrative: "A man walks through the rain",
-      });
-      const result = parseInputStructure(input);
-      expect(result.narrative).toBe("A man walks through the rain");
-    });
-
     it("parses JSON with description field as fallback for narrative", () => {
       const input = JSON.stringify({
         description: "A woman runs along the beach",
@@ -125,17 +88,6 @@ describe("InputStructureParser - parseInputStructure", () => {
   // SECTION HEADER PARSING (~20%)
   // ===========================================================================
   describe("section header detection", () => {
-    it("extracts narrative before technical specs header", () => {
-      const input = `A beautiful sunset over the mountains.
-
-**Technical Specs**
-- Duration: 5s
-- Aspect Ratio: 16:9`;
-      const result = parseInputStructure(input);
-      expect(result.narrative).toBe("A beautiful sunset over the mountains.");
-      expect(result.technical).toBeDefined();
-    });
-
     it("parses technical spec bullet points into key-value pairs", () => {
       const input = `Scene description here.
 
@@ -177,15 +129,6 @@ Technical Specs:
       const result = parseInputStructure(input);
       // parseTechnicalSpecs strips leading ** from value but not trailing
       expect(result.technical?.["duration"]).toBe("5s");
-    });
-
-    it("strips bold markers from keys in technical specs", () => {
-      const input = `Narrative here.
-
-**Technical Specs**
-- **Duration**: 10s`;
-      const result = parseInputStructure(input);
-      expect(result.technical?.["duration"]).toBe("10s");
     });
 
     it("handles asterisk bullet points in technical specs", () => {

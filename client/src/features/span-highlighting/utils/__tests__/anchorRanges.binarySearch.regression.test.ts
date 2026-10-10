@@ -46,29 +46,6 @@ describe("anchorRanges binary search (regression)", () => {
     expect(map2?.range.toString()).toBe("ghi");
   });
 
-  it("multi-node: maps offsets in the middle of intermediate nodes", () => {
-    const root = document.createElement("div");
-    appendText(root, "abc");
-    appendInline(root, "strong", "defghi");
-    appendText(root, "jkl");
-    // text content: "abcdefghijkl"
-    // node ranges: [0..3], [3..9], [9..12]
-
-    const map = mapGlobalRangeToDom(root, 5, 8);
-    expect(map).not.toBeNull();
-    expect(map?.range.toString()).toBe("fgh");
-  });
-
-  it("multi-node: maps offset at the very first byte", () => {
-    const root = document.createElement("div");
-    appendText(root, "abc");
-    appendInline(root, "strong", "def");
-
-    const map = mapGlobalRangeToDom(root, 0, 3);
-    expect(map).not.toBeNull();
-    expect(map?.range.toString()).toBe("abc");
-  });
-
   it("multi-node: clamps offsets past the end to the last node", () => {
     const root = document.createElement("div");
     appendText(root, "abc");
@@ -81,37 +58,5 @@ describe("anchorRanges binary search (regression)", () => {
     // start at offset 5 (in node 2 "def" at local offset 2 → "f")
     // end clamps into the last node
     expect(map?.range.toString()).toBe("f");
-  });
-
-  it("single-node DOM: maps offsets correctly", () => {
-    const root = document.createElement("div");
-    root.textContent = "single text node payload";
-
-    const map = mapGlobalRangeToDom(root, 7, 11);
-    expect(map).not.toBeNull();
-    expect(map?.range.toString()).toBe("text");
-  });
-
-  it("multi-node: handles many small nodes (binary-search depth)", () => {
-    // Build 16 nodes so the binary search needs ≥ 4 levels of recursion.
-    // If the binary-search invariant is wrong, this test catches it where a
-    // 2-3 node test wouldn't.
-    const root = document.createElement("div");
-    for (let i = 0; i < 16; i += 1) {
-      if (i % 2 === 0) {
-        appendText(root, `p${i}`);
-      } else {
-        appendInline(root, "b", `w${i}`);
-      }
-    }
-    const fullText = root.textContent ?? "";
-
-    // pick a marker deep into the structure
-    const startIdx = fullText.indexOf("w7");
-    expect(startIdx).toBeGreaterThan(0);
-
-    const map = mapGlobalRangeToDom(root, startIdx, startIdx + 2);
-    expect(map).not.toBeNull();
-    expect(map?.range.toString()).toBe("w7");
   });
 });

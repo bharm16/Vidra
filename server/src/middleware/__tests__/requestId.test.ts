@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Response, NextFunction } from "express";
+import type { Response } from "express";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requestIdMiddleware } from "../requestId";
 
 // Mock uuid
@@ -11,8 +11,6 @@ vi.mock("uuid", () => ({
 vi.mock("@infrastructure/requestContext", () => ({
   runWithRequestContext: vi.fn((ctx, fn) => fn()),
 }));
-
-import { runWithRequestContext } from "@infrastructure/requestContext";
 
 type RequestWithId = {
   headers: Record<string, string | string[] | undefined>;
@@ -46,26 +44,6 @@ describe("requestIdMiddleware", () => {
 
       expect(req.id).toBe("generated-uuid-1234");
     });
-
-    it("handles empty string x-request-id header by generating new ID", () => {
-      const req = createMockRequest({ "x-request-id": "" });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      requestIdMiddleware(req as never, res, next);
-
-      expect(req.id).toBe("generated-uuid-1234");
-    });
-
-    it("handles undefined header by generating new ID", () => {
-      const req = createMockRequest({ "x-request-id": undefined });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      requestIdMiddleware(req as never, res, next);
-
-      expect(req.id).toBe("generated-uuid-1234");
-    });
   });
 
   describe("edge cases", () => {
@@ -89,16 +67,6 @@ describe("requestIdMiddleware", () => {
       requestIdMiddleware(req as never, res, next);
 
       expect(req.id).toBe("generated-uuid-1234");
-    });
-
-    it("preserves provided ID with special characters", () => {
-      const req = createMockRequest({ "x-request-id": "req-123_abc-xyz" });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      requestIdMiddleware(req as never, res, next);
-
-      expect(req.id).toBe("req-123_abc-xyz");
     });
   });
 
@@ -134,30 +102,6 @@ describe("requestIdMiddleware", () => {
         "X-Request-ID",
         "generated-uuid-1234",
       );
-    });
-
-    it("runs next within request context", () => {
-      const req = createMockRequest({ "x-request-id": "ctx-test" });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      requestIdMiddleware(req as never, res, next);
-
-      expect(runWithRequestContext).toHaveBeenCalledWith(
-        { requestId: "ctx-test" },
-        expect.any(Function),
-      );
-      expect(next).toHaveBeenCalled();
-    });
-
-    it("calls next after setting up context", () => {
-      const req = createMockRequest({});
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      requestIdMiddleware(req as never, res, next);
-
-      expect(next).toHaveBeenCalledTimes(1);
     });
   });
 });

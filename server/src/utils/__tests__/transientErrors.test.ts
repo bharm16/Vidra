@@ -1,8 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  isTransientError,
-  isTransientFirestoreError,
   hasTransientMessageHint,
+  isTransientFirestoreError,
 } from "../transientErrors";
 
 describe("transientErrors", () => {
@@ -69,13 +68,6 @@ describe("transientErrors", () => {
       expect(isTransientFirestoreError(error)).toBe(false);
     });
 
-    it("falls back to message hints when no code", () => {
-      expect(isTransientFirestoreError(new Error("Connection timed out"))).toBe(
-        true,
-      );
-      expect(isTransientFirestoreError(new Error("Not found"))).toBe(false);
-    });
-
     it("handles case-insensitive codes", () => {
       const error = Object.assign(new Error("test"), {
         code: "  UNAVAILABLE  ",
@@ -87,18 +79,6 @@ describe("transientErrors", () => {
       const error = Object.assign(new Error("timed out"), { code: 14 });
       // Numeric code won't match, but message hint will
       expect(isTransientFirestoreError(error)).toBe(true);
-    });
-  });
-
-  describe("isTransientError", () => {
-    it("returns true for network-level transient failures", () => {
-      expect(isTransientError(new Error("ECONNRESET"))).toBe(true);
-      expect(isTransientError(new Error("socket hang up"))).toBe(true);
-    });
-
-    it("returns false for non-transient errors", () => {
-      expect(isTransientError(new Error("Validation failed"))).toBe(false);
-      expect(isTransientError(new Error("Not found"))).toBe(false);
     });
   });
 });

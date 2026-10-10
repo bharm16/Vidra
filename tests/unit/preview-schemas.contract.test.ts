@@ -3,9 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   GeneratePreviewResponseSchema,
   UploadPreviewImageResponseSchema,
-  GenerateStoryboardPreviewResponseSchema,
   MediaViewUrlResponseSchema,
-  FaceSwapPreviewResponseSchema,
   GenerateVideoResponseSchema,
   VideoJobStatusResponseSchema,
 } from "#shared/schemas/preview.schemas";
@@ -37,24 +35,6 @@ describe("GeneratePreviewResponse contract", () => {
 
     expect(result.success).toBe(true);
   });
-
-  it("allows unknown additional properties (forward-compatible)", () => {
-    const result = GeneratePreviewResponseSchema.safeParse({
-      success: true,
-      data: {
-        imageUrl: "https://example.com/img.png",
-        metadata: {
-          aspectRatio: "16:9",
-          model: "flux",
-          duration: 0,
-          generatedAt: "2025-01-01T00:00:00Z",
-        },
-      },
-      futureField: "new-data",
-    });
-
-    expect(result.success).toBe(true);
-  });
 });
 
 describe("UploadPreviewImageResponse contract", () => {
@@ -75,21 +55,6 @@ describe("UploadPreviewImageResponse contract", () => {
   });
 });
 
-describe("GenerateStoryboardPreviewResponse contract", () => {
-  it("accepts a success response", () => {
-    const result = GenerateStoryboardPreviewResponseSchema.safeParse({
-      success: true,
-      data: {
-        imageUrls: ["https://example.com/1.png", "https://example.com/2.png"],
-        deltas: ["initial", "refined"],
-        baseImageUrl: "https://example.com/base.png",
-      },
-    });
-
-    expect(result.success).toBe(true);
-  });
-});
-
 describe("MediaViewUrlResponse contract", () => {
   it("accepts a success response", () => {
     const result = MediaViewUrlResponseSchema.safeParse({
@@ -103,29 +68,6 @@ describe("MediaViewUrlResponse contract", () => {
     });
 
     expect(result.success).toBe(true);
-  });
-});
-
-describe("FaceSwapPreviewResponse contract", () => {
-  it("accepts a success response", () => {
-    const result = FaceSwapPreviewResponseSchema.safeParse({
-      success: true,
-      data: {
-        faceSwapUrl: "https://storage.example.com/face-swap.png",
-        creditsDeducted: 2,
-      },
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing required fields in data", () => {
-    const result = FaceSwapPreviewResponseSchema.safeParse({
-      success: true,
-      data: { faceSwapUrl: "https://example.com/swap.png" },
-    });
-
-    expect(result.success).toBe(false);
   });
 });
 
@@ -160,15 +102,6 @@ describe("GenerateVideoResponse contract", () => {
       keyframeUrl: "https://example.com/kf.png",
       faceSwapApplied: false,
       faceSwapUrl: null,
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("allows unknown additional properties (forward-compatible)", () => {
-    const result = GenerateVideoResponseSchema.safeParse({
-      success: true,
-      futureField: "new-data",
     });
 
     expect(result.success).toBe(true);

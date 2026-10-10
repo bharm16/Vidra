@@ -56,20 +56,6 @@ describe("useAnimatedPresence", () => {
     window.cancelAnimationFrame = originalCancelAnimationFrame;
   });
 
-  it("stages the initial enter transition before settling to entered", async () => {
-    const { result } = renderHook(() =>
-      useAnimatedPresence(true, { exitMs: 220 }),
-    );
-
-    expect(result.current.shouldRender).toBe(true);
-    expect(result.current.phase).toBe("enter");
-
-    await flushAnimationFrames();
-
-    expect(result.current.shouldRender).toBe(true);
-    expect(result.current.phase).toBe("entered");
-  });
-
   it("starts an exit immediately when closed during enter", async () => {
     const { result, rerender } = renderHook(
       ({ open }) => useAnimatedPresence(open, { exitMs: 220 }),
@@ -114,26 +100,6 @@ describe("useAnimatedPresence", () => {
       vi.advanceTimersByTime(220);
     });
 
-    expect(result.current.shouldRender).toBe(true);
-    expect(result.current.phase).toBe("entered");
-  });
-
-  it("honors the latest rapid toggle state instead of queueing timers", async () => {
-    const { result, rerender } = renderHook(
-      ({ open }) => useAnimatedPresence(open, { exitMs: 220 }),
-      { initialProps: { open: false } },
-    );
-
-    rerender({ open: true });
-    expect(result.current.phase).toBe("enter");
-
-    rerender({ open: false });
-    expect(result.current.phase).toBe("exit");
-
-    rerender({ open: true });
-    expect(result.current.phase).toBe("enter");
-
-    await flushAnimationFrames();
     expect(result.current.shouldRender).toBe(true);
     expect(result.current.phase).toBe("entered");
   });

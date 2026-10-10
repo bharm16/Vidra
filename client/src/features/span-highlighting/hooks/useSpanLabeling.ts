@@ -6,7 +6,6 @@
  * - spanLabelingCache: Caching
  * - spanLabelingScheduler: Scheduling/debouncing
  * - spanLabelingErrorHandler: Error handling
- * - spanLabelingResultEmitter: Result emission
  *
  * Single Responsibility: Orchestrate the span labeling workflow
  */

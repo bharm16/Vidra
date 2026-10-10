@@ -22,14 +22,6 @@ describe("useNavigationConfig", () => {
   });
 
   describe("edge cases", () => {
-    it("returns sidebar variant for workspace exact routes", () => {
-      const { result } = renderHook(() => useNavigationConfig(), {
-        wrapper: wrapWithRouter("/"),
-      });
-
-      expect(result.current.variant).toBe("sidebar");
-    });
-
     it("returns sidebar variant for workspace route prefixes", () => {
       const { result } = renderHook(() => useNavigationConfig(), {
         wrapper: wrapWithRouter("/prompt/abc123"),
@@ -52,18 +44,6 @@ describe("useNavigationConfig", () => {
         wrapper: wrapWithRouter("/support"),
       });
 
-      expect(result.current.variant).toBe("topnav");
-    });
-    it.each([
-      "/assets",
-      "/continuity",
-      "/consistent-video",
-      "/billing",
-      "/pricing",
-    ])("does not register the retired %s route as a workspace", (path) => {
-      const { result } = renderHook(() => useNavigationConfig(), {
-        wrapper: wrapWithRouter(path),
-      });
       expect(result.current.variant).toBe("topnav");
     });
   });

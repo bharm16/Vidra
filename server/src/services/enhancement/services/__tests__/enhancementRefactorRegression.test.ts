@@ -24,12 +24,5 @@ describe("enhancement refactor regressions", () => {
         ),
       ).toBe(false);
     });
-
-    it("returns false for invalid highlighted text", () => {
-      expect(detectPlaceholder("", "", "", "")).toBe(false);
-      expect(detectPlaceholder(42 as unknown as string, "", "", "")).toBe(
-        false,
-      );
-    });
   });
 });

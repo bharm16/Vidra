@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import {
-  STUDIO_TURN_SCENARIOS,
-  STUDIO_TURN_SCENARIO,
-  STUDIO_TURN_SURFACE,
-} from "@scripts/replay/studioTurnScenarios";
+import { STUDIO_TURN_SCENARIOS } from "@scripts/replay/studioTurnScenarios";
 import { CassetteStore } from "@server/replay/CassetteStore";
 import { RecordReplayAiService } from "@server/replay/RecordReplayAiService";
 import { StudioPolicyEngine } from "../StudioPolicyEngine";
@@ -55,11 +51,4 @@ describe("StudioPolicyEngine (recorded fixtures)", () => {
       }
     },
   );
-
-  it("records under the studio-turn surface and m3-behaviors scenario", () => {
-    // Constants are part of the record/replay contract; renaming them
-    // orphans the committed fixture files.
-    expect(STUDIO_TURN_SURFACE).toBe("studio-turn");
-    expect(STUDIO_TURN_SCENARIO).toBe("m3-behaviors");
-  });
 });

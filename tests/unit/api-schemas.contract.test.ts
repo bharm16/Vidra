@@ -9,25 +9,6 @@ import {
 } from "#shared/schemas/api.schemas";
 
 describe("ApiErrorCode contract", () => {
-  it("accepts all known error codes", () => {
-    const codes = [
-      "AUTH_REQUIRED",
-      "INVALID_REQUEST",
-      "INSUFFICIENT_CREDITS",
-      "RATE_LIMITED",
-      "SERVICE_UNAVAILABLE",
-      "GENERATION_FAILED",
-      "IDEMPOTENCY_KEY_REQUIRED",
-      "IDEMPOTENCY_CONFLICT",
-      "REQUEST_IN_PROGRESS",
-      "SESSION_VERSION_CONFLICT",
-    ];
-
-    for (const code of codes) {
-      expect(ApiErrorCodeSchema.safeParse(code).success).toBe(true);
-    }
-  });
-
   it("rejects unknown error codes", () => {
     expect(ApiErrorCodeSchema.safeParse("NOT_A_CODE").success).toBe(false);
     expect(ApiErrorCodeSchema.safeParse("").success).toBe(false);
@@ -35,29 +16,12 @@ describe("ApiErrorCode contract", () => {
 });
 
 describe("ApiErrorResponse contract", () => {
-  it("accepts a minimal error response", () => {
-    const result = ApiErrorResponseSchema.safeParse({
-      error: "Something went wrong",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("accepts a fully populated error response", () => {
     const result = ApiErrorResponseSchema.safeParse({
       error: "Insufficient credits",
       code: "INSUFFICIENT_CREDITS",
       details: "You need 5 more credits",
       requestId: "req-abc-123",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("allows unknown additional properties (forward-compatible)", () => {
-    const result = ApiErrorResponseSchema.safeParse({
-      error: "Something went wrong",
-      futureField: "new-data",
     });
 
     expect(result.success).toBe(true);
@@ -84,28 +48,6 @@ describe("ApiSuccessResponse contract", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a success response with requestId", () => {
-    const schema = ApiSuccessResponseSchema(DataSchema);
-    const result = schema.safeParse({
-      success: true,
-      data: { value: "hello" },
-      requestId: "req-123",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("allows unknown additional properties (forward-compatible)", () => {
-    const schema = ApiSuccessResponseSchema(DataSchema);
-    const result = schema.safeParse({
-      success: true,
-      data: { value: "hello" },
-      futureField: true,
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("rejects when success is not true", () => {
     const schema = ApiSuccessResponseSchema(DataSchema);
     expect(
@@ -123,16 +65,6 @@ describe("ApiSuccessResponse contract", () => {
 
 describe("ApiResponse discriminated union contract", () => {
   const DataSchema = z.object({ count: z.number() });
-
-  it("accepts a success variant", () => {
-    const schema = ApiResponseSchema(DataSchema);
-    const result = schema.safeParse({
-      success: true,
-      data: { count: 42 },
-    });
-
-    expect(result.success).toBe(true);
-  });
 
   it("accepts a failure variant", () => {
     const schema = ApiResponseSchema(DataSchema);

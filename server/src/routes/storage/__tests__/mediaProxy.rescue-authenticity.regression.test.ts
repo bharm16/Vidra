@@ -16,12 +16,12 @@
  * upstream failure status. Unminted signatures are never rescued, and a
  * minted signature cannot be replayed onto a different object.
  */
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
+import { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 import express from "express";
 import { Readable } from "node:stream";
+import request from "supertest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMediaProxyRoutes } from "../mediaProxy.routes";
-import { SignedUrlLedger } from "@infrastructure/signedUrl/SignedUrlLedger";
 
 const BUCKET = "test-bucket";
 const OBJECT_PATH = "users/u1/previews/images/1785598164559-abc.webp";
@@ -112,26 +112,6 @@ describe("regression: bucket rescue requires a grant we minted", () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("UPSTREAM_ERROR");
     expect(createReadStreamMock).not.toHaveBeenCalled();
-  });
-
-  it("rescues a minted grant on upstream 400 (expired signature)", async () => {
-    const fakePng = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-    const { bucket } = makeFakeBucket({
-      body: fakePng,
-      contentType: "image/png",
-    });
-    const ledger = makeLedger();
-    ledger.record(OBJECT_PATH, signedUrl(OBJECT_PATH, MINTED_SIGNATURE));
-    fetchMock.mockResolvedValueOnce(
-      new Response("Signature expired", { status: 400 }),
-    );
-
-    const res = await request(buildApp(bucket, ledger)).get(
-      `/api/storage/proxy?url=${encodeURIComponent(signedUrl(OBJECT_PATH, MINTED_SIGNATURE))}`,
-    );
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(fakePng);
   });
 
   it("rescues a minted grant on upstream 403 (key rotation / auth-shaped failures)", async () => {

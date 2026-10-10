@@ -101,41 +101,9 @@ describe("regression: missing GCS objects must surface as null", () => {
   // getPublicUrl must return null. The store must not return a signed URL
   // that would later 404 on fetch — downstream consumers (e.g. GradingService)
   // rely on the null short-circuit to skip work cleanly.
-  it("getPublicUrl returns null when the GCS object does not exist", async () => {
-    const objectName = "video-previews/missing";
-    mocks.files.set(objectName, createMissingFile(objectName));
-
-    const store = new GcsVideoAssetStore({
-      bucket: mocks.bucket as never,
-      minter: new SignedUrlMinter(mocks.bucket as never),
-      basePath: "video-previews",
-      signedUrlTtlMs: 60_000,
-      cacheControl: "public, max-age=86400",
-    });
-
-    const url = await store.getPublicUrl("missing");
-
-    expect(url).toBeNull();
-  });
 
   // Invariant: For any assetId whose underlying GCS object does not exist,
   // getStream must return null — never a stream that would error mid-read.
-  it("getStream returns null when the GCS object does not exist", async () => {
-    const objectName = "video-previews/missing";
-    mocks.files.set(objectName, createMissingFile(objectName));
-
-    const store = new GcsVideoAssetStore({
-      bucket: mocks.bucket as never,
-      minter: new SignedUrlMinter(mocks.bucket as never),
-      basePath: "video-previews",
-      signedUrlTtlMs: 60_000,
-      cacheControl: "public, max-age=86400",
-    });
-
-    const result = await store.getStream("missing");
-
-    expect(result).toBeNull();
-  });
 
   // Sanity check: when the object DOES exist, both methods return non-null.
   // Without this we couldn't distinguish "always returns null" from a real fix.

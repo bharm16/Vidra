@@ -58,6 +58,7 @@ describe("PromptOptimizationApi", () => {
 
     expect(result.prompt).toContain("Offline Prompt Assistant");
     expect(result.optimizedPrompt).toContain("Offline Prompt Assistant");
+    expect(result.optimizedPrompt).toContain("legacy prompt");
     expect(result.metadata).toEqual(
       expect.objectContaining({
         offline: true,

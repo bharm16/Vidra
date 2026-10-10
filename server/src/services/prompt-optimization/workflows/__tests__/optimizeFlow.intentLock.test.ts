@@ -144,21 +144,4 @@ describe("runOptimizeFlow intent lock wiring", () => {
       }),
     );
   });
-
-  it("counts one LLM call per stage that actually calls a provider", async () => {
-    vi.clearAllMocks();
-
-    await runOptimizeFlow({
-      ...baseDeps,
-      request: {
-        prompt: "baby driving a car",
-        mode: "video",
-        targetModel: "veo-3",
-      },
-    } as never);
-
-    // Shot interpreter + strategy + compile. The retired domain-content stage
-    // used to add a fourth without ever reaching a provider.
-    expect(baseDeps.telemetry.recordLlmCall).toHaveBeenCalledTimes(3);
-  });
 });

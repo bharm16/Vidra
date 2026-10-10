@@ -22,27 +22,13 @@ vi.mock("uuid", () => ({
 }));
 
 import { logger } from "@infrastructure/Logger";
-import {
-  runWithRequestContext,
-  getRequestContext,
-} from "@infrastructure/requestContext";
+import { getRequestContext } from "@infrastructure/requestContext";
 import { requestIdMiddleware } from "@middleware/requestId";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { errorHandler } from "@middleware/errorHandler";
-import { PerformanceMonitor } from "@middleware/performanceMonitor";
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 const mockedLogger = vi.mocked(logger);
-
-describe("requestContext", () => {
-  it("stores and retrieves request context within AsyncLocalStorage scope", () => {
-    const result = runWithRequestContext({ requestId: "req-123" }, () => {
-      return getRequestContext();
-    });
-
-    expect(result).toEqual({ requestId: "req-123" });
-  });
-});
 
 describe("requestIdMiddleware", () => {
   it("uses provided request id and exposes it via context", async () => {
@@ -55,10 +41,9 @@ describe("requestIdMiddleware", () => {
       });
     });
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app).get("/test").set("x-request-id", "incoming-id"),
     );
-    if (!response) return;
 
     expect(response.status).toBe(200);
     expect(response.headers["x-request-id"]).toBe("incoming-id");
@@ -73,8 +58,7 @@ describe("requestIdMiddleware", () => {
       res.json({ id: req.id });
     });
 
-    const response = await runSupertestOrSkip(() => request(app).get("/test"));
-    if (!response) return;
+    const response = await runSupertestRequest(() => request(app).get("/test"));
 
     expect(response.status).toBe(200);
     expect(response.headers["x-request-id"]).toBe("uuid-fixed");
@@ -103,8 +87,7 @@ describe("asyncHandler", () => {
       },
     );
 
-    const response = await runSupertestOrSkip(() => request(app).get("/boom"));
-    if (!response) return;
+    const response = await runSupertestRequest(() => request(app).get("/boom"));
 
     expect(response.status).toBe(500);
     expect(response.body.error).toBe("boom");
@@ -138,12 +121,11 @@ describe("errorHandler", () => {
 
     app.use(errorHandler);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/fail")
         .send({ email: "user@example.com", message: "hello" }),
     );
-    if (!response) return;
 
     expect(response.status).toBe(418);
     expect(response.body.error).toBe("failure");
@@ -167,34 +149,5 @@ describe("errorHandler", () => {
     const meta = matchingCall?.[2] as { bodyPreview?: string };
     expect(typeof meta.bodyPreview).toBe("string");
     expect(meta.bodyPreview as string).toContain("[REDACTED]");
-  });
-});
-
-describe("PerformanceMonitor", () => {
-  const originalEnv = process.env.NODE_ENV;
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
-    vi.restoreAllMocks();
-    vi.clearAllMocks();
-  });
-
-  it("adds response time header and records metrics", async () => {
-    const app = express();
-    const monitor = new PerformanceMonitor();
-
-    app.use((req, res, next) => monitor.trackRequest(req, res, next));
-    app.get("/ok", (req, res) => {
-      req.perfMonitor?.start("work");
-      req.perfMonitor?.end("work");
-      res.json({ ok: true });
-    });
-
-    const response = await runSupertestOrSkip(() => request(app).get("/ok"));
-    if (!response) return;
-
-    expect(response.status).toBe(200);
-    expect(response.headers["x-response-time"]).toMatch(/\d+ms/);
-    expect(mockedLogger.info).toHaveBeenCalled();
   });
 });

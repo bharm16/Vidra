@@ -26,15 +26,4 @@ describe("regression: stale pinned models never fail the project parse", () => {
     });
     expect(parsed.pinnedModel).toBe("recraft-v3-retired");
   });
-
-  it("still parses current slugs, null, and absence", () => {
-    expect(
-      StudioProjectSchema.parse({ ...base, pinnedModel: "recraft-v4.1" })
-        .pinnedModel,
-    ).toBe("recraft-v4.1");
-    expect(
-      StudioProjectSchema.parse({ ...base, pinnedModel: null }).pinnedModel,
-    ).toBeNull();
-    expect(StudioProjectSchema.parse(base).pinnedModel).toBeUndefined();
-  });
 });

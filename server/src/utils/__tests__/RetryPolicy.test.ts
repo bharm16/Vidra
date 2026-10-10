@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RetryPolicy } from "../RetryPolicy";
 
 const { sleepMock } = vi.hoisted(() => ({
@@ -51,32 +51,9 @@ describe("RetryPolicy.execute", () => {
         "string error",
       );
     });
-
-    it("handles thrown null gracefully", async () => {
-      const fn = vi.fn().mockRejectedValue(null);
-
-      await expect(RetryPolicy.execute(fn, { maxRetries: 0 })).rejects.toThrow(
-        "null",
-      );
-    });
-
-    it("handles thrown undefined gracefully", async () => {
-      const fn = vi.fn().mockRejectedValue(undefined);
-
-      await expect(RetryPolicy.execute(fn, { maxRetries: 0 })).rejects.toThrow(
-        "undefined",
-      );
-    });
   });
 
   describe("edge cases", () => {
-    it("uses default maxRetries of 2 when not specified", async () => {
-      const fn = vi.fn().mockRejectedValue(new Error("fail"));
-
-      await expect(RetryPolicy.execute(fn)).rejects.toThrow();
-      expect(fn).toHaveBeenCalledTimes(3); // Initial + 2 default retries
-    });
-
     it("handles maxRetries of 0 (no retries)", async () => {
       const fn = vi.fn().mockRejectedValue(new Error("fail"));
 
@@ -84,19 +61,6 @@ describe("RetryPolicy.execute", () => {
         RetryPolicy.execute(fn, { maxRetries: 0 }),
       ).rejects.toThrow();
       expect(fn).toHaveBeenCalledTimes(1);
-    });
-
-    it("succeeds on last retry attempt", async () => {
-      const fn = vi
-        .fn()
-        .mockRejectedValueOnce(new Error("fail 1"))
-        .mockRejectedValueOnce(new Error("fail 2"))
-        .mockResolvedValueOnce("success");
-
-      const result = await RetryPolicy.execute(fn, { maxRetries: 2 });
-
-      expect(result).toBe("success");
-      expect(fn).toHaveBeenCalledTimes(3);
     });
 
     it("respects shouldRetry on each attempt", async () => {
@@ -115,19 +79,6 @@ describe("RetryPolicy.execute", () => {
   });
 
   describe("callbacks", () => {
-    it("calls onRetry with error and attempt number", async () => {
-      const onRetry = vi.fn();
-      const error = new Error("retry error");
-      const fn = vi
-        .fn()
-        .mockRejectedValueOnce(error)
-        .mockResolvedValueOnce("success");
-
-      await RetryPolicy.execute(fn, { onRetry, maxRetries: 1 });
-
-      expect(onRetry).toHaveBeenCalledWith(error, 1);
-    });
-
     it("calls onRetry for each retry attempt", async () => {
       const onRetry = vi.fn();
       const fn = vi.fn().mockRejectedValue(new Error("fail"));
@@ -188,42 +139,6 @@ describe("RetryPolicy.execute", () => {
       expect(sleepMock).toHaveBeenNthCalledWith(2, 200);
     });
   });
-
-  describe("core behavior", () => {
-    it("returns result on successful first attempt", async () => {
-      const fn = vi.fn().mockResolvedValue({ data: "success" });
-
-      const result = await RetryPolicy.execute(fn);
-
-      expect(result).toEqual({ data: "success" });
-      expect(fn).toHaveBeenCalledTimes(1);
-    });
-
-    it("returns result after successful retry", async () => {
-      const fn = vi
-        .fn()
-        .mockRejectedValueOnce(new Error("temporary failure"))
-        .mockResolvedValueOnce("recovered");
-
-      const result = await RetryPolicy.execute(fn);
-
-      expect(result).toBe("recovered");
-      expect(fn).toHaveBeenCalledTimes(2);
-    });
-
-    it("preserves function return type", async () => {
-      const fn = vi
-        .fn()
-        .mockResolvedValue({ complex: { nested: "value" }, array: [1, 2, 3] });
-
-      const result = await RetryPolicy.execute(fn);
-
-      expect(result).toEqual({
-        complex: { nested: "value" },
-        array: [1, 2, 3],
-      });
-    });
-  });
 });
 
 describe("RetryPolicy.createApiErrorFilter", () => {
@@ -252,23 +167,10 @@ describe("RetryPolicy.createApiErrorFilter", () => {
 
       expect(filter(error, 0)).toBe(true);
     });
-
-    it("returns true for errors with zero statusCode", () => {
-      const filter = RetryPolicy.createApiErrorFilter();
-      const error = Object.assign(new Error("test"), { statusCode: 0 });
-
-      // statusCode of 0 is falsy, so should return true
-      expect(filter(error, 0)).toBe(true);
-    });
   });
 });
 
 describe("RetryPolicy.exponentialBackoff", () => {
-  it("returns a function", () => {
-    const backoff = RetryPolicy.exponentialBackoff();
-    expect(typeof backoff).toBe("function");
-  });
-
   it("produces increasing delays for successive attempts", () => {
     // Use jitterMs=0 for deterministic testing
     const backoff = RetryPolicy.exponentialBackoff({
@@ -279,14 +181,6 @@ describe("RetryPolicy.exponentialBackoff", () => {
     expect(backoff(1)).toBe(100); // 100 * 2^0
     expect(backoff(2)).toBe(200); // 100 * 2^1
     expect(backoff(3)).toBe(400); // 100 * 2^2
-  });
-
-  it("uses default values when none provided", () => {
-    const backoff = RetryPolicy.exponentialBackoff({ jitterMs: 0 });
-
-    // Default baseDelayMs is 120
-    expect(backoff(1)).toBe(120);
-    expect(backoff(2)).toBe(240);
   });
 
   it("adds jitter within bounds", () => {

@@ -41,34 +41,12 @@ function renderCard(onDelete = vi.fn()) {
 }
 
 describe("StudioProjectCard — delete is never one click", () => {
-  it("exposes no delete control until the menu is opened", () => {
-    renderCard();
-
-    // The chip is an overflow menu, not a verb: nothing on the resting card
-    // deletes anything.
-    expect(
-      screen.getByLabelText("Project options: Fox Logo"),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Delete project")).toBeNull();
-  });
-
-  it("opening the menu still does not delete", async () => {
-    const user = userEvent.setup();
-    const onDelete = renderCard();
-
-    await user.click(screen.getByLabelText("Project options: Fox Logo"));
-
-    expect(await screen.findByRole("menuitem")).toHaveTextContent(
-      "Delete project",
-    );
-    expect(onDelete).not.toHaveBeenCalled();
-  });
-
   it("deletes on the named item inside the menu", async () => {
     const user = userEvent.setup();
     const onDelete = renderCard();
 
     await user.click(screen.getByLabelText("Project options: Fox Logo"));
+    expect(onDelete).not.toHaveBeenCalled();
     await user.click(
       await screen.findByRole("menuitem", { name: "Delete project" }),
     );

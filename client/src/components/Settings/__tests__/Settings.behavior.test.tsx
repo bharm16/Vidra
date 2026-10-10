@@ -1,4 +1,3 @@
-import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -45,15 +44,6 @@ describe("Settings preferences and destructive confirmation", () => {
     await user.click(screen.getByRole("button", { name: "Clear All Data" }));
     await user.click(screen.getByRole("button", { name: "Yes, Delete All" }));
     expect(props.onClearAllData).toHaveBeenCalledTimes(1);
-  });
-
-  it("disables clear data when no deletion callback is available", () => {
-    const { onClearAllData, ...props } = buildProps();
-    render(<Settings {...props} />);
-    expect(onClearAllData).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole("button", { name: "Clear All Data" }),
-    ).toBeDisabled();
   });
 
   it("discards a pending confirmation when the dialog is dismissed", async () => {

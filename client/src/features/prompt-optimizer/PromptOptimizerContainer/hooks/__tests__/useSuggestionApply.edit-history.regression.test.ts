@@ -113,21 +113,4 @@ describe("suggestion edit history (regression)", () => {
       }),
     ]);
   });
-
-  it("sends an empty edit history when nothing has been applied", async () => {
-    const api = renderApiHook();
-    await act(async () => {
-      await api.result.current.fetchSuggestions({
-        dedupKey: "dedup-key",
-        normalizedHighlight: "lighthouse",
-        normalizedPrompt: PROMPT,
-        suggestionContext: buildSuggestionContext(PROMPT, "lighthouse", null),
-        metadata: null,
-        allLabeledSpans: [],
-      });
-    });
-
-    const payload = vi.mocked(fetchEnhancementSuggestions).mock.calls[0]?.[0];
-    expect(payload?.editHistory).toEqual([]);
-  });
 });

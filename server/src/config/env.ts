@@ -330,7 +330,7 @@ const devSchema = z.object({
 // The following env vars are intentionally NOT validated here. They're
 // read by scripts/test-models-comparison.ts, evaluation harnesses, and
 // per-LLM-call overrides that should be *absent* in normal runtime.
-// Validating them here would force callers to set them. See scripts/README.md.
+// Validating them here would force callers to set them.
 //
 // Eval overrides: CATEGORIZE_MODEL, CATEGORIZE_PROVIDER, ENHANCE_MODEL,
 //   ENHANCE_PROVIDER, JUDGE_MODEL, JUDGE_PROVIDER, JUDGE_GENERAL_MODEL,

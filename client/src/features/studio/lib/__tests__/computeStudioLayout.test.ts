@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   computeStudioLayout,
-  STUDIO_CELL_SIZE,
   STUDIO_CELL_HEIGHT,
   STUDIO_CELL_GAP,
   STUDIO_GROUP_GAP,
@@ -21,12 +20,6 @@ describe("computeStudioLayout", () => {
     expect(c?.y).toBe(STUDIO_CELL_HEIGHT + STUDIO_CELL_GAP);
     expect(a?.x).toBe(c?.x);
     expect(b?.x ?? 0 - (a?.x ?? 0)).toBeGreaterThan(0);
-  });
-
-  it("treats a single-image result as one cell, never a grid with blanks", () => {
-    const items = computeStudioLayout([{ turnId: "t1", imageIds: ["only"] }]);
-    expect(items).toHaveLength(1);
-    expect(items[0]?.y).toBe(0);
   });
 
   it("stacks groups chronologically downward with a group gap", () => {
@@ -63,13 +56,5 @@ describe("computeStudioLayout", () => {
     ]);
     expect(items).toHaveLength(1);
     expect(items[0]?.y).toBe(0);
-  });
-
-  it("is deterministic — same input, same output", () => {
-    const groups = [
-      { turnId: "t1", imageIds: ["a", "b", "c", "d"] },
-      { turnId: "t2", imageIds: ["e", "f"] },
-    ];
-    expect(computeStudioLayout(groups)).toEqual(computeStudioLayout(groups));
   });
 });

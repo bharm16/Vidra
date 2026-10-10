@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 
 import { extractPatternSpans } from "@llm/span-labeling/nlp/tier1/patterns";
 import { extractClosedVocabulary } from "@llm/span-labeling/nlp/tier1/closedVocabulary";
-import { mergeSpans, deduplicateSpans } from "@llm/span-labeling/nlp/merge";
+import { deduplicateSpans } from "@llm/span-labeling/nlp/merge";
 import { filterSectionHeaders } from "@llm/span-labeling/nlp/filters/sectionHeaders";
 import SpanLabelingConfig from "@llm/span-labeling/config/SpanLabelingConfig";
 
@@ -91,34 +91,6 @@ describe("merge and deduplicate spans", () => {
     expect(result).toHaveLength(1);
     expect(result[0]?.source).toBe("pattern");
     expect(result[0]?.role).toBe("camera");
-  });
-
-  it("merges lists of spans by deduplicating", () => {
-    const merged = mergeSpans(
-      [
-        {
-          text: "Pan",
-          start: 0,
-          end: 3,
-          role: "camera.movement",
-          confidence: 1,
-          source: "pattern",
-        },
-      ],
-      [
-        {
-          text: "Pan",
-          start: 0,
-          end: 3,
-          role: "camera.movement",
-          confidence: 0.7,
-          source: "gliner",
-        },
-      ],
-    );
-
-    expect(merged).toHaveLength(1);
-    expect(merged[0]?.source).toBe("pattern");
   });
 });
 

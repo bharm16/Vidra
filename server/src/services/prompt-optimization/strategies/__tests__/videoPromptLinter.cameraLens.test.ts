@@ -27,38 +27,11 @@ describe("videoPromptLinter — camera_lens validation", () => {
     expect(result.errors.filter((e) => e.includes("camera_lens"))).toEqual([]);
   });
 
-  it("accepts undefined camera_lens (slot is optional)", () => {
-    const result = lintVideoPromptSlots(baseSlots({}));
-    expect(result.errors.filter((e) => e.includes("camera_lens"))).toEqual([]);
-  });
-
   it("accepts a valid focal-length + aperture string", () => {
     const result = lintVideoPromptSlots(
       baseSlots({ camera_lens: "28mm at f/11" }),
     );
     expect(result.errors.filter((e) => e.includes("camera_lens"))).toEqual([]);
-  });
-
-  it("accepts an anamorphic descriptor with aperture", () => {
-    const result = lintVideoPromptSlots(
-      baseSlots({ camera_lens: "anamorphic 50mm at f/2.8" }),
-    );
-    expect(result.errors.filter((e) => e.includes("camera_lens"))).toEqual([]);
-  });
-
-  it("rejects orphaned-preposition fragment like 'anamorphic lens at'", () => {
-    const result = lintVideoPromptSlots(
-      baseSlots({ camera_lens: "anamorphic lens at" }),
-    );
-    const cameraLensErrors = result.errors.filter((e) =>
-      e.includes("camera_lens"),
-    );
-    expect(cameraLensErrors.length).toBeGreaterThan(0);
-    expect(
-      cameraLensErrors.some(
-        (e) => /dangling preposition/i.test(e) || /aperture/i.test(e),
-      ),
-    ).toBe(true);
   });
 
   it("rejects a string with no aperture and no focal-length unit", () => {

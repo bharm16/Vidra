@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createHighlightWrapper,
   enhanceWrapperWithMetadata,
-  logEmptyWrappers,
   unwrapHighlight,
 } from "@features/span-highlighting/utils/domManipulation";
 import { DATASET_KEYS } from "@features/span-highlighting/config/constants";
@@ -67,17 +66,5 @@ describe("domManipulation", () => {
 
     expect(parent.textContent).toBe("hello");
     expect(parent.querySelector("span")).toBeNull();
-  });
-
-  it("logs when no wrappers are created in debug mode", () => {
-    expect(() =>
-      logEmptyWrappers(
-        { quote: "text", start: 0, end: 1 },
-        0,
-        1,
-        { nodes: [], length: 0 },
-        document.createElement("div"),
-      ),
-    ).not.toThrow();
   });
 });

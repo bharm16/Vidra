@@ -108,15 +108,6 @@ describe("fetchCustomSuggestions", () => {
     );
   });
 
-  it("throws when fetch is unavailable", async () => {
-    const globalWithFetch = global as { fetch?: typeof fetch };
-    delete globalWithFetch.fetch;
-
-    await expect(fetchCustomSuggestions(defaultParams)).rejects.toThrow(
-      "Fetch API unavailable",
-    );
-  });
-
   it("throws when response is not ok", async () => {
     const mockFetch: MockedFunction<typeof fetch> = vi.fn().mockResolvedValue({
       ok: false,

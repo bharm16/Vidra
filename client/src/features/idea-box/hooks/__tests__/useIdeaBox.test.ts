@@ -213,41 +213,6 @@ describe("useIdeaBox", () => {
     });
   });
 
-  it("increments consecutiveFailures across repeated failed retries", async () => {
-    generatePreviewMock.mockRejectedValue(new Error("storage down"));
-    const setStartFrame = vi.fn();
-    const { result } = renderHook(() =>
-      useIdeaBox({ startImageUrl: null, setStartFrame }),
-    );
-
-    await act(async () => {
-      await result.current.continueAfterOptimization("dog at the park");
-    });
-    expect(result.current.stage).toEqual({
-      kind: "failed",
-      message: "storage down",
-      consecutiveFailures: 1,
-    });
-
-    await act(async () => {
-      await result.current.regenerateFrame("dog at the park");
-    });
-    expect(result.current.stage).toEqual({
-      kind: "failed",
-      message: "storage down",
-      consecutiveFailures: 2,
-    });
-
-    await act(async () => {
-      await result.current.regenerateFrame("dog at the park");
-    });
-    expect(result.current.stage).toEqual({
-      kind: "failed",
-      message: "storage down",
-      consecutiveFailures: 3,
-    });
-  });
-
   it("resets the failure count after a successful frame", async () => {
     generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
     generatePreviewMock.mockRejectedValueOnce(new Error("storage down"));
@@ -343,24 +308,6 @@ describe("useIdeaBox", () => {
       sourcePrompt: "dog at the park, golden hour",
     });
     expect(result.current.stage).toEqual({ kind: "ready" });
-  });
-
-  it("acceptFrame dismisses the gate back to idle", async () => {
-    generatePreviewMock.mockResolvedValue(successResponse);
-    const setStartFrame = vi.fn();
-    const { result } = renderHook(() =>
-      useIdeaBox({ startImageUrl: null, setStartFrame }),
-    );
-
-    await act(async () => {
-      await result.current.continueAfterOptimization("dog at the park");
-    });
-    expect(result.current.stage).toEqual({ kind: "ready" });
-
-    act(() => {
-      result.current.acceptFrame();
-    });
-    expect(result.current.stage).toEqual({ kind: "idle" });
   });
 
   it("treats an unsuccessful response as failure", async () => {

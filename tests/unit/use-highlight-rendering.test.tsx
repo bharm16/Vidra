@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useHighlightRendering } from "@features/span-highlighting/hooks/useHighlightRendering";
 import type { ParseResult } from "@features/span-highlighting/hooks/types";
+import { useHighlightRendering } from "@features/span-highlighting/hooks/useHighlightRendering";
 
 vi.mock("@/services/LoggingService", () => ({
   logger: {

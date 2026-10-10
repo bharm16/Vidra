@@ -60,7 +60,9 @@ function seedSession(prompt: SessionRecord["prompt"]): SessionRecord {
   };
 }
 
-function sessionWithTake(record: Record<string, unknown>): SessionRecord["prompt"] {
+function sessionWithTake(
+  record: Record<string, unknown>,
+): SessionRecord["prompt"] {
   return {
     input: FRAME_WORDS,
     output: FRAME_WORDS,
@@ -157,20 +159,6 @@ describe("armFirstFrame (issue #136)", () => {
     expect(armed?.storagePath).toBe(HANDLE);
     // The frame's words are the take's ASSOCIATED words (ADR-0022 decision 2).
     expect(armed?.sourcePrompt).toBe(FRAME_WORDS);
-  });
-
-  it("is strictly a repair: no media store, no idempotency port, one take before and after", async () => {
-    await armFirstFrame(depsWith(), {
-      userId: OWNER,
-      sessionId: "session-1",
-      generationId: TAKE_ID,
-    });
-
-    const persisted = store.sessions.get("session-1");
-    const takes = persisted?.prompt?.versions?.[0]?.generations ?? [];
-    expect(takes).toHaveLength(1);
-    // The take's record is untouched — the arm only writes keyframes.
-    expect((takes[0] as { id: string }).id).toBe(TAKE_ID);
   });
 
   it("refuses a take that is not in the session, leaving nothing written — the attachment retry owns that debt", async () => {

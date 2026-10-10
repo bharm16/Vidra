@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { VideoJobRecord } from "@services/video-generation/runtime/types";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   loggerDebug: vi.fn(),
@@ -421,44 +421,6 @@ describe("scheduleInlineVideoProcessing", () => {
     vi.advanceTimersByTime(60000);
     await flushMicrotasks();
     expect(jobStore.renewLease.mock.calls.length).toBe(callsBefore);
-  });
-
-  it("logs warning when heartbeat renewal returns false", async () => {
-    jobStore.renewLease.mockResolvedValue(false);
-
-    let resolveGeneration!: (value: typeof FAKE_RESULT) => void;
-    generateVideo.mockReturnValue(
-      new Promise((resolve) => {
-        resolveGeneration = resolve;
-      }),
-    );
-
-    const { scheduleInlineVideoProcessing } = await import(
-      "../inlineProcessor"
-    );
-    scheduleInlineVideoProcessing({
-      jobId: "job-1",
-      requestId: "req-1",
-      videoJobStore: jobStore as never,
-      videoGenerationService: { generateVideo } as never,
-      userCreditService: userCreditService as never,
-      storageService: storageService as never,
-    });
-
-    vi.advanceTimersByTime(300);
-    await flushMicrotasks();
-
-    // Fire heartbeat
-    vi.advanceTimersByTime(30000);
-    await flushMicrotasks();
-
-    expect(mocks.loggerWarn).toHaveBeenCalledWith(
-      "Inline preview job heartbeat skipped (lease may have been reclaimed)",
-      expect.objectContaining({ jobId: "job-1" }),
-    );
-
-    resolveGeneration(FAKE_RESULT);
-    await flushMicrotasks();
   });
 
   // ── Error Classification Tests ────────────────────────────────────

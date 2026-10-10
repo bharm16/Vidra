@@ -11,15 +11,6 @@ import { LocalStoragePromptRepository } from "../LocalStoragePromptRepository";
  * infinite "Loading prompt…" spinner at /session/<id>.
  */
 describe("regression: local session ids never classify as remote", () => {
-  it("classifies any digit-only id as local", () => {
-    fc.assert(
-      fc.property(fc.nat(), (n) => {
-        expect(isRemoteSessionId(String(n))).toBe(false);
-      }),
-      { numRuns: 100 },
-    );
-  });
-
   it("classifies ids produced by LocalStoragePromptRepository.save as local", async () => {
     const repository = new LocalStoragePromptRepository();
     const result = await repository.save("anonymous", {

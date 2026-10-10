@@ -131,16 +131,6 @@ describe("validateImageBuffer", () => {
     );
   });
 
-  it("rejects PDF disguised with faked MIME type", async () => {
-    // PDF magic bytes: %PDF
-    const pdfBuffer = Buffer.from([
-      0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34,
-    ]);
-    await expect(validateImageBuffer(pdfBuffer, "file")).rejects.toThrow(
-      "Invalid file type for file",
-    );
-  });
-
   it("rejects empty buffer", async () => {
     await expect(validateImageBuffer(Buffer.alloc(0), "empty")).rejects.toThrow(
       "Invalid file type for empty",

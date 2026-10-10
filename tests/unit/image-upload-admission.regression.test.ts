@@ -11,7 +11,7 @@ import type {
   AdmissionIdempotencyPort,
   AdmissionMediaStore,
 } from "@services/admission/admitPictureTake";
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 /**
  * Uploading a first frame INSIDE a session admits it as a take — issue #86,
@@ -240,14 +240,13 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
   it("admits an uploaded first frame as a picture take under the named words-version", async () => {
     const harness = createHarness();
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(harness.app).post("/preview/upload").send({
         sessionId: SESSION_ID,
         promptVersionId: "v1",
         admissionKey: "admit-1",
       }),
     );
-    if (!res) return;
 
     expect(res.status).toBe(201);
     expect(typeof res.body?.data?.generationId).toBe("string");
@@ -256,6 +255,7 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
 
     const takes = takesIn(harness, "v1");
     expect(takes).toHaveLength(1);
+    expect(takesIn(harness, "v2")).toHaveLength(0);
     const record = takes[0] as Record<string, unknown>;
     expect(record.id).toBe(res.body.data.generationId);
     expect(record.origin).toBe("upload");
@@ -269,29 +269,11 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
     expect(harness.legacyStorage.uploadBuffer).not.toHaveBeenCalled();
   });
 
-  it("binds the take to the words-version the REQUEST named, not to the session's newest version", async () => {
-    const harness = createHarness();
-
-    const res = await runSupertestOrSkip(() =>
-      request(harness.app).post("/preview/upload").send({
-        sessionId: SESSION_ID,
-        // v2 exists and is newer; the request says v1 and that is what binds.
-        promptVersionId: "v1",
-        admissionKey: "admit-version",
-      }),
-    );
-    if (!res) return;
-
-    expect(res.status).toBe(201);
-    expect(takesIn(harness, "v1")).toHaveLength(1);
-    expect(takesIn(harness, "v2")).toHaveLength(0);
-  });
-
   it("returns the same take on a retry with the same admission key", async () => {
     const harness = createHarness();
 
     const send = () =>
-      runSupertestOrSkip(() =>
+      runSupertestRequest(() =>
         request(harness.app).post("/preview/upload").send({
           sessionId: SESSION_ID,
           promptVersionId: "v1",
@@ -301,7 +283,6 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
 
     const first = await send();
     const second = await send();
-    if (!first || !second) return;
 
     expect(second.body?.data?.generationId).toBe(
       first.body?.data?.generationId,
@@ -313,14 +294,13 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
   it("refuses an admission into a session the creator does not own, and stores nothing", async () => {
     const harness = createHarness("someone-else");
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(harness.app).post("/preview/upload").send({
         sessionId: SESSION_ID,
         promptVersionId: "v1",
         admissionKey: "admit-intruder",
       }),
     );
-    if (!res) return;
 
     expect(res.status).toBe(404);
     expect(harness.mediaStore.calls).toBe(0);
@@ -330,12 +310,11 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
   it("rejects a half-named admission rather than silently falling back to a reference image", async () => {
     const harness = createHarness();
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(harness.app)
         .post("/preview/upload")
         .send({ sessionId: SESSION_ID }),
     );
-    if (!res) return;
 
     expect(res.status).toBe(400);
     expect(harness.mediaStore.calls).toBe(0);
@@ -345,10 +324,9 @@ describe("POST /preview/upload — first-frame admission (issue #86)", () => {
   it("keeps today's behaviour for a reference image that names no destination", async () => {
     const harness = createHarness();
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(harness.app).post("/preview/upload").send({ source: "sidebar" }),
     );
-    if (!res) return;
 
     expect(res.status).toBe(201);
     expect(res.body?.data?.imageUrl).toBe(
@@ -547,6 +525,7 @@ describe("pending reference admission (issue #119)", () => {
     expect(harness.store.mutate).not.toHaveBeenCalled();
   });
   it("rejects another creator's destination even when the reference is owned", async () => {
+    // The request creator is "other"; the destination session belongs to OWNER.
     const harness = createHarness("other");
     const result = await request(harness.app)
       .post("/preview/upload/admit-reference")

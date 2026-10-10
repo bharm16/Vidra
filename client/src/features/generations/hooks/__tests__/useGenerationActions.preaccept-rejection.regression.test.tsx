@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/services/http/ApiError";
+
 import { clearVideoInputSupportCache } from "../../utils/videoInputSupport";
 import { useGenerationActions } from "../useGenerationActions";
 
@@ -36,35 +36,6 @@ describe("regression: pre-accept generation failures", () => {
       version: "1",
       fields: {},
     });
-  });
-
-  it("does not create a generation entry when a draft request is rejected for insufficient credits before acceptance", async () => {
-    const dispatch = vi.fn();
-    const onInsufficientCredits = vi.fn();
-    generateVideoPreviewMock.mockRejectedValue(
-      new ApiError("Insufficient credits", 402, {
-        code: "INSUFFICIENT_CREDITS",
-      }),
-    );
-
-    const { result } = renderHook(() =>
-      useGenerationActions(dispatch, { onInsufficientCredits }),
-    );
-
-    await act(async () => {
-      await result.current.generateDraft("wan-2.2", "A cinematic fox", {});
-    });
-
-    // ISSUE-12 follow-up: ADD_GENERATION retired; state growth now flows
-    // through SET_GENERATIONS. A 402 rejection must not grow the set.
-    expect(dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: "SET_GENERATIONS" }),
-    );
-    expect(dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: "UPDATE_GENERATION" }),
-    );
-    expect(onInsufficientCredits).toHaveBeenCalledWith(28, "Wan 2.2 preview");
-    expect(result.current.isSubmitting).toBe(false);
   });
 
   it("suppresses duplicate submit attempts while the request is still being accepted", async () => {

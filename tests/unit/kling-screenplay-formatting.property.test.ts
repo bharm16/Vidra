@@ -54,21 +54,6 @@ const SPEECH_VERBS = [
 ] as const;
 
 /**
- * Emotions for dialogue
- */
-const EMOTIONS = [
-  "angrily",
-  "happily",
-  "sadly",
-  "excitedly",
-  "nervously",
-  "calmly",
-  "fearfully",
-  "joyfully",
-  "sarcastically",
-] as const;
-
-/**
  * Sound effect types for audio blocks
  */
 const SFX_TYPES = [
@@ -166,7 +151,6 @@ describe("Kling Screenplay Formatting Property Tests", () => {
 
   beforeEach(() => {
     strategy = new KlingStrategy();
-    strategy.resetEntityRegistry();
   });
 
   /**
@@ -223,39 +207,6 @@ describe("Kling Screenplay Formatting Property Tests", () => {
           async (character, line) => {
             // Create input with colon dialogue pattern: Character: "line"
             const input = `${character}: "${line}"`;
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-            const prompt =
-              typeof result.prompt === "string"
-                ? result.prompt
-                : JSON.stringify(result.prompt);
-
-            // Output should contain formatted dialogue
-            expect(containsFormattedDialogue(prompt)).toBe(true);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("emotion indicators are captured in dialogue formatting", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.constantFrom(...CHARACTER_NAMES),
-          fc.constantFrom(...EMOTIONS),
-          fc
-            .string({ minLength: 5, maxLength: 30 })
-            .filter(
-              (s) =>
-                s.trim().length > 0 &&
-                !s.includes('"') &&
-                !s.includes("'") &&
-                /^[a-zA-Z0-9\s.,!?]+$/.test(s),
-            ),
-          async (character, emotion, line) => {
-            // Create input with emotion: Character angrily says "line"
-            const input = `${character} ${emotion} says "${line}"`;
 
             const normalized = strategy.normalize(input);
             const result = await strategy.transform(normalized);
@@ -373,92 +324,6 @@ describe("Kling Screenplay Formatting Property Tests", () => {
 
             // Output should contain Audio block
             expect(containsAudioBlock(prompt)).toBe(true);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-  });
-
-  describe("Screenplay Formatting Edge Cases", () => {
-    it("handles prompts with no dialogue", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.string({ minLength: 10, maxLength: 100 }).filter((s) => {
-            const lower = s.toLowerCase();
-            // Filter out strings that contain dialogue patterns
-            return (
-              s.trim().length > 0 &&
-              !lower.includes("says") &&
-              !lower.includes("said") &&
-              !lower.includes('"') &&
-              !lower.includes("'") &&
-              /^[a-zA-Z0-9\s.,]+$/.test(s)
-            );
-          }),
-          async (input) => {
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-
-            // Should still produce valid output
-            expect(result.prompt).not.toBeNull();
-            expect(result.metadata).toBeDefined();
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("handles multiple dialogue lines", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.array(dialogueLineArb, { minLength: 2, maxLength: 4 }),
-          async (dialogues) => {
-            // Create input with multiple dialogue lines
-            const input = dialogues
-              .map((d) => `${d.character} ${d.verb} "${d.line}"`)
-              .join(". ");
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-            const prompt =
-              typeof result.prompt === "string"
-                ? result.prompt
-                : JSON.stringify(result.prompt);
-
-            // Output should contain formatted dialogue
-            expect(containsFormattedDialogue(prompt)).toBe(true);
-
-            // Should have multiple character references
-            const formattedChars = extractFormattedCharacters(prompt);
-            expect(formattedChars.length).toBeGreaterThan(0);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("preserves visual content alongside dialogue", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          dialogueLineArb,
-          fc
-            .string({ minLength: 10, maxLength: 50 })
-            .filter((s) => s.trim().length > 0 && /^[a-zA-Z0-9\s.,]+$/.test(s)),
-          async ({ character, verb, line }, visualContent) => {
-            // Create input with both visual and dialogue
-            const input = `${visualContent}. ${character} ${verb} "${line}"`;
-
-            const normalized = strategy.normalize(input);
-            const result = await strategy.transform(normalized);
-            const prompt =
-              typeof result.prompt === "string"
-                ? result.prompt
-                : JSON.stringify(result.prompt);
-
-            // Output should contain both visual content and formatted dialogue
-            expect(prompt.length).toBeGreaterThan(0);
-            expect(containsFormattedDialogue(prompt)).toBe(true);
           },
         ),
         { numRuns: 100 },

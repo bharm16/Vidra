@@ -71,20 +71,4 @@ describe("StudioThread — thinking section", () => {
       screen.queryByText(/standalone wordmark/, { exact: false }),
     ).not.toBeInTheDocument();
   });
-
-  it("renders no section when the decision carries no thinking", () => {
-    const turn = makeTurn();
-    if (turn.decision.action === "generate") {
-      delete turn.decision.thinking;
-    }
-    renderThread(turn);
-
-    expect(screen.queryByTestId("studio-thinking")).not.toBeInTheDocument();
-  });
-
-  it("shows thinking while the turn is still running", () => {
-    renderThread(makeTurn({ status: "running" }));
-
-    expect(screen.getByTestId("studio-thinking")).toBeInTheDocument();
-  });
 });

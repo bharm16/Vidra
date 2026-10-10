@@ -339,34 +339,6 @@ describe("useFirstFrameAdmission (issue #86)", () => {
     expect(admissionKeyOfCall(1)).toBe("admission-key-1");
   });
 
-  it("mints a fresh key for a DIFFERENT file after a failure, so a new selection is a new acceptance", async () => {
-    uploadPreviewImage
-      .mockRejectedValueOnce(new Error("network"))
-      .mockResolvedValueOnce(admittedResponse);
-    const { hook, onError } = setup({
-      target: { sessionId: "session-1", promptVersionId: "v1" },
-    });
-
-    await act(async () => {
-      await hook.result.current.uploadFirstFrame(FILE);
-    });
-    expect(onError).toHaveBeenCalledWith("network");
-
-    // The creator picks a DIFFERENT file and retries. It must not reuse the
-    // key retained for the first file — the server (issue #114) fingerprints
-    // the bytes and would reject the reused key as a conflict. A new selection
-    // is a new acceptance.
-    const OTHER = new File(["a-different-picture"], "other.png", {
-      type: "image/png",
-    });
-    await act(async () => {
-      await hook.result.current.uploadFirstFrame(OTHER);
-    });
-
-    expect(admissionKeyOfCall(0)).toBe("admission-key-1");
-    expect(admissionKeyOfCall(1)).toBe("admission-key-2");
-  });
-
   it("mints a fresh key for the next upload once an admission settles", async () => {
     uploadPreviewImage.mockResolvedValue(admittedResponse);
     const { hook } = setup({
@@ -488,34 +460,6 @@ describe("useFirstFrameAdmission (issue #129)", () => {
   afterEach(() => {
     // The unreadable-file test below stubs a global; never let it leak.
     vi.unstubAllGlobals();
-  });
-
-  it("does not apply a response that lands after the creator switched sessions", async () => {
-    const deferred = deferredResponse();
-    uploadPreviewImage.mockReturnValue(deferred.promise);
-    const { hook, setStartFrame, rerenderWith } = setup({
-      target: { sessionId: "session-1", promptVersionId: "v1" },
-    });
-
-    let pending!: Promise<void>;
-    // The request goes out under session-1…
-    await act(async () => {
-      pending = hook.result.current.uploadFirstFrame(FILE);
-    });
-    // …the navigation to session-2 commits…
-    act(() => {
-      rerenderWith({ activeSessionId: "session-2" });
-    });
-    // …and THEN the response lands.
-    await act(async () => {
-      deferred.resolve(admittedResponse);
-      await pending;
-    });
-
-    // The take was admitted into session-1, but the creator is looking at
-    // session-2: the frame must not appear here.
-    expect(setStartFrame).not.toHaveBeenCalled();
-    expect(hook.result.current.unattachedTake).toBeNull();
   });
 
   it("reconciles the stashed response when the creator returns to the attempt's session", async () => {

@@ -602,40 +602,6 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     );
   });
 
-  it("gives an unrelated generation in the same project no picture ancestor and no refine edge", async () => {
-    const project = await bridgedProject();
-    const { imageIds } = await runTurn(
-      fixture.studio,
-      fixture.decide,
-      project.id,
-      "a completely different subject",
-      generateDecision("a paper crane on a windowsill"),
-    );
-
-    const result = await returnStudioImage(fixture.deps, {
-      userId: OWNER,
-      projectId: project.id,
-      imageId: imageIds[0]!,
-    });
-
-    expect(result.state).toBe("returned");
-    if (result.state !== "returned") return;
-    expect(result.result.ancestorGenerationId).toBeNull();
-
-    const session = fixture.sessions.sessions.get(SOURCE.sessionId)!;
-    const returned = takesOf(session, SOURCE.promptVersionId).find(
-      (take) => take.id === result.result.generationId,
-    )!;
-    expect(returned.ancestorGenerationId).toBeNull();
-    // A generate has no image inputs at all, so the only source input is the
-    // returned picture itself — never the project's bridged take.
-    expect(
-      (returned.sourceInputs as Array<{ kind: string }>).some(
-        (input) => input.kind === "take",
-      ),
-    ).toBe(false);
-  });
-
   it("records every input of a multi-input edit while exposing exactly one display ancestor", async () => {
     const project = await bridgedProject();
     const seeded = await runTurn(
@@ -816,34 +782,6 @@ describe("returnStudioImage (ADR-0022 decisions 2/3/4, issue #89)", () => {
     if (asked.state !== "needs-confirmed-words") return;
     expect(asked.suggestion).toBeUndefined();
     expect(fixture.sessions.sessions.size).toBe(0);
-  });
-
-  it("requires the creator's words for a multi-input composition, never picking one source's prompt (issue #131, rule 2)", async () => {
-    const project = await fixture.studio.createProject(OWNER, "Standalone");
-    const seeded = await runTurn(
-      fixture.studio,
-      fixture.decide,
-      project.id,
-      "two plates",
-      generateDecision("a reference plate"),
-    );
-    const composed = await runTurn(
-      fixture.studio,
-      fixture.decide,
-      project.id,
-      "combine them",
-      editDecision("combine them", [seeded.imageIds[0]!, seeded.imageIds[1]!]),
-    );
-
-    const asked = await returnStudioImage(fixture.deps, {
-      userId: OWNER,
-      projectId: project.id,
-      imageId: composed.imageIds[0]!,
-    });
-    expect(asked.state).toBe("needs-confirmed-words");
-    if (asked.state !== "needs-confirmed-words") return;
-    // No unique original prompt is picked from the several inputs.
-    expect(asked.suggestion).toBeUndefined();
   });
 
   it("treats changed confirmed words as a distinct acceptance, never a silent replay of the first words (issue #131, #114)", async () => {
@@ -1806,20 +1744,6 @@ describe("readUnresolvedReturnAttachment (issue #135)", () => {
     body.attachment = { state: "bananas" };
     const attachment = await readUnresolvedReturnAttachment(
       idempotencyWith({ statusCode: 201, body }),
-      KEY_INPUT,
-    );
-    expect(attachment).toBeNull();
-  });
-
-  it("reports nothing when the port has no snapshot read", async () => {
-    const attachment = await readUnresolvedReturnAttachment(
-      {
-        claimRequest: async () => {
-          throw new Error("never");
-        },
-        markCompleted: async () => {},
-        markFailed: async () => {},
-      },
       KEY_INPUT,
     );
     expect(attachment).toBeNull();

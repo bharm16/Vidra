@@ -11,12 +11,19 @@ import {
 const mockApiGet = vi.hoisted(() => vi.fn());
 vi.mock("@/services/ApiClient", () => ({ apiClient: { get: mockApiGet } }));
 const buildSession = (overrides: Partial<SessionDto> = {}): SessionDto => ({
-  id: "session-1", userId: "user-1", name: "Session", status: "active",
-  createdAt: "2026-02-12T00:00:00.000Z", updatedAt: "2026-02-12T00:00:00.000Z",
-  prompt: { input: "Keep this prompt", output: "Generated output" }, ...overrides,
+  id: "session-1",
+  userId: "user-1",
+  name: "Session",
+  status: "active",
+  createdAt: "2026-02-12T00:00:00.000Z",
+  updatedAt: "2026-02-12T00:00:00.000Z",
+  prompt: { input: "Keep this prompt", output: "Generated output" },
+  ...overrides,
 });
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <WorkspaceSessionProvider sessionId="session-1">{children}</WorkspaceSessionProvider>
+  <WorkspaceSessionProvider sessionId="session-1">
+    {children}
+  </WorkspaceSessionProvider>
 );
 
 describe("WorkspaceSessionContext", () => {
@@ -36,26 +43,22 @@ describe("WorkspaceSessionContext", () => {
   it("skips remote fetches for local drafts", async () => {
     const { result } = renderHook(() => useWorkspaceSession(), {
       wrapper: ({ children }: { children: ReactNode }) => (
-        <WorkspaceSessionProvider sessionId="draft-123">{children}</WorkspaceSessionProvider>
+        <WorkspaceSessionProvider sessionId="draft-123">
+          {children}
+        </WorkspaceSessionProvider>
       ),
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(mockApiGet).not.toHaveBeenCalled();
     expect(result.current.session).toBeNull();
   });
-  it("does not fetch without a session", () => {
-    const { result } = renderHook(() => useWorkspaceSession(), {
-      wrapper: ({ children }: { children: ReactNode }) => (
-        <WorkspaceSessionProvider>{children}</WorkspaceSessionProvider>
-      ),
-    });
-    expect(mockApiGet).not.toHaveBeenCalled();
-    expect(result.current.session).toBeNull();
-  });
+
   it("reports session read failures", async () => {
     mockApiGet.mockRejectedValue(new Error("Session unavailable"));
     const { result } = renderHook(() => useWorkspaceSession(), { wrapper });
-    await waitFor(() => expect(result.current.error).toBe("Session unavailable"));
+    await waitFor(() =>
+      expect(result.current.error).toBe("Session unavailable"),
+    );
     expect(result.current.loading).toBe(false);
     expect(result.current.session).toBeNull();
   });
@@ -130,5 +133,4 @@ describe("WorkspaceSessionContext", () => {
       expect(result.current.session?.id).toBe("session-2");
     });
   });
-
 });

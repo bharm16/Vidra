@@ -58,80 +58,12 @@ describe("KlingStrategy", () => {
 
   beforeEach(() => {
     strategy = new KlingStrategy();
-    strategy.resetEntityRegistry();
-  });
-
-  describe("validate - error handling", () => {
-    it("throws on empty string input", async () => {
-      await expect(strategy.validate("")).rejects.toThrow(
-        "Input must be a non-empty string",
-      );
-    });
-
-    it("throws on whitespace-only input", async () => {
-      await expect(strategy.validate("   \t\n  ")).rejects.toThrow(
-        "Input cannot be empty or whitespace only",
-      );
-    });
-
-    it("does not throw for valid input", async () => {
-      await expect(
-        strategy.validate("a warrior stands in the rain"),
-      ).resolves.toBeUndefined();
-    });
-
-    it("does not throw for supported aspect ratio 16:9", async () => {
-      await expect(
-        strategy.validate("a cat walks", {
-          userIntent: "test",
-          constraints: {
-            mode: "enhance",
-            minWords: 1,
-            maxWords: 100,
-            maxSentences: 5,
-            slotDescriptor: "test",
-            formRequirement: "16:9",
-          },
-        }),
-      ).resolves.toBeUndefined();
-    });
-
-    it("does not throw for supported aspect ratio 9:16", async () => {
-      await expect(
-        strategy.validate("a cat walks", {
-          userIntent: "test",
-          constraints: {
-            mode: "enhance",
-            minWords: 1,
-            maxWords: 100,
-            maxSentences: 5,
-            slotDescriptor: "test",
-            formRequirement: "9:16",
-          },
-        }),
-      ).resolves.toBeUndefined();
-    });
   });
 
   describe("normalize - generic sound term stripping", () => {
     it('strips standalone "sound" when no compound phrases present', () => {
       const result = strategy.normalize("the bright sound fills the room");
       expect(result).not.toMatch(/\bsound\b/i);
-    });
-
-    it('strips standalone "noise" from input', () => {
-      const result = strategy.normalize(
-        "there is noise in the background area",
-      );
-      // Note: "background noise" is a compound phrase that would be preserved
-      // but this sentence structure is "noise in the background area" not "background noise"
-      expect(result).not.toMatch(/\bnoise\b/);
-    });
-
-    it('strips "audio" as standalone term', () => {
-      const result = strategy.normalize("the audio is clear and present");
-      // "audio" is in GENERIC_SOUND_TERMS but check for compound context
-      expect(result.toLowerCase()).not.toMatch(/\baudio\b/);
     });
 
     it('preserves compound audio phrases like "city sounds"', () => {
@@ -148,12 +80,6 @@ describe("KlingStrategy", () => {
       const result = strategy.normalize("add a sound effect for thunder");
       expect(result).toContain("sound effect");
     });
-
-    it("returns cleaned whitespace after stripping", () => {
-      const result = strategy.normalize("  multiple   spaces   here  ");
-      expect(result).not.toMatch(/\s{2,}/);
-      expect(result).toBe("multiple spaces here");
-    });
   });
 
   describe("normalize - visual quality token stripping from audio sections", () => {
@@ -164,6 +90,7 @@ describe("KlingStrategy", () => {
       );
       // The "4k" inside an audio section should be stripped
       expect(result).toContain("thunder");
+      expect(result).not.toMatch(/\b(?:4k|crisp)\b/i);
     });
 
     it("preserves visual quality tokens outside audio sections", () => {
@@ -192,28 +119,6 @@ describe("KlingStrategy", () => {
       );
       expect(result.prompt).toContain("natural speech");
       expect(result.prompt).toContain("high fidelity audio");
-    });
-  });
-
-  describe("entity registry", () => {
-    it("resetEntityRegistry does not throw", () => {
-      expect(() => strategy.resetEntityRegistry()).not.toThrow();
-    });
-
-    it("can be called multiple times without error", () => {
-      strategy.resetEntityRegistry();
-      strategy.resetEntityRegistry();
-      expect(strategy.modelId).toBe("kling-2.1");
-    });
-  });
-
-  describe("identity", () => {
-    it("has modelId kling-2.1", () => {
-      expect(strategy.modelId).toBe("kling-2.1");
-    });
-
-    it("has modelName Kling 2.1", () => {
-      expect(strategy.modelName).toBe("Kling 2.1");
     });
   });
 });

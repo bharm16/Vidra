@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  createErrorState,
-  createErrorStateWithFallback,
   createFallbackResult,
-  logErrorWarning,
   shouldHandleError,
 } from "@features/span-highlighting/utils/spanLabelingErrorHandler";
 import type { SpanLabelingCacheService } from "@features/span-highlighting/hooks/useSpanLabelingCache";
@@ -61,39 +58,5 @@ describe("spanLabelingErrorHandler", () => {
 
     expect(result?.meta?.source).toBe("cache-fallback");
     expect(result?.cacheId).toBe("cache-id");
-  });
-
-  it("creates error states", () => {
-    const error = new Error("fail");
-    const fallback = {
-      spans: [],
-      meta: { source: "cache-fallback" },
-      text: "hello",
-      cacheId: null,
-      signature: "sig",
-    };
-
-    expect(createErrorStateWithFallback(fallback, error)).toEqual({
-      spans: [],
-      meta: { source: "cache-fallback" },
-      status: "stale",
-      error,
-      signature: "sig",
-    });
-
-    expect(createErrorState(error)).toEqual({
-      spans: [],
-      meta: null,
-      status: "error",
-      error,
-      signature: null,
-    });
-  });
-
-  it("logs warning for fallback", () => {
-    const payload: SpanLabelingPayload = { text: "hello" };
-    const error = new Error("Network");
-
-    expect(() => logErrorWarning(error, payload, 1000)).not.toThrow();
   });
 });

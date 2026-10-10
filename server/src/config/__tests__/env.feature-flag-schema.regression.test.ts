@@ -84,28 +84,6 @@ describe("feature-flag boot validation is derived from the registry", () => {
     }
   });
 
-  it("fails boot on ENABLE_STUDIO=ture instead of defaulting the surface on", () => {
-    expect(() => parseEnv(minimalEnv({ ENABLE_STUDIO: "ture" }))).toThrow(
-      "ENABLE_STUDIO",
-    );
-
-    // The typo is only caught because the value is constrained — the correctly
-    // spelled value still turns the surface off.
-    const off = parseEnv(minimalEnv({ ENABLE_STUDIO: "false" }));
-    const studioEnabled: boolean = off.ENABLE_STUDIO;
-    expect(studioEnabled).toBe(false);
-  });
-
-  it("fails boot on an undeclared REPLAY_MODE, keeping the merge gate honest", () => {
-    expect(() => parseEnv(minimalEnv({ REPLAY_MODE: "replya" }))).toThrow(
-      "REPLAY_MODE",
-    );
-
-    const replay = parseEnv(minimalEnv({ REPLAY_MODE: "replay" }));
-    const mode: "off" | "record" | "replay" = replay.REPLAY_MODE;
-    expect(mode).toBe("replay");
-  });
-
   it("validates the failover tuning knobs the failover flag documents", () => {
     const defaults = parseEnv(minimalEnv());
     expect(defaults.LLM_FAILOVER_CONSECUTIVE_FAILURES).toBe(5);

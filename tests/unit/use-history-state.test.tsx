@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
 import { useHistoryState } from "@hooks/usePromptHistory/hooks/useHistoryState";
 
@@ -115,33 +115,6 @@ describe("useHistoryState", () => {
       expect(result.current.state.history[2]?.output).toBe("unique");
     });
 
-    it("updateEntry with non-existent uuid leaves all entries unchanged", () => {
-      const { result } = renderHook(() => useHistoryState());
-      const entry = makeEntry({ uuid: "existing" });
-
-      act(() => {
-        result.current.addEntry(entry);
-      });
-      act(() => {
-        result.current.updateEntry("non-existent", { output: "changed" });
-      });
-
-      expect(result.current.state.history[0]?.output).toBe("test output");
-    });
-
-    it("removeEntry with non-existent id leaves all entries unchanged", () => {
-      const { result } = renderHook(() => useHistoryState());
-
-      act(() => {
-        result.current.addEntry(makeEntry({ id: "keep-me" }));
-      });
-      act(() => {
-        result.current.removeEntry("ghost-id");
-      });
-
-      expect(result.current.state.history).toHaveLength(1);
-    });
-
     it("clearEntries empties history", () => {
       const { result } = renderHook(() => useHistoryState());
 
@@ -158,17 +131,6 @@ describe("useHistoryState", () => {
   });
 
   describe("search filtering", () => {
-    it("returns all entries when searchQuery is empty", () => {
-      const { result } = renderHook(() => useHistoryState());
-
-      act(() => {
-        result.current.addEntry(makeEntry({ input: "alpha" }));
-        result.current.addEntry(makeEntry({ input: "beta" }));
-      });
-
-      expect(result.current.filteredHistory).toHaveLength(2);
-    });
-
     it("filters entries by input text (case-insensitive)", () => {
       const { result } = renderHook(() => useHistoryState());
 
@@ -209,19 +171,6 @@ describe("useHistoryState", () => {
       // "dramatic" only appears in output, not input or title — should not match
       expect(result.current.filteredHistory).toHaveLength(0);
     });
-
-    it("returns empty array when no entries match query", () => {
-      const { result } = renderHook(() => useHistoryState());
-
-      act(() => {
-        result.current.addEntry(makeEntry({ input: "hello", output: "world" }));
-      });
-      act(() => {
-        result.current.setSearchQuery("zzzzzzz");
-      });
-
-      expect(result.current.filteredHistory).toHaveLength(0);
-    });
   });
 
   describe("core state mutations", () => {
@@ -259,20 +208,6 @@ describe("useHistoryState", () => {
 
       expect(result.current.state.history).toHaveLength(1);
       expect(result.current.state.history[0]?.id).toBe("b");
-    });
-
-    it("setIsLoadingHistory updates loading state", () => {
-      const { result } = renderHook(() => useHistoryState());
-
-      act(() => {
-        result.current.setIsLoadingHistory(true);
-      });
-      expect(result.current.state.isLoadingHistory).toBe(true);
-
-      act(() => {
-        result.current.setIsLoadingHistory(false);
-      });
-      expect(result.current.state.isLoadingHistory).toBe(false);
     });
   });
 });

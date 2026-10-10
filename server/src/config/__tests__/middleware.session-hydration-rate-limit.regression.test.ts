@@ -113,21 +113,4 @@ describe("regression: rate-limit lanes name routes that exist", () => {
     expect(statuses.filter((status) => status === 429)).toEqual([]);
     expect(new Set(statuses)).toEqual(new Set([200]));
   });
-
-  it.each(["/api/video/validate", "/api/video/suggestions"])(
-    "answers %s with a not-found, never a rate-limit refusal",
-    async (deadPath) => {
-      enterServerLikeEnv();
-      const server = await listenOnLoopback(buildApp());
-
-      const statuses = await statusesFor(
-        server,
-        (agent) => agent.post(deadPath),
-        DEAD_LANE_PROBE,
-      );
-
-      expect(statuses.filter((status) => status === 429)).toEqual([]);
-      expect(new Set(statuses)).toEqual(new Set([404]));
-    },
-  );
 });

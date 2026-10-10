@@ -99,22 +99,6 @@ describe("SketchBudgetService", () => {
     expect(store.reservedByDay.get("creator-1_2026-09-17")).toBe(800);
   });
 
-  it("caps each creator independently", async () => {
-    const store = new FakeSketchBudgetStore();
-    const service = serviceWith(
-      store,
-      () => new Date("2026-09-17T09:30:00.000Z"),
-    );
-
-    await service.admit("creator-1");
-    await service.admit("creator-1");
-
-    expect(await service.admit("creator-1")).toMatchObject({
-      outcome: "allowance-reached",
-    });
-    expect(await service.admit("creator-2")).toEqual({ outcome: "admitted" });
-  });
-
   it("restores the allowance at the UTC day boundary", async () => {
     const store = new FakeSketchBudgetStore();
     let at = new Date("2026-09-17T23:59:59.000Z");

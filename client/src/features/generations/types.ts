@@ -62,6 +62,5 @@ export interface GenerationsPanelProps {
   runtime?: GenerationsPanelRuntime | undefined;
   className?: string;
   versions: PromptVersionEntry[];
-  onRestoreVersion: (versionId: string) => void;
   onCreateVersionIfNeeded: () => string;
 }

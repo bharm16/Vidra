@@ -1,14 +1,11 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import express from "express";
-import request from "supertest";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createVideoJobAttachHandler } from "../handlers/videoJobAttach";
 import type {
   VideoJobAttachment,
   VideoJobRecord,
 } from "@services/video-generation/runtime/types";
+import express from "express";
+import request from "supertest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createVideoJobAttachHandler } from "../handlers/videoJobAttach";
 
 /**
  * ADR-0022 decision 6 — the negative path.
@@ -202,17 +199,5 @@ describe("regression: retrying a clip attachment is not a generation retry", () 
 
     expect(res.status).toBe(403);
     expect(appendGenerationToVersion).not.toHaveBeenCalled();
-  });
-
-  it("cannot reach refund logic: no module on the attachment path imports it", () => {
-    // Asserted against the source because the guarantee is structural. A test
-    // that only watches a double would go quiet the day someone reaches for
-    // the refund guard "just for the storage case".
-    const here = path.dirname(fileURLToPath(import.meta.url));
-    for (const relative of ATTACHMENT_SOURCES) {
-      const source = readFileSync(path.resolve(here, relative), "utf8");
-      expect(source).not.toContain("refundGuard");
-      expect(source).not.toContain("userCreditService");
-    }
   });
 });

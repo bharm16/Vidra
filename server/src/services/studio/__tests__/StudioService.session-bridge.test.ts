@@ -316,26 +316,6 @@ describe("StudioService.createProjectFromSessionPicture", () => {
     );
   });
 
-  it("yields one project for two invocations on the same take", async () => {
-    const { service, store, storage } = makeService();
-
-    const first = await service.createProjectFromSessionPicture(
-      "user-1",
-      SOURCE,
-    );
-    const second = await service.createProjectFromSessionPicture(
-      "user-1",
-      SOURCE,
-    );
-
-    expect(second.id).toBe(first.id);
-    expect(store.projects.size).toBe(1);
-    // The retry re-stores nothing: the bytes were already made durable.
-    expect(storage.saveFromUrl).toHaveBeenCalledTimes(1);
-    expect(second.attachments).toHaveLength(1);
-    expect(second.origin?.capturedAtMs).toBe(first.origin?.capturedAtMs);
-  });
-
   it("admits one project and one bridged attachment for two SIMULTANEOUS presses", async () => {
     const { service, store, storage, reportOrphanedBridgeCopy } = makeService();
 

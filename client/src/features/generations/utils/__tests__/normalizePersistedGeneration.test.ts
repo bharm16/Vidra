@@ -23,21 +23,9 @@ describe("normalizePersistedGeneration", () => {
   };
 
   describe("fields the wire does not guarantee", () => {
-    it("stamps mediaType on a clip record that omits it", () => {
-      // processVideoJob wrote no mediaType until 2026-08-10. Without this,
-      // deriveSpaceNodes matches neither its picture nor its clip branch and
-      // the take never becomes a node at all.
-      expect(normalizePersistedGeneration(clipRecord)?.mediaType).toBe("video");
-    });
-
     it("derives tier from the model, ignoring a stale persisted value", () => {
       const stamped = { ...clipRecord, tier: "draft" };
       expect(normalizePersistedGeneration(stamped)?.tier).toBe("render");
-    });
-
-    it("derives a draft tier for a draft-tier model", () => {
-      const wan = { ...clipRecord, model: "wan-2.5" };
-      expect(normalizePersistedGeneration(wan)?.tier).toBe("draft");
     });
 
     it("converts an ISO completedAt into epoch ms", () => {
@@ -106,10 +94,6 @@ describe("normalizePersistedGeneration", () => {
       expect(
         normalizePersistedGenerations([clipRecord, null, {}]),
       ).toHaveLength(1);
-    });
-
-    it("returns an empty array for a non-array", () => {
-      expect(normalizePersistedGenerations(undefined)).toEqual([]);
     });
   });
 });

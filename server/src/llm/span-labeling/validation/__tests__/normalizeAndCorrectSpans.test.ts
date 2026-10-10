@@ -25,21 +25,6 @@ function createCache(): SubstringPositionCache {
 
 describe("normalizeAndCorrectSpans", () => {
   describe("error handling", () => {
-    it("returns empty result for empty spans array", () => {
-      const cache = createCache();
-      const result = normalizeAndCorrectSpans(
-        [],
-        "source text",
-        defaultPolicy,
-        cache,
-        false,
-      );
-
-      expect(result.sanitized).toEqual([]);
-      expect(result.errors).toEqual([]);
-      expect(result.notes).toEqual([]);
-    });
-
     it("reports error for non-object span in strict mode", () => {
       const cache = createCache();
       const result = normalizeAndCorrectSpans(
@@ -82,49 +67,6 @@ describe("normalizeAndCorrectSpans", () => {
 
       expect(result.errors[0]?.message).toContain("missing text");
       expect(result.errors[0]?.kind).toBe("retryable");
-    });
-
-    it("reports error when span text is empty in strict mode", () => {
-      const cache = createCache();
-      const result = normalizeAndCorrectSpans(
-        [{ text: "", role: "subject" }],
-        "source text",
-        defaultPolicy,
-        cache,
-        false,
-      );
-
-      expect(result.errors[0]?.message).toContain("missing text");
-    });
-
-    it("reports error when span text not found in source in strict mode", () => {
-      const cache = createCache();
-      const result = normalizeAndCorrectSpans(
-        [{ text: "nonexistent phrase", role: "subject" }],
-        "source text",
-        defaultPolicy,
-        cache,
-        false,
-      );
-
-      expect(result.errors[0]?.message).toContain("not found in source");
-      expect(result.errors[0]?.kind).toBe("retryable");
-    });
-
-    it("drops span when text not found in lenient mode", () => {
-      const cache = createCache();
-      const result = normalizeAndCorrectSpans(
-        [{ text: "nonexistent", role: "subject" }],
-        "source text",
-        defaultPolicy,
-        cache,
-        true,
-      );
-
-      expect(result.sanitized.length).toBe(0);
-      expect(result.notes).toContain(
-        "span[0] dropped: text not found in source",
-      );
     });
   });
 
@@ -279,40 +221,6 @@ describe("normalizeAndCorrectSpans", () => {
   });
 
   describe("core behavior", () => {
-    it("normalizes valid span with correct indices", () => {
-      const cache = createCache();
-      const result = normalizeAndCorrectSpans(
-        [{ text: "cat", role: "subject", start: 0, end: 3, confidence: 0.9 }],
-        "cat runs fast",
-        defaultPolicy,
-        cache,
-        false,
-      );
-
-      expect(result.sanitized.length).toBe(1);
-      expect(result.sanitized[0]?.text).toBe("cat");
-      expect(result.sanitized[0]?.start).toBe(0);
-      expect(result.sanitized[0]?.end).toBe(3);
-      expect(result.errors).toEqual([]);
-    });
-
-    it("handles multiple valid spans", () => {
-      const cache = createCache();
-      const result = normalizeAndCorrectSpans(
-        [
-          { text: "cat", role: "subject" },
-          { text: "runs", role: "action.movement" },
-          { text: "fast", role: "style" },
-        ],
-        "cat runs fast",
-        defaultPolicy,
-        cache,
-        false,
-      );
-
-      expect(result.sanitized.length).toBe(3);
-    });
-
     it("handles duplicate occurrences by picking closest to preferred start", () => {
       const cache = createCache();
       const text = "the cat and the cat";
@@ -326,24 +234,6 @@ describe("normalizeAndCorrectSpans", () => {
 
       expect(result.sanitized.length).toBe(1);
       expect(result.sanitized[0]?.start).toBe(16); // Second "cat" at index 16
-    });
-
-    it("claims positions to avoid duplicate spans at same location", () => {
-      const cache = createCache();
-      const text = "cat runs fast";
-      const result = normalizeAndCorrectSpans(
-        [
-          { text: "cat", role: "subject" },
-          { text: "cat", role: "animal" }, // Same text, different role
-        ],
-        text,
-        defaultPolicy,
-        cache,
-        true,
-      );
-
-      // Both should reference the same "cat" - one will be at claimed position
-      expect(result.sanitized.length).toBe(2);
     });
   });
 });

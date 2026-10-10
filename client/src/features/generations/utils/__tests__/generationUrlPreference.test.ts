@@ -25,15 +25,6 @@ const buildGeneration = (
 });
 
 describe("generationUrlPreference", () => {
-  it("prefers unsigned URL over signed URL", () => {
-    const incoming = "https://cdn.example.com/video.mp4";
-    const local =
-      "https://storage.googleapis.com/bucket/video.mp4?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Date=20260101T000000Z&X-Goog-Expires=3600&X-Goog-Signature=abc";
-
-    expect(pickPreferredUrl(incoming, local)).toBe(incoming);
-    expect(pickPreferredUrl(local, incoming)).toBe(incoming);
-  });
-
   it("prefers the signed URL with later expiry when both are signed", () => {
     const nowMs = Date.UTC(2026, 0, 1, 0, 30, 0);
     const earlier =

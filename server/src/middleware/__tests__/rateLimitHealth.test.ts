@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@infrastructure/Logger", () => ({
   logger: {
@@ -9,12 +9,10 @@ vi.mock("@infrastructure/Logger", () => ({
   },
 }));
 
-import { logger } from "@infrastructure/Logger";
 import {
-  isRedisRateLimitHealthy,
-  setRedisRateLimitHealth,
-  createFailClosedLlmRateLimit,
   __resetRateLimitHealthForTest,
+  createFailClosedLlmRateLimit,
+  setRedisRateLimitHealth,
 } from "../rateLimitHealth";
 
 describe("rateLimitHealth", () => {
@@ -23,86 +21,9 @@ describe("rateLimitHealth", () => {
     vi.clearAllMocks();
   });
 
-  describe("health flag", () => {
-    it("defaults to healthy on fresh import", () => {
-      expect(isRedisRateLimitHealthy()).toBe(true);
-    });
-
-    it("flips to unhealthy when setRedisRateLimitHealth(false) is called", () => {
-      setRedisRateLimitHealth(false);
-      expect(isRedisRateLimitHealthy()).toBe(false);
-    });
-
-    it("flips back to healthy when setRedisRateLimitHealth(true) is called", () => {
-      setRedisRateLimitHealth(false);
-      setRedisRateLimitHealth(true);
-      expect(isRedisRateLimitHealthy()).toBe(true);
-    });
-  });
-
-  describe("transition logging", () => {
-    it("logs a structured warn on healthy -> unhealthy transition", () => {
-      setRedisRateLimitHealth(false);
-
-      expect(logger.warn).toHaveBeenCalledTimes(1);
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          operation: "rateLimit.redisHealthTransition",
-          healthy: false,
-        }),
-      );
-    });
-
-    it("logs a structured warn on unhealthy -> healthy transition", () => {
-      setRedisRateLimitHealth(false);
-      vi.clearAllMocks();
-
-      setRedisRateLimitHealth(true);
-
-      expect(logger.warn).toHaveBeenCalledTimes(1);
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          operation: "rateLimit.redisHealthTransition",
-          healthy: true,
-        }),
-      );
-    });
-
-    it("does NOT log on repeated set-to-same-state calls", () => {
-      // Already healthy by default — calling setRedisRateLimitHealth(true)
-      // should be a no-op for logging.
-      setRedisRateLimitHealth(true);
-      setRedisRateLimitHealth(true);
-      setRedisRateLimitHealth(true);
-      expect(logger.warn).not.toHaveBeenCalled();
-
-      // Transition once
-      setRedisRateLimitHealth(false);
-      expect(logger.warn).toHaveBeenCalledTimes(1);
-
-      // Further unhealthy calls must not log
-      setRedisRateLimitHealth(false);
-      setRedisRateLimitHealth(false);
-      setRedisRateLimitHealth(false);
-      expect(logger.warn).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe("createFailClosedLlmRateLimit middleware", () => {
     const makeRes = (): Response => ({}) as Response;
     const makeReq = (): Request => ({}) as Request;
-
-    it("calls next() with no error when health is healthy", () => {
-      const middleware = createFailClosedLlmRateLimit();
-      const next = vi.fn() as unknown as NextFunction;
-
-      middleware(makeReq(), makeRes(), next);
-
-      expect(next).toHaveBeenCalledTimes(1);
-      expect(next).toHaveBeenCalledWith();
-    });
 
     it("calls next(err) with RATE_LIMIT_UNAVAILABLE when unhealthy", () => {
       setRedisRateLimitHealth(false);

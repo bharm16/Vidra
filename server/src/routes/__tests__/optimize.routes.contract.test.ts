@@ -1,7 +1,3 @@
-import express from "express";
-import request from "supertest";
-import { describe, expect, it, vi } from "vitest";
-import { createOptimizeRoutes } from "../optimize.routes";
 import {
   ApiErrorResponseSchema,
   ApiResponseSchema,
@@ -10,57 +6,11 @@ import {
   CompileDataSchema,
   OptimizeDataSchema,
 } from "@shared/schemas/optimization.schemas";
+import express from "express";
+import request from "supertest";
+import { describe, expect, it, vi } from "vitest";
+import { createOptimizeRoutes } from "../optimize.routes";
 import type { PromptOptimizationServiceContract } from "../optimize/types";
-
-/**
- * Contract test for the optimize route response envelopes.
- *
- * Pins the canonical ApiResponse union from shared/types/api.ts. Guards the
- * removal of the deprecated dual-emit shape (payload duplicated at the top
- * level next to `data`) and the flattening of validation `details` to the
- * canonical string. Invalid bodies are rejected by the validateRequest
- * middleware, whose 400 uses the canonical ApiErrorResponse shape.
- */
-
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") {
-    return true;
-  }
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") {
-    return null;
-  }
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
 
 const buildService = (): PromptOptimizationServiceContract =>
   ({
@@ -84,12 +34,9 @@ const buildApp = (): express.Express => {
 
 describe("optimize routes — canonical envelope contract", () => {
   it("POST /optimize returns data-only success envelope (no top-level spread)", async () => {
-    const response = await runSupertestOrSkip(() =>
-      request(buildApp())
-        .post("/optimize")
-        .send({ prompt: "a runner in rain", mode: "video" }),
-    );
-    if (!response) return;
+    const response = await request(buildApp())
+      .post("/optimize")
+      .send({ prompt: "a runner in rain", mode: "video" });
 
     expect(response.status).toBe(200);
     const parsed = ApiResponseSchema(OptimizeDataSchema).parse(response.body);
@@ -104,12 +51,9 @@ describe("optimize routes — canonical envelope contract", () => {
   });
 
   it("POST /optimize-compile returns data-only success envelope", async () => {
-    const response = await runSupertestOrSkip(() =>
-      request(buildApp())
-        .post("/optimize-compile")
-        .send({ prompt: "an optimized prompt", targetModel: "sora-2" }),
-    );
-    if (!response) return;
+    const response = await request(buildApp())
+      .post("/optimize-compile")
+      .send({ prompt: "an optimized prompt", targetModel: "sora-2" });
 
     expect(response.status).toBe(200);
     const parsed = ApiResponseSchema(CompileDataSchema).parse(response.body);
@@ -121,10 +65,7 @@ describe("optimize routes — canonical envelope contract", () => {
   });
 
   it("POST /optimize with an invalid body returns the canonical error shape", async () => {
-    const response = await runSupertestOrSkip(() =>
-      request(buildApp()).post("/optimize").send({}),
-    );
-    if (!response) return;
+    const response = await request(buildApp()).post("/optimize").send({});
 
     expect(response.status).toBe(400);
     const parsed = ApiErrorResponseSchema.parse(response.body);

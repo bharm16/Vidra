@@ -1,4 +1,3 @@
-import React from "react";
 import { render, renderHook, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useFieldError } from "@promptstudio/system/hooks/use-field-error";

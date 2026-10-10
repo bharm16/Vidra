@@ -1,16 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { ApiError } from "@/services/http/ApiError";
+
 import { clearVideoInputSupportCache } from "../../utils/videoInputSupport";
 import { useGenerationActions } from "../useGenerationActions";
 
 const compileWanPromptMock = vi.fn();
 const generateVideoPreviewMock = vi.fn();
-const generateStoryboardPreviewMock = vi.fn();
 const waitForVideoJobMock = vi.fn();
 const getCapabilitiesMock = vi.fn();
-const publishCreditBalanceSyncMock = vi.hoisted(() => vi.fn());
-const requestCreditBalanceRefreshMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/services", () => ({
   capabilitiesApi: {
@@ -22,8 +19,6 @@ vi.mock("../../api", () => ({
   compileWanPrompt: (...args: unknown[]) => compileWanPromptMock(...args),
   generateVideoPreview: (...args: unknown[]) =>
     generateVideoPreviewMock(...args),
-  generateStoryboardPreview: (...args: unknown[]) =>
-    generateStoryboardPreviewMock(...args),
   waitForVideoJob: (...args: unknown[]) => waitForVideoJobMock(...args),
 }));
 
@@ -47,7 +42,7 @@ beforeEach(() => {
   });
 });
 
-describe("useGenerationActions insufficient credits handling", () => {
+describe("useGenerationActions admission failures", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     compileWanPromptMock.mockResolvedValue("compiled prompt");
@@ -59,113 +54,24 @@ describe("useGenerationActions insufficient credits handling", () => {
     });
   });
 
-  it("requests authoritative clip hydration only after the job confirms attachment", async () => {
-    generateVideoPreviewMock.mockResolvedValue({
-      success: true,
-      jobId: "job-saved",
-      status: "queued",
-    });
-    waitForVideoJobMock.mockResolvedValue({
-      videoUrl: "https://example.com/saved.mp4",
-      attachment: {
-        state: "attached",
-        sessionId: "session-saved",
-        promptVersionId: "v-saved",
-        generationId: "job-saved",
-        record: { id: "job-saved" },
-      },
-    });
-    const onServerGenerationPersisted = vi.fn();
-    const { result } = renderHook(() =>
-      useGenerationActions(vi.fn(), {
-        sessionId: "session-saved",
-        promptVersionId: "v-saved",
-        onServerGenerationPersisted,
-      }),
-    );
-    await act(async () =>
-      result.current.generateRender("google/veo-3", "Visible camera words", {}),
-    );
-    expect(onServerGenerationPersisted).toHaveBeenCalledExactlyOnceWith({
-      sessionId: "session-saved",
-      generationId: "job-saved",
-    });
-  });
-
-  it("does not create a draft generation before a 402 rejection and reports insufficient credits", async () => {
+  it("surfaces request failures and releases submission for retry", async () => {
     const dispatch = vi.fn();
-    const onInsufficientCredits = vi.fn();
-    generateVideoPreviewMock.mockRejectedValue(
-      new ApiError("Insufficient credits", 402, {
-        code: "INSUFFICIENT_CREDITS",
-      }),
-    );
-
-    const { result } = renderHook(() =>
-      useGenerationActions(dispatch, { onInsufficientCredits }),
-    );
-
-    await act(async () => {
-      await result.current.generateDraft("wan-2.2", "A test prompt", {});
-    });
-
-    // ISSUE-12 follow-up: ADD_GENERATION retired; state growth flows through
-    // SET_GENERATIONS. A 402 rejection must not grow the set.
-    expect(getAction(dispatch, "SET_GENERATIONS")).toBeUndefined();
-    expect(getAction(dispatch, "UPDATE_GENERATION")).toBeUndefined();
-    expect(onInsufficientCredits).toHaveBeenCalledWith(28, "Wan 2.2 preview");
-  });
-
-  it("does not create a render generation before a 402 rejection and reports insufficient credits", async () => {
-    const dispatch = vi.fn();
-    const onInsufficientCredits = vi.fn();
-    generateVideoPreviewMock.mockRejectedValue(
-      new ApiError("Insufficient credits", 402, {
-        code: "INSUFFICIENT_CREDITS",
-      }),
-    );
-
-    const { result } = renderHook(() =>
-      useGenerationActions(dispatch, { onInsufficientCredits }),
-    );
-
-    await act(async () => {
-      await result.current.generateRender("sora-2", "Render prompt", {});
-    });
-
-    expect(getAction(dispatch, "SET_GENERATIONS")).toBeUndefined();
-    expect(getAction(dispatch, "UPDATE_GENERATION")).toBeUndefined();
-    expect(onInsufficientCredits).toHaveBeenCalledWith(48, "Sora 2 render");
-  });
-
-  it("surfaces non-402 failures as a failed generation via SET_GENERATIONS and does not treat them as insufficient credits", async () => {
-    const dispatch = vi.fn();
-    const onInsufficientCredits = vi.fn();
     generateVideoPreviewMock.mockRejectedValue(new Error("Network down"));
 
-    const { result } = renderHook(() =>
-      useGenerationActions(dispatch, { onInsufficientCredits }),
-    );
+    const { result } = renderHook(() => useGenerationActions(dispatch));
 
     await act(async () => {
       await result.current.generateRender("sora-2", "Render prompt", {});
     });
 
-    // Generic failures surface as a failed generation via SET_GENERATIONS
-    // (state-replace with the failed record appended) so the user sees the
-    // error rather than silence. The 402-only branch remains reserved for
-    // insufficient-credits handling.
     const setAction = getAction(dispatch, "SET_GENERATIONS") as
       | { payload: Array<{ status: string; error: string }> }
       | undefined;
     const failed = setAction?.payload?.[setAction.payload.length - 1];
     expect(failed?.status).toBe("failed");
     expect(failed?.error).toBe("Network down");
-    expect(onInsufficientCredits).not.toHaveBeenCalled();
     expect(result.current.isSubmitting).toBe(false);
   });
-
-
 });
 
 describe("useGenerationActions cancellation behavior", () => {
@@ -329,25 +235,5 @@ describe("useGenerationActions dispatch-model capability filtering", () => {
       "https://example.com/source.mp4",
     );
     expect(getCapabilitiesMock).toHaveBeenCalledWith("generic", "google/veo-3");
-  });
-
-  it("caches capability lookups per dispatch model", async () => {
-    getCapabilitiesMock.mockResolvedValue({
-      provider: "generic",
-      model: "wan-2.2",
-      version: "1",
-      fields: {},
-    });
-
-    const dispatch = vi.fn();
-    const { result } = renderHook(() => useGenerationActions(dispatch));
-
-    await act(async () => {
-      await result.current.generateDraft("wan-2.2", "Prompt one", {});
-      await result.current.generateDraft("wan-2.2", "Prompt two", {});
-    });
-
-    expect(getCapabilitiesMock).toHaveBeenCalledTimes(1);
-    expect(getCapabilitiesMock).toHaveBeenCalledWith("generic", "wan-2.2");
   });
 });

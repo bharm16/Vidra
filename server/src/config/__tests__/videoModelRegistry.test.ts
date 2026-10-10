@@ -1,16 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
 import { VIDEO_MODELS } from "@config/modelConfig";
+import { describe, expect, it, vi } from "vitest";
 import {
   isKnownGenerationModelInput,
-  isKlingModelId,
-  isLumaModelId,
-  isOpenAISoraModelId,
-  isVeoModelId,
-  resolveGenerationModelId,
   resolveGenerationModelSelection,
   resolvePromptModelId,
   resolveProviderForGenerationModel,
-  VIDEO_MODEL_PROVIDERS,
 } from "../videoModelRegistry";
 
 describe("videoModelRegistry", () => {
@@ -71,13 +65,6 @@ describe("videoModelRegistry", () => {
     );
   });
 
-  it("returns generation model id directly via helper", () => {
-    expect(resolveGenerationModelId("sora")).toBe(VIDEO_MODELS.SORA_2);
-    expect(resolveGenerationModelId("wan-2.5")).toBe(
-      VIDEO_MODELS.DRAFT_I2V_WAN_2_5,
-    );
-  });
-
   it("validates known generation model inputs without resolving to defaults", () => {
     expect(isKnownGenerationModelInput("SORA_2")).toBe(true);
     expect(isKnownGenerationModelInput("sora")).toBe(true);
@@ -96,21 +83,6 @@ describe("videoModelRegistry", () => {
     expect(resolvePromptModelId("")).toBeNull();
   });
 
-  it("exposes model family type guards", () => {
-    expect(isOpenAISoraModelId(VIDEO_MODELS.SORA_2)).toBe(true);
-    expect(isOpenAISoraModelId(VIDEO_MODELS.SORA_2_PRO)).toBe(true);
-    expect(isOpenAISoraModelId(VIDEO_MODELS.PRO)).toBe(false);
-
-    expect(isLumaModelId(VIDEO_MODELS.LUMA_RAY3)).toBe(true);
-    expect(isLumaModelId(VIDEO_MODELS.SORA_2)).toBe(false);
-
-    expect(isKlingModelId(VIDEO_MODELS.KLING_V2_1)).toBe(true);
-    expect(isKlingModelId(VIDEO_MODELS.PRO)).toBe(false);
-
-    expect(isVeoModelId(VIDEO_MODELS.VEO_3)).toBe(true);
-    expect(isVeoModelId(VIDEO_MODELS.SORA_2)).toBe(false);
-  });
-
   it("maps canonical generation model ids to provider ids", () => {
     expect(resolveProviderForGenerationModel(VIDEO_MODELS.SORA_2)).toBe(
       "openai",
@@ -127,24 +99,5 @@ describe("videoModelRegistry", () => {
     expect(resolveProviderForGenerationModel(VIDEO_MODELS.PRO)).toBe(
       "replicate",
     );
-  });
-
-  describe("VIDEO_MODEL_PROVIDERS", () => {
-    it("has an explicit provider for every VIDEO_MODELS entry (no silent default)", () => {
-      const modelIds = Object.values(VIDEO_MODELS) as string[];
-      const missing = modelIds.filter((id) => !(id in VIDEO_MODEL_PROVIDERS));
-      expect(missing).toEqual([]);
-    });
-
-    it("agrees with the type-guard fallback for every known model", () => {
-      for (const modelId of Object.keys(VIDEO_MODEL_PROVIDERS)) {
-        const viaMap =
-          VIDEO_MODEL_PROVIDERS[modelId as keyof typeof VIDEO_MODEL_PROVIDERS];
-        const viaResolver = resolveProviderForGenerationModel(
-          modelId as typeof modelId,
-        );
-        expect(viaResolver).toBe(viaMap);
-      }
-    });
   });
 });

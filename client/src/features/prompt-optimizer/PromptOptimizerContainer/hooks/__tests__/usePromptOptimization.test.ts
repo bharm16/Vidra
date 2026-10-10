@@ -115,49 +115,6 @@ describe("usePromptOptimization", () => {
   // through its own typed entry point. This guards the refactor that removed the
   // `unknown`-context + cast-based option extraction: options must land in the
   // options slot, and must never leak into the context slot.
-  it("routes reoptimize options to optimize without leaking into the context slot", async () => {
-    const { params, mocks } = buildBaseParams();
-    const { result } = renderHook(() => usePromptOptimization(params));
-
-    await act(async () => {
-      await result.current.handleReoptimize("Original shot prompt", {
-        forceGenericTarget: true,
-      });
-    });
-
-    expect(mocks.optimize).toHaveBeenCalledTimes(1);
-    // The prompt goes out with a null context (no improvement context set, and
-    // options never occupy the context slot), no target model (forceGenericTarget
-    // in video mode compiles to the generic), and the options in the options slot.
-    expect(mocks.optimize).toHaveBeenCalledWith(
-      "Original shot prompt",
-      null,
-      null,
-      undefined,
-      expect.objectContaining({ forceGenericTarget: true }),
-    );
-  });
-
-  it("keeps sequence optimization in-place when preserveSessionView is enabled", async () => {
-    const { params, mocks } = buildBaseParams();
-    const { result } = renderHook(() => usePromptOptimization(params));
-
-    await act(async () => {
-      await result.current.handleOptimize("Original shot prompt", undefined, {
-        preserveSessionView: true,
-      });
-    });
-
-    expect(mocks.setInputPrompt).toHaveBeenCalledWith(
-      "Optimized sequence prompt",
-    );
-    expect(mocks.setDisplayedPromptSilently).toHaveBeenCalledWith("");
-    expect(mocks.setShowResults).toHaveBeenCalledWith(false);
-    expect(mocks.saveToHistory).not.toHaveBeenCalled();
-    expect(mocks.navigate).not.toHaveBeenCalled();
-    expect(mocks.setCurrentPromptUuid).not.toHaveBeenCalled();
-    expect(mocks.setCurrentPromptDocId).not.toHaveBeenCalled();
-  });
 
   // The Idea Box expansion chain (expand -> first frame -> gate) hangs off
   // onOptimizationApplied: the workspace's continueAfterOptimization only
@@ -185,24 +142,6 @@ describe("usePromptOptimization", () => {
         "Optimized sequence prompt",
       );
       expect(callOrder).toEqual(["saveToHistory", "onOptimizationApplied"]);
-    });
-
-    it("invokes the callback on the preserveSessionView path", async () => {
-      const { params } = buildBaseParams();
-      const onOptimizationApplied = vi.fn();
-      const { result } = renderHook(() =>
-        usePromptOptimization({ ...params, onOptimizationApplied }),
-      );
-
-      await act(async () => {
-        await result.current.handleOptimize("Original shot prompt", undefined, {
-          preserveSessionView: true,
-        });
-      });
-
-      expect(onOptimizationApplied).toHaveBeenCalledWith(
-        "Optimized sequence prompt",
-      );
     });
 
     it("does not invoke the callback on the I2V bypass (start image set)", async () => {

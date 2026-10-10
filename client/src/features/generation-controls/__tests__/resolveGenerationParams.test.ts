@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { DEFAULT_GENERATION_DURATION_SECONDS } from "@shared/generationPricing";
 import {
-  DEFAULT_ASPECT_RATIO,
   readAspectRatio,
   readDurationSeconds,
   readFps,
@@ -48,13 +47,6 @@ describe("resolveDurationSeconds", () => {
       DEFAULT_GENERATION_DURATION_SECONDS,
     );
   });
-
-  it("gives the same answer to every caller for the same params", () => {
-    const params = { aspect_ratio: "9:16" };
-    expect(resolveDurationSeconds(params, "model-a")).toBe(
-      resolveDurationSeconds(params, "model-a"),
-    );
-  });
 });
 
 describe("readAspectRatio", () => {
@@ -66,10 +58,6 @@ describe("readAspectRatio", () => {
     expect(readAspectRatio({ aspect_ratio: "   " })).toBeNull();
     expect(readAspectRatio({})).toBeNull();
     expect(readAspectRatio(null)).toBeNull();
-  });
-
-  it("publishes the default callers fall back to", () => {
-    expect(DEFAULT_ASPECT_RATIO).toBe("16:9");
   });
 });
 

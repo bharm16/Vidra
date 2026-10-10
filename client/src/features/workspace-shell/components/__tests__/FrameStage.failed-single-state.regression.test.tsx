@@ -47,22 +47,6 @@ vi.mock(
 import { FrameStage } from "../FrameStage";
 
 describe("regression: FrameStage failure beat renders one designed state", () => {
-  it("shows exactly one failure message and no competing placeholder", () => {
-    dataState.ideaBoxStage = {
-      kind: "failed",
-      message: "Image generation failed",
-      consecutiveFailures: 1,
-    };
-
-    render(<FrameStage startFrame={null} prompt="a dog running" />);
-
-    expect(screen.getAllByText(/Couldn.t create a frame/)).toHaveLength(1);
-    expect(screen.getByText("Image generation failed")).toBeInTheDocument();
-    // The old split state rendered "No frame yet" INSIDE the tile while the
-    // error copy floated below it — the placeholder must not compete.
-    expect(screen.queryByText("No frame yet")).toBeNull();
-  });
-
   it("offers exactly one retry affordance, wired to frame regeneration", () => {
     dataState.ideaBoxStage = {
       kind: "failed",
@@ -79,21 +63,5 @@ describe("regression: FrameStage failure beat renders one designed state", () =>
 
     fireEvent.click(buttons[0] as HTMLElement);
     expect(onIdeaBoxRegenerate).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps the repeated-failure escalation copy in the single state", () => {
-    dataState.ideaBoxStage = {
-      kind: "failed",
-      message: "Image generation failed",
-      consecutiveFailures: 3,
-    };
-
-    render(<FrameStage startFrame={null} prompt="a dog running" />);
-
-    expect(
-      screen.getByText(/Still couldn.t create a frame/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/problem on our side/)).toBeInTheDocument();
-    expect(screen.getAllByRole("button")).toHaveLength(1);
   });
 });

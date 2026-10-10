@@ -1,6 +1,6 @@
 import http from "node:http";
 import https from "node:https";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   installOutboundGuard,
   OutboundCallBlockedError,
@@ -22,6 +22,7 @@ describe("Cross-mode outbound guard (integration)", () => {
   afterEach(() => {
     guard?.restore();
     guard = null;
+    vi.unstubAllGlobals();
   });
 
   it("fails a fetch to a host that is not loopback, and records it", async () => {
@@ -113,21 +114,14 @@ describe("Cross-mode outbound guard (integration)", () => {
   });
 
   it("with allowEgress, forwards a non-loopback call instead of blocking it, and logs the destination", async () => {
-    // The recorder's posture (issue #139): recording is the one mode whose
-    // point is live provider calls, so the guard observes rather than refuses.
-    // The destination is a guaranteed-NXDOMAIN host — the assertion is about
-    // WHICH error surfaces: any DNS/connection failure proves the call was
-    // forwarded to the real network stack, where blocking would have thrown
-    // OutboundCallBlockedError synchronously from the guard itself.
+    const forwarded = vi.fn(async () => new Response("controlled transport"));
+    vi.stubGlobal("fetch", forwarded);
     guard = installOutboundGuard({ allowEgress: true });
 
     const destination = "https://egress-probe.invalid/v1/models";
-    const failure = await fetch(destination).then(
-      () => null,
-      (error: unknown) => error,
-    );
-    expect(failure).not.toBeNull();
-    expect(failure).not.toBeInstanceOf(OutboundCallBlockedError);
+    const response = await fetch(destination);
+    expect(await response.text()).toBe("controlled transport");
+    expect(forwarded).toHaveBeenCalledWith(destination, undefined);
     expect(guard.networkCalls).toEqual([destination]);
     expect(guard.violations).toEqual([]);
   });

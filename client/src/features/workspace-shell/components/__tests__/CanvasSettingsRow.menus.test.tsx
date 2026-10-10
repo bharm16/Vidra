@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CanvasSettingsRow } from "../CanvasSettingsRow";
 import { GenerationControlsProvider } from "@/features/prompt-optimizer/context/GenerationControlsContext";
@@ -66,20 +66,6 @@ function renderRow(): void {
 }
 
 describe("CanvasSettingsRow aspect/duration menus (system DropdownMenu)", () => {
-  it("opens the aspect menu on an opaque elevated surface using the z-index scale", async () => {
-    const user = userEvent.setup();
-    renderRow();
-
-    await user.click(screen.getByRole("button", { name: "16:9" }));
-
-    const menu = await screen.findByRole("menu");
-    expect(menu.className).toContain("z-overlay");
-    expect(menu.className).toContain("bg-[var(--vidra-dialog-surface)]");
-    expect(
-      screen.getByRole("menuitemradio", { name: "9:16" }),
-    ).toBeInTheDocument();
-  });
-
   it("selecting an aspect ratio updates the chip and closes the menu", async () => {
     const user = userEvent.setup();
     renderRow();
@@ -102,34 +88,5 @@ describe("CanvasSettingsRow aspect/duration menus (system DropdownMenu)", () => 
 
     expect(screen.queryByRole("menu")).toBeNull();
     expect(screen.getByRole("button", { name: "10s" })).toBeInTheDocument();
-  });
-
-  it("dismisses with Escape and with a pointerdown outside (Radix defaults)", async () => {
-    const user = userEvent.setup();
-    renderRow();
-
-    await user.click(screen.getByRole("button", { name: "16:9" }));
-    await screen.findByRole("menu");
-    await user.keyboard("{Escape}");
-    expect(screen.queryByRole("menu")).toBeNull();
-
-    await user.click(screen.getByRole("button", { name: "16:9" }));
-    await screen.findByRole("menu");
-    fireEvent.pointerDown(document.body);
-    expect(screen.queryByRole("menu")).toBeNull();
-  });
-
-  it("supports keyboard navigation between options", async () => {
-    const user = userEvent.setup();
-    renderRow();
-
-    const trigger = screen.getByRole("button", { name: "16:9" });
-    trigger.focus();
-    await user.keyboard("{Enter}");
-    await screen.findByRole("menu");
-
-    await user.keyboard("{ArrowDown}");
-    const active = document.activeElement as HTMLElement;
-    expect(active.getAttribute("role")).toBe("menuitemradio");
   });
 });

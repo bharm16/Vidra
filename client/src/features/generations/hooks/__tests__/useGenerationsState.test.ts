@@ -104,53 +104,6 @@ describe("useGenerationsState", () => {
     });
   });
 
-  it("prefers local unsigned URLs over incoming signed URLs for matching generations", async () => {
-    const localUnsignedVideo = "https://cdn.example.com/local.mp4";
-    const localUnsignedThumb = "https://cdn.example.com/local.jpg";
-    const incomingSignedVideo =
-      "https://storage.googleapis.com/bucket/local.mp4?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Date=20260101T000000Z&X-Goog-Expires=3600&X-Goog-Signature=signed";
-    const incomingSignedThumb =
-      "https://storage.googleapis.com/bucket/local.jpg?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Date=20260101T000000Z&X-Goog-Expires=3600&X-Goog-Signature=signed";
-
-    const local = [
-      buildGeneration(
-        "g1",
-        "completed",
-        [localUnsignedVideo],
-        localUnsignedThumb,
-      ),
-    ];
-
-    const { result, rerender } = renderHook(
-      ({ initialGenerations }) =>
-        useGenerationsState({
-          initialGenerations,
-          promptVersionId: "v1",
-        }),
-      { initialProps: { initialGenerations: local } },
-    );
-
-    rerender({
-      initialGenerations: [
-        buildGeneration(
-          "g1",
-          "completed",
-          [incomingSignedVideo],
-          incomingSignedThumb,
-        ),
-      ],
-    });
-
-    await waitFor(() => {
-      expect(result.current.generations[0]?.mediaUrls).toEqual([
-        localUnsignedVideo,
-      ]);
-      expect(result.current.generations[0]?.thumbnailUrl).toBe(
-        localUnsignedThumb,
-      );
-    });
-  });
-
   it("suppresses onGenerationsChange during external sync but emits for local changes", async () => {
     const onGenerationsChange = vi.fn();
     const initial = [buildGeneration("g1", "completed")];

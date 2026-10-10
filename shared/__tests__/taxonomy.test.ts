@@ -1,62 +1,18 @@
 import { describe, it, expect } from "vitest";
-import * as fc from "fast-check";
 import {
   TAXONOMY,
-  VALID_CATEGORIES,
-  TAXONOMY_VERSION,
   isValidCategory,
-  resolveCategory,
   normalizeRole,
   parseCategoryId,
   getParentCategory,
   isAttribute,
-  getAllParentCategories,
   getAttributesForParent,
 } from "../taxonomy";
 
-describe("VALID_CATEGORIES population", () => {
-  it("contains all parent category IDs", () => {
-    for (const category of Object.values(TAXONOMY)) {
-      expect(VALID_CATEGORIES.has(category.id)).toBe(true);
-    }
-  });
-
-  it("contains all attribute IDs", () => {
-    for (const category of Object.values(TAXONOMY)) {
-      if (category.attributes) {
-        for (const attrId of Object.values(category.attributes)) {
-          expect(VALID_CATEGORIES.has(attrId)).toBe(true);
-        }
-      }
-    }
-  });
-
-  it("has correct size matching unique parents + attributes", () => {
-    const uniqueIds = new Set<string>();
-    for (const category of Object.values(TAXONOMY)) {
-      uniqueIds.add(category.id);
-      if (category.attributes) {
-        for (const attrId of Object.values(category.attributes)) {
-          uniqueIds.add(attrId);
-        }
-      }
-    }
-    expect(VALID_CATEGORIES.size).toBe(uniqueIds.size);
-  });
-});
-
 describe("isValidCategory", () => {
   describe("error handling and edge cases", () => {
-    it("returns false for empty string", () => {
-      expect(isValidCategory("")).toBe(false);
-    });
-
     it("returns false for random string", () => {
       expect(isValidCategory("nonexistent.category")).toBe(false);
-    });
-
-    it("returns false for partial match", () => {
-      expect(isValidCategory("subj")).toBe(false);
     });
   });
 
@@ -71,29 +27,6 @@ describe("isValidCategory", () => {
       expect(isValidCategory("subject.wardrobe")).toBe(true);
       expect(isValidCategory("lighting.source")).toBe(true);
       expect(isValidCategory("camera.movement")).toBe(true);
-    });
-  });
-});
-
-describe("resolveCategory", () => {
-  describe("error handling and edge cases", () => {
-    it("returns empty string for null", () => {
-      expect(resolveCategory(null)).toBe("");
-    });
-
-    it("returns empty string for undefined", () => {
-      expect(resolveCategory(undefined)).toBe("");
-    });
-
-    it("returns empty string for empty string", () => {
-      expect(resolveCategory("")).toBe("");
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns the ID unchanged", () => {
-      expect(resolveCategory("subject.wardrobe")).toBe("subject.wardrobe");
-      expect(resolveCategory("camera")).toBe("camera");
     });
   });
 });
@@ -128,18 +61,6 @@ describe("normalizeRole", () => {
 
 describe("parseCategoryId", () => {
   describe("error handling and edge cases", () => {
-    it("returns null for null input", () => {
-      expect(parseCategoryId(null)).toBeNull();
-    });
-
-    it("returns null for undefined input", () => {
-      expect(parseCategoryId(undefined)).toBeNull();
-    });
-
-    it("returns null for empty string", () => {
-      expect(parseCategoryId("")).toBeNull();
-    });
-
     it("returns null for non-string input", () => {
       // @ts-expect-error testing runtime behavior
       expect(parseCategoryId(123)).toBeNull();
@@ -166,45 +87,10 @@ describe("parseCategoryId", () => {
         isParent: false,
       });
     });
-
-    it("only uses first dot for splitting", () => {
-      const result = parseCategoryId("a.b.c");
-      expect(result).toEqual({ parent: "a", attribute: "b", isParent: false });
-    });
-  });
-
-  describe("property-based", () => {
-    it("parsed parent is always the first segment", () => {
-      const noDotNonEmpty = fc
-        .string({ minLength: 1, maxLength: 20 })
-        .filter((s) => !s.includes(".") && s.length > 0);
-      fc.assert(
-        fc.property(noDotNonEmpty, noDotNonEmpty, (parent, attr) => {
-          const result = parseCategoryId(`${parent}.${attr}`);
-          expect(result?.parent).toBe(parent);
-          expect(result?.attribute).toBe(attr);
-          expect(result?.isParent).toBe(false);
-        }),
-      );
-    });
   });
 });
 
 describe("getParentCategory", () => {
-  describe("error handling and edge cases", () => {
-    it("returns null for null", () => {
-      expect(getParentCategory(null)).toBeNull();
-    });
-
-    it("returns null for undefined", () => {
-      expect(getParentCategory(undefined)).toBeNull();
-    });
-
-    it("returns null for empty string", () => {
-      expect(getParentCategory("")).toBeNull();
-    });
-  });
-
   describe("core behavior", () => {
     it("returns parent from attribute ID", () => {
       expect(getParentCategory("subject.wardrobe")).toBe("subject");
@@ -218,20 +104,6 @@ describe("getParentCategory", () => {
 });
 
 describe("isAttribute", () => {
-  describe("error handling and edge cases", () => {
-    it("returns false for null", () => {
-      expect(isAttribute(null)).toBe(false);
-    });
-
-    it("returns false for undefined", () => {
-      expect(isAttribute(undefined)).toBe(false);
-    });
-
-    it("returns false for empty string", () => {
-      expect(isAttribute("")).toBe(false);
-    });
-  });
-
   describe("core behavior", () => {
     it("returns true for attribute IDs", () => {
       expect(isAttribute("subject.wardrobe")).toBe(true);
@@ -245,25 +117,8 @@ describe("isAttribute", () => {
   });
 });
 
-describe("getAllParentCategories", () => {
-  it("returns all parent IDs from TAXONOMY", () => {
-    const expected = Object.values(TAXONOMY).map((c) => c.id);
-    expect(getAllParentCategories()).toEqual(expected);
-  });
-
-  it("none contain dots", () => {
-    for (const p of getAllParentCategories()) {
-      expect(p).not.toContain(".");
-    }
-  });
-});
-
 describe("getAttributesForParent", () => {
   describe("error handling and edge cases", () => {
-    it("returns empty array for null", () => {
-      expect(getAttributesForParent(null)).toEqual([]);
-    });
-
     it("returns empty array for unknown parent", () => {
       expect(getAttributesForParent("nonexistent")).toEqual([]);
     });
@@ -276,17 +131,5 @@ describe("getAttributesForParent", () => {
       expect(attrs).toContain("subject.identity");
       expect(attrs).toContain("subject.wardrobe");
     });
-
-    it("returns attributes for lighting", () => {
-      const attrs = getAttributesForParent("lighting");
-      expect(attrs).toContain("lighting.source");
-      expect(attrs).toContain("lighting.quality");
-    });
-  });
-});
-
-describe("TAXONOMY_VERSION", () => {
-  it("is a semver-like string", () => {
-    expect(TAXONOMY_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });

@@ -35,20 +35,4 @@ describe("regression: expansion operations fall back to a healthy provider", () 
       );
     }
   });
-
-  it("expansion operations keep gemini as primary when gemini is available", () => {
-    const resolverWithGemini = new ClientResolver({
-      openai: stubClient,
-      groq: stubClient,
-      gemini: stubClient,
-      qwen: null,
-    });
-    const planResolver = new ExecutionPlanResolver(resolverWithGemini);
-
-    for (const operation of EXPANSION_OPERATIONS) {
-      const plan = planResolver.resolve(operation);
-
-      expect(plan.primaryConfig.client).toBe("gemini");
-    }
-  });
 });

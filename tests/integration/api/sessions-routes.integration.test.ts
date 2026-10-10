@@ -24,25 +24,8 @@ function buildSession(id: string) {
   };
 }
 
-function buildContinuitySession() {
-  return {
-    id: "continuity-session-1",
-    userId: TEST_USER_ID,
-    name: "Continuity",
-    shots: [],
-    defaultSettings: {
-      generationMode: "continuity",
-      defaultContinuityMode: "style-match",
-      defaultModel: "sora2",
-      maxRetries: 1,
-      useCharacterConsistency: false,
-    },
-  };
-}
-
-function createApp(options: { continuityEnabled?: boolean } = {}) {
+function createApp() {
   const baseSession = buildSession("session_123");
-  const continuitySession = buildContinuitySession();
 
   const sessionService = {
     createPromptSession: vi.fn().mockResolvedValue(baseSession),
@@ -64,21 +47,6 @@ function createApp(options: { continuityEnabled?: boolean } = {}) {
     updateHighlights: vi.fn().mockResolvedValue(baseSession),
     updateOutput: vi.fn().mockResolvedValue(baseSession),
     updateVersions: vi.fn().mockResolvedValue(baseSession),
-  };
-
-  const continuityService = {
-    getSession: vi.fn().mockResolvedValue(continuitySession),
-    addShot: vi.fn().mockResolvedValue({ id: "shot-1" }),
-    updateShot: vi.fn().mockResolvedValue({ id: "shot-1" }),
-    generateShot: vi
-      .fn()
-      .mockResolvedValue({ status: "completed", retryCount: 0 }),
-    updateShotStyleReference: vi.fn().mockResolvedValue({ id: "shot-1" }),
-    updateSessionSettings: vi.fn().mockResolvedValue(continuitySession),
-    updatePrimaryStyleReference: vi.fn().mockResolvedValue(continuitySession),
-    createSceneProxy: vi.fn().mockResolvedValue(continuitySession),
-    createSession: vi.fn().mockResolvedValue(continuitySession),
-    getUserSessions: vi.fn().mockResolvedValue([continuitySession]),
   };
 
   const app = express();
@@ -134,26 +102,6 @@ describe("Sessions Routes (integration)", () => {
       includePrompt: false,
       includeContinuity: false,
     });
-  });
-
-  it("keeps core /api/sessions routes available without continuity service", async () => {
-    const { app, sessionService } = createApp({ continuityEnabled: false });
-
-    const listResponse = await request(app)
-      .get("/api/sessions")
-      .set("x-api-key", TEST_API_KEY);
-
-    expect(listResponse.status).toBe(200);
-    expect(sessionService.listSessions).toHaveBeenCalledWith(TEST_USER_ID, {
-      includePrompt: true,
-      includeContinuity: true,
-    });
-
-    const continuitySubroute = await request(app)
-      .get("/api/sessions/session_123/shots/shot-1/status")
-      .set("x-api-key", TEST_API_KEY);
-
-    expect(continuitySubroute.status).toBe(404);
   });
 
   it("GET /api/sessions/by-prompt/:uuid returns mapped session", async () => {

@@ -39,7 +39,9 @@ const acceptLiveOutputMock = vi.mocked(acceptLiveOutput);
 const retryFirstFrameArmingMock = vi.mocked(retryFirstFrameArming);
 const retryPictureAttachmentMock = vi.mocked(retryPictureAttachment);
 
-function output(overrides: Partial<LiveOutput> & { requestId: string }): LiveOutput {
+function output(
+  overrides: Partial<LiveOutput> & { requestId: string },
+): LiveOutput {
   return {
     imageUrl: `data:image/webp;base64,output-${overrides.requestId}`,
     at: 0,
@@ -105,28 +107,6 @@ describe("Use this reports the arming outcome (issue #136)", () => {
     retryPictureAttachmentMock.mockReset();
     retryFirstFrameArmingMock.mockReset();
     currentPathname = "/live";
-  });
-
-  it("shows a saved-but-unarmed acceptance as saved-but-not-set instead of landing the creator in a frameless session", async () => {
-    acceptLiveOutputMock.mockResolvedValue(
-      resultWith(attachedButUnarmed, failedArming),
-    );
-
-    const { result } = renderAcceptance();
-
-    act(() => {
-      result.current.accept(output({ requestId: "1" }));
-    });
-    await act(async () => {});
-
-    // The take IS in its session — but the first frame is not armed, and the
-    // creator is told that instead of being navigated as if it were.
-    expect(result.current.status).toEqual({
-      state: "unarmed",
-      sessionId: "session-made",
-      generationId: "take-9",
-    });
-    expect(currentPathname).toBe("/live");
   });
 
   it("the arming retry arms the SAME take by identity through the arm door, then lands in the session", async () => {

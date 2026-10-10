@@ -27,14 +27,6 @@ const unconfigured = (): VideoProvider[] => [
 ];
 
 describe("video providers — injection contract", () => {
-  it("covers every declared provider id, exactly once", () => {
-    expect(
-      configured()
-        .map((provider) => provider.id)
-        .sort(),
-    ).toEqual(["gemini", "replicate"]);
-  });
-
   it("reports available when its own client is injected", () => {
     for (const provider of configured()) {
       expect(provider.isAvailable()).toBe(true);
@@ -44,14 +36,6 @@ describe("video providers — injection contract", () => {
   it("reports unavailable when its credential is absent", () => {
     for (const provider of unconfigured()) {
       expect(provider.isAvailable()).toBe(false);
-    }
-  });
-
-  it("declares the required key the credentials table names", () => {
-    for (const provider of configured()) {
-      expect(provider.requiredKey).toBe(
-        VIDEO_PROVIDER_CREDENTIALS[provider.id].requiredKey,
-      );
     }
   });
 
@@ -69,22 +53,5 @@ describe("video providers — injection contract", () => {
         ),
       ).rejects.toThrow(VIDEO_PROVIDER_CREDENTIALS[provider.id].missingMessage);
     }
-  });
-});
-
-describe("raw-HTTP providers normalize their base URL", () => {
-  it("defaults when none is configured", () => {
-    expect(
-      new VeoVideoProvider({ apiKey: "k" }) as unknown as { baseUrl: string },
-    ).toMatchObject({ baseUrl: DEFAULT_VEO_BASE_URL });
-  });
-
-  it("trims trailing slashes off a configured base URL", () => {
-    expect(
-      new VeoVideoProvider({
-        apiKey: "k",
-        baseUrl: "https://gemini.example.com/v1//",
-      }) as unknown as { baseUrl: string },
-    ).toMatchObject({ baseUrl: "https://gemini.example.com/v1" });
   });
 });

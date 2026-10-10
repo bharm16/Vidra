@@ -116,8 +116,7 @@ export function buildGroqPayload({
     payload.stop = ["```", "\n\n\n", "Note:", "I hope"];
   }
 
-  // Streaming has never requested logprobs; only the buffered path consumes
-  // them (see logprobConfidence).
+  // Streaming has never requested logprobs; only the buffered path consumes them.
   if (options.logprobs && !stream) {
     if (supportsLogprobs(model)) {
       payload.logprobs = true;

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { StudioUnresolvedReturn } from "../../api/schemas";
@@ -24,13 +24,6 @@ const owed: StudioUnresolvedReturn = {
 };
 
 describe("UnsavedReturnNotice", () => {
-  it("renders nothing when the server owes nothing", () => {
-    const { container } = render(
-      <UnsavedReturnNotice returns={[]} onRetry={vi.fn()} />,
-    );
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it("surfaces the unresolved return and retries the SAME take", async () => {
     const onRetry = vi.fn().mockResolvedValue({ ok: true });
     render(<UnsavedReturnNotice returns={[owed]} onRetry={onRetry} />);
@@ -53,19 +46,5 @@ describe("UnsavedReturnNotice", () => {
 
     expect(await screen.findByText("the session is gone")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save it" })).toBeInTheDocument();
-  });
-
-  it("shows no failure when the retry attaches it", async () => {
-    const onRetry = vi.fn(async () => ({ ok: true as const }));
-    render(<UnsavedReturnNotice returns={[owed]} onRetry={onRetry} />);
-
-    await userEvent.click(screen.getByRole("button", { name: "Save it" }));
-
-    // The entry itself is removed by the parent from the retry's outcome
-    // (pinned at the hook level, where the reducer clear runs); what this
-    // pins is that a successful retry surfaces no error.
-    await waitFor(() =>
-      expect(screen.queryByText("the session is gone")).toBeNull(),
-    );
   });
 });

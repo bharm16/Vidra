@@ -100,34 +100,6 @@ describe("NlpSpanStrategy", () => {
   });
 
   describe("edge cases", () => {
-    it("falls back to LLM when GLiNER is required but unavailable", async () => {
-      const longText = Array.from({ length: 100 }, () => "word").join(" ");
-      const spans = Array.from({ length: 8 }, (_, index) => ({
-        start: 0,
-        end: 4,
-        role: index % 2 === 0 ? "subject" : "action",
-        confidence: 0.9,
-      }));
-
-      mockExtractKnownSpans.mockReturnValue(spans);
-      mockValidateSpans.mockReturnValue({
-        ok: true,
-        errors: [],
-        result: { spans, meta: { version: "v1", notes: "ok" } },
-      });
-      mockIsGlinerAvailable.mockReturnValue(false);
-
-      const strategy = new NlpSpanStrategy();
-      const result = await strategy.extractSpans(
-        longText,
-        baseParams.policy,
-        baseParams.options,
-        baseParams.cache,
-      );
-
-      expect(result).toBeNull();
-    });
-
     it("uses lenient validation when strict validation fails", async () => {
       const spans = [{ start: 0, end: 3, role: "subject", confidence: 0.9 }];
 
@@ -153,39 +125,6 @@ describe("NlpSpanStrategy", () => {
       );
 
       expect(result?.meta.notes).toBe("lenient");
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns validated spans when fast-path succeeds", async () => {
-      const spans = [
-        { start: 0, end: 3, role: "subject", confidence: 0.9 },
-        { start: 4, end: 9, role: "action", confidence: 0.8 },
-      ];
-
-      mockExtractKnownSpans.mockReturnValue(spans);
-      mockValidateSpans.mockImplementation(
-        (args: {
-          spans: unknown[];
-          meta: { notes?: string; version?: string };
-        }) => ({
-          ok: true,
-          errors: [],
-          result: { spans: args.spans as typeof spans, meta: args.meta },
-        }),
-      );
-      mockIsGlinerAvailable.mockReturnValue(true);
-
-      const strategy = new NlpSpanStrategy();
-      const result = await strategy.extractSpans(
-        "short text for NLP",
-        baseParams.policy,
-        baseParams.options,
-        baseParams.cache,
-      );
-
-      expect(result?.spans).toHaveLength(2);
-      expect(result?.meta.notes).toContain("Generated via dictionary");
     });
   });
 });

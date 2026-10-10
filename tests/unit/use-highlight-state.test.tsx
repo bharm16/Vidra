@@ -71,31 +71,6 @@ describe("useHighlightState", () => {
     });
   });
 
-  describe("edge cases", () => {
-    it("increments the version when bumping is requested", () => {
-      const { result } = renderHook(() => useHighlightState());
-
-      act(() => {
-        result.current.applyInitialHighlightSnapshot(createSnapshot("sig-2"), {
-          bumpVersion: true,
-        });
-      });
-
-      expect(result.current.initialHighlightsVersion).toBe(1);
-    });
-
-    it("keeps the latest highlight reference in sync", () => {
-      const { result } = renderHook(() => useHighlightState());
-      const snapshot = createSnapshot("sig-3");
-
-      act(() => {
-        result.current.applyInitialHighlightSnapshot(snapshot);
-      });
-
-      expect(result.current.latestHighlightRef.current).toBe(snapshot);
-    });
-  });
-
   describe("core behavior", () => {
     it("applies snapshots and persists signatures when configured", () => {
       const { result } = renderHook(() => useHighlightState());

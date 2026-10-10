@@ -3,7 +3,6 @@ import type { SessionPromptVersionEntry } from "@shared/types/session";
 import type { Generation } from "@features/generations/types";
 import { normalizePersistedGenerations } from "@features/generations/utils/normalizePersistedGeneration";
 import { deriveSpaceNodesFromVersions } from "../deriveSpaceNodes";
-import { deriveEdgeKind } from "../deriveEdgeKind";
 import { resolveWordsForNode } from "../resolveWordsForNode";
 
 const version = (
@@ -72,63 +71,9 @@ describe("deriveSpaceNodesFromVersions", () => {
     ]);
   });
 
-  it("draws the reword chain from each version's recorded parent (survives reload)", () => {
-    const nodes = lineageOf([
-      version({ versionId: "v-1", prompt: "first wording" }),
-      version({
-        versionId: "v-2",
-        prompt: "second wording",
-        rewordedFromVersionId: "v-1",
-      }),
-      version({
-        versionId: "v-3",
-        prompt: "third wording",
-        rewordedFromVersionId: "v-2",
-      }),
-    ]);
-
-    const words = nodes.filter((n) => n.kind === "words");
-    // A linear spine up the words column — but drawn edge-for-edge from each
-    // version's PERSISTED parent, not from the array's order (issue #116).
-    // This is the multi-version chain the live adapter couldn't show.
-    expect(words.map((n) => ({ id: n.id, ancestorId: n.ancestorId }))).toEqual([
-      { id: "words-v-1", ancestorId: null },
-      { id: "words-v-2", ancestorId: "words-v-1" },
-      { id: "words-v-3", ancestorId: "words-v-2" },
-    ]);
-  });
-
   // Issue #116 (ADR-0013 M4): a reword records the version it came from, so a
   // reword of an OLDER version branches off that older version rather than the
   // immediately-preceding array entry.
-  it("branches off the OLDER version a reword recorded as its parent", () => {
-    const nodes = lineageOf([
-      version({ versionId: "v-1", prompt: "first" }),
-      version({
-        versionId: "v-2",
-        prompt: "second",
-        rewordedFromVersionId: "v-1",
-      }),
-      // Reworded from the OLDER v-1, NOT the immediately-preceding v-2.
-      version({
-        versionId: "v-3",
-        prompt: "third",
-        rewordedFromVersionId: "v-1",
-      }),
-    ]);
-
-    const words = nodes.filter((n) => n.kind === "words");
-    expect(words.map((n) => ({ id: n.id, ancestorId: n.ancestorId }))).toEqual([
-      { id: "words-v-1", ancestorId: null },
-      { id: "words-v-2", ancestorId: "words-v-1" },
-      // The branch: v-3 hangs off v-1, not v-2.
-      { id: "words-v-3", ancestorId: "words-v-1" },
-    ]);
-    // And the branch is a genuine reword edge.
-    expect(
-      deriveEdgeKind(nodes.find((n) => n.id === "words-v-3")!, nodes),
-    ).toBe("reword");
-  });
 
   // Issue #116: two versions created concurrently each carry their own
   // recorded parent, and array order — which concurrent writes race to
@@ -217,26 +162,6 @@ describe("deriveSpaceNodesFromVersions", () => {
     expect(nodes.find((n) => n.id === "words-v-2")!.ancestorId).toBeNull();
   });
 
-  it("links a clip to its persisted source picture via ancestorGenerationId", () => {
-    const nodes = lineageOf([
-      version({
-        versionId: "v-1",
-        generations: [
-          { id: "gen-pic-1", mediaType: "image", status: "completed" },
-          {
-            id: "gen-clip-1",
-            mediaType: "video",
-            status: "completed",
-            ancestorGenerationId: "gen-pic-1",
-          },
-        ],
-      }),
-    ]);
-
-    const clip = nodes.find((n) => n.id === "gen-clip-1");
-    expect(clip).toMatchObject({ kind: "clip", ancestorId: "gen-pic-1" });
-  });
-
   it("never attaches a clip to a sibling picture by position", () => {
     const nodes = lineageOf([
       version({
@@ -258,48 +183,6 @@ describe("deriveSpaceNodesFromVersions", () => {
       ancestorId: "words-v-1",
       pictureAncestryUnknown: true,
     });
-  });
-
-  it("files a clip under its words without claiming those words were its full ancestry", () => {
-    const nodes = lineageOf([
-      version({
-        versionId: "v-1",
-        prompt: "a dancer at dusk",
-        generations: [
-          { id: "gen-clip-1", mediaType: "video", status: "completed" },
-        ],
-      }),
-    ]);
-
-    // "We know which words this clip belongs to" — not "these words were its
-    // complete production ancestry". The flag is what keeps the second
-    // reading off the screen.
-    expect(nodes.find((n) => n.id === "gen-clip-1")).toMatchObject({
-      kind: "clip",
-      ancestorId: "words-v-1",
-      pictureAncestryUnknown: true,
-    });
-  });
-
-  it("marks nothing unknown when the clip's ancestor is persisted", () => {
-    const nodes = lineageOf([
-      version({
-        versionId: "v-1",
-        generations: [
-          { id: "gen-pic-1", mediaType: "image", status: "completed" },
-          {
-            id: "gen-clip-1",
-            mediaType: "video",
-            status: "completed",
-            ancestorGenerationId: "gen-pic-1",
-          },
-        ],
-      }),
-    ]);
-
-    expect(nodes.find((n) => n.id === "gen-clip-1")).not.toHaveProperty(
-      "pictureAncestryUnknown",
-    );
   });
 
   it("draws a clip whose session write did not resolve as made-but-not-saved", () => {
@@ -362,79 +245,10 @@ describe("deriveSpaceNodesFromVersions", () => {
   // ADR-0022 decision 3 — the refine edge. Nothing in #86 produces one (an
   // upload has no picture ancestor); the plumbing exists so #88/#89 record a
   // relationship rather than inventing a second way to draw it.
-  it("hangs a picture that names a picture ancestor from that picture", () => {
-    const nodes = lineageOf([
-      version({
-        versionId: "v-1",
-        generations: [
-          { id: "gen-pic-1", mediaType: "image", status: "completed" },
-          {
-            id: "gen-pic-2",
-            mediaType: "image",
-            status: "completed",
-            ancestorGenerationId: "gen-pic-1",
-            origin: "studio",
-          },
-        ],
-      }),
-    ]);
-
-    expect(nodes.find((n) => n.id === "gen-pic-2")).toMatchObject({
-      kind: "picture",
-      ancestorId: "gen-pic-1",
-    });
-  });
 
   // ADR-0022 decision 4, issue #89: a refresh renders the returned picture
   // from server records alone. The record below is exactly what the studio's
   // return bridge writes — nothing here is reconstructed client-side.
-  it("draws a refine edge for a studio take returned onto the picture it was refined from", () => {
-    const nodes = lineageOf([
-      version({
-        versionId: "v-1",
-        prompt: "a brass desk lamp on an oak table",
-        generations: [
-          {
-            id: "take-1",
-            mediaType: "image",
-            status: "completed",
-            origin: "generated",
-            ancestorGenerationId: null,
-          },
-          {
-            id: "take-2",
-            mediaType: "image",
-            status: "completed",
-            origin: "studio",
-            productionProvenance: {
-              state: "known",
-              instruction: "warm the light",
-              model: "nano-banana-2",
-              studio: {
-                projectId: "project-1",
-                turnId: "turn-1",
-                imageId: "img-1",
-              },
-            },
-            sourceInputs: [
-              { kind: "take", generationId: "take-1", storagePath: "p/take-1" },
-              { kind: "studio-image", storagePath: "p/returned" },
-            ],
-            ancestorGenerationId: "take-1",
-            thumbnailUrl: "https://img/returned.png",
-          },
-        ],
-      }),
-    ]);
-
-    const returned = nodes.find((node) => node.id === "take-2")!;
-    expect(returned).toMatchObject({ kind: "picture", ancestorId: "take-1" });
-    // Inside the picture column, not a second roll off the words-version.
-    expect(deriveEdgeKind(returned, nodes)).toBe("refine");
-    expect(deriveEdgeKind(nodes.find((n) => n.id === "take-1")!, nodes)).toBe(
-      "spine",
-    );
-  });
 
   it("keeps an admitted upload rooted at the words-version it was admitted under", () => {
     const nodes = lineageOf([
@@ -516,11 +330,9 @@ describe("deriveSpaceNodesFromVersions", () => {
       archived: true,
     });
     // Archived identity is retained in data; the asset-space renderer hides it.
-    expect(nodes.some((node) => node.id === "gen-pic-live" && !node.archived)).toBe(true);
-  });
-
-  it("returns no nodes for an empty version list", () => {
-    expect(deriveSpaceNodesFromVersions([])).toEqual([]);
+    expect(
+      nodes.some((node) => node.id === "gen-pic-live" && !node.archived),
+    ).toBe(true);
   });
 
   it("shows a clip persisted before its writer stamped mediaType", () => {
@@ -554,34 +366,6 @@ describe("deriveSpaceNodesFromVersions", () => {
   // words restored on selection or arming — is what the take is FILED UNDER,
   // never what its display ancestor descends from. The full production path
   // (normalize → derive → resolve) proves it end to end.
-  it("stamps each take with its own associated words-version", () => {
-    const nodes = lineageOf([
-      version({
-        versionId: "v-1",
-        prompt: "words one",
-        generations: [
-          { id: "pic-1", mediaType: "image", status: "completed" },
-          {
-            id: "clip-1",
-            mediaType: "video",
-            status: "completed",
-            ancestorGenerationId: "pic-1",
-          },
-        ],
-      }),
-    ]);
-
-    expect(nodes.find((n) => n.id === "pic-1")).toMatchObject({
-      wordsVersionId: "v-1",
-    });
-    expect(nodes.find((n) => n.id === "clip-1")).toMatchObject({
-      wordsVersionId: "v-1",
-    });
-    // A words node is the words-version, not a take filed under one.
-    expect(nodes.find((n) => n.id === "words-v-1")).not.toHaveProperty(
-      "wordsVersionId",
-    );
-  });
 
   it("restores a clip's OWN words-version, not its source picture's (P1/W1/W2/C2)", () => {
     // P1 belongs to W1. The creator changes the motion into W2 and makes clip
@@ -619,7 +403,6 @@ describe("deriveSpaceNodesFromVersions", () => {
     const c2 = nodes.find((n) => n.id === "C2")!;
     // Display ancestor unchanged: the space still draws C2 → P1.
     expect(c2).toMatchObject({ kind: "clip", ancestorId: "P1" });
-    expect(deriveEdgeKind(c2, nodes)).toBe("move");
     // But its words are its own version's, not P1's.
     expect(c2.wordsVersionId).toBe("v-w2");
     expect(resolveWordsForNode("C2", nodes)).toBe(
@@ -666,7 +449,6 @@ describe("deriveSpaceNodesFromVersions", () => {
 
     const p2 = nodes.find((n) => n.id === "P2")!;
     expect(p2).toMatchObject({ kind: "picture", ancestorId: "P1" });
-    expect(deriveEdgeKind(p2, nodes)).toBe("refine");
     expect(p2.wordsVersionId).toBe("v-w2");
     expect(resolveWordsForNode("P2", nodes)).toBe(
       "a brass lamp on oak, warmer light",

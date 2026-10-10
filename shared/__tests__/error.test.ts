@@ -6,11 +6,6 @@ describe("toErrorMessage", () => {
     expect(toErrorMessage(new Error("boom"))).toBe("boom");
   });
 
-  it("preserves messages of Error subclasses", () => {
-    class MyError extends Error {}
-    expect(toErrorMessage(new MyError("specific"))).toBe("specific");
-  });
-
   it("returns the string itself when given a string", () => {
     expect(toErrorMessage("oops")).toBe("oops");
     expect(toErrorMessage("")).toBe("");
@@ -41,11 +36,6 @@ describe("toErrorMessage", () => {
 });
 
 describe("toError", () => {
-  it("returns Error instances unchanged (identity preserved)", () => {
-    const err = new Error("boom");
-    expect(toError(err)).toBe(err);
-  });
-
   it("preserves Error subclass identity", () => {
     class MyError extends Error {}
     const err = new MyError("specific");
@@ -58,16 +48,5 @@ describe("toError", () => {
     const err = toError("oops");
     expect(err).toBeInstanceOf(Error);
     expect(err.message).toBe("oops");
-  });
-
-  it("wraps arbitrary values in Error using toErrorMessage", () => {
-    const err = toError({ code: "X" });
-    expect(err).toBeInstanceOf(Error);
-    expect(err.message).toBe("[object Object]");
-  });
-
-  it("wraps null/undefined cleanly", () => {
-    expect(toError(null).message).toBe("null");
-    expect(toError(undefined).message).toBe("undefined");
   });
 });

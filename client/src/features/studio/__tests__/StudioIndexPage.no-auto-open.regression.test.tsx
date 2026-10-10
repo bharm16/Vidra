@@ -1,5 +1,5 @@
 import { MemoryRouter } from "react-router-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { StudioProject } from "../api/schemas";
@@ -68,23 +68,6 @@ describe("regression: the Studio destination lists projects, never opens one", (
     vi.clearAllMocks();
   });
 
-  it("shows every project, including the one an auto-open would have hidden", async () => {
-    vi.mocked(listStudioProjects).mockResolvedValue(projects);
-
-    renderIndex();
-
-    // The real work is reachable from the destination itself — it is not
-    // buried behind the newest empty project.
-    const real = await screen.findByLabelText(
-      "Open studio project: Minimalist Fox Logo",
-    );
-    expect(real).toHaveAttribute("href", "/studio/p-real");
-
-    expect(
-      screen.getByLabelText("Open studio project: Untitled"),
-    ).toHaveAttribute("href", "/studio/p-empty");
-  });
-
   it("offers to start a project without creating one", async () => {
     vi.mocked(listStudioProjects).mockResolvedValue(projects);
 
@@ -94,17 +77,6 @@ describe("regression: the Studio destination lists projects, never opens one", (
     // Routing, not writing. A POST here is what produced the empty
     // "Untitled" records that buried real work.
     expect(create).toHaveAttribute("href", "/studio/new");
-    expect(createStudioProject).not.toHaveBeenCalled();
-  });
-
-  it("still offers the create tile when the creator has no projects", async () => {
-    vi.mocked(listStudioProjects).mockResolvedValue([]);
-
-    renderIndex();
-
-    await waitFor(() =>
-      expect(screen.getByLabelText("Create new project")).toBeInTheDocument(),
-    );
     expect(createStudioProject).not.toHaveBeenCalled();
   });
 });

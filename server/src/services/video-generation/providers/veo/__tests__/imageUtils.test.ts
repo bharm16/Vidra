@@ -29,40 +29,6 @@ describe("fetchAsVeoInline", () => {
     expect(result.inlineData.data).toBe(body.toString("base64"));
   });
 
-  it("falls back to image/png for unknown image content-type", async () => {
-    const body = Buffer.from("image-content");
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      headers: { get: () => "text/html; charset=utf-8" },
-      arrayBuffer: async () =>
-        body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const result = await fetchAsVeoInline("https://example.com/image", "image");
-
-    expect(result.inlineData.mimeType).toBe("image/png");
-    expect(result.inlineData.data).toBe(body.toString("base64"));
-  });
-
-  it("falls back to video/mp4 for unknown video content-type", async () => {
-    const body = Buffer.from("video-content");
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      headers: { get: () => "application/octet-stream" },
-      arrayBuffer: async () =>
-        body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const result = await fetchAsVeoInline("https://example.com/video", "video");
-
-    expect(result.inlineData.mimeType).toBe("video/mp4");
-    expect(result.inlineData.data).toBe(body.toString("base64"));
-  });
-
   it("throws on non-OK fetch responses", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,

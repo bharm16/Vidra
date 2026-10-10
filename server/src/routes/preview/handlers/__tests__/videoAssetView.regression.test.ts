@@ -3,49 +3,6 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createVideoAssetViewHandler } from "../videoAssetView";
 
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") {
-    return true;
-  }
-
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") {
-    return null;
-  }
-
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
-
 const createApp = (
   handler: ReturnType<typeof createVideoAssetViewHandler>,
   userId: string | null = "user-1",
@@ -80,10 +37,9 @@ describe("videoAssetView ownership regression", () => {
     });
     const app = createApp(handler);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/video/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/video/view")
+      .query({ assetId: "asset-1" });
 
     expect(response.status).toBe(503);
     expect(getVideoUrl).not.toHaveBeenCalled();
@@ -99,10 +55,9 @@ describe("videoAssetView ownership regression", () => {
     });
     const app = createApp(handler);
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/video/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/video/view")
+      .query({ assetId: "asset-1" });
 
     expect(response.status).toBe(404);
     expect(findJobByAssetId).toHaveBeenCalledWith("asset-1");
@@ -123,10 +78,9 @@ describe("videoAssetView ownership regression", () => {
     });
     const app = createApp(handler, "user-1");
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/video/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/video/view")
+      .query({ assetId: "asset-1" });
 
     expect(response.status).toBe(403);
     expect(getVideoUrl).not.toHaveBeenCalled();
@@ -151,10 +105,9 @@ describe("videoAssetView ownership regression", () => {
     });
     const app = createApp(handler, "user-1");
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/video/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/video/view")
+      .query({ assetId: "asset-1" });
 
     expect(response.status).toBe(200);
     expect(response.body.data.source).toBe("storage");
@@ -187,10 +140,9 @@ describe("videoAssetView ownership regression", () => {
     });
     const app = createApp(handler, "user-1");
 
-    const response = await runSupertestOrSkip(() =>
-      request(app).get("/preview/video/view").query({ assetId: "asset-1" }),
-    );
-    if (!response) return;
+    const response = await request(app)
+      .get("/preview/video/view")
+      .query({ assetId: "asset-1" });
 
     expect(response.status).toBe(200);
     expect(response.body.data.source).toBe("preview");

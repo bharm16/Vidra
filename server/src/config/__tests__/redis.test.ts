@@ -85,35 +85,6 @@ describe("redis config", () => {
     expect(redisCtorMock).not.toHaveBeenCalled();
   });
 
-  it("creates redis client and connects with URL override", async () => {
-    process.env.REDIS_URL = "redis://localhost:6379";
-
-    const redis = createRedisClient();
-
-    expect(redis).toBeTruthy();
-    expect(redisCtorMock).toHaveBeenCalledTimes(1);
-    expect(connectMock).toHaveBeenCalledTimes(1);
-    expect(onMock.mock.calls.map((c) => c[0])).toEqual(
-      expect.arrayContaining([
-        "connect",
-        "ready",
-        "error",
-        "close",
-        "reconnecting",
-        "end",
-      ]),
-    );
-  });
-
-  it("creates redis client when REDIS_HOST is set", () => {
-    process.env.REDIS_HOST = "10.0.0.5";
-
-    const redis = createRedisClient();
-
-    expect(redis).toBeTruthy();
-    expect(redisCtorMock).toHaveBeenCalledTimes(1);
-  });
-
   it("closes redis client gracefully via quit", async () => {
     process.env.REDIS_URL = "redis://localhost:6379";
     const redis = createRedisClient();

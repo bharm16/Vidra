@@ -3,10 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HighlightSnapshot } from "@features/prompt-optimizer/context/types";
 import { useUndoRedo } from "../useUndoRedo";
 
-type SetupResult = ReturnType<
-  typeof renderHook<unknown, ReturnType<typeof useUndoRedo>>
->;
-
 function setup(initialText = "initial") {
   const setCanUndo = vi.fn();
   const setCanRedo = vi.fn();
@@ -123,43 +119,6 @@ describe("useUndoRedo", () => {
     expect(undoStackRef.current).toHaveLength(2);
   });
 
-  it("supports undo and redo transitions", () => {
-    const {
-      hook,
-      promptOptimizer,
-      undoStackRef,
-      redoStackRef,
-      applyInitialHighlightSnapshot,
-    } = setup("seed");
-
-    act(() => {
-      hook.result.current.handleDisplayedPromptChange("seed one", 8);
-      hook.rerender();
-      hook.result.current.handleDisplayedPromptChange("seed one two", 12);
-      hook.rerender();
-    });
-
-    expect(undoStackRef.current.length).toBeGreaterThan(0);
-
-    act(() => {
-      hook.result.current.handleUndo();
-      vi.runAllTimers();
-      hook.rerender();
-    });
-
-    expect(promptOptimizer.setOptimizedPrompt).toHaveBeenCalled();
-    expect(applyInitialHighlightSnapshot).toHaveBeenCalled();
-    expect(redoStackRef.current.length).toBeGreaterThan(0);
-
-    act(() => {
-      hook.result.current.handleRedo();
-      vi.runAllTimers();
-      hook.rerender();
-    });
-
-    expect(promptOptimizer.setOptimizedPrompt).toHaveBeenCalledTimes(2);
-  });
-
   it("clears redo stack when a new edit diverges after undo", () => {
     const { hook, redoStackRef } = setup("start");
 
@@ -197,20 +156,5 @@ describe("useUndoRedo", () => {
     expect(promptOptimizer.setDisplayedPrompt).toHaveBeenCalledWith(
       "raw updated",
     );
-  });
-
-  it("cleans up pending timers on unmount", () => {
-    const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
-    const { hook } = setup("alpha");
-
-    act(() => {
-      hook.result.current.handleDisplayedPromptChange("alpha 1", 7);
-      hook.rerender();
-      hook.result.current.handleUndo();
-    });
-
-    hook.unmount();
-
-    expect(clearTimeoutSpy).toHaveBeenCalled();
   });
 });

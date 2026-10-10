@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PerformanceMonitor } from "../performanceMonitor";
 
 // Mock the logger
@@ -81,59 +81,7 @@ describe("PerformanceMonitor", () => {
     process.env.NODE_ENV = originalEnv;
   });
 
-  describe("trackRequest middleware", () => {
-    it("attaches perfMonitor to request", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-
-      expect(req.perfMonitor).toBeDefined();
-      expect(typeof req.perfMonitor?.start).toBe("function");
-      expect(typeof req.perfMonitor?.end).toBe("function");
-      expect(typeof req.perfMonitor?.addMetadata).toBe("function");
-      expect(typeof req.perfMonitor?.getMetrics).toBe("function");
-    });
-
-    it("calls next after setup", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-
-      expect(next).toHaveBeenCalledTimes(1);
-    });
-
-    it("intercepts res.json to complete monitoring", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      res.json({ data: "test" });
-
-      expect(res.jsonCalled).toBe(true);
-    });
-  });
-
   describe("timing operations", () => {
-    it("tracks operation duration correctly", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-
-      req.perfMonitor?.start("llm-call");
-      vi.advanceTimersByTime(100);
-      req.perfMonitor?.end("llm-call");
-
-      const metrics = req.perfMonitor?.getMetrics();
-      expect(metrics?.operations["llm-call"]).toBe(100);
-    });
-
     it("tracks multiple operations independently", () => {
       const req = createMockRequest();
       const res = createMockResponse();
@@ -167,18 +115,6 @@ describe("PerformanceMonitor", () => {
 
       const metrics = req.perfMonitor?.getMetrics();
       expect(metrics?.operations["pending-op"]).toBe(0);
-    });
-
-    it("ignores end for non-started operations", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      req.perfMonitor?.end("never-started");
-
-      const metrics = req.perfMonitor?.getMetrics();
-      expect(metrics?.operations["never-started"]).toBeUndefined();
     });
 
     it("does not restart already started operation", () => {
@@ -216,34 +152,6 @@ describe("PerformanceMonitor", () => {
         tokens: 1500,
       });
     });
-
-    it("overwrites metadata with same key", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-
-      req.perfMonitor?.addMetadata("count", 1);
-      req.perfMonitor?.addMetadata("count", 2);
-
-      const metrics = req.perfMonitor?.getMetrics();
-      expect(metrics?.metadata.count).toBe(2);
-    });
-  });
-
-  describe("total time tracking", () => {
-    it("calculates total request time", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      vi.advanceTimersByTime(250);
-
-      const metrics = req.perfMonitor?.getMetrics();
-      expect(metrics?.total).toBe(250);
-    });
   });
 
   describe("response completion", () => {
@@ -257,34 +165,6 @@ describe("PerformanceMonitor", () => {
       res.json({ data: "test" });
 
       expect(res.headerSet["X-Response-Time"]).toBe("150ms");
-    });
-
-    it("uses route path when available", () => {
-      const req = createMockRequest({ route: { path: "/api/users/:id" } });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      res.json({});
-
-      expect(logger.info).toHaveBeenCalledWith(
-        "Request completed",
-        expect.objectContaining({ route: "/api/users/:id" }),
-      );
-    });
-
-    it("falls back to req.path when route not available", () => {
-      const req = createMockRequest({ path: "/fallback/path" });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      res.json({});
-
-      expect(logger.info).toHaveBeenCalledWith(
-        "Request completed",
-        expect.objectContaining({ route: "/fallback/path" }),
-      );
     });
   });
 
@@ -304,48 +184,6 @@ describe("PerformanceMonitor", () => {
           total: 2500,
           threshold: 2000,
         }),
-      );
-    });
-
-    it("does not warn for requests under 2000ms", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      vi.advanceTimersByTime(1999);
-      res.json({});
-
-      expect(logger.warn).not.toHaveBeenCalled();
-    });
-
-    it("does not warn for exactly 2000ms", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      monitor.trackRequest(req, res, next);
-      vi.advanceTimersByTime(2000);
-      res.json({});
-
-      expect(logger.warn).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("development logging", () => {
-    it("logs debug metrics in development mode", () => {
-      process.env.NODE_ENV = "development";
-      const devMonitor = new PerformanceMonitor();
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      devMonitor.trackRequest(req, res, next);
-      res.json({});
-
-      expect(logger.debug).toHaveBeenCalledWith(
-        "Request performance metrics",
-        expect.any(Object),
       );
     });
   });

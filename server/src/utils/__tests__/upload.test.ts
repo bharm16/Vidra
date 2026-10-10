@@ -2,20 +2,9 @@ import fs from "fs/promises";
 import os from "os";
 import path from "path";
 import { describe, expect, it } from "vitest";
-import {
-  cleanupUploadFile,
-  createDiskUpload,
-  readUploadBuffer,
-} from "../upload";
+import { cleanupUploadFile, readUploadBuffer } from "../upload";
 
 describe("upload utils", () => {
-  it("creates multer disk upload middleware", () => {
-    const upload = createDiskUpload({ fileSizeBytes: 1024 });
-
-    expect(upload).toBeTruthy();
-    expect(typeof upload.single).toBe("function");
-  });
-
   it("reads upload buffer directly when provided", async () => {
     const file = {
       buffer: Buffer.from("hello"),

@@ -22,7 +22,9 @@ describe("owned-media references", () => {
   });
 
   it("rejects path-shaped and malformed references", () => {
-    expect(parseOwnedMediaReference("users/user-a/generations/file.mp4")).toBeNull();
+    expect(
+      parseOwnedMediaReference("users/user-a/generations/file.mp4"),
+    ).toBeNull();
     expect(parseOwnedMediaReference("om1.generation../file.mp4")).toBeNull();
   });
 });

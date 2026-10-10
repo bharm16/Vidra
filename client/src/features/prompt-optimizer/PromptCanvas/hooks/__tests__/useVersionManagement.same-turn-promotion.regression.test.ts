@@ -66,9 +66,6 @@ const setup = () => {
       selectedModel: "wan-2.2",
       generationParams: {},
       serializedKeyframes: [],
-      promptOptimizer: { setOptimizedPrompt: vi.fn() },
-      applyInitialHighlightSnapshot: vi.fn(),
-      setDisplayedPromptSilently: vi.fn(),
       latestHighlightRef: { current: null },
       versionEditCountRef: { current: 0 },
       versionEditsRef: { current: [] },
@@ -110,15 +107,5 @@ describe("useVersionManagement same-turn promotion (regression)", () => {
     expect(hook.result.current.session.currentPromptDocId).toBe(
       PROMOTED_SESSION_ID,
     );
-  });
-
-  it("still mints a draft when no identity exists at all", () => {
-    const { hook, createDraft } = setup();
-
-    act(() => {
-      hook.result.current.versioning.createVersionIfNeeded();
-    });
-
-    expect(createDraft).toHaveBeenCalledTimes(1);
   });
 });

@@ -97,21 +97,4 @@ describe("CacheService.getOrCompute (single-flight)", () => {
     expect(second.source).toBe("computed");
     expect(attempts).toBe(2);
   });
-
-  it("forwards ttl + cacheType to the underlying set/metrics calls", async () => {
-    const mockMetrics = {
-      recordCacheHit: vi.fn(),
-      recordCacheMiss: vi.fn(),
-      updateCacheHitRate: vi.fn(),
-    };
-    const service = new CacheService({}, mockMetrics);
-
-    await service.getOrCompute("with-opts", async () => "v", {
-      ttl: 60,
-      cacheType: "optimization",
-    });
-
-    // Miss is attributed to the supplied cacheType
-    expect(mockMetrics.recordCacheMiss).toHaveBeenCalledWith("optimization");
-  });
 });

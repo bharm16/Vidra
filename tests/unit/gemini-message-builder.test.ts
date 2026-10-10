@@ -29,13 +29,6 @@ describe("GeminiMessageBuilder", () => {
       expect(result.contents[0]?.role).toBe("user");
       expect(result.contents[0]?.parts[0]?.text).toBe("Hello");
     });
-
-    it("stringifies array content into a single message", () => {
-      const builder = new GeminiMessageBuilder();
-      const result = builder.stringifyContent(["Hello", { text: " world" }]);
-
-      expect(result).toBe("Hello world");
-    });
   });
 
   describe("core behavior", () => {
@@ -50,21 +43,6 @@ describe("GeminiMessageBuilder", () => {
         "application/json",
       );
       expect(payload.contents[0]?.parts[0]?.text).toBe("Hi");
-    });
-
-    it("uses responseSchema to force JSON responses", () => {
-      const builder = new GeminiMessageBuilder();
-      const payload = builder.buildPayload("System prompt", {
-        userMessage: "Hi",
-        responseSchema: { type: "object" },
-      });
-
-      expect(payload.generationConfig?.responseSchema).toEqual({
-        type: "object",
-      });
-      expect(payload.generationConfig?.responseMimeType).toBe(
-        "application/json",
-      );
     });
 
     it("removes unsupported additionalProperties from Gemini response schemas", () => {

@@ -21,25 +21,11 @@ vi.mock("@llm/span-labeling/schemas/GeminiSchema", () => ({
   GEMINI_JSON_SCHEMA: { name: "gemini-span", type: "object" },
 }));
 
-import { buildCapabilityOptions } from "../schemas/types";
 import { getVideoOptimizationSchema } from "../schemas/videoOptimization";
 
 describe("provider schema factories", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("buildCapabilityOptions applies fallback operation and provider mapping", () => {
-    const options = buildCapabilityOptions(
-      { provider: "groq", model: "m1" },
-      "fallback_op",
-    );
-
-    expect(options).toEqual({
-      operation: "fallback_op",
-      model: "m1",
-      client: "groq",
-    });
   });
 
   it("returns an object-wrapper schema for video optimization", () => {

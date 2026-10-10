@@ -36,7 +36,12 @@ function renderComposer(
 ): ReturnType<typeof vi.fn> {
   render(
     <Composer
-      settings={{ prompt: "a brass desk lamp", strength: 0.62, steps: 4, seed: 1 }}
+      settings={{
+        prompt: "a brass desk lamp",
+        strength: 0.62,
+        steps: 4,
+        seed: 1,
+      }}
       updateSettings={vi.fn()}
       rerollSeed={vi.fn()}
       liveOutput={liveOutput}
@@ -54,25 +59,16 @@ function renderComposer(
 describe("the composer shows made-but-not-saved truthfully (issue #134)", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("names the made-but-not-saved state and offers the save-it retry", () => {
-    renderComposer({
-      state: "unattached",
-      attachment: failedAttachment,
-    });
-
-    const surface = screen.getByTestId("live-editor-accept-unattached");
-    expect(surface).toHaveTextContent("Picture made, but not saved yet");
-    // Not an acceptance failure: the render succeeded, and the copy must not
-    // say otherwise.
-    expect(screen.queryByTestId("live-editor-accept-error")).toBeNull();
-  });
-
   it("the retry button invokes the hook's retry, which re-attaches the same take", () => {
     const onRetry = renderComposer({
       state: "unattached",
       attachment: failedAttachment,
     });
 
+    expect(
+      screen.getByTestId("live-editor-accept-unattached"),
+    ).toHaveTextContent("Picture made, but not saved yet");
+    expect(screen.queryByTestId("live-editor-accept-error")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Save it" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -83,9 +79,9 @@ describe("the composer shows made-but-not-saved truthfully (issue #134)", () => 
       attachment: failedAttachment,
     });
 
-    expect(screen.getByTestId("live-editor-accept-unattached")).toHaveTextContent(
-      "Saving…",
-    );
+    expect(
+      screen.getByTestId("live-editor-accept-unattached"),
+    ).toHaveTextContent("Saving…");
     expect(screen.queryByRole("button", { name: "Save it" })).toBeNull();
     expect(onRetry).not.toHaveBeenCalled();
   });
@@ -101,26 +97,5 @@ describe("the composer shows made-but-not-saved truthfully (issue #134)", () => 
     expect(surface).toHaveTextContent("Session not found: session-made");
     // Still retryable.
     expect(screen.getByRole("button", { name: "Save it" })).toBeInTheDocument();
-  });
-
-  it("no outcome surface appears while idle, accepting, or transport-failed", () => {
-    const { unmount } = render(
-      <Composer
-        settings={{ prompt: "x", strength: 0.62, steps: 4, seed: 1 }}
-        updateSettings={vi.fn()}
-        rerollSeed={vi.fn()}
-        liveOutput={liveOutput}
-        onUseThis={vi.fn()}
-        acceptance={{ state: "accepting" }}
-        onRetryAttachment={vi.fn()}
-        onRetryArming={vi.fn()}
-        strengthPopoverOpen={false}
-        onToggleStrengthPopover={vi.fn()}
-      />,
-    );
-    expect(
-      screen.queryByTestId("live-editor-accept-unattached"),
-    ).toBeNull();
-    unmount();
   });
 });

@@ -133,6 +133,17 @@ describe("Optimize Routes (full-stack integration)", () => {
                 rationale: "Core subject and motion intent preserved",
               }),
             );
+          case "video_prompt_ir_extraction":
+            return makeResponse(
+              JSON.stringify({
+                narrative: "runner in city",
+                subjects: ["runner"],
+                actions: ["running"],
+                environment: { setting: "city street" },
+              }),
+            );
+          case "video_prompt_rewrite":
+            return makeResponse("A runner moves through a city street.");
           default:
             return makeResponse("ok");
         }
@@ -231,8 +242,7 @@ describe("Optimize Routes (full-stack integration)", () => {
     expect(response.body.success).toBe(true);
     // Response envelope v3: the payload lives under `data`, not at the top
     // level (see X-Response-Version and ApiResponse<T> in the handler).
-    expect(response.body.data.prompt).toBeTypeOf("string");
-    expect(response.body.data.prompt.length).toBeGreaterThan(0);
+    expect(response.body.data.prompt).toMatch(/runner/i);
     expect(response.body.data.optimizedPrompt).toBe(response.body.data.prompt);
   });
 
@@ -245,15 +255,6 @@ describe("Optimize Routes (full-stack integration)", () => {
       .send({ prompt: "runner in city", mode: "video", skipCache: true });
 
     expect(response.status).toBe(500);
-  });
-
-  it("POST /api/optimize-stream is no longer registered", async () => {
-    const response = await request(app)
-      .post("/api/optimize-stream")
-      .set("x-api-key", TEST_API_KEY)
-      .send({ prompt: "runner in city", mode: "video" });
-
-    expect(response.status).toBe(404);
   });
 
   it("POST /api/optimize-compile rejects unauthenticated requests", async () => {
@@ -287,7 +288,6 @@ describe("Optimize Routes (full-stack integration)", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.data.compiledPrompt).toBeTypeOf("string");
-    expect(response.body.data.compiledPrompt.length).toBeGreaterThan(0);
+    expect(response.body.data.compiledPrompt).toMatch(/runner/i);
   });
 });

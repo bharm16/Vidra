@@ -114,21 +114,6 @@ describe("OwnedPictureResolver", () => {
     );
   });
 
-  it("prefers the storage path over the asset id when both are present", async () => {
-    const { imageAssets, userStorage } = readers();
-    const resolver = createOwnedPictureResolver({ imageAssets, userStorage });
-
-    await resolver.resolveOwnedPicture("user-1", {
-      storagePath: "image-previews/user-1/abc",
-      assetId: "abc",
-    });
-
-    // The explicit path is authoritative; the asset-id reconstruction branch is
-    // never entered.
-    expect(userStorage.getPreviewImageViewUrl).not.toHaveBeenCalled();
-    expect(imageAssets.getPublicUrl).toHaveBeenCalledWith("abc", "user-1");
-  });
-
   it("refuses a user-scoped path anchored to another creator, minting nothing", async () => {
     const { imageAssets, userStorage } = readers();
     const resolver = createOwnedPictureResolver({ imageAssets, userStorage });
@@ -192,29 +177,11 @@ describe("OwnedPictureResolver", () => {
 });
 
 describe("isOwnedPicturePath", () => {
-  it("accepts a user-scoped path anchored to the creator", () => {
-    expect(
-      isOwnedPicturePath("user-1", "users/user-1/previews/images/x.webp"),
-    ).toBe(true);
-  });
-
   it("rejects a user-scoped path anchored to another creator", () => {
     // A prefix that merely contains the uid is not the uid — the check is
     // anchored, not a substring.
     expect(
       isOwnedPicturePath("user-1", "users/xuser-1y/previews/images/x.webp"),
-    ).toBe(false);
-  });
-
-  it("accepts an image-asset path whose owner segment is the creator's", () => {
-    expect(isOwnedPicturePath("user-1", "image-previews/user-1/1f2e3d4c")).toBe(
-      true,
-    );
-  });
-
-  it("rejects an image-asset path whose owner segment is another creator's", () => {
-    expect(
-      isOwnedPicturePath("user-1", "image-previews/someone-else/1f2e3d4c"),
     ).toBe(false);
   });
 

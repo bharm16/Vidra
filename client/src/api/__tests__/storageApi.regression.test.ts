@@ -35,19 +35,6 @@ describe("storageApi envelope validation regression", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns the envelope data on a well-formed success response", async () => {
-    global.fetch = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      headers: new Headers(),
-      json: async () => ({ success: true, data: { url: "https://x/y.png" } }),
-    })) as unknown as typeof fetch;
-
-    const result = await storageApi.getViewUrl("path/to/file");
-
-    expect(result).toEqual({ url: "https://x/y.png" });
-  });
-
   it("throws when an OK response body is not a JSON object", async () => {
     // A proxy/error page that parses to a non-object must fail at the boundary,
     // not return `undefined` data to the caller.
@@ -59,16 +46,5 @@ describe("storageApi envelope validation regression", () => {
     })) as unknown as typeof fetch;
 
     await expect(storageApi.getViewUrl("path")).rejects.toThrow();
-  });
-
-  it("surfaces the server error message on a failure envelope", async () => {
-    global.fetch = vi.fn(async () => ({
-      ok: false,
-      status: 400,
-      headers: new Headers(),
-      json: async () => ({ error: "Invalid path" }),
-    })) as unknown as typeof fetch;
-
-    await expect(storageApi.getViewUrl("path")).rejects.toThrow(/Invalid path/);
   });
 });

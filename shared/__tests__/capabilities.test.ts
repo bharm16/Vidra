@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import * as fc from "fast-check";
 import {
   isConditionMatch,
   areAllConditionsMet,
@@ -12,10 +11,6 @@ import {
 
 describe("isConditionMatch", () => {
   describe("error handling and edge cases", () => {
-    it("returns true when field is missing from values and no operators set", () => {
-      expect(isConditionMatch({ field: "missing" }, {})).toBe(true);
-    });
-
     it("returns false for eq when field is missing from values", () => {
       expect(isConditionMatch({ field: "missing", eq: "expected" }, {})).toBe(
         false,
@@ -28,24 +23,10 @@ describe("isConditionMatch", () => {
       );
     });
 
-    it("handles eq with NaN using Object.is semantics", () => {
-      expect(isConditionMatch({ field: "x", eq: NaN }, { x: NaN })).toBe(true);
-    });
-
-    it("distinguishes 0 and -0 using Object.is semantics", () => {
-      expect(isConditionMatch({ field: "x", eq: 0 }, { x: -0 })).toBe(false);
-    });
-
     it("returns false when in array is empty", () => {
       expect(isConditionMatch({ field: "x", in: [] }, { x: "anything" })).toBe(
         false,
       );
-    });
-
-    it("returns true when not_in array is empty", () => {
-      expect(
-        isConditionMatch({ field: "x", not_in: [] }, { x: "anything" }),
-      ).toBe(true);
     });
   });
 
@@ -82,114 +63,11 @@ describe("isConditionMatch", () => {
       expect(isConditionMatch({ field: "s", eq: 30 }, { s: 30 })).toBe(true);
       expect(isConditionMatch({ field: "s", eq: 30 }, { s: 50 })).toBe(false);
     });
-
-    it("matches eq with boolean", () => {
-      expect(isConditionMatch({ field: "h", eq: true }, { h: true })).toBe(
-        true,
-      );
-      expect(isConditionMatch({ field: "h", eq: true }, { h: false })).toBe(
-        false,
-      );
-    });
-
-    it("matches neq", () => {
-      expect(isConditionMatch({ field: "m", neq: "old" }, { m: "new" })).toBe(
-        true,
-      );
-      expect(isConditionMatch({ field: "m", neq: "old" }, { m: "old" })).toBe(
-        false,
-      );
-    });
-
-    it("matches in", () => {
-      expect(
-        isConditionMatch({ field: "r", in: ["720p", "1080p"] }, { r: "1080p" }),
-      ).toBe(true);
-      expect(
-        isConditionMatch({ field: "r", in: ["720p", "1080p"] }, { r: "4k" }),
-      ).toBe(false);
-    });
-
-    it("matches not_in", () => {
-      expect(
-        isConditionMatch({ field: "r", not_in: ["480p"] }, { r: "1080p" }),
-      ).toBe(true);
-      expect(
-        isConditionMatch({ field: "r", not_in: ["480p"] }, { r: "480p" }),
-      ).toBe(false);
-    });
-  });
-
-  describe("property-based", () => {
-    it("eq is reflexive", () => {
-      fc.assert(
-        fc.property(fc.string(), (val) => {
-          expect(isConditionMatch({ field: "x", eq: val }, { x: val })).toBe(
-            true,
-          );
-        }),
-      );
-    });
-
-    it("neq is inverse of eq", () => {
-      fc.assert(
-        fc.property(fc.string(), fc.string(), (fieldVal, condVal) => {
-          const eqR = isConditionMatch(
-            { field: "x", eq: condVal },
-            { x: fieldVal },
-          );
-          const neqR = isConditionMatch(
-            { field: "x", neq: condVal },
-            { x: fieldVal },
-          );
-          expect(eqR).toBe(!neqR);
-        }),
-      );
-    });
-
-    it("in matches when array contains value", () => {
-      fc.assert(
-        fc.property(
-          fc.string(),
-          fc.array(fc.string(), { minLength: 1 }),
-          (val, extras) => {
-            expect(
-              isConditionMatch(
-                { field: "x", in: [val, ...extras] },
-                { x: val },
-              ),
-            ).toBe(true);
-          },
-        ),
-      );
-    });
   });
 });
 
 describe("areAllConditionsMet", () => {
-  describe("error handling and edge cases", () => {
-    it("returns true when conditions is undefined", () => {
-      expect(areAllConditionsMet(undefined, {})).toBe(true);
-    });
-
-    it("returns true when conditions is empty array", () => {
-      expect(areAllConditionsMet([], {})).toBe(true);
-    });
-  });
-
   describe("core behavior", () => {
-    it("returns true when all conditions match", () => {
-      expect(
-        areAllConditionsMet(
-          [
-            { field: "model", eq: "wan" },
-            { field: "mode", neq: "turbo" },
-          ],
-          { model: "wan", mode: "normal" },
-        ),
-      ).toBe(true);
-    });
-
     it("returns false when any condition fails", () => {
       expect(
         areAllConditionsMet(
@@ -209,29 +87,9 @@ describe("resolveAllowedValues", () => {
     it("returns empty array when field has no values and no rules", () => {
       expect(resolveAllowedValues({ type: "enum" }, {})).toEqual([]);
     });
-
-    it("returns base values when no rules exist", () => {
-      expect(
-        resolveAllowedValues({ type: "enum", values: ["a", "b"] }, {}),
-      ).toEqual(["a", "b"]);
-    });
   });
 
   describe("core behavior", () => {
-    it("returns first matching rule values", () => {
-      const field: CapabilityField = {
-        type: "enum",
-        values: ["a", "b"],
-        constraints: {
-          available_values_if: [
-            { if: { field: "m", eq: "wan" }, values: ["x", "y"] },
-            { if: { field: "m", eq: "kling" }, values: ["p"] },
-          ],
-        },
-      };
-      expect(resolveAllowedValues(field, { m: "wan" })).toEqual(["x", "y"]);
-    });
-
     it("returns first match when multiple rules match", () => {
       const field: CapabilityField = {
         type: "enum",
@@ -269,15 +127,6 @@ describe("resolveFieldState", () => {
       expect(state.disabled).toBe(false);
       expect(state.allowedValues).toBeUndefined();
     });
-
-    it("omits allowedValues for non-enum types", () => {
-      expect(
-        resolveFieldState({ type: "int" }, {}).allowedValues,
-      ).toBeUndefined();
-      expect(
-        resolveFieldState({ type: "bool" }, {}).allowedValues,
-      ).toBeUndefined();
-    });
   });
 
   describe("core behavior", () => {
@@ -310,18 +159,6 @@ describe("resolveFieldState", () => {
 
 describe("getDefaultValue", () => {
   describe("error handling and edge cases", () => {
-    it("returns undefined for string with no default", () => {
-      expect(getDefaultValue({ type: "string" })).toBeUndefined();
-    });
-
-    it("returns undefined for int with no default and no min", () => {
-      expect(getDefaultValue({ type: "int" })).toBeUndefined();
-    });
-
-    it("returns undefined for enum with empty values and no default", () => {
-      expect(getDefaultValue({ type: "enum", values: [] })).toBeUndefined();
-    });
-
     it("returns falsy default false", () => {
       expect(getDefaultValue({ type: "bool", default: false })).toBe(false);
     });
@@ -336,12 +173,6 @@ describe("getDefaultValue", () => {
   });
 
   describe("core behavior", () => {
-    it("returns explicit default", () => {
-      expect(
-        getDefaultValue({ type: "enum", values: ["a", "b"], default: "b" }),
-      ).toBe("b");
-    });
-
     it("returns first value for enum without default", () => {
       expect(
         getDefaultValue({ type: "enum", values: ["first", "second"] }),

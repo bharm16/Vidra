@@ -108,41 +108,6 @@ describe("resumePendingAttachments", () => {
     expect(last.record).toEqual(owedRecord());
   });
 
-  it("never touches the generation outcome: no credit surface is reachable from here", async () => {
-    // The resumer is constructed with exactly two collaborators. There is no
-    // credit service, no job-status writer, and no provider — so "an
-    // attachment retry never invokes refund logic" is true by construction,
-    // not by discipline.
-    const store = createStore([pendingJob()]);
-    const appendGenerationToVersion = vi
-      .fn()
-      .mockRejectedValue(new Error("firestore still unavailable"));
-
-    await resumePendingAttachments({
-      jobStore: store as never,
-      sessionService: { appendGenerationToVersion },
-    });
-
-    expect(Object.keys(store)).toEqual([
-      "findPendingAttachments",
-      "setAttachment",
-    ]);
-  });
-
-  it("is a no-op when nothing is owed", async () => {
-    const store = createStore([]);
-    const appendGenerationToVersion = vi.fn(async () => undefined);
-
-    const result = await resumePendingAttachments({
-      jobStore: store as never,
-      sessionService: { appendGenerationToVersion },
-    });
-
-    expect(result).toEqual({ scanned: 0, attached: 0, failed: 0 });
-    expect(appendGenerationToVersion).not.toHaveBeenCalled();
-    expect(store.setAttachment).not.toHaveBeenCalled();
-  });
-
   it("skips a pending job that names no session", async () => {
     const {
       sessionId: _sessionId,

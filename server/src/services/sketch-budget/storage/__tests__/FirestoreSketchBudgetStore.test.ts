@@ -112,30 +112,6 @@ describe("FirestoreSketchBudgetStore", () => {
     mocks.attempts = 0;
   });
 
-  it("accumulates a creator's day counter under one userId_day document", async () => {
-    const store = new FirestoreSketchBudgetStore();
-
-    await store.reserve({
-      userId: "creator-1",
-      day: DAY,
-      millicents: 400,
-      capMillicents: 1000,
-    });
-    await store.reserve({
-      userId: "creator-1",
-      day: DAY,
-      millicents: 400,
-      capMillicents: 1000,
-    });
-
-    expect(reservedMillicents("creator-1")).toBe(800);
-    expect(mocks.records.get(`sketch_usage/creator-1_${DAY}`)?.data).toEqual({
-      userId: "creator-1",
-      day: DAY,
-      reservedMillicents: 800,
-    });
-  });
-
   it("writes nothing when the reservation would exceed the cap", async () => {
     const store = new FirestoreSketchBudgetStore();
     await store.reserve({

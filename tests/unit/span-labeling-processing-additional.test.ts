@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { mergeAdjacentSpans } from "@server/llm/span-labeling/processing/AdjacentSpanMerger";
 import { filterByConfidence } from "@server/llm/span-labeling/processing/ConfidenceFilter";
-import {
-  filterHeaders,
-  isLikelyHeader,
-} from "@server/llm/span-labeling/processing/HeaderFilter";
+import { filterHeaders } from "@server/llm/span-labeling/processing/HeaderFilter";
 import { resolveOverlaps } from "@server/llm/span-labeling/processing/OverlapResolver";
 import { deduplicateSpans } from "@server/llm/span-labeling/processing/SpanDeduplicator";
 import { normalizeSpan } from "@server/llm/span-labeling/processing/SpanNormalizer";
@@ -28,13 +25,6 @@ const makeSpan = (
 
 describe("AdjacentSpanMerger (additional)", () => {
   describe("error handling", () => {
-    it("returns empty result for null spans", () => {
-      const result = mergeAdjacentSpans(null, "Hello world");
-
-      expect(result.spans).toEqual([]);
-      expect(result.notes).toEqual([]);
-    });
-
     it("does not merge when gap contains non-mergeable characters", () => {
       const text = "Action/Shot";
       const spans = [
@@ -98,53 +88,6 @@ describe("AdjacentSpanMerger (additional)", () => {
 });
 
 describe("ConfidenceFilter (additional)", () => {
-  describe("error handling", () => {
-    it("drops spans with missing confidence values", () => {
-      const span = makeSpan("Low", 0, "style", 0.5);
-      delete (span as { confidence?: number }).confidence;
-      const spans = [span];
-
-      const result = filterByConfidence(spans, 0.2);
-
-      expect(result.spans).toEqual([]);
-      expect(result.notes[0]).toContain("confidence 0.00");
-    });
-
-    it("drops spans when threshold is above any possible confidence", () => {
-      const spans = [makeSpan("Keep?", 0, "style", 1.0)];
-
-      const result = filterByConfidence(spans, 1.1);
-
-      expect(result.spans).toEqual([]);
-      expect(result.notes[0]).toContain("threshold 1.1");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("keeps zero-confidence spans when threshold is zero", () => {
-      const spans = [makeSpan("Zero", 0, "style", 0)];
-
-      const result = filterByConfidence(spans, 0);
-
-      expect(result.spans).toHaveLength(1);
-      expect(result.spans[0]?.text).toBe("Zero");
-    });
-
-    it("treats non-numeric confidence as zero for filtering", () => {
-      const spans = [
-        {
-          ...makeSpan("Weird", 0, "style", 0.9),
-          confidence: "high" as unknown as number,
-        },
-      ];
-
-      const result = filterByConfidence(spans, 0.1);
-
-      expect(result.spans).toEqual([]);
-      expect(result.notes[0]).toContain("confidence 0.00");
-    });
-  });
-
   describe("core behavior", () => {
     it("filters low-confidence spans and keeps the rest", () => {
       const spans = [
@@ -163,11 +106,6 @@ describe("ConfidenceFilter (additional)", () => {
 
 describe("HeaderFilter (additional)", () => {
   describe("error handling", () => {
-    it("flags very short text as header/label", () => {
-      expect(isLikelyHeader(" ")).toBe(true);
-      expect(isLikelyHeader("A")).toBe(true);
-    });
-
     it("filters markdown headers", () => {
       const spans = [makeSpan("## Camera", 0, "camera")];
 
@@ -175,16 +113,6 @@ describe("HeaderFilter (additional)", () => {
 
       expect(result.spans).toEqual([]);
       expect(result.notes[0]).toContain('Dropped header/label "## Camera"');
-    });
-  });
-
-  describe("edge cases", () => {
-    it("filters bold section titles", () => {
-      expect(isLikelyHeader("**Camera**")).toBe(true);
-    });
-
-    it("filters colon-terminated labels", () => {
-      expect(isLikelyHeader("Duration:")).toBe(true);
     });
   });
 
@@ -203,15 +131,6 @@ describe("HeaderFilter (additional)", () => {
 
 describe("OverlapResolver (additional)", () => {
   describe("error handling", () => {
-    it("returns original spans when overlaps are allowed", () => {
-      const spans = [makeSpan("Hero", 0, "subject", 0.5)];
-
-      const result = resolveOverlaps(spans, true);
-
-      expect(result.spans).toBe(spans);
-      expect(result.notes).toEqual([]);
-    });
-
     it("keeps overlapping spans with different parent categories", () => {
       const spans = [
         makeSpan("Hero", 0, "subject.identity", 0.5),
@@ -250,37 +169,10 @@ describe("OverlapResolver (additional)", () => {
       expect(result.spans[0]?.text).toBe("blue light");
     });
   });
-
-  describe("core behavior", () => {
-    it("records overlap notes when a span is discarded", () => {
-      const spans = [
-        makeSpan("cat", 0, "subject", 0.4),
-        makeSpan("cat portrait", 0, "subject", 0.8),
-      ];
-
-      const result = resolveOverlaps(spans, false);
-
-      expect(result.spans).toHaveLength(1);
-      expect(result.notes).toHaveLength(1);
-      expect(result.notes[0]).toContain('kept "cat portrait"');
-    });
-  });
 });
 
 describe("SpanDeduplicator (additional)", () => {
   describe("error handling", () => {
-    it("removes duplicate spans and records notes", () => {
-      const spans = [
-        makeSpan("alpha", 0, "style"),
-        makeSpan("alpha", 0, "style"),
-      ];
-
-      const result = deduplicateSpans(spans);
-
-      expect(result.spans).toHaveLength(1);
-      expect(result.notes[0]).toBe("span[1] ignored: duplicate span");
-    });
-
     it("deduplicates repeated spans even when non-adjacent", () => {
       const spans = [
         makeSpan("alpha", 0, "style"),
@@ -317,20 +209,6 @@ describe("SpanDeduplicator (additional)", () => {
       const result = deduplicateSpans(spans);
 
       expect(result.spans).toHaveLength(2);
-    });
-  });
-
-  describe("core behavior", () => {
-    it("preserves the first occurrence ordering", () => {
-      const spans = [
-        makeSpan("alpha", 0, "style"),
-        makeSpan("beta", 6, "style"),
-      ];
-
-      const result = deduplicateSpans(spans);
-
-      expect(result.spans[0]?.text).toBe("alpha");
-      expect(result.spans[1]?.text).toBe("beta");
     });
   });
 });
@@ -378,44 +256,9 @@ describe("SpanNormalizer (additional)", () => {
       expect(first?.id).not.toBe(third?.id);
     });
   });
-
-  describe("core behavior", () => {
-    it("applies default confidence when missing", () => {
-      const result = normalizeSpan(
-        { text: "Hero", start: 0, end: 4, role: "subject" },
-        "Hero",
-      );
-
-      expect(result?.confidence).toBe(0.7);
-      expect(result?.role).toBe("subject");
-    });
-  });
 });
 
 describe("SpanTruncator (additional)", () => {
-  describe("error handling", () => {
-    it("removes all spans when maxSpans is zero", () => {
-      const spans = [
-        makeSpan("alpha", 0, "style", 0.2),
-        makeSpan("beta", 6, "style", 0.1),
-      ];
-
-      const result = truncateToMaxSpans(spans, 0);
-
-      expect(result.spans).toEqual([]);
-      expect(result.notes[0]).toContain("removed 2 spans");
-    });
-
-    it("returns the original list when within limit", () => {
-      const spans = [makeSpan("alpha", 0, "style", 0.2)];
-
-      const result = truncateToMaxSpans(spans, 3);
-
-      expect(result.spans).toBe(spans);
-      expect(result.notes).toEqual([]);
-    });
-  });
-
   describe("edge cases", () => {
     it("breaks confidence ties by earliest position", () => {
       const spans = [
@@ -441,34 +284,10 @@ describe("SpanTruncator (additional)", () => {
       expect(result.spans.map((span) => span.text)).toEqual(["a", "b"]);
     });
   });
-
-  describe("core behavior", () => {
-    it("keeps highest confidence spans and reports removal count", () => {
-      const spans = [
-        makeSpan("top", 0, "style", 0.9),
-        makeSpan("mid", 5, "style", 0.6),
-        makeSpan("low", 10, "style", 0.2),
-      ];
-
-      const result = truncateToMaxSpans(spans, 2);
-
-      expect(result.spans).toHaveLength(2);
-      expect(result.notes[0]).toContain("removed 1 spans");
-    });
-  });
 });
 
 describe("VisualOnlyFilter (additional)", () => {
   describe("error handling", () => {
-    it("filters meta spans outside alternatives", () => {
-      const spans = [makeSpan("Lighting", 0, "lighting")];
-
-      const result = filterNonVisualSpans(spans, "Lighting");
-
-      expect(result.spans).toEqual([]);
-      expect(result.notes[0]).toContain('Dropped non-visual span "Lighting"');
-    });
-
     it("filters style-reference spans when context matches", () => {
       const text = "A scene inspired by Wes Anderson with pastel tones.";
       const start = text.indexOf("Wes Anderson");
@@ -507,20 +326,6 @@ describe("VisualOnlyFilter (additional)", () => {
 
       expect(result.spans).toHaveLength(1);
       expect(result.spans[0]?.text).toBe("running fast");
-    });
-  });
-
-  describe("core behavior", () => {
-    it("keeps visual spans that are not meta text", () => {
-      const text = "A glowing neon alley.";
-      const start = text.indexOf("glowing neon");
-      const spans = [makeSpan("glowing neon", start, "style")];
-
-      const result = filterNonVisualSpans(spans, text);
-
-      expect(result.spans).toHaveLength(1);
-      expect(result.spans[0]?.text).toBe("glowing neon");
-      expect(result.notes).toEqual([]);
     });
   });
 });

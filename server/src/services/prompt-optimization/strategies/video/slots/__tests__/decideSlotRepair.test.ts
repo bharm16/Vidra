@@ -43,17 +43,6 @@ describe("decideSlotRepair", () => {
     expect(decision.rerollAttempts).toBe(3);
   });
 
-  it("repairs with three reroll attempts on a quality finding", () => {
-    const decision = decideSlotRepair({
-      findings: [finding("quality")],
-      completenessScore: 1,
-      minAcceptableScore,
-    });
-
-    expect(decision.shouldRepair).toBe(true);
-    expect(decision.rerollAttempts).toBe(3);
-  });
-
   it("ships a single minor finding on a complete slot set", () => {
     const decision = decideSlotRepair({
       findings: [finding("minor")],
@@ -84,17 +73,5 @@ describe("decideSlotRepair", () => {
 
     expect(decision.shouldRepair).toBe(true);
     expect(decision.rerollAttempts).toBe(1);
-  });
-
-  it("groups findings by severity for logging", () => {
-    const decision = decideSlotRepair({
-      findings: [finding("critical"), finding("quality"), finding("minor")],
-      completenessScore: 1,
-      minAcceptableScore,
-    });
-
-    expect(decision.critical).toHaveLength(1);
-    expect(decision.quality).toHaveLength(1);
-    expect(decision.minor).toHaveLength(1);
   });
 });

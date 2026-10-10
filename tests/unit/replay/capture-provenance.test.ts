@@ -38,10 +38,12 @@ const SUGGESTIONS_JSON =
 
 function fakeClient(text: string): IAIClient {
   return {
-    complete: vi.fn(async (): Promise<AIResponse> => ({
-      text,
-      metadata: { provider: "fake", model: "fake-model" },
-    })),
+    complete: vi.fn(
+      async (): Promise<AIResponse> => ({
+        text,
+        metadata: { provider: "fake", model: "fake-model" },
+      }),
+    ),
   };
 }
 
@@ -111,10 +113,12 @@ describe("sketch relay capture provenance", () => {
     const fetchFn = createSketchRelayFetch({
       mode: "record",
       store,
-      inner: vi.fn(async () => Response.json({
-        images: [{ url: "https://fal.media/frame-1.webp" }],
-        seed: 20_260_917,
-      })),
+      inner: vi.fn(async () =>
+        Response.json({
+          images: [{ url: "https://fal.media/frame-1.webp" }],
+          seed: 20_260_917,
+        }),
+      ),
       fetchImage: vi.fn(async () => imageResponse([1, 2, 3], "image/webp")),
     });
 
@@ -172,9 +176,8 @@ describe("sketch relay capture provenance", () => {
     ) as {
       entries: Array<{ response: { images: Array<{ url: string }> } }>;
     };
-    expect(cassette.entries[0]?.response.images.map((image) => image.url)).toEqual([
-      "data:image/png;base64,BA==",
-      "data:image/png;base64,BBBB",
-    ]);
+    expect(
+      cassette.entries[0]?.response.images.map((image) => image.url),
+    ).toEqual(["data:image/png;base64,BA==", "data:image/png;base64,BBBB"]);
   });
 });

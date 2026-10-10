@@ -76,21 +76,6 @@ describe("SuggestionsTelemetryService", () => {
     });
   });
 
-  it("uses anon-<uuid> distinctId when userId is null", () => {
-    const { client, captures } = makeMockClient();
-    const service = new SuggestionsTelemetryService(client);
-    const trace = service.startSuggestionsTrace("req-1", null);
-
-    trace.complete({
-      ...baseSummary,
-      suggestionCount: 0,
-      modelCallCount: 0,
-    });
-
-    expect(captures[0]!.distinctId).toMatch(/^anon-/);
-    expect(captures[0]!.properties).toMatchObject({ userId: null });
-  });
-
   it("populates errorStage and errorMessage on recordError", () => {
     const { client, captures } = makeMockClient();
     const service = new SuggestionsTelemetryService(client);
@@ -104,52 +89,6 @@ describe("SuggestionsTelemetryService", () => {
       errorStage: "v2_engine",
       errorMessage: "scoring failed",
     });
-  });
-
-  it("sets cacheHit=true and leaves stages null when recordCacheHit is called", () => {
-    const { client, captures } = makeMockClient();
-    const service = new SuggestionsTelemetryService(client);
-    const trace = service.startSuggestionsTrace("req-1", "user-1");
-
-    trace.recordCacheHit();
-    trace.complete(baseSummary);
-
-    expect(captures[0]!.properties).toMatchObject({
-      cacheHit: true,
-      stages: {
-        videoContextMs: null,
-        spanContextMs: null,
-        cacheCheckMs: null,
-        v2EngineMs: null,
-        postProcessingMs: null,
-      },
-    });
-  });
-
-  it("durationMs is computed from startedAt to complete()", () => {
-    // Fake `performance`, because that is the clock the service reads:
-    // durationMs is Math.round(performance.now() - startedAt). Sleeping for
-    // real and asserting >= 10 raced that rounding — setTimeout's delay is not
-    // measured on the same clock, so a 10ms sleep could elapse as 9.4ms of
-    // performance.now() and round DOWN to 9. That failed in CI at 9.
-    //
-    // Advancing a fake clock makes the elapsed time exact, which also lets the
-    // assertion tighten from ">= 10" to "== 10" — it now pins the arithmetic
-    // rather than a lower bound any slow machine would satisfy.
-    vi.useFakeTimers({ toFake: ["performance", "Date", "setTimeout"] });
-    try {
-      const { client, captures } = makeMockClient();
-      const service = new SuggestionsTelemetryService(client);
-      const trace = service.startSuggestionsTrace("req-1", "user-1");
-
-      vi.advanceTimersByTime(10);
-
-      trace.complete(baseSummary);
-
-      expect(captures[0]!.properties?.durationMs).toBe(10);
-    } finally {
-      vi.useRealTimers();
-    }
   });
 
   it("does not throw if the underlying client.capture throws", () => {

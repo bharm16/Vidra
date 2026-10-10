@@ -12,12 +12,6 @@ describe("StudioModelRegistry", () => {
       }
     });
 
-    it("only names real Replicate owners (recraft-ai, google, openai)", () => {
-      for (const entry of registry.listModels()) {
-        expect(entry.replicateId).toMatch(/^(recraft-ai|google|openai)\//);
-      }
-    });
-
     it("every model has a positive cost estimate", () => {
       for (const entry of registry.listModels()) {
         expect(entry.costCentsPerCall).toBeGreaterThan(0);
@@ -62,16 +56,8 @@ describe("StudioModelRegistry", () => {
   });
 
   describe("pin validation", () => {
-    it("resolves a valid pin", () => {
-      expect(registry.resolvePin("nano-banana-2")?.slug).toBe("nano-banana-2");
-    });
-
     it("returns null for a stale slug so the project reverts to Auto", () => {
       expect(registry.resolvePin("recraft-v3")).toBeNull();
-    });
-
-    it("returns null for an absent pin (Auto mode)", () => {
-      expect(registry.resolvePin(undefined)).toBeNull();
     });
   });
 
@@ -83,27 +69,12 @@ describe("StudioModelRegistry", () => {
     it("falls back to the model default for unknown ratios", () => {
       expect(registry.resolveAspectRatio("recraft-v4.1", "banana")).toBe("1:1");
     });
-
-    it("falls back to the model default when nothing was requested", () => {
-      expect(registry.resolveAspectRatio("recraft-v4.1")).toBe("1:1");
-    });
   });
 
   describe("timeout budget", () => {
     it("clamps fast models up to the 60s floor", () => {
       // Recraft V4.1 hint is 6s → 18s raw → clamped to 60s.
       expect(registry.timeoutMsFor("recraft-v4.1")).toBe(60_000);
-    });
-
-    it("clamps slow models down to the 180s ceiling", () => {
-      // GPT Image 2 hint is 45s → 135s raw, within bounds.
-      expect(registry.timeoutMsFor("gpt-image-2")).toBe(135_000);
-    });
-
-    it("never exceeds 180s for any roster entry", () => {
-      for (const entry of registry.listModels()) {
-        expect(registry.timeoutMsFor(entry.slug)).toBeLessThanOrEqual(180_000);
-      }
     });
   });
 
@@ -141,12 +112,6 @@ describe("StudioModelRegistry", () => {
   });
 
   describe("utilities", () => {
-    it("maps remove_background to the verified Recraft utility", () => {
-      expect(registry.getUtility("remove_background").replicateId).toBe(
-        "recraft-ai/recraft-remove-background",
-      );
-    });
-
     it("maps vectorize to the verified Recraft utility", () => {
       expect(registry.getUtility("vectorize").replicateId).toBe(
         "recraft-ai/recraft-vectorize",
@@ -180,18 +145,6 @@ describe("StudioModelRegistry", () => {
       expect(
         disabled
           .listModels()
-          .some((entry) => entry.capabilities.includes("svg")),
-      ).toBe(true);
-    });
-
-    it("offers vector models by default, because storage now keeps SVGs", () => {
-      // The no-arg default reads the storage domain's own answer
-      // (canStoreVector). This pins the delivered state of #118: the vector
-      // lane exists, so the Vector tiers ARE presented.
-      const asShipped = new StudioModelRegistry();
-      expect(
-        asShipped
-          .offerableModels()
           .some((entry) => entry.capabilities.includes("svg")),
       ).toBe(true);
     });

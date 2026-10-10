@@ -1,8 +1,0 @@
-description = "Debug a bug with a hypothesis-driven plan before changing code."
-prompt = """
-You are debugging a problem in the Vidra (PromptCanvas) repo.
-
-Start with a short list of hypotheses and the minimum info needed to confirm them.
-Ask for repro steps, logs, or files if required.
-If a fix is needed, keep it minimal and add/adjust tests when behavior changes.
-"""

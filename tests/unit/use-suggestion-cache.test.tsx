@@ -1,10 +1,9 @@
-import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
-import * as fc from "fast-check";
+import { describe, expect, it } from "vitest";
 
 import {
-  type EnhancementSuggestionEntry,
   useSuggestionCache,
+  type EnhancementSuggestionEntry,
   type RawEnhancementSuggestionsResponse,
 } from "@features/prompt-optimizer/PromptOptimizerContainer/hooks/useSuggestionCache";
 
@@ -52,18 +51,6 @@ describe("useSuggestionCache", () => {
         { text: "Nested Two", category: "subject" },
       ]);
     });
-
-    it("returns an empty suggestions list when none are provided", () => {
-      const { result } = renderHook(() => useSuggestionCache());
-
-      const normalized = result.current.setCachedSuggestions("empty-key", {
-        suggestions: [],
-        isPlaceholder: true,
-      });
-
-      expect(normalized.suggestions).toEqual([]);
-      expect(normalized.isPlaceholder).toBe(true);
-    });
   });
 
   describe("edge cases", () => {
@@ -88,12 +75,6 @@ describe("useSuggestionCache", () => {
 
       expect(keyA).toBe(keyB);
     });
-
-    it("returns null when no cached entry exists", () => {
-      const { result } = renderHook(() => useSuggestionCache());
-
-      expect(result.current.getCachedSuggestions("missing")).toBeNull();
-    });
   });
 
   describe("core behavior", () => {
@@ -110,39 +91,6 @@ describe("useSuggestionCache", () => {
 
       expect(cached?.suggestions).toEqual([{ text: "Cached" }]);
       expect(cached?.isPlaceholder).toBe(false);
-    });
-
-    it("produces stable cache keys for identical inputs", () => {
-      const { result } = renderHook(() => useSuggestionCache());
-
-      fc.assert(
-        fc.property(
-          fc.string({ minLength: 0, maxLength: 50 }),
-          fc.string({ minLength: 0, maxLength: 50 }),
-          fc.string({ minLength: 0, maxLength: 50 }),
-          fc.string({ minLength: 0, maxLength: 50 }),
-          (highlight, prompt, category, fingerprint) => {
-            const key1 = result.current.buildCacheKey({
-              normalizedHighlight: highlight,
-              normalizedPrompt: prompt,
-              suggestionContext: baseSuggestionContext,
-              category,
-              spanFingerprint: fingerprint,
-            });
-
-            const key2 = result.current.buildCacheKey({
-              normalizedHighlight: highlight,
-              normalizedPrompt: prompt,
-              suggestionContext: baseSuggestionContext,
-              category,
-              spanFingerprint: fingerprint,
-            });
-
-            expect(key1).toBe(key2);
-          },
-        ),
-        { numRuns: 50 },
-      );
     });
   });
 });

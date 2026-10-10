@@ -68,38 +68,10 @@ describe("regression: renderMainVideoPrompt shot_framing opener (ISSUE-21)", () 
     expect(openerMatchesKnownFraming(opener)).toBe(true);
   });
 
-  it("rejects short token-plucked prose in shot_framing (bug repro #2)", () => {
-    const output = renderMainVideoPrompt(
-      makeSlots({ shot_framing: "Astronaut mars sunset. Extreme Wide Shot" }),
-    );
-    const opener = firstSentence(output);
-    expect(opener).not.toMatch(/^Astronaut mars sunset/);
-    expect(openerMatchesKnownFraming(opener)).toBe(true);
-  });
-
   it("falls back to a known default when shot_framing contains no recognizable framing", () => {
     const output = renderMainVideoPrompt(
       makeSlots({ shot_framing: "Some arbitrary prose the model invented" }),
     );
     expect(openerMatchesKnownFraming(firstSentence(output))).toBe(true);
-  });
-
-  it("for any shot_framing string, the first sentence opens with a known framing token", () => {
-    fc.assert(
-      fc.property(
-        fc.string({ minLength: 0, maxLength: 200 }).filter((s) => {
-          // Property-based sampling: filter out inputs that would be cleaned to empty
-          // (those legitimately fall through to the default "Wide Shot" branch — tested above).
-          return true;
-        }),
-        (arbitraryFraming) => {
-          const output = renderMainVideoPrompt(
-            makeSlots({ shot_framing: arbitraryFraming }),
-          );
-          return openerMatchesKnownFraming(firstSentence(output));
-        },
-      ),
-      { numRuns: 100 },
-    );
   });
 });

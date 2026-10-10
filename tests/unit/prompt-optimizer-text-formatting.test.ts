@@ -12,11 +12,4 @@ describe("textFormatting", () => {
     expect(result).toContain("Hello &amp; bye");
     expect(result).not.toContain("onclick");
   });
-
-  it("wraps escaped text in ML highlighting container", () => {
-    const result = escapeHTMLForMLHighlighting("Test");
-
-    expect(result).toContain("whitespace-pre-wrap");
-    expect(result).toContain("Test");
-  });
 });

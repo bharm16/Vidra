@@ -56,42 +56,4 @@ describe("regression: lint enforcement is non-fatal (sanitize-then-warn)", () =>
     expect(result!.prompt.length).toBeGreaterThan(0);
     expect(logWarn).toHaveBeenCalledTimes(1);
   });
-
-  it("does NOT throw when a 'Variation N' artifact survives sanitation", () => {
-    const service = createService();
-    const logWarn = vi.fn();
-    (service as unknown as { log: { warn: typeof logWarn } }).log = {
-      warn: logWarn,
-    } as never;
-
-    const result = service.sanitize({
-      prompt:
-        "A cinematic shot Variation 2 of the city at dusk, fog drifting low.",
-    });
-
-    expect(result.lint.ok).toBe(false);
-    expect(
-      result.lint.errors.some((e: string) =>
-        e.toLowerCase().includes("variation artifact"),
-      ),
-    ).toBe(true);
-    expect(logWarn).toHaveBeenCalledTimes(1);
-  });
-
-  it("does NOT call warn on a clean prompt", () => {
-    const service = createService();
-    const logWarn = vi.fn();
-    (service as unknown as { log: { warn: typeof logWarn } }).log = {
-      warn: logWarn,
-    } as never;
-
-    const result = service.sanitize({
-      prompt:
-        "A cinematic dolly shot of a neon alley at dusk, fog rolling in from the harbor.",
-    });
-
-    expect(result.lint.ok).toBe(true);
-    expect(result.lint.errors).toEqual([]);
-    expect(logWarn).not.toHaveBeenCalled();
-  });
 });

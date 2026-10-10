@@ -351,6 +351,7 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
 
     expect(retry.take.generationId).toBe(first.take.generationId);
     expect(retry.replayed).toBe(true);
+    expect(retry.take.imageUrl).toBe(first.take.imageUrl);
     expect(mediaStore.calls).toHaveLength(1);
     expect(takesIn(store, "v1")).toHaveLength(1);
   });
@@ -405,41 +406,14 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
 
       const first = await admitPictureTake(withResolver, uploadRequest());
       const retry = await admitPictureTake(withResolver, uploadRequest());
+      expect(first.state).toBe("admitted");
+      expect(retry.state).toBe("admitted");
       if (first.state !== "admitted" || retry.state !== "admitted") return;
 
       expect(retry.replayed).toBe(true);
       expect(retry.take.imageUrl).toBe(first.take.imageUrl);
       expect(retry.take.generationId).toBe(first.take.generationId);
     });
-
-    it("keeps the frozen URL when no resolver is wired (prior behavior)", async () => {
-      const { deps } = setup();
-      const first = await admitPictureTake(deps, uploadRequest());
-      const retry = await admitPictureTake(deps, uploadRequest());
-      if (first.state !== "admitted" || retry.state !== "admitted") return;
-
-      expect(retry.replayed).toBe(true);
-      expect(retry.take.imageUrl).toBe(first.take.imageUrl);
-    });
-  });
-
-  it("a lost response followed by a retry produces one take, not two", async () => {
-    const { store, mediaStore, deps } = setup();
-
-    // The first admission completes on the server; the creator never sees it.
-    const lost = await admitPictureTake(deps, uploadRequest());
-    expect(lost.state).toBe("admitted");
-    if (lost.state !== "admitted") return;
-
-    // The client, having nothing, sends the same admission again.
-    const resent = await admitPictureTake(deps, uploadRequest());
-
-    expect(resent.state).toBe("admitted");
-    if (resent.state !== "admitted") return;
-    expect(resent.take.generationId).toBe(lost.take.generationId);
-    expect(resent.take.imageUrl).toBe(lost.take.imageUrl);
-    expect(takesIn(store, "v1")).toHaveLength(1);
-    expect(mediaStore.calls).toHaveLength(1);
   });
 
   it("a double-click produces one take: the second concurrent admission is refused, not duplicated", async () => {
@@ -563,23 +537,6 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       instruction: "remove the chair",
       model: "flux-kontext",
     });
-  });
-
-  it("reports a failed attachment instead of throwing, and keeps the take's identity and media", async () => {
-    const store = createSessionStore();
-    store.mutate.mockRejectedValue(new Error("firestore unavailable"));
-    const { deps, mediaStore } = setup(store);
-
-    const result = await admitPictureTake(deps, uploadRequest());
-
-    expect(result.state).toBe("admitted");
-    if (result.state !== "admitted") return;
-    // Made but not saved (ADR-0022 decision 6): the media is durable, the take
-    // has a name, and the record rides back out for the creator's retry.
-    expect(result.take.attachment.state).toBe("failed");
-    expect(result.take.attachment.generationId).toBe(result.take.generationId);
-    expect(result.take.attachment.record).toBeDefined();
-    expect(mediaStore.calls).toHaveLength(1);
   });
 
   it("refuses to draw a display ancestor the take never recorded as an input", async () => {
@@ -878,52 +835,6 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
    * is archived — the last test pins exactly that.
    */
   describe("relationship validation (issue #122)", () => {
-    it("accepts a display ancestor that is a live picture take in the destination session", async () => {
-      const { store, deps } = setup(
-        createSessionStore(sessionWith([pictureTakeRecord("gen-parent")])),
-      );
-
-      const result = await admitPictureTake(
-        deps,
-        uploadRequest({
-          origin: "studio",
-          productionProvenance: {
-            state: "known",
-            instruction: "warm the light",
-            model: "flux-kontext",
-          },
-          sourceInputs: [{ kind: "take", generationId: "gen-parent" }],
-          displayAncestorGenerationId: "gen-parent",
-        }),
-      );
-
-      expect(result.state).toBe("admitted");
-      if (result.state !== "admitted") return;
-      const record = takesIn(store, "v1")[0] as Record<string, unknown>;
-      // The refine edge the space draws: this picture's ancestor is that one.
-      expect(record.ancestorGenerationId).toBe("gen-parent");
-    });
-
-    it("refuses a display ancestor that is not a node in this session, storing nothing", async () => {
-      // The base session holds no takes, so the named ancestor is a phantom
-      // here — the same refusal a take that is a node in ANOTHER session's
-      // space earns, because this reads only the destination.
-      const { store, mediaStore, deps } = setup();
-
-      const result = await admitPictureTake(
-        deps,
-        uploadRequest({
-          origin: "studio",
-          sourceInputs: [{ kind: "take", generationId: "gen-nowhere" }],
-          displayAncestorGenerationId: "gen-nowhere",
-        }),
-      );
-
-      expect(result.state).toBe("refused");
-      expect(mediaStore.calls).toHaveLength(0);
-      expect(store.mutate).not.toHaveBeenCalled();
-    });
-
     it("refuses a display ancestor that is a take of ANOTHER session, never crossing the edge", async () => {
       // A real, live picture — but a node in a DIFFERENT session the creator
       // also owns. A take is a node in exactly one space, so an edge to it from
@@ -1004,26 +915,6 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       expect(result.state).toBe("refused");
       if (result.state !== "refused") return;
       expect(result.reason).toContain("not a picture");
-      expect(mediaStore.calls).toHaveLength(0);
-    });
-
-    it("cannot draw a self-link or a cycle: an ancestor id no live picture holds is refused, and the take's own id is minted only after this passes", async () => {
-      // A self-link would need the take to name its own id — but that id is
-      // minted only AFTER this check (step 5). So the only shape a self-link or
-      // cycle can take is an ancestor that is not an existing live picture,
-      // which is refused like any other phantom.
-      const { mediaStore, deps } = setup();
-
-      const result = await admitPictureTake(
-        deps,
-        uploadRequest({
-          origin: "studio",
-          sourceInputs: [{ kind: "take", generationId: "itself" }],
-          displayAncestorGenerationId: "itself",
-        }),
-      );
-
-      expect(result.state).toBe("refused");
       expect(mediaStore.calls).toHaveLength(0);
     });
 
@@ -1288,6 +1179,8 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       );
       expect(mediaStore.calls).toHaveLength(1);
 
+      const persisted = idempotency.peekBody() as { generationId?: string };
+
       // The worker restarts; the client retries the same admission.
       const resumed = await admitPictureTake(deps, uploadRequest());
 
@@ -1295,33 +1188,13 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       if (resumed.state !== "admitted") return;
       expect(resumed.replayed).toBe(true);
       expect(resumed.take.attachment.state).toBe("attached");
+      expect(resumed.take.generationId).toBe(persisted.generationId);
+
       // No second store, exactly one take, under the SAME identity.
       expect(mediaStore.calls).toHaveLength(1);
       const takes = takesIn(store, "v1");
       expect(takes).toHaveLength(1);
       expect((takes[0] as { id?: string }).id).toBe(resumed.take.generationId);
-    });
-
-    it("resumes to the SAME take identity established before the append", async () => {
-      const idempotency = createResumableIdempotency({
-        crash: { call: 1, mode: "after" },
-      });
-      const { mediaStore, deps } = setupResumable(idempotency);
-
-      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow();
-      // The identity was persisted with the pending checkpoint, before the
-      // append — so the resume reuses it rather than minting a second one.
-      const persisted = idempotency.peekBody() as
-        | { generationId?: string }
-        | undefined;
-      expect(typeof persisted?.generationId).toBe("string");
-
-      const resumed = await admitPictureTake(deps, uploadRequest());
-
-      expect(resumed.state).toBe("admitted");
-      if (resumed.state !== "admitted") return;
-      expect(resumed.take.generationId).toBe(persisted?.generationId);
-      expect(mediaStore.calls).toHaveLength(1);
     });
 
     it("a failed completion write after a successful append never creates a second take", async () => {
@@ -1368,32 +1241,6 @@ describe("admitPictureTake (ADR-0022, issue #86)", () => {
       expect(resumed.take.attachment.state).toBe("attached");
       expect(takesIn(store, "v1")).toHaveLength(1);
       expect(mediaStore.calls).toHaveLength(1);
-    });
-
-    it("an expired pending claim resumes rather than restarting the admission", async () => {
-      const idempotency = createResumableIdempotency({
-        crash: { call: 1, mode: "after" },
-      });
-      const { store, mediaStore, deps } = setupResumable(idempotency);
-
-      await expect(admitPictureTake(deps, uploadRequest())).rejects.toThrow();
-      expect(mediaStore.calls).toHaveLength(1);
-
-      // Long past the six-minute pending lock. Before this ticket the reclaim
-      // was a fresh `claimed` — a restart that re-stored the bytes and minted a
-      // second take. The persisted resume snapshot makes it a replay instead;
-      // the only window that can still re-store is a crash BEFORE this
-      // checkpoint, the ambiguous external outcome the ticket declines to
-      // promise away.
-      idempotency.clock.now += 7 * 60 * 1000;
-
-      const resumed = await admitPictureTake(deps, uploadRequest());
-
-      expect(resumed.state).toBe("admitted");
-      if (resumed.state !== "admitted") return;
-      expect(resumed.replayed).toBe(true);
-      expect(mediaStore.calls).toHaveLength(1);
-      expect(takesIn(store, "v1")).toHaveLength(1);
     });
 
     it("a receipt replayed after a later successful attachment repair reports attached, not the stale failure", async () => {

@@ -6,7 +6,6 @@ import {
   redactSensitiveFields,
   getEmailDomain,
   sanitizeUserData,
-  sanitizeError,
 } from "@/utils/logging/sanitize";
 
 describe("logging sanitize utilities", () => {
@@ -29,12 +28,6 @@ describe("logging sanitize utilities", () => {
       expect(getEmailDomain("not-an-email")).toBeNull();
       expect(getEmailDomain("")).toBeNull();
     });
-
-    it("sanitizes non-Error values into a message string", () => {
-      const result = sanitizeError("failure");
-
-      expect(result).toEqual({ message: "failure" });
-    });
   });
 
   describe("edge cases", () => {
@@ -44,22 +37,6 @@ describe("logging sanitize utilities", () => {
 
       expect(result.startsWith("a".repeat(50))).toBe(true);
       expect(result).toContain("(250 chars)");
-    });
-
-    it("summarizes arrays and objects with metadata", () => {
-      const arraySummary = summarize([1, 2, 3, 4]) as Record<string, unknown>;
-      const objectSummary = summarize({ a: 1, b: 2, c: 3 }) as Record<
-        string,
-        unknown
-      >;
-
-      expect(arraySummary.type).toBe("array");
-      expect(arraySummary.length).toBe(4);
-      expect(arraySummary.sample).toEqual([1, 2, 3]);
-
-      expect(objectSummary.type).toBe("object");
-      expect(objectSummary.keyCount).toBe(3);
-      expect(objectSummary.keys).toEqual(["a", "b", "c"]);
     });
   });
 

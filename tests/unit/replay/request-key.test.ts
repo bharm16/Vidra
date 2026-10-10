@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  aiModelRequestKey,
-  imagePreviewRequestKey,
-  stableStringify,
-} from "@server/replay/requestKey";
+import { aiModelRequestKey, stableStringify } from "@server/replay/requestKey";
 
 describe("replay request keys", () => {
   const baseRequest = {
@@ -13,12 +9,6 @@ describe("replay request keys", () => {
     messages: null,
     stream: false,
   };
-
-  it("is deterministic for the same logical request", () => {
-    expect(aiModelRequestKey({ ...baseRequest })).toBe(
-      aiModelRequestKey({ ...baseRequest }),
-    );
-  });
 
   it("is insensitive to object property order", () => {
     const reordered = {
@@ -40,19 +30,6 @@ describe("replay request keys", () => {
       aiModelRequestKey({ ...baseRequest, operation: "optimize_standard" }),
     ).not.toBe(key);
     expect(aiModelRequestKey({ ...baseRequest, stream: true })).not.toBe(key);
-  });
-
-  it("namespaces the two seams so keys can never collide", () => {
-    expect(aiModelRequestKey(baseRequest).startsWith("ai-model:")).toBe(true);
-    expect(
-      imagePreviewRequestKey({
-        prompt: "a cat",
-        aspectRatio: null,
-        inputImageUrl: null,
-        seed: null,
-        speedMode: null,
-      }).startsWith("image-preview:"),
-    ).toBe(true);
   });
 
   it("stableStringify sorts nested keys and drops undefined values", () => {

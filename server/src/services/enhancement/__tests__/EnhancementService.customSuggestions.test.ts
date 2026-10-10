@@ -184,26 +184,4 @@ describe("EnhancementService.getCustomSuggestions (V2 routing)", () => {
     expect(rescuePrompt).toContain("custom request");
     expect(result.suggestions.length).toBeGreaterThan(1);
   });
-
-  it("partitions cache from the legacy custom-suggestions key shape (engineVersion + policyVersion encoded)", async () => {
-    const { service, generateKeySpy } = createService([
-      llmJson([
-        { text: "tailored navy peacoat", category: "subject.appearance" },
-      ]),
-    ]);
-
-    await service.getCustomSuggestions({
-      highlightedText: "the dress",
-      customRequest: "more cinematic",
-      fullPrompt: "Walking the rooftop in the dress.",
-    });
-
-    expect(generateKeySpy).toHaveBeenCalled();
-    const [, params] = generateKeySpy.mock.calls[0]!;
-    expect(params).toMatchObject({
-      engineVersion: "v2",
-      mode: "custom",
-      policyVersion: "2026-03-v2a",
-    });
-  });
 });

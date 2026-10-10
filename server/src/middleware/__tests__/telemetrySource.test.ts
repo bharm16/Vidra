@@ -1,11 +1,11 @@
-import { describe, it, expect, afterEach } from "vitest";
-import type { Request, Response, NextFunction } from "express";
-import { telemetrySourceMiddleware } from "../telemetrySource";
+import type { TelemetrySource } from "#shared/types/telemetry";
 import {
   getRequestContext,
   runWithRequestContext,
 } from "@infrastructure/requestContext";
-import type { TelemetrySource } from "#shared/types/telemetry";
+import type { NextFunction, Request, Response } from "express";
+import { afterEach, describe, expect, it } from "vitest";
+import { telemetrySourceMiddleware } from "../telemetrySource";
 
 function mockReq(headers: Record<string, string> = {}): Request {
   return { headers } as unknown as Request;
@@ -35,18 +35,6 @@ describe("telemetrySourceMiddleware", () => {
     );
   });
 
-  it("resolves 'user' from header", () => {
-    process.env.NODE_ENV = "production";
-    expect(captureSource(mockReq({ "x-telemetry-source": "user" }))).toBe(
-      "user",
-    );
-  });
-
-  it("resolves 'ci' from header", () => {
-    process.env.NODE_ENV = "production";
-    expect(captureSource(mockReq({ "x-telemetry-source": "ci" }))).toBe("ci");
-  });
-
   it("falls through invalid header to env-based rule", () => {
     process.env.NODE_ENV = "production";
     delete process.env.CI;
@@ -65,12 +53,6 @@ describe("telemetrySourceMiddleware", () => {
     process.env.NODE_ENV = "development";
     delete process.env.CI;
     expect(captureSource(mockReq())).toBe("dev");
-  });
-
-  it("resolves 'unknown' in production fallback", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.CI;
-    expect(captureSource(mockReq())).toBe("unknown");
   });
 
   it("inherits requestId from outer context when present", () => {

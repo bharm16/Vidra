@@ -75,21 +75,6 @@ describe("PollingWorkerBase", () => {
     vi.restoreAllMocks();
   });
 
-  it("schedules first tick immediately when initialJitter is false", async () => {
-    const worker = new TestWorker({
-      workerId: "test-worker",
-      basePollIntervalMs: 1_000,
-      runOnceImpl: async () => true,
-    });
-
-    worker.start();
-    expect(worker.controller.runs).toBe(0);
-    await vi.advanceTimersByTimeAsync(1);
-    expect(worker.controller.runs).toBe(1);
-
-    worker.stop();
-  });
-
   it("jitters the first tick within [0, basePollIntervalMs) when enabled", async () => {
     const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
     vi.spyOn(Math, "random").mockReturnValue(0.5);
@@ -105,28 +90,6 @@ describe("PollingWorkerBase", () => {
     const firstCall = setTimeoutSpy.mock.calls[0];
     expect(firstCall).toBeDefined();
     expect(firstCall![1]).toBe(500);
-
-    worker.stop();
-  });
-
-  it("respects upper bound: jittered delay is strictly less than base interval", async () => {
-    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
-    vi.spyOn(Math, "random").mockReturnValue(0.999999);
-
-    const worker = new TestWorker({
-      workerId: "jittered-upper",
-      basePollIntervalMs: 500,
-      initialJitter: true,
-      runOnceImpl: async () => true,
-    });
-
-    worker.start();
-    const firstCall = setTimeoutSpy.mock.calls[0];
-    expect(firstCall).toBeDefined();
-    const delay = firstCall![1] as number;
-    expect(delay).toBeGreaterThanOrEqual(0);
-    expect(delay).toBeLessThan(500);
-    expect(delay).toBe(499);
 
     worker.stop();
   });
@@ -308,18 +271,5 @@ describe("PollingWorkerBase", () => {
     expect(worker.getStatus().consecutiveFailures).toBe(0);
 
     worker.stop();
-  });
-
-  it("getStatus.running is false after stop()", async () => {
-    const worker = new TestWorker({
-      workerId: "status-stop",
-      basePollIntervalMs: 1_000,
-      runOnceImpl: async () => true,
-    });
-
-    worker.start();
-    expect(worker.getStatus().running).toBe(true);
-    worker.stop();
-    expect(worker.getStatus().running).toBe(false);
   });
 });

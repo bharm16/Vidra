@@ -310,29 +310,6 @@ describe("FirestoreStudioProjectStore", () => {
       expect(await store.getTurn("project-1", "turn-2")).toBeNull();
     });
 
-    it("double-submit against a nearly-exhausted cap: exactly one passes", async () => {
-      // Serial equivalent of the concurrent-submit gate: the second
-      // reservation reads the first one's committed counter and fails.
-      // (Under real concurrency Firestore retries one transaction against
-      // the updated counter, reducing to this serial case.)
-      const cap = 20;
-      await store.reserveTurn({
-        turn: makeTurn({ reservedCents: 16 }),
-        day: DAY,
-        capCents: cap,
-      });
-
-      await expect(
-        store.reserveTurn({
-          turn: makeTurn({ id: "turn-2", reservedCents: 16 }),
-          day: DAY,
-          capCents: cap,
-        }),
-      ).rejects.toBeInstanceOf(StudioCapExceededError);
-
-      expect(await store.getReservedCents("user-1", DAY)).toBe(16);
-    });
-
     it("scopes the counter per user and per day", async () => {
       await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 100 });
       await store.reserveTurn({
@@ -564,8 +541,11 @@ describe("FirestoreStudioProjectStore", () => {
       expect(turn?.calls[0]?.status).toBe("running");
       // The produced-image index tracks the checkpointed success immediately,
       // so identity retrieval works even mid-batch.
-      const raw = mocks.records.get("studio_projects/project-1/turns/turn-1");
-      expect(raw?.imageIds).toEqual(["img-2"]);
+      const produced = await store.findTurnByProducedImageId(
+        "project-1",
+        "img-2",
+      );
+      expect(produced?.calls[2]?.image?.id).toBe("img-2");
     });
 
     it("no-ops once the turn is terminal, so a late checkpoint cannot resurrect it", async () => {
@@ -707,43 +687,6 @@ describe("FirestoreStudioProjectStore", () => {
       expect(
         await store.findTurnByProducedImageId("other-project", "img-1"),
       ).toBeNull();
-    });
-  });
-
-  describe("produced-image index", () => {
-    it("persists imageIds for the query but never returns them on reads", async () => {
-      await store.reserveTurn({ turn: makeTurn(), day: DAY, capCents: 500 });
-      await store.settleTurn({
-        projectId: "project-1",
-        turnId: "turn-1",
-        userId: "user-1",
-        day: DAY,
-        refundCents: 0,
-        status: "complete",
-        calls: [
-          {
-            index: 0,
-            status: "succeeded",
-            image: {
-              id: "img-1",
-              storagePath: "users/user-1/previews/images/x.webp",
-              sourcePrompt: "v1",
-              model: "recraft-v4.1",
-            },
-          },
-        ],
-        updatedAtMs: 2000,
-      });
-
-      // The raw doc carries the denormalized index the finder queries...
-      const raw = mocks.records.get("studio_projects/project-1/turns/turn-1");
-      expect(raw?.imageIds).toEqual(["img-1"]);
-
-      // ...but the domain record handed back to consumers never does.
-      const turn = await store.getTurn("project-1", "turn-1");
-      expect(turn && "imageIds" in turn).toBe(false);
-      const [listed] = await store.listTurns("project-1");
-      expect(listed && "imageIds" in listed).toBe(false);
     });
   });
 

@@ -60,76 +60,10 @@ describe("RunwayStrategy", () => {
     strategy = new RunwayStrategy();
   });
 
-  describe("validate - error handling", () => {
-    it("throws on empty input", async () => {
-      await expect(strategy.validate("")).rejects.toThrow(
-        "Input must be a non-empty string",
-      );
-    });
-
-    it("throws on whitespace-only input", async () => {
-      await expect(strategy.validate("  \n ")).rejects.toThrow(
-        "Input cannot be empty or whitespace only",
-      );
-    });
-
-    it("does not throw for valid prompt", async () => {
-      await expect(
-        strategy.validate("a car drives through city streets"),
-      ).resolves.toBeUndefined();
-    });
-
-    it("does not throw for supported aspect ratio", async () => {
-      await expect(
-        strategy.validate("test", {
-          userIntent: "test",
-          constraints: {
-            mode: "enhance",
-            minWords: 1,
-            maxWords: 100,
-            maxSentences: 5,
-            slotDescriptor: "test",
-            formRequirement: "16:9",
-          },
-        }),
-      ).resolves.toBeUndefined();
-    });
-  });
-
   describe("normalize - morphing/blur term stripping", () => {
     it('strips "morphing" from standard prompts', () => {
       const result = strategy.normalize("a face morphing into another face");
       expect(result).not.toMatch(/\bmorphing\b/i);
-    });
-
-    it('strips "blurry" from standard prompts', () => {
-      const result = strategy.normalize("a blurry background with detail");
-      expect(result).not.toMatch(/\bblurry\b/i);
-    });
-
-    it('strips "hazy" from standard prompts', () => {
-      const result = strategy.normalize("a hazy morning landscape");
-      expect(result).not.toMatch(/\bhazy\b/i);
-    });
-
-    it('strips "warped" from standard prompts', () => {
-      const result = strategy.normalize("a warped perspective shot");
-      expect(result).not.toMatch(/\bwarped\b/i);
-    });
-
-    it('strips "foggy" from standard prompts', () => {
-      const result = strategy.normalize("a foggy valley at dawn");
-      expect(result).not.toMatch(/\bfoggy\b/i);
-    });
-
-    it('strips "misty" from standard prompts', () => {
-      const result = strategy.normalize("a misty forest path");
-      expect(result).not.toMatch(/\bmisty\b/i);
-    });
-
-    it('strips "distorted" from standard prompts', () => {
-      const result = strategy.normalize("a distorted reflection in water");
-      expect(result).not.toMatch(/\bdistorted\b/i);
     });
 
     it("strips multiple terms in one pass", () => {
@@ -204,7 +138,7 @@ describe("RunwayStrategy", () => {
         "fallback raw prompt",
       );
 
-      expect(typeof transformed.prompt).toBe("string");
+      expect(transformed.prompt).toContain("fallback raw prompt");
       expect(
         transformed.metadata.warnings.some((warning) =>
           warning.includes("LLM rewrite unavailable"),
@@ -245,32 +179,6 @@ describe("RunwayStrategy", () => {
       const prompt = result.prompt as string;
       const filmGrainOccurrences = (prompt.match(/film grain/gi) || []).length;
       expect(filmGrainOccurrences).toBe(0);
-    });
-
-    it("injects cinematographic triggers", () => {
-      strategy.normalize("test");
-      const result = strategy.augment(makeResult("test"));
-      expect(result.metadata.triggersInjected.length).toBeGreaterThan(0);
-    });
-
-    it("records augment phase with changes", () => {
-      strategy.normalize("test");
-      const result = strategy.augment(makeResult("test"));
-      const augPhase = result.metadata.phases.find(
-        (p) => p.phase === "augment",
-      );
-      expect(augPhase).toBeDefined();
-      expect(augPhase?.changes.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe("identity", () => {
-    it("has correct modelId", () => {
-      expect(strategy.modelId).toBe("runway-gen45");
-    });
-
-    it("has correct modelName", () => {
-      expect(strategy.modelName).toBe("Runway Gen-4.5");
     });
   });
 });

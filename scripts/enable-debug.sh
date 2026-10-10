@@ -8,7 +8,7 @@ echo "=========================================="
 # Check if .env exists
 if [ ! -f .env ]; then
   echo "❌ .env file not found."
-  echo "   Create a .env file first (see docs/QUICKSTART.md)."
+  echo "   Create a .env file first (see CLAUDE.md)."
   echo "   The required-var schema lives in server/src/config/env.ts."
   exit 1
 fi

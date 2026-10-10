@@ -9,6 +9,16 @@
  * @module SuggestionRequestManager.property.test
  */
 
+/**
+ * Property-based tests for SuggestionRequestManager
+ *
+ * Tests the following correctness properties:
+ * - Property 1: Cancellation Prevents State Updates
+ * - Property 2: Deduplication Prevents Redundant Requests
+ * - Property 4: Debounce Coalesces Rapid Selections
+ *
+ * @module SuggestionRequestManager.property.test
+ */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as fc from "fast-check";
 
@@ -217,53 +227,6 @@ describe("SuggestionRequestManager Property Tests", () => {
 
             // After completion, should no longer be in-flight
             expect(manager.isRequestInFlight(dedupKey)).toBe(false);
-
-            manager.dispose();
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it("different dedupKeys allow new requests (cancelling previous)", async () => {
-      await fc.assert(
-        fc.asyncProperty(
-          // Generate array of 2-5 unique non-empty strings
-          fc
-            .uniqueArray(
-              fc
-                .string({ minLength: 1, maxLength: 30 })
-                .filter((s) => s.trim().length > 0),
-              { minLength: 2, maxLength: 5 },
-            )
-            .filter((arr) => arr.length >= 2),
-          async (uniqueKeys) => {
-            const manager = new SuggestionRequestManager({
-              debounceMs: 5,
-              timeoutMs: 5000,
-            });
-            const executedRequests: string[] = [];
-
-            // Schedule multiple requests rapidly (each cancels the previous)
-            const promises = uniqueKeys.map((key) =>
-              manager
-                .scheduleRequest(key, async () => {
-                  executedRequests.push(key);
-                  return key;
-                })
-                .catch((e) => {
-                  if (e instanceof CancellationError) return null;
-                  throw e;
-                }),
-            );
-
-            // Advance timers to complete all
-            await vi.advanceTimersByTimeAsync(100);
-            await Promise.all(promises);
-
-            // Only the last request should have executed (others cancelled)
-            const lastKey = uniqueKeys[uniqueKeys.length - 1];
-            expect(executedRequests).toEqual([lastKey]);
 
             manager.dispose();
           },

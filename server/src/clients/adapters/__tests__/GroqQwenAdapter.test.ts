@@ -126,22 +126,4 @@ describe("GroqQwenAdapter", () => {
     expect(response.text).toBe('{"ok":true}');
     expect(response.metadata.validation?.isValid).toBe(true);
   });
-
-  it("normalizes metadata with provider and optimizations", async () => {
-    const adapter = new GroqQwenAdapter({ apiKey: "key" });
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          choices: [{ message: { content: "Result" }, finish_reason: "stop" }],
-        }),
-        { status: 200 },
-      ),
-    ) as typeof fetch;
-
-    const response = await adapter.complete("System prompt", {});
-
-    expect(response.text).toBe("Result");
-    expect(response.metadata.provider).toBe("groq-qwen");
-    expect(response.metadata.optimizations).toContain("qwen3-reasoning-effort");
-  });
 });

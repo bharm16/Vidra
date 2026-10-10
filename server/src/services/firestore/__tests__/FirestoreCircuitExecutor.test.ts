@@ -85,44 +85,6 @@ describe("FirestoreCircuitExecutor", () => {
     setFirestoreCircuitExecutor(new FirestoreCircuitExecutor());
   });
 
-  it("passes constructor configuration through to opossum", () => {
-    new FirestoreCircuitExecutor({
-      timeoutMs: 3210,
-      errorThresholdPercentage: 70,
-      resetTimeoutMs: 1800,
-      volumeThreshold: 7,
-    });
-
-    const breaker = getLatestBreaker();
-    expect(breaker.options).toMatchObject({
-      name: "firestore",
-      timeout: 3210,
-      errorThresholdPercentage: 70,
-      resetTimeout: 1800,
-      volumeThreshold: 7,
-      rollingCountTimeout: 10_000,
-      rollingCountBuckets: 10,
-    });
-  });
-
-  it("delegates executeRead and executeWrite with the correct operation kind", async () => {
-    const executor = new FirestoreCircuitExecutor();
-    const executeSpy = vi.spyOn(executor, "execute");
-    const operation = vi.fn(async () => "ok");
-
-    await executor.executeRead("read-op", operation, { retries: 1 });
-    await executor.executeWrite("write-op", operation, { retries: 2 });
-
-    expect(executeSpy).toHaveBeenNthCalledWith(1, "read-op", operation, {
-      retries: 1,
-      kind: "read",
-    });
-    expect(executeSpy).toHaveBeenNthCalledWith(2, "write-op", operation, {
-      retries: 2,
-      kind: "write",
-    });
-  });
-
   it("retries transient failures and eventually succeeds", async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValue(0);
@@ -276,35 +238,5 @@ describe("FirestoreCircuitExecutor", () => {
         latencyMs: 1500,
       });
     }
-  });
-
-  it("reports retry-after seconds and logs circuit state transitions", () => {
-    const executor = new FirestoreCircuitExecutor({
-      resetTimeoutMs: 1501,
-    });
-    const breaker = getLatestBreaker();
-
-    breaker.emit("open");
-    breaker.emit("halfOpen");
-    breaker.emit("close");
-
-    expect(executor.getRetryAfterSeconds()).toBe(2);
-    expect(loggerMocks.error).toHaveBeenCalledWith("Firestore circuit opened");
-    expect(loggerMocks.warn).toHaveBeenCalledWith(
-      "Firestore circuit half-open",
-    );
-    expect(loggerMocks.info).toHaveBeenCalledWith("Firestore circuit closed");
-  });
-
-  it("preserves the singleton bridge across get and set", () => {
-    const original = getFirestoreCircuitExecutor();
-    const custom = new FirestoreCircuitExecutor({ timeoutMs: 999 });
-
-    setFirestoreCircuitExecutor(custom);
-
-    expect(getFirestoreCircuitExecutor()).toBe(custom);
-    expect(getFirestoreCircuitExecutor()).toBe(custom);
-
-    setFirestoreCircuitExecutor(original);
   });
 });

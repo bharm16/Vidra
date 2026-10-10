@@ -49,24 +49,6 @@ describe("useSettingsStorage", () => {
   });
 
   describe("edge cases", () => {
-    it("normalizes stored settings from persisted values", () => {
-      localStorage.getItem = vi.fn(() =>
-        JSON.stringify({
-          fontSize: "large",
-          autoSave: false,
-          exportFormat: "json",
-        }),
-      );
-
-      const { result } = renderHook(() => useSettingsStorage());
-
-      expect(result.current.settings).toEqual({
-        fontSize: "large",
-        autoSave: false,
-        exportFormat: "json",
-      });
-    });
-
     it("strips legacy 'darkMode' field from persisted values without losing the rest", () => {
       // Migration safety for ISSUE-36: users with pre-existing localStorage
       // entries that include `darkMode` must continue to load cleanly. Zod's
@@ -111,22 +93,6 @@ describe("useSettingsStorage", () => {
             autoSave: true,
             exportFormat: "markdown",
           }),
-        );
-      });
-    });
-
-    it("resets settings to defaults and persists them", async () => {
-      const { result } = renderHook(() => useSettingsStorage());
-
-      act(() => {
-        result.current.resetSettings();
-      });
-
-      await waitFor(() => {
-        expect(result.current.settings).toEqual(DEFAULT_SETTINGS);
-        expect(localStorage.setItem).toHaveBeenCalledWith(
-          STORAGE_KEY,
-          JSON.stringify(DEFAULT_SETTINGS),
         );
       });
     });

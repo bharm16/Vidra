@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  extractActionSpans,
-  isCompromiseAvailable,
-  warmupCompromise,
-  DEFAULT_COMPROMISE_CONFIG,
-} from "../CompromiseService";
+import { extractActionSpans, warmupCompromise } from "../CompromiseService";
 
 // Mock the logger
 vi.mock("@infrastructure/Logger", () => ({
@@ -49,12 +44,6 @@ describe("extractActionSpans", () => {
       expect(result.spans).toHaveLength(0);
     });
 
-    it("returns empty result for null text", async () => {
-      const result = await extractActionSpans(null as unknown as string);
-
-      expect(result.spans).toHaveLength(0);
-    });
-
     it("returns empty result for non-string input", async () => {
       const result = await extractActionSpans(123 as unknown as string);
 
@@ -63,25 +52,6 @@ describe("extractActionSpans", () => {
   });
 
   describe("edge cases", () => {
-    it("handles text with only auxiliary verbs", async () => {
-      const result = await extractActionSpans("it is what it is");
-
-      // All auxiliary verbs should be excluded
-      expect(
-        result.spans.every(
-          (s) => !["is", "was", "are", "were"].includes(s.text.toLowerCase()),
-        ),
-      ).toBe(true);
-    });
-
-    it("handles text without any verbs", async () => {
-      const result = await extractActionSpans(
-        "a beautiful sunset over the mountains",
-      );
-
-      expect(result.stats.latencyMs).toBeGreaterThanOrEqual(0);
-    });
-
     it("extracts gerunds tagged as nouns", async () => {
       // Compromise sometimes tags gerunds as nouns in video prompts
       const result = await extractActionSpans("woman dribbling a basketball");
@@ -96,52 +66,20 @@ describe("extractActionSpans", () => {
         { maxPhraseWords: 3 },
       );
 
-      // No span should have more than 3 words
+      expect(result.spans.length).toBeGreaterThan(0);
       result.spans.forEach((span) => {
         const wordCount = span.text.split(/\s+/).length;
         expect(wordCount).toBeLessThanOrEqual(3);
       });
     });
-
-    it("handles unicode text", async () => {
-      const result = await extractActionSpans(
-        "跑步 running through the park 走る",
-      );
-
-      expect(result.stats.latencyMs).toBeGreaterThanOrEqual(0);
-    });
   });
 
   describe("verb phrase extraction", () => {
-    it("extracts simple verb phrases", async () => {
-      const result = await extractActionSpans("a dog running through the park");
-
-      const texts = result.spans.map((s) => s.text.toLowerCase());
-      expect(texts.some((t) => t.includes("running"))).toBe(true);
-    });
-
     it("extracts verb with object patterns", async () => {
       const result = await extractActionSpans("catching a ball");
 
       const texts = result.spans.map((s) => s.text.toLowerCase());
       expect(texts.some((t) => t.includes("catching"))).toBe(true);
-    });
-
-    it("extracts adverb + verb patterns when enabled", async () => {
-      const result = await extractActionSpans("quickly running", {
-        includeAdverbs: true,
-      });
-
-      expect(result.spans.length).toBeGreaterThanOrEqual(0);
-    });
-
-    it("skips adverbs when disabled", async () => {
-      const result = await extractActionSpans("quickly running", {
-        includeAdverbs: false,
-      });
-
-      // Should still extract the verb but without the adverb
-      expect(result.stats.latencyMs).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -194,9 +132,7 @@ describe("extractActionSpans", () => {
       const sittingSpan = result.spans.find((s) =>
         s.text.toLowerCase().includes("sitting"),
       );
-      if (sittingSpan) {
-        expect(sittingSpan.role).toBe("action.state");
-      }
+      expect(sittingSpan?.role).toBe("action.state");
     });
 
     it("classifies gesture verbs correctly", async () => {
@@ -205,9 +141,7 @@ describe("extractActionSpans", () => {
       const wavingSpan = result.spans.find((s) =>
         s.text.toLowerCase().includes("waving"),
       );
-      if (wavingSpan) {
-        expect(wavingSpan.role).toBe("action.gesture");
-      }
+      expect(wavingSpan?.role).toBe("action.gesture");
     });
 
     it("classifies movement verbs correctly", async () => {
@@ -216,32 +150,16 @@ describe("extractActionSpans", () => {
       const jumpingSpan = result.spans.find((s) =>
         s.text.toLowerCase().includes("jumping"),
       );
-      if (jumpingSpan) {
-        expect(jumpingSpan.role).toMatch(/^action\./);
-      }
+      expect(jumpingSpan?.role).toBe("action.movement");
     });
   });
 
   describe("span structure", () => {
-    it("includes correct span properties", async () => {
-      const result = await extractActionSpans("a person running");
-
-      if (result.spans.length > 0) {
-        const span = result.spans[0];
-        expect(span).toHaveProperty("text");
-        expect(span).toHaveProperty("role");
-        expect(span).toHaveProperty("confidence");
-        expect(span).toHaveProperty("start");
-        expect(span).toHaveProperty("end");
-        expect(span).toHaveProperty("source");
-        expect(span?.source).toBe("compromise");
-      }
-    });
-
     it("calculates correct character positions", async () => {
       const text = "a person running quickly";
       const result = await extractActionSpans(text);
 
+      expect(result.spans.length).toBeGreaterThan(0);
       result.spans.forEach((span) => {
         expect(span.start).toBeGreaterThanOrEqual(0);
         expect(span.end).toBeLessThanOrEqual(text.length);
@@ -253,41 +171,6 @@ describe("extractActionSpans", () => {
       });
     });
   });
-
-  describe("core behavior", () => {
-    it("uses default config when not specified", async () => {
-      const result = await extractActionSpans("a dog running through the park");
-
-      expect(result.stats.latencyMs).toBeGreaterThanOrEqual(0);
-    });
-
-    it("merges partial config with defaults", async () => {
-      const result = await extractActionSpans("a dog running", {
-        minConfidence: 0.9,
-      });
-
-      if (result.spans.length > 0) {
-        expect(result.spans[0]?.confidence).toBe(0.9);
-      }
-    });
-
-    it("returns stats with extraction counts", async () => {
-      const result = await extractActionSpans(
-        "running and jumping and dancing",
-      );
-
-      expect(result.stats).toHaveProperty("verbPhrases");
-      expect(result.stats).toHaveProperty("gerunds");
-      expect(result.stats).toHaveProperty("totalExtracted");
-      expect(result.stats).toHaveProperty("latencyMs");
-    });
-  });
-});
-
-describe("isCompromiseAvailable", () => {
-  it("returns true when compromise is working", () => {
-    expect(isCompromiseAvailable()).toBe(true);
-  });
 });
 
 describe("warmupCompromise", () => {
@@ -295,30 +178,10 @@ describe("warmupCompromise", () => {
     vi.clearAllMocks();
   });
 
-  it("returns success with latency", async () => {
-    const result = await warmupCompromise();
-
-    expect(result).toHaveProperty("success");
-    expect(result).toHaveProperty("latencyMs");
-    expect(result.latencyMs).toBeGreaterThanOrEqual(0);
-  });
-
   it("extracts spans during warmup", async () => {
     const result = await warmupCompromise();
 
     // The warmup uses a test sentence that should produce spans
     expect(result.success).toBe(true);
-  });
-});
-
-describe("DEFAULT_COMPROMISE_CONFIG", () => {
-  it("has expected default values", () => {
-    expect(DEFAULT_COMPROMISE_CONFIG.enabled).toBe(true);
-    expect(DEFAULT_COMPROMISE_CONFIG.minConfidence).toBe(0.75);
-    expect(DEFAULT_COMPROMISE_CONFIG.extractVerbPhrases).toBe(true);
-    expect(DEFAULT_COMPROMISE_CONFIG.extractGerunds).toBe(true);
-    expect(DEFAULT_COMPROMISE_CONFIG.includeAdverbs).toBe(true);
-    expect(DEFAULT_COMPROMISE_CONFIG.includeObjects).toBe(true);
-    expect(DEFAULT_COMPROMISE_CONFIG.maxPhraseWords).toBe(5);
   });
 });

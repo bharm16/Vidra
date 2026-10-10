@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  createHighlightRange,
   extractHighlightMetadata,
   findHighlightNode,
 } from "@features/prompt-optimizer/utils/highlightInteractionHelpers";
@@ -61,22 +60,5 @@ describe("highlightInteractionHelpers", () => {
       }),
     );
     expect(metadata?.span).toEqual({ id: "span-1", extra: "data" });
-  });
-
-  it("creates range and offsets using provided offset function", () => {
-    const root = document.createElement("div");
-    const node = document.createElement("span");
-    node.textContent = "value";
-    root.appendChild(node);
-
-    const { range, rangeClone, offsets } = createHighlightRange(
-      node,
-      root,
-      () => ({ start: 1, end: 4 }),
-    );
-
-    expect(range).not.toBeNull();
-    expect(rangeClone).not.toBeNull();
-    expect(offsets).toEqual({ start: 1, end: 4 });
   });
 });

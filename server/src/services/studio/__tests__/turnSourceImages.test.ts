@@ -39,13 +39,16 @@ const SOURCES = [
 
 describe("readTurnSourceImages", () => {
   it("reports no inputs for a generate, even inside a project born from a session picture", () => {
-    const generated = turn({
-      action: "generate",
-      basePrompt: "a paper crane",
-      variants: ["a", "b", "c", "d"],
-      capability: "general",
-      suggestions: ["x", "y", "z"],
-    });
+    const generated = turn(
+      {
+        action: "generate",
+        basePrompt: "a paper crane",
+        variants: ["a", "b", "c", "d"],
+        capability: "general",
+        suggestions: ["x", "y", "z"],
+      },
+      SOURCES,
+    );
 
     // The case the whole rule exists for: a generate consumed nothing, so the
     // returning picture can inherit no ancestry from the project's origin.
@@ -110,7 +113,10 @@ describe("readTurnSourceImages", () => {
   it("reports no inputs for a conversational turn", () => {
     expect(
       readTurnSourceImages(
-        turn({ action: "diagnose", question: "which one?", quickPicks: [] }),
+        turn(
+          { action: "diagnose", question: "which one?", quickPicks: [] },
+          SOURCES,
+        ),
       ),
     ).toEqual([]);
   });

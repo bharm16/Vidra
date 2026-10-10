@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { SignInPage } from "../SignInPage";
+
 import { SignUpPage } from "../SignUpPage";
 import { EmailVerificationPage } from "../EmailVerificationPage";
 
@@ -106,16 +106,6 @@ function renderSignUp(path: string): ReturnType<typeof render> {
   );
 }
 
-function renderSignIn(path: string): ReturnType<typeof render> {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/signin" element={<SignInPage />} />
-      </Routes>
-    </MemoryRouter>,
-  );
-}
-
 function renderEmailVerification(
   entry:
     | string
@@ -161,36 +151,6 @@ describe("regression: auth page hard-bug fixes", () => {
       "href",
       "/signin?redirect=%2Fstudio",
     );
-  });
-
-  it("preserves redirect on the sign-in footer create-account link", () => {
-    renderSignIn("/signin?redirect=%2Fstudio");
-
-    expect(
-      screen.getByRole("link", { name: "Create an account" }),
-    ).toHaveAttribute("href", "/signup?redirect=%2Fstudio");
-  });
-
-  it("maps auth/invalid-credential to the credential guidance copy", async () => {
-    authRepositoryMock.signInWithEmail.mockRejectedValueOnce({
-      code: "auth/invalid-credential",
-    });
-
-    renderSignIn("/signin");
-
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "ada@example.com" },
-    });
-    fireEvent.change(screen.getByLabelText("Password", { exact: true }), {
-      target: { value: "wrong-password" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in & continue" }));
-
-    await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Incorrect email or password.",
-      );
-    });
   });
 
   it("routes to email verification with failed delivery state when signup email delivery fails", async () => {
@@ -279,24 +239,6 @@ describe("regression: auth page hard-bug fixes", () => {
       "Account created. Welcome, Ada!",
     );
     expect(toastMock.error).not.toHaveBeenCalled();
-  });
-
-  it("shows the failed delivery panel when entered with failed delivery state", () => {
-    renderEmailVerification({
-      pathname: "/email-verification",
-      search: "?email=ada%40example.com",
-      state: { delivery: "failed" },
-    });
-
-    expect(
-      screen.getByText(
-        /was created, but we couldn’t send the verification email yet/i,
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/couldn[’']t send the verification email yet/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/We sent a verification link to/i)).toBeNull();
   });
 
   it("switches from failed delivery to inbox state after a successful resend", async () => {

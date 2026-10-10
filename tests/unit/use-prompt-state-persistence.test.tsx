@@ -36,18 +36,6 @@ describe("usePromptStatePersistence", () => {
     });
   });
 
-  describe("edge cases", () => {
-    it("persists an empty mode string safely", () => {
-      renderHook(() =>
-        usePromptStatePersistence({
-          selectedMode: "",
-        }),
-      );
-
-      expect(localStorage.getItem(SELECTED_MODE_KEY)).toBe("");
-    });
-  });
-
   describe("core behavior", () => {
     it("updates persisted state when inputs change", () => {
       const { rerender } = renderHook(

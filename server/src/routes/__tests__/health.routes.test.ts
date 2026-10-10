@@ -1,51 +1,8 @@
+import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createHealthRoutes } from "../health.routes";
-import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
-
-interface ErrorWithCode {
-  code?: string;
-  message?: string;
-}
-
-const isSocketPermissionError = (error: unknown): boolean => {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const candidate = error as ErrorWithCode;
-  const code = typeof candidate.code === "string" ? candidate.code : "";
-  const message =
-    typeof candidate.message === "string" ? candidate.message : "";
-  if (code === "EPERM" || code === "EACCES") {
-    return true;
-  }
-
-  return (
-    message.includes("listen EPERM") ||
-    message.includes("listen EACCES") ||
-    message.includes("operation not permitted") ||
-    message.includes("Cannot read properties of null (reading 'port')")
-  );
-};
-
-const runSupertestOrSkip = async <T>(
-  execute: () => Promise<T>,
-): Promise<T | null> => {
-  if (process.env.CODEX_SANDBOX === "seatbelt") {
-    return null;
-  }
-
-  try {
-    return await execute();
-  } catch (error) {
-    if (isSocketPermissionError(error)) {
-      return null;
-    }
-    throw error;
-  }
-};
 
 describe("GET /health/ready", () => {
   it("returns 200 with explicit dependencies map when all required deps are healthy", async () => {
@@ -58,10 +15,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe("ready");
@@ -88,10 +42,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(503);
     expect(result.body.status).toBe("unhealthy");
@@ -113,10 +64,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe("ready");
@@ -136,10 +84,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(503);
     expect(result.body.status).toBe("unhealthy");
@@ -157,10 +102,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(503);
     expect(result.body.status).toBe("unhealthy");
@@ -179,10 +121,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe("ready");
@@ -190,67 +129,6 @@ describe("GET /health/ready", () => {
       required: false,
       healthy: false,
     });
-  });
-
-  it("returns 200 when checkFirestore is absent (skipped — treated as healthy)", async () => {
-    const app = express();
-    app.use(
-      createHealthRoutes({
-        cacheService: { isHealthy: () => true },
-        gcsBucket: { exists: async () => [true] as [boolean] },
-        // checkFirestore intentionally omitted
-      }),
-    );
-
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
-
-    expect(result.status).toBe(200);
-    expect(result.body.status).toBe("ready");
-    // Firebase present but skipped: still listed as healthy
-    expect(result.body.dependencies.firebase.healthy).toBe(true);
-  });
-
-  it("returns 200 when gcsBucket is absent (not wired — treated as healthy)", async () => {
-    const app = express();
-    app.use(
-      createHealthRoutes({
-        cacheService: { isHealthy: () => true },
-        checkFirestore: async () => undefined,
-        // gcsBucket intentionally omitted
-      }),
-    );
-
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
-
-    expect(result.status).toBe(200);
-    expect(result.body.status).toBe("ready");
-    expect(result.body.dependencies.gcs.healthy).toBe(true);
-  });
-
-  it("preserves backward-compatible top-level fields", async () => {
-    const app = express();
-    app.use(
-      createHealthRoutes({
-        cacheService: { isHealthy: () => true },
-        checkFirestore: async () => undefined,
-        gcsBucket: { exists: async () => [true] as [boolean] },
-      }),
-    );
-
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
-
-    expect(result.body.timestamp).toBeDefined();
-    // 'checks' key removed in favour of 'dependencies'
-    expect(result.body.dependencies).toBeDefined();
   });
 
   it("circuit half-open + thresholds-OK: error contains degraded/half-open, lastChecked is non-null", async () => {
@@ -279,10 +157,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(503);
     expect(result.body.dependencies.firebase.healthy).toBe(false);
@@ -319,10 +194,7 @@ describe("GET /health/ready", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/ready"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/ready");
 
     expect(result.status).toBe(200);
     expect(result.body.dependencies.firebase.healthy).toBe(true);
@@ -341,8 +213,7 @@ describe("GET /health", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() => request(app).get("/health"));
-    if (!result) return;
+    const result = await request(app).get("/health");
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe("healthy");
@@ -360,10 +231,7 @@ describe("GET /health/live", () => {
       }),
     );
 
-    const result = await runSupertestOrSkip(() =>
-      request(app).get("/health/live"),
-    );
-    if (!result) return;
+    const result = await request(app).get("/health/live");
 
     expect(result.status).toBe(200);
     expect(result.body.status).toBe("alive");

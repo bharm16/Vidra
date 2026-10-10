@@ -104,13 +104,6 @@ describe("App routes", () => {
 
       expect(await screen.findByText("SignInPage")).toBeInTheDocument();
     });
-
-    it("leaves the dormant /consistent route unregistered", async () => {
-      window.history.pushState({}, "", "/consistent");
-      render(<App />);
-
-      expect(await screen.findByText("NotFoundPage")).toBeInTheDocument();
-    });
   });
 
   describe("edge cases", () => {
@@ -121,27 +114,6 @@ describe("App routes", () => {
       expect(await screen.findByText("SharedClip")).toBeInTheDocument();
     });
   });
-
-  it.each([
-    "/pricing",
-    "/settings/billing",
-    "/settings/billing/invoices",
-    "/billing",
-    "/invoices",
-    "/assets",
-    "/continuity",
-    "/continuity/session-1",
-    "/session/new/continuity",
-    "/session/session-1/continuity",
-  ])(
-    "keeps dormant route %s unregistered even with old feature flags supplied",
-    async (path) => {
-      window.history.pushState({}, "", path);
-      render(<App />);
-      expect(await screen.findByText("NotFoundPage")).toBeInTheDocument();
-      expect(screen.queryByText("MainWorkspace")).not.toBeInTheDocument();
-    },
-  );
 
   describe("core behavior", () => {
     it("renders the main workspace on the root route", async () => {

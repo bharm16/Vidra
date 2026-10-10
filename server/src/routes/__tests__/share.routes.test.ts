@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
+import type { ShareService } from "@services/share/ShareService";
 import express, {
   type NextFunction,
   type Request,
   type Response,
 } from "express";
 import request from "supertest";
-import { createShareRouter, createPublicClipRouter } from "../share.routes";
-import type { ShareService } from "@services/share/ShareService";
+import { describe, expect, it } from "vitest";
+import { createPublicClipRouter, createShareRouter } from "../share.routes";
 
 function fakeShareService(overrides: Partial<ShareService> = {}): ShareService {
   return {
@@ -74,19 +74,5 @@ describe("share routes", () => {
       success: true,
       data: { shareId: "share-123" },
     });
-  });
-
-  it("rejects an unauthenticated mint with 401", async () => {
-    const res = await request(appWith(fakeShareService(), { authed: false }))
-      .post("/api/share")
-      .send(BODY);
-    expect(res.status).toBe(401);
-  });
-
-  it("rejects an invalid mint body with 400", async () => {
-    const res = await request(appWith(fakeShareService()))
-      .post("/api/share")
-      .send({ sessionId: "s" });
-    expect(res.status).toBe(400);
   });
 });

@@ -1,19 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { GenerationControlsState } from "@features/generation-controls";
 import { DEFAULT_GENERATION_CONTROLS_STATE } from "@features/generation-controls";
 import { GenerationControlsStoreProvider } from "@features/generation-controls";
 import { useI2VContext } from "../useI2VContext";
-import { observeImage } from "../../api/i2vApi";
-
-vi.mock("../../api/i2vApi", () => ({
-  observeImage: vi.fn(),
-}));
-
-vi.mock("@/services/media/MediaUrlResolver", () => ({
-  resolveMediaUrl: vi.fn(async ({ url }: { url: string | null }) => ({ url })),
-}));
 
 type GenerationControlsStateOverrides = Partial<
   Omit<GenerationControlsState, "domain" | "ui">
@@ -48,13 +39,6 @@ const buildWrapper =
 describe("useI2VContext", () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.clearAllMocks();
-    (observeImage as ReturnType<typeof vi.fn>).mockResolvedValue({
-      success: true,
-      observation: {
-        summary: "ok",
-      },
-    });
   });
 
   it("does not enter i2v mode when only keyframes[0] exists", () => {
@@ -79,7 +63,7 @@ describe("useI2VContext", () => {
     expect(result.current.startImageUrl).toBeNull();
   });
 
-  it("reads start image from startFrame", async () => {
+  it("reads start image from startFrame", () => {
     const initialState = buildInitialState({
       domain: {
         startFrame: {
@@ -98,15 +82,6 @@ describe("useI2VContext", () => {
 
     expect(result.current.isI2VMode).toBe(true);
     expect(result.current.startImageUrl).toBe("https://example.com/start.png");
-
-    await waitFor(() => {
-      expect(observeImage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          image: "https://example.com/start.png",
-          sourcePrompt: "a start frame",
-        }),
-        expect.any(Object),
-      );
-    });
+    expect(result.current.startImageSourcePrompt).toBe("a start frame");
   });
 });

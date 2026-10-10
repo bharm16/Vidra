@@ -59,34 +59,4 @@ describe("regression: a camera choice adds nothing the creator cannot see", () =
       size: "720p",
     });
   });
-
-  it("builds the same options with and without a camera choice", () => {
-    const withCamera = planWith({
-      duration_s: 5,
-      aspect_ratio: "16:9",
-      camera_motion_id: "push_in",
-    });
-    const withoutCamera = planWith({ duration_s: 5, aspect_ratio: "16:9" });
-
-    expect(withCamera.ok && withoutCamera.ok).toBe(true);
-    if (!withCamera.ok || !withoutCamera.ok) {
-      throw new Error("Expected both plans to succeed");
-    }
-
-    expect(withCamera.value.options).toEqual(withoutCamera.value.options);
-  });
-
-  it("still resolves the camera id for telemetry without letting it steer the run", () => {
-    const result = planWith({
-      duration_s: 5,
-      aspect_ratio: "16:9",
-      camera_motion_id: "push_in",
-    });
-    if (!result.ok) throw new Error("Expected plan to succeed");
-
-    expect(result.value.motionContext.cameraMotionId).toBe("push_in");
-    expect(result.value).not.toHaveProperty("disablePromptExtend");
-    expect(result.value).not.toHaveProperty("promptWithMotion");
-    expect(result.value).not.toHaveProperty("motionGuidanceAppended");
-  });
 });

@@ -158,7 +158,9 @@ describe("smoke runner: abort on the first call that would exceed the ceiling", 
     expect(report.verdict.kind).toBe("failed");
     expect(verdictExitCode(report.verdict)).toBe(1);
 
-    const editStep = report.steps.find((step) => step.step === "studio-edit-turn");
+    const editStep = report.steps.find(
+      (step) => step.step === "studio-edit-turn",
+    );
     expect(editStep?.status).toBe("aborted");
     expect(editStep?.reason).toContain("ceiling");
     expect(editStep?.reason).toContain("studio-edit-image");
@@ -209,35 +211,6 @@ describe("smoke runner: abort on the first call that would exceed the ceiling", 
     expect(report.steps[2]?.status).toBe("aborted");
     expect(report.steps[2]?.reason).toContain("permitted call");
     expect(report.verdict.kind).toBe("failed");
-  });
-
-  it("aborted spend still counts: an aborted run cannot be retried past the ceiling", async () => {
-    const report = await runSmoke({
-      preflight: okPreflight(),
-      ceiling: okCeiling(),
-      steps: [
-        passingStep("sketch-frame", ["sketch-frame"], ["sketch-frame"]),
-        {
-          id: "over-ceiling",
-          label: "would exceed",
-          reserves: ["studio-turn", "studio-edit-image", "first-frame"],
-          execute: async () => ({ status: "passed" }),
-        },
-      ],
-      enforcedCeilingUsd: 0.1,
-    });
-
-    expect(report.verdict.kind).toBe("failed");
-    expect(
-      report.steps.find((step) => step.step === "over-ceiling")?.status,
-    ).toBe("aborted");
-    // The sketch frame's $0.003 is already on the ledger; reservations
-    // accumulate within the step, so the projection crosses at the EDIT
-    // IMAGE ($0.003 + $0.028 + $0.07 = $0.101 > $0.10) — the first leg that
-    // would exceed, exactly as the issue demands.
-    expect(report.steps.find((step) => step.step === "over-ceiling")?.reason).toContain(
-      "studio-edit-image",
-    );
   });
 });
 
@@ -294,7 +267,9 @@ describe("smoke runner: non-verification is not a pass", () => {
 
   it("missing credentials AND unknown bounds are reported together", async () => {
     const report = await runSmoke({
-      preflight: { missing: [{ credential: "FAL_KEY", legs: ["sketch-frame"] }] },
+      preflight: {
+        missing: [{ credential: "FAL_KEY", legs: ["sketch-frame"] }],
+      },
       ceiling: deriveSmokeCeiling(
         { ...productionInputs(), studioEdit: null },
         calculateLLMCost,
@@ -344,7 +319,9 @@ describe("smoke runner: validation failure reporting", () => {
       reason: "studio turn decision was clarify, not edit",
     });
     expect(verdictExitCode(report.verdict)).toBe(1);
-    const failed = report.steps.find((step) => step.step === "studio-edit-turn");
+    const failed = report.steps.find(
+      (step) => step.step === "studio-edit-turn",
+    );
     expect(failed?.calls[0]?.outcome).toBe("invalid");
     expect(
       report.steps.find((step) => step.step === "first-frame")?.status,

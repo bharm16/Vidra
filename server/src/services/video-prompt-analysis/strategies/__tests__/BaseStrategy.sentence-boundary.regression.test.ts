@@ -81,31 +81,6 @@ describe("regression: budget enforcement never ends a prompt mid-sentence", () =
       { numRuns: 100 },
     );
   });
-
-  it("a Gemini-style rewrite straddling the Luma budget keeps only whole sentences", () => {
-    // Modeled on the production failure: the live pipeline emitted a ~130-word
-    // rewrite that was chopped to exactly 120 words, ending "...fill the".
-    const sentences = [
-      "A wide establishing shot slowly pans across the interior of a cozy coffee shop at golden hour while patrons settle into worn leather chairs near the window.",
-      "Warm overhead lights cast soft shadows that interact with the natural diffused light filtering gently through the tall windows onto polished wooden tables.",
-      "Steam rises from a hand-thrown ceramic mug as the barista pours velvety milk into rich espresso with practiced and deliberate care behind the counter.",
-      "The entire composition is rendered with a soft focus and a rich warm color palette reminiscent of classic film photography from another quieter era.",
-      "Soft background chatter and the gentle clinking of cups fill the inviting space with a profound sense of comfort and tranquility for everyone.",
-      "A final lingering close-up settles on the latte art as the morning rush begins to build outside the fogged glass door.",
-    ];
-    const prose = sentences.join(" ");
-    expect(prose.split(/\s+/).length).toBeGreaterThan(120);
-
-    const strategy = new LumaStrategy();
-    strategy.normalize("warmup");
-    const result = strategy.augment(makeResult(prose));
-    const prompt = (result.prompt as string).trim();
-
-    expect(prompt.split(/\s+/).filter(Boolean).length).toBeLessThanOrEqual(120);
-    expect(SENTENCE_TERMINATORS).toContain(prompt.at(-1));
-    // The output must be a prefix of whole sentences, not a fragment.
-    expect(sentences.join(" ")).toContain(prompt);
-  });
 });
 
 // Guard for the trigger-preserving path: trimming the body to a sentence

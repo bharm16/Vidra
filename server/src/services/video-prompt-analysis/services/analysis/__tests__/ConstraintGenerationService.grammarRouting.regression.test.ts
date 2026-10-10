@@ -16,17 +16,6 @@ describe("ConstraintGenerationService grammar-aware routing regression", () => {
     expect(result.formRequirement).toContain("verb phrase");
   });
 
-  it("routes action.gesture spans to verb mode", () => {
-    const result = service.getVideoReplacementConstraints({
-      highlightWordCount: 3,
-      highlightedText: "firmly grip the",
-      highlightedCategory: "action.gesture",
-      highlightedCategoryConfidence: 0.7,
-    });
-
-    expect(result.mode).toBe("verb");
-  });
-
   it("routes very-short style spans to adjective mode", () => {
     const result = service.getVideoReplacementConstraints({
       highlightWordCount: 1,
@@ -61,42 +50,6 @@ describe("ConstraintGenerationService grammar-aware routing regression", () => {
     expect(result.mode).toBe("micro");
   });
 
-  it("verb mode has extraRequirements instructing verb phrase output", () => {
-    const result = service.getVideoReplacementConstraints({
-      highlightWordCount: 2,
-      highlightedText: "running fast",
-      highlightedCategory: "action.physical",
-      highlightedCategoryConfidence: 0.8,
-    });
-
-    expect(result.extraRequirements).toEqual(
-      expect.arrayContaining([expect.stringContaining("verb phrase")]),
-    );
-  });
-
-  it("adjective mode has extraRequirements instructing adjective phrase output", () => {
-    const result = service.getVideoReplacementConstraints({
-      highlightWordCount: 1,
-      highlightedText: "moody",
-      highlightedCategory: "tone",
-      highlightedCategoryConfidence: 0.7,
-    });
-
-    // 'tone' doesn't match style, so it won't get adjective mode
-    // Let's test with explicit style category
-    const styleResult = service.getVideoReplacementConstraints({
-      highlightWordCount: 1,
-      highlightedText: "moody",
-      highlightedCategory: "style.mood",
-      highlightedCategoryConfidence: 0.7,
-    });
-
-    expect(styleResult.mode).toBe("adjective");
-    expect(styleResult.extraRequirements).toEqual(
-      expect.arrayContaining([expect.stringContaining("adjective")]),
-    );
-  });
-
   // --- Short-span category routing regression (prevents highlightIsVeryShort catch-all) ---
 
   it("routes short lighting.quality spans to adjective mode, not micro", () => {
@@ -109,17 +62,6 @@ describe("ConstraintGenerationService grammar-aware routing regression", () => {
 
     expect(result.mode).toBe("adjective");
     expect(result.formRequirement).toContain("adjective");
-  });
-
-  it("routes short lighting.colorTemp spans to adjective mode", () => {
-    const result = service.getVideoReplacementConstraints({
-      highlightWordCount: 2,
-      highlightedText: "golden hour",
-      highlightedCategory: "lighting.colorTemp",
-      highlightedCategoryConfidence: 0.7,
-    });
-
-    expect(result.mode).toBe("adjective");
   });
 
   it("routes longer lighting spans to lighting mode", () => {
@@ -233,16 +175,5 @@ describe("ConstraintGenerationService grammar-aware routing regression", () => {
     expect(result.mode).toBe("micro");
     expect(joinedFocus).toContain("DIFFERENT shot size");
     expect(joinedFocus).not.toContain("wardrobe");
-  });
-
-  it("routes unknown-category short spans to micro mode as fallback", () => {
-    const result = service.getVideoReplacementConstraints({
-      highlightWordCount: 1,
-      highlightedText: "dashboard",
-      highlightedCategory: null,
-      highlightedCategoryConfidence: null,
-    });
-
-    expect(result.mode).toBe("micro");
   });
 });

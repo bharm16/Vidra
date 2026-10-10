@@ -190,7 +190,8 @@ describe("regression: compile hot path reuses structured artifacts", () => {
       operation: "compilePrompt",
       targetModel: "wan-2.2",
       source: { kind: "artifactKey", artifactKey: "artifact-key" },
-      fallbackPrompt: "generic compiled prose that flattened the original prompt",
+      fallbackPrompt:
+        "generic compiled prose that flattened the original prompt",
       artifactKey: "artifact-key",
     });
 

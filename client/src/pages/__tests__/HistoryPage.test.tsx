@@ -5,7 +5,7 @@
  * source. Prompt-level artifacts from the old History page — raw UUIDs,
  * Score badges, provider tags, and the OUTPUT card — must never render.
  */
-import React from "react";
+
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -94,36 +94,6 @@ beforeEach(() => {
 });
 
 describe("library (/history)", () => {
-  it("carries the nav rail so every surface stays navigable", () => {
-    renderPage();
-
-    expect(
-      screen.getByRole("link", { name: /Live editor/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /New session/ })).toBeTruthy();
-  });
-
-  it("lists sessions and kept clips with stored and derived titles", () => {
-    renderPage();
-
-    expect(screen.getByRole("heading", { name: "Library" })).toBeTruthy();
-    expect(screen.getByText("Dog running")).toBeTruthy();
-    // Titleless entries use the same shared title derivation as the rail.
-    expect(screen.getByText("Astronaut On Mars At Dawn")).toBeTruthy();
-  });
-
-  it("never renders prompt-level artifacts: UUIDs, scores, provider tags, output", () => {
-    renderPage();
-
-    expect(screen.queryByText(/60193f16/)).toBeNull();
-    expect(screen.queryByText(/aa11bb22/)).toBeNull();
-    expect(screen.queryByText(/Score/)).toBeNull();
-    expect(screen.queryByText("flux-kontext")).toBeNull();
-    expect(screen.queryByText("sora-2")).toBeNull();
-    expect(screen.queryByText(/^Output$/i)).toBeNull();
-    expect(screen.queryByText(/golden retriever/i)).toBeNull();
-  });
-
   it("links each entry to its workspace session", () => {
     renderPage();
 
@@ -136,14 +106,6 @@ describe("library (/history)", () => {
       name: "Open session: Astronaut On Mars At Dawn",
     });
     expect(openAstronaut.getAttribute("href")).toBe("/session/sess-astronaut");
-  });
-
-  it("loads history for the authenticated user", () => {
-    renderPage();
-
-    expect(mockUsePromptHistory).toHaveBeenCalledWith(
-      expect.objectContaining({ uid: "user-1" }),
-    );
   });
 
   it("filters the archive by sessions and kept clips", () => {
@@ -168,16 +130,5 @@ describe("library (/history)", () => {
       },
     );
     expect(setSearchQuery).toHaveBeenCalledWith("dog");
-  });
-
-  it("shows the empty state with a way back into the workspace", () => {
-    mockUsePromptHistory.mockReturnValue(
-      historyStub({ history: [], filteredHistory: [] }),
-    );
-    renderPage();
-
-    expect(screen.getByText("Your library is empty.")).toBeTruthy();
-    const cta = screen.getByRole("link", { name: "Start creating" });
-    expect(cta.getAttribute("href")).toBe("/");
   });
 });

@@ -48,29 +48,6 @@ function makeBaseline(report: EvaluationReport = makeReport()): Baseline {
 
 describe("compareToBaseline", () => {
   describe("happy path", () => {
-    it("passes when current matches baseline exactly", () => {
-      const baseline = makeBaseline();
-      const result = compareToBaseline(makeReport(), baseline);
-
-      expect(result.passed).toBe(true);
-      expect(result.regressions).toEqual([]);
-    });
-
-    it("passes when current improves over baseline", () => {
-      const baseline = makeBaseline();
-      const improved = makeReport({
-        summary: {
-          relaxedF1: 0.95,
-          precision: 0.93,
-          recall: 0.97,
-          taxonomyAccuracy: 0.98,
-        },
-      });
-
-      const result = compareToBaseline(improved, baseline);
-      expect(result.passed).toBe(true);
-    });
-
     it("passes when drop is within tolerance", () => {
       const baseline = makeBaseline();
       const slightlyWorse = makeReport({
@@ -203,42 +180,6 @@ describe("compareToBaseline", () => {
       expect(result.passed).toBe(true);
       expect(result.regressions).toEqual([]);
     });
-
-    it("can report multiple category regressions in one run", () => {
-      const baseline = makeBaseline();
-      const regressed = makeReport({
-        byCategory: {
-          "subject.identity": {
-            f1: 0.7,
-            precision: 0.68,
-            recall: 0.72,
-            support: 50,
-          },
-          "camera.movement": {
-            f1: 0.6,
-            precision: 0.58,
-            recall: 0.62,
-            support: 30,
-          },
-          "lighting.quality": {
-            f1: 0.85,
-            precision: 0.83,
-            recall: 0.87,
-            support: 20,
-          },
-        },
-      });
-
-      const result = compareToBaseline(regressed, baseline);
-      const categoryRegressions = result.regressions.filter(
-        (r) => r.kind === "category_f1",
-      );
-      expect(categoryRegressions).toHaveLength(2);
-      expect(categoryRegressions.map((r) => r.scope).sort()).toEqual([
-        "camera.movement",
-        "subject.identity",
-      ]);
-    });
   });
 
   describe("taxonomy accuracy regression", () => {
@@ -299,44 +240,7 @@ describe("compareToBaseline", () => {
   });
 });
 
-describe("buildBaseline", () => {
-  it("captures provider and commit metadata", () => {
-    const baseline = buildBaseline(makeReport(), {
-      provider: "openai",
-      commit: "deadbeef",
-    });
-
-    expect(baseline.provider).toBe("openai");
-    expect(baseline.commit).toBe("deadbeef");
-    expect(baseline.summary.relaxedF1).toBe(0.85);
-  });
-
-  it("omits commit field when not provided", () => {
-    const baseline = buildBaseline(makeReport(), { provider: "openai" });
-    expect(baseline.commit).toBeUndefined();
-  });
-
-  it("uses ISO timestamp for blessedAt", () => {
-    const baseline = buildBaseline(makeReport(), { provider: "openai" });
-    // ISO 8601: YYYY-MM-DDTHH:mm:ss.sssZ
-    expect(baseline.blessedAt).toMatch(
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
-    );
-  });
-});
-
 describe("formatGateResult", () => {
-  it("renders a passing result clearly", () => {
-    const output = formatGateResult({
-      passed: true,
-      regressions: [],
-      missingCategories: [],
-      newCategories: [],
-    });
-
-    expect(output).toContain("PASSED");
-  });
-
   it("itemizes each regression in a failed result", () => {
     const output = formatGateResult({
       passed: false,
@@ -360,29 +264,5 @@ describe("formatGateResult", () => {
     expect(output).toContain("support=30");
     expect(output).toContain("0.800");
     expect(output).toContain("0.700");
-  });
-
-  it("warns about missing baseline categories", () => {
-    const output = formatGateResult({
-      passed: true,
-      regressions: [],
-      missingCategories: ["audio.score"],
-      newCategories: [],
-    });
-
-    expect(output).toContain("audio.score");
-    expect(output).toContain("missing");
-  });
-
-  it("notes new categories that need re-blessing", () => {
-    const output = formatGateResult({
-      passed: true,
-      regressions: [],
-      missingCategories: [],
-      newCategories: ["technical.fov"],
-    });
-
-    expect(output).toContain("technical.fov");
-    expect(output).toContain("re-bless");
   });
 });

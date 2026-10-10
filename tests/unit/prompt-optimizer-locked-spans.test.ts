@@ -3,32 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildLockedSpan,
   findLockedSpanIndex,
-  getSpanId,
   isSpanLocked,
 } from "@features/prompt-optimizer/utils/lockedSpans";
 import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
 import type { LockedSpan } from "@features/prompt-optimizer/types";
 
 describe("lockedSpans utils", () => {
-  it("uses existing span id when available", () => {
-    const span: HighlightSpan = {
-      id: "span-1",
-      start: 5,
-      end: 10,
-    } as HighlightSpan;
-
-    expect(getSpanId(span)).toBe("span-1");
-  });
-
-  it("falls back to start/end identifier when id missing", () => {
-    const span: HighlightSpan = {
-      start: 2,
-      end: 7,
-    } as HighlightSpan;
-
-    expect(getSpanId(span)).toBe("span_2_7");
-  });
-
   it("builds locked span from highlight span data", () => {
     const span: HighlightSpan = {
       id: "span-2",

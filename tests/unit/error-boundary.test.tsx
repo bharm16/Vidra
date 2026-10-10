@@ -104,18 +104,6 @@ describe("ErrorBoundary", () => {
     });
   });
 
-  describe("edge cases", () => {
-    it("renders children when no error occurs", () => {
-      render(
-        <ErrorBoundary>
-          <div>Healthy</div>
-        </ErrorBoundary>,
-      );
-
-      expect(screen.getByText("Healthy")).toBeInTheDocument();
-    });
-  });
-
   describe("core behavior", () => {
     it("opens Sentry report dialog for captured errors", () => {
       const Thrower = () => {

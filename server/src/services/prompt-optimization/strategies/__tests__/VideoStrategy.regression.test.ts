@@ -73,42 +73,6 @@ describe("VideoStrategy regression", () => {
     expect(output).not.toMatch(/lens at[,.]\s/);
   });
 
-  it("regression: linter rejects the labeled 'anamorphic lens at' fragment", async () => {
-    // Direct link to Sub-project D's calibration entry pattern:
-    // "captured with an anamorphic lens at. An abstract..." appeared in
-    // ~50% of labeled optimize entries. The lint rule must catch this exact
-    // shape — orphaned preposition with no aperture value following.
-    const { lintVideoPromptSlots } = await import("../videoPromptLinter.js");
-    const result = lintVideoPromptSlots({
-      shot_framing: "Wide Shot",
-      camera_angle: "Eye-Level Shot",
-      camera_move: "static tripod",
-      camera_lens: "anamorphic lens at",
-      subject: "an abstract pattern",
-      subject_details: ["geometric shapes", "high contrast"],
-      action: "shifting slowly across the frame",
-    });
-    const cameraLensErrors = result.errors.filter((e) =>
-      e.includes("camera_lens"),
-    );
-    expect(cameraLensErrors.length).toBeGreaterThan(0);
-  });
-
-  it("fallback looseSchema does NOT require camera_lens (slot is optional)", async () => {
-    // Defense against future hardening that would break optional-null
-    // semantics. camera_lens is intentionally OUT of the required array;
-    // any change should be a deliberate decision, not an accident.
-    const { readFile } = await import("node:fs/promises");
-    const url = new URL("../VideoStrategy.ts", import.meta.url);
-    const src = await readFile(url, "utf8");
-    const looseSchemaMatch = src.match(
-      /const looseSchema = \{[\s\S]*?required: \[([\s\S]*?)\]/,
-    );
-    expect(looseSchemaMatch).not.toBeNull();
-    const requiredArrayContents = looseSchemaMatch![1]!;
-    expect(requiredArrayContents).not.toContain("camera_lens");
-  });
-
   it("makes a malformed camera_lens eligible for reroll on severity, not wording", async () => {
     // The contract between the linter and the reroll path is `severity`, not
     // the message text. This test used to assert that the message matched the

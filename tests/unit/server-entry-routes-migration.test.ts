@@ -9,17 +9,10 @@ vi.mock("@config/middleware.config", () => ({
 vi.mock("@config/routes.config", () => ({
   configureRoutes: vi.fn(),
 }));
-
-import * as middlewareConfig from "@config/middleware.config";
-import * as routesConfig from "@config/routes.config";
-import { createApp } from "@server/app";
 import { startServer } from "@server/server";
 import { createHealthRoutes } from "@routes/health.routes";
 import { createAPIRoutes } from "@routes/api.routes";
-import {
-  isSocketPermissionError,
-  runSupertestOrSkip,
-} from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 const createApiServices = (
   optimize: ReturnType<typeof vi.fn> = vi.fn(
@@ -70,28 +63,6 @@ const createApiServices = (
   } as never,
 });
 
-describe("createApp", () => {
-  it("sets trust proxy and wires middleware/routes", () => {
-    const configureMiddleware = vi.mocked(middlewareConfig.configureMiddleware);
-    const configureRoutes = vi.mocked(routesConfig.configureRoutes);
-    const container = {
-      resolve: vi.fn((key: string) => {
-        if (key === "logger") return { name: "logger" };
-        return null;
-      }),
-    };
-
-    const app = createApp(container as never);
-
-    expect(app.get("trust proxy")).toBe(1);
-    expect(configureMiddleware).toHaveBeenCalledWith(app, {
-      logger: { name: "logger" },
-      redisClient: null,
-    });
-    expect(configureRoutes).toHaveBeenCalledWith(app, container);
-  });
-});
-
 describe("startServer", () => {
   it("starts server and sets timeouts", async () => {
     const app = express();
@@ -104,15 +75,7 @@ describe("startServer", () => {
       })),
     };
 
-    let server;
-    try {
-      server = await startServer(app, container as never);
-    } catch (error) {
-      if (isSocketPermissionError(error)) {
-        return;
-      }
-      throw error;
-    }
+    const server = await startServer(app, container as never);
 
     expect(server.listening).toBe(true);
     expect(server.keepAliveTimeout).toBe(125000);
@@ -137,22 +100,19 @@ describe("health.routes", () => {
     const app = express();
     app.use(createHealthRoutes(deps));
 
-    const health = await runSupertestOrSkip(() => request(app).get("/health"));
-    if (!health) return;
+    const health = await runSupertestRequest(() => request(app).get("/health"));
     expect(health.status).toBe(200);
     expect(health.body.status).toBe("healthy");
 
-    const live = await runSupertestOrSkip(() =>
+    const live = await runSupertestRequest(() =>
       request(app).get("/health/live"),
     );
-    if (!live) return;
     expect(live.status).toBe(200);
     expect(live.body.status).toBe("alive");
 
-    const ready = await runSupertestOrSkip(() =>
+    const ready = await runSupertestRequest(() =>
       request(app).get("/health/ready"),
     );
-    if (!ready) return;
     expect(ready.status).toBe(200);
     expect(ready.body.status).toBe("ready");
     expect(ready.body.dependencies.cache.healthy).toBe(true);
@@ -197,10 +157,9 @@ describe("health.routes", () => {
       createHealthRoutes(deps as Parameters<typeof createHealthRoutes>[0]),
     );
 
-    const ready = await runSupertestOrSkip(() =>
+    const ready = await runSupertestRequest(() =>
       request(app).get("/health/ready"),
     );
-    if (!ready) return;
     expect(ready.status).toBe(503);
     expect(ready.body.status).toBe("unhealthy");
     expect(ready.body.dependencies.firebase.healthy).toBe(false);
@@ -225,16 +184,14 @@ describe("api.routes", () => {
       createAPIRoutes(createApiServices(promptOptimizationService.optimize)),
     );
 
-    const badResponse = await runSupertestOrSkip(() =>
+    const badResponse = await runSupertestRequest(() =>
       request(app).post("/optimize").send({}),
     );
-    if (!badResponse) return;
     expect(badResponse.status).toBe(400);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app).post("/optimize").send({ prompt: "Hello world" }),
     );
-    if (!response) return;
 
     expect(response.status).toBe(200);
     expect(response.body.data.optimizedPrompt).toBe("optimized prompt");
@@ -265,12 +222,11 @@ describe("api.routes", () => {
       createAPIRoutes(createApiServices(promptOptimizationService.optimize)),
     );
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/optimize")
         .send({ prompt: "Hello world", skipCache: true }),
     );
-    if (!response) return;
 
     expect(response.status).toBe(200);
     expect(response.body.data.optimizedPrompt).toBe("optimized prompt");
@@ -301,7 +257,7 @@ describe("api.routes", () => {
       createAPIRoutes(createApiServices(promptOptimizationService.optimize)),
     );
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/optimize")
         .send({
@@ -316,7 +272,6 @@ describe("api.routes", () => {
           ],
         }),
     );
-    if (!response) return;
 
     expect(response.status).toBe(200);
     expect(response.body.data.optimizedPrompt).toBe("optimized prompt");

@@ -16,7 +16,7 @@ The current phase is free testing under [ADR-0023](docs/adr/0023-bounded-free-va
 
 ## Local setup
 
-Node 20+, ESM, React/Vite and Express/TypeScript. Install with `npm install`, configure a local `.env` from `.env.example`, and follow [QUICKSTART.md](docs/QUICKSTART.md) for Firebase/provider credentials. Keep secrets outside Git.
+Node 20+, ESM, React/Vite and Express/TypeScript. Install with `npm install` and configure a local `.env` from `.env.example`. [Server environment validation](server/src/config/env.ts), [client Firebase configuration](client/src/config/firebase.ts) and [canonical startup guidance](CLAUDE.md#runtime) define the required configuration. Keep secrets outside Git.
 
 ```bash
 npm start           # Client + API
@@ -38,9 +38,9 @@ npx playwright test --config tests/e2e/cross-mode/playwright.config.ts
 
 [CONTEXT.md](CONTEXT.md) defines product vocabulary and ownership; [CLAUDE.md](CLAUDE.md) defines engineering rules and mandatory commit/handoff checks. [Page 21 adoption](docs/design/page21-component-migration.md) retains the current visual reference and real state journeys.
 
-Free intake uses durable request receipts and zero-credit jobs. Completion precedes attachment; recovery reuses the original media/take/session/version. Legacy charged-job refunds remain isolated until stored obligations are drained. Retired dormant backends and process bundles are documented in the [cleanup record](docs/audits/2026-10-09-frozen-separation-plan.md).
+Free intake uses durable request receipts and zero-credit jobs. Completion precedes attachment; recovery reuses the original media/take/session/version. Legacy charged-job refunds remain isolated until stored obligations are drained. [CONTEXT.md](CONTEXT.md) identifies current ownership and retired backends.
 
-Replay, controlled browser journeys and emulator tests prove specified local contracts. They do not qualify live provider availability, creative quality or deployment. See [cross-mode proof limits](docs/architecture/cross-mode-golden-path.md), [provider quality](docs/architecture/provider-quality.md) and [deferred acceptance](docs/architecture/deferred-work-ledger.md).
+Replay, controlled browser journeys and emulator tests prove specified local contracts. They do not qualify live provider availability, creative quality or deployment. See [cross-mode proof limits](docs/architecture/cross-mode-golden-path.md) and [deferred acceptance](docs/architecture/deferred-work-ledger.md). Dated provider receipts remain in `scripts/ops/provider-quality/evidence/`.
 
 Current [routes](docs/architecture/ROUTE_MAP.md) and [flags](docs/architecture/FEATURE_FLAGS.md) are generated from source. [Architecture contracts](docs/architecture/README.md) link the surviving media/admission/recovery documentation.
 

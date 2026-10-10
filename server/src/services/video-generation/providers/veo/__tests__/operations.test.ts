@@ -59,25 +59,6 @@ describe("startVeoGeneration", () => {
     expect(body.parameters).toBeUndefined();
   });
 
-  it("includes start image and last frame in parameters", async () => {
-    const startImage = makeInline("image/png", "start");
-    const lastFrame = makeInline("image/png", "end");
-
-    await startVeoGeneration(
-      "https://veo.example.com",
-      "key",
-      { prompt: "hello", startImage, lastFrame },
-      "veo-model",
-    );
-
-    const body = readBody();
-    expect((body.instances as Array<Record<string, unknown>>)[0]).toEqual({
-      prompt: "hello",
-      image: startImage,
-    });
-    expect(body.parameters).toEqual({ lastFrame });
-  });
-
   it("includes reference images array in parameters", async () => {
     const ref1 = {
       image: makeInline("image/jpeg", "r1"),

@@ -291,41 +291,6 @@ describe("useHistoryPersistence", () => {
     expect(setIsLoadingHistory).toHaveBeenLastCalledWith(false);
   });
 
-  it("createDraft adds draft entry with generated uuid and returns save result", () => {
-    const addEntry = vi.fn();
-
-    const { result } = renderHook(() =>
-      useHistoryPersistence(
-        createHookOptions({
-          addEntry,
-        }),
-      ),
-    );
-
-    let draftResult: { uuid: string; id: string } | undefined;
-    act(() => {
-      draftResult = result.current.createDraft({
-        mode: "video",
-        targetModel: "kling",
-        generationParams: { duration: 8 },
-      });
-    });
-
-    expect(draftResult).toEqual({
-      uuid: "generated-uuid-1",
-      id: expect.stringMatching(/^draft-/),
-    });
-    expect(addEntry).toHaveBeenCalledWith(
-      expect.objectContaining({
-        uuid: "generated-uuid-1",
-        mode: "video",
-        targetModel: "kling",
-        generationParams: { duration: 8 },
-        versions: [],
-      }),
-    );
-  });
-
   it("persists draft entries to local storage when requested", () => {
     const addEntry = vi.fn();
 

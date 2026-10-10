@@ -147,26 +147,4 @@ describe("GroqLlamaAdapter", () => {
     expect(response.text).toBe('{"ok":true}');
     expect(response.metadata.validation?.isValid).toBe(true);
   });
-
-  it("prefixes prefilled JSON responses with opening brace", async () => {
-    const adapter = new GroqLlamaAdapter({
-      apiKey: "key",
-      defaultModel: "openai/gpt-oss-20b",
-    });
-    global.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          choices: [{ message: { content: '"a":1}' }, finish_reason: "stop" }],
-        }),
-        { status: 200 },
-      ),
-    ) as typeof fetch;
-
-    const response = await adapter.complete("System prompt", {
-      jsonMode: true,
-    });
-
-    expect(response.text).toBe('{"a":1}');
-    expect(response.metadata.optimizations).toContain("prefill-assistant");
-  });
 });

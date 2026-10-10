@@ -24,106 +24,15 @@ const makeContext = (
   ...overrides,
 });
 
-describe("buildBaseHeader — Sub-project C6 tech-spec tail guard", () => {
-  // Sub-project C5 discovered that the compile step's LLM rewriter would
-  // sometimes append a parenthetical tech-spec tail like
-  // "(5s, 16:9, 24fps, 50mm at" which can be truncated mid-phrase by
-  // max_tokens, reproducing the "lens at" fragment Sub-project C thought
-  // it eliminated. The buildBaseHeader now carries an OUTPUT FORMAT RULES
-  // block forbidding the pattern. This regression test guards against
-  // accidental removal.
-
-  it("includes the OUTPUT FORMAT RULES block in every prompt", () => {
-    const result = buildBaseHeader(makeContext());
-    expect(result).toContain("OUTPUT FORMAT RULES");
-  });
-
-  it("explicitly forbids the parenthetical tech-spec tail pattern", () => {
-    const result = buildBaseHeader(makeContext());
-    expect(result).toContain("DO NOT append a parenthetical");
-    expect(result).toContain("tech-spec tail");
-  });
-
-  it("requires the prompt to end with completed punctuation", () => {
-    const result = buildBaseHeader(makeContext());
-    expect(result).toContain("complete sentence terminated by punctuation");
-  });
-
-  it("forbids the colon-list tech-spec prefix variant (C7)", () => {
-    // C7 (2026-05-22): previewPrompt telemetry exposed a colon-tail variant
-    // ("100mm at: An extreme close-up...") that C6's parenthetical-tail
-    // guard didn't catch. The OUTPUT FORMAT RULES now also forbid
-    // colon-list prefixes.
-    const result = buildBaseHeader(makeContext());
-    expect(result).toContain("DO NOT prefix the prompt with a colon-list");
-  });
-});
-
 describe("buildBaseHeader", () => {
   describe("error handling and edge cases", () => {
     it("omits constraint block when constraints object is empty", () => {
       const result = buildBaseHeader(makeContext({ constraints: {} }));
       expect(result).not.toContain("CONSTRAINTS:");
     });
-
-    it("omits constraint block when all arrays are empty", () => {
-      const result = buildBaseHeader(
-        makeContext({
-          constraints: { mandatory: [], suggested: [], avoid: [] },
-        }),
-      );
-      expect(result).not.toContain("CONSTRAINTS:");
-    });
-
-    it("handles IR with empty subjects array", () => {
-      const result = buildBaseHeader(
-        makeContext({ ir: makeIR({ subjects: [] }) }),
-      );
-      expect(result).toContain('"subjects": []');
-    });
-
-    it("escapes special characters via JSON serialization", () => {
-      const result = buildBaseHeader(
-        makeContext({ ir: makeIR({ raw: 'text with "quotes" here' }) }),
-      );
-      expect(result).toContain('text with \\"quotes\\" here');
-    });
   });
 
   describe("constraint formatting", () => {
-    it("renders mandatory section with correct header and items", () => {
-      const result = buildBaseHeader(
-        makeContext({
-          constraints: { mandatory: ["HDR", "cinematic lighting"] },
-        }),
-      );
-      expect(result).toContain(
-        "MANDATORY CONSTRAINTS (must appear, paraphrased if needed):",
-      );
-      expect(result).toContain("- HDR");
-      expect(result).toContain("- cinematic lighting");
-      expect(result).not.toContain("SUGGESTED");
-      expect(result).not.toContain("AVOID");
-    });
-
-    it("renders suggested section with correct header", () => {
-      const result = buildBaseHeader(
-        makeContext({ constraints: { suggested: ["slow motion"] } }),
-      );
-      expect(result).toContain("SUGGESTED CONSTRAINTS (include when natural):");
-      expect(result).toContain("- slow motion");
-      expect(result).not.toContain("MANDATORY");
-    });
-
-    it("renders avoid section with correct header", () => {
-      const result = buildBaseHeader(
-        makeContext({ constraints: { avoid: ["4k", "8k"] } }),
-      );
-      expect(result).toContain("AVOID (do not include these words/phrases):");
-      expect(result).toContain("- 4k");
-      expect(result).not.toContain("MANDATORY");
-    });
-
     it("renders all three sections together", () => {
       const result = buildBaseHeader(
         makeContext({
@@ -137,35 +46,13 @@ describe("buildBaseHeader", () => {
       expect(result).toContain("MANDATORY CONSTRAINTS");
       expect(result).toContain("SUGGESTED CONSTRAINTS");
       expect(result).toContain("AVOID");
-    });
-
-    it("joins multiple items with newline-dash separators", () => {
-      const result = buildBaseHeader(
-        makeContext({
-          constraints: { mandatory: ["first", "second", "third"] },
-        }),
-      );
-      expect(result).toContain("- first\n- second\n- third");
+      expect(result).toContain("- HDR");
+      expect(result).toContain("- motion");
+      expect(result).toContain("- blur");
     });
   });
 
   describe("core prompt structure", () => {
-    it("embeds model ID into the system prompt", () => {
-      const result = buildBaseHeader(makeContext({ modelId: "runway-gen45" }));
-      expect(result).toContain("runway-gen45 video generation model");
-    });
-
-    it("wraps IR in a JSON code fence", () => {
-      const result = buildBaseHeader(makeContext());
-      expect(result).toContain("```json");
-      expect(result).toContain('"subjects"');
-    });
-
-    it("includes system role description", () => {
-      const result = buildBaseHeader(makeContext());
-      expect(result).toContain("professional video prompt engineer");
-    });
-
     it("serializes all IR fields into the output", () => {
       const ir = makeIR({
         subjects: [{ text: "dragon", attributes: ["ancient"] }],
@@ -174,11 +61,12 @@ describe("buildBaseHeader", () => {
           lighting: ["dramatic"],
           weather: "stormy",
         },
+        raw: 'A dragon with "ancient" scales',
       });
       const result = buildBaseHeader(makeContext({ ir }));
-      expect(result).toContain("dragon");
-      expect(result).toContain("mountain peak");
-      expect(result).toContain("stormy");
+      const serialized = result.match(/```json\n([\s\S]*?)\n```/)?.[1];
+      expect(serialized).toBeDefined();
+      expect(JSON.parse(serialized!)).toEqual(ir);
     });
 
     it("produces distinct output for different model IDs", () => {

@@ -66,8 +66,4 @@ describe("regression: isRecentEntry handles numeric timestamps", () => {
     expect(isRecentEntry(makeEntry("not-a-date"))).toBe(false);
     expect(isRecentEntry(makeEntry(""))).toBe(false);
   });
-
-  it("returns false for missing timestamps", () => {
-    expect(isRecentEntry(makeEntry(undefined))).toBe(false);
-  });
 });

@@ -120,25 +120,6 @@ describe("regression: legacy storyboard records (no mediaType) still excluded fr
     expect(result).toBeNull();
   });
 
-  it("does not treat a non-storyboard flux-kontext consumer as a storyboard if mediaType is video", () => {
-    // Defensive: a future model might re-use the flux-kontext name for a
-    // video output. Canonical signal (mediaType) wins over the heuristic.
-    const videoFromFlux = buildGeneration({
-      id: "flux-video",
-      model: "flux-kontext",
-      mediaType: "video",
-      tier: "render",
-    });
-
-    const result = selectHeroGeneration({
-      generations: [videoFromFlux],
-      activeGenerationId: null,
-      heroOverrideGenerationId: null,
-    });
-
-    expect(result?.id).toBe("flux-video");
-  });
-
   it("keeps a legacy tier 'final' record on the hero, now via derivation", () => {
     // Live repro (Tokyo alleyway session, 2026-04-30): the persisted Sora
     // record had `tier: "final"` instead of the now-canonical `"render"`.

@@ -13,23 +13,6 @@ vi.mock("@utils/textQuoteRelocator", () => ({
 const mockRelocateQuote = vi.mocked(relocateQuote);
 
 describe("enhancementSuggestionContext", () => {
-  it("returns location from relocateQuote when available", () => {
-    mockRelocateQuote.mockReturnValue({ start: 4, end: 9, exact: true });
-
-    const result = resolveHighlightLocation({
-      normalizedPrompt: "Hello world",
-      highlightedText: "world",
-      preferIndex: 4,
-    });
-
-    expect(result).toEqual({
-      startIndex: 4,
-      matchLength: 5,
-      found: true,
-      usedFallback: false,
-    });
-  });
-
   it("falls back to indexOf when relocateQuote fails", () => {
     mockRelocateQuote.mockReturnValue(null);
 

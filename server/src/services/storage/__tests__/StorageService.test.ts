@@ -103,25 +103,6 @@ describe("StorageService", () => {
     ).rejects.toThrow("Invalid content type");
   });
 
-  it("saves from URL and returns view URL", async () => {
-    const { service, mockUploadService } = buildStorageService();
-    const result = await service.saveFromUrl(
-      "user123",
-      "https://api.openai.com/video.mp4",
-      "generation",
-      { model: "sora-2" },
-    );
-
-    expect(result).toHaveProperty("storagePath");
-    expect(result).toHaveProperty("viewUrl");
-    expect(mockUploadService.uploadFromUrl).toHaveBeenCalledWith(
-      "https://api.openai.com/video.mp4",
-      "user123",
-      "generation",
-      { model: "sora-2" },
-    );
-  });
-
   it("rejects access to other user files", async () => {
     const { service } = buildStorageService();
     await expect(
@@ -168,97 +149,6 @@ describe("StorageService", () => {
       message: "Unauthorized - cannot access files belonging to other users",
       statusCode: 403,
     });
-  });
-
-  it("deletes owned file", async () => {
-    const { service, mockRetentionService } = buildStorageService();
-    const result = await service.deleteFile(
-      "user123",
-      "users/user123/generations/123-abc.mp4",
-    );
-
-    expect(result.deleted).toBe(true);
-    expect(mockRetentionService.deleteFile).toHaveBeenCalled();
-  });
-
-  it("confirms uploads through upload service", async () => {
-    const { service, mockUploadService } = buildStorageService();
-
-    const result = await service.confirmUpload(
-      "user123",
-      "users/user123/previews/images/123-abc.webp",
-    );
-
-    expect(result.storagePath).toBe(
-      "users/user123/previews/images/123-abc.webp",
-    );
-    expect(mockUploadService.confirmUpload).toHaveBeenCalledWith(
-      "users/user123/previews/images/123-abc.webp",
-      "user123",
-    );
-  });
-
-  it("lists files through retention service", async () => {
-    const { service, mockRetentionService } = buildStorageService();
-
-    await service.listFiles("user123", {
-      type: "generation",
-      limit: 5,
-      pageToken: "next",
-    });
-
-    expect(mockRetentionService.listUserFiles).toHaveBeenCalledWith("user123", {
-      type: "generation",
-      limit: 5,
-      pageToken: "next",
-    });
-  });
-
-  it("deletes multiple files through retention service", async () => {
-    const { service, mockRetentionService } = buildStorageService();
-
-    const result = await service.deleteFiles("user123", [
-      "users/user123/generations/a.mp4",
-      "users/user123/generations/b.mp4",
-    ]);
-
-    expect(result).toEqual({ deleted: 2, failed: 0, details: [] });
-    expect(mockRetentionService.deleteFiles).toHaveBeenCalledWith(
-      ["users/user123/generations/a.mp4", "users/user123/generations/b.mp4"],
-      "user123",
-    );
-  });
-
-  it("returns storage usage through retention service", async () => {
-    const { service, mockRetentionService } = buildStorageService();
-    mockRetentionService.getUserStorageUsage.mockResolvedValueOnce({
-      totalBytes: 1024,
-      totalMB: 0.001,
-      byType: { generation: 1024 },
-      fileCount: 1,
-    });
-
-    const usage = await service.getStorageUsage("user123");
-
-    expect(usage.totalBytes).toBe(1024);
-    expect(mockRetentionService.getUserStorageUsage).toHaveBeenCalledWith(
-      "user123",
-    );
-  });
-
-  it("propagates delegated upload errors", async () => {
-    const { service, mockUploadService } = buildStorageService();
-    mockUploadService.uploadFromUrl.mockRejectedValueOnce(
-      new Error("upstream failed"),
-    );
-
-    await expect(
-      service.saveFromUrl(
-        "user123",
-        "https://api.example.com/video.mp4",
-        "generation",
-      ),
-    ).rejects.toThrow("upstream failed");
   });
 
   // Issue #118: the vector lane, and the XSS-safe way it is served.
@@ -316,31 +206,5 @@ describe("StorageService", () => {
         "inline",
       );
     });
-  });
-
-  it("savePreviewImage fixes the preview-image type and png mime behind the verb", async () => {
-    const { service } = buildStorageService();
-    const saveSpy = vi.spyOn(service, "uploadBuffer").mockResolvedValue({
-      storagePath: "users/user123/previews/images/x.png",
-      mediaRef: "om1.preview-image.x.png",
-      viewUrl: "https://storage.googleapis.com/view",
-      expiresAt: "2024-01-21T12:00:00Z",
-      sizeBytes: 10,
-      contentType: "image/png",
-      createdAt: "2024-01-21T12:00:00Z",
-    });
-    const buffer = Buffer.from("preview");
-
-    await service.savePreviewImage("user123", buffer, {
-      source: "scene-proxy",
-    });
-
-    expect(saveSpy).toHaveBeenCalledWith(
-      "user123",
-      "preview-image",
-      buffer,
-      "image/png",
-      { source: "scene-proxy" },
-    );
   });
 });

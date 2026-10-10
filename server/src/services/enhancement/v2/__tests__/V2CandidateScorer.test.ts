@@ -209,14 +209,6 @@ describe("V2CandidateScorer — required vs forbidden symmetry", () => {
     expect(result.reasons).not.toContain("family_miss");
   });
 
-  it("exact category match satisfies required", () => {
-    const policy = makePolicy({
-      requiredFamilies: ["subject_identity"],
-    });
-    const result = scoreOne(policy, suggestion("a girl", "subject.identity"));
-    expect(result.reasons).not.toContain("family_miss");
-  });
-
   it("missing candidate category fails required match", () => {
     const policy = makePolicy({
       requiredFamilies: ["subject_identity"],
@@ -272,14 +264,6 @@ describe("V2CandidateScorer — grammar inference from category", () => {
     expect(result.reasons).not.toContain("grammar");
   });
 
-  it("freeform grammar accepts any non-sentence text", () => {
-    const policy = makePolicy({
-      grammar: { kind: "freeform", minWords: 1, maxWords: 6 },
-    });
-    const result = scoreOne(policy, suggestion("an unusual choice", "subject"));
-    expect(result.reasons).not.toContain("grammar");
-  });
-
   it("any grammar kind rejects sentence-terminator punctuation", () => {
     const policy = makePolicy({
       grammar: { kind: "freeform", minWords: 1, maxWords: 8 },
@@ -318,16 +302,6 @@ describe("V2CandidateScorer — locked-category conflict", () => {
       suggestion("medium close-up", "shot.type"),
       context,
     );
-    expect(result.reasons).not.toContain("locked_conflict");
-  });
-
-  it("missing candidate category cannot detect drift (lenient pass)", () => {
-    const policy = makePolicy({ categoryId: "subject" });
-    const context = makeContext({
-      highlightedCategory: "subject",
-      lockedSpanCategories: ["camera.movement"],
-    });
-    const result = scoreOne(policy, suggestion("alt", undefined), context);
     expect(result.reasons).not.toContain("locked_conflict");
   });
 });

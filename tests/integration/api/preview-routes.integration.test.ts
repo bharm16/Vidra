@@ -10,7 +10,6 @@ import type {
 import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
 import type { VideoGenerationService } from "@services/video-generation/VideoGenerationService";
 import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
-import type { CreditRefunder } from "@services/video-generation/refunds/ports";
 import { API_KEY_UID_PREFIX } from "@utils/apiKeyUser";
 import { InMemoryIdempotencyService } from "../helpers/cross-mode/boundaryDoubles";
 
@@ -55,29 +54,6 @@ function createApp() {
     VideoGenerationService,
     "getAvailabilitySnapshot" | "getVideoUrl"
   >;
-  const userCreditService = {
-    reserveCredits: vi
-      .fn<(userId: string, cost: number) => Promise<boolean>>()
-      .mockResolvedValue(false),
-    refundCredits: vi
-      .fn<CreditRefunder["refundCredits"]>()
-      .mockResolvedValue(false),
-    getBalance: vi
-      .fn<(userId: string) => Promise<number>>()
-      .mockResolvedValue(0),
-    checkAndReserveInTransaction: vi
-      .fn<
-        (
-          transaction: FirebaseFirestore.Transaction,
-          userId: string,
-          cost: number,
-        ) => Promise<
-          | { ok: true }
-          | { ok: false; reason: "user_not_found" | "insufficient_credits" }
-        >
-      >()
-      .mockResolvedValue({ ok: false, reason: "insufficient_credits" }),
-  };
   const services = {
     // This route contract fixture checks the public methods used by the
     // handler; concrete generation services are outside its coverage.
@@ -87,7 +63,7 @@ function createApp() {
       videoGenerationService as unknown as VideoGenerationService,
     videoJobStore: null,
     videoContentAccessService: null,
-    userCreditService,
+    userCreditService: null,
     storageService: storageServiceMock,
     requestIdempotencyService:
       new InMemoryIdempotencyService() as unknown as RequestIdempotencyService,
@@ -99,7 +75,6 @@ function createApp() {
     app,
     imageGenerationService,
     videoGenerationService,
-    userCreditService,
   };
 }
 
@@ -124,7 +99,7 @@ describe("Picture route contracts (legacy preview prefix)", () => {
     else process.env.ALLOWED_API_KEYS = previousAllowedApiKeys;
   });
   it("generates a picture for an authenticated idempotent free request", async () => {
-    const { app, imageGenerationService, userCreditService } = createApp();
+    const { app, imageGenerationService } = createApp();
     const response = await request(app)
       .post("/api/preview/generate")
       .set("x-api-key", TEST_API_KEY)
@@ -135,9 +110,6 @@ describe("Picture route contracts (legacy preview prefix)", () => {
     expect(response.body.data.imageUrl).toBe(
       "https://storage.example.com/generated.webp",
     );
-    expect(userCreditService.reserveCredits).not.toHaveBeenCalled();
-    expect(userCreditService.refundCredits).not.toHaveBeenCalled();
-    expect(userCreditService.getBalance).not.toHaveBeenCalled();
     expect(imageGenerationService.generatePreview).toHaveBeenCalledWith(
       "A dramatic skyline in rain",
       expect.objectContaining({ aspectRatio: "16:9", userId: TEST_USER_ID }),
@@ -180,7 +152,7 @@ describe("Picture route contracts (legacy preview prefix)", () => {
     expect(storageServiceMock.saveFromUrl).not.toHaveBeenCalled();
   });
   it("returns validation failures for invalid picture payloads", async () => {
-    const { app, imageGenerationService, userCreditService } = createApp();
+    const { app, imageGenerationService } = createApp();
     const response = await request(app)
       .post("/api/preview/generate")
       .set("x-api-key", TEST_API_KEY)
@@ -189,7 +161,6 @@ describe("Picture route contracts (legacy preview prefix)", () => {
     expect(response.status).toBe(400);
     expect(response.body.error).toContain("Prompt");
     expect(imageGenerationService.generatePreview).not.toHaveBeenCalled();
-    expect(userCreditService.reserveCredits).not.toHaveBeenCalled();
   });
   it("enforces auth middleware", async () => {
     const { app } = createApp();

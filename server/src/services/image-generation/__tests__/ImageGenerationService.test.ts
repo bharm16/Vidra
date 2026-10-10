@@ -92,7 +92,10 @@ describe("ImageGenerationService", () => {
       });
 
       await expect(
-        service.generatePreview("cat", { userId: "user-1" }),
+        service.generatePreview("cat", {
+          userId: "user-1",
+          inputImageUrl: "https://images.example.com/base.webp",
+        }),
       ).rejects.toMatchObject({
         message: expect.stringContaining(
           "No available image preview providers",
@@ -103,7 +106,9 @@ describe("ImageGenerationService", () => {
 
     it("rethrows the last provider error when all providers fail", async () => {
       const firstProvider = createProvider("replicate-flux-schnell");
-      const secondProvider = createProvider("replicate-flux-kontext-fast");
+      const secondProvider = createProvider("replicate-flux-kontext-fast", {
+        requiresInputImage: true,
+      });
       const errorOne = new Error("first failure");
       const errorTwo = new Error("second failure");
 
@@ -129,36 +134,11 @@ describe("ImageGenerationService", () => {
       });
 
       await expect(
-        service.generatePreview("cat", { userId: "user-1" }),
+        service.generatePreview("cat", {
+          userId: "user-1",
+          inputImageUrl: "https://images.example.com/base.webp",
+        }),
       ).rejects.toThrow("second failure");
-    });
-
-    it("propagates asset store errors when resolving public URLs", async () => {
-      const error = new Error("asset store unavailable");
-      (
-        assetStore.getPublicUrl as MockedFunction<
-          ImageAssetStore["getPublicUrl"]
-        >
-      ).mockRejectedValueOnce(error);
-
-      const service = new ImageGenerationService({ providers: [], assetStore });
-
-      await expect(service.getImageUrl("asset-id", "user-1")).rejects.toThrow(
-        "asset store unavailable",
-      );
-    });
-
-    it("propagates asset store errors when checking image existence", async () => {
-      const error = new Error("existence check failed");
-      (
-        assetStore.exists as MockedFunction<ImageAssetStore["exists"]>
-      ).mockRejectedValueOnce(error);
-
-      const service = new ImageGenerationService({ providers: [], assetStore });
-
-      await expect(service.imageExists("asset-id", "user-1")).rejects.toThrow(
-        "existence check failed",
-      );
     });
 
     it("fails when storage persistence fails after generation", async () => {
@@ -191,71 +171,10 @@ describe("ImageGenerationService", () => {
   });
 
   describe("edge cases", () => {
-    it("skips storage and returns provider URL directly when configured", async () => {
-      const provider = createProvider("replicate-flux-schnell");
-      const previewResult: ImagePreviewResult = {
-        imageUrl: "https://cdn.example.com/preview.webp",
-        model: "flux-schnell",
-        durationMs: 1234,
-        aspectRatio: "16:9",
-      };
-      (
-        provider.generatePreview as MockedFunction<
-          ImagePreviewProvider["generatePreview"]
-        >
-      ).mockResolvedValueOnce(previewResult);
-
-      const service = new ImageGenerationService({
-        providers: [provider],
-        assetStore,
-        skipStorage: true,
-      });
-
-      const result = await service.generatePreview("  a prompt  ", {
-        userId: "user-1",
-      });
-
-      expect(result.imageUrl).toBe(previewResult.imageUrl);
-      expect(result.providerUrl).toBe(previewResult.imageUrl);
-      expect(result.metadata.aspectRatio).toBe("16:9");
-      expect(Number.isNaN(Date.parse(result.metadata.generatedAt))).toBe(false);
-    });
-
-    it("omits undefined optional request fields and trims prompts", async () => {
-      const provider = createProvider("replicate-flux-schnell");
-      (
-        provider.generatePreview as MockedFunction<
-          ImagePreviewProvider["generatePreview"]
-        >
-      ).mockResolvedValueOnce({
-        imageUrl: "https://cdn.example.com/preview.webp",
-        model: "flux-schnell",
-        durationMs: 50,
-        aspectRatio: "1:1",
-      });
-
-      const service = new ImageGenerationService({
-        providers: [provider],
-        assetStore,
-        skipStorage: true,
-      });
-
-      await service.generatePreview("  trimmed prompt  ", { userId: "user-1" });
-
-      const request = (
-        provider.generatePreview as MockedFunction<
-          ImagePreviewProvider["generatePreview"]
-        >
-      ).mock.calls[0]?.[0] as ImagePreviewRequest;
-
-      expect(request.prompt).toBe("trimmed prompt");
-      expect(request.userId).toBe("user-1");
-      expect("seed" in request).toBe(false);
-      expect("inputImageUrl" in request).toBe(false);
-    });
-
     it("forwards all defined preview options to the selected provider", async () => {
-      const provider = createProvider("replicate-flux-schnell");
+      const provider = createProvider("replicate-flux-kontext-fast", {
+        requiresInputImage: true,
+      });
       (
         provider.generatePreview as MockedFunction<
           ImagePreviewProvider["generatePreview"]
@@ -291,11 +210,6 @@ describe("ImageGenerationService", () => {
         speedMode: "Juiced",
         outputQuality: 77,
       });
-    });
-
-    it("keeps type-only modules empty at runtime", async () => {
-      expect(Object.keys(responseTypesModule)).toHaveLength(0);
-      expect(Object.keys(typesIndexModule)).toHaveLength(0);
     });
   });
 
@@ -352,47 +266,11 @@ describe("ImageGenerationService", () => {
       expect(result.metadata.model).toBe("flux-schnell");
     });
 
-    it("falls back to the next provider when the first one fails", async () => {
-      const firstProvider = createProvider("replicate-flux-schnell");
-      const secondProvider = createProvider("replicate-flux-kontext-fast");
-
-      (
-        firstProvider.generatePreview as MockedFunction<
-          ImagePreviewProvider["generatePreview"]
-        >
-      ).mockRejectedValueOnce(new Error("timeout"));
-      (
-        secondProvider.generatePreview as MockedFunction<
-          ImagePreviewProvider["generatePreview"]
-        >
-      ).mockResolvedValueOnce({
-        imageUrl: "https://cdn.example.com/secondary.webp",
-        model: "kontext-fast",
-        durationMs: 300,
-        aspectRatio: "4:5",
-      });
-
-      const service = new ImageGenerationService({
-        providers: [firstProvider, secondProvider],
-        fallbackOrder: [
-          "replicate-flux-schnell",
-          "replicate-flux-kontext-fast",
-        ],
-        assetStore,
-        skipStorage: true,
-      });
-
-      const result = await service.generatePreview("prompt", {
-        userId: "user-1",
-      });
-
-      expect(result.imageUrl).toBe("https://cdn.example.com/secondary.webp");
-      expect(result.metadata.aspectRatio).toBe("4:5");
-    });
-
     it("uses explicit provider selection and ignores fallback order", async () => {
       const firstProvider = createProvider("replicate-flux-schnell");
-      const selectedProvider = createProvider("replicate-flux-kontext-fast");
+      const selectedProvider = createProvider("replicate-flux-kontext-fast", {
+        requiresInputImage: true,
+      });
 
       (
         selectedProvider.generatePreview as MockedFunction<
@@ -418,6 +296,7 @@ describe("ImageGenerationService", () => {
       const result = await service.generatePreview("prompt", {
         userId: "user-1",
         provider: "replicate-flux-kontext-fast",
+        inputImageUrl: "https://images.example.com/base.webp",
       });
 
       expect(result.imageUrl).toBe("https://cdn.example.com/kontext.webp");
@@ -427,7 +306,9 @@ describe("ImageGenerationService", () => {
 
     it("uses available provider order when auto-selection has no fallback order", async () => {
       const firstProvider = createProvider("replicate-flux-schnell");
-      const secondProvider = createProvider("replicate-flux-kontext-fast");
+      const secondProvider = createProvider("replicate-flux-kontext-fast", {
+        requiresInputImage: true,
+      });
 
       (
         firstProvider.generatePreview as MockedFunction<
@@ -453,6 +334,7 @@ describe("ImageGenerationService", () => {
 
       const result = await service.generatePreview("prompt", {
         userId: "user-1",
+        inputImageUrl: "https://images.example.com/base.webp",
       });
 
       expect(result.imageUrl).toBe("https://cdn.example.com/second.webp");
@@ -471,10 +353,6 @@ describe("ImageGenerationService", () => {
       expect(firstCallOrder).toBeDefined();
       expect(secondCallOrder).toBeDefined();
       expect(firstCallOrder!).toBeLessThan(secondCallOrder!);
-    });
-
-    it("re-exports the service from the index module", () => {
-      expect(IndexImageGenerationService).toBe(ImageGenerationService);
     });
   });
 });

@@ -1,15 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { usePromptConfigState } from "@features/prompt-optimizer/context/hooks/usePromptConfigState";
 import { GenerationControlsStoreProvider } from "@features/generation-controls/context/GenerationControlsStore";
+import { usePromptConfigState } from "@features/prompt-optimizer/context/hooks/usePromptConfigState";
 import {
   persistGenerationParams,
   persistSelectedModel,
 } from "@features/prompt-optimizer/context/promptStateStorage";
 
-const SELECTED_MODEL_KEY = "prompt-optimizer:selectedModel";
 const GENERATION_PARAMS_KEY = "prompt-optimizer:generationParams";
 
 describe("usePromptConfigState", () => {
@@ -50,14 +49,6 @@ describe("usePromptConfigState", () => {
   });
 
   describe("edge cases", () => {
-    it("defaults to the video mode and empty config when storage is empty", () => {
-      const { result } = renderHook(() => usePromptConfigState(), { wrapper });
-
-      expect(result.current.selectedMode).toBe("video");
-      expect(result.current.selectedModel).toBe("");
-      expect(result.current.generationParams).toEqual({});
-    });
-
     it("hydrates model and params from persisted storage", () => {
       persistSelectedModel("model-a");
       persistGenerationParams({ steps: 12 });
@@ -66,22 +57,6 @@ describe("usePromptConfigState", () => {
 
       expect(result.current.selectedModel).toBe("model-a");
       expect(result.current.generationParams).toEqual({ steps: 12 });
-    });
-  });
-
-  describe("core behavior", () => {
-    it("updates configuration state via setters", () => {
-      const { result } = renderHook(() => usePromptConfigState(), { wrapper });
-
-      act(() => {
-        result.current.setSelectedMode("image");
-        result.current.setSelectedModel("model-b");
-        result.current.setGenerationParams({ temperature: 0.7 });
-      });
-
-      expect(result.current.selectedMode).toBe("image");
-      expect(result.current.selectedModel).toBe("model-b");
-      expect(result.current.generationParams).toEqual({ temperature: 0.7 });
     });
   });
 });

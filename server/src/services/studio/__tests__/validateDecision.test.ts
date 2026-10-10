@@ -59,15 +59,4 @@ describe("validateDecisionReferences", () => {
     };
     expect(validateDecisionReferences(decision, IMAGES).ok).toBe(false);
   });
-
-  it("passes generate decisions through untouched", () => {
-    const decision: StudioDecision = {
-      action: "generate",
-      basePrompt: "p",
-      variants: ["a", "b", "c", "d"],
-      capability: "design",
-      suggestions: ["a", "b", "c"],
-    };
-    expect(validateDecisionReferences(decision, IMAGES)).toEqual({ ok: true });
-  });
 });

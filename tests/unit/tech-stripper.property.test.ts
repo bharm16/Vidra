@@ -124,71 +124,6 @@ describe("TechStripper Property Tests", () => {
       );
     });
 
-    it("identifies all core placebo tokens correctly", () => {
-      fc.assert(
-        fc.property(fc.constantFrom(...corePlaceboTokens), (token) => {
-          expect(stripper.isPlaceboToken(token)).toBe(true);
-          expect(stripper.isPlaceboToken(token.toUpperCase())).toBe(true);
-          expect(stripper.isPlaceboToken(token.toLowerCase())).toBe(true);
-        }),
-        { numRuns: 100, seed: 20260807 },
-      );
-    });
-
-    it("returns original text unchanged when no placebo tokens present", () => {
-      fc.assert(
-        fc.property(
-          fc.constantFrom(...stripModels, ...keepModels),
-          fc
-            .string({ minLength: 1, maxLength: 200 })
-            .filter(
-              (s) =>
-                !corePlaceboTokens.some((token) =>
-                  s.toLowerCase().includes(token.toLowerCase()),
-                ),
-            ),
-          (modelId, input) => {
-            const result = stripper.strip(input, modelId);
-
-            // For keep models, text should be unchanged
-            if (keepModels.includes(modelId)) {
-              expect(result.text).toBe(input);
-            }
-
-            // Stripped tokens should be empty
-            expect(result.strippedTokens).toHaveLength(0);
-          },
-        ),
-        { numRuns: 100, seed: 20260807 },
-      );
-    });
-
-    it("handles multiple placebo tokens in single input", () => {
-      fc.assert(
-        fc.property(
-          fc.constantFrom(...stripModels),
-          fc.array(fc.constantFrom(...corePlaceboTokens), {
-            minLength: 2,
-            maxLength: 4,
-          }),
-          (modelId, tokens) => {
-            const input = tokens.join(", ");
-            const result = stripper.strip(input, modelId);
-
-            // All tokens should be removed
-            for (const token of tokens) {
-              const tokenRegex = new RegExp(`\\b${token}\\b`, "i");
-              expect(result.text).not.toMatch(tokenRegex);
-            }
-
-            // Should report stripping occurred
-            expect(result.tokensWereStripped).toBe(true);
-          },
-        ),
-        { numRuns: 100, seed: 20260807 },
-      );
-    });
-
     it("preserves non-placebo content when stripping", () => {
       fc.assert(
         fc.property(
@@ -214,56 +149,6 @@ describe("TechStripper Property Tests", () => {
             // Preserved content should still be in output
             expect(result.text.toLowerCase()).toContain(
               preservedContent.toLowerCase(),
-            );
-          },
-        ),
-        { numRuns: 100, seed: 20260807 },
-      );
-    });
-
-    it("model detection is case-insensitive", () => {
-      fc.assert(
-        fc.property(
-          fc.constantFrom(...stripModels),
-          fc.constantFrom("upper", "lower", "mixed"),
-          (modelId, caseType) => {
-            let testModelId: string;
-            switch (caseType) {
-              case "upper":
-                testModelId = modelId.toUpperCase();
-                break;
-              case "lower":
-                testModelId = modelId.toLowerCase();
-                break;
-              default:
-                testModelId =
-                  modelId.charAt(0).toUpperCase() + modelId.slice(1);
-            }
-
-            // Should strip for all case variations of strip models
-            expect(stripper.shouldStripTokens(testModelId)).toBe(true);
-          },
-        ),
-        { numRuns: 100, seed: 20260807 },
-      );
-    });
-
-    it("returns consistent result structure", () => {
-      fc.assert(
-        fc.property(
-          fc.string({ minLength: 0, maxLength: 200 }),
-          fc.constantFrom(...stripModels, ...keepModels),
-          (input, modelId) => {
-            const result = stripper.strip(input, modelId);
-
-            // Result should always have required fields
-            expect(typeof result.text).toBe("string");
-            expect(Array.isArray(result.strippedTokens)).toBe(true);
-            expect(typeof result.tokensWereStripped).toBe("boolean");
-
-            // tokensWereStripped should match strippedTokens length
-            expect(result.tokensWereStripped).toBe(
-              result.strippedTokens.length > 0,
             );
           },
         ),

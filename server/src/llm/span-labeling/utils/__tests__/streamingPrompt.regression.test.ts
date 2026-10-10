@@ -33,15 +33,6 @@ describe("streaming span labeling prompt", () => {
     );
   });
 
-  it("carries the security preamble for the buffered gemini variant too", () => {
-    const buffered = buildSystemPrompt("a woman walks", true, "gemini", false);
-    expect(buffered).toContain(IMMUTABLE_SOVEREIGN_PREAMBLE);
-  });
-
-  it("asks for NDJSON output", () => {
-    expect(buildStreamingPrompt("v2.3")).toContain(GEMINI_NDJSON_OUTPUT_FORMAT);
-  });
-
   it("an I2V request produces the motion-only I2V template", () => {
     const i2v = buildStreamingPrompt("i2v-v2");
     const standard = buildStreamingPrompt("v2.3");

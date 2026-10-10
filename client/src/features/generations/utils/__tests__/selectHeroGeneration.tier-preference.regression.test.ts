@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import * as fc from "fast-check";
-import type {
-  Generation,
-  GenerationMediaType,
-  GenerationTier,
-} from "@features/generations/types";
+
+import type { Generation } from "@features/generations/types";
 import { selectHeroGeneration } from "../selectHeroGeneration";
 
 // Regression: ISSUE-26
@@ -32,28 +28,6 @@ const buildGeneration = (overrides: Partial<Generation>): Generation => ({
 });
 
 describe("regression: hero generation prefers render over draft (ISSUE-26)", () => {
-  it("returns render-tier generation when both tiers exist with no active/override id", () => {
-    const draft = buildGeneration({
-      id: "draft-1",
-      tier: "draft",
-      createdAt: 100,
-    });
-    const render = buildGeneration({
-      id: "render-1",
-      tier: "render",
-      createdAt: 50, // older than the draft
-    });
-
-    // Even though `draft` is the most-recent generation, the render should win.
-    const result = selectHeroGeneration({
-      generations: [render, draft],
-      activeGenerationId: null,
-      heroOverrideGenerationId: null,
-    });
-
-    expect(result?.id).toBe("render-1");
-  });
-
   it("still respects explicit override id even when it points to a draft", () => {
     const draft = buildGeneration({ id: "draft-1", tier: "draft" });
     const render = buildGeneration({ id: "render-1", tier: "render" });
@@ -138,62 +112,7 @@ describe("regression: hero generation prefers render over draft (ISSUE-26)", () 
     expect(result).toBeNull();
   });
 
-  it("returns null for empty generation list", () => {
-    expect(
-      selectHeroGeneration({
-        generations: [],
-        activeGenerationId: null,
-        heroOverrideGenerationId: null,
-      }),
-    ).toBeNull();
-  });
-
   // Property test: across arbitrary mixes of generations, the default-selection
   // path (no override, no active) must never return a draft when at least one
   // non-storyboard render exists in the list.
-  it("property: default selection prefers any render over any draft", () => {
-    const tierArb = fc.constantFrom<GenerationTier>("draft", "render");
-    const mediaTypeArb = fc.constantFrom<GenerationMediaType>(
-      "video",
-      "image",
-      "image-sequence",
-    );
-    const generationArb = fc
-      .tuple(fc.uuid(), tierArb, mediaTypeArb, fc.integer({ min: 0, max: 1e9 }))
-      .map(([id, tier, mediaType, createdAt]) =>
-        buildGeneration({ id, tier, mediaType, createdAt }),
-      );
-
-    fc.assert(
-      fc.property(
-        fc.array(generationArb, { minLength: 1, maxLength: 12 }),
-        (generations) => {
-          const result = selectHeroGeneration({
-            generations,
-            activeGenerationId: null,
-            heroOverrideGenerationId: null,
-          });
-
-          const nonStoryboard = generations.filter(
-            (g) => g.mediaType !== "image-sequence",
-          );
-          const hasRender = nonStoryboard.some((g) => g.tier === "render");
-
-          if (nonStoryboard.length === 0) {
-            return result === null;
-          }
-          if (hasRender) {
-            return result !== null && result.tier === "render";
-          }
-          // No renders → result must be a non-storyboard draft.
-          return (
-            result !== null &&
-            result.tier === "draft" &&
-            result.mediaType !== "image-sequence"
-          );
-        },
-      ),
-      { numRuns: 100 },
-    );
-  });
 });

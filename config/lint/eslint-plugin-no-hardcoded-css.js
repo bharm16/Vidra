@@ -32,7 +32,7 @@ export default {
         },
         messages: {
           noArbitraryColor:
-            'Arbitrary color "{{value}}" found. Use a design token class instead. See docs/DESIGN_TOKENS.md for the mapping.',
+            'Arbitrary color "{{value}}" found. Use a design token class instead. See packages/promptstudio-system/src/tokens.css for the mapping.',
         },
         schema: [],
       },

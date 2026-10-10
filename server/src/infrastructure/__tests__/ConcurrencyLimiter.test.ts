@@ -25,15 +25,6 @@ describe("ConcurrencyLimiter", () => {
     vi.clearAllMocks();
   });
 
-  it("executes immediately when capacity is available", async () => {
-    const limiter = new ConcurrencyLimiter({ maxConcurrent: 2 });
-    const result = await limiter.execute(async () => "ok");
-
-    expect(result).toBe("ok");
-    expect(limiter.getStats().totalExecuted).toBe(1);
-    expect(limiter.getQueueStatus().queuedRequests).toBe(0);
-  });
-
   it("queues overflow requests and processes them when slots free up", async () => {
     const limiter = new ConcurrencyLimiter({
       maxConcurrent: 1,

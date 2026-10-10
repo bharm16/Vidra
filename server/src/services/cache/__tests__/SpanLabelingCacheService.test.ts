@@ -134,14 +134,4 @@ describe("SpanLabelingCacheService", () => {
     const result = await service.get("ttl-test", null, null);
     expect(result).toBeNull();
   });
-
-  it("starts and stops periodic cleanup timers", () => {
-    vi.useFakeTimers();
-    const service = new SpanLabelingCacheService({ redis: null });
-
-    service.startPeriodicCleanup(1000);
-    service.stopPeriodicCleanup();
-
-    expect(service.getStats().cacheSize).toBeGreaterThanOrEqual(0);
-  });
 });

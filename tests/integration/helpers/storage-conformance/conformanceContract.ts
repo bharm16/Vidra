@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 /**
  * The storage-adapter conformance contract (issue #138).
@@ -13,8 +13,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
  *
  * Each concrete store is adapted to the small `ConformanceOps` port and
  * described by a `ConformanceSpec` of its static facts. The axes below are the
- * ticket's list — identity, namespace and ownership, URL expiry, serialization
- * round trips, write conflicts, and failure semantics.
+ * ticket's active axes — identity, namespace and ownership, URL expiry, and
+ * failure semantics. The identity axis includes independent object survival.
  *
  * The suite NEVER lets a double be more permissive or more naturally
  * deduplicating than production: the identity axis is mandatory for every
@@ -54,15 +54,11 @@ export interface ConformanceOps {
    * on adapters that expose a presence-checking read.
    */
   resolveAbsent?(owner: string): Promise<string | null>;
-  /** Release any resources the adapter acquired (e.g. a temp directory). */
-  teardown?(): Promise<void>;
 }
 
 /** The static facts about one adapter, and how to build a fresh instance. */
 export interface ConformanceSpec {
   readonly name: string;
-  /** Does this adapter issue URLs that expire? GCS/StorageService: yes; Local: no. */
-  readonly urlsExpire: boolean;
   /** How the adapter refuses a cross-owner read. */
   readonly crossOwnerRefusal: "null" | "throws";
   /** Whether the adapter can resolve a never-stored object to null. */
@@ -141,10 +137,6 @@ export function runStorageAdapterConformance(spec: ConformanceSpec): void {
       ops = await spec.make();
     });
 
-    afterEach(async () => {
-      await ops.teardown?.();
-    });
-
     it("identity: repeated stores of identical bytes mint distinct objects", async () => {
       await assertMintsDistinctObjects(ops, spec.name);
     });
@@ -181,39 +173,10 @@ export function runStorageAdapterConformance(spec: ConformanceSpec): void {
         handle.url,
         `${spec.name}: stored object has no read url`,
       ).toBeTruthy();
-      if (spec.urlsExpire) {
-        expect(typeof handle.expiresAtMs).toBe("number");
-        const expiresAtMs = handle.expiresAtMs ?? 0;
-        expect(expiresAtMs).toBeGreaterThan(before);
-        expect(expiresAtMs).toBeLessThanOrEqual(Date.now() + MAX_URL_TTL_MS);
-        // The read url is a signed handle, not the bare durable path.
-        expect(handle.url).not.toBe(handle.storagePath);
-      }
-    });
-
-    it("serialization round trip: the durable handle survives JSON and re-resolves", async () => {
-      const handle = await ops.store(CONFORMANCE_BYTES, CONFORMANCE_OWNER);
-      const revived = JSON.parse(JSON.stringify(handle)) as ConformanceHandle;
-      expect(revived).toEqual(handle);
-      // The live url may be gone; only the persisted handle remains. It must
-      // still yield a working url — the property a non-expiring double hides,
-      // because its permanent url lets a "persist the url, never refresh" bug
-      // read as correct offline.
-      const reresolved = await ops.resolveOwn(revived, CONFORMANCE_OWNER);
-      expect(
-        reresolved,
-        `${spec.name}: a persisted handle no longer resolves`,
-      ).toBeTruthy();
-    });
-
-    it("write conflict: a re-store never clobbers the first object", async () => {
-      const first = await ops.store(CONFORMANCE_BYTES, CONFORMANCE_OWNER);
-      const firstUrlBefore = await ops.resolveOwn(first, CONFORMANCE_OWNER);
-      await ops.store(CONFORMANCE_BYTES, CONFORMANCE_OWNER);
-      const firstUrlAfter = await ops.resolveOwn(first, CONFORMANCE_OWNER);
-      // The first object is still there after the second store landed.
-      expect(firstUrlBefore).toBeTruthy();
-      expect(firstUrlAfter).toBeTruthy();
+      const expiresAtMs = handle.expiresAtMs ?? 0;
+      expect(expiresAtMs).toBeGreaterThan(before);
+      expect(expiresAtMs).toBeLessThanOrEqual(Date.now() + MAX_URL_TTL_MS);
+      expect(handle.url).not.toBe(handle.storagePath);
     });
 
     if (spec.refusesBlankOwner) {

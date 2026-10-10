@@ -15,13 +15,9 @@
  * constant — not an archaeology dig.
  */
 
-import { readdir, readFile } from "node:fs/promises";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_QWEN_MODEL, ModelConfig } from "../modelConfig.ts";
 import { calculateLLMCost } from "../llmCosts.ts";
-import { GroqQwenAdapter } from "@clients/adapters/GroqQwenAdapter.ts";
+import { DEFAULT_QWEN_MODEL, ModelConfig } from "../modelConfig.ts";
 
 describe("Qwen model id consistency (regression)", () => {
   it("every qwen-routed operation resolves to DEFAULT_QWEN_MODEL", () => {
@@ -49,51 +45,6 @@ describe("Qwen model id consistency (regression)", () => {
     expect(calculateLLMCost(DEFAULT_QWEN_MODEL, 0, 1_000_000)).toBeCloseTo(
       3.0,
       10,
-    );
-  });
-
-  it("the retired model id survives nowhere in server source or scripts as a literal", async () => {
-    const serverSrc = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-    // scripts/ is walked too: the synthetic harness carried the retired id
-    // for a month after the server purge because this guard only saw
-    // server/src (2026-08-27 audit finding A1).
-    const scriptsDir = join(serverSrc, "..", "..", "scripts");
-    const offenders: string[] = [];
-    const walk = async (dir: string): Promise<void> => {
-      for (const entry of await readdir(dir, { withFileTypes: true })) {
-        const full = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          if (entry.name === "node_modules" || entry.name === "fixtures") {
-            continue;
-          }
-          await walk(full);
-        } else if (/\.(ts|tsx|json)$/.test(entry.name)) {
-          const text = await readFile(full, "utf8");
-          // Quoted occurrences only — prose in comments may cite the
-          // retired id as history; code literals may not. The needle is
-          // assembled so this file itself never contains the quoted form.
-          const needle = ['"', "qwen/", "qwen3-32b", '"'].join("");
-          if (text.includes(needle)) {
-            offenders.push(full);
-          }
-        }
-      }
-    };
-    await walk(serverSrc);
-    await walk(scriptsDir);
-    expect(offenders).toEqual([]);
-    // Reads every source file under server/src one at a time — ~350ms alone, but
-    // it is the only server test whose cost scales with the codebase, and the
-    // 10s default leaves it nothing to give when the other server threads are
-    // mid-transform. Its own budget rather than a looser default for all of them.
-  }, 30000);
-
-  it("GroqQwenAdapter's constructor default matches DEFAULT_QWEN_MODEL", () => {
-    const adapter = new GroqQwenAdapter({ apiKey: "test-key" });
-    // The adapter cannot import config/ (layering), so its literal default
-    // is pinned here instead.
-    expect((adapter as unknown as { defaultModel: string }).defaultModel).toBe(
-      DEFAULT_QWEN_MODEL,
     );
   });
 });

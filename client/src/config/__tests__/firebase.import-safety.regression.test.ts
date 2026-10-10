@@ -64,15 +64,4 @@ describe("firebase config import safety (regression)", () => {
     expect(getFirebaseDb()).toBe(getFirebaseDb());
     expect(initializeFirestoreSpy).toHaveBeenCalledTimes(1);
   });
-
-  it("shares one app across auth and firestore", async () => {
-    const { getFirebaseAuth, getFirebaseDb } = await import(
-      "@/config/firebase"
-    );
-
-    getFirebaseAuth();
-    getFirebaseDb();
-
-    expect(initializeAppSpy).toHaveBeenCalledTimes(1);
-  });
 });

@@ -158,7 +158,7 @@ describe("useSuggestionFetch", () => {
   });
 
   describe("edge cases", () => {
-    it("returns early when mode is not video or highlight is empty", async () => {
+    it("does not request suggestions for empty selected words", async () => {
       const { setSuggestionsData } = createStateHarness();
 
       const fetchSuggestions = vi.fn();
@@ -179,7 +179,7 @@ describe("useSuggestionFetch", () => {
       const { result } = renderHook(() =>
         useSuggestionFetch({
           promptOptimizer: basePromptOptimizer,
-          selectedMode: "image",
+          selectedMode: "video",
           suggestionsData: null,
           setSuggestionsData,
           stablePromptContext: null,

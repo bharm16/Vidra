@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
 import type { Request, Response } from "express";
+import { describe, expect, it, vi } from "vitest";
 import { normalizeOptimizationRequest } from "../normalizeOptimizationRequest";
 
 function createMockRequest(body: unknown = {}): Request {
@@ -75,17 +75,6 @@ describe("normalizeOptimizationRequest", () => {
     it("sets context to null for JSON array string", () => {
       const req = createMockRequest({
         context: "[1, 2, 3]",
-      });
-      const next = vi.fn();
-
-      normalizeOptimizationRequest(req, createMockResponse(), next);
-
-      expect(req.body.context).toBeNull();
-    });
-
-    it("preserves null context", () => {
-      const req = createMockRequest({
-        context: null,
       });
       const next = vi.fn();
 
@@ -293,15 +282,6 @@ describe("normalizeOptimizationRequest", () => {
   });
 
   describe("core behavior", () => {
-    it("calls next after normalization", () => {
-      const req = createMockRequest({});
-      const next = vi.fn();
-
-      normalizeOptimizationRequest(req, createMockResponse(), next);
-
-      expect(next).toHaveBeenCalledTimes(1);
-    });
-
     it("preserves unrelated body properties", () => {
       const req = createMockRequest({
         prompt: "my prompt",

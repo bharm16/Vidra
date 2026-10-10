@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  buildReplicateInput,
-  generateReplicateVideo,
-} from "@services/video-generation/providers/replicateProvider";
+import { generateReplicateVideo } from "@services/video-generation/providers/replicateProvider";
 import { generateVeoVideo } from "@services/video-generation/providers/veoProvider";
 import type { VideoModelId } from "@services/video-generation/types";
 import type {
@@ -10,21 +7,10 @@ import type {
   VideoAssetStore,
 } from "@services/video-generation/storage";
 
-// ----------------------------------------------------------------------------
-// Phase 6 (i2v pipeline simplification) — per-provider empty-prompt support
-//
-// These tests assert that, when an I2V request flows through each provider's
-// adapter with prompt="" and a non-empty startImage, the outbound payload is
-// shaped per the per-provider policy:
-//
-//   • Native-empty providers (Wan, Veo, Sora, Luma): prompt is forwarded as-is
-//   • Substituting providers (Kling, Runway): the empty prompt is replaced with
-//     a deterministic placeholder ("natural motion" / "subtle ambient motion")
-//
-// The substitution happens inside the adapter — never at the route layer.
-// ----------------------------------------------------------------------------
+// Provider prompt policies run through the actual adapter invocation with
+// process-external generation/storage boundaries mocked. Wan and Veo preserve
+// empty words; legacy non-Wan Replicate models use their explicit substitute.
 
-const KLING_EMPTY_PROMPT_SUBSTITUTE = "natural motion";
 const RUNWAY_EMPTY_PROMPT_SUBSTITUTE = "subtle ambient motion";
 
 const STORED_ASSET: StoredVideoAsset = {
@@ -43,12 +29,6 @@ const makeAssetStore = (): VideoAssetStore =>
     cleanupExpired: vi.fn(),
   }) as unknown as VideoAssetStore;
 
-const makeKlingResponse = (payload: unknown, status = 200) => ({
-  ok: status >= 200 && status < 300,
-  status,
-  text: async () => JSON.stringify(payload),
-});
-
 // ----------------------------------------------------------------------------
 // Replicate (Wan + non-Wan/Runway-style) — Wan native, non-Wan substitutes
 // ----------------------------------------------------------------------------
@@ -58,91 +38,56 @@ describe("Replicate adapter empty-prompt handling", () => {
     vi.clearAllMocks();
   });
 
-  it("forwards an empty prompt unchanged for Wan models (native empty support)", () => {
-    const input = buildReplicateInput(
-      "wan-video/wan-2.2-t2v-fast" as VideoModelId,
-      "",
-      { startImage: "https://images.example.com/start.png" },
-    );
-    expect(input.prompt).toBe("");
-  });
+  it.each([
+    ["empty", "", RUNWAY_EMPTY_PROMPT_SUBSTITUTE],
+    ["whitespace", "   \n", RUNWAY_EMPTY_PROMPT_SUBSTITUTE],
+    ["authored", "a horse running", "a horse running"],
+  ])(
+    "generateReplicateVideo sends the %s prompt policy through the SDK",
+    async (_case, prompt, expected) => {
+      const run = vi.fn().mockResolvedValue("https://example.com/video.mp4");
+      const replicate = { run } as unknown as import("replicate").default;
+      const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
-  it("forwards a whitespace prompt unchanged for Wan 2.5 models", () => {
-    const input = buildReplicateInput(
-      "wan-video/wan-2.5-i2v" as VideoModelId,
-      "   ",
-      { startImage: "https://images.example.com/start.png" },
-    );
-    expect(input.prompt).toBe("   ");
-  });
+      await generateReplicateVideo(
+        replicate,
+        prompt,
+        "minimax/video-02" as VideoModelId,
+        { startImage: "https://images.example.com/start.png" },
+        log,
+      );
 
-  it("substitutes 'subtle ambient motion' for empty prompts on non-Wan (Runway-style) models", () => {
-    // Non-Wan branch covers Runway-style adapters routed through Replicate
-    // ("genmo/mochi-1-final", "minimax/video-02", and any future runway-gen45
-    // generation adapter once wired).
-    const input = buildReplicateInput(
-      "genmo/mochi-1-final" as VideoModelId,
-      "",
-      {
-        startImage: "https://images.example.com/start.png",
-      },
-    );
-    expect(input.prompt).toBe(RUNWAY_EMPTY_PROMPT_SUBSTITUTE);
-  });
+      const input = (
+        run.mock.calls[0]?.[1] as { input: Record<string, unknown> }
+      ).input;
+      expect(input.prompt).toBe(expected);
+    },
+  );
 
-  it("substitutes for whitespace-only prompts on non-Wan models", () => {
-    const input = buildReplicateInput(
-      "minimax/video-02" as VideoModelId,
-      "   \n",
-      { startImage: "https://images.example.com/start.png" },
-    );
-    expect(input.prompt).toBe(RUNWAY_EMPTY_PROMPT_SUBSTITUTE);
-  });
+  it.each([
+    ["wan-video/wan-2.2-i2v-fast", ""],
+    ["wan-video/wan-2.5-i2v", "   "],
+  ])(
+    "generateReplicateVideo preserves native prompt bytes for %s",
+    async (model, prompt) => {
+      const run = vi.fn().mockResolvedValue("https://example.com/video.mp4");
+      const replicate = { run } as unknown as import("replicate").default;
+      const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 
-  it("forwards a non-empty prompt unchanged on non-Wan models", () => {
-    const input = buildReplicateInput(
-      "genmo/mochi-1-final" as VideoModelId,
-      "a horse running",
-      { startImage: "https://images.example.com/start.png" },
-    );
-    expect(input.prompt).toBe("a horse running");
-  });
+      await generateReplicateVideo(
+        replicate,
+        prompt,
+        model as VideoModelId,
+        { startImage: "https://images.example.com/start.png" },
+        log,
+      );
 
-  it("end-to-end: generateReplicateVideo carries the substituted prompt to replicate.run for Runway-style models", async () => {
-    const run = vi.fn().mockResolvedValue("https://example.com/video.mp4");
-    const replicate = { run } as unknown as import("replicate").default;
-    const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-
-    await generateReplicateVideo(
-      replicate,
-      "",
-      "minimax/video-02" as VideoModelId,
-      { startImage: "https://images.example.com/start.png" },
-      log,
-    );
-
-    const input = (run.mock.calls[0]?.[1] as { input: Record<string, unknown> })
-      .input;
-    expect(input.prompt).toBe(RUNWAY_EMPTY_PROMPT_SUBSTITUTE);
-  });
-
-  it("end-to-end: generateReplicateVideo forwards empty prompt unchanged for Wan i2v", async () => {
-    const run = vi.fn().mockResolvedValue("https://example.com/video.mp4");
-    const replicate = { run } as unknown as import("replicate").default;
-    const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-
-    await generateReplicateVideo(
-      replicate,
-      "",
-      "wan-video/wan-2.2-i2v-fast" as VideoModelId,
-      { startImage: "https://images.example.com/start.png" },
-      log,
-    );
-
-    const input = (run.mock.calls[0]?.[1] as { input: Record<string, unknown> })
-      .input;
-    expect(input.prompt).toBe("");
-  });
+      const input = (
+        run.mock.calls[0]?.[1] as { input: Record<string, unknown> }
+      ).input;
+      expect(input.prompt).toBe(prompt);
+    },
+  );
 });
 
 // ----------------------------------------------------------------------------

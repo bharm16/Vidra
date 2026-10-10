@@ -66,8 +66,7 @@ function resolveRecord(job: VideoJobRecord): Record<string, unknown> {
     mediaUrls: job.result?.videoUrl ? [job.result.videoUrl] : [],
     ...(job.result?.assetId ? { mediaAssetIds: [job.result.assetId] } : {}),
     ...(job.result?.storagePath ? { storagePath: job.result.storagePath } : {}),
-    // ADR-0013: name the source picture (or null = root) so the space draws
-    // the picture→clip edge from real lineage.
+    // Preserve the source picture (or null for a root) in saved ancestry.
     ancestorGenerationId: job.sourceGenerationId ?? null,
   });
 }

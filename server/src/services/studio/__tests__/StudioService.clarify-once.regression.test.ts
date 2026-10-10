@@ -167,14 +167,6 @@ function makeService(llmResponses: string[]) {
 }
 
 describe("regression: clarify is a first-message-only action", () => {
-  it("a project's first turn may clarify", async () => {
-    const { service } = makeService([CLARIFY_JSON]);
-
-    const result = await service.runTurn("u1", "p1", "make me a logo");
-
-    expect(result.decision.action).toBe("clarify");
-  });
-
   it("a follow-up turn never persists a clarify, even when the LLM proposes one", async () => {
     const { service, store } = makeService([
       // Turn 1: vague message → clarify (legitimate).

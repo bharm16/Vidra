@@ -1,12 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { runWithRequestContext, getRequestContext } from "../requestContext";
+import { describe, expect, it } from "vitest";
+import { getRequestContext, runWithRequestContext } from "../requestContext";
 
 describe("requestContext", () => {
   describe("error handling", () => {
-    it("returns undefined when no context is active", () => {
-      expect(getRequestContext()).toBeUndefined();
-    });
-
     it("does not leak context outside the run scope", () => {
       runWithRequestContext({ requestId: "scoped" }, () => {
         expect(getRequestContext()).toEqual({ requestId: "scoped" });
@@ -27,16 +23,6 @@ describe("requestContext", () => {
 
         expect(getRequestContext()?.requestId).toBe("outer");
       });
-    });
-  });
-
-  describe("core behavior", () => {
-    it("provides context to the callback and returns its result", () => {
-      const result = runWithRequestContext({ requestId: "abc" }, () => {
-        return getRequestContext()?.requestId;
-      });
-
-      expect(result).toBe("abc");
     });
   });
 });

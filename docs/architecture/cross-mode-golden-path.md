@@ -3,7 +3,7 @@
 Status: **implemented offline proof** — the walkthrough, its boundary adapters
 and the outbound guard ship in `npm run test:replay`. Browser controls, real
 generation intake, live output quality and deployed acceptance remain separate
-gates; see the [2026-10-03 consistency audit](../audits/2026-10-03-docs-consistency.md).
+gates; see [current scope and external acceptance](deferred-work-ledger.md).
 
 ## What it proves
 
@@ -147,10 +147,10 @@ By default that double mints fresh ids, exactly as production does — the
 content-addressed id is a wiring choice for this one harness. The
 storage-adapter conformance suite
 (`tests/integration/storage-adapter-conformance.integration.test.ts`, issue
-#138) holds every store — the production `GcsImageAssetStore`, `StorageService`
-and `LocalImageAssetStore`, and these two doubles — to that production contract:
-fresh-id identity, owner-scoped namespaces, reported URL expiry, serialization
-round trips, write conflicts and failure semantics. Correcting
+#138) holds the production `GcsImageAssetStore` and `StorageService`, and these
+two doubles, to that production contract: fresh-id identity, owner-scoped
+namespaces, reported URL expiry, cross-owner refusal and missing-object/owner
+failure semantics. Correcting
 `InMemoryImageAssetStore` to it (fresh ids, a reported expiry) is what keeps the
 image store from hiding the class of bug #109 first found.
 

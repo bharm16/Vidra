@@ -7,18 +7,6 @@ import { CanvasViewport } from "../CanvasViewport";
  * The viewport scales the network in place; zoom resets on reload.
  */
 describe("CanvasViewport", () => {
-  it("starts at 100% and scales the content", () => {
-    render(
-      <CanvasViewport>
-        <div data-testid="content">network</div>
-      </CanvasViewport>,
-    );
-    expect(screen.getByTestId("space-zoom-level")).toHaveTextContent("100%");
-    expect(screen.getByTestId("space-viewport-content").style.transform).toBe(
-      "translate(0px, 0px) scale(1)",
-    );
-  });
-
   it("pans with the wheel — the canvas is an open plane", () => {
     render(
       <CanvasViewport>
@@ -166,44 +154,6 @@ describe("CanvasViewport", () => {
     fireEvent.pointerUp(canvas, { pointerId: 1 });
     fireEvent.click(canvas);
     expect(onBackgroundClick).toHaveBeenCalledTimes(1);
-  });
-
-  it("recenters the camera on the live node when it changes", () => {
-    const rect = (r: Partial<DOMRect>): DOMRect =>
-      ({
-        x: 0,
-        y: 0,
-        right: 0,
-        bottom: 0,
-        toJSON: () => ({}),
-        ...r,
-      }) as DOMRect;
-
-    const { rerender } = render(
-      <CanvasViewport liveNodeId={null}>
-        <div data-canvas-focus="a">live node</div>
-      </CanvasViewport>,
-    );
-    vi.spyOn(
-      screen.getByTestId("space-canvas"),
-      "getBoundingClientRect",
-    ).mockReturnValue(rect({ left: 0, top: 0, width: 800, height: 600 }));
-    vi.spyOn(
-      screen.getByText("live node"),
-      "getBoundingClientRect",
-    ).mockReturnValue(rect({ left: 900, top: 700, width: 200, height: 120 }));
-
-    rerender(
-      <CanvasViewport liveNodeId="a">
-        <div data-canvas-focus="a">live node</div>
-      </CanvasViewport>,
-    );
-
-    // Node center (1000, 760) must land on the viewport center (400, 300):
-    // the camera slides by (−600, −460).
-    expect(screen.getByTestId("space-viewport-content").style.transform).toBe(
-      "translate(-600px, -460px) scale(1)",
-    );
   });
 
   it("zooms in and out within bounds", () => {

@@ -92,6 +92,7 @@ describe("RecordReplayStudioImageRunner", () => {
 
     // Replay against a runner that would throw if it were ever consulted.
     const replayInner = fakeRunner({
+      isAvailable: () => false,
       run: vi.fn(async (): Promise<StudioImageCallResult> => {
         throw new Error("live runner must not be called in replay mode");
       }),
@@ -121,7 +122,10 @@ describe("RecordReplayStudioImageRunner", () => {
     recordStore.flush();
 
     const cassette = JSON.parse(
-      readFileSync(join(dir, "studio-turn", "studio-image-provenance.json"), "utf8"),
+      readFileSync(
+        join(dir, "studio-turn", "studio-image-provenance.json"),
+        "utf8",
+      ),
     ) as { entries: Array<{ provenance?: Record<string, unknown> }> };
     const provenance = cassette.entries[0]?.provenance;
     expect(provenance).toMatchObject({
@@ -209,18 +213,5 @@ describe("RecordReplayStudioImageRunner", () => {
           inner: fakeRunner({ isAvailable: () => false }),
         }),
     ).toThrow(ReplayError);
-  });
-
-  it("does not consult availability in replay mode", () => {
-    const isAvailable = vi.fn(() => false);
-    expect(
-      () =>
-        new RecordReplayStudioImageRunner({
-          mode: "replay",
-          store: new CassetteStore({ fixturesDir: makeTempDir() }),
-          inner: fakeRunner({ isAvailable }),
-        }),
-    ).not.toThrow();
-    expect(isAvailable).not.toHaveBeenCalled();
   });
 });

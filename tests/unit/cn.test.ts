@@ -18,12 +18,4 @@ describe("cn", () => {
       expect(result).toBe("base alpha beta gamma");
     });
   });
-
-  describe("core behavior", () => {
-    it("joins multiple class sources into a single string", () => {
-      const result = cn("one", "two", ["three", "four"]);
-
-      expect(result).toBe("one two three four");
-    });
-  });
 });

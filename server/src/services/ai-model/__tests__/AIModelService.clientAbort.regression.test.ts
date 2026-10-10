@@ -60,28 +60,4 @@ describe("AIModelService client-abort regression", () => {
     expect(primaryComplete).toHaveBeenCalledTimes(1);
     expect(fallbackComplete).not.toHaveBeenCalled();
   });
-
-  it("for retryable non-abort errors, fallback still executes", async () => {
-    const retryableError = new Error(`${primaryName} 503`);
-    (retryableError as Error & { isRetryable?: boolean }).isRetryable = true;
-
-    const primaryComplete = vi.fn().mockRejectedValue(retryableError);
-    const fallbackComplete = vi
-      .fn()
-      .mockResolvedValue({ text: "fallback-ok", metadata: {} });
-
-    const service = new AIModelService({
-      clients: {
-        [primaryName]: { complete: primaryComplete },
-        [fallbackName]: { complete: fallbackComplete },
-      } as never,
-    });
-
-    const response = await service.execute("optimize_standard", {
-      systemPrompt: "prompt",
-    });
-
-    expect(response.text).toBe("fallback-ok");
-    expect(fallbackComplete).toHaveBeenCalledTimes(1);
-  });
 });

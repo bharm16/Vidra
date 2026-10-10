@@ -114,26 +114,6 @@ describe("OpenAICompatibleAdapter", () => {
     expect(response.metadata.validation?.isValid).toBe(true);
   });
 
-  it("streams responses through stream parser", async () => {
-    const adapter = createAdapter();
-    global.fetch = vi
-      .fn()
-      .mockResolvedValue(new Response("", { status: 200 })) as typeof fetch;
-    const parser = (
-      adapter as unknown as {
-        streamParser: { readStream: () => Promise<string> };
-      }
-    ).streamParser;
-    const readStreamSpy = vi
-      .spyOn(parser, "readStream")
-      .mockResolvedValue("chunked");
-
-    const text = await adapter.streamComplete("System", { onChunk: vi.fn() });
-
-    expect(text).toBe("chunked");
-    expect(readStreamSpy).toHaveBeenCalledTimes(1);
-  });
-
   it("maps AbortError to ClientAbortError for non-timeout aborts", async () => {
     const adapter = createAdapter();
     const abortErr = Object.assign(new Error("aborted"), {

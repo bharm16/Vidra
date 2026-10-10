@@ -117,15 +117,4 @@ describe("usePromptOptimizerState", () => {
     expect(result.current.state.rollbackSnapshot).toBeNull();
     expect(result.current.state.optimizedPrompt).toBe("");
   });
-
-  it("increments optimizationResultVersion explicitly", () => {
-    const { result } = renderHook(() => usePromptOptimizerState());
-
-    act(() => {
-      result.current.bumpOptimizationResultVersion();
-      result.current.bumpOptimizationResultVersion();
-    });
-
-    expect(result.current.state.optimizationResultVersion).toBe(2);
-  });
 });

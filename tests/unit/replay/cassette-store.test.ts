@@ -47,37 +47,9 @@ function suggestionsEntry(
 }
 
 describe("CassetteStore", () => {
-  it("round-trips: record → flush → load → lookup", () => {
-    const dir = makeTempDir();
-    const writer = new CassetteStore({ fixturesDir: dir });
-    writer.beginScenario("suggestions", "unit-roundtrip");
-    writer.record(suggestionsEntry());
-    const written = writer.flush();
-    expect(written).toHaveLength(1);
-    expect(written[0]).toContain(join("suggestions", "unit-roundtrip.json"));
-
-    const reader = new CassetteStore({ fixturesDir: dir });
-    const { files, entries } = reader.loadAll();
-    expect(files).toBe(1);
-    expect(entries).toBe(1);
-    const hit = reader.lookup("ai-model:test-key-1");
-    expect(hit?.seam).toBe("ai-model");
-    if (hit?.seam === "ai-model") {
-      expect(hit.response.text).toContain("slow dolly-in");
-    }
-  });
-
   it("rejects recording before a scenario is declared", () => {
     const store = new CassetteStore({ fixturesDir: makeTempDir() });
     expect(() => store.record(suggestionsEntry())).toThrow(ReplayError);
-  });
-
-  it("rejects a capture whose payload violates the live contract", () => {
-    const store = new CassetteStore({ fixturesDir: makeTempDir() });
-    store.beginScenario("suggestions", "bad-capture");
-    expect(() =>
-      store.record(suggestionsEntry({ text: '{"nope":true}' })),
-    ).toThrow(ReplayContractViolationError);
   });
 
   it("fails loudly when a fixture on disk was tampered into invalidity", () => {
@@ -116,10 +88,5 @@ describe("CassetteStore", () => {
     expect(() =>
       store.lookupOrThrow("ai-model:unknown", 'operation "span_labeling"'),
     ).toThrow(/REPLAY_MODE=record/);
-  });
-
-  it("loads an empty directory as zero entries (no throw)", () => {
-    const store = new CassetteStore({ fixturesDir: makeTempDir() });
-    expect(store.loadAll()).toEqual({ files: 0, entries: 0 });
   });
 });

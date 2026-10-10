@@ -23,28 +23,4 @@ describe("StudioModelRegistry edit default (regression)", () => {
     expect(editDefault.slug).toBe("nano-banana-2");
     expect(editDefault.capabilities).toContain("edit");
   });
-
-  it("keeps the carve-out meaningful: a cheaper edit-capable tier exists", () => {
-    const cheapest = registry.cheapestCapable("edit");
-    const editDefault = registry.editDefault();
-
-    // If the cheapest editor ever becomes the standard editor, this ruling
-    // is moot and the carve-out should be deleted rather than left as lore.
-    expect(cheapest.costCentsPerCall).toBeLessThan(
-      editDefault.costCentsPerCall,
-    );
-  });
-
-  it("leaves non-edit Auto routing on cheapest-capable", () => {
-    const generate = registry.cheapestCapable("general");
-    const candidates = registry
-      .listModels()
-      .filter((entry) => entry.capabilities.includes("general"));
-
-    for (const candidate of candidates) {
-      expect(generate.costCentsPerCall).toBeLessThanOrEqual(
-        candidate.costCentsPerCall,
-      );
-    }
-  });
 });

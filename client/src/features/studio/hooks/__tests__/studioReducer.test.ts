@@ -3,7 +3,6 @@ import {
   studioReducer,
   initialStudioState,
   collectThreadImages,
-  type StudioState,
 } from "../studioReducer";
 import type { StudioTurn } from "../../api/schemas";
 
@@ -27,43 +26,13 @@ const makeTurn = (overrides: Partial<StudioTurn> = {}): StudioTurn => ({
 });
 
 describe("studioReducer", () => {
-  it("shows the user message optimistically, then swaps in the accepted turn", () => {
-    let state: StudioState = initialStudioState;
-    state = studioReducer(state, { type: "messageSent", message: "a logo" });
-    expect(state.optimisticMessage).toBe("a logo");
-
-    state = studioReducer(state, { type: "turnAccepted", turn: makeTurn() });
-    expect(state.optimisticMessage).toBeNull();
-    expect(state.pendingTurnId).toBe("t1");
-    expect(state.turns).toHaveLength(1);
-  });
-
-  it("replaces the thread entry on poll and stops pending on terminal status", () => {
-    let state = studioReducer(initialStudioState, {
-      type: "turnAccepted",
-      turn: makeTurn(),
-    });
-
-    state = studioReducer(state, {
-      type: "turnPolled",
-      turn: makeTurn({ status: "running", updatedAtMs: 2 }),
-    });
-    expect(state.pendingTurnId).toBe("t1");
-    expect(state.turns).toHaveLength(1);
-
-    state = studioReducer(state, {
-      type: "turnPolled",
-      turn: makeTurn({ status: "complete", updatedAtMs: 3 }),
-    });
-    expect(state.pendingTurnId).toBeNull();
-    expect(state.turns[0]?.status).toBe("complete");
-  });
-
   it("clears optimistic + pending state on request failure", () => {
     let state = studioReducer(initialStudioState, {
       type: "messageSent",
       message: "x",
     });
+    state = studioReducer(state, { type: "thinkingStreamStarted" });
+    state = studioReducer(state, { type: "thinkingDelta", delta: "half a" });
     state = studioReducer(state, {
       type: "requestFailed",
       error: "Daily studio limit reached",
@@ -71,23 +40,7 @@ describe("studioReducer", () => {
     expect(state.error).toContain("limit");
     expect(state.optimisticMessage).toBeNull();
     expect(state.pendingTurnId).toBeNull();
-  });
-
-  it("opening a project resets the thread and adopts its selection", () => {
-    const opened = studioReducer(initialStudioState, {
-      type: "projectOpened",
-      project: {
-        id: "p1",
-        title: "Logo",
-        selectedImageId: "img-9",
-        createdAtMs: 1,
-        updatedAtMs: 1,
-      },
-      turns: [makeTurn({ status: "complete" })],
-    });
-    expect(opened.selectedImageId).toBe("img-9");
-    expect(opened.turns).toHaveLength(1);
-    expect(opened.loading).toBe(false);
+    expect(state.streamingThinking).toBeNull();
   });
 
   it("collectThreadImages returns only succeeded images", () => {
@@ -133,19 +86,6 @@ describe("studioReducer", () => {
     // The accepted turn carries the final text; streaming state clears.
     state = studioReducer(state, { type: "turnAccepted", turn: makeTurn() });
     expect(state.streamingThinking).toBeNull();
-  });
-
-  it("clears streamed thinking when the request fails", () => {
-    let state = studioReducer(initialStudioState, {
-      type: "thinkingStreamStarted",
-    });
-    state = studioReducer(state, { type: "thinkingDelta", delta: "half a" });
-    state = studioReducer(state, {
-      type: "requestFailed",
-      error: "Daily limit reached",
-    });
-    expect(state.streamingThinking).toBeNull();
-    expect(state.error).toBe("Daily limit reached");
   });
 
   it("opening projectless empties the workspace and stops loading", () => {

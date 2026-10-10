@@ -58,15 +58,6 @@ describe("deriveWorkspaceStage", () => {
   // Restore is free because the stage is derived from artifacts (D2): a reloaded
   // session has no in-flight run, yet reconstructs to the right beat from what
   // was persisted.
-  it("reconstructs the stage on restore: a frame with no in-flight run → 'picture'", () => {
-    expect(
-      deriveWorkspaceStage({
-        ...noArtifacts,
-        hasDescription: true,
-        hasFrame: true,
-      }),
-    ).toEqual({ stage: "picture" });
-  });
 
   // A description with no frame and nothing in flight is post-writing, awaiting
   // the picture — the 'painting' beat, NOT 'empty'. (The workspace oracle: a

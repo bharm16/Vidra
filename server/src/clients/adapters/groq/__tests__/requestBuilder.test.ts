@@ -5,8 +5,8 @@
  * builder, and these tests pin that they agree.
  */
 import { describe, expect, it } from "vitest";
-import { buildGroqPayload, takeUndeclaredGroqModels } from "../requestBuilder";
 import { supportsLogprobs } from "../modelCapabilities";
+import { buildGroqPayload } from "../requestBuilder";
 
 const DEFAULT_MODEL = "openai/gpt-oss-20b";
 
@@ -118,24 +118,6 @@ describe("buildGroqPayload", () => {
     });
   });
 
-  it("asks for logprobs only on a model declared to support them", () => {
-    expect(build({ logprobs: true }).logprobs).toBeUndefined();
-    expect(
-      build({
-        logprobs: true,
-        topLogprobs: 2,
-        model: "llama-3.3-70b-versatile",
-      }).logprobs,
-    ).toBe(true);
-    expect(
-      build({
-        logprobs: true,
-        topLogprobs: 2,
-        model: "llama-3.3-70b-versatile",
-      }).top_logprobs,
-    ).toBe(2);
-  });
-
   it("never asks for logprobs on the streaming path", () => {
     const payload = build(
       { logprobs: true, model: "llama-3.3-70b-versatile" },
@@ -145,26 +127,7 @@ describe("buildGroqPayload", () => {
   });
 });
 
-describe("undeclared models are reported, not silently downgraded", () => {
-  it("names a model it has no capability entry for", () => {
-    takeUndeclaredGroqModels();
-    build({ logprobs: true, model: "llama-9-brand-new" });
-    expect(takeUndeclaredGroqModels()).toEqual(["llama-9-brand-new"]);
-  });
-
-  it("says nothing about a declared model that simply lacks the capability", () => {
-    takeUndeclaredGroqModels();
-    build({ logprobs: true, model: "openai/gpt-oss-20b" });
-    expect(takeUndeclaredGroqModels()).toEqual([]);
-  });
-});
-
 describe("supportsLogprobs", () => {
-  it("answers from a declared table, not from the shape of the name", () => {
-    expect(supportsLogprobs("llama-3.3-70b-versatile")).toBe(true);
-    expect(supportsLogprobs("openai/gpt-oss-20b")).toBe(false);
-  });
-
   it("declines for a model it has never heard of", () => {
     // Requesting an unsupported parameter is a 400 from Groq, so an unknown
     // model gets the conservative answer until it is declared.

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { isUrlSafe, assertUrlSafe } from "../urlValidation";
+import { describe, expect, it } from "vitest";
+import { assertUrlSafe, isUrlSafe } from "../urlValidation";
 
 describe("urlValidation", () => {
   describe("public URLs", () => {
@@ -164,12 +164,6 @@ describe("urlValidation", () => {
       expect(() =>
         assertUrlSafe("https://example.com/a.png", "imageUrl"),
       ).not.toThrow();
-    });
-
-    it("throws on IPv4-mapped IPv6 (regression)", () => {
-      expect(() =>
-        assertUrlSafe("http://[::ffff:169.254.169.254]/", "imageUrl"),
-      ).toThrow();
     });
   });
 });

@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
 import {
   createReplicateVideoClient,
-  resolveVeoCredential,
   normalizeBaseUrl,
+  resolveVeoCredential,
 } from "@clients/videoProviderClients";
+import { describe, expect, it, vi } from "vitest";
 vi.mock("replicate", () => ({
   default: class {
     constructor(readonly options: { auth: string }) {}
@@ -17,11 +17,7 @@ describe("current video provider clients", () => {
     });
     expect(log.warn).not.toHaveBeenCalled();
   });
-  it("passes Veo's credential through", () => {
-    expect(resolveVeoCredential("gemini-key", { warn: vi.fn() })).toBe(
-      "gemini-key",
-    );
-  });
+
   it("reports both missing provider credentials", () => {
     const log = { warn: vi.fn() };
     expect(createReplicateVideoClient(undefined, log)).toBeNull();

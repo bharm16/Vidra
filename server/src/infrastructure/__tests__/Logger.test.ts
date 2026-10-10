@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "events";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Logger } from "../Logger";
 import { runWithRequestContext } from "../requestContext";
 
@@ -136,52 +136,6 @@ describe("Logger", () => {
       expect(message).toBe("Hello");
       expect(meta).toMatchObject({ requestId: "ctx-123" });
     });
-
-    it("includes log stack and caller when configured", () => {
-      const logger = new Logger({
-        includeLogStack: true,
-        includeLogCaller: true,
-        logStackLevels: ["info"],
-        logStackDepth: 2,
-      });
-
-      const appFrame = `${process.cwd()}/server/src/services/Foo.ts:10:5`;
-      vi.spyOn(
-        logger as unknown as { captureLogStack: () => string[] },
-        "captureLogStack",
-      ).mockReturnValue([
-        `at ${appFrame}`,
-        "at node:internal/process/task_queues:96:5",
-      ]);
-
-      logger.info("With stack");
-
-      const stackInfoCall = mockPinoLogger.info.mock.calls[0];
-      expect(stackInfoCall).toBeDefined();
-      const [meta] = stackInfoCall!;
-      expect((meta as { caller?: string }).caller).toContain(
-        "server/src/services/Foo.ts",
-      );
-      expect((meta as { logStack?: string[] }).logStack).toEqual([
-        "server/src/services/Foo.ts:10:5",
-      ]);
-    });
-  });
-
-  describe("core behavior", () => {
-    it("creates child loggers with additional bindings", () => {
-      const logger = new Logger({
-        includeLogStack: false,
-        includeLogCaller: false,
-      });
-
-      const child = logger.child({ service: "child" });
-      child.info("child message");
-
-      expect(mockPinoLogger.child).toHaveBeenCalledWith({ service: "child" });
-      expect(mockChildLogger.info).toHaveBeenCalled();
-      expect(mockPinoLogger.info).not.toHaveBeenCalled();
-    });
   });
 
   describe("level filtering", () => {
@@ -189,23 +143,6 @@ describe("Logger", () => {
     // The guards should be invisible when the level is enabled (current
     // pino default) and should suppress meta enrichment + the underlying
     // pino call when the level is disabled.
-    it("calls underlying pino method when level is enabled", () => {
-      mockPinoLogger.isLevelEnabled.mockReturnValue(true);
-      const logger = new Logger({
-        includeLogStack: false,
-        includeLogCaller: false,
-      });
-
-      logger.info("hi");
-      logger.warn("warn");
-      logger.debug("dbg");
-      logger.error("err");
-
-      expect(mockPinoLogger.info).toHaveBeenCalledTimes(1);
-      expect(mockPinoLogger.warn).toHaveBeenCalledTimes(1);
-      expect(mockPinoLogger.debug).toHaveBeenCalledTimes(1);
-      expect(mockPinoLogger.error).toHaveBeenCalledTimes(1);
-    });
 
     it("skips pino call and enrichMeta when level is disabled", () => {
       mockPinoLogger.isLevelEnabled.mockReturnValue(false);

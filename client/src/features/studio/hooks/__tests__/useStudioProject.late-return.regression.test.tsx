@@ -96,11 +96,7 @@ describe("regression #129: a return that settles after a project switch", () => 
     await act(async () => {
       outcome = result.current.returnImageToSession();
     });
-    expect(returnMock).toHaveBeenCalledWith(
-      "p-a",
-      "img-1",
-      undefined,
-    );
+    expect(returnMock).toHaveBeenCalledWith("p-a", "img-1", undefined);
 
     // The creator opens another project while the return is in flight…
     rerender("p-b");
@@ -115,58 +111,6 @@ describe("regression #129: a return that settles after a project switch", () => 
     const settled = await outcome;
     expect(settled).toEqual({ state: "error", message: "storage unavailable" });
     expect(result.current.state.error).toBeNull();
-  });
-
-  it("stays replayable: back on the project, the same press carries the same identity", async () => {
-    returnMock
-      .mockImplementationOnce(
-        () =>
-          new Promise<UseInSessionOutcome>(() => {
-            // The first press's response never lands — the creator left.
-          }),
-      )
-      .mockResolvedValueOnce({
-        state: "returned",
-        result: {
-          sessionId: "session-1",
-          promptVersionId: "v1",
-          generationId: "take-1",
-          imageUrl: "https://storage.example.com/returned",
-          ancestorGenerationId: null,
-          createdSession: false,
-          arming: { state: "armed", generationId: "take-1" },
-        },
-      });
-
-    const { result, rerender } = renderHook(
-      (projectId: string) => useStudioProject(projectId),
-      { initialProps: "p-a" },
-    );
-    await act(async () => {});
-    act(() => {
-      result.current.selectImage("img-1");
-    });
-
-    await act(async () => {
-      void result.current.returnImageToSession();
-    });
-
-    // The creator returns to the project and presses again: the SAME project
-    // and image travel — the server de-duplicates the pair into one take, so
-    // this replay is the reconciliation, never a second attempt.
-    rerender("p-a");
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.returnImageToSession();
-    });
-
-    expect(returnMock).toHaveBeenCalledTimes(2);
-    expect(returnMock.mock.calls[0]?.slice(0, 2)).toEqual(
-      returnMock.mock.calls[1]?.slice(0, 2),
-    );
-    expect(returnMock.mock.calls[1]?.[0]).toBe("p-a");
-    expect(returnMock.mock.calls[1]?.[1]).toBe("img-1");
   });
 
   it("is applied when the project never changed — the honest control", async () => {

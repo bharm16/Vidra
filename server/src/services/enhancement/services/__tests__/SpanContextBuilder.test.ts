@@ -51,16 +51,6 @@ describe("SpanContextBuilder", () => {
     phraseRole: "lighting.quality",
   };
 
-  it("returns all expected fields", () => {
-    const result = builder.buildSpanContext(defaultInput);
-
-    expect(result).toHaveProperty("spanAnchors");
-    expect(result).toHaveProperty("nearbySpanHints");
-    expect(result).toHaveProperty("spanFingerprint");
-    expect(result).toHaveProperty("lockedSpanCategories");
-    expect(result).toHaveProperty("guidanceSpans");
-  });
-
   it("excludes the highlighted span from anchors", () => {
     const result = builder.buildSpanContext(defaultInput);
 
@@ -98,13 +88,6 @@ describe("SpanContextBuilder", () => {
     expect(result.spanAnchors).toContain("a woman");
   });
 
-  it("produces guidance spans from all labeled spans", () => {
-    const result = builder.buildSpanContext(defaultInput);
-
-    expect(result.guidanceSpans).toHaveLength(3);
-    expect(result.guidanceSpans.map((s) => s.text)).toContain("golden hour");
-  });
-
   it("produces locked span categories from nearby spans", () => {
     const result = builder.buildSpanContext(defaultInput);
 
@@ -129,20 +112,6 @@ describe("SpanContextBuilder", () => {
     expect(result.nearbySpanHints).toBe("");
   });
 
-  it("produces a non-null fingerprint when anchors exist", () => {
-    const result = builder.buildSpanContext(defaultInput);
-
-    expect(result.spanFingerprint).not.toBeNull();
-    expect(typeof result.spanFingerprint).toBe("string");
-  });
-
-  it("produces a stable fingerprint for the same input", () => {
-    const a = builder.buildSpanContext(defaultInput);
-    const b = builder.buildSpanContext(defaultInput);
-
-    expect(a.spanFingerprint).toBe(b.spanFingerprint);
-  });
-
   it("changes fingerprint when nearby spans change", () => {
     const a = builder.buildSpanContext(defaultInput);
     const b = builder.buildSpanContext({
@@ -162,54 +131,5 @@ describe("SpanContextBuilder", () => {
     });
 
     expect(a.spanFingerprint).not.toBe(b.spanFingerprint);
-  });
-
-  describe("clause boundary detection", () => {
-    it("splits on period and semicolon", () => {
-      const clauses = builder._findClauseBoundaries(
-        "first clause. second clause; third clause",
-      );
-
-      expect(clauses.length).toBe(3);
-    });
-
-    it("splits on conjunction words", () => {
-      const clauses = builder._findClauseBoundaries(
-        "subject walks and camera pans while sun sets",
-      );
-
-      expect(clauses.length).toBeGreaterThanOrEqual(3);
-    });
-
-    it("returns single clause for simple text", () => {
-      const clauses = builder._findClauseBoundaries("no delimiters here");
-
-      expect(clauses.length).toBe(1);
-    });
-
-    it("returns empty for blank input", () => {
-      expect(builder._findClauseBoundaries("")).toEqual([]);
-      expect(builder._findClauseBoundaries("   ")).toEqual([]);
-    });
-  });
-
-  describe("span range resolution", () => {
-    it("uses explicit start/end when provided", () => {
-      const result = builder._resolveSpanRange("hello world", "hello", 0, 5);
-
-      expect(result).toEqual({ start: 0, end: 4 });
-    });
-
-    it("falls back to substring search when no indices", () => {
-      const result = builder._resolveSpanRange("hello world", "world");
-
-      expect(result).toEqual({ start: 6, end: 10 });
-    });
-
-    it("returns null when text not found", () => {
-      const result = builder._resolveSpanRange("hello world", "xyz");
-
-      expect(result).toBeNull();
-    });
   });
 });

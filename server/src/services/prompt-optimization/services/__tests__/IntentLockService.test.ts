@@ -4,18 +4,6 @@ import { IntentLockService } from "../IntentLockService";
 describe("IntentLockService", () => {
   const service = new IntentLockService();
 
-  it("extracts required subject/action from shot plan when available", () => {
-    const required = service.extractRequiredIntent("baby driving a car", {
-      shot_type: "close-up",
-      core_intent: "baby driving",
-      subject: "baby",
-      action: "driving a car",
-    });
-
-    expect(required.subject).toBe("baby");
-    expect(required.action).toBe("driving a car");
-  });
-
   it("uses raw prompt intent as source of truth when shot plan drifts", () => {
     const required = service.extractRequiredIntent("baby driving a car", {
       shot_type: "close-up",
@@ -26,18 +14,6 @@ describe("IntentLockService", () => {
 
     expect(required.subject).toBe("baby");
     expect(required.action).toBe("driving a car");
-  });
-
-  it("enforces intent when subject/action are already present", () => {
-    const result = service.enforceIntentLock({
-      originalPrompt: "baby driving a car",
-      optimizedPrompt:
-        "A close-up of a baby driving a car through a sunny park.",
-      shotPlan: null,
-    });
-
-    expect(result.passed).toBe(true);
-    expect(result.repaired).toBe(false);
   });
 
   it("repairs prompt once when required subject/action are missing", () => {

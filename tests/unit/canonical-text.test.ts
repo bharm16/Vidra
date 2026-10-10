@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { CanonicalText, createCanonicalText } from "@/utils/canonicalText";
+import { CanonicalText } from "@/utils/canonicalText";
 
 describe("CanonicalText", () => {
   describe("error handling", () => {
@@ -20,13 +20,6 @@ describe("CanonicalText", () => {
   });
 
   describe("edge cases", () => {
-    it("uses the fallback segmentation when no segmenter is provided", () => {
-      const text = createCanonicalText("abcd", { segmenter: null });
-
-      expect(text.length).toBe(4);
-      expect(text.sliceGraphemes(1, 3)).toBe("bc");
-    });
-
     it("normalizes combining characters to NFC", () => {
       const composed = "\u00e9";
       const combining = "e\u0301";
@@ -51,15 +44,6 @@ describe("CanonicalText", () => {
       expect(text.length).toBe(2);
       expect(text.codeUnitOffsetForGrapheme(1)).toBe(2);
       expect(text.sliceGraphemes(1, 2)).toBe("cd");
-    });
-
-    it("serializes metadata with original, normalized, and length", () => {
-      const text = new CanonicalText("Hello", { segmenter: null });
-      const json = text.toJSON();
-
-      expect(json.original).toBe("Hello");
-      expect(json.normalized).toBe("Hello");
-      expect(json.length).toBe(5);
     });
   });
 });

@@ -127,17 +127,4 @@ describe("normalizeOpenAiSchema", () => {
     );
     assertObjectNodesAreClosed(normalized.schema);
   });
-
-  it("falls back to structured_response when no schema name is provided", () => {
-    const normalized = normalizeOpenAiSchema({
-      type: "object",
-      properties: {
-        ok: { type: "boolean" },
-      },
-      required: ["ok"],
-    });
-
-    expect(normalized.name).toBe("structured_response");
-    assertObjectNodesAreClosed(normalized.schema);
-  });
 });

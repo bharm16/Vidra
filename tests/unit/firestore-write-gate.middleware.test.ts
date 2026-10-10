@@ -2,7 +2,7 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createFirestoreWriteGateMiddleware } from "@middleware/firestoreWriteGate";
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 describe("firestoreWriteGate middleware", () => {
   it("blocks mutating requests with 503 when circuit is open", async () => {
@@ -19,10 +19,9 @@ describe("firestoreWriteGate middleware", () => {
       res.status(200).json({ ok: true });
     });
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app).post("/api/test").send({ hello: "world" }),
     );
-    if (!response) return;
 
     expect(response.status).toBe(503);
     expect(response.headers["retry-after"]).toBe("12");
@@ -42,10 +41,9 @@ describe("firestoreWriteGate middleware", () => {
       res.status(200).json({ ok: true });
     });
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app).get("/api/test"),
     );
-    if (!response) return;
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ ok: true });

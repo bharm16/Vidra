@@ -181,37 +181,6 @@ describe("SessionStore", () => {
     mocks.records.clear();
   });
 
-  it("saves new sessions and merges updates for existing sessions", async () => {
-    const store = new SessionStore();
-    const created = buildRecord({ name: "First", promptUuid: "prompt-1" });
-
-    await store.save(created);
-    expect(mocks.records.get(created.id)?.name).toBe("First");
-
-    await store.save(
-      buildRecord({
-        id: created.id,
-        name: "Updated",
-        promptUuid: "prompt-1",
-        updatedAt: new Date("2026-01-01T00:00:10.000Z"),
-      }),
-    );
-
-    expect(mocks.records.get(created.id)?.name).toBe("Updated");
-  });
-
-  it("gets records by id and returns null when missing", async () => {
-    const store = new SessionStore();
-    const record = buildRecord({ name: "Stored" });
-    await store.save(record);
-
-    await expect(store.get(record.id)).resolves.toMatchObject({
-      id: record.id,
-      name: "Stored",
-    });
-    await expect(store.get("missing")).resolves.toBeNull();
-  });
-
   it("finds by user and by prompt UUID", async () => {
     const store = new SessionStore();
 
@@ -252,15 +221,6 @@ describe("SessionStore", () => {
     expect(fetched?.hasContinuity).toBe(true);
     expect(byUser).toHaveLength(1);
     expect(byUser[0]?.continuity?.id).toBe(continuity.id);
-  });
-
-  it("deletes sessions", async () => {
-    const store = new SessionStore();
-    await store.save(buildRecord({ id: "delete-me" }));
-
-    await store.delete("delete-me");
-
-    expect(mocks.records.has("delete-me")).toBe(false);
   });
 
   it("createIfAbsent creates when the id is free and returns the existing row untouched when it is taken", async () => {

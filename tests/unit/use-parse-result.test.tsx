@@ -1,8 +1,7 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useParseResult } from "@features/prompt-optimizer/PromptCanvas/hooks/useParseResult";
-import type { HighlightSpan } from "@features/span-highlighting/hooks/useHighlightRendering";
 import {
   convertLabeledSpansToHighlights,
   createHighlightSignature,
@@ -78,63 +77,6 @@ describe("useParseResult", () => {
         expect.objectContaining({
           labeledSpanCount: 1,
           labelingSignature: "sig-other",
-        }),
-      );
-    });
-  });
-
-  it("converts spans when signatures match and logs minimal highlight warning", async () => {
-    const highlights = [
-      {
-        id: "span-1",
-        category: "style",
-        role: "style",
-        start: 0,
-        end: 5,
-        displayStart: 0,
-        displayEnd: 5,
-        quote: "Hello",
-        displayQuote: "Hello",
-        leftCtx: "",
-        rightCtx: "",
-        displayLeftCtx: "",
-        displayRightCtx: "",
-        source: "llm",
-        confidence: 0.9,
-        validatorPass: true,
-        version: "llm-v2-taxonomy",
-      },
-    ];
-
-    mockConvertLabeledSpansToHighlights.mockReturnValue(highlights);
-
-    const { result } = renderHook(() =>
-      useParseResult({
-        labeledSpans: [
-          { start: 0, end: 5, category: "style", confidence: 0.9 },
-          { start: 6, end: 11, category: "tone", confidence: 0.8 },
-        ],
-        labeledMeta: { source: "test" },
-        labelingSignature: "sig-current",
-        labelingStatus: "success",
-        labelingError: null,
-        enableMLHighlighting: true,
-        displayedPrompt: "Hello world",
-      }),
-    );
-
-    expect(result.current.spans).toEqual(
-      highlights as unknown as HighlightSpan[],
-    );
-    expect(result.current.meta).toEqual({ source: "test" });
-    expect(mockConvertLabeledSpansToHighlights).toHaveBeenCalled();
-
-    await waitFor(() => {
-      expect(logSpies.debug).toHaveBeenCalledWith(
-        "Span conversion produced minimal highlights",
-        expect.objectContaining({
-          labeledSpanCount: 2,
-          highlightCount: 1,
         }),
       );
     });

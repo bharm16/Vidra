@@ -1,4 +1,3 @@
-import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -90,24 +89,5 @@ describe("ContactSupportPage draft and copy contract", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy email" }));
     expect(await screen.findByRole("button", { name: "Copied" })).toBeVisible();
     expect(writeText).toHaveBeenLastCalledWith("support@vidra.app");
-  });
-
-  it("uses the configured mailbox and preserves app, docs and legal destinations", () => {
-    vi.stubEnv("VITE_SUPPORT_EMAIL", " help@vidra.app ");
-    renderPage();
-    expect(draftUrl().pathname).toBe("help@vidra.app");
-    expect(screen.getByRole("link", { name: "Back to app" })).toHaveAttribute(
-      "href",
-      "/",
-    );
-    expect(
-      screen.getByRole("link", { name: "Browse the docs" }),
-    ).toHaveAttribute("href", "/docs");
-    expect(
-      screen.getByRole("link", { name: "Privacy policy" }),
-    ).toHaveAttribute("href", "/privacy-policy");
-    expect(
-      screen.getByRole("link", { name: "Terms of service" }),
-    ).toHaveAttribute("href", "/terms-of-service");
   });
 });

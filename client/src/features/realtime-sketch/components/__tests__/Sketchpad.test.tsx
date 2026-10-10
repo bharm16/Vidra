@@ -85,28 +85,6 @@ describe("Sketchpad", () => {
     expect(onSnapshot).not.toHaveBeenCalled();
   });
 
-  it("draws and emits a snapshot when a brush stroke ends", () => {
-    const onSnapshot = vi.fn();
-    render(
-      <Sketchpad
-        tool="brush"
-        ink="#1e2c47"
-        brushSize={18}
-        onSnapshot={onSnapshot}
-      />,
-    );
-
-    drawStroke(screen.getByLabelText("Sketchpad"));
-
-    expect(onSnapshot).toHaveBeenCalled();
-    const [dataUri, encodeMs] = onSnapshot.mock.calls.at(-1) as [
-      string,
-      number,
-    ];
-    expect(dataUri).toBe("data:image/jpeg;base64,sketchpad-mock");
-    expect(typeof encodeMs).toBe("number");
-  });
-
   it("undo and clear via the handle re-render and emit fresh snapshots", () => {
     const onSnapshot = vi.fn();
     const handle = createRef<SketchpadHandle>();

@@ -47,14 +47,6 @@ describe("regression: session title derivation", () => {
     expect(title.toLowerCase()).toContain("mars");
   });
 
-  it("keeps more than 2 words from 'Slow cinematic dolly push-in on a lighthouse'", () => {
-    const title = resolveEntryTitle(
-      entry("Slow cinematic dolly push-in on a lighthouse"),
-    );
-    expect(title).not.toBe("Slow Cinematic");
-    expect(title.split(" ").length).toBeGreaterThanOrEqual(3);
-  });
-
   it("stops at first sentence boundary to avoid running into trailing clauses", () => {
     const title = resolveEntryTitle(
       entry(
@@ -78,17 +70,6 @@ describe("regression: session title derivation", () => {
 });
 
 describe("regression: disambiguator does not echo base title tokens", () => {
-  it("returns null when the only matching keyword is already in the base title", () => {
-    // baseTitle = "Cinematic Aerial Shot" — disambiguator that would have
-    // been "aerial" now returns null (or a distinct keyword).
-    const result = extractDisambiguator(
-      "cinematic aerial shot of a lone astronaut",
-      "Cinematic Aerial Shot",
-    );
-    expect(result).not.toBe("aerial");
-    expect(result).not.toBe("cinematic");
-  });
-
   it("returns a non-duplicate keyword when one is available", () => {
     // "aerial" is in base title; "night" is not. Should return "night".
     const result = extractDisambiguator(

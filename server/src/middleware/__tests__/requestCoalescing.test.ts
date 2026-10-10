@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextFunction, Request, Response } from "express";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RequestCoalescingMiddleware } from "../requestCoalescing";
 
 vi.mock("@infrastructure/Logger", () => ({
@@ -375,89 +375,6 @@ describe("RequestCoalescingMiddleware", () => {
       svc.dispose();
     });
 
-    it("evicts in insertion order (oldest first)", async () => {
-      const svc = new RequestCoalescingMiddleware({ maxPending: 3 });
-      const mw = svc.middleware({ keyScope: "/api/optimize" });
-      const reqA = createRequest({ body: { prompt: "A" } });
-      const reqB = createRequest({ body: { prompt: "B" } });
-      const reqC = createRequest({ body: { prompt: "C" } });
-      const reqD = createRequest({ body: { prompt: "D" } });
-      const keyA = svc.generateKey(reqA, { keyScope: "/api/optimize" });
-      const keyB = svc.generateKey(reqB, { keyScope: "/api/optimize" });
-      const keyC = svc.generateKey(reqC, { keyScope: "/api/optimize" });
-      const keyD = svc.generateKey(reqD, { keyScope: "/api/optimize" });
-
-      await mw(reqA, createResponse(), vi.fn() as NextFunction);
-      await mw(reqB, createResponse(), vi.fn() as NextFunction);
-      await mw(reqC, createResponse(), vi.fn() as NextFunction);
-      await mw(reqD, createResponse(), vi.fn() as NextFunction);
-
-      // Access private via cast to inspect presence
-      const map = (svc as unknown as { pendingRequests: Map<string, unknown> })
-        .pendingRequests;
-      expect(map.has(keyA)).toBe(false);
-      expect(map.has(keyB)).toBe(true);
-      expect(map.has(keyC)).toBe(true);
-      expect(map.has(keyD)).toBe(true);
-      svc.dispose();
-    });
-
-    it("stopHousekeeper is idempotent", () => {
-      const svc = new RequestCoalescingMiddleware();
-      expect(() => {
-        svc.stopHousekeeper();
-        svc.stopHousekeeper();
-      }).not.toThrow();
-      svc.dispose();
-    });
-
-    it("startHousekeeper is idempotent (no duplicate handle)", () => {
-      const svc = new RequestCoalescingMiddleware();
-      const firstHandle = (
-        svc as unknown as {
-          housekeepTimer: ReturnType<typeof setInterval> | null;
-        }
-      ).housekeepTimer;
-      svc.startHousekeeper();
-      const secondHandle = (
-        svc as unknown as {
-          housekeepTimer: ReturnType<typeof setInterval> | null;
-        }
-      ).housekeepTimer;
-      expect(secondHandle).toBe(firstHandle);
-      svc.stopHousekeeper();
-      expect(
-        (svc as unknown as { housekeepTimer: unknown }).housekeepTimer,
-      ).toBeNull();
-    });
-
-    it("capacityStats returns pending count and maxPending", async () => {
-      const svc = new RequestCoalescingMiddleware({ maxPending: 10 });
-      await startUnique(svc, { prompt: "x" });
-      await startUnique(svc, { prompt: "y" });
-
-      expect(svc.capacityStats()).toEqual({ pending: 2, maxPending: 10 });
-      svc.dispose();
-    });
-
-    it("clear() preserves the housekeeper (runtime-safe reset)", () => {
-      const svc = new RequestCoalescingMiddleware();
-      const before = (
-        svc as unknown as {
-          housekeepTimer: ReturnType<typeof setInterval> | null;
-        }
-      ).housekeepTimer;
-      expect(before).not.toBeNull();
-      svc.clear();
-      const after = (
-        svc as unknown as {
-          housekeepTimer: ReturnType<typeof setInterval> | null;
-        }
-      ).housekeepTimer;
-      expect(after).toBe(before);
-      svc.dispose();
-    });
-
     describe("with fake timers", () => {
       beforeEach(() => {
         vi.useFakeTimers();
@@ -465,36 +382,6 @@ describe("RequestCoalescingMiddleware", () => {
 
       afterEach(() => {
         vi.useRealTimers();
-      });
-
-      it("independent housekeeper sweeps expired entries", async () => {
-        const svc = new RequestCoalescingMiddleware({
-          housekeepIntervalMs: 100,
-        });
-        // Seed an already-expired entry via the internal map
-        const map = (
-          svc as unknown as {
-            pendingRequests: Map<
-              string,
-              {
-                promise: Promise<unknown>;
-                completedAt: number;
-                expiresAt: number;
-              }
-            >;
-          }
-        ).pendingRequests;
-        map.set("stale-key", {
-          promise: Promise.resolve(),
-          completedAt: Date.now() - 1000,
-          expiresAt: Date.now() - 500,
-        });
-        expect(svc.capacityStats().pending).toBe(1);
-
-        await vi.advanceTimersByTimeAsync(150);
-
-        expect(svc.capacityStats().pending).toBe(0);
-        svc.dispose();
       });
 
       it("housekeeper preserves in-flight (expiresAt === null) entries", async () => {

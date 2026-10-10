@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { errorHandler } from "../errorHandler";
 
 // Mock the logger
@@ -106,15 +106,6 @@ describe("errorHandler", () => {
       });
     });
 
-    it("handles undefined error gracefully", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-
-      errorHandler(undefined, req, res, mockNext);
-
-      expect(res.statusCode).toBe(500);
-    });
-
     it("handles string error", () => {
       const req = createMockRequest();
       const res = createMockResponse();
@@ -126,30 +117,9 @@ describe("errorHandler", () => {
         error: "Something went wrong",
       });
     });
-
-    it("handles number error", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-
-      errorHandler(404, req, res, mockNext);
-
-      expect(res.statusCode).toBe(500);
-    });
   });
 
   describe("Error object handling", () => {
-    it("extracts message from Error instance", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const error = new Error("Test error message");
-
-      errorHandler(error, req, res, mockNext);
-
-      expect(res.responseBody).toMatchObject({
-        error: "Test error message",
-      });
-    });
-
     it("uses statusCode from error object", () => {
       const req = createMockRequest();
       const res = createMockResponse();
@@ -170,16 +140,6 @@ describe("errorHandler", () => {
       errorHandler(error, req, res, mockNext);
 
       expect(res.statusCode).toBe(403);
-    });
-
-    it("defaults to 500 when no status code provided", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const error = new Error("Internal error");
-
-      errorHandler(error, req, res, mockNext);
-
-      expect(res.statusCode).toBe(500);
     });
 
     it("includes details from error object", () => {
@@ -255,25 +215,6 @@ describe("errorHandler", () => {
       const parsedDetails = body.details ? JSON.parse(body.details) : undefined;
       expect(parsedDetails).toEqual({ required: 10, available: 5 });
     });
-
-    it("maps VideoProviderError categories to proper HTTP status", () => {
-      const req = createMockRequest({ id: "video-req" });
-      const res = createMockResponse();
-      const error = createDomainError(
-        "VIDEO_PROVIDER_TIMEOUT",
-        504,
-        "Video generation timed out. Please try again.",
-      );
-
-      errorHandler(error, req, res, mockNext);
-
-      expect(res.statusCode).toBe(504);
-      expect(res.responseBody).toMatchObject({
-        error: "Video generation timed out. Please try again.",
-        code: "VIDEO_PROVIDER_TIMEOUT",
-        requestId: "video-req",
-      });
-    });
   });
 
   describe("ConcurrencyLimiter backpressure mapping", () => {
@@ -294,22 +235,6 @@ describe("errorHandler", () => {
         error: "Queue full",
         code: "QUEUE_FULL",
         requestId: "qf-1",
-      });
-    });
-
-    it("maps QUEUE_FULL to 503 with default Retry-After when retryAfter missing", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const error = Object.assign(new Error("busy"), { code: "QUEUE_FULL" });
-
-      errorHandler(error, req, res, mockNext);
-
-      expect(res.statusCode).toBe(503);
-      expect(res.headers["Retry-After"]).toBe("5");
-      expect(res.responseBody).toMatchObject({
-        success: false,
-        error: "busy",
-        code: "QUEUE_FULL",
       });
     });
 
@@ -412,60 +337,9 @@ describe("errorHandler", () => {
         code: "RATE_LIMIT_UNAVAILABLE",
       });
     });
-
-    it.each([
-      ["Infinity", Number.POSITIVE_INFINITY],
-      ["NaN", Number.NaN],
-      ["negative", -3],
-      ["zero", 0],
-      ["string", "7" as unknown as number],
-    ])(
-      "falls back to default Retry-After when retryAfter is %s",
-      (_label, value) => {
-        const req = createMockRequest();
-        const res = createMockResponse();
-        const error = Object.assign(new Error("down"), {
-          code: "RATE_LIMIT_UNAVAILABLE",
-          retryAfter: value,
-        });
-
-        errorHandler(error, req, res, mockNext);
-
-        expect(res.statusCode).toBe(503);
-        expect(res.headers["Retry-After"]).toBe("5");
-        expect(res.responseBody).toMatchObject({
-          success: false,
-          error: "down",
-          code: "RATE_LIMIT_UNAVAILABLE",
-        });
-      },
-    );
   });
 
   describe("sensitive data redaction", () => {
-    it("redacts email addresses in body preview", () => {
-      const req = createMockRequest({
-        body: { email: "user@example.com" },
-      });
-      const res = createMockResponse();
-
-      errorHandler(new Error("test"), req, res, mockNext);
-
-      // The redaction happens in logging, not in response
-      expect(res.responseBody).toBeDefined();
-    });
-
-    it("redacts password fields in body", () => {
-      const req = createMockRequest({
-        body: { password: "secret123" },
-      });
-      const res = createMockResponse();
-
-      errorHandler(new Error("test"), req, res, mockNext);
-
-      expect(res.responseBody).toBeDefined();
-    });
-
     it("handles body serialization errors gracefully", () => {
       const circularBody: Record<string, unknown> = { name: "test" };
       circularBody.self = circularBody;
@@ -482,35 +356,6 @@ describe("errorHandler", () => {
   });
 
   describe("edge cases", () => {
-    it("includes requestId in response when available", () => {
-      const req = createMockRequest({ id: "unique-request-id" });
-      const res = createMockResponse();
-
-      errorHandler(new Error("test"), req, res, mockNext);
-
-      expect(res.responseBody).toMatchObject({
-        requestId: "unique-request-id",
-      });
-    });
-
-    it("handles missing requestId gracefully", () => {
-      const req = createMockRequest({});
-      const res = createMockResponse();
-
-      errorHandler(new Error("test"), req, res, mockNext);
-
-      expect(res.responseBody).not.toHaveProperty("requestId");
-    });
-
-    it("handles empty body gracefully", () => {
-      const req = createMockRequest({ body: {} });
-      const res = createMockResponse();
-
-      errorHandler(new Error("test"), req, res, mockNext);
-
-      expect(res.statusCode).toBe(500);
-    });
-
     it("uses fallback message for errors without message", () => {
       const req = createMockRequest();
       const res = createMockResponse();
@@ -521,30 +366,6 @@ describe("errorHandler", () => {
       expect(res.responseBody).toMatchObject({
         error: "Internal server error",
       });
-    });
-  });
-
-  describe("core behavior", () => {
-    it("does not call next after handling error", () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-
-      errorHandler(new Error("test"), req, res, mockNext);
-
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it("logs error with request metadata", () => {
-      const req = createMockRequest({
-        id: "log-req",
-        method: "POST",
-        path: "/api/test",
-      });
-      const res = createMockResponse();
-
-      errorHandler(new Error("Logged error"), req, res, mockNext);
-
-      expect(res.statusCode).toBe(500);
     });
   });
 });

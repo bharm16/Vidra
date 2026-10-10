@@ -406,6 +406,10 @@ describe("#126 ambiguous outcome: provider failure vs provider-success-then-stor
     const providerFailure = turn.calls[1];
     const storageFailure = turn.calls[2];
 
+    expect(turn.status).toBe("partial");
+    expect(
+      turn.calls.filter((call) => call.status === "succeeded"),
+    ).toHaveLength(2);
     // Same studio-state decision: neither slot has a usable image.
     expect(providerFailure?.status).toBe("failed");
     expect(storageFailure?.status).toBe("failed");

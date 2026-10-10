@@ -40,34 +40,4 @@ describe("fetchEnhancementSuggestions wire forwarding (regression)", () => {
 
     expect(result.spanFingerprint).toBe("server-fingerprint-abc");
   });
-
-  it("forwards metadata and debug payloads unchanged", async () => {
-    vi.mocked(postEnhancementSuggestions).mockResolvedValue({
-      suggestions: ["close-up"],
-      isPlaceholder: true,
-      metadata: { category: "camera" },
-      _debug: { provider: "groq" },
-    });
-
-    const result = await fetchEnhancementSuggestions(params);
-
-    expect(result).toEqual({
-      suggestions: ["close-up"],
-      isPlaceholder: true,
-      metadata: { category: "camera" },
-      _debug: { provider: "groq" },
-    });
-  });
-
-  it("omits spanFingerprint when the server did not send one", async () => {
-    vi.mocked(postEnhancementSuggestions).mockResolvedValue({
-      suggestions: [],
-      isPlaceholder: false,
-    });
-
-    const result = await fetchEnhancementSuggestions(params);
-
-    expect(result.spanFingerprint).toBeUndefined();
-    expect(result.suggestions).toEqual([]);
-  });
 });

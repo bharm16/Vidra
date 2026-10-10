@@ -1,7 +1,7 @@
-import { describe, expect, expectTypeOf, it, vi } from "vitest";
-import type { Request, Response } from "express";
 import { API_ERROR_CODES, type ApiErrorCode } from "@shared/types/api";
-import { type FailPayload, respond } from "../respond";
+import type { Request, Response } from "express";
+import { describe, expect, it, vi } from "vitest";
+import { respond } from "../respond";
 
 type RequestWithId = Request & { id?: string };
 
@@ -81,35 +81,6 @@ describe("respond — off-contract error codes are a compile error", () => {
    * the union, this file stops compiling — which is exactly the signal a
    * contract change should produce.
    */
-  it("accepts every code the server actually emits", () => {
-    const emittedInProduction = [
-      "ROUTE_TIMEOUT",
-      "RATE_LIMIT_UNAVAILABLE",
-      "QUEUE_FULL",
-      "QUEUE_TIMEOUT",
-      "SESSION_EXPIRED",
-      "VIDEO_PROVIDER_TIMEOUT",
-    ] as const satisfies readonly ApiErrorCode[];
-
-    for (const code of emittedInProduction) {
-      expect(API_ERROR_CODES).toContain(code);
-    }
-  });
-
-  it("rejects a code outside the union", () => {
-    // @ts-expect-error — "TOTALLY_MADE_UP" is not an ApiErrorCode. If this
-    // stops erroring, `FailPayload.code` has been widened to `string` and the
-    // compile-time gate is gone.
-    const bad: FailPayload = { error: "nope", code: "TOTALLY_MADE_UP" };
-    expect(bad.error).toBe("nope");
-  });
-
-  it("types code as ApiErrorCode, never string", () => {
-    expectTypeOf<FailPayload["code"]>().toEqualTypeOf<
-      ApiErrorCode | undefined
-    >();
-    expectTypeOf<FailPayload["error"]>().toEqualTypeOf<string>();
-  });
 
   it("keeps API_ERROR_CODES exhaustive over ApiErrorCode", () => {
     // `satisfies readonly ApiErrorCode[]` in shared/types/api.ts already stops

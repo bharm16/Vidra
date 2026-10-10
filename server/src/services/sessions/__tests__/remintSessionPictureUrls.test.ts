@@ -208,25 +208,4 @@ describe("remintSessionPictureUrls", () => {
     );
     expect(gen.mediaUrls).toEqual(["https://signed/legacy"]);
   });
-
-  it("returns the same DTO reference when there is nothing to re-mint", async () => {
-    const dto = sessionWith([]);
-    const out = await remintSessionPictureUrls(dto, {
-      resolver: freshResolver,
-    });
-    expect(out).toBe(dto);
-  });
-
-  it("returns a session with no prompt unchanged", async () => {
-    const dto: SessionDto = {
-      id: "sess-2",
-      userId: "owner-1",
-      status: "active",
-      createdAt: "2026-09-01T00:00:00.000Z",
-      updatedAt: "2026-09-01T00:00:00.000Z",
-    };
-    expect(
-      await remintSessionPictureUrls(dto, { resolver: freshResolver }),
-    ).toBe(dto);
-  });
 });

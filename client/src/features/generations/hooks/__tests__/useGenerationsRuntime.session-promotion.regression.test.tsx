@@ -232,58 +232,6 @@ describe("regression: signed-in generation session promotion", () => {
     });
   });
 
-  it("promotes the local draft to a remote session before dispatching draft generation", async () => {
-    const { rerender } = renderHook(
-      ({ prompt }) =>
-        useGenerationsRuntime({
-          prompt,
-          promptVersionId: "version-1",
-          aspectRatio: "16:9",
-          duration: 8,
-          versions: [],
-          onCreateVersionIfNeeded: () => "version-1",
-          presentation: "hero",
-        }),
-      { initialProps: { prompt: mockPrompt } },
-    );
-
-    await waitFor(() => {
-      expect(setControlsMock).toHaveBeenCalled();
-    });
-
-    const controlsPayload = setControlsMock.mock.calls.at(-1)?.[0] as
-      | { onDraft?: (model: "wan-2.2") => void }
-      | undefined;
-
-    act(() => {
-      controlsPayload?.onDraft?.("wan-2.2");
-    });
-
-    await waitFor(() => {
-      expect(saveToHistoryMock).toHaveBeenCalledTimes(1);
-      expect(navigateMock).toHaveBeenCalledWith("/session/session-remote", {
-        replace: true,
-      });
-    });
-
-    expect(generateDraftMock).not.toHaveBeenCalled();
-
-    rerender({ prompt: mockPrompt });
-
-    await waitFor(() => {
-      expect(generateDraftMock).toHaveBeenCalledTimes(1);
-    });
-
-    expect(generateDraftMock).toHaveBeenCalledWith(
-      "wan-2.2",
-      mockPrompt,
-      expect.objectContaining({
-        promptVersionId: "version-1",
-      }),
-    );
-    expect(saveToHistoryMock).toHaveBeenCalledTimes(1);
-  });
-
   it("dispatches a free render at zero credits instead of silently blocking the enabled button", async () => {
     mockBalance = 0;
     mockSessionId = "session-remote";

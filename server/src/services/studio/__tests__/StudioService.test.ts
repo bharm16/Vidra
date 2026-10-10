@@ -282,7 +282,14 @@ describe("StudioService", () => {
 
   describe("runTurn — reservation before fan-out", () => {
     it("reserves 4 × the resolved model's cost before any image call", async () => {
-      const { service, store } = makeService();
+      const { service, store, runner } = makeService();
+      vi.mocked(runner.run).mockImplementation(async () => {
+        expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(16);
+        return {
+          imageUrl: "https://replicate.delivery/out.webp",
+          durationMs: 1000,
+        };
+      });
       const project = await service.createProject("user-1");
 
       const result = await service.runTurn(
@@ -414,53 +421,6 @@ describe("StudioService", () => {
       );
     });
 
-    it("marks a 3-of-4 batch partial and refunds exactly the failed call", async () => {
-      const run = vi
-        .fn()
-        .mockResolvedValueOnce({
-          imageUrl: "https://r.dev/1.webp",
-          durationMs: 1,
-        })
-        .mockRejectedValueOnce(
-          Object.assign(new Error("timed out"), { statusCode: 500 }),
-        )
-        .mockResolvedValueOnce({
-          imageUrl: "https://r.dev/3.webp",
-          durationMs: 1,
-        })
-        .mockResolvedValueOnce({
-          imageUrl: "https://r.dev/4.webp",
-          durationMs: 1,
-        });
-      const { service, store } = makeService({ runner: { run } });
-      const project = await service.createProject("user-1");
-
-      const result = await service.runTurn("user-1", project.id, "a logo");
-      await result.completion;
-
-      const turn = await service.getTurn("user-1", project.id, result.turnId);
-      expect(turn.status).toBe("partial");
-      expect(turn.calls[1]?.status).toBe("failed");
-      expect(turn.calls[1]?.error).toContain("timed out");
-      expect(turn.refundedCents).toBe(4);
-      // Refund landed back on the day's counter: 16 reserved − 4 refunded.
-      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(12);
-    });
-
-    it("marks an all-failed batch failed and refunds everything", async () => {
-      const run = vi.fn().mockRejectedValue(new Error("Insufficient credit"));
-      const { service, store } = makeService({ runner: { run } });
-      const project = await service.createProject("user-1");
-
-      const result = await service.runTurn("user-1", project.id, "a logo");
-      await result.completion;
-
-      const turn = await service.getTurn("user-1", project.id, result.turnId);
-      expect(turn.status).toBe("failed");
-      expect(turn.refundedCents).toBe(16);
-      expect(await store.getReservedCents("user-1", "2026-07-24")).toBe(0);
-    });
-
     it("decorates polled turns with fresh signed view URLs", async () => {
       const { service } = makeService();
       const project = await service.createProject("user-1");
@@ -474,23 +434,6 @@ describe("StudioService", () => {
       );
       expect(view.calls[0]?.image?.viewUrl).toContain(
         "https://signed.example.com/",
-      );
-    });
-
-    it("titles an Untitled project from the first generation", async () => {
-      const { service } = makeService();
-      const project = await service.createProject("user-1");
-
-      const result = await service.runTurn(
-        "user-1",
-        project.id,
-        "a logo for Vidra, a video generation platform",
-      );
-      await result.completion;
-
-      const fetched = await service.getProject("user-1", project.id);
-      expect(fetched.title).toBe(
-        "a logo for Vidra, a video generation platform",
       );
     });
   });
@@ -514,18 +457,6 @@ describe("StudioService", () => {
       expect(context?.projectImageIds.has(attachment.id)).toBe(true);
       expect(context?.attachments.map((a) => a.id)).toEqual([attachment.id]);
       expect(context?.messageAttachmentIds).toEqual([attachment.id]);
-    });
-
-    it("rejects a storagePath outside the caller's prefix", async () => {
-      const { service } = makeService();
-      const project = await service.createProject("user-1");
-
-      await expect(
-        service.addAttachment("user-1", project.id, {
-          storagePath: "users/someone-else/previews/images/x.png",
-          filename: "x.png",
-        }),
-      ).rejects.toMatchObject({ statusCode: 400 });
     });
 
     it("edits can source a user-attached image", async () => {

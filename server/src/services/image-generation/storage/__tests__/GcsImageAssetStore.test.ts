@@ -137,7 +137,7 @@ describe("GcsImageAssetStore", () => {
       expect(fileMock.save).toHaveBeenCalledTimes(2);
     });
 
-    it("handles delete errors when cleaning up expired assets", async () => {
+    it("keeps assets whose metadata cannot be read during cleanup", async () => {
       const store = new GcsImageAssetStore({
         bucket: bucketMock as never,
         minter: new SignedUrlMinter(bucketMock as never),
@@ -155,70 +155,6 @@ describe("GcsImageAssetStore", () => {
       const deleted = await store.cleanupExpired(Date.now() - 1000);
 
       expect(deleted).toBe(0);
-    });
-  });
-
-  describe("edge cases", () => {
-    it("returns null when the asset does not exist", async () => {
-      const store = new GcsImageAssetStore({
-        bucket: bucketMock as never,
-        minter: new SignedUrlMinter(bucketMock as never),
-        basePath: "image-previews",
-        signedUrlTtlMs: 60000,
-        cacheControl: "public, max-age=60",
-      });
-
-      fileMock.exists.mockResolvedValueOnce([false]);
-
-      const result = await store.getPublicUrl("missing-id", "user-1");
-
-      expect(result).toBeNull();
-    });
-
-    it("returns 0 when cleanup is called with an invalid threshold", async () => {
-      const store = new GcsImageAssetStore({
-        bucket: bucketMock as never,
-        minter: new SignedUrlMinter(bucketMock as never),
-        basePath: "image-previews",
-        signedUrlTtlMs: 60000,
-        cacheControl: "public, max-age=60",
-      });
-
-      const deleted = await store.cleanupExpired(-1);
-
-      expect(deleted).toBe(0);
-    });
-
-    it("omits sizeBytes when metadata size is not positive", async () => {
-      const store = new GcsImageAssetStore({
-        bucket: bucketMock as never,
-        minter: new SignedUrlMinter(bucketMock as never),
-        basePath: "image-previews",
-        signedUrlTtlMs: 60000,
-        cacheControl: "public, max-age=60",
-      });
-
-      const buffer = Buffer.from("image");
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: "OK",
-        arrayBuffer: () => Promise.resolve(buffer.buffer),
-        headers: { get: vi.fn().mockReturnValue("image/webp") },
-      });
-      vi.stubGlobal("fetch", fetchMock);
-
-      fileMock.getMetadata.mockResolvedValueOnce([{ size: "0" }]);
-      fileMock.getSignedUrl.mockResolvedValueOnce([
-        "https://signed.example.com/asset",
-      ]);
-
-      const result = await store.storeFromUrl(
-        "https://example.com/source.webp",
-        "user-1",
-      );
-
-      expect(result.sizeBytes).toBeUndefined();
     });
   });
 

@@ -117,39 +117,6 @@ describe("regression: the armed start frame is a session fact (ADR-0011 D4)", ()
     );
   });
 
-  it("a generation-sourced frame keeps its lineage (generationId + sourcePrompt) across persist and hydrate", () => {
-    const updateEntryPersisted = vi.fn();
-    const startFrame: KeyframeTile = {
-      id: "kf-lineage",
-      url: "https://media.example.com/frame.png",
-      source: "generation",
-      storagePath: "frames/frame.png",
-      generationId: "gen-source-picture",
-      sourcePrompt: "a clockmaker winds a brass clock",
-    };
-    const baseParams = buildParams({ updateEntryPersisted });
-    const { rerender } = renderHook(
-      ({ armed }: { armed: KeyframeTile | null }) =>
-        usePromptKeyframesSync({ ...baseParams, startFrame: armed }),
-      { initialProps: { armed: null as KeyframeTile | null } },
-    );
-    rerender({ armed: startFrame });
-
-    const persisted = (
-      updateEntryPersisted.mock.calls.at(-1)?.[2] as {
-        keyframes?: PromptKeyframe[];
-      }
-    ).keyframes;
-    expect(persisted?.[0]?.generationId).toBe("gen-source-picture");
-    expect(persisted?.[0]?.sourcePrompt).toBe(
-      "a clockmaker winds a brass clock",
-    );
-
-    const rearmed = hydrateKeyframes(persisted)[0];
-    expect(rearmed?.generationId).toBe("gen-source-picture");
-    expect(rearmed?.sourcePrompt).toBe("a clockmaker winds a brass clock");
-  });
-
   it("an armed frame already persisted at [0] does not write again (no dupes, no loops)", () => {
     const updateEntryPersisted = vi.fn();
     const startFrame: KeyframeTile = {

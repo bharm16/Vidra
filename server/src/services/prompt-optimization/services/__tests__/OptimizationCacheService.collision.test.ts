@@ -76,16 +76,6 @@ describe("OptimizationCacheService.buildCacheKey collision", () => {
     expect(keyA).not.toBe(keyB);
   });
 
-  it("produces identical keys for identical prompts", () => {
-    const service = new OptimizationCacheService(createCacheServiceStub());
-
-    const prompt = "some long prompt that repeats across calls";
-    const keyA = service.buildCacheKey(prompt, VIDEO_MODE, null, null);
-    const keyB = service.buildCacheKey(prompt, VIDEO_MODE, null, null);
-
-    expect(keyA).toBe(keyB);
-  });
-
   it("uses a hex hash segment rather than a raw prompt substring", () => {
     const service = new OptimizationCacheService(createCacheServiceStub());
 

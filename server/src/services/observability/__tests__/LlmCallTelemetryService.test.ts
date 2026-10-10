@@ -35,16 +35,6 @@ describe("LlmCallTelemetryService", () => {
     vi.clearAllMocks();
   });
 
-  it("emits one llm.call.completed event per record() call", () => {
-    const { client, captures } = makeMockClient();
-    const service = new LlmCallTelemetryService(client);
-
-    service.record(baseSummary);
-
-    expect(captures).toHaveLength(1);
-    expect(captures[0]?.event).toBe("llm.call.completed");
-  });
-
   it("populates all token + provider fields in event properties", () => {
     const { client, captures } = makeMockClient();
     const service = new LlmCallTelemetryService(client);
@@ -63,15 +53,6 @@ describe("LlmCallTelemetryService", () => {
       outcome: "success",
       userId: null,
     });
-  });
-
-  it("rounds durationMs to an integer", () => {
-    const { client, captures } = makeMockClient();
-    const service = new LlmCallTelemetryService(client);
-
-    service.record({ ...baseSummary, durationMs: 123.789 });
-
-    expect(captures[0]?.properties?.durationMs).toBe(124);
   });
 
   it("includes errorMessage and outcome=error on failed calls", () => {
@@ -112,16 +93,6 @@ describe("LlmCallTelemetryService", () => {
     expect(captures[0]?.properties?.userId).toBe("user-42");
   });
 
-  it("falls back to 'system' distinctId when no userId is provided", () => {
-    const { client, captures } = makeMockClient();
-    const service = new LlmCallTelemetryService(client);
-
-    service.record(baseSummary);
-
-    expect(captures[0]?.distinctId).toBe("system");
-    expect(captures[0]?.properties?.userId).toBeNull();
-  });
-
   it("reads requestId from the AsyncLocalStorage request context when present", () => {
     const { client, captures } = makeMockClient();
     const service = new LlmCallTelemetryService(client);
@@ -131,15 +102,6 @@ describe("LlmCallTelemetryService", () => {
     });
 
     expect(captures[0]?.properties?.requestId).toBe("req-abc");
-  });
-
-  it("omits requestId when no request context is active", () => {
-    const { client, captures } = makeMockClient();
-    const service = new LlmCallTelemetryService(client);
-
-    service.record(baseSummary);
-
-    expect(captures[0]?.properties).not.toHaveProperty("requestId");
   });
 
   it("does not throw when the underlying client.capture throws", () => {

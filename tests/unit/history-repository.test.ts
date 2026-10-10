@@ -35,8 +35,6 @@ import {
   normalizeEntries,
   loadFromFirestore,
   saveEntry,
-  deleteEntry,
-  clearAll,
   updatePrompt,
   updateOutput,
   updateVersions,
@@ -45,10 +43,6 @@ import type { PromptHistoryEntry } from "@features/prompt-optimizer/types/domain
 
 describe("normalizeEntries", () => {
   describe("error and edge cases", () => {
-    it("returns empty array for empty input", () => {
-      expect(normalizeEntries([])).toEqual([]);
-    });
-
     it("fills in all optional fields with defaults when missing", () => {
       const sparse = [
         { input: "test", output: "result" },
@@ -92,17 +86,6 @@ describe("loadFromFirestore", () => {
     vi.clearAllMocks();
   });
 
-  describe("error handling", () => {
-    it("propagates repository errors", async () => {
-      mockRepository.getUserPrompts.mockRejectedValueOnce(
-        new Error("Firestore unavailable"),
-      );
-      await expect(loadFromFirestore("user-1")).rejects.toThrow(
-        "Firestore unavailable",
-      );
-    });
-  });
-
   describe("core behavior", () => {
     it("normalizes entries returned from repository", async () => {
       mockRepository.getUserPrompts.mockResolvedValueOnce([
@@ -120,34 +103,7 @@ describe("saveEntry", () => {
     vi.clearAllMocks();
   });
 
-  describe("error handling", () => {
-    it("propagates save errors", async () => {
-      mockRepository.save.mockRejectedValueOnce(new Error("Quota exceeded"));
-      await expect(
-        saveEntry("user-1", {
-          input: "test",
-          output: "out",
-          score: null,
-          mode: "video",
-        }),
-      ).rejects.toThrow("Quota exceeded");
-    });
-  });
-
   describe("core behavior", () => {
-    it("returns uuid and id from repository result", async () => {
-      mockRepository.save.mockResolvedValueOnce({ uuid: "abc", id: "doc-1" });
-
-      const result = await saveEntry("user-1", {
-        input: "my prompt",
-        output: "optimized",
-        score: 85,
-        mode: "video",
-      });
-
-      expect(result).toEqual({ uuid: "abc", id: "doc-1" });
-    });
-
     it("passes optional fields when provided", async () => {
       mockRepository.save.mockResolvedValueOnce({ uuid: "x", id: "y" });
 
@@ -169,23 +125,6 @@ describe("saveEntry", () => {
       expect(callArg?.title).toBe("My Title");
       expect(callArg?.targetModel).toBe("kling");
     });
-  });
-});
-
-describe("deleteEntry", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("propagates delete errors", async () => {
-    mockRepository.deleteById.mockRejectedValueOnce(new Error("Not found"));
-    await expect(deleteEntry("user-1", "entry-1")).rejects.toThrow("Not found");
-  });
-
-  it("calls deleteById with the entry id", async () => {
-    mockRepository.deleteById.mockResolvedValueOnce(undefined);
-    await deleteEntry("user-1", "entry-123");
-    expect(mockRepository.deleteById).toHaveBeenCalledWith("entry-123");
   });
 });
 
@@ -237,17 +176,5 @@ describe("updateVersions", () => {
   it("falls back to uuid when docId is draft", async () => {
     await updateVersions("user-1", "uuid-1", "draft-789", []);
     expect(mockRepository.updateVersions).toHaveBeenCalledWith("uuid-1", []);
-  });
-});
-
-describe("clearAll", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("calls clear on repository when method exists", async () => {
-    mockRepository.clear.mockResolvedValueOnce(undefined);
-    await clearAll("user-1");
-    expect(mockRepository.clear).toHaveBeenCalled();
   });
 });

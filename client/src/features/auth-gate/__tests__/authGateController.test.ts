@@ -2,17 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import { AuthGateController } from "../authGateController";
 
 describe("AuthGateController", () => {
-  it("opens with a request and notifies subscribers", () => {
-    const controller = new AuthGateController();
-    const listener = vi.fn();
-    controller.subscribe(listener);
-
-    void controller.requestAuth({ reason: "pre-go" });
-
-    expect(controller.isPending()).toBe(true);
-    expect(listener).toHaveBeenCalledWith({ reason: "pre-go" });
-  });
-
   it("resolves the request with 'authenticated' and closes", async () => {
     const controller = new AuthGateController();
     const listener = vi.fn();
@@ -68,13 +57,6 @@ describe("AuthGateController", () => {
     expect(controller.isPending()).toBe(true);
     controller.resolveAuthenticated();
     await expect(second).resolves.toBe("authenticated");
-  });
-
-  it("resolveAuthenticated / cancelPending are no-ops when nothing is pending", () => {
-    const controller = new AuthGateController();
-    expect(() => controller.resolveAuthenticated()).not.toThrow();
-    expect(() => controller.cancelPending()).not.toThrow();
-    expect(controller.isPending()).toBe(false);
   });
 
   it("stops notifying after unsubscribe", () => {

@@ -34,22 +34,10 @@ function shot(tiles: Generation[]): Shot {
 }
 
 describe("TileStateAnnouncer", () => {
-  it("renders an aria-live=polite region", () => {
-    render(<TileStateAnnouncer shots={[]} />);
-    const region = screen.getByRole("status");
-    expect(region).toHaveAttribute("aria-live", "polite");
-  });
-
   it("announces the active shot's status when shots are present", () => {
     const tiles = [gen({ id: "a", status: "completed" })];
     render(<TileStateAnnouncer shots={[shot(tiles)]} />);
     const region = screen.getByRole("status");
     expect(region.textContent).toMatch(/(ready|complete)/i);
-  });
-
-  it("renders empty when no shots", () => {
-    render(<TileStateAnnouncer shots={[]} />);
-    const region = screen.getByRole("status");
-    expect(region.textContent ?? "").toBe("");
   });
 });

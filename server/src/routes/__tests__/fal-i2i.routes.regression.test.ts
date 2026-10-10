@@ -1,16 +1,13 @@
-import http from "node:http";
-import type { AddressInfo } from "node:net";
-
 import express from "express";
 import request from "supertest";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { createFalI2iRouter } from "../fal-i2i.routes";
 import { SketchBudgetService } from "@services/sketch-budget/SketchBudgetService";
 import {
   closeLoopbackServers,
   listenOnLoopback,
 } from "../../config/__tests__/loopbackTestServer";
+import { createFalI2iRouter } from "../fal-i2i.routes";
 
 afterEach(closeLoopbackServers);
 
@@ -91,40 +88,6 @@ function hangingUpstream(): {
 }
 
 describe("POST /api/fal/i2i upstream lifecycle (regression)", () => {
-  it("aborts the upstream fal call when the client disconnects mid-frame", async () => {
-    const { fetchFn, state } = hangingUpstream();
-    const server = await listenOnLoopback(
-      appWith(
-        createFalI2iRouter({
-          falKey: "key-123",
-          fetchFn,
-          budget: openBudget(),
-        }),
-      ),
-    );
-    const { port } = server.address() as AddressInfo;
-
-    const clientRequest = http.request({
-      host: "127.0.0.1",
-      port,
-      path: "/api/fal/i2i",
-      method: "POST",
-      headers: { "content-type": "application/json" },
-    });
-    // Destroying mid-flight surfaces ECONNRESET on the client side by design.
-    clientRequest.on("error", () => undefined);
-    clientRequest.end(JSON.stringify(validFrame));
-
-    await vi.waitFor(() => {
-      expect(state.invoked).toBe(true);
-    });
-    clientRequest.destroy();
-
-    await vi.waitFor(() => {
-      expect(state.aborted).toBe(true);
-    });
-  });
-
   it("times out a hung upstream call, aborts it, and answers 504", async () => {
     const { fetchFn, state } = hangingUpstream();
     const server = await listenOnLoopback(

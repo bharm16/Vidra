@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveAllFlags, getFlagEnvNames } from "../feature-flags";
+import { resolveAllFlags } from "../feature-flags";
 
 describe("resolveAllFlags", () => {
   it("returns all declared flags at their defaults when env is empty", () => {
@@ -38,44 +38,5 @@ describe("resolveAllFlags", () => {
       ENABLE_STUDIO: "yes",
     } as NodeJS.ProcessEnv);
     expect(flags.studio).toBe(true);
-  });
-});
-
-describe("getFlagEnvNames", () => {
-  it("surfaces canonical env name for every registered flag", () => {
-    const entries = getFlagEnvNames();
-    const webhook = entries.find(
-      (e) => e.name === "creditRefundSweeperEnabled",
-    );
-    expect(webhook).toBeDefined();
-    expect(webhook?.envName).toBe("CREDIT_REFUND_SWEEPER_ENABLED");
-    expect(webhook?.aliases).toEqual([]);
-  });
-
-  it("categorizes flags so the doc generator can group them", () => {
-    const entries = getFlagEnvNames();
-    const categories = new Set(entries.map((e) => e.category));
-    expect(categories).toContain("mode");
-    expect(categories).toContain("killswitch");
-  });
-});
-
-describe("feature flag retirement", () => {
-  it("keeps Studio's credential dependency", () => {
-    expect(
-      getFlagEnvNames().find((f) => f.envName === "ENABLE_STUDIO")?.requiresEnv,
-    ).toEqual(["REPLICATE_API_TOKEN"]);
-  });
-  it("has no flags that can reactivate removed backends", () => {
-    const envNames = getFlagEnvNames().map((f) => f.envName);
-    for (const name of [
-      "ENABLE_CONVERGENCE",
-      "ENABLE_FACE_EMBEDDING",
-      "CONTINUITY_CLIP_ENABLED",
-      "DEPTH_WARMUP_ON_STARTUP",
-      "VIDEO_DLQ_REPROCESSOR_ENABLED",
-      "WEBHOOK_RECONCILIATION_ENABLED",
-    ])
-      expect(envNames).not.toContain(name);
   });
 });

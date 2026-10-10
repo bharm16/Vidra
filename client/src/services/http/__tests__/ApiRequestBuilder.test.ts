@@ -1,29 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { ApiRequestBuilder } from "../ApiRequestBuilder";
-import type { HttpClientConfig } from "../HttpClientConfig";
+import { HttpClientConfig } from "../HttpClientConfig";
 
 describe("ApiRequestBuilder", () => {
-  it("builds a default GET request with merged headers and timeout signal", () => {
-    const signal = new AbortController().signal;
-    const config = {
-      buildUrl: vi.fn().mockReturnValue("https://api.test/users"),
-      mergeHeaders: vi.fn().mockReturnValue({ "X-Test": "1" }),
-      createSignal: vi.fn().mockReturnValue(signal),
-    } as unknown as HttpClientConfig;
-
-    const builder = new ApiRequestBuilder(config);
-    const result = builder.build("/users");
-
-    expect(config.buildUrl).toHaveBeenCalledWith("/users");
-    expect(config.mergeHeaders).toHaveBeenCalledWith(undefined);
-    expect(config.createSignal).toHaveBeenCalledWith(undefined);
-    expect(result.url).toBe("https://api.test/users");
-    expect(result.init.method).toBe("GET");
-    expect(result.init.headers).toEqual({ "X-Test": "1" });
-    expect(result.init.signal).toBe(signal);
-    expect(result.init.body).toBeUndefined();
-  });
-
   it("prefers provided signal over generated timeout signal", () => {
     const fallbackSignal = new AbortController().signal;
     const providedSignal = new AbortController().signal;
@@ -44,11 +23,10 @@ describe("ApiRequestBuilder", () => {
   });
 
   it("serializes object body for non-GET methods", () => {
-    const config = {
-      buildUrl: vi.fn().mockReturnValue("https://api.test/resource"),
-      mergeHeaders: vi.fn().mockReturnValue({}),
-      createSignal: vi.fn().mockReturnValue(new AbortController().signal),
-    } as unknown as HttpClientConfig;
+    const config = HttpClientConfig.fromApiConfig({
+      baseURL: "https://api.test",
+      timeout: { default: 5000 },
+    });
 
     const builder = new ApiRequestBuilder(config);
     const result = builder.build("/resource", {
@@ -57,6 +35,10 @@ describe("ApiRequestBuilder", () => {
     });
 
     expect(result.init.method).toBe("POST");
+    expect(result.url).toBe("https://api.test/resource");
+    expect(new Headers(result.init.headers).get("Content-Type")).toBe(
+      "application/json",
+    );
     expect(result.init.body).toBe(
       JSON.stringify({ name: "Ada", active: true }),
     );

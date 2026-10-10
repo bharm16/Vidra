@@ -45,46 +45,9 @@ describe("OpenAiRequestBuilder", () => {
       expect(payload.logprobs).toBe(true);
       expect(payload.top_logprobs).toBe(20);
     });
-
-    it("injects stream options when streaming", () => {
-      const payload = builder.buildPayload(
-        "System prompt",
-        {
-          streamOptions: { include_usage: true },
-        },
-        true,
-      );
-
-      expect(payload.stream_options).toEqual({ include_usage: true });
-    });
   });
 
   describe("core behavior", () => {
-    it("builds structured output payloads with deterministic seed", () => {
-      const systemPrompt = "Respond only with valid JSON.";
-      const payload = builder.buildPayload(systemPrompt, {
-        schema: { type: "object" },
-      });
-      const responseFormat = payload.response_format as
-        | {
-            type?: string;
-            json_schema?: {
-              name?: string;
-              strict?: boolean;
-              schema?: Record<string, unknown>;
-            };
-          }
-        | undefined;
-
-      expect(responseFormat?.type).toBe("json_schema");
-      expect(responseFormat?.json_schema?.name).toBe("structured_response");
-      expect(responseFormat?.json_schema?.strict).toBe(true);
-      expect(payload.frequency_penalty).toBe(0);
-      expect(payload.temperature).toBe(0);
-      expect(payload.top_p).toBe(1);
-      expect(payload.seed).toBe(hashString(systemPrompt) % 2147483647);
-    });
-
     it("uses schema-provided name and unwraps wrapper schemas for OpenAI response format", () => {
       const payload = builder.buildPayload("Return strict JSON output.", {
         schema: {

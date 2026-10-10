@@ -2,7 +2,6 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
-import { toPublicLabelSpansResult } from "@routes/labelSpans/transform";
 import { SpanLabelingCacheService } from "@services/cache/SpanLabelingCacheService";
 import type { AIModelService } from "@services/ai-model/AIModelService";
 import type { AIExecutionPort } from "@services/ai-model/ports/AIExecutionPort";
@@ -18,7 +17,7 @@ const OPENAI_EXECUTION: ResolvedExecution = {
   model: "gpt-4o-2024-08-06",
   viaFallback: false,
 };
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 /**
  * Route-seam tests for POST /api/llm/label-spans.
@@ -94,13 +93,12 @@ describe("label-spans route seam", () => {
     ]);
     const app = makeApp(port);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/api/llm/label-spans")
         .send({ text: LLM_ONLY_TEXT })
         .expect(200),
     );
-    if (!response) return;
 
     expect(response.body.success).toBe(true);
     const spans = response.body.data?.spans as Array<{
@@ -113,18 +111,17 @@ describe("label-spans route seam", () => {
     expect(spans.length).toBeGreaterThan(0);
     expect(spans[0]?.text).toBe("quixotic bureaucrat");
     expect(spans[0]?.category).toBe("subject.identity");
-    expect(typeof spans[0]?.start).toBe("number");
-    expect(typeof spans[0]?.end).toBe("number");
+    expect(spans[0]?.start).toBe(4);
+    expect(spans[0]?.end).toBe(23);
   });
 
   it("returns the canonical 400 error envelope for an invalid body", async () => {
     const port = makePort([]);
     const app = makeApp(port);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app).post("/api/llm/label-spans").send({}).expect(400),
     );
-    if (!response) return;
 
     expect(response.body.success).toBe(false);
     expect(typeof response.body.error).toBe("string");
@@ -135,13 +132,12 @@ describe("label-spans route seam", () => {
     const port = makePort(["definitely not json {{{"]);
     const app = makeApp(port);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/api/llm/label-spans")
         .send({ text: LLM_ONLY_TEXT })
         .expect(502),
     );
-    if (!response) return;
 
     expect(response.body.success).toBe(false);
     expect(typeof response.body.error).toBe("string");
@@ -151,10 +147,9 @@ describe("label-spans route seam", () => {
     const port = makePort([]);
     const app = makeApp(port);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app).post("/api/llm/label-spans/stream").send({}).expect(400),
     );
-    if (!response) return;
 
     expect(response.body.success).toBe(false);
     expect(port.calls.length).toBe(0);
@@ -166,13 +161,12 @@ describe("label-spans route seam", () => {
     ]);
     const app = makeApp(port);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/api/llm/label-spans/stream")
         .send({ text: LLM_ONLY_TEXT })
         .expect(200),
     );
-    if (!response) return;
 
     expect(response.text).toContain("quixotic bureaucrat");
   });
@@ -181,12 +175,11 @@ describe("label-spans route seam", () => {
     const port = makePort(["definitely not json {{{"]);
     const app = makeApp(port);
 
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/api/llm/label-spans/stream")
         .send({ text: LLM_ONLY_TEXT }),
     );
-    if (!response) return;
 
     // Before any bytes are streamed the handler still owns the status line —
     // the failure must surface as an error status or an NDJSON error record,
@@ -206,7 +199,7 @@ describe("label-spans route seam", () => {
     const app = makeApp(port, cache);
     const body = { text: LLM_ONLY_TEXT };
 
-    const results = await runSupertestOrSkip(async () => {
+    const results = await runSupertestRequest(async () => {
       const first = await request(app)
         .post("/api/llm/label-spans")
         .send(body)
@@ -217,7 +210,6 @@ describe("label-spans route seam", () => {
         .expect(200);
       return { first, second };
     });
-    if (!results) return;
 
     expect(results.first.headers["x-cache"]).toBe("MISS");
     expect(results.second.headers["x-cache"]).toBe("HIT");
@@ -240,13 +232,12 @@ describe("label-spans route seam", () => {
     const app = makeApp(port, cache);
     const body = { text: LLM_ONLY_TEXT };
 
-    const results = await runSupertestOrSkip(() =>
+    const results = await runSupertestRequest(() =>
       Promise.all([
         request(app).post("/api/llm/label-spans").send(body).expect(200),
         request(app).post("/api/llm/label-spans").send(body).expect(200),
       ]),
     );
-    if (!results) return;
 
     // Single-flight is the invariant: one upstream call serves both
     // responses with identical payloads. (Which layer reports the dedup —
@@ -257,36 +248,5 @@ describe("label-spans route seam", () => {
       expect(response.body.success).toBe(true);
     }
     expect(results[0]?.body.data.spans).toEqual(results[1]?.body.data.spans);
-  });
-});
-
-describe("label-spans public transform (pure)", () => {
-  it("maps role into public category and keeps positional metadata", () => {
-    const result = toPublicLabelSpansResult({
-      spans: [
-        {
-          text: "quixotic bureaucrat",
-          role: "subject.identity",
-          confidence: 0.9,
-          start: 4,
-          end: 23,
-        },
-      ],
-      meta: { version: "v1", notes: "" },
-    } as never);
-
-    expect(result.spans[0]?.category).toBe("subject.identity");
-    expect(result.spans[0]?.start).toBe(4);
-    expect(result.spans[0]?.end).toBe(23);
-  });
-
-  it("falls back to a valid taxonomy id when role is unavailable", () => {
-    const result = toPublicLabelSpansResult({
-      spans: [{ text: "something", confidence: 0.5, start: 0, end: 9 }],
-      meta: { version: "v1", notes: "" },
-    } as never);
-
-    expect(typeof result.spans[0]?.category).toBe("string");
-    expect((result.spans[0]?.category ?? "").length).toBeGreaterThan(0);
   });
 });

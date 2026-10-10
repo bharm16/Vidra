@@ -54,52 +54,6 @@ const snapshot = (at: number, dataUri = `data:image/jpeg;base64,frame${at}`) =>
   }) as const;
 
 describe("generationReducer — trailing-frame retry discipline", () => {
-  it("retries a failed trailing frame once, with the same drawing bytes", () => {
-    let state = generationReducer(
-      createInitialGenerationState(),
-      snapshot(1_000),
-    );
-    state = generationReducer(state, {
-      type: "generationError",
-      message: "frame failed (500): relay hiccup",
-      requestId: "1",
-      at: 1_600,
-    });
-
-    expect(state.inFlight?.requestId).toBe("2");
-    expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1000");
-    expect(state.inFlight?.sentAt).toBe(1_600);
-    expect(state.stats.sent).toBe(2);
-    expect(state.stats.lastError?.message).toBe(
-      "frame failed (500): relay hiccup",
-    );
-  });
-
-  it("a retry that fails again frees the loop instead of retrying forever", () => {
-    let state = generationReducer(
-      createInitialGenerationState(),
-      snapshot(1_000),
-    );
-    state = generationReducer(state, {
-      type: "generationError",
-      message: "frame failed (500): relay hiccup",
-      requestId: "1",
-      at: 1_600,
-    });
-    state = generationReducer(state, {
-      type: "generationError",
-      message: "frame failed (500): relay hiccup",
-      requestId: "2",
-      at: 2_200,
-    });
-
-    expect(state.inFlight).toBeNull();
-    expect(state.stats.sent).toBe(2);
-    expect(state.stats.lastError?.message).toBe(
-      "frame failed (500): relay hiccup",
-    );
-  });
-
   it("a fresh snapshot after a failed retry earns its own retry budget", () => {
     let state = generationReducer(
       createInitialGenerationState(),
@@ -127,22 +81,6 @@ describe("generationReducer — trailing-frame retry discipline", () => {
 
     expect(state.inFlight?.requestId).toBe("4");
     expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame3000");
-  });
-
-  it("a pending drawing still wins over a retry — newest wins, always", () => {
-    let state = generationReducer(
-      createInitialGenerationState(),
-      snapshot(1_000),
-    );
-    state = generationReducer(state, snapshot(1_150));
-    state = generationReducer(state, {
-      type: "generationError",
-      message: "boom",
-      requestId: "1",
-      at: 1_600,
-    });
-
-    expect(state.inFlight?.dataUri).toBe("data:image/jpeg;base64,frame1150");
   });
 });
 

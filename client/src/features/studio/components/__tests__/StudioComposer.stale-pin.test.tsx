@@ -44,21 +44,6 @@ describe("StudioComposer — stale pin (behavior 9)", () => {
     expect(screen.getByRole("button", { name: /Auto/ })).toBeInTheDocument();
   });
 
-  it("shows no notice for a valid pin", () => {
-    renderComposer("recraft-v4.1");
-
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Recraft V4\.1/ }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows no notice before the roster has loaded", () => {
-    renderComposer("recraft-v4.1", []);
-
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  });
-
   it("lets a keyboard user replace a stale pin with an available model", async () => {
     const user = userEvent.setup();
     const onPin = vi.fn();

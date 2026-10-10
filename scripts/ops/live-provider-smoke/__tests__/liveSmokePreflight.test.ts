@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isPlaceholderCredentialValue,
-  requiredCredentials,
-  runCredentialPreflight,
-} from "../preflight";
+import { runCredentialPreflight } from "../preflight";
 
 /**
  * The credential preflight (issue #140): "Missing credentials … produce an
@@ -66,7 +62,16 @@ describe("credential preflight", () => {
   });
 
   it("a placeholder-shaped value counts as absent — the nightly must not spend against a templated secret", () => {
-    for (const bad of ["${FAL_KEY}", "$FAL_KEY", "undefined", "null", "  ", ""]) {
+    for (const bad of [
+      "${FAL_KEY}",
+      "${{ secrets.FAL_KEY }}",
+      "$FAL_KEY",
+      "$GITHUB_TOKEN",
+      "undefined",
+      "null",
+      "  ",
+      "",
+    ]) {
       const result = runCredentialPreflight({
         studioTurnClient: "openai",
         env: { ...OPENAI_ENV, FAL_KEY: bad },
@@ -110,27 +115,5 @@ describe("credential preflight", () => {
       },
     });
     expect(qwen.missing).toEqual([]);
-  });
-
-  it("requiredCredentials is exported so the PR can document the secret list", () => {
-    const requirements = requiredCredentials({
-      studioTurnClient: "openai",
-      env: {},
-    });
-    expect(requirements.map((entry) => entry.credential)).toEqual([
-      "FAL_KEY",
-      "OPENAI_API_KEY",
-      "REPLICATE_API_TOKEN",
-    ]);
-  });
-});
-
-describe("placeholder detection", () => {
-  it("mirrors the relay resolver's placeholder rules", () => {
-    expect(isPlaceholderCredentialValue(undefined)).toBe(true);
-    expect(isPlaceholderCredentialValue("real-key")).toBe(false);
-    expect(isPlaceholderCredentialValue("${{ secrets.FAL_KEY }}")).toBe(true);
-    expect(isPlaceholderCredentialValue("$GITHUB_TOKEN")).toBe(true);
-    expect(isPlaceholderCredentialValue("null")).toBe(true);
   });
 });

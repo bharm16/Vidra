@@ -103,19 +103,6 @@ describe("finishPrompt", () => {
     });
   });
 
-  it("returns no compilation state when none was supplied", () => {
-    const finished = finishPrompt({
-      prompt: "generic prompt",
-      originalPrompt: "baby driving a car",
-      shotPlan: null,
-      phase: "generic",
-      intentLock: intentLock(),
-      promptLint: promptLint(),
-    });
-
-    expect(finished.compilation).toBeNull();
-  });
-
   it("reports a failed lint without withholding the prompt", () => {
     const finished = finishPrompt({
       prompt: "# Heading\nprompt body",

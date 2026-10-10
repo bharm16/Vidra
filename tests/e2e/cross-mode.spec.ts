@@ -263,6 +263,21 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
       )
       .toBe(true);
     await page.getByLabel("Playback position").focus();
+    // The 0.1-second slider can already show zero just after playback pauses.
+    // Establish a nonzero position so Home must issue a real seek.
+    await page.keyboard.press("ArrowRight", { delay: 100 });
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate(
+          (element: HTMLVideoElement) => element.currentTime,
+        ),
+      )
+      .toBeGreaterThan(0.05);
+    await expect
+      .poll(() =>
+        inlineVideo.evaluate((element: HTMLVideoElement) => element.seeking),
+      )
+      .toBe(false);
     await page.keyboard.press("Home");
     await expect
       .poll(() =>

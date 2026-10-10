@@ -71,16 +71,6 @@ describe("regression: bootstrap never creates a project; first send creates exac
     vi.clearAllMocks();
   });
 
-  it("an empty account bootstraps projectless with no server writes", async () => {
-    const { result } = renderHook(() => useStudioProject(null));
-
-    await act(async () => {});
-
-    expect(result.current.state.loading).toBe(false);
-    expect(result.current.state.project).toBeNull();
-    expect(createStudioProject).not.toHaveBeenCalled();
-  });
-
   it("a StrictMode-style double mount still creates nothing", async () => {
     const first = renderHook(() => useStudioProject(null));
     first.unmount();

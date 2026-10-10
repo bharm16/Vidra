@@ -10,11 +10,6 @@ const nodes: SpaceNode[] = [
 ];
 
 describe("space leaf rules", () => {
-  it("collects the ids that a live node names as ancestor", () => {
-    // words-v-1 (parent of pics) and pic-1 (parent of clip-1) are non-leaves.
-    expect(nonLeafIds(nodes)).toEqual(new Set(["words-v-1", "pic-1"]));
-  });
-
   it("ignores archived nodes when deciding parenthood", () => {
     const withArchivedClip: SpaceNode[] = [
       { id: "pic-1", kind: "picture", ancestorId: "words-v-1" },

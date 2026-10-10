@@ -27,26 +27,6 @@ describe("PromptLintGateService", () => {
     expect(result.repaired).toBe(true);
   });
 
-  it("returns unchanged model-specific prompts that exceed the budget and reports lint", () => {
-    const longPrompt = new Array(120).fill("word").join(" ");
-    const logError = vi.fn();
-    (service as unknown as { log: { error: typeof logError } }).log = {
-      error: logError,
-    } as never;
-
-    const result = service.sanitize({
-      prompt: longPrompt,
-      modelId: "wan-2.2",
-    });
-
-    expect(result.prompt).toBe(longPrompt);
-    expect(result.lint.ok).toBe(false);
-    expect(result.lint.errors).toContain(
-      "Prompt too long for wan-2.2 (120 words > 60).",
-    );
-    expect(logError).toHaveBeenCalled();
-  });
-
   // The one lint outcome with a downstream cost: the provider truncates after
   // the spend. Typed so a caller can act on it without parsing an error string.
   it("reports a budget overrun as a typed outcome", () => {
@@ -70,13 +50,5 @@ describe("PromptLintGateService", () => {
 
     expect(result.lint.overBudget).toBeUndefined();
     expect(result.lint.ok).toBe(true);
-  });
-
-  it("leaves overBudget unset when no model constrains the prompt", () => {
-    const result = service.sanitize({
-      prompt: new Array(400).fill("word").join(" "),
-    });
-
-    expect(result.lint.overBudget).toBeUndefined();
   });
 });

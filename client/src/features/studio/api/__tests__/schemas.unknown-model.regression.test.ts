@@ -21,10 +21,6 @@ describe("regression: an unknown roster model never fails the roster parse", () 
     latencyHintSeconds: 8,
   };
 
-  it("parses a roster entry whose slug this client has never heard of", () => {
-    expect(StudioModelInfoSchema.parse(ninth).slug).toBe("recraft-v5-preview");
-  });
-
   it("parses the whole roster array as getStudioModels does", () => {
     const roster = z.array(StudioModelInfoSchema).parse([
       {

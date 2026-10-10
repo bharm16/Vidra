@@ -88,26 +88,6 @@ describe("regression: Library covers resolve from persisted generation records",
     expect(resolved.assetId ?? null).toBeNull();
   });
 
-  it("a clip whose recorded poster is itself a video contributes nothing", () => {
-    const entry = entryWith([
-      {
-        versionId: "v-1",
-        signature: "sig",
-        prompt: "a clockmaker",
-        timestamp: "2026-07-31T00:00:00.000Z",
-        generations: [
-          baseGeneration({
-            mediaType: "video",
-            mediaUrls: ["https://storage.googleapis.com/bucket/clip.mp4"],
-            thumbnailUrl: "https://storage.googleapis.com/bucket/clip.mp4",
-          }),
-        ],
-      },
-    ]);
-
-    expect(resolveHistoryThumbnail(entry).url).toBeNull();
-  });
-
   it("the legacy version.firstFrame still wins when both exist", () => {
     const entry = entryWith([
       {

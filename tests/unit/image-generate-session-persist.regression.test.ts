@@ -8,7 +8,7 @@ import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createImageGenerateHandler } from "@routes/preview/handlers/imageGenerate";
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 // A generated picture's attachment is a separate fact: failed attachment keeps
 // the owned media and immutable take identity. Free validation never reserves
@@ -132,7 +132,7 @@ describe("imageGenerate session persistence (M5 D4)", () => {
       createImageGenerateHandler(makeServices(appendGenerationToVersion)),
     );
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(app)
         .post("/preview/generate")
         .set("Idempotency-Key", "picture-persist-1")
@@ -142,7 +142,6 @@ describe("imageGenerate session persistence (M5 D4)", () => {
           promptVersionId: "v1",
         }),
     );
-    if (!res) return;
 
     expect(appendGenerationToVersion).toHaveBeenCalledTimes(1);
     const [userId, sessionId, promptVersionId, record] =
@@ -159,6 +158,9 @@ describe("imageGenerate session persistence (M5 D4)", () => {
     });
     expect(typeof record.id).toBe("string");
     expect(res.body?.data?.generationId).toBe(record.id);
+    expect(res.body?.data?.attachment?.state).toBe("attached");
+    expect(res.body?.data?.attachment?.generationId).toBe(record.id);
+    expect(res.body?.data?.attachment?.record).toBeUndefined();
   });
 
   it("regression: a rejecting session write returns an explicit failed attachment, keeps the media, and never refunds", async () => {
@@ -170,7 +172,7 @@ describe("imageGenerate session persistence (M5 D4)", () => {
     const services = makeServices(appendGenerationToVersion);
     const app = createApp(createImageGenerateHandler(services));
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(app)
         .post("/preview/generate")
         .set("Idempotency-Key", "picture-persist-1")
@@ -180,7 +182,6 @@ describe("imageGenerate session persistence (M5 D4)", () => {
           promptVersionId: "v1",
         }),
     );
-    if (!res) return;
 
     // The picture was made. Free validation preserves it without credit activity.
     expect(res.status).toBe(200);
@@ -198,39 +199,6 @@ describe("imageGenerate session persistence (M5 D4)", () => {
     // `generationId` at the top level has always meant "this take is in the
     // session". A failed attachment must not claim it.
     expect(res.body?.data?.generationId).toBeUndefined();
-  });
-
-  it("hands back the exact record that failed to attach, under the take identity already minted", async () => {
-    const appendGenerationToVersion = vi.fn<
-      SessionService["appendGenerationToVersion"]
-    >(
-      async (
-        _userId: string,
-        _sessionId: string,
-        _promptVersionId: string,
-        _record: Record<string, unknown>,
-      ): Promise<SessionRecord> => {
-        throw new Error("firestore unavailable");
-      },
-    );
-    const app = createApp(
-      createImageGenerateHandler(makeServices(appendGenerationToVersion)),
-    );
-
-    const res = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/preview/generate")
-        .set("Idempotency-Key", "picture-persist-1")
-        .send({
-          prompt: "a cat on a couch",
-          sessionId: "session-1",
-          promptVersionId: "v1",
-        }),
-    );
-    if (!res) return;
-
-    // randomUUID() runs before the append, so the take identity survives the
-    // failure: a retry re-sends THIS record rather than minting a new one.
     const attempted = appendGenerationToVersion.mock.calls[0]![3];
     expect(res.body?.data?.attachment?.record).toMatchObject({
       id: attempted.id,
@@ -240,34 +208,6 @@ describe("imageGenerate session persistence (M5 D4)", () => {
       mediaUrls: ["https://images.example.com/pic.webp"],
     });
     expect(res.body?.data?.attachment?.generationId).toBe(attempted.id);
-  });
-
-  it("states the attachment explicitly when the session write succeeds", async () => {
-    const appendGenerationToVersion = vi.fn<
-      SessionService["appendGenerationToVersion"]
-    >(async (): Promise<SessionRecord> => SESSION_RECORD);
-    const app = createApp(
-      createImageGenerateHandler(makeServices(appendGenerationToVersion)),
-    );
-
-    const res = await runSupertestOrSkip(() =>
-      request(app)
-        .post("/preview/generate")
-        .set("Idempotency-Key", "picture-persist-1")
-        .send({
-          prompt: "a cat on a couch",
-          sessionId: "session-1",
-          promptVersionId: "v1",
-        }),
-    );
-    if (!res) return;
-
-    expect(res.body?.data?.attachment?.state).toBe("attached");
-    expect(res.body?.data?.attachment?.generationId).toBe(
-      res.body?.data?.generationId,
-    );
-    // Nothing to retry, so nothing to hand back.
-    expect(res.body?.data?.attachment?.record).toBeUndefined();
   });
 
   it("rejects a foreign destination before generation or attachment", async () => {
@@ -306,13 +246,12 @@ describe("imageGenerate session persistence (M5 D4)", () => {
       createImageGenerateHandler(makeServices(appendGenerationToVersion)),
     );
 
-    const res = await runSupertestOrSkip(() =>
+    const res = await runSupertestRequest(() =>
       request(app)
         .post("/preview/generate")
         .set("Idempotency-Key", "picture-persist-1")
         .send({ prompt: "a cat" }),
     );
-    if (!res) return;
 
     expect(appendGenerationToVersion).not.toHaveBeenCalled();
     expect(res.body?.data?.generationId).toBeUndefined();

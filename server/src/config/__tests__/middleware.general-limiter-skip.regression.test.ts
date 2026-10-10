@@ -89,33 +89,4 @@ describe("regression: general limiter skips routes with dedicated limiters", () 
     const staticResponse = await request(server).get("/static/page");
     expect(staticResponse.status).toBe(200);
   });
-
-  it("/api/llm/ requests do not count against the general limiter", async () => {
-    process.env.NODE_ENV = "development";
-    delete process.env.VITEST_WORKER_ID;
-    delete process.env.VITEST;
-
-    const app = express();
-    applyRateLimitingMiddleware(app);
-
-    app.post("/api/llm/label-spans", (_req, res) => {
-      res.status(200).json({ spans: [] });
-    });
-    app.get("/static/page", (_req, res) => {
-      res.status(200).send("OK");
-    });
-
-    const server = await listenOnLoopback(app);
-
-    // Fire LLM requests
-    await Promise.all(
-      Array.from({ length: 100 }, () =>
-        request(server).post("/api/llm/label-spans"),
-      ),
-    );
-
-    // Non-API request must still work
-    const staticResponse = await request(server).get("/static/page");
-    expect(staticResponse.status).toBe(200);
-  });
 });

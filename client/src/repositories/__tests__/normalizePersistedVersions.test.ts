@@ -27,27 +27,12 @@ describe("normalizePersistedVersions", () => {
       expect(result?.firstFrame).toEqual(frame);
     });
 
-    it("drops the old key so only one name survives the boundary", () => {
-      const [result] = normalizePersistedVersions([
-        { ...version, ...{ preview: frame } },
-      ]);
-      expect(
-        (result as unknown as Record<string, unknown>).preview,
-      ).toBeUndefined();
-    });
-
     it("prefers firstFrame when a version carries both", () => {
       const legacy = { ...frame, assetId: "stale" };
       const [result] = normalizePersistedVersions([
         { ...version, ...{ preview: legacy, firstFrame: frame } },
       ]);
       expect(result?.firstFrame?.assetId).toBe("asset-1");
-    });
-
-    it("leaves a version with no frame alone", () => {
-      const [result] = normalizePersistedVersions([version]);
-      expect(result?.firstFrame).toBeUndefined();
-      expect(result?.versionId).toBe("v1");
     });
   });
 
@@ -68,12 +53,6 @@ describe("normalizePersistedVersions", () => {
       // Derived, not persisted — see ADR-0021 and the clip mediaType fix.
       expect(result?.generations?.[0]?.tier).toBe("render");
       expect(result?.generations?.[0]?.mediaType).toBe("video");
-    });
-
-    it("leaves a version without generations untouched", () => {
-      expect(
-        normalizePersistedVersions([version])[0]?.generations,
-      ).toBeUndefined();
     });
   });
 

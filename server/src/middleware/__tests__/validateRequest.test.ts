@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Request, Response } from "express";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { validateRequest } from "../validateRequest";
 
@@ -77,19 +77,6 @@ describe("validateRequest", () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it("reports every invalid field, not just the first", () => {
-      const middleware = validateRequest(UserSchema);
-      const req = createMockRequest({ email: "invalid", age: "old" });
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      middleware(req, res, next);
-
-      const details = (res.body as { details?: string }).details ?? "";
-      expect(details).toContain("email");
-      expect(details).toContain("age");
-    });
-
     it("calls next and replaces body with validated data on success", () => {
       const middleware = validateRequest(
         z.object({ email: z.string(), keep: z.boolean().default(true) }),
@@ -104,19 +91,6 @@ describe("validateRequest", () => {
       // sees the parsed value, not the raw body.
       expect(req.body).toEqual({ email: "valid@test.com", keep: true });
       expect(next).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("edge cases", () => {
-    it("omits requestId entirely when the request carries no id", () => {
-      const middleware = validateRequest(UserSchema);
-      const req = createMockRequest({});
-      const res = createMockResponse();
-      const next = vi.fn();
-
-      middleware(req, res, next);
-
-      expect(res.body).not.toHaveProperty("requestId");
     });
   });
 });

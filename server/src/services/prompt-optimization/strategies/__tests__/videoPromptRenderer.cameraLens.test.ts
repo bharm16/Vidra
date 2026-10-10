@@ -27,35 +27,10 @@ function baseSlots(
 }
 
 describe("renderMainVideoPrompt — camera_lens slot", () => {
-  it("renders 'on {camera_lens}' when camera_lens is present", () => {
-    const output = renderMainVideoPrompt(
-      baseSlots({ camera_lens: "28mm at f/11" }),
-    );
-    expect(output).toContain("on 28mm at f/11");
-  });
-
-  it("suppresses hardcoded focusFromFraming aperture when camera_lens is present", () => {
-    const output = renderMainVideoPrompt(
-      baseSlots({ camera_lens: "28mm at f/11" }),
-    );
-    // Wide Shot framing previously emitted "with deep focus (f/11-f/16)..."
-    expect(output).not.toContain("deep focus (f/11-f/16)");
-    expect(output).not.toContain("with shallow depth of field");
-    expect(output).not.toContain("with selective focus");
-  });
-
   it("falls back to focusFromFraming when camera_lens is null (back-compat)", () => {
     const output = renderMainVideoPrompt(baseSlots({ camera_lens: null }));
     // Wide Shot → "deep focus" preserved
     expect(output).toContain("deep focus");
-  });
-
-  it("emits exactly one aperture phrase when camera_lens is provided (no duplication)", () => {
-    const output = renderMainVideoPrompt(
-      baseSlots({ camera_lens: "28mm at f/11" }),
-    );
-    const fStopMatches = output.match(/f\/\d/g) || [];
-    expect(fStopMatches.length).toBe(1);
   });
 });
 

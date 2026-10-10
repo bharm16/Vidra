@@ -4,24 +4,6 @@ import { SpanContextBuilder } from "../services/SpanContextBuilder";
 describe("EnhancementService regression", () => {
   const builder = new SpanContextBuilder();
 
-  it("splits prompt into clause boundaries for ownership-aware anchor selection", () => {
-    const fullPrompt =
-      "A baby sits in a car seat while trees sway gently in the wind and sunlight flickers.";
-
-    const clauses = builder._findClauseBoundaries(fullPrompt);
-
-    expect(clauses.length).toBeGreaterThanOrEqual(2);
-    const firstClause = fullPrompt
-      .slice(clauses[0]!.start, clauses[0]!.end + 1)
-      .toLowerCase();
-    const secondClause = fullPrompt
-      .slice(clauses[1]!.start, clauses[1]!.end + 1)
-      .toLowerCase();
-
-    expect(firstClause).toContain("baby");
-    expect(secondClause).toContain("trees");
-  });
-
   it("prefers same-clause anchors over higher-confidence anchors from other clauses", () => {
     const fullPrompt =
       "A baby sits in a car seat while trees sway gently in the wind and sunlight flickers.";

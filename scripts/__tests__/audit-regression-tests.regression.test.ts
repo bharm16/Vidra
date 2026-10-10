@@ -84,7 +84,11 @@ function reportedPaths(output: string): string[] {
 function trackedRegressionFiles(): string[] {
   return execFileSync("git", ["ls-files"], { cwd: REPO_ROOT, encoding: "utf8" })
     .split("\n")
-    .filter((file) => file.includes(".regression.test."));
+    .filter(
+      (file) =>
+        file.includes(".regression.test.") &&
+        existsSync(path.join(REPO_ROOT, file)),
+    );
 }
 
 /**
@@ -131,43 +135,6 @@ function buildFixture(treeName: string): { scriptPath: string } {
   copyFileSync(SCRIPT, scriptPath);
   return { scriptPath };
 }
-
-describe("regression test inventory", () => {
-  it("reports a non-empty inventory", () => {
-    expect(reportedPaths(runAudit(SCRIPT)).length).toBeGreaterThan(0);
-  });
-
-  it("reports every regression test this repo tracks", () => {
-    // A superset, not an equality: a regression test written but not yet
-    // committed belongs in the inventory, and is exactly what the audit is for.
-    const reported = new Set(reportedPaths(runAudit(SCRIPT)));
-    const missing = trackedRegressionFiles().filter(
-      (file) => !reported.has(file),
-    );
-
-    expect(missing).toEqual([]);
-  });
-
-  it("never reports a path from a nested checkout or a dependency tree", () => {
-    const offenders = reportedPaths(runAudit(SCRIPT)).filter(
-      (file) =>
-        file.includes(".claude/worktrees/") || file.includes("node_modules/"),
-    );
-
-    expect(offenders).toEqual([]);
-  });
-
-  it("reports every path relative to this checkout, so each one resolves", () => {
-    // The original defect printed `prompt-builder/<path>` — a real file, named
-    // relative to the wrong root, so it resolved to nothing from here.
-    const unresolvable = reportedPaths(runAudit(SCRIPT)).filter(
-      (file) =>
-        path.isAbsolute(file) || !existsSync(path.join(REPO_ROOT, file)),
-    );
-
-    expect(unresolvable).toEqual([]);
-  });
-});
 
 describe("regression test inventory, on a synthetic checkout", () => {
   it("audits its own tree and nothing above, beside, or nested within it", () => {

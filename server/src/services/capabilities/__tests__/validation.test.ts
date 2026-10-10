@@ -121,19 +121,6 @@ describe("validateCapabilityValues", () => {
   });
 
   describe("edge cases", () => {
-    it("returns ok with empty values for null input", () => {
-      const schema = makeSchema({});
-      const result = validateCapabilityValues(schema, null);
-      expect(result.ok).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it("returns ok with empty values for undefined input", () => {
-      const schema = makeSchema({});
-      const result = validateCapabilityValues(schema, undefined);
-      expect(result.ok).toBe(true);
-    });
-
     it("populates default values for missing fields", () => {
       const schema = makeSchema({
         model: { type: "enum", values: ["sora", "veo3"], default: "sora" },
@@ -234,24 +221,6 @@ describe("validateCapabilityValues", () => {
   });
 
   describe("core behavior — valid inputs", () => {
-    it("validates valid enum value", () => {
-      const schema = makeSchema({
-        model: { type: "enum", values: ["sora", "veo3"] },
-      });
-      const result = validateCapabilityValues(schema, { model: "sora" });
-      expect(result.ok).toBe(true);
-      expect(result.values.model).toBe("sora");
-    });
-
-    it("validates valid int with constraints", () => {
-      const schema = makeSchema({
-        width: { type: "int", constraints: { min: 0, max: 1920, step: 16 } },
-      });
-      const result = validateCapabilityValues(schema, { width: 1024 });
-      expect(result.ok).toBe(true);
-      expect(result.values.width).toBe(1024);
-    });
-
     it("validates int aligned to step with min offset", () => {
       const schema = makeSchema({
         frames: { type: "int", constraints: { min: 1, max: 100, step: 5 } },

@@ -83,11 +83,6 @@ describe("useVersionManagement setGenerationFavorite", () => {
         selectedModel: "wan-2.2",
         generationParams: {},
         serializedKeyframes: [],
-        promptOptimizer: {
-          setOptimizedPrompt: vi.fn(),
-        },
-        applyInitialHighlightSnapshot: vi.fn(),
-        setDisplayedPromptSilently: vi.fn(),
         latestHighlightRef: { current: null },
         versionEditCountRef: { current: 0 },
         versionEditsRef: { current: [] },
@@ -106,53 +101,5 @@ describe("useVersionManagement setGenerationFavorite", () => {
       (generation) => generation.id === "gen-2",
     );
     expect(persistedGeneration?.isFavorite).toBe(true);
-  });
-
-  it("does not persist when favorite value does not change", () => {
-    const updateEntryVersions = vi.fn();
-    const historyEntry: PromptHistoryEntry = {
-      id: "doc-1",
-      uuid: "uuid-1",
-      input: "input",
-      output: "output",
-      versions: makeVersions(),
-    };
-
-    const { result } = renderHook(() =>
-      useVersionManagement({
-        promptHistory: {
-          history: [historyEntry],
-          createDraft: vi.fn(() => ({ uuid: "uuid-1", id: "doc-1" })),
-          updateEntryVersions,
-        },
-        currentPromptUuid: "uuid-1",
-        currentPromptDocId: "doc-1",
-        setCurrentPromptUuid: vi.fn(),
-        setCurrentPromptDocId: vi.fn(),
-        activeVersionId: "v-1",
-        setActiveVersionId: vi.fn(),
-        inputPrompt: "A prompt",
-        normalizedDisplayedPrompt: "A prompt",
-        selectedMode: "video",
-        selectedModel: "wan-2.2",
-        generationParams: {},
-        serializedKeyframes: [],
-        promptOptimizer: {
-          setOptimizedPrompt: vi.fn(),
-        },
-        applyInitialHighlightSnapshot: vi.fn(),
-        setDisplayedPromptSilently: vi.fn(),
-        latestHighlightRef: { current: null },
-        versionEditCountRef: { current: 0 },
-        versionEditsRef: { current: [] },
-        resetVersionEdits: vi.fn(),
-      }),
-    );
-
-    act(() => {
-      result.current.setGenerationFavorite("gen-1", false);
-    });
-
-    expect(updateEntryVersions).not.toHaveBeenCalled();
   });
 });

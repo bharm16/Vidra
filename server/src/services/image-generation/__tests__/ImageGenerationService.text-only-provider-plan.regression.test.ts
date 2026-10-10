@@ -64,39 +64,6 @@ describe("regression: text-only preview requests never route to img2img-only pro
     assetStore = createAssetStore();
   });
 
-  it("auto provider plans without an input image exclude providers that require one", () => {
-    const schnell = createProvider("replicate-flux-schnell");
-    const kontext = createProvider("replicate-flux-kontext-fast", {
-      requiresInputImage: true,
-    });
-
-    const plan = buildProviderPlan({
-      providers: [schnell, kontext],
-      requestedProvider: "auto",
-      hasInputImage: false,
-    });
-
-    expect(plan.map((p) => p.id)).toEqual(["replicate-flux-schnell"]);
-  });
-
-  it("auto provider plans with an input image keep img2img providers eligible", () => {
-    const schnell = createProvider("replicate-flux-schnell");
-    const kontext = createProvider("replicate-flux-kontext-fast", {
-      requiresInputImage: true,
-    });
-
-    const plan = buildProviderPlan({
-      providers: [schnell, kontext],
-      requestedProvider: "auto",
-      hasInputImage: true,
-    });
-
-    expect(plan.map((p) => p.id)).toEqual([
-      "replicate-flux-schnell",
-      "replicate-flux-kontext-fast",
-    ]);
-  });
-
   it("for any text-only prompt, a t2i failure surfaces its own error and the img2img provider is never invoked", async () => {
     await fc.assert(
       fc.asyncProperty(

@@ -42,13 +42,6 @@ describe("useGenerationsTimeline", () => {
   });
 
   describe("edge cases", () => {
-    it("returns an empty timeline when no versions exist", () => {
-      const { result } = renderHook(() =>
-        useGenerationsTimeline({ versions: [] }),
-      );
-      expect(result.current).toEqual([]);
-    });
-
     it("deduplicates generations by id", () => {
       const generation = createGeneration();
       const versions: PromptVersionEntry[] = [

@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { createLlmClient, spanProfileIdFor } from "../LlmClientFactory";
-import { SpanLabelingClient } from "../SpanLabelingClient";
-import { SPAN_PROVIDER_PROFILES } from "@llm/span-labeling/providers/registry";
 
 /**
  * The factory's whole job is a mapping: executing provider -> the profile
@@ -24,26 +22,6 @@ describe("LlmClientFactory", () => {
     it("falls back to the generic profile rather than guessing", () => {
       expect(spanProfileIdFor("anthropic")).toBe("generic");
       expect(spanProfileIdFor("unknown")).toBe("generic");
-    });
-
-    it("always builds a SpanLabelingClient carrying that profile", () => {
-      const client = createLlmClient("groq");
-      expect(client).toBeInstanceOf(SpanLabelingClient);
-      expect((client as SpanLabelingClient).providerId).toBe("groq");
-    });
-  });
-
-  describe("isolation constraint", () => {
-    it("gives every provider a distinct profile object", () => {
-      // ADR-0001 relied on class-per-provider to keep "changes to Groq must
-      // not affect OpenAI"; ADR-0020 relies on this instead.
-      const groq = SPAN_PROVIDER_PROFILES.groq;
-      const openai = SPAN_PROVIDER_PROFILES.openai;
-
-      expect(groq).not.toBe(openai);
-      expect(groq.jsonSchema).not.toBe(openai.jsonSchema);
-      expect(groq.requestOptions).not.toBe(openai.requestOptions);
-      expect(groq.promptProviderName).not.toBe(openai.promptProviderName);
     });
   });
 

@@ -45,19 +45,4 @@ describe("regression: GCS signed URLs are rewritten to media proxy", () => {
     expect(result.url).toContain(encodeURIComponent("storage.googleapis.com"));
     expect(result.url).not.toBe(gcsUrl);
   });
-
-  it("does not rewrite non-GCS URLs", async () => {
-    const appUrl = "/api/preview/video/content/abc?token=xyz";
-
-    const result = await resolveMediaUrl({
-      kind: "video",
-      url: appUrl,
-      preferFresh: false,
-    });
-
-    // Should not contain proxy path
-    if (result.url) {
-      expect(result.url).not.toContain("/api/storage/proxy");
-    }
-  });
 });

@@ -7,7 +7,7 @@ import type { VideoModelId } from "@shared/videoModels";
 
 describe("buildReplicateInput", () => {
   it("includes a rounded seed when provided", () => {
-    const modelId = "custom-model" as VideoModelId;
+    const modelId = "wan-video/wan-2.2-t2v-fast" as VideoModelId;
     const input = buildReplicateInput(modelId, "prompt", {
       aspectRatio: "16:9",
       seed: 42.7,
@@ -17,7 +17,7 @@ describe("buildReplicateInput", () => {
   });
 
   it("preserves a seed of 0", () => {
-    const modelId = "custom-model" as VideoModelId;
+    const modelId = "wan-video/wan-2.2-t2v-fast" as VideoModelId;
     const input = buildReplicateInput(modelId, "prompt", {
       aspectRatio: "16:9",
       seed: 0,
@@ -91,11 +91,8 @@ describe("generateReplicateVideo", () => {
 
     const input = (run.mock.calls[0]?.[1] as { input: Record<string, unknown> })
       .input;
-    expect(input.image).toEqual(
-      expect.objectContaining({
-        size: expect.any(Number),
-        type: "image/png",
-      }),
-    );
+    if (!(input.image instanceof Blob)) throw new Error("expected image Blob");
+    expect(input.image.type).toBe("image/png");
+    expect(await input.image.arrayBuffer()).toEqual(new ArrayBuffer(4));
   });
 });

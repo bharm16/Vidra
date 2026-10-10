@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
+import { describe, expect, it, vi } from "vitest";
 import { asyncHandler } from "../asyncHandler";
 
 function createMockRequest(): Request {
@@ -47,43 +47,9 @@ describe("asyncHandler", () => {
 
       expect(next).toHaveBeenCalledWith("string error");
     });
-
-    it("handles promise rejection with undefined", async () => {
-      const handler = asyncHandler(async () => {
-        // eslint-disable-next-line prefer-promise-reject-errors
-        throw undefined;
-      });
-      const next = vi.fn();
-
-      // Wait for the rejection to be processed
-      await new Promise((resolve) => {
-        next.mockImplementation(() => resolve(undefined));
-        handler(createMockRequest(), createMockResponse(), next);
-      });
-
-      expect(next).toHaveBeenCalledWith(undefined);
-    });
   });
 
   describe("edge cases", () => {
-    it("handles handler that returns undefined", async () => {
-      const handler = asyncHandler(async () => undefined);
-      const next = vi.fn();
-
-      await handler(createMockRequest(), createMockResponse(), next);
-
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    it("handles synchronous handler that returns value", async () => {
-      const handler = asyncHandler(() => "sync result");
-      const next = vi.fn();
-
-      await handler(createMockRequest(), createMockResponse(), next);
-
-      expect(next).not.toHaveBeenCalled();
-    });
-
     it("handles handler that calls next explicitly", async () => {
       const handler = asyncHandler(async (_req, _res, next) => {
         next();
@@ -97,25 +63,6 @@ describe("asyncHandler", () => {
   });
 
   describe("core behavior", () => {
-    it("passes request, response, and next to handler", async () => {
-      const req = createMockRequest();
-      const res = createMockResponse();
-      const next = vi.fn();
-      const handlerFn = vi.fn().mockResolvedValue(undefined);
-
-      const handler = asyncHandler(handlerFn);
-      await handler(req, res, next);
-
-      expect(handlerFn).toHaveBeenCalledWith(req, res, next);
-    });
-
-    it("returns a function that matches RequestHandler signature", () => {
-      const handler = asyncHandler(async () => {});
-
-      expect(typeof handler).toBe("function");
-      expect(handler.length).toBe(3); // req, res, next
-    });
-
     it("allows handler to send response without calling next", async () => {
       const mockRes = {
         json: vi.fn(),

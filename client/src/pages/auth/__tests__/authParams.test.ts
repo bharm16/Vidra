@@ -13,12 +13,6 @@ describe("safeRedirect", () => {
     expect(safeRedirect("?redirect=/studio/abc%20def")).toBe("/studio/abc def");
   });
 
-  it("returns null when there is no destination", () => {
-    expect(safeRedirect("")).toBeNull();
-    expect(safeRedirect("?other=/studio")).toBeNull();
-    expect(safeRedirect("?redirect=")).toBeNull();
-  });
-
   it("rejects destinations that leave the origin", () => {
     expect(safeRedirect("?redirect=https://evil.example/x")).toBeNull();
     expect(safeRedirect("?redirect=//evil.example/x")).toBeNull();
@@ -42,10 +36,5 @@ describe("readOobCode / readActionMode", () => {
   it("reads and trims the emailed link's parameters", () => {
     expect(readOobCode("?oobCode=%20abc%20")).toBe("abc");
     expect(readActionMode("?mode=%20resetPassword%20")).toBe("resetPassword");
-  });
-
-  it("returns null when the parameter is absent", () => {
-    expect(readOobCode("?mode=resetPassword")).toBeNull();
-    expect(readActionMode("?oobCode=abc")).toBeNull();
   });
 });

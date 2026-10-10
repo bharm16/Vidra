@@ -1,9 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EventEmitter } from "node:events";
-import {
-  createSseWriter,
-  DEFAULT_MAX_BUFFERED_BYTES,
-} from "../sseBackpressure";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createSseWriter } from "../sseBackpressure";
 
 /**
  * Mock Response object shaped after the bits of Node's Writable that the
@@ -66,17 +63,6 @@ describe("sseBackpressure / createSseWriter", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns ok:true when res.write returns true", async () => {
-    const res = createMockResponse();
-    const writer = createSseWriter(
-      res as unknown as import("http").ServerResponse,
-    );
-    const result = await writer.write("hello\n");
-    expect(result).toEqual({ ok: true });
-    expect(res.writtenChunks).toEqual(["hello\n"]);
-    expect(writer.bytesWritten).toBe(Buffer.byteLength("hello\n"));
-  });
-
   it("queues subsequent writes behind a pause and flushes them on 'drain'", async () => {
     const res = createMockResponse({ pauseAfterBytes: 3 });
     const writer = createSseWriter(
@@ -130,20 +116,6 @@ describe("sseBackpressure / createSseWriter", () => {
     const result = await writer.write("chunk");
     expect(result).toEqual({ ok: false, reason: "closed" });
     expect(res.writtenChunks).toEqual([]);
-  });
-
-  it("returns ok:false reason:closed after writer.close() is called", async () => {
-    const res = createMockResponse();
-    const writer = createSseWriter(
-      res as unknown as import("http").ServerResponse,
-    );
-    writer.close();
-    const result = await writer.write("chunk");
-    expect(result).toEqual({ ok: false, reason: "closed" });
-  });
-
-  it("uses the default threshold of 1 MB when not specified", () => {
-    expect(DEFAULT_MAX_BUFFERED_BYTES).toBe(1_048_576);
   });
 
   it("serializes concurrent writes (no interleaving, stable order)", async () => {

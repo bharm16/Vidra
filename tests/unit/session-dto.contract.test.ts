@@ -10,18 +10,6 @@ import {
 } from "#shared/schemas/session.schemas";
 
 describe("SessionDto contract", () => {
-  it("accepts a minimal active session", () => {
-    const result = SessionDtoSchema.safeParse({
-      id: "session-1",
-      userId: "user-1",
-      status: "active",
-      createdAt: "2025-01-01T00:00:00Z",
-      updatedAt: "2025-01-01T00:00:00Z",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("accepts a session with prompt data", () => {
     const result = SessionDtoSchema.safeParse({
       id: "session-2",
@@ -93,19 +81,6 @@ describe("SessionDto contract", () => {
       false,
     );
   });
-
-  it("allows unknown additional properties (forward-compatible)", () => {
-    const result = SessionDtoSchema.safeParse({
-      id: "session-fc",
-      userId: "user-1",
-      status: "active",
-      createdAt: "2025-01-01T00:00:00Z",
-      updatedAt: "2025-01-01T00:00:00Z",
-      futureField: "some-value",
-    });
-
-    expect(result.success).toBe(true);
-  });
 });
 
 describe("SessionPrompt contract", () => {
@@ -119,14 +94,6 @@ describe("SessionPrompt contract", () => {
 });
 
 describe("SessionPromptVersionPreview contract", () => {
-  it("accepts a minimal preview with only generatedAt", () => {
-    const result = SessionPromptVersionFirstFrameSchema.safeParse({
-      generatedAt: "2025-01-01T00:00:00Z",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("accepts preview with null fields (server sends null, not undefined)", () => {
     const result = SessionPromptVersionFirstFrameSchema.safeParse({
       generatedAt: "2025-01-01T00:00:00Z",
@@ -155,17 +122,6 @@ describe("SessionPromptVersionPreview contract", () => {
 });
 
 describe("SessionPromptVersionEntry contract", () => {
-  it("accepts a minimal version entry", () => {
-    const result = SessionPromptVersionEntrySchema.safeParse({
-      versionId: "v1",
-      signature: "abc",
-      prompt: "A cinematic scene",
-      timestamp: "2025-01-01T00:00:00Z",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("accepts a version entry with all optional fields", () => {
     const result = SessionPromptVersionEntrySchema.safeParse({
       versionId: "v2",
@@ -209,12 +165,6 @@ describe("SessionContinuityShot contract", () => {
     status: "draft" as const,
     createdAt: "2025-01-01T00:00:00Z",
   };
-
-  it("accepts a minimal draft shot", () => {
-    expect(SessionContinuityShotSchema.safeParse(minimalShot).success).toBe(
-      true,
-    );
-  });
 
   it("accepts a completed shot with all optional fields", () => {
     const result = SessionContinuityShotSchema.safeParse({

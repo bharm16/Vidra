@@ -50,19 +50,6 @@ describe("promptStateStorage", () => {
     });
   });
 
-  describe("edge cases", () => {
-    it("returns empty defaults when no values are stored", () => {
-      expect(loadSelectedModel()).toBe("");
-      expect(loadGenerationParams()).toEqual({});
-    });
-
-    it("stores and loads an empty generation params object", () => {
-      persistGenerationParams({});
-
-      expect(loadGenerationParams()).toEqual({});
-    });
-  });
-
   describe("core behavior", () => {
     it("round-trips the selected model value", () => {
       persistSelectedModel("model-a");

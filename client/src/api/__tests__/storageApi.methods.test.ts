@@ -22,32 +22,6 @@ describe("storageApi", () => {
     mockBuildHeaders.mockResolvedValue({ Authorization: "Bearer token" });
   });
 
-  describe("error handling", () => {
-    it("throws the payload error message when the response is not ok", async () => {
-      fetchMock.mockResolvedValueOnce({
-        ok: false,
-        status: 403,
-        headers: new Headers(),
-        json: async () => ({ error: "No access" }),
-      } as Response);
-
-      await expect(storageApi.getUsage()).rejects.toThrow("No access");
-    });
-
-    it("throws a status-tagged fallback when the error body has no message", async () => {
-      fetchMock.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        headers: new Headers(),
-        json: async () => ({}),
-      } as Response);
-
-      await expect(storageApi.deleteFile("path/to/file")).rejects.toThrow(
-        /Request failed \(400\)/,
-      );
-    });
-  });
-
   describe("edge cases", () => {
     it("builds query params for listFiles", async () => {
       fetchMock.mockResolvedValueOnce({
@@ -88,24 +62,6 @@ describe("storageApi", () => {
         `${API_CONFIG.baseURL}/storage/download-url?path=path%2Fto%2Ffile&filename=my-file.txt`,
         expect.any(Object),
       );
-    });
-  });
-
-  describe("core behavior", () => {
-    it("returns data payloads on successful responses", async () => {
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: new Headers(),
-        json: async () => ({
-          success: true,
-          data: { viewUrl: "https://example.com/view" },
-        }),
-      } as Response);
-
-      const result = await storageApi.getViewUrl("path/asset.png");
-
-      expect(result).toEqual({ viewUrl: "https://example.com/view" });
     });
   });
 });

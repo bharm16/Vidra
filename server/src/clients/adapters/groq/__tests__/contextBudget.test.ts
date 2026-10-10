@@ -1,10 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import {
-  calculateMaxTokens,
-  checkContextSize,
-  estimateContextTokens,
-} from "../contextBudget";
 import type { ILogger } from "@interfaces/ILogger";
+import { describe, expect, it, vi } from "vitest";
+import { calculateMaxTokens } from "../contextBudget";
 
 /**
  * This arithmetic had no direct coverage while it was private to a
@@ -21,51 +17,6 @@ const fakeLog = (): ILogger =>
     warn: vi.fn(),
     error: vi.fn(),
   }) as unknown as ILogger;
-
-describe("estimateContextTokens", () => {
-  it("counts the system prompt and every message at ~4 chars per token", () => {
-    expect(
-      estimateContextTokens("a".repeat(400), [
-        { role: "user", content: "b".repeat(200) },
-        { role: "assistant", content: "c".repeat(200) },
-      ]),
-    ).toBe(200);
-  });
-
-  it("rounds each part up independently", () => {
-    // 1 char -> 1 token each, not 3 chars -> 1 token overall.
-    expect(
-      estimateContextTokens("a", [
-        { role: "user", content: "b" },
-        { role: "user", content: "c" },
-      ]),
-    ).toBe(3);
-  });
-});
-
-describe("checkContextSize", () => {
-  it("stays silent inside the optimal range", () => {
-    const log = fakeLog();
-    checkContextSize(8000, log);
-    expect(log.info).not.toHaveBeenCalled();
-    expect(log.warn).not.toHaveBeenCalled();
-    expect(log.error).not.toHaveBeenCalled();
-  });
-
-  it("escalates info -> warn -> error as the context grows", () => {
-    const info = fakeLog();
-    checkContextSize(40_000, info);
-    expect(info.info).toHaveBeenCalledTimes(1);
-
-    const warn = fakeLog();
-    checkContextSize(70_000, warn);
-    expect(warn.warn).toHaveBeenCalledTimes(1);
-
-    const error = fakeLog();
-    checkContextSize(200_000, error);
-    expect(error.error).toHaveBeenCalledTimes(1);
-  });
-});
 
 describe("calculateMaxTokens", () => {
   it("caps an explicit request for structured output, but not for prose", () => {

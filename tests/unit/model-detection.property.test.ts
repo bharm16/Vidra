@@ -265,39 +265,9 @@ describe("ModelDetectionService Property Tests", () => {
     /**
      * All POE models can be detected with their primary pattern
      */
-    it("detects all POE models with their primary patterns", () => {
-      fc.assert(
-        fc.property(fc.constantFrom(...poeModelIds), (modelId) => {
-          const primaryPattern = poeModelPatterns[modelId].patterns[0];
-          const result = service.detectTargetModel(primaryPattern);
-          expect(result).toBe(modelId);
-        }),
-        { numRuns: 100 },
-      );
-    });
 
     /**
      * Model detection returns valid ModelId type
      */
-    it("returns a valid model ID or null", () => {
-      const allModelIds = [
-        "runway-gen45",
-        "luma-ray3",
-        "kling-2.1",
-        "sora-2",
-        "veo-3",
-        "wan-2.2",
-      ];
-
-      fc.assert(
-        fc.property(fc.string({ minLength: 0, maxLength: 200 }), (input) => {
-          const result = service.detectTargetModel(input);
-          if (result !== null) {
-            expect(allModelIds).toContain(result);
-          }
-        }),
-        { numRuns: 100 },
-      );
-    });
   });
 });

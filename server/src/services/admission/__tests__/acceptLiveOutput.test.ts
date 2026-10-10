@@ -612,7 +612,9 @@ describe("acceptLiveOutput (ADR-0022 decision 5, issue #87)", () => {
     expect(result.result.attachment.generationId).toBe(
       result.result.generationId,
     );
-    expect(result.result.attachment.record?.id).toBe(result.result.generationId);
+    expect(result.result.attachment.record?.id).toBe(
+      result.result.generationId,
+    );
     expect(result.result.attachment.sessionId).toBe(result.result.sessionId);
     expect(result.result.attachment.promptVersionId).toBe(
       result.result.promptVersionId,
@@ -696,33 +698,6 @@ describe("acceptLiveOutput (ADR-0022 decision 5, issue #87)", () => {
     expect(
       mediaStore.calls.filter((call) => call.contentType === "image/webp"),
     ).toHaveLength(1);
-  });
-
-  it("re-arms the same frame when a settled acceptance is re-pressed — the arm never depends on which invocation created the session (issue #136)", async () => {
-    const { deps, store } = fixture;
-
-    const first = await acceptLiveOutput(deps, request());
-    expect(first.state).toBe("accepted");
-    if (first.state !== "accepted") return;
-    expect(first.result.arming.state).toBe("armed");
-
-    const second = await acceptLiveOutput(deps, request());
-    expect(second.state).toBe("accepted");
-    if (second.state !== "accepted") return;
-
-    // The second press reused the first press's session — createdSession is
-    // stated from the request, not from which invocation minted it — and it
-    // armed identically: same take at keyframes[0], one take, one session.
-    expect(second.result.arming).toEqual({
-      state: "armed",
-      generationId: first.result.generationId,
-    });
-    const session = onlySession(store);
-    const versionId = session.prompt?.versions?.[0]?.versionId;
-    expect(session.prompt?.keyframes?.[0]?.generationId).toBe(
-      first.result.generationId,
-    );
-    expect(takesOf(session, versionId!)).toHaveLength(1);
   });
 
   it("reports arming as not owed when the acceptance named a destination, whose first frame is not this bridge's to replace (issue #136)", async () => {

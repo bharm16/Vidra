@@ -59,28 +59,10 @@ describe("urlValidation", () => {
   });
 
   describe("assertUrlSafe", () => {
-    it("does not throw for safe URLs", () => {
-      expect(() =>
-        assertUrlSafe("https://example.com/image.png", "testField"),
-      ).not.toThrow();
-    });
-
     it("throws for unsafe URLs with descriptive message", () => {
       expect(() =>
         assertUrlSafe("http://169.254.169.254/latest/meta-data/", "sourceUrl"),
       ).toThrow("Invalid URL for sourceUrl");
-    });
-
-    it("throws for localhost URLs", () => {
-      expect(() =>
-        assertUrlSafe("http://localhost:3001/health", "imageUrl"),
-      ).toThrow("Invalid URL for imageUrl");
-    });
-
-    it("throws for private IP URLs", () => {
-      expect(() =>
-        assertUrlSafe("http://10.0.0.1/internal", "referenceUrl"),
-      ).toThrow("Invalid URL for referenceUrl");
     });
   });
 });

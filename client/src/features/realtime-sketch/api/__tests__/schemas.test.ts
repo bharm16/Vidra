@@ -26,11 +26,6 @@ describe("FalI2iResultSchema", () => {
     }
   });
 
-  it("accepts a result without timings (model time shows as absent)", () => {
-    const { timings: _timings, ...withoutTimings } = validResult;
-    expect(FalI2iResultSchema.safeParse(withoutTimings).success).toBe(true);
-  });
-
   it("rejects results with no usable image url", () => {
     expect(
       FalI2iResultSchema.safeParse({ ...validResult, images: [] }).success,

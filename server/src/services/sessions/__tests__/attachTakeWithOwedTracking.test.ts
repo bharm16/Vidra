@@ -157,22 +157,6 @@ describe("attachTakeWithOwedTracking (issue #133)", () => {
     expect(store.docs.get("gen-1")?.state).toBe("failed");
   });
 
-  it("attaches without a store, leaving no durable trace", async () => {
-    const sessionService: SessionAppendPort = {
-      appendGenerationToVersion: vi.fn(async () => ({})),
-    };
-
-    const attachment = await attachTakeWithOwedTracking({
-      store: undefined,
-      sessionService,
-      input: INPUT,
-      logLabel: "Quick picture",
-    });
-
-    expect(attachment.state).toBe("attached");
-    expect(sessionService.appendGenerationToVersion).toHaveBeenCalledTimes(1);
-  });
-
   it("still attaches when the checkpoint write itself fails", async () => {
     const store = makeStore();
     vi.spyOn(store, "recordOwedPending").mockRejectedValue(

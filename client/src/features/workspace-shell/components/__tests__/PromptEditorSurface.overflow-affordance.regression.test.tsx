@@ -39,26 +39,6 @@ function makeProps(
 }
 
 describe("regression: composer overflow affordances", () => {
-  it("the prompt editor scrolls behind a visible thin scrollbar, not a hidden one", () => {
-    const { container } = render(
-      withSelectedSpan(<PromptEditorSurface {...makeProps()} />),
-    );
-    const editor = container.querySelector("[data-placeholder]");
-    expect(editor).not.toBeNull();
-    const className = (editor as HTMLElement).className;
-    expect(className).toMatch(/overflow-y-auto/);
-    expect(className).toContain("ps-scrollbar-thin");
-    expect(className).not.toContain("ps-scrollbar-hide");
-  });
-
-  it("the editor and tray are inset from the composer card edge", () => {
-    const { container } = render(
-      withSelectedSpan(<PromptEditorSurface {...makeProps()} />),
-    );
-    const root = container.firstChild as HTMLElement;
-    expect(root.className).toMatch(/px-4/);
-  });
-
   it("replacement controls render outside the composer overflow viewport", () => {
     const { container } = render(
       withSelectedSpan(<PromptEditorSurface {...makeProps()} />, {

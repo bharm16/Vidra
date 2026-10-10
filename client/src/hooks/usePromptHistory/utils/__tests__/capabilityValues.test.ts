@@ -26,11 +26,6 @@ describe("toCapabilityValues", () => {
     ).toEqual({ aspect_ratio: "16:9" });
   });
 
-  it("reports null when nothing usable survives", () => {
-    expect(toCapabilityValues({ nested: { a: 1 } })).toBeNull();
-    expect(toCapabilityValues({})).toBeNull();
-  });
-
   it("reports null for non-objects", () => {
     expect(toCapabilityValues(null)).toBeNull();
     expect(toCapabilityValues(undefined)).toBeNull();

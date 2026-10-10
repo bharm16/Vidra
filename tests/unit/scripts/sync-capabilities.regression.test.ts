@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { CapabilitiesSchema } from "@shared/capabilities";
-import { MODEL_CATALOG } from "@scripts/lib/modelCatalog";
 import { sortRegistryForOutput } from "@scripts/sync-capabilities";
 
 type Registry = Record<string, Record<string, CapabilitiesSchema>>;
@@ -34,18 +33,6 @@ const schema = (
 });
 
 describe("sync-capabilities regression", () => {
-  it("keeps catalog explicit and excludes discovery noise", () => {
-    const ids = MODEL_CATALOG.map((entry) => `${entry.provider}/${entry.id}`);
-
-    expect(ids).toContain("wan/wan-2.5");
-    expect(ids).toContain("openai/sora-2");
-    expect(ids).toContain("openai/sora-2-pro");
-
-    expect(ids).not.toContain("openai/sora-2-2025-10-06");
-    expect(ids).not.toContain("luma/luma-ray-2");
-    expect(ids).not.toContain("google/veo-3.1-generate-preview");
-  });
-
   it("sorts providers, models, and fields deterministically", () => {
     const registry: Registry = {
       wan: {

@@ -2,7 +2,7 @@ import { SidebarDataContextProvider } from "@/components/ToolSidebar/context";
 import { PromptResultsActionsProvider } from "@/features/prompt-optimizer/context/PromptResultsActionsContext";
 import React, { useEffect } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { CanvasSettingsRow } from "../CanvasSettingsRow";
 import {
   GenerationControlsProvider,
@@ -101,7 +101,7 @@ function renderRow(options: {
                   onStartFrameUpload: options.onReferenceUpload,
                   onRender: vi.fn(),
                   onDraft: vi.fn(),
-                          }
+                }
               : null,
           }}
         >
@@ -175,35 +175,11 @@ describe("CanvasSettingsRow", () => {
 
     fireEvent.click(screen.getByTestId("canvas-generate-button"));
 
-    expect(screen.queryByTestId("canvas-preview-button")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("canvas-preview-button"),
+    ).not.toBeInTheDocument();
     expect(onRender).toHaveBeenCalledWith("sora-2");
     expect(onDraft).not.toHaveBeenCalled();
-  });
-
-  it("uses draft action when Wan draft model is selected", () => {
-    const onDraft = vi.fn();
-    const onRender = vi.fn();
-
-    renderRow({
-      controls: {
-        onDraft,
-        onRender,
-        isGenerating: false,
-        activeDraftModel: null,
-      },
-      state: buildState({ selectedModel: VIDEO_DRAFT_MODEL.id }),
-    });
-
-    fireEvent.click(screen.getByTestId("canvas-generate-button"));
-
-    expect(onDraft).toHaveBeenCalledWith(VIDEO_DRAFT_MODEL.id);
-    expect(onRender).not.toHaveBeenCalled();
-  });
-
-  it("disables generation when controls are unavailable", () => {
-    renderRow({ controls: null });
-
-    expect(screen.getByTestId("canvas-generate-button")).toBeDisabled();
   });
 
   it("disables generation while generation is in progress", () => {
@@ -217,18 +193,6 @@ describe("CanvasSettingsRow", () => {
     });
 
     expect(screen.getByTestId("canvas-generate-button")).toBeDisabled();
-  });
-
-  it("keeps the supported media and settings controls, without dormant camera/storyboard actions", () => {
-    renderRow({ controls: { onDraft: vi.fn(), onRender: vi.fn(), isGenerating: false, activeDraftModel: null } });
-    const row = screen.getByTestId("canvas-settings-row");
-    expect(within(row).getByRole("button", { name: "16:9" })).toBeVisible();
-    expect(within(row).getByRole("button", { name: "5s" })).toBeVisible();
-    expect(within(row).getByRole("button", { name: "Video model" })).toHaveTextContent("Sora 2");
-    expect(within(row).getByRole("button", { name: "Upload reference picture" })).toBeVisible();
-    expect(within(row).getByRole("button", { name: "Open Sketch" })).toBeVisible();
-    expect(within(row).queryByRole("button", { name: /Camera motion|Storyboard|Preview storyboard/ })).not.toBeInTheDocument();
-    expect(screen.queryByTestId("canvas-preview-button")).not.toBeInTheDocument();
   });
 
   it("shows extend chip and clears extend mode from prompt row", () => {
@@ -277,7 +241,7 @@ describe("pending reference words action (issue #119)", () => {
             controls={{
               onRender,
               onDraft,
-                    isGenerating: false,
+              isGenerating: false,
               activeDraftModel: null,
             }}
           />

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Readable } from "node:stream";
 import { ReadableStream as WebReadableStream } from "node:stream/web";
 import { toNodeReadableStream, storeVideoFromUrl } from "../utils";
 
@@ -8,21 +9,6 @@ describe("toNodeReadableStream", () => {
       expect(() => toNodeReadableStream(null)).toThrow(
         "Response body is empty",
       );
-    });
-  });
-
-  describe("core behavior", () => {
-    it("converts a ReadableStream to a Node.js Readable", () => {
-      const webStream = new WebReadableStream({
-        start(controller) {
-          controller.enqueue(new Uint8Array([1, 2, 3]));
-          controller.close();
-        },
-      });
-
-      const nodeStream = toNodeReadableStream(webStream);
-      expect(nodeStream).toBeDefined();
-      expect(typeof nodeStream.pipe).toBe("function");
     });
   });
 });
@@ -110,6 +96,12 @@ describe("storeVideoFromUrl", () => {
       );
 
       expect(result).toEqual(storedAsset);
+      const copiedStream = mockAssetStore.storeFromStream.mock.calls[0]?.[0];
+      if (!(copiedStream instanceof Readable))
+        throw new Error("expected readable video stream");
+      const chunks: Buffer[] = [];
+      for await (const chunk of copiedStream) chunks.push(Buffer.from(chunk));
+      expect(Buffer.concat(chunks)).toEqual(Buffer.from([1, 2, 3]));
       expect(mockAssetStore.storeFromStream).toHaveBeenCalledWith(
         expect.anything(),
         "video/webm",
@@ -145,40 +137,6 @@ describe("storeVideoFromUrl", () => {
       expect(mockAssetStore.storeFromStream).toHaveBeenCalledWith(
         expect.anything(),
         "video/mp4",
-      );
-
-      vi.unstubAllGlobals();
-    });
-
-    it("invokes log.info when logger provided", async () => {
-      const mockBody = new ReadableStream({
-        start(controller) {
-          controller.enqueue(new Uint8Array([1]));
-          controller.close();
-        },
-      });
-
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockResolvedValue({
-          ok: true,
-          headers: new Headers(),
-          body: mockBody,
-        }),
-      );
-
-      mockAssetStore.storeFromStream.mockResolvedValue({ id: "asset-3" });
-      const log = { info: vi.fn(), warn: vi.fn() };
-
-      await storeVideoFromUrl(
-        mockAssetStore as never,
-        "https://example.com/vid.mp4",
-        log,
-      );
-
-      expect(log.info).toHaveBeenCalledWith(
-        "Downloading provider video for storage",
-        { url: "https://example.com/vid.mp4" },
       );
 
       vi.unstubAllGlobals();

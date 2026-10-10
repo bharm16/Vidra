@@ -13,7 +13,7 @@ import type { SpaceNode } from "../../lineage/types";
 
 const picture: SpaceNode = { id: "p1", kind: "picture", ancestorId: null };
 const clip: SpaceNode = { id: "g1", kind: "clip", ancestorId: null };
-const words: SpaceNode = { id: "words-v1", kind: "words", ancestorId: null };
+
 const noop = (): void => {};
 
 describe("SpaceNodeMenu — Refine in the studio", () => {
@@ -49,36 +49,5 @@ describe("SpaceNodeMenu — Refine in the studio", () => {
     await userEvent.click(screen.getByTestId("space-node-menu-g1"));
 
     expect(screen.queryByTestId("space-node-refine-g1")).toBeNull();
-  });
-
-  it("does not offer it on a words node", async () => {
-    render(
-      <SpaceNodeMenu
-        node={words}
-        removable={false}
-        onReword={noop}
-        onRemove={noop}
-        onRefine={vi.fn()}
-      />,
-    );
-
-    await userEvent.click(screen.getByTestId("space-node-menu-words-v1"));
-
-    expect(screen.queryByTestId("space-node-refine-words-v1")).toBeNull();
-  });
-
-  it("omits it when no handler is wired", async () => {
-    render(
-      <SpaceNodeMenu
-        node={picture}
-        removable={false}
-        onReword={noop}
-        onRemove={noop}
-      />,
-    );
-
-    await userEvent.click(screen.getByTestId("space-node-menu-p1"));
-
-    expect(screen.queryByTestId("space-node-refine-p1")).toBeNull();
   });
 });

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getSelectionOffsets,
   restoreSelectionFromOffsets,
-  selectRange,
 } from "@features/prompt-optimizer/utils/textSelection";
 
 vi.mock("@/services/LoggingService", () => ({
@@ -37,21 +36,5 @@ describe("textSelection utils", () => {
 
     const selection = window.getSelection();
     expect(selection?.toString()).toBe("world");
-  });
-
-  it("selects a range in the window selection", () => {
-    const root = document.createElement("div");
-    root.textContent = "Hello world";
-    document.body.appendChild(root);
-
-    const range = document.createRange();
-    const textNode = root.firstChild as Text;
-    range.setStart(textNode, 0);
-    range.setEnd(textNode, 5);
-
-    selectRange(range);
-
-    const selection = window.getSelection();
-    expect(selection?.toString()).toBe("Hello");
   });
 });

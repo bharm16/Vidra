@@ -109,9 +109,4 @@ describe("VeoStrategy", () => {
       "naturalistic lighting",
     );
   });
-
-  it("has canonical model identity", () => {
-    expect(strategy.modelId).toBe("veo-3");
-    expect(strategy.modelName).toBe("Google Veo 3");
-  });
 });

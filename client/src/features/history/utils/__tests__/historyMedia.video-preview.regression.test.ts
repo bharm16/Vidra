@@ -24,27 +24,6 @@ const entryWith = (
   }) as PromptHistoryEntry;
 
 describe("resolveHistoryThumbnail vs video previews (regression)", () => {
-  it("treats an mp4 preview as absent instead of returning it as a cover", () => {
-    const entry = entryWith([
-      {
-        versionId: "v1",
-        signature: "s1",
-        prompt: "p",
-        timestamp: new Date(1000).toISOString(),
-        firstFrame: {
-          generatedAt: new Date(2000).toISOString(),
-          imageUrl: PROXIED_MP4,
-          storagePath: "users/u1/generations/1785521699821-abc.mp4",
-          assetId: null,
-          aspectRatio: null,
-          viewUrlExpiresAt: null,
-        },
-      },
-    ]);
-
-    expect(resolveHistoryThumbnail(entry)).toEqual({ url: null });
-  });
-
   it("falls back to an earlier version's real still", () => {
     const entry = entryWith([
       {

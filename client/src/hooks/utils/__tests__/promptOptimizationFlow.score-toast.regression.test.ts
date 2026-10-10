@@ -86,21 +86,6 @@ describe("regression: quality-score toast never fires in the creator loop (produ
     vi.unstubAllEnvs();
   });
 
-  it("for any quality score, production builds surface no score toast", async () => {
-    vi.stubEnv("DEV", false);
-
-    await fc.assert(
-      fc.asyncProperty(fc.integer({ min: 0, max: 100 }), async (score) => {
-        const toast = createMockToast();
-        await runWithScore(score, toast);
-        expect(toast.success).not.toHaveBeenCalled();
-        expect(toast.info).not.toHaveBeenCalled();
-        expect(toast.warning).not.toHaveBeenCalled();
-      }),
-      { numRuns: 50 },
-    );
-  });
-
   it("dev builds are silent too, and the score is still persisted", async () => {
     vi.stubEnv("DEV", true);
 

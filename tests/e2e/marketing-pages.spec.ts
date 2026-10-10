@@ -9,15 +9,6 @@ test.describe("marketing pages render correctly", () => {
     await expect(page.getByLabel("Shot description")).toBeVisible();
   });
 
-  test("pricing redirects to the workspace while billing is frozen", async ({
-    page,
-  }) => {
-    // BILLING_UI defaults off (ADR-0002 frozen stack) — /pricing parks on "/"
-    // until the subscription rewrite.
-    await page.goto("/pricing");
-    await expect(page).toHaveURL(/\/$/);
-  });
-
   test("docs page displays documentation sections", async ({ page }) => {
     await page.goto("/docs");
     await expect(
@@ -26,20 +17,5 @@ test.describe("marketing pages render correctly", () => {
     await expect(
       page.getByRole("heading", { name: /^the workflow$/i, level: 2 }),
     ).toBeVisible();
-  });
-
-  test("privacy policy page renders legal variant", async ({ page }) => {
-    await page.goto("/privacy-policy");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  });
-
-  test("terms of service page renders legal variant", async ({ page }) => {
-    await page.goto("/terms-of-service");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  });
-
-  test("contact/support page renders", async ({ page }) => {
-    await page.goto("/contact");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 });

@@ -6,7 +6,7 @@
  * absence of fabricated dashboards. Tests exercise the public surface (render,
  * click, assert observable content) so they survive the visual polish pass.
  */
-import React from "react";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -65,16 +65,6 @@ beforeEach(() => {
 });
 
 describe("AccountPage behavior", () => {
-  it("carries the nav rail so every surface stays navigable", () => {
-    mockUseAuthUser.mockReturnValue(signedIn());
-    renderPage();
-
-    expect(
-      screen.getByRole("link", { name: /Live editor/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Library/ })).toBeInTheDocument();
-  });
-
   it("signs out through the settings nav, then navigates to /signin", async () => {
     mockUseAuthUser.mockReturnValue(signedIn());
     renderPage();
@@ -104,29 +94,6 @@ describe("AccountPage behavior", () => {
         "/account",
       ),
     );
-  });
-
-  it("verified: shows the Verified badge and no Resend verification", () => {
-    mockUseAuthUser.mockReturnValue(signedIn({ emailVerified: true }));
-    renderPage();
-
-    expect(screen.getByText("Verified")).toBeTruthy();
-    expect(
-      screen.queryByRole("button", { name: /resend verification/i }),
-    ).toBeNull();
-  });
-
-  it("not signed in: renders the Sign in / Create account CTA", () => {
-    mockUseAuthUser.mockReturnValue(null);
-    renderPage();
-
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
-      "href",
-      "/signin",
-    );
-    expect(
-      screen.getByRole("link", { name: "Create account" }),
-    ).toHaveAttribute("href", "/signup");
   });
 
   it("shows real identity and recovery without fabricated dashboards or navigation", () => {

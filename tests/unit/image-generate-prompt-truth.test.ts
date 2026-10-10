@@ -5,7 +5,7 @@ import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createImageGenerateHandler } from "@routes/preview/handlers/imageGenerate";
-import { runSupertestOrSkip } from "./test-helpers/supertestSafeRequest";
+import { runSupertestRequest } from "./test-helpers/supertestRequest";
 
 const createApp = (handler: express.RequestHandler) => {
   const app = express();
@@ -58,13 +58,12 @@ describe("imageGenerate prompt truth (M2b D3)", () => {
     // have LLM-rewritten. ADR-0010 truth: the picture model receives it
     // verbatim — the rewrite path no longer exists.
     const videoShapedPrompt = "A runner at dawn, camera pans left, 6 seconds";
-    const response = await runSupertestOrSkip(() =>
+    const response = await runSupertestRequest(() =>
       request(app)
         .post("/preview/generate")
         .set("Idempotency-Key", "prompt-truth-1")
         .send({ prompt: videoShapedPrompt }),
     );
-    if (!response) return;
 
     expect(response.status).toBe(200);
     expect(generatePreviewMock).toHaveBeenCalledTimes(1);

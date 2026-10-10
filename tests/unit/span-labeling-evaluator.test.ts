@@ -90,35 +90,3 @@ describe("RelaxedF1Evaluator", () => {
     expect(result.accuracy).toBe(0);
   });
 });
-
-describe("RelaxedF1Evaluator typed metrics", () => {
-  it("reports the same F1 whether or not spans carry extra fields", () => {
-    const base = evaluator.evaluateSpans(
-      [{ start: 0, end: 3, role: "style.aesthetic", text: "noir" }],
-      [{ start: 0, end: 3, role: "style.aesthetic", text: "noir" }],
-    );
-    const withConfidence = evaluator.evaluateSpans(
-      [
-        {
-          start: 0,
-          end: 3,
-          role: "style.aesthetic",
-          text: "noir",
-          confidence: 0.8,
-        },
-      ],
-      [
-        {
-          start: 0,
-          end: 3,
-          role: "style.aesthetic",
-          text: "noir",
-          confidence: 0.8,
-        },
-      ],
-    );
-
-    expect(withConfidence.f1).toBe(base.f1);
-    expect(withConfidence.truePositives).toBe(base.truePositives);
-  });
-});

@@ -1,26 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildTextNodeIndex,
   mapGlobalRangeToDom,
   surroundRange,
   wrapRangeSegments,
 } from "@features/span-highlighting/utils/anchorRanges";
 
 describe("anchorRanges", () => {
-  it("builds text node index for a root", () => {
-    const root = document.createElement("div");
-    root.appendChild(document.createTextNode("Hello "));
-    const span = document.createElement("span");
-    span.textContent = "world";
-    root.appendChild(span);
-
-    const index = buildTextNodeIndex(root);
-
-    expect(index.length).toBe(11);
-    expect(index.nodes.length).toBe(2);
-  });
-
   it("maps global range to DOM range", () => {
     const root = document.createElement("div");
     root.textContent = "Hello world";

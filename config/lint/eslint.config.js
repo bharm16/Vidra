@@ -336,7 +336,6 @@ export default [
       "client/src/features/prompt-optimizer/components/StyleReferenceControls/StyleReferenceControls.tsx",
       "client/src/features/prompt-optimizer/components/TriggerAutocomplete/TriggerAutocomplete.tsx",
       "client/src/features/prompt-optimizer/components/TriggerAutocomplete/TriggerSuggestion.tsx",
-      "client/src/features/prompt-optimizer/components/VersionRow.tsx",
       "client/src/features/prompt-optimizer/components/VersionsPanel.tsx",
       "client/src/features/prompt-optimizer/components/coherence/CoherenceIssueCard.tsx",
       "client/src/features/prompt-optimizer/components/coherence/CoherencePanel.tsx",

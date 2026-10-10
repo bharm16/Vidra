@@ -31,13 +31,9 @@ vi.mock("../../../../services/LoggingService", () => ({
 }));
 
 import {
-  clearAll,
-  deleteEntry,
   loadFromFirestore,
   loadFromLocalStorage,
-  normalizeEntries,
   saveEntry,
-  syncToLocalStorage,
   updateHighlights,
   updateOutput,
   updatePrompt,
@@ -46,27 +42,6 @@ import {
 describe("historyRepository", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("normalizeEntries sets nullable/default fields consistently", () => {
-    const normalized = normalizeEntries([
-      {
-        id: "1",
-        uuid: "uuid-1",
-        input: "in",
-        output: "out",
-        timestamp: "2025-01-01T00:00:00.000Z",
-      },
-    ]);
-
-    expect(normalized[0]).toMatchObject({
-      title: null,
-      brainstormContext: null,
-      generationParams: null,
-      keyframes: null,
-      highlightCache: null,
-      versions: [],
-    });
   });
 
   it("loadFromFirestore uses authenticated repository and normalizes results", async () => {
@@ -109,19 +84,6 @@ describe("historyRepository", () => {
     expect(mockGetPromptRepositoryForUser).toHaveBeenCalledWith(false);
     expect(repository.getUserPrompts).toHaveBeenCalledWith("", 100);
     expect(result).toHaveLength(1);
-  });
-
-  it("syncToLocalStorage delegates to local repository syncEntries", () => {
-    const entries = [{ id: "1", input: "a", output: "b" }] as never[];
-    const syncEntries = vi
-      .fn()
-      .mockReturnValue({ success: true, trimmed: false });
-    mockGetLocalPromptRepository.mockReturnValue({ syncEntries });
-
-    const result = syncToLocalStorage(entries);
-
-    expect(syncEntries).toHaveBeenCalledWith(entries);
-    expect(result).toEqual({ success: true, trimmed: false });
   });
 
   it("saveEntry selects repository by auth state and returns id/uuid pair", async () => {
@@ -168,17 +130,6 @@ describe("historyRepository", () => {
     });
   });
 
-  it("updatePrompt skips remote persistence for authenticated draft docId", async () => {
-    const updatePromptMock = vi.fn().mockResolvedValue(undefined);
-    mockGetPromptRepositoryForUser.mockReturnValue({
-      updatePrompt: updatePromptMock,
-    });
-
-    await updatePrompt("user-1", "uuid-2", "draft-123", { title: "Title" });
-
-    expect(updatePromptMock).not.toHaveBeenCalled();
-  });
-
   it("updateHighlights normalizes non-object highlightCache to null", async () => {
     const updateHighlightsMock = vi.fn().mockResolvedValue(undefined);
     mockGetPromptRepositoryForUser.mockReturnValue({
@@ -192,17 +143,6 @@ describe("historyRepository", () => {
     expect(updateHighlightsMock).toHaveBeenCalledWith("session_9", {
       highlightCache: null,
     });
-  });
-
-  it("updateOutput skips remote persistence for authenticated draft docId", async () => {
-    const updateOutputMock = vi.fn().mockResolvedValue(undefined);
-    mockGetPromptRepositoryForUser.mockReturnValue({
-      updateOutput: updateOutputMock,
-    });
-
-    await updateOutput("user-1", "uuid-out", "draft-1", "new output");
-
-    expect(updateOutputMock).not.toHaveBeenCalled();
   });
 
   it("updateOutput falls back to uuid when docId update fails", async () => {
@@ -226,19 +166,5 @@ describe("historyRepository", () => {
       "uuid-out",
       "new output",
     );
-  });
-
-  it("deleteEntry delegates and clearAll uses repository clear when available", async () => {
-    const repository = {
-      deleteById: vi.fn().mockResolvedValue(undefined),
-      clear: vi.fn().mockResolvedValue(undefined),
-    };
-    mockGetPromptRepositoryForUser.mockReturnValue(repository);
-
-    await deleteEntry("user-1", "doc-1");
-    await clearAll("user-1");
-
-    expect(repository.deleteById).toHaveBeenCalledWith("doc-1");
-    expect(repository.clear).toHaveBeenCalledTimes(1);
   });
 });

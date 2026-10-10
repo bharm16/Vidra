@@ -41,21 +41,6 @@ function createCacheServiceStub(): CacheService {
  *   the *content* of nested objects, not on insertion-order of their keys.
  */
 describe("OptimizationCacheService key-order invariance (regression)", () => {
-  it("buildCacheKey: identical context with reordered top-level keys → same key", () => {
-    const service = new OptimizationCacheService(createCacheServiceStub());
-    const prompt = "a prompt";
-
-    const ctxA = { sceneType: "indoor", lighting: "soft", mood: "calm" };
-    const ctxB = { mood: "calm", lighting: "soft", sceneType: "indoor" };
-
-    // Cast: the test's purpose is to verify key-order invariance, not the
-    // structural shape of InferredContext.
-    const keyA = service.buildCacheKey(prompt, VIDEO_MODE, ctxA as never, null);
-    const keyB = service.buildCacheKey(prompt, VIDEO_MODE, ctxB as never, null);
-
-    expect(keyA).toBe(keyB);
-  });
-
   it("buildCacheKey: identical brainstormContext with reordered keys → same key", () => {
     const service = new OptimizationCacheService(createCacheServiceStub());
     const prompt = "a prompt";

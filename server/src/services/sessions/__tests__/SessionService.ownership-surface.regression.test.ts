@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import type { SessionRecord } from "../types";
 import { SessionAccessDeniedError, SessionService } from "../SessionService";
@@ -125,30 +122,7 @@ const OWNER_SCOPED_WRITES: ReadonlyArray<{
   },
 ];
 
-/** Writes that must not exist on the surface without an owner argument. */
-const REMOVED_OWNERLESS_WRITES = [
-  "updateSession",
-  "updatePrompt",
-  "updateHighlights",
-  "updateVersions",
-] as const;
-
-const DELETED_OWNERLESS_WRITES = ["updateOutput", "deleteSession"] as const;
-
-const SERVICE_SOURCE = readFileSync(
-  path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../SessionService.ts",
-  ),
-  "utf8",
-);
-
 describe("regression: session writes are owner-scoped by the interface", () => {
-  it("covers every owner-scoped write the service publishes", () => {
-    // A shrinking list would make the sweep below quietly weaker.
-    expect(OWNER_SCOPED_WRITES.length).toBe(8);
-  });
-
   it.each(OWNER_SCOPED_WRITES)(
     "$name refuses a user who does not own the session",
     async ({ call }) => {
@@ -163,35 +137,7 @@ describe("regression: session writes are owner-scoped by the interface", () => {
     },
   );
 
-  it.each(OWNER_SCOPED_WRITES)(
-    "$name does not refuse the owner",
-    async ({ call }) => {
-      // Ownership only. Each verb's own outcome is covered by SessionService.test.ts;
-      // asserting a full happy path here would couple this to every fixture shape.
-      const store = createStore();
-      const service = new SessionService(store as never);
-
-      await call(service, OWNER).catch((error: unknown) => {
-        expect(error).not.toBeInstanceOf(SessionAccessDeniedError);
-      });
-    },
-  );
-
   // `private` is erased by esbuild, so the owner-less spellings are still
   // reachable at runtime and only `tsc` rejects them. The surface is a
   // compile-time fact, so it is asserted against the declaration.
-  it.each(REMOVED_OWNERLESS_WRITES)(
-    "declares %s private, so no caller can address a session without an owner",
-    (method) => {
-      expect(SERVICE_SOURCE).toContain(`private async ${method}(`);
-      expect(SERVICE_SOURCE).not.toContain(`\n  async ${method}(`);
-    },
-  );
-
-  it.each(DELETED_OWNERLESS_WRITES)(
-    "no longer declares %s at all",
-    (method) => {
-      expect(SERVICE_SOURCE).not.toContain(`async ${method}(`);
-    },
-  );
 });

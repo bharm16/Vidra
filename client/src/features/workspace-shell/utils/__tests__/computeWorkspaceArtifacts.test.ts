@@ -13,21 +13,6 @@ const base: WorkspaceArtifactsInput = {
 };
 
 describe("computeWorkspaceArtifacts", () => {
-  it("is all-false for an empty workspace", () => {
-    expect(computeWorkspaceArtifacts(base)).toEqual({
-      hasDescription: false,
-      hasFrame: false,
-      hasClip: false,
-    });
-  });
-
-  it("maps an expanded prompt to hasDescription", () => {
-    expect(
-      computeWorkspaceArtifacts({ ...base, hasExpandedPrompt: true })
-        .hasDescription,
-    ).toBe(true);
-  });
-
   it("treats a start frame, a ready idea-box frame, or a completed image as hasFrame", () => {
     expect(
       computeWorkspaceArtifacts({ ...base, hasStartFrame: true }).hasFrame,
