@@ -6,9 +6,12 @@ import {
   CROSS_MODE_USER_ID,
 } from "#tests/integration/helpers/cross-mode/harness";
 import type { InMemoryObjectStore } from "#tests/integration/helpers/cross-mode/boundaryDoubles";
+import { parseBrowserAddress } from "./browserAddress";
+
+const browserAddress = parseBrowserAddress(process.env.CROSS_MODE_BROWSER_URL ?? "http://127.0.0.1:58141");
 
 process.env.GCS_BUCKET_NAME = "prompt-builder-test-bucket";
-process.env.ALLOWED_ORIGINS = "http://127.0.0.1:58141";
+process.env.ALLOWED_ORIGINS = browserAddress.origin;
 process.env.VIDEO_GENERATE_IDEMPOTENCY_MODE = "soft";
 process.env.VITE_FIREBASE_API_KEY = "synthetic-firebase-key";
 process.env.VITE_FIREBASE_PROJECT_ID = "demo-browser-proof";
@@ -139,7 +142,7 @@ const vite = await createServer({
   ],
   server: {
     host: "127.0.0.1",
-    port: 58141,
+    port: browserAddress.port,
     strictPort: true,
     proxy: {
       "/api": { target: harness.baseUrl, changeOrigin: true },
@@ -152,7 +155,7 @@ const control = async (
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> => {
-  const url = new URL(req.url ?? "/", "http://127.0.0.1:58141");
+  const url = new URL(req.url ?? "/", browserAddress.origin);
   if (url.pathname === "/__test/objects") {
     const path = url.searchParams.get("path") ?? "";
     const object = objectStore?.get(path);
@@ -253,7 +256,7 @@ const control = async (
 
 await vite.listen();
 console.log(
-  "Cross-mode offline browser server listening at http://127.0.0.1:58141",
+  `Cross-mode offline browser server listening at ${browserAddress.origin}`,
 );
 const close = async (): Promise<void> => {
   await vite.close();
