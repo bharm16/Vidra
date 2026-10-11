@@ -1,0 +1,702 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-10",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "pageId": "956:84247",
+  "indexId": "976:95137",
+  "summary": {
+    "screens": 207,
+    "desktop": 138,
+    "mobile": 69,
+    "workspaceScreensElsewhere": 209,
+    "sharedComponentFamilies": 96,
+    "iconMasters": 55,
+    "variables": 70,
+    "prototypeTransitions": 1745
+  },
+  "visualSources": [
+    {
+      "kind": "visual",
+      "url": "https://www.krea.ai/",
+      "used": "public home and sign-in dialog hierarchy"
+    },
+    {
+      "kind": "visual",
+      "url": "https://www.krea.ai/docs/user-guide",
+      "used": "documentation navigation, reading width and article hierarchy"
+    },
+    {
+      "kind": "visual",
+      "url": "https://www.krea.ai/pricing",
+      "used": "public navigation and pricing hierarchy; Krea prices and offers were not copied"
+    },
+    {
+      "kind": "repository",
+      "path": "client/src/App.tsx",
+      "used": "all currently declared application routes"
+    },
+    {
+      "kind": "repository",
+      "path": "client/src/pages/auth/authErrorCopy.ts",
+      "used": "reachable authentication failures and recovery categories"
+    },
+    {
+      "kind": "repository",
+      "path": "client/src/pages/ContactSupportPage.tsx",
+      "used": "email handoff semantics; no server-side ticket delivery"
+    },
+    {
+      "kind": "repository",
+      "path": "docs/design/workflow/workflow-state-contract.md",
+      "used": "creation, history, ownership and recovery behavior"
+    }
+  ],
+  "validation": {
+    "productScreens": 207,
+    "overlays": 12,
+    "outside": [],
+    "overflow": [],
+    "legacyMasterReferences": [],
+    "fontFamilies": [
+      "Inter"
+    ],
+    "textStyles": [
+      "S:2ac917175896a69b69a6f5bf1f2c91df4e7db1c2,",
+      "S:b4eafcfb693d2ad6dfd1d987be5be94388edd189,",
+      "S:06611ee7e5c01ff493811bed844005b5c5bc9f0b,",
+      "S:1f9ef091a9cb7625cf7d35117d5f542715f27736,",
+      "S:28912dbe348245aad81de85473276ec880ca9182,",
+      "S:88776718ef3228e98f9375106c812ae0d49f7c33,",
+      "S:18629faeeb504bc6d697b806393006442d1053b6,",
+      "S:ccbbe2b11b2c43f9dec87194b1feb23169cef799,",
+      "S:8418ab1de9a148cbd09439765dc99a18bbc1fe52,",
+      "S:df0ecc419c0ba27a896d32add4e92a95fe12b3f1,",
+      "S:c86e2cc7b902e991bd764b17632b38f52a15566d,"
+    ],
+    "nonPublicImagesInAuth": []
+  },
+  "prototype": {
+    "transitions": 1745,
+    "triggers": {
+      "ON_CLICK": 1697,
+      "AFTER_TIMEOUT": 20,
+      "ON_KEY_DOWN": 28
+    },
+    "actions": {
+      "NODE": 1695,
+      "BACK": 4,
+      "CLOSE": 44,
+      "URL": 2
+    },
+    "invalidDestinations": [],
+    "journeysChecked": [
+      "desktop_signin",
+      "desktop_signup",
+      "reset_request",
+      "reset_link",
+      "docs_search",
+      "profile_save",
+      "deletion_request",
+      "support_email",
+      "mobile_signup",
+      "mobile_signin",
+      "mobile_reset_request",
+      "mobile_reset_password",
+      "mobile_docs_search",
+      "mobile_signout",
+      "mobile_data_request",
+      "mobile_deletion_request"
+    ],
+    "missingJourneySteps": []
+  },
+  "reviewJourneys": {
+    "desktop_signin": [
+      "W01",
+      "A01",
+      "A02",
+      "A05",
+      "A45",
+      "X08"
+    ],
+    "desktop_signup": [
+      "W01",
+      "A14",
+      "A15",
+      "A19",
+      "A21",
+      "A22",
+      "A23",
+      "A24",
+      "A25",
+      "X07"
+    ],
+    "reset_request": [
+      "A01",
+      "A31",
+      "A32",
+      "A33",
+      "A34"
+    ],
+    "reset_link": [
+      "T02",
+      "A36",
+      "A37",
+      "A57",
+      "A40",
+      "A41",
+      "A01"
+    ],
+    "docs_search": [
+      "H01",
+      "O01",
+      "O02",
+      "H05"
+    ],
+    "profile_save": [
+      "K01",
+      "K04",
+      "K05",
+      "K06"
+    ],
+    "deletion_request": [
+      "K17",
+      "S12",
+      "O09"
+    ],
+    "support_email": [
+      "S01",
+      "S02",
+      "O09",
+      "O10",
+      "O11"
+    ],
+    "mobile_signup": [
+      "N01",
+      "N10",
+      "N48",
+      "N49",
+      "N12",
+      "N50",
+      "N51",
+      "N38"
+    ],
+    "mobile_signin": [
+      "N08",
+      "N43",
+      "N44",
+      "N39"
+    ],
+    "mobile_reset_request": [
+      "N08",
+      "N14",
+      "N45",
+      "N46",
+      "N15"
+    ],
+    "mobile_reset_password": [
+      "N16",
+      "N37",
+      "N52",
+      "N17",
+      "N08"
+    ],
+    "mobile_docs_search": [
+      "N19",
+      "N66",
+      "N21",
+      "N19"
+    ],
+    "mobile_signout": [
+      "N23",
+      "N36",
+      "N41",
+      "N40"
+    ],
+    "mobile_data_request": [
+      "N27",
+      "N68",
+      "O12"
+    ],
+    "mobile_deletion_request": [
+      "N27",
+      "N69",
+      "O12"
+    ]
+  },
+  "sharedLibrary": {
+    "families": 96,
+    "icons": 55,
+    "variables": 70,
+    "components": [
+      [
+        "957:87540",
+        "Site header",
+        [
+          [
+            "957:87538",
+            "Account=Guest",
+            1440,
+            80
+          ],
+          [
+            "957:87539",
+            "Account=Member",
+            1440,
+            80
+          ]
+        ]
+      ],
+      [
+        "957:87571",
+        "Mobile site header",
+        [
+          [
+            "957:87569",
+            "State=Default",
+            390,
+            64
+          ],
+          [
+            "957:87570",
+            "State=Menu",
+            390,
+            64
+          ]
+        ]
+      ],
+      [
+        "957:87591",
+        "Site footer",
+        []
+      ],
+      [
+        "957:87613",
+        "Site product menu",
+        []
+      ],
+      [
+        "957:87663",
+        "Auth form",
+        [
+          [
+            "957:87651",
+            "Step=Sign in, State=Empty",
+            384,
+            380
+          ],
+          [
+            "957:87652",
+            "Step=Sign in, State=Ready",
+            384,
+            380
+          ],
+          [
+            "957:87653",
+            "Step=Sign in, State=Busy",
+            384,
+            380
+          ],
+          [
+            "957:87654",
+            "Step=Sign up, State=Empty",
+            384,
+            452
+          ],
+          [
+            "957:87655",
+            "Step=Sign up, State=Ready",
+            384,
+            452
+          ],
+          [
+            "957:87656",
+            "Step=Sign up, State=Busy",
+            384,
+            452
+          ],
+          [
+            "957:87657",
+            "Step=Forgot password, State=Empty",
+            384,
+            130
+          ],
+          [
+            "957:87658",
+            "Step=Forgot password, State=Ready",
+            384,
+            130
+          ],
+          [
+            "957:87659",
+            "Step=Forgot password, State=Busy",
+            384,
+            130
+          ],
+          [
+            "957:87660",
+            "Step=Reset password, State=Empty",
+            384,
+            220
+          ],
+          [
+            "957:87661",
+            "Step=Reset password, State=Ready",
+            384,
+            220
+          ],
+          [
+            "957:87662",
+            "Step=Reset password, State=Busy",
+            384,
+            220
+          ]
+        ]
+      ],
+      [
+        "957:87874",
+        "Auth notice",
+        [
+          [
+            "957:87871",
+            "Tone=Error",
+            384,
+            84
+          ],
+          [
+            "957:87872",
+            "Tone=Info",
+            384,
+            84
+          ],
+          [
+            "957:87873",
+            "Tone=Success",
+            384,
+            84
+          ]
+        ]
+      ],
+      [
+        "957:87893",
+        "FAQ row",
+        [
+          [
+            "957:87891",
+            "State=Closed",
+            704,
+            62
+          ],
+          [
+            "957:87892",
+            "State=Open",
+            704,
+            148
+          ]
+        ]
+      ],
+      [
+        "957:87921",
+        "Docs navigation",
+        [
+          [
+            "957:87909",
+            "Active=Overview",
+            236,
+            730
+          ],
+          [
+            "957:87910",
+            "Active=Get started",
+            236,
+            730
+          ],
+          [
+            "957:87911",
+            "Active=Images",
+            236,
+            730
+          ],
+          [
+            "957:87912",
+            "Active=Video clips",
+            236,
+            730
+          ],
+          [
+            "957:87913",
+            "Active=Video editor",
+            236,
+            730
+          ],
+          [
+            "957:87914",
+            "Active=Imports",
+            236,
+            730
+          ],
+          [
+            "957:87915",
+            "Active=History and drafts",
+            236,
+            730
+          ],
+          [
+            "957:87916",
+            "Active=Sketch",
+            236,
+            730
+          ],
+          [
+            "957:87917",
+            "Active=Models and settings",
+            236,
+            730
+          ],
+          [
+            "957:87918",
+            "Active=Sharing",
+            236,
+            730
+          ],
+          [
+            "957:87919",
+            "Active=Recovery",
+            236,
+            730
+          ],
+          [
+            "957:87920",
+            "Active=Allowance",
+            236,
+            730
+          ]
+        ]
+      ],
+      [
+        "957:88262",
+        "Docs search",
+        [
+          [
+            "957:88258",
+            "State=Empty",
+            688,
+            340
+          ],
+          [
+            "957:88259",
+            "State=Results",
+            688,
+            378
+          ],
+          [
+            "957:88260",
+            "State=No matches",
+            688,
+            228
+          ],
+          [
+            "957:88261",
+            "State=Unavailable",
+            688,
+            228
+          ]
+        ]
+      ],
+      [
+        "957:88348",
+        "Settings navigation",
+        [
+          [
+            "957:88343",
+            "Active=Profile",
+            232,
+            360
+          ],
+          [
+            "957:88344",
+            "Active=Security",
+            232,
+            360
+          ],
+          [
+            "957:88345",
+            "Active=Usage",
+            232,
+            360
+          ],
+          [
+            "957:88346",
+            "Active=Billing",
+            232,
+            360
+          ],
+          [
+            "957:88347",
+            "Active=Data and privacy",
+            232,
+            360
+          ]
+        ]
+      ],
+      [
+        "957:88419",
+        "Usage summary",
+        [
+          [
+            "957:88414",
+            "State=Available",
+            680,
+            190
+          ],
+          [
+            "957:88415",
+            "State=Limit",
+            680,
+            190
+          ],
+          [
+            "957:88416",
+            "State=Loading",
+            680,
+            190
+          ],
+          [
+            "957:88417",
+            "State=Error",
+            680,
+            190
+          ],
+          [
+            "957:88418",
+            "State=Empty",
+            680,
+            190
+          ]
+        ]
+      ],
+      [
+        "957:88442",
+        "Support form",
+        [
+          [
+            "957:88438",
+            "State=Empty",
+            560,
+            470
+          ],
+          [
+            "957:88439",
+            "State=Ready",
+            560,
+            470
+          ],
+          [
+            "957:88440",
+            "State=Invalid",
+            560,
+            470
+          ],
+          [
+            "957:88441",
+            "State=Opening",
+            560,
+            470
+          ]
+        ]
+      ],
+      [
+        "957:88524",
+        "System message",
+        [
+          [
+            "957:88518",
+            "State=Loading",
+            520,
+            340
+          ],
+          [
+            "957:88519",
+            "State=Failed",
+            520,
+            340
+          ],
+          [
+            "957:88520",
+            "State=Offline",
+            520,
+            340
+          ],
+          [
+            "957:88521",
+            "State=Not found",
+            520,
+            340
+          ],
+          [
+            "957:88522",
+            "State=Unavailable",
+            520,
+            340
+          ],
+          [
+            "957:88523",
+            "State=Denied",
+            520,
+            340
+          ]
+        ]
+      ],
+      [
+        "957:88578",
+        "Profile summary",
+        [
+          [
+            "957:88575",
+            "State=Verified",
+            680,
+            142
+          ],
+          [
+            "957:88576",
+            "State=Unverified",
+            680,
+            142
+          ],
+          [
+            "957:88577",
+            "State=Loading",
+            680,
+            142
+          ]
+        ]
+      ],
+      [
+        "958:87947",
+        "Auth artwork",
+        []
+      ]
+    ]
+  },
+  "newTextStyles": {
+    "Display": "S:06611ee7e5c01ff493811bed844005b5c5bc9f0b,",
+    "Page title": "S:df0ecc419c0ba27a896d32add4e92a95fe12b3f1,",
+    "Section title": "S:18629faeeb504bc6d697b806393006442d1053b6,",
+    "Reading": "S:1f9ef091a9cb7625cf7d35117d5f542715f27736,"
+  },
+  "qualification": {
+    "allCurrentRoutesMapped": true,
+    "allCatalogScreensDrawn": true,
+    "ownerApproved": false,
+    "applicationImplementationStarted": false,
+    "applicationTestsExecuted": 0,
+    "providerQualified": false,
+    "commercialLaunchApproved": false
+  },
+  "limits": [
+    "Prototype fields use fixed example inputs. Timed responses are illustrative fixtures, not backend or provider results.",
+    "A node link and screenshot do not prove authentication, persistence, ownership, email delivery, charging or rendering correctness.",
+    "The public offer is bounded free testing. Future paid prices and activation remain separate decisions.",
+    "Legal layouts retain existing source copy and date; legacy billing statements are not reapproved by the design.",
+    "Sample hero artwork on auth pages is public static content. Private project grants must never be used for authentication decoration."
+  ]
+}

@@ -169,6 +169,13 @@ export function registerApiRoutes(
   );
 
   // LLM endpoints
+  app.use("/api/projects", apiAuthMiddleware, createProjectRoutes({
+    projects: container.resolve<ProjectStore>("workflowProjectStore"),
+    conversations: container.resolve<ConversationStore>("workflowConversationStore"),
+    drafts: container.resolve<CreationDraftStore>("workflowDraftStore"),
+  }));
+
+  // LLM endpoints
   const labelSpansRoute = createLabelSpansRoute(
     container.resolve("aiService"),
     container.resolve("spanLabelingCacheService"),
@@ -300,3 +307,7 @@ export function registerApiRoutes(
     );
   }
 }
+import { createProjectRoutes } from "@routes/projects.routes";
+import type { ProjectStore } from "@services/projects/ProjectStore";
+import type { ConversationStore } from "@services/projects/ConversationStore";
+import type { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";

@@ -3,6 +3,8 @@ import { admin, getFirestore } from "@infrastructure/firebaseAdmin";
 import { logger } from "@infrastructure/Logger";
 import type { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
 import { getFirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
+import { acceptWorkflowRequest, readWorkflowRequest, type WorkflowAdmissionInput } from "./workflowReceipts";
+import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 
 const DEFAULT_PENDING_LOCK_TTL_MS = 6 * 60 * 1000;
 const DEFAULT_REPLAY_TTL_MS = 24 * 60 * 60 * 1000;
@@ -91,8 +93,8 @@ export function resolveVideoGenerateIdempotencyMode(
 }
 
 export class RequestIdempotencyService {
-  private readonly db = getFirestore();
-  private readonly collection = this.db.collection("request_idempotency");
+  private readonly db: FirebaseFirestore.Firestore;
+  private readonly collection: FirebaseFirestore.CollectionReference;
   private readonly log = logger.child({ service: "RequestIdempotencyService" });
   private readonly pendingLockTtlMs: number;
   private readonly replayTtlMs: number;
@@ -103,12 +105,23 @@ export class RequestIdempotencyService {
     options?: {
       pendingLockTtlMs?: number;
       replayTtlMs?: number;
+      database?: FirebaseFirestore.Firestore;
     },
   ) {
+    this.db = options?.database ?? getFirestore();
+    this.collection = this.db.collection("request_idempotency");
     this.firestoreCircuitExecutor = firestoreCircuitExecutor;
     this.pendingLockTtlMs =
       options?.pendingLockTtlMs ?? DEFAULT_PENDING_LOCK_TTL_MS;
     this.replayTtlMs = options?.replayTtlMs ?? DEFAULT_REPLAY_TTL_MS;
+  }
+
+  async acceptWorkflow(input: WorkflowAdmissionInput): Promise<AcceptedRequest> {
+    return this.firestoreCircuitExecutor.executeWrite("idempotency.acceptWorkflow", () => acceptWorkflowRequest(this.db, input));
+  }
+
+  async getWorkflowRequest(ownerId: string, submissionId: string): Promise<AcceptedRequest | undefined> {
+    return this.firestoreCircuitExecutor.executeRead("idempotency.getWorkflowRequest", () => readWorkflowRequest(this.db, ownerId, submissionId));
   }
 
   async claimRequest(input: {

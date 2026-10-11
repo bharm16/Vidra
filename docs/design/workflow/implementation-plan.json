@@ -516,13 +516,13 @@
       "owner": "Product UI design",
       "status": "planned",
       "keep": [
-        "Page 21 components/tokens, existing Figma pages and the established inspection/ownership safeguards."
+        "Existing Figma pages, exact inspection/ownership safeguards and useful underlying primitives. Page 21 remains historical implementation evidence."
       ],
       "replace": [
         "Visual layouts that imply one required creation order or one whole-workspace stage."
       ],
       "build": [
-        "Dedicated design page for the new workspace, conversation/history, draft/input controls, recovery and small video editor; per-state component/variant mapping. Include the account/usage, hosted-checkout return and entitlement-blocked presentations; retain Page 21 styling.",
+        "Fresh Page 24 component foundations and Pages 25/26/28 workspace, conversation/history, draft/input, recovery, editor and whole-product presentations. Page 27 model-dependent review remains pending; the dedicated image editor is deferred.",
         "Desktop/mobile/keyboard walkthroughs mapped to the readable state inventory; owner review of actual linked frames."
       ],
       "commits": [
@@ -532,7 +532,7 @@
       ],
       "exitCriteria": [
         "Each user-visible state has a reviewed presentation and action/wait reason.",
-        "Existing tokens/components are reused; no acceptance claimed for an unseen layout."
+        "Reuse compatible primitives with the fresh tokens and components; inspect linked frames and verify runtime parity before claiming visual acceptance."
       ],
       "testFocus": [
         "Walk all 137 cases through the specified controls; demonstrate active draft versus viewed result, pending result source, old-message revision and recovery without focus loss."
@@ -547,7 +547,7 @@
       "caseIds": [],
       "entryCriteria": [
         "The existing workflow contract, state map and acceptance scenarios are available as the design baseline; wire schemas and the executable application harness are not prerequisites.",
-        "Inspect the current Page 21 component library before authoring; preserve existing pages and use a dedicated new design page.",
+        "Inspect the fresh Page 24 component library and the latest Page 28 supplement; preserve Pages 24-28 and use a dedicated new page for remaining model-dependent corrections.",
         "Use wireframes and linked interactions to review unresolved presentation choices before marking designs approved."
       ]
     },
@@ -20332,7 +20332,7 @@
     "Auth, authorization, payment and user-data behavior includes a negative path. Transactional uniqueness/CAS/settlement passes the actual Firestore-emulator race profile without skips.",
     "Every commit passes root typecheck, quiet ESLint, architecture, unit and replay gates. Shared-contract changes typecheck immediately; registration/lifecycle changes add bootstrap and DI; route/catalog/flag changes add drift checks.",
     "Before handoff, lint including CSS, build and relevant provider-free browser journeys pass. The required renderer profile runs the real pinned FFmpeg image and checks bytes/frames/audio.",
-    "New UI composition has linked approved designs and browser/accessibility evidence; old Page 21 styling is retained unless explicitly replaced.",
+    "New UI composition uses the fresh approved design direction, linked target frames and browser/accessibility evidence. Page 21 is implementation/reference evidence, not the replacement component library.",
     "Rollback, saved-record compatibility and outstanding recovery obligations are proved before retiring a route/writer.",
     "No required missing environment, provider cancellation/status capability, live creative quality, pricing data or hosted rollout evidence is silently marked passed.",
     "Add executable tests with the behavior change; unimplemented cases stay in this plan, not as skipped/TODO passing application tests. Whole-case closure waits for every required boundary/profile.",
@@ -20343,7 +20343,7 @@
       "id": "G-DESIGN",
       "owner": "WP-12",
       "requires": [],
-      "condition": "Use the existing behavior contract/state cases to begin design now. Concrete state presentations and linked new frames must be reviewed before new UI implementation; schema and harness implementation do not block design. Retain existing Page 21 styling.",
+      "condition": "Concrete state presentations and linked frames must be reviewed before their UI implementation. Use Pages 24-26 plus Page 28 and the current supplements; Page 27 interaction/mobile/result review remains open. Preserve the deferred image editor.",
       "evidence": "docs/design/workflow/ui-state-evidence.json (planned)"
     },
     {
@@ -20905,13 +20905,18 @@
     "limits": "These are existing application baseline checks plus plan validation. None of the planned new application suites, real renderer profiles, production billing, migration or hosted release gates is claimed complete."
   },
   "designReadiness": {
-    "status": "ready to begin wireframes; no replacement layout approved yet",
+    "status": "Fresh visual direction authorized for implementation on 2026-10-10; exact frame/runtime acceptance and Page 27 review remain open.",
     "existingInputs": [
       "workflow-state-contract.md",
       "state-map.md",
       "acceptance-cases.md",
       "../page21-component-migration.md",
-      "../page21-tokens.json"
+      "../page21-tokens.json",
+      "design-handoff.md",
+      "ui-state-evidence.json",
+      "../model-dependent/capability-contract.md",
+      "../prompt-editing/interaction-contract.md",
+      "../product/interaction-contract.md"
     ],
     "decideInFigma": [
       "Project/conversation navigation and workspace layout",

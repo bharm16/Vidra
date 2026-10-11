@@ -15,7 +15,7 @@ The authoritative plan data is `implementation-plan.json`. Run `python3 docs/des
 <!-- prettier-ignore -->
 | Disposition | Implementation decision |
 | --- | --- |
-| Keep | Authentication SDK; aiService; span labeling/refinement; actual provider input shaping; owned media and grants; durable receipts/attachments; proven player/seek/fullscreen; bounded Sketch loop; Page 21 primitives; legacy refund obligations. |
+| Keep | Authentication SDK; aiService; span labeling/refinement; tested provider input shaping; owned media and grants; durable receipts/attachments; proven player/seek/fullscreen; bounded Sketch loop; compatible primitives; legacy refund obligations. |
 | Keep and extend | Receipt authority and native workers with durable attempt evidence; immutable media/provenance with project destinations; upload admission with persistent staging/audio; observed results with uniform slots/recovery. |
 | Replace | Starting-frame inference of task; one workspace stage; job-gated/fragmented drafts; Studio viewer-as-edit-source; whole-thread implicit context; automatic stale-job/provider retry; unsafe sign-in replay; old share/trash semantics. |
 | Build | Project/conversation envelopes, execution-draft revision protocol, exact branch context, customer usage/entitlements, durable clarifications, recovery inbox, small composition editor, real renderer and isolated export deployment. |
@@ -24,7 +24,7 @@ The source inventory names the exact existing modules/tests and their limitation
 
 ## Ready to start Figma design
 
-WP-12 can begin now from the behavior contract, state map, acceptance cases and existing Page 21 components. Schema and test-harness implementation are not design prerequisites. Start with linked wireframes; approval of a replacement layout remains required before its production UI implementation.
+WP-12 uses the fresh Page 24 foundations, Pages 25/26 whole-product coverage and the latest Page 28 supplement. Schema and harness work do not block design. The visual direction is authorized for implementation; exact target review, runtime parity and Page 27 interaction/mobile/result review remain open. The dedicated image editor is deferred.
 
 Decide during that first design pass:
 
@@ -456,14 +456,14 @@ WP-25 builds/tests adoption and writer-switch machinery on fixture copies. Produ
 **Entry criteria:**
 
 - The existing workflow contract, state map and acceptance scenarios are available as the design baseline; wire schemas and the executable application harness are not prerequisites.
-- Inspect the current Page 21 component library before authoring; preserve existing pages and use a dedicated new design page.
+- Inspect the fresh Page 24 component library and the latest Page 28 supplement; preserve Pages 24-28 and use a dedicated new page for remaining model-dependent corrections.
 - Use wireframes and linked interactions to review unresolved presentation choices before marking designs approved.
 
-**Keep:** Page 21 components/tokens, existing Figma pages and the established inspection/ownership safeguards.
+**Keep:** Existing Figma pages, exact inspection/ownership safeguards and useful underlying primitives. Page 21 remains historical implementation evidence.
 
 **Replace:** Visual layouts that imply one required creation order or one whole-workspace stage.
 
-**Build:** Dedicated design page for the new workspace, conversation/history, draft/input controls, recovery and small video editor; per-state component/variant mapping. Include the account/usage, hosted-checkout return and entitlement-blocked presentations; retain Page 21 styling. Desktop/mobile/keyboard walkthroughs mapped to the readable state inventory; owner review of actual linked frames.
+**Build:** Fresh Page 24 component foundations and Pages 25/26/28 workspace, conversation/history, draft/input, recovery, editor and whole-product presentations. Page 27 model-dependent review remains pending; the dedicated image editor is deferred. Desktop/mobile/keyboard walkthroughs mapped to the readable state inventory; owner review of actual linked frames.
 
 **Existing code boundaries:** `docs/design/page21-component-migration.md`, `docs/design/page21-tokens.json`, `packages/promptstudio-system/`.
 
@@ -478,7 +478,7 @@ WP-25 builds/tests adoption and writer-switch machinery on fixture copies. Produ
 **Acceptance:**
 
 - Each user-visible state has a reviewed presentation and action/wait reason.
-- Existing tokens/components are reused; no acceptance claimed for an unseen layout.
+- Reuse compatible primitives with the fresh tokens and components; inspect linked frames and verify runtime parity before claiming visual acceptance.
 - Walk all 137 cases through the specified controls; demonstrate active draft versus viewed result, pending result source, old-message revision and recovery without focus loss.
 
 **Primary original case IDs:** No original case is uniquely owned here; infrastructure/design/release acceptance is specified above and in supplemental cases/gates..
@@ -919,7 +919,7 @@ A package may land an additive contract with its local boundary tests before a l
 - Auth, authorization, payment and user-data behavior includes a negative path. Transactional uniqueness/CAS/settlement passes the actual Firestore-emulator race profile without skips.
 - Every commit passes root typecheck, quiet ESLint, architecture, unit and replay gates. Shared-contract changes typecheck immediately; registration/lifecycle changes add bootstrap and DI; route/catalog/flag changes add drift checks.
 - Before handoff, lint including CSS, build and relevant provider-free browser journeys pass. The required renderer profile runs the real pinned FFmpeg image and checks bytes/frames/audio.
-- New UI composition has linked approved designs and browser/accessibility evidence; old Page 21 styling is retained unless explicitly replaced.
+- New UI composition uses the fresh approved design direction, linked target frames and browser/accessibility evidence. Page 21 is implementation/reference evidence, not the replacement component library.
 - Rollback, saved-record compatibility and outstanding recovery obligations are proved before retiring a route/writer.
 - No required missing environment, provider cancellation/status capability, live creative quality, pricing data or hosted rollout evidence is silently marked passed.
 - Add executable tests with the behavior change; unimplemented cases stay in this plan, not as skipped/TODO passing application tests. Whole-case closure waits for every required boundary/profile.
@@ -946,7 +946,7 @@ The last two checks apply when their route/catalog/flag and registration/lifecyc
 <!-- prettier-ignore -->
 | Gate | Owner / prerequisites | Required evidence |
 | --- | --- | --- |
-| G-DESIGN | WP-12 /  | Use the existing behavior contract/state cases to begin design now. Concrete state presentations and linked new frames must be reviewed before new UI implementation; schema and harness implementation do not block design. Retain existing Page 21 styling. docs/design/workflow/ui-state-evidence.json (planned) |
+| G-DESIGN | WP-12 /  | Concrete state presentations and linked frames must be reviewed before their UI implementation. Use Pages 24-26 plus Page 28 and the current supplements; Page 27 interaction/mobile/result review remains open. Preserve the deferred image editor. docs/design/workflow/ui-state-evidence.json (planned) |
 | G-EMULATOR | WP-24 / WP-04, WP-08, WP-11, WP-22 | Actual transactional CAS/admission/usage races pass against Firestore emulator. Skips fail this gate. Emulator test report with exact source revision and conflicting-call histories. |
 | G-RENDER | WP-24 / WP-19, WP-20, WP-21 | Real render fixture/container/resource checks and browser preview parity pass for every enabled preset. Pinned image/font/manifest hashes, ffprobe/decode/frame/audio assertions and browser artifacts. |
 | G-APP | WP-24 / WP-25 | All state/transition/rejection owners, all 137 original acceptance cases, actor adapters and supplemental cases assigned to G-APP have passing application evidence. Hosted/activation supplements remain separate named gates. docs/design/workflow/application-acceptance-evidence.json (planned; missing/skip cannot be green). |

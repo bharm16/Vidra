@@ -109,6 +109,15 @@ describe("respond — off-contract error codes are a compile error", () => {
       SHARE_CLIP_NOT_FOUND: true,
       SHARE_NO_MEDIA: true,
       VIDEO_MODEL_UNAVAILABLE: true,
+      not_found: true,
+      access_denied: true,
+      read_only: true,
+      revision_conflict: true,
+      invalid_context: true,
+      input_unavailable: true,
+      capability_unavailable: true,
+      invalid_settings: true,
+      submission_conflict: true,
     };
 
     for (const code of Object.keys(declared)) {

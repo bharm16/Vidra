@@ -1,0 +1,371 @@
+{
+  "reviewedAt": "2026-10-10T21:02:48Z",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "pageId": "1026:84247",
+  "status": "unfinished_design_review",
+  "frozenPages": [
+    "883:84247",
+    "887:85295",
+    "956:84247"
+  ],
+  "generation": [
+    {
+      "key": "G01",
+      "title": "Model settings loading",
+      "nodeId": "1030:84332",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84332",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G02",
+      "title": "Veo has sound built in",
+      "nodeId": "1030:84410",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84410",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G03",
+      "title": "Only supported durations are offered",
+      "nodeId": "1030:84502",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84502",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G04",
+      "title": "Aspect ratios come from the selected model",
+      "nodeId": "1030:84608",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84608",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G05",
+      "title": "Resolution shows its duration requirement",
+      "nodeId": "1030:84713",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84713",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G06",
+      "title": "Review a coupled setting change",
+      "nodeId": "1030:84822",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84822",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G07",
+      "title": "Duration fixed by the selected resolution",
+      "nodeId": "1030:84929",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-84929",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G08",
+      "title": "An end frame still requires a start frame",
+      "nodeId": "1030:85023",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-85023",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G09",
+      "title": "Start and end images are explicit inputs",
+      "nodeId": "1030:85126",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-85126",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G10",
+      "title": "Reference images fix the duration",
+      "nodeId": "1030:85225",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1030-85225",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G11",
+      "title": "An image-only model cannot run from words alone",
+      "nodeId": "1032:84980",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-84980",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G12",
+      "title": "Image-derived shape with model-specific duration",
+      "nodeId": "1032:85077",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85077",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G13",
+      "title": "An audio reference is an input, not a music track",
+      "nodeId": "1032:85170",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85170",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G14",
+      "title": "Audio reference limits block an invalid input",
+      "nodeId": "1032:85269",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85269",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G15",
+      "title": "Changing model explicitly reviews discarded capabilities",
+      "nodeId": "1032:85369",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85369",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G16",
+      "title": "A compatible capability refresh preserves the draft",
+      "nodeId": "1032:85483",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85483",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G17",
+      "title": "A saved model is no longer available",
+      "nodeId": "1032:85580",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85580",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G18",
+      "title": "Capability lookup failed",
+      "nodeId": "1032:85658",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85658",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G19",
+      "title": "Unverified capabilities never get generic defaults",
+      "nodeId": "1032:85736",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85736",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G20",
+      "title": "Changed capabilities require review before a new submission",
+      "nodeId": "1032:85814",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85814",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G21",
+      "title": "An unconfirmed submission keeps its captured model settings",
+      "nodeId": "1032:85910",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85910",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G22",
+      "title": "Choose a model by its actual capabilities",
+      "nodeId": "1032:85991",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-85991",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G23",
+      "title": "Reusing old settings does not bypass current model limits",
+      "nodeId": "1032:86106",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86106",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G24",
+      "title": "A different source image changes the derived shape",
+      "nodeId": "1032:86212",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86212",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G25",
+      "title": "Frame-based generation has a derived length and no sound control",
+      "nodeId": "1032:86305",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86305",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G26",
+      "title": "An unsupported dropped input remains visibly unresolved",
+      "nodeId": "1032:86392",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86392",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G27",
+      "title": "Frame count and generation rate determine length",
+      "nodeId": "1032:86492",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86492",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G28",
+      "title": "A range change updates the derived length",
+      "nodeId": "1032:86590",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86590",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G29",
+      "title": "Native extension inherits the source shape and fixed extension length",
+      "nodeId": "1032:86682",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86682",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G30",
+      "title": "A stored clip can be ineligible for native extension",
+      "nodeId": "1032:86770",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1032-86770",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G31",
+      "title": "A start image does not require an end image",
+      "nodeId": "1037:87424",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87424",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G32",
+      "title": "Making a new clip from a frame is an explicit alternative to extension",
+      "nodeId": "1037:87524",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87524",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G33",
+      "title": "Input-derived values wait for verified image metadata",
+      "nodeId": "1037:87629",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87629",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G34",
+      "title": "A rejected image does not get an invented shape",
+      "nodeId": "1037:87734",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87734",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    },
+    {
+      "key": "G35",
+      "title": "Provider support alone does not enable an unwired audio input",
+      "nodeId": "1037:87835",
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1037-87835",
+      "sourceAlignment": "updated",
+      "structuralCheck": "passed",
+      "prototype": "not_wired",
+      "runtimeAcceptance": "not_run"
+    }
+  ],
+  "remaining": {
+    "resultFrames": "R01–R10 need source-alignment review",
+    "editorFrames": "E01–E12 need a verified video-editor source",
+    "mobile": "not_built_on_page_27",
+    "interactions": "not_wired_on_page_27",
+    "providerQualification": "not_performed",
+    "applicationImplementation": "not_started"
+  }
+}

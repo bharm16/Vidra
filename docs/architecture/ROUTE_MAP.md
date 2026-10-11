@@ -33,6 +33,21 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/preview/video/jobs/:jobId`                                 | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/video/jobs/:jobId/attach`                          | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/view`                                        | `server/src/routes/preview.routes.ts`                          |
+| GET    | `/api/projects`                                                  | `server/src/routes/projects.routes.ts`                         |
+| POST   | `/api/projects`                                                  | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId`                                       | `server/src/routes/projects.routes.ts`                         |
+| PATCH  | `/api/projects/:projectId`                                       | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId/conversations`                         | `server/src/routes/projects.routes.ts`                         |
+| POST   | `/api/projects/:projectId/conversations`                         | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId/conversations/:conversationId`         | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId/conversations/:conversationId/drafts`  | `server/src/routes/projects.routes.ts`                         |
+| POST   | `/api/projects/:projectId/conversations/:conversationId/drafts`  | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId/drafts/:draftId`                       | `server/src/routes/projects.routes.ts`                         |
+| PATCH  | `/api/projects/:projectId/drafts/:draftId`                       | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId/drafts/:draftId/conflicts`             | `server/src/routes/projects.routes.ts`                         |
+| POST   | `/api/projects/:projectId/drafts/:draftId/restore`               | `server/src/routes/projects.routes.ts`                         |
+| GET    | `/api/projects/:projectId/drafts/:draftId/revisions`             | `server/src/routes/projects.routes.ts`                         |
+| POST   | `/api/projects/:projectId/drafts/:draftId/status`                | `server/src/routes/projects.routes.ts`                         |
 | GET    | `/api/providers`                                                 | `server/src/routes/capabilities.routes.ts`                     |
 | GET    | `/api/public/share/:shareId`                                     | `server/src/routes/share.routes.ts`                            |
 | GET    | `/api/registry`                                                  | `server/src/routes/capabilities.routes.ts`                     |
@@ -75,4 +90,4 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/health/live`                                                   | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                  | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **67**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **82**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
