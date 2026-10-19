@@ -48,16 +48,16 @@ export function AuthEntryPage({ mode }: { mode: "signin" | "signup" }): ReactEle
       if (!validEmail || !validPassword) return;
     }
     suppressAutoRedirect.current = true;
-    const token = ++operation.current;
+    const attempt = ++operation.current;
     setBusy(provider);
     try {
       const repo = getAuthRepository();
       const signedIn = provider === "google" ? await repo.signInWithGoogle() : isSignUp ? await repo.signUpWithEmail(normalizedEmail, password) : await repo.signInWithEmail(normalizedEmail, password);
-      if (token !== operation.current) return;
+      if (attempt !== operation.current) return;
       if (isSignUp && provider === "email") {
         let delivery: "sent" | "failed" = "sent";
         try { await repo.sendVerificationEmail(redirect, signedIn.uid); } catch { delivery = "failed"; }
-        if (token !== operation.current) return;
+        if (attempt !== operation.current) return;
         const params = new URLSearchParams();
         if (location.search) params.set("redirect", redirect);
         params.set("email", normalizedEmail);
@@ -66,11 +66,11 @@ export function AuthEntryPage({ mode }: { mode: "signin" | "signup" }): ReactEle
         navigate(`/email-verification?${params.toString()}`, { replace: true, state: { delivery } });
       } else navigate(redirect, { replace: true });
     } catch (err) {
-      if (token !== operation.current) return;
+      if (attempt !== operation.current) return;
       const message = authErrorCopy(err, isSignUp ? "signUp" : "signIn", provider);
       setError(message === "Incorrect email or password." ? message + " Try again or reset your password." : message);
       suppressAutoRedirect.current = false;
-    } finally { if (token === operation.current) setBusy(undefined); }
+    } finally { if (attempt === operation.current) setBusy(undefined); }
   };
   const handleSubmit = (event: FormEvent): void => { event.preventDefault(); void submit("email"); };
 

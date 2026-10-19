@@ -31,7 +31,7 @@ export function EmailVerificationPage(): ReactElement {
   const failedDelivery = z.object({ delivery: z.enum(["sent", "failed"]) }).safeParse(location.state).data?.delivery === "failed";
   const email = typeof user?.email === "string" ? user.email : new URLSearchParams(location.search).get("email")?.trim() ?? "";
   useEffect(() => {
-    const token = ++operation.current;
+    const attempt = ++operation.current;
     setError(undefined);
     if (!code) { setState("idle"); return; }
     if (mode && mode !== "verifyEmail") { setState("error"); setError("This link is not an email verification link."); return; }
@@ -40,8 +40,8 @@ export function EmailVerificationPage(): ReactElement {
       try {
         await getAuthRepository().verifyEmailWithCode(code);
         try { await getAuthRepository().refreshCurrentUser(); } catch { /* Applying the code succeeded independently of the session refresh. */ }
-        if (token === operation.current) setState("verified");
-      } catch (err) { if (token === operation.current) { setState("error"); setError(authErrorCopy(err, "verifyEmail")); } }
+        if (attempt === operation.current) setState("verified");
+      } catch (err) { if (attempt === operation.current) { setState("error"); setError(authErrorCopy(err, "verifyEmail")); } }
     })();
     return () => { operation.current += 1; };
   }, [code, mode]);
@@ -49,11 +49,11 @@ export function EmailVerificationPage(): ReactElement {
   const resend = async (): Promise<void> => {
     if (!user || resending || cooldown || state === "verifying") return;
     const owner = user.uid;
-    const token = ++resendOperation.current;
+    const attempt = ++resendOperation.current;
     setResending(true); setError(undefined);
-    try { await getAuthRepository().sendVerificationEmail(redirect, owner); if (token === resendOperation.current && owner === currentOwner.current) { setState("idle"); setResent(true); setCooldown(60); } }
-    catch (err) { if (token === resendOperation.current && owner === currentOwner.current) setError(authErrorCopy(err, "resendVerification")); }
-    finally { if (token === resendOperation.current && owner === currentOwner.current) setResending(false); }
+    try { await getAuthRepository().sendVerificationEmail(redirect, owner); if (attempt === resendOperation.current && owner === currentOwner.current) { setState("idle"); setResent(true); setCooldown(60); } }
+    catch (err) { if (attempt === resendOperation.current && owner === currentOwner.current) setError(authErrorCopy(err, "resendVerification")); }
+    finally { if (attempt === resendOperation.current && owner === currentOwner.current) setResending(false); }
   };
   const verified = state === "verified" || user?.emailVerified === true;
   const continueTo = user ? redirect : `/signin?redirect=${encodeURIComponent(redirect)}`;
