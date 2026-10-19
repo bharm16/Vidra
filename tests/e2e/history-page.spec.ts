@@ -60,7 +60,7 @@ test.describe("library page", () => {
     await page.goto("/history");
     await expect(page).toHaveURL(/\/signin\?redirect=%2Fhistory/);
     await expect(
-      page.getByRole("heading", { level: 1, name: /welcome back/i }),
+      page.getByRole("form", { name: "Sign in", exact: true }),
     ).toBeVisible();
   });
 

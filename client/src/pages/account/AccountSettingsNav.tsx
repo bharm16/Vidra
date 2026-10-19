@@ -1,47 +1,17 @@
-import React from "react";
-import { Button } from "@promptstudio/system/components/ui/button";
-import profileIcon from "@/assets/design-system/account-profile.svg";
-import signoutIcon from "@/assets/design-system/account-signout.svg";
+import { useState, type ReactElement } from "react";
+import { Link } from "react-router-dom";
+import { FreshButton } from "@/components/fresh/FreshButton";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@promptstudio/system/components/ui/dialog";
+import { SiteHeader } from "@/features/public-site/SiteShell";
 
-export interface AccountSettingsNavProps {
-  onSignOut: () => void;
-  isSigningOut: boolean;
+export type AccountSection = "profile" | "security" | "usage" | "privacy";
+const SECTIONS: Array<{ id: AccountSection; label: string }> = [{ id: "profile", label: "Profile" }, { id: "security", label: "Security" }, { id: "usage", label: "Usage" }, { id: "privacy", label: "Data and privacy" }];
+const sectionPath = (section: AccountSection): string => section === "profile" ? "/account" : `/account?section=${section}`;
+export function AccountMobileHeader(): ReactElement {
+  return <div className="vf-account-mobile-header"><SiteHeader /></div>;
 }
-
-export function AccountSettingsNav({
-  onSignOut,
-  isSigningOut,
-}: AccountSettingsNavProps): React.ReactElement {
-  return (
-    <nav
-      aria-label="Account settings"
-      className="flex flex-none items-center gap-4 bg-chrome p-2 md:w-[184px] md:flex-col md:items-stretch md:pb-6 md:pt-10"
-    >
-      <h2 className="hidden text-body-lg font-normal leading-7 md:block">
-        Settings
-      </h2>
-      <Button
-        asChild
-        variant="secondary"
-        size="sm"
-        className="bg-active px-6 md:w-[176px]"
-      >
-        <span aria-current="page">
-          <img src={profileIcon} alt="" draggable={false} />
-          Personal profile
-        </span>
-      </Button>
-      <div className="flex-1" />
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={onSignOut}
-        loading={isSigningOut}
-        className="shrink-0 md:w-full"
-      >
-        <img src={signoutIcon} alt="" draggable={false} />
-        Sign out
-      </Button>
-    </nav>
-  );
+export function AccountSettingsNav({ section, onNavigate }: { section: AccountSection; onNavigate: () => void }): ReactElement {
+  const [open, setOpen] = useState(false);
+  return <><nav className="vf-account-navigation" aria-label="Account settings"><span>Your account</span>{SECTIONS.map(item => <Link key={item.id} to={sectionPath(item.id)} aria-current={section === item.id ? "page" : undefined} onClick={onNavigate}>{item.label}</Link>)}<Link className="vf-account-back" to="/app" onClick={onNavigate}>Back to workspace</Link></nav>
+  <div className="vf-account-mobile-menu"><Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><FreshButton tone="quiet">Account menu</FreshButton></DialogTrigger><DialogContent hideClose overlayClassName="vf-account-menu-overlay" className="vf vf-account-menu-sheet"><DialogTitle>Your account</DialogTitle><DialogDescription className="sr-only">Choose your account settings section.</DialogDescription>{SECTIONS.map(item => <FreshButton asChild tone="quiet" key={item.id}><Link to={sectionPath(item.id)} onClick={() => { setOpen(false); onNavigate(); }} aria-current={section === item.id ? "page" : undefined}>{item.label}</Link></FreshButton>)}<DialogClose><img src="/design-assets/fidelity-public-close.svg" alt="" /><span className="sr-only">Close</span></DialogClose></DialogContent></Dialog></div></>;
 }

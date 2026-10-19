@@ -10,7 +10,9 @@ import { readActionMode, readOobCode, safeRedirect } from "../authParams";
 describe("safeRedirect", () => {
   it("returns a same-origin path", () => {
     expect(safeRedirect("?redirect=/studio")).toBe("/studio");
-    expect(safeRedirect("?redirect=/studio/abc%20def")).toBe("/studio/abc def");
+    expect(safeRedirect("?redirect=/studio/abc%2520def")).toBe(
+      "/studio/abc%20def",
+    );
   });
 
   it("rejects destinations that leave the origin", () => {
@@ -18,6 +20,11 @@ describe("safeRedirect", () => {
     expect(safeRedirect("?redirect=//evil.example/x")).toBeNull();
     expect(safeRedirect("?redirect=studio")).toBeNull();
     expect(safeRedirect("?redirect=javascript:alert(1)")).toBeNull();
+    expect(safeRedirect("?redirect=/studio/abc%20def")).toBeNull();
+    expect(safeRedirect("?returnTo=/app%00/path")).toBeNull();
+    expect(safeRedirect("?returnTo=/\\evil.example")).toBeNull();
+    expect(safeRedirect("?redirect=/.//evil.example")).toBeNull();
+    expect(safeRedirect("?redirect=/a/..//evil.example")).toBeNull();
   });
 
   it("only ever yields a single-slash-rooted path", () => {

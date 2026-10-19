@@ -1,14 +1,8 @@
-import React from "react";
+import { type ReactElement, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-
-const CARD: React.CSSProperties = {
-  background: "var(--card)",
-  border: `1px solid ${"var(--border)"}`,
-  borderRadius: "10px",
-};
-
+import { LegalPageLayout } from "@/features/public-site/LegalPageLayout";
+import { supportAddress } from "@/features/public-site/support";
 type TocItem = { id: string; label: string };
-
 const TOC: TocItem[] = [
   { id: "summary", label: "Summary" },
   { id: "who", label: "Who we are" },
@@ -23,111 +17,16 @@ const TOC: TocItem[] = [
   { id: "changes", label: "Changes" },
   { id: "contact", label: "Contact" },
 ];
-
-function SectionHeading({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}): React.ReactElement {
-  return (
-    <h2 id={id} className="text-ui mb-3 scroll-mt-16 font-semibold text-white">
-      {children}
-    </h2>
-  );
-}
-
-export function TermsOfServicePage(): React.ReactElement {
-  const updatedAt = "January 13, 2026";
-  const supportEmail =
-    (
-      import.meta as { env?: { VITE_SUPPORT_EMAIL?: string } }
-    ).env?.VITE_SUPPORT_EMAIL?.trim() || "support@vidra.app";
+function SectionHeading({ id, children }: { id: string; children: ReactNode }): ReactElement { return <h2 id={id} tabIndex={-1}>{children}</h2>; }
+export function TermsOfServicePage(): ReactElement {
+  const supportEmail = supportAddress();
   const companyName = "Vidra";
   const productName = "Vidra";
-
-  return (
-    <div
-      className="h-full overflow-y-auto"
-      style={{ background: "var(--background)" }}
-    >
-      {/* Sticky header */}
-      <div
-        className="sticky top-0 z-10 px-4 py-3 sm:px-6"
-        style={{
-          background: "var(--background)",
-          borderBottom: `1px solid ${"var(--border)"}`,
-        }}
-      >
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p
-              className="text-meta font-semibold tracking-[0.2em]"
-              style={{ color: "var(--ghost-foreground)" }}
-            >
-              LEGAL
-            </p>
-            <h1 className="text-ui font-semibold tracking-tight text-white">
-              Terms of Service
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <span
-              className="text-meta"
-              style={{ color: "var(--faint-foreground)" }}
-            >
-              Updated {updatedAt}
-            </span>
-            <Link
-              to="/"
-              className="text-meta font-medium transition-colors hover:text-white"
-              style={{ color: "var(--faint-foreground)" }}
-            >
-              Back to app
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Content with sidebar TOC */}
-      <div className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
-        <div className="mt-5 grid gap-5 lg:grid-cols-[200px_1fr]">
-          {/* TOC sidebar */}
-          <aside className="lg:sticky lg:top-14 lg:self-start">
-            <nav aria-label="On this page" className="text-meta">
-              <p
-                className="text-meta mb-2 font-semibold tracking-[0.18em]"
-                style={{ color: "var(--ghost-foreground)" }}
-              >
-                ON THIS PAGE
-              </p>
-              <ul className="space-y-1.5">
-                {TOC.map((item) => (
-                  <li key={item.id}>
-                    <a
-                      className="transition-colors hover:text-white"
-                      style={{ color: "var(--faint-foreground)" }}
-                      href={`#${item.id}`}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </aside>
-
-          {/* Main content */}
-          <div className="p-4" style={CARD}>
-            <div
-              className="text-meta space-y-8 leading-relaxed"
-              style={{ color: "var(--muted-foreground)" }}
-            >
+  return <LegalPageLayout title="Terms of service" updated="October 10, 2026" toc={TOC}>
               <section>
                 <SectionHeading id="summary">Summary</SectionHeading>
                 <p>
-                  These Terms govern your use of {productName} (the
+                  These Terms govern your use of {productName} (the<br />
                   &ldquo;Service&rdquo;). By accessing or using the Service, you
                   agree to these Terms.
                 </p>
@@ -136,8 +35,8 @@ export function TermsOfServicePage(): React.ReactElement {
               <section>
                 <SectionHeading id="who">Who we are</SectionHeading>
                 <p>
-                  The Service is provided by {companyName} (&ldquo;we&rdquo;,
-                  &ldquo;us&rdquo;, &ldquo;our&rdquo;). Contact:{" "}
+                  The Service is provided by {companyName} (&ldquo;we&rdquo;,<br />
+                  &ldquo;us&rdquo;, &ldquo;our&rdquo;). Contact:<br />
                   <a
                     className="font-medium hover:underline"
                     style={{ color: "var(--foreground)" }}
@@ -145,13 +44,13 @@ export function TermsOfServicePage(): React.ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  .
+                  <br />.
                 </p>
               </section>
 
               <section>
                 <SectionHeading id="accounts">Accounts</SectionHeading>
-                <ul className="list-disc space-y-1.5 pl-5">
+                <ul>
                   <li>
                     You&apos;re responsible for activity under your account.
                   </li>
@@ -172,29 +71,19 @@ export function TermsOfServicePage(): React.ReactElement {
                 <p>
                   Don&apos;t misuse the Service. Don&apos;t reverse engineer,
                   disrupt, or overload our systems, and don&apos;t use the
-                  Service to generate unlawful, harmful, or infringing content.
+                  <br />Service to generate unlawful, harmful, or infringing content.
                 </p>
               </section>
 
               <section>
                 <SectionHeading id="billing">Billing</SectionHeading>
-                <p>
-                  Some features require payment. Subscriptions are charged on a
-                  recurring basis until you cancel (processed by Stripe).
-                </p>
-                <ul className="mt-2 list-disc space-y-1.5 pl-5">
-                  <li>Taxes may apply.</li>
-                  <li>Manage billing via the billing portal.</li>
-                  <li>Invoices and receipts available in the Service.</li>
-                  <li>Refunds follow our posted policy or applicable law.</li>
-                  <li>Prices may change with advance notice.</li>
-                </ul>
+                <p>Vidra is free during testing, with a limited allowance. Paid plans and purchases are not available during testing. If paid services are introduced, their prices and terms will be shown before a purchase.</p>
               </section>
 
               <section>
                 <SectionHeading id="privacy">Privacy</SectionHeading>
                 <p>
-                  Our{" "}
+                  Our<br />
                   <Link
                     to="/privacy-policy"
                     className="font-medium hover:underline"
@@ -249,7 +138,7 @@ export function TermsOfServicePage(): React.ReactElement {
                 <p>
                   We may update these Terms. Material changes will be
                   communicated. Continued use means you accept the updated
-                  Terms.
+                  <br />Terms.
                 </p>
               </section>
 
@@ -264,44 +153,8 @@ export function TermsOfServicePage(): React.ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  .
+                  <br />.
                 </p>
               </section>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer
-          className="text-meta mt-8 py-6"
-          style={{
-            borderTop: `1px solid ${"var(--border)"}`,
-            color: "var(--faint-foreground)",
-          }}
-        >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Link to="/" className="font-medium text-white hover:underline">
-              Go to app
-            </Link>
-            <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <Link
-                to="/privacy-policy"
-                className="hover:text-white"
-                style={{ color: "var(--faint-foreground)" }}
-              >
-                Privacy
-              </Link>
-              <Link
-                to="/contact"
-                className="hover:text-white"
-                style={{ color: "var(--faint-foreground)" }}
-              >
-                Support
-              </Link>
-            </nav>
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
+  </LegalPageLayout>;
 }

@@ -1,14 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
-
-const CARD: React.CSSProperties = {
-  background: "var(--card)",
-  border: `1px solid ${"var(--border)"}`,
-  borderRadius: "10px",
-};
-
+import { type ReactElement, type ReactNode } from "react";
+import { LegalPageLayout } from "@/features/public-site/LegalPageLayout";
+import { supportAddress } from "@/features/public-site/support";
 type TocItem = { id: string; label: string };
-
 const TOC: TocItem[] = [
   { id: "overview", label: "Overview" },
   { id: "data", label: "Information we collect" },
@@ -21,116 +14,19 @@ const TOC: TocItem[] = [
   { id: "changes", label: "Changes" },
   { id: "contact", label: "Contact" },
 ];
-
-function SectionHeading({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}): React.ReactElement {
-  return (
-    <h2 id={id} className="text-ui mb-3 scroll-mt-16 font-semibold text-white">
-      {children}
-    </h2>
-  );
-}
-
-export function PrivacyPolicyPage(): React.ReactElement {
-  const updatedAt = "January 13, 2026";
-  const supportEmail =
-    (
-      import.meta as { env?: { VITE_SUPPORT_EMAIL?: string } }
-    ).env?.VITE_SUPPORT_EMAIL?.trim() || "support@vidra.app";
+function SectionHeading({ id, children }: { id: string; children: ReactNode }): ReactElement { return <h2 id={id} tabIndex={-1}>{children}</h2>; }
+export function PrivacyPolicyPage(): ReactElement {
+  const supportEmail = supportAddress();
   const companyName = "Vidra";
   const productName = "Vidra";
-
-  return (
-    <div
-      className="h-full overflow-y-auto"
-      style={{ background: "var(--background)" }}
-    >
-      {/* Sticky header */}
-      <div
-        className="sticky top-0 z-10 px-4 py-3 sm:px-6"
-        style={{
-          background: "var(--background)",
-          borderBottom: `1px solid ${"var(--border)"}`,
-        }}
-      >
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p
-              className="text-meta font-semibold tracking-[0.2em]"
-              style={{ color: "var(--ghost-foreground)" }}
-            >
-              LEGAL
-            </p>
-            <h1 className="text-ui font-semibold tracking-tight text-white">
-              Privacy Policy
-            </h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <span
-              className="text-meta"
-              style={{ color: "var(--faint-foreground)" }}
-            >
-              Updated {updatedAt}
-            </span>
-            <Link
-              to="/"
-              className="text-meta font-medium transition-colors hover:text-white"
-              style={{ color: "var(--faint-foreground)" }}
-            >
-              Back to app
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Content with sidebar TOC */}
-      <div className="mx-auto max-w-4xl px-4 pb-16 sm:px-6">
-        <div className="mt-5 grid gap-5 lg:grid-cols-[200px_1fr]">
-          {/* TOC sidebar */}
-          <aside className="lg:sticky lg:top-14 lg:self-start">
-            <nav aria-label="On this page" className="text-meta">
-              <p
-                className="text-meta mb-2 font-semibold tracking-[0.18em]"
-                style={{ color: "var(--ghost-foreground)" }}
-              >
-                ON THIS PAGE
-              </p>
-              <ul className="space-y-1.5">
-                {TOC.map((item) => (
-                  <li key={item.id}>
-                    <a
-                      className="transition-colors hover:text-white"
-                      style={{ color: "var(--faint-foreground)" }}
-                      href={`#${item.id}`}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </aside>
-
-          {/* Main content */}
-          <div className="p-4" style={CARD}>
-            <div
-              className="text-meta space-y-8 leading-relaxed"
-              style={{ color: "var(--muted-foreground)" }}
-            >
+  return <LegalPageLayout title="Privacy policy" toc={TOC}>
               <section>
                 <SectionHeading id="overview">Overview</SectionHeading>
                 <p>
-                  This Privacy Policy explains how {companyName}{" "}
-                  (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)
-                  collects, uses, and shares information when you use{" "}
-                  {productName} (the &ldquo;Service&rdquo;).
-                </p>
-                <p className="mt-2">
+                  This Privacy Policy explains how {companyName}<br />
+                  (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)<br />
+                  collects, uses, and shares information when you use<br />
+                  {productName} (the &ldquo;Service&rdquo;).<br />
                   Questions? Contact us at{" "}
                   <a
                     className="font-medium hover:underline"
@@ -139,7 +35,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  .
+                  <br />.
                 </p>
               </section>
 
@@ -147,7 +43,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                 <SectionHeading id="data">
                   Information we collect
                 </SectionHeading>
-                <ul className="list-disc space-y-1.5 pl-5">
+                <ul>
                   <li>
                     <span className="font-semibold text-white">
                       Account information
@@ -182,18 +78,16 @@ export function PrivacyPolicyPage(): React.ReactElement {
                     : email, message content, attachments.
                   </li>
                 </ul>
-                <p className="mt-3">
-                  <span className="font-semibold text-white">
-                    AI processing.
-                  </span>{" "}
+                <p>
+                  AI processing.<br />
                   When you use AI features, we send inputs to the relevant AI
-                  provider to process your request and return results.
+                  <br />provider to process your request and return results.
                 </p>
               </section>
 
               <section>
                 <SectionHeading id="use">How we use data</SectionHeading>
-                <ul className="list-disc space-y-1.5 pl-5">
+                <ul>
                   <li>Provide, maintain, and improve the Service.</li>
                   <li>Authenticate you and secure accounts.</li>
                   <li>Process payments and prevent fraud.</li>
@@ -207,7 +101,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                 <p>
                   We share information with service providers (hosting,
                   analytics, error monitoring, payment processing) and AI
-                  providers you use through the Service. We may share to comply
+                  <br />providers you use through the Service. We may share to comply
                   with law, protect rights/safety, or in connection with a
                   business transfer. We do not sell personal information.
                 </p>
@@ -226,7 +120,7 @@ export function PrivacyPolicyPage(): React.ReactElement {
                 <SectionHeading id="choices">
                   Your choices &amp; rights
                 </SectionHeading>
-                <ul className="list-disc space-y-1.5 pl-5">
+                <ul>
                   <li>Access and update account information in the Service.</li>
                   <li>Request deletion of your account and saved content.</li>
                   <li>Opt out of non-essential communications.</li>
@@ -276,44 +170,8 @@ export function PrivacyPolicyPage(): React.ReactElement {
                   >
                     {supportEmail}
                   </a>
-                  .
+                  <br />.
                 </p>
               </section>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer
-          className="text-meta mt-8 py-6"
-          style={{
-            borderTop: `1px solid ${"var(--border)"}`,
-            color: "var(--faint-foreground)",
-          }}
-        >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Link to="/" className="font-medium text-white hover:underline">
-              Go to app
-            </Link>
-            <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <Link
-                to="/terms-of-service"
-                className="hover:text-white"
-                style={{ color: "var(--faint-foreground)" }}
-              >
-                Terms
-              </Link>
-              <Link
-                to="/contact"
-                className="hover:text-white"
-                style={{ color: "var(--faint-foreground)" }}
-              >
-                Support
-              </Link>
-            </nav>
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
+  </LegalPageLayout>;
 }

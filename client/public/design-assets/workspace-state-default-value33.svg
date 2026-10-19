@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="208" height="24" viewBox="0 0 208 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Vidra Fresh / Slider">
+<g id="Track">
+<path d="M0 11.5C0 10.6716 0.671573 10 1.5 10H206.5C207.328 10 208 10.6716 208 11.5V11.5C208 12.3284 207.328 13 206.5 13H1.50001C0.671579 13 0 12.3284 0 11.5V11.5Z" fill="#2C2C2C"/>
+</g>
+<g id="Value">
+<rect width="70.68" height="3" transform="translate(0 10)" fill="#B8B8B8"/>
+</g>
+<circle id="Ellipse" cx="70.68" cy="12" r="6" fill="#F7F7F7"/>
+</g>
+</svg>

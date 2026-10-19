@@ -1,93 +1,80 @@
+import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ContactSupportPage } from "../ContactSupportPage";
 
-const writeText = vi.fn();
-const originalClipboard = Object.getOwnPropertyDescriptor(
-  navigator,
-  "clipboard",
-);
-
-beforeEach(() => {
-  writeText.mockReset();
-  Object.defineProperty(navigator, "clipboard", {
-    configurable: true,
-    value: { writeText },
-  });
-});
-afterEach(() => {
-  vi.unstubAllEnvs();
-  if (originalClipboard)
-    Object.defineProperty(navigator, "clipboard", originalClipboard);
-  else Reflect.deleteProperty(navigator, "clipboard");
-});
-
-function renderPage(): void {
-  render(
-    <MemoryRouter>
-      <ContactSupportPage />
-    </MemoryRouter>,
-  );
+const { openDraft, copy } = vi.hoisted(() => ({ openDraft: vi.fn<(url: string) => void>(), copy: vi.fn<(value: string) => Promise<void>>() }));
+vi.mock("@/hooks/useAuthUser", () => ({ useAuthUser: (options: { onChange?: (user: null) => void }): null => { const { onChange } = options; useEffect(() => { onChange?.(null); }, [onChange]); return null; } }));
+vi.mock("@/features/public-site/support", async original => ({ ...await original<typeof import("@/features/public-site/support")>(), openSupportDraft: openDraft }));
+const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+const originalMatchMedia = window.matchMedia;
+beforeEach(() => { vi.clearAllMocks(); window.matchMedia = vi.fn(query => ({ matches: false, media: query, onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(() => true) })); copy.mockResolvedValue(undefined); Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: copy } }); });
+afterEach(() => { window.matchMedia = originalMatchMedia; if (originalClipboard) Object.defineProperty(navigator, "clipboard", originalClipboard); else Reflect.deleteProperty(navigator, "clipboard"); });
+function prepare(): void {
+  render(<MemoryRouter><ContactSupportPage /></MemoryRouter>);
+  fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Please help me recover my clip." } });
+  fireEvent.submit(screen.getByRole("form", { name: "Contact support form" }));
 }
 
-function draftUrl(): URL {
-  return new URL(
-    screen
-      .getByRole("form", { name: "Contact support form" })
-      .getAttribute("action") ?? "",
-  );
-}
-
-describe("ContactSupportPage draft and copy contract", () => {
-  it("encodes the selected security topic, optional reply address and multiline message into the mail draft", () => {
-    renderPage();
-    fireEvent.click(screen.getByRole("button", { name: "Security report" }));
-    fireEvent.change(screen.getByLabelText("Your email (optional)"), {
-      target: { value: " creator@example.com " },
-    });
-    fireEvent.change(screen.getByLabelText("Message"), {
-      target: { value: "Problem & expected result?\nA second line + symbols" },
-    });
-    const draft = draftUrl();
-    expect(draft.protocol).toBe("mailto:");
-    expect(draft.pathname).toBe("support@vidra.app");
-    expect(draft.searchParams.get("subject")).toBe("Security report");
-    expect(draft.searchParams.get("body")).toContain(
-      "From: creator@example.com\nTopic: security",
-    );
-    expect(draft.searchParams.get("body")).toContain(
-      "Problem & expected result?\nA second line + symbols",
-    );
-    expect(
-      screen.getByRole("button", { name: "Security report" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(
-      screen.getByRole("button", { name: "Support request" }),
-    ).toHaveAttribute("aria-pressed", "false");
+describe("Support email handoff recovery", () => {
+  it("keeps the desktop action available for validation while invalid values never open the email draft", () => {
+    render(<MemoryRouter><ContactSupportPage /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText("Your email (optional)"), { target: { value: "creator@" } });
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Please help me recover my clip." } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue in email" }));
+    expect(screen.getByRole("button", { name: "Continue in email" })).toBeEnabled();
+    expect(screen.getByLabelText("Your email (optional)")).toHaveAttribute("aria-invalid", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Continue in email" }));
+    expect(openDraft).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Message")).toHaveValue("Please help me recover my clip.");
+    fireEvent.change(screen.getByLabelText("Your email (optional)"), { target: { value: "creator@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue in email" }));
+    expect(openDraft).toHaveBeenCalledOnce();
   });
-
-  it("accepts an omitted reply address and rejects an invalid nonempty email through native form validation", () => {
-    renderPage();
-    const field = screen.getByLabelText("Your email (optional)");
-    expect(field).toBeValid();
-    expect(draftUrl().searchParams.get("body")).toContain("From: [your email]");
-    fireEvent.change(field, { target: { value: "invalid-address" } });
-    expect(field).toBeInvalid();
+  it("requires correction of reported fields before enabling the mobile email handoff again", () => {
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: true, media: "(max-width: 767px)", onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() });
+    render(<MemoryRouter><ContactSupportPage /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText("Your email (optional)"), { target: { value: "creator@" } });
+    fireEvent.submit(screen.getByRole("form", { name: "Contact support form" }));
+    expect(screen.getByRole("button", { name: "Continue in email" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Your email (optional)"), { target: { value: "still-invalid@" } });
+    expect(screen.getByLabelText("Your email (optional)")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("button", { name: "Continue in email" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Your email (optional)"), { target: { value: "creator@example.com" } });
+    expect(screen.getByRole("button", { name: "Continue in email" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "   " } });
+    expect(screen.getByRole("button", { name: "Continue in email" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: "Please help me recover my clip." } });
+    expect(screen.getByRole("button", { name: "Continue in email" })).toBeEnabled();
+    expect(openDraft).not.toHaveBeenCalled();
   });
-
-  it("keeps Copy available after clipboard denial and only reports Copied after a successful write", async () => {
-    writeText
-      .mockRejectedValueOnce(new Error("Clipboard denied"))
-      .mockResolvedValueOnce(undefined);
-    renderPage();
-    fireEvent.click(screen.getByRole("button", { name: "Copy email" }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
-    expect(
-      screen.queryByRole("button", { name: "Copied" }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Copy email" }));
-    expect(await screen.findByRole("button", { name: "Copied" })).toBeVisible();
-    expect(writeText).toHaveBeenLastCalledWith("support@vidra.app");
+  it("keeps the draft available when the email app and clipboard cannot be used", async () => {
+    copy.mockRejectedValue(new Error("Clipboard denied"));
+    prepare();
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("Vidra has not sent a support message.");
+    fireEvent.click(within(dialog).getByRole("button", { name: "My email app did not open" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Copy email address" }));
+    await waitFor(() => expect(dialog).toHaveAttribute("data-state-kind", "manual"));
+    expect(screen.getByLabelText("Support email address")).toHaveAttribute("readonly");
+    expect(dialog).toHaveTextContent("Clipboard access was blocked.");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Back to support" }));
+    expect(screen.getByLabelText("Message")).toHaveValue("Please help me recover my clip.");
+    expect(openDraft).toHaveBeenCalledOnce();
+  });
+  it("copies only the displayed address and preserves the original email draft after closing", async () => {
+    prepare();
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "My email app did not open" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Copy email address" }));
+    await waitFor(() => expect(dialog).toHaveAttribute("data-state-kind", "copied"));
+    expect(copy).toHaveBeenCalledWith("support@vidra.app");
+    expect(dialog).toHaveAttribute("data-state-kind", "copied");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.getByLabelText("Message")).toHaveValue("Please help me recover my clip.");
+    const url = new URL(openDraft.mock.calls[0]?.[0] ?? "");
+    expect(url.protocol).toBe("mailto:");
+    expect(url.searchParams.get("body")).toContain("Please help me recover my clip.");
   });
 });

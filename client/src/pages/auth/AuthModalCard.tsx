@@ -1,82 +1,35 @@
-import React from "react";
+import type { ReactElement, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@promptstudio/system/components/ui/button";
-import { VidraMark } from "@/components/brand";
-import authClose from "@/assets/design-system/auth-close.svg";
-
-import "./auth.css";
+import { SiteHeader } from "@/features/public-site/SiteShell";
+import "@/components/fresh/fresh.css";
+import "./fresh-auth.css";
 
 interface AuthModalCardProps {
-  /** Centered card title (handoff: "Welcome back"). */
-  heading: string;
-  /** The line beneath the title — the mode toggle or a short instruction. */
-  subhead?: React.ReactNode;
-  headingIcon?: React.ReactNode;
-  /** The form column body (buttons + inputs). */
-  children: React.ReactNode;
-  /**
-   * Where the brand mark and the corner close both navigate. Defaults to the
-   * app root — the handoff's dismiss target.
-   */
+  heading?: string;
+  subhead?: ReactNode;
+  headingIcon?: ReactNode;
+  children: ReactNode;
   dismissTo?: string;
+  footer?: boolean;
+  backTo?: string;
+  placement?: "center" | "verification";
 }
 
-/* Vidra lockup — the shared brand mark + wordtype, mirrored from
-   WorkspaceTopBar so the auth stage carries the same signature. */
-export function AuthBrand(): React.ReactElement {
-  return (
-    <span className="inline-flex items-center gap-2.5">
-      <VidraMark className="h-[26px] w-[26px]" />
-      <span className="text-foreground text-body-lg font-normal">Vidra</span>
-    </span>
-  );
-}
+export function AuthBrand(): ReactElement { return <span>Vidra</span>; }
 
-/** Shared Page 21 authentication surface; pages retain their auth logic. */
-export function AuthModalCard({
-  heading,
-  subhead,
-  headingIcon,
-  children,
-  dismissTo = "/",
-}: AuthModalCardProps): React.ReactElement {
-  return (
-    <div className="text-foreground relative isolate flex min-h-screen flex-col bg-canvas px-4 pb-10 pt-[88px]">
-      <Link
-        to={dismissTo}
-        aria-label="Vidra home"
-        className="absolute left-8 top-7 z-10 inline-flex transition-opacity hover:opacity-80"
-      >
-        <AuthBrand />
-      </Link>
-
-      <main className="flex flex-1 items-center justify-center">
-        <div className="ps-auth-modal relative z-10 w-full max-w-[440px]">
-          {/* Form column */}
-          <div className="flex w-full flex-col">
-            {headingIcon ? <div className="mb-3">{headingIcon}</div> : null}
-            <h1 className="whitespace-pre-line text-foreground text-display-lg font-medium">
-              {heading}
-            </h1>
-            {subhead ? (
-              <p className="whitespace-pre-line text-foreground mt-3 text-body">
-                {subhead}
-              </p>
-            ) : null}
-            <div className="mt-6">{children}</div>
-          </div>
-        </div>
-      </main>
-      <Button
-        asChild
-        variant="ghost"
-        size="icon-lg"
-        className="absolute right-6 top-5 z-10 rounded-md"
-      >
-        <Link to={dismissTo} aria-label="Close">
-          <img src={authClose} alt="" />
-        </Link>
-      </Button>
-    </div>
-  );
+/** Auth forms and messages share the approved Conversation-panel surface. */
+export function AuthModalCard({ heading, subhead, headingIcon, children, dismissTo = "/", footer = false, backTo, placement = "center" }: AuthModalCardProps): ReactElement {
+  return <div className="vf vf-auth-stage" data-placement={footer ? "entry" : placement}>
+    <div className="vf-auth-ambient" aria-hidden="true"><img src="/design-assets/auth-ambient-stadium.png" alt="" /></div>
+    <header className="vf-auth-header"><Link to={dismissTo} aria-label="Vidra home"><AuthBrand /></Link><Link to="/contact">Help</Link></header>
+    <div className="vf-auth-mobile-header"><SiteHeader /></div>
+    <main className="vf-auth-main"><section className="vf-auth-card" aria-label={heading ?? "Your Vidra account"}>
+      <div className={`vf-auth-content${headingIcon ? " vf-auth-message" : ""}`}>
+        {headingIcon ? <div className="vf-auth-message-icon">{headingIcon}</div> : null}
+        {heading ? <div className="vf-auth-message-text"><div className="vf-auth-title-row">{backTo ? <Link to={backTo} aria-label="Back to sign in"><img src="/design-assets/auth-back.svg" alt="" /></Link> : null}<h1>{heading}</h1></div>{subhead ? <div className="vf-auth-subhead">{subhead}</div> : null}</div> : subhead ? <div className="vf-auth-subhead">{subhead}</div> : null}
+        {children}
+      </div>
+      {footer ? <footer className="vf-auth-consent">By continuing, you agree to the <Link to="/terms-of-service">Terms of service</Link> and <Link to="/privacy-policy">Privacy policy</Link>.</footer> : null}
+    </section></main>
+  </div>;
 }

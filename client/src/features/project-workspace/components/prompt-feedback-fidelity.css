@@ -1,0 +1,51 @@
+.vf.vf-semantic-tooltip {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  width: 130px;
+  height: 32px;
+  align-items: flex-start;
+  gap: var(--vf-space-8);
+  padding: var(--vf-space-8);
+  border-radius: var(--vf-radius-media);
+  color: var(--vf-secondary);
+  background: #2e2e2e;
+  pointer-events: none;
+}
+.vf-semantic-tooltip > p {
+  width: 110px;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--vf-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vf-highlighting-unavailable {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--vf-space-8);
+  color: var(--vf-secondary);
+}
+.vf-highlighting-unavailable > p {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+}
+.vf-highlighting-unavailable .vf-button {
+  flex: none;
+  width: 96px;
+  height: 32px;
+  min-height: 32px;
+  color: var(--vf-secondary);
+}
