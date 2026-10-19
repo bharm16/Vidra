@@ -18,6 +18,7 @@ export const RequestSlotSchema = z.strictObject({
   outcome: z.enum(["queued", "running", "unknown", "completed", "failed", "cancelled", "needs-attention"]),
   delivery: z.enum(["none", "storing", "stored", "attaching", "ready", "storage-failed", "attachment-failed", "lost"]),
   versionId: VersionIdSchema.optional(),
+  text: z.string().max(32000).optional(),
   error: z.strictObject({ code: z.string().min(1).max(100), message: z.string().max(2000) }).optional(),
   cancellation: z.enum(["not-requested", "requested", "unsupported", "confirmed", "completion-won"]).default("not-requested"),
   usage: SlotUsageSchema,
@@ -26,7 +27,7 @@ export type RequestSlot = z.infer<typeof RequestSlotSchema>;
 
 export const MaterializedContextSchema = z.strictObject({
   projectInstructions: z.string().max(32000),
-  entries: z.array(z.strictObject({ requestId: RequestIdSchema, instructions: z.string().max(32000) })).max(200),
+  entries: z.array(z.strictObject({ requestId: RequestIdSchema, instructions: z.string().max(32000), textOutputs: z.array(z.strictObject({ slotId: SlotIdSchema, text: z.string().max(32000) })).max(8).optional() })).max(200),
 });
 
 export const AcceptedRequestSchema = z.strictObject({

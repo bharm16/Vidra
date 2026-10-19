@@ -2,8 +2,8 @@ export type WorkflowErrorCode = "not_found" | "access_denied" | "read_only" | "r
 
 /** Domain failures never contain another owner's private record. */
 export class WorkflowError extends DomainError {
-  constructor(readonly code: WorkflowErrorCode, message: string) {
-    super(message);
+  constructor(readonly code: WorkflowErrorCode, message: string, details?: Record<string, unknown>) {
+    super(message, details);
     this.name = "WorkflowError";
   }
 

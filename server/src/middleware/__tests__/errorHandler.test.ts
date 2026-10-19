@@ -340,6 +340,15 @@ describe("errorHandler", () => {
   });
 
   describe("sensitive data redaction", () => {
+    it("omits sketch bytes and working words from failure logs", async () => {
+      const { logger } = await import("@infrastructure/Logger");
+      const body = { outputDataUri: "data:picture/private-output", drawingDataUri: "data:picture/private-drawing", prompt: "private short prompt", instructions: "private working words" };
+      errorHandler(createDomainError("access_denied", 403, "Unavailable"), createMockRequest({ method: "POST", path: "/api/projects/project_x/sketch/captures", body }), createMockResponse(), mockNext);
+      const logged = JSON.stringify(vi.mocked(logger.warn).mock.calls);
+      for (const value of Object.values(body)) expect(logged).not.toContain(value);
+      expect(logged).toContain("REDACTED");
+    });
+
     it("handles body serialization errors gracefully", () => {
       const circularBody: Record<string, unknown> = { name: "test" };
       circularBody.self = circularBody;

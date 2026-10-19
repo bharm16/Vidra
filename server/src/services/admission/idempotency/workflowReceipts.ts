@@ -5,7 +5,7 @@ import { CreationDraftSchema } from "@shared/schemas/workflow/draft.schemas";
 import { ConversationSchema } from "@shared/schemas/workflow/project.schemas";
 import { OwnerIdSchema, ProjectIdSchema, RequestIdSchema, SubmissionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
-import type { PreparedAction } from "@shared/schemas/workflow/preparation.schemas";
+import { PreparedActionSchema, type PreparedAction } from "@shared/schemas/workflow/preparation.schemas";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { sha256Hex } from "@utils/hash";
 import { WorkflowError } from "@services/projects/WorkflowError";
@@ -39,6 +39,10 @@ export function workflowReceiptId(ownerId: string, submissionId: string): string
   return sha256Hex(`${ownerId}|workflow/v2|${submissionId}`);
 }
 
+function rejectExportIdentity(data: unknown): void {
+  if (typeof data === "object" && data !== null && "kind" in data && data.kind === "video-export/v1") throw new WorkflowError("submission_conflict", "This action identity belongs to an accepted video export.");
+}
+
 /** All v2 consumption, receipt, intent and outbox facts commit in one authority. */
 export async function acceptWorkflowRequest(database: Firestore, input: WorkflowAdmissionInput): Promise<AcceptedRequest> {
   const ownerId = OwnerIdSchema.parse(input.ownerId);
@@ -52,6 +56,8 @@ export async function acceptWorkflowRequest(database: Firestore, input: Workflow
   return database.runTransaction(async transaction => {
     const receiptRow = await transaction.get(receiptRef);
     const consumedRow = await transaction.get(consumedRef);
+    rejectExportIdentity(receiptRow.data());
+    rejectExportIdentity(consumedRow.data());
     let priorRequestId: string | undefined;
     if (receiptRow.exists) {
       const receipt = WorkflowReceiptSchema.parse(receiptRow.data());
@@ -70,7 +76,7 @@ export async function acceptWorkflowRequest(database: Firestore, input: Workflow
       if (!receiptRow.exists) transaction.create(receiptRef, WorkflowReceiptSchema.parse({ kind: "workflow/v2", userId: ownerId, route: "workflow/v2", key: command.submissionId, projectId, requestId: request.id, payloadHash, reviewedHash: command.reviewedHash }));
       return request;
     }
-    const prepared = await input.prepare(transaction);
+    const prepared = PreparedActionSchema.parse(await input.prepare(transaction));
     if (prepared.state !== "ready") throw new WorkflowError("invalid_settings", prepared.reasons[0]?.message ?? "This action is not ready.");
     if (prepared.draftId !== command.draftId || prepared.draftRevision !== command.draftRevision || prepared.reviewedHash !== command.reviewedHash || prepared.snapshot.destination.projectId !== projectId) throw new WorkflowError("revision_conflict", "The reviewed setup changed before acceptance. Review the retained draft again.");
     if (prepared.profile.pricing.mode !== "free" || prepared.profile.pricing.maximumCreditsPerSlot !== 0) throw new WorkflowError("capability_unavailable", "This release supports bounded free testing only.");
@@ -85,15 +91,13 @@ export async function acceptWorkflowRequest(database: Firestore, input: Workflow
     if (draft.status !== "open" && draft.status !== "parked") throw new WorkflowError("read_only", "This execution draft is already immutable.");
     if (draft.revision !== command.draftRevision || conversation.status !== "active") throw new WorkflowError("revision_conflict", "The execution destination changed before acceptance.");
     const requestId = RequestIdSchema.parse(`request_${consumedId}`);
-    const seed = prepared.snapshot.settings.parameters.seed;
     const request = AcceptedRequestSchema.parse({
       schemaVersion: "vidra-workflow/v2", id: requestId, ownerId, projectId, conversationId: conversation.id,
       submissionId: command.submissionId, executionDraftId: draft.id, executionDraftRevision: draft.revision,
       acceptanceSequence: conversation.acceptanceSequence + 1, snapshotHash: prepared.reviewedHash,
       snapshot: prepared.snapshot, materializedContext: prepared.materializedContext, acceptedAt: timestamp,
-      slots: Array.from({ length: prepared.snapshot.settings.outputCount }, (_, index) => ({
-        id: `slot_${sha256Hex(`${requestId}:${index + 1}`)}`, ordinal: index + 1,
-        ...(typeof seed === "number" ? { seed: (seed + index) % 2147483648 } : {}),
+      slots: prepared.slotPlan.map(slot => ({
+        id: `slot_${sha256Hex(`${requestId}:${slot.ordinal}`)}`, ...slot,
         outcome: "queued", delivery: "none", usage: { mode: "free", reserved: 0, settled: 0 },
       })),
     });
@@ -117,6 +121,7 @@ export async function readWorkflowRequest(database: Firestore, owner: string, su
   const submissionId = SubmissionIdSchema.parse(submission);
   const row = await database.collection("request_idempotency").doc(workflowReceiptId(ownerId, submissionId)).get();
   if (!row.exists) return undefined;
+  rejectExportIdentity(row.data());
   const receipt = WorkflowReceiptSchema.parse(row.data());
   if (receipt.userId !== ownerId) throw new WorkflowError("access_denied", "This receipt is unavailable.");
   const requestRow = await database.collection("creation_requests").doc(receipt.requestId).get();

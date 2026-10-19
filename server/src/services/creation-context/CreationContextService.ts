@@ -41,6 +41,9 @@ export class CreationContextService {
       if (expected.length !== context.requestIds.length || expected.some((id, index) => context.requestIds[index] !== id)) throw new WorkflowError("invalid_context", "This history includes a sibling or unrelated request.");
     }
     if (context.summary && (!context.summary.requestIds.every(id => context.requestIds.includes(id)) || new Set(context.summary.requestIds).size !== context.summary.requestIds.length)) throw new WorkflowError("invalid_context", "The applied summary must name exact requests in this context.");
-    return MaterializedContextSchema.parse({ projectInstructions, entries: requests.map(request => ({ requestId: request.id, instructions: request.snapshot.instructions })) });
+    return MaterializedContextSchema.parse({ projectInstructions, entries: requests.map(request => {
+      const textOutputs = request.slots.filter(slot => slot.outcome === "completed" && slot.delivery === "ready" && slot.text !== undefined).map(slot => ({ slotId: slot.id, text: slot.text }));
+      return { requestId: request.id, instructions: request.snapshot.instructions, ...(textOutputs.length ? { textOutputs } : {}) };
+    }) });
   }
 }

@@ -24,3 +24,12 @@ it("WP-03 creates distinct conversations only within an owned writable project",
   await expect(conversations.create("creator", "project_conversations", { id: "conversation_third", name: "Third" })).rejects.toMatchObject({ code: "read_only" });
   expect((await conversations.get("creator", "project_conversations", "conversation_first")).name).toBe("First ideas");
 });
+
+it("rejects conversation records whose stored identity disagrees with their address", async () => {
+  await projects.create("creator", { id: "project_bound", name: "Bound project" });
+  const conversation = await conversations.create("creator", "project_bound", { id: "conversation_bound", name: "Bound ideas" });
+  await database.collection("creation_projects").doc("project_bound").collection("conversations").doc(conversation.id).set({ ...conversation, id: "conversation_alias" });
+  await expect(conversations.get("creator", "project_bound", "conversation_bound")).rejects.toMatchObject({ code: "access_denied" });
+  await expect(conversations.create("creator", "project_bound", { id: "conversation_bound", name: "Bound ideas" })).rejects.toMatchObject({ code: "access_denied" });
+  await expect(conversations.list("creator", "project_bound")).rejects.toMatchObject({ code: "access_denied" });
+});

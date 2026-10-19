@@ -32,4 +32,13 @@ describe("WP-03 owner-scoped project command boundary", () => {
     expect(current.revision).toBe(2);
     expect(current.name).not.toBe("Stolen");
   });
+
+  it("rejects project records whose stored identity disagrees with their address", async () => {
+    const project = await store.create("creator", { id: "project_bound", name: "Bound project" });
+    await database.collection("creation_projects").doc(project.id).set({ ...project, id: "project_alias" });
+    await expect(store.get("creator", "project_bound")).rejects.toMatchObject({ code: "access_denied" });
+    await expect(store.create("creator", { id: "project_bound", name: "Bound project" })).rejects.toMatchObject({ code: "access_denied" });
+    await expect(store.change("creator", "project_bound", { expectedRevision: 1, name: "A new name" })).rejects.toMatchObject({ code: "access_denied" });
+    await expect(store.list("creator")).rejects.toMatchObject({ code: "access_denied" });
+  });
 });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ImportIdSchema } from "./import.schemas";
 import {
   ConversationIdSchema, DraftIdSchema, EditIdSchema, OwnerIdSchema,
   ProjectIdSchema, RequestIdSchema, RevisionSchema, SlotIdSchema,
@@ -24,7 +25,8 @@ export const PendingInputSchema = z.strictObject({
   requestId: RequestIdSchema,
   slotId: SlotIdSchema,
 });
-export const DraftInputSchema = z.discriminatedUnion("state", [ResolvedInputSchema, PendingInputSchema]);
+export const ImportInputSchema = z.strictObject({ role: InputRoleSchema, state: z.literal("importing"), importId: ImportIdSchema });
+export const DraftInputSchema = z.discriminatedUnion("state", [ResolvedInputSchema, PendingInputSchema, ImportInputSchema]);
 export type DraftInput = z.infer<typeof DraftInputSchema>;
 
 export const DraftSettingsSchema = z.strictObject({

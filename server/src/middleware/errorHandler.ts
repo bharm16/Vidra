@@ -50,6 +50,9 @@ function redactSensitiveData(obj: unknown): unknown {
     "credit_card",
     "phone",
     "address",
+    "datauri",
+    "instructions",
+    "prompt",
   ];
 
   for (const [key, value] of Object.entries(obj)) {

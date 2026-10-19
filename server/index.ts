@@ -14,6 +14,7 @@
 
 // IMPORTANT: Import instrument.mjs FIRST, before any other imports
 import "./instrument.mjs";
+import "./src/config/native-fonts.js";
 
 import { existsSync, readdirSync } from "node:fs";
 import dotenv from "dotenv";

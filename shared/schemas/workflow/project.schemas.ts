@@ -37,6 +37,11 @@ export const ConversationSchema = z.strictObject({
   updatedAt: TimestampSchema,
 });
 export type Conversation = z.infer<typeof ConversationSchema>;
+export const ConversationMediaCountSchema = z.strictObject({ pictures: z.number().int().nonnegative(), clips: z.number().int().nonnegative() });
+/** Listing rows add derived counts; servers that predate them omit the field. */
+export const ConversationListingSchema = ConversationSchema.extend({ media: ConversationMediaCountSchema.optional() });
+export type ConversationMediaCount = z.infer<typeof ConversationMediaCountSchema>;
+export type ConversationListing = z.infer<typeof ConversationListingSchema>;
 
 export const CreateProjectCommandSchema = z.strictObject({
   id: ProjectIdSchema,
