@@ -46,7 +46,16 @@ export type ApiErrorCode =
   // 2026-08-27 when those sites moved onto DomainError subclasses.
   | "SHARE_CLIP_NOT_FOUND"
   | "SHARE_NO_MEDIA"
-  | "VIDEO_MODEL_UNAVAILABLE";
+  | "VIDEO_MODEL_UNAVAILABLE"
+  | "not_found"
+  | "access_denied"
+  | "read_only"
+  | "revision_conflict"
+  | "invalid_context"
+  | "input_unavailable"
+  | "capability_unavailable"
+  | "invalid_settings"
+  | "submission_conflict";
 
 /** All valid error code values, usable at runtime for validation. */
 export const API_ERROR_CODES = [
@@ -70,6 +79,15 @@ export const API_ERROR_CODES = [
   "SHARE_CLIP_NOT_FOUND",
   "SHARE_NO_MEDIA",
   "VIDEO_MODEL_UNAVAILABLE",
+  "not_found",
+  "access_denied",
+  "read_only",
+  "revision_conflict",
+  "invalid_context",
+  "input_unavailable",
+  "capability_unavailable",
+  "invalid_settings",
+  "submission_conflict",
 ] as const satisfies readonly ApiErrorCode[];
 
 // ---------------------------------------------------------------------------

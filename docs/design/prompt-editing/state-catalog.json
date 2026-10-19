@@ -1,0 +1,1234 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-10",
+  "status": "design specification; application implementation planned",
+  "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
+  "page": {
+    "id": "1048:84247",
+    "name": "Page 28 - Prompt editing and timeline"
+  },
+  "reviewId": "1091:101275",
+  "deferred": [
+    {
+      "feature": "Dedicated image editor",
+      "status": "to do later",
+      "nodeId": "1091:101743"
+    }
+  ],
+  "sourcePagesPreserved": ["883:84247", "887:85295", "956:84247", "1026:84247"],
+  "screens": [
+    {
+      "key": "T01",
+      "title": "Timeline shown",
+      "id": "1055:84528",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1055-84528"
+    },
+    {
+      "key": "T02",
+      "title": "Timeline hidden",
+      "id": "1055:84811",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1055-84811"
+    },
+    {
+      "key": "T03",
+      "title": "Timeline shown",
+      "id": "1055:85079",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1055-85079"
+    },
+    {
+      "key": "T04",
+      "title": "Timeline hidden",
+      "id": "1055:85175",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1055-85175"
+    },
+    {
+      "key": "S03",
+      "title": "Highlighted phrases in the compact composer",
+      "id": "1056:84591",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-84591"
+    },
+    {
+      "key": "S07",
+      "title": "Choose one replacement",
+      "id": "1056:84868",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-84868"
+    },
+    {
+      "key": "S10",
+      "title": "Ask for a different direction",
+      "id": "1056:85089",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-85089"
+    },
+    {
+      "key": "S19",
+      "title": "The draft changed before applying",
+      "id": "1056:85310",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-85310"
+    },
+    {
+      "key": "T05",
+      "title": "Timeline shown",
+      "id": "1063:85167",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1063-85167"
+    },
+    {
+      "key": "T06",
+      "title": "Timeline hidden",
+      "id": "1063:85356",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1063-85356"
+    },
+    {
+      "key": "T07",
+      "title": "Playback continues with timeline hidden",
+      "id": "1063:85545",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1063-85545"
+    },
+    {
+      "key": "T08",
+      "title": "Playback continues with timeline shown",
+      "id": "1063:85815",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1063-85815"
+    },
+    {
+      "key": "T09",
+      "title": "Timeline shown",
+      "id": "1064:85399",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1064-85399"
+    },
+    {
+      "key": "T10",
+      "title": "Timeline hidden",
+      "id": "1064:85611",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1064-85611"
+    },
+    {
+      "key": "T11",
+      "title": "Keyboard focus",
+      "id": "1064:85823",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1064-85823"
+    },
+    {
+      "key": "T12",
+      "title": "Keyboard focus",
+      "id": "1064:86091",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1064-86091"
+    },
+    {
+      "key": "S01",
+      "title": "Empty prompt",
+      "id": "1065:85631",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-85631"
+    },
+    {
+      "key": "S02",
+      "title": "Highlighting a new draft",
+      "id": "1065:85871",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-85871"
+    },
+    {
+      "key": "S04",
+      "title": "Highlights hidden; words unchanged",
+      "id": "1065:86091",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-86091"
+    },
+    {
+      "key": "S05",
+      "title": "Phrase hover shows its meaning",
+      "id": "1065:86442",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-86442"
+    },
+    {
+      "key": "S06",
+      "title": "Finding replacements",
+      "id": "1065:86757",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-86757"
+    },
+    {
+      "key": "S08",
+      "title": "Pointer over another replacement",
+      "id": "1065:87084",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-87084"
+    },
+    {
+      "key": "S09",
+      "title": "Keyboard focus in replacements",
+      "id": "1065:87418",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-87418"
+    },
+    {
+      "key": "S11",
+      "title": "Custom request pending; existing options remain usable",
+      "id": "1065:87752",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-87752"
+    },
+    {
+      "key": "S12",
+      "title": "New alternatives returned",
+      "id": "1065:88087",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-88087"
+    },
+    {
+      "key": "S13",
+      "title": "Suggestion request failed",
+      "id": "1065:88420",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1065-88420"
+    },
+    {
+      "key": "S14",
+      "title": "No alternatives found",
+      "id": "1066:86856",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-86856"
+    },
+    {
+      "key": "S15",
+      "title": "Custom request failed; wording retained",
+      "id": "1066:87256",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-87256"
+    },
+    {
+      "key": "S16",
+      "title": "Replacement applied once; undo available",
+      "id": "1066:87592",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-87592"
+    },
+    {
+      "key": "S17",
+      "title": "Undo restores only the draft wording",
+      "id": "1066:87912",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-87912"
+    },
+    {
+      "key": "S18",
+      "title": "Redo restores the replacement",
+      "id": "1066:88232",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-88232"
+    },
+    {
+      "key": "S20",
+      "title": "Review the replacement in the current draft",
+      "id": "1066:88552",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-88552"
+    },
+    {
+      "key": "S21",
+      "title": "The original phrase was removed",
+      "id": "1066:88884",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-88884"
+    },
+    {
+      "key": "S22",
+      "title": "Selecting another phrase cancels the old response",
+      "id": "1066:89209",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-89209"
+    },
+    {
+      "key": "S23",
+      "title": "Another draft keeps its own words and selection",
+      "id": "1066:89536",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-89536"
+    },
+    {
+      "key": "S24",
+      "title": "An accepted request cannot be rewritten",
+      "id": "1066:89834",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1066-89834"
+    },
+    {
+      "key": "S25",
+      "title": "Editing is no longer available",
+      "id": "1067:88120",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-88120"
+    },
+    {
+      "key": "S26",
+      "title": "Highlighting failed; normal writing still works",
+      "id": "1067:88515",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-88515"
+    },
+    {
+      "key": "S27",
+      "title": "Typing clears stale highlights while relabeling",
+      "id": "1067:88828",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-88828"
+    },
+    {
+      "key": "S28",
+      "title": "Manual text selection without semantic labels",
+      "id": "1067:89137",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-89137"
+    },
+    {
+      "key": "S29",
+      "title": "Long prompt keeps a visible scroll affordance",
+      "id": "1067:89467",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-89467"
+    },
+    {
+      "key": "S30",
+      "title": "The selected phrase wraps across lines",
+      "id": "1067:89782",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-89782"
+    },
+    {
+      "key": "S31",
+      "title": "Failed application keeps the original wording",
+      "id": "1067:90114",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-90114"
+    },
+    {
+      "key": "S32",
+      "title": "Replacement made locally; remote save needs retry",
+      "id": "1067:90439",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-90439"
+    },
+    {
+      "key": "S33",
+      "title": "Motion wording is distinct from image appearance",
+      "id": "1067:90751",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-90751"
+    },
+    {
+      "key": "S34",
+      "title": "A repeated phrase replaces only the selected occurrence",
+      "id": "1067:91084",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1067-91084"
+    },
+    {
+      "key": "S35",
+      "title": "Highlights and replacement on a narrow screen",
+      "id": "1070:89372",
+      "w": 390,
+      "h": 844,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-89372"
+    },
+    {
+      "key": "S36",
+      "title": "Custom replacement on a narrow screen",
+      "id": "1070:89804",
+      "w": 390,
+      "h": 844,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-89804"
+    },
+    {
+      "key": "S37",
+      "title": "Highlight focus is visible without color alone",
+      "id": "1070:90164",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-90164"
+    },
+    {
+      "key": "S38",
+      "title": "Only the second occurrence changes",
+      "id": "1070:90477",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-90477"
+    },
+    {
+      "key": "S39",
+      "title": "Matching cached highlights remain while refreshing",
+      "id": "1070:90787",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-90787"
+    },
+    {
+      "key": "S40",
+      "title": "No phrases identified; manual selection remains available",
+      "id": "1070:91100",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-91100"
+    },
+    {
+      "key": "W01",
+      "title": "Ongoing workspace",
+      "id": "1071:89958",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-89958"
+    },
+    {
+      "key": "W02",
+      "title": "Inspect an older result without replacing the working draft",
+      "id": "1071:90343",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-90343"
+    },
+    {
+      "key": "W03",
+      "title": "Generated image and video composer remain visible together",
+      "id": "1071:90656",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-90656"
+    },
+    {
+      "key": "W04",
+      "title": "Reuse setup creates a separate working draft",
+      "id": "1071:90960",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-90960"
+    },
+    {
+      "key": "W05",
+      "title": "Use an explicit frame as the next input",
+      "id": "1071:91277",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-91277"
+    },
+    {
+      "key": "W06",
+      "title": "Accepted request queued; captured words are read-only",
+      "id": "1071:91594",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-91594"
+    },
+    {
+      "key": "W07",
+      "title": "Generation running with the prior asset still visible",
+      "id": "1071:91916",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-91916"
+    },
+    {
+      "key": "W08",
+      "title": "Acceptance is unknown; recover the same request",
+      "id": "1071:92238",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-92238"
+    },
+    {
+      "key": "W09",
+      "title": "Work on a new draft while the previous generation runs",
+      "id": "1071:92560",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-92560"
+    },
+    {
+      "key": "W10",
+      "title": "Background completion leaves draft and viewer untouched",
+      "id": "1071:92880",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1071-92880"
+    },
+    {
+      "key": "W11",
+      "title": "View the new result explicitly; retain the working draft",
+      "id": "1072:91102",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-91102"
+    },
+    {
+      "key": "W12",
+      "title": "Background failure leaves current work intact",
+      "id": "1072:91494",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-91494"
+    },
+    {
+      "key": "W13",
+      "title": "Partial batch keeps stable output slots",
+      "id": "1072:91816",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-91816"
+    },
+    {
+      "key": "W14",
+      "title": "Cancellation requires an explicit action",
+      "id": "1072:92151",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-92151"
+    },
+    {
+      "key": "W15",
+      "title": "Cancellation requested; the outcome is still pending",
+      "id": "1072:92478",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-92478"
+    },
+    {
+      "key": "W16",
+      "title": "Cancelled request stays in conversation history",
+      "id": "1072:92798",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-92798"
+    },
+    {
+      "key": "W17",
+      "title": "Completion wins a cancellation race",
+      "id": "1072:93120",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-93120"
+    },
+    {
+      "key": "W18",
+      "title": "Retry is reviewed as a new attempt",
+      "id": "1072:93446",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-93446"
+    },
+    {
+      "key": "W19",
+      "title": "Provider status unresolved; no duplicate submission",
+      "id": "1072:93773",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-93773"
+    },
+    {
+      "key": "W20",
+      "title": "Video made; saving failed",
+      "id": "1072:94095",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1072-94095"
+    },
+    {
+      "key": "W21",
+      "title": "Saved media needs attachment repair",
+      "id": "1073:92317",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-92317"
+    },
+    {
+      "key": "W22",
+      "title": "Repairing the same stored output",
+      "id": "1073:92711",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-92711"
+    },
+    {
+      "key": "W23",
+      "title": "Repaired result returns without taking over",
+      "id": "1073:93031",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-93031"
+    },
+    {
+      "key": "W24",
+      "title": "Missing draft input blocks generation but keeps words editable",
+      "id": "1073:93357",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-93357"
+    },
+    {
+      "key": "W25",
+      "title": "A missing viewed asset does not erase history or unrelated draft",
+      "id": "1073:93681",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-93681"
+    },
+    {
+      "key": "W26",
+      "title": "Playback failed; the generation and file are still successful",
+      "id": "1073:93926",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-93926"
+    },
+    {
+      "key": "W27",
+      "title": "Offline editing keeps an honest local save state",
+      "id": "1073:94243",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-94243"
+    },
+    {
+      "key": "W28",
+      "title": "Conflicting saved drafts require a deliberate choice",
+      "id": "1073:94561",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-94561"
+    },
+    {
+      "key": "W29",
+      "title": "Model constraints changed; review before generating",
+      "id": "1073:94884",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-94884"
+    },
+    {
+      "key": "W30",
+      "title": "A historical request is immutable; start a new draft to edit",
+      "id": "1073:95202",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1073-95202"
+    },
+    {
+      "key": "W31",
+      "title": "Lost access prevents further editing and generation",
+      "id": "1074:93482",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93482"
+    },
+    {
+      "key": "W32",
+      "title": "Conversation, generated media and expanded timeline together",
+      "id": "1074:93752",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93752"
+    },
+    {
+      "key": "W33",
+      "title": "Conversation and generated media with timeline collapsed",
+      "id": "1074:94305",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-94305"
+    },
+    {
+      "key": "W34",
+      "title": "Historical model unavailable for a new request",
+      "id": "1074:94816",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-94816"
+    },
+    {
+      "key": "W35",
+      "title": "Request rejected before execution; draft is retained",
+      "id": "1074:95134",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-95134"
+    },
+    {
+      "key": "W36",
+      "title": "Inspect an in-flight request snapshot",
+      "id": "1074:95455",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-95455"
+    },
+    {
+      "key": "W37",
+      "title": "Inspect the exact setup that produced a selected result",
+      "id": "1074:95792",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-95792"
+    },
+    {
+      "key": "W38",
+      "title": "Removing an input from the new draft does not change the accepted job",
+      "id": "1074:96123",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-96123"
+    },
+    {
+      "key": "W39",
+      "title": "An input upload is pending; generation waits",
+      "id": "1074:96443",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-96443"
+    },
+    {
+      "key": "W40",
+      "title": "Reopen with the retained draft, viewed asset and collapsed timeline",
+      "id": "1074:96767",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-96767"
+    },
+    {
+      "key": "W41",
+      "title": "Terminal partial batch keeps every original slot",
+      "id": "1075:94634",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-94634"
+    },
+    {
+      "key": "W42",
+      "title": "Partial cancellation preserves completed and failed slots",
+      "id": "1075:95037",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-95037"
+    },
+    {
+      "key": "W43",
+      "title": "Retry a failed slot without renumbering the batch",
+      "id": "1075:95370",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-95370"
+    },
+    {
+      "key": "W44",
+      "title": "A separate retry runs beside the unchanged original batch",
+      "id": "1075:95711",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-95711"
+    },
+    {
+      "key": "W45",
+      "title": "Inspect a ready slot while another slot is still running",
+      "id": "1075:96045",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-96045"
+    },
+    {
+      "key": "W46",
+      "title": "Provider finished; durable saving is still in progress",
+      "id": "1075:96378",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-96378"
+    },
+    {
+      "key": "W47",
+      "title": "An output is unrecoverable; a new attempt is explicit",
+      "id": "1075:96698",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-96698"
+    },
+    {
+      "key": "W48",
+      "title": "Phrase editing with the timeline expanded",
+      "id": "1075:97020",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-97020"
+    },
+    {
+      "key": "W49",
+      "title": "Phrase editing with the timeline collapsed",
+      "id": "1076:95631",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-95631"
+    },
+    {
+      "key": "W50",
+      "title": "A phrase change preserves the expanded edit",
+      "id": "1076:96234",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-96234"
+    },
+    {
+      "key": "W51",
+      "title": "A phrase change preserves the collapsed edit",
+      "id": "1076:96752",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-96752"
+    },
+    {
+      "key": "W52",
+      "title": "Phrase suggestions while a prior generation runs",
+      "id": "1076:97270",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-97270"
+    },
+    {
+      "key": "W53",
+      "title": "A replacement changes only the new draft while generation continues",
+      "id": "1076:97610",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-97610"
+    },
+    {
+      "key": "W54",
+      "title": "Several accepted requests retain separate status",
+      "id": "1076:97937",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-97937"
+    },
+    {
+      "key": "W55",
+      "title": "A newer request completes first without reordering history",
+      "id": "1076:98261",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-98261"
+    },
+    {
+      "key": "W56",
+      "title": "Both requests finish in their original conversation positions",
+      "id": "1076:98589",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-98589"
+    },
+    {
+      "key": "T13",
+      "title": "Mobile timeline shown",
+      "id": "1078:96613",
+      "w": 390,
+      "h": 844,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-96613"
+    },
+    {
+      "key": "T14",
+      "title": "Mobile timeline hidden",
+      "id": "1078:96794",
+      "w": 390,
+      "h": 844,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-96794"
+    },
+    {
+      "key": "T15",
+      "title": "Square output",
+      "id": "1078:96929",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-96929"
+    },
+    {
+      "key": "T16",
+      "title": "Square output",
+      "id": "1078:97209",
+      "w": 1440,
+      "h": 960,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-97209"
+    },
+    {
+      "key": "S41",
+      "title": "Long custom request at the character limit",
+      "id": "1078:97489",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-97489"
+    },
+    {
+      "key": "S42",
+      "title": "Long custom request pending",
+      "id": "1078:97718",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-97718"
+    },
+    {
+      "key": "M01",
+      "title": "Inspect the clip and return to the same draft",
+      "id": "1078:97951",
+      "w": 390,
+      "h": 844,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1078-97951"
+    },
+    {
+      "key": "W57",
+      "title": "Inspect another asset with the timeline shown",
+      "id": "1081:97192",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1081-97192"
+    },
+    {
+      "key": "W58",
+      "title": "Inspect another asset with the timeline hidden",
+      "id": "1081:97568",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1081-97568"
+    },
+    {
+      "key": "W59",
+      "title": "A new empty draft keeps the viewed asset and prior request",
+      "id": "1083:97427",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1083-97427"
+    },
+    {
+      "key": "W60",
+      "title": "Explicitly use the viewed image as the next starting image",
+      "id": "1083:97804",
+      "w": 1440,
+      "h": 900,
+      "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1083-97804"
+    }
+  ],
+  "additionalFrames": [
+    {
+      "id": "1087:97632",
+      "name": "Applied · S07 · 1"
+    },
+    {
+      "id": "1087:97810",
+      "name": "Applied · S07 · 2"
+    },
+    {
+      "id": "1087:97988",
+      "name": "Applied · S07 · 3"
+    },
+    {
+      "id": "1087:98166",
+      "name": "Applied · S12 · 1"
+    },
+    {
+      "id": "1087:98344",
+      "name": "Applied · S12 · 2"
+    },
+    {
+      "id": "1087:98522",
+      "name": "Applied · S12 · 3"
+    },
+    {
+      "id": "1087:98700",
+      "name": "Applied · S28 · 1"
+    },
+    {
+      "id": "1087:98878",
+      "name": "Applied · S28 · 2"
+    },
+    {
+      "id": "1087:99056",
+      "name": "Applied · S28 · 3"
+    },
+    {
+      "id": "1087:99234",
+      "name": "Return · S30"
+    },
+    {
+      "id": "1087:99377",
+      "name": "Applied · S30 · 1"
+    },
+    {
+      "id": "1087:99554",
+      "name": "Applied · S30 · 2"
+    },
+    {
+      "id": "1087:99731",
+      "name": "Applied · S30 · 3"
+    },
+    {
+      "id": "1088:99154",
+      "name": "Return · S33"
+    },
+    {
+      "id": "1088:99298",
+      "name": "Applied · S33 · 1"
+    },
+    {
+      "id": "1088:99476",
+      "name": "Applied · S33 · 2"
+    },
+    {
+      "id": "1088:99654",
+      "name": "Applied · S33 · 3"
+    },
+    {
+      "id": "1088:99832",
+      "name": "Return · S34"
+    },
+    {
+      "id": "1088:99969",
+      "name": "Applied · S34 · 1"
+    },
+    {
+      "id": "1088:100140",
+      "name": "Applied · S34 · 2"
+    },
+    {
+      "id": "1088:100311",
+      "name": "Applied · S34 · 3"
+    },
+    {
+      "id": "1088:100482",
+      "name": "Return · S35"
+    },
+    {
+      "id": "1088:100582",
+      "name": "Applied · S35 · 1"
+    },
+    {
+      "id": "1088:100710",
+      "name": "Applied · S35 · 2"
+    },
+    {
+      "id": "1088:100838",
+      "name": "Applied · S35 · 3"
+    },
+    {
+      "id": "1089:100222",
+      "name": "Applied · W48 · 1"
+    },
+    {
+      "id": "1089:100588",
+      "name": "Applied · W48 · 2"
+    },
+    {
+      "id": "1089:100954",
+      "name": "Applied · W48 · 3"
+    },
+    {
+      "id": "1090:100570",
+      "name": "Applied · W49 · 1"
+    },
+    {
+      "id": "1090:100936",
+      "name": "Applied · W49 · 2"
+    },
+    {
+      "id": "1090:101302",
+      "name": "Applied · W49 · 3"
+    },
+    {
+      "id": "1090:101668",
+      "name": "Applied · W52 · 1"
+    },
+    {
+      "id": "1090:101851",
+      "name": "Applied · W52 · 2"
+    },
+    {
+      "id": "1090:102034",
+      "name": "Applied · W52 · 3"
+    },
+    {
+      "id": "1095:101405",
+      "name": "X01 · Checking the same provider request"
+    },
+    {
+      "id": "1095:101569",
+      "name": "X02 · Close request details without changing the working draft"
+    },
+    {
+      "id": "1097:101646",
+      "name": "Return · S19"
+    },
+    {
+      "id": "1097:101841",
+      "name": "Return · S20"
+    },
+    {
+      "id": "1097:102043",
+      "name": "Return · S21"
+    },
+    {
+      "id": "1097:102238",
+      "name": "Return · S22"
+    },
+    {
+      "id": "1097:102435",
+      "name": "Return · S24"
+    },
+    {
+      "id": "1097:102620",
+      "name": "Return · S25"
+    },
+    {
+      "id": "1097:102803",
+      "name": "Return · S28"
+    },
+    {
+      "id": "1097:103003",
+      "name": "Return · S31"
+    },
+    {
+      "id": "1097:103198",
+      "name": "Return · S36"
+    },
+    {
+      "id": "1097:103332",
+      "name": "Return · S41"
+    },
+    {
+      "id": "1097:103531",
+      "name": "Return · S42"
+    },
+    {
+      "id": "1100:102840",
+      "name": "Applied · S20 · reviewed"
+    },
+    {
+      "id": "1105:102955",
+      "name": "X03 · New draft from a historical request"
+    },
+    {
+      "id": "1105:103091",
+      "name": "X04 · Retry highlighting without changing words or viewer"
+    },
+    {
+      "id": "1105:103246",
+      "name": "X05 · Relabeling finished for the changed draft"
+    },
+    {
+      "id": "1105:103431",
+      "name": "X06 · Accepted creation opens an empty draft with the edit expanded"
+    },
+    {
+      "id": "1105:103774",
+      "name": "X07 · Accepted creation opens an empty draft with the edit collapsed"
+    }
+  ],
+  "components": [
+    {
+      "id": "1054:84269",
+      "name": "Vidra Editing / Replacement option",
+      "variants": 4
+    },
+    {
+      "id": "1054:84290",
+      "name": "Vidra Editing / Timeline visibility",
+      "variants": 4
+    },
+    {
+      "id": "1054:84316",
+      "name": "Vidra Editing / Highlight control",
+      "variants": 5
+    },
+    {
+      "id": "1054:84325",
+      "name": "Vidra Editing / Phrase",
+      "variants": 4
+    },
+    {
+      "id": "1055:84527",
+      "name": "Vidra Editing / Phrase suggestions",
+      "variants": 13
+    }
+  ],
+  "validation": {
+    "structuralIssues": [],
+    "checkedNodeActions": 610,
+    "existingApplicationTests": {
+      "files": 6,
+      "passed": 23
+    },
+    "newAcceptanceTests": "planned, not executed",
+    "providerQualification": "not performed",
+    "browserChecks": [
+      "T01 Hide timeline navigated to T02",
+      "T02 Show timeline navigated back to T01",
+      "S07 second replacement navigated to its exact bright-and-crisp outcome while retaining the viewed clip",
+      "Undo returned to S03 with the original prompt and retained asset"
+    ],
+    "canvasOverlap": [],
+    "badPrototypeTargets": []
+  },
+  "interactionsDocument": "interaction-contract.md",
+  "implementationDocument": "implementation-notes.md"
+}

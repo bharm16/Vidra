@@ -63,6 +63,8 @@ export default [
       "**/.vite/**",
       "**/.cache/**",
       "**/tmp/**",
+      // Local design-tool scripts and verification artifacts are not application modules.
+      ".scratch/**",
       // Parallel-agent worktrees checked out INSIDE the repo — foreign
       // sessions' files; linting them breaks every pre-commit run here.
       ".claude/worktrees/**",

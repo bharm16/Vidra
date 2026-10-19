@@ -1,0 +1,9 @@
+{
+  "source": "Exact existing client/public/design-assets/figtree-{400,500,600}.ttf bytes",
+  "license": "SIL Open Font License1.1, copied unchanged from client/public/design-assets/figtree-OFL.txt",
+  "files": {
+    "Figtree-Regular.ttf": "81f3fc9d8d4e307e5ae0dd43a03d22eb90d50b6cc72241552c460a59b6731b31",
+    "Figtree-Medium.ttf": "f8a90c01bc4c31aa84be5cbff3e80784bfc0da37e5aaa23eb9e05108b9ba0ece",
+    "Figtree-SemiBold.ttf": "b5d3fe714f8283b072579c9318c6cbe9e028ca51d6ba33eed0412a828ec331da"
+  }
+}

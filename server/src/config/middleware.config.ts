@@ -635,7 +635,7 @@ export function applyCorsMiddleware(app: Application): void {
         }
       },
       credentials: true,
-      methods: ["GET", "POST", "OPTIONS"],
+      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: [
         "Content-Type",
         "Authorization",
@@ -655,7 +655,11 @@ export function applyCorsMiddleware(app: Application): void {
  * Apply body parser middleware
  */
 export function applyBodyParserMiddleware(app: Application): void {
-  app.use(express.json({ limit: "2mb" }));
+  const generalJson = express.json({ limit: "2mb" });
+  app.use((req, res, next): void => {
+    if (req.method === "POST" && /^\/api\/projects\/project_[A-Za-z0-9_-]+\/sketch\/captures\/?$/.test(req.path)) { next(); return; }
+    generalJson(req, res, next);
+  });
   app.use(express.urlencoded({ limit: "2mb", extended: true }));
   app.use(express.raw({ limit: "2mb" }));
   app.use(express.text({ limit: "2mb" }));

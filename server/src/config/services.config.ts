@@ -23,6 +23,7 @@ import { registerImageGenerationServices } from "./services/image-generation.ser
 import { registerStudioServices } from "./services/studio.services.ts";
 import { registerSessionServices } from "./services/session.services.ts";
 import { registerShareServices } from "./services/share.services.ts";
+import { registerWorkflowServices } from "./services/workflow.services.ts";
 
 export type { ServiceConfig } from "./services/service-config.types.ts";
 
@@ -61,6 +62,7 @@ export async function configureServices(): Promise<DIContainer> {
   registerStudioServices(container);
   registerSessionServices(container);
   registerShareServices(container);
+  registerWorkflowServices(container);
 
   return container;
 }

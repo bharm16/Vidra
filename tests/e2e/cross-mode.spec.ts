@@ -428,7 +428,13 @@ test.describe("cross-mode actual controls and HTTP intake", () => {
     const before = (await browserState(page)).sessions.length;
     let concurrentStatuses: number[] = [];
     await page.route("**/api/sketch/accept", async (route) => {
-      const [first, second] = await Promise.all([route.fetch(), route.fetch()]);
+      // A reset can lose the response after acceptance. Playwright retries only
+      // ECONNRESET here, with the original body/key; the one-take assertion below
+      // still proves that every transport attempt converges on the same receipt.
+      const [first, second] = await Promise.all([
+        route.fetch({ maxRetries: 1 }),
+        route.fetch({ maxRetries: 1 }),
+      ]);
       concurrentStatuses = [first.status(), second.status()];
       const success = first.ok() ? first : second;
       await route.fulfill({ response: success });

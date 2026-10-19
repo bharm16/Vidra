@@ -174,14 +174,14 @@ def main() -> None:
         "## What stays, changes, and is new", "",
     ]
     plan_lines += table(["Disposition", "Implementation decision"], [
-        ["Keep", "Authentication SDK; aiService; span labeling/refinement; actual provider input shaping; owned media and grants; durable receipts/attachments; proven player/seek/fullscreen; bounded Sketch loop; Page 21 primitives; legacy refund obligations."],
+        ["Keep", "Authentication SDK; aiService; span labeling/refinement; tested provider input shaping; owned media and grants; durable receipts/attachments; proven player/seek/fullscreen; bounded Sketch loop; compatible primitives; legacy refund obligations."],
         ["Keep and extend", "Receipt authority and native workers with durable attempt evidence; immutable media/provenance with project destinations; upload admission with persistent staging/audio; observed results with uniform slots/recovery."],
         ["Replace", "Starting-frame inference of task; one workspace stage; job-gated/fragmented drafts; Studio viewer-as-edit-source; whole-thread implicit context; automatic stale-job/provider retry; unsafe sign-in replay; old share/trash semantics."],
         ["Build", "Project/conversation envelopes, execution-draft revision protocol, exact branch context, customer usage/entitlements, durable clarifications, recovery inbox, small composition editor, real renderer and isolated export deployment."],
     ])
     plan_lines += ["The source inventory names the exact existing modules/tests and their limitations. A current test that enforces a rejected workflow is replaced with the new behavior's test in the same implementation work; ownership, identity, data and refund protection tests remain.", "",
                    "## Ready to start Figma design", "",
-                   "WP-12 can begin now from the behavior contract, state map, acceptance cases and existing Page 21 components. Schema and test-harness implementation are not design prerequisites. Start with linked wireframes; approval of a replacement layout remains required before its production UI implementation.", "",
+                   "WP-12 uses the fresh Page 24 foundations, Pages 25/26 whole-product coverage and the latest Page 28 supplement. Schema and harness work do not block design. The visual direction is authorized for implementation; exact target review, runtime parity and Page 27 interaction/mobile/result review remain open. The dedicated image editor is deferred.", "",
                    "Decide during that first design pass:", ""]
     plan_lines += ["- " + choice for choice in plan["designReadiness"]["decideInFigma"]] + ["",
                    "Map backend states to understandable status/actions and reusable component variants. The 126 internal states do not require 126 full-page mockups. Cover combinations that can coexist, such as viewing an older result while a new draft is edited and another request finishes.", "",

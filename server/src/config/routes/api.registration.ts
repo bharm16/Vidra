@@ -1,3 +1,4 @@
+import express from "express";
 /**
  * Core API Route Registration
  *
@@ -12,6 +13,13 @@ import type { DIContainer } from "@infrastructure/DIContainer";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
+import { createCreationRequestRoutes, createWorkflowCatalogRoutes } from "@routes/creation-requests.routes";
+import type { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
+import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
+import type { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
+import type { ActionPreparationService } from "@services/creation-requests/preparation/ActionPreparationService";
+import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
+import type { StorageService } from "@services/storage/StorageService";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
@@ -78,6 +86,9 @@ export function registerApiRoutes(
   // Registered before the /api auth middleware, like the media proxy above.
   const shareService = container.resolve<ShareService>("shareService");
   app.use("/api/public/share", createPublicClipRouter(shareService));
+
+  const workflowManagement = container.resolve<WorkflowManagementService>("workflowManagementService");
+  app.use("/api/public/workflow-shares", createPublicWorkflowSharingRoutes(workflowManagement, { publicBaseUrl: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
 
   // Issue #109 / #125: the ONE owner-checked resolver that understands both
   // the image-asset store and the user-scoped store. Built once here and shared
@@ -167,6 +178,26 @@ export function registerApiRoutes(
     }),
     apiRoutes,
   );
+
+  // New project authoring and immutable request recovery.
+  const workflowStorage = container.resolve<StorageService>("storageService");
+  app.use("/api/projects", apiAuthMiddleware, createWorkflowManagementRoutes(workflowManagement));
+  app.use("/api/projects", apiAuthMiddleware, createProjectRoutes({
+    projects: container.resolve<ProjectStore>("workflowProjectStore"),
+    conversations: container.resolve<ConversationStore>("workflowConversationStore"),
+    drafts: container.resolve<CreationDraftStore>("workflowDraftStore"),
+    history: container.resolve<RequestHistoryStore>("workflowHistoryStore"),
+    media: container.resolve<MediaVersionIndex>("workflowMediaIndex"),
+    library: container.resolve<ProjectMediaService>("workflowMediaLibrary"),
+    mediaActions: workflowManagement,
+    mediaAccess: (ownerId, storagePath) => workflowStorage.getViewUrl(ownerId, storagePath),
+  }));
+  app.use("/api/workflow", apiAuthMiddleware, createWorkflowCatalogRoutes(container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog")));
+  app.use("/api/creation-requests", apiAuthMiddleware, createCreationRequestRoutes({ preparation: container.resolve<ActionPreparationService>("workflowPreparationService"), receipts: container.resolve<RequestIdempotencyService>("requestIdempotencyService"), execution: container.resolve<WorkflowExecutionService>("workflowExecutionService") }));
+
+  app.use("/api/projects", apiAuthMiddleware, createVideoEditRoutes({ projects: container.resolve<ProjectStore>("workflowProjectStore"), edits: container.resolve<VideoEditStore>("workflowVideoEditStore"), exports: container.resolve<VideoExportService>("workflowVideoExportService"), previews: container.resolve<VideoPreviewService>("workflowVideoPreviewService") }));
+  app.use("/api/projects", apiAuthMiddleware, express.json({ limit: "24mb" }), createProjectSketchRoutes(container.resolve<ProjectSketchService>("workflowSketchService")));
+  app.use("/api/account", apiAuthMiddleware, createAccountRoutes(container.resolve<AccountUsageService>("workflowAccountUsage")));
 
   // LLM endpoints
   const labelSpansRoute = createLabelSpansRoute(
@@ -300,3 +331,22 @@ export function registerApiRoutes(
     );
   }
 }
+import { createProjectRoutes } from "@routes/projects.routes";
+import type { ProjectMediaService } from "@services/project-media/ProjectMediaService";
+import type { ProjectStore } from "@services/projects/ProjectStore";
+import type { ConversationStore } from "@services/projects/ConversationStore";
+import type { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
+
+import type { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
+import type { VideoEditStore } from "@services/video-editing/VideoEditStore";
+import type { VideoPreviewService } from "@services/video-editing/VideoPreviewService";
+import type { VideoExportService } from "@services/video-export/VideoExportService";
+import type { AccountUsageService } from "@services/account/AccountUsageService";
+import type { ProjectSketchService } from "@services/project-sketch/ProjectSketchService";
+import { createVideoEditRoutes } from "@routes/video-edits.routes";
+import { createAccountRoutes } from "@routes/account.routes";
+import { createProjectSketchRoutes } from "@routes/project-sketch.routes";
+
+import { createWorkflowManagementRoutes } from "@routes/workflow-management.routes";
+import { createPublicWorkflowSharingRoutes } from "@routes/public-workflow-sharing.routes";
+import type { WorkflowManagementService } from "@services/workflow-sharing/WorkflowManagementService";

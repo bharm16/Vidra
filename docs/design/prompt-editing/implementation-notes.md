@@ -1,0 +1,46 @@
+# Code review and implementation dependencies
+
+Reviewed source on 2026-10-10. No application code was changed in this design pass.
+
+## Existing implementation
+
+| Responsibility                                         | Source                                                                                                                                                | Keep / change                                                                                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Editable surface and replacement panel                 | `client/src/features/workspace-shell/components/PromptEditorSurface.tsx`, `phrase-suggestions.css`                                                    | Keep the mounted editor and explicit apply/custom-request actions. Replace the old panel presentation and expose real retry/review states.   |
+| Label scheduling, cancellation, signatures and caching | `client/src/features/span-highlighting/hooks/useSpanLabeling.ts`, `useHighlightSourceSelection.ts`, `useHighlightRendering.ts`                        | Keep the useful signature/cancellation boundaries; only paint labels for the current text.                                                   |
+| Selection and exact range/context capture              | `client/src/features/prompt-optimizer/PromptCanvas/hooks/useTextSelection.ts`                                                                         | Keep range/context capture and explicit selection. Extend its eligibility to the current working draft rather than an old results-mode gate. |
+| Suggestions, keyboard state and custom requests        | `useInlineSuggestionState.ts`, `useSuggestionFetch.ts`, `useSuggestionApi.ts`, `client/src/components/SuggestionsPanel/hooks/useCustomRequest.ts`     | Keep the existing services and ordinary states. Add draft/range/revision/authorization binding and complete retry/recovery wiring.           |
+| Replacement and highlight adjustment                   | `client/src/features/prompt-optimizer/utils/applySuggestion.ts`, `updateHighlightSnapshot.ts`, `PromptOptimizerContainer/hooks/useSuggestionApply.ts` | Reuse the text/range utilities behind a guarded draft transaction. Never apply an old full-prompt snapshot over newer words.                 |
+| Server suggestion pipeline                             | `server/src/routes/enhancement/`, `server/src/services/enhancement/EnhancementService.ts`                                                             | Keep the provider boundary and full-input server cache key. Pass the qualified action/model context where needed.                            |
+
+## Concrete gaps found
+
+1. `useSpanLabelingPipeline` enables labeling only for `selectedMode === "video" && showResults`. Direct authoring must not require expansion or an optimized result first.
+2. `useSuggestionApply` takes `suggestionsData.fullPrompt` as the replacement base. Its application boundary has no current draft-revision, accepted/frozen-target or write-eligibility check. The new transaction must validate all of them at application time, independently of upstream panel dismissal.
+3. The client custom-request manager uses only `trimmedRequest` for its cache/dedup key. It lives across selection changes. The server already hashes fuller inputs, but that cannot repair a wrong client cache hit. Include draft identity, revision, exact range/context, input/model context and request wording; cancel and reject responses when that binding changes.
+4. `useCustomRequest` clears its text in `finally`, including failure. The proposed retry states retain the request. Persist this unsent text by draft and target; do not attach it to another phrase implicitly.
+5. `useSuggestionFeedback` reports the replacement before the application callback finishes. Report success only after the guarded draft edit succeeds; save acknowledgment is a separate state.
+6. The apply hook calls `promptHistory.updateEntryOutput`. The redesign requires a new draft revision, while accepted requests and media provenance stay immutable. Saving failures must reach the draft save indicator rather than only a log.
+7. `useEditHistory` is a module-scoped, session-only list without draft/project identity. The new history must be scoped to the draft/branch and support restoration without contaminating another draft's suggestion context.
+8. The fetch layer retains `onRetry`, but the surface does not expose the complete retry path. Keyboard handling also needs explicit ownership: custom-field undo, draft undo and timeline undo must not compete through document-wide listeners.
+9. Lock helpers exist, but the inspected surface does not expose their toggle. This pass does not resurrect an inactive control. Automatic highlight pulsing is also not part of the proposed interface.
+
+## Ordered implementation
+
+| Task                                    | Dependencies                                      | Keep / replace / build                                                                                                   | Required acceptance                                                                                                   |
+| --------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| PE-01: draft-bound authoring            | Existing WP-05, WP-06, WP-07 and WP-13 contracts  | Keep text utilities; replace results-mode ownership; build the exact draft/target binding.                               | Direct draft labeling, immutable accepted snapshots, no mutation on asset inspection.                                 |
+| PE-02: scoped async suggestions         | PE-01                                             | Keep API/service calls; replace client cache key and stale-response admission; build retained custom-request state.      | Selection/draft/model/input changes reject old replies; failed requests retain wording.                               |
+| PE-03: guarded replacement transaction  | PE-01, PE-02                                      | Keep verified range helpers; replace whole old-snapshot application and legacy output rewriting.                         | Exact occurrence, one undoable revision, stale review, frozen/access-denied rejection, honest save state.             |
+| PE-04: new phrase presentation          | PE-02, PE-03                                      | Replace surface/CSS with Page 28 components; retain the editor node and existing API behavior.                           | Keyboard, long text/list overflow, narrow layouts, initial/custom loading, empty/error and full replacement text.     |
+| PE-05: persistent timeline visibility   | WP-19/WP-20 editor, plus the workspace view owner | Build view preference and focus/layout behavior. The video editor itself remains a separate implementation work package. | No edit/media/job mutation; preserve playback, selection, zoom/scroll and optional tracks.                            |
+| PE-06: continuing workspace integration | WP-08 through WP-11, WP-15/WP-16, PE-01/03/05     | Keep durable completion/receipts; build the combined sidebar, viewer, draft and edit presentation.                       | Multiple jobs, out-of-order completion, explicit input/setup reuse, repair without regeneration, viewer preservation. |
+| PE-07: acceptance and migration         | PE-01 through PE-06                               | Add the focused tests below; retain existing useful regression coverage.                                                 | All new contract cases pass before replacement UI activation.                                                         |
+
+The image editor is a separate deferred work package. No Code Connect mapping is claimed before these new components exist in application code.
+
+## Verification actually performed
+
+Six existing provider-free Vitest suites passed: **23 tests**. They cover the phrase surface, focused-option keyboard behavior, inline suggestion state, custom requests, edit-history plumbing and image-to-video selection reachability. This is evidence about the current implementation, not execution of the new acceptance cases.
+
+No provider calls, application implementation, migrations, commits or pushes were performed for this design pass.

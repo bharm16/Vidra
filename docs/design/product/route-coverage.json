@@ -1,0 +1,1714 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-10",
+  "source": "client/src/App.tsx",
+  "currentRouteCount": 28,
+  "routeChangesAreProposed": true,
+  "currentRoutes": [
+    {
+      "path": "/home",
+      "screens": [
+        {
+          "key": "W01",
+          "nodeId": "959:87947",
+          "name": "W01 \u00b7 Landing page",
+          "width": 1440,
+          "height": 2388,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
+        }
+      ],
+      "contract": "compatibility alias; currently redirects to workspace root; proposed public home"
+    },
+    {
+      "path": "/products",
+      "screens": [
+        {
+          "key": "W01",
+          "nodeId": "959:87947",
+          "name": "W01 \u00b7 Landing page",
+          "width": 1440,
+          "height": 2388,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
+        },
+        {
+          "key": "W02",
+          "nodeId": "959:88089",
+          "name": "W02 \u00b7 Product navigation open",
+          "width": 1440,
+          "height": 2388,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88089"
+        }
+      ],
+      "contract": "compatibility alias; product menu links explicit product pages"
+    },
+    {
+      "path": "/docs",
+      "screens": [
+        {
+          "key": "H01",
+          "nodeId": "963:91185",
+          "name": "H01 \u00b7 Documentation home",
+          "width": 1440,
+          "height": 1562,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91185"
+        },
+        {
+          "key": "H13",
+          "nodeId": "963:91320",
+          "name": "H13 \u00b7 Search documentation",
+          "width": 1440,
+          "height": 1562,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91320"
+        },
+        {
+          "key": "H14",
+          "nodeId": "963:91471",
+          "name": "H14 \u00b7 Documentation search results",
+          "width": 1440,
+          "height": 1562,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91471"
+        },
+        {
+          "key": "H15",
+          "nodeId": "963:91630",
+          "name": "H15 \u00b7 Documentation search has no matches",
+          "width": 1440,
+          "height": 1562,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91630"
+        },
+        {
+          "key": "H16",
+          "nodeId": "963:91783",
+          "name": "H16 \u00b7 Documentation search unavailable",
+          "width": 1440,
+          "height": 1562,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91783"
+        },
+        {
+          "key": "H17",
+          "nodeId": "963:91936",
+          "name": "H17 \u00b7 Documentation article missing",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91936"
+        },
+        {
+          "key": "H18",
+          "nodeId": "963:91997",
+          "name": "H18 \u00b7 Documentation could not load",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91997"
+        }
+      ],
+      "contract": "replace the old required words-to-picture-to-clip documentation"
+    },
+    {
+      "path": "/signin",
+      "screens": [
+        {
+          "key": "A01",
+          "nodeId": "960:88814",
+          "name": "A01 \u00b7 Sign in",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814"
+        },
+        {
+          "key": "A02",
+          "nodeId": "960:88852",
+          "name": "A02 \u00b7 Sign in with filled fields",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88852"
+        },
+        {
+          "key": "A03",
+          "nodeId": "960:88890",
+          "name": "A03 \u00b7 Sign in validation",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88890"
+        },
+        {
+          "key": "A04",
+          "nodeId": "960:88936",
+          "name": "A04 \u00b7 Incorrect credentials",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88936"
+        },
+        {
+          "key": "A05",
+          "nodeId": "960:88982",
+          "name": "A05 \u00b7 Signing in",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88982"
+        },
+        {
+          "key": "A06",
+          "nodeId": "960:89023",
+          "name": "A06 \u00b7 Google sign-in in progress",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89023"
+        },
+        {
+          "key": "A07",
+          "nodeId": "960:89071",
+          "name": "A07 \u00b7 Google sign-in cancelled",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89071"
+        },
+        {
+          "key": "A08",
+          "nodeId": "960:89116",
+          "name": "A08 \u00b7 Google popup blocked",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89116"
+        },
+        {
+          "key": "A09",
+          "nodeId": "960:89162",
+          "name": "A09 \u00b7 Embedded browser cannot use Google",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89162"
+        },
+        {
+          "key": "A10",
+          "nodeId": "960:89208",
+          "name": "A10 \u00b7 Sign-in provider unavailable",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89208"
+        },
+        {
+          "key": "A11",
+          "nodeId": "960:89254",
+          "name": "A11 \u00b7 Sign-in rate limited",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89254"
+        },
+        {
+          "key": "A12",
+          "nodeId": "960:89300",
+          "name": "A12 \u00b7 Sign-in offline",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89300"
+        },
+        {
+          "key": "A13",
+          "nodeId": "960:89346",
+          "name": "A13 \u00b7 Account disabled",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89346"
+        },
+        {
+          "key": "A45",
+          "nodeId": "962:90066",
+          "name": "A45 \u00b7 Returning to a saved destination",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90066"
+        },
+        {
+          "key": "A46",
+          "nodeId": "962:90081",
+          "name": "A46 \u00b7 Keep a guest draft after sign-in",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90081"
+        },
+        {
+          "key": "A47",
+          "nodeId": "962:90103",
+          "name": "A47 \u00b7 Different account cannot take over a draft",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90103"
+        },
+        {
+          "key": "A48",
+          "nodeId": "962:90122",
+          "name": "A48 \u00b7 Saved destination unavailable",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90122"
+        },
+        {
+          "key": "A52",
+          "nodeId": "962:90197",
+          "name": "A52 \u00b7 Unexpected sign-in failure",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90197"
+        },
+        {
+          "key": "A53",
+          "nodeId": "962:90242",
+          "name": "A53 \u00b7 Email sign-in unavailable",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90242"
+        }
+      ],
+      "contract": "keep Google/email and a validated same-origin return destination"
+    },
+    {
+      "path": "/signup",
+      "screens": [
+        {
+          "key": "A14",
+          "nodeId": "960:89392",
+          "name": "A14 \u00b7 Create an account",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392"
+        },
+        {
+          "key": "A15",
+          "nodeId": "960:89435",
+          "name": "A15 \u00b7 Account details ready",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89435"
+        },
+        {
+          "key": "A16",
+          "nodeId": "960:89478",
+          "name": "A16 \u00b7 Passwords do not match",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89478"
+        },
+        {
+          "key": "A17",
+          "nodeId": "960:89531",
+          "name": "A17 \u00b7 Password is too short",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89531"
+        },
+        {
+          "key": "A18",
+          "nodeId": "960:89584",
+          "name": "A18 \u00b7 Email already in use",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89584"
+        },
+        {
+          "key": "A19",
+          "nodeId": "960:89634",
+          "name": "A19 \u00b7 Creating an account",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89634"
+        },
+        {
+          "key": "A20",
+          "nodeId": "960:89680",
+          "name": "A20 \u00b7 Account creation failed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89680"
+        },
+        {
+          "key": "A51",
+          "nodeId": "962:90173",
+          "name": "A51 \u00b7 Account created but verification email failed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90173"
+        }
+      ],
+      "contract": "account creation and verification-email delivery are separate results"
+    },
+    {
+      "path": "/forgot-password",
+      "screens": [
+        {
+          "key": "A31",
+          "nodeId": "962:89666",
+          "name": "A31 \u00b7 Forgot password",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89666"
+        },
+        {
+          "key": "A32",
+          "nodeId": "962:89690",
+          "name": "A32 \u00b7 Reset email ready to send",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89690"
+        },
+        {
+          "key": "A33",
+          "nodeId": "962:89714",
+          "name": "A33 \u00b7 Sending reset email",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89714"
+        },
+        {
+          "key": "A34",
+          "nodeId": "962:89741",
+          "name": "A34 \u00b7 Check your inbox for reset instructions",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89741"
+        },
+        {
+          "key": "A35",
+          "nodeId": "962:89763",
+          "name": "A35 \u00b7 Reset email could not be sent",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89763"
+        },
+        {
+          "key": "A54",
+          "nodeId": "962:90288",
+          "name": "A54 \u00b7 Reset email rate limited",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90288"
+        }
+      ],
+      "contract": "neutral inbox confirmation does not disclose whether an account exists"
+    },
+    {
+      "path": "/email-verification",
+      "screens": [
+        {
+          "key": "A21",
+          "nodeId": "962:89442",
+          "name": "A21 \u00b7 Check your email",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89442"
+        },
+        {
+          "key": "A22",
+          "nodeId": "962:89466",
+          "name": "A22 \u00b7 Sending verification email",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89466"
+        },
+        {
+          "key": "A23",
+          "nodeId": "962:89490",
+          "name": "A23 \u00b7 Verification email resent",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89490"
+        },
+        {
+          "key": "A24",
+          "nodeId": "962:89512",
+          "name": "A24 \u00b7 Checking verification link",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89512"
+        },
+        {
+          "key": "A25",
+          "nodeId": "962:89530",
+          "name": "A25 \u00b7 Email verified",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89530"
+        },
+        {
+          "key": "A26",
+          "nodeId": "962:89550",
+          "name": "A26 \u00b7 Verification link expired",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89550"
+        },
+        {
+          "key": "A27",
+          "nodeId": "962:89574",
+          "name": "A27 \u00b7 Verification link invalid or missing",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89574"
+        },
+        {
+          "key": "A28",
+          "nodeId": "962:89598",
+          "name": "A28 \u00b7 Verification failed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89598"
+        },
+        {
+          "key": "A29",
+          "nodeId": "962:89622",
+          "name": "A29 \u00b7 Verification belongs to another account",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89622"
+        },
+        {
+          "key": "A30",
+          "nodeId": "962:89646",
+          "name": "A30 \u00b7 Verified but signed out",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89646"
+        },
+        {
+          "key": "A51",
+          "nodeId": "962:90173",
+          "name": "A51 \u00b7 Account created but verification email failed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90173"
+        },
+        {
+          "key": "A55",
+          "nodeId": "962:90320",
+          "name": "A55 \u00b7 Verification resend rate limited",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90320"
+        }
+      ],
+      "contract": "code validation, resend, rate limit, delivery failure and account mismatch"
+    },
+    {
+      "path": "/reset-password",
+      "screens": [
+        {
+          "key": "A36",
+          "nodeId": "962:89794",
+          "name": "A36 \u00b7 Checking a password reset link",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89794"
+        },
+        {
+          "key": "A37",
+          "nodeId": "962:89812",
+          "name": "A37 \u00b7 Choose a new password",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89812"
+        },
+        {
+          "key": "A38",
+          "nodeId": "962:89844",
+          "name": "A38 \u00b7 Reset passwords do not match",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89844"
+        },
+        {
+          "key": "A39",
+          "nodeId": "962:89886",
+          "name": "A39 \u00b7 Reset password is too short",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89886"
+        },
+        {
+          "key": "A40",
+          "nodeId": "962:89928",
+          "name": "A40 \u00b7 Saving the new password",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89928"
+        },
+        {
+          "key": "A41",
+          "nodeId": "962:89963",
+          "name": "A41 \u00b7 Password changed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89963"
+        },
+        {
+          "key": "A42",
+          "nodeId": "962:89983",
+          "name": "A42 \u00b7 Password reset link expired",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-89983"
+        },
+        {
+          "key": "A43",
+          "nodeId": "962:90005",
+          "name": "A43 \u00b7 Password reset link invalid or missing",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90005"
+        },
+        {
+          "key": "A44",
+          "nodeId": "962:90027",
+          "name": "A44 \u00b7 Password reset failed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90027"
+        },
+        {
+          "key": "A56",
+          "nodeId": "962:90344",
+          "name": "A56 \u00b7 New password field required",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90344"
+        },
+        {
+          "key": "A57",
+          "nodeId": "962:90386",
+          "name": "A57 \u00b7 New password ready to save",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=962-90386"
+        }
+      ],
+      "contract": "validate the code before collecting a new password"
+    },
+    {
+      "path": "/login",
+      "screens": [
+        {
+          "key": "A01",
+          "nodeId": "960:88814",
+          "name": "A01 \u00b7 Sign in",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-88814"
+        }
+      ],
+      "contract": "alias of sign-in; retain safe redirect"
+    },
+    {
+      "path": "/register",
+      "screens": [
+        {
+          "key": "A14",
+          "nodeId": "960:89392",
+          "name": "A14 \u00b7 Create an account",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=960-89392"
+        }
+      ],
+      "contract": "alias of sign-up; retain safe redirect"
+    },
+    {
+      "path": "/privacy-policy",
+      "screens": [
+        {
+          "key": "W10",
+          "nodeId": "959:89028",
+          "name": "W10 \u00b7 Privacy policy",
+          "width": 1440,
+          "height": 3078,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89028"
+        },
+        {
+          "key": "N30",
+          "nodeId": "968:94206",
+          "name": "N30 \u00b7 Mobile Privacy policy",
+          "width": 390,
+          "height": 3434,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94206"
+        }
+      ],
+      "contract": "existing policy copy and existing date; content review is still required before publication"
+    },
+    {
+      "path": "/terms-of-service",
+      "screens": [
+        {
+          "key": "W11",
+          "nodeId": "959:89112",
+          "name": "W11 \u00b7 Terms of service",
+          "width": 1440,
+          "height": 2952,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-89112"
+        },
+        {
+          "key": "N31",
+          "nodeId": "968:94254",
+          "name": "N31 \u00b7 Mobile Terms of service",
+          "width": 390,
+          "height": 3184,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=968-94254"
+        }
+      ],
+      "contract": "existing terms copy and existing date; legacy payment/Stripe claims need owner review before publication"
+    },
+    {
+      "path": "/contact",
+      "screens": [
+        {
+          "key": "S01",
+          "nodeId": "965:92848",
+          "name": "S01 \u00b7 Contact support",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848"
+        },
+        {
+          "key": "S02",
+          "nodeId": "965:92901",
+          "name": "S02 \u00b7 Support details ready",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92901"
+        },
+        {
+          "key": "S03",
+          "nodeId": "965:92954",
+          "name": "S03 \u00b7 Support form validation",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92954"
+        },
+        {
+          "key": "S04",
+          "nodeId": "965:93014",
+          "name": "S04 \u00b7 Choose a support topic",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93014"
+        },
+        {
+          "key": "S05",
+          "nodeId": "965:93074",
+          "name": "S05 \u00b7 Continue in your email app",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93074"
+        },
+        {
+          "key": "S06",
+          "nodeId": "965:93136",
+          "name": "S06 \u00b7 No email app available",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93136"
+        },
+        {
+          "key": "S07",
+          "nodeId": "965:93198",
+          "name": "S07 \u00b7 Support address copied",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93198"
+        },
+        {
+          "key": "S08",
+          "nodeId": "965:93251",
+          "name": "S08 \u00b7 Clipboard permission failed",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93251"
+        },
+        {
+          "key": "S09",
+          "nodeId": "965:93305",
+          "name": "S09 \u00b7 Security report",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93305"
+        },
+        {
+          "key": "S10",
+          "nodeId": "965:93359",
+          "name": "S10 \u00b7 Request account data or deletion",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93359"
+        },
+        {
+          "key": "S11",
+          "nodeId": "980:95180",
+          "name": "S11 \u00b7 Product feedback",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95180"
+        },
+        {
+          "key": "S12",
+          "nodeId": "980:95234",
+          "name": "S12 \u00b7 Account deletion request",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=980-95234"
+        }
+      ],
+      "contract": "prepare an email; never claim a sent or received support ticket"
+    },
+    {
+      "path": "/support",
+      "screens": [
+        {
+          "key": "S01",
+          "nodeId": "965:92848",
+          "name": "S01 \u00b7 Contact support",
+          "width": 1440,
+          "height": 1040,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-92848"
+        }
+      ],
+      "contract": "alias of contact"
+    },
+    {
+      "path": "/share/:uuid",
+      "screens": [
+        {
+          "key": "D06",
+          "nodeId": "903:97643",
+          "name": "D06 \u00b7 Public viewer contains only the shared version",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=903-97643"
+        },
+        {
+          "key": "D07",
+          "nodeId": "903:97648",
+          "name": "D07 \u00b7 Revoked or unavailable public link",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=903-97648"
+        },
+        {
+          "key": "E40",
+          "nodeId": "932:112097",
+          "name": "E40 \u00b7 Public viewer shows only the shared export",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=932-112097"
+        }
+      ],
+      "contract": "public immutable-version/file viewer; no private project UI"
+    },
+    {
+      "path": "/",
+      "screens": [
+        {
+          "key": "W01",
+          "nodeId": "959:87947",
+          "name": "W01 \u00b7 Landing page",
+          "width": 1440,
+          "height": 2388,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-87947"
+        },
+        {
+          "key": "W03",
+          "nodeId": "959:88269",
+          "name": "W03 \u00b7 Landing page for a returning creator",
+          "width": 1440,
+          "height": 2388,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88269"
+        },
+        {
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
+        },
+        {
+          "key": "X08",
+          "nodeId": "965:93659",
+          "name": "X08 \u00b7 Return to an existing project",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93659"
+        }
+      ],
+      "contract": "proposed public landing at / with workspace at /app; this routing change is not implemented"
+    },
+    {
+      "path": "/live-editor",
+      "screens": [
+        {
+          "key": "M13",
+          "nodeId": "898:92992",
+          "name": "M13 \u00b7 Sketch before live preview starts",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-92992"
+        },
+        {
+          "key": "M14",
+          "nodeId": "898:93121",
+          "name": "M14 \u00b7 Sketch live preview",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93121"
+        },
+        {
+          "key": "M15",
+          "nodeId": "898:93250",
+          "name": "M15 \u00b7 Keep the last good preview after an error",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93250"
+        },
+        {
+          "key": "M16",
+          "nodeId": "898:93379",
+          "name": "M16 \u00b7 Restore drawing without restarting preview",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93379"
+        },
+        {
+          "key": "M17",
+          "nodeId": "898:93519",
+          "name": "M17 \u00b7 Allowance reached with an image still available",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93519"
+        },
+        {
+          "key": "M18",
+          "nodeId": "898:93648",
+          "name": "M18 \u00b7 Accept exactly the displayed Sketch image",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93648"
+        },
+        {
+          "key": "M19",
+          "nodeId": "898:93795",
+          "name": "M19 \u00b7 Connecting to Sketch",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93795"
+        },
+        {
+          "key": "M20",
+          "nodeId": "898:93924",
+          "name": "M20 \u00b7 Accepted image with explicit use as input",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=898-93924"
+        },
+        {
+          "key": "B08",
+          "nodeId": "912:327096",
+          "name": "B08 \u00b7 Mobile Sketch with explicit acceptance",
+          "width": 390,
+          "height": 844,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=912-327096"
+        }
+      ],
+      "contract": "retain Sketch lifecycle; no automatic live resume"
+    },
+    {
+      "path": "/studio",
+      "screens": [
+        {
+          "key": "P01",
+          "nodeId": "900:93950",
+          "name": "P01 \u00b7 Choose projects by identity",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=900-93950"
+        },
+        {
+          "key": "C05",
+          "nodeId": "888:85240",
+          "name": "C05 \u00b7 Inspect one image while editing another",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
+        }
+      ],
+      "contract": "existing project identity must be resolved before showing its conversation"
+    },
+    {
+      "path": "/studio/new",
+      "screens": [
+        {
+          "key": "C01",
+          "nodeId": "888:85153",
+          "name": "C01 \u00b7 New request",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85153"
+        },
+        {
+          "key": "C37",
+          "nodeId": "930:105076",
+          "name": "C37 \u00b7 Image action chosen before writing",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=930-105076"
+        }
+      ],
+      "contract": "new independent image request"
+    },
+    {
+      "path": "/studio/:projectId",
+      "screens": [
+        {
+          "key": "C05",
+          "nodeId": "888:85240",
+          "name": "C05 \u00b7 Inspect one image while editing another",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
+        },
+        {
+          "key": "C25",
+          "nodeId": "904:98467",
+          "name": "C25 \u00b7 Edit a legacy file without inventing its history",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=904-98467"
+        },
+        {
+          "key": "P04",
+          "nodeId": "900:94222",
+          "name": "P04 \u00b7 Retry the same project after a load error",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=900-94222"
+        },
+        {
+          "key": "P05",
+          "nodeId": "900:94295",
+          "name": "P05 \u00b7 Access denied without displaying private media",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=900-94295"
+        }
+      ],
+      "contract": "resolve legacy project identity and authorize; never infer history"
+    },
+    {
+      "path": "/history",
+      "screens": [
+        {
+          "key": "P01",
+          "nodeId": "900:93950",
+          "name": "P01 \u00b7 Choose projects by identity",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=900-93950"
+        },
+        {
+          "key": "M01",
+          "nodeId": "897:91827",
+          "name": "M01 \u00b7 Browse project media",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=897-91827"
+        },
+        {
+          "key": "C13",
+          "nodeId": "891:86691",
+          "name": "C13 \u00b7 Follow the actual version branch",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=891-86691"
+        },
+        {
+          "key": "X12",
+          "nodeId": "971:95026",
+          "name": "X12 \u00b7 First project browser",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026"
+        },
+        {
+          "key": "X14",
+          "nodeId": "971:95182",
+          "name": "X14 \u00b7 Project search has no matches",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95182"
+        },
+        {
+          "key": "X15",
+          "nodeId": "971:95259",
+          "name": "X15 \u00b7 Project browser loading",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259"
+        }
+      ],
+      "contract": "projects/media/history entry with empty, no-match, loading and exact-version views"
+    },
+    {
+      "path": "/account",
+      "screens": [
+        {
+          "key": "K01",
+          "nodeId": "964:91361",
+          "name": "K01 \u00b7 Profile",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91361"
+        },
+        {
+          "key": "K02",
+          "nodeId": "964:91459",
+          "name": "K02 \u00b7 Profile awaiting email verification",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91459"
+        },
+        {
+          "key": "K03",
+          "nodeId": "964:91559",
+          "name": "K03 \u00b7 Account loading",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91559"
+        },
+        {
+          "key": "K04",
+          "nodeId": "964:91646",
+          "name": "K04 \u00b7 Edit display name",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91646"
+        },
+        {
+          "key": "K05",
+          "nodeId": "964:91746",
+          "name": "K05 \u00b7 Saving profile",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91746"
+        },
+        {
+          "key": "K06",
+          "nodeId": "964:91849",
+          "name": "K06 \u00b7 Profile saved",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91849"
+        },
+        {
+          "key": "K07",
+          "nodeId": "964:91948",
+          "name": "K07 \u00b7 Profile update failed",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91948"
+        },
+        {
+          "key": "K08",
+          "nodeId": "964:92055",
+          "name": "K08 \u00b7 Password and sign-in settings",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92055"
+        },
+        {
+          "key": "K09",
+          "nodeId": "964:92150",
+          "name": "K09 \u00b7 Google sign-in settings",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92150"
+        },
+        {
+          "key": "K10",
+          "nodeId": "964:92245",
+          "name": "K10 \u00b7 Password reset requested from account",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92245"
+        },
+        {
+          "key": "K11",
+          "nodeId": "964:92345",
+          "name": "K11 \u00b7 Free testing allowance",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92345"
+        },
+        {
+          "key": "K12",
+          "nodeId": "964:92446",
+          "name": "K12 \u00b7 Testing allowance exhausted",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92446"
+        },
+        {
+          "key": "K13",
+          "nodeId": "964:92549",
+          "name": "K13 \u00b7 Usage loading",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92549"
+        },
+        {
+          "key": "K14",
+          "nodeId": "964:92635",
+          "name": "K14 \u00b7 Usage unavailable",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92635"
+        },
+        {
+          "key": "K15",
+          "nodeId": "964:92719",
+          "name": "K15 \u00b7 Request receipt details",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92719"
+        },
+        {
+          "key": "K16",
+          "nodeId": "964:92829",
+          "name": "K16 \u00b7 No usage history yet",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92829"
+        },
+        {
+          "key": "K17",
+          "nodeId": "964:92913",
+          "name": "K17 \u00b7 Data and privacy requests",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92913"
+        },
+        {
+          "key": "K18",
+          "nodeId": "964:93011",
+          "name": "K18 \u00b7 Sign out with unsaved work",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93011"
+        },
+        {
+          "key": "K19",
+          "nodeId": "964:93118",
+          "name": "K19 \u00b7 Signing out clears private content",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93118"
+        },
+        {
+          "key": "K20",
+          "nodeId": "964:93123",
+          "name": "K20 \u00b7 Sign-out could not finish",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93123"
+        },
+        {
+          "key": "K21",
+          "nodeId": "964:93130",
+          "name": "K21 \u00b7 Billing during free testing",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93130"
+        }
+      ],
+      "contract": "profile, provider-aware security, usage, testing billing, privacy requests and sign-out"
+    },
+    {
+      "path": "/create",
+      "screens": [
+        {
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
+        }
+      ],
+      "contract": "compatibility alias of workspace entry"
+    },
+    {
+      "path": "/session/:sessionId",
+      "screens": [
+        {
+          "key": "C05",
+          "nodeId": "888:85240",
+          "name": "C05 \u00b7 Inspect one image while editing another",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
+        },
+        {
+          "key": "C25",
+          "nodeId": "904:98467",
+          "name": "C25 \u00b7 Edit a legacy file without inventing its history",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=904-98467"
+        },
+        {
+          "key": "P04",
+          "nodeId": "900:94222",
+          "name": "P04 \u00b7 Retry the same project after a load error",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=900-94222"
+        },
+        {
+          "key": "P05",
+          "nodeId": "900:94295",
+          "name": "P05 \u00b7 Access denied without displaying private media",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=900-94295"
+        }
+      ],
+      "contract": "authoritative legacy-session resolver; do not cast a session ID to a new project ID"
+    },
+    {
+      "path": "/session/:sessionId/studio",
+      "screens": [
+        {
+          "key": "C05",
+          "nodeId": "888:85240",
+          "name": "C05 \u00b7 Inspect one image while editing another",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
+        },
+        {
+          "key": "C25",
+          "nodeId": "904:98467",
+          "name": "C25 \u00b7 Edit a legacy file without inventing its history",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=904-98467"
+        }
+      ],
+      "contract": "preserve identity and requested view through the resolver"
+    },
+    {
+      "path": "/session/:sessionId/create",
+      "screens": [
+        {
+          "key": "C01",
+          "nodeId": "888:85153",
+          "name": "C01 \u00b7 New request",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85153"
+        },
+        {
+          "key": "C05",
+          "nodeId": "888:85240",
+          "name": "C05 \u00b7 Inspect one image while editing another",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=888-85240"
+        }
+      ],
+      "contract": "preserve identity and draft intent through the resolver"
+    },
+    {
+      "path": "/prompt/:uuid",
+      "screens": [
+        {
+          "key": "C25",
+          "nodeId": "904:98467",
+          "name": "C25 \u00b7 Edit a legacy file without inventing its history",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=904-98467"
+        },
+        {
+          "key": "X01",
+          "nodeId": "965:93412",
+          "name": "X01 \u00b7 Page not found",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412"
+        },
+        {
+          "key": "X06",
+          "nodeId": "965:93546",
+          "name": "X06 \u00b7 Access denied",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546"
+        }
+      ],
+      "contract": "resolve and authorize the saved reference; missing and denied remain distinct"
+    },
+    {
+      "path": "*",
+      "screens": [
+        {
+          "key": "X01",
+          "nodeId": "965:93412",
+          "name": "X01 \u00b7 Page not found",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93412"
+        },
+        {
+          "key": "X02",
+          "nodeId": "965:93440",
+          "name": "X02 \u00b7 Page loading",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93440"
+        },
+        {
+          "key": "X03",
+          "nodeId": "965:93462",
+          "name": "X03 \u00b7 Page failed to load",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93462"
+        },
+        {
+          "key": "X04",
+          "nodeId": "965:93490",
+          "name": "X04 \u00b7 Offline page",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93490"
+        },
+        {
+          "key": "X05",
+          "nodeId": "965:93518",
+          "name": "X05 \u00b7 Service temporarily unavailable",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93518"
+        },
+        {
+          "key": "X06",
+          "nodeId": "965:93546",
+          "name": "X06 \u00b7 Access denied",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93546"
+        }
+      ],
+      "contract": "not-found, loading, load failure, offline, unavailable and access-denied"
+    }
+  ],
+  "proposedRoutes": [
+    {
+      "path": "/app",
+      "screens": [
+        {
+          "key": "X07",
+          "nodeId": "965:93574",
+          "name": "X07 \u00b7 First signed-in workspace visit",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93574"
+        },
+        {
+          "key": "X08",
+          "nodeId": "965:93659",
+          "name": "X08 \u00b7 Return to an existing project",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=965-93659"
+        },
+        {
+          "key": "X09",
+          "nodeId": "971:94640",
+          "name": "X09 \u00b7 An adopted guest draft stays unsubmitted",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94640"
+        },
+        {
+          "key": "X10",
+          "nodeId": "971:94758",
+          "name": "X10 \u00b7 New video edit with no project media",
+          "width": 1440,
+          "height": 900,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94758"
+        },
+        {
+          "key": "X11",
+          "nodeId": "971:94945",
+          "name": "X11 \u00b7 First project media library",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94945"
+        },
+        {
+          "key": "X12",
+          "nodeId": "971:95026",
+          "name": "X12 \u00b7 First project browser",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95026"
+        },
+        {
+          "key": "X13",
+          "nodeId": "971:95103",
+          "name": "X13 \u00b7 Media search has no matches",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95103"
+        },
+        {
+          "key": "X14",
+          "nodeId": "971:95182",
+          "name": "X14 \u00b7 Project search has no matches",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95182"
+        },
+        {
+          "key": "X15",
+          "nodeId": "971:95259",
+          "name": "X15 \u00b7 Project browser loading",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-95259"
+        }
+      ]
+    },
+    {
+      "path": "/product/:tool",
+      "screens": [
+        {
+          "key": "W04",
+          "nodeId": "959:88411",
+          "name": "W04 \u00b7 Image creation product page",
+          "width": 1440,
+          "height": 1958,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88411"
+        },
+        {
+          "key": "W05",
+          "nodeId": "959:88495",
+          "name": "W05 \u00b7 Video generation product page",
+          "width": 1440,
+          "height": 1958,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88495"
+        },
+        {
+          "key": "W06",
+          "nodeId": "959:88576",
+          "name": "W06 \u00b7 Video editing product page",
+          "width": 1440,
+          "height": 2026,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88576"
+        },
+        {
+          "key": "W07",
+          "nodeId": "959:88732",
+          "name": "W07 \u00b7 Sketch product page",
+          "width": 1440,
+          "height": 1958,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88732"
+        }
+      ]
+    },
+    {
+      "path": "/pricing",
+      "screens": [
+        {
+          "key": "W08",
+          "nodeId": "959:88816",
+          "name": "W08 \u00b7 Pricing during free testing",
+          "width": 1440,
+          "height": 1454,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88816"
+        },
+        {
+          "key": "W09",
+          "nodeId": "959:88920",
+          "name": "W09 \u00b7 Pricing questions expanded",
+          "width": 1440,
+          "height": 1798,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=959-88920"
+        }
+      ]
+    },
+    {
+      "path": "/docs/:article",
+      "screens": [
+        {
+          "key": "H02",
+          "nodeId": "963:89912",
+          "name": "H02 \u00b7 Get started",
+          "width": 1440,
+          "height": 1604,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-89912"
+        },
+        {
+          "key": "H03",
+          "nodeId": "963:90023",
+          "name": "H03 \u00b7 Create and edit images",
+          "width": 1440,
+          "height": 1578,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90023"
+        },
+        {
+          "key": "H04",
+          "nodeId": "963:90134",
+          "name": "H04 \u00b7 Generate a video clip",
+          "width": 1440,
+          "height": 1656,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90134"
+        },
+        {
+          "key": "H05",
+          "nodeId": "963:90245",
+          "name": "H05 \u00b7 Assemble and export a video",
+          "width": 1440,
+          "height": 1630,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90245"
+        },
+        {
+          "key": "H06",
+          "nodeId": "963:90401",
+          "name": "H06 \u00b7 Import and organize media",
+          "width": 1440,
+          "height": 1604,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90401"
+        },
+        {
+          "key": "H07",
+          "nodeId": "963:90512",
+          "name": "H07 \u00b7 Conversations, drafts and versions",
+          "width": 1440,
+          "height": 1630,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90512"
+        },
+        {
+          "key": "H08",
+          "nodeId": "963:90630",
+          "name": "H08 \u00b7 Draw with Sketch",
+          "width": 1440,
+          "height": 1604,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90630"
+        },
+        {
+          "key": "H09",
+          "nodeId": "963:90741",
+          "name": "H09 \u00b7 Choose models and settings",
+          "width": 1440,
+          "height": 1630,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90741"
+        },
+        {
+          "key": "H10",
+          "nodeId": "963:90852",
+          "name": "H10 \u00b7 Share and download your work",
+          "width": 1440,
+          "height": 1604,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90852"
+        },
+        {
+          "key": "H11",
+          "nodeId": "963:90963",
+          "name": "H11 \u00b7 Recover interrupted work",
+          "width": 1440,
+          "height": 1656,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-90963"
+        },
+        {
+          "key": "H12",
+          "nodeId": "963:91074",
+          "name": "H12 \u00b7 Understand your testing allowance",
+          "width": 1440,
+          "height": 1578,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=963-91074"
+        },
+        {
+          "key": "H19",
+          "nodeId": "971:94418",
+          "name": "H19 \u00b7 Improve words without generating media",
+          "width": 1440,
+          "height": 1626,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94418"
+        },
+        {
+          "key": "H20",
+          "nodeId": "971:94529",
+          "name": "H20 \u00b7 Select an area to edit",
+          "width": 1440,
+          "height": 1578,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=971-94529"
+        }
+      ]
+    },
+    {
+      "path": "/account/:section",
+      "screens": [
+        {
+          "key": "K01",
+          "nodeId": "964:91361",
+          "name": "K01 \u00b7 Profile",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-91361"
+        },
+        {
+          "key": "K08",
+          "nodeId": "964:92055",
+          "name": "K08 \u00b7 Password and sign-in settings",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92055"
+        },
+        {
+          "key": "K09",
+          "nodeId": "964:92150",
+          "name": "K09 \u00b7 Google sign-in settings",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92150"
+        },
+        {
+          "key": "K11",
+          "nodeId": "964:92345",
+          "name": "K11 \u00b7 Free testing allowance",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92345"
+        },
+        {
+          "key": "K17",
+          "nodeId": "964:92913",
+          "name": "K17 \u00b7 Data and privacy requests",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-92913"
+        },
+        {
+          "key": "K21",
+          "nodeId": "964:93130",
+          "name": "K21 \u00b7 Billing during free testing",
+          "width": 1440,
+          "height": 960,
+          "url": "https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=964-93130"
+        }
+      ]
+    }
+  ],
+  "externalOwnedSurfaces": [
+    "Google identity-provider window",
+    "User email app or webmail",
+    "Native file picker and browser download UI"
+  ],
+  "externalHandoffRule": "The design covers launching, pending, cancelled, failed and returned states. It does not counterfeit third-party UI or assert those systems completed an action."
+}

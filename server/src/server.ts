@@ -1,3 +1,5 @@
+import type { VideoExportService } from "@services/video-export/VideoExportService";
+import type { WorkflowExecutionService } from "@services/creation-requests/execution/WorkflowExecutionService";
 /**
  * Server Lifecycle Management
  *
@@ -169,13 +171,21 @@ export function setupGracefulShutdown(
       try {
         stopAllPeriodicWorkers(container);
 
-        // Drain active worker jobs with a deadline, then release claims for fast reclaim.
-        const videoJobWorker = resolveOptional<VideoJobWorker | null>(
-          "videoJobWorker",
-        );
-        if (videoJobWorker) {
-          await videoJobWorker.shutdown(drainTimeoutMs);
-        }
+        // Each executor shares one shutdown grace window. Unknown attempts stay durable.
+        const videoJobWorker = resolveOptional<VideoJobWorker | null>("videoJobWorker");
+        const workflow = resolveOptional<WorkflowExecutionService>("workflowExecutionService");
+        const exports = resolveOptional<VideoExportService>("workflowVideoExportService");
+        const workflowDrain = async (): Promise<void> => {
+          if (!workflow) return;
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try { await Promise.race([workflow.drain(), new Promise<void>(resolve => { timer = setTimeout(resolve, drainTimeoutMs); })]); }
+          finally { if (timer) clearTimeout(timer); }
+        };
+        const drained = await Promise.allSettled([videoJobWorker?.shutdown(drainTimeoutMs), workflowDrain(), exports?.drain(drainTimeoutMs)]);
+        drained.forEach((result, index) => {
+          if (result.status === "rejected") logger.warn("Executor shutdown needs durable recovery", { executor: ["video-jobs", "workflow", "exports"][index], error: result.reason instanceof Error ? result.reason.message : String(result.reason) });
+          else if (result.value === false) logger.warn("Native exports retain unresolved work for recovery");
+        });
 
         // Close Redis connection
         const redisClient = container.resolve<Redis | null>("redisClient");
