@@ -111,9 +111,9 @@ export class WorkflowApi {
     const projectId = ProjectIdSchema.parse(project);
     return this.request(`/projects/${encodeURIComponent(projectId)}/conversations`, z.array(this.owned(ConversationListingSchema, { projectId })), "GET", undefined, signal);
   }
-  async createConversation(project: string, id: string, name: string): Promise<Conversation> {
+  async createConversation(project: string, id: string, name: string, folderId?: string): Promise<Conversation> {
     const projectId = ProjectIdSchema.parse(project);
-    const command = CreateConversationCommandSchema.parse({ id, name });
+    const command = CreateConversationCommandSchema.parse({ id, name, ...(folderId ? { folderId } : {}) });
     return this.request(`/projects/${encodeURIComponent(projectId)}/conversations`, this.owned(ConversationSchema, { projectId, id: command.id }), "POST", command);
   }
   listDrafts(projectId: string, conversationId: string, signal?: AbortSignal): Promise<CreationDraft[]> {

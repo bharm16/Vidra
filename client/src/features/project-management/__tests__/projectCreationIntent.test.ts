@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { keepProjectCreationIntent, readProjectCreationIntent, clearProjectCreationIntent } from "../state/projectCreationIntent";
 beforeEach(() => { sessionStorage.clear(); vi.restoreAllMocks(); });
 describe("Stable project creation intent", () => {
-  it("retains identical project/conversation identities and captured name after uncertain retries", () => {
+  it("retains the same project identity and captured name after uncertain retries", () => {
     const first = keepProjectCreationIntent("creator", "Evening campaign");
     expect(keepProjectCreationIntent("creator", "Changed name after response loss")).toEqual(first);
     expect(readProjectCreationIntent("creator")).toEqual(first);
@@ -11,9 +11,9 @@ describe("Stable project creation intent", () => {
   it("clears only the acknowledged request and leaves other owners alone", () => {
     const first = keepProjectCreationIntent("creator", "Evening campaign");
     const other = keepProjectCreationIntent("other", "Other project");
-    clearProjectCreationIntent("creator", "project_wrong");
+    clearProjectCreationIntent("creator", "folder_wrong");
     expect(readProjectCreationIntent("creator")).toEqual(first);
-    clearProjectCreationIntent("creator", first.projectId);
+    clearProjectCreationIntent("creator", first.folderId);
     expect(readProjectCreationIntent("creator")).toBeUndefined();
     expect(readProjectCreationIntent("other")).toEqual(other);
   });
@@ -22,7 +22,7 @@ describe("Stable project creation intent", () => {
     expect(() => keepProjectCreationIntent("creator", "Evening campaign")).toThrow();
   });
   it("rejects corrupt or foreign stored intent instead of starting a new request", () => {
-    sessionStorage.setItem("vidra-project-create-v1:creator", JSON.stringify({ ...keepProjectCreationIntent("other", "Other"), ownerId: "other" }));
+    sessionStorage.setItem("vidra-project-create-v2:creator", JSON.stringify({ ...keepProjectCreationIntent("other", "Other"), ownerId: "other" }));
     expect(() => keepProjectCreationIntent("creator", "New request")).toThrow();
   });
 });

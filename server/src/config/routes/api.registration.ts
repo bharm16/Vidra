@@ -13,6 +13,8 @@ import type { DIContainer } from "@infrastructure/DIContainer";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
+import { createFolderRoutes } from "@routes/folders.routes";
+import type { FolderStore } from "@services/projects/FolderStore";
 import { createCreationRequestRoutes, createPublicWorkflowCatalogRoutes, createWorkflowCatalogRoutes } from "@routes/creation-requests.routes";
 import type { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
@@ -193,6 +195,7 @@ export function registerApiRoutes(
     mediaActions: workflowManagement,
     mediaAccess: (ownerId, storagePath) => workflowStorage.getViewUrl(ownerId, storagePath),
   }));
+  app.use("/api/folders", apiAuthMiddleware, createFolderRoutes(container.resolve<FolderStore>("workflowFolderStore")));
   app.use("/api/workflow", apiAuthMiddleware, createWorkflowCatalogRoutes(container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog")));
   app.use("/api/creation-requests", apiAuthMiddleware, createCreationRequestRoutes({ preparation: container.resolve<ActionPreparationService>("workflowPreparationService"), receipts: container.resolve<RequestIdempotencyService>("requestIdempotencyService"), execution: container.resolve<WorkflowExecutionService>("workflowExecutionService") }));
 

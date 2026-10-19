@@ -1,15 +1,28 @@
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
-import { ConversationSchema, CreateConversationCommandSchema, type Conversation } from "@shared/schemas/workflow/project.schemas";
+import { ConversationSchema, CreateConversationCommandSchema, isLibraryProject, type Conversation, type Project } from "@shared/schemas/workflow/project.schemas";
 import { ConversationIdSchema, OwnerIdSchema, ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { AcceptedRequestSchema } from "@shared/schemas/workflow/request.schemas";
 import type { ProjectStore } from "./ProjectStore";
 import { WorkflowError } from "./WorkflowError";
 import { requireWritableProject } from "./projectAccess";
 import { ChangeConversationSchema } from "@shared/schemas/workflow/management.schemas";
+import { FolderStore } from "./FolderStore";
 
 export class ConversationStore {
-  constructor(private readonly database: Firestore, private readonly projects: ProjectStore, private readonly now: () => string = () => new Date().toISOString()) {}
+  constructor(
+    private readonly database: Firestore,
+    private readonly projects: ProjectStore,
+    private readonly now: () => string = () => new Date().toISOString(),
+    private readonly folders: FolderStore = new FolderStore(database, now),
+  ) {}
+
+  /** Only library conversations are filed, and only into the owner's active projects. */
+  private async requireFilingTarget(transaction: Transaction, ownerId: string, project: Project, folderId: string): Promise<void> {
+    if (!isLibraryProject(project)) throw new WorkflowError("invalid_context", "Only work outside a project can be added to one.");
+    const folder = await this.folders.readOwned(transaction, ownerId, folderId);
+    if (folder.status !== "active") throw new WorkflowError("read_only", "Restore this project before adding work to it.");
+  }
 
   async create(ownerId: string, id: string, input: unknown): Promise<Conversation> {
     const projectId = ProjectIdSchema.parse(id);
@@ -21,6 +34,7 @@ export class ConversationStore {
       const existing = await transaction.get(ref);
       if (existing.exists) return this.owned(ownerId, projectId, command.id, existing.data());
       requireWritableProject(project);
+      if (command.folderId) await this.requireFilingTarget(transaction, ownerId, project, command.folderId);
       const context = command.context ?? { origin: "empty", requestIds: [], projectInstructionsRevision: project.instructions.revision };
       if (context.projectInstructionsRevision !== project.instructions.revision) throw new WorkflowError("invalid_context", "Review the project's current instructions before starting this conversation.");
       for (const requestId of context.requestIds) {
@@ -32,6 +46,7 @@ export class ConversationStore {
       const conversation = ConversationSchema.parse({
         schemaVersion: "vidra-workflow/v2", id: command.id, projectId, ownerId, revision: 1,
         name: command.name, status: "active", acceptanceSequence: 0, initialContext: context,
+        ...(command.folderId ? { folderId: command.folderId } : {}),
         createdAt: timestamp, updatedAt: timestamp,
       });
       transaction.create(ref, conversation);
@@ -50,7 +65,10 @@ export class ConversationStore {
       requireWritableProject(project);
       const current = await this.readOwned(transaction, ownerId, id, conversationId);
       if (current.revision !== command.expectedRevision) throw new WorkflowError("revision_conflict", "This conversation changed in another window. Review its current name and status.");
-      const next = ConversationSchema.parse({ ...current, name: command.name ?? current.name, status: command.status ?? current.status, revision: current.revision + 1, updatedAt: this.now() });
+      if (command.folderId) await this.requireFilingTarget(transaction, ownerId, project, command.folderId);
+      const { folderId: filed, ...unfiled } = current;
+      const folderId = command.folderId === undefined ? filed : command.folderId ?? undefined;
+      const next = ConversationSchema.parse({ ...unfiled, ...(folderId ? { folderId } : {}), name: command.name ?? current.name, status: command.status ?? current.status, revision: current.revision + 1, updatedAt: this.now() });
       transaction.set(this.database.collection("creation_projects").doc(project.id).collection("conversations").doc(current.id), next);
       return next;
     });

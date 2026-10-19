@@ -2,6 +2,7 @@ import type { DIContainer } from "@infrastructure/DIContainer";
 import { getFirestore } from "@infrastructure/firebaseAdmin";
 import { ProjectStore } from "@services/projects/ProjectStore";
 import { ConversationStore } from "@services/projects/ConversationStore";
+import { FolderStore } from "@services/projects/FolderStore";
 import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
 import { CreationContextService } from "@services/creation-context/CreationContextService";
 import { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
@@ -39,7 +40,8 @@ import { WorkflowSpendPolicySchema } from "@services/creation-requests/execution
 
 export function registerWorkflowServices(container: DIContainer): void {
   container.register("workflowProjectStore", () => new ProjectStore(getFirestore()), []);
-  container.register("workflowConversationStore", (projects: ProjectStore) => new ConversationStore(getFirestore(), projects), ["workflowProjectStore"]);
+  container.register("workflowFolderStore", () => new FolderStore(getFirestore()), []);
+  container.register("workflowConversationStore", (projects: ProjectStore, folders: FolderStore) => new ConversationStore(getFirestore(), projects, undefined, folders), ["workflowProjectStore", "workflowFolderStore"]);
   container.register("workflowDraftStore", (projects: ProjectStore, conversations: ConversationStore) => new CreationDraftStore(getFirestore(), projects, conversations), ["workflowProjectStore", "workflowConversationStore"]);
   container.register("workflowContextService", (projects: ProjectStore) => new CreationContextService(getFirestore(), projects), ["workflowProjectStore"]);
   container.register("workflowHistoryStore", (projects: ProjectStore) => new RequestHistoryStore(getFirestore(), projects), ["workflowProjectStore"]);

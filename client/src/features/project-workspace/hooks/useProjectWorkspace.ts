@@ -18,8 +18,8 @@ import { settingsForAction, settingsForProfile } from "../state/profileSettings"
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
 /** The newest active conversation with nothing made in it yet. */
-export function unusedConversation(rows: ConversationListing[]): ConversationListing | undefined {
-  return rows.filter(row => row.status === "active" && row.acceptanceSequence === 0).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0];
+export function unusedConversation(rows: ConversationListing[], folderId?: string): ConversationListing | undefined {
+  return rows.filter(row => row.status === "active" && row.acceptanceSequence === 0 && row.folderId === folderId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0];
 }
 
 export interface ProjectWorkspaceController {
@@ -83,10 +83,13 @@ export interface ProjectWorkspaceController {
 export interface ProjectWorkspaceOptions {
   /** A library home starts in an unused conversation instead of the newest one. */
   library?: boolean;
+  /** The named project a library home files new conversations into. */
+  folderId?: string | undefined;
 }
 
 export function useProjectWorkspace(ownerId: string, projectId: string, initialConversationId?: string, initialDraftTargetId?: string, options: ProjectWorkspaceOptions = {}): ProjectWorkspaceController {
   const library = options.library === true;
+  const folderId = library ? options.folderId : undefined;
   const api = useMemo(() => new WorkflowApi(undefined, ownerId), [ownerId]);
   const device = useMemo(() => new DraftCheckpointStore(), []);
   const [view, dispatch] = useReducer(workspaceViewReducer, EMPTY_WORKSPACE_VIEW);
@@ -178,12 +181,12 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         if (!abort.signal.aborted && inScope()) setProject(owned);
         const rows = await api.listConversations(projectId, abort.signal);
         if (rows.some(row => row.ownerId !== ownerId || row.projectId !== projectId)) throw new Error("The conversation list does not belong to this project and account.");
-        let chosen: ConversationListing | undefined = requestedConversationId ? rows.find(row => row.id === requestedConversationId) : library ? unusedConversation(rows) : rows.find(row => row.status === "active") ?? rows[0];
+        let chosen: ConversationListing | undefined = requestedConversationId ? rows.find(row => row.id === requestedConversationId) : library ? unusedConversation(rows, folderId) : rows.find(row => row.status === "active") ?? rows[0];
         if (requestedConversationId && !chosen) throw new Error("This conversation is unavailable in the current project.");
         if (!chosen && library && owned.status === "active") {
           // Reusing an unused conversation keeps repeat visits from piling up empty rows.
-          const created = await api.createConversation(projectId, id("conversation"), "New conversation");
-          if (created.ownerId !== ownerId || created.projectId !== projectId) throw new Error("The conversation does not belong to this library and account.");
+          const created = await api.createConversation(projectId, id("conversation"), "New conversation", folderId);
+          if (created.ownerId !== ownerId || created.projectId !== projectId || created.folderId !== folderId) throw new Error("The conversation does not belong to this library and account.");
           rows.push(created); chosen = created;
         }
         if (abort.signal.aborted || !inScope()) return;
@@ -244,7 +247,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
       finally { if (!abort.signal.aborted && inScope()) setLoading(false); }
     })();
     return () => { abort.abort(); mounted.current = false; };
-  }, [api, device, emit, inScope, library, loadVersion, ownerId, projectId, requestedConversationId, scopeKey]);
+  }, [api, device, emit, folderId, inScope, library, loadVersion, ownerId, projectId, requestedConversationId, scopeKey]);
 
   const flushId = useCallback(async (draftId: string): Promise<boolean> => {
     // Recheck after each awaited save: several callers can resume together.

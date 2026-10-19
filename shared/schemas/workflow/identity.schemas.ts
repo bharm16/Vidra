@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const WorkflowSchemaVersion = z.literal("vidra-workflow/v2");
 export const ProjectIdSchema = z.string().regex(/^project_[A-Za-z0-9_-]+$/).max(160).brand<"ProjectId">();
+export const FolderIdSchema = z.string().regex(/^folder_[A-Za-z0-9_-]+$/).max(160).brand<"FolderId">();
 export const ConversationIdSchema = z.string().regex(/^conversation_[A-Za-z0-9_-]+$/).max(160).brand<"ConversationId">();
 export const DraftIdSchema = z.string().regex(/^draft_[A-Za-z0-9_-]+$/).max(160).brand<"DraftId">();
 export const RequestIdSchema = z.string().regex(/^request_[A-Za-z0-9_-]+$/).max(160).brand<"RequestId">();
@@ -14,6 +15,7 @@ export const RevisionSchema = z.number().int().min(1).max(Number.MAX_SAFE_INTEGE
 export const TimestampSchema = z.iso.datetime();
 
 export type ProjectId = z.infer<typeof ProjectIdSchema>;
+export type FolderId = z.infer<typeof FolderIdSchema>;
 export type ConversationId = z.infer<typeof ConversationIdSchema>;
 export type DraftId = z.infer<typeof DraftIdSchema>;
 export type RequestId = z.infer<typeof RequestIdSchema>;
