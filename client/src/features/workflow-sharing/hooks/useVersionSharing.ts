@@ -31,14 +31,14 @@ export function useVersionSharing(scope: ShareScope, suppliedApi?: OwnedSharesPo
   const [previewRevision, updatePreview] = useReducer((revision: number): number => revision + 1, 0);
   const send = useCallback((event: Event): void => { if (mounted.current) dispatch(event); }, []);
   const refresh = useCallback(async (): Promise<void> => {
-    const token = ++readVersion.current;
+    const attempt = ++readVersion.current;
     send({ type: "loading" });
     try {
       const shares = (await api.list(projectId)).filter(share => share.versionId === versionId);
-      if (!mounted.current || readVersion.current !== token) return;
+      if (!mounted.current || readVersion.current !== attempt) return;
       if (pending.current && shares.some(share => share.id === pending.current?.id)) { clearPublication({ ownerId, projectId, versionId }); pending.current = undefined; }
       send({ type: "loaded", shares, pending: pending.current });
-    } catch { if (readVersion.current === token) send({ type: "error", message: "Sharing could not be checked. Try again before changing access." }); }
+    } catch { if (readVersion.current === attempt) send({ type: "error", message: "Sharing could not be checked. Try again before changing access." }); }
   }, [api, projectId, versionId, ownerId, send]);
   useEffect(() => {
     mounted.current = true;
