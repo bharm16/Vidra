@@ -39,3 +39,10 @@ export function createWorkflowCatalogRoutes(catalog: WorkflowCapabilityCatalog):
   router.get("/profiles", handle({}, () => catalog.list()));
   return router;
 }
+
+/** The model list is static configuration, so signed-out visitors can set up a request before signing in. */
+export function createPublicWorkflowCatalogRoutes(catalog: WorkflowCapabilityCatalog): Router {
+  const router = Router();
+  router.get("/profiles", handle({ auth: "anonymous" }, () => catalog.list()));
+  return router;
+}

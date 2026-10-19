@@ -59,7 +59,8 @@ export class ConversationStore {
   async list(ownerId: string, id: string): Promise<Conversation[]> {
     const projectId = ProjectIdSchema.parse(id);
     await this.projects.get(ownerId, projectId);
-    const result = await this.database.collection("creation_projects").doc(projectId).collection("conversations").limit(200).get();
+    // Newest first, so a busy library never drops recent work past the cap.
+    const result = await this.database.collection("creation_projects").doc(projectId).collection("conversations").orderBy("updatedAt", "desc").limit(200).get();
     return result.docs.map(doc => this.owned(ownerId, projectId, doc.id, doc.data())).sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
   }
 

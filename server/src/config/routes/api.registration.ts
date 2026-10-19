@@ -13,7 +13,7 @@ import type { DIContainer } from "@infrastructure/DIContainer";
 import { apiAuthMiddleware } from "@middleware/apiAuth";
 import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
-import { createCreationRequestRoutes, createWorkflowCatalogRoutes } from "@routes/creation-requests.routes";
+import { createCreationRequestRoutes, createPublicWorkflowCatalogRoutes, createWorkflowCatalogRoutes } from "@routes/creation-requests.routes";
 import type { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import type { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
@@ -88,6 +88,7 @@ export function registerApiRoutes(
   app.use("/api/public/share", createPublicClipRouter(shareService));
 
   const workflowManagement = container.resolve<WorkflowManagementService>("workflowManagementService");
+  app.use("/api/public/workflow", createPublicWorkflowCatalogRoutes(container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog")));
   app.use("/api/public/workflow-shares", createPublicWorkflowSharingRoutes(workflowManagement, { publicBaseUrl: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
 
   // Issue #109 / #125: the ONE owner-checked resolver that understands both

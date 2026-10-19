@@ -1,5 +1,8 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { ProjectStore } from "@services/projects/ProjectStore";
+import { ConversationStore } from "@services/projects/ConversationStore";
+import { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
+import { libraryProjectId } from "@services/projects/libraryProject";
 import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
 
 const database = createWorkflowTestDatabase();
@@ -40,5 +43,53 @@ describe("WP-03 owner-scoped project command boundary", () => {
     await expect(store.create("creator", { id: "project_bound", name: "Bound project" })).rejects.toMatchObject({ code: "access_denied" });
     await expect(store.change("creator", "project_bound", { expectedRevision: 1, name: "A new name" })).rejects.toMatchObject({ code: "access_denied" });
     await expect(store.list("creator")).rejects.toMatchObject({ code: "access_denied" });
+  });
+});
+
+describe("owner library", () => {
+  it("converges concurrent first use on one library that stays out of the project list", async () => {
+    const [first, second] = await Promise.all([store.ensureLibrary("library-owner"), store.ensureLibrary("library-owner")]);
+    expect(first).toEqual(second);
+    expect(first).toMatchObject({ id: libraryProjectId("library-owner"), ownerId: "library-owner", role: "library", status: "active", origin: { kind: "new" } });
+    expect(await store.ensureLibrary("library-owner")).toEqual(first);
+    await store.create("library-owner", { id: "project_named", name: "Named" });
+    expect((await store.list("library-owner")).map(project => project.id)).toEqual(["project_named"]);
+  });
+
+  it("derives a valid id from owner ids that contain separators", async () => {
+    const library = await store.ensureLibrary("api-key:replay-cross-mode-key");
+    expect(library.id).toBe(libraryProjectId("api-key:replay-cross-mode-key"));
+    expect(library.id).not.toBe(libraryProjectId("library-owner"));
+  });
+
+  it("cannot be renamed, trashed or read by another owner", async () => {
+    const library = await store.ensureLibrary("library-guarded");
+    await expect(store.change("library-guarded", library.id, { expectedRevision: 1, name: "Renamed" })).rejects.toMatchObject({ code: "read_only" });
+    await expect(store.change("library-guarded", library.id, { expectedRevision: 1, status: "trashed" })).rejects.toMatchObject({ code: "read_only" });
+    await expect(store.get("library-intruder", library.id)).rejects.toMatchObject({ code: "access_denied" });
+    await expect(store.change("library-intruder", library.id, { expectedRevision: 1, status: "trashed" })).rejects.toMatchObject({ code: "access_denied" });
+    expect((await store.get("library-guarded", library.id)).status).toBe("active");
+  });
+
+  it("refuses an ordinary project stored at a library address", async () => {
+    const id = libraryProjectId("library-squatted");
+    await database.collection("creation_projects").doc(id).set({
+      schemaVersion: "vidra-workflow/v2", id, ownerId: "library-squatted", revision: 1, name: "Not a library", status: "active",
+      sharingEpoch: 0, instructions: { revision: 1, text: "" }, origin: { kind: "new" }, createdAt: "2026-10-19T00:00:00.000Z", updatedAt: "2026-10-19T00:00:00.000Z",
+    });
+    await expect(store.ensureLibrary("library-squatted")).rejects.toMatchObject({ code: "access_denied" });
+  });
+
+  it("holds conversations and drafts like any project", async () => {
+    const conversations = new ConversationStore(database, store);
+    const drafts = new CreationDraftStore(database, store, conversations);
+    const library = await store.ensureLibrary("library-writer");
+    const conversation = await conversations.create("library-writer", library.id, { id: "conversation_library", name: "New conversation" });
+    expect(conversation.projectId).toBe(library.id);
+    const draft = await drafts.create("library-writer", library.id, conversation.id, {
+      id: "draft_library", content: { action: "make-video", instructions: "A lighthouse at dusk", inputs: [], settings: { profileId: "wan-t2v", profileRevision: "1", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination: { projectId: library.id, conversationId: conversation.id } },
+    });
+    expect(draft).toMatchObject({ id: "draft_library", projectId: library.id });
+    await expect(conversations.create("library-intruder", library.id, { id: "conversation_stolen", name: "Stolen" })).rejects.toMatchObject({ code: "access_denied" });
   });
 });

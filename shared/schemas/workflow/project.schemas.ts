@@ -18,10 +18,15 @@ export const ProjectSchema = z.strictObject({
   sharingEpoch: z.number().int().nonnegative().default(0),
   instructions: z.strictObject({ revision: RevisionSchema, text: z.string().max(32000) }),
   origin: ProjectOriginSchema,
+  /** The owner's library holds work that starts outside a named project. */
+  role: z.literal("library").optional(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
 });
 export type Project = z.infer<typeof ProjectSchema>;
+/** Library ids are derived by the server; clients can never create them. */
+export const LIBRARY_PROJECT_PREFIX = "project_library_";
+export const isLibraryProject = (project: Pick<Project, "role">): boolean => project.role === "library";
 
 export const ConversationSchema = z.strictObject({
   schemaVersion: WorkflowSchemaVersion,
@@ -44,7 +49,7 @@ export type ConversationMediaCount = z.infer<typeof ConversationMediaCountSchema
 export type ConversationListing = z.infer<typeof ConversationListingSchema>;
 
 export const CreateProjectCommandSchema = z.strictObject({
-  id: ProjectIdSchema,
+  id: ProjectIdSchema.refine(id => !id.startsWith(LIBRARY_PROJECT_PREFIX), "This project id is reserved"),
   name: z.string().trim().min(1).max(200),
 });
 export const ChangeProjectCommandSchema = z.strictObject({

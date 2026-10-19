@@ -46,6 +46,7 @@ export function createProjectRoutes({ projects, conversations, drafts, history, 
   router.post("/", handle({ body: CreateProjectCommandSchema }, async ({ creatorId, body, req, res }) => {
     respond.ok(res, req, await projects.create(creatorId, body), 201);
   }));
+  router.post("/library", handle({ body: z.strictObject({}) }, ({ creatorId }) => projects.ensureLibrary(creatorId)));
   router.get("/:projectId", handle({}, ({ creatorId, req }) => projects.get(creatorId, param(req, "projectId"))));
   router.patch("/:projectId", handle({ body: ChangeProjectCommandSchema }, ({ creatorId, req, body }) => projects.change(creatorId, param(req, "projectId"), body)));
   router.get("/:projectId/conversations", handle({}, async ({ creatorId, req }) => {

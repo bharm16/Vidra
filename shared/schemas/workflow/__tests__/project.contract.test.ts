@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { ConversationListingSchema, ConversationSchema, ProjectSchema } from "../project.schemas";
+import { ConversationListingSchema, ConversationSchema, CreateProjectCommandSchema, ProjectSchema } from "../project.schemas";
 
 it("WP-01 records exact legacy origin IDs without inferring identity from titles", () => {
   const project = {
@@ -23,4 +23,9 @@ it("reads conversation listings with or without media counts and rejects invente
   expect(ConversationListingSchema.safeParse({ ...conversation, media: { pictures: -1, clips: 0 } }).success).toBe(false);
   expect(ConversationListingSchema.safeParse({ ...conversation, media: { pictures: 1, clips: 0, audio: 2 } }).success).toBe(false);
   expect(ConversationSchema.safeParse({ ...conversation, media: { pictures: 1, clips: 0 } }).success).toBe(false);
+});
+
+it("reserves library ids for the server", () => {
+  expect(CreateProjectCommandSchema.safeParse({ id: "project_campaign", name: "Campaign" }).success).toBe(true);
+  expect(CreateProjectCommandSchema.safeParse({ id: "project_library_abc", name: "Someone else's library" }).success).toBe(false);
 });
