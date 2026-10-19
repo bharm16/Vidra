@@ -10,6 +10,12 @@ const callbacks = { onProjectChange: vi.fn(), onConversationChange: vi.fn(), onO
 beforeEach(() => { vi.clearAllMocks(); calls.changeProject.mockResolvedValue({ ...project, revision: 2 }); calls.changeConversation.mockResolvedValue({ ...conversation, revision: 2, status: "archived" }); });
 function panel(overrides: Partial<React.ComponentProps<typeof ProjectManagementPanel>> = {}): ReturnType<typeof render> { return render(<ProjectManagementPanel ownerId="creator" project={project} conversations={[conversation]} {...callbacks} {...overrides} />); }
 describe("Project and conversation management", () => {
+  it("offers no rename or trash for the library, which holds work outside named projects", () => {
+    panel({ project: { ...project, role: "library" } });
+    expect(screen.queryByRole("button", { name: /Rename project/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Move to Trash/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Archived conversations/ })).toBeInTheDocument();
+  });
   it("retains a failed name edit and retries against the revision it started from", async () => {
     calls.changeProject.mockRejectedValueOnce(new Error("This project changed in another window.")); panel();
     fireEvent.click(screen.getByRole("button", { name: "Rename project" }));

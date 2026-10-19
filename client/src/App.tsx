@@ -161,6 +161,7 @@ function AppRoutes(): React.ReactElement {
   return (
     <Routes>
         <Route path="/app" element={<Suspense fallback={<RouteFallback />}><ProjectWorkspace /></Suspense>} />
+        <Route path="/app/projects" element={<Suspense fallback={<RouteFallback />}><ProjectWorkspace /></Suspense>} />
         <Route path="/app/project/:projectId" element={<Suspense fallback={<RouteFallback />}><ProjectWorkspace /></Suspense>} />
 
         <Route path="/home" element={<Navigate to="/" replace />} />

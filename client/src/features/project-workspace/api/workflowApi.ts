@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ApiClient } from "@/services/ApiClient";
+import { API_CONFIG } from "@/config/api.config";
 import { createFirebaseTokenInterceptor } from "@/services/http/AuthInterceptors";
 import { getAuthRepository } from "@/repositories/index";
 import { setupTelemetrySource } from "@/services/http/TelemetrySourceInterceptor";
@@ -49,6 +50,17 @@ export function createWorkflowClient(expectedOwnerId?: string): ApiClient {
   return client;
 }
 
+/**
+ * Signed-out visitors read the model list without the shared client: it would
+ * attach the development fallback key or open the sign-in dialog on a 401.
+ */
+export async function fetchPublicProfiles(signal?: AbortSignal): Promise<CapabilityProfile[]> {
+  const response = await fetch(`${API_CONFIG.baseURL}/public/workflow/profiles`, { credentials: "omit", ...(signal ? { signal } : {}) });
+  const payload: unknown = await response.json().catch(() => undefined);
+  if (!response.ok) throw new WorkflowApiError(`The models could not be loaded (${response.status}).`, response.status, undefined);
+  return z.array(CapabilityProfileSchema).parse(ApiSuccessResponseSchema(z.unknown()).parse(payload).data);
+}
+
 export class WorkflowApi {
   private readonly client: Pick<ApiClient, "rawRequest">;
   private readonly ownerId: string | undefined;
@@ -82,6 +94,10 @@ export class WorkflowApi {
   async createProject(id: string, name: string): Promise<Project> {
     const command = CreateProjectCommandSchema.parse({ id, name });
     return this.request("/projects", this.owned(ProjectSchema, { id: command.id }), "POST", command);
+  }
+  /** The owner's library holds work that has not been filed into a named project. */
+  ensureLibrary(signal?: AbortSignal): Promise<Project> {
+    return this.request("/projects/library", this.owned(ProjectSchema).refine(project => project.role === "library", "The response is not this account's library."), "POST", {}, signal);
   }
   async getProject(id: string, signal?: AbortSignal): Promise<Project> {
     const projectId = ProjectIdSchema.parse(id);
