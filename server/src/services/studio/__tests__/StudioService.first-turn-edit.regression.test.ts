@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { StudioService, type SessionPictureSource } from "../StudioService";
+import { StudioService } from "../StudioService";
 import { StudioModelRegistry } from "../StudioModelRegistry";
 import { StudioPolicyEngine, StudioPolicyError } from "../StudioPolicyEngine";
 import { StudioCapExceededError } from "../storage/FirestoreStudioProjectStore";
@@ -20,9 +20,8 @@ import type { ResolvedExecution } from "@services/ai-model/types";
  * The old rule picked the first turn's allowed actions from conversation
  * length alone and excluded edit/transform, so the REAL policy engine rejected
  * a first-turn edit with a corrective re-ask and failed the turn after two
- * attempts — even on a project bridged from a session picture, or one with an
- * uploaded attachment, which hold a selected editable image before any turn
- * exists. The new rule keys edit/transform to whether a source image exists.
+ * attempts — even on a project with an uploaded attachment, which holds a
+ * selected editable image before any turn exists. The new rule keys edit/transform to whether a source image exists.
  *
  * Enforcement lives in the policy engine (`allowedActions`), so these hold
  * through the REAL StudioPolicyEngine with only the process-external LLM
@@ -35,19 +34,6 @@ const STUB_EXECUTION: ResolvedExecution = {
   provider: "openai",
   model: "stub-model",
   viaFallback: false,
-};
-
-/**
- * The take as the session-side lookup resolved it (issue #109): a path the
- * session owns, plus the read URL the shared resolver already minted for it.
- */
-const SOURCE: SessionPictureSource = {
-  sessionId: "session-1",
-  promptVersionId: "v1",
-  generationId: "take-1",
-  storagePath: "users/user-1/previews/images/1758100000000-abcdef01.webp",
-  viewUrl: "https://signed.example.com/source-picture?exp=1h",
-  assetId: "1758100000000-abcdef01.webp",
 };
 
 const NOW_MS = new Date("2026-09-17T12:00:00Z").getTime();
@@ -220,41 +206,6 @@ function makeService() {
 }
 
 describe("regression: the first turn can edit a picture the project already holds (#110)", () => {
-  it("a project bridged from a session picture edits on the FIRST message, no prior generation", async () => {
-    const { service, execute } = makeService();
-    const project = await service.createProjectFromSessionPicture(
-      "user-1",
-      SOURCE,
-    );
-    const bridgedId = project.origin?.bridgedImageId ?? "";
-    expect(bridgedId).not.toBe("");
-
-    // The conversation LLM's very first decision is an edit of the bridged
-    // picture — nothing has been generated or asked first.
-    execute.mockResolvedValueOnce({
-      text: JSON.stringify({
-        action: "edit",
-        instruction: "remove the chair",
-        sourceImageIds: [bridgedId],
-        suggestions: SUGGESTIONS,
-      } satisfies StudioDecision),
-    });
-
-    const result = await service.runTurn(
-      "user-1",
-      project.id,
-      "remove the chair",
-    );
-    await result.completion;
-
-    // Accepted on the first attempt — not rejected with a corrective re-ask.
-    expect(result.decision.action).toBe("edit");
-    expect(execute).toHaveBeenCalledTimes(1);
-    const turn = await service.getTurn("user-1", project.id, result.turnId);
-    expect(turn.status).toBe("complete");
-    expect(turn.calls[0]?.status).toBe("succeeded");
-  });
-
   it("a project with an uploaded attachment and no turns transforms on the FIRST message", async () => {
     const { service, execute } = makeService();
     const project = await service.createProject("user-1");

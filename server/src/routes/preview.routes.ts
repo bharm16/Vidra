@@ -9,13 +9,11 @@ import express from "express";
 import { createDiskUpload } from "@utils/upload";
 import { asyncHandler } from "@middleware/asyncHandler";
 import type { PreviewRoutesServices } from "./types";
-import { createImageGenerateHandler } from "./preview/handlers/imageGenerate";
 import { createVideoGenerateHandler } from "./preview/handlers/videoGenerate";
 import { createVideoJobsHandler } from "./preview/handlers/videoJobs";
 import { createVideoJobAttachHandler } from "./preview/handlers/videoJobAttach";
 import { createVideoContentHandler } from "./preview/handlers/videoContent";
 import { createImageContentHandler } from "./preview/handlers/imageContent";
-import { createPendingReferenceAdmissionHandler } from "./preview/handlers/pendingReferenceAdmission";
 import { createImageUploadHandler } from "./preview/handlers/imageUpload";
 import {
   createOwedPictureAttachmentsHandler,
@@ -38,7 +36,6 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
 
   const resolvedServices = services;
 
-  const imageGenerateHandler = createImageGenerateHandler(resolvedServices);
   const videoGenerateHandler = createVideoGenerateHandler(resolvedServices);
   const videoJobsHandler = createVideoJobsHandler(resolvedServices);
   const videoJobAttachHandler = createVideoJobAttachHandler(resolvedServices);
@@ -56,15 +53,10 @@ export function createPreviewRoutes(services: PreviewRoutesServices): Router {
   const retryPictureAttachmentHandler =
     createRetryPictureAttachmentHandler(resolvedServices);
 
-  router.post("/generate", asyncHandler(imageGenerateHandler));
   router.post(
     "/upload",
     upload.single("file"),
     asyncHandler(imageUploadHandler),
-  );
-  router.post(
-    "/upload/admit-reference",
-    asyncHandler(createPendingReferenceAdmissionHandler(resolvedServices)),
   );
   router.get("/image/view", asyncHandler(imageAssetViewHandler));
   router.post("/image/view-batch", asyncHandler(imageAssetViewBatchHandler));

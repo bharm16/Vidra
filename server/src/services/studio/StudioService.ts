@@ -16,7 +16,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { logger } from "@infrastructure/Logger";
 import { validatePathOwnership } from "@services/storage/utils/pathUtils";
-import { isOwnedPicturePath } from "@services/owned-media";
 import type { StudioModelRegistry } from "./StudioModelRegistry";
 import type {
   StudioThinkingHooks,
@@ -27,12 +26,8 @@ import type {
   StudioImageRunner,
 } from "./providers/types";
 import { StudioSpendLedger, type StudioReservation } from "./StudioSpendLedger";
-import { readTurnSourceImages } from "./turnSourceImages";
 import type { StudioProjectStore } from "./storage/StudioProjectStore";
-import type {
-  StudioProjectOrigin,
-  StudioTurnSubmission,
-} from "@shared/schemas/studio.schemas";
+import type { StudioTurnSubmission } from "@shared/schemas/studio.schemas";
 import type {
   StudioAttachment,
   StudioCallRecord,
@@ -104,60 +99,8 @@ export interface StudioProjectView extends StudioProjectRecord {
 }
 
 /**
- * The session picture a creator invoked "Refine in the studio" on, as the
- * session resolved it (`sessionPictureLookup`). Plain data on purpose: the
- * studio never reads a session, so a bridge cannot become a coupling.
- */
-export interface SessionPictureSource {
-  sessionId: string;
-  /** The words-version the take is filed under (ADR-0022 decision 2). */
-  promptVersionId: string;
-  /** The take identity. */
-  generationId: string;
-  /** A durable path in the creator's own store — never a signed URL. */
-  storagePath: string;
-  /**
-   * A fresh read URL for that path, resolved by the session-side lookup through
-   * the shared owner-checked resolver (issue #109). The studio copies the bytes
-   * from this URL rather than re-resolving which store holds them — it has no
-   * way to reach the source stores itself.
-   */
-  viewUrl: string;
-  assetId?: string | undefined;
-}
-
-/**
- * One project per creator + session + take, enforced by the project's own
- * identity rather than by a lookup that two concurrent clicks could both miss.
- * A double-click, or a retry after a lost response, addresses the same
- * document: the second invocation finds the first and returns it.
- *
- * Deriving the id is what makes this true without a Firestore composite index
- * on a nested origin field, and without borrowing the request-idempotency
- * service, which ADR-0022 decision 6 keeps frozen outside the admission key.
- */
-export function studioProjectIdForSessionPicture(
-  userId: string,
-  sessionId: string,
-  generationId: string,
-): string {
-  return (
-    createHash("sha256")
-      // JSON-encoded rather than concatenated: the parts are opaque ids, and
-      // a separator one of them could contain would let two different takes
-      // hash to one project.
-      .update(
-        JSON.stringify(["studio-from-take", userId, sessionId, generationId]),
-      )
-      .digest("hex")
-      .slice(0, 32)
-  );
-}
-
-/**
  * One turn per (project, submission), enforced by the turn's own derived id
- * rather than a scan a concurrent retry could miss — issue #115, the same
- * technique `studioProjectIdForSessionPicture` uses one level up.
+ * rather than a scan a concurrent retry could miss — issue #115.
  *
  * The submission identity is a client→server idempotency value: a lost
  * response, the auth transport re-sending the POST after sign-in, or a reload
@@ -179,41 +122,6 @@ export function studioTurnIdForSubmission(
     .slice(0, 32);
 }
 
-/**
- * One studio image together with everything the return bridge needs about it
- * (ADR-0022 decision 4): which turn made it, what that turn ran on, and the
- * session the project was born from. Plain data, no session vocabulary — the
- * studio still does not know what a session is.
- */
-export interface StudioProducedImage {
-  projectId: string;
-  /** The turn whose succeeded call produced this image. */
-  turnId: string;
-  image: StudioImageRecord;
-  /** Minted per read, never persisted: a one-hour URL is not a record. */
-  viewUrl: string;
-  /**
-   * The action of the producing turn's decision (ADR-0022 decision 2, issue
-   * #131). It is the authoritative answer — the same total switch
-   * `readTurnSourceImages` trusts — to whether this image's `sourcePrompt` is a
-   * standalone description (`generate`) or an instruction / operation label
-   * (`edit` / `transform`). The return bridge reads it to decide whether a
-   * newly minted session's associated words can be PREFILLED from the prompt or
-   * must be typed by the creator; it is never derived from inspecting the
-   * prompt text or from `sourceImages` alone, which a corrupted edit record can
-   * leave empty.
-   */
-  producingAction: StudioDecision["action"];
-  /**
-   * What the producing turn ACTUALLY consumed — empty for a generate, which
-   * has no image inputs at all. This, not the project's origin, is what
-   * decides whether the returning picture has a picture ancestor.
-   */
-  sourceImages: readonly StudioTurnSourceImage[];
-  /** Present only when the project was born from a session picture. */
-  origin?: StudioProjectOrigin | undefined;
-}
-
 /** Wire shape for turn polling: images decorated with fresh signed URLs. */
 export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
   calls: Array<
@@ -221,24 +129,6 @@ export interface StudioTurnView extends Omit<StudioTurnRecord, "calls"> {
       image?: (StudioCallRecord["image"] & { viewUrl?: string }) | undefined;
     }
   >;
-}
-
-/**
- * A media copy a losing concurrent bridge left behind (#127). Two simultaneous
- * "Refine in the studio" presses both copy the picture before either claims the
- * project id; the loser's copy is durable bytes no project references. This
- * names it — the storage path to reap, and the winning project it must never be
- * confused with — so the cleanup stack (#137) can reap it. The winner's own
- * copy is authoritative and is never named here.
- */
-export interface OrphanedBridgeCopy {
-  /** The abandoned object under the creator's prefix — the copy to reap. */
-  storagePath: string;
-  /** The project that won the id claim; its copy is the one that survives. */
-  projectId: string;
-  userId: string;
-  sessionId: string;
-  generationId: string;
 }
 
 export interface StudioServiceDeps {
@@ -262,13 +152,6 @@ export interface StudioServiceDeps {
    * without waiting out the real window.
    */
   interruptedTurnGraceMs?: number;
-  /**
-   * Where a losing concurrent bridge reports the copy it orphaned (#127). The
-   * default records it for the cleanup stack (#137) to reap; #137 replaces
-   * this with the actual reaper. This seam only IDENTIFIES the orphan — it
-   * never deletes, and deletion is deliberately out of scope until #137.
-   */
-  reportOrphanedBridgeCopy?: (copy: OrphanedBridgeCopy) => void;
 }
 
 export interface RunTurnResult {
@@ -377,7 +260,6 @@ export class StudioService {
   private readonly interruptedTurnGraceMs: number;
   private readonly now: () => Date;
   private readonly idFactory: () => string;
-  private readonly reportOrphanedBridgeCopy: (copy: OrphanedBridgeCopy) => void;
   private readonly log = logger.child({ service: "StudioService" });
 
   constructor(deps: StudioServiceDeps) {
@@ -391,13 +273,6 @@ export class StudioService {
       deps.interruptedTurnGraceMs ?? INTERRUPTED_TURN_GRACE_MS;
     this.now = deps.now ?? (() => new Date());
     this.idFactory = deps.idFactory ?? (() => randomUUID());
-    this.reportOrphanedBridgeCopy =
-      deps.reportOrphanedBridgeCopy ??
-      ((copy) =>
-        this.log.warn(
-          "Studio bridge lost the id claim; copy orphaned for cleanup (#137)",
-          { ...copy },
-        ));
     this.ledger = new StudioSpendLedger({
       store: deps.store,
       dailyCapCents: deps.dailyCapCents,
@@ -441,140 +316,6 @@ export class StudioService {
     };
     await this.store.createProject(project);
     return project;
-  }
-
-  /**
-   * "Refine in the studio" (ADR-0022 decision 4): a project born from a
-   * session picture, opened with that picture selected.
-   *
-   * The sequence, and why it is in this order:
-   *
-   *  1. **Identity first.** The project id is derived from the take. A press
-   *     that arrives after the first completed finds the project and returns
-   *     it — a retry re-stores no bytes. The read alone does NOT settle two
-   *     SIMULTANEOUS presses: both can pass it before either writes (step 5).
-   *  2. **Ownership.** A defense-in-depth check that the source path is the
-   *     creator's, in EITHER store (issue #109) — the same predicate the
-   *     session-side resolver already applied when it minted `source.viewUrl`.
-   *  3. **A copy the project owns.** The bytes land in a NEW object under the
-   *     creator's prefix, copied from the URL the resolver minted, tagged with
-   *     where they came from. Referencing the session's object instead would
-   *     tie the project's media to a record the session is free to change; a
-   *     signed URL would tie it to one hour.
-   *  4. **Selected, and recorded.** The copy is registered as the project's
-   *     first image and made the selection, so an edit turn sources it exactly
-   *     as it sources an uploaded reference; the origin is stamped with the
-   *     session, words-version and take identity AS OF this moment.
-   *  5. **Claim, atomically (#127).** The project is written with a
-   *     create-if-absent claim, not an overwrite. Two simultaneous presses
-   *     both reach here with their own copies; exactly one claim wins. The
-   *     loser copied bytes it will never own, so it names that copy for cleanup
-   *     (#137 reaps it — this never deletes) and returns the WINNER as it
-   *     stands now, including any edits and selection made since. The winner's
-   *     project is never rewritten, so a later press cannot roll it back.
-   *
-   * It writes nothing back to the session — the source take and its paired
-   * words are untouched, by having no way to reach them.
-   */
-  async createProjectFromSessionPicture(
-    userId: string,
-    source: SessionPictureSource,
-    title?: string,
-  ): Promise<StudioProjectRecord> {
-    const projectId = studioProjectIdForSessionPicture(
-      userId,
-      source.sessionId,
-      source.generationId,
-    );
-
-    const existing = await this.store.getProject(projectId);
-    if (existing) {
-      if (existing.userId !== userId) {
-        throw new StudioNotFoundError("Studio project");
-      }
-      return existing;
-    }
-
-    if (!isOwnedPicturePath(userId, source.storagePath)) {
-      const error = new Error("storagePath is not yours") as Error & {
-        statusCode: number;
-      };
-      error.statusCode = 400;
-      throw error;
-    }
-
-    // The source URL was minted by the resolver (both stores); the studio just
-    // copies the bytes into an object it owns. Nothing downstream keeps the URL.
-    const copied = await this.storage.saveFromUrl(
-      userId,
-      source.viewUrl,
-      "preview-image",
-      {
-        studioProjectId: projectId,
-        originSessionId: source.sessionId,
-        originGenerationId: source.generationId,
-      },
-    );
-
-    const nowMs = this.now().getTime();
-    const bridged: StudioAttachment = {
-      id: `att-${this.idFactory()}`,
-      storagePath: copied.storagePath,
-      filename: "Session picture",
-      createdAtMs: nowMs,
-    };
-
-    const project: StudioProjectRecord = {
-      id: projectId,
-      userId,
-      title: title?.trim() || "Untitled",
-      attachments: [bridged],
-      selectedImageId: bridged.id,
-      origin: {
-        sessionId: source.sessionId,
-        promptVersionId: source.promptVersionId,
-        sourceInput: {
-          kind: "take",
-          generationId: source.generationId,
-          storagePath: source.storagePath,
-          ...(source.assetId ? { assetId: source.assetId } : {}),
-        },
-        bridgedImageId: bridged.id,
-        capturedAtMs: nowMs,
-      },
-      createdAtMs: nowMs,
-      updatedAtMs: nowMs,
-    };
-
-    const claimed = await this.store.createProject(project);
-    if (claimed) {
-      this.log.info("Studio project born from a session picture", {
-        projectId,
-        sessionId: source.sessionId,
-        generationId: source.generationId,
-      });
-      return project;
-    }
-
-    // A simultaneous press claimed the id between our read (step 1) and this
-    // write. Our copy is now bytes no project references — name it for cleanup
-    // (#137), never delete it, and never touch the winner.
-    this.reportOrphanedBridgeCopy({
-      storagePath: copied.storagePath,
-      projectId,
-      userId,
-      sessionId: source.sessionId,
-      generationId: source.generationId,
-    });
-
-    // Return the winner AS IT STANDS NOW — reopened, not our rejected draft —
-    // so any edit or selection it made since is preserved. The claim proved
-    // the document exists; a null read here would be a store fault.
-    const winner = await this.store.getProject(projectId);
-    if (!winner || winner.userId !== userId) {
-      throw new StudioNotFoundError("Studio project");
-    }
-    return winner;
   }
 
   async getProject(
@@ -624,79 +365,6 @@ export class StudioService {
       });
       return project;
     }
-  }
-
-  /**
-   * What produced one of this project's images — the studio-side read behind
-   * "Use this in the session" (ADR-0022 decision 4, issue #89).
-   *
-   * It answers three things the return bridge cannot work out for itself: the
-   * turn that made the image, what that turn ACTUALLY consumed, and where the
-   * project came from. Ownership reads as absence, as everywhere else here.
-   *
-   * Only images the studio PRODUCED are addressable. An attachment — the
-   * bridged session picture included — has no producing turn, so it answers
-   * `null`: sending the session its own picture back is not a refinement, and
-   * a bridge that allowed it would mint a second take of the same media.
-   *
-   * It writes nothing and knows nothing about sessions. The session half of
-   * the bridge lives in `returnStudioImage`, one layer up, exactly as the
-   * outbound half's session read lives outside this service.
-   */
-  async findProducedImage(
-    userId: string,
-    projectId: string,
-    imageId: string,
-  ): Promise<StudioProducedImage | null> {
-    const project = await this.getProject(userId, projectId);
-    // BY IDENTITY, never by walking a history page (#121): the producing turn
-    // is fetched directly, so an image made past any list window is still
-    // returned. Ownership is proven by getProject above; the lookup is scoped
-    // to that project.
-    const turn = await this.store.findTurnByProducedImageId(projectId, imageId);
-    if (!turn) return null;
-
-    const call = turn.calls.find(
-      (candidate) =>
-        candidate.status === "succeeded" && candidate.image?.id === imageId,
-    );
-    if (!call?.image) return null;
-
-    const { viewUrl } = await this.storage.getViewUrl(
-      userId,
-      call.image.storagePath,
-    );
-    return {
-      projectId,
-      turnId: turn.id,
-      image: call.image,
-      viewUrl,
-      producingAction: turn.decision.action,
-      sourceImages: readTurnSourceImages(turn),
-      ...(project.origin ? { origin: project.origin } : {}),
-    };
-  }
-
-  /**
-   * The ids of every picture this project produced, deduplicated — the
-   * enumeration behind the return-recovery read (issue #135). A reloaded
-   * workspace needs to know WHICH of the project's images could carry an
-   * unresolved return receipt; only images the studio PRODUCED are
-   * addressable by the return door, so only those are listed. Ownership reads
-   * as absence, and no URL is minted: this is an id listing, not a view.
-   */
-  async listProducedImageIds(
-    userId: string,
-    projectId: string,
-  ): Promise<string[]> {
-    await this.getProject(userId, projectId);
-    const turns = await this.store.listTurns(projectId);
-    const ids = turns.flatMap((turn) =>
-      turn.calls.flatMap((call) =>
-        call.status === "succeeded" && call.image ? [call.image.id] : [],
-      ),
-    );
-    return [...new Set(ids)];
   }
 
   /**

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { SessionRecord } from "@server/domain/session/types";
 import type { SessionGenerationRecord } from "@shared/types/session";
 import type { StudioProjectStore } from "@services/studio/storage/StudioProjectStore";
@@ -6,11 +6,7 @@ import type { StudioTurnRecord } from "@services/studio/types";
 import type { StorageService } from "@services/storage/StorageService";
 import type { SessionStore } from "@services/sessions/SessionStore";
 import type { ImageAssetStore } from "@services/image-generation/storage";
-import {
-  CROSS_MODE_LIVE_OUTPUT_DATA_URI,
-  CROSS_MODE_SKETCH_DATA_URI,
-  CROSS_MODE_SKETCH_INPUTS,
-} from "@scripts/replay/goldenScenarios";
+import { CROSS_MODE_SKETCH_INPUTS } from "@scripts/replay/goldenScenarios";
 import {
   REAL_ADAPTER_USER_ID,
   apiKeyCaller,
@@ -18,7 +14,6 @@ import {
   createFirebaseIdentity,
   firebaseCaller,
   firestoreEmulatorConfigured,
-  sessionServiceFailingAppendOnce,
   startRealAdapterHarness,
   type Caller,
   type FirebaseIdentity,
@@ -26,21 +21,17 @@ import {
 } from "./helpers/cross-mode/realAdapterHarness";
 
 /**
- * Cross-mode writes against the real Firestore adapter and a production-shaped
- * storage adapter (issue #142).
+ * Session and studio writes against the real Firestore adapter and a
+ * production-shaped storage adapter (issue #142).
  *
- * The offline walkthrough (`cross-mode-golden-path.integration.test.ts`) proves
- * the seams line up on in-memory doubles. This suite re-runs the critical
- * cross-mode WRITES with the doubles lifted from the persistence boundaries:
- * the session store, the admission receipt, the studio project store and the
- * storage adapters are the classes production registers — Firestore against
- * the emulator, GCS against the #138 conformance-passing controlled bucket —
- * and the boundary list is exactly the issue's:
+ * The doubles are lifted from the persistence boundaries: the session store,
+ * the studio project store and the storage adapters are the classes
+ * production registers — Firestore against the emulator, GCS against the #138
+ * conformance-passing controlled bucket — and the boundary list is:
  *
  *  - transaction retries (Firestore contention re-runs a mutator on fresh data)
- *  - concurrent writers: append vs rename, arming vs archive, racing
- *    acceptances, racing studio bridges
- *  - process restart during admission (#128) and during a studio turn (#126)
+ *  - concurrent writers: append vs rename
+ *  - process restart during a studio turn (#126)
  *  - serialized schema round trips
  *  - expired URLs (#125)
  *  - denied access
@@ -48,8 +39,7 @@ import {
  *    replay API-key bypass, with a cross-creator negative path
  *
  * Every assertion is stated so it FAILS when the guarantee it names is broken:
- * a lost concurrent write, a second take for one acceptance, a re-stored
- * medium, a rival session, a stale URL served as fresh, a foreign read
+ * a lost concurrent write, a stale URL served as fresh, a foreign read
  * granted. The suite requires the emulators; without them it skips rather
  * than fakes a pass, and CI's job is where it is made to run.
  */
@@ -83,20 +73,36 @@ interface SessionDtoJson {
     | undefined;
 }
 
-function acceptBody(
-  idempotencyKey: string,
-  destination?: {
-    sessionId: string;
-    promptVersionId: string;
-  },
-): Record<string, unknown> {
-  return {
-    liveOutputDataUri: CROSS_MODE_LIVE_OUTPUT_DATA_URI,
-    sketchSnapshotDataUri: CROSS_MODE_SKETCH_DATA_URI,
-    inputs: CROSS_MODE_SKETCH_INPUTS,
-    idempotencyKey,
-    ...(destination ? { destination } : {}),
-  };
+/**
+ * Attach one completed picture take through the session's attachment door —
+ * the record-POST write every surviving take path ends in.
+ */
+async function attachTake(
+  harness: RealAdapterHarness,
+  sessionId: string,
+  promptVersionId: string,
+  generationId: string,
+  media: { storagePath?: string; mediaAssetIds?: string[] } = {},
+  caller?: Caller,
+): Promise<{ status: number; json: { data?: unknown } }> {
+  const { buildCompletedTakeRecord } = await import(
+    "@services/sessions/takeRecord"
+  );
+  const generation = buildCompletedTakeRecord({
+    id: generationId,
+    model: ACCEPT_MODEL,
+    mediaType: "image",
+    prompt: "an attached take",
+    promptVersionId,
+    mediaUrls: [`https://conformance.invalid/${generationId}.png`],
+    ...media,
+    ancestorGenerationId: null,
+  });
+  return harness.post(
+    `/api/sessions/${sessionId}/versions/${promptVersionId}/generations`,
+    { generation },
+    caller,
+  );
 }
 
 async function rootVersionOf(
@@ -201,145 +207,6 @@ describe.skipIf(!runAgainstEmulator)(
 
     afterAll(async () => {
       await harness?.close();
-    });
-
-    it("deleting the source session preserves the studio bridge copy on real adapters (#137)", async () => {
-      const accepted = await harness.post(
-        "/api/sketch/accept",
-        acceptBody(`lifecycle-source-${Date.now()}`),
-      );
-      expect(accepted.status).toBe(201);
-      const { sessionId, generationId } = accepted.json.data as {
-        sessionId: string;
-        generationId: string;
-      };
-      const opened = await harness.post(
-        "/api/studio/projects/from-session-picture",
-        { sessionId, generationId },
-      );
-      expect(opened.status).toBe(201);
-      const project = opened.json.data as {
-        id: string;
-        originImageUrl: string;
-        attachments: Array<{ storagePath: string }>;
-      };
-      const before = await fetch(project.originImageUrl);
-      expect(before.status).toBe(200);
-      const bytes = Buffer.from(await before.arrayBuffer());
-      expect(bytes.length).toBeGreaterThan(0);
-      expect((await harness.delete(`/api/sessions/${sessionId}`)).status).toBe(
-        200,
-      );
-      expect((await harness.get(`/api/sessions/${sessionId}`)).status).toBe(
-        404,
-      );
-      const reopened = await harness.get(`/api/studio/projects/${project.id}`);
-      expect(reopened.status).toBe(200);
-      const surviving = reopened.json.data as typeof project;
-      expect(surviving.attachments[0]?.storagePath).toBe(
-        project.attachments[0]?.storagePath,
-      );
-      const after = await fetch(surviving.originImageUrl);
-      expect(after.status).toBe(200);
-      expect(Buffer.from(await after.arrayBuffer())).toEqual(bytes);
-    });
-
-    it("deleting a producing studio project preserves its accepted session copy on real adapters (#137)", async () => {
-      const accepted = await harness.post(
-        "/api/sketch/accept",
-        acceptBody(`lifecycle-project-${Date.now()}`),
-      );
-      expect(accepted.status).toBe(201);
-      const { sessionId, generationId } = accepted.json.data as {
-        sessionId: string;
-        generationId: string;
-      };
-      const opened = await harness.post(
-        "/api/studio/projects/from-session-picture",
-        { sessionId, generationId },
-      );
-      expect(opened.status).toBe(201);
-      const { id: projectId } = opened.json.data as { id: string };
-      const { STORAGE_TYPES } = await import(
-        "@services/storage/config/storageConfig"
-      );
-      // Fixture provider output enters through the real storage/store boundaries;
-      // no paid provider is invoked and the admission route is untouched.
-      const image = await storageService.uploadBuffer(
-        REAL_ADAPTER_USER_ID,
-        STORAGE_TYPES.PREVIEW_IMAGE,
-        PNG_BYTES,
-        "image/png",
-        { studioProjectId: projectId },
-      );
-      await studioProjectStore.saveTurn({
-        id: `turn-lifecycle-${Date.now()}`,
-        projectId,
-        userId: REAL_ADAPTER_USER_ID,
-        status: "partial",
-        userMessage: "A lighthouse at dawn",
-        decision: {
-          action: "generate",
-          basePrompt: "A lighthouse at dawn",
-          variants: [
-            "A lighthouse at dawn",
-            "A lighthouse at sunrise",
-            "A lighthouse in mist",
-            "A lighthouse at sea",
-          ],
-          capability: "general",
-          suggestions: ["Add mist", "Try sunrise", "Move closer"],
-        },
-        resolvedModel: "nano-banana-2",
-        reservedCents: 0,
-        refundedCents: 0,
-        createdAtMs: Date.now(),
-        updatedAtMs: Date.now(),
-        calls: [
-          {
-            index: 0,
-            status: "succeeded",
-            image: {
-              id: "image-lifecycle",
-              storagePath: image.storagePath,
-              sourcePrompt: "A lighthouse at dawn",
-              model: "nano-banana-2",
-            },
-          },
-          ...[1, 2, 3].map((index) => ({
-            index,
-            status: "failed" as const,
-            error: "No fixture output for this sibling",
-          })),
-        ],
-      });
-      const returned = await harness.post(
-        `/api/studio/projects/${projectId}/images/image-lifecycle/use-in-session`,
-        {},
-      );
-      expect(returned.status).toBe(201);
-      const result = returned.json.data as {
-        generationId: string;
-        imageUrl: string;
-      };
-      const before = await fetch(result.imageUrl);
-      expect(before.status).toBe(200);
-      const bytes = Buffer.from(await before.arrayBuffer());
-      expect(bytes).toEqual(PNG_BYTES);
-      expect(
-        (await harness.delete(`/api/studio/projects/${projectId}`)).status,
-      ).toBe(200);
-      expect(
-        (await harness.get(`/api/studio/projects/${projectId}`)).status,
-      ).toBe(404);
-      const reopened = await harness.get(`/api/sessions/${sessionId}`);
-      expect(reopened.status).toBe(200);
-      expect(takeIdsOf(reopened.json.data as SessionDtoJson)).toContain(
-        result.generationId,
-      );
-      const after = await fetch(result.imageUrl);
-      expect(after.status).toBe(200);
-      expect(Buffer.from(await after.arrayBuffer())).toEqual(bytes);
     });
 
     // ── Transaction retries ─────────────────────────────────────────────
@@ -478,309 +345,21 @@ describe.skipIf(!runAgainstEmulator)(
         `append-vs-rename-${Date.now()}`,
       );
 
-      const [admission, renamed] = await Promise.all([
-        harness.post(
-          "/api/sketch/accept",
-          acceptBody(`append-vs-rename-accept-${Date.now()}`, {
-            sessionId,
-            promptVersionId,
-          }),
-        ),
+      const [attached, renamed] = await Promise.all([
+        attachTake(harness, sessionId, promptVersionId, "append-vs-rename-take"),
         harness.patch(`/api/sessions/${sessionId}`, { name: "renamed" }),
       ]);
 
       // Neither writer may fail the other: both are active writers on one
       // document, and the transactional mutate path exists so both land.
-      expect(admission.status).toBe(201);
+      expect(attached.status).toBe(200);
       expect(renamed.status).toBe(200);
 
       const { status, json } = await harness.get(`/api/sessions/${sessionId}`);
       expect(status).toBe(200);
       const dto = json.data as SessionDtoJson;
       expect(dto.name).toBe("renamed");
-      expect(takeIdsOf(dto)).toHaveLength(1);
-    });
-
-    it("first-frame arming racing with archive keeps both effects", async () => {
-      // A plain session — no first frame yet — so the race is exactly
-      // arm vs archive, with nothing pre-armed.
-      const created = await harness.post("/api/sessions", {
-        name: "arm-vs-archive",
-      });
-      const sessionId = (created.json.data as SessionDtoJson).id;
-
-      const [armed, archived] = await Promise.all([
-        harness.patch(`/api/sessions/${sessionId}`, {
-          prompt: {
-            keyframes: [
-              {
-                id: "armed-first-frame",
-                url: "https://conformance.invalid/armed.webp",
-                source: "generation",
-                generationId: "armed-first-frame",
-                sourcePrompt: CROSS_MODE_SKETCH_INPUTS.prompt,
-              },
-            ],
-          },
-        }),
-        harness.patch(`/api/sessions/${sessionId}`, {
-          status: "archived",
-        }),
-      ]);
-
-      expect(armed.status).toBe(200);
-      expect(archived.status).toBe(200);
-
-      const { status, json } = await harness.get(`/api/sessions/${sessionId}`);
-      expect(status).toBe(200);
-      const dto = json.data as {
-        id: string;
-        status: string;
-        prompt?: { keyframes?: Array<Record<string, unknown>> };
-      };
-      expect(dto.status).toBe("archived");
-      const keyframes = dto.prompt?.keyframes ?? [];
-      expect(keyframes).toHaveLength(1);
-      expect(keyframes[0]?.generationId).toBe("armed-first-frame");
-    });
-
-    it("racing acceptances of one output mint one session and one take", async () => {
-      const key = `race-accept-${Date.now()}`;
-      const [first, second] = await Promise.all([
-        harness.post("/api/sketch/accept", acceptBody(key)),
-        harness.post("/api/sketch/accept", acceptBody(key)),
-      ]);
-
-      // 201 = this press admitted (or replayed) the take; 409 = the other
-      // press still held the claim. Either way: never two takes, never two
-      // sessions — the create-if-absent and the per-admission claim are
-      // transactions on the REAL idempotency store now.
-      for (const response of [first, second]) {
-        expect([201, 409]).toContain(response.status);
-      }
-      const admitted = [
-        ...new Set(
-          [first, second]
-            .filter((response) => response.status === 201)
-            .map(
-              (response) =>
-                (response.json.data as { generationId: string }).generationId,
-            ),
-        ),
-      ];
-      expect(admitted.length).toBe(1);
-
-      const sessionIds = new Set(
-        [first, second]
-          .filter((response) => response.status === 201)
-          .map(
-            (response) =>
-              (response.json.data as { sessionId: string }).sessionId,
-          ),
-      );
-      expect(sessionIds.size).toBe(1);
-
-      const sessionId = [...sessionIds][0] as string;
-      const { json } = await harness.get(`/api/sessions/${sessionId}`);
-      expect(takeIdsOf(json.data as SessionDtoJson)).toEqual(admitted);
-    });
-
-    it("racing studio bridges of one session picture open one project", async () => {
-      const accepted = await harness.post(
-        "/api/sketch/accept",
-        acceptBody(`bridge-source-${Date.now()}`),
-      );
-      expect(accepted.status).toBe(201);
-      const { sessionId, generationId } = accepted.json.data as {
-        sessionId: string;
-        generationId: string;
-      };
-      const objectsBefore = harness.bucket.objectCount;
-
-      const body = { sessionId, generationId };
-      // Launching HTTP requests together does not ensure both initial project
-      // reads see absence. Hold their GCS writes until BOTH reach the copy:
-      // neither can claim the project before the other has passed that read.
-      // Only the external bucket is controlled; storage, Firestore and the
-      // bridge above it still run their production implementations.
-      const originalFile = harness.bucket.file.bind(harness.bucket);
-      let copiesArrived = 0;
-      let releaseCopies!: () => void;
-      let arrivalError: Error | undefined;
-      const bothCopiesArrived = new Promise<void>((resolve) => {
-        releaseCopies = resolve;
-      });
-      // A request can fail before reaching GCS. Release and reject any parked
-      // write before the test timeout, so cleanup always restores the bucket.
-      const arrivalDeadline = setTimeout(() => {
-        arrivalError = new Error(
-          `Expected two bridge copies to arrive; received ${copiesArrived}`,
-        );
-        releaseCopies();
-      }, 10_000);
-      const fileSpy = vi
-        .spyOn(harness.bucket, "file")
-        .mockImplementation((path) => {
-          const file = originalFile(path);
-          if (
-            path.startsWith(`users/${REAL_ADAPTER_USER_ID}/previews/images/`)
-          ) {
-            const originalSave = file.save.bind(file);
-            vi.spyOn(file, "save").mockImplementation(
-              async (buffer, options): Promise<void> => {
-                copiesArrived += 1;
-                if (copiesArrived === 2) releaseCopies();
-                await bothCopiesArrived;
-                if (arrivalError) throw arrivalError;
-                await originalSave(buffer, options);
-              },
-            );
-          }
-          return file;
-        });
-      const [first, second] = await (async () => {
-        try {
-          return await Promise.all([
-            harness.post("/api/studio/projects/from-session-picture", body),
-            harness.post("/api/studio/projects/from-session-picture", body),
-          ]);
-        } finally {
-          clearTimeout(arrivalDeadline);
-          releaseCopies();
-          fileSpy.mockRestore();
-        }
-      })();
-      expect(copiesArrived).toBe(2);
-
-      // Both presses answer 201 with the SAME project: exactly one claim of
-      // the deterministic id won on the real store's create-if-absent, and
-      // the loser read the winner back rather than writing a rival.
-      expect(first.status).toBe(201);
-      expect(second.status).toBe(201);
-      const projectIds = new Set(
-        [first, second].map(
-          (response) => (response.json.data as { id: string }).id,
-        ),
-      );
-      expect(projectIds.size).toBe(1);
-
-      const listed = await harness.get("/api/studio/projects");
-      const projects = listed.json.data as Array<{ id: string }>;
-      expect(
-        projects.filter((project) => project.id === [...projectIds][0]),
-      ).toHaveLength(1);
-
-      // Both presses copied the bytes before either claimed; the winner's
-      // copy is the project's, the loser's is the named-for-cleanup orphan.
-      // Exactly two NEW objects, both under the creator's prefix — a copy
-      // that referenced the session's object, or lost bytes, fails here.
-      const objectsAfter = harness.bucket.objectCount;
-      expect(objectsAfter - objectsBefore).toBe(2);
-
-      const winner = first.json.data as {
-        id: string;
-        origin?: {
-          sourceInput?: { generationId?: string };
-          bridgedImageId?: string;
-        };
-        attachments?: Array<{ id: string; storagePath: string }>;
-        selectedImageId?: string;
-      };
-      expect(winner.origin?.sourceInput?.generationId).toBe(generationId);
-      expect(winner.attachments ?? []).toHaveLength(1);
-      expect(winner.selectedImageId).toBe(winner.origin?.bridgedImageId);
-    });
-
-    // ── Process restart during admission (#128) ─────────────────────────
-
-    it("an admission interrupted after its checkpoint resumes as the same take, with no re-stored media", async () => {
-      const { acceptLiveOutput } = await import(
-        "@services/admission/acceptLiveOutput"
-      );
-      const { SketchAcceptRequestSchema } = await import(
-        "@shared/schemas/sketch.schemas"
-      );
-      // The relay model the ROUTE passes — the provenance model is part of
-      // the acceptance fingerprint, so the interrupted call and its replay
-      // must name the same model for the receipt to recognise the retry.
-      const { FAL_I2I_MODEL_ENDPOINT } = await import("@routes/fal-i2i.routes");
-      const key = `restart-admission-${Date.now()}`;
-      const objectsBefore = harness.bucket.objectCount;
-      const accepted = SketchAcceptRequestSchema.parse(acceptBody(key));
-
-      // The append fails once — the shape of a process death AFTER the
-      // durable checkpoint (id, media handle, record) landed in the REAL
-      // idempotency store and BEFORE the session append. Everything around
-      // the failure is production code on the real adapters.
-      const interrupted = await acceptLiveOutput(
-        {
-          sessionService: sessionServiceFailingAppendOnce(
-            harness.sessionService,
-          ),
-          mediaStore: imageAssetStore,
-          idempotency: harness.requestIdempotency,
-        },
-        {
-          userId: REAL_ADAPTER_USER_ID,
-          accepted,
-          model: FAL_I2I_MODEL_ENDPOINT,
-        },
-      );
-      expect(interrupted.state).toBe("accepted");
-      if (interrupted.state !== "accepted") return;
-      const takeId = interrupted.result.generationId;
-      const sessionId = interrupted.result.sessionId;
-
-      // The take never reached the session, but the media and the arm did.
-      const midFlight = await harness.get(`/api/sessions/${sessionId}`);
-      expect(takeIdsOf(midFlight.json.data as SessionDtoJson)).toEqual([]);
-      const afterDeath = harness.bucket.objectCount;
-      expect(afterDeath - objectsBefore).toBe(2); // snapshot + picture
-
-      // Restart: the replay path reads its receipt from FIRESTORE (the
-      // idempotency service holds no memory), re-attaches THIS take, and
-      // re-stores nothing of the take's media. The one new object is the
-      // sketch snapshot a re-press documents as an orphan (the claim lives
-      // one layer below the snapshot store); a re-stored PICTURE would make
-      // the delta two.
-      const replayed = await harness.post(
-        "/api/sketch/accept",
-        acceptBody(key),
-      );
-      expect(
-        replayed.status,
-        `expected replay, got ${replayed.status}: ${JSON.stringify(replayed.json)}`,
-      ).toBe(201);
-      const replayData = replayed.json.data as {
-        sessionId: string;
-        generationId: string;
-        imageUrl: string;
-      };
-      expect(replayData.generationId).toBe(takeId);
-      expect(replayData.sessionId).toBe(sessionId);
-      expect(harness.bucket.objectCount).toBe(afterDeath + 1);
-
-      const repaired = await harness.get(`/api/sessions/${sessionId}`);
-      expect(takeIdsOf(repaired.json.data as SessionDtoJson)).toEqual([takeId]);
-      const repairedTake = (
-        ((repaired.json.data as SessionDtoJson).prompt?.versions ?? []).flatMap(
-          (version) => version.generations ?? [],
-        ) as Array<{
-          id?: string;
-          storagePath?: string;
-        }>
-      ).find((entry) => entry.id === takeId);
-      expect(typeof repairedTake?.storagePath).toBe("string");
-      const handlePath = repairedTake?.storagePath as string;
-      expect(
-        (await harness.bucket.file(handlePath).exists())[0],
-        "the replayed take's original media object is gone",
-      ).toBe(true);
-
-      // The replayed acceptance answers with a resolvable URL (#125): a read
-      // of the same object, minted now.
-      const fetched = await fetch(replayData.imageUrl);
-      expect(fetched.status).toBe(200);
+      expect(takeIdsOf(dto)).toEqual(["append-vs-rename-take"]);
     });
 
     // ── Process restart during a studio turn (#126) ─────────────────────
@@ -1055,15 +634,24 @@ describe.skipIf(!runAgainstEmulator)(
     // ── Expired URLs (#125) ─────────────────────────────────────────────
 
     it("reopening a session whose stored URLs expired remints every picture from its durable handle", async () => {
-      const accepted = await harness.post(
-        "/api/sketch/accept",
-        acceptBody(`expiry-${Date.now()}`),
+      const { sessionId, promptVersionId } = await createSessionWithRootVersion(
+        harness,
+        `expiry-${Date.now()}`,
       );
-      expect(accepted.status).toBe(201);
-      const { sessionId, generationId } = accepted.json.data as {
-        sessionId: string;
-        generationId: string;
-      };
+      const asset = await imageAssetStore.storeFromBuffer(
+        PNG_BYTES,
+        "image/png",
+        REAL_ADAPTER_USER_ID,
+      );
+      const generationId = "expiry-take";
+      const attached = await attachTake(
+        harness,
+        sessionId,
+        promptVersionId,
+        generationId,
+        { storagePath: asset.storagePath, mediaAssetIds: [asset.id] },
+      );
+      expect(attached.status).toBe(200);
 
       // Time passes: the URL frozen in the record dies. Minted with a past
       // expiry through the same signer, so it is honestly a dead URL.
@@ -1158,13 +746,21 @@ describe.skipIf(!runAgainstEmulator)(
 
         it("a session created under a verified token is owned by the Firebase uid, and its owner can work on it", async () => {
           const caller = firebaseCaller(creatorA);
-          const accepted = await harness.post(
-            "/api/sketch/accept",
-            acceptBody(`auth-owned-${creatorA.uid}`),
+          const { sessionId, promptVersionId } =
+            await createSessionWithRootVersion(
+              harness,
+              `auth-owned-${creatorA.uid}`,
+              caller,
+            );
+          const attached = await attachTake(
+            harness,
+            sessionId,
+            promptVersionId,
+            `auth-owned-take-${creatorA.uid}`,
+            {},
             caller,
           );
-          expect(accepted.status).toBe(201);
-          const { sessionId } = accepted.json.data as { sessionId: string };
+          expect(attached.status).toBe(200);
 
           const { status, json } = await harness.get(
             `/api/sessions/${sessionId}`,
@@ -1187,7 +783,7 @@ describe.skipIf(!runAgainstEmulator)(
           expect(renamed.status).toBe(200);
         });
 
-        it("a second creator's verified token cannot read, mutate, or admit into the first creator's session (cross-creator negative path)", async () => {
+        it("a second creator's verified token cannot read, mutate, or attach into the first creator's session (cross-creator negative path)", async () => {
           const callerA = firebaseCaller(creatorA);
           const callerB = firebaseCaller(creatorB);
 
@@ -1220,19 +816,16 @@ describe.skipIf(!runAgainstEmulator)(
             callerB,
           );
           expect(removed.status).toBe(403);
-          // Admission into the foreign destination: refused, and nothing was
-          // stored on the refusal.
-          const objectsBefore = harness.bucket.objectCount;
-          const admitted = await harness.post(
-            "/api/sketch/accept",
-            acceptBody(`cross-creator-${creatorB.uid}`, {
-              sessionId,
-              promptVersionId,
-            }),
+          // Attaching a take into the foreign session: denied.
+          const attached = await attachTake(
+            harness,
+            sessionId,
+            promptVersionId,
+            `cross-creator-${creatorB.uid}`,
+            {},
             callerB,
           );
-          expect(admitted.status).toBe(404);
-          expect(harness.bucket.objectCount).toBe(objectsBefore);
+          expect(attached.status).toBe(403);
 
           // The session is untouched: same takes, same name.
           const after = await harness.get(

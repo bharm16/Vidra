@@ -12,8 +12,6 @@
  * lane also answers 429, and the two must never be confused.
  */
 import { z } from "zod";
-import { TakeAttachmentSchema } from "./attachment.schemas.js";
-import { FirstFrameArmingSchema } from "./firstFrame.schemas.js";
 
 export const SketchFrameRefusalSchema = z.discriminatedUnion("reason", [
   z.object({
@@ -36,17 +34,6 @@ export const SketchFrameRefusalSchema = z.discriminatedUnion("reason", [
 export type SketchFrameRefusal = z.infer<typeof SketchFrameRefusalSchema>;
 
 /**
- * The live editor's accept bridge — ADR-0022 decision 5, issue #87.
- *
- * "Use this" hands the server the picture the creator was LOOKING AT together
- * with the drawing and the settings that produced that exact picture. The
- * tuple travels as one object for one reason: the live editor keeps sending
- * frames and the creator keeps typing, so anything the server re-reads at
- * acceptance time would describe a different image than the one accepted.
- * Nothing here is re-derived server-side and nothing is regenerated.
- */
-
-/**
  * The inputs of ONE live output, captured when that output's frame was
  * dispatched — never the sketchpad and settings at the moment of the press.
  */
@@ -60,64 +47,3 @@ export const SketchProductionInputsSchema = z.object({
 export type SketchProductionInputs = z.infer<
   typeof SketchProductionInputsSchema
 >;
-
-/**
- * Where the accepted picture lands when the creator already has a session.
- *
- * Optional by contract and unused by the standalone launch, which is the only
- * launch today: a session-launched live editor (ADR-0022's "open and
- * deliberately not decided") returns to its own session and words-version
- * instead of minting a second one. Carried now so the bridge does not have to
- * change shape the day that surface exists.
- */
-export const SketchAcceptDestinationSchema = z.object({
-  sessionId: z.string().min(1),
-  promptVersionId: z.string().min(1),
-});
-
-export type SketchAcceptDestination = z.infer<
-  typeof SketchAcceptDestinationSchema
->;
-
-export const SketchAcceptRequestSchema = z.object({
-  /** The picture on screen at the press, as the relay returned it. */
-  liveOutputDataUri: z.string().min(1),
-  /** The drawing that produced it, as it was sent. */
-  sketchSnapshotDataUri: z.string().min(1),
-  inputs: SketchProductionInputsSchema,
-  /** Stable across every retry AND every re-press of this one output. */
-  idempotencyKey: z.string().min(1),
-  destination: SketchAcceptDestinationSchema.optional(),
-});
-
-export type SketchAcceptRequest = z.infer<typeof SketchAcceptRequestSchema>;
-
-export const SketchAcceptResultSchema = z.object({
-  sessionId: z.string(),
-  promptVersionId: z.string(),
-  generationId: z.string(),
-  imageUrl: z.string(),
-  /** False when the picture was admitted into a destination the caller named. */
-  createdSession: z.boolean(),
-  /**
-   * The attachment fact, on the #133 contract (issue #134): the take's media
-   * being durable and the take having reached its session are two independent
-   * facts, and neither stands in for the other. Required — a response that
-   * cannot say which of pending / failed / attached it is, is not a settled
-   * acceptance, and the client refuses it at the wire rather than reading a
-   * missing fact as "attached". `failed` carries the record a retry re-sends.
-   */
-  attachment: TakeAttachmentSchema,
-  /**
-   * The arming fact (issue #136): the take being in its session and the take
-   * being armed as the session's first frame are two more independent facts.
-   * Required like the attachment fact — a response that cannot say whether
-   * the frame was armed is not a settled acceptance. `failed` is repairable
-   * through the arm door without readmission and without a second take;
-   * `not-owed` says this acceptance named a destination whose first frame is
-   * not this bridge's to replace.
-   */
-  arming: FirstFrameArmingSchema,
-});
-
-export type SketchAcceptResult = z.infer<typeof SketchAcceptResultSchema>;

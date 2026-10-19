@@ -1,9 +1,15 @@
 # Cross-mode golden path — the deterministic proof of ADR-0022's milestone
 
-Status: **implemented offline proof** — the walkthrough, its boundary adapters
-and the outbound guard ship in `npm run test:replay`. Browser controls, real
-generation intake, live output quality and deployed acceptance remain separate
-gates; see [current scope and external acceptance](deferred-work-ledger.md).
+Status: **retired 2026-10-19.** The `/session` workspace and its handoffs were
+removed, and with them the routes this walkthrough exercised
+(`/api/sketch/accept`, the studio session bridge and return,
+`/api/preview/upload/admit-reference`, `/api/preview/generate`,
+`/api/sessions/:id/first-frame/arm`). The walkthrough test, its browser twin,
+the cross-mode recorder and the `cross-mode/sketch-to-clip` cassette are gone.
+The outbound guard (`tests/integration/cross-mode-outbound-guard.integration.test.ts`)
+and the shared harness under `tests/integration/helpers/cross-mode/` survive
+for the workflow journeys. This document is kept as the historical record of
+what the walkthrough proved; recover the deleted files from Git history.
 
 ## What it proves
 

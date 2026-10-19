@@ -1,5 +1,10 @@
 # Reference-first admission
 
+Status: **retired 2026-10-19.** The `/session` workspace that drove this flow
+was removed, and `POST /api/preview/upload/admit-reference` with it. This
+document is kept as the historical record; `POST /api/preview/upload` admission
+remains.
+
 Issue #119 implements the owner direction recorded in the 2026-09-18 review
 and annotated in [ADR-0022](../adr/0022-takes-can-enter-a-session-from-an-upload-the-sketchpad-or-the-studio.md).
 Owner sign-off and the current browser acceptance walkthrough remain open.

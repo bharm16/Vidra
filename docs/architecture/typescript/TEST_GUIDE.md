@@ -33,4 +33,4 @@ Cross-mode replay and real-adapter/emulator qualification remain distinct suites
 - Legacy refund/debt compatibility: `server/src/services/video-generation/refunds/`.
 - Generic sessions and durable media: session, storage and owned-media services.
 
-Current acceptance examples are the free HTTP intake contracts in `tests/unit/`, the admission/runtime tests beside their owners, and `tests/integration/cross-mode-golden-path.integration.test.ts`. Retired credit/payment/continuity/depth endpoints are not test scaffolding targets.
+Current acceptance examples are the free HTTP intake contracts in `tests/unit/`, the admission/runtime tests beside their owners, and `tests/integration/replay-mode.integration.test.ts`. Retired credit/payment/continuity/depth endpoints are not test scaffolding targets.

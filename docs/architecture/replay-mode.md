@@ -114,16 +114,8 @@ Gotcha: `ModelConfig` snapshots env at module load — recording sets
 imports after env setup. A prompt-template or provider-default change makes
 replay miss loudly; re-record to resolve.
 
-Re-record the cross-mode pack (live paid calls with a response-count budget,
-which does not establish a dollar ceiling — see
-[cross-mode-golden-path.md](cross-mode-golden-path.md) for the gates and the
-spend statement):
-
-```bash
-REPLAY_MODE=record NODE_ENV=test \
-OPENAI_API_KEY=… REPLICATE_API_TOKEN=… FAL_KEY=… \
-npx tsx --tsconfig tsconfig.json scripts/replay/record-cross-mode.ts
-```
+The cross-mode pack and its recorder were retired on 2026-10-19 with the
+routes they walked (see [cross-mode-golden-path.md](cross-mode-golden-path.md)).
 
 Follow-up for the main checkout (worktrees must not run servers or e2e):
 

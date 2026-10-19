@@ -14,7 +14,6 @@ import {
   controlledStorage,
 } from "../storage-conformance/controlledBucket";
 import { installOutboundGuard, type OutboundGuard } from "./outboundGuard";
-import type { AcceptLiveOutputSessionPort } from "@services/admission/acceptLiveOutput";
 
 /**
  * The cross-mode harness booted on the REAL adapters (issue #142).
@@ -364,47 +363,5 @@ export async function startRealAdapterHarness(): Promise<RealAdapterHarness> {
         else process.env[key] = value;
       }
     },
-  };
-}
-
-/**
- * A session port whose append fails ONCE, then delegates — the shape of a
- * process dying between the durable admission checkpoint (#128) and the
- * session append. Everything else is delegated to the real service, so the
- * checkpoint is written to the REAL Firestore by the REAL code before the
- * failure lands.
- */
-export function sessionServiceFailingAppendOnce(
-  real: SessionService,
-): AcceptLiveOutputSessionPort {
-  let failed = false;
-  return {
-    requireOwnedSession: (userId, sessionId) =>
-      real.requireOwnedSession(userId, sessionId),
-    appendGenerationToVersion: (
-      userId,
-      sessionId,
-      promptVersionId,
-      generation,
-    ) => {
-      if (!failed) {
-        failed = true;
-        return Promise.reject(
-          new Error("process died before the append landed"),
-        );
-      }
-      return real.appendGenerationToVersion(
-        userId,
-        sessionId,
-        promptVersionId,
-        generation,
-      );
-    },
-    createPromptSessionAtomically: (userId, sessionId, request) =>
-      real.createPromptSessionAtomically(userId, sessionId, request),
-    updatePromptForUser: (userId, sessionId, updates) =>
-      real.updatePromptForUser(userId, sessionId, updates),
-    deleteSessionForUser: (userId, sessionId) =>
-      real.deleteSessionForUser(userId, sessionId),
   };
 }

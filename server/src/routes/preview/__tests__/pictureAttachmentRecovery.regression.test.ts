@@ -1,31 +1,29 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createImageGenerateHandler } from "../handlers/imageGenerate";
 import {
   createOwedPictureAttachmentsHandler,
   createRetryPictureAttachmentHandler,
 } from "../handlers/pictureAttachments";
-import type {
-  OwedTakeAttachment,
-  OwedTakeAttachmentInput,
-  OwedTakeAttachmentStore,
+import {
+  attachTakeWithOwedTracking,
+  type OwedTakeAttachment,
+  type OwedTakeAttachmentInput,
+  type OwedTakeAttachmentStore,
 } from "@services/sessions/attachTakeWithOwedTracking";
+import { buildCompletedTakeRecord } from "@services/sessions/takeRecord";
 import type { TakeAttachment } from "@shared/schemas/attachment.schemas";
 import type { SessionRecord } from "@server/domain/session/types";
 import type { SessionService } from "@services/sessions/SessionService";
-import type { ImageGenerationService } from "@services/image-generation/ImageGenerationService";
-import type { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
-import { InMemoryIdempotencyService } from "../../../../../tests/integration/helpers/cross-mode/boundaryDoubles";
 
 /**
  * ADR-0022 decision 6 (issue #133) — the quick-picture recovery path.
  *
  * A generated take is not admitted, so it has no idempotency snapshot to resume
- * from. Before this seam, a quick picture whose session write failed (or whose
- * response was lost) left NOTHING server-side that knew the session was owed it:
- * recovery depended on the client re-posting the record it received, and a
- * dropped response stranded a durable, paid-for picture with no way back.
+ * from. A quick picture whose session write failed left a durable owed record
+ * (`attachTakeWithOwedTracking`), and these doors are how a reloaded client
+ * finds and repairs it. The quick-picture generate route is retired; previously
+ * owed takes remain recoverable.
  *
  * This proves the three recovery guarantees against real handlers with plain
  * injected doubles (no internal module mocked):
@@ -156,24 +154,9 @@ function makeSessionService() {
   };
 }
 
-function makeImageGenerationService() {
-  return {
-    generatePreview: vi.fn(async () => ({
-      imageUrl: "https://cdn.example.com/pic.png",
-      metadata: {
-        model: "flux-schnell",
-        aspectRatio: "1:1",
-        duration: 100,
-        generatedAt: "2026-10-03T00:00:00Z",
-      },
-    })),
-  } satisfies Pick<ImageGenerationService, "generatePreview">;
-}
-
 function createApp(deps: {
   owedTakeAttachmentStore: OwedTakeAttachmentStore;
   sessionService: ReturnType<typeof makeSessionService>;
-  imageGenerationService: ReturnType<typeof makeImageGenerationService>;
 }): express.Express {
   const app = express();
   app.use((req, _res, next) => {
@@ -185,21 +168,10 @@ function createApp(deps: {
   app.use(express.json());
 
   const services = {
-    imageGenerationService: deps.imageGenerationService,
-    userCreditService: {
-      reserveCredits: vi.fn(async () => true),
-      refundCredits: vi.fn(async () => undefined),
-    },
-    storageService: null,
-    requestIdempotencyService: new InMemoryIdempotencyService() satisfies Pick<
-      RequestIdempotencyService,
-      "claimRequest" | "markCompleted" | "markFailed"
-    >,
     sessionService: deps.sessionService,
     owedTakeAttachmentStore: deps.owedTakeAttachmentStore,
   } as never;
 
-  app.post("/generate", createImageGenerateHandler(services));
   app.get(
     "/pictures/owed-attachments",
     createOwedPictureAttachmentsHandler(services),
@@ -211,15 +183,32 @@ function createApp(deps: {
   return app;
 }
 
-const generate = (app: express.Express) =>
-  request(app)
-    .post("/generate")
-    .set("Idempotency-Key", "quick-picture-recovery")
-    .send({
-      prompt: "a quiet harbour",
+/** A quick picture whose session write is attempted with owed tracking. */
+const makeQuickPicture = (
+  store: OwedTakeAttachmentStore,
+  sessionService: ReturnType<typeof makeSessionService>,
+): Promise<TakeAttachment> =>
+  attachTakeWithOwedTracking({
+    store,
+    sessionService,
+    input: {
+      userId: OWNER,
+      generationId: "quick-picture-1",
       sessionId: SESSION,
       promptVersionId: VERSION,
-    });
+      record: buildCompletedTakeRecord({
+        id: "quick-picture-1",
+        model: "flux-schnell",
+        mediaType: "image",
+        prompt: "a quiet harbour",
+        promptVersionId: VERSION,
+        mediaUrls: ["https://cdn.example.com/pic.png"],
+        thumbnailUrl: "https://cdn.example.com/pic.png",
+        ancestorGenerationId: null,
+      }),
+    },
+    logLabel: "Quick picture",
+  });
 
 describe("regression: quick-picture attachment recovery (issue #133)", () => {
   beforeEach(() => {
@@ -230,50 +219,30 @@ describe("regression: quick-picture attachment recovery (issue #133)", () => {
     const owedStore = makeOwedStore();
     const sessionService = makeSessionService();
     sessionService.state.failNext = true;
-    const app = createApp({
-      owedTakeAttachmentStore: owedStore,
-      sessionService,
-      imageGenerationService: makeImageGenerationService(),
-    });
 
-    const res = await generate(app);
+    const attachment = await makeQuickPicture(owedStore, sessionService);
 
-    expect(res.status).toBe(200);
-    // The picture is real and returned; the session does not have it.
-    expect(res.body.data.imageUrl).toBe("https://cdn.example.com/pic.png");
-    expect(res.body.data.attachment.state).toBe("failed");
-    // `generationId` has always meant "this take is in the session".
-    expect(res.body.data).not.toHaveProperty("generationId");
+    // The session does not have the take.
+    expect(attachment.state).toBe("failed");
+    expect(sessionService.appended).toEqual([]);
     // The debt is durable: a reloaded client can find it.
     expect(owedStore.docs.size).toBe(1);
     const owed = [...owedStore.docs.values()][0]!;
     expect(owed.state).toBe("failed");
-    expect(owed.record.id).toBe(res.body.data.attachment.generationId);
+    expect(owed.record.id).toBe(attachment.generationId);
   });
 
   it("finds the owed take after reload and repairs it without regeneration", async () => {
     const owedStore = makeOwedStore();
     const sessionService = makeSessionService();
-    const imageGenerationService = makeImageGenerationService();
     const app = createApp({
       owedTakeAttachmentStore: owedStore,
       sessionService,
-      imageGenerationService,
     });
 
-    // Generation succeeds, its session write does not — the response is lost.
+    // The picture exists, its session write does not.
     sessionService.state.failNext = true;
-    const made = await generate(app);
-    const generationId: string = made.body.data.attachment.generationId;
-    expect(imageGenerationService.generatePreview).toHaveBeenCalledTimes(1);
-
-    // A repeated generation request after the lost response replays the same
-    // failed attachment, rather than paying for a second picture.
-    const replayed = await generate(app);
-    expect(replayed.status).toBe(200);
-    expect(replayed.body).toEqual(made.body);
-    expect(imageGenerationService.generatePreview).toHaveBeenCalledTimes(1);
-    expect(owedStore.docs.size).toBe(1);
+    const { generationId } = await makeQuickPicture(owedStore, sessionService);
 
     // Reload: the client discovers what the session is owed.
     const found = await request(app)
@@ -293,8 +262,6 @@ describe("regression: quick-picture attachment recovery (issue #133)", () => {
     expect(repaired.body.attachment.state).toBe("attached");
     expect(repaired.body.attachment.generationId).toBe(generationId);
 
-    // No regeneration and no re-store: generatePreview ran once, at make time.
-    expect(imageGenerationService.generatePreview).toHaveBeenCalledTimes(1);
     // The take is in the session under its original identity, exactly once.
     expect(sessionService.appended.map((r) => r.id)).toEqual([generationId]);
 
@@ -311,12 +278,10 @@ describe("regression: quick-picture attachment recovery (issue #133)", () => {
     const app = createApp({
       owedTakeAttachmentStore: owedStore,
       sessionService,
-      imageGenerationService: makeImageGenerationService(),
     });
 
     sessionService.state.failNext = true;
-    const made = await generate(app);
-    const generationId: string = made.body.data.attachment.generationId;
+    const { generationId } = await makeQuickPicture(owedStore, sessionService);
 
     // The destination session is deleted before the creator retries.
     sessionService.state.failNext = false;
@@ -337,7 +302,6 @@ describe("regression: quick-picture attachment recovery (issue #133)", () => {
     const app = createApp({
       owedTakeAttachmentStore: owedStore,
       sessionService: makeSessionService(),
-      imageGenerationService: makeImageGenerationService(),
     });
 
     const res = await request(app).post(

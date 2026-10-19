@@ -5,7 +5,6 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { asyncHandler } from "@middleware/asyncHandler";
 import { createVideoGenerateHandler } from "@routes/preview/handlers/videoGenerate";
-import { createImageGenerateHandler } from "@routes/preview/handlers/imageGenerate";
 import { VideoJobStore } from "@services/video-generation/runtime/VideoJobStore";
 import { RequestIdempotencyService } from "@services/admission/idempotency/RequestIdempotencyService";
 import { FirestoreCircuitExecutor } from "@services/firestore/FirestoreCircuitExecutor";
@@ -160,7 +159,6 @@ async function harness(): Promise<{
     getBalance: ReturnType<typeof vi.fn>;
   };
   generateVideo: ReturnType<typeof vi.fn>;
-  generatePicture: ReturnType<typeof vi.fn>;
   services: PreviewRoutesServices;
 }> {
   const executor = new FirestoreCircuitExecutor({
@@ -205,15 +203,6 @@ async function harness(): Promise<{
     status: "completed",
     inputMode: "t2v",
   }));
-  const generatePicture = vi.fn(async () => ({
-    imageUrl: "https://cdn.example.com/picture.png",
-    metadata: {
-      model: "flux-schnell",
-      aspectRatio: "1:1",
-      duration: 1,
-      generatedAt: new Date().toISOString(),
-    },
-  }));
   const services = {
     videoJobStore: jobs,
     requestIdempotencyService: receipts,
@@ -227,7 +216,6 @@ async function harness(): Promise<{
       generateVideo,
     } as never,
     imageGenerationService: {
-      generatePreview: generatePicture,
       getImageUrl: async (): Promise<string> =>
         "https://cdn.example.com/owned-image.png",
     } as never,
@@ -250,14 +238,12 @@ async function harness(): Promise<{
     next();
   });
   app.post("/video", asyncHandler(createVideoGenerateHandler(services)));
-  app.post("/picture", asyncHandler(createImageGenerateHandler(services)));
   return {
     app,
     jobs,
     receipts,
     credits,
     generateVideo,
-    generatePicture,
     services,
   };
 }
@@ -334,15 +320,6 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
     expect(
       (
         await request(app)
-          .post("/api/preview/generate")
-          .set(auth)
-          .set("Idempotency-Key", "registered-picture")
-          .send({ prompt: "A city" })
-      ).status,
-    ).toBe(200);
-    expect(
-      (
-        await request(app)
           .get(`/api/preview/video/jobs/${accepted.body.jobId}`)
           .set(auth)
       ).status,
@@ -361,23 +338,19 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
     expect((await request(app).get("/api/preview/available")).status).toBe(401);
     for (const path of [
       "/api/preview/face-swap",
+      "/api/preview/generate",
       "/api/preview/generate/storyboard",
+      "/api/preview/upload/admit-reference",
     ]) {
       const retired = await request(app).post(path).set(auth).send({});
       expect(retired.status).toBe(404);
     }
     expect(ensureStarterGrant).not.toHaveBeenCalled();
   });
-  it("accepts signed-in clip and picture requests with zero balance and never uses credit ports", async () => {
+  it("accepts signed-in clip requests with zero balance and never uses credit ports", async () => {
     const h = await harness();
     const video = await clip(h.app);
-    const picture = await request(h.app)
-      .post("/picture")
-      .set("X-Test-User", OWNER)
-      .set("Idempotency-Key", "picture-1")
-      .send({ prompt: "A city" });
     expect(video.status).toBe(202);
-    expect(picture.status).toBe(200);
     expect(db.jobs()).toHaveLength(1);
     expect(db.jobs()[0]?.creditsReserved).toBe(0);
     expect(video.body).not.toHaveProperty("creditsDeducted");
@@ -526,21 +499,7 @@ describe("free generation HTTP intake (#124, ADR-0023)", () => {
         )
       ).status,
     ).toBe(404);
-    expect(
-      (
-        await request(h.app)
-          .post("/picture")
-          .set("X-Test-User", "creator-b")
-          .set("Idempotency-Key", "foreign-picture")
-          .send({
-            prompt: "A city",
-            sessionId: "session-a",
-            promptVersionId: "v1",
-          })
-      ).status,
-    ).toBe(404);
     expect(db.jobs()).toHaveLength(0);
-    expect(h.generatePicture).not.toHaveBeenCalled();
   });
   it("refuses frozen implicit character preprocessing without reserving credits or scheduling", async () => {
     const h = await harness();

@@ -31,7 +31,7 @@ npm run verify:drift # Route/flag/catalog freshness
 The isolated provider-free browser journey runs with:
 
 ```bash
-npx playwright test --config tests/e2e/cross-mode/playwright.config.ts
+npx playwright test --config tests/e2e/workflow/playwright.config.ts
 ```
 
 ## Contracts and evidence
@@ -40,7 +40,7 @@ npx playwright test --config tests/e2e/cross-mode/playwright.config.ts
 
 Free intake uses durable request receipts and zero-credit jobs. Completion precedes attachment; recovery reuses the original media/take/session/version. Legacy charged-job refunds remain isolated until stored obligations are drained. [CONTEXT.md](CONTEXT.md) identifies current ownership and retired backends.
 
-Replay, controlled browser journeys and emulator tests prove specified local contracts. They do not qualify live provider availability, creative quality or deployment. See [cross-mode proof limits](docs/architecture/cross-mode-golden-path.md) and [deferred acceptance](docs/architecture/deferred-work-ledger.md). Dated provider receipts remain in `scripts/ops/provider-quality/evidence/`.
+Replay, controlled browser journeys and emulator tests prove specified local contracts. They do not qualify live provider availability, creative quality or deployment. See [deferred acceptance](docs/architecture/deferred-work-ledger.md). Dated provider receipts remain in `scripts/ops/provider-quality/evidence/`.
 
 Current [routes](docs/architecture/ROUTE_MAP.md) and [flags](docs/architecture/FEATURE_FLAGS.md) are generated from source. [Architecture contracts](docs/architecture/README.md) link the surviving media/admission/recovery documentation.
 

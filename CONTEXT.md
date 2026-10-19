@@ -20,9 +20,9 @@ The [implementation plan](docs/design/workflow/implementation-plan.md) defines w
 
 | Term                | Meaning in the redesign                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Library             | The owner's home for work outside a named project. One per owner, created on first use; it cannot be renamed or trashed.                         |
-| Project             | A named folder that library conversations are filed into, and back out of, without moving their work. Earlier projects keep their own history.   |
-| Guest draft         | Words, action and settings written while signed out, kept in that browser for a day and moved into the library after sign-in. Never submitted.  |
+| Library             | The owner's home for work outside a named project. One per owner, created on first use; it cannot be renamed or trashed.                           |
+| Project             | A named folder that library conversations are filed into, and back out of, without moving their work. Earlier projects keep their own history.     |
+| Guest draft         | Words, action and settings written while signed out, kept in that browser for a day and moved into the library after sign-in. Never submitted.     |
 | Conversation        | Chronological accepted requests, questions, answers and results. Editing an old request appends a revision; it does not erase later work.          |
 | Draft               | Independently saved unfinished instructions, action, explicit inputs, settings, context and destination. A project can retain more than one.       |
 | Request             | An immutable accepted snapshot of one submitted action, with its receipt and fixed output slots.                                                   |
@@ -107,16 +107,16 @@ The composer keeps one chip row across models. A core video setting (shape, dura
 
 These were kept when `/session` was retired. Each works against a live server path, but no screen reaches it yet. `client/src/features/dormant/` holds the client pieces.
 
-| Capability | Server | Client |
-| ---------- | ------ | ------ |
-| Expand your idea | `POST /api/optimize`, `POST /api/optimize-compile` and `server/src/services/prompt-optimization/` | `dormant/expand-idea/PromptOptimizationApi.ts` |
-| End frame | `POST /api/preview/video/generate` (`endImage`) and the video provider adapters | — |
-| Extend a clip | `POST /api/preview/video/generate` (`extendVideo`) and the video provider adapters | — |
-| Camera motion | `camera_motion_id` and `subject_motion` on `POST /api/preview/video/generate` (`video-generate/motion.ts`, `shared/cameraMotion.ts`) | `dormant/camera-motion/cameraDirection.ts` |
-| Compare takes | — | `dormant/compare/generationComparison.ts` |
-| Rename or delete a session | `PATCH`/`DELETE /api/sessions/:id` | `repositories/PromptRepository.ts` |
+| Capability                 | Server                                                                                                                               | Client                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Expand your idea           | `POST /api/optimize`, `POST /api/optimize-compile` and `server/src/services/prompt-optimization/`                                    | `dormant/expand-idea/PromptOptimizationApi.ts` |
+| End frame                  | `POST /api/preview/video/generate` (`endImage`) and the video provider adapters                                                      | —                                              |
+| Extend a clip              | `POST /api/preview/video/generate` (`extendVideo`) and the video provider adapters                                                   | —                                              |
+| Camera motion              | `camera_motion_id` and `subject_motion` on `POST /api/preview/video/generate` (`video-generate/motion.ts`, `shared/cameraMotion.ts`) | `dormant/camera-motion/cameraDirection.ts`     |
+| Compare takes              | —                                                                                                                                    | `dormant/compare/generationComparison.ts`      |
+| Rename or delete a session | `PATCH`/`DELETE /api/sessions/:id`                                                                                                   | `repositories/PromptRepository.ts`             |
 
-The server routes the `/session` workspace used for handoffs and its first-frame loop (`/api/sketch/accept`, Studio `use-in-session`, `from-session-picture` and `unresolved-returns`, `/api/preview/upload/admit-reference`, `/api/preview/generate`) still run, with no client caller. The replay gate's cross-mode golden path still exercises them.
+The server routes only the `/session` workspace used for handoffs and its first-frame loop were retired on 2026-10-19: `/api/sketch/accept` and its unresolved read, Studio `use-in-session`, `from-session-picture` and `unresolved-returns`, `/api/preview/upload/admit-reference`, `/api/preview/generate` and `/api/sessions/:id/first-frame/arm`. The replay gate's cross-mode golden path went with them; [its record](docs/architecture/cross-mode-golden-path.md) is marked retired. Studio projects bridged from a session picture stay readable through their stored origin, and quick pictures already owed to a session stay recoverable through `/api/preview/pictures/owed-attachments`.
 
 ## State and recovery
 

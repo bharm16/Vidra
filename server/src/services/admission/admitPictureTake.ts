@@ -425,8 +425,7 @@ function checkSourceInputKinds(
  *    here, because a take is a node in exactly one session and this reads only
  *    this one;
  *  - a clip: a `move` edge is drawn from a picture and `refine` never reaches
- *    one, so a non-`image` node is refused (the same picture test
- *    `sessionPictureLookup` applies);
+ *    one, so a non-`image` node is refused;
  *  - an archived take: gone from the rendered space, so an edge to it would
  *    point at nothing the creator can see.
  *

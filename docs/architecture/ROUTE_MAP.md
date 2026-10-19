@@ -30,7 +30,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/llm/label-spans/stream`                                     | `server/src/routes/labelSpansRoute.ts`                         |
 | POST   | `/api/optimize`                                                   | `server/src/routes/optimize.routes.ts`                         |
 | POST   | `/api/optimize-compile`                                           | `server/src/routes/optimize.routes.ts`                         |
-| POST   | `/api/preview/generate`                                           | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/image/content/:contentId`                           | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/image/view`                                         | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/image/view-batch`                                   | `server/src/routes/preview.routes.ts`                          |
@@ -38,7 +37,6 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/preview/pictures/owed-attachments`                          | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/pictures/owed-attachments/:generationId/retry`      | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/upload`                                             | `server/src/routes/preview.routes.ts`                          |
-| POST   | `/api/preview/upload/admit-reference`                             | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/content/:contentId`                           | `server/src/routes/preview.routes.ts`                          |
 | POST   | `/api/preview/video/generate`                                     | `server/src/routes/preview.routes.ts`                          |
 | GET    | `/api/preview/video/jobs/:jobId`                                  | `server/src/routes/preview.routes.ts`                          |
@@ -98,13 +96,10 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | POST   | `/api/sessions`                                                   | `server/src/routes/sessions.routes.ts`                         |
 | DELETE | `/api/sessions/:sessionId`                                        | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/:sessionId`                                        | `server/src/routes/sessions.routes.ts`                         |
-| POST   | `/api/sessions/:sessionId/first-frame/arm`                        | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/generations/:generationId/archive`      | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/sessions/:sessionId/versions/:versionId/generations`        | `server/src/routes/sessions.routes.ts`                         |
 | GET    | `/api/sessions/by-prompt/:uuid`                                   | `server/src/routes/sessions.routes.ts`                         |
 | POST   | `/api/share`                                                      | `server/src/routes/share.routes.ts`                            |
-| POST   | `/api/sketch/accept`                                              | `server/src/routes/sketch-accept.routes.ts`                    |
-| GET    | `/api/sketch/accept/unresolved`                                   | `server/src/routes/sketch-accept.routes.ts`                    |
 | DELETE | `/api/storage/:path(*)`                                           | `server/src/routes/storage.routes.ts`                          |
 | POST   | `/api/storage/confirm-upload`                                     | `server/src/routes/storage.routes.ts`                          |
 | POST   | `/api/storage/delete-batch`                                       | `server/src/routes/storage.routes.ts`                          |
@@ -122,16 +117,13 @@ Regenerate with `npm run routemap:generate`. CI enforces freshness via `npm run 
 | GET    | `/api/studio/projects/:projectId`                                 | `server/src/routes/studio.routes.ts`                           |
 | PATCH  | `/api/studio/projects/:projectId`                                 | `server/src/routes/studio.routes.ts`                           |
 | POST   | `/api/studio/projects/:projectId/attachments`                     | `server/src/routes/studio.routes.ts`                           |
-| POST   | `/api/studio/projects/:projectId/images/:imageId/use-in-session`  | `server/src/routes/studio.routes.ts`                           |
 | GET    | `/api/studio/projects/:projectId/turns`                           | `server/src/routes/studio.routes.ts`                           |
 | POST   | `/api/studio/projects/:projectId/turns`                           | `server/src/routes/studio.routes.ts`                           |
 | GET    | `/api/studio/projects/:projectId/turns/:turnId`                   | `server/src/routes/studio.routes.ts`                           |
-| GET    | `/api/studio/projects/:projectId/unresolved-returns`              | `server/src/routes/studio.routes.ts`                           |
-| POST   | `/api/studio/projects/from-session-picture`                       | `server/src/routes/studio.routes.ts`                           |
 | GET    | `/api/workflow/profiles`                                          | `server/src/routes/creation-requests.routes.ts`                |
 | GET    | `/debug-sentry`                                                   | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health`                                                         | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/live`                                                    | `server/src/routes/health.routes.ts`                           |
 | GET    | `/health/ready`                                                   | `server/src/routes/health.routes.ts`                           |
 
-_Generated route count: **126**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._
+_Generated route count: **118**. Each row reflects a real `router.<method>` call reachable from `app.use` at server boot; conditional registrations (feature-flagged routes) are included because they can be registered under some configuration._

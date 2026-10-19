@@ -15,7 +15,11 @@ import { createRouteTimeout } from "@middleware/routeTimeout";
 import { createAPIRoutes } from "@routes/api.routes";
 import { createFolderRoutes } from "@routes/folders.routes";
 import type { FolderStore } from "@services/projects/FolderStore";
-import { createCreationRequestRoutes, createPublicWorkflowCatalogRoutes, createWorkflowCatalogRoutes } from "@routes/creation-requests.routes";
+import {
+  createCreationRequestRoutes,
+  createPublicWorkflowCatalogRoutes,
+  createWorkflowCatalogRoutes,
+} from "@routes/creation-requests.routes";
 import type { RequestHistoryStore } from "@services/media-history/RequestHistoryStore";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import type { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
@@ -25,11 +29,9 @@ import type { StorageService } from "@services/storage/StorageService";
 import { createLabelSpansRoute } from "@routes/labelSpansRoute";
 import { createMediaProxyRoutes } from "@routes/storage/mediaProxy.routes";
 import { createFalI2iRouter } from "@routes/fal-i2i.routes";
-import { createSketchAcceptRouter } from "@routes/sketch-accept.routes";
 import type { SketchRelayFetch } from "@server/replay/RecordReplaySketchRelay";
 import { createStudioRouter } from "@routes/studio.routes";
 import type { StudioService } from "@services/studio/StudioService";
-import { createSessionPictureLookup } from "@services/sessions/sessionPictureLookup";
 import { remintSessionPictureUrls } from "@services/sessions/remintSessionPictureUrls";
 import type { SessionDto } from "@shared/types/session";
 import {
@@ -38,13 +40,6 @@ import {
   type OwnedPictureResolver,
   type UserScopedMediaReader,
 } from "@services/owned-media";
-import type {
-  AdmissionIdempotencyPort,
-  AdmissionMediaStore,
-} from "@services/admission/admitPictureTake";
-import { armFirstFrame } from "@services/admission/armFirstFrame";
-import type { AdmissionReceiptReaderPort } from "@services/admission/unresolvedAcceptances";
-import type { SessionService } from "@services/sessions/SessionService";
 import {
   createShareRouter,
   createPublicClipRouter,
@@ -89,17 +84,27 @@ export function registerApiRoutes(
   const shareService = container.resolve<ShareService>("shareService");
   app.use("/api/public/share", createPublicClipRouter(shareService));
 
-  const workflowManagement = container.resolve<WorkflowManagementService>("workflowManagementService");
-  app.use("/api/public/workflow", createPublicWorkflowCatalogRoutes(container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog")));
-  app.use("/api/public/workflow-shares", createPublicWorkflowSharingRoutes(workflowManagement, { publicBaseUrl: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
+  const workflowManagement = container.resolve<WorkflowManagementService>(
+    "workflowManagementService",
+  );
+  app.use(
+    "/api/public/workflow",
+    createPublicWorkflowCatalogRoutes(
+      container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog"),
+    ),
+  );
+  app.use(
+    "/api/public/workflow-shares",
+    createPublicWorkflowSharingRoutes(workflowManagement, {
+      publicBaseUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
+    }),
+  );
 
   // Issue #109 / #125: the ONE owner-checked resolver that understands both
-  // the image-asset store and the user-scoped store. Built once here and shared
-  // by every surface that re-mints a picture from a durable handle — the
-  // session read (#125), the studio-refine bridge (#88), and the admission
-  // replay (#125). Null when either store is absent; each consumer then
-  // degrades to the stored URL, which the client can still recover from its
-  // durable handle.
+  // the image-asset store and the user-scoped store, used by the session read
+  // to re-mint a picture from its durable handle (#125). Null when either
+  // store is absent; the read then degrades to the stored URL, which the
+  // client can still recover from its durable handle.
   const ownedPictureResolverImageAssets =
     resolveOptionalService<ImagePreviewAssetReader | null>(
       container,
@@ -124,30 +129,6 @@ export function registerApiRoutes(
         remintSessionPictureUrls(dto, { resolver: ownedPictureResolver })
     : null;
 
-  // Issue #136: the arm door's binding — an attached take is armed from its
-  // own persisted record, its URL re-minted from the durable handle (#125)
-  // when the resolver is wired. One session service, one resolver, one
-  // spelling of the arm; the route never learns either.
-  const armFirstFrameBinding =
-    (
-      sessionService: SessionService,
-    ): ((input: {
-      userId: string;
-      sessionId: string;
-      generationId: string;
-    }) => Promise<
-      | { ok: true; frame: Record<string, unknown> }
-      | { ok: false; reason: string }
-    >) =>
-    (input) =>
-      armFirstFrame(
-        {
-          sessionService,
-          ...(ownedPictureResolver ? { resolver: ownedPictureResolver } : {}),
-        },
-        input,
-      );
-
   // Main API routes
   const apiRoutes = createAPIRoutes({
     promptOptimizationService: container.resolve("promptOptimizationService"),
@@ -162,9 +143,6 @@ export function registerApiRoutes(
     storageService: container.resolve<StorageRoutesService>("storageService"),
     sessionService: container.resolve("sessionService"),
     remintSessionPictures,
-    armFirstFrame: armFirstFrameBinding(
-      container.resolve<SessionService>("sessionService"),
-    ),
   });
 
   app.use(
@@ -184,24 +162,85 @@ export function registerApiRoutes(
 
   // New project authoring and immutable request recovery.
   const workflowStorage = container.resolve<StorageService>("storageService");
-  app.use("/api/projects", apiAuthMiddleware, createWorkflowManagementRoutes(workflowManagement));
-  app.use("/api/projects", apiAuthMiddleware, createProjectRoutes({
-    projects: container.resolve<ProjectStore>("workflowProjectStore"),
-    conversations: container.resolve<ConversationStore>("workflowConversationStore"),
-    drafts: container.resolve<CreationDraftStore>("workflowDraftStore"),
-    history: container.resolve<RequestHistoryStore>("workflowHistoryStore"),
-    media: container.resolve<MediaVersionIndex>("workflowMediaIndex"),
-    library: container.resolve<ProjectMediaService>("workflowMediaLibrary"),
-    mediaActions: workflowManagement,
-    mediaAccess: (ownerId, storagePath) => workflowStorage.getViewUrl(ownerId, storagePath),
-  }));
-  app.use("/api/folders", apiAuthMiddleware, createFolderRoutes(container.resolve<FolderStore>("workflowFolderStore")));
-  app.use("/api/workflow", apiAuthMiddleware, createWorkflowCatalogRoutes(container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog")));
-  app.use("/api/creation-requests", apiAuthMiddleware, createCreationRequestRoutes({ preparation: container.resolve<ActionPreparationService>("workflowPreparationService"), receipts: container.resolve<RequestIdempotencyService>("requestIdempotencyService"), execution: container.resolve<WorkflowExecutionService>("workflowExecutionService") }));
+  app.use(
+    "/api/projects",
+    apiAuthMiddleware,
+    createWorkflowManagementRoutes(workflowManagement),
+  );
+  app.use(
+    "/api/projects",
+    apiAuthMiddleware,
+    createProjectRoutes({
+      projects: container.resolve<ProjectStore>("workflowProjectStore"),
+      conversations: container.resolve<ConversationStore>(
+        "workflowConversationStore",
+      ),
+      drafts: container.resolve<CreationDraftStore>("workflowDraftStore"),
+      history: container.resolve<RequestHistoryStore>("workflowHistoryStore"),
+      media: container.resolve<MediaVersionIndex>("workflowMediaIndex"),
+      library: container.resolve<ProjectMediaService>("workflowMediaLibrary"),
+      mediaActions: workflowManagement,
+      mediaAccess: (ownerId, storagePath) =>
+        workflowStorage.getViewUrl(ownerId, storagePath),
+    }),
+  );
+  app.use(
+    "/api/folders",
+    apiAuthMiddleware,
+    createFolderRoutes(container.resolve<FolderStore>("workflowFolderStore")),
+  );
+  app.use(
+    "/api/workflow",
+    apiAuthMiddleware,
+    createWorkflowCatalogRoutes(
+      container.resolve<WorkflowCapabilityCatalog>("workflowCapabilityCatalog"),
+    ),
+  );
+  app.use(
+    "/api/creation-requests",
+    apiAuthMiddleware,
+    createCreationRequestRoutes({
+      preparation: container.resolve<ActionPreparationService>(
+        "workflowPreparationService",
+      ),
+      receipts: container.resolve<RequestIdempotencyService>(
+        "requestIdempotencyService",
+      ),
+      execution: container.resolve<WorkflowExecutionService>(
+        "workflowExecutionService",
+      ),
+    }),
+  );
 
-  app.use("/api/projects", apiAuthMiddleware, createVideoEditRoutes({ projects: container.resolve<ProjectStore>("workflowProjectStore"), edits: container.resolve<VideoEditStore>("workflowVideoEditStore"), exports: container.resolve<VideoExportService>("workflowVideoExportService"), previews: container.resolve<VideoPreviewService>("workflowVideoPreviewService") }));
-  app.use("/api/projects", apiAuthMiddleware, express.json({ limit: "24mb" }), createProjectSketchRoutes(container.resolve<ProjectSketchService>("workflowSketchService")));
-  app.use("/api/account", apiAuthMiddleware, createAccountRoutes(container.resolve<AccountUsageService>("workflowAccountUsage")));
+  app.use(
+    "/api/projects",
+    apiAuthMiddleware,
+    createVideoEditRoutes({
+      projects: container.resolve<ProjectStore>("workflowProjectStore"),
+      edits: container.resolve<VideoEditStore>("workflowVideoEditStore"),
+      exports: container.resolve<VideoExportService>(
+        "workflowVideoExportService",
+      ),
+      previews: container.resolve<VideoPreviewService>(
+        "workflowVideoPreviewService",
+      ),
+    }),
+  );
+  app.use(
+    "/api/projects",
+    apiAuthMiddleware,
+    express.json({ limit: "24mb" }),
+    createProjectSketchRoutes(
+      container.resolve<ProjectSketchService>("workflowSketchService"),
+    ),
+  );
+  app.use(
+    "/api/account",
+    apiAuthMiddleware,
+    createAccountRoutes(
+      container.resolve<AccountUsageService>("workflowAccountUsage"),
+    ),
+  );
 
   // LLM endpoints
   const labelSpansRoute = createLabelSpansRoute(
@@ -240,44 +279,6 @@ export function registerApiRoutes(
     }),
   );
 
-  // The Live editor's accept door (ADR-0022 decision 5, issue #87): the
-  // picture on screen becomes a picture take in a session born around it.
-  // Its dependencies are optional at the container level, so the router
-  // answers 503 rather than disappearing when storage or sessions are down.
-  app.use(
-    "/api/sketch",
-    apiAuthMiddleware,
-    createSketchAcceptRouter({
-      sessionService: resolveOptionalService<SessionService | null>(
-        container,
-        "sessionService",
-        "sketch-accept",
-      ),
-      mediaStore: resolveOptionalService<AdmissionMediaStore | null>(
-        container,
-        "imageAssetStore",
-        "sketch-accept",
-      ),
-      idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
-        container,
-        "requestIdempotencyService",
-        "sketch-accept",
-      ),
-      // Issue #134: the same store, read as the #128 receipt ledger, so a
-      // refreshed client can find an acceptance whose attachment never
-      // resolved. Optional separately — recovery being down must not take the
-      // accept door down with it.
-      receipts: resolveOptionalService<AdmissionReceiptReaderPort | null>(
-        container,
-        "requestIdempotencyService",
-        "sketch-accept",
-      ),
-      // Issue #125: a repeated acceptance re-mints its URL from the durable
-      // handle rather than replaying the expired one.
-      resolver: ownedPictureResolver,
-    }),
-  );
-
   // Studio conversational image workspace (ADR-0019). Null when the
   // ENABLE_STUDIO flag is off or REPLICATE_API_TOKEN is missing — the
   // surface simply isn't mounted then.
@@ -290,48 +291,7 @@ export function registerApiRoutes(
     app.use(
       "/api/studio",
       apiAuthMiddleware,
-      createStudioRouter(
-        studioService,
-        // ADR-0022 decision 4: the studio bridge's session-side read. The
-        // join lives here, at the route layer — StudioService never learns
-        // what a session is. Issue #109: the picture's media is resolved
-        // through one owner-checked resolver that understands both the
-        // image-asset store and the user-scoped store, so a real picture is
-        // never refused for living under the wrong namespace.
-        createSessionPictureLookup(
-          container.resolve<SessionService>("sessionService"),
-          createOwnedPictureResolver({
-            imageAssets:
-              container.resolve<ImagePreviewAssetReader>("imageAssetStore"),
-            userStorage:
-              container.resolve<UserScopedMediaReader>("storageService"),
-          }),
-        ),
-        // ADR-0022 decision 4, return leg: "Use this in the session" admits a
-        // studio image through the same boundary as an upload. Resolved
-        // optionally for the same reason the sketch door's are — the route
-        // answers 503 rather than vanishing when they are absent.
-        {
-          sessionService: resolveOptionalService<SessionService | null>(
-            container,
-            "sessionService",
-            "studio-return",
-          ),
-          mediaStore: resolveOptionalService<AdmissionMediaStore | null>(
-            container,
-            "imageAssetStore",
-            "studio-return",
-          ),
-          idempotency: resolveOptionalService<AdmissionIdempotencyPort | null>(
-            container,
-            "requestIdempotencyService",
-            "studio-return",
-          ),
-          // Issue #125: a repeated "Use this in the session" re-mints its URL
-          // from the durable handle rather than replaying the expired one.
-          resolver: ownedPictureResolver,
-        },
-      ),
+      createStudioRouter(studioService),
     );
   }
 }

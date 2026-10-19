@@ -7,8 +7,6 @@
  */
 import { z } from "zod";
 import { TakeSourceInputSchema } from "./session.schemas.js";
-import { TakeAttachmentSchema } from "./attachment.schemas.js";
-import { FirstFrameArmingSchema } from "./firstFrame.schemas.js";
 
 /**
  * Where a studio project came from, captured at the moment the creator
@@ -48,90 +46,6 @@ export const StudioProjectOriginSchema = z.object({
 });
 
 export type StudioProjectOrigin = z.infer<typeof StudioProjectOriginSchema>;
-
-/**
- * "Use this in the session" — the return leg of the same bridge (#89).
- *
- * The creator names only the project and the image; every other fact is read
- * from records the server already holds. The destination in particular is
- * never accepted from the wire: it is the project's own origin, and a client
- * that could name a session would be a second, disagreeing copy of where the
- * picture belongs.
- */
-
-/**
- * What to do when the project's origin session is gone.
- *
- * `refuse` — the default, and what an unprompted press means — reports the
- * loss and stops. A silently recreated session would answer "where did this
- * go?" with a place the creator never worked in, and the ADR forbids exactly
- * that. `new-session` is the creator's answer to the refusal, sent on the
- * second press; the choice is theirs, so it travels rather than being
- * inferred.
- */
-export const STUDIO_MISSING_ORIGIN_SESSION_CHOICES = [
-  "refuse",
-  "new-session",
-] as const;
-
-export const StudioUseInSessionRequestSchema = z.object({
-  onMissingOriginSession: z
-    .enum(STUDIO_MISSING_ORIGIN_SESSION_CHOICES)
-    .optional(),
-  /**
-   * The creator-confirmed associated words for a session this return mints
-   * (ADR-0022 decision 2, issue #131). Required only when a new session is
-   * created — a return into the project's existing origin session ignores it,
-   * because the take is filed under that session's own words. It is NEVER the
-   * edit instruction or the transform operation label that produced the image:
-   * those are recorded separately as production provenance, and restoring an
-   * instruction as a session's words is the exact fabrication decision 2
-   * forbids. When the server mints a session and no confirmed words are
-   * supplied, it asks for them (offering a from-scratch generate's prompt as an
-   * editable suggestion) rather than inventing any.
-   */
-  confirmedWords: z.string().min(1).max(4000).optional(),
-});
-
-export const StudioUseInSessionResultSchema = z.object({
-  sessionId: z.string(),
-  promptVersionId: z.string(),
-  /** The admitted take's identity — what a clip names as its ancestor. */
-  generationId: z.string(),
-  imageUrl: z.string(),
-  /**
-   * ADR-0022 decision 3: the one picture ancestor the space draws, or `null`
-   * when the producing turn consumed no take of this session. `null` is an
-   * answer — "this picture has no picture ancestor" — not a missing field.
-   */
-  ancestorGenerationId: z.string().nullable(),
-  /** True when the project had no origin session and this press started one. */
-  createdSession: z.boolean(),
-  /**
-   * The attachment fact (ADR-0022 decision 6, issue #135): "the take reached
-   * its session" is a second fact, independent of "the picture was made" —
-   * and the studio may not read the return as returned until it is known.
-   * Present whenever a take was admitted, whatever the outcome; only
-   * `attached` means the session now holds the take, so the client treats
-   * `pending` and `failed` as made-but-not-saved. A `failed` attachment
-   * carries the take's own record, which is exactly what its retry re-sends:
-   * the same take, no re-upload, no second admission.
-   */
-  attachment: TakeAttachmentSchema.optional(),
-  /**
-   * The arming fact (issue #136): arming the returned picture as the
-   * session's first frame is the point of the press, and it is a separate
-   * outcome from the attachment — the two writes fail independently. Required
-   * whenever a take was admitted; only `armed` says the reopened session will
-   * restore this picture as its first frame, and `failed` is repairable
-   * through the arm door without readmission and without a second take.
-   */
-  arming: FirstFrameArmingSchema,
-});
-
-export type StudioUseInSessionResult = z.infer<
-  typeof StudioUseInSessionResultSchema
->;
 
 /**
  * The identity and captured context a turn submission carries on the wire —

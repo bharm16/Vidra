@@ -10,9 +10,16 @@ import { COMPLETION_PROMPT } from "./completionPlan";
 import { writeExclusiveEvidence } from "./completionLedger";
 
 const responseRecord = z.record(z.string(), z.unknown());
-const acceptedSchema = z.object({
+const createdSessionSchema = z.object({
   data: z.object({
-    sessionId: z.string(),
+    id: z.string(),
+    prompt: z.object({
+      versions: z.array(z.object({ versionId: z.string() })).min(1),
+    }),
+  }),
+});
+const admittedSchema = z.object({
+  data: z.object({
     promptVersionId: z.string(),
     generationId: z.string(),
     imageUrl: z.string(),
@@ -160,22 +167,61 @@ export async function completeWanViaHttp(
     },
   });
   try {
-    const accepted = await harness.post("/api/sketch/accept", {
-      liveOutputDataUri: options.sourceDataUri,
-      sketchSnapshotDataUri: options.sourceDataUri,
-      inputs: {
-        prompt: COMPLETION_PROMPT,
-        strength: 0.6,
-        steps: 8,
-        seed: 20261003,
+    // The source picture enters a session through the upload admission door:
+    // a session whose root words are the completion prompt, then the picture
+    // admitted as a take under that words-version.
+    const created = await harness.post("/api/sessions", {
+      name: "Live provider completion",
+      prompt: {
+        input: COMPLETION_PROMPT,
+        output: COMPLETION_PROMPT,
+        versions: [
+          {
+            versionId: "live-provider-completion-v1",
+            label: "v1",
+            prompt: COMPLETION_PROMPT,
+            signature: COMPLETION_PROMPT,
+            timestamp: new Date().toISOString(),
+            generations: [],
+          },
+        ],
       },
-      idempotencyKey: "live-provider-completion-source-20261003",
     });
-    assert.ok(
-      accepted.status >= 200 && accepted.status < 300,
-      `Source admission answered${accepted.status}`,
+    assert.equal(created.status, 200, "source session created");
+    const sourceSession = createdSessionSchema.parse(created.json).data;
+    const sourceMatch = /^data:([^;]+);base64,(.*)$/s.exec(
+      options.sourceDataUri,
     );
-    const target = acceptedSchema.parse(accepted.json).data;
+    assert.ok(sourceMatch?.[1] && sourceMatch[2], "source is a data URI");
+    const upload = new FormData();
+    upload.append(
+      "file",
+      new Blob([Buffer.from(sourceMatch[2], "base64")], {
+        type: sourceMatch[1],
+      }),
+      "source.png",
+    );
+    upload.append("sessionId", sourceSession.id);
+    upload.append(
+      "promptVersionId",
+      sourceSession.prompt.versions[0]!.versionId,
+    );
+    upload.append("admissionKey", "live-provider-completion-source-20261003");
+    const admitted = await fetch(`${harness.baseUrl}/api/preview/upload`, {
+      method: "POST",
+      headers: { "x-api-key": CROSS_MODE_API_KEY },
+      body: upload,
+    });
+    const admittedJson: unknown = await admitted.json();
+    assert.equal(
+      admitted.status,
+      201,
+      `Source admission answered ${admitted.status}`,
+    );
+    const target = {
+      ...admittedSchema.parse(admittedJson).data,
+      sessionId: sourceSession.id,
+    };
     const selectedFrameResponse = await fetch(target.imageUrl, {
       headers: { "x-api-key": CROSS_MODE_API_KEY },
     });
