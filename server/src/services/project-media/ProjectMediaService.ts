@@ -1,7 +1,7 @@
 import type { Firestore, DocumentReference, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
-import { CopyMediaCommandSchema, ImportCommandSchema, ImportIdSchema, ImportRecordSchema, type ImportRecord } from "@shared/schemas/workflow/import.schemas";
-import { MediaVersionSchema, type MediaVersion } from "@shared/schemas/workflow/media.schemas";
+import { CopyMediaCommandSchema, ImportCommandSchema, ImportIdSchema, ImportRecordSchema, importedVersionId, type ImportRecord } from "@shared/schemas/workflow/import.schemas";
+import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { OwnerIdSchema, ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import type { ProjectStore } from "@services/projects/ProjectStore";
 import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
@@ -42,7 +42,7 @@ export class ProjectMediaService {
     const command = ImportCommandSchema.parse(input);
     const browserOrigin = origin === undefined ? undefined : z.url().parse(origin);
     requireWritableProject(await this.projects.get(owner, project));
-    const versionId = VersionIdSchema.parse(`version_${command.id.slice(7)}`);
+    const versionId = importedVersionId(command.id);
     const storagePath = importStoragePath(owner, project, versionId, command.contentType);
     await this.database.runTransaction(async transaction => {
       requireWritableProject(await this.projects.readOwned(transaction, owner, project));
@@ -94,13 +94,29 @@ export class ProjectMediaService {
     return this.database.runTransaction(async transaction => {
       const latest = await this.read(owner, project, id, transaction);
       const targetProject = await this.projects.readOwned(transaction, owner, project);
-      const ref = this.database.collection("creation_projects").doc(project).collection("media_versions").doc(latest.versionId);
-      const row = await transaction.get(ref);
-      if (row.exists) return recover(MediaVersionSchema.parse(row.data()));
-      const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: latest.versionId, ownerId: owner, projectId: project, kind: latest.contentType.startsWith("image/") ? "image" : latest.contentType.startsWith("audio/") ? "audio" : "video", label: latest.filename, origin: { kind: "upload" }, sourceInputs: [], object: { identity: "verified", assetId: latest.versionId, storagePath: latest.storagePath, generation: verified.generation, sha256: verified.sha256, bytes: verified.bytes }, metadata: verified.metadata, association: targetProject.status === "active" ? "linked" : "recovery", createdAt: latest.createdAt });
-      transaction.create(ref, version);
-      transaction.set(this.ref(project, id), { ...latest, state: latest.state === "cancelled" ? "cancelled" : "ready", recoveryPending: false });
-      return version;
+      return this.media.publishInTransaction(
+        transaction,
+        targetProject,
+        {
+          id: latest.versionId,
+          ownerId: owner,
+          projectId: project,
+          kind: latest.contentType.startsWith("image/") ? "image" : latest.contentType.startsWith("audio/") ? "audio" : "video",
+          label: latest.filename,
+          origin: { kind: "upload" },
+          sourceInputs: [],
+          object: { identity: "verified", assetId: latest.versionId, storagePath: latest.storagePath, generation: verified.generation, sha256: verified.sha256, bytes: verified.bytes },
+          metadata: verified.metadata,
+          createdAt: latest.createdAt,
+        },
+        {
+          conflictMessage: "This media identity belongs to another import or copy.",
+          verifyExisting: existingVersion => { recover(existingVersion); },
+          afterCreate: () => {
+            transaction.set(this.ref(project, id), { ...latest, state: latest.state === "cancelled" ? "cancelled" : "ready", recoveryPending: false });
+          },
+        },
+      );
     });
   }
   async cancel(owner: string, project: string, id: string, input?: unknown): Promise<ImportRecord> {
@@ -131,14 +147,7 @@ export class ProjectMediaService {
     return ImportRecordSchema.strip().parse(cancelled);
   }
   async visibility(owner: string, project: string, versionId: string, hidden: boolean): Promise<MediaVersion> {
-    return this.database.runTransaction(async transaction => {
-      requireWritableProject(await this.projects.readOwned(transaction, owner, project));
-      const version = await this.media.get(owner, project, versionId, transaction);
-      if (!version) throw new WorkflowError("not_found", "This media is unavailable.");
-      const next = MediaVersionSchema.parse({ ...version, hidden });
-      transaction.update(this.database.collection("creation_projects").doc(project).collection("media_versions").doc(version.id), { hidden });
-      return next;
-    });
+    return this.media.change(owner, project, versionId, { hidden });
   }
   async copy(owner: string, project: string, versionId: string, input: unknown): Promise<MediaVersion> {
     const command = CopyMediaCommandSchema.parse(input);
@@ -146,14 +155,12 @@ export class ProjectMediaService {
     const source = await this.media.get(owner, project, versionId);
     if (!source) throw new WorkflowError("not_found", "This media is unavailable.");
     requireWritableProject(await this.projects.get(owner, command.targetProjectId));
-    const ref = this.database.collection("creation_projects").doc(command.targetProjectId).collection("media_versions").doc(command.id);
-    const recover = (value: unknown): MediaVersion => {
-      const copy = MediaVersionSchema.parse(value);
+    const recover = (copy: MediaVersion): MediaVersion => {
       if (copy.ownerId !== owner || copy.projectId !== command.targetProjectId || copy.id !== command.id || copy.origin.kind !== "copy" || copy.origin.projectId !== project || copy.origin.versionId !== versionId) throw new WorkflowError("submission_conflict", "This copy identity is already used.");
       return copy;
     };
-    const existing = await ref.get();
-    if (existing.exists) return recover(existing.data());
+    const existing = await this.media.get(owner, command.targetProjectId, command.id);
+    if (existing) return recover(existing);
     const intentRef = this.database.collection("creation_projects").doc(command.targetProjectId).collection("media_copy_intents").doc(command.id);
     const intent = CopyIntentSchema.parse({ ownerId: owner, targetProjectId: command.targetProjectId, id: command.id, sourceProjectId: project, sourceVersionId: versionId });
     await this.database.runTransaction(async transaction => {
@@ -171,13 +178,15 @@ export class ProjectMediaService {
     const generation = await this.storage.copy(source.object.storagePath, storagePath, source.object.identity === "verified" ? source.object.generation : undefined);
     return this.database.runTransaction(async transaction => {
       await this.projects.readOwned(transaction, owner, project);
-      requireWritableProject(await this.projects.readOwned(transaction, owner, command.targetProjectId));
-      const row = await transaction.get(ref);
-      if (row.exists) return recover(row.data());
-      const object = source.object.identity === "verified" ? { ...source.object, assetId: command.id, storagePath, generation } : { identity: "unknown", assetId: command.id, storagePath };
-      const copy = MediaVersionSchema.parse({ ...source, id: command.id, projectId: command.targetProjectId, origin: { kind: "copy", projectId: project, versionId }, sourceInputs: [], hidden: false, association: "linked", object, createdAt: new Date().toISOString() });
-      transaction.create(ref, copy);
-      return copy;
+      const targetProject = await this.projects.readOwned(transaction, owner, command.targetProjectId);
+      requireWritableProject(targetProject);
+      const object = source.object.identity === "verified" ? { ...source.object, assetId: command.id, storagePath, generation } : { identity: "unknown" as const, assetId: command.id, storagePath };
+      return this.media.publishInTransaction(
+        transaction,
+        targetProject,
+        { ...source, id: command.id, projectId: command.targetProjectId, origin: { kind: "copy", projectId: project, versionId }, sourceInputs: [], hidden: false, association: "linked", object, createdAt: new Date().toISOString() },
+        { conflictMessage: "This copy identity is already used.", verifyExisting: existingCopy => { recover(existingCopy); } },
+      );
     });
   }
 }

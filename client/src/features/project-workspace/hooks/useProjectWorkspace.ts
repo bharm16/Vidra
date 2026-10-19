@@ -11,9 +11,16 @@ import { DraftCheckpointStore, type DraftCheckpoint, type SubmissionCheckpoint }
 import { WorkflowApi, WorkflowApiError } from "../api/workflowApi";
 import { acknowledgeDraftBuffer, draftContent, draftHasSafeRetention, openDraftBuffer, redoDraftBuffer, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
 import { EMPTY_WORKSPACE_VIEW, workspaceViewReducer, type WorkspaceViewEvent, type WorkspaceViewState } from "../state/workspaceState";
-import { initialDraftId } from "../state/initialDraft";
-import { bindDraftInput } from "../state/inputBinding";
-import { settingsForAction, settingsForProfile } from "../state/profileSettings";
+import {
+  applyDraftInputSource,
+  emptyDraftContent,
+  followupDraftForRequest,
+  initialDraftId,
+  mediaActionDraftContent,
+  resolvePendingDraftInputs,
+  retrySlotDraftContent,
+} from "../state/inputBinding";
+import { settingsForAction, settingsForProfile } from "../state/capabilitySettings";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
@@ -228,7 +235,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
               try {
                 const draftId = await initialDraftId(ownerId, projectId, chosen.id, drafts.map(record => record.id));
                 if (abort.signal.aborted || !inScope() || !selectionCurrent() || viewRef.current.activeDraftId) return;
-                const content: DraftContent = { action: "make-image", instructions: "", inputs: [], settings: { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: owned.instructions.revision }, destination: { projectId: owned.id, conversationId: chosen.id } };
+                const content = emptyDraftContent("make-image", owned.id, chosen.id, owned.instructions.revision);
                 const created = await api.createDraft(projectId, chosen.id, draftId, content);
                 if (abort.signal.aborted || !inScope() || created.ownerId !== ownerId || created.projectId !== projectId || created.conversationId !== chosen.id) return;
                 const initial = viewRef.current.drafts[created.id] ?? openDraftBuffer(created);
@@ -310,7 +317,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
           emit({ type: "update-buffer", buffer: { ...buffer, record } });
         }
       }
-      const content: DraftContent = { action, instructions: "", inputs: [], settings: { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: project.instructions.revision }, destination: { projectId: project.id, conversationId: conversation.id } };
+      const content = emptyDraftContent(action, project.id, conversation.id, project.instructions.revision);
       const record = await api.createDraft(projectId, conversation.id, id("draft"), content);
       if (!currentIntent() || record.ownerId !== ownerId || record.projectId !== projectId || record.conversationId !== conversation.id) return;
       if (viewRef.current.activeDraftId !== prior || (prior && viewRef.current.drafts[prior]?.sequence !== priorSequence)) { emit({ type: "update-buffer", buffer: openDraftBuffer(record) }); return; }
@@ -344,26 +351,12 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
 
   const openFollowup = useCallback(async (request: AcceptedRequest): Promise<void> => {
     if (!inScope() || !project || !conversation || conversationRef.current?.id !== request.conversationId || viewRef.current.activeDraftId !== request.executionDraftId) return;
-    const imageAction = ["make-image", "edit-image", "upscale-image"].includes(request.snapshot.action);
-    if (!imageAction && !["make-video", "animate-image", "edit-video", "extend-video"].includes(request.snapshot.action)) return;
-    const editProfile = imageAction && request.slots.length === 1 ? profiles.find(candidate => candidate.availability === "qualified" && candidate.action === "edit-image" && candidate.inputs.some(rule => rule.role === "primary" && rule.kinds.includes("image") && rule.minCount === 1 && rule.maxCount === 1)) : undefined;
-    const parameters: DraftContent["settings"]["parameters"] = {};
-    if (editProfile) for (const [name, policy] of Object.entries(editProfile.parameters)) {
-      if (policy.policy === "fixed") parameters[name] = policy.value;
-      else if (policy.policy === "editable") parameters[name] = policy.defaultValue;
-    }
-    const slot = request.slots[0];
-    const content: DraftContent = {
-      action: editProfile ? "edit-image" : imageAction ? "make-image" : "make-video", instructions: "",
-      inputs: editProfile && slot ? [{ role: "primary", state: "pending", requestId: request.id, slotId: slot.id }] : [],
-      settings: { profileId: editProfile?.id ?? "unselected", profileRevision: editProfile?.revision ?? "unresolved", parameters, outputCount: 1 },
-      context: editProfile ? { ...request.snapshot.context, origin: "branch", parentRequestId: request.id, requestIds: [...request.snapshot.context.requestIds, request.id], projectInstructionsRevision: project.instructions.revision } : { origin: "empty", requestIds: [], projectInstructionsRevision: project.instructions.revision },
-      destination: { projectId: project.id, conversationId: conversation.id },
-    };
-    const record = await api.createDraft(projectId, conversation.id, id("draft"), content);
+    const followup = followupDraftForRequest(request, profiles, project.id, conversation.id, project.instructions.revision);
+    if (!followup) return;
+    const record = await api.createDraft(projectId, conversation.id, id("draft"), followup.content);
     if (!inScope() || record.ownerId !== ownerId || conversationRef.current?.id !== request.conversationId || viewRef.current.activeDraftId !== request.executionDraftId) return;
     emit({ type: "open-draft", buffer: openDraftBuffer(record) });
-    setFollowupNotice(request.slots.length > 1 ? { draftId: record.id, kind: "choose-result", requestId: request.id } : imageAction && !editProfile ? { draftId: record.id, kind: "edit-unavailable", requestId: request.id } : undefined);
+    setFollowupNotice(followup.noticeKind ? { draftId: record.id, kind: followup.noticeKind, requestId: request.id } : undefined);
   }, [api, conversation, emit, inScope, ownerId, profiles, project, projectId]);
 
   const completeAcceptance = useCallback(async (request: AcceptedRequest, pending: SubmissionCheckpoint): Promise<void> => {
@@ -570,7 +563,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
       }
       if (!["failed", "cancelled", "needs-attention"].includes(slot.outcome) && slot.delivery !== "lost") return;
       const conversationId = conversationRef.current?.id;
-      const content: DraftContent = { ...request.snapshot, settings: { ...request.snapshot.settings, outputCount: 1, parameters: { ...request.snapshot.settings.parameters, ...(slot.seed === undefined ? {} : { seed: slot.seed }) } } };
+      const content = retrySlotDraftContent(request, slot);
       const record = await api.createDraft(projectId, request.conversationId, id("draft"), content);
       if (!inScope() || record.ownerId !== ownerId || record.projectId !== projectId) return;
       emit({ type: "update-buffer", buffer: openDraftBuffer(record) });
@@ -598,7 +591,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     if (!project || !chosenConversation || project.status !== "active" || chosenConversation.status !== "active") return;
     if (activeId) await flushId(activeId);
     if (!inScope() || viewRef.current.activeDraftId !== activeId) return;
-    const content: DraftContent = current ? { ...current.content, instructions: text } : { action: "make-image", instructions: text, inputs: [], settings: { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: project.instructions.revision }, destination: { projectId: project.id, conversationId: chosenConversation.id } };
+    const content: DraftContent = current ? { ...current.content, instructions: text } : emptyDraftContent("make-image", project.id, chosenConversation.id, project.instructions.revision, text);
     const record = await api.createDraft(projectId, chosenConversation.id, id("draft"), content);
     if (!inScope() || viewRef.current.activeDraftId !== activeId || conversationRef.current?.id !== chosenConversation.id || (current && viewRef.current.drafts[activeId ?? ""]?.sequence !== current.sequence)) return;
     emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined);
@@ -609,27 +602,16 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const current = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!current || version.ownerId !== ownerId || version.projectId !== projectId) return;
     const kind = version.kind === "export" ? "video" : version.kind;
-    const profile = profiles.find(candidate => candidate.id === current.content.settings.profileId);
-    const role = requestedRole ?? profile?.inputs.find(rule => rule.minCount > 0 && rule.kinds.includes(kind))?.role ?? (current.content.action === "edit-image" ? "primary" : current.content.action === "animate-image" ? "start-frame" : kind === "video" ? "clip" : "reference");
-    const rule = profile?.inputs.find(candidate => candidate.role === role && candidate.kinds.includes(kind));
-    if (requestedRole && profile && !rule) return;
-    const inputs = bindDraftInput(current.content.inputs, { state: "resolved", role, versionId: version.id }, rule?.maxCount ?? (role === "reference" ? 16 : 1), replacing);
-    if (inputs !== current.content.inputs) edit({ ...current.content, inputs });
+    const next = applyDraftInputSource(current.content, profiles, { state: "resolved", versionId: version.id, kind }, requestedRole, replacing);
+    if (next !== current.content) edit(next);
   }, [edit, ownerId, profiles, projectId]);
 
   useEffect(() => {
     for (const buffer of Object.values(viewRef.current.drafts)) {
       if (buffer.record.ownerId !== ownerId || buffer.record.projectId !== projectId || !["open", "parked"].includes(buffer.record.status)) continue;
-      let changed = false;
-      const inputs = buffer.content.inputs.map(input => {
-        if (input.state !== "pending") return input;
-        const request = viewRef.current.requests.find(candidate => candidate.id === input.requestId);
-        const slot = request?.slots.find(candidate => candidate.id === input.slotId);
-        if (slot?.outcome !== "completed" || !slot.versionId || !media.some(version => version.id === slot.versionId && version.ownerId === ownerId && version.projectId === projectId)) return input;
-        changed = true; return { role: input.role, state: "resolved" as const, versionId: slot.versionId };
-      });
-      if (changed) {
-        emit({ type: "edit-draft", draftId: buffer.record.id, content: { ...buffer.content, inputs } });
+      const next = resolvePendingDraftInputs(buffer.content, viewRef.current.requests, media, ownerId, projectId);
+      if (next !== buffer.content) {
+        emit({ type: "edit-draft", draftId: buffer.record.id, content: next });
         const latest = viewRef.current.drafts[buffer.record.id];
         if (latest) { void checkpoint(latest); void flushId(buffer.record.id); }
       }
@@ -689,13 +671,8 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     bindImport: (draftId, importId, kind = "image", requestedRole, replacing) => {
       const buffer = viewRef.current.drafts[draftId];
       if (!buffer || buffer.record.ownerId !== ownerId || !["open", "parked"].includes(buffer.record.status)) return;
-      const profile = profiles.find(candidate => candidate.id === buffer.content.settings.profileId);
-      const role = requestedRole ?? profile?.inputs.find(rule => rule.minCount > 0 && rule.kinds.includes(kind))?.role ?? (buffer.content.action === "edit-image" ? "primary" : buffer.content.action === "animate-image" ? "start-frame" : kind === "video" ? "clip" : "reference");
-      const rule = profile?.inputs.find(candidate => candidate.role === role && candidate.kinds.includes(kind));
-      if (requestedRole && profile && !rule) return;
-      const inputs = bindDraftInput(buffer.content.inputs, { state: "importing", role, importId }, rule?.maxCount ?? (role === "reference" ? 16 : 1), replacing);
-      if (inputs === buffer.content.inputs) return;
-      const content: DraftContent = { ...buffer.content, inputs };
+      const content = applyDraftInputSource(buffer.content, profiles, { state: "importing", importId, kind }, requestedRole, replacing);
+      if (content === buffer.content) return;
       emit({ type: "edit-draft", draftId, content });
       const next = viewRef.current.drafts[draftId]; if (next) void checkpoint(next);
     },
@@ -707,7 +684,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         const priorSequence = priorId ? viewRef.current.drafts[priorId]?.sequence : undefined;
         if (priorId) await flushId(priorId);
         if (!inScope()) return;
-        const record = await api.createDraft(projectId, conversation.id, id("draft"), { action: version.kind === "image" ? "edit-image" : "edit-video", instructions: "", inputs: [{ state: "resolved", role: version.kind === "image" ? "primary" : "clip", versionId: version.id }], settings: { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: project.instructions.revision }, destination: { projectId: project.id, conversationId: conversation.id } });
+        const record = await api.createDraft(projectId, conversation.id, id("draft"), mediaActionDraftContent(version.kind === "image" ? "edit-image" : "edit-video", version.id, project.id, conversation.id, project.instructions.revision));
         if (inScope() && record.ownerId === ownerId && record.projectId === projectId && conversationRef.current?.id === record.conversationId) { if (viewRef.current.activeDraftId !== priorId || (priorId && viewRef.current.drafts[priorId]?.sequence !== priorSequence)) emit({ type: "update-buffer", buffer: openDraftBuffer(record) }); else { emit({ type: "open-draft", buffer: openDraftBuffer(record) }); setPrepared(undefined); } }
       } catch (failure) { if (inScope()) setError(message(failure)); }
     },

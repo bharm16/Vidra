@@ -2,16 +2,17 @@ import { randomUUID } from "node:crypto";
 import { FieldPath } from "firebase-admin/firestore";
 import type { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
 import { AcceptedRequestSchema, RequestSlotSchema, type AcceptedRequest, type RequestSlot } from "@shared/schemas/workflow/request.schemas";
-import { MediaVersionSchema, type MediaVersion } from "@shared/schemas/workflow/media.schemas";
+import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { ProjectSchema } from "@shared/schemas/workflow/project.schemas";
 import { OwnerIdSchema, RequestIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { WorkflowOutboxSchema } from "@services/admission/idempotency/workflowReceipts";
+import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import { WorkflowError } from "@services/projects/WorkflowError";
 import { ExecutionAttemptSchema, NativeOutputSchema, VerifiedOutputSchema, instructionsFor, type ExecutionAttempt, type NativeOutput, type VerifiedOutput } from "./types";
 
 /** One permanent attempt per accepted output slot. A lost lease never permits another provider call. */
 export class WorkflowExecutionStore {
-  constructor(private readonly database: Firestore, private readonly now: () => string = () => new Date().toISOString()) {}
+  constructor(private readonly database: Firestore, private readonly media: MediaVersionIndex, private readonly now: () => string = () => new Date().toISOString()) {}
 
   private ref(id: string): DocumentReference { return this.database.collection("creation_requests").doc(RequestIdSchema.parse(id)); }
   private attemptRef(id: string, slotId: string): DocumentReference { return this.ref(id).collection("execution_attempts").doc(slotId); }
@@ -96,17 +97,24 @@ export class WorkflowExecutionStore {
       else {
         const stored = VerifiedOutputSchema.parse(verified);
         const versionId = VersionIdSchema.parse(`version_${current.slotId.slice(5)}`);
-        const versionRef = this.database.collection("creation_projects").doc(request.projectId).collection("media_versions").doc(versionId);
-        const versionRow = await transaction.get(versionRef);
         const projectRow = await transaction.get(this.database.collection("creation_projects").doc(request.projectId));
         const project = projectRow.exists ? ProjectSchema.parse(projectRow.data()) : undefined;
-        const linked = project?.ownerId === request.ownerId && project.status === "active" && (project.origin.kind === "new" || project.origin.authority === "workflow");
-        const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: versionId, ownerId: request.ownerId, projectId: request.projectId, kind: current.output.kind, label: request.snapshot.instructions.trim().slice(0, 160) || (current.output.kind === "image" ? "Picture" : "Clip"), origin: { kind: "generated", requestId: request.id, slotId: current.slotId }, sourceInputs: request.snapshot.inputs, ...stored, association: linked ? "linked" : "recovery", createdAt: current.startedAt });
-        if (versionRow.exists) {
-          const prior = MediaVersionSchema.parse(versionRow.data());
-          if (prior.origin.kind !== "generated" || prior.origin.requestId !== request.id || prior.origin.slotId !== current.slotId || JSON.stringify(prior.object) !== JSON.stringify(version.object)) throw new WorkflowError("submission_conflict", "This result identity already belongs to different stored bytes.");
-        } else transaction.create(versionRef, version);
-        if (!linked) transaction.set(this.database.collection("creation_recovery").doc(request.ownerId).collection("media_versions").doc(version.id), version);
+        await this.media.publishInTransaction(
+          transaction,
+          project,
+          {
+            id: versionId,
+            ownerId: request.ownerId,
+            projectId: request.projectId,
+            kind: current.output.kind,
+            label: request.snapshot.instructions.trim().slice(0, 160) || (current.output.kind === "image" ? "Picture" : "Clip"),
+            origin: { kind: "generated", requestId: request.id, slotId: current.slotId },
+            sourceInputs: request.snapshot.inputs,
+            ...stored,
+            createdAt: current.startedAt,
+          },
+          { conflictMessage: "This result identity already belongs to different stored bytes." },
+        );
         patch = { outcome: "completed", delivery: "ready", versionId };
       }
       const next = this.replaceSlot(request, current.slotId, patch, true);
@@ -145,9 +153,7 @@ export class WorkflowExecutionStore {
   }
 
   async recoveries(owner: string): Promise<MediaVersion[]> {
-    const ownerId = OwnerIdSchema.parse(owner);
-    const rows = await this.database.collection("creation_recovery").doc(ownerId).collection("media_versions").limit(200).get();
-    return rows.docs.map(row => { const version = MediaVersionSchema.parse(row.data()); if (version.ownerId !== ownerId || version.id !== row.id) throw new WorkflowError("access_denied", "This result is unavailable."); return version; });
+    return this.media.listRecoveries(owner);
   }
 
   async queued(limit = 20, after?: string): Promise<Array<{ ownerId: string; requestId: string }>> {

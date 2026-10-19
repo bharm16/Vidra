@@ -5,6 +5,7 @@ import type { CapabilityProfile, ParameterValue } from "@shared/schemas/workflow
 import { ResolvedInputSchema, type CreationDraft } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
+import { validateProfileParameters } from "@shared/workflow/capabilityEvaluation";
 import type { ProjectStore } from "@services/projects/ProjectStore";
 import type { ConversationStore } from "@services/projects/ConversationStore";
 import type { CreationDraftStore } from "@services/creation-drafts/CreationDraftStore";
@@ -90,42 +91,11 @@ export class ActionPreparationService {
       if (count < rule.minCount && !draft.inputs.some(input => input.role === rule.role && input.state === "pending")) block("input_missing", `Choose ${rule.minCount} ${rule.role} input${rule.minCount === 1 ? "" : "s"}.`, rule.role);
       if (count > rule.maxCount) block("input_incompatible", `This operation supports at most ${rule.maxCount} ${rule.role} inputs.`, rule.role);
     }
-    const parameters: Record<string, ParameterValue> = {};
-    for (const key of Object.keys(draft.settings.parameters)) if (profile && !Object.hasOwn(profile.parameters, key)) block("settings_invalid", `The ${key} setting is not mapped by this exact operation.`, key);
-    for (const [key, policy] of Object.entries(profile?.parameters ?? {})) {
-      const retained = draft.settings.parameters[key];
-      if (policy.policy === "derived") continue;
-      if (policy.policy === "unsupported" || policy.policy === "unknown") {
-        if (retained !== undefined || policy.policy === "unknown") block("settings_invalid", policy.reason, key);
-        continue;
-      }
-      const value = retained ?? (policy.policy === "fixed" ? policy.value : policy.defaultValue);
-      const valid = policy.policy === "fixed" ? value === policy.value : policy.domain.kind === "enum" ? policy.domain.values.includes(value) : typeof value === "number" && value >= policy.domain.min && value <= policy.domain.max && Math.abs((value - policy.domain.min) / policy.domain.step - Math.round((value - policy.domain.min) / policy.domain.step)) < 1e-8;
-      if (!valid) block("settings_invalid", `Review the retained ${key} value; it is not valid for this operation.`, key);
-      else if (key === "seed" && (typeof value !== "number" || !Number.isInteger(value) || value < -1 || value > 2147483647)) block("settings_invalid", "The requested seed is not a supported concrete or provider-chosen seed.", key);
-      else parameters[key] = value;
-    }
-    for (const [key, policy] of Object.entries(profile?.parameters ?? {})) {
-      if (policy.policy !== "derived") continue;
-      if (policy.from === "frame-duration") {
-        const frames = parameters.numFrames;
-        const fps = parameters.framesPerSecond;
-        if (typeof frames === "number" && typeof fps === "number" && fps > 0) parameters[key] = frames / fps;
-        else block("settings_invalid", "Frame count and generation rate are required to derive duration.", key);
-      } else {
-        const index = inputs.findIndex(input => input.role === policy.role);
-        const metadata = media[index]?.metadata;
-        if (metadata?.state !== "verified") block("input_pending", "The exact input metadata is needed for this setting.", key);
-        else if (policy.from === "input-duration") parameters[key] = metadata.durationSeconds;
-        else if (metadata.width === undefined || metadata.height === undefined) block("input_incompatible", "This setting requires an input with verified visual dimensions.", key);
-        else parameters[key] = `${metadata.width}:${metadata.height}`;
-      }
-    }
-    for (const constraint of profile?.constraints ?? []) if (parameters[constraint.parameter] === constraint.equals) for (const [field, allowed] of Object.entries(constraint.requires)) if (!allowed.includes(parameters[field] ?? "")) block("settings_invalid", constraint.reason, field);
-    if (profile && draft.settings.outputCount > profile.output.maxCount) block("settings_invalid", "This operation cannot produce the selected number of outputs.", "outputCount");
+    const { parameters, reasons: settingReasons } = validateProfileParameters(profile, draft.settings, inputs, media);
+    reasons.push(...settingReasons);
     let materializedContext: Awaited<ReturnType<CreationContextService["materializeInTransaction"]>> | undefined;
     try {
-      materializedContext = await this.deps.contexts.materializeInTransaction(transaction, ownerId, projectId, draft.context);
+      materializedContext = await this.deps.contexts.materializeInTransaction(transaction, ownerId, projectId, draft.context, project);
     } catch (error) {
       if (!(error instanceof WorkflowError) || error.code !== "invalid_context") throw error;
       block("context_invalid", error.message);

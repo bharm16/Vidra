@@ -10,7 +10,7 @@ import { ProjectSketchCaptureRecordSchema, type ProjectSketchCaptureCommand } fr
 const database = createWorkflowTestDatabase();
 const projects = new ProjectStore(database); const media = new MediaVersionIndex(database, projects);
 const storage: ProjectSketchStorage = { put: vi.fn(async (path, picture) => ({ identity: "verified" as const, assetId: path.split("/").at(-1) ?? "picture", storagePath: path, generation: "1", sha256: picture.sha256, bytes: picture.bytes.length })) };
-const service = new ProjectSketchService(database, projects, storage);
+const service = new ProjectSketchService(database, projects, storage, media);
 let picture: string;
 const command = (id: string): ProjectSketchCaptureCommand => ({ captureId: `capture_${id}`, displayedFrameId: "preview-session:17", displayedAt: "2026-10-17T01:02:03.000Z", outputDataUri: picture, drawingDataUri: picture, inputs: { prompt: "Exact original words", strength: .875, steps: 8, seed: 42 } });
 beforeAll(async () => { picture = `data:image/png;base64,${(await sharp({ create: { width: 8, height: 8, channels: 3, background: "red" } }).png().toBuffer()).toString("base64")}`; await projects.create("owner", { id: "project_sketch", name: "Sketch" }); });

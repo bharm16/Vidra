@@ -53,7 +53,8 @@ it("applies only the selected clip's reviewed caption and audio repair in one re
   expect(command).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Apply shorter timing" }));
   const expected = { ...before, items: before.items.map(item => item.id === "one" ? { ...item, sourceAudio: { ...item.sourceAudio, timing: { startFrame: 0, endFrame: 60 } } } : item), text: before.text.map(text => text.id === "caption_one" ? { ...text, endFrame: 60 } : text) };
-  expect(command).toHaveBeenCalledExactlyOnceWith({ kind: "replace_composition", composition: expected });
+  expect(command).toHaveBeenCalledExactlyOnceWith({ kind: "repair_timing", target: { kind: "item", itemId: "one" } });
+  expect(applyEditCommand(value, command.mock.calls[0]![0])).toEqual(expected);
   expect(done).toHaveBeenCalledOnce();
   expect(value).toEqual(before);
   expect(validateVideoComposition(expected, media)).not.toContainEqual(expect.objectContaining({ elementId: "one", code: "source_audio_timing" }));
@@ -67,7 +68,8 @@ it("composition-anchored repair does not change a clip's caption or retained sou
   render(<TimingRepair composition={value} media={media} target={{ kind: "composition" }} disabled={false} command={command} onDone={vi.fn()} onManual={vi.fn()} />);
   expect(screen.queryByText(/Clip audio/)).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Apply shorter timing" }));
-  expect(command).toHaveBeenCalledExactlyOnceWith({ kind: "replace_composition", composition: { ...value, text: value.text.map(text => text.id === "video_caption" ? { ...text, endFrame: 300 } : text) } });
+  expect(command).toHaveBeenCalledExactlyOnceWith({ kind: "repair_timing", target: { kind: "composition" } });
+  expect(applyEditCommand(value, command.mock.calls[0]![0])).toEqual({ ...value, text: value.text.map(text => text.id === "video_caption" ? { ...text, endFrame: 300 } : text) });
 });
 
 it("does not repair an absent audio stream and uses explicit attached timing only when media was not supplied", () => {
@@ -113,7 +115,8 @@ it("keeps legitimate single-frame intersections precise in the reviewed timing",
   render(<TimingRepair composition={value} media={media} target={{ kind: "item", itemId: "one" }} disabled={false} command={command} onDone={vi.fn()} onManual={vi.fn()} />);
   expect(screen.getByText("Clip audio 1.97–4.0s → 1.97–2.0s")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Apply shorter timing" }));
-  expect(command).toHaveBeenCalledExactlyOnceWith({ kind: "replace_composition", composition: { ...value, items: value.items.map(item => item.id === "one" ? { ...item, sourceAudio: { ...item.sourceAudio, timing: { startFrame: 59, endFrame: 60 } } } : item) } });
+  expect(command).toHaveBeenCalledExactlyOnceWith({ kind: "repair_timing", target: { kind: "item", itemId: "one" } });
+  expect(applyEditCommand(value, command.mock.calls[0]![0])).toEqual({ ...value, items: value.items.map(item => item.id === "one" ? { ...item, sourceAudio: { ...item.sourceAudio, timing: { startFrame: 59, endFrame: 60 } } } : item) });
 });
 
 it("removes only an explicitly chosen fully excluded caption, then removes its clip audio without changing the retained interval", () => {

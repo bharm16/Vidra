@@ -1,7 +1,8 @@
-import { VideoCompositionSchema, VideoTextSchema, type EditCommand, type VideoComposition, type VideoItem, type VideoPreset, type VideoText, type VideoValidationIssue } from "../schemas/workflow/video-edit.schemas";
+import { VideoCompositionSchema, VideoTextSchema, type EditCommand, type TimingRepairTarget, type VideoComposition, type VideoItem, type VideoPreset, type VideoText, type VideoValidationIssue } from "../schemas/workflow/video-edit.schemas";
 import type { MediaVersion } from "../schemas/workflow/media.schemas";
 import { captionPlacement } from "./captionPlacement";
 
+export type { TimingRepairTarget };
 export const VIDEO_EDIT_LIMITS = Object.freeze({ maxFrames: 1800, maxSourcePixels: 8_294_400, maxItems: 32, maxText: 100, maxSourceBytes: 512 * 1024 * 1024, maxDecodeSeconds: 300, maxCompositionBytes: 256 * 1024 });
 export const VIDEO_PRESETS: Readonly<Record<VideoPreset, { width: number; height: number }>> = Object.freeze({ landscape: { width: 1920, height: 1080 }, portrait: { width: 1080, height: 1920 }, square: { width: 1080, height: 1080 } });
 export function emptyVideoComposition(preset: VideoPreset = "landscape"): VideoComposition { return { normalizationVersion: "vidra-cfr30/v1", preset, fps: 30, items: [], text: [] }; }
@@ -9,6 +10,73 @@ export function compositionFrames(composition: VideoComposition): number { retur
 export function timelineItems(composition: VideoComposition): Array<{ item: VideoItem; startFrame: number; endFrame: number }> {
   let cursor = 0;
   return composition.items.map(item => { const startFrame = cursor; cursor += item.displayFrames; return { item, startFrame, endFrame: cursor }; });
+}
+export function timelineItemAtFrame(composition: VideoComposition, frame: number): { item: VideoItem; startFrame: number; endFrame: number } | undefined {
+  const items = timelineItems(composition);
+  return items.find(row => frame >= row.startFrame && frame < row.endFrame) ?? (frame === compositionFrames(composition) ? items.at(-1) : undefined);
+}
+export function movedPlayheadFrame(composition: VideoComposition, itemId: string, index: number, frame: number): number | undefined {
+  const before = timelineItems(composition).find(row => row.item.id === itemId); if (!before) return undefined;
+  const items = composition.items.filter(item => item.id !== itemId); items.splice(index, 0, before.item);
+  const after = timelineItems({ ...composition, items }).find(row => row.item.id === itemId);
+  return after ? after.startFrame + (frame >= before.startFrame && frame < before.endFrame ? frame - before.startFrame : 0) : undefined;
+}
+export function removeItemWithAttachedElements(composition: VideoComposition, itemId: string): VideoComposition {
+  return VideoCompositionSchema.parse({
+    ...composition,
+    items: composition.items.filter(item => item.id !== itemId),
+    text: composition.text.filter(text => text.anchor.kind !== "item" || text.anchor.itemId !== itemId),
+  });
+}
+export interface TimingRepairPlan {
+  target: TimingRepairTarget | undefined;
+  targetLabel: string;
+  limitFrames: number;
+  itemIndex: number;
+  captionRows: Array<{ before: VideoText; after: VideoText | undefined; limit: number }>;
+  audioRows: Array<{ item: VideoItem; before: { startFrame: number; endFrame: number }; after: { startFrame: number; endFrame: number } | undefined }>;
+  canApply: boolean;
+  repairedComposition: VideoComposition;
+}
+function shorterInterval(startFrame: number, endFrame: number, limit: number): { startFrame: number; endFrame: number } | undefined {
+  const start = Math.max(0, startFrame), end = Math.min(endFrame, limit);
+  return start < end ? { startFrame: start, endFrame: end } : undefined;
+}
+export function planTimingRepair(composition: VideoComposition, media?: readonly MediaVersion[], target?: TimingRepairTarget): TimingRepairPlan {
+  const duration = compositionFrames(composition);
+  const captions = composition.text.flatMap(text => {
+    const limit = text.anchor.kind === "item" ? composition.items.find(item => text.anchor.kind === "item" && item.id === text.anchor.itemId)?.displayFrames : duration;
+    if (!limit || text.startFrame >= 0 && text.endFrame <= limit && text.startFrame < text.endFrame) return [];
+    const timing = shorterInterval(text.startFrame, text.endFrame, limit);
+    return [{ before: text, after: timing ? { ...text, ...timing } : undefined, limit }];
+  });
+  const audio = composition.items.flatMap(item => {
+    if (item.kind !== "clip" || item.sourceAudio.removed || !item.displayFrames) return [];
+    const attached = media ? media.some(version => version.id === item.versionId && version.metadata.state === "verified" && version.metadata.audio === "present") : Boolean(item.sourceAudio.timing);
+    if (!attached) return [];
+    const before = sourceAudioInterval(item);
+    if (before.startFrame >= 0 && before.endFrame <= item.displayFrames && before.startFrame < before.endFrame) return [];
+    return [{ item, before, after: shorterInterval(before.startFrame, before.endFrame, item.displayFrames) }];
+  });
+  const firstAnchor = captions[0]?.before.anchor;
+  const inferred: TimingRepairTarget | undefined = target ?? (firstAnchor ? firstAnchor.kind === "item" ? { kind: "item", itemId: firstAnchor.itemId } : { kind: "composition" } : audio[0] ? { kind: "item", itemId: audio[0].item.id } : undefined);
+  const captionRows = captions.filter(row => inferred?.kind === "item" ? row.before.anchor.kind === "item" && row.before.anchor.itemId === inferred.itemId : inferred?.kind === "composition" && row.before.anchor.kind === "composition");
+  const audioRows = inferred?.kind === "item" ? audio.filter(row => row.item.id === inferred.itemId) : [];
+  const itemIndex = inferred?.kind === "item" ? composition.items.findIndex(item => item.id === inferred.itemId) : -1;
+  const targetLabel = itemIndex >= 0 ? `Clip ${itemIndex + 1}` : "the video";
+  const limitFrames = itemIndex >= 0 ? composition.items[itemIndex]?.displayFrames ?? duration : duration;
+  const hasRows = captionRows.length + audioRows.length > 0;
+  const canApply = hasRows && captionRows.every(row => row.after) && audioRows.every(row => row.after);
+  const textUpdates = new Map(captionRows.flatMap(row => row.after ? [[row.after.id, row.after] as const] : []));
+  const audioUpdates = new Map(audioRows.flatMap(row => row.after ? [[row.item.id, row.after] as const] : []));
+  const repairedComposition = canApply
+    ? VideoCompositionSchema.parse({
+        ...composition,
+        text: composition.text.map(text => textUpdates.get(text.id) ?? text),
+        items: composition.items.map(item => { const timing = audioUpdates.get(item.id); return timing ? { ...item, sourceAudio: { ...item.sourceAudio, timing } } : item; }),
+      })
+    : composition;
+  return { target: inferred, targetLabel, limitFrames, itemIndex, captionRows, audioRows, canApply, repairedComposition };
 }
 export function absoluteText(composition: VideoComposition, text: VideoText): { startFrame: number; endFrame: number } | undefined {
   const anchor = text.anchor;
@@ -46,7 +114,7 @@ export function applyEditCommand(value: VideoComposition, command: Exclude<EditC
   switch (command.kind) {
     case "replace_composition": return VideoCompositionSchema.parse(command.composition);
     case "insert": if (command.index > composition.items.length || composition.items.some(item => item.id === command.item.id)) throw new Error("Choose an existing timeline boundary and a new item identity."); composition.items.splice(command.index, 0, command.item); break;
-    case "remove": itemById(command.itemId); composition.items = composition.items.filter(item => item.id !== command.itemId); break;
+    case "remove": itemById(command.itemId); if (command.removeAttachedElements) return removeItemWithAttachedElements(composition, command.itemId); composition.items = composition.items.filter(item => item.id !== command.itemId); break;
     case "move": { const item = itemById(command.itemId); if (command.index >= composition.items.length) throw new Error("Choose an existing timeline position."); composition.items = composition.items.filter(candidate => candidate.id !== item.id); composition.items.splice(command.index, 0, item); break; }
     case "trim": { const item = itemById(command.itemId); if (item.kind !== "clip") throw new Error("Use duration to change a picture's length."); const offsetDelta = item.inFrame - command.inFrame; const audio = sourceAudioInterval(item); item.sourceAudio.timing = { startFrame: audio.startFrame + offsetDelta, endFrame: audio.endFrame + offsetDelta }; for (const cue of composition.text) if (cue.anchor.kind === "item" && cue.anchor.itemId === item.id) { cue.startFrame += offsetDelta; cue.endFrame += offsetDelta; } item.inFrame = command.inFrame; item.outFrame = command.outFrame; item.displayFrames = Math.max(0, command.outFrame - command.inFrame); break; }
     case "duration": { const item = itemById(command.itemId); if (item.kind !== "picture") throw new Error("Trim a clip to change its duration."); item.displayFrames = command.displayFrames; break; }
@@ -58,6 +126,7 @@ export function applyEditCommand(value: VideoComposition, command: Exclude<EditC
     case "source_audio": { const item = itemById(command.itemId); item.sourceAudio = { ...item.sourceAudio, muted: command.muted, gain: command.gain, ...(command.timing ? { timing: command.timing } : {}), ...(command.removed !== undefined ? { removed: command.removed } : {}) }; break; }
     case "background_audio": if (command.audio) composition.backgroundAudio = command.audio; else delete composition.backgroundAudio; break;
     case "copy_audio": { if (composition.backgroundAudio) throw new Error("The background audio track is occupied. Remove it before copying audio."); const row = timelineItems(composition).find(candidate => candidate.item.id === command.itemId); if (!row || row.item.kind !== "clip") throw new Error("Choose a clip with source audio."); if (row.item.sourceAudio.removed) throw new Error("This clip audio was removed. Undo its removal before copying it."); const audio = sourceAudioInterval(row.item); if (audio.startFrame < 0 || audio.endFrame <= audio.startFrame || audio.endFrame > row.item.displayFrames) throw new Error("Fit this clip's audio timing before copying it."); composition.backgroundAudio = { id: command.audioId, versionId: row.item.versionId, sourceInFrame: row.item.inFrame + audio.startFrame, startFrame: row.startFrame + audio.startFrame, endFrame: row.startFrame + audio.endFrame, gain: 0.25 }; break; }
+    case "repair_timing": { const plan = planTimingRepair(composition, undefined, command.target); if (!plan.canApply) throw new Error("This timing cannot be shortened automatically."); return plan.repairedComposition; }
   }
   return VideoCompositionSchema.parse(composition);
 }

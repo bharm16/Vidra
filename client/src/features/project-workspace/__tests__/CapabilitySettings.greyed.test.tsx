@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { CapabilityProfileSchema } from "@shared/schemas/workflow/capability.schemas";
 import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { CapabilitySettings } from "../components/CapabilitySettings";
-import { settingsForProfile } from "../state/profileSettings";
+import { evaluateCapabilityDraft, settingsForProfile } from "../state/capabilitySettings";
 import { modelContent, veo, wan22 } from "./fixtures/modelCreationFixtures";
 
 afterEach(cleanup);
@@ -46,4 +46,16 @@ it("moves values the chosen model cannot use to its nearest offer", () => {
   expect(switched.parameters).toEqual({ aspectRatio: "16:9", duration: 8, resolution: "720p" });
   expect(settingsForProfile(veo, content(veo.id, { aspectRatio: "9:16", duration: 4, resolution: "4K" })).parameters).toEqual({ aspectRatio: "9:16", duration: 8, resolution: "4K" });
   expect(settingsForProfile(wan22, content(veo.id, { resolution: "1080p" })).parameters).toMatchObject({ resolution: "720p", numFrames: 81, framesPerSecond: 16 });
+});
+
+it("evaluates capability draft candidates, unsupported saved settings, and fixed parameter conflicts in one snapshot", () => {
+  const evaluation = evaluateCapabilityDraft(
+    [veo, wan22],
+    content(wan22.id, { aspectRatio: "16:9", framesPerSecond: 24, retiredParam: "old" }),
+    [],
+  );
+  expect(evaluation.profile?.id).toBe(wan22.id);
+  expect(evaluation.candidates.map(item => item.id)).toEqual([veo.id, wan22.id]);
+  expect(evaluation.unsupportedSaved).toEqual(["retiredParam"]);
+  expect(evaluation.fixedConflicts.map(([name]) => name)).toEqual(["framesPerSecond"]);
 });

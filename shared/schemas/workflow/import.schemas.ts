@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { OwnerIdSchema, ProjectIdSchema, TimestampSchema, VersionIdSchema } from "./identity.schemas";
+import { OwnerIdSchema, ProjectIdSchema, TimestampSchema, VersionIdSchema, type VersionId } from "./identity.schemas";
 
 export const ImportIdSchema = z.string().regex(/^import_[A-Za-z0-9_-]+$/).max(160);
+/** A finished import's media version reuses the import's identity. */
+export function importedVersionId(importId: string): VersionId {
+  return VersionIdSchema.parse(`version_${ImportIdSchema.parse(importId).slice("import_".length)}`);
+}
 export const AUDIO_IMPORT_LIMITS = Object.freeze({ maxBytes: 100 * 1024 * 1024, maxDurationSeconds: 300 });
 export const ImportContentTypeSchema = z.enum(["image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm", "audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4"]);
 /** Browser and byte-sniffer aliases normalize to one recorded wire type. */

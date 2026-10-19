@@ -38,7 +38,11 @@ export const VideoCaptionValidationDetailsSchema = z.strictObject({
   kind: z.literal("video-caption-validation"), ownerId: OwnerIdSchema, projectId: ProjectIdSchema, editId: EditIdSchema, revision: RevisionSchema,
   issues: z.array(VideoValidationIssueSchema.extend({ elementId: ElementIdSchema, code: z.literal("text_render_policy"), message: z.string().min(1).max(2000) })).min(1).max(100),
 });
-export const EditCommandKindSchema = z.enum(["replace_composition", "insert", "remove", "move", "trim", "duration", "replace", "transform", "preset", "text", "remove_text", "source_audio", "background_audio", "copy_audio", "restore"]);
+export const TimingRepairTargetSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("item"), itemId: ElementIdSchema }),
+  z.strictObject({ kind: z.literal("composition") }),
+]);
+export const EditCommandKindSchema = z.enum(["replace_composition", "insert", "remove", "move", "trim", "duration", "replace", "transform", "preset", "text", "remove_text", "source_audio", "background_audio", "copy_audio", "repair_timing", "restore"]);
 /** The saved command behind a revision. Revisions saved before this field existed have none. */
 export const VideoEditChangeSchema = z.strictObject({ kind: EditCommandKindSchema, restoredFrom: RevisionSchema.optional() })
   .refine(change => (change.kind === "restore") === (change.restoredFrom !== undefined), "Only a restore names the revision it restored.");
@@ -51,7 +55,7 @@ export const CreateVideoEditSchema = z.strictObject({ id: EditIdSchema, name: z.
 export const EditCommandSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("replace_composition"), composition: VideoCompositionSchema }),
   z.strictObject({ kind: z.literal("insert"), item: VideoItemSchema, index: z.number().int().min(0).max(32) }),
-  z.strictObject({ kind: z.literal("remove"), itemId: ElementIdSchema }),
+  z.strictObject({ kind: z.literal("remove"), itemId: ElementIdSchema, removeAttachedElements: z.boolean().optional() }),
   z.strictObject({ kind: z.literal("move"), itemId: ElementIdSchema, index: z.number().int().min(0).max(31) }),
   z.strictObject({ kind: z.literal("trim"), itemId: ElementIdSchema, inFrame: FrameSchema, outFrame: FrameSchema }),
   z.strictObject({ kind: z.literal("duration"), itemId: ElementIdSchema, displayFrames: FrameSchema }),
@@ -63,6 +67,7 @@ export const EditCommandSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("source_audio"), itemId: ElementIdSchema, muted: z.boolean(), gain: z.number().min(0).max(4), timing: SourceAudioTimingSchema.optional(), removed: z.boolean().optional() }),
   z.strictObject({ kind: z.literal("background_audio"), audio: VideoBackgroundAudioSchema.nullable() }),
   z.strictObject({ kind: z.literal("copy_audio"), itemId: ElementIdSchema, audioId: ElementIdSchema }),
+  z.strictObject({ kind: z.literal("repair_timing"), target: TimingRepairTargetSchema.optional() }),
   z.strictObject({ kind: z.literal("restore"), sourceRevision: RevisionSchema }),
 ]);
 export const SaveVideoEditSchema = z.strictObject({ operationId: ElementIdSchema, expectedRevision: RevisionSchema, command: EditCommandSchema });
@@ -90,6 +95,7 @@ export type VideoCaptionValidationDetails = z.infer<typeof VideoCaptionValidatio
 export type VideoEdit = z.infer<typeof VideoEditSchema>;
 export type VideoEditRevision = VideoEdit;
 export type EditCommand = z.infer<typeof EditCommandSchema>;
+export type TimingRepairTarget = z.infer<typeof TimingRepairTargetSchema>;
 export type VideoEditChange = z.infer<typeof VideoEditChangeSchema>;
 export type VideoExport = z.infer<typeof VideoExportSchema>;
 export type StoredVideoExport = z.infer<typeof StoredVideoExportSchema>;

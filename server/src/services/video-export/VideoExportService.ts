@@ -6,15 +6,18 @@ import { z } from "zod";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { compositionFrames, sourceElementIds } from "@shared/video-edit/composition";
 import { CreateVideoExportSchema, ExportIdSchema, VideoCaptionValidationDetailsSchema, VideoExportSchema, type VideoExport, type StoredVideoExport } from "@shared/schemas/workflow/video-edit.schemas";
-import { MediaVersionSchema, type MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { EditIdSchema, OwnerIdSchema, ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
+import { OwnerIdSchema, ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import type { ProjectStore } from "@services/projects/ProjectStore";
-import type { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
+import type { MediaVersionIndex, MediaVersionPublishCandidate } from "@services/media-history/MediaVersionIndex";
 import type { VideoEditStore } from "@services/video-editing/VideoEditStore";
 import { requireWritableProject } from "@services/projects/projectAccess";
 import { WorkflowError } from "@services/projects/WorkflowError";
 import { sha256Hex } from "@utils/hash";
-import { workflowReceiptId } from "@services/admission/idempotency/workflowReceipts";
+import {
+  commitVideoExportReceiptInTransaction,
+  recoverVideoExportReceiptInTransaction,
+  workflowExecutionDraftKey,
+} from "@services/admission/idempotency/workflowReceipts";
 import { logger } from "@infrastructure/Logger";
 import type { ExportStorage } from "./ExportStorage";
 import { hashLocalFile } from "./ExportStorage";
@@ -24,7 +27,6 @@ import { CaptionPolicyError } from "./CaptionPolicyError";
 import { SourceUnavailableError } from "./SourceUnavailableError";
 
 const EvidenceSchema = z.strictObject({ localPath: z.string(), directory: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/), bytes: z.number().int().positive(), frames: z.number().int().positive(), width: z.number().int().positive(), height: z.number().int().positive() });
-const BindingSchema = z.strictObject({ kind: z.literal("video-export/v1"), ownerId: OwnerIdSchema, projectId: ProjectIdSchema, editId: EditIdSchema, exportId: ExportIdSchema, payloadHash: z.string() });
 /** Native execution is single-attempt. Durable status recovery never reclaims a render. */
 export class VideoExportService {
   private readonly running = new Map<string, { controller: AbortController; promise: Promise<void> }>();
@@ -39,23 +41,22 @@ export class VideoExportService {
     const command = CreateVideoExportSchema.parse(input);
     const { submissionId: _submissionId, ...settings } = command;
     const payloadHash = sha256Hex(canonicalJson({ projectId, editId, ...settings }));
-    const executionKey = sha256Hex(`${ownerId}|${command.executionDraftId}|${command.executionDraftRevision}`);
-    const submissionRef = this.database.collection("request_idempotency").doc(workflowReceiptId(ownerId, command.submissionId));
-    const executionRef = this.database.collection("creation_consumed_drafts").doc(executionKey);
+    const executionKey = workflowExecutionDraftKey(ownerId, command.executionDraftId, command.executionDraftRevision);
+    const receiptScope = {
+      ownerId,
+      projectId,
+      editId,
+      submissionId: command.submissionId,
+      executionDraftId: command.executionDraftId,
+      executionDraftRevision: command.executionDraftRevision,
+      payloadHash,
+    };
     // An accepted receipt remains recoverable when a source, project or renderer changes.
     const recovered = await this.database.runTransaction(async transaction => {
       await this.projects.readOwned(transaction, ownerId, projectId);
-      const submission = await transaction.get(submissionRef); const execution = await transaction.get(executionRef);
-      for (const row of [submission, execution]) if (row.exists) {
-        const raw = z.object({ kind: z.string().optional() }).parse(row.data());
-        if (raw.kind !== "video-export/v1") throw new WorkflowError("submission_conflict", "This action identity belongs to another accepted request.");
-        const binding = BindingSchema.parse(row.data());
-        if (binding.ownerId !== ownerId || binding.projectId !== projectId || binding.editId !== editId || binding.payloadHash !== payloadHash) throw new WorkflowError("submission_conflict", "This export action identity is already bound to different settings.");
-        const existing = await this.readOwned(transaction, ownerId, projectId, binding.exportId);
-        if (!submission.exists) transaction.create(submissionRef, binding);
-        return existing;
-      }
-      return undefined;
+      return recoverVideoExportReceiptInTransaction(this.database, transaction, receiptScope, (tx, exportId) =>
+        this.readOwned(tx, ownerId, projectId, exportId),
+      );
     });
     if (recovered) { this.schedule(recovered); return recovered; }
     if (this.stopping) throw new WorkflowError("capability_unavailable", "The renderer is stopping. This export was not accepted. Retry after reconnecting.");
@@ -75,17 +76,10 @@ export class VideoExportService {
     const id = ExportIdSchema.parse(`export_${executionKey}`); const timestamp = this.now();
     const record = await this.database.runTransaction(async transaction => {
       const project = await this.projects.readOwned(transaction, ownerId, projectId);
-      const submission = await transaction.get(submissionRef); const execution = await transaction.get(executionRef);
-      for (const row of [submission, execution]) if (row.exists) {
-        const raw = z.object({ kind: z.string().optional() }).parse(row.data());
-        if (raw.kind !== "video-export/v1") throw new WorkflowError("submission_conflict", "This action identity belongs to another accepted request.");
-        const binding = BindingSchema.parse(row.data());
-        if (binding.ownerId !== ownerId || binding.projectId !== projectId || binding.editId !== editId || binding.payloadHash !== payloadHash) throw new WorkflowError("submission_conflict", "This export action identity is already bound to different settings.");
-        const existing = await this.readOwned(transaction, ownerId, projectId, binding.exportId);
-        // A second tab's submission gets the same immutable receipt.
-        if (!submission.exists) transaction.create(submissionRef, binding);
-        return existing;
-      }
+      const existing = await recoverVideoExportReceiptInTransaction(this.database, transaction, receiptScope, (tx, exportId) =>
+        this.readOwned(tx, ownerId, projectId, exportId),
+      );
+      if (existing) return existing;
       requireWritableProject(project);
       if (this.stopping) throw new WorkflowError("capability_unavailable", "The renderer is stopping. This export was not accepted. Retry after reconnecting.");
       const saved = await this.edits.revision(ownerId, projectId, editId, command.revision, transaction);
@@ -94,8 +88,8 @@ export class VideoExportService {
       if (issues.length) throw new WorkflowError("invalid_settings", issues.map(issue => `${issue.elementId}: ${issue.message}`).join(" "));
       if (command.retryOf) { const previous = await this.readOwned(transaction, ownerId, projectId, command.retryOf); if (previous.state !== "failed" || previous.editId !== editId || previous.revision !== command.revision || canonicalJson(previous.composition) !== canonicalJson(saved.composition) || canonicalJson(previous.sources.map(source => ({ id: source.id, object: source.object }))) !== canonicalJson(sources.map(source => ({ id: source.id, object: source.object })))) throw new WorkflowError("invalid_settings", "Retry export requires a definitively failed export and its exact saved revision."); }
       const accepted = VideoExportSchema.parse({ schemaVersion: "vidra-workflow/v2", id, ownerId, projectId, editId, revision: command.revision, submissionId: command.submissionId, executionDraftId: command.executionDraftId, executionDraftRevision: command.executionDraftRevision, ...(command.retryOf ? { retryOf: command.retryOf } : {}), composition: saved.composition, compositionHash: sha256Hex(canonicalJson(saved.composition)), sources, renderer, attemptId: `attempt_${executionKey}`, state: "queued", progress: 0, createdAt: timestamp, updatedAt: timestamp });
-      const binding = BindingSchema.parse({ kind: "video-export/v1", ownerId, projectId, editId, exportId: id, payloadHash });
-      transaction.create(this.ref(projectId, id), accepted); transaction.create(submissionRef, binding); transaction.create(executionRef, binding);
+      transaction.create(this.ref(projectId, id), accepted);
+      commitVideoExportReceiptInTransaction(this.database, transaction, { ...receiptScope, exportId: id });
       transaction.create(this.attemptRef(projectId, id), { state: "queued", attemptId: accepted.attemptId, renderer, createdAt: timestamp });
       return accepted;
     });
@@ -254,17 +248,24 @@ export class VideoExportService {
       const latest = await this.readOwned(transaction, record.ownerId, record.projectId, record.id); if (latest.state === "ready") return;
       if (latest.state !== "linking" || !latest.stored || canonicalJson(latest.stored) !== canonicalJson(immutableStored)) throw new WorkflowError("submission_conflict", "This export lost its exact stored-output link.");
       const project = await this.projects.readOwned(transaction, record.ownerId, record.projectId);
-      const versionRef = this.database.collection("creation_projects").doc(record.projectId).collection("media_versions").doc(immutableStored.versionId); const existing = await transaction.get(versionRef);
-      const version = this.exportVersion(latest, immutableStored, evidence, project.status === "active" && (project.origin.kind === "new" || project.origin.authority === "workflow"));
-      if (existing.exists) { const previous = MediaVersionSchema.parse(existing.data()); if (canonicalJson(previous) !== canonicalJson(version)) throw new WorkflowError("submission_conflict", "The media identity is bound to different bytes."); }
-      else transaction.create(versionRef, version);
+      await this.media.publishInTransaction(
+        transaction,
+        project,
+        this.exportVersion(latest, immutableStored, evidence),
+        {
+          conflictMessage: "The media identity is bound to different bytes.",
+          verifyExisting: (existing, candidate) => {
+            if (canonicalJson(existing) !== canonicalJson(candidate)) throw new WorkflowError("submission_conflict", "The media identity is bound to different bytes.");
+          },
+        },
+      );
       transaction.set(this.ref(record.projectId, record.id), VideoExportSchema.parse({ ...latest, state: "ready", message: "Export ready.", updatedAt: this.now() })); transaction.set(this.attemptRef(record.projectId, record.id), { state: "ready", updatedAt: this.now() }, { merge: true });
     });
     this.repairAfter.delete(record.id);
     await rm(evidence.directory, { recursive: true, force: true });
   }
-  private exportVersion(record: VideoExport, stored: StoredVideoExport, evidence: z.infer<typeof EvidenceSchema>, linked: boolean): MediaVersion {
-    return MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: stored.versionId, ownerId: record.ownerId, projectId: record.projectId, kind: "export", label: `Video · revision ${record.revision}`, origin: { kind: "export", exportId: record.id, editId: record.editId, revision: record.revision }, sourceInputs: [], object: { identity: "verified", assetId: stored.versionId, storagePath: stored.storagePath, generation: stored.generation, sha256: stored.sha256, bytes: stored.bytes }, metadata: { state: "verified", width: evidence.width, height: evidence.height, durationSeconds: compositionFrames(record.composition) / 30, audio: "present", framesPerSecond: 30, probeVersion: record.renderer }, association: linked ? "linked" : "recovery", createdAt: record.createdAt });
+  private exportVersion(record: VideoExport, stored: StoredVideoExport, evidence: z.infer<typeof EvidenceSchema>): MediaVersionPublishCandidate {
+    return { id: stored.versionId, ownerId: record.ownerId, projectId: record.projectId, kind: "export", label: `Video · revision ${record.revision}`, origin: { kind: "export", exportId: record.id, editId: record.editId, revision: record.revision }, sourceInputs: [], object: { identity: "verified", assetId: stored.versionId, storagePath: stored.storagePath, generation: stored.generation, sha256: stored.sha256, bytes: stored.bytes }, metadata: { state: "verified", width: evidence.width, height: evidence.height, durationSeconds: compositionFrames(record.composition) / 30, audio: "present", framesPerSecond: 30, probeVersion: record.renderer }, createdAt: record.createdAt };
   }
   private async change(ownerId: string, projectId: string, id: string, allowed: VideoExport["state"][], update: Partial<Pick<VideoExport, "state" | "progress" | "message" | "stored">>): Promise<VideoExport> {
     return this.database.runTransaction(async transaction => { const current = await this.readOwned(transaction, ownerId, projectId, id); if (!allowed.includes(current.state)) return current; const next = VideoExportSchema.parse({ ...current, ...update, updatedAt: this.now() }); transaction.set(this.ref(projectId, id), next); return next; });

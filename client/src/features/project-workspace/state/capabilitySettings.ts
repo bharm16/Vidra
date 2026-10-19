@@ -1,6 +1,30 @@
-import type { CapabilityProfile, ParameterPolicy, ParameterValue } from "@shared/schemas/workflow/capability.schemas";
+import {
+  isParameterValueInDomain,
+  isParameterValueInRange,
+  type CapabilityProfile,
+  type ParameterPolicy,
+  type ParameterRangeDomain,
+  type ParameterValue,
+} from "@shared/schemas/workflow/capability.schemas";
 import type { DraftContent, DraftInput } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
+import {
+  allowedParameterValues,
+  settingRole,
+  settingsForAction,
+  settingsForProfile,
+  withConstraints,
+  type SettingRole,
+} from "@shared/workflow/capabilityEvaluation";
+
+export {
+  allowedParameterValues,
+  settingRole,
+  settingsForAction,
+  settingsForProfile,
+  withConstraints,
+  type SettingRole,
+};
 
 const ORDER = ["aspectRatio", "aspect_ratio", "shape", "duration", "durationSeconds", "resolution", "generateAudio", "audio", "sound"];
 export function orderedParameters(profile: CapabilityProfile): [string, ParameterPolicy][] {
@@ -13,16 +37,6 @@ export function orderedParameters(profile: CapabilityProfile): [string, Paramete
 /** The composer exposes creation choices, not adapter serialization settings. */
 export function visibleParameters(profile: CapabilityProfile): [string, ParameterPolicy][] {
   return orderedParameters(profile).filter(([name]) => ORDER.includes(name));
-}
-
-export type SettingRole = "shape" | "duration" | "resolution" | "sound";
-/** Models name the same creation choice differently; the role is what the composer shows. */
-export function settingRole(name: string): SettingRole | undefined {
-  if (/aspect|shape/i.test(name)) return "shape";
-  if (/duration/i.test(name)) return "duration";
-  if (/resolution/i.test(name)) return "resolution";
-  if (/audio|sound/i.test(name)) return "sound";
-  return undefined;
 }
 
 const CORE_SETTINGS: Record<CapabilityProfile["output"]["kind"], string[]> = { video: ["aspectRatio", "durationSeconds", "resolution", "sound"], image: ["aspectRatio"], text: [], file: [] };
@@ -60,13 +74,7 @@ export function visibleSavedParameters(parameters: DraftContent["settings"]["par
   return Object.entries(parameters).filter(([name]) => ORDER.includes(name)).sort(([a], [b]) => ORDER.indexOf(a) - ORDER.indexOf(b));
 }
 
-type EditableParameter = Extract<ParameterPolicy, { policy: "editable" }>;
-type ParameterRange = Extract<EditableParameter["domain"], { kind: "range" }>;
-export interface PreModelParameterChoices { values: ParameterValue[]; ranges: ParameterRange[]; }
-
-function inRange(value: ParameterValue, range: ParameterRange): boolean {
-  return typeof value === "number" && value >= range.min && value <= range.max && Math.abs((value - range.min) / range.step - Math.round((value - range.min) / range.step)) < 1e-8;
-}
+export interface PreModelParameterChoices { values: ParameterValue[]; ranges: ParameterRangeDomain[]; }
 
 function acceptsCurrentInputs(profile: CapabilityProfile, content: DraftContent, media: MediaVersion[]): boolean {
   for (const rule of profile.inputs) {
@@ -105,7 +113,7 @@ export function preModelParameterChoices(profiles: CapabilityProfile[], content:
     if (domain.kind === "enum") {
       for (const value of allowedParameterValues(profile, content, name) ?? []) add(value);
     } else if (restrictions.length) {
-      for (const value of restrictions[0] ?? []) if (inRange(value, domain) && restrictions.every(values => values.includes(value))) add(value);
+      for (const value of restrictions[0] ?? []) if (isParameterValueInRange(domain, value) && restrictions.every(values => values.includes(value))) add(value);
     } else if (!choices.ranges.some(range => range.min === domain.min && range.max === domain.max && range.step === domain.step)) {
       choices.ranges.push({ ...domain });
     }
@@ -161,10 +169,8 @@ export function capabilityProblems(profile: CapabilityProfile, content: DraftCon
     const value = content.settings.parameters[name];
     if (value === undefined) continue;
     if (policy.policy === "fixed" && value !== policy.value) problems.push(`${parameterName(name)} must be ${parameterLabel(name, policy.value)} for this model.`);
-    if (policy.policy === "editable") {
-      const domain = policy.domain;
-      const valid = domain.kind === "enum" ? domain.values.includes(value) : typeof value === "number" && value >= domain.min && value <= domain.max && Math.abs((value - domain.min) / domain.step - Math.round((value - domain.min) / domain.step)) < 1e-8;
-      if (!valid) problems.push(`Choose an available ${parameterName(name).toLowerCase()} for this model.`);
+    if (policy.policy === "editable" && !isParameterValueInDomain(policy.domain, value)) {
+      problems.push(`Choose an available ${parameterName(name).toLowerCase()} for this model.`);
     }
     if (policy.policy === "unsupported" || policy.policy === "unknown") problems.push(policy.reason);
   }
@@ -175,18 +181,6 @@ export function capabilityProblems(profile: CapabilityProfile, content: DraftCon
     if (!profile.inputs.some(rule => rule.role === input.role)) problems.push(`This model does not use the ${input.role.replaceAll("-", " ")} input. Choose another action or remove it.`);
   }
   return [...new Set(problems)];
-}
-
-/** Intersect declared constraints without altering the retained selection. */
-export function allowedParameterValues(profile: CapabilityProfile, content: DraftContent, name: string): ParameterValue[] | undefined {
-  const policy = profile.parameters[name];
-  if (policy?.policy !== "editable" || policy.domain.kind !== "enum") return undefined;
-  let values = [...policy.domain.values];
-  for (const constraint of profile.constraints) {
-    const allowed = constraint.requires[name];
-    if (content.settings.parameters[constraint.parameter] === constraint.equals && allowed) values = values.filter(value => allowed.includes(value));
-  }
-  return values;
 }
 
 function list(values: ParameterValue[]): string {
@@ -265,3 +259,36 @@ export function modelInputLabel(role: DraftInput["role"], profile?: CapabilityPr
   return labels[role] ?? role;
 }
 
+export interface CapabilityDraftEvaluation {
+  candidates: CapabilityProfile[];
+  profile: CapabilityProfile | undefined;
+  problems: string[];
+  modelNotice: ModelCreationNotice | undefined;
+  unsupportedSaved: string[];
+  fixedConflicts: [string, Extract<ParameterPolicy, { policy: "fixed" }>][];
+}
+
+export function evaluateCapabilityDraft(
+  profiles: CapabilityProfile[],
+  content: DraftContent,
+  media: MediaVersion[],
+): CapabilityDraftEvaluation {
+  const candidates = profiles.filter(profile => profile.action === content.action);
+  const profile = candidates.find(candidate => candidate.id === content.settings.profileId);
+  const problems = profile ? capabilityProblems(profile, content) : [];
+  const modelNotice = profile ? modelCreationFeedback(profile, content, media) : undefined;
+  const unsupportedSaved = profile
+    ? Object.keys(content.settings.parameters).filter(
+        name => !(name in profile.parameters) || profile.parameters[name]?.policy === "unsupported",
+      )
+    : [];
+  const fixedConflicts = profile
+    ? Object.entries(profile.parameters).filter(
+        (entry): entry is [string, Extract<ParameterPolicy, { policy: "fixed" }>] =>
+          entry[1].policy === "fixed" &&
+          content.settings.parameters[entry[0]] !== undefined &&
+          content.settings.parameters[entry[0]] !== entry[1].value,
+      )
+    : [];
+  return { candidates, profile, problems, modelNotice, unsupportedSaved, fixedConflicts };
+}

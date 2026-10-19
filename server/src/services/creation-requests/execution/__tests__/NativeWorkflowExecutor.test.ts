@@ -1,6 +1,11 @@
 import { expect, it, vi } from "vitest";
+import { isParameterValueInDomain } from "@shared/schemas/workflow/capability.schemas";
 import { AcceptedRequestSchema } from "@shared/schemas/workflow/request.schemas";
-import { WorkflowCapabilityCatalog } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
+import {
+  WorkflowCapabilityCatalog,
+  isWorkflowProfileRuntimeAvailable,
+  resolveWorkflowAdapterBinding,
+} from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
 import { NativeWorkflowExecutor, type NativeWorkflowExecutorDeps } from "../NativeWorkflowExecutor";
 
 const qualifiedSpend = { qualified: (): boolean => true, reserve: vi.fn(async (): Promise<boolean> => true) };
@@ -56,4 +61,22 @@ it("executes text advice once through aiService without its JSON default or cros
   await expect(executor.execute(request, request.slots[0]!, profile, "How can I improve the lighting?")).resolves.toMatchObject({ kind: "text", text: "Use warmer lighting.", provider: "openai", model: "text-model" });
   expect(execute).toHaveBeenCalledTimes(1); expect(execute).toHaveBeenCalledWith("studio_turn", expect.objectContaining({ responseFormat: { type: "text" }, maxRetries: 0 }));
   expect(deps.images?.generatePreview).not.toHaveBeenCalled(); expect(deps.videos?.generateVideo).not.toHaveBeenCalled();
+});
+
+it("shares parameter domain validation and adapter binding across catalog and executor", () => {
+  expect(isParameterValueInDomain({ kind: "range", min: 0.1, max: 1.0, step: 0.1 }, 0.3)).toBe(true);
+  expect(isParameterValueInDomain({ kind: "range", min: 0.1, max: 1.0, step: 0.1 }, 0.35)).toBe(false);
+  expect(resolveWorkflowAdapterBinding(catalog.get("flux-kontext-fast")!)).toEqual({
+    kind: "image",
+    providerId: "replicate-flux-kontext-fast",
+    requiresPrimaryImage: true,
+  });
+  expect(
+    isWorkflowProfileRuntimeAvailable(catalog.get("flux-schnell")!, {
+      imageProviders: new Set(["replicate-flux-schnell"]),
+      videoAvailable: () => false,
+      textAvailable: false,
+      spendGuard: qualifiedSpend,
+    }),
+  ).toBe(true);
 });

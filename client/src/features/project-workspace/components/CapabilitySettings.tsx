@@ -1,11 +1,10 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { SettingsMenu } from "./SettingsMenu";
 import { FreshButton, FreshIcon } from "@/components/fresh/FreshButton";
-import type { CapabilityProfile, ParameterPolicy, ParameterValue } from "@shared/schemas/workflow/capability.schemas";
+import { isParameterValueInRange, type CapabilityProfile, type ParameterPolicy, type ParameterValue } from "@shared/schemas/workflow/capability.schemas";
 import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { allowedParameterValues, capabilityProblems, derivedParameter, modelCapabilityDescription, modelCreationFeedback, parameterDescription, preModelParameterChoices, visibleSavedParameters, parameterLabel, parameterName, settingEntries, settingOptions, settingRole, type PreModelParameterChoices, type SettingOption } from "../state/capabilitySettings";
-import { withConstraints } from "../state/profileSettings";
+import { allowedParameterValues, derivedParameter, evaluateCapabilityDraft, modelCapabilityDescription, parameterDescription, preModelParameterChoices, visibleSavedParameters, parameterLabel, parameterName, settingEntries, settingOptions, settingRole, withConstraints, type PreModelParameterChoices, type SettingOption } from "../state/capabilitySettings";
 import { FrameSettings } from "./FrameSettings";
 import type { CapabilityLookupStatus } from "./ModelCreationArea";
 import "./model-creation-fidelity.css";
@@ -47,7 +46,7 @@ function UnavailableSetting({ name }: { name: string }): ReactElement {
 function PreModelRange({ name, range, disabled, onChoose }: { name: string; range: PreModelParameterChoices["ranges"][number]; disabled: boolean; onChoose(value: number): void }): ReactElement {
   const [text, setText] = useState("");
   const value = Number(text);
-  const valid = text.trim().length > 0 && Number.isFinite(value) && value >= range.min && value <= range.max && Math.abs((value - range.min) / range.step - Math.round((value - range.min) / range.step)) < 1e-8;
+  const valid = text.trim().length > 0 && isParameterValueInRange(range, value);
   const label = parameterName(name);
   return <div className="vf-range-setting" role="group" aria-label={`${label} ${range.min}–${range.max}`}><p className="vf-setting-name">{range.min}–{range.max} · step {range.step}</p><input className="vf-field" type="number" aria-label={`Desired ${label.toLowerCase()}`} min={range.min} max={range.max} step={range.step} value={text} onChange={event => setText(event.target.value)} disabled={disabled} /><FreshButton tone="quiet" className="vf-setting-option" disabled={disabled || !valid} onClick={() => { if (valid) onChoose(value); }}>Use {label.toLowerCase()}</FreshButton></div>;
 }
@@ -86,12 +85,8 @@ export interface CapabilitySettingsProps {
 export function CapabilitySettings({ profiles, content, media, disabled, onProfile, onChange, presentation = "default", lookupStatus = "ready", children }: CapabilitySettingsProps): ReactElement {
   const [modelOpen, setModelOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const candidates = profiles.filter(profile => profile.action === content.action);
-  const profile = candidates.find(candidate => candidate.id === content.settings.profileId);
-  const problems = profile ? capabilityProblems(profile, content) : [];
-  const modelNotice = presentation === "model" && profile ? modelCreationFeedback(profile, content, media) : undefined;
-  const unsupportedSaved = profile ? Object.keys(content.settings.parameters).filter(name => !(name in profile.parameters) || profile.parameters[name]?.policy === "unsupported") : [];
-  const fixedConflicts = profile ? Object.entries(profile.parameters).filter((entry): entry is [string, Extract<ParameterPolicy, { policy: "fixed" }>] => entry[1].policy === "fixed" && content.settings.parameters[entry[0]] !== undefined && content.settings.parameters[entry[0]] !== entry[1].value) : [];
+  const { candidates, profile, problems, modelNotice: rawModelNotice, unsupportedSaved, fixedConflicts } = evaluateCapabilityDraft(profiles, content, media);
+  const modelNotice = presentation === "model" ? rawModelNotice : undefined;
   const ready = lookupStatus === "ready" && modelNotice?.kind !== "extension-ineligible";
   const parameterValue = (name: string, value: ParameterValue): string => presentation === "model" && profile?.action === "extend-video" && /duration/i.test(name) && typeof value === "number" ? `+${value}s` : parameterLabel(name, value);
   return <><div className="vf-settings" aria-label="Request settings">

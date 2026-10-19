@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Project } from "@shared/schemas/workflow/project.schemas";
-import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { GuestDraftStore } from "@/repositories/workflow/GuestDraftStore";
 import { WorkflowApi } from "../api/workflowApi";
+import { wordsDraftContent } from "../state/inputBinding";
 
 export type LibraryClaim =
   | { state: "claimed"; conversationId: string; draftId: string }
@@ -66,21 +66,14 @@ export function useLibraryEntry(
           kept.conversationId,
           "New conversation",
         );
-        const content: DraftContent = {
-          action: kept.action,
-          instructions: kept.instructions,
-          inputs: [],
-          settings: kept.settings,
-          context: {
-            origin: "empty",
-            requestIds: [],
-            projectInstructionsRevision: library.instructions.revision,
-          },
-          destination: {
-            projectId: library.id,
-            conversationId: conversation.id,
-          },
-        };
+        const content = wordsDraftContent(
+          kept.action,
+          kept.instructions,
+          kept.settings,
+          library.id,
+          conversation.id,
+          library.instructions.revision,
+        );
         const draft = await client.createDraft(
           library.id,
           conversation.id,

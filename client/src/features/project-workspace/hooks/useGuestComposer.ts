@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CreationDraftSchema, type CreationAction, type CreationDraft, type DraftContent } from "@shared/schemas/workflow/draft.schemas";
+import { ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import { GuestDraftSchema, GuestDraftStore, type GuestDraft } from "@/repositories/workflow/GuestDraftStore";
 import type { PromptComposerProps } from "../components/PromptComposer";
 import type { CapabilityLookupStatus } from "../components/ModelCreationArea";
 import { fetchPublicProfiles } from "../api/workflowApi";
 import { editDraftBuffer, openDraftBuffer, redoDraftBuffer, undoDraftBuffer, type DraftBuffer } from "../state/draftBuffer";
-import { settingsForAction, settingsForProfile } from "../state/profileSettings";
+import { settingsForAction, settingsForProfile } from "../state/capabilitySettings";
+import { wordsDraftContent } from "../state/inputBinding";
 
-const GUEST_PROJECT = "project_guest";
+const GUEST_PROJECT = ProjectIdSchema.parse("project_guest");
 const UNSELECTED = { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 } as const;
 
 function freshGuestDraft(action: CreationAction): GuestDraft {
@@ -17,11 +19,10 @@ function freshGuestDraft(action: CreationAction): GuestDraft {
 
 /** The composer reads a draft record; this one never leaves the browser. */
 function localRecord(draft: GuestDraft): CreationDraft {
-  const destination = { projectId: GUEST_PROJECT, conversationId: draft.conversationId };
   return CreationDraftSchema.parse({
     schemaVersion: "vidra-workflow/v2", id: draft.draftId, ownerId: "guest", projectId: GUEST_PROJECT, conversationId: draft.conversationId, revision: 1, status: "open",
-    action: draft.action, instructions: draft.instructions, inputs: [], settings: draft.settings,
-    context: { origin: "empty", requestIds: [], projectInstructionsRevision: 1 }, destination, createdAt: draft.updatedAt, updatedAt: draft.updatedAt,
+    ...wordsDraftContent(draft.action, draft.instructions, draft.settings, GUEST_PROJECT, draft.conversationId, 1),
+    createdAt: draft.updatedAt, updatedAt: draft.updatedAt,
   });
 }
 

@@ -2,6 +2,7 @@ import { afterAll, expect, it, vi } from "vitest";
 import { AcceptedRequestSchema, type AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { CapabilityProfile } from "@shared/schemas/workflow/capability.schemas";
 import { ProjectStore } from "@services/projects/ProjectStore";
+import { MediaVersionIndex } from "@services/media-history/MediaVersionIndex";
 import { WorkflowCapabilityCatalog, workflowRuntimeProfiles } from "@services/creation-requests/preparation/WorkflowCapabilityCatalog";
 import { WorkflowOutboxSchema } from "@services/admission/idempotency/workflowReceipts";
 import { WorkflowExecutionStore } from "@services/creation-requests/execution/WorkflowExecutionStore";
@@ -14,7 +15,7 @@ import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
 
 const database = createWorkflowTestDatabase(); const projects = new ProjectStore(database);
 const NOW = "2026-10-17T12:00:00.000Z"; const DAY = "2026-10-17";
-const store = new WorkflowExecutionStore(database, () => NOW);
+const store = new WorkflowExecutionStore(database, new MediaVersionIndex(database, projects), () => NOW);
 const guard = new StudioWorkflowSpendGuard(database, { dailyCapCents: 500 }, () => Date.parse(NOW));
 const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(["replicate-flux-schnell", "replicate-flux-kontext-fast"]), videoAvailable: () => true, textAvailable: true, textProvider: "controlled", textModel: "controlled-text", spendGuard: guard });
 const outputStorage: WorkflowOutputStorage = { materialize: vi.fn() };

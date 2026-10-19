@@ -21,7 +21,7 @@ it("confirmed removal removes attached text in the same reversible change while 
   render(<VideoEditor {...props} />); const item = await screen.findByRole("button", { name: /Edit Stadium/ }); fireEvent.contextMenu(item); fireEvent.click(screen.getByRole("menuitem", { name: "Remove clip" }));
   fireEvent.click(screen.getByRole("button", { name: "Remove clip and attached elements" }));
   await waitFor(() => expect(screen.queryByRole("button", { name: /Edit Stadium/ })).toBeNull());
-  expect(api.command.mock.calls[0]?.[3]).toMatchObject({ kind: "replace_composition", composition: { items: [], text: [] } });
+  expect(api.command.mock.calls[0]?.[3]).toEqual({ kind: "remove", itemId: "item_one", removeAttachedElements: true });
   expect(screen.getByRole("button", { name: "Add Stadium" })).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Undo video edit" }));
   await screen.findByRole("button", { name: /Edit Stadium/ });

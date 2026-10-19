@@ -8,6 +8,23 @@ export const ParameterDomainSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("enum"), values: z.array(ParameterValueSchema).min(1).max(100) }),
   z.strictObject({ kind: z.literal("range"), min: z.number().finite(), max: z.number().finite(), step: z.number().positive() }).refine(value => value.min <= value.max, "Parameter range is inverted"),
 ]);
+export type ParameterDomain = z.infer<typeof ParameterDomainSchema>;
+export type ParameterRangeDomain = Extract<ParameterDomain, { kind: "range" }>;
+
+export function isParameterValueInRange(range: ParameterRangeDomain, value: ParameterValue): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= range.min &&
+    value <= range.max &&
+    Math.abs((value - range.min) / range.step - Math.round((value - range.min) / range.step)) < 1e-8
+  );
+}
+
+export function isParameterValueInDomain(domain: ParameterDomain, value: ParameterValue): boolean {
+  return domain.kind === "enum" ? domain.values.includes(value) : isParameterValueInRange(domain, value);
+}
+
 export const ParameterPolicySchema = z.discriminatedUnion("policy", [
   z.strictObject({ policy: z.literal("editable"), domain: ParameterDomainSchema, defaultValue: ParameterValueSchema }),
   z.strictObject({ policy: z.literal("fixed"), value: ParameterValueSchema }),
@@ -58,12 +75,7 @@ export const CapabilityProfileSchema = z.strictObject({
 }).superRefine((profile, ctx) => {
   for (const [name, parameter] of Object.entries(profile.parameters)) {
     if (parameter.policy !== "editable") continue;
-    const domain = parameter.domain;
-    const value = parameter.defaultValue;
-    const valid = domain.kind === "enum"
-      ? domain.values.includes(value)
-      : typeof value === "number" && value >= domain.min && value <= domain.max && Math.abs((value - domain.min) / domain.step - Math.round((value - domain.min) / domain.step)) < 1e-8;
-    if (!valid) ctx.addIssue({ code: "custom", path: ["parameters", name, "defaultValue"], message: "Explicit default must belong to the parameter domain" });
+    if (!isParameterValueInDomain(parameter.domain, parameter.defaultValue)) ctx.addIssue({ code: "custom", path: ["parameters", name, "defaultValue"], message: "Explicit default must belong to the parameter domain" });
   }
 });
 export type CapabilityProfile = z.infer<typeof CapabilityProfileSchema>;

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
-import { MediaVersionSchema, type MediaVersion } from "@shared/schemas/workflow/media.schemas";
-import { ChangeMediaSchema, DeriveFrameSchema } from "@shared/schemas/workflow/management.schemas";
+import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
+import { DeriveFrameSchema } from "@shared/schemas/workflow/management.schemas";
 import { OwnerIdSchema, ProjectIdSchema, VersionIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { PublishVersionSchema, PublicVersionSchema, VersionShareSchema, WorkflowShareIdSchema, type PublicVersion, type VersionShare } from "@shared/schemas/workflow/sharing.schemas";
 import type { Conversation } from "@shared/schemas/workflow/project.schemas";
@@ -14,7 +14,6 @@ import { WorkflowError } from "@services/projects/WorkflowError";
 import { sha256Hex } from "@utils/hash";
 import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { StoredShareSchema, FrameOperationSchema, type StoredShare, type WorkflowContent, type WorkflowManagementStorage } from "./types";
-import { relatedMediaVersions } from "./mediaFamily";
 import { deriveNativeFrame } from "./NativeFrameDeriver";
 
 export class WorkflowManagementService {
@@ -24,30 +23,11 @@ export class WorkflowManagementService {
   async conversation(owner: string, project: string, conversation: string, command: unknown): Promise<Conversation> { return this.conversations.change(owner, project, conversation, command); }
 
   async changeMedia(owner: string, projectId: string, versionId: string, command: unknown): Promise<MediaVersion> {
-    const change = ChangeMediaSchema.parse(command);
-    return this.database.runTransaction(async transaction => {
-      requireWritableProject(await this.projects.readOwned(transaction, owner, projectId));
-      const current = await this.media.get(owner, projectId, versionId, transaction);
-      if (!current) throw new WorkflowError("not_found", "This media is unavailable.");
-      const next = MediaVersionSchema.parse({ ...current, ...change });
-      transaction.set(this.database.collection("creation_projects").doc(current.projectId).collection("media_versions").doc(current.id), next);
-      return next;
-    });
+    return this.media.change(owner, projectId, versionId, command);
   }
 
   async preferred(owner: string, projectId: string, versionId: string): Promise<MediaVersion[]> {
-    const selectedId = VersionIdSchema.parse(versionId);
-    return this.database.runTransaction(async transaction => {
-      const project = await this.projects.readOwned(transaction, owner, projectId); requireWritableProject(project);
-      const rows = await transaction.get(this.database.collection("creation_projects").doc(project.id).collection("media_versions").limit(401));
-      if (rows.size > 400) throw new WorkflowError("capability_unavailable", "This project's version history is too large to update safely.");
-      const versions = rows.docs.map(row => { const version = MediaVersionSchema.parse(row.data()); if (version.ownerId !== owner || version.projectId !== project.id || version.id !== row.id) throw new WorkflowError("access_denied", "This version history is unavailable."); return version; });
-      const selected = versions.find(version => version.id === selectedId);
-      if (!selected || selected.association !== "linked") throw new WorkflowError("not_found", "This version is unavailable in the project.");
-      const family = relatedMediaVersions(versions, selectedId).map(version => MediaVersionSchema.parse({ ...version, preferred: version.id === selectedId }));
-      for (const version of family) transaction.set(this.database.collection("creation_projects").doc(project.id).collection("media_versions").doc(version.id), version);
-      return family;
-    });
+    return this.media.selectPreferred(owner, projectId, versionId);
   }
 
   async shares(owner: string, projectId: string): Promise<VersionShare[]> {
@@ -166,18 +146,32 @@ export class WorkflowManagementService {
       const parent = await this.projects.readOwned(transaction, ownerId, project);
       const ref = this.database.collection("creation_projects").doc(project).collection("frame_derivations").doc(command.id);
       const current = FrameOperationSchema.parse((await transaction.get(ref)).data());
-      const versionRef = this.database.collection("creation_projects").doc(project).collection("media_versions").doc(command.id);
-      const row = await transaction.get(versionRef);
-      if (row.exists) {
-        const prior = MediaVersionSchema.parse(row.data());
-        if (prior.ownerId !== ownerId || prior.projectId !== project || prior.id !== command.id || prior.origin.kind !== "frame" || prior.origin.versionId !== source.id || prior.origin.timestampSeconds !== command.timestampSeconds) throw new WorkflowError("submission_conflict", "This frame identity already belongs to different media.");
-        return prior;
-      }
-      if (current.token !== operation.token) throw new WorkflowError("revision_conflict", "This frame attempt was replaced. Retry to recover the stored picture.");
-      const version = MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: command.id, ownerId, projectId: project, kind: "image", label: "Frame", origin: { kind: "frame", versionId: source.id, timestampSeconds: command.timestampSeconds }, sourceInputs: [{ role: "clip", state: "resolved", versionId: source.id }], ...stored, association: parent.status === "active" ? "linked" : "recovery", createdAt: operation.createdAt });
-      transaction.create(versionRef, version);
-      if (version.association === "recovery") transaction.set(this.database.collection("creation_recovery").doc(ownerId).collection("media_versions").doc(version.id), version);
-      return version;
+      return this.media.publishInTransaction(
+        transaction,
+        parent,
+        {
+          id: command.id,
+          ownerId,
+          projectId: project,
+          kind: "image",
+          label: "Frame",
+          origin: { kind: "frame", versionId: source.id, timestampSeconds: command.timestampSeconds },
+          sourceInputs: [{ role: "clip", state: "resolved", versionId: source.id }],
+          ...stored,
+          createdAt: operation.createdAt,
+        },
+        {
+          conflictMessage: "This frame identity already belongs to different media.",
+          verifyExisting: prior => {
+            if (prior.origin.kind !== "frame" || prior.origin.versionId !== source.id || prior.origin.timestampSeconds !== command.timestampSeconds) {
+              throw new WorkflowError("submission_conflict", "This frame identity already belongs to different media.");
+            }
+          },
+          beforeCreate: () => {
+            if (current.token !== operation.token) throw new WorkflowError("revision_conflict", "This frame attempt was replaced. Retry to recover the stored picture.");
+          },
+        },
+      );
     });
   }
 }

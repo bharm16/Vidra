@@ -23,7 +23,7 @@ import { createWorkflowTestDatabase } from "../helpers/workflow/emulator";
 
 const database = createWorkflowTestDatabase();
 const projects = new ProjectStore(database);
-const store = new WorkflowExecutionStore(database);
+const store = new WorkflowExecutionStore(database, new MediaVersionIndex(database, projects));
 const catalog = new WorkflowCapabilityCatalog(undefined, { imageProviders: new Set(["replicate-flux-schnell"]), videoAvailable: () => false, textAvailable: true, spendGuard: { qualified: () => true } });
 const profile = catalog.get("flux-schnell")!;
 const storage: WorkflowOutputStorage = { materialize: vi.fn(async (attempt: ExecutionAttempt): Promise<VerifiedOutput> => ({ object: { identity: "verified", assetId: attempt.slotId, storagePath: `users/creator/previews/images/${attempt.slotId}.webp`, generation: "1", sha256: "b".repeat(64), bytes: 20 }, metadata: { state: "verified", width: 100, height: 100, durationSeconds: 0, audio: "absent", probeVersion: "controlled" } })) };

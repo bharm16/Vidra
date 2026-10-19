@@ -63,7 +63,7 @@ const harness = await startCrossModeHarness({
     });
     dependencies.spendGuard = spendGuard;
     const native = new NativeWorkflowExecutor(dependencies);
-    const execution = new WorkflowExecutionService(new WorkflowExecutionStore(database), {
+    const execution = new WorkflowExecutionService(new WorkflowExecutionStore(database, media), {
       available: profile => native.available(profile),
       execute: async (request, slot, profile, words) => { const output = await native.execute(request, slot, profile, words); if (output.kind === "video") boundaries.bindVideoAsset(request.ownerId, output.assetId); return output; },
     }, boundaries.outputStorage);
@@ -87,7 +87,7 @@ const harness = await startCrossModeHarness({
     container.registerValue("workflowVideoRenderer", renderer);
     container.registerValue("workflowVideoExportService", new VideoExportService(database, projects, edits, media, boundaries.exportStorage, renderer));
     container.registerValue("workflowVideoPreviewService", new VideoPreviewService(database, projects, media, boundaries.exportStorage, renderer));
-    container.registerValue("workflowSketchService", new ProjectSketchService(database, projects, boundaries.sketchStorage));
+    container.registerValue("workflowSketchService", new ProjectSketchService(database, projects, boundaries.sketchStorage, media));
     container.registerValue("sketchRelayFetch", boundaries.sketchPreview);
     container.registerValue("workflowManagementService", new WorkflowManagementService(database, projects, conversations, media, boundaries.managementStorage));
     container.registerValue("workflowAccountUsage", new AccountUsageService(database, { studioCapCents: 500, sketchCapCents: 500, sketchFrameCostMillicents: 250 }));

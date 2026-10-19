@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MediaVersionSchema } from "../../schemas/workflow/media.schemas";
 import { VideoCompositionSchema, VideoItemSchema, VideoTextSchema, type VideoText } from "../../schemas/workflow/video-edit.schemas";
-import { absoluteText, applyEditCommand, compositionFrames, emptyVideoComposition, reanchorText, sourceAudioInterval, sourceElementIds, sourceVersionIds, timelineItems, validateVideoComposition, withVideoPreset } from "../composition";
+import { absoluteText, applyEditCommand, compositionFrames, emptyVideoComposition, movedPlayheadFrame, planTimingRepair, reanchorText, removeItemWithAttachedElements, sourceAudioInterval, sourceElementIds, sourceVersionIds, timelineItemAtFrame, timelineItems, validateVideoComposition, withVideoPreset } from "../composition";
 import { captionPlacement } from "../captionPlacement";
 const item = (id: string, frames = 150) => VideoItemSchema.parse({ id, versionId: `version_${id}`, kind: "clip", inFrame: 0, outFrame: frames, displayFrames: frames, fit: "fit", sourceAudio: { muted: false, gain: 1 } });
 const source = (id: string, seconds = 5) => MediaVersionSchema.parse({ schemaVersion: "vidra-workflow/v2", id: `version_${id}`, ownerId: "creator", projectId: "project_edit", kind: "video", label: id, origin: { kind: "upload" }, sourceInputs: [], object: { identity: "verified", assetId: id, storagePath: `users/creator/${id}.mp4`, generation: "1", sha256: "a".repeat(64), bytes: 100 }, metadata: { state: "verified", width: 64, height: 36, durationSeconds: seconds, audio: "present", probeVersion: "test" }, association: "linked", createdAt: "2026-10-17T00:00:00.000Z" });
@@ -47,7 +47,30 @@ describe("revisioned composition commands", () => {
   expect(withVideoPreset(preview, "landscape")).toEqual(before);
   expect(composition).toEqual(before);
  });
-
+ it("removes an item and its anchored captions via applyEditCommand remove while keeping composition captions and tracking moved playheads", () => {
+  const globalCaption = { ...caption(), id: "global_text", anchor: { kind: "composition" as const } };
+  const composition = { ...emptyVideoComposition(), items: [item("a", 120), item("b", 90)], text: [caption(), globalCaption] };
+  expect(timelineItemAtFrame(composition, 119)?.item.id).toBe("a");
+  expect(timelineItemAtFrame(composition, 120)?.item.id).toBe("b");
+  expect(timelineItemAtFrame(composition, 210)?.item.id).toBe("b");
+  expect(movedPlayheadFrame(composition, "b", 0, 135)).toBe(15);
+  const afterRemove = applyEditCommand(composition, { kind: "remove", itemId: "b", removeAttachedElements: true });
+  expect(afterRemove).toEqual(removeItemWithAttachedElements(composition, "b"));
+  expect(afterRemove.items.map(row => row.id)).toEqual(["a"]);
+  expect(afterRemove.text).toEqual([globalCaption]);
+ });
+ it("plans and applies shorter timing repairs via repair_timing command for overflowing captions and clip audio", () => {
+  const trimmed = applyEditCommand({ ...emptyVideoComposition(), items: [item("b", 120)], text: [{ ...caption(), startFrame: 0, endFrame: 90 }] }, { kind: "trim", itemId: "b", inFrame: 0, outFrame: 60 });
+  const plan = planTimingRepair(trimmed, [source("b")], { kind: "item", itemId: "b" });
+  expect(plan.canApply).toBe(true);
+  expect(plan.targetLabel).toBe("Clip 1");
+  expect(plan.limitFrames).toBe(60);
+  expect(plan.captionRows[0]?.after).toMatchObject({ startFrame: 0, endFrame: 60 });
+  expect(plan.audioRows[0]?.after).toEqual({ startFrame: 0, endFrame: 60 });
+  const repaired = applyEditCommand(trimmed, { kind: "repair_timing", target: { kind: "item", itemId: "b" } });
+  expect(repaired).toEqual(plan.repairedComposition);
+  expect(validateVideoComposition(repaired, [source("b")])).toEqual([]);
+ });
 });
 describe("unavailable sources", () => {
  it("names each element of a missing or failed source, and keeps a pending check separate", () => {

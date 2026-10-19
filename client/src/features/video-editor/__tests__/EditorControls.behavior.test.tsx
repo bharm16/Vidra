@@ -74,7 +74,7 @@ it("timing repair keeps the exact caption and anchor and changes only the review
  const invalid=VideoCompositionSchema.parse({...composition,text:[text]});const command=vi.fn(),manual=vi.fn();
  render(<TimingRepair composition={invalid} command={command} disabled={false} onDone={vi.fn()} onManual={manual} />);
  expect(command).not.toHaveBeenCalled();fireEvent.click(screen.getByRole("button",{name:"Apply shorter timing"}));
- expect(command).toHaveBeenCalledWith({kind:"replace_composition",composition:{...invalid,text:[{...invalid.text[0],endFrame:60}]}});
+ expect(command).toHaveBeenCalledWith({kind:"repair_timing",target:{kind:"item",itemId:"one"}});
 });
 
 it("timecode editing retains single-frame precision when using the keyboard",()=>{

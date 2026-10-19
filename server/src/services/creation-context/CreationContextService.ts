@@ -1,6 +1,7 @@
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
 import { BranchContextSchema } from "@shared/schemas/workflow/draft.schemas";
+import type { Project } from "@shared/schemas/workflow/project.schemas";
 import { MaterializedContextSchema, AcceptedRequestSchema } from "@shared/schemas/workflow/request.schemas";
 import type { ProjectStore } from "@services/projects/ProjectStore";
 import { WorkflowError } from "@services/projects/WorkflowError";
@@ -15,9 +16,9 @@ export class CreationContextService {
     return this.database.runTransaction(transaction => this.materializeInTransaction(transaction, ownerId, projectId, input));
   }
 
-  async materializeInTransaction(transaction: Transaction, ownerId: string, projectId: string, input: unknown): Promise<MaterializedContext> {
+  async materializeInTransaction(transaction: Transaction, ownerId: string, projectId: string, input: unknown, preloadedProject?: Project): Promise<MaterializedContext> {
     const context = BranchContextSchema.parse(input);
-    const project = await this.projects.readOwned(transaction, ownerId, projectId);
+    const project = preloadedProject ?? await this.projects.readOwned(transaction, ownerId, projectId);
     let projectInstructions = project.instructions.text;
     if (context.projectInstructionsRevision !== project.instructions.revision) {
       const prior = await transaction.get(this.database.collection("creation_projects").doc(project.id).collection("instructions").doc(String(context.projectInstructionsRevision)));

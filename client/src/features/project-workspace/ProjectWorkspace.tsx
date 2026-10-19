@@ -13,7 +13,8 @@ import { useOpenFolder } from "./hooks/useOpenFolder";
 import { GuestWorkspace } from "./GuestWorkspace";
 import { PromptComposer, type PromptComposerProps } from "./components/PromptComposer";
 import { ModelCreationArea, ModelInputActions, type CapabilityLookupStatus } from "./components/ModelCreationArea";
-import { observedDraftInputs } from "./state/inputBinding";
+import { mediaActionDraftContent, observedDraftInputs, reuseDraftContent } from "./state/inputBinding";
+import { importedVersionId } from "@shared/schemas/workflow/import.schemas";
 import { modelCreationFeedback, modelInputLabel } from "./state/capabilitySettings";
 import { MediaViewer } from "./components/MediaViewer";
 import { ProjectManagementApi } from "@/features/project-management/api/projectManagementApi";
@@ -241,9 +242,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     const stillCurrent = (): boolean => scopeAlive.current && controllerRef.current.conversation?.id === conversationId && controllerRef.current.active?.record.id === captured?.record.id && controllerRef.current.active?.sequence === captured?.sequence;
     await current.flush();
     if (!stillCurrent() || !current.canLeave()) return;
-    const parameters = { ...request.snapshot.settings.parameters };
-    if (variation) delete parameters.seed;
-    const record = await api.createDraft(projectId, conversationId, `draft_${crypto.randomUUID()}`, { ...request.snapshot, settings: { ...request.snapshot.settings, parameters }, destination: { projectId: current.conversation.projectId, conversationId } });
+    const record = await api.createDraft(projectId, conversationId, `draft_${crypto.randomUUID()}`, reuseDraftContent(request, current.conversation.projectId, conversationId, variation));
     if (stillCurrent()) {
       controllerRef.current.openDraft(record);
       const resultId = request.slots.find(slot => slot.versionId === current.view.viewedVersionId)?.versionId ?? request.slots.find(slot => slot.versionId && current.media.some(version => version.id === slot.versionId && version.ownerId === ownerId && version.projectId === projectId))?.versionId;
@@ -276,7 +275,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
     if (!conversation || !project) return;
     void perform(async () => {
       await controller.flush();
-      const record = await api.createDraft(projectId, conversation.id, `draft_${crypto.randomUUID()}`, { action: "animate-image", instructions: "", inputs: [{ state: "resolved", role: "start-frame", versionId: version.id }], settings: { profileId: "unselected", profileRevision: "unresolved", parameters: {}, outputCount: 1 }, context: { origin: "empty", requestIds: [], projectInstructionsRevision: project.instructions.revision }, destination: { projectId: project.id, conversationId: conversation.id } });
+      const record = await api.createDraft(projectId, conversation.id, `draft_${crypto.randomUUID()}`, mediaActionDraftContent("animate-image", version.id, project.id, conversation.id, project.instructions.revision));
       const current = controllerRef.current.active;
       if (scopeAlive.current && controllerRef.current.conversation?.id === conversation.id && current?.record.id === target?.record.id && current?.sequence === target?.sequence) { controllerRef.current.openDraft(record); showView(); setPane("conversation"); setViewerOrigin("conversation"); }
     });
@@ -345,7 +344,7 @@ function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: stri
       if (!kind || !profile.inputs.some(rule => rule.role === input.role && rule.kinds.some(allowed => allowed === kind))) return "unavailable";
     }
     if (input.state !== "importing") return undefined;
-    if (controller.media.some(version => version.id === `version_${input.importId.slice(7)}`)) return undefined;
+    if (controller.media.some(version => version.id === importedVersionId(input.importId))) return undefined;
     const job = imports.jobs.find(row => row.id === input.importId);
     return job?.state === "uploading" ? "uploading" : "unavailable";
   }} controller={controller} onSubmit={async () => {

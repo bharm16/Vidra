@@ -1,6 +1,6 @@
 import { useState, type ReactElement } from "react";
 import { FreshButton } from "@/components/fresh/FreshButton";
-import type { CapabilityProfile, ParameterPolicy } from "@shared/schemas/workflow/capability.schemas";
+import { isParameterValueInDomain, type CapabilityProfile, type ParameterPolicy } from "@shared/schemas/workflow/capability.schemas";
 import type { DraftContent } from "@shared/schemas/workflow/draft.schemas";
 import { SettingsMenu } from "./SettingsMenu";
 
@@ -23,8 +23,7 @@ function validValue(text: string, policy: ParameterPolicy | undefined): boolean 
   if (!Number.isFinite(value) || value <= 0 || !policy) return false;
   if (policy.policy === "fixed") return value === policy.value;
   if (policy.policy !== "editable") return false;
-  const domain = policy.domain;
-  return domain.kind === "enum" ? domain.values.includes(value) : value >= domain.min && value <= domain.max && Math.abs((value - domain.min) / domain.step - Math.round((value - domain.min) / domain.step)) < 1e-8;
+  return isParameterValueInDomain(policy.domain, value);
 }
 
 /** G27/G28: derived seconds never replace the exact stored frame count and generation rate. */
