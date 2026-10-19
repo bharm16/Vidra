@@ -257,27 +257,6 @@ export default [
       "security/detect-non-literal-regexp": "off",
     },
   },
-  // Load test files (k6)
-  {
-    files: ["tests/load/**/*.js"],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        __ENV: "readonly",
-        __VU: "readonly",
-        __ITER: "readonly",
-        open: "readonly",
-        http: "readonly",
-        check: "readonly",
-        sleep: "readonly",
-        group: "readonly",
-      },
-    },
-    rules: {
-      "no-console": "off", // Allow console in load tests
-      "no-undef": "off", // K6 has many globals
-    },
-  },
   // Prompt template files - disable secrets detection for false positives
   {
     files: [

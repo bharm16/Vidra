@@ -5,8 +5,8 @@ import { defineConfig, devices } from "@playwright/test";
  * @see https://playwright.dev/docs/test-configuration
  */
 // Single-browser (chromium) is the default for fast feedback.
-// Cross-browser coverage is opted into via E2E_ALL_BROWSERS=true — set on
-// pushes to main/develop and on the nightly schedule, but not on PR runs.
+// Cross-browser coverage is opted into locally via E2E_ALL_BROWSERS=true; CI
+// runs only the provider-free Chromium suite (playwright.pr.config.js).
 const singleBrowser = process.env.E2E_ALL_BROWSERS !== "true";
 
 export default defineConfig({

@@ -13,8 +13,8 @@ const browser = {
     : {}),
 };
 
-// PR feedback exercises existing UI contracts without starting the API or
-// exposing provider credentials.
+// CI's browser suite, on every push and pull request: it exercises existing UI
+// contracts without starting the API or exposing provider credentials.
 export default defineConfig({
   ...baseConfig,
   retries: 0,

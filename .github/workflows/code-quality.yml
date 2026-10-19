@@ -1,6 +1,11 @@
 name: Code Quality Checks
 
-on: [pull_request]
+on:
+  # Pushes to main as well: the route-map check also ran on push through
+  # ci.yml, which duplicated test.yml's lint and unit jobs and was removed.
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   # A check-file-size job used to live here. It was a permanent no-op (it

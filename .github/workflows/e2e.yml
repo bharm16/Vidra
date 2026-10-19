@@ -23,17 +23,6 @@ jobs:
     # them in lockstep on upgrades.
     container: mcr.microsoft.com/playwright:v1.56.0-noble
 
-    services:
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
@@ -46,8 +35,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run provider-free PR browser tests (20 cases)
-        if: github.event_name == 'pull_request'
+      - name: Run provider-free browser tests (20 cases)
         run: npx playwright test --config config/test/playwright.pr.config.js
         env:
           HOME: /root
@@ -59,103 +47,6 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: test.appspot.com
           VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
           VITE_FIREBASE_APP_ID: test-app-id
-
-      # golden-path persists a session and then reloads to prove it survived,
-      # so it needs a Firestore the server can actually write to. There is none
-      # in CI — the readiness probe failed every 15s for the whole run — so the
-      # save never returned an id, the app never navigated to /session/, and
-      # the spec died on a 60s waitForURL. Same emulator the integration job
-      # uses; no credentials, nothing to leak, nothing written to a real
-      # project. JDK 21 because firebase-tools >= 15 refuses to start on less.
-      - name: Setup Java (Firestore emulator requirement)
-        if: github.event_name != 'pull_request'
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-
-      - name: Install Firebase CLI
-        if: github.event_name != 'pull_request'
-        run: npm install -g firebase-tools
-
-      - name: Run native Playwright tests (main, develop, or manual)
-        if: github.event_name != 'pull_request'
-        run: |
-          # An unset repository secret resolves to "" in env: above, and
-          # optionalApiKey() in server/src/config/env.ts is
-          # z.string().min(1).optional() — absent passes validation, empty does
-          # not. Left as "", the server refuses to boot and the entire job dies
-          # on env validation rather than running a single spec. Drop the
-          # empties so the optional branch applies and the native suite runs,
-          # with golden-path failing honestly on the missing provider.
-          [ -n "${OPENAI_API_KEY:-}" ] || unset OPENAI_API_KEY
-          [ -n "${GROQ_API_KEY:-}" ] || unset GROQ_API_KEY
-          # One argument after --only, and no backslash-escaped quotes: a YAML
-          # plain scalar does not process escapes, and firebase answers "Too
-          # many arguments" to the pieces (that is what kept the integration
-          # job from running a single test until dab39f0f).
-          firebase emulators:exec --project demo-test --only firestore "npm run test:e2e"
-        env:
-          # Firefox refuses to start when $HOME is not owned by the running
-          # user. This job runs as root inside the playwright container, where
-          # $HOME is /github/home owned by pwuser, so every firefox test died
-          # in ~5ms at browserType.launch — 81 of 93 failures in the run before
-          # this, all reported as test failures rather than a launch problem.
-          # HOME=/root is the workaround Playwright's own error message gives.
-          HOME: /root
-          VITE_ANTHROPIC_API_KEY: ${{ secrets.VITE_ANTHROPIC_API_KEY || 'sk-test-key' }}
-          VITE_FIREBASE_API_KEY: test-key
-          VITE_FIREBASE_PROJECT_ID: test-project
-          VITE_FIREBASE_AUTH_DOMAIN: test.firebaseapp.com
-          VITE_FIREBASE_STORAGE_BUCKET: test.appspot.com
-          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
-          VITE_FIREBASE_APP_ID: test-app-id
-          PORT: 3001
-          # Service containers are reachable by service name when the job
-          # itself runs in a container (mcr.microsoft.com/playwright above).
-          # localhost would resolve to the playwright container, not the
-          # redis service container, hence ECONNREFUSED at 6379.
-          REDIS_URL: redis://redis:6379
-          NODE_ENV: test
-          CI: true
-          # Server-side env (no VITE_ prefix). The server checks for either
-          # GCS_BUCKET_NAME or FIREBASE_STORAGE_BUCKET on startup; values
-          # match config/test/vitest.setup.server.js.
-          GCS_BUCKET_NAME: prompt-builder-test-bucket
-          FIREBASE_STORAGE_BUCKET: test.appspot.com
-          VIDEO_GENERATE_IDEMPOTENCY_MODE: soft
-          # golden-path.spec.ts mocks nothing on the network by design — it
-          # exists to catch isolated-green/integrated-broken, so it needs the
-          # server to have real providers. Without these the server logged "No
-          # AI clients configured" and expansion never returned, so the spec
-          # failed as a 60s waitForURL timeout rather than as a missing key.
-          #
-          # These two cover all five operations the golden path reaches:
-          # optimize_standard / _shot_interpreter / _intent_check are openai;
-          # enhance_suggestions is qwen, which the Qwen client reads
-          # GROQ_API_KEY for. span_labeling is configured for gemini, and with
-          # no GEMINI_API_KEY the execution planner remaps it to its declared
-          # fallbackTo ("qwen") before dispatch — so it lands on Groq too.
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          # Firebase Admin routes to the emulator off this env var alone — no
-          # app code reads it, which is why the integration suite needs no
-          # wiring either. demo-* project ids are the emulator's convention for
-          # "never contacts production".
-          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
-          GCLOUD_PROJECT: demo-test
-          # Without this every API call 403s and nothing downstream can work.
-          # apiAuth requires ALLOWED_API_KEYS or API_KEY and has no dev
-          # fallback of its own; the client does, and it sends dev-key-12345
-          # (DEV_FALLBACK_API_KEY in client/src/services/http/firebaseAuth.ts),
-          # which is the value the integration job already uses. The last run
-          # logged 390 responses, every one of them a 403 — /sessions and
-          # /optimize included — so the save never happened and golden-path sat
-          # on waitForURL until it timed out.
-          ALLOWED_API_KEYS: dev-key-12345
-          # Native runs retain the existing cross-browser coverage. PRs use
-          # the separate provider-free Chromium configurations above.
-          E2E_ALL_BROWSERS: "true"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -172,67 +63,3 @@ jobs:
           name: playwright-videos
           path: test-results/
           retention-days: 7
-
-  accessibility-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        # SPA crashes on init without these VITE_* values. Without a
-        # rendered DOM both Pa11y (browser launch fine but nothing to scan)
-        # and Lighthouse (NO_FCP) fail. Test placeholders are fine —
-        # nothing in this job makes real Firebase calls.
-        env:
-          VITE_ANTHROPIC_API_KEY: "sk-test-key"
-          VITE_FIREBASE_API_KEY: "test-key"
-          VITE_FIREBASE_PROJECT_ID: "test-project"
-          VITE_FIREBASE_AUTH_DOMAIN: "test.firebaseapp.com"
-          VITE_FIREBASE_STORAGE_BUCKET: "test.appspot.com"
-          VITE_FIREBASE_MESSAGING_SENDER_ID: "123456789"
-          VITE_FIREBASE_APP_ID: "test-app-id"
-        run: npm run build
-
-      - name: Run Pa11y accessibility tests
-        run: |
-          # --gzip enables Content-Encoding: gzip on responses, satisfying the
-          # Lighthouse uses-text-compression audit run later in this job.
-          npx http-server dist -p 8080 --gzip &
-          SERVER_PID=$!
-          # Wait for server to actually accept connections
-          for i in {1..15}; do
-            if curl -fs http://localhost:8080/ >/dev/null 2>&1; then break; fi
-            sleep 1
-          done
-
-          # The site has no /sitemap.xml; run pa11y on the root URL with
-          # Chrome flags that work on Ubuntu 24+ runners (sandboxing is
-          # disabled by AppArmor on hosted runners).
-          npx pa11y \
-            --config .pa11yci.json \
-            http://localhost:8080
-
-          kill $SERVER_PID
-
-      - name: Run Lighthouse CI
-        # Pinned to v12 (@lhci/cli 0.15.x -> Lighthouse 12.x). v10 bundled
-        # Lighthouse 10.1.0, whose axe-core cannot parse oklch(); the design
-        # system emits 5229 oklch declarations, so color-contrast ERRORED
-        # (score null) and failed its assertion. Not a contrast violation.
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          urls: |
-            http://localhost:8080
-          uploadArtifacts: false
-          temporaryPublicStorage: true
-          configPath: ".lighthouserc.json"

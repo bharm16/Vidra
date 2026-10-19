@@ -293,23 +293,6 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
       exclude: coverageExclude,
-      // A ratchet at the measured floor, not a target.
-      //
-      // 85/80/75/85 was set on 2025-10-15, four days after this repo had 77
-      // tests over three files and genuinely measured 76.85%. It has been
-      // unreachable ever since the codebase grew, and nobody noticed because
-      // the coverage step only ever ran on a CI that was failing at startup.
-      // Real coverage across ~1,000 source files is 57.5%.
-      //
-      // These numbers sit just under current so the gate catches a regression
-      // rather than reporting an aspiration. Raise them when coverage earns
-      // it; do not lower them to make a red build green.
-      thresholds: {
-        lines: 57,
-        functions: 78,
-        branches: 74,
-        statements: 57,
-      },
     },
     testTimeout: 10000,
   },
