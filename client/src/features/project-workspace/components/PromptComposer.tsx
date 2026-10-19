@@ -89,9 +89,12 @@ export interface PromptComposerProps {
   onAreaEdit?(): void;
   submissionBlockedReason?: string;
   offline?: boolean;
+  /** Signed-out visitors write and choose settings; phrase help needs an account. */
+  assistance?: "available" | "account-required";
+  onAccountRequired?(): void;
 }
 
-export function PromptComposer({ controller, onChooseInput, inputControl, mediaActions, settingsPresentation = "default", capabilityLookupStatus = "ready", primaryLabel, inputLabel, renderInputPicker, inputStatus, onSubmit, onActionChange, onSketch, onAreaEdit, submissionBlockedReason, offline = false }: PromptComposerProps): ReactElement {
+export function PromptComposer({ controller, onChooseInput, inputControl, mediaActions, settingsPresentation = "default", capabilityLookupStatus = "ready", primaryLabel, inputLabel, renderInputPicker, inputStatus, onSubmit, onActionChange, onSketch, onAreaEdit, submissionBlockedReason, offline = false, assistance = "available", onAccountRequired }: PromptComposerProps): ReactElement {
   const buffer = controller.active;
   const highlightDescription = useId();
   const retentionDescription = useId();
@@ -120,7 +123,8 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   const selectedKey = binding ? canonicalJson(binding) : undefined;
   const writable = buffer !== undefined && (buffer.record.status === "open" || buffer.record.status === "parked") && controller.project?.status === "active" && controller.conversation?.status === "active";
   const [labelResult, setLabels] = useState<{ text: string; spans: LabeledSpan[] }>(NO_LABELS);
-  const labeling = useSpanLabeling({ text: buffer?.content.instructions ?? "", enabled: writable, cacheKey: buffer ? `${buffer.record.ownerId}:${buffer.record.id}` : null, onResult: result => { if (bufferRef.current?.content.instructions === result.text) setLabels({ text: result.text, spans: result.spans }); } });
+  const assisted = assistance === "available";
+  const labeling = useSpanLabeling({ text: buffer?.content.instructions ?? "", enabled: writable && assisted, cacheKey: buffer ? `${buffer.record.ownerId}:${buffer.record.id}` : null, onResult: result => { if (bufferRef.current?.content.instructions === result.text) setLabels({ text: result.text, spans: result.spans }); } });
   // S26: failed highlighting leaves plain words; earlier spans are not repainted under the notice.
   const labels = labeling.status === "error" ? NO_LABELS : labelResult;
   const scopeKey = buffer ? `${buffer.record.id}:${contextKey(buffer)}` : "";
@@ -262,7 +266,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
     setHoveredPhrase(undefined);
     const current = bufferRef.current;
     const field = textarea.current;
-    if (!current || !field || field.selectionStart === field.selectionEnd || !writable) return;
+    if (!current || !field || field.selectionStart === field.selectionEnd || !writable || !assisted) return;
     try {
       const target = bindPhrase({ id: current.record.id, sequence: current.sequence, contextKey: contextKey(current), instructions: current.content.instructions, writable }, field.selectionStart, field.selectionEnd);
       const key = canonicalJson(target);
@@ -278,6 +282,7 @@ export function PromptComposer({ controller, onChooseInput, inputControl, mediaA
   };
 
   const improveWords = (): void => {
+    if (!assisted) { onAccountRequired?.(); return; }
     const current = bufferRef.current; const field = textarea.current;
     if (!current || !field || !writable || !current.content.instructions.trim()) { field?.focus(); return; }
     const selected = field.selectionStart !== field.selectionEnd;

@@ -320,6 +320,22 @@
   flex-direction: column;
   gap: var(--vf-space-40);
 }
+/* An open project's name sits close above its composer. */
+.vf-conversation-home-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vf-space-12);
+  min-height: 32px;
+  margin-bottom: calc(var(--vf-space-16) - var(--vf-space-40));
+}
+.vf-conversation-home-title {
+  min-width: 0;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 .vf-conversation-home-list {
   display: flex;
   flex-direction: column;

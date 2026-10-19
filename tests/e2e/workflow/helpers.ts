@@ -14,12 +14,11 @@ export async function authenticated(page: Page): Promise<void> {
   await page.route("**/*", async route => { const host = new URL(route.request().url()).hostname; if (host === "127.0.0.1" || host === "localhost") await route.continue(); else await route.abort("blockedbyclient"); });
 }
 export function projectId(page: Page): string { const id = /\/app\/project\/([^/?]+)/.exec(page.url())?.[1]; if (!id) throw new Error(`No project in ${page.url()}`); return decodeURIComponent(id); }
+/** A fresh earlier-style project per test keeps each journey's conversations and media separate. */
 export async function project(page: Page, action: "picture" | "clip" = "picture"): Promise<string> {
-  await page.goto("/app");
-  await page.getByRole("button", { name: "New project", exact: true }).first().click();
-  await page.getByLabel("Project name", { exact: true }).fill(`Browser ${crypto.randomUUID()}`);
-  await page.getByRole("button", { name: "Create project", exact: true }).click();
-  await page.waitForURL(/\/app\/project\//);
+  const created = await data(await page.request.post("/api/projects", { headers: authHeaders, data: { id: `project_${crypto.randomUUID()}`, name: `Browser ${crypto.randomUUID()}` } }), ProjectSchema);
+  await data(await page.request.post(`/api/projects/${created.id}/conversations`, { headers: authHeaders, data: { id: `conversation_${crypto.randomUUID()}`, name: "First ideas" } }), z.unknown());
+  await page.goto(`/app/project/${created.id}`);
   await expect(page.getByLabel("Current request words", { exact: true })).toBeVisible();
   if (action === "clip") { await page.getByRole("button", { name: "Choose request action", exact: true }).click(); await page.getByRole("button", { name: "Make a video", exact: true }).click(); }
   await page.getByRole("button", { name: "Model: Choose a model", exact: true }).click();
@@ -31,5 +30,6 @@ export async function drafts(page: Page, id = projectId(page)): Promise<Creation
 export async function keepWords(page: Page, words: string): Promise<void> { await page.getByLabel("Current request words", { exact: true }).fill(words); await page.getByLabel("Current request words", { exact: true }).blur(); await expect.poll(async () => (await drafts(page)).some(draft => draft.instructions === words), { timeout: 15000 }).toBe(true); }
 export async function versions(page: Page, id = projectId(page)): Promise<MediaVersion[]> { return data(await page.request.get(`/api/projects/${id}/media`, { headers: authHeaders }), z.array(MediaVersionSchema)); }
 export async function makePicture(page: Page, words = "A runner under warm stadium lights"): Promise<string> { await keepWords(page, words); await page.getByRole("button", { name: "Make image", exact: true }).click(); await expect.poll(async () => (await versions(page)).find(version => version.label === words)?.id, { timeout: 20000 }).toBeTruthy(); return (await versions(page)).find(version => version.label === words)!.id; }
+export async function library(page: Page): Promise<Project> { return data(await page.request.post("/api/projects/library", { headers: authHeaders, data: {} }), ProjectSchema); }
 export async function ownedProject(page: Page, id = projectId(page)): Promise<Project> { return data(await page.request.get(`/api/projects/${id}`, { headers: authHeaders }), ProjectSchema); }
 export async function guard(page: Page): Promise<void> { const state = await page.request.get("/__test/state"); expect((await state.json()).outbound).toEqual([]); }

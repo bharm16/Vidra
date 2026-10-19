@@ -4,6 +4,10 @@ import type { ConversationListing, ConversationMediaCount } from "@shared/schema
 import "./project-management.css";
 
 export interface ConversationHomeProps {
+  /** The open project's name; the library and signed-out homes have none. */
+  title?: string;
+  /** Controls for the open project, shown beside its name. */
+  actions?: ReactNode;
   composer: ReactNode;
   conversations: ConversationListing[];
   onOpenConversation(id: string): void;
@@ -28,9 +32,10 @@ function mediaCount(media: ConversationMediaCount | undefined): string {
 }
 
 /** P02 keeps the current composer above the project's saved conversations. */
-export function ConversationHome({ composer, conversations, onOpenConversation }: ConversationHomeProps): ReactElement {
-  return <main className="vf-conversation-home" aria-label="Project conversations">
+export function ConversationHome({ title, actions, composer, conversations, onOpenConversation }: ConversationHomeProps): ReactElement {
+  return <main className="vf-conversation-home" aria-label={title ?? "Project conversations"}>
     <div className="vf-conversation-home-content">
+      {title !== undefined ? <header className="vf-conversation-home-heading"><h1 className="vf-conversation-home-title">{title}</h1>{actions}</header> : null}
       {composer}
       <div className="vf-conversation-home-list" aria-label="Conversations">
         {conversations.filter(conversation => conversation.status === "active").map(conversation => <Button key={conversation.id} variant="ghost" className="vf-conversation-home-row !h-auto" onClick={() => onOpenConversation(conversation.id)}>

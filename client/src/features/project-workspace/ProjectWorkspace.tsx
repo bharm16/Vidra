@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { Link, useNavigate, useParams, useSearchParams, useBlocker, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useBlocker, useLocation } from "react-router-dom";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { FreshButton, FreshIconButton } from "@/components/fresh/FreshButton";
 import { FreshRail, type FreshDestination } from "@/components/fresh/FreshRail";
@@ -8,6 +8,9 @@ import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { WorkflowApi } from "./api/workflowApi";
 import { MediaActionsApi } from "./api/mediaActionsApi";
 import { useProjectWorkspace } from "./hooks/useProjectWorkspace";
+import { useLibraryEntry } from "./hooks/useLibraryEntry";
+import { useOpenFolder } from "./hooks/useOpenFolder";
+import { GuestWorkspace } from "./GuestWorkspace";
 import { PromptComposer, type PromptComposerProps } from "./components/PromptComposer";
 import { ModelCreationArea, ModelInputActions, type CapabilityLookupStatus } from "./components/ModelCreationArea";
 import { observedDraftInputs } from "./state/inputBinding";
@@ -23,8 +26,8 @@ import { RequestDetails } from "./components/RequestDetails";
 import { requestHistoryDescription } from "./state/requestDescription";
 import { versionTree } from "./state/versionTree";
 import { draftHasSafeRetention } from "./state/draftBuffer";
-import { bindWorkspaceEntry, consumeCreatedWorkspaceEntry, createdWorkspaceState, readWorkspaceEntry, reopenWorkspaceState, workspaceEntryMatches, type WorkspaceEntryBinding, type WorkspaceEntryTicket } from "./state/workspaceEntry";
-import { ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
+import { bindWorkspaceEntry, consumeCreatedWorkspaceEntry, readWorkspaceEntry, reopenWorkspaceState, workspaceEntryMatches, type WorkspaceEntryBinding, type WorkspaceEntryTicket } from "./state/workspaceEntry";
+import { FolderIdSchema, ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import type { MediaVersion } from "@shared/schemas/workflow/media.schemas";
 import type { AcceptedRequest } from "@shared/schemas/workflow/request.schemas";
 import type { CreationAction, DraftInput } from "@shared/schemas/workflow/draft.schemas";
@@ -45,7 +48,7 @@ import "./workspace.css";
 type Panel = "none" | "recovery" | "options" | "leave" | "rename" | "area";
 interface ResultFeedback { conversationId: string; draftId: string; versionId: string; kind: "setup" | "frame"; }
 interface ScopedActionError { conversationId: string | undefined; draftId: string | undefined; message: string; }
-function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: string }): ReactElement {
+function OwnedWorkspace({ ownerId, projectId, library = false }: { ownerId: string; projectId: string; library?: boolean }): ReactElement {
   const [search, setSearch] = useSearchParams();
   const location = useLocation();
   const navigationEntry = useMemo(() => readWorkspaceEntry(location.state, ownerId, projectId), [location.state, ownerId, projectId]);
@@ -53,7 +56,10 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
   const [entryTicket, setEntryTicket] = useState<WorkspaceEntryTicket>();
   const [entryBinding, setEntryBinding] = useState<WorkspaceEntryBinding>();
   const handledEntry = useRef<string>();
-  const controller = useProjectWorkspace(ownerId, projectId, search.get("conversation") ?? undefined, initialEntry.current?.draftId);
+  const folderParam = FolderIdSchema.safeParse(search.get("folder"));
+  const folderId = library && folderParam.success ? folderParam.data : undefined;
+  const openFolder = useOpenFolder(ownerId, folderId);
+  const controller = useProjectWorkspace(ownerId, projectId, search.get("conversation") ?? undefined, initialEntry.current?.draftId, { library, folderId });
   const imports = useProjectImports(ownerId, projectId, controller.updateMedia);
   const api = useMemo(() => new WorkflowApi(undefined, ownerId), [ownerId]);
   const mediaActions = useMemo(() => new MediaActionsApi(ownerId, projectId), [ownerId, projectId]);
@@ -97,6 +103,8 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
   const savedImport = libraryOpen ? controller.media.find(version => version.id === search.get("savedImport") && isSavedImportVersion(version, ownerId, projectId)) : undefined;
   const inlineVideo = view === "video-workspace";
   const projectHome = view === "conversations";
+  // The library opens on its conversations with a fresh composer, like P02 with no project selected.
+  const libraryHome = library && !view && !search.get("conversation");
   const modelOpen = view === "model";
   const focusEditor = view === "video-focus";
   const editorOpen = focusEditor || view === "video" || search.get("intent") === "video-edit";
@@ -210,7 +218,7 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
   const navigation = (target: FreshDestination): void => {
     if (target === "media") setSourceVersionIds(undefined);
     if (target === "media" || target === "video" || target === "sketch") { showView(target); return; }
-    if (target === "projects") { showView("conversations"); return; }
+    if (target === "projects") { if (library) void navigateSafely("/app/projects"); else showView("conversations"); return; }
     if (target === "create") { void perform(() => newDraft("make-image")); return; }
     void navigateSafely(target === "home" ? "/" : target === "help" ? "/docs" : "/account");
   };
@@ -290,6 +298,15 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialIntent, controller.loading, controller.conversation?.id]);
 
+  // Once something is made from the library home, that conversation is where its results live.
+  const homeConversationId = controller.conversation?.id;
+  const homeHasWork = homeConversationId !== undefined && (controller.view.requests.some(request => request.conversationId === homeConversationId) || controller.submissions.some(submission => controller.view.drafts[submission.command.draftId]?.record.conversationId === homeConversationId));
+  useEffect(() => {
+    if (!libraryHome || !homeHasWork || !homeConversationId) return;
+    const next = new URLSearchParams(search); next.set("conversation", homeConversationId); setSearch(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [libraryHome, homeHasWork, homeConversationId]);
+
   useEffect(() => {
     const requestId = search.get("request");
     if (!requestId || controller.loading || inspectedRequests.current.has(requestId) || controller.resourceErrors.some(problem => problem.startsWith("History"))) return;
@@ -350,7 +367,7 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
     }} /> : undefined;
     return <MediaViewer {...(inspectionActions ? { inspectionActions, onBackToEdit: () => setInspectingVideo(false) } : {})} {...(sourceRequest && selected ? { renderRequestDetails: (onClose: () => void) => <RequestDetails request={sourceRequest} result={selected} media={controller.media} profile={controller.profiles.find(candidate => candidate.id === sourceRequest.snapshot.settings.profileId && candidate.revision === sourceRequest.snapshot.settings.profileRevision)} projectName={controller.project?.name ?? "Project"} conversationName={controller.conversations.find(row => row.id === sourceRequest.conversationId)?.name ?? "Conversation"} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} onReuse={request => { onClose(); void perform(() => reuseRequest(request)); }} onClose={onClose} /> } : {})} mobilePreview={Boolean(mobilePreviewKind)} onView={() => setPane("viewer")} onBack={() => { if (viewerOrigin === "media") showView("media"); else setPane("conversation"); }} banner={failedInput ? <WorkspaceNotice title="The image for this draft could not be made" message="Choose an input or reuse the original setup." actionLabel="Choose input" onAction={() => requestInput(failedInput.role, failedInput)} /> : controller.serviceUnavailable ? <WorkspaceNotice title="New requests are temporarily unavailable" message="The service is at capacity" actionLabel="Check again" onAction={controller.reload} /> : offline ? <WorkspaceNotice title="You are offline" message={active?.checkpointSequence === active?.sequence ? "Changes are saved on this device" : "Keep your latest work before leaving"} actionLabel="View history" onAction={() => showView("conversations")} /> : controller.conversation?.status === "archived" ? <WorkspaceNotice title="This conversation is archived" message="Restore it to make changes." actionLabel="Restore" onAction={() => { const conversation = controller.conversation; if (conversation) void perform(async () => { const updated = await managementApi.changeConversation(projectId, conversation.id, { expectedRevision: conversation.revision, status: "active" }); if (scopeAlive.current) controller.observeConversation(updated); }); }} /> : feedbackBanner ? feedbackBanner : newlyReadyVersionId && newlyReadyVersionId !== selected?.id ? <div className="vf-workspace-banner"><p>{controller.media.find(version => version.id === newlyReadyVersionId)?.label ?? "New version"} is ready.</p><FreshButton onClick={() => { setInspectedRequest(undefined); controller.viewMedia(newlyReadyVersionId); setPane("viewer"); }}>View result</FreshButton></div> : undefined} readOnly={controller.project?.status !== "active" || controller.conversation?.status !== "active"} timeline={timeline} timelineControl={timelineControl} {...(selected && masks[selected.id] ? { areaMask: { versionId: selected.id, dataUri: masks[selected.id]?.dataUri ?? "" } } : {})} version={selected} access={access} onUseInput={controller.applyMediaInput} onUseFrame={useFrame} onDownload={download} onReuseSetup={reuse} canReuseSetup={selected?.origin.kind === "generated" && controller.view.requests.some(request => request.id === (selected.origin.kind === "generated" ? selected.origin.requestId : ""))} onEdit={edit} onAnimate={animate} onAddToVideo={version => { setVersionsOpen(false); setInspectingVideo(false); const next = new URLSearchParams(search); next.delete("intent"); next.set("view", "video-workspace"); next.set("addVersion", version.id); setSearch(next, { replace: true }); }} onVersions={() => setVersionsOpen(true)} onPreferred={makePreferred} {...(preferred ? { preferredVersionId: preferred } : {})} onShare={version => { setSharePlacement("viewer"); setShareVersion(version); }} onHide={version => change(version, { hidden: !version.hidden })} onRename={version => { setRename({ version, label: version.label }); setPanel("rename"); }} onFavorite={version => change(version, { favorite: !version.favorite })} {...(selected?.favorite !== undefined ? { favorite: selected.favorite } : {})} onPictureTools={version => { void perform(async () => { const resource = await access(version.id); if (scopeAlive.current) { setArea({ version, url: resource.url }); setPanel("area"); } }); }} /> };
   const sharing = shareVersion ? <ShareVersionPanel ownerId={ownerId} projectId={projectId} version={shareVersion} placement={sharePlacement} onClose={() => setShareVersion(undefined)} /> : null;
-  const options = panel === "options" && controller.project ? <ProjectManagementPanel ownerId={ownerId} project={controller.project} conversations={controller.conversations} onProjectChange={controller.observeProject} onConversationChange={controller.observeConversation} onOpenConversation={id => { void showConversation(id); }} onOpenDraft={record => { void perform(async () => { await controller.openConversationDraft(record); const current = controllerRef.current; if (current.conversation?.id === record.conversationId) { const next = new URLSearchParams(search); next.set("conversation", record.conversationId); setSearch(next, { replace: true }); markReopenedConversation(record.conversationId, record.id); } setPanel("none"); }); }} onShowConversations={() => showView("conversations")} onClose={() => setPanel("none")} /> : null;
+  const options = panel === "options" && controller.project ? <ProjectManagementPanel ownerId={ownerId} project={controller.project} folder={openFolder.folder} onFolderChange={folder => { openFolder.observe(folder); if (folder.status === "trashed") void navigateSafely("/app/projects"); }} conversations={controller.conversations} onProjectChange={controller.observeProject} onConversationChange={controller.observeConversation} onOpenConversation={id => { void showConversation(id); }} onOpenDraft={record => { void perform(async () => { await controller.openConversationDraft(record); const current = controllerRef.current; if (current.conversation?.id === record.conversationId) { const next = new URLSearchParams(search); next.set("conversation", record.conversationId); setSearch(next, { replace: true }); markReopenedConversation(record.conversationId, record.id); } setPanel("none"); }); }} onShowConversations={() => showView("conversations")} onClose={() => setPanel("none")} /> : null;
   const workspaceDialog = <Dialog open={panel !== "none" && panel !== "options" && panel !== "area"} onOpenChange={open => { if (!open) keepEditing(); }}><DialogContent overlayClassName={panel === "leave" ? "vf-leave-backdrop" : ""} className={`vf vf-dialog${panel === "leave" ? " vf-leave-dialog" : ""}`} aria-describedby="workspace-panel-description"><DialogTitle>{panel === "recovery" ? "Recover your work" : panel === "rename" ? "Rename media" : panel === "area" ? "Paint an area" : "Keep this draft before leaving"}</DialogTitle><DialogDescription id="workspace-panel-description">{panel === "leave" ? <><span className="vf-leave-desktop-copy">Neither this device nor the server has saved your latest changes. Retry saving or export a copy before leaving.</span><span className="vf-leave-mobile-copy">Your latest changes are not saved on this device or the server. Retry saving or export a copy before leaving.</span></> : panel === "area" ? "Choose an area on this exact picture." : "Continue when you are ready."}</DialogDescription>
 
       {panel === "recovery" ? <div className="vf-draft-list">{controller.deviceCopies.length ? <h3>Device recovery copies</h3> : null}{controller.deviceCopies.map((copy, index) => <FreshButton key={`${copy.draftId}:${index}`} onClick={() => { void perform(async () => { await controller.recoverDeviceCopy(copy); setPanel("none"); }); }}>{copy.content.instructions || "Empty request"} · {new Date(copy.updatedAt).toLocaleTimeString()}</FreshButton>)}</div> : null}
@@ -368,9 +385,16 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
   if (projectHome) return <div className="vf vf-project-home-shell">{renderRail("projects")}<ConversationHome composer={renderComposer()} conversations={controller.conversations} onOpenConversation={id => { void perform(async () => { await controller.openConversation(id); if (controllerRef.current.canLeave()) { const next = new URLSearchParams(search); next.set("conversation", id); next.delete("view"); setSearch(next, { replace: true }); setPane("conversation"); markReopenedConversation(id); } }); }} />{options}{sharing}{workspaceDialog}</div>;
   if (sketchOpen) return <><ProjectSketch key={`${ownerId}:${projectId}`} ownerId={ownerId} projectId={projectId} projectName={controller.project?.name ?? "this project"} rail={renderRail("sketch")} onAccepted={controller.updateMedia} onClose={() => showView()} onUseAsInput={version => { controller.applyMediaInput(version); showView(); }} />{options}{sharing}{workspaceDialog}</>;
   if (editorOpen) return <div className="vf vf-editor-host" data-focus={focusEditor || undefined}>{renderRail("video")}<div className="vf-editor-body">{!focusEditor ? <header className="vf-editor-project-header"><FreshIconButton icon="folder" label="Project options" onClick={() => setPanel("options")} /><div className="vf-flex" /><FreshIconButton icon="more" label="More project options" onClick={() => setPanel("options")} /></header> : null}{renderEditor(focusEditor ? "focus" : "full")}</div>{options}{sharing}{workspaceDialog}</div>;
+  if (libraryHome) {
+    const homeConversations = controller.conversations.filter(conversation => conversation.acceptanceSequence > 0 && (!folderId || conversation.folderId === folderId));
+    const title = folderId ? openFolder.folder?.name ?? "" : undefined;
+    const loadProblem = controller.error ?? openFolder.error;
+    const homeNotice = loadProblem ? <div className="vf-notice" role="status"><p>{loadProblem}</p><FreshButton onClick={controller.reload}>Retry loading</FreshButton></div> : actionError ? <div className="vf-notice" role="alert"><p>{actionError}</p><FreshButton tone="quiet" onClick={() => setActionError(undefined)}>Dismiss</FreshButton></div> : null;
+    return <div className="vf vf-project-home-shell">{renderRail(folderId ? "projects" : "create")}<ConversationHome {...(title !== undefined ? { title } : {})} {...(folderId ? { actions: <FreshIconButton icon="more" label="Project options" onClick={() => setPanel("options")} /> } : {})} composer={<>{homeNotice}{renderComposer()}</>} conversations={homeConversations} onOpenConversation={id => { void showConversation(id); }} />{options}{sharing}{workspaceDialog}</div>;
+  }
   return <div className="vf vf-workspace" data-workspace-entry={entryWorkingCopy ? entryBinding?.kind : undefined} data-mobile-pane={pane} data-library={libraryOpen || undefined} data-area={panel === "area" || undefined} data-mobile-preview={mobilePreviewKind} data-versions={versionsOpen || undefined} data-empty={!libraryOpen && !inlineVideo && !controller.view.requests.length && !controller.submissions.length && !selected || undefined}>
     {renderRail(libraryOpen || selected && (viewerOrigin === "media" || isMobile && pane === "viewer") ? "media" : "create")}
-    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? controller.media.filter(version => sourceVersionIds.includes(version.id)) : controller.media} imports={imports} onChange={controller.updateMedia} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setPane("viewer"); showView(); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-image")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resourceErrors.find(problem => problem.includes("Media"))} onReload={controller.reload} onProjects={() => { void navigateSafely("/app"); }} onOptions={() => setPanel("options")} /> : null}
+    {libraryOpen ? <ProjectMediaLibrary ownerId={ownerId} projectId={projectId} versions={sourceVersionIds ? controller.media.filter(version => sourceVersionIds.includes(version.id)) : controller.media} imports={imports} onChange={controller.updateMedia} onOpen={version => { setInspectedRequest(undefined); setViewerOrigin("media"); controller.viewMedia(version.id); setPane("viewer"); showView(); }} onEdit={edit} onCreate={() => { void perform(() => newDraft("make-image")); }} readonly={controller.project?.status !== "active"} loading={controller.loading} loadError={controller.error ?? controller.resourceErrors.find(problem => problem.includes("Media"))} onReload={controller.reload} onProjects={() => { void navigateSafely("/app/projects"); }} onOptions={() => setPanel("options")} /> : null}
     <header className="vf-project-bar"><FreshIconButton icon="folder" label="Project options" onClick={() => setPanel("options")} /><div className="vf-flex" />{controller.view.requests.length || selected ? <FreshIconButton icon="more" label="More project options" onClick={() => setPanel("options")} /> : null}</header>
     <aside className="vf-conversation">
       {controller.loading ? <p className="vf-notice" role="status">Opening saved work…</p> : null}
@@ -391,15 +415,41 @@ function OwnedWorkspace({ ownerId, projectId }: { ownerId: string; projectId: st
   </div>;
 }
 
+function LibraryWorkspace({ ownerId }: { ownerId: string }): ReactElement {
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  // Read once: dropping the claim from the URL must not restart the entry.
+  const [claim] = useState(() => search.get("claim") ?? undefined);
+  const entry = useLibraryEntry(ownerId, claim);
+  const library = entry.library;
+  useEffect(() => {
+    if (!library || !entry.claim) return;
+    const next = new URLSearchParams(search); next.delete("claim");
+    if (entry.claim.state === "claimed") {
+      next.set("conversation", entry.claim.conversationId);
+      navigate(`/app?${next}`, { replace: true, state: reopenWorkspaceState({ ownerId, projectId: library.id, conversationId: entry.claim.conversationId, draftId: entry.claim.draftId }) });
+    } else navigate(next.size ? `/app?${next}` : "/app", { replace: true });
+    // The claim settles once per entry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry.claim, library]);
+  if (entry.error) return <SystemRoutePage state={entry.error.status === 401 || entry.error.status === 403 ? "denied" : entry.error.status === 503 ? "unavailable" : !navigator.onLine ? "offline" : "load-error"} onRetry={entry.retry} />;
+  if (!library || search.has("claim")) return <SystemRoutePage state="loading" />;
+  return <OwnedWorkspace key={`${ownerId}:${library.id}`} ownerId={ownerId} projectId={library.id} library />;
+}
+
 export default function ProjectWorkspace(): ReactElement {
   const [resolved, setResolved] = useState(false);
   const user = useAuthUser({ onChange: () => setResolved(true) });
   const params = useParams<{ projectId: string }>();
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  const browsing = useLocation().pathname === "/app/projects";
   const project = ProjectIdSchema.safeParse(params.projectId ?? search.get("project"));
-  const openProject = (id: string, reopen: boolean): void => { if (!user) return; const next = new URLSearchParams(search); next.delete("project"); const target = { ownerId: user.uid, projectId: id }; navigate(`/app/project/${encodeURIComponent(id)}${next.size ? `?${next}` : ""}`, { state: reopen ? reopenWorkspaceState(target) : createdWorkspaceState(target) }); };
-  if (!resolved) return <main className="vf vf-project-index"><p role="status">Checking your account…</p></main>;
-  if (!user) return <main className="vf vf-project-index"><h1>Keep your work in a project.</h1><p>Sign in to save and reopen your requests.</p><Link to={`/signin?redirect=${encodeURIComponent(project.success ? `/app/project/${project.data}?${search}` : `/app?${search}`)}`}>Sign in</Link><Link to="/">Back to home</Link></main>;
-  return project.success ? <OwnedWorkspace key={`${user.uid}:${project.data}`} ownerId={user.uid} projectId={project.data} /> : <ProjectBrowser key={user.uid} ownerId={user.uid} onOpen={id => openProject(id, true)} onCreate={id => openProject(id, false)} />;
+  const openProject = (id: string): void => { if (!user) return; const next = new URLSearchParams(search); next.delete("project"); const target = { ownerId: user.uid, projectId: id }; navigate(`/app/project/${encodeURIComponent(id)}${next.size ? `?${next}` : ""}`, { state: reopenWorkspaceState(target) }); };
+  if (!resolved) return <SystemRoutePage state="loading" />;
+  // Saved projects need their owner; anyone can start writing a request.
+  if (!user) return project.success || browsing ? <SystemRoutePage state="denied" /> : <GuestWorkspace />;
+  if (project.success) return <OwnedWorkspace key={`${user.uid}:${project.data}`} ownerId={user.uid} projectId={project.data} />;
+  if (browsing) return <ProjectBrowser key={user.uid} ownerId={user.uid} onOpen={openProject} onOpenFolder={id => navigate(`/app?folder=${encodeURIComponent(id)}`)} />;
+  return <LibraryWorkspace key={user.uid} ownerId={user.uid} />;
 }

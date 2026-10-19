@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ProjectBrowser } from "../ProjectBrowser";
-import { project, conversation } from "./fixtures";
+import { project, folder } from "./fixtures";
 import { readProjectCreationIntent } from "../state/projectCreationIntent";
-const calls = vi.hoisted(() => ({ listProjects: vi.fn(), createProject: vi.fn(), createConversation: vi.fn(), changeProject: vi.fn(), currentUser: vi.fn() }));
-vi.mock("../api/projectManagementApi", () => ({ ProjectManagementApi: class { listProjects = calls.listProjects; createProject = calls.createProject; createConversation = calls.createConversation; changeProject = calls.changeProject; } }));
+const calls = vi.hoisted(() => ({ listProjects: vi.fn(), listFolders: vi.fn(), createFolder: vi.fn(), changeFolder: vi.fn(), changeProject: vi.fn(), currentUser: vi.fn() }));
+vi.mock("../api/projectManagementApi", () => ({ ProjectManagementApi: class { listProjects = calls.listProjects; listFolders = calls.listFolders; createFolder = calls.createFolder; changeFolder = calls.changeFolder; changeProject = calls.changeProject; } }));
 vi.mock("@/repositories/index", () => ({ getAuthRepository: () => ({ getCurrentUser: calls.currentUser }) }));
-beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); calls.currentUser.mockReturnValue({ uid: "creator" }); calls.listProjects.mockResolvedValue([project]); calls.createProject.mockImplementation(async (id: string, name: string) => ({ ...project, id, name })); calls.createConversation.mockImplementation(async (projectId: string, id: string) => ({ ...conversation, id, projectId })); calls.changeProject.mockResolvedValue({ ...project, revision: 2 }); });
-function browser(onOpen = vi.fn()): ReturnType<typeof render> { return render(<MemoryRouter><ProjectBrowser ownerId="creator" onOpen={onOpen} /></MemoryRouter>); }
+beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); calls.currentUser.mockReturnValue({ uid: "creator" }); calls.listProjects.mockResolvedValue([project]); calls.listFolders.mockResolvedValue([]); calls.createFolder.mockImplementation(async (id: string, name: string) => ({ ...folder, id, name })); calls.changeFolder.mockResolvedValue({ ...folder, revision: 2 }); calls.changeProject.mockResolvedValue({ ...project, revision: 2 }); });
+function browser(onOpen = vi.fn(), onOpenFolder = vi.fn()): ReturnType<typeof render> { return render(<MemoryRouter><ProjectBrowser ownerId="creator" onOpen={onOpen} onOpenFolder={onOpenFolder} /></MemoryRouter>); }
 describe("Project browser", () => {
   it("opens the selected real project without mutating an active draft", async () => {
     const open = vi.fn(); browser(open);
@@ -30,9 +30,17 @@ describe("Project browser", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reload projects" }));
     expect(await screen.findByRole("heading", { name: "Start your first project" })).toBeVisible();
   });
-  it("retries a response-loss creation with the same captured identities and name", async () => {
-    calls.createProject.mockRejectedValueOnce(new Error("Response lost")).mockImplementation(async (id: string, name: string) => ({ ...project, id, name }));
-    const open = vi.fn(); browser(open); await screen.findByRole("heading", { name: project.name });
+  it("lists new projects beside earlier ones and opens each the right way", async () => {
+    calls.listFolders.mockResolvedValue([folder]);
+    const open = vi.fn(); const openFolder = vi.fn(); browser(open, openFolder);
+    fireEvent.click(await screen.findByRole("button", { name: `Open project ${folder.name}` }));
+    expect(openFolder).toHaveBeenCalledWith(folder.id);
+    fireEvent.click(screen.getByRole("button", { name: `Open project ${project.name}` }));
+    expect(open).toHaveBeenCalledWith(project.id);
+  });
+  it("retries a response-loss creation with the same captured identity and name", async () => {
+    calls.createFolder.mockRejectedValueOnce(new Error("Response lost")).mockImplementation(async (id: string, name: string) => ({ ...folder, id, name }));
+    const openFolder = vi.fn(); browser(vi.fn(), openFolder); await screen.findByRole("heading", { name: project.name });
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
     fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "New campaign" } });
     fireEvent.click(screen.getByRole("button", { name: "Create project" }));
@@ -41,9 +49,8 @@ describe("Project browser", () => {
     expect(retained?.name).toBe("New campaign");
     expect(screen.getByLabelText("Project name")).toHaveAttribute("readonly");
     fireEvent.click(screen.getByRole("button", { name: "Retry same project" }));
-    await waitFor(() => expect(open).toHaveBeenCalledWith(retained?.projectId));
-    expect(calls.createProject.mock.calls[0]).toEqual(calls.createProject.mock.calls[1]);
-    expect(calls.createConversation).toHaveBeenCalledWith(retained?.projectId, retained?.conversationId, "First ideas");
+    await waitFor(() => expect(openFolder).toHaveBeenCalledWith(retained?.folderId));
+    expect(calls.createFolder.mock.calls[0]).toEqual(calls.createFolder.mock.calls[1]);
     expect(readProjectCreationIntent("creator")).toBeUndefined();
   });
   it("restores only the selected trashed project's captured revision", async () => {
@@ -55,15 +62,15 @@ describe("Project browser", () => {
     expect(await screen.findByRole("heading", { name: "Trash is empty" })).toBeVisible();
   });
   it("does not open another owner's late project creation after account change", async () => {
-    let complete: ((value: typeof project) => void) | undefined;
-    calls.createProject.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
-    const open = vi.fn(); const view = browser(open); await screen.findByRole("heading", { name: project.name });
+    let complete: ((value: typeof folder) => void) | undefined;
+    calls.createFolder.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+    const open = vi.fn(); const view = browser(vi.fn(), open); await screen.findByRole("heading", { name: project.name });
     fireEvent.click(screen.getByRole("button", { name: "New project" }));
     fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Private project" } });
     fireEvent.click(screen.getByRole("button", { name: "Create project" }));
     calls.currentUser.mockReturnValue({ uid: "other" }); calls.listProjects.mockResolvedValue([]);
-    view.rerender(<MemoryRouter><ProjectBrowser ownerId="other" onOpen={open} /></MemoryRouter>);
-    await act(async () => complete?.(project));
+    view.rerender(<MemoryRouter><ProjectBrowser ownerId="other" onOpen={vi.fn()} onOpenFolder={open} /></MemoryRouter>);
+    await act(async () => complete?.(folder));
     expect(open).not.toHaveBeenCalled();
     expect(screen.queryByText("Private project")).not.toBeInTheDocument();
   });

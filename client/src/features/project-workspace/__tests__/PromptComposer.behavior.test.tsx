@@ -9,12 +9,12 @@ import type { LabeledSpan } from "@/features/span-highlighting/hooks/useSpanLabe
 
 const ports = vi.hoisted(() => {
   const spans: { current: LabeledSpan[] | undefined } = { current: undefined };
-  return { suggestions: vi.fn(), spans, status: { current: "success" } };
+  return { suggestions: vi.fn(), spans, status: { current: "success" }, labelingEnabled: { current: undefined as boolean | undefined } };
 });
 vi.mock("@/features/span-highlighting/hooks/useSpanLabeling", async () => {
   const { useEffect, useRef } = await import("react");
-  return { useSpanLabeling: ({ text, onResult }: { text: string; onResult(result: { text: string; spans: LabeledSpan[] }): void }) => {
-    const callback = useRef(onResult); callback.current = onResult;
+  return { useSpanLabeling: ({ text, enabled, onResult }: { text: string; enabled: boolean; onResult(result: { text: string; spans: LabeledSpan[] }): void }) => {
+    const callback = useRef(onResult); callback.current = onResult; ports.labelingEnabled.current = enabled;
     useEffect(() => { if (ports.spans.current) callback.current({ text, spans: ports.spans.current }); }, [text]);
     return { status: ports.status.current, refresh: vi.fn() };
   } };
@@ -336,4 +336,18 @@ it("states offline device retention only once the latest words are checkpointed,
   rerender(<PromptComposer controller={{ ...state, conversation: { status: "archived" } }} onChooseInput={vi.fn()} />);
   expect(screen.getByText("Your work and history are kept")).toBeInTheDocument();
   expect(screen.queryByText("Only on this device")).not.toBeInTheDocument();
+});
+
+it("asks a signed-out writer to sign in for phrase help and never calls the suggestion services", async () => {
+  const onAccountRequired = vi.fn();
+  const unchosen = CreationDraftSchema.parse({ ...draft, settings: { ...draft.settings, profileId: "unselected", profileRevision: "unresolved" } });
+  render(<PromptComposer controller={{ ...controller(), active: openDraftBuffer(unchosen) }} onChooseInput={vi.fn()} onActionChange={vi.fn()} assistance="account-required" onAccountRequired={onAccountRequired} />);
+  expect(ports.labelingEnabled.current).toBe(false);
+  const field = screen.getByLabelText("Current request words") as HTMLTextAreaElement;
+  act(() => { field.focus(); field.setSelectionRange(0, 11); }); fireEvent.mouseUp(field);
+  expect(ports.suggestions).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Choose request action" }));
+  fireEvent.click(await screen.findByRole("button", { name: /Improve wording/ }));
+  expect(onAccountRequired).toHaveBeenCalledTimes(1);
+  expect(ports.suggestions).not.toHaveBeenCalled();
 });

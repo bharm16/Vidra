@@ -22,6 +22,7 @@ const harness = await startCrossModeHarness({
   async configureBoundaries({ container, storage }): Promise<void> {
     const { ProjectStore } = await import("@services/projects/ProjectStore");
     const { ConversationStore } = await import("@services/projects/ConversationStore");
+    const { FolderStore } = await import("@services/projects/FolderStore");
     const { CreationDraftStore } = await import("@services/creation-drafts/CreationDraftStore");
     const { CreationContextService } = await import("@services/creation-context/CreationContextService");
     const { RequestHistoryStore } = await import("@services/media-history/RequestHistoryStore");
@@ -43,7 +44,8 @@ const harness = await startCrossModeHarness({
     const { WorkflowManagementService } = await import("@services/workflow-sharing/WorkflowManagementService");
     const { AccountUsageService } = await import("@services/account/AccountUsageService");
     const projects = new ProjectStore(database);
-    const conversations = new ConversationStore(database, projects);
+    const folders = new FolderStore(database);
+    const conversations = new ConversationStore(database, projects, undefined, folders);
     const drafts = new CreationDraftStore(database, projects, conversations);
     const contexts = new CreationContextService(database, projects);
     const media = new MediaVersionIndex(database, projects);
@@ -68,6 +70,7 @@ const harness = await startCrossModeHarness({
     const edits = new VideoEditStore(database, projects, media);
     const renderer = new NativeVideoRenderer(boundaries.exportStorage);
     container.registerValue("workflowProjectStore", projects);
+    container.registerValue("workflowFolderStore", folders);
     container.registerValue("workflowConversationStore", conversations);
     container.registerValue("workflowDraftStore", drafts);
     container.registerValue("workflowContextService", contexts);

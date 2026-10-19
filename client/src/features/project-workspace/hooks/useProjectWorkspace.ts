@@ -13,9 +13,14 @@ import { acknowledgeDraftBuffer, draftContent, draftHasSafeRetention, openDraftB
 import { EMPTY_WORKSPACE_VIEW, workspaceViewReducer, type WorkspaceViewEvent, type WorkspaceViewState } from "../state/workspaceState";
 import { initialDraftId } from "../state/initialDraft";
 import { bindDraftInput } from "../state/inputBinding";
+import { settingsForAction, settingsForProfile } from "../state/profileSettings";
 
 function message(error: unknown): string { return error instanceof Error ? error.message : "This operation was not confirmed. Your current words are retained."; }
 function id(prefix: string): string { return `${prefix}_${crypto.randomUUID()}`; }
+/** The newest active conversation with nothing made in it yet. */
+export function unusedConversation(rows: ConversationListing[], folderId?: string): ConversationListing | undefined {
+  return rows.filter(row => row.status === "active" && row.acceptanceSequence === 0 && row.folderId === folderId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id))[0];
+}
 
 export interface ProjectWorkspaceController {
   view: WorkspaceViewState;
@@ -75,7 +80,16 @@ export interface ProjectWorkspaceController {
 }
 
 /** An owner-bound controller: media observation never writes the active composer. */
-export function useProjectWorkspace(ownerId: string, projectId: string, initialConversationId?: string, initialDraftTargetId?: string): ProjectWorkspaceController {
+export interface ProjectWorkspaceOptions {
+  /** A library home starts in an unused conversation instead of the newest one. */
+  library?: boolean;
+  /** The named project a library home files new conversations into. */
+  folderId?: string | undefined;
+}
+
+export function useProjectWorkspace(ownerId: string, projectId: string, initialConversationId?: string, initialDraftTargetId?: string, options: ProjectWorkspaceOptions = {}): ProjectWorkspaceController {
+  const library = options.library === true;
+  const folderId = library ? options.folderId : undefined;
   const api = useMemo(() => new WorkflowApi(undefined, ownerId), [ownerId]);
   const device = useMemo(() => new DraftCheckpointStore(), []);
   const [view, dispatch] = useReducer(workspaceViewReducer, EMPTY_WORKSPACE_VIEW);
@@ -167,8 +181,14 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
         if (!abort.signal.aborted && inScope()) setProject(owned);
         const rows = await api.listConversations(projectId, abort.signal);
         if (rows.some(row => row.ownerId !== ownerId || row.projectId !== projectId)) throw new Error("The conversation list does not belong to this project and account.");
-        const chosen = requestedConversationId ? rows.find(row => row.id === requestedConversationId) : rows.find(row => row.status === "active") ?? rows[0];
+        let chosen: ConversationListing | undefined = requestedConversationId ? rows.find(row => row.id === requestedConversationId) : library ? unusedConversation(rows, folderId) : rows.find(row => row.status === "active") ?? rows[0];
         if (requestedConversationId && !chosen) throw new Error("This conversation is unavailable in the current project.");
+        if (!chosen && library && owned.status === "active") {
+          // Reusing an unused conversation keeps repeat visits from piling up empty rows.
+          const created = await api.createConversation(projectId, id("conversation"), "New conversation", folderId);
+          if (created.ownerId !== ownerId || created.projectId !== projectId || created.folderId !== folderId) throw new Error("The conversation does not belong to this library and account.");
+          rows.push(created); chosen = created;
+        }
         if (abort.signal.aborted || !inScope()) return;
         setProject(owned); setConversations(rows); setConversation(chosen);
         if (chosen) {
@@ -227,7 +247,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
       finally { if (!abort.signal.aborted && inScope()) setLoading(false); }
     })();
     return () => { abort.abort(); mounted.current = false; };
-  }, [api, device, emit, inScope, loadVersion, ownerId, projectId, requestedConversationId, scopeKey]);
+  }, [api, device, emit, folderId, inScope, library, loadVersion, ownerId, projectId, requestedConversationId, scopeKey]);
 
   const flushId = useCallback(async (draftId: string): Promise<boolean> => {
     // Recheck after each awaited save: several callers can resume together.
@@ -302,14 +322,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || profile.action !== buffer.content.action) return;
-    const parameters: DraftContent["settings"]["parameters"] = {};
-    for (const [name, policy] of Object.entries(profile.parameters)) {
-      if (buffer.content.settings.parameters[name] !== undefined) parameters[name] = buffer.content.settings.parameters[name];
-      else if (policy.policy === "fixed") parameters[name] = policy.value;
-      else if (policy.policy === "editable") parameters[name] = policy.defaultValue;
-    }
-    // Retained incompatible values remain visible; preparation never silently clamps them.
-    edit({ ...buffer.content, settings: { profileId: profile.id, profileRevision: profile.revision, parameters: { ...buffer.content.settings.parameters, ...parameters }, outputCount: buffer.content.settings.outputCount } });
+    edit({ ...buffer.content, settings: settingsForProfile(profile, buffer.content) });
   }, [edit]);
 
   const prepare = useCallback(async (): Promise<void> => {
@@ -456,7 +469,7 @@ export function useProjectWorkspace(ownerId: string, projectId: string, initialC
     const draftId = viewRef.current.activeDraftId;
     const buffer = draftId ? viewRef.current.drafts[draftId] : undefined;
     if (!buffer || action === buffer.content.action) return;
-    edit({ ...buffer.content, action, settings: { ...buffer.content.settings, profileId: "unselected", profileRevision: "unresolved" } });
+    edit({ ...buffer.content, action, settings: settingsForAction(buffer.content) });
   }, [edit]);
 
   const openConversation = useCallback(async (value: string): Promise<void> => {

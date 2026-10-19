@@ -604,3 +604,51 @@ it.each(["trashed-project", "archived-conversation", "submitted-draft"])("read-o
   expect(ports.device.save).not.toHaveBeenCalled();
   expect(ports.api.saveDraft).not.toHaveBeenCalled();
 });
+
+it("a library home reuses its newest unused conversation instead of reopening finished work", async () => {
+  const finished = ConversationSchema.parse({ ...conversation, id: "conversation_finished", acceptanceSequence: 3, updatedAt: "2026-10-12T20:00:00.000Z" });
+  const older = ConversationSchema.parse({ ...conversation, id: "conversation_older_unused", updatedAt: "2026-10-09T20:00:00.000Z" });
+  ports.api.listConversations.mockResolvedValue([finished, older, conversation]);
+  const { result } = renderHook(() => useProjectWorkspace("creator", project.id, undefined, undefined, { library: true }));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.conversation?.id).toBe(conversation.id);
+  expect(ports.api.createConversation).not.toHaveBeenCalled();
+});
+
+it("a library home starts a new conversation when every existing one has work", async () => {
+  const finished = ConversationSchema.parse({ ...conversation, id: "conversation_finished", acceptanceSequence: 1 });
+  const fresh = ConversationSchema.parse({ ...conversation, id: "conversation_fresh" });
+  ports.api.listConversations.mockResolvedValue([finished]);
+  ports.api.createConversation.mockResolvedValue(fresh);
+  ports.api.listDrafts.mockResolvedValue([]);
+  const { result } = renderHook(() => useProjectWorkspace("creator", project.id, undefined, undefined, { library: true }));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(ports.api.createConversation).toHaveBeenCalledWith(project.id, expect.stringMatching(/^conversation_/), "New conversation", undefined);
+  expect(result.current.conversation?.id).toBe(fresh.id);
+  expect(result.current.conversations.map(row => row.id)).toEqual([finished.id, fresh.id]);
+});
+
+it("a library home rejects a created conversation that belongs to another account", async () => {
+  ports.api.listConversations.mockResolvedValue([]);
+  ports.api.createConversation.mockResolvedValue(ConversationSchema.parse({ ...conversation, id: "conversation_foreign", ownerId: "intruder" }));
+  const { result } = renderHook(() => useProjectWorkspace("creator", project.id, undefined, undefined, { library: true }));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  expect(result.current.conversation).toBeUndefined();
+  expect(result.current.error).toMatch(/does not belong/);
+});
+
+it("a project home in the library reuses or starts a conversation filed in that project only", async () => {
+  const loose = ConversationSchema.parse({ ...conversation, id: "conversation_loose" });
+  const filed = ConversationSchema.parse({ ...conversation, id: "conversation_filed", folderId: "folder_spring" });
+  ports.api.listConversations.mockResolvedValue([loose, filed]);
+  const reused = renderHook(() => useProjectWorkspace("creator", project.id, undefined, undefined, { library: true, folderId: "folder_spring" }));
+  await waitFor(() => expect(reused.result.current.loading).toBe(false));
+  expect(reused.result.current.conversation?.id).toBe(filed.id);
+  reused.unmount();
+  ports.api.listConversations.mockResolvedValue([loose]);
+  ports.api.createConversation.mockResolvedValue(ConversationSchema.parse({ ...conversation, id: "conversation_new_filed", folderId: "folder_spring" }));
+  const started = renderHook(() => useProjectWorkspace("creator", project.id, undefined, undefined, { library: true, folderId: "folder_spring" }));
+  await waitFor(() => expect(started.result.current.loading).toBe(false));
+  expect(ports.api.createConversation).toHaveBeenCalledWith(project.id, expect.stringMatching(/^conversation_/), "New conversation", "folder_spring");
+  expect(started.result.current.conversation?.id).toBe("conversation_new_filed");
+});

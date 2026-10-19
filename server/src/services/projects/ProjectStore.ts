@@ -1,9 +1,10 @@
 import type { Firestore, Transaction } from "firebase-admin/firestore";
 import { z } from "zod";
-import { ChangeProjectCommandSchema, CreateProjectCommandSchema, ProjectSchema, type Project } from "@shared/schemas/workflow/project.schemas";
+import { ChangeProjectCommandSchema, CreateProjectCommandSchema, ProjectSchema, isLibraryProject, type Project } from "@shared/schemas/workflow/project.schemas";
 import { OwnerIdSchema, ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { WorkflowError } from "./WorkflowError";
 import { requireWorkflowProjectAuthority } from "./projectAccess";
+import { libraryProjectId } from "./libraryProject";
 
 export class ProjectStore {
   constructor(private readonly database: Firestore, private readonly now: () => string = () => new Date().toISOString()) {}
@@ -26,6 +27,29 @@ export class ProjectStore {
     });
   }
 
+  /** Returns the owner's library, creating it on first use. */
+  async ensureLibrary(owner: string): Promise<Project> {
+    const ownerId = OwnerIdSchema.parse(owner);
+    const id = libraryProjectId(ownerId);
+    const ref = this.database.collection("creation_projects").doc(id);
+    const timestamp = this.now();
+    return this.database.runTransaction(async transaction => {
+      const existing = await transaction.get(ref);
+      if (existing.exists) {
+        const project = this.owned(ownerId, id, existing.data());
+        if (!isLibraryProject(project)) throw new WorkflowError("access_denied", "You do not have access to this project.");
+        return project;
+      }
+      const project = ProjectSchema.parse({
+        schemaVersion: "vidra-workflow/v2", id, ownerId, revision: 1,
+        name: "Library", status: "active", instructions: { revision: 1, text: "" },
+        origin: { kind: "new" }, role: "library", createdAt: timestamp, updatedAt: timestamp,
+      });
+      transaction.create(ref, project);
+      return project;
+    });
+  }
+
   async get(owner: string, id: string): Promise<Project> {
     const ownerId = OwnerIdSchema.parse(owner);
     const projectId = ProjectIdSchema.parse(id);
@@ -37,7 +61,7 @@ export class ProjectStore {
   async list(owner: string): Promise<Project[]> {
     const ownerId = OwnerIdSchema.parse(owner);
     const result = await this.database.collection("creation_projects").where("ownerId", "==", ownerId).limit(200).get();
-    return result.docs.map(doc => this.owned(ownerId, doc.id, doc.data())).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+    return result.docs.map(doc => this.owned(ownerId, doc.id, doc.data())).filter(project => !isLibraryProject(project)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
   }
 
   async change(owner: string, id: string, input: unknown): Promise<Project> {
@@ -48,6 +72,7 @@ export class ProjectStore {
       const current = await this.readOwned(transaction, owner, projectId);
       // Metadata restoration is permitted while authoring remains read-only.
       requireWorkflowProjectAuthority(current);
+      if (isLibraryProject(current)) throw new WorkflowError("read_only", "Your library can't be renamed or moved to trash.");
       if (current.revision !== command.expectedRevision) throw new WorkflowError("revision_conflict", "This project changed in another window. Keep your changes and review the latest version.");
       if (current.status === "trashed" && command.status !== "active") throw new WorkflowError("read_only", "Restore this project before changing it.");
       const instructions = command.instructions === undefined || command.instructions === current.instructions.text

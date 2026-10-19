@@ -37,6 +37,19 @@ it("WP-03 project HTTP boundary rejects anonymous, malformed and cross-owner req
   expect(JSON.stringify(forbidden.body)).not.toContain("Private name");
 });
 
+it("opens the caller's own library and keeps library ids out of client hands", async () => {
+  expect((await request(app).post("/projects/library").send({})).status).toBe(401);
+  const first = await request(app).post("/projects/library").set("x-test-owner", "creator").send({});
+  expect(first.status).toBe(200);
+  expect(first.body.data).toMatchObject({ ownerId: "creator", role: "library" });
+  expect((await request(app).post("/projects/library").set("x-test-owner", "creator").send({})).body.data.id).toBe(first.body.data.id);
+  const other = await request(app).post("/projects/library").set("x-test-owner", "other").send({});
+  expect(other.body.data.id).not.toBe(first.body.data.id);
+  expect((await request(app).post("/projects").set("x-test-owner", "other").send({ id: first.body.data.id, name: "Squatted" })).status).toBe(400);
+  expect((await request(app).get(`/projects/${first.body.data.id}`).set("x-test-owner", "other")).status).toBe(403);
+  expect((await request(app).get("/projects").set("x-test-owner", "creator")).body.data.map((row: { id: string }) => row.id)).not.toContain(first.body.data.id);
+});
+
 it("lists conversations with their media counts when request history is available, and without them otherwise", async () => {
   const counted = express(); counted.use(express.json());
   counted.use((req: RequestWithUser, _res, next) => { const owner = req.header("x-test-owner"); if (owner) req.user = { uid: owner }; next(); });
