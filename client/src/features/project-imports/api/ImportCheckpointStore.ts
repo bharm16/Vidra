@@ -29,6 +29,12 @@ export class ImportCheckpointStore {
       return values.map(value => CheckpointSchema.parse(value)).filter(value => value.ownerId === ownerId && value.projectId === projectId);
     } finally { database.close(); }
   }
+  /** Uploads the device still holds for this account in any project. Keys begin with the owner. */
+  async hasUnfinished(ownerId: string): Promise<boolean> {
+    const owner = OwnerIdSchema.parse(ownerId);
+    const database = await this.open();
+    try { return await result(database.transaction("imports").objectStore("imports").count(IDBKeyRange.bound([owner], [owner, []]))) > 0; } finally { database.close(); }
+  }
   async remove(ownerId: string, projectId: string, id: string): Promise<void> {
     const database = await this.open();
     try { const transaction = database.transaction("imports", "readwrite"); const done = committed(transaction); transaction.objectStore("imports").delete([ownerId, projectId, id]); await done; } finally { database.close(); }

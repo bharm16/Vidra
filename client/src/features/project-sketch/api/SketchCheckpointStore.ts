@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ProjectSketchCaptureCommandSchema, SketchPictureDataUriSchema } from "@shared/schemas/workflow/sketch.schemas";
 import { SketchProductionInputsSchema } from "@shared/schemas/sketch.schemas";
 import { MediaVersionSchema } from "@shared/schemas/workflow/media.schemas";
+import { ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 
 export const SketchCheckpointSchema = z.strictObject({
   key: z.string(), drawingDataUri: SketchPictureDataUriSchema.optional(), inputs: SketchProductionInputsSchema,
@@ -10,6 +11,12 @@ export const SketchCheckpointSchema = z.strictObject({
 export type SketchCheckpoint = z.infer<typeof SketchCheckpointSchema>;
 function complete(transaction: IDBTransaction): Promise<void> { return new Promise((resolve, reject) => { transaction.oncomplete = () => resolve(); transaction.onerror = () => reject(transaction.error); transaction.onabort = () => reject(transaction.error ?? new Error("Sketch checkpoint aborted")); }); }
 function result<T>(request: IDBRequest<T>): Promise<T> { return new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); }
+
+/** A pressed save the server has not confirmed, in one of this owner's projects. Keys are `${ownerId}:${projectId}`. */
+export function hasUnsavedSketch(ownerId: string, rows: readonly SketchCheckpoint[]): boolean {
+  const prefix = `${ownerId}:`;
+  return rows.some(row => row.key.startsWith(prefix) && ProjectIdSchema.safeParse(row.key.slice(prefix.length)).success && row.pending !== undefined && row.saved === undefined);
+}
 
 /** IndexedDB retains one exact pending press across reloads without a localStorage size limit. */
 export class SketchCheckpointStore {
@@ -27,6 +34,13 @@ export class SketchCheckpointStore {
   async read(key: string): Promise<SketchCheckpoint | undefined> {
     const db = await this.open();
     try { const row: unknown = await result(db.transaction("checkpoints", "readonly").objectStore("checkpoints").get(key)); return row === undefined ? undefined : SketchCheckpointSchema.parse(row); } finally { db.close(); }
+  }
+  async hasUnsaved(ownerId: string): Promise<boolean> {
+    const db = await this.open();
+    try {
+      const rows: unknown[] = await result(db.transaction("checkpoints", "readonly").objectStore("checkpoints").getAll(IDBKeyRange.bound(`${ownerId}:`, `${ownerId}:\uffff`)));
+      return hasUnsavedSketch(ownerId, rows.flatMap(row => { const parsed = SketchCheckpointSchema.safeParse(row); return parsed.success ? [parsed.data] : []; }));
+    } finally { db.close(); }
   }
   async save(checkpoint: SketchCheckpoint): Promise<void> {
     const row = SketchCheckpointSchema.parse(checkpoint);

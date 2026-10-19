@@ -12,6 +12,7 @@ import { AuthFieldError, AuthNotice } from "./auth/AuthFormControls";
 import { AccountMobileHeader, AccountSettingsNav, type AccountSection } from "./account/AccountSettingsNav";
 import { AccountUsagePanel } from "./account/AccountUsagePanel";
 import { useAccountProfile } from "./account/useAccountProfile";
+import { DEVICE_WORK } from "./account/deviceWork";
 import "@/components/fresh/fresh.css";
 import "./auth/fresh-auth.css";
 import "./account/account.css";
@@ -43,7 +44,7 @@ export function AccountPage(): ReactElement {
     signoutPending.current = true;
     setSignoutError(undefined);
     try {
-      const retention = await prepareWorkspaceSignOut(uid);
+      const retention = await prepareWorkspaceSignOut(uid, DEVICE_WORK);
       if (!mounted.current || owner.current !== uid) return;
       if (!retention.safe && !(confirmedDeviceCopy && retention.canSignOutWithDeviceCopy)) {
         const target = retention.returnToDraft?.ownerId === uid ? retention.returnToDraft : undefined;

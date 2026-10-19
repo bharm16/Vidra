@@ -4,6 +4,8 @@ import { canonicalJson } from "@shared/workflow/canonicalJson";
 import { DraftCheckpointStore, type DraftCheckpoint } from "./DraftCheckpointStore";
 
 interface RetentionCheck { ownerId: string; prepare(): Promise<boolean>; }
+/** Other unfinished work a feature keeps on this device for an account, such as an upload. */
+export interface DeviceWorkCheck { label: string; unfinished(ownerId: string): Promise<boolean>; }
 const checks = new Set<RetentionCheck>();
 export interface WorkspaceDraftReturnTarget { ownerId: string; projectId: string; conversationId: string; draftId: string; }
 export type WorkspaceSignOutPreparation =
@@ -28,7 +30,7 @@ export function registerWorkspaceRetention(ownerId: string, prepare: () => Promi
   return () => { checks.delete(check); };
 }
 
-export async function prepareWorkspaceSignOut(ownerId: string): Promise<WorkspaceSignOutPreparation> {
+export async function prepareWorkspaceSignOut(ownerId: string, deviceWork: readonly DeviceWorkCheck[] = []): Promise<WorkspaceSignOutPreparation> {
   const owner = OwnerIdSchema.parse(ownerId);
   const owned = [...checks].filter(check => check.ownerId === ownerId);
   const results = await Promise.allSettled(owned.map(check => check.prepare()));
@@ -56,6 +58,8 @@ export async function prepareWorkspaceSignOut(ownerId: string): Promise<Workspac
       return !acknowledged.some(saved => saved.projectId === draft.projectId && saved.draftId === draft.draftId && Math.min(saved.record.revision, saved.serverRevision) >= draft.serverRevision && canonicalJson(saved.content) === canonicalJson(draft.content));
     });
     if (pendingDrafts.length) return { safe: false, reason: "This tab has a draft that hasn’t finished saving. Return to it before you leave, or sign out and keep a copy on this device for this account.", canSignOutWithDeviceCopy: true, ...returnTarget(pendingDrafts) };
+    const unfinished = (await Promise.all(deviceWork.map(async check => (await check.unfinished(owner)) ? [check.label] : []))).flat();
+    if (unfinished.length) return { safe: false, reason: `Unfinished work is still on this device: ${unfinished.join(", ")}. Return to it before you leave, or sign out and keep a copy on this device for this account.`, canSignOutWithDeviceCopy: true };
     return { safe: true };
   } catch {
     return { safe: false, reason: "Your saved work on this device could not be checked. Keep this tab open and try again before signing out." };

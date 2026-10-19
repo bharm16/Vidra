@@ -3,7 +3,7 @@ import { CreationDraftSchema, DraftContentSchema } from "@shared/schemas/workflo
 import { SubmissionCommandSchema } from "@shared/schemas/workflow/request.schemas";
 import { DraftIdSchema, ProjectIdSchema } from "@shared/schemas/workflow/identity.schemas";
 import { DraftCheckpointStore, type DraftCheckpoint, type OwnedWorkflowRetention, type SubmissionCheckpoint } from "../DraftCheckpointStore";
-import { prepareWorkspaceSignOut, registerWorkspaceRetention } from "../WorkspaceRetention";
+import { prepareWorkspaceSignOut, registerWorkspaceRetention, type DeviceWorkCheck } from "../WorkspaceRetention";
 
 const record = CreationDraftSchema.parse({
   schemaVersion: "vidra-workflow/v2", id: "draft_one", ownerId: "creator", projectId: "project_one", conversationId: "conversation_one",
@@ -124,5 +124,22 @@ describe("Account sign-out retention", () => {
     expect(result).toMatchObject({ safe: false, reason: expect.stringContaining("could not be checked") });
     expect(result).not.toHaveProperty("returnToDraft");
     expect(JSON.stringify(result)).not.toContain("project_private");
+  });
+  it("blocks sign-out for an unfinished upload or edit kept on this device, offering the device copy", async () => {
+    const upload = vi.fn(async () => true);
+    const work: DeviceWorkCheck[] = [{ label: "an upload", unfinished: upload }, { label: "a video edit", unfinished: async () => false }];
+    const result = await prepareWorkspaceSignOut("creator", work);
+    expect(result).toMatchObject({ safe: false, canSignOutWithDeviceCopy: true, reason: expect.stringContaining("an upload") });
+    expect(result).not.toHaveProperty("returnToDraft");
+    expect(JSON.stringify(result)).not.toContain("a video edit");
+    expect(upload).toHaveBeenCalledWith("creator");
+  });
+  it("keeps the account when other device work cannot be read", async () => {
+    const result = await prepareWorkspaceSignOut("creator", [{ label: "an upload", unfinished: async () => { throw new Error("IDB read denied"); } }]);
+    expect(result).toMatchObject({ safe: false, reason: expect.stringContaining("could not be checked") });
+    expect(result).not.toHaveProperty("canSignOutWithDeviceCopy");
+  });
+  it("signs out when no device work is unfinished", async () => {
+    expect(await prepareWorkspaceSignOut("creator", [{ label: "an upload", unfinished: async () => false }])).toEqual({ safe: true });
   });
 });

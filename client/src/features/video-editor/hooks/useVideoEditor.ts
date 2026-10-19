@@ -11,6 +11,8 @@ const PendingExportSchema = z.strictObject({ editId: z.string(), envelope: Creat
 export type PendingChange = z.infer<typeof PendingChangeSchema>;
 interface PendingExport { editId: string; envelope: ExportEnvelope; }
 type CheckpointKind = "change" | "export";
+const SCOPE_PREFIX = "vidra.video-editor.v1:";
+function editorScope(ownerId: string, projectId: string): string { return `${SCOPE_PREFIX}${encodeURIComponent(ownerId)}:${encodeURIComponent(projectId)}`; }
 function readCheckpoint<T extends z.ZodType>(key: string, schema: T): z.output<T> | undefined { try { const value: unknown = JSON.parse(localStorage.getItem(key) ?? "null"); const result = schema.safeParse(value); return result.success ? result.data : undefined; } catch { return undefined; } }
 function checkpointKey(scope: string, kind: CheckpointKind, editId?: string): string { return editId === undefined ? `${scope}:${kind}` : `${scope}:edit:${encodeURIComponent(editId)}:${kind}`; }
 function sameCheckpoint<T extends z.ZodType>(raw: string | null, schema: T, value: z.output<T>): boolean {
@@ -48,6 +50,12 @@ function recoveryEditId(scope: string): string | undefined {
     }
   } catch { /* Loading an edit does not require working device storage. */ }
   return undefined;
+}
+/** Sign-out reads every project's unconfirmed saves and export acceptances while no editor is open. Storage failures throw. */
+export function hasUnconfirmedVideoEdits(ownerId: string): boolean {
+  const prefix = `${SCOPE_PREFIX}${encodeURIComponent(ownerId)}:`;
+  const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter((key): key is string => Boolean(key?.startsWith(prefix)));
+  return keys.some(key => key.endsWith(":change") ? readCheckpoint(key, PendingChangeSchema) !== undefined : key.endsWith(":export") ? readCheckpoint(key, PendingExportSchema) !== undefined : false);
 }
 function writeCheckpoint<T extends z.ZodType<{ editId: string }>>(scope: string, kind: CheckpointKind, schema: T, value: z.output<T>): "saved" | "conflict" | "unavailable" {
   try {
@@ -88,7 +96,7 @@ export function useVideoEditor(ownerId: string, projectId: string, initialEditId
   cancelExport(id: string): Promise<void>; checkExport(id: string): Promise<void>; clearError(): void;
 } {
   const api = useMemo(() => new VideoEditorApi(ownerId, projectId), [ownerId, projectId]);
-  const scope = `vidra.video-editor.v1:${encodeURIComponent(ownerId)}:${encodeURIComponent(projectId)}`;
+  const scope = editorScope(ownerId, projectId);
   const [reloadKey, setReloadKey] = useState(0);
   const selectionRef = useRef<EditorSelection>({ scope, requestedId: initialEditId, reloadKey, generation: 0 });
   const previous = selectionRef.current;

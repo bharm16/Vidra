@@ -26,7 +26,7 @@ describe("Retained account states", () => {
     auth.signOut.mockImplementation(() => new Promise<void>(resolve => { done = resolve; }));
     renderPage(); fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     await screen.findByText("Signing out…");
-    expect(retention).toHaveBeenCalledWith("creator");
+    expect(retention).toHaveBeenCalledWith("creator", expect.arrayContaining([expect.objectContaining({ label: "an upload" }), expect.objectContaining({ label: "a video edit" }), expect.objectContaining({ label: "a Sketch picture" })]));
     expect(screen.queryByText("alex@vidra.test")).not.toBeInTheDocument();
     await act(async () => done?.());
     expect(navigate).toHaveBeenCalledWith("/signin", { replace: true });
