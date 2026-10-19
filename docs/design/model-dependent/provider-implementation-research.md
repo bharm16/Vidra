@@ -6,12 +6,12 @@ Reviewed 2026-10-10. This is documentation and source evidence for the redesign,
 
 Replicate's rendered schema text omits its fields. The public HTML contains JSON script properties at `version._extras.dereferenced_openapi_schema.components.schemas.Input` and `Output`. These were extracted directly from each first-party schema page. The inspected deployment versions are:
 
-| Operation | Schema version | Version timestamp |
-| --- | --- | --- |
-| [Wan 2.2 text to video](https://replicate.com/wan-video/wan-2.2-t2v-fast/api/schema) | `9f0a607c444c14a25ca46cb94f01d83566e40a7c68ee0d313cb8b8b5e5cf2c09` | 2026-09-17T11:09:39.261640Z |
-| [Wan 2.5 image to video](https://replicate.com/wan-video/wan-2.5-i2v/api/schema) | `17d990034120b74845dc0affafa81a7e70c1ab95ee7448aaf12fbc7b6bb925e2` | 2025-12-04T16:50:02.804917Z |
+| Operation                                                                                     | Schema version                                                     | Version timestamp           |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------- |
+| [Wan 2.2 text to video](https://replicate.com/wan-video/wan-2.2-t2v-fast/api/schema)          | `9f0a607c444c14a25ca46cb94f01d83566e40a7c68ee0d313cb8b8b5e5cf2c09` | 2026-09-17T11:09:39.261640Z |
+| [Wan 2.5 image to video](https://replicate.com/wan-video/wan-2.5-i2v/api/schema)              | `17d990034120b74845dc0affafa81a7e70c1ab95ee7448aaf12fbc7b6bb925e2` | 2025-12-04T16:50:02.804917Z |
 | [Flux Schnell text to image](https://replicate.com/black-forest-labs/flux-schnell/api/schema) | `d9fbf23e0a34bb6134f86d3e24f48c0dd96332378da307b5e9b60a9d47e4a9c2` | 2025-06-25T20:01:49.723220Z |
-| [Flux Kontext Fast image edit](https://replicate.com/prunaai/flux-kontext-fast/api/schema) | `e0869266e4964dc7e0c544eff7a95ac4b51fb98e9bf64eed6b4edfb6f651df50` | 2026-09-23T07:17:18.222506Z |
+| [Flux Kontext Fast image edit](https://replicate.com/prunaai/flux-kontext-fast/api/schema)    | `e0869266e4964dc7e0c544eff7a95ac4b51fb98e9bf64eed6b4edfb6f651df50` | 2026-09-23T07:17:18.222506Z |
 
 These are the schemas observed behind versionless model names; current adapters do not pin those hashes. A profile must bind its exact endpoint and schema revision and detect drift. An environment override is a different, unresolved profile until inspected. The active image edit adapter is **`prunaai/flux-kontext-fast`**, not the similarly named Black Forest Labs Kontext endpoint. [Video configuration](../../../server/src/config/modelConfig.ts), [image adapters](../../../server/src/services/image-generation/providers/ReplicateFluxKontextFastProvider.ts).
 
@@ -19,20 +19,20 @@ Google evidence uses the [Gemini Veo guide](https://ai.google.dev/gemini-api/doc
 
 ## Wan payloads
 
-| Field | `wan-video/wan-2.2-t2v-fast` | `wan-video/wan-2.5-i2v` |
-| --- | --- | --- |
-| Required | `prompt`: string | `prompt`: string; `image`: URI |
-| Shape | `aspect_ratio`: `16:9` / `9:16`; default `16:9` | No aspect field; derive display geometry from the admitted image and verify delivered media |
-| Resolution | `resolution`: `480p` / `720p`; default `480p` | `resolution`: `480p` / `720p` / `1080p`; default `720p` |
-| Length | `num_frames`: integer 81–121; default 81 | `duration`: integer 5 / 10; default 5 |
-| Generation rate | `frames_per_second`: integer 5–30; default 16 | No FPS parameter |
-| Output interpolation | `interpolate_output`: boolean; default `true` (30 FPS) | No interpolation parameter |
-| Prompt processing | `optimize_prompt`: boolean; default `false` | `enable_prompt_expansion`: boolean; default `true` |
-| Negative prompt | No field | `negative_prompt`: string; default empty |
-| Seed | Optional nullable integer; no default seed | Optional nullable integer; no default seed |
-| Audio reference | No field | Optional nullable `audio`: URI; WAV/MP3, 3–30 seconds, ≤15 MB |
-| Other fields | `go_fast`: default `true`; `sample_shift`: number 1–20, default 12; safety checker disabled default `false`; two optional transformer LoRA URLs with scale defaults 1 | No corresponding fields |
-| Output | URI string | URI string |
+| Field                | `wan-video/wan-2.2-t2v-fast`                                                                                                                                          | `wan-video/wan-2.5-i2v`                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Required             | `prompt`: string                                                                                                                                                      | `prompt`: string; `image`: URI                                                              |
+| Shape                | `aspect_ratio`: `16:9` / `9:16`; default `16:9`                                                                                                                       | No aspect field; derive display geometry from the admitted image and verify delivered media |
+| Resolution           | `resolution`: `480p` / `720p`; default `480p`                                                                                                                         | `resolution`: `480p` / `720p` / `1080p`; default `720p`                                     |
+| Length               | `num_frames`: integer 81–121; default 81                                                                                                                              | `duration`: integer 5 / 10; default 5                                                       |
+| Generation rate      | `frames_per_second`: integer 5–30; default 16                                                                                                                         | No FPS parameter                                                                            |
+| Output interpolation | `interpolate_output`: boolean; default `true` (30 FPS)                                                                                                                | No interpolation parameter                                                                  |
+| Prompt processing    | `optimize_prompt`: boolean; default `false`                                                                                                                           | `enable_prompt_expansion`: boolean; default `true`                                          |
+| Negative prompt      | No field                                                                                                                                                              | `negative_prompt`: string; default empty                                                    |
+| Seed                 | Optional nullable integer; no default seed                                                                                                                            | Optional nullable integer; no default seed                                                  |
+| Audio reference      | No field                                                                                                                                                              | Optional nullable `audio`: URI; WAV/MP3, 3–30 seconds, ≤15 MB                               |
+| Other fields         | `go_fast`: default `true`; `sample_shift`: number 1–20, default 12; safety checker disabled default `false`; two optional transformer LoRA URLs with scale defaults 1 | No corresponding fields                                                                     |
+| Output               | URI string                                                                                                                                                            | URI string                                                                                  |
 
 The tables paraphrase the exact embedded [Wan 2.2 schema](https://replicate.com/wan-video/wan-2.2-t2v-fast/api/schema) and [Wan 2.5 schema](https://replicate.com/wan-video/wan-2.5-i2v/api/schema). The unoffered LoRA fields are `lora_weights_transformer`, `lora_weights_transformer_2` (nullable strings) and `lora_scale_transformer`, `lora_scale_transformer_2` (numbers, default 1, no bounds supplied). Wan 2.2 has no `size`, `prompt_extend`, `negative_prompt`, `image`, `style_reference` or sound toggle. Frame count and generation rate describe intended length; actual duration and delivered FPS require probing. The schema's pricing description uses duration at 16 FPS, so changing generation FPS alone must not be treated as a proven cost reduction.
 
@@ -70,13 +70,13 @@ Current [Wan input construction](../../../server/src/services/video-generation/p
 
 ## Gemini Veo modes and serialization
 
-| Mode | Inputs and coupled constraints |
-| --- | --- |
-| Text to video | `prompt`; 4/6/8 seconds at 720p; 1080p/4k require 8 seconds |
-| First-frame animation | `prompt` and `image`; same duration/resolution constraints |
-| First/last interpolation | `image` and `lastFrame`; last frame alone is invalid |
-| Reference direction | `prompt` and up to three asset references; 8 seconds; qualify exact supported combinations |
-| Native extension | Previous Veo video, generated/referenced within two days; 720p; `16:9` / `9:16`; source ≤141 seconds. Adds 7 seconds; returns combined video. Parameter table requires duration 8 |
+| Mode                     | Inputs and coupled constraints                                                                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text to video            | `prompt`; 4/6/8 seconds at 720p; 1080p/4k require 8 seconds                                                                                                                       |
+| First-frame animation    | `prompt` and `image`; same duration/resolution constraints                                                                                                                        |
+| First/last interpolation | `image` and `lastFrame`; last frame alone is invalid                                                                                                                              |
+| Reference direction      | `prompt` and up to three asset references; 8 seconds; qualify exact supported combinations                                                                                        |
+| Native extension         | Previous Veo video, generated/referenced within two days; 720p; `16:9` / `9:16`; source ≤141 seconds. Adds 7 seconds; returns combined video. Parameter table requires duration 8 |
 
 All modes have native audio always on, one output and 24 FPS. Aspect default is `16:9`; resolution default is `720p`. The guide lists `personGeneration:"allow_all"` for text/extension and `"allow_adult"` for image/interpolation/references; EU, UK, CH and MENA permit only `allow_adult`. Resolve regional conflicts before offering an executable profile. These facts come from the [Gemini Veo guide](https://ai.google.dev/gemini-api/docs/veo?hl=en). An application default of 8 seconds must be captured as such. Style-reference support and mixed input modes remain unqualified on this exact path.
 
@@ -84,7 +84,7 @@ For direct REST, place `prompt`, `image`, `lastFrame`, `referenceImages` and `vi
 
 ```json
 {
-  "instances": [{"prompt": "captured words"}],
+  "instances": [{ "prompt": "captured words" }],
   "parameters": {
     "aspectRatio": "16:9",
     "resolution": "720p",
@@ -103,17 +103,17 @@ Current [operations mapping](../../../server/src/services/video-generation/provi
 
 ## Active Flux image adapters
 
-| Field | Flux Schnell | Pruna Flux Kontext Fast |
-| --- | --- | --- |
-| Required | `prompt` | `prompt`, `img_cond_path`: URI |
-| Aspect | `1:1`, `16:9`, `21:9`, `3:2`, `2:3`, `4:5`, `5:4`, `3:4`, `4:3`, `9:16`, `9:21`; default `1:1` | Same list plus `match_input_image`; default `match_input_image` |
-| Output | URI array; `num_outputs`: integer 1–4, default 1 | URI string |
-| Format/quality | `webp`/`jpg`/`png`, default `webp`; quality integer 0–100, default 80 | `png`/`jpg`/`webp`, default `jpg`; quality integer 1–100, default 80 |
-| Size | `megapixels`: `1` / `0.25`, default `1` | `image_size`: integer, default 1024; no bound supplied |
-| Steps | `num_inference_steps`: integer 1–4, default 4 | Integer, default 30; no bounds supplied |
-| Seed | Optional integer | Optional nullable integer |
-| Speed | `go_fast` default `true`; fixed seed does not guarantee deterministic output when enabled | `Lightly Juiced 🍊 (more consistent)`, `Juiced 🔥 (default)`, `Extra Juiced 🔥 (more speed)`, `Blink of an eye 👁️`, `Real Time`; schema default **Extra Juiced** |
-| Other | `disable_safety_checker`: default `false` | `guidance`: number, default 3.5; no bounds supplied |
+| Field          | Flux Schnell                                                                                   | Pruna Flux Kontext Fast                                                                                                                                          |
+| -------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Required       | `prompt`                                                                                       | `prompt`, `img_cond_path`: URI                                                                                                                                   |
+| Aspect         | `1:1`, `16:9`, `21:9`, `3:2`, `2:3`, `4:5`, `5:4`, `3:4`, `4:3`, `9:16`, `9:21`; default `1:1` | Same list plus `match_input_image`; default `match_input_image`                                                                                                  |
+| Output         | URI array; `num_outputs`: integer 1–4, default 1                                               | URI string                                                                                                                                                       |
+| Format/quality | `webp`/`jpg`/`png`, default `webp`; quality integer 0–100, default 80                          | `png`/`jpg`/`webp`, default `jpg`; quality integer 1–100, default 80                                                                                             |
+| Size           | `megapixels`: `1` / `0.25`, default `1`                                                        | `image_size`: integer, default 1024; no bound supplied                                                                                                           |
+| Steps          | `num_inference_steps`: integer 1–4, default 4                                                  | Integer, default 30; no bounds supplied                                                                                                                          |
+| Seed           | Optional integer                                                                               | Optional nullable integer                                                                                                                                        |
+| Speed          | `go_fast` default `true`; fixed seed does not guarantee deterministic output when enabled      | `Lightly Juiced 🍊 (more consistent)`, `Juiced 🔥 (default)`, `Extra Juiced 🔥 (more speed)`, `Blink of an eye 👁️`, `Real Time`; schema default **Extra Juiced** |
+| Other          | `disable_safety_checker`: default `false`                                                      | `guidance`: number, default 3.5; no bounds supplied                                                                                                              |
 
 Sources: embedded [Schnell schema](https://replicate.com/black-forest-labs/flux-schnell/api/schema) and [Kontext Fast schema](https://replicate.com/prunaai/flux-kontext-fast/api/schema). Unbounded fields must not acquire invented sliders.
 
@@ -123,10 +123,10 @@ Current [Kontext adapter](../../../server/src/services/image-generation/provider
 
 ## Start, status, cancel, result and acceptance uncertainty
 
-| Provider | Reviewed public protocol | Required durable evidence / current gap |
-| --- | --- | --- |
-| Replicate | `POST /v1/models/{owner}/{name}/predictions` with `{input}`; immutable-version requests use `POST /v1/predictions` with `{version,input}`. Get `GET /v1/predictions/{id}`; cancel `POST /v1/predictions/{id}/cancel`; result is `output` | Persist prediction id, exact endpoint/version, captured input, acceptance response and terminal evidence. Video `replicate.run` returns only media; image runner retains id only inside one call. No durable resume/cancel seam |
-| Gemini | `POST /v1beta/models/veo-3.1-generate-preview:predictLongRunning`; response has server-assigned `name`. `GET /v1beta/{name}`; terminal `done` has error or response; REST output URI at `response.generateVideoResponse.generatedSamples[0].video.uri` | Persist operation name/service identity immediately, resume polling that operation, authenticated download and durable copy. Current operation name is logged, not returned through provider result/job state |
+| Provider  | Reviewed public protocol                                                                                                                                                                                                                               | Required durable evidence / current gap                                                                                                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Replicate | `POST /v1/models/{owner}/{name}/predictions` with `{input}`; immutable-version requests use `POST /v1/predictions` with `{version,input}`. Get `GET /v1/predictions/{id}`; cancel `POST /v1/predictions/{id}/cancel`; result is `output`               | Persist prediction id, exact endpoint/version, captured input, acceptance response and terminal evidence. Video `replicate.run` returns only media; image runner retains id only inside one call. No durable resume/cancel seam |
+| Gemini    | `POST /v1beta/models/veo-3.1-generate-preview:predictLongRunning`; response has server-assigned `name`. `GET /v1beta/{name}`; terminal `done` has error or response; REST output URI at `response.generateVideoResponse.generatedSamples[0].video.uri` | Persist operation name/service identity immediately, resume polling that operation, authenticated download and durable copy. Current operation name is logged, not returned through provider result/job state                   |
 
 Replicate protocol is documented in its [HTTP reference](https://replicate.com/docs/reference/http) and public [HTTP OpenAPI](https://api.replicate.com/openapi.json). Its creation contract lists `Prefer` and `Cancel-After`, **no idempotency key**. `Prefer: wait` controls HTTP waiting; it does not cancel generation when the wait expires. `Cancel-After` controls provider deadline. [Creation guide](https://replicate.com/docs/topics/predictions/create-a-prediction).
 

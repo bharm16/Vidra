@@ -3,11 +3,7 @@
   "fileKey": "hVtzoSXhV2rQmxc6pOYC8c",
   "pageId": "1026:84247",
   "status": "unfinished_design_review",
-  "frozenPages": [
-    "883:84247",
-    "887:85295",
-    "956:84247"
-  ],
+  "frozenPages": ["883:84247", "887:85295", "956:84247"],
   "generation": [
     {
       "key": "G01",
