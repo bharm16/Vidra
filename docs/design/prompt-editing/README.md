@@ -8,16 +8,16 @@ The page contains 119 primary state screens: 42 prompt-editing states, 60 ongoin
 
 ## Review entry points
 
-| Journey | Entry |
-| --- | --- |
-| Sidebar, viewed clip and timeline together | [W32](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93752) |
-| Phrase replacement while viewing an asset and retaining the timeline | [W48](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-97020) |
-| Phrase suggestions in the compact composer | [S07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-84868) |
-| Independent requests finishing out of order | [W55](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-98261) |
-| Empty new draft with the prior asset and request retained | [W59](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1083-97427) |
-| Timeline collapsed | [T02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1055-84811) |
-| Narrow conversation, asset and replacements | [S35](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-89372) |
-| Image editor — explicitly deferred | [TODO](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1091-101743) |
+| Journey                                                              | Entry                                                                                    |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Sidebar, viewed clip and timeline together                           | [W32](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1074-93752)   |
+| Phrase replacement while viewing an asset and retaining the timeline | [W48](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1075-97020)   |
+| Phrase suggestions in the compact composer                           | [S07](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1056-84868)   |
+| Independent requests finishing out of order                          | [W55](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1076-98261)   |
+| Empty new draft with the prior asset and request retained            | [W59](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1083-97427)   |
+| Timeline collapsed                                                   | [T02](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1055-84811)   |
+| Narrow conversation, asset and replacements                          | [S35](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1070-89372)   |
+| Image editor — explicitly deferred                                   | [TODO](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1091-101743) |
 
 ## Sources visually inspected before this work
 

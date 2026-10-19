@@ -107,7 +107,11 @@ export async function rasterizeCaption(cue: VideoText, preset: VideoPreset): Pro
     return { png, x: Math.round(outputWidth * cue.x), y: Math.round(outputHeight * cue.y), width: boxWidth, height: boxHeight };
   }
   // Preserve the captured legacy Inter raster, including its historical ink-top placement.
-  const rendered = await sharp({ text: { text: `<span foreground="${cue.color}">${escapeMarkup(cue.text)}</span>`, fontfile, font: `Inter ${cue.fontWeight === 400 ? "Regular" : cue.fontWeight === 500 ? "Medium" : "SemiBold"} ${cue.fontSize}`, width: boxWidth, dpi: 72, align: cue.align, wrap: "word-char", rgba: true } }).png().toBuffer({ resolveWithObject: true });
+  const rendered = await sharp({ text: { text: `<span foreground="${cue.color}">${escapeMarkup(cue.text)}</span>`, fontfile, font: `Inter ${cue.fontWeight === 400 ? "Regular" : cue.fontWeight === 500 ? "Medium" : "SemiBold"} ${cue.fontSize}`, width: boxWidth, dpi: 72, align: cue.align, wrap: "word-char", rgba: true } }).png().toBuffer({ resolveWithObject: true }).catch((error: unknown) => {
+    // libvips on Linux refuses an oversized text surface before the box check can run.
+    if (error instanceof Error && /too big/i.test(error.message)) throw policy(cue, `Text ${cue.id}: the words overflow this text box. Enlarge it, reduce the size or shorten the words.`);
+    throw error;
+  });
   if (rendered.info.height > boxHeight || rendered.info.width > boxWidth) throw policy(cue, `Text ${cue.id}: the words overflow this text box. Enlarge it, reduce the size or shorten the words.`);
   const left = cue.align === "center" ? Math.floor((boxWidth - rendered.info.width) / 2) : cue.align === "right" ? boxWidth - rendered.info.width : 0;
   const png = await sharp({ create: { width: boxWidth, height: Math.max(1, boxHeight), channels: 4, background: cue.background ?? { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([{ input: rendered.data, left, top: 0 }]).png().toBuffer();
