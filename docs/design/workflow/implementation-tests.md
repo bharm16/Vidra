@@ -1,5 +1,7 @@
 # Implementation acceptance-test plan
 
+Presentation scope was revised on October 14: the 39-screen removal and source cleanup (local record `screen-removal-execution-2026-10-14.json`) overrides older screen, dialog and control requirements in this plan. Retained backend states/tests do not authorize rebuilding retired draft management, technical repair, billing or confirmation UI.
+
 All **137 original cases** are assigned below. **33 additional implementation cases** cover requirements that need concrete renderer/commerce/cutover choices. Every suite/path is planned unless separately backed by execution evidence.
 
 Original Given/When/Then remain in [acceptance-cases.md](acceptance-cases.md). The test title must contain its case ID. TestReadyAfter includes both suite owners and the later production boundaries required by the full scenario; their transitive prerequisites also apply. Local contract proof can land earlier, but the full case stays open until all required suites pass. G-APP is the full application closure gate; hosted/activation cases have their own stated gates.

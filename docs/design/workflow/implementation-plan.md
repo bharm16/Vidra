@@ -1,5 +1,7 @@
 # Vidra workflow implementation plan
 
+Presentation scope was revised on October 14: the 39-screen removal and source cleanup (local record `screen-removal-execution-2026-10-14.json`) overrides older screen, dialog and control requirements in this plan. Retained backend states/tests do not authorize rebuilding retired draft management, technical repair, billing or confirmation UI.
+
 **Date:** 2026-10-10. **Baseline:** `0f541e60db3b3cf87405de1390e2257adf30d2b8`. **Status:** all work packages are planned. This document does not implement the redesigned workflow.
 
 The plan has **26 work packages and 80 small implementation commits**, with explicit prerequisites and acceptance. WP identifiers are local planning IDs, not GitHub issue numbers.

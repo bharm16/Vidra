@@ -20,26 +20,8 @@
         "height": 900
       },
       {
-        "id": "993:115008",
-        "name": "E47 · Saving a restored arrangement",
-        "width": 1440,
-        "height": 900
-      },
-      {
         "id": "993:115240",
         "name": "E48 · Earlier arrangement restored as a new edit",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "993:115462",
-        "name": "E49 · Restore failed without losing the current edit",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "993:115686",
-        "name": "E50 · Undo the last caption change",
         "width": 1440,
         "height": 900
       },
@@ -104,24 +86,6 @@
         "height": 900
       },
       {
-        "id": "993:118138",
-        "name": "R28 · Draft download started before leaving",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "993:118261",
-        "name": "R29 · Draft download could not start",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "993:118339",
-        "name": "R30 · Draft clipboard blocked",
-        "width": 1440,
-        "height": 900
-      },
-      {
         "id": "1001:117540",
         "name": "B36 · Mobile edit history",
         "width": 390,
@@ -164,18 +128,6 @@
         "height": 844
       },
       {
-        "id": "1001:118334",
-        "name": "B43 · Mobile draft download started",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "1001:118430",
-        "name": "B44 · Mobile manual copy fallback",
-        "width": 390,
-        "height": 844
-      },
-      {
         "id": "1001:118528",
         "name": "B45 · Mobile preview volume",
         "width": 390,
@@ -214,18 +166,6 @@
       {
         "id": "1004:118876",
         "name": "D16 · Public link failed to load",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "1004:118888",
-        "name": "D17 · Shared image download started",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "1004:118898",
-        "name": "D18 · Shared image download failed",
         "width": 1440,
         "height": 900
       },
@@ -536,36 +476,6 @@
         "height": 844
       },
       {
-        "id": "991:96569",
-        "name": "N93 · Mobile Returning to a saved destination",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96582",
-        "name": "N94 · Mobile Keep a guest draft after sign-in",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96602",
-        "name": "N95 · Mobile Different account cannot take over a draft",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96619",
-        "name": "N96 · Mobile Saved destination unavailable",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96634",
-        "name": "N97 · Mobile Sign-out failed",
-        "width": 390,
-        "height": 844
-      },
-      {
         "id": "991:96649",
         "name": "N98 · Mobile Profile awaiting email verification",
         "width": 390,
@@ -580,24 +490,6 @@
       {
         "id": "991:96684",
         "name": "N100 · Mobile Edit display name",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96703",
-        "name": "N101 · Mobile Saving profile",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96725",
-        "name": "N102 · Mobile Profile saved",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "991:96741",
-        "name": "N103 · Mobile Profile update failed",
         "width": 390,
         "height": 844
       },
@@ -962,32 +854,14 @@
         "height": 844
       },
       {
-        "id": "994:97323",
-        "name": "N144 · Mobile guest draft kept without submission",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "999:97087",
-        "name": "X16 · Choose the first file",
-        "width": 1440,
-        "height": 900
-      },
-      {
         "id": "999:97241",
         "name": "X17 · First file uploading",
         "width": 1440,
         "height": 900
       },
       {
-        "id": "999:97393",
-        "name": "X18 · First file being checked",
-        "width": 1440,
-        "height": 900
-      },
-      {
         "id": "999:97545",
-        "name": "X19 · First file saved without insertion",
+        "name": "X19 · First file ready in project media",
         "width": 1440,
         "height": 900
       },
@@ -1004,44 +878,8 @@
         "height": 900
       },
       {
-        "id": "999:98002",
-        "name": "X23 · First file rejected",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "999:98154",
-        "name": "X24 · First upload cancelled",
-        "width": 1440,
-        "height": 900
-      },
-      {
         "id": "999:98306",
         "name": "X20 · First imported clip added explicitly",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "999:98605",
-        "name": "A63 · Password change was not confirmed",
-        "width": 1440,
-        "height": 960
-      },
-      {
-        "id": "999:98622",
-        "name": "N145 · Mobile password change not confirmed",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "1000:98172",
-        "name": "X25 · Upload continues with the panel closed",
-        "width": 1440,
-        "height": 900
-      },
-      {
-        "id": "1000:98325",
-        "name": "X26 · First saved file remains in media",
         "width": 1440,
         "height": 900
       },
@@ -1072,24 +910,6 @@
       {
         "id": "1003:98495",
         "name": "N150 · Mobile public link network failure",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "1003:98504",
-        "name": "N151 · Mobile shared file download failed",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "1009:98470",
-        "name": "O33 · Download started",
-        "width": 390,
-        "height": 844
-      },
-      {
-        "id": "1009:98487",
-        "name": "O34 · Could not start the download",
         "width": 390,
         "height": 844
       },

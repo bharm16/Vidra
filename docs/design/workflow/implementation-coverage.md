@@ -1,5 +1,7 @@
 # Implementation coverage for every workflow state
 
+Presentation scope was revised on October 14: the 39-screen removal and source cleanup (local record `screen-removal-execution-2026-10-14.json`) overrides older screen, dialog and control requirements in this plan. Retained backend states/tests do not authorize rebuilding retired draft management, technical repair, billing or confirmation UI.
+
 Generated from `implementation-plan.json` and checked against `state-model.json`. Every status here is **planned**, not implemented or tested in the application.
 
 **126 states · 348 declared transitions · 1032 rejected pairs · 5 action adapters.** No state/pair may disappear from this ledger when the behavior model changes; the checker fails until the plan is amended.

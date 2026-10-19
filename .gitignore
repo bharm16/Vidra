@@ -134,3 +134,14 @@ docs/research/2026-10-03-higgsfield-business-sources.md
 docs/research/2026-10-03-higgsfield-product-sources.md
 
 docs/research/2026-10-03-vidra-competitive-direction.md
+
+# Local design-pass evidence: capture scratch, screenshots, HTML galleries and
+# dated per-pass ledgers. Canonical design docs stay tracked; follow-up lists are
+# committed explicitly (see the negation below).
+.scratch/
+docs/design/removal-screen-images-*/
+docs/design/*-2026-*.json
+docs/design/*-2026-*.html
+docs/design/*-2026-*.csv
+docs/design/*-2026-*.md
+!docs/design/figma-followups-*.md
