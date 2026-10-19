@@ -1,10 +1,10 @@
 # Whole-product design handoff
 
-The October 14 [approved screen removal](../screen-removal-execution-2026-10-14.json) supersedes retired screen and component references below. Earlier coverage claims are historical; these deleted presentations must not be rebuilt.
+The October 14 approved screen removal (local record `screen-removal-execution-2026-10-14.json`) supersedes retired screen and component references below. Earlier coverage claims are historical; these deleted presentations must not be rebuilt.
 
-The October 15 [removal](../figma-state-screen-removal-2026-10-15.json) likewise deleted screens and components that drew backend or contract states as UI (the auth state machine, cancellation races, request reconciliation, cross-tab submission and guest-draft ownership). Do not redraw them. The behavior stays in backend contracts and tests. The real client surfaces are AuthGateDialog "Sign in to continue", the RequireAuth redirect to /signin, the AccountPopover and toasts.
+The October 15 removal (local record `figma-state-screen-removal-2026-10-15.json`) likewise deleted screens and components that drew backend or contract states as UI (the auth state machine, cancellation races, request reconciliation, cross-tab submission and guest-draft ownership). Do not redraw them. The behavior stays in backend contracts and tests. The real client surfaces are AuthGateDialog "Sign in to continue", the RequireAuth redirect to /signin, the AccountPopover and toasts.
 
-The October 16 [auth redesign](../auth-redesign-2026-10-16.json) rebuilt every sign-in, account-creation, recovery and verification screen on one Auth card over the Ambient backdrop. Sign in and Create account switch in place at one size, field errors sit under their fields, and account creation keeps a single password field with Show, so A16, A38, N11 and N88 (password mismatch) are retired. N40 and N41, already retired on October 15, were also removed from the canvas.
+The October 16 auth redesign (local record `auth-redesign-2026-10-16.json`) rebuilt every sign-in, account-creation, recovery and verification screen on one Auth card over the Ambient backdrop. Sign in and Create account switch in place at one size, field errors sit under their fields, and account creation keeps a single password field with Show, so A16, A38, N11 and N88 (password mismatch) are retired. N40 and N41, already retired on October 15, were also removed from the canvas.
 
 2026-10-10. Screen coverage is complete for review. Application implementation has not started.
 
@@ -61,7 +61,7 @@ Do not implement the replacement UI before the whole screen set is reviewed. Exi
 
 ## Verification
 
-The original 207-entry and 1,745-transition audit describes the earlier snapshot. It predates the October 14 consolidation and removals and is not a current active-screen count or a blanket overflow claim. The [October 14 remediation record](../design-critique-remediation-2026-10-14.json) records current checks of the 81 retained public/account surfaces, their shared controls, typography, touch targets, contrast and review guides. Historical fixtures and retired catalog entries remain distinguishable from active review surfaces.
+The original 207-entry and 1,745-transition audit describes the earlier snapshot. It predates the October 14 consolidation and removals and is not a current active-screen count or a blanket overflow claim. The October 14 remediation record (local record `design-critique-remediation-2026-10-14.json`) records current checks of the 81 retained public/account surfaces, their shared controls, typography, touch targets, contrast and review guides. Historical fixtures and retired catalog entries remain distinguishable from active review surfaces.
 
 This is a design prototype, not a running application. Fields, account records, requests and responses are fixed examples. Live authentication, email delivery, provider output, persistence, rendering, accessibility behavior and commercial activation still require implementation and their assigned tests.
 

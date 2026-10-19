@@ -1,6 +1,6 @@
 # Figma follow-ups — October 18, 2026
 
-Status after the 485-frame Figma review (fileKey `hVtzoSXhV2rQmxc6pOYC8c`). The live file still has the 485 frames from the [Oct 17 reconciliation](figma-fidelity-implementation-2026-10-17.md). The only new nodes are four "Output settings overlay" components on page 10. The visual fixes from this pass are in the working tree, uncommitted. This file lists what still needs implementation or a design decision.
+Status after the 485-frame Figma review (fileKey `hVtzoSXhV2rQmxc6pOYC8c`). The live file still has the 485 frames from the Oct 17 reconciliation (local record `figma-fidelity-implementation-2026-10-17.md`). The only new nodes are four "Output settings overlay" components on page 10. The visual fixes from this pass are in the working tree, uncommitted. This file lists what still needs implementation or a design decision.
 
 ## Missing functionality
 

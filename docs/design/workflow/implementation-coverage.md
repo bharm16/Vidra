@@ -1,6 +1,6 @@
 # Implementation coverage for every workflow state
 
-Presentation scope was revised on October 14: the [39-screen removal and source cleanup](../screen-removal-execution-2026-10-14.json) overrides older screen, dialog and control requirements in this plan. Retained backend states/tests do not authorize rebuilding retired draft management, technical repair, billing or confirmation UI.
+Presentation scope was revised on October 14: the 39-screen removal and source cleanup (local record `screen-removal-execution-2026-10-14.json`) overrides older screen, dialog and control requirements in this plan. Retained backend states/tests do not authorize rebuilding retired draft management, technical repair, billing or confirmation UI.
 
 Generated from `implementation-plan.json` and checked against `state-model.json`. Every status here is **planned**, not implemented or tested in the application.
 

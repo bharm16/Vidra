@@ -1,10 +1,10 @@
 # Model-dependent creation contract
 
-The October 14 approved removal supersedes earlier presentation requirements for the 39 retired screens. Do not rebuild draft comparison/management/discard screens, context or coupled-setting approval gates, technical attachment/storage/renderer repair screens, billing/checkout/credit receipts, extra retry confirmation, or the retired result notices. Unfinished work is reached through conversation history. Retry is a direct deliberate action with a new execution identity; uncertain acceptance still reconciles the original identity. Data retention, conflict detection, media ownership, idempotency and internal recovery remain required. The retirement record, not older screenshots or state-model labels, determines active UI scope. See the [removal record](../screen-removal-execution-2026-10-14.json).
+The October 14 approved removal supersedes earlier presentation requirements for the 39 retired screens. Do not rebuild draft comparison/management/discard screens, context or coupled-setting approval gates, technical attachment/storage/renderer repair screens, billing/checkout/credit receipts, extra retry confirmation, or the retired result notices. Unfinished work is reached through conversation history. Retry is a direct deliberate action with a new execution identity; uncertain acceptance still reconciles the original identity. Data retention, conflict detection, media ownership, idempotency and internal recovery remain required. The retirement record, not older screenshots or state-model labels, determines active UI scope. See the removal record (local record `screen-removal-execution-2026-10-14.json`).
 
 Status: proposed design and implementation requirements, 2026-10-10. See the [source review](source-review.md) for visual evidence and remaining design gates. This supplements the [workflow state contract](../workflow/workflow-state-contract.md); existing history and request ownership rules still apply.
 
-The October 14 [visual remediation](../design-critique-remediation-2026-10-14.json) changes the shell, typography, compact layout and control presentation. It preserves the captured model/settings/input cases. Its visual checks do not close the provider or adapter gaps below.
+The October 14 visual remediation (local record `design-critique-remediation-2026-10-14.json`) changes the shell, typography, compact layout and control presentation. It preserves the captured model/settings/input cases. Its visual checks do not close the provider or adapter gaps below.
 
 ## Authority
 

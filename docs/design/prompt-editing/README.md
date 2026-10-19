@@ -4,7 +4,7 @@
 
 Start at [Page 28's review index](https://www.figma.com/design/hVtzoSXhV2rQmxc6pOYC8c/Untitled?node-id=1091-101275). The [state catalog](state-catalog.json) and [interaction contract](interaction-contract.md) describe the complete declared scope, including data and interactions that do not require a visually different screen. The [implementation notes](implementation-notes.md) distinguish existing code from required changes.
 
-After the October 14 consolidation and removals, Page 28 has **23 retained product review surfaces**: 18 desktop and five mobile. Reusable state components and preserved prototype fixtures carry the detailed cases. The earlier 116-screen count describes the October 10 snapshot, not the active review surface. The [remediation record](../design-critique-remediation-2026-10-14.json) records the current sources and verification. Repeated values use the same state contract; they do not require separate full-screen drawings.
+After the October 14 consolidation and removals, Page 28 has **23 retained product review surfaces**: 18 desktop and five mobile. Reusable state components and preserved prototype fixtures carry the detailed cases. The earlier 116-screen count describes the October 10 snapshot, not the active review surface. The remediation record (local record `design-critique-remediation-2026-10-14.json`) records the current sources and verification. Repeated values use the same state contract; they do not require separate full-screen drawings.
 
 ## Review entry points
 
@@ -40,6 +40,6 @@ The canonical composer remains `1175:109219`, with the touch controls variant `1
 
 ## Review evidence
 
-The October 14 [remediation record](../design-critique-remediation-2026-10-14.json) is the current geometry and visual-review record for Pages 24–29. It separates retained product surfaces, source reviews, intentional scrolling, archived fixtures and application acceptance.
+The October 14 remediation record (local record `design-critique-remediation-2026-10-14.json`) is the current geometry and visual-review record for Pages 24–29. It separates retained product surfaces, source reviews, intentional scrolling, archived fixtures and application acceptance.
 
 The original canvas check found no overlapping state/transition frames and no invalid prototype destinations across 610 checked node actions. Browser checks at that point exercised timeline hide/show and exact second-option replacement/undo while retaining the viewed clip. Those checks preceded the follow-up correction. The current Figma pass visually inspected the fixed dock, compact composer, and caption-free history, and audited the removed controls and labels; application and browser acceptance for the revised behavior remains open. [The earlier workspace render](workspace-review.png) predates these corrections.
