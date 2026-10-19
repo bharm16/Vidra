@@ -14,7 +14,7 @@ const browser = {
 };
 
 // PR feedback exercises existing UI contracts without starting the API or
-// exposing provider credentials. Native golden-path coverage has its own job.
+// exposing provider credentials.
 export default defineConfig({
   ...baseConfig,
   retries: 0,
@@ -45,12 +45,6 @@ export default defineConfig({
         "history-page.spec.ts",
         "share-page.spec.ts",
       ],
-      use: browser,
-    },
-    {
-      name: "chromium-guest",
-      testMatch: "golden-path.spec.ts",
-      grep: /a guest submit is sign-in-gated and preserves the prompt$/,
       use: browser,
     },
   ],

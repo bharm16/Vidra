@@ -69,6 +69,6 @@ For performance, establish a working baseline and measure one change at a time. 
 ## References
 
 - [Route map](docs/architecture/ROUTE_MAP.md) and [service boundaries](docs/architecture/SERVICE_BOUNDARIES.md).
-- [Replay](docs/architecture/replay-mode.md), [cross-mode contracts](docs/architecture/cross-mode-golden-path.md), [media lifecycle](docs/architecture/admission-media-lifecycle.md).
+- [Replay](docs/architecture/replay-mode.md) and [media lifecycle](docs/architecture/admission-media-lifecycle.md).
 - [Page 21 adoption](docs/design/page21-component-migration.md): current components/state journeys. Pages 22/23 do not authorize a new draft ownership model.
 - [Issue tracker](docs/agents/issue-tracker.md) and [triage labels](docs/agents/triage-labels.md).

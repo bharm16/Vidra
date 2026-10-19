@@ -88,9 +88,6 @@ class FakeStore {
     const turn = this.turns.get(turnId);
     return turn ? { ...turn, calls: turn.calls.map((c) => ({ ...c })) } : null;
   }
-  async findTurnByProducedImageId(): Promise<StudioTurnRecord | null> {
-    return null;
-  }
   async reserveTurn(params: {
     turn: StudioTurnRecord;
     day: string;

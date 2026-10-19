@@ -25,25 +25,6 @@ import type {
 } from "../types";
 import type { StudioProjectStore } from "./StudioProjectStore";
 
-/**
- * The ids of every image a turn's succeeded calls produced. Persisted as a
- * top-level array on the turn doc purely as a query index: Firestore cannot
- * filter on `calls[].image.id` (a sub-property of an object array), so
- * `findTurnByProducedImageId` reaches an image BY IDENTITY through an
- * `array-contains` on this field instead of walking a history page (#121).
- *
- * Derived, never authoritative — `calls` remains the source of truth, and
- * `fromStoredTurn` strips this field on the way out so it never reaches the
- * domain record or the wire.
- */
-function producedImageIds(calls: readonly StudioCallRecord[]): string[] {
-  const ids: string[] = [];
-  for (const call of calls) {
-    if (call.status === "succeeded" && call.image) ids.push(call.image.id);
-  }
-  return ids;
-}
-
 export class StudioCapExceededError extends Error {
   public readonly statusCode = 429;
 
@@ -174,25 +155,6 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
   }
 
   /**
-   * The turn that produced `imageId`, by identity — an `array-contains` on the
-   * denormalized `imageIds` index, so retrieval never depends on where the
-   * turn falls in the project's history (#121). Firestore serves this with an
-   * automatic single-field index; no composite index is required.
-   */
-  async findTurnByProducedImageId(
-    projectId: string,
-    imageId: string,
-  ): Promise<StudioTurnRecord | null> {
-    const snapshot = await this.turnsOf(projectId)
-      .where("imageIds", "array-contains", imageId)
-      .limit(1)
-      .get();
-    if (snapshot.empty) return null;
-    const doc = snapshot.docs[0];
-    return doc ? this.fromStoredTurn(doc.data()) : null;
-  }
-
-  /**
    * Atomically reserve the turn's estimated cost against the user's daily cap
    * and persist the turn record. Throws StudioCapExceededError (and writes
    * nothing) when the reservation would exceed the cap.
@@ -277,7 +239,6 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
         this.stripUndefined({
           calls,
           updatedAtMs,
-          imageIds: producedImageIds(calls),
         }),
         { merge: true },
       );
@@ -348,7 +309,6 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
           calls: [...calls],
           refundedCents: refundCents,
           updatedAtMs: params.updatedAtMs,
-          imageIds: producedImageIds(calls),
         }),
         { merge: true },
       );
@@ -388,18 +348,16 @@ export class FirestoreStudioProjectStore implements StudioProjectStore {
     ) as T;
   }
 
-  /** A turn plus its derived produced-image index, undefined fields dropped. */
+  /** A turn with undefined fields dropped. */
   private toStoredTurn(turn: StudioTurnRecord): Record<string, unknown> {
-    return this.stripUndefined({
-      ...turn,
-      imageIds: producedImageIds(turn.calls),
-    });
+    return this.stripUndefined({ ...turn });
   }
 
   /**
-   * The domain turn, with the persistence-only `imageIds` index removed. The
-   * index is a query aid, not part of the record's contract, so no consumer —
-   * the service, the turn view, the wire — ever sees it.
+   * The domain turn, with the retired `imageIds` query index removed. Turns
+   * written before the index was retired still carry it; it is not part of
+   * the record's contract, so no consumer — the service, the turn view, the
+   * wire — ever sees it.
    */
   private fromStoredTurn(data: Record<string, unknown>): StudioTurnRecord {
     const turn = { ...data } as unknown as StudioTurnRecord & {

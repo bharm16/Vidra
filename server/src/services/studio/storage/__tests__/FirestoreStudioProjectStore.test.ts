@@ -105,12 +105,7 @@ function makeQuery(
           value,
         }))
         .filter(({ value }) =>
-          filters.every(([field, op, expected]) =>
-            op === "array-contains"
-              ? Array.isArray(value[field]) &&
-                (value[field] as unknown[]).includes(expected)
-              : value[field] === expected,
-          ),
+          filters.every(([field, , expected]) => value[field] === expected),
         );
       if (order) {
         const { field, direction } = order;
@@ -509,7 +504,7 @@ describe("FirestoreStudioProjectStore", () => {
         })),
       });
 
-    it("merges one call's outcome, keeps the turn running, and indexes its image", async () => {
+    it("merges one call's outcome and keeps the turn running", async () => {
       await store.reserveTurn({
         turn: runningTurn(),
         day: DAY,
@@ -539,13 +534,6 @@ describe("FirestoreStudioProjectStore", () => {
       expect(turn?.calls[2]?.image?.id).toBe("img-2");
       // Sibling slots are untouched by the single-call merge.
       expect(turn?.calls[0]?.status).toBe("running");
-      // The produced-image index tracks the checkpointed success immediately,
-      // so identity retrieval works even mid-batch.
-      const produced = await store.findTurnByProducedImageId(
-        "project-1",
-        "img-2",
-      );
-      expect(produced?.calls[2]?.image?.id).toBe("img-2");
     });
 
     it("no-ops once the turn is terminal, so a late checkpoint cannot resurrect it", async () => {
@@ -621,72 +609,16 @@ describe("FirestoreStudioProjectStore", () => {
     });
   });
 
-  describe("findTurnByProducedImageId (identity retrieval, #121)", () => {
-    const producedTurn = (
-      id: string,
-      createdAtMs: number,
-      imageId: string,
-    ): StudioTurnRecord =>
-      makeTurn({
-        id,
-        createdAtMs,
-        status: "complete",
-        calls: [
-          {
-            index: 0,
-            status: "succeeded",
-            image: {
-              id: imageId,
-              storagePath: `users/user-1/previews/images/${imageId}.webp`,
-              sourcePrompt: "v1",
-              model: "recraft-v4.1",
-            },
-          },
-        ],
+  describe("getTurn", () => {
+    it("drops the retired imageIds index a historical turn doc still carries", async () => {
+      mocks.records.set("studio_projects/project-1/turns/turn-1", {
+        ...makeTurn(),
+        imageIds: ["img-1"],
       });
 
-    it("finds a produced image BEYOND the 200-turn listTurns window", async () => {
-      // 200 image-less turns, then one late turn that produced the target.
-      for (let i = 1; i <= 200; i++) {
-        await store.saveTurn(
-          makeTurn({ id: `turn-${i}`, createdAtMs: i, calls: [] }),
-        );
-      }
-      await store.saveTurn(producedTurn("turn-late", 201, "img-late"));
-
-      // The default history page (200, oldest-first) cannot reach it — the
-      // exact window the old page-walking lookup was trapped inside.
-      const page = await store.listTurns("project-1");
-      expect(page).toHaveLength(200);
-      expect(page.some((turn) => turn.id === "turn-late")).toBe(false);
-
-      // Identity lookup reaches it regardless of the window.
-      const found = await store.findTurnByProducedImageId(
-        "project-1",
-        "img-late",
-      );
-      expect(found?.id).toBe("turn-late");
-    });
-
-    it("returns null for an unknown id and for a non-produced id", async () => {
-      await store.saveTurn(producedTurn("turn-1", 1, "img-1"));
-      expect(
-        await store.findTurnByProducedImageId("project-1", "img-1"),
-      ).not.toBeNull();
-      expect(
-        await store.findTurnByProducedImageId("project-1", "unknown"),
-      ).toBeNull();
-      // An attachment id never enters a call, so it is not a produced image.
-      expect(
-        await store.findTurnByProducedImageId("project-1", "att-1"),
-      ).toBeNull();
-    });
-
-    it("scopes the lookup to the named project", async () => {
-      await store.saveTurn(producedTurn("turn-1", 1, "img-1"));
-      expect(
-        await store.findTurnByProducedImageId("other-project", "img-1"),
-      ).toBeNull();
+      const turn = await store.getTurn("project-1", "turn-1");
+      expect(turn?.id).toBe("turn-1");
+      expect(turn).not.toHaveProperty("imageIds");
     });
   });
 

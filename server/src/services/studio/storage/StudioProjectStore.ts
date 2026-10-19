@@ -51,21 +51,6 @@ export interface StudioProjectStore {
     limitCount?: number,
   ): Promise<StudioTurnRecord[]>;
   getTurn(projectId: string, turnId: string): Promise<StudioTurnRecord | null>;
-  /**
-   * The turn whose succeeded calls produced `imageId`, looked up BY IDENTITY —
-   * never by scanning a history page (#121, ADR-0022 decision 4). A known
-   * produced image is retrievable no matter how many turns precede it, which
-   * is what keeps "Use this in the session" working past any list window.
-   * Returns null when no succeeded call in the project produced that image
-   * (an attachment id, an unknown id, or a failed call all answer null).
-   *
-   * #132 reuses this contract; it is the studio's only produced-image-by-id
-   * retrieval seam.
-   */
-  findTurnByProducedImageId(
-    projectId: string,
-    imageId: string,
-  ): Promise<StudioTurnRecord | null>;
   reserveTurn(params: {
     turn: StudioTurnRecord;
     day: string;

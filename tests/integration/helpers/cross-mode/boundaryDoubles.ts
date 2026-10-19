@@ -407,29 +407,6 @@ export class InMemorySessionStore {
     return Promise.resolve();
   }
 
-  /**
-   * The atomic create-if-absent the acceptance bridges mint through (issue
-   * #130). Existence check and write share one synchronous section, mirroring
-   * the real store's transaction: a second create at the same id reports the
-   * existing row untouched rather than overwriting it.
-   */
-  createIfAbsent(
-    session: SessionRecord,
-  ): Promise<{ created: boolean; session: SessionRecord }> {
-    const existing = this.sessions.get(session.id);
-    if (existing) {
-      return Promise.resolve({
-        created: false,
-        session: structuredClone(existing),
-      });
-    }
-    this.sessions.set(session.id, structuredClone(session));
-    return Promise.resolve({
-      created: true,
-      session: structuredClone(session),
-    });
-  }
-
   async mutate(
     sessionId: string,
     mutator: (current: SessionRecord) => SessionRecord,
@@ -573,21 +550,6 @@ export class InMemoryIdempotencyService {
     );
   }
 
-  listResponseSnapshots(
-    userId: string,
-    route: string,
-  ): Promise<Array<{ statusCode: number; body: Record<string, unknown> }>> {
-    return Promise.resolve(
-      [...this.records.values()].flatMap((record) =>
-        record.userId === userId &&
-        record.route === route &&
-        record.status === "completed" &&
-        record.snapshot
-          ? [structuredClone(record.snapshot)]
-          : [],
-      ),
-    );
-  }
 }
 
 /** The studio's project/turn persistence, in memory. */
@@ -646,20 +608,6 @@ export class InMemoryStudioProjectStore implements StudioProjectStore {
     return Promise.resolve(
       found && found.projectId === projectId ? structuredClone(found) : null,
     );
-  }
-
-  findTurnByProducedImageId(
-    projectId: string,
-    imageId: string,
-  ): Promise<StudioTurnRecord | null> {
-    const found = [...this.turns.values()].find(
-      (turn) =>
-        turn.projectId === projectId &&
-        turn.calls.some(
-          (call) => call.status === "succeeded" && call.image?.id === imageId,
-        ),
-    );
-    return Promise.resolve(found ? structuredClone(found) : null);
   }
 
   reserveTurn({

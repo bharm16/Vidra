@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { InMemoryIdempotencyService } from "#tests/integration/helpers/cross-mode/boundaryDoubles";
 
-it("browser recovery reads only the creator's settled receipts for that admission route", async () => {
+it("a creator reads back only their own settled receipt, as a copy", async () => {
   const store = new InMemoryIdempotencyService();
   const route = "/api/admission/picture";
   const claim = await store.claimRequest({
@@ -31,12 +31,6 @@ it("browser recovery reads only the creator's settled receipts for that admissio
     snapshot: { statusCode: 200, body: { generationId: "private-other-take" } },
   });
 
-  expect(await store.listResponseSnapshots("owner", route)).toEqual([
-    { statusCode: 200, body: { generationId: "owned-take" } },
-  ]);
-  expect(await store.listResponseSnapshots("owner", "/other-route")).toEqual(
-    [],
-  );
   expect(
     await store.getResponseSnapshot({ userId: "owner", route, key: "pending" }),
   ).toBeNull();

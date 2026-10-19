@@ -71,21 +71,6 @@ class FakeStore implements StudioProjectStore {
     return this.turns.get(turnId) ?? null;
   }
 
-  async findTurnByProducedImageId(
-    projectId: string,
-    imageId: string,
-  ): Promise<StudioTurnRecord | null> {
-    return (
-      [...this.turns.values()].find(
-        (turn) =>
-          turn.projectId === projectId &&
-          turn.calls.some(
-            (call) => call.status === "succeeded" && call.image?.id === imageId,
-          ),
-      ) ?? null
-    );
-  }
-
   async listTurns(projectId: string): Promise<StudioTurnRecord[]> {
     return [...this.turns.values()]
       .filter((turn) => turn.projectId === projectId)

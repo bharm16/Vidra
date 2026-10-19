@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run provider-free PR browser tests (23 cases)
+      - name: Run provider-free PR browser tests (20 cases)
         if: github.event_name == 'pull_request'
         run: npx playwright test --config config/test/playwright.pr.config.js
         env:

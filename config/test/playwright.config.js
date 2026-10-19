@@ -27,7 +27,7 @@ export default defineConfig({
     //
     // Paths are relative to THIS file's directory (config/test/), so the
     // ../../ anchors output at the repo root — where .gitignore and the CI
-    // upload-artifact steps (e2e.yml, golden-path.yml) expect it. When the
+    // upload-artifact steps (e2e.yml) expect it. When the
     // config moved into config/test/ the bare paths silently started
     // writing here instead, and every CI failure shipped zero artifacts.
     ["html", { outputFolder: "../../playwright-report", open: "never" }],

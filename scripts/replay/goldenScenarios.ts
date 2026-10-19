@@ -7,7 +7,7 @@
  * import from here, never inline copies.
  */
 
-/** Same one-liner the golden-path e2e spec uses — the product's definition of working. */
+/** The one-liner the scenario pack records — the product's definition of working. */
 export const GOLDEN_PROMPT =
   "a lighthouse keeper reading by lamplight during a storm";
 
